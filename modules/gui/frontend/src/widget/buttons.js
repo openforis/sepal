@@ -1,9 +1,32 @@
+import {Label} from 'widget/form'
 import PropTypes from 'prop-types'
 import React from 'react'
 import UnstyledSelectionList from 'widget/unstyledSelectionList'
 import styles from './buttons.module.css'
 
-const Buttons = props => <UnstyledSelectionList styles={styles} {...props}/>
+export default class Buttons extends React.Component {
+
+    renderLabel() {
+        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        return label ? (
+            <Label
+                msg={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+            />
+        ) : null
+    }
+
+    render() {
+        const {...props} = this.props
+        return (
+            <div>
+                {this.renderLabel()}
+                <UnstyledSelectionList styles={styles} {...props}/>
+            </div>
+        )
+    }
+}
 
 Buttons.propTypes = {
     className: PropTypes.string,
@@ -12,5 +35,3 @@ Buttons.propTypes = {
     options: PropTypes.array,
     onChange: PropTypes.any
 }
-
-export default Buttons

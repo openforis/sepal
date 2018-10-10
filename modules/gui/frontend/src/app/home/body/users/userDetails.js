@@ -1,7 +1,6 @@
-import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
+import {Field, Input, InputGroup, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {msg} from 'translate'
-// import {relativeTimeThreshold} from 'moment'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -53,89 +52,22 @@ class UserDetails extends React.Component {
         this.props.onCancel()
     }
 
-    renderPanel() {
-        const {form, newUser = !this.props.userDetails.username,
-            inputs: {username, name, email, organization, monthlyInstanceBudget, monthlyStorageBudget, storageQuota}
-        } = this.props
-        const renderUsername = () =>
-            <div>
-                <Label msg={msg('user.userDetails.form.username.label')}/>
-                <Input
-                    input={username}
-                    spellCheck={false}
-                />
-                <ErrorMessage for={username}/>
-            </div>
-        
-        return (
-            <React.Fragment>
-                <PanelContent>
-                    <div>
-                        <Label msg={msg('user.userDetails.form.name.label')}/>
-                        <Input
-                            autoFocus
-                            input={name}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={name}/>
-                    </div>
-                    {newUser ? renderUsername() : null}
-                    <div>
-                        <Label msg={msg('user.userDetails.form.email.label')}/>
-                        <Input
-                            input={email}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={email}/>
-                    </div>
-                    <div>
-                        <Label msg={msg('user.userDetails.form.organization.label')}/>
-                        <Input
-                            input={organization}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={organization}/>
-                    </div>
-                    <Label msg={msg('user.userDetails.form.monthlyLimits.label')}/>
-                    <div className={styles.monthlyLimits}>
-                        <div>
-                            <Label msg={msg('user.userDetails.form.monthlyInstanceBudget.label')}/>
-                            <Input
-                                type='number'
-                                input={monthlyInstanceBudget}
-                                spellCheck={false}
-                            />
-                        </div>
-                        <div>
-                            <Label msg={msg('user.userDetails.form.monthlyStorageBudget.label')}/>
-                            <Input
-                                type='number'
-                                input={monthlyStorageBudget}
-                                spellCheck={false}
-                            />
-                        </div>
-                        <div>
-                            <Label msg={msg('user.userDetails.form.storageQuota.label')}/>
-                            <Input
-                                type='number'
-                                input={storageQuota}
-                                spellCheck={false}
-                            />
-                        </div>
-                    </div>
-                    <ErrorMessage for={[monthlyInstanceBudget, monthlyStorageBudget, storageQuota]}/>
-                </PanelContent>
-                <PanelButtons
-                    form={form}
-                    statePath='userDetails'
-                    isActionForm={true}
-                    onApply={userDetails => this.save(userDetails)}
-                    onCancel={() => this.cancel()}/>
-            </React.Fragment>
-        )
+    renderUsername(newUser) {
+        const {inputs: {username}} = this.props
+        return newUser ? (
+            <Input
+                label={msg('user.userDetails.form.username.label')}
+                input={username}
+                spellCheck={false}
+                errorMessage
+            />
+        ) : null
     }
 
     render() {
+        const {form,
+            inputs: {name, email, organization, monthlyInstanceBudget, monthlyStorageBudget, storageQuota}
+        } = this.props
         const newUser = !this.props.userDetails.username
         return (
             <Portal>
@@ -143,7 +75,58 @@ class UserDetails extends React.Component {
                     <PanelHeader
                         icon='user'
                         title={msg('user.userDetails.title')}/>
-                    {this.renderPanel()}
+                    <PanelContent>
+                        <Input
+                            label={msg('user.userDetails.form.name.label')}
+                            autoFocus
+                            input={name}
+                            spellCheck={false}
+                            errorMessage
+                        />
+                        {this.renderUsername(newUser)}
+                        <Input
+                            label={msg('user.userDetails.form.email.label')}
+                            input={email}
+                            spellCheck={false}
+                            errorMessage
+                        />
+                        <Input
+                            label={msg('user.userDetails.form.organization.label')}
+                            input={organization}
+                            spellCheck={false}
+                            errorMessage
+                        />
+                        <InputGroup
+                            label={msg('user.userDetails.form.monthlyLimits.label')}
+                            errorMessage={[monthlyInstanceBudget, monthlyStorageBudget, storageQuota]}>
+                            <div className={styles.monthlyLimits}>
+                                <Input
+                                    label={msg('user.userDetails.form.monthlyInstanceBudget.label')}
+                                    type='number'
+                                    input={monthlyInstanceBudget}
+                                    spellCheck={false}
+                                />
+                                <Input
+                                    label={msg('user.userDetails.form.monthlyStorageBudget.label')}
+                                    type='number'
+                                    input={monthlyStorageBudget}
+                                    spellCheck={false}
+                                />
+                                <Input
+                                    label={msg('user.userDetails.form.storageQuota.label')}
+                                    type='number'
+                                    input={storageQuota}
+                                    spellCheck={false}
+                                />
+                            </div>
+                        </InputGroup>
+                    </PanelContent>
+                    <PanelButtons
+                        form={form}
+                        statePath='userDetails'
+                        isActionForm={true}
+                        onApply={userDetails => this.save(userDetails)}
+                        onCancel={() => this.cancel()}/>
                 </Panel>
             </Portal>
         )

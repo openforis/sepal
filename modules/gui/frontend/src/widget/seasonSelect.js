@@ -1,9 +1,8 @@
-import {ErrorMessage} from 'widget/form'
-import {Msg} from 'translate'
+import {Msg, msg} from 'translate'
 import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
 import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
 import {intersect} from 'collections'
-import DatePicker from 'widget/datePicker'
+import DatePicker, {DatePickerControl} from 'widget/datePicker'
 import Hammer from 'hammerjs'
 import Media from 'react-media'
 import PropTypes from 'prop-types'
@@ -216,8 +215,9 @@ class DatePickers extends React.Component {
                         input={startDate}
                         startDate={minDate}
                         endDate={centerDate}
-                        onChange={updatedStartDate => this.startDateChanged(moment(updatedStartDate), true)}/>
-                    <ErrorMessage for={startDate}/>
+                        onChange={updatedStartDate => this.startDateChanged(moment(updatedStartDate), true)}
+                        errorMessage
+                    />
                 </div>
 
                 <div>
@@ -226,8 +226,9 @@ class DatePickers extends React.Component {
                         input={endDate}
                         startDate={moment(centerDate).add(1, 'days')}
                         endDate={maxDate}
-                        onChange={updatedEndDate => this.endDateChanged(moment(updatedEndDate), true)}/>
-                    <ErrorMessage for={endDate}/>
+                        onChange={updatedEndDate => this.endDateChanged(moment(updatedEndDate), true)}
+                        errorMessage
+                    />
                 </div>
             </div>
         )
@@ -253,6 +254,15 @@ class Timeline extends React.Component {
                     <div className={styles.axisReference}>
                         <div className={styles.centerMarker}>
                             <div className={styles.label}>{this.formatDay(centerDay)}</div>
+                            {/* <div className={styles.label}>
+                                <DatePickerControl
+                                    startDate={'1982-08-22'}
+                                    endDate={moment().format(DATE_FORMAT)}
+                                    input={this.props.centerDate}
+                                    resolution='day'
+                                    onSelect={() => console.log('selected')}
+                                />
+                            </div> */}
                         </div>
                         <Handle
                             position={this.dateToPosition(startDate)}

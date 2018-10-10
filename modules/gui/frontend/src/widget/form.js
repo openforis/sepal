@@ -380,8 +380,19 @@ ErrorMessage.propTypes = {
 export class Input extends React.Component {
     element = React.createRef()
 
-    render() {
-        const {input, validate = 'onBlur', tabIndex, onChange, className, onBlur, ...props} = this.props
+    renderLabel() {
+        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        return label ? (
+            <Label
+                msg={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+            />
+        ) : null
+    }
+
+    renderInput() {
+        const {input, validate = 'onBlur', tabIndex, onChange, className, onBlur, errorMessage, ...props} = this.props
         return (
             <input
                 {...props}
@@ -407,6 +418,23 @@ export class Input extends React.Component {
         )
     }
 
+    renderErrorMessage() {
+        const {errorMessage, input} = this.props
+        return errorMessage ? (
+            <ErrorMessage for={errorMessage === true ? input.name : errorMessage}/>
+        ) : null
+    }
+
+    render() {
+        return (
+            <div>
+                {this.renderLabel()}
+                {this.renderInput()}
+                {this.renderErrorMessage()}
+            </div>
+        )
+    }
+
     focus() {
         this.element.current.focus()
     }
@@ -421,6 +449,46 @@ Input.propTypes = {
     validate: PropTypes.oneOf(['onChange', 'onBlur']),
     onBlur: PropTypes.func,
     onChange: PropTypes.func
+}
+
+export class InputGroup extends React.Component {
+    renderLabel() {
+        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        return label ? (
+            <Label
+                msg={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+            />
+        ) : null
+    }
+
+    renderErrorMessage() {
+        const {errorMessage, input} = this.props
+        return errorMessage ? (
+            <ErrorMessage for={errorMessage === true ? input.name : errorMessage}/>
+        ) : null
+    }
+
+    render() {
+        const {children} = this.props
+        return (
+            <React.Fragment>
+                {this.renderLabel()}
+                <fieldset>
+                    {children}
+                </fieldset>
+                {this.renderErrorMessage()}
+            </React.Fragment>
+        )
+    }
+}
+
+InputGroup.propTypes = {
+    children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
+    label: PropTypes.string,
+    tooltip: PropTypes.string,
+    tooltipPlacement: PropTypes.string
 }
 
 export class Label extends React.Component {

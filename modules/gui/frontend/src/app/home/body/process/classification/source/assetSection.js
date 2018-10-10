@@ -1,4 +1,4 @@
-import {ErrorMessage, Input, Label} from 'widget/form'
+import {Input} from 'widget/form'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -8,16 +8,14 @@ export default class AssetSection extends React.Component {
         const {asset} = this.props
         // TODO: Make sure asset is readable
         return (
-            <React.Fragment>
-                <Label msg={msg('process.classification.panel.source.form.asset.label')}/>
-                <Input
-                    autoFocus
-                    input={asset}
-                    placeholder={msg('process.classification.panel.source.form.asset.placeholder')}
-                    spellCheck={false}
-                />
-                <ErrorMessage for={asset}/>
-            </React.Fragment>
+            <Input
+                label={msg('process.classification.panel.source.form.asset.label')}
+                autoFocus
+                input={asset}
+                placeholder={msg('process.classification.panel.source.form.asset.placeholder')}
+                spellCheck={false}
+                errorMessage
+            />
         )
     }
 }

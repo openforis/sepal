@@ -1,4 +1,4 @@
-import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
+import {Field, Input, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
 import {Subject} from 'rxjs'
@@ -89,35 +89,31 @@ class TrainingData extends React.Component {
                 : 'noFusionTable'
         return (
             <React.Fragment>
-                <div>
-                    <Label msg={msg('process.classification.panel.trainingData.form.fusionTable.label')}/>
-                    <Input
-                        autoFocus
-                        input={fusionTable}
-                        placeholder={msg('process.classification.panel.trainingData.form.fusionTable.placeholder')}
-                        spellCheck={false}
-                        onChange={e => {
-                            fusionTableColumn.set('')
-                            this.recipeActions.setFusionTableColumns(null).dispatch()
-                            this.fusionTableChanged$.next()
-                            const fusionTableMinLength = 30
-                            if (e && e.target.value.length > fusionTableMinLength)
-                                this.loadFusionTableColumns(e.target.value)
-                        }}
-                    />
-                    <ErrorMessage for={fusionTable}/>
-                </div>
-
-                <div>
-                    <Label msg={msg('process.classification.panel.trainingData.form.fusionTableColumn.label')}/>
-                    <ComboBox
-                        input={fusionTableColumn}
-                        isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
-                        disabled={!columns || columns.length === 0}
-                        placeholder={msg(`process.classification.panel.trainingData.form.fusionTableColumn.placeholder.${columnState}`)}
-                        options={(columns || []).map(({name}) => ({value: name, label: name}))}/>
-                    <ErrorMessage for={fusionTableColumn}/>
-                </div>
+                <Input
+                    label={msg('process.classification.panel.trainingData.form.fusionTable.label')}
+                    autoFocus
+                    input={fusionTable}
+                    placeholder={msg('process.classification.panel.trainingData.form.fusionTable.placeholder')}
+                    spellCheck={false}
+                    onChange={e => {
+                        fusionTableColumn.set('')
+                        this.recipeActions.setFusionTableColumns(null).dispatch()
+                        this.fusionTableChanged$.next()
+                        const fusionTableMinLength = 30
+                        if (e && e.target.value.length > fusionTableMinLength)
+                            this.loadFusionTableColumns(e.target.value)
+                    }}
+                    errorMessage
+                />
+                <ComboBox
+                    label={msg('process.classification.panel.trainingData.form.fusionTableColumn.label')}
+                    input={fusionTableColumn}
+                    isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
+                    disabled={!columns || columns.length === 0}
+                    placeholder={msg(`process.classification.panel.trainingData.form.fusionTableColumn.placeholder.${columnState}`)}
+                    options={(columns || []).map(({name}) => ({value: name, label: name}))}
+                    errorMessage
+                />
             </React.Fragment>
         )
     }

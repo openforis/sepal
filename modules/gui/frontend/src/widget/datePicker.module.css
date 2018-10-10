@@ -37,6 +37,11 @@
     color: #a0a0a0;
 }
 
+.inline {
+    display: flex;
+    flex-direction: row;
+}
+
 .date {
     padding: .3rem .5rem;
     cursor: pointer;

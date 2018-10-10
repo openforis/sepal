@@ -1,3 +1,4 @@
+import {ErrorMessage, Label} from 'widget/form'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
@@ -16,7 +17,18 @@ class ComboBox extends React.Component {
     element = React.createRef()
     menuPortalTarget = React.createRef()
 
-    render() {
+    renderLabel() {
+        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        return label ? (
+            <Label
+                msg={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+            />
+        ) : null
+    }
+
+    renderComboBox() {
         const {
             input,
             validate = 'onBlur',
@@ -68,6 +80,23 @@ class ComboBox extends React.Component {
                             input.validate()
                     }}
                 />
+            </div>
+        )
+    }
+
+    renderErrorMessage() {
+        const {errorMessage, input} = this.props
+        return errorMessage ? (
+            <ErrorMessage for={errorMessage === true ? input.name : errorMessage}/>
+        ) : null
+    }
+
+    render() {
+        return (
+            <div>
+                {this.renderLabel()}
+                {this.renderComboBox()}
+                {this.renderErrorMessage()}
             </div>
         )
     }

@@ -1,4 +1,4 @@
-import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
+import {Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {SubmitButton} from 'widget/legacyButton'
 import {query} from 'route'
@@ -32,32 +32,29 @@ class SetupAccount extends React.Component {
     render() {
         const {form, inputs: {username, password, password2}} = this.props
         return <form>
-            <div>
-                <Label msg={msg('landing.reset-password.username.label')}/>
-                <Input
-                    input={username}
-                    disabled={true}/>
-                <ErrorMessage/>
-            </div>
-            <div>
-                <Label msg={msg('landing.reset-password.password.label')}/>
-                <Input
-                    input={password}
-                    type='password'
-                    placeholder={msg('landing.reset-password.password.placeholder')}
-                    autoFocus='on'
-                    tabIndex={1}/>
-                <ErrorMessage for={password}/>
-            </div>
-            <div>
-                <Label msg={msg('landing.reset-password.password2.label')}/>
-                <Input
-                    input={password2}
-                    type='password'
-                    placeholder={msg('landing.reset-password.password2.placeholder')}
-                    tabIndex={2}/>
-                <ErrorMessage for={password2}/>
-            </div>
+            <Input
+                label={msg('landing.reset-password.username.label')}
+                input={username}
+                disabled={true}
+                errorMessage
+            />
+            <Input
+                label={msg('landing.reset-password.password.label')}
+                input={password}
+                type='password'
+                placeholder={msg('landing.reset-password.password.placeholder')}
+                autoFocus='on'
+                tabIndex={1}
+                errorMessage
+            />
+            <Input
+                label={msg('landing.reset-password.password2.label')}
+                input={password2}
+                type='password'
+                placeholder={msg('landing.reset-password.password2.placeholder')}
+                tabIndex={2}
+                errorMessage
+            />
 
             <SubmitButton
                 icon='sign-in-alt'

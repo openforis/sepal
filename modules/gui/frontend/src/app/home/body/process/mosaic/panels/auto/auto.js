@@ -64,25 +64,23 @@ class Auto extends React.Component {
             <div className={styles.form}>
                 <Label msg={msg('process.mosaic.panel.auto.form.sceneCount')}/>
                 <div className={styles.sceneCount}>
-                    <div>
-                        <Label msg={msg('process.mosaic.panel.auto.form.min.label')}/>
-                        <Input
-                            type="number"
-                            min={0}
-                            max={999}
-                            step={1}
-                            autoFocus
-                            input={min}/>
-                    </div>
-                    <div>
-                        <Label msg={msg('process.mosaic.panel.auto.form.max.label')}/>
-                        <Input
-                            type="number"
-                            min={0}
-                            max={999}
-                            step={1}
-                            input={max}/>
-                    </div>
+                    <Input
+                        label={msg('process.mosaic.panel.auto.form.min.label')}
+                        type="number"
+                        min={0}
+                        max={999}
+                        step={1}
+                        autoFocus
+                        input={min}
+                    />
+                    <Input
+                        label={msg('process.mosaic.panel.auto.form.max.label')}
+                        type="number"
+                        min={0}
+                        max={999}
+                        step={1}
+                        input={max}
+                    />
                 </div>
                 <ErrorMessage for={[min, max, 'minLessThanMax']}/>
             </div>

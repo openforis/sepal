@@ -10,6 +10,11 @@ form label {
     text-transform: uppercase;
 }
 
+form fieldset label {
+    font-size: .7rem;
+    font-weight: normal;
+}
+
 form input {
     display: block;
     width: 100%;
@@ -20,6 +25,10 @@ form input {
     background-color: transparent;
     font-size: calc(1.25rem * var(--scaling-factor));
     transition: background-color 800ms ease-out;
+}
+
+form input[type=number] {
+    text-align: right;
 }
 
 form input:-webkit-autofill,

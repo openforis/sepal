@@ -1,5 +1,5 @@
 import {CenteredProgress} from 'widget/progress'
-import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
+import {Field, Input, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {closePanel, showChangePassword} from './userProfile'
 import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
@@ -82,30 +82,24 @@ class UserDetails extends React.Component {
             ? <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>
             : <React.Fragment>
                 <PanelContent>
-                    <div>
-                        <Label msg={msg('user.userDetails.form.name.label')}/>
-                        <Input
-                            autoFocus
-                            input={name}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={name}/>
-                    </div>
-                    <div>
-                        <Label msg={msg('user.userDetails.form.email.label')}/>
-                        <Input
-                            input={email}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={email}/>
-                    </div>
-                    <div>
-                        <Label msg={msg('user.userDetails.form.organization.label')}/>
-                        <Input
-                            input={organization}
-                            spellCheck={false}
-                        />
-                    </div>
+                    <Input
+                        label={msg('user.userDetails.form.name.label')}
+                        autoFocus
+                        input={name}
+                        spellCheck={false}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('user.userDetails.form.email.label')}
+                        input={email}
+                        spellCheck={false}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('user.userDetails.form.organization.label')}
+                        input={organization}
+                        spellCheck={false}
+                    />
                 </PanelContent>
                 <PanelButtons
                     form={form}

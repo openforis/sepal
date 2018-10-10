@@ -256,8 +256,8 @@
                         "years": {
                             "label": "Additional years",
                             "tooltip": "Include data from additional years, from the same time of year.",
-                            "before": "years before.",
-                            "after": "years after.",
+                            "before": "Years before",
+                            "after": "Years after",
                             "positiveInteger": "Must be a positive integer"
                         },
                         "season": {

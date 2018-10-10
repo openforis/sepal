@@ -1,5 +1,5 @@
 import {CenteredProgress} from 'widget/progress'
-import {Constraint, ErrorMessage, Field, Input, Label, form} from 'widget/form'
+import {Constraint, Field, Input, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {changeUserPassword$} from 'user'
 import {msg} from 'translate'
@@ -55,34 +55,28 @@ class ChangePassword extends React.Component {
             ? <CenteredProgress title={msg('user.changePassword.updating')}/>
             : <React.Fragment>
                 <PanelContent>
-                    <div>
-                        <Label msg={msg('user.changePassword.form.oldPassword.label')}/>
-                        <Input
-                            type='password'
-                            autoFocus
-                            input={oldPassword}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={oldPassword}/>
-                    </div>
-                    <div>
-                        <Label msg={msg('user.changePassword.form.newPassword.label')}/>
-                        <Input
-                            type='password'
-                            input={newPassword}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={newPassword}/>
-                    </div>
-                    <div>
-                        <Label msg={msg('user.changePassword.form.confirmPassword.label')}/>
-                        <Input
-                            type='password'
-                            input={confirmPassword}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={[confirmPassword, 'passwordsMatch']}/>
-                    </div>
+                    <Input
+                        label={msg('user.changePassword.form.oldPassword.label')}
+                        type='password'
+                        autoFocus
+                        input={oldPassword}
+                        spellCheck={false}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('user.changePassword.form.newPassword.label')}
+                        type='password'
+                        input={newPassword}
+                        spellCheck={false}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('user.changePassword.form.confirmPassword.label')}
+                        type='password'
+                        input={confirmPassword}
+                        spellCheck={false}
+                        errorMessage={[confirmPassword, 'passwordsMatch']}
+                    />
                 </PanelContent>
                 <PanelButtons
                     form={form}

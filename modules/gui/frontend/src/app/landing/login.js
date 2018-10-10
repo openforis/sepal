@@ -31,25 +31,25 @@ class Login extends React.Component {
         const {form, inputs: {username, password}, action} = this.props
         return (
             <form>
-                <div>
-                    <Label msg={msg('landing.login.username.label')}/>
-                    <Input
-                        input={username}
-                        placeholder={msg('landing.login.username.placeholder')}
-                        autoFocus='on'
-                        autoComplete='off'
-                        tabIndex={1}/>
-                    <ErrorMessage for={username}/>
-                </div>
-                <div>
-                    <Label msg={msg('landing.login.password.label')}/>
-                    <Input
-                        input={password}
-                        type='password'
-                        placeholder={msg('landing.login.password.placeholder')}
-                        tabIndex={2}/>
-                    <ErrorMessage for={password}/>
-                </div>
+                <Input
+                    label={msg('landing.login.username.label')}
+                    input={username}
+                    placeholder={msg('landing.login.username.placeholder')}
+                    autoFocus='on'
+                    autoComplete='off'
+                    tabIndex={1}
+                    errorMessage
+                />
+                <Label msg/>
+                <Input
+                    label={msg('landing.login.password.label')}
+                    input={password}
+                    type='password'
+                    placeholder={msg('landing.login.password.placeholder')}
+                    tabIndex={2}
+                    errorMessage
+                />
+                <ErrorMessage for={password}/>
 
                 <SubmitButton
                     icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}

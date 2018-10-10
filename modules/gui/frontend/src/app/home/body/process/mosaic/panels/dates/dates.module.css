@@ -8,29 +8,25 @@
 
 .advancedLayout {
     display: grid;
+    grid-template-columns: 1fr;
     grid-template-areas:
-            'targetDateLabel'
-            'targetDateInput'
-            'yearsLabel'
-            'yearsInput'
-            'seasonLabel'
-            'seasonDatePickers'
-            'seasonTimeline'
-            'moreLess';
+        'targetDate'
+        'years'
+        'season';
     grid-row-gap: 1rem;
 }
 
 @media (min-width: 576px) {
     .advancedLayout {
-        grid-template-columns: auto 1fr;
+        grid-template-columns: 3rem 1fr 3rem;
+        /* grid-template-areas:
+            'yearsBefore targetDate yearsAfter'
+            'season      season     season    '; */
         grid-template-areas:
-                'targetDateLabel targetDateInput'
-                'yearsLabel      yearsInput'
-                'seasonLabel     seasonDatePickers'
-                'seasonTimeline  seasonTimeline'
-                '.               moreLess';
+            'targetDate  targetDate targetDate'
+            'yearsBefore season     yearsAfter';
         grid-column-gap: 3rem;
-        grid-row-gap: 0;
+        grid-row-gap: 3rem;
     }
 }
 
@@ -38,21 +34,32 @@
     min-height: 13rem;
 }
 
-.targetDateLabel {
-    grid-area: targetDateLabel;
-    margin-top: 0.2rem;
+.targetDate {
+    grid-area: targetDate;
+    justify-self: center;
 }
 
-.targetDateInput {
-    grid-area: targetDateInput;
+.years {
+    grid-area: years;
 }
 
-.yearsLabel {
-    grid-area: yearsLabel;
+.yearsBefore {
+    grid-area: yearsBefore;
+    align-self: end;
+}
+
+.yearsAfter {
+    grid-area: yearsAfter;
+    align-self: end;
 }
 
 .yearsInput {
-    grid-area: yearsInput;
+    display: flex;
+    flex-direction: row;
+}
+
+.yearsInput > * + * {
+    margin-left: 2rem;
 }
 
 .yearsInput input {
@@ -65,8 +72,8 @@
     opacity: 1;
 }
 
-.seasonLabel {
-    grid-area: seasonLabel;
+.season {
+    grid-area: season;
 }
 
 .seasonInput {
@@ -76,7 +83,7 @@
 @media (min-width: 768px) {
     .seasonInput {
         grid-area: seasonTimeline;
-        padding-right: 5rem;
-        padding-left: 5rem;
+        /* padding-right: 5rem; */
+        /* padding-left: 5rem; */
     }
 }

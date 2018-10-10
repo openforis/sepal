@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 
 let intl
 export const initIntl = intlInstance => intl = intlInstance

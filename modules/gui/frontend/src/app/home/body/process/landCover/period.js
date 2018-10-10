@@ -80,8 +80,9 @@ class Period extends React.Component {
                         input={startYear}
                         startDate={moment('1982-01-01', DATE_FORMAT)}
                         endDate={moment()}
-                        resolution='year'/>
-                    <ErrorMessage for={startYear}/>
+                        resolution='year'
+                        errorMessage
+                    />
                 </div>
                 <div className={styles.endYearLabel}>
                     <Label msg={msg('process.landCover.panel.period.endYear.label')}/>
@@ -91,8 +92,9 @@ class Period extends React.Component {
                         input={endYear}
                         startDate={moment('1983-01-01', DATE_FORMAT)}
                         endDate={moment()}
-                        resolution='year'/>
-                    <ErrorMessage for={endYear}/>
+                        resolution='year'
+                        errorMessage
+                    />
                 </div>
                 <div className={styles.error}>
                     <ErrorMessage for={[startYear, endYear, 'startBeforeEnd']}/>

@@ -1,4 +1,4 @@
-import {Input} from 'widget/form'
+import {Input, Label} from 'widget/form'
 import {Subject, animationFrameScheduler, interval} from 'rxjs'
 import {debounceTime, filter, first, map, scan, skip, switchMap, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
@@ -57,29 +57,42 @@ class DatePicker extends React.Component {
         }
     }
 
-    render() {
-        const {input, startDate, endDate, resolution = DAY, className, ...props} = this.props
+    renderLabel() {
+        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        return label ? (
+            <Label
+                msg={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+            />
+        ) : null
+    }
+
+    renderDatePicker() {
+        const {input, startDate, endDate, resolution = DAY, className, onChange} = this.props
         const {edit} = this.state
         return (
             <div className={className}>
                 <div className={[styles.input, styles[resolution]].join(' ')}>
-                    <Input
-                        {...props}
-                        ref={this.inputElement}
-                        input={input}
-                        maxLength={10}
-                        autoComplete='off'
-                        onClick={() => this.editDate(true)}
-                        onFocus={() => this.editDate(true)}
-                        onBlur={() => this.editDate(false)}
-                    />
-                    <Icon name='calendar'
-                        onMouseDown={e => e.preventDefault()}
-                        onClick={() => {
-                            if (!edit)
-                                this.inputElement.current.focus()
-                            this.editDate(!edit)
-                        }}/>
+                    <div className={styles.inline}>
+                        <Input
+                            ref={this.inputElement}
+                            input={input}
+                            maxLength={10}
+                            autoComplete='off'
+                            onClick={() => this.editDate(true)}
+                            onFocus={() => this.editDate(true)}
+                            onBlur={() => this.editDate(false)}
+                            onChange={onChange}
+                        />
+                        <Icon name='calendar'
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => {
+                                if (!edit)
+                                    this.inputElement.current.focus()
+                                this.editDate(!edit)
+                            }}/>
+                    </div>
                     {edit
                         ? <DatePickerControl
                             startDate={startDate}
@@ -91,6 +104,15 @@ class DatePicker extends React.Component {
                         : null}
                 </div>
             </div>
+        )
+    }
+
+    render() {
+        return (
+            <React.Fragment>
+                {this.renderLabel()}
+                {this.renderDatePicker()}
+            </React.Fragment>
         )
     }
 }
@@ -105,7 +127,7 @@ DatePicker.propTypes = {
     onChange: PropTypes.func
 }
 
-class DatePickerControl extends React.Component {
+export class DatePickerControl extends React.Component {
     constructor(props) {
         super(props)
         const {input, resolution} = props
