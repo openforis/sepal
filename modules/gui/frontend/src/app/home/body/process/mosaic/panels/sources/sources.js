@@ -1,4 +1,4 @@
-import {Field, form} from 'widget/form'
+import {Field, Label, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
@@ -66,7 +66,7 @@ class Sources extends React.Component {
         )
         return (
             <div>
-                <label><Msg id='process.mosaic.panel.sources.form.source.label'/></label>
+                <Label msg={msg('process.mosaic.panel.sources.form.source.label')}/>
                 <Buttons
                     className={styles.sources}
                     input={source}
@@ -94,7 +94,7 @@ class Sources extends React.Component {
             : <div className={styles.oneDataSet}><Msg id='process.mosaic.panel.sources.form.dataSets.oneDataSet'/></div>
         return (
             <div>
-                <label><Msg id='process.mosaic.panel.sources.form.dataSets.label'/></label>
+                <Label msg={msg('process.mosaic.panel.sources.form.dataSets.label')}/>
                 {content}
             </div>
         )

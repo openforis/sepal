@@ -1,7 +1,7 @@
 import {Constraint, ErrorMessage, Field, Label, form} from 'widget/form'
-import {Msg, msg} from 'translate'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
+import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'

@@ -1,5 +1,5 @@
 import {CenteredProgress} from 'widget/progress'
-import {Constraint, ErrorMessage, Field, Input, form} from 'widget/form'
+import {Constraint, ErrorMessage, Field, Input, Label, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {PropTypes} from 'prop-types'
 import {SubmitButton} from 'widget/legacyButton'
@@ -78,14 +78,14 @@ class ResetPassword extends React.Component {
         const {form, inputs: {username, password, password2}} = this.props
         return <form>
             <div>
-                <label><Msg id='landing.reset-password.username.label'/></label>
+                <Label msg={msg('landing.reset-password.username.label')}/>
                 <Input
                     input={username}
                     disabled={true}/>
                 <ErrorMessage/>
             </div>
             <div>
-                <label><Msg id='landing.reset-password.password.label'/></label>
+                <Label msg={msg('landing.reset-password.password.label')}/>
                 <Input
                     input={password}
                     type='password'
@@ -95,7 +95,7 @@ class ResetPassword extends React.Component {
                 <ErrorMessage for={password}/>
             </div>
             <div>
-                <label><Msg id='landing.reset-password.password2.label'/></label>
+                <Label msg={msg('landing.reset-password.password2.label')}/>
                 <Input
                     input={password2}
                     type='password'

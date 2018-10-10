@@ -1,10 +1,10 @@
 import {CenteredProgress} from 'widget/progress'
-import {ErrorMessage, Field, Input, form} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {closePanel, showChangePassword} from './userProfile'
 import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
 import {map, switchMap} from 'rxjs/operators'
+import {msg} from 'translate'
 import Notifications from 'app/notifications'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
@@ -83,7 +83,7 @@ class UserDetails extends React.Component {
             : <React.Fragment>
                 <PanelContent>
                     <div>
-                        <label><Msg id='user.userDetails.form.name.label'/></label>
+                        <Label msg={msg('user.userDetails.form.name.label')}/>
                         <Input
                             autoFocus
                             input={name}
@@ -92,7 +92,7 @@ class UserDetails extends React.Component {
                         <ErrorMessage for={name}/>
                     </div>
                     <div>
-                        <label><Msg id='user.userDetails.form.email.label'/></label>
+                        <Label msg={msg('user.userDetails.form.email.label')}/>
                         <Input
                             input={email}
                             spellCheck={false}
@@ -100,7 +100,7 @@ class UserDetails extends React.Component {
                         <ErrorMessage for={email}/>
                     </div>
                     <div>
-                        <label><Msg id='user.userDetails.form.organization.label'/></label>
+                        <Label msg={msg('user.userDetails.form.organization.label')}/>
                         <Input
                             input={organization}
                             spellCheck={false}

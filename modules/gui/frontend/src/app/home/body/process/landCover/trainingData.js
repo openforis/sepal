@@ -1,11 +1,11 @@
 import {Constraint} from '../../../../../widget/form'
-import {ErrorMessage, Field, Input, form} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
 import {Subject} from 'rxjs'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
 import ComboBox from 'widget/comboBox'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
@@ -107,7 +107,7 @@ class TrainingData extends React.Component {
         return (
             <React.Fragment>
                 <div>
-                    <label><Msg id='process.landCover.panel.trainingData.form.fusionTable.label'/></label>
+                    <Label msg={msg('process.landCover.panel.trainingData.form.fusionTable.label')}/>
                     <Input
                         autoFocus
                         input={fusionTable}
@@ -127,7 +127,7 @@ class TrainingData extends React.Component {
                 </div>
 
                 <div>
-                    <label><Msg id='process.landCover.panel.trainingData.form.yearColumn.label'/></label>
+                    <Label msg={msg('process.landCover.panel.trainingData.form.yearColumn.label')}/>
                     <ComboBox
                         input={yearColumn}
                         isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
@@ -138,7 +138,7 @@ class TrainingData extends React.Component {
                 </div>
 
                 <div>
-                    <label><Msg id='process.landCover.panel.trainingData.form.classColumn.label'/></label>
+                    <Label msg={msg('process.landCover.panel.trainingData.form.classColumn.label')}/>
                     <ComboBox
                         input={classColumn}
                         isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}

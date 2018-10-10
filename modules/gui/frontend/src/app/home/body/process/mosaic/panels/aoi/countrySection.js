@@ -1,9 +1,9 @@
-import {ErrorMessage} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {ErrorMessage, Label} from 'widget/form'
 import {Subject} from 'rxjs'
 import {connect, select} from 'store'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {map, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
 import ComboBox from 'widget/comboBox'
@@ -84,7 +84,7 @@ class CountrySection extends React.Component {
         return (
             <React.Fragment>
                 <div>
-                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.country.country.label'/></label>
+                    <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}/>
                     <ComboBox
                         input={country}
                         isLoading={action('LOAD_COUNTRIES').dispatching}
@@ -102,7 +102,7 @@ class CountrySection extends React.Component {
                     <ErrorMessage for={country}/>
                 </div>
                 <div>
-                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.country.area.label'/></label>
+                    <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}/>
                     <ComboBox
                         input={area}
                         isLoading={action('LOAD_COUNTRY_AREAS').dispatching}

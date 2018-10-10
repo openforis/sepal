@@ -1,4 +1,4 @@
-import {ErrorMessage, Field, Input, form} from 'widget/form'
+import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
 import {Link, history} from 'route'
 import {Msg, msg} from 'translate'
 import {SubmitButton} from 'widget/legacyButton'
@@ -31,7 +31,7 @@ export class ForgotPassword extends React.Component {
         const {form, inputs: {email}, action} = this.props
         return <form style={styles.form}>
             <div>
-                <label><Msg id='landing.forgot-password.label'/></label>
+                <Label msg={msg('landing.forgot-password.label')}/>
                 <Input
                     input={email}
                     placeholder={msg('landing.forgot-password.placeholder')}

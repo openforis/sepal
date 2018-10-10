@@ -1,4 +1,4 @@
-import {ErrorMessage, Field, Input, form} from 'widget/form'
+import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import {Msg, msg} from 'translate'
 import {SubmitButton} from 'widget/legacyButton'
@@ -32,7 +32,7 @@ class Login extends React.Component {
         return (
             <form>
                 <div>
-                    <label><Msg id='landing.login.username.label'/></label>
+                    <Label msg={msg('landing.login.username.label')}/>
                     <Input
                         input={username}
                         placeholder={msg('landing.login.username.placeholder')}
@@ -42,7 +42,7 @@ class Login extends React.Component {
                     <ErrorMessage for={username}/>
                 </div>
                 <div>
-                    <label><Msg id='landing.login.password.label'/></label>
+                    <Label msg={msg('landing.login.password.label')}/>
                     <Input
                         input={password}
                         type='password'

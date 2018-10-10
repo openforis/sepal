@@ -1,7 +1,7 @@
 import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
-import {Msg, msg} from 'translate'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import {relativeTimeThreshold} from 'moment'
+import {msg} from 'translate'
+// import {relativeTimeThreshold} from 'moment'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -59,7 +59,7 @@ class UserDetails extends React.Component {
         } = this.props
         const renderUsername = () =>
             <div>
-                <label><Msg id='user.userDetails.form.username.label'/></label>
+                <Label msg={msg('user.userDetails.form.username.label')}/>
                 <Input
                     input={username}
                     spellCheck={false}
@@ -71,7 +71,7 @@ class UserDetails extends React.Component {
             <React.Fragment>
                 <PanelContent>
                     <div>
-                        <label><Msg id='user.userDetails.form.name.label'/></label>
+                        <Label msg={msg('user.userDetails.form.name.label')}/>
                         <Input
                             autoFocus
                             input={name}
@@ -81,7 +81,7 @@ class UserDetails extends React.Component {
                     </div>
                     {newUser ? renderUsername() : null}
                     <div>
-                        <label><Msg id='user.userDetails.form.email.label'/></label>
+                        <Label msg={msg('user.userDetails.form.email.label')}/>
                         <Input
                             input={email}
                             spellCheck={false}
@@ -89,7 +89,7 @@ class UserDetails extends React.Component {
                         <ErrorMessage for={email}/>
                     </div>
                     <div>
-                        <label><Msg id='user.userDetails.form.organization.label'/></label>
+                        <Label msg={msg('user.userDetails.form.organization.label')}/>
                         <Input
                             input={organization}
                             spellCheck={false}
@@ -99,7 +99,7 @@ class UserDetails extends React.Component {
                     <Label msg={msg('user.userDetails.form.monthlyLimits.label')}/>
                     <div className={styles.monthlyLimits}>
                         <div>
-                            <label><Msg id='user.userDetails.form.monthlyInstanceBudget.label'/></label>
+                            <Label msg={msg('user.userDetails.form.monthlyInstanceBudget.label')}/>
                             <Input
                                 type='number'
                                 input={monthlyInstanceBudget}
@@ -107,7 +107,7 @@ class UserDetails extends React.Component {
                             />
                         </div>
                         <div>
-                            <label><Msg id='user.userDetails.form.monthlyStorageBudget.label'/></label>
+                            <Label msg={msg('user.userDetails.form.monthlyStorageBudget.label')}/>
                             <Input
                                 type='number'
                                 input={monthlyStorageBudget}
@@ -115,7 +115,7 @@ class UserDetails extends React.Component {
                             />
                         </div>
                         <div>
-                            <label><Msg id='user.userDetails.form.storageQuota.label'/></label>
+                            <Label msg={msg('user.userDetails.form.storageQuota.label')}/>
                             <Input
                                 type='number'
                                 input={storageQuota}

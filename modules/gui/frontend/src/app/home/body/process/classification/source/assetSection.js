@@ -1,5 +1,5 @@
-import {ErrorMessage, Input} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {ErrorMessage, Input, Label} from 'widget/form'
+import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -9,7 +9,7 @@ export default class AssetSection extends React.Component {
         // TODO: Make sure asset is readable
         return (
             <React.Fragment>
-                <label><Msg id='process.classification.panel.source.form.asset.label'/></label>
+                <Label msg={msg('process.classification.panel.source.form.asset.label')}/>
                 <Input
                     autoFocus
                     input={asset}

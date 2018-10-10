@@ -1,7 +1,7 @@
-import {Constraint, ErrorMessage, Field, Input, form} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {Constraint, ErrorMessage, Field, Input, Label, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
+import {msg} from 'translate'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -62,10 +62,10 @@ class Auto extends React.Component {
         const {inputs: {min, max}} = this.props
         return (
             <div className={styles.form}>
-                <label><Msg id='process.mosaic.panel.auto.form.sceneCount'/></label>
+                <Label msg={msg('process.mosaic.panel.auto.form.sceneCount')}/>
                 <div className={styles.sceneCount}>
                     <div>
-                        <label><Msg id='process.mosaic.panel.auto.form.min.label'/></label>
+                        <Label msg={msg('process.mosaic.panel.auto.form.min.label')}/>
                         <Input
                             type="number"
                             min={0}
@@ -75,7 +75,7 @@ class Auto extends React.Component {
                             input={min}/>
                     </div>
                     <div>
-                        <label><Msg id='process.mosaic.panel.auto.form.max.label'/></label>
+                        <Label msg={msg('process.mosaic.panel.auto.form.max.label')}/>
                         <Input
                             type="number"
                             min={0}

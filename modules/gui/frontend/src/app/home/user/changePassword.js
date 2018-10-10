@@ -1,8 +1,8 @@
 import {CenteredProgress} from 'widget/progress'
-import {Constraint, ErrorMessage, Field, Input, form} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {Constraint, ErrorMessage, Field, Input, Label, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {changeUserPassword$} from 'user'
+import {msg} from 'translate'
 import {showUserDetails} from './userProfile'
 import Notifications from 'app/notifications'
 import PanelButtons from 'widget/panelButtons'
@@ -56,7 +56,7 @@ class ChangePassword extends React.Component {
             : <React.Fragment>
                 <PanelContent>
                     <div>
-                        <label><Msg id='user.changePassword.form.oldPassword.label'/></label>
+                        <Label msg={msg('user.changePassword.form.oldPassword.label')}/>
                         <Input
                             type='password'
                             autoFocus
@@ -66,7 +66,7 @@ class ChangePassword extends React.Component {
                         <ErrorMessage for={oldPassword}/>
                     </div>
                     <div>
-                        <label><Msg id='user.changePassword.form.newPassword.label'/></label>
+                        <Label msg={msg('user.changePassword.form.newPassword.label')}/>
                         <Input
                             type='password'
                             input={newPassword}
@@ -75,7 +75,7 @@ class ChangePassword extends React.Component {
                         <ErrorMessage for={newPassword}/>
                     </div>
                     <div>
-                        <label><Msg id='user.changePassword.form.confirmPassword.label'/></label>
+                        <Label msg={msg('user.changePassword.form.confirmPassword.label')}/>
                         <Input
                             type='password'
                             input={confirmPassword}

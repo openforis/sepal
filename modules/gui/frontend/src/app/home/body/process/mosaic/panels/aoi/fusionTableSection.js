@@ -1,10 +1,10 @@
-import {ErrorMessage, Input} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {ErrorMessage, Input, Label} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
 import {connect} from 'store'
 import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import ComboBox from 'widget/comboBox'
@@ -91,7 +91,7 @@ class FusionTableSection extends React.Component {
         return (
             <React.Fragment>
                 <div>
-                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.label'/></label>
+                    <Label msg={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.label')}/>
                     <Input
                         autoFocus
                         input={fusionTable}
@@ -114,7 +114,7 @@ class FusionTableSection extends React.Component {
                 </div>
 
                 <div>
-                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.fusionTable.column.label'/></label>
+                    <Label msg={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.column.label')}/>
                     <ComboBox
                         input={fusionTableColumn}
                         isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
@@ -134,7 +134,7 @@ class FusionTableSection extends React.Component {
                 </div>
 
                 <div>
-                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.fusionTable.row.label'/></label>
+                    <Label msg={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.row.label')}/>
                     <ComboBox
                         input={fusionTableRow}
                         isLoading={action('LOAD_FUTION_TABLE_ROWS').dispatching}
