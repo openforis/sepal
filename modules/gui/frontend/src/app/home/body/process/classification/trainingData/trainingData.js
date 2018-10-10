@@ -41,8 +41,9 @@ class TrainingData extends React.Component {
     }
 
     loadFusionTableColumns(fusionTableId) {
-        this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
-            loadFusionTableColumns$(fusionTableId).pipe(
+        const {asyncActionBuilder, inputs: {fusionTableColumn}} = this.props
+        asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
+            loadFusionTableColumns$(fusionTableId, {includedTypes: ['NUMBER']}).pipe(
                 map(response => {
                     if (response.error)
                         this.props.inputs.fusionTable.setInvalid(
@@ -51,7 +52,13 @@ class TrainingData extends React.Component {
                     return (response.columns || [])
                         .filter((column) => column.type !== 'LOCATION')
                 }),
-                map(columns => this.recipeActions.setFusionTableColumns(columns)),
+                map( columns => columns.map(({name}) => ({value: name, label: name}))),
+                map(columns => {
+                    const defaultColumn = columns.length === 1 ? columns[0] : columns.find(column => column.value === 'class')
+                    if(defaultColumn)
+                        fusionTableColumn.set(defaultColumn.value)
+                    return this.recipeActions.setFusionTableColumns(columns)
+                }),
                 takeUntil(this.fusionTableChanged$))
         )
             .dispatch()
@@ -115,7 +122,7 @@ class TrainingData extends React.Component {
                         isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
                         disabled={!columns || columns.length === 0}
                         placeholder={msg(`process.classification.panel.trainingData.form.fusionTableColumn.placeholder.${columnState}`)}
-                        options={(columns || []).map(({name}) => ({value: name, label: name}))}/>
+                        options={columns || []}/>
                     <ErrorMessage for={fusionTableColumn}/>
                 </div>
             </React.Fragment>

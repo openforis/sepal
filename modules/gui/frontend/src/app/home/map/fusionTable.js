@@ -32,7 +32,7 @@ export const queryFusionTable$ = (query, args = {}) => {
     })
 }
 
-export const loadFusionTableColumns$ = (tableId) => {
+export const loadFusionTableColumns$ = (tableId, {includedTypes, excludedTypes}) => {
     return Http.get$(
         `https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns`, {
             validStatuses: [200, 401, 404],
@@ -50,7 +50,10 @@ export const loadFusionTableColumns$ = (tableId) => {
                 }
             } else
                 return {
-                    columns: response.items
+                    columns: response.items.filter(({type}) =>
+                        (!includedTypes || includedTypes.includes(type)) &&
+                        (!excludedTypes || !excludedTypes.includes(type))
+                    )
                 }
         })
     )
