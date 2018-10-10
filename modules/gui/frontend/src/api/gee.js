@@ -22,7 +22,7 @@ export default {
                 })
             }
         }).pipe(toResponse),
-    recipeGeometry$: (recipe) =>
+    recipeGeometry$: recipe =>
         postJson$('/api/gee/recipe/geometry', {body: {recipe}})
             .pipe(toResponse)
 }

@@ -20,12 +20,12 @@ export default {
     logout$: () =>
         post$('/api/user/logout').pipe(toResponse),
 
-    requestPasswordReset$: (email) =>
+    requestPasswordReset$: email =>
         post$('/api/user/password/reset-request', {
             body: {email}
         }),
 
-    validateToken$: (token) =>
+    validateToken$: token =>
         post$('/api/user/validate-token', {
             body: {token}
         }),
@@ -45,7 +45,7 @@ export default {
             body: {oldPassword, newPassword}
         }).pipe(toResponse),
 
-    getGoogleAccessRequestUrl$: (destinationUrl) =>
+    getGoogleAccessRequestUrl$: destinationUrl =>
         get$('/api/user/google/access-request-url', {query: {destinationUrl}})
             .pipe(toResponse),
 
@@ -53,14 +53,14 @@ export default {
         post$('/api/user/google/revoke-access')
             .pipe(toResponse),
 
-    updateUserSession$: (session) =>
+    updateUserSession$: session =>
         post$(`/api/sandbox/session/${session.id}/earliestTimeoutTime`, {
             body: {
                 hours: session.keepAlive
             }
         }).pipe(toResponse),
 
-    stopUserSession$: (session) =>
+    stopUserSession$: session =>
         delete$(`/api/sandbox/session/${session.id}`),
 
     getUserList$: () =>
@@ -71,12 +71,12 @@ export default {
         get$('/api/budget/report')
             .pipe(toResponse),
 
-    updateUserDetails$: (userDetails) =>
+    updateUserDetails$: userDetails =>
         post$('/api/user/details', {
             body: userDetails
         }).pipe(toResponse),
 
-    updateUserBudget$: (budget) =>
+    updateUserBudget$: budget =>
         post$('/api/budget', {
             body: budget
         }).pipe(toResponse)

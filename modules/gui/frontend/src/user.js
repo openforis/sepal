@@ -13,7 +13,7 @@ export const resetInvalidCredentials = () =>
 
 export const loadCurrentUser$ = () =>
     api.user.loadCurrentUser$().pipe(
-        map((user) =>
+        map(user =>
             actionBuilder('SET_CURRENT_USER', {user})
                 .set('user.currentUser', user)
                 .build()
@@ -22,7 +22,7 @@ export const loadCurrentUser$ = () =>
 
 export const loadCurrentUserReport$ = () => {
     api.user.loadCurrentUserReport$().pipe(
-        map((userReport) =>
+        map(userReport =>
             actionBuilder('SET_CURRENT_USER_REPORT', {userReport})
                 .set('user.currentUserReport', userReport)
                 .build()
@@ -33,7 +33,7 @@ export const loadCurrentUserReport$ = () => {
 export const login$ = (username, password) => {
     resetInvalidCredentials()
     return api.user.login$(username, password).pipe(
-        map((user) => actionBuilder('CREDENTIALS_POSTED')
+        map(user => actionBuilder('CREDENTIALS_POSTED')
             .set('user.currentUser', user)
             .set('user.login.invalidCredentials', !user)
             .build()
@@ -41,12 +41,12 @@ export const login$ = (username, password) => {
     )
 }
 
-export const requestPasswordReset$ = (email) =>
+export const requestPasswordReset$ = email =>
     api.user.requestPasswordReset$(email).pipe(
         filter(() => false)
     )
 
-export const validateToken$ = (token) =>
+export const validateToken$ = token =>
     api.user.validateToken$(token).pipe(
         map(({user}) =>
             actionBuilder('TOKEN_VALIDATED', {valid: !!user})
@@ -89,7 +89,7 @@ export const changeUserPassword$ = ({oldPassword, newPassword}) =>
         )
     )
 
-export const updateUserSession$ = (session) =>
+export const updateUserSession$ = session =>
     api.user.updateUserSession$(session).pipe(
         map(() =>
             actionBuilder('UPDATE_USER_SESSION_POSTED', {session})
@@ -102,7 +102,7 @@ export const updateUserSession$ = (session) =>
         )
     )
 
-export const stopUserSession$ = (session) =>
+export const stopUserSession$ = session =>
     api.user.stopUserSession$(session).pipe(
         map(() =>
             actionBuilder('STOP_USER_SESSION_POSTED', {session})

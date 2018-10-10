@@ -21,7 +21,7 @@ export default class UnstyledSelectionList extends React.Component {
         const {input} = this.props
         const prevValue = Array.isArray(input.value) ? input.value : []
         const nextValue = this.isSelected(value)
-            ? prevValue.filter((v) => v !== value)
+            ? prevValue.filter(v => v !== value)
             : [...prevValue, value]
         input.set(nextValue)
         return nextValue

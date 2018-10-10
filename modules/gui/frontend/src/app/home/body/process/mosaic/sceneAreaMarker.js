@@ -30,8 +30,8 @@ class SceneAreaMarker extends React.Component {
             strokeWeight: 1
         })
         const bounds = new google.maps.LatLngBounds()
-        gPolygon.getPaths().getArray().forEach((path) =>
-            path.getArray().forEach((latLng) =>
+        gPolygon.getPaths().getArray().forEach(path =>
+            path.getArray().forEach(latLng =>
                 bounds.extend(latLng)
             ))
         this.polygon = gPolygon

@@ -53,7 +53,7 @@ class Auto extends React.Component {
                     statePath={recipePath(recipeId, 'ui')}
                     isActionForm={true}
                     applyLabel={msg('process.mosaic.panel.auto.form.selectScenes')}
-                    onApply={(sceneCount) => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}/>
+                    onApply={sceneCount => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}/>
             </Panel>
         )
     }

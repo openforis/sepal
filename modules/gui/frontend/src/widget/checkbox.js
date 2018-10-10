@@ -9,7 +9,7 @@ const Checkbox = ({label, input, tabIndex, className, onChange}) =>
             name={input.name}
             checked={!!input.value}
             tabIndex={tabIndex}
-            onChange={(e) => {
+            onChange={e => {
                 input.handleChange(e)
                 input.validate()
                 onChange && onChange(!!e.target.checked)

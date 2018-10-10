@@ -66,7 +66,7 @@ Typology.propTypes = {
 
 export default form({fields, mapStateToProps})(Typology)
 
-const valuesToModel = (values) => ({
+const valuesToModel = values => ({
     ...values
 })
 

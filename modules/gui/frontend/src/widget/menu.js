@@ -81,8 +81,8 @@ const MenuContext = React.createContext()
 
 export const MenuItem = ({onSelect, children}) =>
     <MenuContext.Consumer>
-        {(menu) =>
-            <li className={styles.menuItem} onClick={(e) => {
+        {menu =>
+            <li className={styles.menuItem} onClick={e => {
                 menu.toggleOpen()
                 onSelect && onSelect(e)
             }}>{children}</li>

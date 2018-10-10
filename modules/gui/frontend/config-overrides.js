@@ -10,7 +10,7 @@ module.exports = {
                     changeOrigin: true,
                     autoRewrite: true,
                     ws: true,
-                    onProxyRes: (proxyRes) => proxyRes.headers['Content-Security-Policy'] = contentSecurityPolicy
+                    onProxyRes: proxyRes => proxyRes.headers['Content-Security-Policy'] = contentSecurityPolicy
                 })
                 config.proxy.unshift({
                     ...defaultProxy,
@@ -69,7 +69,7 @@ module.exports = {
                         configureCssModuleLoader(item)
                 })
             else if (o instanceof Object)
-                return Object.keys(o).find((key) => configureCssModuleLoader(o[key]))
+                return Object.keys(o).find(key => configureCssModuleLoader(o[key]))
             else
                 return null
         }
@@ -77,16 +77,16 @@ module.exports = {
         function findCssLoader(o) {
             if (o instanceof Array) {
                 return o
-                    .map((item) => findCssLoader(item))
-                    .filter((item) => item)
-                    .find((item) => item)
+                    .map(item => findCssLoader(item))
+                    .filter(item => item)
+                    .find(item => item)
             } else if (o instanceof Object) {
                 if ('loader' in o && o.loader.indexOf('/css-loader/') > -1)
                     return o
                 else
-                    return Object.keys(o).map((key) => findCssLoader(o[key]))
-                        .filter((item) => item)
-                        .find((item) => item)
+                    return Object.keys(o).map(key => findCssLoader(o[key]))
+                        .filter(item => item)
+                        .find(item => item)
             } else
                 return null
         }
@@ -97,17 +97,17 @@ module.exports = {
 
             function getLocalesInDirectory(directory) {
                 const fs = require('fs')
-                return fs.readdirSync(directory).filter((name) => /^[^\\.]/.test(name))
+                return fs.readdirSync(directory).filter(name => /^[^\\.]/.test(name))
             }
 
             const incompleteKeys = _.chain(locales || getLocalesInDirectory('src/locale'))
-                .map((locale) => require(`./src/locale/${locale}/translations`))
-                .map((messages) =>
+                .map(locale => require(`./src/locale/${locale}/translations`))
+                .map(messages =>
                     _.chain(flat.flatten(messages))
                         .pickBy(_.identity)
                         .keys()
                         .value())
-                .thru((keys) => _.difference(_.union(...keys), _.intersection(...keys)))
+                .thru(keys => _.difference(_.union(...keys), _.intersection(...keys)))
                 .value()
 
             if (incompleteKeys.length)

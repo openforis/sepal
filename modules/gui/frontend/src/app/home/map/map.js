@@ -19,7 +19,7 @@ const contextById = {}
 let currentContextId
 
 const initListeners = []
-const onInit = (listener) => {
+const onInit = listener => {
     if (google)
         listener(google)
     else
@@ -32,13 +32,13 @@ export const initGoogleMapsApi$ = () => {
             map(({apiKey}) => apiKey)
         )
 
-    const loadGoogleMapsApi$ = (apiKey) => Observable.create((observer) => {
+    const loadGoogleMapsApi$ = apiKey => Observable.create(observer => {
         GoogleMapsLoader.KEY = apiKey
         GoogleMapsLoader.VERSION = '3.34'
         GoogleMapsLoader.LIBRARIES = ['drawing']
-        GoogleMapsLoader.load((g) => {
+        GoogleMapsLoader.load(g => {
             google = g
-            initListeners.forEach((listener) => listener(google))
+            initListeners.forEach(listener => listener(google))
             observer.next(apiKey)
             observer.complete()
         })
@@ -46,14 +46,14 @@ export const initGoogleMapsApi$ = () => {
 
     return loadGoogleMapsApiKey$.pipe(
         mergeMap(loadGoogleMapsApi$),
-        map((apiKey) => actionBuilder('SET_GOOGLE_MAPS_API_INITIALIZED', {apiKey: apiKey})
+        map(apiKey => actionBuilder('SET_GOOGLE_MAPS_API_INITIALIZED', {apiKey: apiKey})
             .set('map.apiKey', apiKey)
             .build()
         )
     )
 }
 
-const createMap = (mapElement) => {
+const createMap = mapElement => {
     googleMap = new google.maps.Map(mapElement, {
         zoom: 3,
         minZoom: 3,
@@ -106,7 +106,7 @@ const createMap = (mapElement) => {
             googleMap.setZoom(googleMap.getZoom() - 1)
         },
         zoomArea() {
-            const setZooming = (zooming) =>
+            const setZooming = zooming =>
                 actionBuilder('SET_MAP_ZOOMING')
                     .set('map.zooming', zooming)
                     .set('map.zoom', googleMap.getZoom())
@@ -117,7 +117,7 @@ const createMap = (mapElement) => {
                 drawingControl: false,
                 rectangleOptions: drawingOptions
             })
-            const drawingListener = (e) => {
+            const drawingListener = e => {
                 const rectangle = e.overlay
                 rectangle.setMap(null)
                 drawingManager.setMap(null)
@@ -176,7 +176,7 @@ const createMap = (mapElement) => {
                                         currentContextId === contextId && layer.addToMap(googleMap)
                                         onInitialized && onInitialized(layer)
                                     },
-                                    (e) => {
+                                    e => {
                                         if (onError)
                                             onError()
                                         else
@@ -237,10 +237,10 @@ const createMap = (mapElement) => {
                             polygonOptions: drawingOptions,
                             rectangleOptions: drawingOptions
                         })
-                        const drawingListener = (e) => {
+                        const drawingListener = e => {
                             const polygon = e.overlay
                             polygon.setMap(null)
-                            const toPolygonPath = (polygon) => polygon.getPaths().getArray()[0].getArray().map((latLng) =>
+                            const toPolygonPath = polygon => polygon.getPaths().getArray()[0].getArray().map(latLng =>
                                 [latLng.lng(), latLng.lat()]
                             )
                             callback(toPolygonPath(polygon))
@@ -297,7 +297,7 @@ const createMap = (mapElement) => {
     }
 }
 
-export const fromGoogleBounds = (googleBounds) => {
+export const fromGoogleBounds = googleBounds => {
     const sw = googleBounds.getSouthWest()
     const ne = googleBounds.getNorthEast()
     return [
@@ -306,14 +306,14 @@ export const fromGoogleBounds = (googleBounds) => {
     ]
 }
 
-const toGoogleBounds = (bounds) => {
+const toGoogleBounds = bounds => {
     return new google.maps.LatLngBounds(
         {lng: bounds[0][0], lat: bounds[0][1]},
         {lng: bounds[1][0], lat: bounds[1][1]}
     )
 }
 
-export const polygonOptions = (fill) => ({
+export const polygonOptions = fill => ({
     fillColor: '#FBFAF2',
     fillOpacity: fill ? 0.07 : 0.000000000000000000000000000001,
     strokeColor: '#FBFAF2',
@@ -344,7 +344,7 @@ class Map extends React.Component {
     componentDidUpdate() {
         const apiKey = this.props.apiKey
         if (apiKey && !this.state.initialized) { // Create map once there is an API key
-            this.setState((prevState) => ({...prevState, initialized: true}))
+            this.setState(prevState => ({...prevState, initialized: true}))
             createMap(this.mapElement.current)
             this.initialized = true
         }
@@ -425,7 +425,7 @@ export const MapObject = connect(state => ({projectionChange: state.map.projecti
 const ProjectionContext = React.createContext()
 
 let ReactOverlayView
-onInit((google) =>
+onInit(google =>
     ReactOverlayView = class ReactOverlayView extends google.maps.OverlayView {
         constructor(component) {
             super()
@@ -444,7 +444,7 @@ onInit((google) =>
             const xyz = [point.x, point.y, sepalMap.getZoom()]
             if (!_.isEqual(this.xyz, xyz)) {
                 this.xyz = xyz
-                this.component.setState((prevState) => ({...prevState, projection}))
+                this.component.setState(prevState => ({...prevState, projection}))
                 actionBuilder('PROJECTION_CHANGED', {xyz})
                     .set('map.projectionChange', xyz)
                     .dispatch()
@@ -457,6 +457,6 @@ onInit((google) =>
         }
 
         show(shown) {
-            this.component.setState((prevState) => ({...prevState, shown: shown}))
+            this.component.setState(prevState => ({...prevState, shown: shown}))
         }
     })

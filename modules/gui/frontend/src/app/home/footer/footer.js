@@ -34,7 +34,7 @@ Footer.propTypes = {
     user: PropTypes.object
 }
 
-const Logout = (props) =>
+const Logout = props =>
     <Button
         className={props.className}
         icon='sign-out-alt'

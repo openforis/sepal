@@ -69,14 +69,14 @@ class UserDetails extends React.Component {
                 label: msg('user.userDetails.useSepalGoogleAccount.label'),
                 tooltip: msg('user.userDetails.useSepalGoogleAccount.tooltip'),
                 disabled: form.isDirty(),
-                onClick: (e) => this.useSepalGoogleAccount(e)
+                onClick: e => this.useSepalGoogleAccount(e)
             }
             : {
                 key: 'useUserGoogleAccount',
                 label: msg('user.userDetails.useUserGoogleAccount.label'),
                 tooltip: msg('user.userDetails.useUserGoogleAccount.tooltip'),
                 disabled: form.isDirty(),
-                onClick: (e) => this.useUserGoogleAccount(e)
+                onClick: e => this.useUserGoogleAccount(e)
             }
         return this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT') === 'ACTIVE'
             ? <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>

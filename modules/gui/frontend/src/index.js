@@ -34,7 +34,7 @@ const rootReducer = (state = [], action) => {
         }
 }
 
-const batchActions = () => (next) => (action) => {
+const batchActions = () => next => action => {
     if ('actions' in action)
         next({
             type: action.type,

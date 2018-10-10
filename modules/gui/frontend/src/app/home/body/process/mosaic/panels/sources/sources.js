@@ -57,7 +57,7 @@ class Sources extends React.Component {
 
     renderSources() {
         const {inputs: {source}} = this.props
-        const options = sources.map((value) =>
+        const options = sources.map(value =>
             ({
                 value,
                 label: msg(['process.mosaic.panel.sources.form.source.options', value]),
@@ -71,7 +71,7 @@ class Sources extends React.Component {
                     className={styles.sources}
                     input={source}
                     options={options}
-                    onChange={(sourceValue) => this.sourceChanged(sourceValue)}/>
+                    onChange={sourceValue => this.sourceChanged(sourceValue)}/>
             </div>
         )
     }
@@ -81,7 +81,7 @@ class Sources extends React.Component {
         if (!source.value)
             return
         const dataSetNames = this.lookupDataSetNames(source.value)
-        const options = (dataSetNames || []).map((value) =>
+        const options = (dataSetNames || []).map(value =>
             ({
                 value,
                 label: msg(['process.mosaic.panel.sources.form.dataSets.options', value, 'label']),
@@ -143,11 +143,11 @@ Sources.propTypes = {
 
 export default form({fields, mapStateToProps})(Sources)
 
-const valuesToModel = (values) => {
+const valuesToModel = values => {
     return {[values.source]: values.dataSets ? [...values.dataSets] : null}
 }
 
-const modelToValues = (model) => {
+const modelToValues = model => {
     return {
         source: Object.keys(model)[0],
         dataSets: [...Object.values(model)[0]]

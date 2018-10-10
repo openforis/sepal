@@ -65,7 +65,7 @@ class ClassificationPreview extends React.Component {
             layerIndex: 1,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
-            onProgress: (tiles) => this.onProgress(tiles)
+            onProgress: tiles => this.onProgress(tiles)
         })
         const context = sepalMap.getContext(recipeId)
         const changed = context.setLayer({
@@ -105,7 +105,7 @@ class ClassificationPreview extends React.Component {
                     <div className={styles.retry}>
                         <a
                             href=''
-                            onClick={(e) => {
+                            onClick={e => {
                                 e.preventDefault()
                                 this.reload()
                             }}>

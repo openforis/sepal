@@ -63,7 +63,7 @@ export default function actionBuilder(type, props) {
         },
 
         setAll(values) {
-            Object.keys(values).forEach((path) =>
+            Object.keys(values).forEach(path =>
                 this.set(path, values[path]))
             return this
         },
@@ -96,7 +96,7 @@ export default function actionBuilder(type, props) {
         pushIfMissing(path, value, uniqueKeyProp) {
             operations.push((immutableState, state) => {
                 const collection = select(path, state)
-                const equals = (item) => uniqueKeyProp
+                const equals = item => uniqueKeyProp
                     ? item[uniqueKeyProp] === value[uniqueKeyProp]
                     : item === value
 

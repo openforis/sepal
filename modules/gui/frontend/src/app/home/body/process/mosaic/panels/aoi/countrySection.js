@@ -18,7 +18,7 @@ const loadCountries$ = () => {
             FROM ${countryFusionTable}
             WHERE parent_id != '' 
             ORDER BY label ASC`).pipe(
-        map((e) =>
+        map(e =>
             actionBuilder('SET_COUNTRIES', {countries: e.response})
                 .set('countries', e.response.rows)
                 .build()
@@ -26,13 +26,13 @@ const loadCountries$ = () => {
     )
 }
 
-const loadCountryAreas$ = (countryId) => {
+const loadCountryAreas$ = countryId => {
     return queryFusionTable$(`
             SELECT id, label 
             FROM ${countryFusionTable} 
             WHERE parent_id = '${countryId}'
             ORDER BY label ASC`).pipe(
-        map((e) =>
+        map(e =>
             actionBuilder('SET_COUNTRY_AREA', {countries: e.response})
                 .set(['areasByCountry', countryId], e.response.rows)
                 .build()
@@ -92,7 +92,7 @@ class CountrySection extends React.Component {
                         placeholder={countryPlaceholder}
                         options={(countries || []).map(([value, label]) => ({value, label}))}
                         autoFocus={true}
-                        onChange={(e) => {
+                        onChange={e => {
                             area.set('')
                             this.aoiChanged$.next()
                             if (e)
@@ -137,7 +137,7 @@ class CountrySection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: (layer) => this.updateBounds(layer.bounds)
+            onInitialized: layer => this.updateBounds(layer.bounds)
         })
     }
 }

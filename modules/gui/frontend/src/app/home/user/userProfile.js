@@ -7,7 +7,7 @@ import React from 'react'
 import UserDetails from './userDetails'
 import actionBuilder from 'action-builder'
 
-const mapStateToProps = (state) => {
+const mapStateToProps = state => {
     const user = state.user.currentUser
     return {
         username: user.username,
@@ -16,7 +16,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-const action = (mode) =>
+const action = mode =>
     actionBuilder('USER_PROFILE')
         .set('ui.userProfile', mode)
         .set('ui.modal', !!mode)

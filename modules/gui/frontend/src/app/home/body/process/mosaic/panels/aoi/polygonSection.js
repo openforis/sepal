@@ -25,7 +25,7 @@ class PolygonSection extends React.Component {
         const {recipeId, inputs: {polygon}} = this.props
 
         this.recipeActions.setLabelsShown(true).dispatch()
-        sepalMap.getContext(recipeId).drawPolygon('aoi', (drawnPolygon) => {
+        sepalMap.getContext(recipeId).drawPolygon('aoi', drawnPolygon => {
             polygon.set(drawnPolygon)
         })
     }
@@ -70,7 +70,7 @@ class PolygonSection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: (layer) => this.updateBounds(layer.bounds)
+            onInitialized: layer => this.updateBounds(layer.bounds)
         })
     }
 

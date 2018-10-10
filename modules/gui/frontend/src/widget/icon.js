@@ -25,7 +25,7 @@ Icon.propTypes = Object.assign(FontAwesomeIcon.propTypes, {
     name: PropTypes.string
 })
 
-const fontAwesomeCollection = (type) => {
+const fontAwesomeCollection = type => {
     switch (type) {
     case 'solid':
         return 'fas'

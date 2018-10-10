@@ -19,11 +19,11 @@ const mapStateToProps = () => ({
     user: currentUser()
 })
 
-const refreshUserAccessTokens$ = (user) => {
+const refreshUserAccessTokens$ = user => {
     const oneMinute = 60 * 1000
     const minRefreshTime = oneMinute
     const maxRefreshTime = 20 * oneMinute
-    const calculateDelayMillis = (expiryDate) =>
+    const calculateDelayMillis = expiryDate =>
         Math.min(maxRefreshTime, Math.max(minRefreshTime, expiryDate - 5 * oneMinute - Date.now()))
     return interval(0).pipe(
         delay(calculateDelayMillis(user.googleTokens.accessTokenExpiryDate)),
@@ -34,7 +34,7 @@ const refreshUserAccessTokens$ = (user) => {
                 return currentUserAction.user.googleTokens.accessTokenExpiryDate
             }),
             map(calculateDelayMillis),
-            switchMap((delayMillis) => EMPTY.pipe(delay(delayMillis))
+            switchMap(delayMillis => EMPTY.pipe(delay(delayMillis))
             )
         ))
     )

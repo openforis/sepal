@@ -39,7 +39,7 @@ class FusionTableSection extends React.Component {
                             msg(response.error.key)
                         )
                     return (response.columns || [])
-                        .filter((column) => column.type !== 'LOCATION')
+                        .filter(column => column.type !== 'LOCATION')
                 }),
                 map(this.recipe.setFusionTableColumns),
                 takeUntil(this.fusionTableChanged$))
@@ -54,10 +54,10 @@ class FusionTableSection extends React.Component {
                     FROM ${this.props.inputs.fusionTable.value}
                     ORDER BY '${column}' ASC
             `).pipe(
-                map((e) =>
+                map(e =>
                     (e.response.rows || [])
-                        .map((row) => row[0])
-                        .filter((value) => value)
+                        .map(row => row[0])
+                        .filter(value => value)
                 ),
                 map(this.recipe.setFusionTableRows),
                 takeUntil(this.fusionTableColumnChanged$),
@@ -97,7 +97,7 @@ class FusionTableSection extends React.Component {
                         input={fusionTable}
                         placeholder={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.placeholder')}
                         spellCheck={false}
-                        onChange={(e) => {
+                        onChange={e => {
                             fusionTableColumn.set('')
                             fusionTableRow.set('')
                             this.recipe.setFusionTableColumns(null).dispatch()
@@ -121,7 +121,7 @@ class FusionTableSection extends React.Component {
                         disabled={!columns || columns.length === 0}
                         placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.column.placeholder.${columnState}`)}
                         options={(columns || []).map(({name}) => ({value: name, label: name}))}
-                        onChange={(e) => {
+                        onChange={e => {
                             fusionTableRow.set('')
                             this.recipe.setFusionTableRows(null).dispatch()
                             this.fusionTableColumnChanged$.next()
@@ -140,7 +140,7 @@ class FusionTableSection extends React.Component {
                         isLoading={action('LOAD_FUTION_TABLE_ROWS').dispatching}
                         disabled={!rows}
                         placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.row.placeholder.${rowState}`)}
-                        options={(rows || []).map((value) => ({value, label: value}))}
+                        options={(rows || []).map(value => ({value, label: value}))}
                         onChange={() => this.fusionTableRowChanged$.next()}
                     />
                     <ErrorMessage for={fusionTableRow}/>
@@ -165,7 +165,7 @@ class FusionTableSection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: (layer) => this.updateBounds(layer.bounds)
+            onInitialized: layer => this.updateBounds(layer.bounds)
         })
     }
 }

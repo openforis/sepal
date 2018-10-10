@@ -49,7 +49,7 @@ class TrainingData extends React.Component {
                             msg(response.error.key)
                         )
                     return (response.columns || [])
-                        .filter((column) => column.type !== 'LOCATION')
+                        .filter(column => column.type !== 'LOCATION')
                 }),
                 map(columns => this.recipeActions.setFusionTableColumns(columns)),
                 takeUntil(this.fusionTableChanged$))
@@ -96,7 +96,7 @@ class TrainingData extends React.Component {
                         input={fusionTable}
                         placeholder={msg('process.classification.panel.trainingData.form.fusionTable.placeholder')}
                         spellCheck={false}
-                        onChange={(e) => {
+                        onChange={e => {
                             fusionTableColumn.set('')
                             this.recipeActions.setFusionTableColumns(null).dispatch()
                             this.fusionTableChanged$.next()
@@ -127,7 +127,7 @@ TrainingData.propTypes = {
     recipeId: PropTypes.string
 }
 
-const valuesToModel = (values) => ({
+const valuesToModel = values => ({
     ...values
 })
 

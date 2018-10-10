@@ -119,10 +119,10 @@ Scenes.propTypes = {
 
 export default form({fields, mapStateToProps})(Scenes)
 
-const valuesToModel = (values) => ({
+const valuesToModel = values => ({
     ...values
 })
 
-const modelToValues = (model) => ({
+const modelToValues = model => ({
     ...model
 })

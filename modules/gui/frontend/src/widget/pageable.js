@@ -89,7 +89,7 @@ Pageable.propTypes = {
     watch: PropTypes.array.isRequired
 }
 
-export const PageData = (props) =>
+export const PageData = props =>
     <Consumer>
         {pageable =>
             <React.Fragment>
@@ -102,8 +102,8 @@ PageData.propTypes = {
     children: PropTypes.func.isRequired
 }
 
-export const PageControls = (props) => {
-    const renderDefaultControls = (pageable) =>
+export const PageControls = props => {
+    const renderDefaultControls = pageable =>
         <ButtonGroup>
             <Button icon='fast-backward'
                 onClick={() => pageable.firstPage()}
@@ -138,7 +138,7 @@ PageControls.propTypes = {
     children: PropTypes.func
 }
 
-export const PageInfo = (props) => {
+export const PageInfo = props => {
     const renderDefaultInfo = ({pageNumber, pageCount, itemCount}) =>
         <div>
             {msg('pagination.info', {pageNumber, pageCount, itemCount})}

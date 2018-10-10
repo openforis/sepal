@@ -9,7 +9,7 @@ import actionBuilder from 'action-builder'
 import format from 'format'
 import styles from './userReport.module.css'
 
-const mapStateToProps = (state) => {
+const mapStateToProps = state => {
     return {
         userReport: (state.user && state.user.currentUserReport) || {},
         panel: state.ui && state.ui.userBudget,
@@ -17,7 +17,7 @@ const mapStateToProps = (state) => {
     }
 }
 
-const action = (mode) =>
+const action = mode =>
     actionBuilder('USER_BUDGET')
         .set('ui.userBudget', mode)
         .set('ui.modal', !!mode)

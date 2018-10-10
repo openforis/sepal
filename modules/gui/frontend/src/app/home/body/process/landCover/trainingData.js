@@ -63,7 +63,7 @@ class TrainingData extends React.Component {
                             msg(response.error.key)
                         )
                     return (response.columns || [])
-                        .filter((column) => column.type !== 'LOCATION')
+                        .filter(column => column.type !== 'LOCATION')
                 }),
                 map(columns => this.recipeActions.setFusionTableColumns(columns)),
                 takeUntil(this.fusionTableChanged$))
@@ -113,7 +113,7 @@ class TrainingData extends React.Component {
                         input={fusionTable}
                         placeholder={msg('process.landCover.panel.trainingData.form.fusionTable.placeholder')}
                         spellCheck={false}
-                        onChange={(e) => {
+                        onChange={e => {
                             yearColumn.set('')
                             classColumn.set('')
                             this.recipeActions.setFusionTableColumns(null).dispatch()

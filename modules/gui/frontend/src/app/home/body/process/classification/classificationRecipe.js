@@ -4,12 +4,12 @@ import globalActionBuilder from 'action-builder'
 
 export {recipePath}
 
-export const RecipeState = (recipeId) => {
+export const RecipeState = recipeId => {
     const recipeState = ParentRecipeState(recipeId)
     initRecipe(recipeState())
     return recipeState
 }
-export const RecipeActions = (id) => {
+export const RecipeActions = id => {
 
     const actionBuilder = (name, props) => {
         return globalActionBuilder(name, props)
@@ -55,7 +55,7 @@ export const RecipeActions = (id) => {
     }
 }
 
-const initRecipe = (recipeState) => {
+const initRecipe = recipeState => {
     if (!recipeState || recipeState.ui)
         return
 

@@ -3,7 +3,7 @@ import React from 'react'
 import _ from 'lodash'
 
 let intl
-export const initIntl = (intlInstance) => intl = intlInstance
+export const initIntl = intlInstance => intl = intlInstance
 
 export const Msg = ({id, ...values}) => (
     <span>{msg(id, values)}</span>

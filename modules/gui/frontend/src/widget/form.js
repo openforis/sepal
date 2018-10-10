@@ -9,7 +9,7 @@ import moment from 'moment'
 import styles from './form.module.css'
 
 export function form({fields = {}, constraints = {}, mapStateToProps}) {
-    return (WrappedComponent) => {
+    return WrappedComponent => {
         class Form extends React.Component {
             dirtyListeners = []
             cleanListeners = []
@@ -57,7 +57,7 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
 
             UNSAFE_componentWillReceiveProps(nextProps) {
                 if ('errors' in nextProps)
-                    this.setState((prevState) =>
+                    this.setState(prevState =>
                         ({...prevState, errors: nextProps.errors})
                     )
             }
@@ -75,12 +75,12 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
             set(name, value) {
                 const prevValue = this.state.values[name]
                 if (value !== prevValue && !_.isEqual(value, prevValue))
-                    this.setState((prevState) => {
+                    this.setState(prevState => {
                         const state = Object.assign({}, prevState)
                         state.values[name] = value
                         this.clearErrorsForField(name, state.errors)
                         state.invalidValue[name] = ''
-                        state.dirty = !!Object.keys(state.initialValues).find((name) =>
+                        state.dirty = !!Object.keys(state.initialValues).find(name =>
                             state.initialValues[name] !== state.values[name]
                         )
                         state.gotDirty = state.dirty && !prevState.dirty
@@ -94,7 +94,7 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
 
             notifyOnChange(name, value) {
                 const listeners = this.changeListenersByInputName[name] || []
-                listeners.forEach((listener) => listener(value))
+                listeners.forEach(listener => listener(value))
                 if (this.state.gotDirty)
                     this.onDirty()
                 else if (this.state.gotClean)
@@ -131,12 +131,12 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
 
             validateField(name) {
                 // TODO: Validate constraints containing name
-                this.setState((prevState) => {
+                this.setState(prevState => {
                     const state = Object.assign({}, prevState)
                     if (!state.invalidValue[name])
                         state.errors[name] = this.checkFieldError(name)
                     const constraintNames = this.constraintNamesByFieldName[name]
-                    constraintNames && constraintNames.forEach((constraintName) =>
+                    constraintNames && constraintNames.forEach(constraintName =>
                         state.errors[constraintName] = this.checkConstraintError(constraintName)
                     )
                     return state
@@ -153,7 +153,7 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
             setInitialValues(values) {
                 if (!values)
                     return
-                this.setState((prevState) => {
+                this.setState(prevState => {
                     const state = {...prevState, dirty: false}
                     Object.keys(fields).forEach(name => {
                         state.initialValues[name] = name in values ? values[name] : ''
@@ -167,7 +167,7 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
             }
 
             reset() {
-                this.setState((prevState) => {
+                this.setState(prevState => {
                     const state = {...prevState, values: {...prevState.initialValues}, dirty: false}
                     Object.keys(fields).forEach(name => {
                         this.clearErrorsForField(name, state.errors)
@@ -185,15 +185,15 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
 
             isDirty() {
                 return !!Object.keys(this.state.initialValues)
-                    .find((name) => this.isValueDirty(name))
+                    .find(name => this.isValueDirty(name))
             }
 
             onDirty() {
-                this.dirtyListeners.forEach((listener) => listener())
+                this.dirtyListeners.forEach(listener => listener())
             }
 
             onClean() {
-                this.cleanListeners.forEach((listener) => listener())
+                this.cleanListeners.forEach(listener => listener())
             }
 
             render() {
@@ -205,16 +205,16 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                         error: this.state.errors[name],
                         validationFailed: !!this.state.errors[name] || !!this.getConstraintErrorsForField(name),
                         isInvalid: () => this.checkFieldError(name),
-                        setInvalid: (msg) => this.setState((prevState) => ({
+                        setInvalid: msg => this.setState(prevState => ({
                             ...prevState,
                             errors: {...prevState.errors, [name]: msg},
                             invalidValue: {...prevState.invalidValue, [name]: this.state.values[name]}
                         })),
                         validate: () => this.validateField(name),
                         isDirty: () => this.isValueDirty(name),
-                        set: (value) => this.set(name, value),
-                        handleChange: (e) => this.handleChange(e),
-                        onChange: (listener) => {
+                        set: value => this.set(name, value),
+                        handleChange: e => this.handleChange(e),
+                        onChange: listener => {
                             const listeners = this.changeListenersByInputName[name] || []
                             this.changeListenersByInputName[name] = listeners
                             listeners.push(listener)
@@ -225,11 +225,11 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                     errors: this.state.errors,
                     isInvalid: this.isInvalid,
                     isDirty: () => this.isDirty(),
-                    setInitialValues: (values) => this.setInitialValues(values),
+                    setInitialValues: values => this.setInitialValues(values),
                     reset: () => this.reset(),
                     values: () => this.state.values,
-                    onDirty: (listener) => this.dirtyListeners.push(listener),
-                    onClean: (listener) => this.cleanListeners.push(listener)
+                    onDirty: listener => this.dirtyListeners.push(listener),
+                    onClean: listener => this.cleanListeners.push(listener)
                 }
                 const element = React.createElement(WrappedComponent, {
                     ...this.props, form, inputs
@@ -308,7 +308,7 @@ class FormProperty {
     check(name, values) {
         const skip = this._isSkipped(name, values)
         const failingConstraint = !skip &&
-            this._predicates.find((constraint) =>
+            this._predicates.find(constraint =>
                 this._checkPredicate(name, values, constraint[0]) ? null : constraint[1]
             )
         return failingConstraint ? msg(failingConstraint[1], failingConstraint[2](values)) : ''
@@ -336,7 +336,7 @@ export class Constraint extends FormProperty {
     }
 
     _isSkipped(name, values) {
-        return this._skip.find((when) => when(values))
+        return this._skip.find(when => when(values))
     }
 }
 
@@ -346,13 +346,13 @@ export class Field extends FormProperty {
     }
 
     _isSkipped(name, values) {
-        return this._skip.find((when) => when(values[name], values))
+        return this._skip.find(when => when(values[name], values))
     }
 }
 
 const FormContext = React.createContext()
 
-export const ErrorMessage = (props) => {
+export const ErrorMessage = props => {
     return <FormContext.Consumer>
         {form => {
             let sources = props['for'] || []
@@ -389,14 +389,14 @@ export class Input extends React.Component {
                 name={input.name}
                 value={input.value || ''}
                 tabIndex={tabIndex}
-                onChange={(e) => {
+                onChange={e => {
                     input.handleChange(e)
                     if (onChange)
                         onChange(e)
                     if (validate === 'onChange')
                         input.validate()
                 }}
-                onBlur={(e) => {
+                onBlur={e => {
                     if (onBlur)
                         onBlur(e)
                     if (validate === 'onBlur')

@@ -25,7 +25,7 @@ const Process = () => {
     return (
         <Tabs
             statePath='process'
-            tabActions={(recipeId) => <ProcessMenu recipeId={recipeId}/>}
+            tabActions={recipeId => <ProcessMenu recipeId={recipeId}/>}
             onTitleChanged={recipe => saveRecipe(recipe)}>
             {({id, type}) =>
                 <React.Fragment>

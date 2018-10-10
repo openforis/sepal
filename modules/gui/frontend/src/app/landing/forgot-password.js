@@ -61,7 +61,7 @@ ForgotPassword.propTypes = {}
 
 export const LoginLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>
-        <Link to='/' tabIndex={tabIndex} onMouseDown={(e) => e.preventDefault()}>
+        <Link to='/' tabIndex={tabIndex} onMouseDown={e => e.preventDefault()}>
             <Icon name='undo' className={styles.forgotPasswordIcon}/>
             <Msg id='landing.forgot-password.cancel-link'/>
         </Link>
@@ -72,7 +72,7 @@ LoginLink.propTypes = {
 
 export const ForgotPasswordLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>
-        <Link to='/forgot-password' tabIndex={tabIndex} onMouseDown={(e) => e.preventDefault()}>
+        <Link to='/forgot-password' tabIndex={tabIndex} onMouseDown={e => e.preventDefault()}>
             <Icon name='question-circle' className={styles.forgotPasswordIcon}/>
             <Msg id='landing.login.forgot-password-link'/>
         </Link>

@@ -168,7 +168,7 @@ PercentileField.propTypes = {
     input: PropTypes.object
 }
 
-const valuesToModel = (values) => ({
+const valuesToModel = values => ({
     corrections: values.corrections,
     filters: [
         {type: 'SHADOW', percentile: values.shadowPercentile},
@@ -180,8 +180,8 @@ const valuesToModel = (values) => ({
     compose: values.compose,
 })
 
-const modelToValues = (model) => {
-    const getPercentile = (type) => {
+const modelToValues = model => {
+    const getPercentile = type => {
         const filter = model.filters.find(filter => filter.type === type)
         return filter ? filter.percentile : 0
     }

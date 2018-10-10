@@ -13,7 +13,7 @@ export default function asyncActionBuilder(type, action$, component) {
     const componentId = component.id
 
     let actionsToDispatch = []
-    const addActions = (actions) => {
+    const addActions = actions => {
         if (!actions) return
         actions instanceof Array || (actions = [actions])
         actionsToDispatch = actionsToDispatch.concat(actions)
@@ -41,7 +41,7 @@ export default function asyncActionBuilder(type, action$, component) {
                     let actions = onError ? onError(error) : []
                     if (actions && !(actions instanceof Array))
                         actions = [actions]
-                    actions.forEach((action) => addActions(action))
+                    actions.forEach(action => addActions(action))
                     // console.log('error', error)
                     if (actions.length === 0)
                         addActions(Notifications.caught(

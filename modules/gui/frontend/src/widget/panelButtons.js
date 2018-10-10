@@ -134,7 +134,7 @@ class PanelButtons extends React.Component {
                 look={look}
                 label={label}
                 disabled={disabled}
-                onClick={(e) => {
+                onClick={e => {
                     e.preventDefault()
                     onClick(e)
                 }}

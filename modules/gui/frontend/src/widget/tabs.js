@@ -10,7 +10,7 @@ import flexy from 'flexy.module.css'
 import guid from 'guid'
 import styles from './tabs.module.css'
 
-export const addTab = (statePath) => {
+export const addTab = statePath => {
     const id = guid()
     const tab = {id, placeholder: msg('widget.tabs.newTab')}
     actionBuilder('ADD_TAB')
@@ -22,7 +22,7 @@ export const addTab = (statePath) => {
 
 const getTabIndex = (id, statePath) =>
     select([statePath, 'tabs'])
-        .findIndex((tab) => tab.id === id)
+        .findIndex(tab => tab.id === id)
 
 const toTabPath = (id, statePath) =>
     [statePath, 'tabs', getTabIndex(id, statePath)].join('.')
@@ -39,7 +39,7 @@ export const closeTab = (id, statePath) => {
         if (root.selectedTabId !== id)
             return
         const tabs = root.tabs
-        const tabIndex = tabs.findIndex((tab) => tab.id === id)
+        const tabIndex = tabs.findIndex(tab => tab.id === id)
         const last = tabIndex === tabs.length - 1
         const first = tabIndex === 0
         let nextSelectedId = null
@@ -87,7 +87,7 @@ class Tabs extends React.Component {
             <div className={[styles.container, flexy.container].join(' ')}>
                 <div className={styles.tabBar}>
                     <div className={styles.tabs}>
-                        {this.props.tabs.map((tab) =>
+                        {this.props.tabs.map(tab =>
                             <Tab
                                 key={tab.id}
                                 id={tab.id}
@@ -104,7 +104,7 @@ class Tabs extends React.Component {
                 </div>
 
                 <div className={[styles.tabContents, flexy.container].join(' ')}>
-                    {this.props.tabs.map((tab) =>
+                    {this.props.tabs.map(tab =>
                         <TabContent key={tab.id} tab={tab} selected={tab.id === selectedTabId}>
                             {children}
                         </TabContent>
@@ -160,7 +160,7 @@ class Tab extends React.Component {
     onTitleChange(e) {
         const value = e.target.value.replace(/[^\w-.]/g, '_')
         e.target.value = value
-        this.setState((prevState) => ({...prevState, title: value}))
+        this.setState(prevState => ({...prevState, title: value}))
     }
 
     saveTitle() {
@@ -173,7 +173,7 @@ class Tab extends React.Component {
             return
         renameTab(id, title, tabPath, onTitleChanged)
         this.setState(
-            (state) => ({...state, editing: false})
+            state => ({...state, editing: false})
         )
     }
 
@@ -203,8 +203,8 @@ class Tab extends React.Component {
                                 autoFocus={!title}
                                 spellCheck={false}
                                 autoComplete='off'
-                                onKeyPress={(e) => this.onTitleKeyPress(e)}
-                                onChange={(e) => this.onTitleChange(e)}
+                                onKeyPress={e => this.onTitleKeyPress(e)}
+                                onChange={e => this.onTitleChange(e)}
                                 onBlur={() => this.saveTitle()}/>
                             : null
                         }

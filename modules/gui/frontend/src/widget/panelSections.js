@@ -60,7 +60,7 @@ class Section extends React.Component {
         if (this.isSelectionSection())
             Object.keys(inputs)
                 .filter(name => name !== selected.name)
-                .forEach((name) => {
+                .forEach(name => {
                     return inputs[name] && inputs[name].set('')
                 })
     }

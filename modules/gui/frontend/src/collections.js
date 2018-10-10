@@ -16,14 +16,14 @@ export const objectEquals = (o1, o2, compareProps) => {
     return _.isEqual(extractValues(o1), extractValues(o2))
 }
 
-export const intersect = (array) => Array.from(new Set(array))
+export const intersect = array => Array.from(new Set(array))
 
 export const range = (from, to) =>
     [...Array(to - from).keys()].map(i => from + i)
 
-export const toPathList = (path) => {
+export const toPathList = path => {
     let pathList = []
-    const flatten = (path) => {
+    const flatten = path => {
         if (typeof path === 'string')
             pathList = pathList.concat(path.split('.'))
         else

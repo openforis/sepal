@@ -19,23 +19,23 @@ const DAY = 'day'
 
 const items = [YEAR, MONTH, DAY]
 
-const currentScrollOffset = (element) => {
+const currentScrollOffset = element => {
     return element.parentNode.scrollTop
 }
-const targetScrollOffset = (element) => {
+const targetScrollOffset = element => {
     return Math.round(element.offsetTop - element.parentNode.offsetTop - element.parentNode.clientHeight / 2)
 }
 
 const setScrollOffset = (element, value) =>
     element.parentNode.scrollTop = value
 
-const lerp = (rate) =>
+const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
 
 const daysInMonth = (year, month) =>
     moment().year(year).month(month).daysInMonth()
 
-const toMomentUnit = (item) => {
+const toMomentUnit = item => {
     switch (item) {
     case DAY:
         return 'date'
@@ -49,7 +49,7 @@ class DatePicker extends React.Component {
     inputElement = React.createRef()
 
     editDate(edit) {
-        this.setState((prevState) =>
+        this.setState(prevState =>
             ({...prevState, edit}))
         if (!edit) {
             const {onChange, input} = this.props
@@ -74,7 +74,7 @@ class DatePicker extends React.Component {
                         onBlur={() => this.editDate(false)}
                     />
                     <Icon name='calendar'
-                        onMouseDown={(e) => e.preventDefault()}
+                        onMouseDown={e => e.preventDefault()}
                         onClick={() => {
                             if (!edit)
                                 this.inputElement.current.focus()
@@ -148,7 +148,7 @@ class DatePickerControl extends React.Component {
             filter(selected => selected.item === item),
             map(selected => selected.element),
             filter(element => element),
-            switchMap((element) => {
+            switchMap(element => {
                 const target = targetScrollOffset(element)
                 const scroll$ = animationFrame$.pipe(
                     map(() => target),
@@ -160,7 +160,7 @@ class DatePickerControl extends React.Component {
                     first() // just one stop event
                 )
                 return scroll$.pipe(
-                    map((value) => ({element, value})),
+                    map(value => ({element, value})),
                     takeUntil(stop$)
                 )
             })
@@ -176,7 +176,7 @@ class DatePickerControl extends React.Component {
     }
 
     set(item, value) {
-        this.setState((prevState) => {
+        this.setState(prevState => {
             const state = {...prevState}
             const {resolution} = this.props
             state[item] = value
@@ -189,7 +189,7 @@ class DatePickerControl extends React.Component {
     }
 
     highlight(value) {
-        this.setState((prevState) => {
+        this.setState(prevState => {
             const state = {...prevState}
             state.highlighted = value
             return state
@@ -224,15 +224,15 @@ class DatePickerControl extends React.Component {
         const select = (e, item, value) => {
             const {input, resolution, onSelect} = this.props
             const completeDate = !this.items
-                .filter((i) => i !== item)
-                .find((i) => {
+                .filter(i => i !== item)
+                .find(i => {
                     return !(this.state[i] >= 0)
                 })
             if (completeDate) { // If year, month, day specified in state
                 const date = moment().set(toMomentUnit(item), value)
                 this.items
-                    .filter((i) => i !== item)
-                    .forEach((i) => date.set(toMomentUnit(i), this.state[i]))
+                    .filter(i => i !== item)
+                    .forEach(i => date.set(toMomentUnit(i), this.state[i]))
                 input.set(this.formatDate(date))
             }
             this.set(item, value)
@@ -252,8 +252,8 @@ class DatePickerControl extends React.Component {
         ) : (
             <li
                 key={value}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={(e) => select(e, item, value)}>
+                onMouseDown={e => e.preventDefault()}
+                onClick={e => select(e, item, value)}>
                 {displayValue}
             </li>
         )
@@ -266,7 +266,7 @@ class DatePickerControl extends React.Component {
                 onMouseOver={() => this.scroll$.next(item)}
                 onScroll={() => this.scroll$.next(item)}
                 className={styles[item]}>
-                {range.map((value) => this.renderItem(item, value))}
+                {range.map(value => this.renderItem(item, value))}
             </ul>
         )
     }
@@ -321,7 +321,7 @@ class DatePickerControl extends React.Component {
         }
 
         const nextState = {...this.state}
-        const changed = this.items.find((item) => {
+        const changed = this.items.find(item => {
             const prevValue = prevState[item]
             const date = this.parseDate(this.props.input.value)
             if (!date.isValid())
@@ -347,7 +347,7 @@ class DatePickerControl extends React.Component {
     }
 }
 
-const getDateFormat = (resolution) => {
+const getDateFormat = resolution => {
     switch (resolution) {
     case YEAR:
         return 'YYYY'

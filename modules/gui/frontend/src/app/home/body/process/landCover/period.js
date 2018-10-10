@@ -108,7 +108,7 @@ Period.propTypes = {
 
 export default form({fields, constraints, mapStateToProps})(Period)
 
-const valuesToModel = (values) => ({
+const valuesToModel = values => ({
     startYear: +values.startYear,
     endYear: +values.endYear,
 })

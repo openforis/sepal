@@ -11,9 +11,9 @@ export default {
             body: gzippedContents,
             headers: {'Content-Type': 'application/octet-stream'}
         }).pipe(toResponse),
-    delete$: (recipeId) =>
+    delete$: recipeId =>
         delete$(`/api/processing-recipes/${recipeId}`),
-    load$: (recipeId) =>
+    load$: recipeId =>
         get$(`/api/processing-recipes/${recipeId}`)
             .pipe(toResponse),
 }

@@ -10,7 +10,7 @@ import api from 'api'
 
 export const recipePath = (recipeId, path) => {
     const recipeTabIndex = select('process.tabs')
-        .findIndex((recipe) => recipe.id === recipeId)
+        .findIndex(recipe => recipe.id === recipeId)
     if (recipeTabIndex === -1)
         throw new Error(`Recipe not found: ${recipeId}`)
     if (path && Array.isArray(path))
@@ -20,15 +20,15 @@ export const recipePath = (recipeId, path) => {
         .join('.')
 }
 
-export const RecipeState = (recipeId) => {
+export const RecipeState = recipeId => {
     if (!isRecipeOpen(recipeId))
         return null
 
-    return (path) =>
+    return path =>
         select(recipePath(recipeId, path))
 }
 
-export const saveRecipe$ = (recipe) => {
+export const saveRecipe$ = recipe => {
     if (!recipe.type)
         return EMPTY
     const listItem = {
@@ -51,10 +51,10 @@ export const saveRecipe$ = (recipe) => {
     )
 }
 
-export const saveRecipe = (recipe) =>
+export const saveRecipe = recipe =>
     saveRecipe$(recipe).subscribe(action => action.dispatch())
 
-export const exportRecipe = (recipe) => {
+export const exportRecipe = recipe => {
     const name = `${recipe.title || recipe.placeholder}`
     const recipeString = JSON.stringify(_.omit(recipe, ['ui']), null, 2)
     from(new JSZip().file(name + '.json', recipeString).generateAsync({
@@ -79,12 +79,12 @@ export const exportRecipe = (recipe) => {
 
 export const loadRecipes$ = () =>
     api.recipe.loadAll$().pipe(
-        map((recipes) => actionBuilder('SET_RECIPES', {recipes})
+        map(recipes => actionBuilder('SET_RECIPES', {recipes})
             .set('process.recipes', recipes)
             .build())
     )
 
-export const loadRecipe$ = (recipeId) => {
+export const loadRecipe$ = recipeId => {
     const selectedTabId = select('process.selectedTabId')
     if (isRecipeOpen(recipeId)) {
         const recipe = select(recipePath(recipeId))
@@ -104,7 +104,7 @@ export const loadRecipe$ = (recipeId) => {
     }
 }
 
-export const addRecipe = (recipe) => {
+export const addRecipe = recipe => {
     const tab = addTab('process')
     recipe.id = tab.id
     return actionBuilder('SELECT_RECIPE')
@@ -113,7 +113,7 @@ export const addRecipe = (recipe) => {
         .dispatch()
 }
 
-export const deleteRecipe$ = (recipeId) =>
+export const deleteRecipe$ = recipeId =>
     api.recipe.delete$(recipeId).pipe(
         map(() => {
             const recipes = select('process.recipes')
@@ -124,18 +124,18 @@ export const deleteRecipe$ = (recipeId) =>
         })
     )
 
-export const deleteRecipe = (recipeId) =>
+export const deleteRecipe = recipeId =>
     deleteRecipe$(recipeId).subscribe(action => action.dispatch())
 
-const isRecipeOpen = (recipeId) =>
+const isRecipeOpen = recipeId =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
 
 const saveToBackend$ = new Subject()
 
 let prevTabs = []
-const findPrevRecipe = (recipe) =>
+const findPrevRecipe = recipe =>
     prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
-subscribe('process.tabs', (recipes) => {
+subscribe('process.tabs', recipes => {
     if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
         const recipesToSave = recipes
             .filter(recipe =>
@@ -173,7 +173,7 @@ const saveRevisionToLocalStorage = (recipeId, revision) => {
     }
 }
 
-const expireRevisionFromLocalStorage = (_recipeId) => {
+const expireRevisionFromLocalStorage = _recipeId => {
     const keyToExpire = _(localStorage)
         .keys()
         .filter(key => key.startsWith('sepal:'))
@@ -186,7 +186,7 @@ const expireRevisionFromLocalStorage = (_recipeId) => {
     return true
 }
 
-export const getRevisions = (recipeId) =>
+export const getRevisions = recipeId =>
     _(localStorage)
         .keys()
         .filter(key => key.startsWith('sepal:'))
@@ -214,7 +214,7 @@ export const revertToRevision$ = (recipeId, revision) => {
     )
 }
 
-const save$ = (recipe) => {
+const save$ = recipe => {
     const name = recipe.title || recipe.placeholder
     return gzip$(_.omit(recipe, ['ui'])).pipe(
         switchMap(gzippedContents =>

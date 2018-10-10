@@ -14,7 +14,7 @@ const storeInitListeners = []
 
 export function initStore(store) {
     storeInstance = store
-    storeInitListeners.forEach((listener) => listener(store))
+    storeInitListeners.forEach(listener => listener(store))
 }
 
 export function subscribe(path, listener) {
@@ -51,7 +51,7 @@ function includeDispatchingProp(mapStateToProps) {
 export function connect(mapStateToProps) {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
     
-    return (WrappedComponent) => {
+    return WrappedComponent => {
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
         WrappedComponent = connectToRedux(includeDispatchingProp(mapStateToProps), null, null, {
             areStatePropsEqual: _.isEqual
@@ -125,7 +125,7 @@ export function connect(mapStateToProps) {
             }
         }
 
-        const ComponentWithContext = (props) =>
+        const ComponentWithContext = props =>
             <EnabledContext.Consumer>
                 {enabled =>
                     <ConnectedComponent {...props} enabled={enabled}>
@@ -166,14 +166,14 @@ Enabled.propTypes = {
     value: PropTypes.any.isRequired
 }
 
-const stream = (component) => {
+const stream = component => {
     return (name, stream$, onSuccess, onError, onComplete) => {
         const componentPath = `stream.${component.id}`
         const statePath = `${componentPath}.${name}`
         if (!stream$)
             return select(statePath)
 
-        const setStatus = (status) =>
+        const setStatus = status =>
             actionBuilder('SET_STREAM_STATUS', {statePath, status})
                 .set(statePath, status)
                 .dispatch()

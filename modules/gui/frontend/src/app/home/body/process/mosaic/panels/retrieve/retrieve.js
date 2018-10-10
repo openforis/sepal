@@ -164,4 +164,4 @@ Retrieve.propTypes = {
 
 export default form({fields, mapStateToProps})(Retrieve)
 
-const option = (band) => ({value: band, label: msg(['bands', band])})
+const option = band => ({value: band, label: msg(['bands', band])})

@@ -39,7 +39,7 @@ class Users extends React.Component {
     search = React.createRef()
 
     componentDidMount() {
-        const setUserList = (userList) =>
+        const setUserList = userList =>
             this.setState(prevState => ({
                 ...prevState,
                 users: this.getSortedUsers(
@@ -49,7 +49,7 @@ class Users extends React.Component {
                     }))
                 )
             }))
-        const mergeBudgetReport = (budgetReport) =>
+        const mergeBudgetReport = budgetReport =>
             this.setState(prevState => ({
                 ...prevState,
                 users: _.map(prevState.users, user => ({
@@ -227,7 +227,7 @@ class Users extends React.Component {
 
     renderInfo() {
         const {filter} = this.state
-        const results = (count) => filter
+        const results = count => filter
             ? msg('users.countWithFilter', {count, filter})
             : msg('users.countNoFilter', {count})
         return (

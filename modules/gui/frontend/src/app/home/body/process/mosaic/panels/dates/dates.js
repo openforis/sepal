@@ -13,11 +13,11 @@ import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
-const minStartDate = (targetDate) => parseDate(targetDate).subtract(1, 'year').add(1, 'days')
-const maxStartDate = (targetDate) => parseDate(targetDate)
+const minStartDate = targetDate => parseDate(targetDate).subtract(1, 'year').add(1, 'days')
+const maxStartDate = targetDate => parseDate(targetDate)
 
-const minEndDate = (targetDate) => parseDate(targetDate).add(1, 'days')
-const maxEndDate = (targetDate) => parseDate(targetDate).add(1, 'years')
+const minEndDate = targetDate => parseDate(targetDate).add(1, 'days')
+const maxEndDate = targetDate => parseDate(targetDate).add(1, 'years')
 
 const fields = {
     advanced: new Field(),
@@ -85,8 +85,8 @@ class Dates extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId, inputs: {targetYear, targetDate}} = props
-        targetYear.onChange((yearString) => this.handleYearChange(yearString))
-        targetDate.onChange((dateString) => this.handleDateChange(dateString))
+        targetYear.onChange(yearString => this.handleYearChange(yearString))
+        targetDate.onChange(dateString => this.handleDateChange(dateString))
         this.recipeActions = RecipeActions(recipeId)
     }
 
@@ -211,10 +211,10 @@ class Dates extends React.Component {
     }
 }
 
-const parseDate = (dateString) =>
+const parseDate = dateString =>
     moment(dateString, 'YYYY-MM-DD', true)
 
-const parseYear = (dateString) =>
+const parseYear = dateString =>
     moment(dateString, 'YYYY', true)
 
 Dates.propTypes = {
@@ -223,7 +223,7 @@ Dates.propTypes = {
 
 export default form({fields, mapStateToProps})(Dates)
 
-const valuesToModel = (values) => {
+const valuesToModel = values => {
     const DATE_FORMAT = 'YYYY-MM-DD'
     if (values.advanced)
         return {

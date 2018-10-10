@@ -26,8 +26,8 @@ export default class SeasonSelect extends React.Component {
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        const calcMinDate = (centerDate) => moment(centerDate).subtract(1, 'years').add(1, 'day')
-        const calcMaxDate = (centerDate) => moment(centerDate).add(1, 'years')
+        const calcMinDate = centerDate => moment(centerDate).subtract(1, 'years').add(1, 'day')
+        const calcMaxDate = centerDate => moment(centerDate).add(1, 'years')
 
         const centerDate = moment(nextProps.centerDate.value, DATE_FORMAT, true)
         let startDate = moment(nextProps.startDate.value, DATE_FORMAT, true)
@@ -50,7 +50,7 @@ export default class SeasonSelect extends React.Component {
             moment(date).set('year', date.year() + years)
 
         const bestRange = (range1, range2) => {
-            const diff = (range) => Math.abs(range[0].diff(centerDate, 'days') + range[1].diff(centerDate, 'days'))
+            const diff = range => Math.abs(range[0].diff(centerDate, 'days') + range[1].diff(centerDate, 'days'))
             const diff1 = diff(range1)
             const diff2 = diff(range2)
             return diff1 === diff2 ? 0 : diff1 < diff2 ? -1 : 1
@@ -59,7 +59,7 @@ export default class SeasonSelect extends React.Component {
         const [updatedStartDate, updatedEndDate] = intersect([startDate, endDate]
             .map(date => date.year())
             .map(year => centerDate.year() - year))
-            .map((yearDiff) => [
+            .map(yearDiff => [
                 incrementYear(startDate, yearDiff),
                 incrementYear(endDate, yearDiff)
             ])
@@ -88,13 +88,13 @@ export default class SeasonSelect extends React.Component {
     render() {
         return (
             <Media query='(min-width: 768px)'>
-                {(matches) => matches ? <Timeline seasonSelect={this}/> : <DatePickers seasonSelect={this}/>}
+                {matches => matches ? <Timeline seasonSelect={this}/> : <DatePickers seasonSelect={this}/>}
             </Media>
         )
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const changed = ['startDate', 'endDate', 'centerDate'].find((key) => !prevState[key].isSame(this.state[key]))
+        const changed = ['startDate', 'endDate', 'centerDate'].find(key => !prevState[key].isSame(this.state[key]))
         if (changed)
             this.notifyChange(
                 this.state.startDate.format(DATE_FORMAT),
@@ -140,7 +140,7 @@ export default class SeasonSelect extends React.Component {
     }
 
     widthUpdated(width) {
-        this.setState((prevState) => ({...prevState, width}))
+        this.setState(prevState => ({...prevState, width}))
     }
 
     notifyChange(startDate, endDate) {
@@ -216,7 +216,7 @@ class DatePickers extends React.Component {
                         input={startDate}
                         startDate={minDate}
                         endDate={centerDate}
-                        onChange={(updatedStartDate) => this.startDateChanged(moment(updatedStartDate), true)}/>
+                        onChange={updatedStartDate => this.startDateChanged(moment(updatedStartDate), true)}/>
                     <ErrorMessage for={startDate}/>
                 </div>
 
@@ -226,7 +226,7 @@ class DatePickers extends React.Component {
                         input={endDate}
                         startDate={moment(centerDate).add(1, 'days')}
                         endDate={maxDate}
-                        onChange={(updatedEndDate) => this.endDateChanged(moment(updatedEndDate), true)}/>
+                        onChange={updatedEndDate => this.endDateChanged(moment(updatedEndDate), true)}/>
                     <ErrorMessage for={endDate}/>
                 </div>
             </div>
@@ -302,7 +302,7 @@ const DateFlag = ({date, className, onChange}) =>
 
 class Axis extends React.Component {
     shouldComponentUpdate(nextProps) {
-        return !!['centerDate', 'width'].find((key) =>
+        return !!['centerDate', 'width'].find(key =>
             nextProps[key] !== this.props[key]
         )
     }
@@ -310,7 +310,7 @@ class Axis extends React.Component {
     render() {
         const {dateRange} = this.props
         const ticks = [...Array(25).keys()]
-            .map((i) => [dateRange.monthIndexToPosition(i), i])
+            .map(i => [dateRange.monthIndexToPosition(i), i])
             .filter(([position, _i]) => position >= 0)
             .map(([position, i]) => {
                 const axisStyle = {left: `${position}px`}
@@ -320,8 +320,8 @@ class Axis extends React.Component {
             }
             )
         const months = [...Array(24).keys()]
-            .filter((i) => i % 2)
-            .map((i) => {
+            .filter(i => i % 2)
+            .map(i => {
                 const monthStyle = {
                     left: `${dateRange.monthIndexToPosition(i)}px`,
                     width: `${dateRange.monthIndexToPosition(i + 1) - dateRange.monthIndexToPosition(i)}px`,
