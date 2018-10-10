@@ -12,10 +12,13 @@ Msg.propTypes = {
     id: PropTypes.any.isRequired
 }
 
+const getIdString = (id) =>
+    Array.isArray(id)
+        ? id.map(element => toString(element)).join('.')
+        : id
+
 export const msg = (id, values = {}, defaultMessage) => {
-    const toString = (id) =>
-        Array.isArray(id) ? id.map((element) => toString(element)).join('.') : id
-    const idString = toString(id)
+    const idString = getIdString(id)
     return intl.formatMessage({
         id: String(idString),
         defaultMessage: defaultMessage || idString
