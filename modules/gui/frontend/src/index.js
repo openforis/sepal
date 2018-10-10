@@ -58,6 +58,7 @@ initStore(store)
 class IntlInitializer extends React.Component {
     constructor(props) {
         super(props)
+        // TODO: resolve references here
         initIntl(props.intl)
     }
 
