@@ -1,10 +1,10 @@
 import {CenteredProgress} from 'widget/progress'
-import {ErrorMessage, Field, Input, form} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {Field, Input, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {closePanel, showChangePassword} from './userProfile'
-import {currentUser, loadCurrentUser$, updateUserDetails$} from 'user'
+import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
 import {map, switchMap} from 'rxjs/operators'
+import {msg} from 'translate'
 import Notifications from 'app/notifications'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
@@ -49,12 +49,12 @@ class UserDetails extends React.Component {
     }
 
     updateUserDetails(userDetails) {
+        this.props.stream('UPDATE_CURRENT_USER_DETAILS',
+            updateCurrentUserDetails$(userDetails),
+            () => Notifications.success('user.userDetails.update').dispatch(),
+            error => Notifications.caught('user.userDetails.update', null, error).dispatch()
+        )
         closePanel()
-        updateUserDetails$(userDetails)
-            .subscribe(
-                () => Notifications.success('user.userDetails.update').dispatch(),
-                (error) => Notifications.caught('user.userDetails.update', null, error).dispatch()
-            )
     }
 
     cancel() {
@@ -69,43 +69,37 @@ class UserDetails extends React.Component {
                 label: msg('user.userDetails.useSepalGoogleAccount.label'),
                 tooltip: msg('user.userDetails.useSepalGoogleAccount.tooltip'),
                 disabled: form.isDirty(),
-                onClick: (e) => this.useSepalGoogleAccount(e)
+                onClick: e => this.useSepalGoogleAccount(e)
             }
             : {
                 key: 'useUserGoogleAccount',
                 label: msg('user.userDetails.useUserGoogleAccount.label'),
                 tooltip: msg('user.userDetails.useUserGoogleAccount.tooltip'),
                 disabled: form.isDirty(),
-                onClick: (e) => this.useUserGoogleAccount(e)
+                onClick: e => this.useUserGoogleAccount(e)
             }
         return this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT') === 'ACTIVE'
             ? <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>
             : <React.Fragment>
                 <PanelContent>
-                    <div>
-                        <label><Msg id='user.userDetails.form.name.label'/></label>
-                        <Input
-                            autoFocus
-                            input={name}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={name}/>
-                    </div>
-                    <div>
-                        <label><Msg id='user.userDetails.form.email.label'/></label>
-                        <Input
-                            input={email}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={email}/>
-                    </div>
-                    <div>
-                        <label><Msg id='user.userDetails.form.organization.label'/></label>
-                        <Input
-                            input={organization}
-                            spellCheck={false}
-                        />
-                    </div>
+                    <Input
+                        label={msg('user.userDetails.form.name.label')}
+                        autoFocus
+                        input={name}
+                        spellCheck={false}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('user.userDetails.form.email.label')}
+                        input={email}
+                        spellCheck={false}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('user.userDetails.form.organization.label')}
+                        input={organization}
+                        spellCheck={false}
+                    />
                 </PanelContent>
                 <PanelButtons
                     form={form}

@@ -81,7 +81,7 @@ Source.propTypes = {
 
 export default form({fields, mapStateToProps})(Source)
 
-const valuesToModel = (values) => {
+const valuesToModel = values => {
     switch (values.section) {
     case 'ASSET':
         return {

@@ -30,7 +30,7 @@ class ToggleSwitch extends React.Component {
                     <input
                         type='checkbox'
                         defaultChecked={on}
-                        ref={(checkbox) => this.checkbox = checkbox}/>
+                        ref={checkbox => this.checkbox = checkbox}/>
                     <div className={styles.slider}>
 
                     </div>

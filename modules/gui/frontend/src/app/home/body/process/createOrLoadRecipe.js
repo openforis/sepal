@@ -105,7 +105,7 @@ class RecipeList extends React.Component {
                     <div className={styles.type}>{msg('process.recipe.type')}</div>
                 </div>
                 <div className={[styles.recipeRows, flexy.scrollable].join(' ')}>
-                    {(recipes || []).map((recipe) => this.renderRecipe(recipe))}
+                    {(recipes || []).map(recipe => this.renderRecipe(recipe))}
                 </div>
             </div>
         )
@@ -124,7 +124,7 @@ RecipeList = connect(mapStateToProps)(RecipeList)
 const setTabType = (recipeId, type, title) =>
     actionBuilder('SET_TAB_TYPE')
         .withState('process.tabs', (recipes, stateBuilder) => {
-            const recipeIndex = recipes.findIndex((recipe) => recipe.id === recipeId)
+            const recipeIndex = recipes.findIndex(recipe => recipe.id === recipeId)
             if (recipeIndex === -1)
                 throw new Error('Unable to create recipe')
             return stateBuilder
@@ -142,7 +142,7 @@ const CreateButton = ({recipeId, type, label}) =>
         onClick={() => setTabType(recipeId, type, label)}/>
 
 function formatDate(date) {
-    const pad = (value) => ('' + value).length < 2 ? '0' + value : value
+    const pad = value => ('' + value).length < 2 ? '0' + value : value
     let d = new Date(date),
         month = pad(d.getMonth() + 1),
         day = pad(d.getDate()),

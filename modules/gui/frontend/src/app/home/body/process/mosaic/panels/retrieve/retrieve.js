@@ -1,9 +1,9 @@
 import {Field, Label, form} from 'widget/form'
-import {Msg, msg} from 'translate'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {currentUser} from 'user'
 import {dataSetById} from 'sources'
+import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Buttons from 'widget/buttons'
 import PanelButtons from 'widget/panelButtons'
@@ -164,4 +164,4 @@ Retrieve.propTypes = {
 
 export default form({fields, mapStateToProps})(Retrieve)
 
-const option = (band) => ({value: band, label: msg(['bands', band])})
+const option = band => ({value: band, label: msg(['bands', band])})

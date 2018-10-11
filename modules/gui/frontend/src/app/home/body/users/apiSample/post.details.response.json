@@ -5,7 +5,6 @@
     "email": "luca.paolini@fao.org",
     "organization": "FAO",
     "status": "ACTIVE",
-
     "systemUser": false,
     "roles": ["application_admin"],
     "googleTokens": null,

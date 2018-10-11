@@ -1,3 +1,4 @@
+import {ErrorMessage, Label} from 'widget/form'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
@@ -16,7 +17,18 @@ class ComboBox extends React.Component {
     element = React.createRef()
     menuPortalTarget = React.createRef()
 
-    render() {
+    renderLabel() {
+        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        return label ? (
+            <Label
+                msg={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+            />
+        ) : null
+    }
+
+    renderComboBox() {
         const {
             input,
             validate = 'onBlur',
@@ -54,20 +66,37 @@ class ComboBox extends React.Component {
                     isLoading={!!isLoading}
                     loadingMessage={() => msg('widget.comboBox.loading')}
                     components={components}
-                    onChange={(e) => {
+                    onChange={e => {
                         input.handleChange({target: {value: e ? e.value : '', name: input.name}})
                         if (onChange)
                             onChange(e)
                         if (validate === 'onChange')
                             input.validate()
                     }}
-                    onBlur={(e) => {
+                    onBlur={e => {
                         if (onBlur)
                             onBlur(e)
                         if (validate === 'onBlur')
                             input.validate()
                     }}
                 />
+            </div>
+        )
+    }
+
+    renderErrorMessage() {
+        const {errorMessage, input} = this.props
+        return errorMessage ? (
+            <ErrorMessage for={errorMessage === true ? input.name : errorMessage}/>
+        ) : null
+    }
+
+    render() {
+        return (
+            <div>
+                {this.renderLabel()}
+                {this.renderComboBox()}
+                {this.renderErrorMessage()}
             </div>
         )
     }
@@ -107,7 +136,7 @@ class ComboBox extends React.Component {
         const value = this.props.input.value
         let selectedOption = null
 
-        const setSelected = (option) => {
+        const setSelected = option => {
             if (option.value === value)
                 selectedOption = option
             return option.value === value
@@ -136,7 +165,7 @@ const LoadingIndicator = () => {
     )
 }
 
-const createSingleValue = (children) => (props) => (
+const createSingleValue = children => props => (
     <components.SingleValue {...props}>
         {children && children(props)}
     </components.SingleValue>

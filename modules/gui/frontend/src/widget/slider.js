@@ -21,7 +21,7 @@ class SliderContainer extends React.Component {
     
     ticks() {
         const {ticks = 10, width} = this.props
-        const equidistantTicks = (ticks) => range(0, ticks).map(i => i / (ticks - 1))
+        const equidistantTicks = ticks => range(0, ticks).map(i => i / (ticks - 1))
         return (Array.isArray(ticks) ? ticks : equidistantTicks(Math.max(2, ticks)))
             .map(tick => [
                 width * normalize(tick, {min: this.props.minValue, max: this.props.maxValue}),

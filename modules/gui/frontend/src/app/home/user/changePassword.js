@@ -1,8 +1,8 @@
 import {CenteredProgress} from 'widget/progress'
-import {Constraint, ErrorMessage, Field, Input, form} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {Constraint, Field, Input, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {changeUserPassword$} from 'user'
+import {msg} from 'translate'
 import {showUserDetails} from './userProfile'
 import Notifications from 'app/notifications'
 import PanelButtons from 'widget/panelButtons'
@@ -55,40 +55,34 @@ class ChangePassword extends React.Component {
             ? <CenteredProgress title={msg('user.changePassword.updating')}/>
             : <React.Fragment>
                 <PanelContent>
-                    <div>
-                        <label><Msg id='user.changePassword.form.oldPassword.label'/></label>
-                        <Input
-                            type='password'
-                            autoFocus
-                            input={oldPassword}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={oldPassword}/>
-                    </div>
-                    <div>
-                        <label><Msg id='user.changePassword.form.newPassword.label'/></label>
-                        <Input
-                            type='password'
-                            input={newPassword}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={newPassword}/>
-                    </div>
-                    <div>
-                        <label><Msg id='user.changePassword.form.confirmPassword.label'/></label>
-                        <Input
-                            type='password'
-                            input={confirmPassword}
-                            spellCheck={false}
-                        />
-                        <ErrorMessage for={[confirmPassword, 'passwordsMatch']}/>
-                    </div>
+                    <Input
+                        label={msg('user.changePassword.form.oldPassword.label')}
+                        type='password'
+                        autoFocus
+                        input={oldPassword}
+                        spellCheck={false}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('user.changePassword.form.newPassword.label')}
+                        type='password'
+                        input={newPassword}
+                        spellCheck={false}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('user.changePassword.form.confirmPassword.label')}
+                        type='password'
+                        input={confirmPassword}
+                        spellCheck={false}
+                        errorMessage={[confirmPassword, 'passwordsMatch']}
+                    />
                 </PanelContent>
                 <PanelButtons
                     form={form}
                     isActionForm={true}
                     statePath='userPassword'
-                    onApply={(userPasswords) => this.changePassword(userPasswords)}
+                    onApply={userPasswords => this.changePassword(userPasswords)}
                     onCancel={() => this.cancel()}/>
             </React.Fragment>
     }

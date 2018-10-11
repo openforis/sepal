@@ -107,7 +107,7 @@ export const isSourceInDateRange = (sourceId, fromDate, toDate) => {
     if (!sourceId)
         return false
     else
-        return !!imageSourceById[sourceId].dataSets.find((dataSetId) =>
+        return !!imageSourceById[sourceId].dataSets.find(dataSetId =>
             isDataSetInDateRange(dataSetId, fromDate, toDate)
         )
 }

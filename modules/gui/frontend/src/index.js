@@ -34,7 +34,7 @@ const rootReducer = (state = [], action) => {
         }
 }
 
-const batchActions = () => (next) => (action) => {
+const batchActions = () => next => action => {
     if ('actions' in action)
         next({
             type: action.type,
@@ -58,6 +58,7 @@ initStore(store)
 class IntlInitializer extends React.Component {
     constructor(props) {
         super(props)
+        // TODO: resolve references here
         initIntl(props.intl)
     }
 

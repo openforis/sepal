@@ -38,7 +38,7 @@ class SceneDeselection extends React.Component {
         if (!sceneAreas) // Scene areas are not loaded, we don't know enough to filter out scenes
             return
         const filteredScenes = {}
-        const filterScenes = (scenes) => {
+        const filterScenes = scenes => {
             if (!scenes)
                 return []
             return scenes

@@ -18,11 +18,12 @@ export class Pageable extends React.Component {
             const {items, limit} = this.props
             const itemCount = items.length
             const pageCount = Math.ceil(itemCount / limit)
+            const watchUnchanged = _.isEqual(prevProps.watch, this.props.watch)
             this.setState(prevState => ({
                 ...prevState,
                 pageCount,
                 itemCount,
-                pageNumber: 1
+                pageNumber: prevState.pageNumber && watchUnchanged ? prevState.pageNumber : 1
             }))
         }
     }
@@ -84,14 +85,15 @@ export class Pageable extends React.Component {
 Pageable.propTypes = {
     children: PropTypes.array.isRequired,
     items: PropTypes.array.isRequired,
-    limit: PropTypes.number.isRequired
+    limit: PropTypes.number.isRequired,
+    watch: PropTypes.array.isRequired
 }
 
-export const PageData = (props) =>
+export const PageData = props =>
     <Consumer>
         {pageable =>
             <React.Fragment>
-                {pageable.pageItems.map(item => props.children(item))}
+                {pageable.pageItems.map((item, index) => props.children(item, index))}
             </React.Fragment>
         }
     </Consumer>
@@ -100,8 +102,8 @@ PageData.propTypes = {
     children: PropTypes.func.isRequired
 }
 
-export const PageControls = (props) => {
-    const renderDefaultControls = (pageable) =>
+export const PageControls = props => {
+    const renderDefaultControls = pageable =>
         <ButtonGroup>
             <Button icon='fast-backward'
                 onClick={() => pageable.firstPage()}
@@ -136,7 +138,7 @@ PageControls.propTypes = {
     children: PropTypes.func
 }
 
-export const PageInfo = (props) => {
+export const PageInfo = props => {
     const renderDefaultInfo = ({pageNumber, pageCount, itemCount}) =>
         <div>
             {msg('pagination.info', {pageNumber, pageCount, itemCount})}

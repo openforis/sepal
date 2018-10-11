@@ -15,10 +15,10 @@ export const appList = () =>
 export const requestedApps = () =>
     appsInState(['REQUESTED', 'INITIALIZED', 'READY'])
 
-export const appState = (path) =>
+export const appState = path =>
     select(['apps', 'state', path]).state
 
-export const appReady = (app) => {
+export const appReady = app => {
     return actionBuilder('APP_READY')
         .set(['apps', 'state', app.path], {state: 'READY', app})
         .dispatch()
@@ -30,7 +30,7 @@ export const loadApps$ = () =>
             Notifications.error('apps.loading').dispatch()
             return of([])
         }),
-        map((apps) => {
+        map(apps => {
             const dataVis = {
                 path: '/sandbox/data-vis',
                 label: msg('apps.dataVis'),
@@ -60,20 +60,20 @@ export const loadApps$ = () =>
         })
     )
 
-export const runApp$ = (path) => {
+export const runApp$ = path => {
     const app = getApp(path)
     actionBuilder('APP_REQUESTED')
         .pushIfMissing('apps.active', path)
         .set(['apps', 'state', path], {state: 'REQUESTED', app})
         .dispatch()
 
-    const isSessionStarted = (e) => e.response.status === 'STARTED'
+    const isSessionStarted = e => e.response.status === 'STARTED'
     const requestSession$ = api.apps.requestSession$(app.endpoint).pipe(
         filter(isSessionStarted)
     )
 
     const waitForSession$ = interval(1000).pipe(
-        switchMap((secondsPassed) => secondsPassed < 30
+        switchMap(secondsPassed => secondsPassed < 30
             ? of(secondsPassed)
             : throwError({message: msg('')})),
         exhaustMap(() => api.apps.waitForSession$(app.endpoint)),
@@ -85,7 +85,7 @@ export const runApp$ = (path) => {
         concat(waitForSession$),
         first(),
         takeUntil(quitApp$.pipe(
-            filter((path) => path === app.path)
+            filter(path => path === app.path)
         )),
         map(() => actionBuilder('APP_INITIALIZED', {app})
             .set(['apps', 'state', app.path], {state: 'INITIALIZED', app})
@@ -99,7 +99,7 @@ export const runApp$ = (path) => {
     )
 }
 
-export const quitApp = (path) => {
+export const quitApp = path => {
     quitApp$.next(path)
     isPathInLocation('/app' + path)
     && history().replace('/app-launch-pad').dispatch()
@@ -111,10 +111,10 @@ export const quitApp = (path) => {
 
 const quitApp$ = new Subject()
 
-const getApp = (path) =>
-    appList().find((app) => app.path === path)
+const getApp = path =>
+    appList().find(app => app.path === path)
 
-const appsInState = (states) => (select('apps.active') || [])
-    .map((path) => select(['apps', 'state', path]))
+const appsInState = states => (select('apps.active') || [])
+    .map(path => select(['apps', 'state', path]))
     .filter(({state}) => states.includes(state))
     .map(({app}) => app)

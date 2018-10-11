@@ -1,5 +1,5 @@
 import {CenteredProgress} from 'widget/progress'
-import {Constraint, ErrorMessage, Field, Input, form} from 'widget/form'
+import {Constraint, Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {PropTypes} from 'prop-types'
 import {SubmitButton} from 'widget/legacyButton'
@@ -77,32 +77,29 @@ class ResetPassword extends React.Component {
     form() {
         const {form, inputs: {username, password, password2}} = this.props
         return <form>
-            <div>
-                <label><Msg id='landing.reset-password.username.label'/></label>
-                <Input
-                    input={username}
-                    disabled={true}/>
-                <ErrorMessage/>
-            </div>
-            <div>
-                <label><Msg id='landing.reset-password.password.label'/></label>
-                <Input
-                    input={password}
-                    type='password'
-                    placeholder={msg('landing.reset-password.password.placeholder')}
-                    autoFocus='on'
-                    tabIndex={1}/>
-                <ErrorMessage for={password}/>
-            </div>
-            <div>
-                <label><Msg id='landing.reset-password.password2.label'/></label>
-                <Input
-                    input={password2}
-                    type='password'
-                    placeholder={msg('landing.reset-password.password2.placeholder')}
-                    tabIndex={2}/>
-                <ErrorMessage for={[password2, 'passwordsMatch']}/>
-            </div>
+            <Input
+                label={msg('landing.reset-password.username.label')}
+                input={username}
+                disabled={true}
+                errorMessage
+            />
+            <Input
+                label={msg('landing.reset-password.password.label')}
+                input={password}
+                type='password'
+                placeholder={msg('landing.reset-password.password.placeholder')}
+                autoFocus='on'
+                tabIndex={1}
+                errorMessage
+            />
+            <Input
+                label={msg('landing.reset-password.password2.label')}
+                input={password2}
+                type='password'
+                placeholder={msg('landing.reset-password.password2.placeholder')}
+                tabIndex={2}
+                errorMessage={[password2, 'passwordsMatch']}
+            />
 
             <SubmitButton
                 icon='sign-in-alt'

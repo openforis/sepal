@@ -3,7 +3,7 @@ import React from 'react'
 import UnstyledSelectionList from 'widget/unstyledSelectionList'
 import styles from './selectionList.module.css'
 
-const SelectionList = (props) =>
+const SelectionList = props =>
     <UnstyledSelectionList styles={styles} {...props}/>
 
 SelectionList.propTypes = {

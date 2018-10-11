@@ -1,6 +1,6 @@
+import {googleMap, sepalMap} from './map'
 import {map} from 'rxjs/operators'
 import {of} from 'rxjs'
-import {sepalMap, googleMap} from './map'
 import _ from 'lodash'
 import ee from 'earthengine-api'
 

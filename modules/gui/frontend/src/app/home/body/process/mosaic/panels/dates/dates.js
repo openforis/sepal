@@ -1,7 +1,7 @@
-import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {ErrorMessage, Field, Input, InputGroup, Label, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import DatePicker from 'widget/datePicker'
 import PanelButtons from 'widget/panelButtons'
@@ -13,11 +13,11 @@ import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
-const minStartDate = (targetDate) => parseDate(targetDate).subtract(1, 'year').add(1, 'days')
-const maxStartDate = (targetDate) => parseDate(targetDate)
+const minStartDate = targetDate => parseDate(targetDate).subtract(1, 'year').add(1, 'days')
+const maxStartDate = targetDate => parseDate(targetDate)
 
-const minEndDate = (targetDate) => parseDate(targetDate).add(1, 'days')
-const maxEndDate = (targetDate) => parseDate(targetDate).add(1, 'years')
+const minEndDate = targetDate => parseDate(targetDate).add(1, 'days')
+const maxEndDate = targetDate => parseDate(targetDate).add(1, 'years')
 
 const fields = {
     advanced: new Field(),
@@ -85,8 +85,8 @@ class Dates extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId, inputs: {targetYear, targetDate}} = props
-        targetYear.onChange((yearString) => this.handleYearChange(yearString))
-        targetDate.onChange((dateString) => this.handleDateChange(dateString))
+        targetYear.onChange(yearString => this.handleYearChange(yearString))
+        targetDate.onChange(dateString => this.handleDateChange(dateString))
         this.recipeActions = RecipeActions(recipeId)
     }
 
@@ -141,49 +141,54 @@ class Dates extends React.Component {
         const {inputs: {targetDate, seasonStart, seasonEnd, yearsBefore, yearsAfter}} = this.props
         return (
             <div className={styles.advancedLayout}>
-                <Label
-                    className={styles.targetDateLabel}
-                    msg={msg('process.mosaic.panel.dates.form.targetDate.label')}
-                    tooltip={msg('process.mosaic.panel.dates.form.targetDate.tooltip')}
-                    tooltipPlacement='topLeft'/>
-                <div className={styles.targetDateInput}>
+
+                <div className={styles.yearsBefore}>
+                    <Input
+                        label={msg('process.mosaic.panel.dates.form.years.before')}
+                        type='number'
+                        input={yearsBefore}
+                        maxLength={2}
+                        min={0}
+                        max={99}
+                    />
+                </div>
+
+                <div className={styles.yearsAfter}>
+                    <Input
+                        label={msg('process.mosaic.panel.dates.form.years.after')}
+                        type='number'
+                        input={yearsAfter}
+                        maxLength={2}
+                        min={0}
+                        max={99}
+                    />
+                </div>
+
+                <div className={styles.targetDate}>
                     <DatePicker
+                        label={msg('process.mosaic.panel.dates.form.targetDate.label')}
+                        tooltip={msg('process.mosaic.panel.dates.form.targetDate.tooltip')}
+                        tooltipPlacement='topLeft'
                         input={targetDate}
                         startDate={'1982-08-22'}
-                        endDate={moment().format(DATE_FORMAT)}/>
-                    <ErrorMessage for={targetDate}/>
+                        endDate={moment().format(DATE_FORMAT)}
+                        errorMessage
+                    />
                 </div>
 
-                <Label
-                    className={styles.yearsLabel}
-                    msg={msg('process.mosaic.panel.dates.form.years.label')}
-                    tooltip={msg('process.mosaic.panel.dates.form.years.tooltip')}
-                    tooltipPlacement='topLeft'/>
-                <div className={styles.yearsInput}>
-                    <div>
-                        <Input type='number' input={yearsBefore} maxLength={2} min={0} max={99}/>
-                        &nbsp;
-                        <Msg id='process.mosaic.panel.dates.form.years.before'/>
-                    </div>
-                    <div>
-                        <Input type='number' input={yearsAfter} maxLength={2} min={0} max={99}/>
-                        &nbsp;
-                        <Msg id='process.mosaic.panel.dates.form.years.after'/>
-                    </div>
-                    <ErrorMessage for={[yearsBefore, yearsAfter]}/>
+                <div className={styles.season}>
+                    {/* <Label
+                        className={styles.seasonLabel}
+                        msg={msg('process.mosaic.panel.dates.form.season.label')}
+                        tooltip={msg('process.mosaic.panel.dates.form.season.tooltip')}
+                        tooltipPlacement='topLeft'/> */}
+                    <SeasonSelect
+                        startDate={seasonStart}
+                        endDate={seasonEnd}
+                        centerDate={targetDate}
+                        disabled={targetDate.isInvalid()}
+                        className={styles.seasonInput}/>
                 </div>
-
-                <Label
-                    className={styles.seasonLabel}
-                    msg={msg('process.mosaic.panel.dates.form.season.label')}
-                    tooltip={msg('process.mosaic.panel.dates.form.season.tooltip')}
-                    tooltipPlacement='topLeft'/>
-                <SeasonSelect
-                    startDate={seasonStart}
-                    endDate={seasonEnd}
-                    centerDate={targetDate}
-                    disabled={targetDate.isInvalid()}
-                    className={styles.seasonInput}/>
             </div>
         )
     }
@@ -192,29 +197,24 @@ class Dates extends React.Component {
         const {inputs: {targetYear}} = this.props
         return (
             <div className={styles.simpleLayout}>
-                <Label
-                    className={styles.yearLabel}
-                    msg={msg('process.mosaic.panel.dates.form.targetYear.label')}
+                <DatePicker
+                    label={msg('process.mosaic.panel.dates.form.targetYear.label')}
                     tooltip={msg('process.mosaic.panel.dates.form.targetYear.tooltip')}
-                    tooltipPlacement='topRight'/>
-                <div className={styles.targetDateInput}>
-                    <DatePicker
-                        input={targetYear}
-                        startDate={moment('1982-08-22', DATE_FORMAT)}
-                        endDate={moment()}
-                        resolution='year'/>
-                    <ErrorMessage for={targetYear}/>
-                </div>
-
+                    tooltipPlacement='top'
+                    input={targetYear}
+                    startDate={moment('1982-08-22', DATE_FORMAT)}
+                    endDate={moment()}
+                    resolution='year'/>
+                <ErrorMessage for={targetYear}/>
             </div>
         )
     }
 }
 
-const parseDate = (dateString) =>
+const parseDate = dateString =>
     moment(dateString, 'YYYY-MM-DD', true)
 
-const parseYear = (dateString) =>
+const parseYear = dateString =>
     moment(dateString, 'YYYY', true)
 
 Dates.propTypes = {
@@ -223,7 +223,7 @@ Dates.propTypes = {
 
 export default form({fields, mapStateToProps})(Dates)
 
-const valuesToModel = (values) => {
+const valuesToModel = values => {
     const DATE_FORMAT = 'YYYY-MM-DD'
     if (values.advanced)
         return {

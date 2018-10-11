@@ -6,7 +6,7 @@ import {subscribe} from 'store'
 import Http from 'http-client'
 
 let googleTokens = null
-subscribe('user.currentUser.googleTokens', (tokens) => googleTokens = tokens)
+subscribe('user.currentUser.googleTokens', tokens => googleTokens = tokens)
 
 export const setFusionTableLayer = (
     {
@@ -59,7 +59,7 @@ export const loadFusionTableColumns$ = (tableId, {includedTypes, excludedTypes})
     )
 }
 
-const errorKey = (error) => {
+const errorKey = error => {
     switch(error.code) {
     case 401: return 'fusionTable.unauthorized'
     case 404: return 'fusionTable.notFound'
@@ -114,13 +114,13 @@ class FusionTableLayer {
             return of(this)
         const eachLatLng = (o, callback) => {
             if (Array.isArray(o))
-                o.forEach((o) => callback(new google.maps.LatLng(o[1], o[0])))
+                o.forEach(o => callback(new google.maps.LatLng(o[1], o[0])))
             else {
-                const property = ['geometries', 'geometry', 'coordinates'].find((p) => p in o)
+                const property = ['geometries', 'geometry', 'coordinates'].find(p => p in o)
                 let value = property && o[property]
                 if (!Array.isArray(value))
                     value = [value]
-                value.forEach((o) => eachLatLng(o, callback))
+                value.forEach(o => eachLatLng(o, callback))
             }
         }
         return queryFusionTable$(`
@@ -128,13 +128,13 @@ class FusionTableLayer {
             FROM ${this.tableId} 
             WHERE '${this.keyColumn}' = '${this.key}'
         `).pipe(
-            map((e) => {
+            map(e => {
                 const googleBounds = new google.maps.LatLngBounds()
                 if (!e.response.rows[0])
                     throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.tableId}`)
                 try {
-                    e.response.rows[0].forEach((o) =>
-                        eachLatLng(o, (latLng) => googleBounds.extend(latLng))
+                    e.response.rows[0].forEach(o =>
+                        eachLatLng(o, latLng => googleBounds.extend(latLng))
                     )
                     this.bounds = fromGoogleBounds(googleBounds)
                     return this.bounds

@@ -66,7 +66,7 @@ CompositeOptions.propTypes = {
 
 export default form({fields, mapStateToProps})(CompositeOptions)
 
-const valuesToModel = (values) => ({
+const valuesToModel = values => ({
     ...values
 })
 

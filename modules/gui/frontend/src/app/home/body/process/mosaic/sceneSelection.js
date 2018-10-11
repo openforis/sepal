@@ -171,7 +171,7 @@ class SceneSelection extends React.Component {
     }
 
     widthUpdated(width) {
-        this.setState((prevState) => ({...prevState, width}))
+        this.setState(prevState => ({...prevState, width}))
     }
 }
 

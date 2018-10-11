@@ -22,9 +22,13 @@
 .grid {
     display: grid;
     grid-template-areas: 
+        "name status ib  ib  sb  sb  st  st "
+        "name status ibq ibu sbq sbu stq stu";
+    grid-template-columns: 4fr 1fr repeat(6, 1fr);
+    /* grid-template-areas: 
         "name username status ib  ib  sb  sb  st  st "
         "name username status ibq ibu sbq sbu stq stu";
-    grid-template-columns: 3fr 1.5fr 1fr repeat(6, 1fr);
+    grid-template-columns: 3fr 1.5fr 1fr repeat(6, 1fr); */
     grid-template-rows: auto;
     column-gap: 1rem;
     width: 100%;

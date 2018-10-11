@@ -2,7 +2,7 @@ import NumberFormat from 'react-number-format'
 import React from 'react'
 import moment from 'moment'
 
-const integer = (value) => decimal(value, 0)
+const integer = value => decimal(value, 0)
 
 const decimal = (value, decimals = 2) =>
     <NumberFormat
@@ -68,13 +68,13 @@ const percent = (part, total, decimals = 2) =>
         fixedDecimalScale={true}
         suffix={'%'}/>
 
-const fullDateTime = (date) =>
+const fullDateTime = date =>
     moment(date).format('ddd, DD MMM YYYY, hh:mm:ss')
 
-const fullDate = (date) =>
+const fullDate = date =>
     moment(date).format('ddd, DD MMM YYYY')
 
-const date = (date) =>
+const date = date =>
     moment(date).format('DD MMM YYYY')
 
 export default {

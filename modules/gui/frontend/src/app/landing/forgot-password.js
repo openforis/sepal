@@ -1,4 +1,4 @@
-import {ErrorMessage, Field, Input, form} from 'widget/form'
+import {Field, Input, form} from 'widget/form'
 import {Link, history} from 'route'
 import {Msg, msg} from 'translate'
 import {SubmitButton} from 'widget/legacyButton'
@@ -30,18 +30,16 @@ export class ForgotPassword extends React.Component {
     render() {
         const {form, inputs: {email}, action} = this.props
         return <form style={styles.form}>
-            <div>
-                <label><Msg id='landing.forgot-password.label'/></label>
-                <Input
-                    input={email}
-                    placeholder={msg('landing.forgot-password.placeholder')}
-                    autoFocus='on'
-                    autoComplete='off'
-                    tabIndex={1}
-                    validate='onBlur'
-                />
-                <ErrorMessage for={email}/>
-            </div>
+            <Input
+                label={msg('landing.forgot-password.label')}
+                input={email}
+                placeholder={msg('landing.forgot-password.placeholder')}
+                autoFocus='on'
+                autoComplete='off'
+                tabIndex={1}
+                validate='onBlur'
+                errorMessage
+            />
 
             <SubmitButton
                 icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in-alt'}
@@ -61,7 +59,7 @@ ForgotPassword.propTypes = {}
 
 export const LoginLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>
-        <Link to='/' tabIndex={tabIndex} onMouseDown={(e) => e.preventDefault()}>
+        <Link to='/' tabIndex={tabIndex} onMouseDown={e => e.preventDefault()}>
             <Icon name='undo' className={styles.forgotPasswordIcon}/>
             <Msg id='landing.forgot-password.cancel-link'/>
         </Link>
@@ -72,7 +70,7 @@ LoginLink.propTypes = {
 
 export const ForgotPasswordLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>
-        <Link to='/forgot-password' tabIndex={tabIndex} onMouseDown={(e) => e.preventDefault()}>
+        <Link to='/forgot-password' tabIndex={tabIndex} onMouseDown={e => e.preventDefault()}>
             <Icon name='question-circle' className={styles.forgotPasswordIcon}/>
             <Msg id='landing.login.forgot-password-link'/>
         </Link>

@@ -5,7 +5,7 @@ import {setPolygonLayer} from './polygonLayer'
 
 export const countryFusionTable = '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU'
 
-export const removeAoiLayer = (contextId) => {
+export const removeAoiLayer = contextId => {
     sepalMap.getContext(contextId).removeLayer('aoi')
 }
 

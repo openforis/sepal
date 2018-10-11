@@ -41,7 +41,7 @@ class Body extends React.Component {
     UNSAFE_componentWillReceiveProps({action, location, requestedApps}) {
         if (action('LOAD_APPS').dispatched && isPathInLocation('/app/sandbox')) {
             const path = location.pathname.replace(/^\/app/, '')
-            const notRunning = !requestedApps.find((app) => path === app.path)
+            const notRunning = !requestedApps.find(app => path === app.path)
             if (notRunning)
                 this.props.asyncActionBuilder('RUN_APP',
                     runApp$(path))
@@ -51,7 +51,7 @@ class Body extends React.Component {
 
     render() {
         const {action, className} = this.props
-        const appSections = this.props.requestedApps.map((app) =>
+        const appSections = this.props.requestedApps.map(app =>
             <Section key={app.path} path={'/app' + app.path} className={styles.app}>
                 <IFrame app={app}/>
             </Section>

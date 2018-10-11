@@ -25,8 +25,8 @@ class PolygonLayer {
                 new google.maps.LatLng(lat, lng)), ...polygonOptions(fill)
         })
         const googleBounds = new google.maps.LatLngBounds()
-        this.layer.getPaths().getArray().forEach((path) =>
-            path.getArray().forEach((latLng) =>
+        this.layer.getPaths().getArray().forEach(path =>
+            path.getArray().forEach(latLng =>
                 googleBounds.extend(latLng)
             ))
         this.bounds = fromGoogleBounds(googleBounds)

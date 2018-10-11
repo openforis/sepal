@@ -1,10 +1,10 @@
-import {ErrorMessage, Field, Input, form} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {Field, Input, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
 import {Subject} from 'rxjs'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
 import ComboBox from 'widget/comboBox'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
@@ -50,7 +50,7 @@ class TrainingData extends React.Component {
                             msg(response.error.key)
                         )
                     return (response.columns || [])
-                        .filter((column) => column.type !== 'LOCATION')
+                        .filter(column => column.type !== 'LOCATION')
                 }),
                 map( columns => columns.map(({name}) => ({value: name, label: name}))),
                 map(columns => {
@@ -96,35 +96,31 @@ class TrainingData extends React.Component {
                 : 'noFusionTable'
         return (
             <React.Fragment>
-                <div>
-                    <label><Msg id='process.classification.panel.trainingData.form.fusionTable.label'/></label>
-                    <Input
-                        autoFocus
-                        input={fusionTable}
-                        placeholder={msg('process.classification.panel.trainingData.form.fusionTable.placeholder')}
-                        spellCheck={false}
-                        onChange={(e) => {
-                            fusionTableColumn.set('')
-                            this.recipeActions.setFusionTableColumns(null).dispatch()
-                            this.fusionTableChanged$.next()
-                            const fusionTableMinLength = 30
-                            if (e && e.target.value.length > fusionTableMinLength)
-                                this.loadFusionTableColumns(e.target.value)
-                        }}
-                    />
-                    <ErrorMessage for={fusionTable}/>
-                </div>
-
-                <div>
-                    <label><Msg id='process.classification.panel.trainingData.form.fusionTableColumn.label'/></label>
-                    <ComboBox
-                        input={fusionTableColumn}
-                        isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
-                        disabled={!columns || columns.length === 0}
-                        placeholder={msg(`process.classification.panel.trainingData.form.fusionTableColumn.placeholder.${columnState}`)}
-                        options={columns || []}/>
-                    <ErrorMessage for={fusionTableColumn}/>
-                </div>
+                <Input
+                    label={msg('process.classification.panel.trainingData.form.fusionTable.label')}
+                    autoFocus
+                    input={fusionTable}
+                    placeholder={msg('process.classification.panel.trainingData.form.fusionTable.placeholder')}
+                    spellCheck={false}
+                    onChange={e => {
+                        fusionTableColumn.set('')
+                        this.recipeActions.setFusionTableColumns(null).dispatch()
+                        this.fusionTableChanged$.next()
+                        const fusionTableMinLength = 30
+                        if (e && e.target.value.length > fusionTableMinLength)
+                            this.loadFusionTableColumns(e.target.value)
+                    }}
+                    errorMessage
+                />
+                <ComboBox
+                    label={msg('process.classification.panel.trainingData.form.fusionTableColumn.label')}
+                    input={fusionTableColumn}
+                    isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
+                    disabled={!columns || columns.length === 0}
+                    placeholder={msg(`process.classification.panel.trainingData.form.fusionTableColumn.placeholder.${columnState}`)}
+                    options={columns || []}
+                    errorMessage
+                />
             </React.Fragment>
         )
     }
@@ -134,7 +130,7 @@ TrainingData.propTypes = {
     recipeId: PropTypes.string
 }
 
-const valuesToModel = (values) => ({
+const valuesToModel = values => ({
     ...values
 })
 

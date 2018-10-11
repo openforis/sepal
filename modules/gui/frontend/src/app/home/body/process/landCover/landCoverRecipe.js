@@ -4,13 +4,13 @@ import globalActionBuilder from 'action-builder'
 import moment from 'moment'
 
 export {recipePath}
-export const RecipeState = (recipeId) => {
+export const RecipeState = recipeId => {
     const recipeState = GlobalRecipeState(recipeId)
     initRecipe(recipeState())
     return recipeState
 }
 
-export const RecipeActions = (id) => {
+export const RecipeActions = id => {
     const actionBuilder = (name, props) => {
         return globalActionBuilder(name, props)
             .within(recipePath(id))
@@ -59,7 +59,7 @@ export const RecipeActions = (id) => {
     }
 }
 
-const initRecipe = (recipe) => {
+const initRecipe = recipe => {
     if (!recipe || recipe.ui)
         return
 
@@ -94,7 +94,7 @@ const initRecipe = (recipe) => {
     }).dispatch()
 }
 
-export const createComposites = (recipe) => {
+export const createComposites = recipe => {
     api.tasks.submit$({
         operation: 'sepal.landcover.create_composites',
         params: {
@@ -108,7 +108,7 @@ export const createComposites = (recipe) => {
     }).subscribe()
 }
 
-export const createLandCoverMap = (recipe) => {
+export const createLandCoverMap = recipe => {
     api.tasks.submit$({
         operation: 'sepal.landcover.create_land_cover_map',
         params: {

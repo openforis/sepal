@@ -5,7 +5,7 @@ import styles from './selectable.module.css'
 
 export class Select extends React.Component {
     getChildContext() {
-        const focus = (element) => this.elementToFocus = element
+        const focus = element => this.elementToFocus = element
         return {focus: focus.bind(this)}
     }
 

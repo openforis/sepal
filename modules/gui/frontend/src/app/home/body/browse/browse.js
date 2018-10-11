@@ -58,13 +58,13 @@ const mapStateToProps = () => ({
     selected: selected()
 })
 
-const loadFiles$ = (path) => {
+const loadFiles$ = path => {
     return api.files.loadFiles$(path).pipe(
         catchError(() => {
             Notifications.error('files.loading').dispatch()
             return Observable.of([])
         }),
-        map((files) => {
+        map(files => {
             return actionBuilder('LOAD_FILES')
                 .set(['files', 'loaded', path, 'files'], files)
                 .build()
@@ -82,7 +82,7 @@ const removeItem$ = (path, action) => {
     )
 }
 
-const removeFile$ = (path) => {
+const removeFile$ = path => {
     return removeItem$(path, () => {
         const directory = Path.dirname(path)
         const fileName = Path.basename(path)
@@ -92,7 +92,7 @@ const removeFile$ = (path) => {
     })
 }
 
-const removeDirectory$ = (path) => {
+const removeDirectory$ = path => {
     return removeItem$(path, () => {
         const directory = Path.dirname(path)
         const fileName = Path.basename(path)
@@ -129,8 +129,8 @@ class Browse extends React.Component {
 
     removeSelected() {
         const {files, directories} = this.selectedItems()
-        files.forEach((file) => this.removeFile(file))
-        directories.forEach((directory) => this.removeDirectory(directory))
+        files.forEach(file => this.removeFile(file))
+        directories.forEach(directory => this.removeDirectory(directory))
         this.clearSelection()
     }
 
@@ -251,7 +251,7 @@ class Browse extends React.Component {
     }
 
     renderFileIcon(path) {
-        const isImage = (path) => ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
+        const isImage = path => ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
         return (
             <span className={styles.icon}>
                 <Icon name={isImage(path) ? 'file-image' : 'file'}/>
@@ -270,7 +270,7 @@ class Browse extends React.Component {
     renderDirectoryIcon(path) {
         const directory = this.props.loaded[path]
         const expanded = directory && !directory.collapsed
-        const toggleDirectory = (e) => {
+        const toggleDirectory = e => {
             e.stopPropagation()
             this.toggleDirectory(path)
         }
@@ -293,7 +293,7 @@ class Browse extends React.Component {
     }
 
     renderListItems(path, files) {
-        return files ? files.map((file) => {
+        return files ? files.map(file => {
             const fullPath = Path.join(path, file ? file.name : null)
             return (
                 <li key={file.name}>

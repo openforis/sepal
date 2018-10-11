@@ -1,7 +1,7 @@
-import {Constraint, ErrorMessage, Field, Input, form} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {Constraint, ErrorMessage, Field, Input, Label, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
+import {msg} from 'translate'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -53,7 +53,7 @@ class Auto extends React.Component {
                     statePath={recipePath(recipeId, 'ui')}
                     isActionForm={true}
                     applyLabel={msg('process.mosaic.panel.auto.form.selectScenes')}
-                    onApply={(sceneCount) => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}/>
+                    onApply={sceneCount => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}/>
             </Panel>
         )
     }
@@ -62,27 +62,25 @@ class Auto extends React.Component {
         const {inputs: {min, max}} = this.props
         return (
             <div className={styles.form}>
-                <label><Msg id='process.mosaic.panel.auto.form.sceneCount'/></label>
+                <Label msg={msg('process.mosaic.panel.auto.form.sceneCount')}/>
                 <div className={styles.sceneCount}>
-                    <div>
-                        <label><Msg id='process.mosaic.panel.auto.form.min.label'/></label>
-                        <Input
-                            type="number"
-                            min={0}
-                            max={999}
-                            step={1}
-                            autoFocus
-                            input={min}/>
-                    </div>
-                    <div>
-                        <label><Msg id='process.mosaic.panel.auto.form.max.label'/></label>
-                        <Input
-                            type="number"
-                            min={0}
-                            max={999}
-                            step={1}
-                            input={max}/>
-                    </div>
+                    <Input
+                        label={msg('process.mosaic.panel.auto.form.min.label')}
+                        type="number"
+                        min={0}
+                        max={999}
+                        step={1}
+                        autoFocus
+                        input={min}
+                    />
+                    <Input
+                        label={msg('process.mosaic.panel.auto.form.max.label')}
+                        type="number"
+                        min={0}
+                        max={999}
+                        step={1}
+                        input={max}
+                    />
                 </div>
                 <ErrorMessage for={[min, max, 'minLessThanMax']}/>
             </div>

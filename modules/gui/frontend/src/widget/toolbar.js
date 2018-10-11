@@ -109,7 +109,7 @@ export class PanelButton extends React.Component {
         const {name, icon, label, tooltip, disabled, onClick, children} = this.props
         return (
             <Context.Consumer>
-                {(toolbarProps) => {
+                {toolbarProps => {
                     this.toolbarProps = toolbarProps
                     const {panelContainer, top, right, bottom, left, modal, selectedPanel} = this.toolbarProps
                     const selected = selectedPanel === name
@@ -121,7 +121,7 @@ export class PanelButton extends React.Component {
                             label={label}
                             tooltip={tooltip}
                             className={[styles.panelButton, selected ? styles.selected : null].join(' ')}
-                            onClick={(e) => {
+                            onClick={e => {
                                 this.select()
                                 onClick && onClick(e)
                             }}/>

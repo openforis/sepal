@@ -1,7 +1,7 @@
-import {Field, form} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {Field, Label, form} from 'widget/form'
 import {Panel, PanelContent} from 'widget/panel'
 import {PropTypes} from 'prop-types'
+import {msg} from 'translate'
 import {stopUserSession$, updateUserSession$} from 'user'
 import Notifications from 'app/notifications'
 import PanelButtons from 'widget/panelButtons'
@@ -66,7 +66,7 @@ class UserSession extends React.Component {
             <Panel className={styles.panel} inline>
                 <PanelContent>
                     <div>
-                        <label><Msg id='user.userSession.form.keepAlive.label'/></label>
+                        <Label msg={msg('user.userSession.form.keepAlive.label')}/>
                         <Slider
                             input={keepAlive}
                             minValue={0}

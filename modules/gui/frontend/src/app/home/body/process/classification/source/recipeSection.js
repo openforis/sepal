@@ -1,5 +1,4 @@
-import {ErrorMessage} from 'widget/form'
-import {Msg} from 'translate'
+import {ErrorMessage, Label} from 'widget/form'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import ComboBox from 'widget/comboBox'
@@ -21,7 +20,7 @@ class RecipeSection extends React.Component {
         }))
         return (
             <React.Fragment>
-                <label><Msg id='process.classification.panel.source.form.recipe.label'/></label>
+                <Label msg={msg('process.classification.panel.source.form.recipe.label')}/>
                 <ComboBox
                     input={recipe}
                     placeholder={msg('process.classification.panel.source.form.recipe.placeholder')}

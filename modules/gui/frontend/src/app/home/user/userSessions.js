@@ -5,7 +5,7 @@ import UserSession from './userSession'
 import format from 'format'
 import styles from './userSessions.module.css'
 
-const mapStateToProps = (state) => {
+const mapStateToProps = state => {
     return {
         sessions: (state.user && state.user.currentUserReport && state.user.currentUserReport.sessions) || [],
         selectedSession: state.ui && state.ui.selectedSession

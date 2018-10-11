@@ -19,11 +19,11 @@ export const SceneSelectionType = Object.freeze({
 export const isRecipeOpen = (recipeId) =>
     !!ParentRecipeState(recipeId)
 
-export const RecipeState = (recipeId) => {
+export const RecipeState = recipeId => {
     const recipeState = ParentRecipeState(recipeId)
     if (!recipeState)
         return null
-    const get = (path) => recipeState(path)
+    const get = path => recipeState(path)
     get.dateRange = () => {
         const dates = get('model.dates')
         const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
@@ -33,11 +33,11 @@ export const RecipeState = (recipeId) => {
             seasonEnd.add(dates.yearsAfter, 'years')
         ]
     }
-    get.isSourceInDateRange = (sourceId) => {
+    get.isSourceInDateRange = sourceId => {
         const [from, to] = get.dateRange()
         return isSourceInDateRange(sourceId, from, to)
     }
-    get.isDataSetInDateRange = (dataSetId) => {
+    get.isDataSetInDateRange = dataSetId => {
         const [from, to] = get.dateRange()
         return isDataSetInDateRange(dataSetId, from, to)
     }
@@ -50,7 +50,7 @@ export const RecipeState = (recipeId) => {
     return get
 }
 
-export const RecipeActions = (id) => {
+export const RecipeActions = id => {
     const actionBuilder = (name, props) => {
         return globalActionBuilder(name, props)
             .within(recipePath(id))
@@ -174,7 +174,7 @@ export const RecipeActions = (id) => {
     }
 }
 
-const initRecipe = (recipeState) => {
+const initRecipe = recipeState => {
     if (!recipeState || recipeState.ui)
         return
 
@@ -223,7 +223,7 @@ const initRecipe = (recipeState) => {
     }).dispatch()
 }
 
-const submitRetrieveRecipeTask = (recipe) => {
+const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', destination], {name})
@@ -252,13 +252,13 @@ export const inDateRange = (date, dates) => {
         : doy >= fromDoy && doy < toDoy
 }
 
-const fromDate = (dates) =>
+const fromDate = dates =>
     moment(dates.seasonStart, DATE_FORMAT).subtract(dates.yearsBefore, 'years').format(DATE_FORMAT)
 
-const toDate = (dates) =>
+const toDate = dates =>
     moment(dates.seasonEnd, DATE_FORMAT).add(dates.yearsAfter, 'years').format(DATE_FORMAT)
 
-const dayOfYearIgnoringLeapDay = (date) => {
+const dayOfYearIgnoringLeapDay = date => {
     date = moment(date)
     let doy = date.dayOfYear()
     if (date.isLeapYear() && doy > 60)

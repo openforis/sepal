@@ -1,7 +1,7 @@
 import {Constraint, ErrorMessage, Field, Label, form} from 'widget/form'
-import {Msg, msg} from 'translate'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
+import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
@@ -80,8 +80,9 @@ class Period extends React.Component {
                         input={startYear}
                         startDate={moment('1982-01-01', DATE_FORMAT)}
                         endDate={moment()}
-                        resolution='year'/>
-                    <ErrorMessage for={startYear}/>
+                        resolution='year'
+                        errorMessage
+                    />
                 </div>
                 <div className={styles.endYearLabel}>
                     <Label msg={msg('process.landCover.panel.period.endYear.label')}/>
@@ -91,8 +92,9 @@ class Period extends React.Component {
                         input={endYear}
                         startDate={moment('1983-01-01', DATE_FORMAT)}
                         endDate={moment()}
-                        resolution='year'/>
-                    <ErrorMessage for={endYear}/>
+                        resolution='year'
+                        errorMessage
+                    />
                 </div>
                 <div className={styles.error}>
                     <ErrorMessage for={[startYear, endYear, 'startBeforeEnd']}/>
@@ -108,7 +110,7 @@ Period.propTypes = {
 
 export default form({fields, constraints, mapStateToProps})(Period)
 
-const valuesToModel = (values) => ({
+const valuesToModel = values => ({
     startYear: +values.startYear,
     endYear: +values.endYear,
 })

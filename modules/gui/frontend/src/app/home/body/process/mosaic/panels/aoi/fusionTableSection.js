@@ -1,10 +1,10 @@
-import {ErrorMessage, Input} from 'widget/form'
-import {Msg, msg} from 'translate'
+import {Input} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
 import {connect} from 'store'
 import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import ComboBox from 'widget/comboBox'
@@ -53,10 +53,10 @@ class FusionTableSection extends React.Component {
                     FROM ${this.props.inputs.fusionTable.value}
                     ORDER BY '${column}' ASC
             `).pipe(
-                map((e) =>
+                map(e =>
                     (e.response.rows || [])
-                        .map((row) => row[0])
-                        .filter((value) => value)
+                        .map(row => row[0])
+                        .filter(value => value)
                 ),
                 map(this.recipe.setFusionTableRows),
                 takeUntil(this.fusionTableColumnChanged$),
@@ -89,61 +89,53 @@ class FusionTableSection extends React.Component {
 
         return (
             <React.Fragment>
-                <div>
-                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.label'/></label>
-                    <Input
-                        autoFocus
-                        input={fusionTable}
-                        placeholder={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.placeholder')}
-                        spellCheck={false}
-                        onChange={(e) => {
-                            fusionTableColumn.set('')
-                            fusionTableRow.set('')
-                            this.recipe.setFusionTableColumns(null).dispatch()
-                            this.recipe.setFusionTableRows(null).dispatch()
-                            this.fusionTableChanged$.next()
-                            this.fusionTableColumnChanged$.next()
-                            this.fusionTableRowChanged$.next()
-                            const fusionTableMinLength = 30
-                            if (e && e.target.value.length > fusionTableMinLength)
-                                this.loadFusionTableColumns(e.target.value)
-                        }}
-                    />
-                    <ErrorMessage for={fusionTable}/>
-                </div>
-
-                <div>
-                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.fusionTable.column.label'/></label>
-                    <ComboBox
-                        input={fusionTableColumn}
-                        isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
-                        disabled={!columns || columns.length === 0}
-                        placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.column.placeholder.${columnState}`)}
-                        options={(columns || []).map(({name}) => ({value: name, label: name}))}
-                        onChange={(e) => {
-                            fusionTableRow.set('')
-                            this.recipe.setFusionTableRows(null).dispatch()
-                            this.fusionTableColumnChanged$.next()
-                            this.fusionTableRowChanged$.next()
-                            if (e && e.value)
-                                this.loadFusionTableRows(e.value)
-                        }}
-                    />
-                    <ErrorMessage for={fusionTableColumn}/>
-                </div>
-
-                <div>
-                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.fusionTable.row.label'/></label>
-                    <ComboBox
-                        input={fusionTableRow}
-                        isLoading={action('LOAD_FUTION_TABLE_ROWS').dispatching}
-                        disabled={!rows}
-                        placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.row.placeholder.${rowState}`)}
-                        options={(rows || []).map((value) => ({value, label: value}))}
-                        onChange={() => this.fusionTableRowChanged$.next()}
-                    />
-                    <ErrorMessage for={fusionTableRow}/>
-                </div>
+                <Input
+                    label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.label')}
+                    autoFocus
+                    input={fusionTable}
+                    placeholder={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.placeholder')}
+                    spellCheck={false}
+                    onChange={e => {
+                        fusionTableColumn.set('')
+                        fusionTableRow.set('')
+                        this.recipe.setFusionTableColumns(null).dispatch()
+                        this.recipe.setFusionTableRows(null).dispatch()
+                        this.fusionTableChanged$.next()
+                        this.fusionTableColumnChanged$.next()
+                        this.fusionTableRowChanged$.next()
+                        const fusionTableMinLength = 30
+                        if (e && e.target.value.length > fusionTableMinLength)
+                            this.loadFusionTableColumns(e.target.value)
+                    }}
+                    errorMessage
+                />
+                <ComboBox
+                    label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.column.label')}
+                    input={fusionTableColumn}
+                    isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
+                    disabled={!columns || columns.length === 0}
+                    placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.column.placeholder.${columnState}`)}
+                    options={(columns || []).map(({name}) => ({value: name, label: name}))}
+                    onChange={e => {
+                        fusionTableRow.set('')
+                        this.recipe.setFusionTableRows(null).dispatch()
+                        this.fusionTableColumnChanged$.next()
+                        this.fusionTableRowChanged$.next()
+                        if (e && e.value)
+                            this.loadFusionTableRows(e.value)
+                    }}
+                    errorMessage
+                />
+                <ComboBox
+                    label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.row.label')}
+                    input={fusionTableRow}
+                    isLoading={action('LOAD_FUTION_TABLE_ROWS').dispatching}
+                    disabled={!rows}
+                    placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.row.placeholder.${rowState}`)}
+                    options={(rows || []).map(value => ({value, label: value}))}
+                    onChange={() => this.fusionTableRowChanged$.next()}
+                    errorMessage
+                />
             </React.Fragment>
         )
     }
@@ -164,7 +156,7 @@ class FusionTableSection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: (layer) => this.updateBounds(layer.bounds)
+            onInitialized: layer => this.updateBounds(layer.bounds)
         })
     }
 }

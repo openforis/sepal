@@ -3,7 +3,7 @@ import {dispatchable} from 'store'
 import {msg} from 'translate'
 import ReactNotifications, * as notifications from 'react-notification-system-redux'
 
-const mapStateToProps = (state) => {
+const mapStateToProps = state => {
     return ({
         notifications: state.notifications,
         style: {
@@ -34,7 +34,7 @@ const toOpts = ({level, messageId, values = {}, message, autoDismiss = 5}) => ({
     uid: null
 })
 
-const errorMessage = (error) => {
+const errorMessage = error => {
     if (!error) return null
     const connectionError = error.request && error.status === 0
     return connectionError

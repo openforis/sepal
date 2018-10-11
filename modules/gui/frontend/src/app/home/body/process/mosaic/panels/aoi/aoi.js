@@ -108,7 +108,7 @@ class Aoi extends React.Component {
                 <PanelButtons
                     form={form}
                     statePath={recipePath(recipeId, 'ui')}
-                    onApply={(values) => this.onApply(values)}/>
+                    onApply={values => this.onApply(values)}/>
             </Panel>
         )
     }
@@ -135,7 +135,7 @@ Aoi.propTypes = {
 
 export default form({fields, mapStateToProps})(Aoi)
 
-const valuesToModel = (values) => {
+const valuesToModel = values => {
     switch (values.section) {
     case 'COUNTRY':
         return {

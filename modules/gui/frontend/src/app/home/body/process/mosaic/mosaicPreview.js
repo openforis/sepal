@@ -57,7 +57,7 @@ class MosaicPreview extends React.Component {
                         <div className={styles.retry}>
                             <a
                                 href=''
-                                onClick={(e) => {
+                                onClick={e => {
                                     e.preventDefault()
                                     this.reload()
                                 }}>
@@ -108,7 +108,7 @@ class MosaicPreview extends React.Component {
                 bounds: previewRequest.recipe.model.aoi.bounds,
                 mapId$: api.gee.preview$(previewRequest),
                 props: previewRequest,
-                onProgress: (tiles) => this.onProgress(tiles)
+                onProgress: tiles => this.onProgress(tiles)
             })
             : null
         const context = sepalMap.getContext(recipeId)
