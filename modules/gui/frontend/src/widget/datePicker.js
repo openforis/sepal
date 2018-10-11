@@ -2,6 +2,7 @@ import {Input, Label} from 'widget/form'
 import {Subject, animationFrameScheduler, interval} from 'rxjs'
 import {debounceTime, filter, first, map, scan, skip, switchMap, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
@@ -68,8 +69,17 @@ class DatePicker extends React.Component {
         ) : null
     }
 
+    portalWrapper(children) {
+        const {portal} = this.props
+        return portal ? (
+            <Portal container={portal}>
+                {children}
+            </Portal>
+        ) : children
+    }
+
     renderDatePicker() {
-        const {input, startDate, endDate, resolution = DAY, className, onChange} = this.props
+        const {input, startDate, endDate, resolution = DAY, className, onChange, portal} = this.props
         const {edit} = this.state
         return (
             <div className={className}>
@@ -93,15 +103,16 @@ class DatePicker extends React.Component {
                                 this.editDate(!edit)
                             }}/>
                     </div>
-                    {edit
-                        ? <DatePickerControl
+                    {edit ? (
+                        <DatePickerControl
                             startDate={startDate}
                             endDate={endDate}
                             input={input}
                             resolution={resolution}
                             onSelect={() => this.editDate(false)}
+                            portal={portal}
                         />
-                        : null}
+                    ) : null}
                 </div>
             </div>
         )
@@ -122,6 +133,7 @@ DatePicker.propTypes = {
     date: PropTypes.object,
     endDate: PropTypes.any,
     input: PropTypes.object,
+    portal: PropTypes.object,
     resolution: PropTypes.string,
     startDate: PropTypes.any,
     onChange: PropTypes.func
@@ -276,6 +288,7 @@ export class DatePickerControl extends React.Component {
                 key={value}
                 onMouseDown={e => e.preventDefault()}
                 onClick={e => select(e, item, value)}>
+                {/* onMouseDown={e => select(e, item, value)}> */}
                 {displayValue}
             </li>
         )
@@ -386,6 +399,7 @@ DatePickerControl.propTypes = {
     date: PropTypes.object,
     endDate: PropTypes.any,
     input: PropTypes.object,
+    portal: PropTypes.object,
     resolution: PropTypes.string,
     startDate: PropTypes.any,
     onSelect: PropTypes.func
