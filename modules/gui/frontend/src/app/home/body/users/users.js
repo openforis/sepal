@@ -198,7 +198,7 @@ class Users extends React.Component {
     renderSearch() {
         return (
             <input
-                type="text"
+                type='text'
                 ref={this.search}
                 value={this.state.filter}
                 placeholder={'filter results'}
