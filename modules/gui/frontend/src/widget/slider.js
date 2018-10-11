@@ -1,7 +1,7 @@
 import {Label} from 'widget/form'
 import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
 import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
-import {range} from 'collections'
+// import {range} from 'collections'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -12,21 +12,50 @@ import _ from 'lodash'
 import styles from './slider.module.css'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
-const scale = (value, {from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
-const normalize = (value, range) => scale(value, {from: range, to: {min: 0, max: 1}})
 const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
+
+const toLogScale = (value, min, max) => {
+    const offset = min - 1
+    return Math.log(value - offset) / Math.log(max - offset)
+}
+
+const fromLogScale = (value, min, max) => {
+    const offset = min - 1
+    return Math.exp(value * Math.log(max - offset)) + offset
+}
+
+const toLinearScale = (value, min, max) => {
+    const offset = min
+    return (value - offset) / (max - offset)
+}
+
+const fromLinearScale = (value, min, max) => {
+    const offset = min
+    return value * (max - offset) + offset
+}
 
 class SliderContainer extends React.Component {
     clickTarget = React.createRef()
+
+    normalize(value) {
+        const {logScale, minValue, maxValue} = this.props
+        return logScale ? toLogScale(value, minValue, maxValue) : toLinearScale(value, minValue, maxValue)
+    }
+
+    denormalize(value) {
+        const {logScale, minValue, maxValue} = this.props
+        return logScale ? fromLogScale(value, minValue, maxValue) : fromLinearScale(value, minValue, maxValue)
+    }
     
     ticks() {
         const {ticks = 10, width} = this.props
-        const equidistantTicks = ticks => range(0, ticks)
-            .map(i => scale(i / (ticks - 1), {from: {min: 0, max: 1}, to: {min: this.props.minValue, max: this.props.maxValue}}))
-        return (Array.isArray(ticks) ? ticks : equidistantTicks(Math.max(2, ticks))).map(tick => [
-            width * normalize(tick, {min: this.props.minValue, max: this.props.maxValue}),
-            tick
-        ])
+        return ticks.map(tick => [width * this.normalize(tick), tick])
+        // const equidistantTicks = ticks => range(0, ticks)
+        //     .map(i => scale(i / (ticks - 1), {from: {min: 0, max: 1}, to: {min: this.props.minValue, max: this.props.maxValue}}))
+        // return (Array.isArray(ticks) ? ticks : equidistantTicks(Math.max(2, ticks))).map(tick => [
+        //     width * normalize(tick, {min: this.props.minValue, max: this.props.maxValue}),
+        //     tick
+        // ])
     }
 
     renderTick([position, value]) {
@@ -63,7 +92,9 @@ class SliderContainer extends React.Component {
                 width={width}
                 ticks={ticks}
                 range={range}
-                clickTarget={this.clickTarget}/>
+                clickTarget={this.clickTarget}
+                normalize={this.normalize.bind(this)}
+                denormalize={this.denormalize.bind(this)}/>
         )
     }
 
@@ -280,17 +311,21 @@ class SliderDynamics extends React.Component {
     }
 
     toPosition(value) {
-        return scale(value, {
-            from: {min: this.props.minValue, max: this.props.maxValue},
-            to: {min: 0, max: this.props.width}
-        })
+        const {normalize, width} = this.props
+        return normalize(value) * width
+        // return scale(value, {
+        //     from: {min: this.props.minValue, max: this.props.maxValue},
+        //     to: {min: 0, max: this.props.width}
+        // })
     }
 
     toValue(position) {
-        return scale(position, {
-            from: {min: 0, max: this.props.width},
-            to: {min: this.props.minValue, max: this.props.maxValue}
-        })
+        const {denormalize, width} = this.props
+        return denormalize(position / width)
+        // return scale(position, {
+        //     from: {min: 0, max: this.props.width},
+        //     to: {min: this.props.minValue, max: this.props.maxValue}
+        // })
     }
 
     clampPosition(position) {
@@ -348,6 +383,8 @@ class SliderDynamics extends React.Component {
 }
 
 SliderDynamics.propTypes = {
+    denormalize: PropTypes.func.isRequired,
+    normalize: PropTypes.func.isRequired,
     input: PropTypes.object,
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
@@ -370,7 +407,7 @@ export default class Slider extends React.Component {
     }
 
     renderSlider() {
-        const {input, minValue, maxValue, ticks, range = 'left', info, disabled} = this.props
+        const {input, minValue, maxValue, ticks, logScale, range = 'left', info, disabled} = this.props
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
@@ -385,6 +422,7 @@ export default class Slider extends React.Component {
                         maxValue={maxValue !== undefined ? maxValue : 100}
                         ticks={ticks}
                         range={range}
+                        logScale={logScale}
                         info={info}
                         width={this.state.width}
                         disabled={disabled}/>
@@ -431,11 +469,12 @@ Slider.propTypes = {
         PropTypes.func
     ]),
     label: PropTypes.string,
+    logScale: PropTypes.any,
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
     range: PropTypes.oneOf(['none', 'left', 'right']),
     ticks: PropTypes.oneOfType([
-        PropTypes.number,
+        // PropTypes.number,
         PropTypes.array
     ]),
     tooltip: PropTypes.string,

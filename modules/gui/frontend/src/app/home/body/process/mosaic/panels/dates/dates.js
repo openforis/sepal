@@ -157,9 +157,10 @@ class Dates extends React.Component {
                         }
                         input={yearsBefore}
                         minValue={0}
-                        maxValue={9}
-                        ticks={10}
+                        maxValue={100}
+                        ticks={[0, 1, 2, 3, 5, 10, 25, 50, 100]}
                         range='left'
+                        logScale
                     />
                 </div>
                 <div className={styles.futureSeasons}>
@@ -171,8 +172,10 @@ class Dates extends React.Component {
                         }
                         input={yearsAfter}
                         minValue={0}
-                        maxValue={9}
+                        maxValue={100}
+                        ticks={[0, 1, 2, 3, 5, 10, 25, 50, 100]}
                         range='left'
+                        logScale
                     />
                 </div>
                 <div className={styles.season}>
