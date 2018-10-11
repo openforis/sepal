@@ -1,3 +1,4 @@
+import {Label} from 'widget/form'
 import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
 import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
 import {range} from 'collections'
@@ -9,7 +10,6 @@ import ReactResizeDetector from 'react-resize-detector'
 import ViewportResizeDetector from 'widget/viewportResizeDetector'
 import _ from 'lodash'
 import styles from './slider.module.css'
-// import lookStyles from '../styles/look.module.css'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 const scale = (value, {from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
@@ -21,12 +21,12 @@ class SliderContainer extends React.Component {
     
     ticks() {
         const {ticks = 10, width} = this.props
-        const equidistantTicks = ticks => range(0, ticks).map(i => i / (ticks - 1))
-        return (Array.isArray(ticks) ? ticks : equidistantTicks(Math.max(2, ticks)))
-            .map(tick => [
-                width * normalize(tick, {min: this.props.minValue, max: this.props.maxValue}),
-                tick
-            ])
+        const equidistantTicks = ticks => range(0, ticks)
+            .map(i => scale(i / (ticks - 1), {from: {min: 0, max: 1}, to: {min: this.props.minValue, max: this.props.maxValue}}))
+        return (Array.isArray(ticks) ? ticks : equidistantTicks(Math.max(2, ticks))).map(tick => [
+            width * normalize(tick, {min: this.props.minValue, max: this.props.maxValue}),
+            tick
+        ])
     }
 
     renderTick([position, value]) {
@@ -400,9 +400,21 @@ export default class Slider extends React.Component {
         ) : null
     }
 
+    renderLabel() {
+        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        return label ? (
+            <Label
+                msg={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+            />
+        ) : null
+    }
+
     render() {
         return (
             <div className={styles.wrapper}>
+                {this.renderLabel()}
                 {this.renderInfo()}
                 {this.renderSlider()}
                 {this.renderDisabledOverlay()}
@@ -418,11 +430,14 @@ Slider.propTypes = {
         PropTypes.string,
         PropTypes.func
     ]),
+    label: PropTypes.string,
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
     range: PropTypes.oneOf(['none', 'left', 'right']),
     ticks: PropTypes.oneOfType([
         PropTypes.number,
         PropTypes.array
-    ])
+    ]),
+    tooltip: PropTypes.string,
+    tooltipPlacement: PropTypes.string
 }
