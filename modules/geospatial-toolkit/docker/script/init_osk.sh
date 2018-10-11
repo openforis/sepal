@@ -14,6 +14,7 @@ cd ${OSK_HOME}
 echo -ne " Getting the Open Foris SAR Toolkit ..."
 git clone https://github.com/openforis/opensarkit
 cd opensarkit
+git fetch
 git checkout s1_fixes
 
 echo "OPENSARKIT=${OSK_HOME}/opensarkit" | tee -a /etc/environment

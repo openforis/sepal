@@ -1,5 +1,5 @@
 import {Msg} from 'translate'
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, RecipeState, isRecipeOpen} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {connect} from 'store'
 import {sepalMap} from '../../../../../map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
@@ -32,7 +32,8 @@ class PolygonSection extends React.Component {
 
     componentWillUnmount() {
         this.disableDrawingMode()
-        this.recipeActions.setLabelsShown(this.wereLabelsShown).dispatch()
+        if (isRecipeOpen(this.props.recipeId))
+            this.recipeActions.setLabelsShown(this.wereLabelsShown).dispatch()
     }
 
     disableDrawingMode() {
