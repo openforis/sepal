@@ -253,12 +253,19 @@
                             "tooltip": "The date in which pixels in the mosaic should ideally come from.",
                             "malformed": "Invalid date"
                         },
-                        "years": {
-                            "label": "Additional years",
-                            "tooltip": "Include data from additional years, from the same time of year.",
-                            "before": "Years before",
-                            "after": "Years after",
-                            "positiveInteger": "Must be a positive integer"
+                        "pastSeasons": {
+                            "label": "Past seasons",
+                            "info": {
+                                "number": "Include {pastSeasons} {pastSeasons, plural, one {season} other {seasons}} from the past",
+                                "none": "Don't include seasons from the past"
+                            }
+                        },
+                        "futureSeasons": {
+                            "label": "Future seasons",
+                            "info": {
+                                "number": "Include {futureSeasons} {futureSeasons, plural, one {season} other {seasons}} from the future",
+                                "none": "Don't include seasons from the future"
+                            }
                         },
                         "season": {
                             "label": "Season",

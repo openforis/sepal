@@ -10,24 +10,26 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
-        'targetDate  season'
-        'yearsBefore .'
-        'yearsAfter  .';
+        'targetDate    .'
+        'season        season'
+        'pastSeasons   pastSeasons'
+        'futureSeasons futureSeasons';
     grid-column-gap: 3rem;
     grid-row-gap: 1rem;
 }
 
 @media (min-width: 576px) {
     .advancedLayout {
-        grid-template-columns: 3rem 1fr 3rem;
-        /* grid-template-areas:
-            'yearsBefore targetDate yearsAfter'
-            'season      season     season    '; */
+        grid-template-columns: 1fr auto 1fr;
         grid-template-areas:
+            'pastSeasons targetDate futureSeasons'
+            'season      season     season    ';
+            /* grid-template-columns: 3rem 1fr 3rem;
+            grid-template-areas:
             'targetDate  targetDate targetDate'
-            'yearsBefore season     yearsAfter';
+            'pastSeasons season     futureSeasons'; */
         grid-column-gap: 3rem;
-        grid-row-gap: 3rem;
+        grid-row-gap: 1rem;
     }
     .targetDate {
         justify-self: center;
@@ -35,10 +37,10 @@
     .seasonLabel {
         display: none;
     }
-    .yearsBefore {
+    .pastSeasons {
         align-self: end;
     }
-    .yearsAfter {
+    .futureSeasons {
         align-self: end;
     }    
 }
@@ -55,12 +57,12 @@
     grid-area: years;
 }
 
-.yearsBefore {
-    grid-area: yearsBefore;
+.pastSeasons {
+    grid-area: pastSeasons;
 }
 
-.yearsAfter {
-    grid-area: yearsAfter;
+.futureSeasons {
+    grid-area: futureSeasons;
 }
 
 .yearsInput {
@@ -84,10 +86,6 @@
 
 .season {
     grid-area: season;
-}
-
-.seasonInput {
-    grid-area: seasonDatePickers;
 }
 
 @media (min-width: 768px) {

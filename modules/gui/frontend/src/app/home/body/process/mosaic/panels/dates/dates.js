@@ -8,6 +8,7 @@ import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SeasonSelect from 'widget/seasonSelect'
+import Slider from 'widget/slider'
 import moment from 'moment'
 import styles from './dates.module.css'
 
@@ -82,6 +83,8 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class Dates extends React.Component {
+    modal = React.createRef()
+
     constructor(props) {
         super(props)
         const {recipeId, inputs: {targetYear, targetDate}} = props
@@ -112,87 +115,6 @@ class Dates extends React.Component {
         advanced.set(enabled)
     }
 
-    render() {
-        const {recipeId, form, inputs: {advanced}} = this.props
-        return (
-            <Panel className={advanced.value ? styles.advanced : styles.simple}>
-                <PanelHeader
-                    icon='cog'
-                    title={msg('process.mosaic.panel.dates.title')}/>
-
-                <PanelContent>
-                    {advanced.value ? this.renderAdvanced() : this.renderSimple()}
-                </PanelContent>
-
-                <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}
-                    additionalButtons={[{
-                        key: 'advanced',
-                        label: advanced.value ? msg('button.less') : msg('button.more'),
-                        onClick: () => this.setAdvanced(!advanced.value)
-                    }]}/>
-            </Panel>
-        )
-    }
-
-    renderAdvanced() {
-        const {inputs: {targetDate, seasonStart, seasonEnd, yearsBefore, yearsAfter}} = this.props
-        return (
-            <div className={styles.advancedLayout}>
-
-                <div className={styles.yearsBefore}>
-                    <Input
-                        label={msg('process.mosaic.panel.dates.form.years.before')}
-                        type='number'
-                        input={yearsBefore}
-                        maxLength={2}
-                        min={0}
-                        max={99}
-                    />
-                </div>
-
-                <div className={styles.yearsAfter}>
-                    <Input
-                        label={msg('process.mosaic.panel.dates.form.years.after')}
-                        type='number'
-                        input={yearsAfter}
-                        maxLength={2}
-                        min={0}
-                        max={99}
-                    />
-                </div>
-
-                <div className={styles.targetDate}>
-                    <DatePicker
-                        label={msg('process.mosaic.panel.dates.form.targetDate.label')}
-                        tooltip={msg('process.mosaic.panel.dates.form.targetDate.tooltip')}
-                        tooltipPlacement='topLeft'
-                        input={targetDate}
-                        startDate={'1982-08-22'}
-                        endDate={moment().format(DATE_FORMAT)}
-                        errorMessage
-                    />
-                </div>
-
-                <div className={styles.season}>
-                    {/* <Label
-                        className={styles.seasonLabel}
-                        msg={msg('process.mosaic.panel.dates.form.season.label')}
-                        tooltip={msg('process.mosaic.panel.dates.form.season.tooltip')}
-                        tooltipPlacement='topLeft'/> */}
-                    <SeasonSelect
-                        startDate={seasonStart}
-                        endDate={seasonEnd}
-                        centerDate={targetDate}
-                        disabled={targetDate.isInvalid()}
-                        className={styles.seasonInput}/>
-                </div>
-            </div>
-        )
-    }
-
     renderSimple() {
         const {inputs: {targetYear}} = this.props
         return (
@@ -207,6 +129,92 @@ class Dates extends React.Component {
                     resolution='year'/>
                 <ErrorMessage for={targetYear}/>
             </div>
+        )
+    }
+
+    renderAdvanced() {
+        const {inputs: {targetDate, seasonStart, seasonEnd, yearsBefore, yearsAfter}} = this.props
+        return (
+            <div className={styles.advancedLayout}>
+                <div className={styles.targetDate}>
+                    <DatePicker
+                        label={msg('process.mosaic.panel.dates.form.targetDate.label')}
+                        tooltip={msg('process.mosaic.panel.dates.form.targetDate.tooltip')}
+                        tooltipPlacement='topLeft'
+                        input={targetDate}
+                        startDate={'1982-08-22'}
+                        endDate={moment().format(DATE_FORMAT)}
+                        errorMessage
+                        modalContainer={this.modal.current}
+                    />
+                </div>
+                <div className={styles.pastSeasons}>
+                    <Slider
+                        label={msg('process.mosaic.panel.dates.form.pastSeasons.label')}
+                        info={pastSeasons => pastSeasons
+                            ? msg('process.mosaic.panel.dates.form.pastSeasons.info.number', {pastSeasons})
+                            : msg('process.mosaic.panel.dates.form.pastSeasons.info.none')
+                        }
+                        input={yearsBefore}
+                        minValue={0}
+                        maxValue={9}
+                        ticks={10}
+                        range='left'
+                    />
+                </div>
+                <div className={styles.futureSeasons}>
+                    <Slider
+                        label={msg('process.mosaic.panel.dates.form.futureSeasons.label')}
+                        info={futureSeasons => futureSeasons
+                            ? msg('process.mosaic.panel.dates.form.futureSeasons.info.number', {futureSeasons})
+                            : msg('process.mosaic.panel.dates.form.futureSeasons.info.none')
+                        }
+                        input={yearsAfter}
+                        minValue={0}
+                        maxValue={9}
+                        range='left'
+                    />
+                </div>
+                <div className={styles.season}>
+                    <Label
+                        className={styles.seasonLabel}
+                        msg={msg('process.mosaic.panel.dates.form.season.label')}
+                        tooltip={msg('process.mosaic.panel.dates.form.season.tooltip')}
+                        tooltipPlacement='topLeft'/>
+                    <SeasonSelect
+                        startDate={seasonStart}
+                        endDate={seasonEnd}
+                        centerDate={targetDate}
+                        disabled={targetDate.isInvalid()}/>
+                </div>
+            </div>
+        )
+    }
+
+    render() {
+        const {recipeId, form, inputs: {advanced}} = this.props
+        return (
+            <Panel className={advanced.value ? styles.advanced : styles.simple}>
+                <PanelHeader
+                    icon='cog'
+                    title={msg('process.mosaic.panel.dates.title')}/>
+
+                <PanelContent>
+                    <div ref={this.modal}>
+                        {advanced.value ? this.renderAdvanced() : this.renderSimple()}
+                    </div>
+                </PanelContent>
+
+                <PanelButtons
+                    form={form}
+                    statePath={recipePath(recipeId, 'ui')}
+                    onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}
+                    additionalButtons={[{
+                        key: 'advanced',
+                        label: advanced.value ? msg('button.less') : msg('button.more'),
+                        onClick: () => this.setAdvanced(!advanced.value)
+                    }]}/>
+            </Panel>
         )
     }
 }
