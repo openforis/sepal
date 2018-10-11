@@ -72,7 +72,7 @@ class ClassificationPreview extends React.Component {
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
-            // onError: () => this.onError()
+            onError: () => this.onError()
         })
         if (changed && initializing !== !!layer)
             this.setState(prevState => ({...prevState, initializing: !!layer, error: null}))
