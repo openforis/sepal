@@ -444,8 +444,11 @@ Input.propTypes = {
     input: PropTypes.object.isRequired,
     autoComplete: PropTypes.string,
     className: PropTypes.string,
+    label: PropTypes.string,
     placeholder: PropTypes.string,
     tabIndex: PropTypes.number,
+    tooltip: PropTypes.string,
+    tooltipPlacement: PropTypes.string,
     validate: PropTypes.oneOf(['onChange', 'onBlur']),
     onBlur: PropTypes.func,
     onChange: PropTypes.func
