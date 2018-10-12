@@ -297,8 +297,8 @@ class Timeline extends React.Component {
     }
 }
 
-const DateFlag = ({date, onChange}) =>
-    <div className={styles.flag}>
+const DateFlag = ({date, onChange, className}) =>
+    <div className={[styles.flag, className].join(' ')}>
         <div className={styles.label}>
             {SeasonSelect.formatDate(date)}
             <div className={styles.decrease} onMouseDown={() => onChange(-1)}/>
