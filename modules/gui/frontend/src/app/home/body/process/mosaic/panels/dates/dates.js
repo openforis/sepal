@@ -133,7 +133,6 @@ class Dates extends React.Component {
                     <DatePicker
                         label={msg('process.mosaic.panel.dates.form.targetDate.label')}
                         tooltip={msg('process.mosaic.panel.dates.form.targetDate.tooltip')}
-                        tooltipPlacement='topLeft'
                         input={targetDate}
                         startDate={'1982-08-22'}
                         endDate={moment().format(DATE_FORMAT)}
@@ -174,7 +173,7 @@ class Dates extends React.Component {
                         className={styles.seasonLabel}
                         msg={msg('process.mosaic.panel.dates.form.season.label')}
                         tooltip={msg('process.mosaic.panel.dates.form.season.tooltip')}
-                        tooltipPlacement='topLeft'/>
+                    />
                     <SeasonSelect
                         startDate={seasonStart}
                         endDate={seasonEnd}

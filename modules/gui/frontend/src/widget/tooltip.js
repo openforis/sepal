@@ -6,7 +6,7 @@ import React from 'react'
 
 export default class Tooltip extends React.Component {
     render() {
-        const {msg, placement, disabled = false, delay = .5, children, ...otherProps} = this.props
+        const {msg, placement = 'top', disabled = false, delay = .5, children, ...otherProps} = this.props
         return (
             msg && !disabled
                 ? (
