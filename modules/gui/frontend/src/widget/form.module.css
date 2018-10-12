@@ -21,6 +21,10 @@ form label {
     background-color: var(--label-background-color);
 }
 
+form label .info {
+    cursor: help;
+}
+
 form fieldset label {
     font-size: .7rem;
     font-weight: normal;

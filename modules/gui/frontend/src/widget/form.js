@@ -511,12 +511,12 @@ export class Label extends React.Component {
     renderLabelWithTooltip(contents) {
         const {tooltip, tooltipPlacement} = this.props
         return (
-            <Tooltip msg={tooltip} placement={tooltipPlacement}>
-                <label className={styles.label}>
-                    {contents}
-                    <Icon name='question-circle'/>
-                </label>
-            </Tooltip>
+            <label className={styles.label}>
+                {contents}
+                <Tooltip msg={tooltip} placement={tooltipPlacement}>
+                    <Icon className={styles.info} name='question-circle'/>
+                </Tooltip>
+            </label>
         )
     }
     
