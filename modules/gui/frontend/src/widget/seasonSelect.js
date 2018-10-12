@@ -1,8 +1,8 @@
-import {Msg, msg} from 'translate'
+import {Msg} from 'translate'
 import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
 import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
 import {intersect} from 'collections'
-import DatePicker, {DatePickerControl} from 'widget/datePicker'
+import DatePicker from 'widget/datePicker'
 import Hammer from 'hammerjs'
 import Media from 'react-media'
 import PropTypes from 'prop-types'
@@ -194,7 +194,6 @@ SeasonSelect.propTypes = {
     centerDate: PropTypes.object.isRequired,
     endDate: PropTypes.object.isRequired,
     startDate: PropTypes.object.isRequired,
-    className: PropTypes.string,
     disabled: PropTypes.any,
     onChange: PropTypes.func
 }
@@ -206,9 +205,9 @@ class DatePickers extends React.Component {
 
     renderDatePickers() {
         const {centerDate, minDate, maxDate} = this.state
-        const {startDate, endDate, className} = this.props
+        const {startDate, endDate} = this.props
         return (
-            <div className={className}>
+            <div className={styles.datePickers}>
                 <div>
                     <Msg id='widget.seasonSelect.from'/>
                     <DatePicker
@@ -219,7 +218,6 @@ class DatePickers extends React.Component {
                         errorMessage
                     />
                 </div>
-
                 <div>
                     <Msg id='widget.seasonSelect.to'/>
                     <DatePicker
@@ -242,19 +240,18 @@ class Timeline extends React.Component {
 
     renderTimeline() {
         const {centerDate, centerDay, startDate, endDate, maxDay, width} = this.state
-        const {className, disabled} = this.props
+        const {disabled} = this.props
         const selectRangeStyle = {
             left: `${this.dateToPosition(startDate)}px`,
             right: `${this.dayToPosition(maxDay) - this.dateToPosition(endDate) - 1}px`
         }
         return (
-            <div className={className}>
-                <div className={styles.container} ref={this.element}>
-                    {disabled ? <div className={styles.disabled}/> : null}
-                    <div className={styles.axisReference}>
-                        <div className={styles.centerMarker}>
-                            <div className={styles.label}>{this.formatDay(centerDay)}</div>
-                            {/* <div className={styles.label}>
+            <div className={styles.container} ref={this.element}>
+                {disabled ? <div className={styles.disabled}/> : null}
+                <div className={styles.axisReference}>
+                    <div className={styles.centerMarker}>
+                        <div className={styles.label}>{this.formatDay(centerDay)}</div>
+                        {/* <div className={styles.label}>
                                 <DatePickerControl
                                     startDate={'1982-08-22'}
                                     endDate={moment().format(DATE_FORMAT)}
@@ -263,46 +260,45 @@ class Timeline extends React.Component {
                                     onSelect={() => console.log('selected')}
                                 />
                             </div> */}
-                        </div>
-                        <Handle
-                            position={this.dateToPosition(startDate)}
-                            min={0}
-                            max={this.dateToPosition(centerDate)}
-                            onChange={this.startPositionChanged.bind(this)}>
-                            <DateFlag
-                                date={startDate}
-                                onChange={this.startIncrementDays.bind(this)}
-                                className={styles.leftFlag}/>
-                        </Handle>
-                        <Handle
-                            position={this.dateToPosition(endDate)}
-                            min={this.dayToPosition(centerDay + 1)}
-                            max={width}
-                            onChange={this.endPositionChanged.bind(this)}>
-                            <DateFlag
-                                date={endDate}
-                                onChange={this.endIncrementDays.bind(this)}
-                                className={styles.rightFlag}/>
-                        </Handle>
-                        <Axis
-                            dateRange={this}
-                            centerDate={centerDate}
-                            width={width}/>
-                        <div
-                            className={styles.selectedRange}
-                            style={selectRangeStyle}/>
                     </div>
-                    <ReactResizeDetector
-                        handleWidth
-                        onResize={width => this.widthUpdated(width)}/>
+                    <Handle
+                        position={this.dateToPosition(startDate)}
+                        min={0}
+                        max={this.dateToPosition(centerDate)}
+                        onChange={this.startPositionChanged.bind(this)}>
+                        <DateFlag
+                            date={startDate}
+                            onChange={this.startIncrementDays.bind(this)}
+                            className={styles.leftFlag}/>
+                    </Handle>
+                    <Handle
+                        position={this.dateToPosition(endDate)}
+                        min={this.dayToPosition(centerDay + 1)}
+                        max={width}
+                        onChange={this.endPositionChanged.bind(this)}>
+                        <DateFlag
+                            date={endDate}
+                            onChange={this.endIncrementDays.bind(this)}
+                            className={styles.rightFlag}/>
+                    </Handle>
+                    <Axis
+                        dateRange={this}
+                        centerDate={centerDate}
+                        width={width}/>
+                    <div
+                        className={styles.selectedRange}
+                        style={selectRangeStyle}/>
                 </div>
+                <ReactResizeDetector
+                    handleWidth
+                    onResize={width => this.widthUpdated(width)}/>
             </div>
         )
     }
 }
 
-const DateFlag = ({date, className, onChange}) =>
-    <div className={[styles.flag, className].join(' ')}>
+const DateFlag = ({date, onChange}) =>
+    <div className={styles.flag}>
         <div className={styles.label}>
             {SeasonSelect.formatDate(date)}
             <div className={styles.decrease} onMouseDown={() => onChange(-1)}/>

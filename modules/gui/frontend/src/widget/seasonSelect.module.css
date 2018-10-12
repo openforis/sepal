@@ -142,3 +142,8 @@
     right: 50%;
     cursor: w-resize;
 }
+
+.datePickers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
