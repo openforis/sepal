@@ -40,7 +40,7 @@ class Login extends React.Component {
                     tabIndex={1}
                     errorMessage
                 />
-                <Label msg/>
+
                 <Input
                     label={msg('landing.login.password.label')}
                     input={password}
