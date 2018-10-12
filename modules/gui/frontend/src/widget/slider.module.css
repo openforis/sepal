@@ -60,7 +60,7 @@
     position: absolute;
     background-color: var(--axis-color);
     width: 1px;
-    top: calc(-.5 * var(--tick-height));
+    top: 0;
     bottom: calc(-.5 * var(--tick-height));
 }
 
