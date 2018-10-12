@@ -1,7 +1,6 @@
 import {Label} from 'widget/form'
 import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
 import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
-// import {range} from 'collections'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -49,15 +48,19 @@ class SliderContainer extends React.Component {
     
     ticks() {
         const {ticks, width} = this.props
-        return ticks.map(tick => [width * this.normalize(tick), tick])
+        return ticks.map(tick => {
+            return typeof tick === 'object'
+                ? [width * this.normalize(tick.value), tick.value, tick.label]
+                : [width * this.normalize(tick), tick, tick]
+        })
     }
 
-    renderTick([position, value]) {
+    renderTick([position, value, label]) {
         const left = `${Math.trunc(position)}px`
         return (
             <React.Fragment key={value}>
                 <div className={styles.tick} style={{left}}></div>
-                <div className={styles.label} style={{left}}>{value}</div>
+                <div className={styles.label} style={{left}}>{label}</div>
             </React.Fragment>
         )
     }

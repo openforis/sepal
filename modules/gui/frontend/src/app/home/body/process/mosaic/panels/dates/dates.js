@@ -158,7 +158,7 @@ class Dates extends React.Component {
                         input={yearsBefore}
                         minValue={0}
                         maxValue={50}
-                        ticks={[0, 1, 2, 3, 5, 10, 25, 50]}
+                        ticks={[0, 1, 2, 3, 5, 10, 25, {value: 50, label: 'max'}]}
                         range='left'
                         logScale
                     />
@@ -173,7 +173,7 @@ class Dates extends React.Component {
                         input={yearsAfter}
                         minValue={0}
                         maxValue={50}
-                        ticks={[0, 1, 2, 3, 5, 10, 25, 50]}
+                        ticks={[0, 1, 2, 3, 5, 10, 25, {value: 50, label: 'max'}]}
                         range='left'
                         logScale
                     />
