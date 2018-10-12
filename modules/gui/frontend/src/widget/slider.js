@@ -33,29 +33,47 @@ const denormalizeLog = (value, min, max) => {
     return Math.exp(value * Math.log(max - offset)) + offset
 }
 
+const normalize = (value, min, max, logScale) =>
+    logScale ? normalizeLog(value, min, max) : normalizeLinear(value, min, max)
+
+const denormalize = (value, min, max, logScale) =>
+    logScale ? denormalizeLog(value, min, max) : denormalizeLinear(value, min, max)
+
 class SliderContainer extends React.Component {
+    state = {}
     clickTarget = React.createRef()
 
+    static getDerivedStateFromProps(props, _state) {
+        const ticks = props.ticks.map(tick =>
+            typeof tick === 'object'
+                ? {value: tick.value, label: tick.label}
+                : {value: tick, label: tick}
+        )
+        const minValue = props.minValue || ticks.reduce((min, {value}) => Math.min(min, value), null)
+        const maxValue = props.maxValue || ticks.reduce((max, {value}) => Math.max(max, value), null)
+        return {
+            ticks: ticks.map(tick => ({
+                ...tick,
+                position: props.width * normalize(tick.value, minValue, maxValue, props.logScale)
+            })),
+            minValue,
+            maxValue
+        }
+    }
+
     normalize(value) {
-        const {logScale, minValue, maxValue} = this.props
-        return logScale ? normalizeLog(value, minValue, maxValue) : normalizeLinear(value, minValue, maxValue)
+        const {logScale} = this.props
+        const {minValue, maxValue} = this.state
+        return normalize(value, minValue, maxValue, logScale)
     }
 
     denormalize(value) {
-        const {logScale, minValue, maxValue} = this.props
-        return logScale ? denormalizeLog(value, minValue, maxValue) : denormalizeLinear(value, minValue, maxValue)
+        const {logScale} = this.props
+        const {minValue, maxValue} = this.state
+        return denormalize(value, minValue, maxValue, logScale)
     }
     
-    ticks() {
-        const {ticks, width} = this.props
-        return ticks.map(tick => {
-            return typeof tick === 'object'
-                ? [width * this.normalize(tick.value), tick.value, tick.label]
-                : [width * this.normalize(tick), tick, tick]
-        })
-    }
-
-    renderTick([position, value, label]) {
+    renderTick({position, value, label}) {
         const left = `${Math.trunc(position)}px`
         return (
             <React.Fragment key={value}>
@@ -65,7 +83,8 @@ class SliderContainer extends React.Component {
         )
     }
 
-    renderAxis(ticks) {
+    renderAxis() {
+        const {ticks} = this.state
         return (
             <div className={styles.axis}>
                 {ticks.map(tick => this.renderTick(tick))}
@@ -79,8 +98,9 @@ class SliderContainer extends React.Component {
         )
     }
 
-    renderDynamics(ticks) {
-        const {input, minValue, maxValue, width, range} = this.props
+    renderDynamics() {
+        const {input, width, range} = this.props
+        const {ticks, minValue, maxValue} = this.state
         return (
             <SliderDynamics
                 input={input}
@@ -96,12 +116,11 @@ class SliderContainer extends React.Component {
     }
 
     render() {
-        const ticks = this.ticks()
         return (
             <div>
-                {this.renderAxis(ticks)}
+                {this.renderAxis()}
                 {this.renderClickTarget()}
-                {this.renderDynamics(ticks)}
+                {this.renderDynamics()}
             </div>
         )
     }
@@ -336,7 +355,7 @@ class SliderDynamics extends React.Component {
 
     snapPosition(value) {
         const closest = _(this.props.ticks)
-            .map(([position]) => ({position, distance: Math.abs(position - value)}))
+            .map(({position}) => ({position, distance: Math.abs(position - value)}))
             .sortBy('distance')
             .head()
         return closest.position
@@ -387,8 +406,8 @@ SliderDynamics.propTypes = {
     maxValue: PropTypes.number.isRequired,
     minValue: PropTypes.number.isRequired,
     normalize: PropTypes.func.isRequired,
-    width: PropTypes.number.isRequired,
-    ticks: PropTypes.array
+    ticks: PropTypes.array,
+    width: PropTypes.number
 }
 
 export default class Slider extends React.Component {
@@ -417,8 +436,8 @@ export default class Slider extends React.Component {
                         }}/>
                     <SliderContainer
                         input={input}
-                        minValue={minValue !== undefined ? minValue : 0}
-                        maxValue={maxValue !== undefined ? maxValue : 100}
+                        minValue={minValue}
+                        maxValue={maxValue}
                         ticks={ticks}
                         range={range}
                         logScale={logScale}

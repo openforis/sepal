@@ -1,4 +1,4 @@
-import {ErrorMessage, Field, Input, InputGroup, Label, form} from 'widget/form'
+import {ErrorMessage, Field, Label, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {msg} from 'translate'
@@ -59,15 +59,8 @@ const fields = {
                 max: maxEndDate(targetDate).format(DATE_FORMAT)
             })),
 
-    yearsBefore: new Field()
-        .skip((_, {advanced}) => !advanced)
-        .int('process.mosaic.panel.dates.form.years.positiveInteger')
-        .min(0, 'process.mosaic.panel.dates.form.years.positiveInteger'),
-
+    yearsBefore: new Field(),
     yearsAfter: new Field()
-        .skip((_, {advanced}) => !advanced)
-        .int('process.mosaic.panel.dates.form.years.positiveInteger')
-        .min(0, 'process.mosaic.panel.dates.form.years.positiveInteger')
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -156,8 +149,6 @@ class Dates extends React.Component {
                             : msg('process.mosaic.panel.dates.form.pastSeasons.info.none')
                         }
                         input={yearsBefore}
-                        minValue={0}
-                        maxValue={50}
                         ticks={[0, 1, 2, 3, 5, 10, 25, {value: 50, label: 'max'}]}
                         range='left'
                         logScale
@@ -171,8 +162,6 @@ class Dates extends React.Component {
                             : msg('process.mosaic.panel.dates.form.futureSeasons.info.none')
                         }
                         input={yearsAfter}
-                        minValue={0}
-                        maxValue={50}
                         ticks={[0, 1, 2, 3, 5, 10, 25, {value: 50, label: 'max'}]}
                         range='left'
                         logScale
