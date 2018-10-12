@@ -149,9 +149,10 @@ class Dates extends React.Component {
                             : msg('process.mosaic.panel.dates.form.pastSeasons.info.none')
                         }
                         input={yearsBefore}
-                        ticks={[0, 1, 2, 3, 5, 10, 25, {value: 50, label: 'max'}]}
-                        range='left'
+                        ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
+                        snap
                         logScale
+                        range='left'
                     />
                 </div>
                 <div className={styles.futureSeasons}>
@@ -162,9 +163,10 @@ class Dates extends React.Component {
                             : msg('process.mosaic.panel.dates.form.futureSeasons.info.none')
                         }
                         input={yearsAfter}
-                        ticks={[0, 1, 2, 3, 5, 10, 25, {value: 50, label: 'max'}]}
-                        range='left'
+                        ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
+                        snap
                         logScale
+                        range='left'
                     />
                 </div>
                 <div className={styles.season}>

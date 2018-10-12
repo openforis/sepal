@@ -436,7 +436,7 @@ export default class Slider extends React.Component {
     }
 
     renderSlider() {
-        const {input, logScale, snap = true, range = 'left', info, disabled} = this.props
+        const {input, logScale, snap, range = 'left', info, disabled} = this.props
         const {ticks, minValue, maxValue} = this.state
         return (
             <div className={styles.container}>

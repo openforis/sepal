@@ -72,8 +72,9 @@ class UserSession extends React.Component {
                             minValue={0}
                             maxValue={72}
                             ticks={[0, 1, 3, 6, 12, 24, 36, 48, 60, 72]}
-                            info={value => msg('user.userSession.form.keepAlive.info', {value})}
+                            snap
                             logScale
+                            info={value => msg('user.userSession.form.keepAlive.info', {value})}
                         />
                     </div>
                 </PanelContent>
