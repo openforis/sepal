@@ -4,6 +4,7 @@ import ee
 
 from ..image_operation import ImageOperation
 from ..image_spec import ImageSpec
+from ..sepal_exception import SepalException
 
 
 class Classification(ImageSpec):
@@ -27,6 +28,9 @@ class Classification(ImageSpec):
         # return {'bands': 'uncertainty', 'min': 0, 'max': 1, 'palette': 'green, yellow, orange, red'}
 
     def _ee_image(self):
+        has_data_in_aoi = self.trainingData.filterBounds(self.aoi._geometry).size().getInfo() > 0
+        if not has_data_in_aoi:
+            raise SepalException(code='gee.classification.error.noTrainingData', message='No training data in AOI.')
         return _Operation(self.source, self.trainingData, self.classProperty).apply()
 
 

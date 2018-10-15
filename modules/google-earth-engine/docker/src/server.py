@@ -3,6 +3,7 @@ import json
 import logging
 
 import ee
+from ee import EEException
 from flask import Flask, Blueprint, Response, request
 
 from sepal import gee
@@ -10,6 +11,7 @@ from sepal import image_spec_factory
 from sepal.aoi import Aoi
 from sepal.drive.drive_cleanup import DriveCleanup
 from sepal.sepal_api import SepalApi
+from sepal.sepal_exception import SepalException
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
@@ -47,12 +49,31 @@ def recipe_geometry():
     return Response(json.dumps(geometry), mimetype='application/json')
 
 
-
 @http.route('/sceneareas')
 def scene_areas():
     aoi = Aoi.create(json.loads(request.values['aoi']))
     areas = aoi.scene_areas(request.values['source'])
     return Response(json.dumps(areas), mimetype='application/json')
+
+
+@http.errorhandler(SepalException)
+def sepal_exception(error):
+    body = {
+        'code': error.code,
+        'data': error.data,
+        'message': error.message
+    }
+    return Response(json.dumps(body), mimetype='application/json', status=400)
+
+
+@http.errorhandler(EEException)
+def ee_exception(error):
+    body = {
+        'code': 'gee.error.earthEngineException',
+        'data': {'earthEngineMessage': error.message},
+        'message': error.message
+    }
+    return Response(json.dumps(body), mimetype='application/json', status=400)
 
 
 def init(server_args):

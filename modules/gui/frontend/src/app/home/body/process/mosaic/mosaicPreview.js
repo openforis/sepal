@@ -47,13 +47,16 @@ class MosaicPreview extends React.Component {
         this.setState(prevState => ({...prevState, tiles, initializing: false}))
     }
 
-    onError() {
+    onError(e) {
+        const message = e.response && e.response.code
+            ? msg(e.response.code, e.response.data)
+            : msg('process.mosaic.preview.error')
         this.setState(prevState => ({
             ...prevState,
             error:
                 <div>
                     <div>
-                        <Msg id='process.mosaic.preview.error'/>
+                        {message}
                         <div className={styles.retry}>
                             <a
                                 href=''
@@ -116,7 +119,7 @@ class MosaicPreview extends React.Component {
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
-            onError: () => this.onError()
+            onError: (e) => this.onError(e)
         })
         if (changed && initializing !== !!layer)
             this.setState(prevState => ({...prevState, initializing: !!layer, error: null}))
