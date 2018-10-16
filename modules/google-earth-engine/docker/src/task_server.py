@@ -5,7 +5,6 @@ import os
 from collections import namedtuple
 from os import path
 from threading import local
-from sepal.sepal_api import SepalApi
 
 import ee
 import oauth2client.client
@@ -14,6 +13,7 @@ from flask import Flask, Blueprint, Response
 from flask import request
 
 from sepal import gee
+from sepal.sepal_api import SepalApi
 from sepal.task import repository
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
@@ -106,6 +106,7 @@ def cancel():
 
 def init(server_args):
     global username, download_dir, sepal_host, sepal_username, sepal_password
+    gee.init_service_account_credentials(server_args)
     username = server_args.username
     download_dir = server_args.download_dir
     sepal_host = server_args.sepal_host

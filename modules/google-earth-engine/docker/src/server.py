@@ -1,4 +1,5 @@
 import argparse
+import atexit
 import json
 import logging
 
@@ -78,10 +79,11 @@ def ee_exception(error):
 
 def init(server_args):
     global sepal_api, drive_cleanup
+    gee.init_service_account_credentials(server_args)
     sepal_api = SepalApi(
-        host=server_args.sepal_host,
-        username=server_args.sepal_username,
-        password=server_args.sepal_password
+        host=server_args['sepal_host'],
+        username=server_args['sepal_username'],
+        password=server_args['sepal_password']
     )
 
     drive_cleanup = DriveCleanup(gee.service_account_credentials)
@@ -89,12 +91,20 @@ def init(server_args):
 
 
 def destroy():
+    logging.info('*** Stopping gee server ***')
     if drive_cleanup:
         drive_cleanup.stop()
 
 
-if __name__ == '__main__':
+def build_app(server_args):
     logging.basicConfig(level=logging.INFO)
+    init(server_args)
+    app.register_blueprint(http)
+    atexit.register(destroy)
+    return app
+
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gee-email', required=True, help='Earth Engine service account email')
     parser.add_argument('--gee-key-path', required=True, help='Path to Earth Engine service account key')
@@ -102,8 +112,5 @@ if __name__ == '__main__':
     parser.add_argument('--sepal-username', required=True, help='Username to use when accessing sepal services')
     parser.add_argument('--sepal-password', required=True, help='Password to use when accessing sepal services')
     args, unknown = parser.parse_known_args()
-    init(args)
-    app.register_blueprint(http)
+    build_app(args)
     app.run(host='0.0.0.0', threaded=True, port=5001)
-
-destroy()

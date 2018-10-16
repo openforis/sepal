@@ -14,9 +14,21 @@ mkdir -p /etc/ssh/google-earth-engine
 privateKeyPath=/etc/ssh/google-earth-engine/key.pem
 echo -e ${privateKey} > ${privateKeyPath}
 
-exec python /src/server.py \
- --gee-email ${account} \
- --gee-key-path ${privateKeyPath} \
- --sepal-host ${sepalHost} \
- --sepal-username sepalAdmin \
- --sepal-password ${sepalPassword}
+exec gunicorn\
+ --pythonpath /src\
+ --bind 0.0.0.0:5001\
+ --workers 5\
+ --timeout 3600\
+ --threads 16\
+ --backlog 64\
+ --error-logfile -\
+ --log-file -\
+ --access-logfile -\
+ --log-level debug\
+ --capture-output "server:build_app({\
+    'gee_email': '${account}',\
+    'gee_key_path': '${privateKeyPath}',\
+    'sepal_host': '${sepalHost}',\
+    'sepal_username': 'sepalAdmin',\
+    'sepal_password': '${sepalPassword}'\
+})" server:build_app
