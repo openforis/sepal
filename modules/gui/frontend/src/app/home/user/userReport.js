@@ -109,12 +109,15 @@ class Usage extends React.Component {
     }
 
     renderButton() {
-        const {className, modal} = this.props
+        const {className, modal, userReport} = this.props
+        const hourlySpending = userReport.sessions
+            ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
+            : 0
         return (
             <Button
                 className={className}
                 icon='dollar-sign'
-                label='0/h'
+                label={hourlySpending.toFixed(2) + '/h'}
                 onClick={() => this.buttonHandler()}
                 tooltip={msg('home.sections.user.report.tooltip')}
                 tooltipPlacement='top'
