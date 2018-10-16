@@ -10,8 +10,6 @@ service_account_credentials = None
 
 def init_service_account_credentials(args):
     global service_account_credentials
-    print('***** init_service_account_credentials')
-    print(args)
     service_account_credentials = ServiceAccountCredentials.from_p12_keyfile(
         service_account_email=args['gee_email'],
         filename=args['gee_key_path'],
