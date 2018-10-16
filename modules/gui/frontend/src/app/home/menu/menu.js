@@ -9,9 +9,10 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './menu.module.css'
 
-const mapStateToProps = () => ({
+const mapStateToProps = (state = {}) => ({
     requestedApps: requestedApps(),
-    floating: isFloating()
+    floating: isFloating(),
+    hasActiveTasks: !!(state.tasks && state.tasks.find(task => ['PENDING', 'ACTIVE'].includes(task.status)))
 })
 
 class Menu extends React.Component {
@@ -20,7 +21,7 @@ class Menu extends React.Component {
     }
 
     render() {
-        const {className, floating, requestedApps, user} = this.props
+        const {className, floating, requestedApps, user, hasActiveTasks} = this.props
         return (
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
@@ -32,7 +33,7 @@ class Menu extends React.Component {
                         {requestedApps.map(this.appSection)}
                     </div>
                     <div className={styles.section}>
-                        <SectionLink name='tasks' icon='tasks'/>
+                        <SectionLink name='tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'}/>
                         {user.admin ? <SectionLink name='users' icon='users'/> : null}
                     </div>
                 </div>
