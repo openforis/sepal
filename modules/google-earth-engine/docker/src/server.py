@@ -112,5 +112,5 @@ if __name__ == '__main__':
     parser.add_argument('--sepal-username', required=True, help='Username to use when accessing sepal services')
     parser.add_argument('--sepal-password', required=True, help='Password to use when accessing sepal services')
     args, unknown = parser.parse_known_args()
-    build_app(args)
+    build_app(vars(args))
     app.run(host='0.0.0.0', threaded=True, port=5001)

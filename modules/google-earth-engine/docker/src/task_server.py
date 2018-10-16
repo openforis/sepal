@@ -107,11 +107,11 @@ def cancel():
 def init(server_args):
     global username, download_dir, sepal_host, sepal_username, sepal_password
     gee.init_service_account_credentials(server_args)
-    username = server_args.username
-    download_dir = server_args.download_dir
-    sepal_host = server_args.sepal_host
-    sepal_username = server_args.sepal_username
-    sepal_password = server_args.sepal_password
+    username = server_args['username']
+    download_dir = server_args['download_dir']
+    sepal_host = server_args['sepal_host']
+    sepal_username = server_args['sepal_username']
+    sepal_password = server_args['sepal_password']
 
 
 def destroy():
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     parser.add_argument('--username', required=True, help='Username of user executing tasks')
     parser.add_argument('--download-dir', required=True, help='Directory where downloaded data should be stored')
     args, unknown = parser.parse_known_args()
-    init(args)
+    init(vars(args))
     app.register_blueprint(http)
     app.run(host='0.0.0.0', threaded=True, port=5002)
 

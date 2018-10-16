@@ -52,7 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('--username', required=True, help='Username of user executing tasks')
     parser.add_argument('--download-dir', required=True, help='Directory where downloaded data should be stored')
     args, unknown = parser.parse_known_args()
-    init(args)
+    init(vars(args))
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
     logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
     logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
