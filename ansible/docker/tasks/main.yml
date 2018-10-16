@@ -62,10 +62,10 @@
     name: python-pip
     state: present
 
-
-- name: Install docker-py
+- name: Install docker-compose
   pip:
-    name: docker-py
+    name: docker-compose
 
 - name: Start Docker
   service: name=docker state=started
+
