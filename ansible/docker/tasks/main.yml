@@ -7,6 +7,7 @@
   apt:
     name: "{{ item }}"
     state: present
+    update_cache: yes
   when: ansible_distribution_version is version_compare('14.04', '==')
   loop:
     - "linux-image-extra-{{ ansible_kernel }}"
@@ -48,6 +49,7 @@
   apt:
     name: docker-ce
     state: present
+    update_cache: yes
 
 - name: Set DOCKER_OPTS
   lineinfile:
