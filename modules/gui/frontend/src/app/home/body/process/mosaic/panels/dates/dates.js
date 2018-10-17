@@ -100,7 +100,7 @@ class Dates extends React.Component {
         const {inputs: {targetYear}} = this.props
         const date = parseDate(dateString)
         if (date.isValid())
-            targetYear.set(String(date.year()))
+            targetYear.set(date.year())
     }
 
     setAdvanced(enabled) {
@@ -231,14 +231,14 @@ const valuesToModel = values => {
             targetDate: values.targetDate,
             seasonStart: values.seasonStart,
             seasonEnd: values.seasonEnd,
-            yearsBefore: Number(values.yearsBefore || 0),
-            yearsAfter: Number(values.yearsAfter || 0)
+            yearsBefore: values.yearsBefore,
+            yearsAfter: values.yearsAfter
         }
     else
         return {
             targetDate: moment().year(values.targetYear).month(6).date(2).format(DATE_FORMAT),
             seasonStart: moment().year(values.targetYear).startOf('year').format(DATE_FORMAT),
-            seasonEnd: moment().year(Number(values.targetYear) + 1).startOf('year').format(DATE_FORMAT),
+            seasonEnd: moment().year(values.targetYear + 1).startOf('year').format(DATE_FORMAT),
             yearsBefore: 0,
             yearsAfter: 0
         }
@@ -251,11 +251,11 @@ const modelToValues = (model = {}) => {
             || moment(model.seasonEnd).dayOfYear() !== 1
             || model.yearsBefore !== 0
             || model.yearsAfter !== 0,
-        targetYear: String(moment(model.targetDate).year()),
+        targetYear: moment(model.targetDate).year(),
         targetDate: model.targetDate,
         seasonStart: model.seasonStart,
         seasonEnd: model.seasonEnd,
-        yearsBefore: String(model.yearsBefore),
-        yearsAfter: String(model.yearsAfter),
+        yearsBefore: model.yearsBefore,
+        yearsAfter: model.yearsAfter,
     }
 }
