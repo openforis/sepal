@@ -427,7 +427,7 @@ export default class Slider extends React.Component {
         const {input, info} = this.props
         const {ticks} = this.state
         const tick = ticks && ticks.find(tick => tick.value === input.value)
-        const label = tick && tick.label || input.value
+        const label = (tick && tick.label) || input.value
         return info ? (
             <div className={styles.info}>
                 {_.isFunction(info) ? info(label) : info}
