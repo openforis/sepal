@@ -8,9 +8,11 @@ import Notifications from 'app/notifications'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder, {dotSafe} from 'action-builder'
 import api from 'api'
 import flexy from 'flexy.module.css'
+import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
 
 // const files = {
@@ -167,7 +169,7 @@ class Browse extends React.Component {
     }
 
     toggleSelection(path, isDirectory) {
-        this.isSelected(path)
+        this.isSelected(path, false)
             ? this.deselectItem(path)
             : this.selectItem(path, isDirectory)
     }
@@ -178,16 +180,20 @@ class Browse extends React.Component {
             .dispatch()
     }
 
-    isSelected(path) {
+    isSelected(path, inherit = true) {
         const isSelected = (pathSections, selected) => {
             if (!selected) {
                 return false
             }
-            if (pathSections.length === 1) {
-                return typeof(selected[pathSections[0]]) === 'boolean'
-            }
             const pathSection = pathSections.splice(0, 1)
-            return isSelected(pathSections, selected[pathSection])
+            const current = selected[pathSection]
+            if (pathSections.length === 0) {
+                return _.isBoolean(current)
+            }
+            if (inherit && current === true) {
+                return true
+            }
+            return isSelected(pathSections, current)
         }
         return isSelected(this.pathSections(path), this.props.selected)
     }
@@ -284,7 +290,7 @@ class Browse extends React.Component {
     renderList(path) {
         const directory = this.props.loaded[path]
         return directory && !directory.collapsed ? (
-            <ul className={[styles.fileList, flexy.scrollable].join(' ')}>
+            <ul>
                 {this.renderListItems(path, directory.files)}
             </ul>
         ) : null
@@ -295,8 +301,9 @@ class Browse extends React.Component {
             const fullPath = Path.join(path, file ? file.name : null)
             return (
                 <li key={file.name}>
-                    <div className={this.isSelected(fullPath) ? styles.selected : null}
-                        onClick={() => this.toggleSelection(fullPath, file.isDirectory)}>
+                    <div className={[lookStyles.look, this.isSelected(fullPath) ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
+                        onClick={() => this.toggleSelection(fullPath, file.isDirectory)}
+                        onDoubleClick={() => this.toggleDirectory(fullPath)}>
                         {this.renderIcon(fullPath, file)}
                         <span className={styles.fileName}>{file.name}</span>
                         {this.renderFileInfo(fullPath, file)}
@@ -350,7 +357,9 @@ class Browse extends React.Component {
         return (
             <div className={[styles.browse, flexy.container].join(' ')}>
                 {this.renderToolbar()}
-                {this.renderList('/')}
+                <div className={[styles.fileList, flexy.scrollable].join(' ')}>
+                    {this.renderList('/')}
+                </div>
             </div>
         )
     }
