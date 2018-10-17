@@ -22,16 +22,16 @@
     margin: auto;
 }
 
-.default:hover {
+.default:not(:disabled):hover {
     background-color: hsla(0, 0%, 100%, .1);
     border: 2px solid hsla(0, 0%, 100%, .25);
 }
 
-.default:focus {
+.default:not(:disabled):focus {
     border: 2px solid hsla(0, 0%, 100%, .35);
 }
 
-.default:active {
+.default:not(:disabled):active {
     background-color: hsla(0, 0%, 100%, .15);
     border: 2px solid hsla(0, 0%, 100%, .40);
 }

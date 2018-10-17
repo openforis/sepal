@@ -1,0 +1,11 @@
+.languages span {
+    font-size: 0.9rem;
+    cursor: default;
+}
+
+.languages > span:not(:first-child):before {
+    color: white;
+    content: '/';
+    margin: 0.5rem;
+    cursor: default;
+}

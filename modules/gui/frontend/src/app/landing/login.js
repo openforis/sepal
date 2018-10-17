@@ -1,9 +1,10 @@
-import {ErrorMessage, Field, Input, Label, form} from 'widget/form'
+import {Field, Input, Label, form} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import {Msg, msg} from 'translate'
 import {SubmitButton} from 'widget/legacyButton'
 import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
 import React from 'react'
+import styles from './login.module.css'
 
 const fields = {
     username: new Field()
@@ -40,7 +41,6 @@ class Login extends React.Component {
                     tabIndex={1}
                     errorMessage
                 />
-                <Label msg/>
                 <Input
                     label={msg('landing.login.password.label')}
                     input={password}
@@ -49,17 +49,16 @@ class Login extends React.Component {
                     tabIndex={2}
                     errorMessage
                 />
-                <ErrorMessage for={password}/>
-
-                <SubmitButton
-                    icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
-                    onClick={() => this.login(form.values())}
-                    disabled={form.isInvalid() || action('LOGIN').dispatching}
-                    tabIndex={3}>
-                    <Msg id='landing.login.button'/>
-                </SubmitButton>
-
-                <ForgotPasswordLink tabIndex={4}/>
+                <div className={styles.submit}>
+                    <SubmitButton
+                        icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
+                        onClick={() => this.login(form.values())}
+                        disabled={form.isInvalid() || action('LOGIN').dispatching}
+                        tabIndex={3}>
+                        <Msg id='landing.login.button'/>
+                    </SubmitButton>
+                    <ForgotPasswordLink tabIndex={4}/>
+                </div>
             </form>)
     }
 }
