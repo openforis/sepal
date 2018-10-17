@@ -41,6 +41,7 @@ class Login extends React.Component {
                     tabIndex={1}
                     errorMessage
                 />
+
                 <Input
                     label={msg('landing.login.password.label')}
                     input={password}
