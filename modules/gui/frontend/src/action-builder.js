@@ -1,9 +1,29 @@
 import {dispatch} from 'store'
-import {toPathList} from 'collections'
 import _ from 'lodash'
 import immutable from 'object-path-immutable'
 
-export default function actionBuilder(type, props) {
+const dotSafeWrap = path => ({dotSafe: path})
+const dotSafeUnwrap = safePath => safePath.dotSafe
+
+const toPathList = (path, safe = false) => {
+    if (_.isArray(path)) {
+        return _.flatten(path.map(pathElement => toPathList(pathElement, safe)))
+    }
+    if (_.isObject(path)) {
+        return toPathList(dotSafeUnwrap(path), true)
+    }
+    if (_.isString(path)) {
+        return safe ? path : path.split('.')
+    }
+    throw new Error('Unsupported path element type: ', path)
+}
+
+const select = (path, state) =>
+    toPathList(path).reduce((state, part) => {
+        return state != null && state[part] != null ? state[part] : undefined
+    }, state)
+
+const actionBuilder = (type, props) => {
     const operations = []
     const sideEffects = []
     let prefix = ''
@@ -173,8 +193,5 @@ export default function actionBuilder(type, props) {
     }
 }
 
-function select(path, state) {
-    return toPathList(path).reduce((state, part) => {
-        return state != null && state[part] != null ? state[part] : undefined
-    }, state)
-}
+export default actionBuilder
+export const dotSafe = path => dotSafeWrap(path)
