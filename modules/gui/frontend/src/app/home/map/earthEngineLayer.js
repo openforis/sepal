@@ -1,4 +1,4 @@
-import {googleMap, sepalMap} from './map'
+import {sepalMap} from './map'
 import {map} from 'rxjs/operators'
 import {of} from 'rxjs'
 import _ from 'lodash'

@@ -231,8 +231,8 @@ const valuesToModel = values => {
             targetDate: values.targetDate,
             seasonStart: values.seasonStart,
             seasonEnd: values.seasonEnd,
-            yearsBefore: Number(values.yearsBefore),
-            yearsAfter: Number(values.yearsAfter)
+            yearsBefore: Number(values.yearsBefore || 0),
+            yearsAfter: Number(values.yearsAfter || 0)
         }
     else
         return {

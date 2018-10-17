@@ -38,7 +38,7 @@ const dollarsPerHour = (value, decimals = 2) =>
         decimalScale={decimals}
         fixedDecimalScale={true}
         prefix={'$'}
-        suffix={'/hr'}/>
+        suffix={'/h'}/>
 
 const dollarsPerMonth = (value, decimals = 0) =>
     <NumberFormat
@@ -57,7 +57,7 @@ const hours = (value, decimals = 2) =>
         thousandSeparator={true}
         decimalScale={decimals}
         fixedDecimalScale={true}
-        suffix={'hr'}/>
+        suffix={'h'}/>
 
 const percent = (part, total, decimals = 2) =>
     <NumberFormat

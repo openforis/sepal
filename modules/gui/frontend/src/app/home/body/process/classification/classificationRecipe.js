@@ -1,4 +1,6 @@
 import {RecipeState as ParentRecipeState, recipePath} from '../recipe'
+import {msg} from 'translate'
+import _ from 'lodash'
 import api from 'api'
 import globalActionBuilder from 'action-builder'
 
@@ -43,7 +45,7 @@ export const RecipeActions = id => {
                     'ui.retrieveState': 'SUBMITTED',
                     'ui.retrieveOptions': retrieveOptions,
                 })
-                .sideEffect(recipe => api.gee.retrieveClassification(recipe))
+                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
         },
         setFusionTableColumns(columns) {
@@ -63,4 +65,21 @@ const initRecipe = recipeState => {
     const model = recipeState.model
     if (model)
         return actions.setInitialized(model.source && model.trainingData).dispatch()
+}
+
+const submitRetrieveRecipeTask = recipe => {
+    const name = recipe.title || recipe.placeholder
+    const destination = recipe.ui.retrieveOptions.destination
+    const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', destination], {name})
+    const bands = recipe.ui.retrieveOptions.bands
+    const task = {
+        'operation': `sepal.image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
+        'params':
+            {
+                title: taskTitle,
+                description: name,
+                image: {recipe: _.omit(recipe, ['ui']), bands: {selection: bands}}
+            }
+    }
+    return api.tasks.submit$(task).subscribe()
 }

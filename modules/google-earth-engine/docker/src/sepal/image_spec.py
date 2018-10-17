@@ -20,7 +20,7 @@ class ImageSpec(object):
                 ee_preview = ee_image.getMapId(viz_params)
             except ee.EEException:
                 retry += 1
-                if retry > 9:
+                if retry > 3:
                     raise
                 logging.info('Retry ' + str(retry) + ' of requesting map id of ' + str(self))
         logging.debug('Got map id of ' + str(self) + ': ' + str(ee_preview))

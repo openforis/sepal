@@ -178,7 +178,7 @@ const createMap = mapElement => {
                                     },
                                     e => {
                                         if (onError)
-                                            onError()
+                                            onError(e)
                                         else
                                             Notifications.caught('map.layer', {}, e)
                                                 .dispatch()

@@ -1,4 +1,4 @@
-import {map, tap} from 'rxjs/operators'
+import {map} from 'rxjs/operators'
 import {of} from 'rxjs'
 import {sepalMap} from './map'
 import EarthEngineLayer from './earthEngineLayer'

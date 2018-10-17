@@ -6,6 +6,7 @@ project_dir = '../../..'
 Vagrant.configure(2) do |config|
   config.vm.network 'private_network', ip: "#{ENV['VAGRANT_IP']}"
   config.vm.box = 'ubuntu/trusty64'
+  config.disksize.size = "64GB"
   config.vm.synced_folder project_dir, '/opt/sepal/'
 
   config.vm.provider 'virtualbox' do |v|

@@ -1,14 +1,12 @@
 import {RecipeState, recipePath} from './classificationRecipe'
 import {connect, select} from 'store'
 import {sepalMap} from 'app/home/map/map'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import ClassificationPreview from './classificationPreview'
 import ClassificationToolbar from './classificationToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
-import api from 'api'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
