@@ -3,6 +3,7 @@ package fake
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
 
+import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 
 class FakeClock implements Clock {
@@ -22,12 +23,12 @@ class FakeClock implements Clock {
     }
 
     Date set(String date) {
-        currentTime = Date.parse('yyyy-MM-dd', date)
+        currentTime = new SimpleDateFormat('yyyy-MM-dd').parse(date)
     }
 
 
     Date set(String date, String time) {
-        currentTime = Date.parse('yyyy-MM-dd HH:mm:ss', "$date $time")
+        currentTime = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse("$date $time")
     }
 
     Date forward(long time, TimeUnit timeUnit) {

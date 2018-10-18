@@ -1,12 +1,12 @@
 package org.openforis.sepal.security
 
 import groovy.json.JsonOutput
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-@ImmutableData
+@Immutable
 class GateOneAuthObject {
     private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1"
     String publicKey

@@ -1,11 +1,13 @@
 package org.openforis.sepal.component.files.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.files.internal.UserDir
-import org.openforis.sepal.util.annotation.Data
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class DeleteFile extends AbstractCommand<Void> {
     String path
 }

@@ -1,13 +1,13 @@
 package org.openforis.sepal.component.user.command
 
+import groovy.transform.Immutable
 import groovymvc.security.UsernamePasswordVerifier
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.user.User
-import org.openforis.sepal.util.annotation.ImmutableData
 
-@ImmutableData
+@Immutable
 class Authenticate implements Command<User> {
     String username
     String password

@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.workerinstance.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
@@ -11,11 +13,11 @@ import org.openforis.sepal.component.workerinstance.event.InstanceLaunched
 import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
 import org.openforis.sepal.event.EventDispatcher
 import org.openforis.sepal.util.Clock
-import org.openforis.sepal.util.annotation.Data
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class RequestInstance extends AbstractCommand<WorkerInstance> {
     String workerType
     String instanceType
@@ -72,7 +74,7 @@ class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestIn
     private WorkerInstance idleInstance(String instanceType) {
         def idleIds = instanceRepository.idleInstances(instanceType)
         def idleInstances = instanceProvider.idleInstances(instanceType)
-                .findAll { it.id in idleIds }
+            .findAll { it.id in idleIds }
         idleInstances ? idleInstances.first() : null
     }
 }

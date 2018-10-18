@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.budget.api
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
-@ImmutableData
+@Immutable
 class Budget {
     double instanceSpending
     double storageSpending

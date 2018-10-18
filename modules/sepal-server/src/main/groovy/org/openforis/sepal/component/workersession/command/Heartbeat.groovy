@@ -1,14 +1,16 @@
 package org.openforis.sepal.component.workersession.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.command.Unauthorized
 import org.openforis.sepal.component.workersession.api.GoogleOAuthGateway
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
-import org.openforis.sepal.util.annotation.Data
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class Heartbeat extends AbstractCommand<WorkerSession> {
     String sessionId
 }

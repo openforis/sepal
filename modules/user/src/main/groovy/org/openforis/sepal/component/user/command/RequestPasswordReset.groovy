@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.user.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.api.EmailGateway
@@ -8,13 +10,13 @@ import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageQueue
 import org.openforis.sepal.user.User
 import org.openforis.sepal.util.Clock
-import org.openforis.sepal.util.annotation.Data
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.user.User.Status.ACTIVE
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class RequestPasswordReset extends AbstractCommand<Void> {
     String email
 }
@@ -27,10 +29,10 @@ class RequestPasswordResetHandler implements CommandHandler<Void, RequestPasswor
     private final Clock clock
 
     RequestPasswordResetHandler(
-            UserRepository userRepository,
-            EmailGateway emailGateway,
-            MessageBroker messageBroker,
-            Clock clock) {
+        UserRepository userRepository,
+        EmailGateway emailGateway,
+        MessageBroker messageBroker,
+        Clock clock) {
         this.userRepository = userRepository
         this.emailGateway = emailGateway
         this.messageQueue = messageBroker.createMessageQueue('user.send_password_reset_email', Map) {
@@ -50,8 +52,8 @@ class RequestPasswordResetHandler implements CommandHandler<Void, RequestPasswor
             userRepository.updateStatus(user.username, ACTIVE)
         userRepository.updateToken(user.username, token, clock.now())
         messageQueue.publish(
-                user: user,
-                token: token
+            user: user,
+            token: token
         )
         return null
     }

@@ -6,6 +6,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.text.DecimalFormat
+import java.text.SimpleDateFormat
 
 class Interactive {
     private static final Logger LOG = LoggerFactory.getLogger(this)
@@ -267,7 +268,7 @@ class Interactive {
                 new Week(locale),
                 new Month(locale)
         ])
-        prettyTime.format(Date.parse("yyyy-MM-dd'T'HH:mm:ss", session.creationTime as String))
+        prettyTime.format(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(session.creationTime as String))
     }
 
     private String readLine(String prompt) {

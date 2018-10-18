@@ -1,13 +1,15 @@
 package org.openforis.sepal.component.notification.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.notification.api.Message
 import org.openforis.sepal.component.notification.api.MessageRepository
 import org.openforis.sepal.util.Clock
-import org.openforis.sepal.util.annotation.Data
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class SaveMessage extends AbstractCommand<Void> {
     Message message
 }

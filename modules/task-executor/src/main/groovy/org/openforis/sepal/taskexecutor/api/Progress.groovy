@@ -1,8 +1,8 @@
 package org.openforis.sepal.taskexecutor.api
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
-@ImmutableData
+@Immutable
 class Progress {
     String message
 }

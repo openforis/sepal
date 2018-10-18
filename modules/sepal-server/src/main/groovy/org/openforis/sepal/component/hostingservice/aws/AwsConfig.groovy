@@ -1,9 +1,9 @@
 package org.openforis.sepal.component.hostingservice.aws
 
+import groovy.transform.Canonical
 import org.openforis.sepal.util.Config
-import org.openforis.sepal.util.annotation.Data
 
-@Data
+@Canonical
 class AwsConfig {
     final String region
     final String availabilityZone

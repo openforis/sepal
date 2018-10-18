@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.hostingservice.api
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
-@ImmutableData
+@Immutable
 class InstanceType {
     String id
     String name

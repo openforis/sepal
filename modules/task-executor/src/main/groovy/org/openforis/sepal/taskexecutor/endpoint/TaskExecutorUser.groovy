@@ -1,11 +1,11 @@
 package org.openforis.sepal.taskexecutor.endpoint
 
+import groovy.transform.Immutable
 import groovymvc.security.User
 import groovymvc.security.UserProvider
 import groovymvc.security.UsernamePasswordVerifier
-import org.openforis.sepal.util.annotation.ImmutableData
 
-@ImmutableData
+@Immutable
 class TaskExecutorUser implements User {
     String username
     String name
@@ -27,8 +27,8 @@ class TaskExecutorUserProvider implements UserProvider {
 
     TaskExecutorUserProvider(String sepalUsername) {
         this.sepalUser = new TaskExecutorUser(
-                username: sepalUsername,
-                roles: ['ADMIN'].toSet()
+            username: sepalUsername,
+            roles: ['ADMIN'].toSet()
         )
     }
 

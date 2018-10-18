@@ -1,17 +1,17 @@
 package org.openforis.sepal.component.workersession.query
 
+import groovy.transform.Immutable
 import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository
 import org.openforis.sepal.component.workersession.api.BudgetManager
 import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.UserSessionReport
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
-import org.openforis.sepal.util.annotation.ImmutableData
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
 
-@ImmutableData
+@Immutable
 class GenerateUserSessionReport implements Query<UserSessionReport> {
     String username
     String workerType
@@ -23,9 +23,9 @@ class GenerateUserSessionReportHandler implements QueryHandler<UserSessionReport
     private final BudgetManager budgetManager
 
     GenerateUserSessionReportHandler(
-            JdbcWorkerSessionRepository sessionRepository,
-            InstanceManager instanceManager,
-            BudgetManager budgetManager) {
+        JdbcWorkerSessionRepository sessionRepository,
+        InstanceManager instanceManager,
+        BudgetManager budgetManager) {
         this.sessionRepository = sessionRepository
         this.instanceManager = instanceManager
         this.budgetManager = budgetManager
@@ -34,9 +34,9 @@ class GenerateUserSessionReportHandler implements QueryHandler<UserSessionReport
     UserSessionReport execute(GenerateUserSessionReport query) {
         def sessions = sessionRepository.userSessions(query.username, [PENDING, ACTIVE], query.workerType)
         return new UserSessionReport(
-                sessions: sessions,
-                instanceTypes: instanceManager.instanceTypes,
-                spending: budgetManager.userSpending(query.username)
+            sessions: sessions,
+            instanceTypes: instanceManager.instanceTypes,
+            spending: budgetManager.userSpending(query.username)
         )
     }
 }

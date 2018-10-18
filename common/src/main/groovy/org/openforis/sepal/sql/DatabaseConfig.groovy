@@ -1,12 +1,12 @@
 package org.openforis.sepal.sql
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
+import groovy.transform.Immutable
 import org.openforis.sepal.util.Config
-import org.openforis.sepal.util.annotation.ImmutableData
 
 import javax.sql.DataSource
 
-@ImmutableData
+@Immutable
 class DatabaseConfig {
     String driver
     String schema

@@ -1,9 +1,9 @@
 package org.openforis.sepal.component.hostingservice.local
 
+import groovy.transform.Canonical
 import org.openforis.sepal.util.Config
-import org.openforis.sepal.util.annotation.Data
 
-@Data
+@Canonical
 class LocalConfig {
     final String host
 

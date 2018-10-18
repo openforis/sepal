@@ -1,9 +1,9 @@
 package org.openforis.sepal.component.workerinstance
 
+import groovy.transform.Canonical
 import org.openforis.sepal.util.Config
-import org.openforis.sepal.util.annotation.Data
 
-@Data
+@Canonical
 class WorkerInstanceConfig {
     final String sepalVersion
     final String sepalUser

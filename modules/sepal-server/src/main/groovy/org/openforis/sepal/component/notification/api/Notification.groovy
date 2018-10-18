@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.notification.api
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
-@ImmutableData
+@Immutable
 class Notification {
     Message message
     String username

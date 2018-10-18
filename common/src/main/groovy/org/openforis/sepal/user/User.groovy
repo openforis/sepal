@@ -1,12 +1,12 @@
 package org.openforis.sepal.user
 
 import groovy.json.JsonOutput
+import groovy.transform.Immutable
 import org.openforis.sepal.security.Roles
-import org.openforis.sepal.util.annotation.ImmutableData
 
 import static org.openforis.sepal.user.User.Status.ACTIVE
 
-@ImmutableData
+@Immutable
 class User implements groovymvc.security.User {
     Long id
     String name

@@ -1,5 +1,6 @@
 package org.openforis.sepal.component.user
 
+import groovy.transform.Canonical
 import groovymvc.security.UsernamePasswordVerifier
 import org.openforis.sepal.component.user.adapter.LdapUsernamePasswordVerifier
 import org.openforis.sepal.component.user.adapter.TerminalBackedExternalUserDataGateway
@@ -8,7 +9,6 @@ import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.security.PathRestrictionsFactory
 import org.openforis.sepal.util.Config
-import org.openforis.sepal.util.annotation.Data
 import org.openforis.sepal.util.lifecycle.Lifecycle
 import org.openforis.sepal.util.lifecycle.Stoppable
 import org.slf4j.Logger
@@ -26,8 +26,8 @@ class Main extends AbstractMain {
                 serverConfig
             )
             def endpoints = new Endpoints(
-                    PathRestrictionsFactory.create(),
-                    userComponent
+                PathRestrictionsFactory.create(),
+                userComponent
             )
             start new Server(serverConfig.port, endpoints)
             addShutdownHook { stop() }
@@ -52,7 +52,7 @@ class Main extends AbstractMain {
 
 }
 
-@Data
+@Canonical
 class ServerConfig {
     final int port
     final String host

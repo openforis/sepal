@@ -1,8 +1,8 @@
 package org.openforis.sepal.apigateway.server
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
-@ImmutableData
+@Immutable
 class EndpointConfig {
     boolean https = true
     boolean authenticate = true

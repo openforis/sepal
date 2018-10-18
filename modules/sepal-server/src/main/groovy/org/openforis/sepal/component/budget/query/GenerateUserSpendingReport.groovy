@@ -1,14 +1,14 @@
 package org.openforis.sepal.component.budget.query
 
+import groovy.transform.Immutable
 import org.openforis.sepal.component.budget.api.BudgetRepository
 import org.openforis.sepal.component.budget.api.UserSpendingReport
 import org.openforis.sepal.component.budget.internal.InstanceSpendingService
 import org.openforis.sepal.component.budget.internal.StorageUseService
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
-import org.openforis.sepal.util.annotation.ImmutableData
 
-@ImmutableData
+@Immutable
 class GenerateUserSpendingReport implements Query<UserSpendingReport> {
     String username
 }
@@ -19,9 +19,9 @@ class GenerateUserSpendingReportHandler implements QueryHandler<UserSpendingRepo
     private final BudgetRepository budgetRepository
 
     GenerateUserSpendingReportHandler(
-            InstanceSpendingService instanceSpendingService,
-            StorageUseService storageUseService,
-            BudgetRepository budgetRepository) {
+        InstanceSpendingService instanceSpendingService,
+        StorageUseService storageUseService,
+        BudgetRepository budgetRepository) {
         this.instanceSpendingService = instanceSpendingService
         this.storageUseService = storageUseService
         this.budgetRepository = budgetRepository
@@ -34,13 +34,13 @@ class GenerateUserSpendingReportHandler implements QueryHandler<UserSpendingRepo
         double storageSpending = storageUseService.calculateSpending(storageUse)
         def budget = budgetRepository.userBudget(username)
         new UserSpendingReport(
-                username: username,
-                instanceSpending: instanceSpending,
-                storageSpending: storageSpending,
-                storageUsage: storageUse.gb,
-                instanceBudget: budget.instanceSpending,
-                storageBudget: budget.storageSpending,
-                storageQuota: budget.storageQuota
+            username: username,
+            instanceSpending: instanceSpending,
+            storageSpending: storageSpending,
+            storageUsage: storageUse.gb,
+            instanceBudget: budget.instanceSpending,
+            storageBudget: budget.storageSpending,
+            storageQuota: budget.storageQuota
         )
     }
 }

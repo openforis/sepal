@@ -1,9 +1,9 @@
 package org.openforis.sepal.component.workersession.event
 
+import groovy.transform.Immutable
 import org.openforis.sepal.event.Event
-import org.openforis.sepal.util.annotation.ImmutableData
 
-@ImmutableData
+@Immutable
 class SessionClosed implements Event {
     String sessionId
 }

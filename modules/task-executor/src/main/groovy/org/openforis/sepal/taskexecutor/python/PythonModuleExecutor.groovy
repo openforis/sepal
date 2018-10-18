@@ -1,5 +1,6 @@
 package org.openforis.sepal.taskexecutor.python
 
+import groovy.transform.Immutable
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.taskexecutor.api.Progress
 import org.openforis.sepal.taskexecutor.api.Task
@@ -7,7 +8,6 @@ import org.openforis.sepal.taskexecutor.api.TaskExecutor
 import org.openforis.sepal.taskexecutor.api.TaskExecutorFactory
 import org.openforis.sepal.taskexecutor.util.Scheduler
 import org.openforis.sepal.taskexecutor.util.SleepingScheduler
-import org.openforis.sepal.util.annotation.ImmutableData
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -80,25 +80,25 @@ class PythonModuleExecutor implements TaskExecutor {
 
         void submit(Task task) {
             http.post(
-                    path: 'submit',
-                    requestContentType: JSON,
-                    body: [
-                            task  : task.id,
-                            module: task.operation,
-                            spec  : task.params
-                    ]
+                path: 'submit',
+                requestContentType: JSON,
+                body: [
+                    task: task.id,
+                    module: task.operation,
+                    spec: task.params
+                ]
             )
         }
 
         Status status(String geeTaskId) {
             def response = http.get(
-                    path: 'status',
-                    contentType: JSON,
-                    query: [task: geeTaskId]
+                path: 'status',
+                contentType: JSON,
+                query: [task: geeTaskId]
             )
             return new Status(
-                    state: response.data.state as Status.State,
-                    message: response.data.message)
+                state: response.data.state as Status.State,
+                message: response.data.message)
         }
 
         void cancel(String geeTaskId) {
@@ -110,7 +110,7 @@ class PythonModuleExecutor implements TaskExecutor {
         }
     }
 
-    @ImmutableData
+    @Immutable
     private static class Status {
         State state
         String message

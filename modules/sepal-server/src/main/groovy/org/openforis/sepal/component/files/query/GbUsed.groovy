@@ -1,12 +1,12 @@
 package org.openforis.sepal.component.files.query
 
+import groovy.transform.Immutable
 import org.apache.commons.lang.SystemUtils
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 import org.openforis.sepal.util.Terminal
-import org.openforis.sepal.util.annotation.ImmutableData
 
-@ImmutableData
+@Immutable
 class GbUsed implements Query<Double> {
     String username
 }

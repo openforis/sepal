@@ -19,10 +19,10 @@ class Main {
                 rewrite('path-prefix["/"]',
                         '/',
                         getClass().classLoader,
-                        resource(new ClassPathResourceManager(getClass().classLoader, 'build'))))
+                        resource(new ClassPathResourceManager(getClass().classLoader, 'frontend'))))
         handler.addPrefixPath(
                 '/static',
-                resource(new ClassPathResourceManager(getClass().classLoader, 'build/static'))
+                resource(new ClassPathResourceManager(getClass().classLoader, 'frontend/static'))
         )
         def processorCount = Runtime.getRuntime().availableProcessors()
         server = Undertow.builder()

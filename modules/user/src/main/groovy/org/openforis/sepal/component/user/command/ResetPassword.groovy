@@ -1,13 +1,15 @@
 package org.openforis.sepal.component.user.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.api.ExternalUserDataGateway
 import org.openforis.sepal.component.user.api.UsingInvalidToken
 import org.openforis.sepal.component.user.internal.TokenManager
-import org.openforis.sepal.util.annotation.Data
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class ResetPassword extends AbstractCommand<Void> {
     String token
     String password

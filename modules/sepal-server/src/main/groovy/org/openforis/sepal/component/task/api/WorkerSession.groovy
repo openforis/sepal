@@ -1,11 +1,11 @@
 package org.openforis.sepal.component.task.api
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
 import static org.openforis.sepal.component.task.api.WorkerSession.State.ACTIVE
 import static org.openforis.sepal.component.task.api.WorkerSession.State.CLOSED
 
-@ImmutableData
+@Immutable
 class WorkerSession {
     String id
     String instanceType

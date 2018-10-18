@@ -1,9 +1,9 @@
 package org.openforis.sepal.workertype
 
+import groovy.transform.Immutable
 import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.util.Terminal
-import org.openforis.sepal.util.annotation.ImmutableData
 
 final class WorkerTypes {
     static final String SANDBOX = 'sandbox'
@@ -124,13 +124,13 @@ final class WorkerTypes {
     }
 }
 
-@ImmutableData
+@Immutable
 final class WorkerType {
     final String id
     final List<Image> images = []
 }
 
-@ImmutableData
+@Immutable
 final class Image {
     String name
     List<Integer> exposedPorts = []

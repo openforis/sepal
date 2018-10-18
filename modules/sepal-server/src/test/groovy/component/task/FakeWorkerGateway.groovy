@@ -1,9 +1,9 @@
 package component.task
 
+import groovy.transform.Immutable
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSession
-import org.openforis.sepal.util.annotation.ImmutableData
 
 class FakeWorkerGateway implements WorkerGateway {
     private final Map<String, ExecutionRequest> requestByTaskId = [:]
@@ -18,12 +18,12 @@ class FakeWorkerGateway implements WorkerGateway {
         canceledRequests << removed
         assert removed, "No execution request for task $taskId"
         assert session.id == removed.session.id, "Session of execution request and cancel request does not match: " +
-                "$removed.session.id != $session.id"
+            "$removed.session.id != $session.id"
     }
 
     List<ExecutionRequest> executedTwo() {
         assert requests.size() == 2,
-                "Expected two execution request. Actually requested ${requests.size()}: ${requests}"
+            "Expected two execution request. Actually requested ${requests.size()}: ${requests}"
         return requests
     }
 
@@ -33,23 +33,23 @@ class FakeWorkerGateway implements WorkerGateway {
 
     void canceledNone() {
         assert canceledRequests.empty,
-                "Expected no canceled execution request. Actually canceled ${canceledRequests.size()}: ${canceledRequests}"
+            "Expected no canceled execution request. Actually canceled ${canceledRequests.size()}: ${canceledRequests}"
     }
 
     ExecutionRequest canceledOne() {
         assert canceledRequests.size() == 1,
-                "Expected one canceled execution request. Actually canceled ${canceledRequests.size()}: ${canceledRequests}"
+            "Expected one canceled execution request. Actually canceled ${canceledRequests.size()}: ${canceledRequests}"
         return canceledRequests.first()
     }
 
     List<ExecutionRequest> canceledTwo() {
         assert canceledRequests.size() == 2,
-                "Expected two canceled execution request. Actually canceled ${canceledRequests.size()}: ${canceledRequests}"
+            "Expected two canceled execution request. Actually canceled ${canceledRequests.size()}: ${canceledRequests}"
         return canceledRequests
     }
 }
 
-@ImmutableData
+@Immutable
 class ExecutionRequest {
     Task task
     WorkerSession session

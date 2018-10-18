@@ -1,15 +1,14 @@
 package org.openforis.sepal.component.datasearch.query
 
-
-import org.openforis.sepal.component.datasearch.api.SceneArea
+import groovy.transform.Canonical
 import org.openforis.sepal.component.datasearch.api.Aoi
 import org.openforis.sepal.component.datasearch.api.GoogleEarthEngineGateway
+import org.openforis.sepal.component.datasearch.api.SceneArea
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 import org.openforis.sepal.user.User
-import org.openforis.sepal.util.annotation.Data
 
-@Data
+@Canonical
 class FindSceneAreasForAoi implements Query<List<SceneArea>> {
     User user
     String source

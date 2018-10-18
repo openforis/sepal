@@ -1,10 +1,10 @@
 package org.openforis.sepal.component.workersession.api
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.*
 
-@ImmutableData
+@Immutable
 class WorkerSession {
     String id
     State state

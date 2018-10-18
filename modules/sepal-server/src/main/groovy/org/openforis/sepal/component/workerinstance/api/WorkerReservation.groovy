@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.workerinstance.api
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
-@ImmutableData
+@Immutable
 class WorkerReservation {
     String username
     String workerType

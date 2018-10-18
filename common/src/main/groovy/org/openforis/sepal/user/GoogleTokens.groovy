@@ -1,8 +1,8 @@
 package org.openforis.sepal.user
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
-@ImmutableData
+@Immutable
 class GoogleTokens {
     static final int REFRESH_IF_EXPIRES_IN_MINUTES = 5
 
