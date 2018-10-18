@@ -1,0 +1,35 @@
+def mainClassName = 'org.openforis.sepal.taskexecutor.Main'
+description = ''
+
+apply plugin: 'java'
+
+dependencies {
+    compile project(':sepal-common')
+    compile group: 'com.google.guava', name: 'guava', version: '19.0'
+    testCompile project(':sepal-common-test')
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+task copyJar(type: Copy) {
+    println "${libsDir}/${project.name}-${version}.jar"
+    from file("${libsDir}/${project.name}-${version}.jar")
+    into file("${projectDir}/docker/binary")
+    rename "${project.name}-${version}.jar", "${project.name}.jar"
+}
+
+build.dependsOn(copyJar)
+
+task runDev(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    main = mainClassName
+    systemProperties(System.getProperties())
+}
+// ./gradlew :task-executor:runDev --args='/path/to/sepal-config/task-executor/task-executor.properties'

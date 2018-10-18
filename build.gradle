@@ -1,0 +1,41 @@
+allprojects  {
+  apply plugin: 'maven'
+  apply plugin: 'groovy'
+
+  group = 'org.openforis.sepal'
+  version = '1.0.0-SNAPSHOT'
+}
+
+subprojects {
+  apply plugin: 'java'
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+  tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+  }
+  test {
+    testLogging {
+      exceptionFormat = 'full'
+    }
+  }
+
+
+  tasks.withType(Test) {
+    maxParallelForks = 1
+  }
+  
+
+
+  repositories {
+    mavenLocal()
+
+    maven { url "http://www.openforis.org/nexus/content/groups/public/" }
+    maven { url "http://jcenter.bintray.com/" }
+    maven { url "http://repo.maven.apache.org/maven2" }
+  }
+
+
+  dependencies {
+    testCompile group: 'org.spockframework', name: 'spock-core', version:'1.2-groovy-2.5'
+  }
+}

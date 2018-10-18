@@ -1,0 +1,71 @@
+plugins {
+    id "com.moowork.node" version "1.2.0"
+}
+
+def mainClassName = 'org.openforis.sepal.gui.Main'
+description = ''
+
+apply plugin: 'com.moowork.node'
+apply plugin: 'java'
+
+node {
+    version = '10.4.1'
+    npmVersion = '6.1.0'
+    nodeModulesDir = file("${projectDir}/frontend")
+    download = true
+}
+
+dependencies {
+    compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.3'
+    compile group: 'org.codehaus.groovy', name: 'groovy-dateutil', version: '2.5.3'
+    compile group: 'io.undertow', name: 'undertow-core', version: '1.4.11.Final'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.5'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.16'
+    compile group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.16'
+    compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.16'
+    testCompile project(':sepal-common-test')
+    testCompile project(':sepal-server')
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+task buildFrontend(type: NpmTask) {
+    args = ['run', 'build']
+}
+
+task copyFrontend(type: Copy) {
+    from file("frontend/build")
+    into file("${buildDir}/resources/main/frontend")
+}
+
+task copyJar(type: Copy) {
+    from file("${libsDir}/${project.name}-${version}.jar")
+    into file("${projectDir}/docker/binary")
+    rename "${project.name}-${version}.jar", "${project.name}.jar"
+}
+
+buildFrontend.dependsOn(npm_cache_verify, npm_install)
+copyFrontend.dependsOn(buildFrontend)
+jar.dependsOn(copyFrontend)
+copyJar.dependsOn(jar)
+build.dependsOn(copyJar)
+
+clean.doFirst {
+    delete "${projectDir}/frontend/build"
+    delete "${projectDir}/frontend/node_modules"
+    delete "${projectDir}/docker/binary/${project.name}.jar"
+}
+
+task runDev(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = mainClassName
+    systemProperties(System.getProperties())
+}
+//  ./gradlew :sepal-gui:runDev

@@ -1,0 +1,38 @@
+def mainClassName = 'org.openforis.sepal.apigateway.Main'
+description = ''
+
+apply plugin: 'java'
+
+dependencies {
+  compile project(':sepal-common')
+    compile group: 'com.vividsolutions', name: 'jts', version:'1.13'
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version:'1.11.221'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version:'2.7.2'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.7.2'
+  testCompile project(':sepal-common-test')
+}
+
+jar {
+  manifest {
+    attributes 'Main-Class': mainClassName
+  }
+  from {
+    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+  }
+}
+
+task copyJar(type: Copy) {
+  println "${libsDir}/${project.name}-${version}.jar"
+  from file("${libsDir}/${project.name}-${version}.jar")
+  into file("${projectDir}/docker/binary")
+  rename "${project.name}-${version}.jar", "sepal.jar"
+}
+
+build.dependsOn(copyJar)
+
+task runDev(type: JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+  main = 'manual.ConfiguredMain'
+  systemProperties(System.getProperties())
+}
+//  ./gradlew :sepal-server:runDev -DconfigDir=/path/to/sepal-config/sepal-server

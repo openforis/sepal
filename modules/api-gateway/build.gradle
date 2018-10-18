@@ -1,0 +1,35 @@
+def mainClassName = 'org.openforis.sepal.Main'
+description = ''
+
+apply plugin: 'java'
+
+dependencies {
+    compile project(':sepal-common')
+    compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.55'
+    testCompile project(':sepal-common-test')
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+task copyJar(type: Copy) {
+    println "${libsDir}/${project.name}-${version}.jar"
+    from file("${libsDir}/${project.name}-${version}.jar")
+    into file("${projectDir}/docker/binary")
+    rename "${project.name}-${version}.jar", "${project.name}.jar"
+}
+
+build.dependsOn(copyJar)
+
+task runDev(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    main = 'manual.TestMain'
+    systemProperties(System.getProperties())
+}
+//  ./gradlew :sepal-api-gateway:runDev -DconfigDir=/path/to/config/dir/api-gateway

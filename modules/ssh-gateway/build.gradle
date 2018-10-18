@@ -1,0 +1,22 @@
+
+description = ''
+dependencies {
+  compile project(':sepal-common')
+    compile group: 'com.ocpsoft', name: 'ocpsoft-pretty-time', version:'1.0.7'
+    compile group: 'com.jcraft', name: 'jsch', version:'0.1.53'
+}
+
+jar {
+  from {
+    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+  }
+}
+
+task copyJar(type: Copy) {
+  println "${libsDir}/${project.name}-${version}.jar"
+  from file("${libsDir}/${project.name}-${version}.jar")
+  into file("${projectDir}/docker/binary")
+  rename "${project.name}-${version}.jar", "${project.name}.jar"
+}
+
+build.dependsOn(copyJar)
