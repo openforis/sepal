@@ -1,4 +1,3 @@
-description = ''
 dependencies {
     compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.3'
     compile group: 'org.codehaus.groovy', name: 'groovy-dateutil', version: '2.5.3'

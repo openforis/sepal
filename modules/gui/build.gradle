@@ -1,12 +1,11 @@
 plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
     id "com.moowork.node" version "1.2.0"
 }
 
-def mainClassName = 'org.openforis.sepal.gui.Main'
-description = ''
-
-apply plugin: 'com.moowork.node'
-apply plugin: 'java'
+mainClassName = 'org.openforis.sepal.gui.Main'
 
 node {
     version = '10.4.1'
@@ -27,15 +26,6 @@ dependencies {
     testCompile project(':sepal-server')
 }
 
-jar {
-    manifest {
-        attributes 'Main-Class': mainClassName
-    }
-    from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-}
-
 task buildFrontend(type: NpmTask) {
     args = ['run', 'build']
 }
@@ -45,10 +35,14 @@ task copyFrontend(type: Copy) {
     into file("${buildDir}/resources/main/frontend")
 }
 
+shadowJar {
+    mergeGroovyExtensionModules()
+}
+
 task copyJar(type: Copy) {
-    from file("${libsDir}/${project.name}-${version}.jar")
+    from file("${libsDir}/${project.name}-${version}-all.jar")
     into file("${projectDir}/docker/binary")
-    rename "${project.name}-${version}.jar", "${project.name}.jar"
+    rename "${project.name}-${version}-all.jar", "${project.name}.jar"
 }
 
 buildFrontend.dependsOn(npm_cache_verify, npm_install)

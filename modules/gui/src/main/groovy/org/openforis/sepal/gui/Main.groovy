@@ -1,4 +1,4 @@
-package org.openforis.sepal.guireact
+package org.openforis.sepal.gui
 
 import io.undertow.Handlers
 import io.undertow.Undertow
@@ -16,7 +16,7 @@ class Main {
 
     Main() {
         def handler = Handlers.path(
-                rewrite('path-prefix["/"]',
+                rewrite('path-prefix("/")',
                         '/',
                         getClass().classLoader,
                         resource(new ClassPathResourceManager(getClass().classLoader, 'frontend'))))

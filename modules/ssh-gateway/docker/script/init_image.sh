@@ -14,8 +14,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     libnss-sss \
     libnss-ldap \
     sssd-tools \
-    gettext \
-    groovy
+    gettext
 
 echo "initgroups: files sss" >> /etc/nsswitch.conf
 

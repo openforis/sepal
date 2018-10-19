@@ -1,7 +1,10 @@
-def mainClassName = 'org.openforis.sepal.apigateway.Main'
-description = ''
+plugins {
+  id 'java'
+  id 'application'
+  id 'com.github.johnrengelman.shadow' version '4.0.1'
+}
 
-apply plugin: 'java'
+mainClassName = 'org.openforis.sepal.Main'
 
 dependencies {
   compile project(':sepal-common')
@@ -12,23 +15,21 @@ dependencies {
   testCompile project(':sepal-common-test')
 }
 
-jar {
-  manifest {
-    attributes 'Main-Class': mainClassName
-  }
-  from {
-    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-  }
+shadowJar {
+  mergeGroovyExtensionModules()
 }
 
 task copyJar(type: Copy) {
-  println "${libsDir}/${project.name}-${version}.jar"
-  from file("${libsDir}/${project.name}-${version}.jar")
+  from file("${libsDir}/${project.name}-${version}-all.jar")
   into file("${projectDir}/docker/binary")
-  rename "${project.name}-${version}.jar", "sepal.jar"
+  rename "${project.name}-${version}-all.jar", "sepal.jar"
 }
 
 build.dependsOn(copyJar)
+
+clean.doFirst {
+  delete "${projectDir}/docker/binary/sepal.jar"
+}
 
 task runDev(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath

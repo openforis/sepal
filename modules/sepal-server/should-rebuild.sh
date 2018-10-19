@@ -3,15 +3,14 @@ cd $1
 rebuild=false
 if [ -f ./docker/binary/sepal.jar ]; then
     found=$(find . \
-        -not \( -path ./target -prune \) \
-        -not \( -path ./frontend/dist -prune \) \
+        -not \( -path ./build -prune \) \
         -newer ./docker/binary/sepal.jar \
         -print -quit)
     if [ ! -z "$found" ]; then
         rebuild=true
     else
         found=$(find ../../common/* \
-            -not \( -path ../../common/target -prune \) \
+            -not \( -path ../../common/build -prune \) \
             -newer ./docker/binary/sepal.jar \
             -print -quit)
         if [ ! -z "$found" ]; then

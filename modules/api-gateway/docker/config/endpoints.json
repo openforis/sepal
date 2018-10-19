@@ -29,7 +29,7 @@
   },
   {
     "prefix": "false",
-    "path": "/api/gateone/ws",
+    "path": "/gateone/ws",
     "target": "https://gateone:8000/ws",
     "https": "true",
     "authenticate": "true"
@@ -150,11 +150,11 @@
   },
   {
     "prefix": "true",
-    "path": "/",
-    "target": "http://gui:7667/",
+    "path": "/static/",
+    "target": "http://gui:7667/static",
     "https": "true",
     "authenticate": "false",
-    "no-cache": "true"
+    "cached": "true"
   },
   {
     "prefix": "false",
@@ -166,10 +166,10 @@
   },
   {
     "prefix": "true",
-    "path": "/static/",
+    "path": "/",
     "target": "http://gui:7667/",
     "https": "true",
     "authenticate": "false",
-    "cached": "true"
+    "no-cache": "true"
   }
 ]
