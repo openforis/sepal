@@ -27,23 +27,28 @@
     margin-left: 1rem;
 }
 
+.fileList {
+    overflow-x: auto;
+}
+
+.fileList > div {
+    width: max-content;
+}
+
 .fileList ul {
     list-style: none;
     padding: 0;
-    margin: 0 0 0 1.5rem;
-    user-select: none;
     overflow: visible;
+    user-select: none;
 }
 
 .fileList li div {
+    width: 100%;
     color: #d0d0d0;
     cursor: pointer;
-    margin-left: -100%;
-    padding-left: 100%;
-}
-
-.fileList li div {
     border: none !important;
+    padding-left: calc(var(--depth) * 1.5rem);
+    padding-right: 1rem;
 }
 
 .fileList li div.selected {

@@ -287,28 +287,30 @@ class Browse extends React.Component {
             )
     }
 
-    renderList(path) {
+    renderList(path, depth = 0) {
         const directory = this.props.loaded[path]
         return directory && !directory.collapsed ? (
             <ul>
-                {this.renderListItems(path, directory.files)}
+                {this.renderListItems(path, directory.files, depth)}
             </ul>
         ) : null
     }
 
-    renderListItems(path, files) {
+    renderListItems(path, files, depth) {
         return files ? files.map(file => {
             const fullPath = Path.join(path, file ? file.name : null)
             return (
                 <li key={file.name}>
-                    <div className={[lookStyles.look, this.isSelected(fullPath) ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
+                    <div
+                        className={[lookStyles.look, this.isSelected(fullPath) ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
+                        style={{'--depth': depth}}
                         onClick={() => this.toggleSelection(fullPath, file.isDirectory)}
                         onDoubleClick={() => this.toggleDirectory(fullPath)}>
                         {this.renderIcon(fullPath, file)}
                         <span className={styles.fileName}>{file.name}</span>
                         {this.renderFileInfo(fullPath, file)}
                     </div>
-                    {this.renderList(fullPath)}
+                    {this.renderList(fullPath, depth + 1)}
                 </li>
             )
         }) : null
@@ -358,7 +360,9 @@ class Browse extends React.Component {
             <div className={[styles.browse, flexy.container].join(' ')}>
                 {this.renderToolbar()}
                 <div className={[styles.fileList, flexy.scrollable].join(' ')}>
-                    {this.renderList('/')}
+                    <div>
+                        {this.renderList('/')}
+                    </div>
                 </div>
             </div>
         )
