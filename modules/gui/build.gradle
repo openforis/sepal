@@ -17,7 +17,7 @@ node {
 dependencies {
     compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.3'
     compile group: 'org.codehaus.groovy', name: 'groovy-dateutil', version: '2.5.3'
-    compile group: 'io.undertow', name: 'undertow-core', version: '1.4.11.Final'
+    compile group: 'io.undertow', name: 'undertow-core', version: '2.0.14.Final'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.5'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.16'
     compile group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.16'

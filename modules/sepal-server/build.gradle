@@ -1,39 +1,40 @@
 plugins {
-  id 'java'
-  id 'application'
-  id 'com.github.johnrengelman.shadow' version '4.0.1'
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
 }
 
 mainClassName = 'org.openforis.sepal.Main'
 
 dependencies {
-  compile project(':sepal-common')
-    compile group: 'com.vividsolutions', name: 'jts', version:'1.13'
-    compile group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version:'1.11.221'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version:'2.7.2'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.7.2'
-  testCompile project(':sepal-common-test')
+    compile project(':sepal-common')
+    compile group: 'com.vividsolutions', name: 'jts', version: '1.13'
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version: '1.11.221'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.7.2'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.2'
+    testCompile project(':sepal-common-test')
 }
 
 shadowJar {
-  mergeGroovyExtensionModules()
+    mergeGroovyExtensionModules()
 }
 
 task copyJar(type: Copy) {
-  from file("${libsDir}/${project.name}-${version}-all.jar")
-  into file("${projectDir}/docker/binary")
-  rename "${project.name}-${version}-all.jar", "sepal.jar"
+    from file("${libsDir}/${project.name}-${version}-all.jar")
+    into file("${projectDir}/docker/binary")
+    rename "${project.name}-${version}-all.jar", "sepal.jar"
 }
 
 build.dependsOn(copyJar)
 
 clean.doFirst {
-  delete "${projectDir}/docker/binary/sepal.jar"
+    delete "${projectDir}/docker/binary/sepal.jar"
 }
 
 task runDev(type: JavaExec) {
-  classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
-  main = 'manual.ConfiguredMain'
-  systemProperties(System.getProperties())
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    main = 'manual.ConfiguredMain'
+    systemProperties(System.getProperties())
+    systemProperties.remove("java.endorsed.dirs")
 }
 //  ./gradlew :sepal-server:runDev -DconfigDir=/path/to/sepal-config/sepal-server
