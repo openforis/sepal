@@ -1,8 +1,5 @@
 ---
 
-- name: "task-executor | Install Maven"
-  apt: name="maven"
-
 - name: "task-executor | Determine if jar should be built"
   script: "{{ module_dir }}/should-rebuild.sh {{ module_dir }}"
   delegate_to: 127.0.0.1
