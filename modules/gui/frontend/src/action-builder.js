@@ -18,10 +18,13 @@ const toPathList = (path, safe = false) => {
     throw new Error('Unsupported path element type: ', path)
 }
 
-const select = (path, state) =>
-    toPathList(path).reduce((state, part) => {
+const select = (path, state) => {
+    const pathList = toPathList(path)
+    return pathList.reduce((state, part) => {
         return state != null && state[part] != null ? state[part] : undefined
     }, state)
+
+}
 
 const actionBuilder = (type, props) => {
     const operations = []
@@ -45,38 +48,37 @@ const actionBuilder = (type, props) => {
 
         set(path, value) {
             operations.push((immutableState, state) => {
-                const pathList = toPathList(path)
-                const prevValue = select(pathList, state)
+                const prevValue = select(path, state)
                 if (prevValue !== value)
-                    return immutableState.set(pathList, value)
+                    return immutableState.set(toPathList(path), value)
             })
             return this
         },
 
         setValueByTemplate(path, template, value) {
-            path = toPathList(path)
             operations.push((immutableState, state) => {
                 const index = select(path, state)
                     .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
                 return (index !== -1)
-                    ? immutableState.set([...path, index], value)
+                    ? immutableState.set([...toPathList(path), index], value)
                     : immutableState
             })
             return this
         },
 
         assign(path, value) {
-            operations.push(immutableState => immutableState.assign(toPathList(path), value))
+            operations.push(immutableState =>
+                immutableState.assign(toPathList(path), value)
+            )
             return this
         },
 
         assignValueByTemplate(path, template, value) {
-            path = toPathList(path)
             operations.push((immutableState, state) => {
                 const index = select(path, state)
                     .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
                 return (index !== -1)
-                    ? immutableState.assign([...path, index], value)
+                    ? immutableState.assign([...toPathList(path), index], value)
                     : immutableState
             })
             return this
@@ -96,7 +98,7 @@ const actionBuilder = (type, props) => {
                     .map(callback)
                     .map((value, index) => ({index, value}))
                     .filter(({index, value}) => value !== collection[index])
-                    .reduce((immutableState, {index, value}) => immutableState.set([path, index], value), immutableState)
+                    .reduce((immutableState, {index, value}) => immutableState.set([toPathList(path), index], value), immutableState)
             })
             return this
         },
@@ -134,23 +136,21 @@ const actionBuilder = (type, props) => {
         },
 
         delValue(path, value) {
-            path = toPathList(path)
             operations.push((immutableState, state) => {
                 const index = select(path, state).indexOf(value)
                 return (index !== -1)
-                    ? immutableState.del([...path, index])
+                    ? immutableState.del([...toPathList(path), index])
                     : immutableState
             })
             return this
         },
 
         delValueByTemplate(path, template) {
-            path = toPathList(path)
             operations.push((immutableState, state) => {
                 const index = select(path, state)
                     .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
                 return (index !== -1)
-                    ? immutableState.del([...path, index])
+                    ? immutableState.del([...toPathList(path), index])
                     : immutableState
             })
             return this
