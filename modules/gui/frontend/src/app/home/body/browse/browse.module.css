@@ -35,19 +35,6 @@
     overflow: visible;
 }
 
-@keyframes list {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.fileList li {
-    animation: list 250ms ease-in-out forwards;
-}
-
 .fileList li div {
     color: #d0d0d0;
     cursor: pointer;

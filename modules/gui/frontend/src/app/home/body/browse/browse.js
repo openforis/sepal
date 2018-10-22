@@ -98,7 +98,7 @@ const removeDirectory$ = path => {
         const fileName = Path.basename(path)
         return actionBuilder('DIRECTORY_REMOVED', path)
             .delValueByTemplate(['files.loaded', dotSafe(directory), 'files'], {name: fileName})
-            .del(['files', 'loaded', path])
+            .del(['files.loaded', path])
             .build()
     })
 }
