@@ -25,13 +25,14 @@
   copy: src="{{ config_home }}/certificates/docker-registry.key" dest=/data/ssl/registry_certs
 
 - name: Start docker registry
-  docker:
-    docker_api_version: "1.22"
+  docker_container:
+    api_version: "1.22"
     name: "registry"
-    pull: 'missing'
+    pull: 'yes'
     image: "registry:2"
     state: "started"
     restart_policy: "always"
+    network_mode: "bridge"
     ports:
       - "443:5000"
     volumes:

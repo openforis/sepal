@@ -8,6 +8,9 @@
     - "{{ secret_vars_file }}"
 
   pre_tasks:
+    - set_fact:
+        workspace: "/opt/sepal/"
+
     - name: Copy Jenkins Image
       copy: src="../../../modules/jenkins/" dest="/opt/sepal/modules/jenkins/"
 
