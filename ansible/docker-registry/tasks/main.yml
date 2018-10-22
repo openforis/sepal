@@ -28,7 +28,7 @@
   docker_container:
     api_version: "1.22"
     name: "registry"
-    pull: 'missing'
+    pull: 'yes'
     image: "registry:2"
     state: "started"
     restart_policy: "always"
