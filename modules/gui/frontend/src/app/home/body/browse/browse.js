@@ -3,6 +3,7 @@ import {Observable} from 'rxjs'
 import {catchError, map} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
+import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import Notifications from 'app/notifications'
 import Path from 'path'
@@ -301,15 +302,17 @@ class Browse extends React.Component {
             const fullPath = Path.join(path, file ? file.name : null)
             return (
                 <li key={file.name}>
-                    <div
-                        className={[lookStyles.look, this.isSelected(fullPath) ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
-                        style={{'--depth': depth}}
-                        onClick={() => this.toggleSelection(fullPath, file.isDirectory)}
-                        onDoubleClick={() => this.toggleDirectory(fullPath)}>
-                        {this.renderIcon(fullPath, file)}
-                        <span className={styles.fileName}>{file.name}</span>
-                        {this.renderFileInfo(fullPath, file)}
-                    </div>
+                    <Hammer
+                        onTap={() => this.toggleSelection(fullPath, file.isDirectory)}
+                        onDoubleTap={() => this.toggleDirectory(fullPath)}>
+                        <div
+                            className={[lookStyles.look, this.isSelected(fullPath) ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
+                            style={{'--depth': depth}}>
+                            {this.renderIcon(fullPath, file)}
+                            <span className={styles.fileName}>{file.name}</span>
+                            {this.renderFileInfo(fullPath, file)}
+                        </div>
+                    </Hammer>
                     {this.renderList(fullPath, depth + 1)}
                 </li>
             )
