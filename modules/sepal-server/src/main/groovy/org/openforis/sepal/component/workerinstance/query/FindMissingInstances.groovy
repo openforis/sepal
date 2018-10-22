@@ -1,12 +1,12 @@
 package org.openforis.sepal.component.workerinstance.query
 
+import groovy.transform.Canonical
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
-import org.openforis.sepal.util.annotation.Data
 
-@Data
+@Canonical
 class FindMissingInstances implements Query<List<WorkerInstance>> {
     List<WorkerInstance> instances
 }

@@ -10,22 +10,32 @@
 
 .contentContainer {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr 1fr auto;
+    grid-template-rows: auto 1fr auto;
     grid-template-areas:
-            'caption  title'
-            'features form';
+            'caption  title    title'
+            'features form     form'
+            'features privacy  language';
     grid-column-gap: 3rem;
     grid-row-gap: 3rem;
     height: 100%;
     padding: 4rem 3rem 1rem 3rem;
+    align-items: flex-start;
 }
 
 @media screen and (min-width: 320px) {
 
 }
 
-.caption {
+.languageSection {
+    grid-area: language;
+}
+
+.privacySection {
+    grid-area: privacy;
+}
+
+.captionSection {
     grid-area: caption;
     font-style: italic;
     font-family: Merriweather, Georgia, Times New Roman, Times, serif;
@@ -54,6 +64,10 @@
     background-color: #fff;
 }
 
+.featuresSection {
+    grid-area: features;
+}
+
 .features {
     color: white;
 }
@@ -62,7 +76,14 @@
     display: grid;
     grid-template-columns: auto 1fr;
     grid-column-gap: 1rem;
-    margin-bottom: 1.8rem;
+}
+
+.feature p {
+    margin: 0;
+}
+
+.feature:not(:last-child) {
+    margin-bottom: 3rem;
 }
 
 .featureIcon {
@@ -107,7 +128,8 @@
     font-weight: lighter;
 }
 
-.form {
+.formSection {
+    grid-area: form;
     overflow: hidden;
 }
 

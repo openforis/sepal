@@ -1,14 +1,16 @@
 package org.openforis.sepal.component.task.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSession
 import org.openforis.sepal.component.task.api.WorkerSessionManager
-import org.openforis.sepal.util.annotation.Data
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class CancelUserTasks extends AbstractCommand<Void> {
 }
 
@@ -32,7 +34,7 @@ class CancelUserTasksHandler implements CommandHandler<Void, CancelUserTasks> {
         } as Map<String, WorkerSession>
 
         tasks.findAll { it.active }
-                .each { workerGateway.cancel(it.id, sessionById[it.sessionId]) }
+            .each { workerGateway.cancel(it.id, sessionById[it.sessionId]) }
 
         sessionById.keySet().each { sessionManager.closeSession(it) }
         return null

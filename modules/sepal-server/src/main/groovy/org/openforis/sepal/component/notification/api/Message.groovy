@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.notification.api
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
-@ImmutableData
+@Immutable
 class Message {
     String id
     String username
@@ -18,8 +18,8 @@ class Message {
 
     Message updated(Date date) {
         new Message(
-                id: id, username: username, subject: subject, contents: contents, type: type,
-                creationTime: creationTime, updateTime: date)
+            id: id, username: username, subject: subject, contents: contents, type: type,
+            creationTime: creationTime, updateTime: date)
     }
 
 }

@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.task.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.command.InvalidCommand
@@ -9,11 +11,11 @@ import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.util.Clock
-import org.openforis.sepal.util.annotation.Data
 
 import static org.openforis.sepal.component.task.api.Task.State.*
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class ResubmitTask extends AbstractCommand<Task> {
     String instanceType
     String taskId
@@ -25,10 +27,10 @@ class ResubmitTaskHandler implements CommandHandler<Task, ResubmitTask> {
     private final SubmitTaskHandler submitTaskHandler
 
     ResubmitTaskHandler(
-            TaskRepository taskRepository,
-            WorkerSessionManager sessionManager,
-            WorkerGateway workerGateway,
-            Clock clock) {
+        TaskRepository taskRepository,
+        WorkerSessionManager sessionManager,
+        WorkerGateway workerGateway,
+        Clock clock) {
         this.taskRepository = taskRepository
         this.sessionManager = sessionManager
         submitTaskHandler = new SubmitTaskHandler(taskRepository, sessionManager, workerGateway, clock)
@@ -43,10 +45,10 @@ class ResubmitTaskHandler implements CommandHandler<Task, ResubmitTask> {
         taskRepository.remove(task)
         def instanceType = command.instanceType ?: sessionManager.defaultInstanceType
         def resubmittedTask = submitTaskHandler.execute(new SubmitTask(
-                username: command.username,
-                instanceType: instanceType,
-                operation: task.operation,
-                params: task.params
+            username: command.username,
+            instanceType: instanceType,
+            operation: task.operation,
+            params: task.params
         ))
         return resubmittedTask
     }

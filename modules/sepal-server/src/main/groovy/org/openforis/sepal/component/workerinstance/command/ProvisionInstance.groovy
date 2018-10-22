@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.workerinstance.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
@@ -7,9 +9,9 @@ import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.event.FailedToProvisionInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceProvisioned
 import org.openforis.sepal.event.EventDispatcher
-import org.openforis.sepal.util.annotation.Data
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class ProvisionInstance extends AbstractCommand<Void> {
     WorkerInstance instance
 }

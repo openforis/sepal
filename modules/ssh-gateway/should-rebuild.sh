@@ -3,8 +3,7 @@ cd $1
 rebuild=false
 if [ -f ./docker/binary/sepal-ssh-gateway.jar ]; then
     found=$(find . \
-        -not \( -path ./target -prune \) \
-        -not \( -path ./frontend/dist -prune \) \
+        -not \( -path ./build -prune \) \
         -newer ./docker/binary/sepal-ssh-gateway.jar \
         -print -quit)
     if [ ! -z "$found" ]; then

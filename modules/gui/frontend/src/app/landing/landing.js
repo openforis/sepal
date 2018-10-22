@@ -5,6 +5,7 @@ import {connect} from 'react-redux'
 import CenteredPanel from 'widget/centered-panel'
 import ForgotPassword from './forgot-password'
 import Icon from 'widget/icon'
+import LanguageSelector from 'app/landing/languageSelector'
 import Login from './login'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -22,19 +23,19 @@ let Landing =
         <div className={styles.landing}>
             <SlideShow/>
             <LandingPanel>
-                <AnimateEnter name={AnimateEnter.fadeInUp} delay={1000}>
+                <AnimateEnter name={AnimateEnter.fadeInUp} delay={1000} className={styles.captionSection}>
                     <Caption/>
                 </AnimateEnter>
 
-                <AnimateEnter name={AnimateEnter.fadeInUp} delay={0}>
+                <AnimateEnter name={AnimateEnter.fadeInUp} delay={0} className={styles.titleSection}>
                     <Title/>
                 </AnimateEnter>
 
-                <AnimateEnter name={AnimateEnter.fadeInLeft} delay={100}>
+                <AnimateEnter name={AnimateEnter.fadeInLeft} delay={100} className={styles.featuresSection}>
                     <Features/>
                 </AnimateEnter>
 
-                <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500} className={styles.form}>
+                <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500} className={styles.formSection}>
                     <AnimateReplacement
                         currentKey={location.pathname}
                         classNames={{enter: styles.formEnter, exit: styles.formExit}}
@@ -42,6 +43,15 @@ let Landing =
                         <Form location={location}/>
                     </AnimateReplacement>
                 </AnimateEnter>
+
+                <AnimateEnter name={AnimateEnter.fadeInUp} delay={500} className={styles.languageSection}>
+                    <LanguageSelector/>
+                </AnimateEnter>
+
+                <AnimateEnter name={AnimateEnter.fadeInUp} delay={500} className={styles.privacySection}>
+                    <PrivacyPolicy/>
+                </AnimateEnter>
+
             </LandingPanel>
         </div>
 
@@ -106,3 +116,6 @@ Form.propTypes = {
 }
 
 export default connect(mapStateToProps)(Landing)
+
+const PrivacyPolicy = () =>
+    <a href={'/privacy-policy'}><Msg id='landing.privacyPolicy'/></a>

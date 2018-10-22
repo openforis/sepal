@@ -1,7 +1,7 @@
 package org.openforis.sepal.util
 
 import groovy.text.SimpleTemplateEngine
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 import org.slf4j.LoggerFactory
 
 import javax.mail.Message
@@ -95,7 +95,7 @@ class EmailServer {
 }
 
 
-@ImmutableData
+@Immutable
 class EmailTemplate {
     Map<String, Object> binding
     String subject

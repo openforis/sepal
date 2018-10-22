@@ -5,6 +5,10 @@
 #Maven
 target
 
+#Gradle
+.gradle
+build
+
 #Eclipse
 .classpath
 .project
@@ -19,9 +23,8 @@ target
 /modules/api-gateway/docker/binary/sepal-api-gateway.jar
 
 #Sepal frontend
-/modules/*/frontend/dist/
-/modules/*/frontend/node/
-/modules/gui/frontend/node/
+/modules/*/frontend/build
+/modules/gui/frontend/node-*
 /modules/gui/frontend/node_modules/
 
 #Vagrant

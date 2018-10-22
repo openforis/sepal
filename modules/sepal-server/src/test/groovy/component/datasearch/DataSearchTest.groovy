@@ -14,6 +14,8 @@ import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.user.User
 import spock.lang.Specification
 
+import java.text.SimpleDateFormat
+
 import static org.openforis.sepal.util.DateTime.parseDateString
 
 class DataSearchTest extends Specification {
@@ -204,7 +206,7 @@ class DataSearchTest extends Specification {
     }
 
     List<SceneMetaData> findScenesInDateRange(String from, String to) {
-        findScenes(Date.parse('yyyy-MM-dd', from), Date.parse('yyyy-MM-dd', to), SCENE_AREA_ID)
+        findScenes(new SimpleDateFormat('yyyy-MM-dd').parse(from), new java.text.SimpleDateFormat('yyyy-MM-dd').parse(to), SCENE_AREA_ID)
     }
 
     List<SceneMetaData> findScenes(
@@ -254,7 +256,7 @@ class DataSearchTest extends Specification {
     }
 
     SceneMetaData sceneUpdatedAt(String date) {
-        sceneUpdatedAt(Date.parse('yyyy-MM-dd', date))
+        sceneUpdatedAt(new SimpleDateFormat('yyyy-MM-dd').parse(date))
     }
 
     SceneMetaData sceneUpdatedAt(Date date) {

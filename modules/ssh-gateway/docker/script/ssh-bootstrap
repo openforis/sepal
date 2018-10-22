@@ -14,7 +14,7 @@ java \
     "http://sepal:1025/api/" \
     "/home/$USER/.ssh/id_rsa" \
     "$sshScriptFile" \
-    "$password"
+    "$password" 2> /dev/null
 
 if [ -s $sshScriptFile ]; then
     eval "$sshScriptFile \"${SSH_ORIGINAL_COMMAND:-}\""

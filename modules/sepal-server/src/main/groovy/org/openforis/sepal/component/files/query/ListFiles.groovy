@@ -1,12 +1,12 @@
 package org.openforis.sepal.component.files.query
 
+import groovy.transform.Immutable
 import org.openforis.sepal.component.files.api.UserFile
 import org.openforis.sepal.component.files.internal.UserDir
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
-import org.openforis.sepal.util.annotation.ImmutableData
 
-@ImmutableData
+@Immutable
 class ListFiles implements Query<List<UserFile>> {
     String username
     String path

@@ -1,0 +1,9 @@
+dependencies {
+    compile project(':sepal-common')
+    compile group: 'com.h2database', name: 'h2', version: '1.4.191'
+    compile group: 'org.orbisgis', name: 'h2spatial-ext', version: '1.2.3'
+    compile group: 'cglib', name: 'cglib-nodep', version: '3.2.0'
+    compile group: 'org.flywaydb', name: 'flyway-core', version: '3.2.1'
+    compile group: 'com.bitmechanic', name: 'dumbster', version: '1.9.0.2'
+    compile group: 'org.spockframework', name: 'spock-core', version: '1.2-groovy-2.5'
+}

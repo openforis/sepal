@@ -21,6 +21,10 @@ html {
     --tab-default-border-color: hsla(0, 0%, 100%, .15);
     --tab-selected-border-color: hsl(var(--selected-hue), var(--selected-sat), 40%);
 
+    --link-default-color: #b0b0b0;
+    --link-hover-color: #ccc;
+    --link-selected-color: #fff;
+
     font-size: calc(14px * var(--scaling-factor));
 }
 
@@ -47,10 +51,18 @@ input::placeholder {
     box-shadow: none !important;
 }
 
-a:hover {
-    text-decoration: none;
-    color: var(--look-highlight-hover-background-color);
+a, a:not([href]):not([tabindex]) {
+    color: var(--link-default-color);
+    font-size: .9rem;
 }
+
+a:hover, a:hover:not([href]):not([tabindex]) {
+    text-decoration: none;
+    cursor: pointer;
+    color: var(--link-hover-color);
+    opacity: 1;
+}
+
 
 .app {
     height: 100%

@@ -1,10 +1,9 @@
 package org.openforis.sepal.component.datasearch.api
 
-
+import groovy.transform.Immutable
 import org.openforis.sepal.util.DateTime
-import org.openforis.sepal.util.annotation.ImmutableData
 
-@ImmutableData
+@Immutable
 class SceneQuery {
     String sceneAreaId
     String source

@@ -1,25 +1,26 @@
 package org.openforis.sepal.apigateway.server
 
 import groovy.json.JsonSlurper
+import groovy.transform.Immutable
 import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.FileSystem
-import org.openforis.sepal.util.annotation.ImmutableData
 
 import static groovy.json.JsonParserType.LAX
 import static java.lang.Boolean.parseBoolean
 
-@ImmutableData(knownImmutableClasses = [File])
+
+@Immutable(knownImmutableClasses = [File])
 class ProxyConfig {
-    final File keyFile
-    final File certificateFile
-    final String host
-    final int httpPort
-    final int httpsPort
-    final String logoutPath
-    final String authenticationUrl
-    final String currentUserUrl
-    final String refreshGoogleAccessTokenUrl
-    final List<EndpointConfig> endpointConfigs
+    File keyFile
+    File certificateFile
+    String host
+    int httpPort
+    int httpsPort
+    String logoutPath
+    String authenticationUrl
+    String currentUserUrl
+    String refreshGoogleAccessTokenUrl
+    List<EndpointConfig> endpointConfigs
 
     static ProxyConfig create() {
         def c = new Config('api-gateway-server.properties')

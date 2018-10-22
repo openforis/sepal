@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.workerinstance.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
@@ -7,12 +9,12 @@ import org.openforis.sepal.component.workerinstance.api.InstanceRepository
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.event.EventDispatcher
 import org.openforis.sepal.util.Clock
-import org.openforis.sepal.util.annotation.Data
 
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class SizeIdlePool extends AbstractCommand<Void> {
     Map<String, Integer> targetIdleCountByInstanceType
     int timeBeforeChargeToTerminate
@@ -36,11 +38,11 @@ class SizeIdlePoolHandler implements CommandHandler<Void, SizeIdlePool> {
         def minutesBeforeChargeToTerminate = command.timeUnit.toMinutes(command.timeBeforeChargeToTerminate) as int
         def idleInstancesByType = instanceProvider.idleInstances().groupBy { it.type }
         command.targetIdleCountByInstanceType.keySet()
-                .findAll { !idleInstancesByType.containsKey(it) }
-                .each { idleInstancesByType[it] = [] }
+            .findAll { !idleInstancesByType.containsKey(it) }
+            .each { idleInstancesByType[it] = [] }
 
         idleInstancesByType
-                .each { instanceType, idleInstances ->
+            .each { instanceType, idleInstances ->
             def idleCount = idleInstances.size()
             def targetCount = command.targetIdleCountByInstanceType[instanceType] ?: 0
             if (idleCount < targetCount) {
@@ -54,10 +56,10 @@ class SizeIdlePoolHandler implements CommandHandler<Void, SizeIdlePool> {
 
     private void potentiallyForTermination(int count, List<WorkerInstance> instances, int minutesBeforeChargeToTerminate) {
         instances
-                .findAll { minutesUntilCharged(it.launchTime) <= minutesBeforeChargeToTerminate }
-                .sort(false, new OrderBy([{ minutesUntilCharged(it.launchTime) }]))
-                .take(count)
-                .each { terminate(it) }
+            .findAll { minutesUntilCharged(it.launchTime) <= minutesBeforeChargeToTerminate }
+            .sort(false, new OrderBy([{ minutesUntilCharged(it.launchTime) }]))
+            .take(count)
+            .each { terminate(it) }
     }
 
     private terminate(WorkerInstance instance) {

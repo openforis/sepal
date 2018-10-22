@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.datasearch.api
 
-import org.openforis.sepal.util.annotation.Data
+import groovy.transform.Canonical
 
-@Data
+@Canonical
 class AutomaticSceneSelectingMapQuery {
     String source
     Date fromDate

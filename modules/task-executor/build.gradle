@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
+}
+
+mainClassName = 'org.openforis.sepal.taskexecutor.Main'
+
+dependencies {
+    compile project(':sepal-common')
+    compile group: 'com.google.guava', name: 'guava', version: '19.0'
+    testCompile project(':sepal-common-test')
+}
+
+shadowJar {
+    mergeGroovyExtensionModules()
+}
+
+task copyJar(type: Copy) {
+    from file("${libsDir}/${project.name}-${version}-all.jar")
+    into file("${projectDir}/docker/binary")
+    rename "${project.name}-${version}-all.jar", "${project.name}.jar"
+}
+
+build.dependsOn(copyJar)
+
+clean.doFirst {
+    delete "${projectDir}/docker/binary/${project.name}.jar"
+}
+
+task runDev(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    main = mainClassName
+    systemProperties(System.getProperties())
+}
+// ./gradlew :task-executor:runDev --args='/path/to/sepal-config/task-executor/task-executor.properties'

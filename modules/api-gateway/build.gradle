@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
+}
+
+mainClassName = 'org.openforis.sepal.apigateway.Main'
+
+dependencies {
+    compile project(':sepal-common')
+    compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.55'
+    testCompile project(':sepal-common-test')
+}
+
+shadowJar {
+    mergeGroovyExtensionModules()
+}
+
+task copyJar(type: Copy) {
+    from file("${libsDir}/${project.name}-${version}-all.jar")
+    into file("${projectDir}/docker/binary")
+    rename "${project.name}-${version}-all.jar", "${project.name}.jar"
+}
+
+build.dependsOn(copyJar)
+
+clean.doFirst {
+    delete "${projectDir}/docker/binary/${project.name}.jar"
+}
+
+task runDev(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    main = 'manual.TestMain'
+    systemProperties(System.getProperties())
+}
+//  ./gradlew :sepal-api-gateway:runDev -DconfigDir=/path/to/config/dir/api-gateway

@@ -1,0 +1,28 @@
+plugins {
+  id 'java'
+  id 'application'
+  id 'com.github.johnrengelman.shadow' version '4.0.1'
+}
+
+mainClassName = 'org.openforis.sepal.sshgateway.Interactive'
+dependencies {
+  compile project(':sepal-common')
+    compile group: 'com.ocpsoft', name: 'ocpsoft-pretty-time', version:'1.0.7'
+    compile group: 'com.jcraft', name: 'jsch', version:'0.1.53'
+}
+
+shadowJar {
+  mergeGroovyExtensionModules()
+}
+
+task copyJar(type: Copy) {
+  from file("${libsDir}/${project.name}-${version}-all.jar")
+  into file("${projectDir}/docker/binary")
+  rename "${project.name}-${version}-all.jar", "${project.name}.jar"
+}
+
+clean.doFirst {
+  delete "${projectDir}/docker/binary/${project.name}.jar"
+}
+
+build.dependsOn(copyJar)

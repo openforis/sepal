@@ -1,7 +1,7 @@
 ---
 
-- name: "user | Install Maven"
-  apt: name="maven"
+#- name: "user | Install Maven"
+#  apt: name="maven"
 
 - name: "user | Determine if jar should be built"
   script: "{{ module_dir }}/should-rebuild.sh {{ module_dir }}"
@@ -11,7 +11,7 @@
   changed_when: should_rebuild.stdout_lines[0] == 'true'
 
 - name: "user | Build jar"
-  shell: mvn clean package -DskipTests --projects modules/user --also-make chdir="{{ module_dir }}/../.."
+  shell: "{{ module_dir }}/../../gradlew :sepal-user:clean :sepal-user:build -x test -p {{ module_dir }}/../.."
   delegate_to: 127.0.0.1
   become: no
   when: should_rebuild.changed

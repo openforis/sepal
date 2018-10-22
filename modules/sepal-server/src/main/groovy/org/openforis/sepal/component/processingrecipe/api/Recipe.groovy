@@ -1,9 +1,9 @@
 package org.openforis.sepal.component.processingrecipe.api
 
 import groovy.json.JsonSlurper
-import org.openforis.sepal.util.annotation.ImmutableData
+import groovy.transform.Immutable
 
-@ImmutableData
+@Immutable
 class Recipe {
     String id
     int typeVersion
@@ -15,7 +15,7 @@ class Recipe {
     Date updateTime
 
     def getParsedContents() {
-        new JsonSlurper().parseText(contents)
+        contents == null ? null : new JsonSlurper().parseText(contents)
     }
 
     Recipe created(Date date) {

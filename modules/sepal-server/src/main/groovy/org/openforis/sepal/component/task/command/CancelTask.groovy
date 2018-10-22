@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.task.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.AfterCommitCommandHandler
 import org.openforis.sepal.command.Unauthorized
@@ -7,13 +9,13 @@ import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
-import org.openforis.sepal.util.annotation.Data
 import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.component.task.api.Task.State.ACTIVE
 import static org.openforis.sepal.component.task.api.Task.State.PENDING
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class CancelTask extends AbstractCommand<Task> {
     String taskId
 }
@@ -58,7 +60,7 @@ class CancelTaskHandler implements AfterCommitCommandHandler<Task, CancelTask> {
             sessionManager.closeSession(canceledTask.sessionId)
         } else {
             LOG.debug("There still are tasks in session, will not close it. " +
-                    "${[tasksInSession: tasksInSession, canceledTask: canceledTask, command: command]}")
+                "${[tasksInSession: tasksInSession, canceledTask: canceledTask, command: command]}")
             sessionManager.heartbeat(canceledTask.sessionId)
         }
     }

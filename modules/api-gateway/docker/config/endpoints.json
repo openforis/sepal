@@ -21,13 +21,6 @@
     "authenticate": "true"
   },
   {
-    "prefix": "false",
-    "path": "/gateone/ws",
-    "target": "https://gateone:8000/ws",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
     "prefix": "true",
     "path": "/api/gateone/",
     "target": "https://gateone:8000/",
@@ -36,8 +29,22 @@
   },
   {
     "prefix": "false",
+    "path": "/gateone/ws",
+    "target": "https://gateone:8000/ws",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "false",
     "path": "/api/gateone/auth-object",
     "target": "http://sepal:1025/api/gateone/auth-object",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/user/",
+    "target": "http://user/",
     "https": "true",
     "authenticate": "true"
   },
@@ -68,13 +75,6 @@
     "target": "http://user/validate-token",
     "https": "true",
     "authenticate": "false"
-  },
-  {
-    "prefix": "true",
-    "path": "/api/user/",
-    "target": "http://user/",
-    "https": "true",
-    "authenticate": "true"
   },
   {
     "prefix": "true",
@@ -134,14 +134,6 @@
   },
   {
     "prefix": "true",
-    "path": "/api/sandbox/jupyter/",
-    "target": "http://sepal:9191/jupyter/api/sandbox/jupyter/",
-    "rewriteRedirects": "false",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
     "path": "/api/sandbox/",
     "target": "http://sepal:9191/",
     "rewriteRedirects": "true",
@@ -150,11 +142,27 @@
   },
   {
     "prefix": "true",
-    "path": "/api/static/",
-    "target": "http://gui:7667/static/",
+    "path": "/api/sandbox/jupyter/",
+    "target": "http://sepal:9191/jupyter/api/sandbox/jupyter/",
+    "rewriteRedirects": "false",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/static/",
+    "target": "http://gui:7667/static",
     "https": "true",
     "authenticate": "false",
     "cached": "true"
+  },
+  {
+    "prefix": "false",
+    "path": "/privacy-policy",
+    "target": "http://gui:7667/privacy-policy.html",
+    "https": "true",
+    "authenticate": "false",
+    "no-cache": "true"
   },
   {
     "prefix": "true",
@@ -163,21 +171,5 @@
     "https": "true",
     "authenticate": "false",
     "no-cache": "true"
-  },
-  {
-    "prefix": "false",
-    "path": "/privacy-policy",
-    "target": "http://gui:7667/static/privacy-policy.html",
-    "https": "true",
-    "authenticate": "false",
-    "cached": "false"
-  },
-  {
-    "prefix": "true",
-    "path": "/static/",
-    "target": "http://gui:7667/static/",
-    "https": "true",
-    "authenticate": "false",
-    "cached": "true"
   }
 ]

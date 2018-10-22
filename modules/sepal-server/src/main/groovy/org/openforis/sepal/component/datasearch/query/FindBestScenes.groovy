@@ -1,14 +1,13 @@
 package org.openforis.sepal.component.datasearch.query
 
-
+import groovy.transform.Canonical
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.SceneMetaDataProvider
 import org.openforis.sepal.component.datasearch.api.SceneQuery
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
-import org.openforis.sepal.util.annotation.Data
 
-@Data
+@Canonical
 class FindBestScenes implements Query<Map<String, List<SceneMetaData>>> {
     String source
     Collection<String> sceneAreaIds

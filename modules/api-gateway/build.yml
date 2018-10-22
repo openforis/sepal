@@ -11,7 +11,7 @@
   changed_when: should_rebuild.stdout_lines[0] == 'true'
 
 - name: "api-gateway | Build jar"
-  shell: mvn clean package -DskipTests --projects modules/api-gateway --also-make chdir="{{ module_dir }}/../.."
+  shell: "{{ module_dir }}/../../gradlew :sepal-api-gateway:clean :sepal-api-gateway:build -x test -p {{ module_dir }}/../.."
   delegate_to: 127.0.0.1
   become: no
   when: should_rebuild.changed

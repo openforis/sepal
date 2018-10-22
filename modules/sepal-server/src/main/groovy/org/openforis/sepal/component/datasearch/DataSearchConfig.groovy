@@ -1,9 +1,10 @@
 package org.openforis.sepal.component.datasearch
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.util.Config
-import org.openforis.sepal.util.annotation.Data
 
-@Data
+@Canonical
 class DataSearchConfig {
     final String googleEarthEngineEndpoint
     final String googleMapsApiKey

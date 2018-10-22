@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
+}
+
+mainClassName = 'org.openforis.sepal.component.user.Main'
+
+dependencies {
+    compile project(':sepal-common')
+    compile group: 'org.openforis.rmb', name: 'repository-message-broker-xstream', version: '0.1.3'
+    compile group: 'org.openforis.rmb', name: 'repository-message-broker-slf4j', version: '0.1.3'
+    testCompile project(':sepal-common-test')
+}
+
+shadowJar {
+    mergeGroovyExtensionModules()
+}
+
+task copyJar(type: Copy) {
+    from file("${libsDir}/${project.name}-${version}-all.jar")
+    into file("${projectDir}/docker/binary")
+    rename "${project.name}-${version}-all.jar", "${project.name}.jar"
+}
+
+build.dependsOn(copyJar)
+
+clean.doFirst {
+    delete "${projectDir}/docker/binary/${project.name}.jar"
+}
+
+task runDev(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    main = 'manual.UserTestMain'
+    systemProperties(System.getProperties())
+}
+//  ./gradlew :sepal-server:runDev -DconfigDir=/path/to/sepal-config/user
+

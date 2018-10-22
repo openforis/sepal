@@ -1,0 +1,29 @@
+dependencies {
+    compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.3'
+    compile group: 'org.codehaus.groovy', name: 'groovy-dateutil', version: '2.5.3'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.5'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.16'
+    compile group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.16'
+    compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.16'
+    compile group: 'javax.mail', name: 'mail', version: '1.4.7'
+    compile group: 'org.apache.commons', name: 'commons-compress', version: '1.10'
+    compile group: 'commons-io', name: 'commons-io', version: '2.4'
+    compile group: 'com.mchange', name: 'c3p0', version: '0.9.5.2'
+    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.38'
+    compile group: 'io.undertow', name: 'undertow-servlet', version: '2.0.14.Final'
+    compile group: 'org.mortbay.jetty.alpn', name: 'alpn-boot', version: '8.1.7.v20160121'
+    compile group: 'org.fao.foris.groovy.mvc', name: 'groovy-mvc', version: '0.6.2'
+    compile group: 'org.apache.commons', name: 'commons-csv', version: '1.4'
+    compile(group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7.1') {
+        exclude(module: 'commons-logging')
+        exclude(module: 'httpclient')
+    }
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.1'
+    compile group: 'org.flywaydb', name: 'flyway-core', version: '4.0.3'
+    compile group: 'org.apache.kafka', name: 'kafka-clients', version: '2.0.0'
+
+    compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.2.11'
+    compile group: 'com.sun.xml.bind', name: 'jaxb-core', version: '2.2.11'
+    compile group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '2.2.11'
+    compile group: 'javax.activation', name: 'activation', version: '1.1.1'
+}

@@ -1,14 +1,15 @@
 package org.openforis.sepal.component.notification.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
-import org.openforis.sepal.component.notification.api.MessageRepository
 import org.openforis.sepal.component.notification.api.Notification
 import org.openforis.sepal.component.notification.api.NotificationRepository
-import org.openforis.sepal.util.annotation.Data
 
-@Data(callSuper = true)
-class UpdateNotification  extends AbstractCommand<Void> {
+@EqualsAndHashCode(callSuper = true)
+@Canonical
+class UpdateNotification extends AbstractCommand<Void> {
     String messageId
     Notification.State state
 }

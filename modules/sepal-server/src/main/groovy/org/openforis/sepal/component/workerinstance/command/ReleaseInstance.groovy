@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.workerinstance.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
@@ -8,11 +10,11 @@ import org.openforis.sepal.component.workerinstance.api.InstanceRepository
 import org.openforis.sepal.component.workerinstance.event.FailedToReleaseInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceReleased
 import org.openforis.sepal.event.EventDispatcher
-import org.openforis.sepal.util.annotation.Data
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class ReleaseInstance extends AbstractCommand<Void> {
     String instanceId
 }

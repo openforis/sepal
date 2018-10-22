@@ -1,12 +1,14 @@
 package org.openforis.sepal.component.task.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.task.api.*
-import org.openforis.sepal.util.annotation.Data
 import org.slf4j.LoggerFactory
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class CancelTimedOutTasks extends AbstractCommand<Void> {
 }
 
@@ -33,8 +35,8 @@ class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutT
         } as Map<String, WorkerSession>
 
         timedOutTasks
-                .findAll { it.active }
-                .each { cancelTask(it, sessionById[it.sessionId]) }
+            .findAll { it.active }
+            .each { cancelTask(it, sessionById[it.sessionId]) }
 
         sessionById.keySet().each {
             def tasksInSession = taskRepository.pendingOrActiveTasksInSession(it)

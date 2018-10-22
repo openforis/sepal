@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.workersession.command
 
+import groovy.transform.Canonical
+import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
@@ -8,9 +10,9 @@ import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
 import org.openforis.sepal.util.Clock
-import org.openforis.sepal.util.annotation.Data
 
-@Data(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Canonical
 class RequestSession extends AbstractCommand<WorkerSession> {
     String workerType
     String instanceType
@@ -24,10 +26,10 @@ class RequestSessionHandler implements CommandHandler<WorkerSession, RequestSess
     private final Clock clock
 
     RequestSessionHandler(
-            WorkerSessionRepository repository,
-            BudgetManager budgetManager,
-            InstanceManager instanceManager,
-            Clock clock) {
+        WorkerSessionRepository repository,
+        BudgetManager budgetManager,
+        InstanceManager instanceManager,
+        Clock clock) {
         this.repository = repository
         this.budgetManager = budgetManager
         this.instanceManager = instanceManager
@@ -38,13 +40,13 @@ class RequestSessionHandler implements CommandHandler<WorkerSession, RequestSess
         budgetManager.check(command.username)
         def now = clock.now()
         def session = new WorkerSession(
-                id: UUID.randomUUID().toString(),
-                state: WorkerSession.State.PENDING,
-                username: command.username,
-                workerType: command.workerType,
-                instanceType: command.instanceType,
-                creationTime: now,
-                updateTime: now
+            id: UUID.randomUUID().toString(),
+            state: WorkerSession.State.PENDING,
+            username: command.username,
+            workerType: command.workerType,
+            instanceType: command.instanceType,
+            creationTime: now,
+            updateTime: now
         )
         def instance = instanceManager.requestInstance(session)
         def requestedSession = session.withInstance(instance)

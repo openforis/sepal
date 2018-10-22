@@ -1,15 +1,15 @@
 package org.openforis.sepal.component.workersession.query
 
+import groovy.transform.Immutable
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
-import org.openforis.sepal.util.annotation.ImmutableData
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
 
-@ImmutableData
+@Immutable
 class FindPendingOrActiveSession implements Query<WorkerSession> {
     String username
     String workerType

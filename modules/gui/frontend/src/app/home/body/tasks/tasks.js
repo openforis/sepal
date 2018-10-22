@@ -2,14 +2,14 @@ import {Button} from 'widget/button'
 import {IconButton} from 'widget/legacyButton'
 import {Msg, msg} from 'translate'
 import {Progress} from 'widget/progress'
-import {connect, select} from 'store'
+import {connect} from 'store'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
 import api from 'api'
 import styles from './tasks.module.css'
 
-const mapStateToProps = () => ({
-    tasks: select('tasks'),
+const mapStateToProps = (state) => ({
+    tasks: state.tasks,
 })
 
 class Tasks extends React.Component {
