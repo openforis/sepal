@@ -30,7 +30,7 @@ class ResetPasswordTest extends AbstractUserTest {
         inviteUser()
         requestPasswordReset()
         def token = mailServer.token
-        clock.forward(TokenStatus.MAX_AGE_DAYS, DAYS)
+        clock.forward(TokenStatus.MAX_AGE_DAYS + 1, DAYS)
 
         when:
         resetPassword(token, 'the password')
