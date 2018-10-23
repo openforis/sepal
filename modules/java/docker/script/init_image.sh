@@ -18,3 +18,8 @@ yes | sdk install java 10.0.2-open
 
 ln -s `which java` /usr/local/bin/java
 ln -s `which groovy` /usr/local/bin/groovy
+
+keytool -import \
+ -alias GlobalSign \
+ -keystore /usr/local/lib/sdkman/candidates/java/current/lib/security/cacerts \
+ -file /config/GlobalSign.cer
