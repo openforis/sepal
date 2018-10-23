@@ -84,6 +84,13 @@ const actionBuilder = (type, props) => {
             return this
         },
 
+        merge(path, value) {
+            operations.push(immutableState =>
+                immutableState.merge(toPathList(path), value)
+            )
+            return this
+        },
+
         setAll(values) {
             Object.keys(values).forEach(path =>
                 this.set(path, values[path]))
