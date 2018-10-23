@@ -16,163 +16,224 @@ import flexy from 'flexy.module.css'
 import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
 
-// const files = {
-//     'loaded': {
-//         '/': {
-//             files: [
-//                 {name: 'file1', isDirectory: false, size: 100},
-//                 {name: 'dir1', isDirectory: true}
-//             ]
-//         },
-//         '/dir1': {
-//             files: [
-//                 {name: 'file2', isDirectory: false, size: 200},
-//                 {name: 'file3', isDirectory: false, size: 300},
-//                 {name: 'dir2', isDirectory: true}
-//             ]
-//         },
-//         '/dir1/dir2': {
-//             files: [
-//                 {name: 'file4', isDirectory: false, size: 400},
-//                 {name: 'file5', isDirectory: false, size: 500},
-//             ],
-//             collapsed: true
-//         },
-//     },
-//     'selected': {
-//         'file1': false,
-//         'dir1': {
-//             'file3': false,
-//             'dir2': true
-//         }
-//     }
-// }
+const _tree = {
+    open: true,
+    files: {
+        'file1': {
+            size: 1000,
+            lastModified: 1234,
+            // selected: true
+        },
+        'file2': {
+            size: 100,
+            lastModified: 1234
+        },
+        'dir1': {
+            // open: true,
+            files: {
+                'file3': {
+                    size: 400,
+                    lastModified: 1234,
+                    // selected: true
+                },
+                'dir2': {
+                    // open: true,
+                    // selected: true,
+                    files: {
+                        'file4': {
+                            size: 400,
+                            lastModified: 1234
+                        },
+                        'dir3': {
+                            files: null
+                        },
+                        'file5': {
+                            size: 683,
+                            lastModified: 1234
+                        },
+                        'a long file name to test hotrizontal scrolling a long file name to test hotrizontal scrolling a long file name to test hotrizontal scrolling ': {
+                            size: 4003,
+                            lastModified: 1234
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
-const loaded = () =>
-    select('files.loaded') || {}
+const _selected = {
+    'file2': true,
+    'dir1': {
+        'file3': true,
+        'dir3': true
+    }
+}
+
+const tree = () =>
+    select('files.tree') || {}
+
+const opened = () =>
+    select('files.opened') || {}
 
 const selected = () =>
     select('files.selected') || {}
 
 const mapStateToProps = () => ({
-    loaded: loaded(),
+    tree: tree(),
+    opened: opened(),
     selected: selected()
 })
 
-const loadFiles$ = path => {
-    return api.files.loadFiles$(path).pipe(
+// const removeItem$ = (path, action) => {
+//     return api.files.removeItem$(path).pipe(
+//         catchError(() => {
+//             Notifications.error('files.removing').dispatch()
+//             return Observable.of([])
+//         }),
+//         map(action)
+//     )
+// }
+
+// const removeFile$ = path => {
+//     return removeItem$(path, () => {
+//         const directory = Path.dirname(path)
+//         const fileName = Path.basename(path)
+//         return actionBuilder('FILE_REMOVED', {directory, fileName})
+//             .delValueByTemplate(['files.loaded', dotSafe(directory), 'files'], {name: fileName})
+//             .build()
+//     })
+// }
+
+// const removeDirectory$ = path => {
+//     return removeItem$(path, () => {
+//         const directory = Path.dirname(path)
+//         const fileName = Path.basename(path)
+//         return actionBuilder('DIRECTORY_REMOVED', path)
+//             .delValueByTemplate(['files.loaded', dotSafe(directory), 'files'], {name: fileName})
+//             .del(['files.loaded', path])
+//             .build()
+//     })
+// }
+
+const update$ = current => {
+    return api.files.loadFiles$(current).pipe(
         catchError(() => {
             Notifications.error('files.loading').dispatch()
             return Observable.of([])
         }),
-        map(files => {
+        map(tree => {
+            // console.log(tree)
+            // if (!collapsed) {
+            // _.forEach(files, file => {
+            //     if (file.isDirectory) {
+            //         this.loadDirectory(Path.join(path, file.name), true)
+            //     }
+            // })
+            // }
             return actionBuilder('LOAD_FILES')
-                .set(['files.loaded', dotSafe(path), 'files'], files)
-                .build()
+                .merge('files.tree', tree)
+                .merge('files.opened', {'/': true})
+                .dispatch()
         })
     )
 }
 
-const removeItem$ = (path, action) => {
-    return api.files.removeItem$(path).pipe(
-        catchError(() => {
-            Notifications.error('files.removing').dispatch()
-            return Observable.of([])
-        }),
-        map(action)
-    )
-}
-
-const removeFile$ = path => {
-    return removeItem$(path, () => {
-        const directory = Path.dirname(path)
-        const fileName = Path.basename(path)
-        return actionBuilder('FILE_REMOVED', {directory, fileName})
-            .delValueByTemplate(['files.loaded', dotSafe(directory), 'files'], {name: fileName})
-            .build()
-    })
-}
-
-const removeDirectory$ = path => {
-    return removeItem$(path, () => {
-        const directory = Path.dirname(path)
-        const fileName = Path.basename(path)
-        return actionBuilder('DIRECTORY_REMOVED', path)
-            .delValueByTemplate(['files.loaded', dotSafe(directory), 'files'], {name: fileName})
-            .del(['files.loaded', path])
-            .build()
-    })
-}
-
 class Browse extends React.Component {
     UNSAFE_componentWillMount() {
-        this.loadDirectory('/')
+        this.update()
+        setTimeout(() => {
+            this.update(this.props.tree)
+        }, 3000)
     }
 
-    loadDirectory(path) {
-        this.props.asyncActionBuilder('LOAD_DIRECTORY', loadFiles$(path))
-            .dispatch()
+    update(current) {
+        this.props.stream('UPDATE_DIRECTORY', update$(current))
     }
 
-    pathSections(path) {
-        return path.substr(1).split('/')
+    treePath(path) {
+        return _.reduce(path.split('/').splice(1),
+            (treePath, pathElement) => treePath.concat(['files', pathElement]), []
+        )
     }
 
-    removeFile(path) {
-        this.props.asyncActionBuilder('REMOVE_FILE', removeFile$(path))
-            .dispatch()
+    getNode(path) {
+        return _.get(this.props.tree, this.treePath(path))
     }
 
-    removeDirectory(path) {
-        this.props.asyncActionBuilder('REMOVE_DIRECTORY', removeDirectory$(path))
-            .dispatch()
+    // pathSections(path) {
+    //     return path.substr(1).split('/')
+    // }
+
+    // removeFile(path) {
+    //     this.props.asyncActionBuilder('REMOVE_FILE', removeFile$(path))
+    //         .dispatch()
+    // }
+
+    // removeDirectory(path) {
+    //     this.props.asyncActionBuilder('REMOVE_DIRECTORY', removeDirectory$(path))
+    //         .dispatch()
+    // }
+
+    // removeSelected() {
+    //     const {files, directories} = this.selectedItems()
+    //     files.forEach(file => this.removeFile(file))
+    //     directories.forEach(directory => this.removeDirectory(directory))
+    //     this.clearSelection()
+    // }
+
+    toggleDirectory(path, directory) {
+        if (this.isExpandedDirectory(path)) {
+            this.collapseDirectory(path, directory)
+        } else {
+            this.expandDirectory(path, directory)
+            // this.loadDirectory(path)
+        }
     }
 
-    removeSelected() {
-        const {files, directories} = this.selectedItems()
-        files.forEach(file => this.removeFile(file))
-        directories.forEach(directory => this.removeDirectory(directory))
-        this.clearSelection()
+    isExpandedDirectory(path) {
+        return !!this.props.opened[path]
     }
 
     collapseDirectory(path) {
         actionBuilder('COLLAPSE_DIRECTORY')
-            .set(['files.loaded', dotSafe(path), 'collapsed'], true)
+            .del(['files.opened', dotSafe(path)])
             .dispatch()
     }
 
     expandDirectory(path) {
         actionBuilder('EXPAND_DIRECTORY')
-            .del(['files.loaded', dotSafe(path), 'collapsed'])
+            .set(['files.opened', dotSafe(path)], true)
             .dispatch()
     }
 
-    toggleDirectory(path) {
-        const directory = this.props.loaded[path]
-        if (directory && !directory.collapsed) {
-            this.collapseDirectory(path)
-        } else {
-            this.expandDirectory(path)
-            this.loadDirectory(path)
-        }
+    toggleSelected(path) {
+        this.isSelected(path)
+            ? this.deselectItem(path)
+            : this.selectItem(path)
     }
 
-    selectItem(path, isDirectory) {
-        actionBuilder('SELECT_ITEM', {path})
-            .set(['files.selected', dotSafe(this.pathSections(path))], isDirectory)
+    isSelected(path) {
+        return _.get(this.props.selected, path.split('/').splice(1)) === true
+    }
+
+    isAncestorSelected(path) {
+        const parentPath = Path.dirname(path)
+        return parentPath !== path
+            ? this.isSelected(parentPath) || this.isAncestorSelected(parentPath)
+            : false
+    }
+
+    selectItem(path) {
+        path && actionBuilder('SELECT_ITEM', {path})
+            .set(['files.selected', dotSafe(path.split('/').splice(1))], true)
             .dispatch()
     }
 
     deselectItem(path) {
-        actionBuilder('DESELECT_ITEM', {path})
-            .del(['files.selected', dotSafe(this.pathSections(path))])
+        path && actionBuilder('DESELECT_ITEM', {path})
+            .del(['files.selected', dotSafe(path.split('/').splice(1))])
             .dispatch()
-    }
-
-    toggleSelection(path, isDirectory) {
-        this.isSelected(path, false)
-            ? this.deselectItem(path)
-            : this.selectItem(path, isDirectory)
     }
 
     clearSelection() {
@@ -181,146 +242,42 @@ class Browse extends React.Component {
             .dispatch()
     }
 
-    isSelected(path, inherit = true) {
-        const isSelected = (pathSections, selected) => {
-            if (!selected) {
-                return false
-            }
-            const pathSection = pathSections.splice(0, 1)
-            const current = selected[pathSection]
-            if (pathSections.length === 0) {
-                return _.isBoolean(current)
-            }
-            if (inherit && current === true) {
-                return true
-            }
-            return isSelected(pathSections, current)
-        }
-        return isSelected(this.pathSections(path), this.props.selected)
-    }
+    // selectedItems() {
+    //     const selectedItems = (selected, path) => {
+    //         return Object.keys(selected).reduce((acc, key) => {
+    //             const value = selected[key]
+    //             const fullPath = Path.join(path, key)
+    //             if (typeof(value) === 'object') {
+    //                 const {files, directories} = selectedItems(value, fullPath)
+    //                 return {
+    //                     files: acc.files.concat(files),
+    //                     directories: acc.directories.concat(directories)
+    //                 }
+    //             } else {
+    //                 value
+    //                     ? acc.directories.push(fullPath)
+    //                     : acc.files.push(fullPath)
+    //                 return acc
+    //             }
+    //         }, {
+    //             files: [],
+    //             directories: []
+    //         })
+    //     }
+    //     return selectedItems(this.props.selected, '/')
+    // }
 
-    selectedItems() {
-        const selectedItems = (selected, path) => {
-            return Object.keys(selected).reduce((acc, key) => {
-                const value = selected[key]
-                const fullPath = Path.join(path, key)
-                if (typeof(value) === 'object') {
-                    const {files, directories} = selectedItems(value, fullPath)
-                    return {
-                        files: acc.files.concat(files),
-                        directories: acc.directories.concat(directories)
-                    }
-                } else {
-                    value
-                        ? acc.directories.push(fullPath)
-                        : acc.files.push(fullPath)
-                    return acc
-                }
-            }, {
-                files: [],
-                directories: []
-            })
-        }
-        return selectedItems(this.props.selected, '/')
-    }
-
-    countSelectedItems() {
-        const {files, directories} = this.selectedItems()
-        return {
-            files: files.length,
-            directories: directories.length
-        }
-    }
-
-    downloadSelected() {
-
-    }
-
-    renderFileInfo(fullPath, file) {
-        if (file.isDirectory) {
-            const files = this.props.loaded[fullPath] && this.props.loaded[fullPath].files
-            return files
-                ? <span className={styles.fileInfo}>({files.length} items)</span>
-                : null
-        } else {
-            return file.size
-                ? <span className={styles.fileInfo}>({file.size} bytes)</span>
-                : null
-        }
-    }
-
-    renderIcon(path, file) {
-        return file.isDirectory
-            ? this.renderDirectoryIcon(path)
-            : this.renderFileIcon(path)
-    }
-
-    renderFileIcon(path) {
-        const isImage = path => ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
-        return (
-            <span className={styles.icon}>
-                <Icon name={isImage(path) ? 'file-image' : 'file'}/>
-            </span>
-        )
-    }
-
-    renderSpinner() {
-        return (
-            <span className={styles.icon}>
-                <Icon name={'spinner'}/>
-            </span>
-        )
-    }
-
-    renderDirectoryIcon(path) {
-        const directory = this.props.loaded[path]
-        const expanded = directory && !directory.collapsed
-        const toggleDirectory = e => {
-            e.stopPropagation()
-            this.toggleDirectory(path)
-        }
-        return expanded && !directory.files
-            ? this.renderSpinner()
-            : (
-                <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
-                    <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
-                </span>
-            )
-    }
-
-    renderList(path, depth = 0) {
-        const directory = this.props.loaded[path]
-        return directory && !directory.collapsed ? (
-            <ul>
-                {this.renderListItems(path, directory.files, depth)}
-            </ul>
-        ) : null
-    }
-
-    renderListItems(path, files, depth) {
-        return files ? files.map(file => {
-            const fullPath = Path.join(path, file ? file.name : null)
-            return (
-                <li key={file.name}>
-                    <Hammer
-                        onTap={() => this.toggleSelection(fullPath, file.isDirectory)}
-                        onDoubleTap={() => this.toggleDirectory(fullPath)}>
-                        <div
-                            className={[lookStyles.look, this.isSelected(fullPath) ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
-                            style={{'--depth': depth}}>
-                            {this.renderIcon(fullPath, file)}
-                            <span className={styles.fileName}>{file.name}</span>
-                            {this.renderFileInfo(fullPath, file)}
-                        </div>
-                    </Hammer>
-                    {this.renderList(fullPath, depth + 1)}
-                </li>
-            )
-        }) : null
-    }
+    // countSelectedItems() {
+    //     const {files, directories} = this.selectedItems()
+    //     return {
+    //         files: files.length,
+    //         directories: directories.length
+    //     }
+    // }
 
     renderToolbar() {
         const selected = this.countSelectedItems()
+
         const nothingSelected = selected.files === 0 && selected.directories === 0
         const oneFileSelected = selected.files === 1 && selected.directories === 0
         return (
@@ -358,13 +315,101 @@ class Browse extends React.Component {
         )
     }
 
+    renderFileInfo(fullPath, file) {
+        if (file.isDirectory) {
+            const files = this.props.loaded[fullPath] && this.props.loaded[fullPath].files
+            return files
+                ? <span className={styles.fileInfo}>({files.length} items)</span>
+                : null
+        } else {
+            return file.size
+                ? <span className={styles.fileInfo}>({file.size} bytes)</span>
+                : null
+        }
+    }
+
+    renderIcon(path, fileName, file) {
+        return file.files
+            ? this.renderDirectoryIcon(path, file)
+            : this.renderFileIcon(fileName)
+    }
+
+    renderDirectoryIcon(path, directory) {
+        const expanded = this.isExpandedDirectory(path)
+        const toggleDirectory = e => {
+            e.stopPropagation()
+            this.toggleDirectory(path, directory)
+        }
+        return expanded && !directory.files
+            ? this.renderSpinner()
+            : (
+                <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
+                    <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
+                </span>
+            )
+    }
+
+    renderFileIcon(fileName) {
+        const isImage = ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(fileName))
+        return (
+            <span className={styles.icon}>
+                <Icon name={isImage ? 'file-image' : 'file'}/>
+            </span>
+        )
+    }
+
+    renderSpinner() {
+        return (
+            <span className={styles.icon}>
+                <Icon name={'spinner'}/>
+            </span>
+        )
+    }
+
+    renderList(path, tree, depth = 0) {
+        const {files} = tree
+        return files && this.isExpandedDirectory(path) ? (
+            <ul>
+                {this.renderListItems(path, files, depth)}
+            </ul>
+        ) : null
+    }
+
+    renderListItems(path, files, depth) {
+        return files ?
+            _.chain(files)
+                .pickBy(file => file)
+                .map((file, fileName) => {
+                    const fullPath = Path.join(path, file ? fileName : null)
+                    const selected = this.isSelected(fullPath) || this.isAncestorSelected(fullPath)
+                    return (
+                        <li key={fileName}>
+                            {/* <Hammer
+                        onTap={() => this.toggleSelection(fullPath, file.isDirectory)}
+                        onDoubleTap={() => this.toggleDirectory(fullPath, file)}> */}
+                            <div
+                                className={[lookStyles.look, selected ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
+                                style={{'--depth': depth}}
+                                onClick={() => this.toggleSelected(fullPath)}>
+                                {this.renderIcon(fullPath, fileName, file)}
+                                <span className={styles.fileName}>{fileName}</span>
+                                {this.renderFileInfo(fullPath, file)}
+                            </div>
+                            {/* </Hammer> */}
+                            {this.renderList(fullPath, file, depth + 1)}
+                        </li>
+                    )
+                }).value()
+            : null
+    }
+
     render() {
         return (
             <div className={[styles.browse, flexy.container].join(' ')}>
-                {this.renderToolbar()}
+                {/* {this.renderToolbar()} */}
                 <div className={[styles.fileList, flexy.scrollable].join(' ')}>
                     <div>
-                        {this.renderList('/')}
+                        {this.renderList('/', this.props.tree)}
                     </div>
                 </div>
             </div>
