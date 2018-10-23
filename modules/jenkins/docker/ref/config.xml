@@ -21,7 +21,7 @@
       <properties/>
     </jdk>
     <name>java-10-open</name>
-    <home>/usr/local/lib/sdkman/candidates/java/10.0.2-open</home>
+    <home>/usr/local/lib/sdkman/candidates/java/11.0.1-open</home>
     <properties/>
   </jdk>
   </jdks>
