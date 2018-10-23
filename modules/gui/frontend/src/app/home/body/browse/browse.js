@@ -207,14 +207,14 @@ class Browse extends React.Component {
             .dispatch()
     }
 
-    toggleSelected(path) {
+    toggleSelected(path, isDirectory) {
         this.isSelected(path)
             ? this.deselectItem(path)
-            : this.selectItem(path)
+            : this.selectItem(path, isDirectory)
     }
 
     isSelected(path) {
-        return _.get(this.props.selected, path.split('/').splice(1)) === true
+        return _.isBoolean(_.get(this.props.selected, path.split('/').splice(1)))
     }
 
     isAncestorSelected(path) {
@@ -224,9 +224,9 @@ class Browse extends React.Component {
             : false
     }
 
-    selectItem(path) {
+    selectItem(path, isDirectory) {
         path && actionBuilder('SELECT_ITEM', {path})
-            .set(['files.selected', dotSafe(path.split('/').splice(1))], true)
+            .set(['files.selected', dotSafe(path.split('/').splice(1))], isDirectory)
             .dispatch()
     }
 
@@ -382,15 +382,16 @@ class Browse extends React.Component {
                 .map((file, fileName) => {
                     const fullPath = Path.join(path, file ? fileName : null)
                     const selected = this.isSelected(fullPath) || this.isAncestorSelected(fullPath)
+                    const isDirectory = !!file.files
                     return (
                         <li key={fileName}>
                             {/* <Hammer
-                        onTap={() => this.toggleSelection(fullPath, file.isDirectory)}
+                        onTap={() => this.toggleSelected(fullPath, file.isDirectory)}
                         onDoubleTap={() => this.toggleDirectory(fullPath, file)}> */}
                             <div
                                 className={[lookStyles.look, selected ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
                                 style={{'--depth': depth}}
-                                onClick={() => this.toggleSelected(fullPath)}>
+                                onClick={() => this.toggleSelected(fullPath, isDirectory)}>
                                 {this.renderIcon(fullPath, fileName, file)}
                                 <span className={styles.fileName}>{fileName}</span>
                                 {this.renderFileInfo(fullPath, file)}
