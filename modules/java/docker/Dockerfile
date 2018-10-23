@@ -4,7 +4,9 @@ EXPOSE 80 443
 
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/lib/sdkman/candidates/java/current/bin
 
+ADD config /config
 ADD script /script
 
-RUN chmod -R 500 /script; sync && \
+RUN chmod -R 500 /script && \
+    chmod -R 400 /config; sync && \
     /script/init_image.sh
