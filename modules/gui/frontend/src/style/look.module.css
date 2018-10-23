@@ -117,6 +117,7 @@
     color: var(--look-default-color);
     background-color: var(--look-default-background-color);
     border: 1px solid var(--look-default-border-color);
+    transition: all 100ms ease-in-out;
 }
 
 .look.default:focus {
@@ -149,6 +150,7 @@
     color: var(--look-transparent-color);
     background-color: var(--look-transparent-background-color);
     border: 1px solid var(--look-transparent-border-color);
+    transition: all 100ms ease-in-out;
 }
 
 .look.transparent:focus {
@@ -181,6 +183,7 @@
     color: var(--look-highlight-color);
     background-color: var(--look-highlight-background-color);
     border: 1px solid var(--look-highlight-border-color);
+    transition: all 100ms ease-in-out;
 }
 
 .look.highlight:focus {
@@ -213,6 +216,7 @@
     color: var(--look-apply-color);
     background-color: var(--look-apply-background-color);
     border: 1px solid var(--look-apply-border-color);
+    transition: all 100ms ease-in-out;
 }
 
 .look.apply:focus {
@@ -245,6 +249,7 @@
     color: var(--look-cancel-color);
     background-color: var(--look-cancel-background-color);
     border: 1px solid var(--look-cancel-border-color);
+    transition: all 100ms ease-in-out;
 }
 
 .look.cancel:focus {

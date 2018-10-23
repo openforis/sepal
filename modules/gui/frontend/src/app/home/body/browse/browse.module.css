@@ -1,8 +1,19 @@
 .browse {
-    padding-top: 1rem;
-    padding-right: 1rem;
-    /*display: flex;*/
-    /*flex-direction: column;*/
+    /* default */
+
+    --look-default-h: 40;
+    --look-default-s: 8%;
+    --look-default-l: 20%;
+    --look-default-a: .2;
+
+    /* highlight */
+
+    --look-highlight-h: 40;
+    --look-highlight-s: 60%;
+    --look-highlight-l: 26%;
+    --look-highlight-a: .5;
+
+    margin: 3rem 1rem 1rem 1rem;
 }
 
 .toolbar {
@@ -17,44 +28,35 @@
 }
 
 .fileList {
+    overflow-x: auto;
+}
+
+.fileList > div {
+    width: max-content;
+}
+
+.fileList ul {
     list-style: none;
     padding: 0;
-    margin: 0 0 0 2rem;
+    overflow: visible;
     user-select: none;
-    /*overflow-y: auto;*/
-}
-
-@keyframes list {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.fileList li {
-    animation: list 250ms ease-in-out forwards;
 }
 
 .fileList li div {
+    width: 100%;
     color: #d0d0d0;
     cursor: pointer;
-}
-
-.fileList li div:hover {
-    color: white;
-    background-color: rgba(100, 100, 100, .3);
+    border: none !important;
+    padding-left: calc(var(--depth) * 1.5rem);
+    padding-right: 1rem;
 }
 
 .fileList li div.selected {
-    color: #bd911a;
     transition: 100ms ease-in-out;
 }
 
 /* recursively propagate selection to children */
 .fileList li div.selected + ul li div {
-    color: #bd911a;
     transition: 100ms ease-in-out;
 }
 

@@ -1,18 +1,19 @@
 import {Button} from 'widget/button'
-import {IconButton} from 'widget/legacyButton'
 import {Observable} from 'rxjs'
 import {catchError, map} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
+import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import Notifications from 'app/notifications'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
-import actionBuilder from 'action-builder'
+import _ from 'lodash'
+import actionBuilder, {dotSafe} from 'action-builder'
 import api from 'api'
 import flexy from 'flexy.module.css'
+import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
 
 // const files = {
@@ -66,7 +67,7 @@ const loadFiles$ = path => {
         }),
         map(files => {
             return actionBuilder('LOAD_FILES')
-                .set(['files', 'loaded', path, 'files'], files)
+                .set(['files.loaded', dotSafe(path), 'files'], files)
                 .build()
         })
     )
@@ -87,7 +88,7 @@ const removeFile$ = path => {
         const directory = Path.dirname(path)
         const fileName = Path.basename(path)
         return actionBuilder('FILE_REMOVED', {directory, fileName})
-            .delValueByTemplate(['files', 'loaded', directory, 'files'], {name: fileName})
+            .delValueByTemplate(['files.loaded', dotSafe(directory), 'files'], {name: fileName})
             .build()
     })
 }
@@ -97,8 +98,8 @@ const removeDirectory$ = path => {
         const directory = Path.dirname(path)
         const fileName = Path.basename(path)
         return actionBuilder('DIRECTORY_REMOVED', path)
-            .delValueByTemplate(['files', 'loaded', directory, 'files'], {name: fileName})
-            .del(['files', 'loaded', path])
+            .delValueByTemplate(['files.loaded', dotSafe(directory), 'files'], {name: fileName})
+            .del(['files.loaded', path])
             .build()
     })
 }
@@ -136,13 +137,13 @@ class Browse extends React.Component {
 
     collapseDirectory(path) {
         actionBuilder('COLLAPSE_DIRECTORY')
-            .set(['files', 'loaded', path, 'collapsed'], true)
+            .set(['files.loaded', dotSafe(path), 'collapsed'], true)
             .dispatch()
     }
 
     expandDirectory(path) {
         actionBuilder('EXPAND_DIRECTORY')
-            .del(['files', 'loaded', path, 'collapsed'])
+            .del(['files.loaded', dotSafe(path), 'collapsed'])
             .dispatch()
     }
 
@@ -158,38 +159,42 @@ class Browse extends React.Component {
 
     selectItem(path, isDirectory) {
         actionBuilder('SELECT_ITEM', {path})
-            .set(['files', 'selected', ...this.pathSections(path)], isDirectory)
+            .set(['files.selected', dotSafe(this.pathSections(path))], isDirectory)
             .dispatch()
     }
 
     deselectItem(path) {
         actionBuilder('DESELECT_ITEM', {path})
-            .del(['files', 'selected', ...this.pathSections(path)])
+            .del(['files.selected', dotSafe(this.pathSections(path))])
             .dispatch()
     }
 
     toggleSelection(path, isDirectory) {
-        this.isSelected(path)
+        this.isSelected(path, false)
             ? this.deselectItem(path)
             : this.selectItem(path, isDirectory)
     }
 
     clearSelection() {
         actionBuilder('CLEAR_SELECTED_ITEMS')
-            .del(['files', 'selected'])
+            .del('files.selected')
             .dispatch()
     }
 
-    isSelected(path) {
+    isSelected(path, inherit = true) {
         const isSelected = (pathSections, selected) => {
             if (!selected) {
                 return false
             }
-            if (pathSections.length === 1) {
-                return typeof(selected[pathSections[0]]) === 'boolean'
-            }
             const pathSection = pathSections.splice(0, 1)
-            return isSelected(pathSections, selected[pathSection])
+            const current = selected[pathSection]
+            if (pathSections.length === 0) {
+                return _.isBoolean(current)
+            }
+            if (inherit && current === true) {
+                return true
+            }
+            return isSelected(pathSections, current)
         }
         return isSelected(this.pathSections(path), this.props.selected)
     }
@@ -283,27 +288,32 @@ class Browse extends React.Component {
             )
     }
 
-    renderList(path) {
+    renderList(path, depth = 0) {
         const directory = this.props.loaded[path]
         return directory && !directory.collapsed ? (
-            <ul className={[styles.fileList, flexy.scrollable].join(' ')}>
-                {this.renderListItems(path, directory.files)}
+            <ul>
+                {this.renderListItems(path, directory.files, depth)}
             </ul>
         ) : null
     }
 
-    renderListItems(path, files) {
+    renderListItems(path, files, depth) {
         return files ? files.map(file => {
             const fullPath = Path.join(path, file ? file.name : null)
             return (
                 <li key={file.name}>
-                    <div className={this.isSelected(fullPath) ? styles.selected : null}
-                        onClick={() => this.toggleSelection(fullPath, file.isDirectory)}>
-                        {this.renderIcon(fullPath, file)}
-                        <span className={styles.fileName}>{file.name}</span>
-                        {this.renderFileInfo(fullPath, file)}
-                    </div>
-                    {this.renderList(fullPath)}
+                    <Hammer
+                        onTap={() => this.toggleSelection(fullPath, file.isDirectory)}
+                        onDoubleTap={() => this.toggleDirectory(fullPath)}>
+                        <div
+                            className={[lookStyles.look, this.isSelected(fullPath) ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
+                            style={{'--depth': depth}}>
+                            {this.renderIcon(fullPath, file)}
+                            <span className={styles.fileName}>{file.name}</span>
+                            {this.renderFileInfo(fullPath, file)}
+                        </div>
+                    </Hammer>
+                    {this.renderList(fullPath, depth + 1)}
                 </li>
             )
         }) : null
@@ -323,33 +333,27 @@ class Browse extends React.Component {
                         })}
                     </span>
                 )}
-                <Tooltip
-                    msg={msg('browse.controls.download.tooltip')}
+                <Button
+                    tooltip={msg('browse.controls.download.tooltip')}
                     placement='bottom'
-                    disabled={!oneFileSelected}>
-                    <IconButton icon='download'
-                        onClick={this.downloadSelected.bind(this)}
-                        disabled={!oneFileSelected}/>
-                </Tooltip>
-                <Tooltip
-                    msg={msg('browse.controls.remove.tooltip')}
+                    icon='download'
+                    onClick={this.downloadSelected.bind(this)}
+                    disabled={!oneFileSelected}
+                />
+                <Button
+                    tooltip={msg('browse.controls.remove.tooltip')}
                     placement='bottom'
-                    disabled={nothingSelected}>
-                    <Button
-                        icon='trash-alt'
-                        onClickHold={this.removeSelected.bind(this)}
-                        disabled={nothingSelected}
-                        stopPropagation={true}/>
-                </Tooltip>
-                <Tooltip
-                    msg={msg('browse.controls.clearSelection.tooltip')}
+                    icon='trash-alt'
+                    onClickHold={this.removeSelected.bind(this)}
+                    disabled={nothingSelected}
+                    stopPropagation={true}/>
+                <Button
+                    tooltip={msg('browse.controls.clearSelection.tooltip')}
                     placement='bottom'
-                    disabled={nothingSelected}>
-                    <IconButton icon='times'
-                        onClick={this.clearSelection.bind(this)}
-                        disabled={nothingSelected}
-                    />
-                </Tooltip>
+                    icon='times'
+                    onClick={this.clearSelection.bind(this)}
+                    disabled={nothingSelected}
+                />
             </div>
         )
     }
@@ -358,7 +362,11 @@ class Browse extends React.Component {
         return (
             <div className={[styles.browse, flexy.container].join(' ')}>
                 {this.renderToolbar()}
-                {this.renderList('/')}
+                <div className={[styles.fileList, flexy.scrollable].join(' ')}>
+                    <div>
+                        {this.renderList('/')}
+                    </div>
+                </div>
             </div>
         )
     }

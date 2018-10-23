@@ -1,9 +1,32 @@
 import {dispatch} from 'store'
-import {toPathList} from 'collections'
 import _ from 'lodash'
 import immutable from 'object-path-immutable'
 
-export default function actionBuilder(type, props) {
+const dotSafeWrap = path => ({dotSafe: path})
+const dotSafeUnwrap = safePath => safePath.dotSafe
+
+const toPathList = (path, safe = false) => {
+    if (_.isArray(path)) {
+        return _.flatten(path.map(pathElement => toPathList(pathElement, safe)))
+    }
+    if (_.isObject(path)) {
+        return toPathList(dotSafeUnwrap(path), true)
+    }
+    if (_.isString(path)) {
+        return safe ? path : path.split('.')
+    }
+    throw new Error('Unsupported path element type: ', path)
+}
+
+const select = (path, state) => {
+    const pathList = toPathList(path)
+    return pathList.reduce((state, part) => {
+        return state != null && state[part] != null ? state[part] : undefined
+    }, state)
+
+}
+
+const actionBuilder = (type, props) => {
     const operations = []
     const sideEffects = []
     let prefix = ''
@@ -25,38 +48,37 @@ export default function actionBuilder(type, props) {
 
         set(path, value) {
             operations.push((immutableState, state) => {
-                const pathList = toPathList(path)
-                const prevValue = select(pathList, state)
+                const prevValue = select(path, state)
                 if (prevValue !== value)
-                    return immutableState.set(pathList, value)
+                    return immutableState.set(toPathList(path), value)
             })
             return this
         },
 
         setValueByTemplate(path, template, value) {
-            path = toPathList(path)
             operations.push((immutableState, state) => {
                 const index = select(path, state)
                     .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
                 return (index !== -1)
-                    ? immutableState.set([...path, index], value)
+                    ? immutableState.set([...toPathList(path), index], value)
                     : immutableState
             })
             return this
         },
 
         assign(path, value) {
-            operations.push(immutableState => immutableState.assign(toPathList(path), value))
+            operations.push(immutableState =>
+                immutableState.assign(toPathList(path), value)
+            )
             return this
         },
 
         assignValueByTemplate(path, template, value) {
-            path = toPathList(path)
             operations.push((immutableState, state) => {
                 const index = select(path, state)
                     .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
                 return (index !== -1)
-                    ? immutableState.assign([...path, index], value)
+                    ? immutableState.assign([...toPathList(path), index], value)
                     : immutableState
             })
             return this
@@ -76,7 +98,7 @@ export default function actionBuilder(type, props) {
                     .map(callback)
                     .map((value, index) => ({index, value}))
                     .filter(({index, value}) => value !== collection[index])
-                    .reduce((immutableState, {index, value}) => immutableState.set([path, index], value), immutableState)
+                    .reduce((immutableState, {index, value}) => immutableState.set([toPathList(path), index], value), immutableState)
             })
             return this
         },
@@ -114,23 +136,21 @@ export default function actionBuilder(type, props) {
         },
 
         delValue(path, value) {
-            path = toPathList(path)
             operations.push((immutableState, state) => {
                 const index = select(path, state).indexOf(value)
                 return (index !== -1)
-                    ? immutableState.del([...path, index])
+                    ? immutableState.del([...toPathList(path), index])
                     : immutableState
             })
             return this
         },
 
         delValueByTemplate(path, template) {
-            path = toPathList(path)
             operations.push((immutableState, state) => {
                 const index = select(path, state)
                     .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
                 return (index !== -1)
-                    ? immutableState.del([...path, index])
+                    ? immutableState.del([...toPathList(path), index])
                     : immutableState
             })
             return this
@@ -173,8 +193,5 @@ export default function actionBuilder(type, props) {
     }
 }
 
-function select(path, state) {
-    return toPathList(path).reduce((state, part) => {
-        return state != null && state[part] != null ? state[part] : undefined
-    }, state)
-}
+export default actionBuilder
+export const dotSafe = path => dotSafeWrap(path)
