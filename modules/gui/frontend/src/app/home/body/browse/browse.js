@@ -36,18 +36,11 @@ const loadPath$ = path =>
             Notifications.error('files.loading').dispatch()
             return Observable.of([])
         }),
-        map(tree => {
-            // _.forEach(tree.files, (file, fileName) => {
-            //     if (this.isDirectoryUnpopulated(file)) {
-            //         console.log('should load', Path.join(path, fileName))
-            //         // this.loadPath(Path.join(path, fileName))
-            //     }
-            // })
-            return actionBuilder('LOAD_FILES')
-                .set(['files.tree', dotSafe(treePath(path))], tree)
-                .set(['files.opened', path], true)
-                .dispatch()
-        })
+        map(tree => actionBuilder('LOAD_PATH', {path})
+            .set(['files.tree', dotSafe(treePath(path))], tree)
+            .set(['files.opened', dotSafe(path)], true)
+            .dispatch()
+        )
     )
 
 const removePath$ = path =>
@@ -56,11 +49,10 @@ const removePath$ = path =>
             Notifications.error('files.removing').dispatch()
             return Observable.of([])
         }),
-        map(() => {
-            return actionBuilder('REMOVE_ITEM', {path})
-                .del(['files.tree', dotSafe(treePath(path))])
-                .dispatch()
-        })
+        map(() => actionBuilder('REMOVE_PATH', {path})
+            .del(['files.tree', dotSafe(treePath(path))])
+            .dispatch()
+        )
     )
 
 const updateTree$ = current =>
@@ -69,7 +61,7 @@ const updateTree$ = current =>
             Notifications.error('files.loading').dispatch()
             return Observable.of([])
         }),
-        map(tree => actionBuilder('UPDATE_FILES')
+        map(tree => actionBuilder('UPDATE_TREE')
             .merge('files.tree', tree)
             .dispatch()
         )
@@ -88,7 +80,7 @@ class Browse extends React.Component {
     UNSAFE_componentWillMount() {
         this.loadPath('/')
         setTimeout(() => {
-            // this.updateTree(this.props.tree)
+            this.updateTree(this.props.tree)
         }, 3000)
     }
 
@@ -101,12 +93,8 @@ class Browse extends React.Component {
     }
     
     updateTree(current) {
-        this.props.stream('REQUEST_UPDATE_FILES', updateTree$(current))
+        this.props.stream('REQUEST_UPDATE_TREE', updateTree$(current))
     }
-
-    // getNode(path) {
-    //     return _.get(this.props.tree, this.treePath(path))
-    // }
 
     isDirectory(directory) {
         return this.isDirectoryPopulated(directory) || this.isDirectoryUnpopulated(directory)
@@ -117,17 +105,16 @@ class Browse extends React.Component {
     }
 
     isDirectoryUnpopulated(directory) {
-        return _.isNull(directory.files)
+        return directory.files === null
     }
 
     toggleDirectory(path, directory) {
         if (this.isDirectoryExpanded(path)) {
             this.collapseDirectory(path, directory)
         } else {
+            this.expandDirectory(path, directory)
             if (this.isDirectoryUnpopulated(directory)) {
                 this.loadPath(path)
-            } else {
-                this.expandDirectory(path, directory)
             }
         }
     }

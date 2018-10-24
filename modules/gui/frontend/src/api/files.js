@@ -1,5 +1,5 @@
+import {delay, map} from 'rxjs/operators'
 import {delete$, get$} from 'http-client'
-import {map} from 'rxjs/operators'
 import {of} from 'rxjs'
 
 const responses = {
@@ -64,9 +64,9 @@ const updateResponse = {
 export default {
     // loadPath$: path => get$('/api/files', {query: {path}}).pipe(toResponse),
     // removePath$: path => delete$(`/api/files/${encodeURIComponent(path)}`).pipe(toResponse)
-    loadPath$: request => of(responses[request]),
-    removePath$: path => of(path),
-    updateTree$: () => of(updateResponse)
+    loadPath$: request => of(responses[request]).pipe(delay(500)),
+    removePath$: path => of(path).pipe(delay(500)),
+    updateTree$: () => of(updateResponse).pipe(delay(500))
 }
 
 const toResponse = map(e => e.response)
