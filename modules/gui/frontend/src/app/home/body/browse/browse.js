@@ -3,7 +3,6 @@ import {Observable} from 'rxjs'
 import {catchError, map} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
-import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import Notifications from 'app/notifications'
 import Path from 'path'
@@ -15,60 +14,6 @@ import api from 'api'
 import flexy from 'flexy.module.css'
 import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
-
-const _tree = {
-    open: true,
-    files: {
-        'file1': {
-            size: 1000,
-            lastModified: 1234,
-            // selected: true
-        },
-        'file2': {
-            size: 100,
-            lastModified: 1234
-        },
-        'dir1': {
-            // open: true,
-            files: {
-                'file3': {
-                    size: 400,
-                    lastModified: 1234,
-                    // selected: true
-                },
-                'dir2': {
-                    // open: true,
-                    // selected: true,
-                    files: {
-                        'file4': {
-                            size: 400,
-                            lastModified: 1234
-                        },
-                        'dir3': {
-                            files: null
-                        },
-                        'file5': {
-                            size: 683,
-                            lastModified: 1234
-                        },
-                        'a long file name to test hotrizontal scrolling a long file name to test hotrizontal scrolling a long file name to test hotrizontal scrolling ': {
-                            size: 4003,
-                            lastModified: 1234
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-const _selected = {
-    'file2': true,
-    'dir1': {
-        'file3': true,
-        'dir3': true
-    }
-}
 
 const tree = () =>
     select('files.tree') || {}
@@ -85,125 +30,121 @@ const mapStateToProps = () => ({
     selected: selected()
 })
 
-// const removeItem$ = (path, action) => {
-//     return api.files.removeItem$(path).pipe(
-//         catchError(() => {
-//             Notifications.error('files.removing').dispatch()
-//             return Observable.of([])
-//         }),
-//         map(action)
-//     )
-// }
-
-// const removeFile$ = path => {
-//     return removeItem$(path, () => {
-//         const directory = Path.dirname(path)
-//         const fileName = Path.basename(path)
-//         return actionBuilder('FILE_REMOVED', {directory, fileName})
-//             .delValueByTemplate(['files.loaded', dotSafe(directory), 'files'], {name: fileName})
-//             .build()
-//     })
-// }
-
-// const removeDirectory$ = path => {
-//     return removeItem$(path, () => {
-//         const directory = Path.dirname(path)
-//         const fileName = Path.basename(path)
-//         return actionBuilder('DIRECTORY_REMOVED', path)
-//             .delValueByTemplate(['files.loaded', dotSafe(directory), 'files'], {name: fileName})
-//             .del(['files.loaded', path])
-//             .build()
-//     })
-// }
-
-const update$ = current => {
-    return api.files.loadFiles$(current).pipe(
+const loadPath$ = path =>
+    api.files.loadPath$(path).pipe(
         catchError(() => {
             Notifications.error('files.loading').dispatch()
             return Observable.of([])
         }),
         map(tree => {
-            // console.log(tree)
-            // if (!collapsed) {
-            // _.forEach(files, file => {
-            //     if (file.isDirectory) {
-            //         this.loadDirectory(Path.join(path, file.name), true)
+            // _.forEach(tree.files, (file, fileName) => {
+            //     if (this.isDirectoryUnpopulated(file)) {
+            //         console.log('should load', Path.join(path, fileName))
+            //         // this.loadPath(Path.join(path, fileName))
             //     }
             // })
-            // }
             return actionBuilder('LOAD_FILES')
-                .merge('files.tree', tree)
-                .merge('files.opened', {'/': true})
+                .set(['files.tree', dotSafe(treePath(path))], tree)
+                .set(['files.opened', path], true)
                 .dispatch()
         })
     )
-}
+
+const removePath$ = path =>
+    api.files.removePath$(path).pipe(
+        catchError(() => {
+            Notifications.error('files.removing').dispatch()
+            return Observable.of([])
+        }),
+        map(() => {
+            return actionBuilder('REMOVE_ITEM', {path})
+                .del(['files.tree', dotSafe(treePath(path))])
+                .dispatch()
+        })
+    )
+
+const updateTree$ = current =>
+    api.files.updateTree$(current).pipe(
+        catchError(() => {
+            Notifications.error('files.loading').dispatch()
+            return Observable.of([])
+        }),
+        map(tree => actionBuilder('UPDATE_FILES')
+            .merge('files.tree', tree)
+            .dispatch()
+        )
+    )
+
+const pathSections = path =>
+    path.split('/').splice(1)
+
+const treePath = path =>
+    path !== '/'
+        ? _.reduce(pathSections(path),
+            (treePath, pathElement) => treePath.concat(['files', pathElement]), []
+        ) : []
 
 class Browse extends React.Component {
     UNSAFE_componentWillMount() {
-        this.update()
+        this.loadPath('/')
         setTimeout(() => {
-            this.update(this.props.tree)
+            // this.updateTree(this.props.tree)
         }, 3000)
     }
 
-    update(current) {
-        this.props.stream('UPDATE_DIRECTORY', update$(current))
+    loadPath(path) {
+        this.props.stream('REQUEST_LOAD_FILES', loadPath$(path))
     }
 
-    treePath(path) {
-        return _.reduce(path.split('/').splice(1),
-            (treePath, pathElement) => treePath.concat(['files', pathElement]), []
-        )
+    removePath(path) {
+        this.props.stream('REQUEST_REMOVE_PATH', removePath$(path))
+    }
+    
+    updateTree(current) {
+        this.props.stream('REQUEST_UPDATE_FILES', updateTree$(current))
     }
 
-    getNode(path) {
-        return _.get(this.props.tree, this.treePath(path))
+    // getNode(path) {
+    //     return _.get(this.props.tree, this.treePath(path))
+    // }
+
+    isDirectory(directory) {
+        return this.isDirectoryPopulated(directory) || this.isDirectoryUnpopulated(directory)
     }
 
-    // pathSections(path) {
-    //     return path.substr(1).split('/')
-    // }
+    isDirectoryPopulated(directory) {
+        return _.isObject(directory.files)
+    }
 
-    // removeFile(path) {
-    //     this.props.asyncActionBuilder('REMOVE_FILE', removeFile$(path))
-    //         .dispatch()
-    // }
-
-    // removeDirectory(path) {
-    //     this.props.asyncActionBuilder('REMOVE_DIRECTORY', removeDirectory$(path))
-    //         .dispatch()
-    // }
-
-    // removeSelected() {
-    //     const {files, directories} = this.selectedItems()
-    //     files.forEach(file => this.removeFile(file))
-    //     directories.forEach(directory => this.removeDirectory(directory))
-    //     this.clearSelection()
-    // }
+    isDirectoryUnpopulated(directory) {
+        return _.isNull(directory.files)
+    }
 
     toggleDirectory(path, directory) {
-        if (this.isExpandedDirectory(path)) {
+        if (this.isDirectoryExpanded(path)) {
             this.collapseDirectory(path, directory)
         } else {
-            this.expandDirectory(path, directory)
-            // this.loadDirectory(path)
+            if (this.isDirectoryUnpopulated(directory)) {
+                this.loadPath(path)
+            } else {
+                this.expandDirectory(path, directory)
+            }
         }
     }
 
-    isExpandedDirectory(path) {
+    isDirectoryExpanded(path) {
         return !!this.props.opened[path]
-    }
-
-    collapseDirectory(path) {
-        actionBuilder('COLLAPSE_DIRECTORY')
-            .del(['files.opened', dotSafe(path)])
-            .dispatch()
     }
 
     expandDirectory(path) {
         actionBuilder('EXPAND_DIRECTORY')
             .set(['files.opened', dotSafe(path)], true)
+            .dispatch()
+    }
+
+    collapseDirectory(path) {
+        actionBuilder('COLLAPSE_DIRECTORY')
+            .del(['files.opened', dotSafe(path)])
             .dispatch()
     }
 
@@ -214,7 +155,7 @@ class Browse extends React.Component {
     }
 
     isSelected(path) {
-        return _.isBoolean(_.get(this.props.selected, path.split('/').splice(1)))
+        return _.isBoolean(_.get(this.props.selected, pathSections(path)))
     }
 
     isAncestorSelected(path) {
@@ -226,13 +167,13 @@ class Browse extends React.Component {
 
     selectItem(path, isDirectory) {
         path && actionBuilder('SELECT_ITEM', {path})
-            .set(['files.selected', dotSafe(path.split('/').splice(1))], isDirectory)
+            .set(['files.selected', dotSafe(pathSections(path))], isDirectory)
             .dispatch()
     }
 
     deselectItem(path) {
         path && actionBuilder('DESELECT_ITEM', {path})
-            .del(['files.selected', dotSafe(path.split('/').splice(1))])
+            .del(['files.selected', dotSafe(pathSections(path))])
             .dispatch()
     }
 
@@ -242,42 +183,52 @@ class Browse extends React.Component {
             .dispatch()
     }
 
-    // selectedItems() {
-    //     const selectedItems = (selected, path) => {
-    //         return Object.keys(selected).reduce((acc, key) => {
-    //             const value = selected[key]
-    //             const fullPath = Path.join(path, key)
-    //             if (typeof(value) === 'object') {
-    //                 const {files, directories} = selectedItems(value, fullPath)
-    //                 return {
-    //                     files: acc.files.concat(files),
-    //                     directories: acc.directories.concat(directories)
-    //                 }
-    //             } else {
-    //                 value
-    //                     ? acc.directories.push(fullPath)
-    //                     : acc.files.push(fullPath)
-    //                 return acc
-    //             }
-    //         }, {
-    //             files: [],
-    //             directories: []
-    //         })
-    //     }
-    //     return selectedItems(this.props.selected, '/')
-    // }
+    selectedItems() {
+        const selectedItems = (selected, path) => {
+            return Object.keys(selected).reduce((acc, key) => {
+                const value = selected[key]
+                const fullPath = Path.join(path, key)
+                if (typeof(value) === 'object') {
+                    const {files, directories} = selectedItems(value, fullPath)
+                    return {
+                        files: acc.files.concat(files),
+                        directories: acc.directories.concat(directories)
+                    }
+                } else {
+                    value
+                        ? acc.directories.push(fullPath)
+                        : acc.files.push(fullPath)
+                    return acc
+                }
+            }, {
+                files: [],
+                directories: []
+            })
+        }
+        return selectedItems(this.props.selected, '/')
+    }
 
-    // countSelectedItems() {
-    //     const {files, directories} = this.selectedItems()
-    //     return {
-    //         files: files.length,
-    //         directories: directories.length
-    //     }
-    // }
+    removeSelected() {
+        const {files, directories} = this.selectedItems()
+        files.forEach(file => this.removePath(file))
+        directories.forEach(directory => this.removePath(directory))
+        this.clearSelection()
+    }
+
+    downloadSelected() {
+        // TO BE DONE
+    }
+
+    countSelectedItems() {
+        const {files, directories} = this.selectedItems()
+        return {
+            files: files.length,
+            directories: directories.length
+        }
+    }
 
     renderToolbar() {
         const selected = this.countSelectedItems()
-
         const nothingSelected = selected.files === 0 && selected.directories === 0
         const oneFileSelected = selected.files === 1 && selected.directories === 0
         return (
@@ -329,13 +280,13 @@ class Browse extends React.Component {
     }
 
     renderIcon(path, fileName, file) {
-        return file.files
+        return this.isDirectory(file)
             ? this.renderDirectoryIcon(path, file)
             : this.renderFileIcon(fileName)
     }
 
     renderDirectoryIcon(path, directory) {
-        const expanded = this.isExpandedDirectory(path)
+        const expanded = this.isDirectoryExpanded(path)
         const toggleDirectory = e => {
             e.stopPropagation()
             this.toggleDirectory(path, directory)
@@ -368,7 +319,7 @@ class Browse extends React.Component {
 
     renderList(path, tree, depth = 0) {
         const {files} = tree
-        return files && this.isExpandedDirectory(path) ? (
+        return files && this.isDirectoryExpanded(path) ? (
             <ul>
                 {this.renderListItems(path, files, depth)}
             </ul>
@@ -385,9 +336,6 @@ class Browse extends React.Component {
                     const isDirectory = !!file.files
                     return (
                         <li key={fileName}>
-                            {/* <Hammer
-                        onTap={() => this.toggleSelected(fullPath, file.isDirectory)}
-                        onDoubleTap={() => this.toggleDirectory(fullPath, file)}> */}
                             <div
                                 className={[lookStyles.look, selected ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
                                 style={{'--depth': depth}}
@@ -396,7 +344,6 @@ class Browse extends React.Component {
                                 <span className={styles.fileName}>{fileName}</span>
                                 {this.renderFileInfo(fullPath, file)}
                             </div>
-                            {/* </Hammer> */}
                             {this.renderList(fullPath, file, depth + 1)}
                         </li>
                     )
@@ -407,7 +354,7 @@ class Browse extends React.Component {
     render() {
         return (
             <div className={[styles.browse, flexy.container].join(' ')}>
-                {/* {this.renderToolbar()} */}
+                {this.renderToolbar()}
                 <div className={[styles.fileList, flexy.scrollable].join(' ')}>
                     <div>
                         {this.renderList('/', this.props.tree)}
