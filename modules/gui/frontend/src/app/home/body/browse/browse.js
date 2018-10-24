@@ -277,10 +277,10 @@ class Browse extends React.Component {
     }
 
     renderFileInfo(fullPath, file) {
-        if (file.isDirectory) {
-            const files = this.props.loaded[fullPath] && this.props.loaded[fullPath].files
+        if (this.isDirectory(file)) {
+            const files = file.files
             return files
-                ? <span className={styles.fileInfo}>({files.length} items)</span>
+                ? <span className={styles.fileInfo}>({_.keys(files).length} items)</span>
                 : null
         } else {
             return file.size

@@ -44,6 +44,7 @@ const updateResponse = {
         'file2': null,
         'dir1': {
             files: {
+                'file2': {size: 100, lastModified: 1234},
                 'dir2': {
                     files: {
                         'dir3': null,
@@ -52,7 +53,32 @@ const updateResponse = {
                 },
                 'dir4': {
                     files: {
-                        'dir5': {files: null}
+                        'dir5': {files: null},
+                        'dir3': {
+                            files: {
+                                'file6': {size: 400, lastModified: 1234},
+                                'file7': {size: 683, lastModified: 1234},
+                                'some other file here': {size: 4003, lastModified: 1234},
+                                'fileX1': {size: 12345, lastModified: 34534},
+                                'fileX2': {size: 12345, lastModified: 34534},
+                                'fileX3': {size: 12345, lastModified: 34534},
+                                'fileX4': {size: 12345, lastModified: 34534},
+                                'fileX5': {size: 12345, lastModified: 34534},
+                                'fileX6': {size: 12345, lastModified: 34534},
+                                'fileX7': {size: 12345, lastModified: 34534},
+                                'fileX8': {size: 12345, lastModified: 34534},
+                                'fileX9': {size: 12345, lastModified: 34534},
+                            }
+                        },
+                        'fileX1': {size: 12345, lastModified: 34534},
+                        'fileX2': {size: 12345, lastModified: 34534},
+                        'fileX3': {size: 12345, lastModified: 34534},
+                        'fileX4': {size: 12345, lastModified: 34534},
+                        'fileX5': {size: 12345, lastModified: 34534},
+                        'fileX6': {size: 12345, lastModified: 34534},
+                        'fileX7': {size: 12345, lastModified: 34534},
+                        'fileX8': {size: 12345, lastModified: 34534},
+                        'fileX9': {size: 12345, lastModified: 34534},
                     }
                 },
                 'file9': {size: 100, lastModified: 945885}
