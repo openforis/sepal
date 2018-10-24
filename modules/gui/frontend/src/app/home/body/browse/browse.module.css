@@ -61,6 +61,14 @@
     transition: 100ms ease-in-out;
 }
 
+.fileList li div.removed {
+    color: red;
+}
+
+.fileList li div.removed span {
+    /* text-decoration: line-through; */
+}
+
 .fileName {
     display: inline-block;
 }

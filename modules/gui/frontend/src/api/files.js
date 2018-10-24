@@ -65,7 +65,7 @@ export default {
     // loadPath$: path => get$('/api/files', {query: {path}}).pipe(toResponse),
     // removePath$: path => delete$(`/api/files/${encodeURIComponent(path)}`).pipe(toResponse)
     loadPath$: request => of(responses[request]).pipe(delay(500)),
-    removePath$: path => of(path).pipe(delay(500)),
+    removePath$: path => of(path).pipe(delay(1000)),
     updateTree$: () => of(updateResponse).pipe(delay(500))
 }
 

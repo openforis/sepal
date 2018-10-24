@@ -24,10 +24,14 @@ const opened = () =>
 const selected = () =>
     select('files.selected') || {}
 
+const removed = () =>
+    select('files.removed') || {}
+
 const mapStateToProps = () => ({
     tree: tree(),
     opened: opened(),
-    selected: selected()
+    selected: selected(),
+    removed: removed()
 })
 
 const loadPath$ = path =>
@@ -89,7 +93,15 @@ class Browse extends React.Component {
     }
 
     removePath(path) {
-        this.props.stream('REQUEST_REMOVE_PATH', removePath$(path))
+        actionBuilder('REMOVE_PATH_PENDING', {path})
+            .set(['files.removed', dotSafe(pathSections(path))], true)
+            .dispatch()
+        this.props.stream('REQUEST_REMOVE_PATH',
+            removePath$(path),
+            () => actionBuilder('REMOVE_PATH_COMPLETE', {path})
+                .del(['files.removed', dotSafe(pathSections(path))])
+                .dispatch()
+        )
     }
     
     updateTree(current) {
@@ -200,6 +212,17 @@ class Browse extends React.Component {
         files.forEach(file => this.removePath(file))
         directories.forEach(directory => this.removePath(directory))
         this.clearSelection()
+    }
+
+    isRemoved(path) {
+        return _.get(this.props.removed, pathSections(path)) === true
+    }
+
+    isAncestorRemoved(path) {
+        const parentPath = Path.dirname(path)
+        return parentPath !== path
+            ? this.isRemoved(parentPath) || this.isAncestorRemoved(parentPath)
+            : false
     }
 
     downloadSelected() {
@@ -319,12 +342,18 @@ class Browse extends React.Component {
                 .pickBy(file => file)
                 .map((file, fileName) => {
                     const fullPath = Path.join(path, file ? fileName : null)
-                    const selected = this.isSelected(fullPath) || this.isAncestorSelected(fullPath)
+                    const isSelected = this.isSelected(fullPath) || this.isAncestorSelected(fullPath)
+                    const isRemoved = this.isRemoved(fullPath) || this.isAncestorRemoved(fullPath)
                     const isDirectory = !!file.files
                     return (
                         <li key={fileName}>
                             <div
-                                className={[lookStyles.look, selected ? lookStyles.highlight: lookStyles.default, styles.item].join(' ')}
+                                className={[
+                                    lookStyles.look,
+                                    isSelected ? lookStyles.highlight : lookStyles.default,
+                                    styles.item,
+                                    isRemoved ? styles.removed : null
+                                ].join(' ')}
                                 style={{'--depth': depth}}
                                 onClick={() => this.toggleSelected(fullPath, isDirectory)}>
                                 {this.renderIcon(fullPath, fileName, file)}
