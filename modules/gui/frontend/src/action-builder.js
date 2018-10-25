@@ -38,10 +38,9 @@ const actionBuilder = (type, props) => {
         },
         
         withState(path, callback) {
-            operations.push(immutableState => {
-                const currentState = immutableState.value()
-                const selectedState = select(path, currentState)
-                return callback(selectedState, immutable(currentState))
+            operations.push((immutableState, state) => {
+                const prevValue = select(path, state)
+                return callback(prevValue, immutableState)
             })
             return this
         },
