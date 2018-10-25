@@ -4,27 +4,36 @@ import {of} from 'rxjs'
 
 const responses = {
     '/': {
+        dir: true,
+        count: 4,
         files: {
             'file1': {size: 1000, lastModified: 1234},
             'file2': {size: 100, lastModified: 1234},
-            'dir1': {files: null}
+            'dir1': {dir: true, count: 2},
+            'dir0': {dir: true, count: 0}
         }
     },
     '/dir1': {
+        dir: true,
+        count: 2,
         files: {
             'file3': {size: 400, lastModified: 1234},
-            'dir2': {files: null}
+            'dir2': {dir: true, count: 4}
         }
     },
     '/dir1/dir2': {
+        dir: true,
+        count: 4,
         files: {
             'file4': {size: 400, lastModified: 1234},
-            'dir3': {files: null},
+            'dir3': {dir: true, count: 3},
             'file5': {size: 683, lastModified: 1234},
             'a long file name to test horizontal scrolling a long file name to test horizontal scrolling a long file name to test horizontal scrolling ': {size: 4003, lastModified: 1234}
         }
     },
     '/dir1/dir2/dir3': {
+        dir: true,
+        count: 3,
         files: {
             'file6': {size: 400, lastModified: 1234},
             'file7': {size: 683, lastModified: 1234},
@@ -32,6 +41,8 @@ const responses = {
         }
     },
     '/dir1/dir4/dir5': {
+        dir: true,
+        count: 2,
         files: {
             'file10': {size: 400, lastModified: 1234},
             'another long file name to test horizontal scrolling a long file name to test horizontal scrolling a long file name to test horizontal scrolling ': {size: 4003, lastModified: 1234}
@@ -40,21 +51,36 @@ const responses = {
 }
 
 const updateResponse = {
+    dir: true,
+    count: 2,
     files: {
-        'file2': null,
+        'file2': {removed: true},
+        'dir0': {
+            dir: true,
+            count: 0,
+            removed: true
+        },
         'dir1': {
+            dir: true,
+            count: 4,
             files: {
                 'file2': {size: 100, lastModified: 1234},
                 'dir2': {
+                    dir: true,
+                    count: 2,
                     files: {
-                        'dir3': null,
+                        'dir3': {removed: true},
                         'file8': {size: 12345, lastModified: 34534}
                     }
                 },
                 'dir4': {
+                    dir: true,
+                    count: 11,
                     files: {
                         'dir5': {files: null},
                         'dir3': {
+                            dir: true,
+                            count: 12,
                             files: {
                                 'file6': {size: 400, lastModified: 1234},
                                 'file7': {size: 683, lastModified: 1234},

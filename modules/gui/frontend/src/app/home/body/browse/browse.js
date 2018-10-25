@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {Observable} from 'rxjs'
-import {catchError, map} from 'rxjs/operators'
+import {catchError, delay, map} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
@@ -68,8 +68,26 @@ const updateTree$ = current =>
         map(tree => actionBuilder('UPDATE_TREE')
             .merge('files.tree', tree)
             .dispatch()
-        )
+        ),
+        // delay(1000),
+        // map(() => actionBuilder('CLEANUP_TREE')
+        //     .withState('files.tree', (tree, stateBuilder) => {
+        //         return stateBuilder.set('files.tree', cleanupTree(tree))
+        //     })
+        //     .dispatch()
+        // )
     )
+
+const cleanupTree = tree => {
+    _.forEach(tree.files, (file, name) => {
+        if (file.removed) {
+            delete tree.files[name]
+        } else if (file.dir) {
+            cleanupTree(file)
+        }
+    })
+    return tree
+}
 
 const pathSections = path =>
     path.split('/').splice(1)
@@ -85,7 +103,7 @@ class Browse extends React.Component {
         this.loadPath('/')
         setTimeout(() => {
             this.updateTree(this.props.tree)
-        }, 3000)
+        }, 1000)
     }
 
     loadPath(path) {
@@ -105,19 +123,21 @@ class Browse extends React.Component {
     }
     
     updateTree(current) {
-        this.props.stream('REQUEST_UPDATE_TREE', updateTree$(current))
+        this.props.stream('REQUEST_UPDATE_TREE', updateTree$(current),
+            // () => actionBuilder('CLEANUP_TREE')
+            //     .withState('files.tree', (tree, immutableState) => {
+            //         return immutableState.set('files.tree', cleanupTree(tree))
+            //     })
+            //     .dispatch()
+        )
     }
 
     isDirectory(directory) {
-        return this.isDirectoryPopulated(directory) || this.isDirectoryUnpopulated(directory)
-    }
-
-    isDirectoryPopulated(directory) {
-        return _.isObject(directory.files)
+        return directory.dir
     }
 
     isDirectoryUnpopulated(directory) {
-        return directory.files === null
+        return !directory.files
     }
 
     toggleDirectory(path, directory) {
@@ -278,10 +298,7 @@ class Browse extends React.Component {
 
     renderFileInfo(fullPath, file) {
         if (this.isDirectory(file)) {
-            const files = file.files
-            return files
-                ? <span className={styles.fileInfo}>({_.keys(files).length} items)</span>
-                : null
+            return <span className={styles.fileInfo}>({file.count} items)</span>
         } else {
             return file.size
                 ? <span className={styles.fileInfo}>({file.size} bytes)</span>
@@ -343,8 +360,8 @@ class Browse extends React.Component {
                 .map((file, fileName) => {
                     const fullPath = Path.join(path, file ? fileName : null)
                     const isSelected = this.isSelected(fullPath) || this.isAncestorSelected(fullPath)
-                    const isRemoved = this.isRemoved(fullPath) || this.isAncestorRemoved(fullPath)
-                    const isDirectory = !!file.files
+                    const isRemoved = file.removed || this.isRemoved(fullPath) || this.isAncestorRemoved(fullPath)
+                    const isDirectory = this.isDirectory(file)
                     return (
                         <li key={fileName}>
                             <div
@@ -368,6 +385,7 @@ class Browse extends React.Component {
     }
 
     render() {
+        console.log('render', this.props.tree)
         return (
             <div className={[styles.browse, flexy.container].join(' ')}>
                 {this.renderToolbar()}
