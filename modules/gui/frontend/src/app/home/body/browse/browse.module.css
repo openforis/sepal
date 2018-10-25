@@ -34,6 +34,7 @@
 .fileList > div {
     min-width: 100%;
     width: max-content;
+    margin-bottom: 5rem;
 }
 
 .fileList ul {
