@@ -475,6 +475,11 @@
               "placeholder": "Enter an asset ID...",
               "required": "You must enter an asset ID"
             }
+          },
+          "retrieve": {
+            "form":  {
+              "destination.label":  "Destination"
+            }
           }
         },
         "trainingData": {
@@ -839,6 +844,7 @@
     "classification": {
       "error.noTrainingData": "There is no training data in selected area of interest."
     },
-    "error.earthEngineException": "Google Earth Engine returned an error: {earthEngineMessage}"
+    "error.earthEngineException": "Google Earth Engine returned an error: {earthEngineMessage}",
+    "error.failedToLoadRecipe": "Failed to load Sepal recipe"
   }
 }
