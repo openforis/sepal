@@ -4,6 +4,7 @@ import org.openforis.sepal.component.files.FilesComponent
 import org.openforis.sepal.component.files.api.UserFile
 import org.openforis.sepal.component.files.command.DeleteFile
 import org.openforis.sepal.component.files.query.ListFiles
+import org.openforis.sepal.component.files.query.QueryFiles
 import org.openforis.sepal.component.files.query.ReadFile
 import spock.lang.Specification
 
@@ -35,6 +36,10 @@ abstract class AbstractFilesTest extends Specification {
 
     final File createUserHome(String username) {
         new File(homeDir, username)
+    }
+
+    final Map query(String path, Map filter = [:], String username = testUsername) {
+        component.submit(new QueryFiles(path: path, filter: filter, username: username))
     }
 
     final UserFile addFile(String relativePath, String username = testUsername) {

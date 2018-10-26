@@ -8,13 +8,15 @@ class UserFile {
     long size
     boolean directory
     boolean archivable
+    long lastModified
 
     static UserFile fromFile(File file, boolean archivable = true) {
         new UserFile(
             path: file.path,
             size: file.size(),
             directory: file.directory,
-            archivable: archivable
+            archivable: archivable,
+            lastModified: file.lastModified()
         )
     }
 
