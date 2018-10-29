@@ -6,7 +6,10 @@ import groovy.json.JsonSlurper
 import groovymvc.Controller
 import groovymvc.Params
 import org.openforis.sepal.endpoint.InvalidRequest
+import org.openforis.sepal.endpoint.MalformedRequest
 import org.openforis.sepal.user.User
+
+import static groovy.json.JsonParserType.LAX
 
 class MvcExtension {
     /**
@@ -48,6 +51,27 @@ class MvcExtension {
      */
     static String getBody(Controller self) {
         self.requestContext.request.reader.text
+    }
+
+
+    /**
+     * Reads, parses, and returns the request body as a JSON Object. This method can only be called once per request.
+     * @return the request body as a JSON Object
+     */
+    static <T> T jsonBody(Controller self, Class<T> expectedType = Object) {
+        def body = getBody(self)
+        T result = null
+        if (body) {
+            try {
+                result = new JsonSlurper(type: LAX).parseText(body)
+            } catch (Exception e) {
+                throw new MalformedRequest('Request body is not well-formed JSON.', e)
+            }
+            if (!expectedType.isAssignableFrom(result.getClass()))
+                throw new MalformedRequest("Request body expected to be of type ${expectedType.simpleName}.")
+
+        }
+        return result
     }
 
     static User getSepalUser(Controller self) throws InvalidRequest {

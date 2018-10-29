@@ -94,7 +94,7 @@ class QueryFiles_Test extends AbstractFilesTest {
         ]
     }
 
-    def 'Given no files, when querying root with last-modified for a file, file is returned with removed: true'() {
+    def 'Given no files, when querying root with last-modified for a non-existing file, file is returned with removed: true'() {
         when: 
         def result = query('/', [
             dir: true,
@@ -111,6 +111,36 @@ class QueryFiles_Test extends AbstractFilesTest {
             dir: true,
             count: 0,
             files: [
+                'file.txt': [
+                    removed: true
+                ]
+            ]
+        ]
+    }
+
+    def 'Given a nested directory, when querying root with last-modified for a non-existing file, nested dir and file with removed: true is returned'() {
+        addDir('nestedDir')
+
+        when:
+        def result = query('/', [
+            dir: true,
+            count: 1,
+            files: [
+                'file.txt': [
+                    lastModified: longTimeAgo
+                ]
+            ]
+        ])
+
+        then:
+        result == [
+            dir: true,
+            count: 1,
+            files: [
+                'nestedDir': [
+                    dir: true,
+                    count: 0
+                ],
                 'file.txt': [
                     removed: true
                 ]
