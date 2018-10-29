@@ -53,7 +53,7 @@ class QueryFilesHandler implements QueryHandler<Map, QueryFiles> {
                     .forEach { files[it.name] = fileProperties(it)}
 
                 clientDirTree.files?.keySet()
-                    .findAll { !userDir.exists(it) }
+                    .findAll {!userDir.exists("${path}/${it}")}
                     .forEach { files[it] = [removed: true] }
                 result.files = files
             }
@@ -62,18 +62,22 @@ class QueryFilesHandler implements QueryHandler<Map, QueryFiles> {
         }
         
         Map fileProperties(UserFile file) {
+            def result
             if (file.directory) {
                 def count = userDir.list(file).size()
                 if (clientDirTree.files)
-                    return new Context(
+                    result = new Context(
                             userDir: userDir, 
                             path: userDir.toUserDirPath(file), 
                             clientDirTree: clientDirTree.files[file.name]
                         ).execute()
                 else 
-                    return [dir: true, count: count]
+                    result = [dir: true, count: count]
             } else
-                return fileMap(file)
+                result = fileMap(file)
+            if (!clientDirTree?.files?.get(file.name))
+                result.added = true
+            return result
         }
 
         Map fileMap(UserFile file) {

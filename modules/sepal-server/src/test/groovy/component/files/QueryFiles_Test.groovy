@@ -7,7 +7,7 @@ class QueryFiles_Test extends AbstractFilesTest {
     def 'Given empty home directory, when querying root, no files are returned'() {
         when:
         def result = query('/')
-        
+
         then:
         result == [dir: true, count: 0, files: [:]]
     }
@@ -19,11 +19,12 @@ class QueryFiles_Test extends AbstractFilesTest {
 
         then:
         result == [
-            dir: true, 
-            count: 1, 
+            dir: true,
+            count: 1,
             files: [
                 'file.txt': [
-                    size: file.size, 
+                    added: true,
+                    size: file.size,
                     lastModified: lastModified(file)
                 ]
             ]
@@ -33,16 +34,17 @@ class QueryFiles_Test extends AbstractFilesTest {
     def 'Given an empty dir at the root, when querying root, dir is returned'() {
         addDir('dir')
 
-        when: 
+        when:
         def result = query('/')
 
         then:
         result == [
-            dir: true, 
-            count: 1, 
+            dir: true,
+            count: 1,
             files: [
                 'dir': [
-                    dir: true, 
+                    added: true,
+                    dir: true,
                     count: 0
                 ]
             ]
@@ -54,8 +56,8 @@ class QueryFiles_Test extends AbstractFilesTest {
 
         when:
         def result = query('/', [
-            dir: true, 
-            count: 1, 
+            dir: true,
+            count: 1,
             files: [
                 'file.txt': [
                     lastModified: lastModified(file)
@@ -70,10 +72,10 @@ class QueryFiles_Test extends AbstractFilesTest {
     def 'Given a modified file, when querying root with last-modified for file, file is returned'() {
         def file = addFile('file.txt')
 
-        when: 
+        when:
         def result = query('/', [
-            dir: true, 
-            count: 1, 
+            dir: true,
+            count: 1,
             files: [
                 'file.txt': [
                     lastModified: longTimeAgo
@@ -87,7 +89,7 @@ class QueryFiles_Test extends AbstractFilesTest {
             count: 1,
             files: [
                 'file.txt': [
-                    size: file.size, 
+                    size: file.size,
                     lastModified: lastModified(file)
                 ]
             ]
@@ -95,7 +97,7 @@ class QueryFiles_Test extends AbstractFilesTest {
     }
 
     def 'Given no files, when querying root with last-modified for a non-existing file, file is returned with removed: true'() {
-        when: 
+        when:
         def result = query('/', [
             dir: true,
             count: 1,
@@ -138,6 +140,7 @@ class QueryFiles_Test extends AbstractFilesTest {
             count: 1,
             files: [
                 'nestedDir': [
+                    added: true,
                     dir: true,
                     count: 0
                 ],
@@ -160,7 +163,8 @@ class QueryFiles_Test extends AbstractFilesTest {
             count: 1,
             files: [
                 'file.txt': [
-                    size: file.size, 
+                    added: true,
+                    size: file.size,
                     lastModified: lastModified(file)
                 ]
             ]
@@ -179,6 +183,7 @@ class QueryFiles_Test extends AbstractFilesTest {
             count: 1,
             files: [
                 'child-dir': [
+                    added: true,
                     dir: true,
                     count: 0
                 ]
@@ -198,6 +203,7 @@ class QueryFiles_Test extends AbstractFilesTest {
             count: 1,
             files: [
                 'dir': [
+                    added: true,
                     dir: true,
                     count: 1
                 ]
@@ -208,7 +214,7 @@ class QueryFiles_Test extends AbstractFilesTest {
     def 'Given a dir, when querying root with incorrect count for dir, dir is returned'() {
         addDir('dir')
 
-        when: 
+        when:
         def result = query('/', [
             dir: true,
             count: 0,
@@ -228,7 +234,7 @@ class QueryFiles_Test extends AbstractFilesTest {
                 'dir': [
                     dir: true,
                     count: 0
-                ]                
+                ]
             ]
         ]
     }
@@ -236,7 +242,7 @@ class QueryFiles_Test extends AbstractFilesTest {
     def 'Given a dir, when querying root believing dir is a file, dir is returned'() {
         addDir('dir')
 
-        when: 
+        when:
         def result = query('/', [
             dir: true,
             count: 1,
@@ -256,7 +262,7 @@ class QueryFiles_Test extends AbstractFilesTest {
                 'dir': [
                     dir: true,
                     count: 0
-                ]                
+                ]
             ]
         ]
     }
@@ -264,7 +270,7 @@ class QueryFiles_Test extends AbstractFilesTest {
     def 'Given a dir, when querying root with up-to-date count for dir, dir is not returned'() {
         addDir('dir')
 
-        when: 
+        when:
         def result = query('/', [
             dir: true,
             count: 0,
@@ -300,10 +306,53 @@ class QueryFiles_Test extends AbstractFilesTest {
 
         then:
         result == [
-            size: file.size, 
+            size: file.size,
             lastModified: lastModified(file)
         ]
     }
+
+    def 'Given an added dir in a nested directory, dir is returned'() {
+        addDir('dir1/dir1')
+        addDir('dir1/dir2')
+
+        when:
+        def result = query('/', [
+            dir: true,
+            count: 1,
+            files: [
+                'dir1': [
+                    dir: true,
+                    count: 1,
+                    files: [
+                        'dir2': [
+                            dir: true,
+                            count: 0
+                        ]
+                    ]
+                ]
+            ]
+        ])
+
+        then:
+        result == [
+            dir: true,
+            count: 1,
+            files: [
+                'dir1': [
+                    dir: true,
+                    count: 2,
+                    files: [
+                        'dir1': [
+                            added: true,
+                            dir: true,
+                            count: 0
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    }
+
 
     private String longTimeAgo = '2000-01-01 00:00:00'
 
