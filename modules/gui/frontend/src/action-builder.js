@@ -32,6 +32,11 @@ const actionBuilder = (type, props) => {
     let prefix = ''
 
     return {
+        forEach(paths, callback) {
+            _.forEach(paths, (path, key) => callback(this, path, key))
+            return this
+        },
+
         within(_prefix) {
             prefix = _prefix
             return this
