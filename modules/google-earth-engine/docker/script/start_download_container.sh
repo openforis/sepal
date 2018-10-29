@@ -2,7 +2,7 @@
 
 account=$1
 privateKeyPath=$2
-downloadDir=$3
+homeDir=$3
 worker_user=$4
 sepal_host=$5
 sepal_password=$6
@@ -26,7 +26,7 @@ exec su - ${worker_user} -c "python -s /src/task_server.py \
  --gee-key-path ${privateKeyPath} \
  --sepal-host ${sepal_host} \
  --sepal-username sepalAdmin \
- --sepal-password '${sepal_password}' \
+ --sepal-password \"${sepal_password}\" \
  --username ${worker_user} \
- --download-dir ${downloadDir} \
+ --home-dir ${homeDir} \
  "

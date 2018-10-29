@@ -102,7 +102,7 @@ class Browse extends React.Component {
     UNSAFE_componentWillMount() {
         this.loadPath('/')
         setTimeout(() => {
-            this.updateTree(this.props.tree)
+            // this.updateTree(this.props.tree)
         }, 1000)
     }
 
@@ -133,7 +133,7 @@ class Browse extends React.Component {
     }
 
     isDirectory(directory) {
-        return directory.dir
+        return !!directory.dir
     }
 
     isDirectoryUnpopulated(directory) {
@@ -185,6 +185,7 @@ class Browse extends React.Component {
     }
 
     selectItem(path, isDirectory) {
+        console.log({path, isDirectory})
         path && actionBuilder('SELECT_ITEM', {path})
             .set(['files.selected', dotSafe(pathSections(path))], isDirectory)
             .dispatch()

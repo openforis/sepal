@@ -38,8 +38,8 @@ abstract class AbstractFilesTest extends Specification {
         new File(homeDir, username)
     }
 
-    final Map query(String path, Map filter = [:], String username = testUsername) {
-        component.submit(new QueryFiles(path: path, filter: filter, username: username))
+    final Map query(String path, Map clientDirTree = [:], String username = testUsername) {
+        component.submit(new QueryFiles(path: path, clientDirTree: clientDirTree, username: username))
     }
 
     final UserFile addFile(String relativePath, String username = testUsername) {

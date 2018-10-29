@@ -24,13 +24,14 @@ app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 thread_local = local()
 username = None
+home_dir = None
 download_dir = None
 
 sepal_host = None
 sepal_username = None
 sepal_password = None
 
-earthengine_credentials_file = os.path.expanduser('~/.config/earthengine/credentials')
+earthengine_credentials_file = None
 
 Context = namedtuple('Context', 'credentials, download_dir, sepal_api')
 
@@ -105,10 +106,12 @@ def cancel():
 
 
 def init(server_args):
-    global username, download_dir, sepal_host, sepal_username, sepal_password
+    global username, download_dir, sepal_host, sepal_username, sepal_password, earthengine_credentials_file
     gee.init_service_account_credentials(server_args)
     username = server_args['username']
-    download_dir = server_args['download_dir']
+    home_dir = server_args['home_dir']
+    earthengine_credentials_file = os.path.expanduser(home_dir + '/credentials')
+    download_dir = home_dir + "/download"
     sepal_host = server_args['sepal_host']
     sepal_username = server_args['sepal_username']
     sepal_password = server_args['sepal_password']
@@ -127,7 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('--sepal-username', required=True, help='Username to use when accessing sepal services')
     parser.add_argument('--sepal-password', required=True, help='Password to use when accessing sepal services')
     parser.add_argument('--username', required=True, help='Username of user executing tasks')
-    parser.add_argument('--download-dir', required=True, help='Directory where downloaded data should be stored')
+    parser.add_argument('--home-dir', required=True, help='User home directory.')
     args, unknown = parser.parse_known_args()
     init(vars(args))
     app.register_blueprint(http)

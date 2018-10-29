@@ -1,5 +1,6 @@
 import requests
 import urllib3
+from sepal_exception import SepalException
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -21,4 +22,6 @@ class SepalApi:
 
     def get_recipe(self, recipe_id):
         response = self._get('/processing-recipes/{}'.format(recipe_id))
+        if response.status_code != 200:
+            raise SepalException(code='gee.error.failedToLoadRecipe', message='Failed to load recipe.')
         return response.json()

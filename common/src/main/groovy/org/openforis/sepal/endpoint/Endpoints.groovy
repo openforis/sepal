@@ -40,6 +40,13 @@ final class Endpoints extends AbstractMvcFilter {
                 response.contentType = 'application/json'
             }
 
+            error(MalformedRequest) {
+                response?.status = 400
+                response?.setContentType('application/json')
+                LOG.warn("Malformed request: $requestContext.description. Message: ${it.message}")
+                send(toJson([message: it.message]))
+            }
+
             error(InvalidRequest) {
                 response?.status = 400
                 response?.setContentType('application/json')
