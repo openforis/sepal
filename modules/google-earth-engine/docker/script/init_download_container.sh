@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export worker_user=$1
-export downloadDir=/home/${worker_user}/downloads
+export homeDir=/home/${worker_user}
 export account=${EE_ACCOUNT_SEPAL_ENV}
 privateKey=${EE_PRIVATE_KEY_SEPAL_ENV//-----LINE BREAK-----/\\n}
 export privateKeyPath=/etc/ssh/google-earth-engine/key.pem
