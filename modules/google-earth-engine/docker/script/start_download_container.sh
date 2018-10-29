@@ -26,7 +26,7 @@ exec su - ${worker_user} -c "python -s /src/task_server.py \
  --gee-key-path ${privateKeyPath} \
  --sepal-host ${sepal_host} \
  --sepal-username sepalAdmin \
- --sepal-password ${sepal_password} \
+ --sepal-password '${sepal_password}' \
  --username ${worker_user} \
  --download-dir ${downloadDir} \
  "
