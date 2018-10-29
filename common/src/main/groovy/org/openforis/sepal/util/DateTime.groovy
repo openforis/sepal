@@ -30,6 +30,10 @@ class DateTime {
         new SimpleDateFormat(DATE_ONLY_DATE_FORMAT).parse(dateString)
     }
 
+    static Date parseDateTimeString(String dateTimeString) {
+        new SimpleDateFormat(DATE_TIME_DATE_FORMAT).parse(dateTimeString)
+    }
+
     static Date parseEarthExplorerDateString(String dateString) {
         new SimpleDateFormat(EARTH_EXPLORER_DATE_FORMAT).parse(dateString)
     }

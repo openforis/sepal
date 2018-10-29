@@ -24,7 +24,7 @@ class UserTestMain extends Main {
             roles: [Roles.ADMIN] as Set,
             systemUser: true
         ))
-        userDataGateway.changePassword('sepalAdmin', 'password')
+        userDataGateway.changePassword('sepalAdmin', 'the admin password')
         userDataGateway.createdUser(new User(
             id: 2,
             name: 'Admin',

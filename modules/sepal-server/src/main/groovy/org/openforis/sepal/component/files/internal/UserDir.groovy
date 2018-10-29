@@ -14,6 +14,19 @@ class UserDir {
         noArchiveFile = new File(userDir, '.no-archive')
     }
 
+    UserFile toUserFile(path) {
+        return UserFile.fromFile(new File(userDir, path))
+    }
+
+    List<UserFile> list(UserFile dir) {
+        if (!dir.directory)
+            throw new InvalidPath("Path does not point to a directory. userDir: $userDir, dir: $dir")
+        def noArchivePaths = getNoArchivePaths()
+        return new File(dir.path).listFiles().toList().sort().collect {
+            UserFile.fromFile(it, isArchivable(it, noArchivePaths))
+        }
+    }
+
     List<UserFile> list(String path) {
         def dir = toUserDirFile(path)
         if (!dir.isDirectory())
@@ -24,7 +37,11 @@ class UserDir {
         }
     }
 
-    private String toUserDirPath(File file) {
+    String toUserDirPath(UserFile file) {
+        '/' + userDir.toURI().relativize(new File(file.path).toURI()).path
+    }
+
+    String toUserDirPath(File file) {
         '/' + userDir.toURI().relativize(file.toURI()).path
     }
 
@@ -74,6 +91,12 @@ class UserDir {
         lines.add(path)
         lines.sort()
         noArchiveFile.setText(lines.join('\n'), 'UTF-8')
+    }
+
+    boolean exists(String path) {
+        def file = toUserDirFile(path)
+        assertInUserDir(file)
+        return file.exists()
     }
 
     void removeFromNoArchiveFile(String path) {

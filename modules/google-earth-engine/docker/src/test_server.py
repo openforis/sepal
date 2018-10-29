@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument('--sepal-username', required=True, help='Username to use when accessing sepal services')
     parser.add_argument('--sepal-password', required=True, help='Password to use when accessing sepal services')
     parser.add_argument('--username', required=True, help='Username of user executing tasks')
-    parser.add_argument('--download-dir', required=True, help='Directory where downloaded data should be stored')
+    parser.add_argument('--home-dir', required=True, help='User home directory.')
     args, unknown = parser.parse_known_args()
     init(vars(args))
     logging.getLogger("werkzeug").setLevel(logging.ERROR)

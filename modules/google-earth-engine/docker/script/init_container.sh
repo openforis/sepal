@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 worker_user=$1
-downloadDir=/home/${worker_user}/downloads
+homeDir=/home/${worker_user}
 account=${EE_ACCOUNT_SEPAL_ENV}
 privateKey=${EE_PRIVATE_KEY_SEPAL_ENV//-----LINE BREAK-----/\\n}
 sepalHost=${SEPAL_HOST_SEPAL_ENV}
