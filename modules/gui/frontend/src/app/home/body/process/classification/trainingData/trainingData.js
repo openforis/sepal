@@ -1,14 +1,14 @@
-import {Field, Input, form} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
-import {Subject} from 'rxjs'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
-import {map, takeUntil} from 'rxjs/operators'
-import {msg} from 'translate'
-import ComboBox from 'widget/comboBox'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {Subject} from 'rxjs'
+import {map, takeUntil} from 'rxjs/operators'
+import {msg, Msg} from 'translate'
+import ComboBox from 'widget/comboBox'
+import {Field, form, Input} from 'widget/form'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
+import {RecipeActions, recipePath, RecipeState} from '../classificationRecipe'
 import styles from './trainingData.module.css'
 
 const fields = {
@@ -52,10 +52,10 @@ class TrainingData extends React.Component {
                     return (response.columns || [])
                         .filter(column => column.type !== 'LOCATION')
                 }),
-                map( columns => columns.map(({name}) => ({value: name, label: name}))),
+                map(columns => columns.map(({name}) => ({value: name, label: name}))),
                 map(columns => {
                     const defaultColumn = columns.length === 1 ? columns[0] : columns.find(column => column.value === 'class')
-                    if(defaultColumn)
+                    if (defaultColumn)
                         fusionTableColumn.set(defaultColumn.value)
                     return this.recipeActions.setFusionTableColumns(columns)
                 }),
@@ -121,6 +121,10 @@ class TrainingData extends React.Component {
                     options={columns || []}
                     errorMessage
                 />
+
+                <p>
+                    <a href='/ceo' target='_blank'><Msg id='process.classification.panel.trainingData.form.openCeo'/></a>
+                </p>
             </React.Fragment>
         )
     }
