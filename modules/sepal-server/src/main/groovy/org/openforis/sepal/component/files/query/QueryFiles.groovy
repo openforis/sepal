@@ -95,7 +95,7 @@ class QueryFilesHandler implements QueryHandler<Map, QueryFiles> {
                 return true
             if (file.directory) {
                 def count = userDir.list(file).size()
-                return count != fileDirTree.count || !fileDirTree.dir // Include if files in dir doesn't match or it isn't a dir in the clientDirTree
+                return fileDirTree.files || count != fileDirTree.count || !fileDirTree.dir // Include if files in dir doesn't match or it isn't a dir in the clientDirTree
             } else {
                 def previouslyModified = fileDirTree.lastModified
                 def lastModified = DateTime.toDateTimeString(new Date(file.lastModified))

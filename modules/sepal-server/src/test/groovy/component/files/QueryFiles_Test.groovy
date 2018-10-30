@@ -64,7 +64,7 @@ class QueryFiles_Test extends AbstractFilesTest {
         ])
 
         then:
-        result ==  [dir: true, count: 1, files: [:]]
+        result == [dir: true, count: 1, files: [:]]
     }
 
     def 'Given a modified file, when querying root with last-modified for file, file is returned'() {
@@ -341,6 +341,54 @@ class QueryFiles_Test extends AbstractFilesTest {
                             added: true,
                             dir: true,
                             count: 0
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    }
+
+    def 'Additions are caught in deeper directory structures'() {
+        addDir('dir1/dir2/dir3')
+
+        when:
+        def result = query('/', [
+            dir: true,
+            count: 1,
+            files: [
+                'dir1': [
+                    dir: true,
+                    count: 1,
+                    files: [
+                        'dir2': [
+                            dir: true,
+                            count: 0,
+                            files: [:]
+                        ]
+                    ]
+                ]
+            ]
+        ])
+
+        then:
+        result == [
+            dir: true,
+            count: 1,
+            files: [
+                'dir1': [
+                    dir: true,
+                    count: 1,
+                    files: [
+                        'dir2': [
+                            dir: true,
+                            count: 1,
+                            files: [
+                                'dir3': [
+                                    dir: true,
+                                    count: 0,
+                                    added: true
+                                ]
+                            ]
                         ]
                     ]
                 ]
