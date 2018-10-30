@@ -58,12 +58,12 @@ class Composite extends React.Component {
                         value: 'SR',
                         label: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.label'),
                         tooltip: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.tooltip'),
-                        disabled: source !== 'LANDSAT'
+                        neverSelected: source !== 'LANDSAT'
                     }, {
                         value: 'BRDF',
                         label: msg('process.mosaic.panel.composite.form.corrections.brdf.label'),
                         tooltip: msg('process.mosaic.panel.composite.form.corrections.brdf.tooltip'),
-                        disabled: source !== 'LANDSAT'
+                        neverSelected: source !== 'LANDSAT'
                     }]}
                 />
                 <div className={styles.filters}>

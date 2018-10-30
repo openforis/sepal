@@ -503,7 +503,8 @@
               "placeholder.noFusionTable": "Enter a Fusion Table ID first",
               "placeholder.loaded": "Select a column...",
               "required": "A column must be selected"
-            }
+            },
+            "openCeo": "Open training data collection tool"
           }
         },
         "retrieve": {
