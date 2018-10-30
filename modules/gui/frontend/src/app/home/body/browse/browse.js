@@ -120,13 +120,13 @@ class Browse extends React.Component {
     }
     
     updateTree(current) {
-        const pruneRemovedNodes = (actionBuilder, parentPath) => {
-            _.forEach(this.getFiles(parentPath), (file, name) => {
-                const path = this.childPath(parentPath, name)
+        const pruneRemovedNodes = (actionBuilder, path) => {
+            _.forEach(this.getFiles(path), (file, name) => {
+                const childPath = this.childPath(path, name)
                 if (file.removed) {
-                    actionBuilder.del([TREE, dotSafe(treePath(path))])
+                    actionBuilder.del([TREE, dotSafe(treePath(childPath))])
                 } else if (this.isDirectory(file)) {
-                    pruneRemovedNodes(actionBuilder, path)
+                    pruneRemovedNodes(actionBuilder, childPath)
                 }
             })
             return actionBuilder
@@ -251,13 +251,13 @@ class Browse extends React.Component {
         _.transform(this.getFiles(path), (acc, file, name) => {
             const childPath = this.childPath(path, name)
             if (file.selected) {
-                if (file.dir) {
+                if (this.isDirectory(file)) {
                     acc.directories.push(childPath)
                 } else {
                     acc.files.push(childPath)
                 }
             } else {
-                if (file.dir) {
+                if (this.isDirectory(file)) {
                     this.selectedItems(childPath, acc)
                 }
             }
@@ -333,21 +333,26 @@ class Browse extends React.Component {
         )
     }
 
-    renderFileInfo(fullPath, file) {
-        if (this.isDirectory(file)) {
-            return (
-                <span className={styles.fileInfo}>
-                    ({msg('browse.info.directory', {itemCount: file.count})}
-                )</span>
-            )
-        } else {
-            return file.size
-                ? (
-                    <span className={styles.fileInfo}>
-                        ({msg('browse.info.file', {size: file.size})})
-                    </span>
-                ) : null
-        }
+    renderFileInfo(file) {
+        return (
+            <span className={styles.fileInfo}>
+                ({msg('browse.info.file', {size: file.size})})
+            </span>
+        )
+    }
+
+    renderDirectoryInfo(dir) {
+        return (
+            <span className={styles.fileInfo}>
+                ({msg('browse.info.directory', {itemCount: dir.count})})
+            </span>
+        )
+    }
+
+    renderNodeInfo(file) {
+        return this.isDirectory(file)
+            ? this.renderDirectoryInfo(file)
+            : this.renderFileInfo(file)
     }
 
     renderIcon(path, fileName, file) {
@@ -409,7 +414,6 @@ class Browse extends React.Component {
                     const isAdded = file.added
                     const isRemoving = file.removing
                     const isRemoved = file.removed || this.isRemoved(fullPath) || this.isAncestorRemoved(fullPath)
-                    // const isDirectory = this.isDirectory(file)
                     return (
                         <li key={fileName}>
                             <div className={[
@@ -424,7 +428,7 @@ class Browse extends React.Component {
                             onClick={() => this.toggleSelected(fullPath)}>
                                 {this.renderIcon(fullPath, fileName, file)}
                                 <span className={styles.fileName}>{fileName}</span>
-                                {this.renderFileInfo(fullPath, file)}
+                                {this.renderNodeInfo(file)}
                             </div>
                             {this.renderList(fullPath, file, depth + 1)}
                         </li>
