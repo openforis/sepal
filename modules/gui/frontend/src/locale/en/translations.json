@@ -100,7 +100,11 @@
     "controls.clearSelection.tooltip": "Clear selection",
     "controls.remove.tooltip": "Remove selected items",
     "controls.download.tooltip": "Download selected item",
-    "selected": "{files} {files, plural, one {file} other {files}} and {directories} {directories, plural, one {directory} other {directories}} selected"
+    "selected": "{files} {files, plural, one {file} other {files}} and {directories} {directories, plural, one {directory} other {directories}} selected",
+    "info": {
+      "directory": "{itemCount} {itemCount, plural, one {item} other {items}}",
+      "file":  "{size} {size, plural, one {byte} other {bytes}}"
+    }
   },
   "body": {
     "starting-sepal": "Starting SEPAL...",

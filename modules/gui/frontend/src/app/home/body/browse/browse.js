@@ -15,23 +15,13 @@ import flexy from 'flexy.module.css'
 import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
 
+const TREE = 'files.tree'
+
 const tree = () =>
-    select('files.tree') || {}
-
-const opened = () =>
-    select('files.opened') || {}
-
-const selected = () =>
-    select('files.selected') || {}
-
-const removed = () =>
-    select('files.removed') || {}
+    select(TREE) || {}
 
 const mapStateToProps = () => ({
-    tree: tree(),
-    opened: opened(),
-    selected: selected(),
-    removed: removed()
+    tree: tree()
 })
 
 const loadPath$ = path =>
@@ -39,24 +29,15 @@ const loadPath$ = path =>
         catchError(() => {
             Notifications.error('files.loading').dispatch()
             return Observable.of([])
-        }),
-        map(tree => actionBuilder('LOAD_PATH', {path})
-            .set(['files.tree', dotSafe(treePath(path))], tree)
-            .set(['files.opened', dotSafe(path)], true)
-            .dispatch()
-        )
+        })
     )
 
-const removePath$ = path =>
-    api.files.removePath$(path).pipe(
+const removePaths$ = paths =>
+    api.files.removePaths$(paths).pipe(
         catchError(() => {
             Notifications.error('files.removing').dispatch()
             return Observable.of([])
-        }),
-        map(() => actionBuilder('REMOVE_PATH', {path})
-            .del(['files.tree', dotSafe(treePath(path))])
-            .dispatch()
-        )
+        })
     )
 
 const updateTree$ = current =>
@@ -64,35 +45,13 @@ const updateTree$ = current =>
         catchError(() => {
             Notifications.error('files.loading').dispatch()
             return Observable.of([])
-        }),
-        map(tree => actionBuilder('UPDATE_TREE')
-            .merge('files.tree', tree)
-            .dispatch()
-        ),
-        // delay(1000),
-        // map(() => actionBuilder('CLEANUP_TREE')
-        //     .withState('files.tree', (tree, stateBuilder) => {
-        //         return stateBuilder.set('files.tree', cleanupTree(tree))
-        //     })
-        //     .dispatch()
-        // )
+        })
     )
-
-const cleanupTree = tree => {
-    _.forEach(tree.files, (file, name) => {
-        if (file.removed) {
-            delete tree.files[name]
-        } else if (file.dir) {
-            cleanupTree(file)
-        }
-    })
-    return tree
-}
 
 const pathSections = path =>
     path.split('/').splice(1)
 
-const treePath = path =>
+const treePath = (path = '/') =>
     path !== '/'
         ? _.reduce(pathSections(path),
             (treePath, pathElement) => treePath.concat(['files', pathElement]), []
@@ -101,34 +60,87 @@ const treePath = path =>
 class Browse extends React.Component {
     UNSAFE_componentWillMount() {
         this.loadPath('/')
-        setTimeout(() => {
-            // this.updateTree(this.props.tree)
-        }, 1000)
+        setInterval(() => {
+            this.updateTree(this.props.tree)
+        }, 2000)
+    }
+
+    childPath(path = '/', name = '/') {
+        return Path.join(path, name)
+    }
+
+    parentPath(path = '/') {
+        return Path.dirname(path)
+    }
+
+    getNode(path) {
+        return _.get(this.props.tree, treePath(path), this.props.tree)
+    }
+
+    getFiles(path) {
+        return this.getNode(path).files
     }
 
     loadPath(path) {
-        this.props.stream('REQUEST_LOAD_FILES', loadPath$(path))
+        this.props.stream('REQUEST_LOAD_FILES',
+            loadPath$(path).pipe(
+                map(tree => actionBuilder('LOAD_PATH', {path})
+                    .set([TREE, dotSafe(treePath(path))], _.assign(tree, {opened: true}))
+                    .dispatch()
+                )
+            )
+        )
     }
 
-    removePath(path) {
-        actionBuilder('REMOVE_PATH_PENDING', {path})
-            .set(['files.removed', dotSafe(pathSections(path))], true)
+    removePaths(paths) {
+        actionBuilder('REMOVE_PATH_PENDING', {paths})
+            .forEach(paths, (actionBuilder, path) =>
+                actionBuilder.set([TREE, dotSafe(treePath(path)), 'removing'], true)
+            )
             .dispatch()
-        this.props.stream('REQUEST_REMOVE_PATH',
-            removePath$(path),
-            () => actionBuilder('REMOVE_PATH_COMPLETE', {path})
-                .del(['files.removed', dotSafe(pathSections(path))])
-                .dispatch()
+
+        this.props.stream('REQUEST_REMOVE_PATHS',
+            removePaths$(paths).pipe(
+                map(() => actionBuilder('REMOVE_PATHS', {paths})
+                    .forEach(paths, (actionBuilder, path) => {
+                        actionBuilder.del([TREE, dotSafe(treePath(path)), 'removing'])
+                        actionBuilder.set([TREE, dotSafe(treePath(path)), 'removed'], true)
+                    })
+                    .dispatch()
+                ),
+                delay(1000),
+                map(() => actionBuilder('REMOVE_PATHS', {paths})
+                    .forEach(paths, (actionBuilder, path) =>
+                        actionBuilder.del([TREE, dotSafe(treePath(path))])
+                    )
+                    .dispatch()
+                )
+            )
         )
     }
     
     updateTree(current) {
-        this.props.stream('REQUEST_UPDATE_TREE', updateTree$(current),
-            // () => actionBuilder('CLEANUP_TREE')
-            //     .withState('files.tree', (tree, immutableState) => {
-            //         return immutableState.set('files.tree', cleanupTree(tree))
-            //     })
-            //     .dispatch()
+        const pruneRemovedNodes = (actionBuilder, parentPath) => {
+            _.forEach(this.getFiles(parentPath), (file, name) => {
+                const path = this.childPath(parentPath, name)
+                if (file.removed) {
+                    actionBuilder.del([TREE, dotSafe(treePath(path))])
+                } else if (this.isDirectory(file)) {
+                    pruneRemovedNodes(actionBuilder, path)
+                }
+            })
+            return actionBuilder
+        }
+        this.props.stream('REQUEST_UPDATE_TREE',
+            updateTree$(current).pipe(
+                map(tree => {
+                    actionBuilder('UPDATE_TREE')
+                        .merge(TREE, tree)
+                        .dispatch()
+                }),
+                delay(1000),
+                map(() => pruneRemovedNodes(actionBuilder('CLEANUP_TREE')).dispatch())
+            )
         )
     }
 
@@ -152,102 +164,126 @@ class Browse extends React.Component {
     }
 
     isDirectoryExpanded(path) {
-        return !!this.props.opened[path]
+        return !!this.getNode(path).opened
     }
 
     expandDirectory(path) {
         actionBuilder('EXPAND_DIRECTORY')
-            .set(['files.opened', dotSafe(path)], true)
+            .set([TREE, dotSafe(treePath(path)), 'opened'], true)
             .dispatch()
     }
 
     collapseDirectory(path) {
-        actionBuilder('COLLAPSE_DIRECTORY')
-            .del(['files.opened', dotSafe(path)])
+        const removeAddedFlag = (actionBuilder, parentPath) => {
+            _.chain(this.getFiles(parentPath))
+                .pickBy(file => file.added)
+                .forEach((file, name) =>
+                    actionBuilder.del([TREE, dotSafe(treePath(this.childPath(parentPath, name))), 'added'])
+                )
+                .value()
+            return actionBuilder
+        }
+        removeAddedFlag(actionBuilder('COLLAPSE_DIRECTORY'), path)
+            .del([TREE, dotSafe(treePath(path)), 'opened'])
             .dispatch()
     }
 
-    toggleSelected(path, isDirectory) {
+    toggleSelected(path) {
         this.isSelected(path)
             ? this.deselectItem(path)
-            : this.selectItem(path, isDirectory)
+            : this.selectItem(path)
     }
 
     isSelected(path) {
-        return _.isBoolean(_.get(this.props.selected, pathSections(path)))
+        return this.getNode(path).selected
     }
 
     isAncestorSelected(path) {
-        const parentPath = Path.dirname(path)
+        const parentPath = this.parentPath(path)
         return parentPath !== path
             ? this.isSelected(parentPath) || this.isAncestorSelected(parentPath)
             : false
     }
 
-    selectItem(path, isDirectory) {
-        console.log({path, isDirectory})
-        path && actionBuilder('SELECT_ITEM', {path})
-            .set(['files.selected', dotSafe(pathSections(path))], isDirectory)
+    deselectAncestors(actionBuilder, path) {
+        const parentPath = this.parentPath(path)
+        if (parentPath !== path) {
+            actionBuilder.del([TREE, dotSafe(treePath(parentPath)), 'selected'])
+            this.deselectAncestors(actionBuilder, parentPath)
+        }
+        return actionBuilder
+    }
+
+    deselectDescendants(actionBuilder, path) {
+        _.forEach(this.getFiles(path), (file, name) => {
+            const childPath = this.childPath(path, name)
+            actionBuilder.del([TREE, dotSafe(treePath(childPath)), 'selected'])
+            if (this.isDirectory(file)) {
+                this.deselectDescendants(actionBuilder, childPath)
+            }
+        })
+        return actionBuilder
+    }
+
+    selectItem(path) {
+        const deselectHierarchy = (actionBuilder, path) => {
+            this.deselectAncestors(actionBuilder, path)
+            this.deselectDescendants(actionBuilder, path)
+            return actionBuilder
+        }
+        deselectHierarchy(actionBuilder('SELECT_ITEM', {path}), path)
+            .set([TREE, dotSafe(treePath(path)), 'selected'], true)
             .dispatch()
     }
 
     deselectItem(path) {
-        path && actionBuilder('DESELECT_ITEM', {path})
-            .del(['files.selected', dotSafe(pathSections(path))])
+        actionBuilder('DESELECT_ITEM', {path})
+            .del([TREE, dotSafe(treePath(path)), 'selected'])
             .dispatch()
     }
 
     clearSelection() {
-        actionBuilder('CLEAR_SELECTED_ITEMS')
-            .del('files.selected')
+        this.deselectDescendants(actionBuilder('CLEAR_SELECTION'))
             .dispatch()
     }
 
-    selectedItems() {
-        const selectedItems = (selected, path) => {
-            return Object.keys(selected).reduce((acc, key) => {
-                const value = selected[key]
-                const fullPath = Path.join(path, key)
-                if (typeof(value) === 'object') {
-                    const {files, directories} = selectedItems(value, fullPath)
-                    return {
-                        files: acc.files.concat(files),
-                        directories: acc.directories.concat(directories)
-                    }
+    selectedItems(path = '/', acc = {files: [], directories: []}) {
+        _.transform(this.getFiles(path), (acc, file, name) => {
+            const childPath = this.childPath(path, name)
+            if (file.selected) {
+                if (file.dir) {
+                    acc.directories.push(childPath)
                 } else {
-                    value
-                        ? acc.directories.push(fullPath)
-                        : acc.files.push(fullPath)
-                    return acc
+                    acc.files.push(childPath)
                 }
-            }, {
-                files: [],
-                directories: []
-            })
-        }
-        return selectedItems(this.props.selected, '/')
+            } else {
+                if (file.dir) {
+                    this.selectedItems(childPath, acc)
+                }
+            }
+        }, acc)
+        return acc
     }
 
     removeSelected() {
         const {files, directories} = this.selectedItems()
-        files.forEach(file => this.removePath(file))
-        directories.forEach(directory => this.removePath(directory))
+        this.removePaths(_.concat(directories, files))
         this.clearSelection()
     }
 
     isRemoved(path) {
-        return _.get(this.props.removed, pathSections(path)) === true
+        return this.getNode(path).removed
     }
 
     isAncestorRemoved(path) {
-        const parentPath = Path.dirname(path)
+        const parentPath = this.parentPath(path)
         return parentPath !== path
             ? this.isRemoved(parentPath) || this.isAncestorRemoved(parentPath)
             : false
     }
 
     downloadSelected() {
-        // TO BE DONE
+        // TODO
     }
 
     countSelectedItems() {
@@ -299,11 +335,18 @@ class Browse extends React.Component {
 
     renderFileInfo(fullPath, file) {
         if (this.isDirectory(file)) {
-            return <span className={styles.fileInfo}>({file.count} items)</span>
+            return (
+                <span className={styles.fileInfo}>
+                    ({msg('browse.info.directory', {itemCount: file.count})}
+                )</span>
+            )
         } else {
             return file.size
-                ? <span className={styles.fileInfo}>({file.size} bytes)</span>
-                : null
+                ? (
+                    <span className={styles.fileInfo}>
+                        ({msg('browse.info.file', {size: file.size})})
+                    </span>
+                ) : null
         }
     }
 
@@ -358,22 +401,27 @@ class Browse extends React.Component {
         return files ?
             _.chain(files)
                 .pickBy(file => file)
-                .map((file, fileName) => {
-                    const fullPath = Path.join(path, file ? fileName : null)
+                .toPairs()
+                .sortBy(0)
+                .map(([fileName, file]) => {
+                    const fullPath = this.childPath(path, file ? fileName : null)
                     const isSelected = this.isSelected(fullPath) || this.isAncestorSelected(fullPath)
+                    const isAdded = file.added
+                    const isRemoving = file.removing
                     const isRemoved = file.removed || this.isRemoved(fullPath) || this.isAncestorRemoved(fullPath)
-                    const isDirectory = this.isDirectory(file)
+                    // const isDirectory = this.isDirectory(file)
                     return (
                         <li key={fileName}>
-                            <div
-                                className={[
-                                    lookStyles.look,
-                                    isSelected ? lookStyles.highlight : lookStyles.default,
-                                    styles.item,
-                                    isRemoved ? styles.removed : null
-                                ].join(' ')}
-                                style={{'--depth': depth}}
-                                onClick={() => this.toggleSelected(fullPath, isDirectory)}>
+                            <div className={[
+                                lookStyles.look,
+                                isSelected ? lookStyles.highlight : lookStyles.default,
+                                styles.item,
+                                isAdded ? styles.added : null,
+                                isRemoving ? styles.removing : null,
+                                isRemoved ? styles.removed : null
+                            ].join(' ')}
+                            style={{'--depth': depth}}
+                            onClick={() => this.toggleSelected(fullPath)}>
                                 {this.renderIcon(fullPath, fileName, file)}
                                 <span className={styles.fileName}>{fileName}</span>
                                 {this.renderFileInfo(fullPath, file)}
@@ -386,7 +434,6 @@ class Browse extends React.Component {
     }
 
     render() {
-        console.log('render', this.props.tree)
         return (
             <div className={[styles.browse, flexy.container].join(' ')}>
                 {this.renderToolbar()}

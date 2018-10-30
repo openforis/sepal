@@ -62,12 +62,31 @@
     transition: 100ms ease-in-out;
 }
 
-.fileList li div.removed {
-    color: red;
+.fileList li div.added {
+    animation: added 1s forwards;
 }
 
-.fileList li div.removed span {
-    /* text-decoration: line-through; */
+@keyframes added {
+    0% {
+        background-color: green;
+    }
+}
+
+.fileList li div.removing,
+.fileList li div.removing li div {
+    background-color: red;
+}
+
+.fileList li div.removed,
+.fileList li div.removed li div {
+    background-color: red;
+    animation: removed 1s forwards;
+}
+
+@keyframes removed {
+    100% {
+        opacity: 0;
+    }
 }
 
 .fileName {
