@@ -1,9 +1,7 @@
 import argparse
 import json
 import logging
-import os
 from collections import namedtuple
-from os import path
 from threading import local
 
 import ee
@@ -12,6 +10,7 @@ import oauth2client.client
 from flask import Flask, Blueprint, Response
 from flask import request
 
+import os
 from sepal import gee
 from sepal.sepal_api import SepalApi
 from sepal.task import repository
@@ -45,7 +44,7 @@ class AccessTokenCredentials(oauth2client.client.OAuth2Credentials):
 
     @staticmethod
     def create():
-        if path.exists(earthengine_credentials_file) \
+        if os.path.exists(earthengine_credentials_file) \
                 and AccessTokenCredentials._read_access_token():
             return AccessTokenCredentials()
         else:
@@ -67,7 +66,7 @@ def before():
     credentials = AccessTokenCredentials.create()
     if not credentials:
         credentials = gee.service_account_credentials
-    logger.debug('Using credentials: ' + str(credentials))
+    logger.info('Using credentials: ' + str(credentials))
     thread_local.context = Context(
         credentials=credentials,
         download_dir=download_dir,
@@ -110,7 +109,7 @@ def init(server_args):
     gee.init_service_account_credentials(server_args)
     username = server_args['username']
     home_dir = server_args['home_dir']
-    earthengine_credentials_file = os.path.expanduser(home_dir + '/credentials')
+    earthengine_credentials_file = os.path.expanduser(home_dir + '/.config/earthengine/credentials')
     download_dir = home_dir + "/download"
     sepal_host = server_args['sepal_host']
     sepal_username = server_args['sepal_username']
