@@ -25,7 +25,8 @@ class QueryFilesHandler implements QueryHandler<Map, QueryFiles> {
         def userDir = new UserDir(homeDir, query.username)
         return new Context(
             userDir: userDir,
-            path: query.path, 
+            path: query.path,
+            indicatedAddedFiles: !!query.clientDirTree,
             clientDirTree: query.clientDirTree ?: [dir: true, count: 0, files: [:]]
         ).execute()
     }
@@ -34,6 +35,7 @@ class QueryFilesHandler implements QueryHandler<Map, QueryFiles> {
         UserDir userDir
         String path
         Map clientDirTree
+        boolean indicatedAddedFiles
 
         Map execute() {
             if (!userDir.exists(path))
@@ -68,14 +70,15 @@ class QueryFilesHandler implements QueryHandler<Map, QueryFiles> {
                 if (clientDirTree.files)
                     result = new Context(
                             userDir: userDir, 
-                            path: userDir.toUserDirPath(file), 
+                            path: userDir.toUserDirPath(file),
+                            indicatedAddedFiles: indicatedAddedFiles,
                             clientDirTree: clientDirTree.files[file.name]
                         ).execute()
                 else 
                     result = [dir: true, count: count]
             } else
                 result = fileMap(file)
-            if (!clientDirTree?.files?.get(file.name))
+            if (indicatedAddedFiles && !clientDirTree?.files?.get(file.name))
                 result.added = true
             return result
         }

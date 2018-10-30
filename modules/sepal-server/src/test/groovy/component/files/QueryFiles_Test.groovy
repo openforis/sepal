@@ -23,7 +23,6 @@ class QueryFiles_Test extends AbstractFilesTest {
             count: 1,
             files: [
                 'file.txt': [
-                    added: true,
                     size: file.size,
                     lastModified: lastModified(file)
                 ]
@@ -43,7 +42,6 @@ class QueryFiles_Test extends AbstractFilesTest {
             count: 1,
             files: [
                 'dir': [
-                    added: true,
                     dir: true,
                     count: 0
                 ]
@@ -163,7 +161,6 @@ class QueryFiles_Test extends AbstractFilesTest {
             count: 1,
             files: [
                 'file.txt': [
-                    added: true,
                     size: file.size,
                     lastModified: lastModified(file)
                 ]
@@ -183,7 +180,6 @@ class QueryFiles_Test extends AbstractFilesTest {
             count: 1,
             files: [
                 'child-dir': [
-                    added: true,
                     dir: true,
                     count: 0
                 ]
@@ -203,7 +199,6 @@ class QueryFiles_Test extends AbstractFilesTest {
             count: 1,
             files: [
                 'dir': [
-                    added: true,
                     dir: true,
                     count: 1
                 ]
