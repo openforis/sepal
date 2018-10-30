@@ -48,7 +48,7 @@ class Retrieve extends React.Component {
         return (
             <div className={styles.form}>
                 <div>
-                    <Label msg={('process.classification.panel.retrieve.form.destination.label')}/>
+                    <Label msg={msg('process.classification.panel.retrieve.form.destination.label')}/>
                     <Buttons
                         input={destination}
                         multiple={false}
