@@ -73,12 +73,12 @@
 }
 
 .fileList li div.removing,
-.fileList li div.removing li div {
+.fileList li div.removing + ul li div {
     background-color: red;
 }
 
 .fileList li div.removed,
-.fileList li div.removed li div {
+.fileList li div.removed + ul li div {
     background-color: red;
     animation: removed 1s forwards;
 }

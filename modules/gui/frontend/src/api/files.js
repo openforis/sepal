@@ -16,7 +16,9 @@ export default {
     }).pipe(
         delay(500),
         toResponse
-    )
+    ),
+
+    downloadUrl: path => `/api/files/download?path=${encodeURIComponent(path)}`
 }
 
 const toResponse = map(e => e.response)

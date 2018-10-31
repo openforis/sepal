@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
-import {Observable} from 'rxjs'
-import {catchError, delay, map} from 'rxjs/operators'
+import {Observable, Subject, timer} from 'rxjs'
+import {catchError, delay, exhaustMap, map, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
@@ -16,6 +16,7 @@ import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
 
 const TREE = 'files.tree'
+const REFRESH_INTERVAL = 1000
 
 const tree = () =>
     select(TREE) || {}
@@ -23,30 +24,6 @@ const tree = () =>
 const mapStateToProps = () => ({
     tree: tree()
 })
-
-const loadPath$ = path =>
-    api.files.loadPath$(path).pipe(
-        catchError(() => {
-            Notifications.error('files.loading').dispatch()
-            return Observable.of([])
-        })
-    )
-
-const removePaths$ = paths =>
-    api.files.removePaths$(paths).pipe(
-        catchError(() => {
-            Notifications.error('files.removing').dispatch()
-            return Observable.of([])
-        })
-    )
-
-const updateTree$ = current =>
-    api.files.updateTree$(current).pipe(
-        catchError(() => {
-            Notifications.error('files.loading').dispatch()
-            return Observable.of([])
-        })
-    )
 
 const pathSections = path =>
     path.split('/').splice(1)
@@ -58,11 +35,44 @@ const treePath = (path = '/') =>
         ) : []
 
 class Browse extends React.Component {
-    UNSAFE_componentWillMount() {
+    disableRefresh$ = new Subject()
+
+    componentDidMount() {
         this.loadPath('/')
-        setInterval(() => {
-            this.updateTree(this.props.tree)
-        }, 2000)
+        this.props.onEnable(() => this.enableRefresh())
+        this.props.onDisable(() => this.disableRefresh())
+        this.enableRefresh()
+    }
+
+    enableRefresh() {
+        this.props.stream('SCHEDULE_REFRESH',
+            timer(0, REFRESH_INTERVAL).pipe(
+                exhaustMap(() => this.updateTree$()),
+                takeUntil(this.disableRefresh$)
+            )
+        )
+    }
+
+    updateTree$() {
+        return api.files.updateTree$(this.props.tree).pipe(
+            catchError(() => {
+                Notifications.error('files.loading').dispatch()
+                return Observable.of([])
+            }),
+            map(tree => {
+                actionBuilder('UPDATE_TREE')
+                    .merge(TREE, tree)
+                    .dispatch()
+            }),
+            delay(1000),
+            map(() => this.pruneRemovedNodes(
+                actionBuilder('CLEANUP_TREE')).dispatch()
+            )
+        )
+    }
+
+    disableRefresh() {
+        this.disableRefresh$.next()
     }
 
     childPath(path = '/', name = '/') {
@@ -83,7 +93,11 @@ class Browse extends React.Component {
 
     loadPath(path) {
         this.props.stream('REQUEST_LOAD_FILES',
-            loadPath$(path).pipe(
+            api.files.loadPath$(path).pipe(
+                catchError(() => {
+                    Notifications.error('files.loading').dispatch()
+                    return Observable.of([])
+                }),
                 delay(200),
                 map(tree => actionBuilder('LOAD_PATH', {path})
                     .set([TREE, dotSafe(treePath(path))], _.assign(tree, {opened: true}))
@@ -101,7 +115,11 @@ class Browse extends React.Component {
             .dispatch()
 
         this.props.stream('REQUEST_REMOVE_PATHS',
-            removePaths$(paths).pipe(
+            api.files.removePaths$(paths).pipe(
+                catchError(() => {
+                    Notifications.error('files.removing').dispatch()
+                    return Observable.of([])
+                }),
                 map(() => actionBuilder('REMOVE_PATHS', {paths})
                     .forEach(paths, (actionBuilder, path) => {
                         actionBuilder.del([TREE, dotSafe(treePath(path)), 'removing'])
@@ -130,22 +148,6 @@ class Browse extends React.Component {
             }
         })
         return actionBuilder
-    }
-
-    updateTree(current) {
-        this.props.stream('REQUEST_UPDATE_TREE',
-            updateTree$(current).pipe(
-                map(tree => {
-                    actionBuilder('UPDATE_TREE')
-                        .merge(TREE, tree)
-                        .dispatch()
-                }),
-                delay(1000),
-                map(() => this.pruneRemovedNodes(
-                    actionBuilder('CLEANUP_TREE')).dispatch()
-                )
-            )
-        )
     }
 
     isDirectory(directory) {
@@ -290,9 +292,15 @@ class Browse extends React.Component {
             : false
     }
 
-    downloadSelected() {
-        // TODO
-    }
+    // downloadSelected() {
+    //     const selectedFiles = this.selectedItems().files
+    //     if (selectedFiles.length === 1) {
+    //         const path = selectedFiles[0]
+    //         this.props.stream('DOWNLOAD_FILE',
+    //             api.files.downloadFile$(path)
+    //         )
+    //     }
+    // }
 
     countSelectedItems() {
         const {files, directories} = this.selectedItems()
@@ -306,6 +314,10 @@ class Browse extends React.Component {
         const selected = this.countSelectedItems()
         const nothingSelected = selected.files === 0 && selected.directories === 0
         const oneFileSelected = selected.files === 1 && selected.directories === 0
+        const selectedFiles = this.selectedItems().files
+        const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
+        const downloadUrl = selectedFile && api.files.downloadUrl(selectedFile)
+        const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
         return (
             <div className={styles.toolbar}>
                 {nothingSelected ? null : (
@@ -320,7 +332,8 @@ class Browse extends React.Component {
                     tooltip={msg('browse.controls.download.tooltip')}
                     placement='bottom'
                     icon='download'
-                    onClick={this.downloadSelected.bind(this)}
+                    downloadUrl={downloadUrl}
+                    downloadFilename={downloadFilename}
                     disabled={!oneFileSelected}
                 />
                 <Button
@@ -420,8 +433,8 @@ class Browse extends React.Component {
                     const fullPath = this.childPath(path, file ? fileName : null)
                     const isSelected = this.isSelected(fullPath) || this.isAncestorSelected(fullPath)
                     const isAdded = file.added
-                    const isRemoving = file.removing
                     const isRemoved = file.removed || this.isRemoved(fullPath) || this.isAncestorRemoved(fullPath)
+                    const isRemoving = file.removing && !isRemoved
                     return (
                         <li key={fileName}>
                             <div className={[
@@ -460,13 +473,7 @@ class Browse extends React.Component {
 }
 
 Browse.propTypes = {
-    loaded: PropTypes.objectOf(
-        PropTypes.shape({
-            files: PropTypes.arrayOf(PropTypes.object),
-            open: PropTypes.bool
-        })
-    ),
-    selected: PropTypes.object
+    tree: PropTypes.object
 }
 
 export default connect(mapStateToProps)(Browse)
