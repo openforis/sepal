@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {Observable, Subject, timer} from 'rxjs'
+import {Observable, Subject, forkJoin, timer} from 'rxjs'
 import {catchError, delay, exhaustMap, map, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
@@ -94,13 +94,16 @@ class Browse extends React.Component {
 
     loadPath(path) {
         this.props.stream('REQUEST_LOAD_FILES',
-            api.files.loadPath$(path).pipe(
-                catchError(() => {
-                    Notifications.error('files.loading').dispatch()
-                    return Observable.of([])
-                }),
-                delay(200),
-                map(tree => actionBuilder('LOAD_PATH', {path})
+            forkJoin(
+                api.files.loadPath$(path).pipe(
+                    catchError(() => {
+                        Notifications.error('files.loading').dispatch()
+                        return Observable.of([])
+                    })
+                ),
+                timer(200) // add 200ms comfort delay if response is quicker
+            ).pipe(
+                map(([tree]) => actionBuilder('LOAD_PATH', {path})
                     .set([TREE, dotSafe(treePath(path))], _.assign(tree, {opened: true}))
                     .dispatch()
                 )
