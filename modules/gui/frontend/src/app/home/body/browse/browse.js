@@ -84,6 +84,7 @@ class Browse extends React.Component {
     loadPath(path) {
         this.props.stream('REQUEST_LOAD_FILES',
             loadPath$(path).pipe(
+                delay(200),
                 map(tree => actionBuilder('LOAD_PATH', {path})
                     .set([TREE, dotSafe(treePath(path))], _.assign(tree, {opened: true}))
                     .dispatch()
@@ -177,12 +178,15 @@ class Browse extends React.Component {
     }
 
     removeAddedFlag(actionBuilder, path) {
-        _.chain(this.getFiles(path))
-            .pickBy(file => file.added)
-            .forEach((file, name) =>
-                actionBuilder.del([TREE, dotSafe(treePath(this.childPath(path, name))), 'added'])
-            )
-            .value()
+        _.forEach(this.getFiles(path), (file, name) => {
+            const childPath = this.childPath(path, name)
+            if (file.added) {
+                actionBuilder.del([TREE, dotSafe(treePath(childPath)), 'added'])
+            }
+            if (this.isDirectory(file)) {
+                this.removeAddedFlag(actionBuilder, childPath)
+            }
+        })
         return actionBuilder
     }
 
