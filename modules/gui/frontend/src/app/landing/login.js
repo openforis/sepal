@@ -1,4 +1,4 @@
-import {Field, Input, Label, form} from 'widget/form'
+import {Field, Input, form} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import {Msg, msg} from 'translate'
 import {SubmitButton} from 'widget/legacyButton'
