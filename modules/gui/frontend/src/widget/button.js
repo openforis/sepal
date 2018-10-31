@@ -7,7 +7,7 @@ import Tooltip from 'widget/tooltip'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 
-const hammerOptions = ({onClick, onClickHold}) => {
+const hammerOptions = ({onClick, onClickHold, downloadUrl}) => {
     const tapOnly = {
         recognizers: {
             tap: {
@@ -48,7 +48,7 @@ const hammerOptions = ({onClick, onClickHold}) => {
             }
         }
     }
-    return onClick
+    return onClick || downloadUrl
         ? (onClickHold ? tapAndPress : tapOnly)
         : (onClickHold ? pressOnly : nothing)
 }
@@ -81,12 +81,15 @@ const renderButton = ({type, className, look, size, tabIndex, onMouseDown, onCli
         {contents}
     </button>
 
-const renderHammer = ({onClick, onClickHold, shown, disabled}, contents) =>
+const renderHammer = ({onClick, onClickHold, downloadUrl, downloadFilename, shown, disabled}, contents) =>
     shown && !disabled ? (
         <Hammer
-            onTap={e => onClick && onClick(e.srcEvent, e)}
+            onTap={e => {
+                onClick && onClick(e.srcEvent, e)
+                downloadUrl && download(downloadUrl, downloadFilename)
+            }}
             onPressUp={e => onClickHold && onClickHold(e.srcEvent, e)}
-            options={hammerOptions({onClick, onClickHold})}>
+            options={hammerOptions({onClick, onClickHold, downloadUrl})}>
             {contents}
         </Hammer>
     ) : contents
@@ -112,6 +115,17 @@ const renderLink = ({link, shown, disabled}, contents) =>
         </Link>
     ) : contents
 
+const download = (url, filename) => {
+    // create hidden anchor, attach to DOM, click it and remove it from the DOM
+    var downloadElement = document.createElement('a')
+    downloadElement.setAttribute('style', 'display: none')
+    downloadElement.setAttribute('href', url)
+    downloadElement.setAttribute('download', filename)
+    document.body.appendChild(downloadElement)
+    downloadElement.click()
+    downloadElement.remove()
+}
+
 export const Button = ({
     type = 'button',
     className,
@@ -123,6 +137,8 @@ export const Button = ({
     onMouseDown,
     onClick,
     onClickHold,
+    downloadUrl,
+    downloadFilename,
     link,
     shown = true,
     disabled,
@@ -135,7 +151,7 @@ export const Button = ({
     renderLink({link, shown, disabled},
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
             renderPropagationStopper({stopPropagation},
-                renderHammer({onClick, onClickHold, shown, disabled},
+                renderHammer({onClick, onClickHold, downloadUrl, downloadFilename, shown, disabled},
                     renderButton({type, className, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled},
                         renderContents({icon, label, children})
                     )
@@ -148,6 +164,8 @@ Button.propTypes = {
     children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
     className: PropTypes.string,
     disabled: PropTypes.any,
+    downloadFilename: PropTypes.any,
+    downloadUrl: PropTypes.any,
     icon: PropTypes.string,
     label: PropTypes.string,
     link: PropTypes.string,
