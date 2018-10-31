@@ -197,7 +197,11 @@ const stream = component => {
                 },
                 error => {
                     unmounted || setStatus('FAILED')
-                    onError && onError(error)
+                    if (onError) {
+                        onError(error)
+                    } else {
+                        throw error
+                    }
                 },
                 () => {
                     unmounted || setStatus('COMPLETED')
