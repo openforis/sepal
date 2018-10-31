@@ -10,11 +10,12 @@ class ChangeDetection(ImageSpec):
     def __init__(self, sepal_api, spec, create_image_spec):
         super(ChangeDetection, self).__init__()
         self.spec = spec
-        self.trainingData = ee.FeatureCollection('ft:' + spec['tableName'])
-        self.classProperty = spec['classProperty']
-        self.fromImage = create_image_spec(sepal_api, spec['fromImage'])
-        self.toImage = create_image_spec(sepal_api, spec['toImage'])
-        self.aoi = self.fromImage._aoi
+        model = spec['recipe']['model']
+        self.trainingData = ee.FeatureCollection('ft:' + model['trainingData']['fusionTable'])
+        self.classProperty = model['trainingData']['fusionTableColumn']
+        self.fromImage = create_image_spec(sepal_api, {'recipe': model['source1']})
+        self.toImage = create_image_spec(sepal_api, {'recipe': model['source2']})
+        self.aoi = self.fromImage.aoi
         self.scale = self.fromImage.scale
         self.bands = ['class']
 

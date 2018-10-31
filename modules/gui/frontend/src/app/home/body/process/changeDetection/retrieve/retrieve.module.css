@@ -1,0 +1,7 @@
+.panel {
+    max-width: 33rem;
+}
+
+.form > *:not(:last-child) {
+    margin-bottom: 2rem;
+}

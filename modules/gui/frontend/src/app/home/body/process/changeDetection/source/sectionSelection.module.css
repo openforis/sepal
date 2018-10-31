@@ -1,0 +1,13 @@
+
+
+
+
+.sectionSelection ul {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sectionSelection li {
+    margin-top: 1.5rem;
+}

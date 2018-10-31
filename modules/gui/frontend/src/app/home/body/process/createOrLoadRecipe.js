@@ -129,7 +129,7 @@ const setTabType = (recipeId, type, title) =>
                 throw new Error('Unable to create recipe')
             return stateBuilder
                 .set(['process', 'tabs', recipeIndex, 'type'], type)
-                .set(['process', 'tabs', recipeIndex, 'placeholder'], `${title}_${formatDate(new Date())}`)
+                .set(['process', 'tabs', recipeIndex, 'placeholder'], `${title.replace(/[^\w-.]/g, '_')}_${formatDate(new Date())}`)
         })
         .dispatch()
 
