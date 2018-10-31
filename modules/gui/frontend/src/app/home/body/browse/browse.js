@@ -296,16 +296,6 @@ class Browse extends React.Component {
             : false
     }
 
-    // downloadSelected() {
-    //     const selectedFiles = this.selectedItems().files
-    //     if (selectedFiles.length === 1) {
-    //         const path = selectedFiles[0]
-    //         this.props.stream('DOWNLOAD_FILE',
-    //             api.files.downloadFile$(path)
-    //         )
-    //     }
-    // }
-
     countSelectedItems() {
         const {files, directories} = this.selectedItems()
         return {
