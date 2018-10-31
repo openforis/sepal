@@ -51,6 +51,7 @@
     border: none !important;
     padding-left: calc(var(--depth) * 1.5rem);
     padding-right: 1rem;
+    --animation-duration: calc(var(--animation-duration-ms) * 1ms);
 }
 
 .fileList li div.selected {
@@ -63,7 +64,7 @@
 }
 
 .fileList li div.added {
-    animation: added 1s forwards;
+    animation: added var(--animation-duration) forwards;
 }
 
 @keyframes added {
@@ -73,14 +74,16 @@
 }
 
 .fileList li div.removing,
+.fileList li div.removing:hover,
 .fileList li div.removing + ul li div {
     background-color: red;
 }
 
 .fileList li div.removed,
+.fileList li div.removed:hover,
 .fileList li div.removed + ul li div {
     background-color: red;
-    animation: removed 1s forwards;
+    animation: removed var(--animation-duration) forwards;
 }
 
 @keyframes removed {

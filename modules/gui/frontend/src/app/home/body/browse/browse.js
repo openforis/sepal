@@ -16,7 +16,8 @@ import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
 
 const TREE = 'files.tree'
-const REFRESH_INTERVAL = 1000
+const REFRESH_INTERVAL_MS = 1000
+const ANIMATION_DURATION_MS = 1000
 
 const tree = () =>
     select(TREE) || {}
@@ -46,7 +47,7 @@ class Browse extends React.Component {
 
     enableRefresh() {
         this.props.stream('SCHEDULE_REFRESH',
-            timer(0, REFRESH_INTERVAL).pipe(
+            timer(0, REFRESH_INTERVAL_MS).pipe(
                 exhaustMap(() => this.updateTree$()),
                 takeUntil(this.disableRefresh$)
             )
@@ -64,7 +65,7 @@ class Browse extends React.Component {
                     .merge(TREE, tree)
                     .dispatch()
             }),
-            delay(1000),
+            delay(ANIMATION_DURATION_MS),
             map(() => this.pruneRemovedNodes(
                 actionBuilder('CLEANUP_TREE')).dispatch()
             )
@@ -127,7 +128,7 @@ class Browse extends React.Component {
                     })
                     .dispatch()
                 ),
-                delay(1000),
+                delay(ANIMATION_DURATION_MS),
                 map(() => actionBuilder('REMOVE_PATHS', {paths})
                     .forEach(paths, (actionBuilder, path) =>
                         actionBuilder.del([TREE, dotSafe(treePath(path))])
@@ -437,16 +438,21 @@ class Browse extends React.Component {
                     const isRemoving = file.removing && !isRemoved
                     return (
                         <li key={fileName}>
-                            <div className={[
-                                lookStyles.look,
-                                isSelected ? lookStyles.highlight : lookStyles.default,
-                                styles.item,
-                                isAdded ? styles.added : null,
-                                isRemoving ? styles.removing : null,
-                                isRemoved ? styles.removed : null
-                            ].join(' ')}
-                            style={{'--depth': depth}}
-                            onClick={() => this.toggleSelected(fullPath)}>
+                            <div
+                                className={[
+                                    lookStyles.look,
+                                    isSelected ? lookStyles.highlight : lookStyles.default,
+                                    styles.item,
+                                    isAdded ? styles.added : null,
+                                    isRemoving ? styles.removing : null,
+                                    isRemoved ? styles.removed : null
+                                ].join(' ')}
+                                style={{
+                                    '--depth': depth,
+                                    '--animation-duration-ms': ANIMATION_DURATION_MS
+                                }}
+                                onClick={() => this.toggleSelected(fullPath)}
+                            >
                                 {this.renderIcon(fullPath, fileName, file)}
                                 <span className={styles.fileName}>{fileName}</span>
                                 {this.renderNodeInfo(file)}
