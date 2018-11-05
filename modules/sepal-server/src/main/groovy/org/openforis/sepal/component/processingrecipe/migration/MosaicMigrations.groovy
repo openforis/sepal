@@ -1,7 +1,6 @@
 package org.openforis.sepal.component.processingrecipe.migration
 
 import groovy.json.JsonSlurper
-import org.openforis.sepal.component.processingrecipe.api.Recipe
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -15,7 +14,7 @@ class MosaicMigrations extends AbstractMigrations {
     MosaicMigrations() {
         super('MOSAIC')
         addMigration(1, { r ->
-            [
+            def result = [
                 id: r.id,
                 title: r.name,
                 placeholder: 'Migrated_Mosaic',
@@ -24,10 +23,6 @@ class MosaicMigrations extends AbstractMigrations {
                     bands: ['RED', 'GREEN', 'BLUE'],
                     dates: dates(r.targetDate, r.offsetToTargetDay),
                     sources: sources(r.sensorGroup, r.sensors),
-                    sceneSelectionOptions: [
-                        type: 'SELECT',
-                        targetDateWeight: r.sortWeight
-                    ],
                     compositeOptions: [
                         corrections: [
                             r.brdfCorrect ? 'BRDF' : null,
@@ -45,11 +40,22 @@ class MosaicMigrations extends AbstractMigrations {
                         ].findAll(),
                         compose: r.median ? 'MEDIAN' : 'MEDOID'
                     ],
-                    aoi: aoi(r),
-                    scenes: scenes(r.sceneAreas, r.sensorGroup),
                     panSharpen: r.panSharpening ?: false
                 ]
             ]
+            def aoi = aoi(r)
+            if (aoi)
+                result.model.aoi = aoi
+            if (r.sceneAreas) {
+                result.model.sceneSelectionOptions = [
+                    type: 'SELECT',
+                    targetDateWeight: r.sortWeight
+                ]
+                result.model.scenes = scenes(r.sceneAreas, r.sensorGroup)
+            } else {
+                result.model.sceneSelectionOptions = [type: 'ALL']
+            }
+            return result
         })
     }
 
@@ -75,15 +81,15 @@ class MosaicMigrations extends AbstractMigrations {
                 type: 'POLYGON',
                 path: new JsonSlurper().parseText(polygon)
             ]
-        else if (r.aoiFusionTable == OLD_COUNTRY_FUSION_TABLE)
+        else if (r.aoiCode || r.aoiFusionTable == OLD_COUNTRY_FUSION_TABLE)
             return [
                 type: 'FUSION_TABLE',
                 id: NEW_COUNTRY_FUSION_TABLE,
                 keyColumn: 'id',
-                key: r.aoiFusionTableKey,
-                level: r.aoiFusionTableKey.length() == 3 ? 'COUNTRY' : 'AREA'
+                key: r.aoiCode ?: r.aoiFusionTableKey,
+                level: (r.aoiCode ?: r.aoiFusionTableKey).length() == 3 ? 'COUNTRY' : 'AREA'
             ]
-        else
+        else if (r.aoiFusionTable)
             return [
                 type: 'FUSION_TABLE',
                 id: r.aoiFusionTable,

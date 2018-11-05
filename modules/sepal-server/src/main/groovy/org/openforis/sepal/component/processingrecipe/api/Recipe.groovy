@@ -33,4 +33,8 @@ class Recipe {
     Recipe withContents(String contents) {
         new Recipe(id: id, name: name, type: type, typeVersion: typeVersion, username: username, contents: contents, creationTime: creationTime, updateTime: updateTime)
     }
+
+    String toString() {
+        return "Recipe(id: ${id}, username: ${username}, type: ${type}, name: ${name})"
+    }
 }
