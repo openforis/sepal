@@ -20,7 +20,6 @@ class HeartbeatHandler implements CommandHandler<WorkerSession, Heartbeat> {
 
     HeartbeatHandler(WorkerSessionRepository sessionRepository) {
         this.sessionRepository = sessionRepository
-        this.googleOAuthGateway = googleOAuthGateway
     }
 
     WorkerSession execute(Heartbeat command) {
