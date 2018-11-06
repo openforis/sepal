@@ -117,6 +117,7 @@ Home.propTypes = {
 
 export default connect(mapStateToProps)(Home)
 
+/* eslint-disable */
 const _sampleUserReport = {
     'sessions': [{
         'id': 'b9c6784f-84af-4b49-93bd-91ee57c0595c-1',
