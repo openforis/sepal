@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {Observable, Subject, forkJoin, timer} from 'rxjs'
-import {catchError, delay, exhaustMap, map, takeUntil} from 'rxjs/operators'
+import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
@@ -60,6 +60,7 @@ class Browse extends React.Component {
                 Notifications.error('files.loading').dispatch()
                 return Observable.of([])
             }),
+            filter(tree => tree),
             map(tree => {
                 actionBuilder('UPDATE_TREE')
                     .merge(TREE, tree)
