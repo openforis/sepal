@@ -96,6 +96,10 @@ abstract class AbstractWorkerSessionTest extends Specification {
         return findSessionById(session.id)
     }
 
+    final void refreshGoogleTokens() {
+        component.submit(new RefreshGoogleTokens())
+    }
+
     final void closeSession(WorkerSession session, Map args = [:]) {
         component.submit(new CloseSession(
                 username: username(args),
