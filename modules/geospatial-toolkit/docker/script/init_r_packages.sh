@@ -16,6 +16,7 @@ export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
 export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/jre/lib/amd64/server:${JAVA_HOME}/jre/lib/amd64
 R CMD javareconf
 
+R -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 R -e "install.packages('pacman', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 R -e "devtools::install_github('appelmar/strucchange')"
 R -e "pacman::p_load_gh(\
@@ -24,7 +25,6 @@ R -e "pacman::p_load_gh(\
     )"
 R -e "pacman::p_load(\
         'corrplot',\
-        'devtools',\
         'dismo',\
         'dplyr',\
         'DT',\
