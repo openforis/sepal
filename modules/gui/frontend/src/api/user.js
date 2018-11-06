@@ -8,7 +8,7 @@ export default {
         }).pipe(toResponse),
 
     loadCurrentUserReport$: () =>
-        get$('/api/sessions/report')
+        get$('/api/sandbox/report')
             .pipe(toResponse),
 
     login$: (username, password) =>
