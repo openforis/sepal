@@ -17,9 +17,8 @@ class Heartbeat extends AbstractCommand<WorkerSession> {
 
 class HeartbeatHandler implements CommandHandler<WorkerSession, Heartbeat> {
     private final WorkerSessionRepository sessionRepository
-    private final GoogleOAuthGateway googleOAuthGateway
 
-    HeartbeatHandler(WorkerSessionRepository sessionRepository, GoogleOAuthGateway googleOAuthGateway) {
+    HeartbeatHandler(WorkerSessionRepository sessionRepository) {
         this.sessionRepository = sessionRepository
         this.googleOAuthGateway = googleOAuthGateway
     }
@@ -30,7 +29,6 @@ class HeartbeatHandler implements CommandHandler<WorkerSession, Heartbeat> {
             throw new Unauthorized("Session not owned by user: $session", command)
         if (session.active) {
             sessionRepository.update(session)
-            googleOAuthGateway.refreshTokens(session.username)
         }
         return session
     }
