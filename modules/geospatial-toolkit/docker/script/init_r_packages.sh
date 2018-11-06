@@ -37,6 +37,7 @@ R -e "pacman::p_load(\
         'knitr',\
         'leaflet',\
         'lubridate',\
+        'maptools',\
         'mapview',\
         'plyr',\
         'random',\
