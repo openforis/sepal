@@ -1,21 +1,23 @@
-import {Button} from '../../../../../widget/button'
-import {CenteredProgress} from 'widget/progress'
-import {Field, form} from 'widget/form'
-import {Panel, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState, recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {dataSetById} from 'sources'
-import {map} from 'rxjs/operators'
-import {msg} from 'translate'
+import api from 'api'
+import {RecipeActions, recipePath, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
 import {objectEquals} from 'collections'
-import Icon from 'widget/icon'
-import PanelButtons from 'widget/panelButtons'
+import format from 'format'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
-import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
-import api from 'api'
-import format from 'format'
+import {map} from 'rxjs/operators'
+import {dataSetById} from 'sources'
+import {msg} from 'translate'
+import {Field, form} from 'widget/form'
+import Icon from 'widget/icon'
+import {Panel, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
+import {CenteredProgress} from 'widget/progress'
+import {Button} from '../../../../../widget/button'
+import daysBetween from './daysBetween'
 import styles from './sceneSelection.module.css'
+
 
 const fields = {
     selectedScenes: new Field()
@@ -39,15 +41,15 @@ class SceneSelection extends React.Component {
         this.state = {
             scenes: []
         }
-        this.recipe = RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(props.recipeId)
     }
 
     render() {
-        const {action, recipeId, form} = this.props
+        const {action, recipeId, dates: {targetDate}, form} = this.props
         const loading = !action('LOAD_SCENES').dispatched
         return (
             <React.Fragment>
-                <ScenePreview recipeId={recipeId}/>
+                <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
                 <Panel center className={styles.panel}>
                     <PanelHeader
                         icon='cog'
@@ -72,17 +74,18 @@ class SceneSelection extends React.Component {
     }
 
     renderScenes() {
-        const {inputs: {selectedScenes}} = this.props
+        const {dates: {targetDate}, inputs: {selectedScenes}} = this.props
         const {width, scenes, scenesById} = this.state
         const availableSceneComponents = scenes
             .filter(scene => !selectedScenes.value.find(selectedScene => selectedScene.id === scene.id))
             .map(scene =>
                 <Scene
                     key={scene.id}
+                    targetDate={targetDate}
                     scene={scene}
                     selected={false}
                     onAdd={() => this.addScene(scene)}
-                    recipe={this.recipe}/>
+                    recipeActions={this.recipeActions}/>
             )
         const selectedSceneComponents = selectedScenes.value
             .map(scene => scenesById[scene.id])
@@ -90,10 +93,11 @@ class SceneSelection extends React.Component {
             .map(scene =>
                 <Scene
                     key={scene.id}
+                    targetDate={targetDate}
                     scene={scene}
                     selected={true}
                     onRemove={() => this.removeScene(scene)}
-                    recipe={this.recipe}/>
+                    recipeActions={this.recipeActions}/>
             )
         return (
             <React.Fragment>
@@ -137,12 +141,12 @@ class SceneSelection extends React.Component {
 
     onApply(selectedScenes) {
         const {sceneAreaId} = this.props
-        this.recipe.setSelectedScenesInSceneArea(sceneAreaId, selectedScenes).dispatch()
+        this.recipeActions.setSelectedScenesInSceneArea(sceneAreaId, selectedScenes).dispatch()
         this.deselectSceneArea()
     }
 
     deselectSceneArea() {
-        this.recipe.setSceneSelection(null).dispatch()
+        this.recipeActions.setSceneSelection(null).dispatch()
     }
 
     addScene(scene) {
@@ -152,6 +156,7 @@ class SceneSelection extends React.Component {
             {
                 id: scene.id,
                 date: scene.date,
+                // cloudCover: scene.cloudCover,
                 dataSet: scene.dataSet
             }
         ])
@@ -175,8 +180,9 @@ class SceneSelection extends React.Component {
     }
 }
 
-const Scene = ({selected, scene, onAdd, onRemove, className, recipe}) => {
-    const {dataSet, date, daysFromTarget, cloudCover, browseUrl} = scene
+const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeActions}) => {
+    const {dataSet, date, cloudCover, browseUrl} = scene
+    const daysFromTarget = daysBetween(targetDate, date)
     const thumbnailStyle = {
         backgroundImage: `url("${browseUrl}")`
     }
@@ -202,14 +208,14 @@ const Scene = ({selected, scene, onAdd, onRemove, className, recipe}) => {
                 </div>
             </div>
             {selected
-                ? <SelectedSceneOverlay scene={scene} onRemove={onRemove} recipe={recipe}/>
-                : <AvailableSceneOverlay scene={scene} onAdd={onAdd} recipe={recipe}/>
+                ? <SelectedSceneOverlay scene={scene} onRemove={onRemove} recipeActions={recipeActions}/>
+                : <AvailableSceneOverlay scene={scene} onAdd={onAdd} recipeActions={recipeActions}/>
             }
         </div>
     )
 }
 
-const AvailableSceneOverlay = ({scene, onAdd, recipe}) =>
+const AvailableSceneOverlay = ({scene, onAdd, recipeActions}) =>
     <div className={styles.sceneOverlay}>
         <Button
             className={styles.add}
@@ -220,10 +226,10 @@ const AvailableSceneOverlay = ({scene, onAdd, recipe}) =>
             className={styles.preview}
             icon='eye'
             label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-            onClick={() => recipe.setSceneToPreview(scene).dispatch()}/>
+            onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
     </div>
 
-const SelectedSceneOverlay = ({scene, onRemove, recipe}) =>
+const SelectedSceneOverlay = ({scene, onRemove, recipeActions}) =>
     <div className={styles.sceneOverlay}>
         <Button
             className={styles.remove}
@@ -234,7 +240,7 @@ const SelectedSceneOverlay = ({scene, onRemove, recipe}) =>
             className={styles.preview}
             icon='eye'
             label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-            onClick={() => recipe.setSceneToPreview(scene).dispatch()}/>
+            onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
     </div>
 
 SceneSelection.propTypes = {

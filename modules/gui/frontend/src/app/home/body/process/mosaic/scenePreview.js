@@ -6,6 +6,7 @@ import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import React from 'react'
 import styles from './scenePreview.module.css'
+import daysBetween from './daysBetween'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -21,9 +22,10 @@ class ScenePreview extends React.Component {
     }
 
     render() {
-        const {scene} = this.props
+        const {targetDate, scene} = this.props
         if (scene) {
-            const {id, dataSet, date, daysFromTarget, cloudCover, browseUrl} = scene
+            const {id, dataSet, date, cloudCover, browseUrl} = scene
+            const daysFromTarget = daysBetween(targetDate, date)
             const daysFromTargetString = daysFromTarget === 0
                 ? msg('process.mosaic.panel.sceneSelection.preview.onTarget')
                 : daysFromTarget < 0

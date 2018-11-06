@@ -25,7 +25,7 @@ class SepalClient {
     Map loadSandboxInfo() {
         LOG.debug("Loading sandbox info for $username")
         sepal.get(
-                path: "sessions/$username/report",
+                path: "sandbox/$username/report",
                 contentType: JSON,
                 requestContentType: JSON
         ).data

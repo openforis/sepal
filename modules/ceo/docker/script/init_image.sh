@@ -8,7 +8,6 @@ apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
  gettext\
  git\
  mongodb\
- npm\
  supervisor
 
 curl -sL https://deb.nodesource.com/setup_8.x | bash -

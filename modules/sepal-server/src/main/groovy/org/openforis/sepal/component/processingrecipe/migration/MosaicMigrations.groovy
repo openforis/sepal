@@ -16,7 +16,7 @@ class MosaicMigrations extends AbstractMigrations {
         addMigration(1, { r ->
             def result = [
                 id: r.id,
-                title: r.name,
+                title: r.name?.trim(),
                 placeholder: 'Migrated_Mosaic',
                 type: 'MOSAIC',
                 model: [
