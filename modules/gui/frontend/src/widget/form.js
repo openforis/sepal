@@ -1,12 +1,12 @@
-import {connect} from 'store'
-import {msg} from 'translate'
-import Icon from './icon'
-import PropTypes from 'prop-types'
-import React from 'react'
-import Tooltip from './tooltip'
 import _ from 'lodash'
 import moment from 'moment'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {connect} from 'store'
+import {msg} from 'translate'
 import styles from './form.module.css'
+import Icon from './icon'
+import Tooltip from './tooltip'
 
 export function form({fields = {}, constraints = {}, mapStateToProps}) {
     return WrappedComponent => {
@@ -166,6 +166,18 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                 })
             }
 
+            setInitialValue(name, value) {
+                this.setState(prevState => {
+                    const state = {...prevState, dirty: false}
+                    state.initialValues[name] = value
+                    state.values[name] = value
+                    state.errors[name] = ''
+                    if (prevState.dirty)
+                        this.onClean()
+                    return state
+                })
+            }
+
             reset() {
                 this.setState(prevState => {
                     const state = {...prevState, values: {...prevState.initialValues}, dirty: false}
@@ -213,6 +225,7 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                         validate: () => this.validateField(name),
                         isDirty: () => this.isValueDirty(name),
                         set: value => this.set(name, value),
+                        setInitialValue: value => this.setInitialValue(name, value),
                         handleChange: e => this.handleChange(e),
                         onChange: listener => {
                             const listeners = this.changeListenersByInputName[name] || []
@@ -273,15 +286,15 @@ class FormProperty {
 
     notEmpty(messageId, messageArgs) {
         return this.predicate(value => {
-            if (Array.isArray(value))
-                return value.length > 0
-            else if (value === Object(value))
-                return Object.keys(value).length > 0
-            else
-                return !!value
-        },
-        messageId,
-        messageArgs
+                if (Array.isArray(value))
+                    return value.length > 0
+                else if (value === Object(value))
+                    return Object.keys(value).length > 0
+                else
+                    return !!value
+            },
+            messageId,
+            messageArgs
         )
     }
 
@@ -519,7 +532,7 @@ export class Label extends React.Component {
             </label>
         )
     }
-    
+
     render() {
         const {tooltip} = this.props
         return tooltip
