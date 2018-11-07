@@ -143,7 +143,7 @@ const valuesToModel = values => {
             id: countryFusionTable,
             keyColumn: 'id',
             key: values.area || values.country,
-            level: values.area ? 'area' : 'country',
+            level: values.area ? 'AREA' : 'COUNTRY',
             bounds: values.bounds
         }
     case 'FUSION_TABLE':
@@ -170,7 +170,7 @@ const modelToValues = (model = {}) => {
         if (model.id === countryFusionTable)
             return {
                 section: 'COUNTRY',
-                [model.level]: model.key,
+                [model.level.toLowerCase()]: model.key,
                 bounds: model.bounds
             }
         else
