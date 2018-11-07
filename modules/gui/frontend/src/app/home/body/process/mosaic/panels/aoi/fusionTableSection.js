@@ -1,15 +1,15 @@
+import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
+import {sepalMap} from 'app/home/map/map'
+import _ from 'lodash'
+import React from 'react'
+import {Subject} from 'rxjs'
+import {map, takeUntil} from 'rxjs/operators'
+import {connect} from 'store'
+import {msg} from 'translate'
+import ComboBox from 'widget/comboBox'
 import {Input} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import {Subject} from 'rxjs'
-import {connect} from 'store'
-import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
-import {map, takeUntil} from 'rxjs/operators'
-import {msg} from 'translate'
-import {sepalMap} from 'app/home/map/map'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import ComboBox from 'widget/comboBox'
-import React from 'react'
-import _ from 'lodash'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -20,8 +20,6 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class FusionTableSection extends React.Component {
-    x = {}
-
     constructor(props) {
         super(props)
         this.fusionTableChanged$ = new Subject()
@@ -31,38 +29,39 @@ class FusionTableSection extends React.Component {
     }
 
     loadFusionTableColumns(fusionTableId) {
-        this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
+        this.props.stream('LOAD_FUSION_TABLE_COLUMNS',
             loadFusionTableColumns$(fusionTableId, {excludedTypes: ['LOCATION']}).pipe(
                 map(response => {
                     if (response.error)
                         this.props.inputs.fusionTable.setInvalid(
                             msg(response.error.key)
                         )
-                    return (response.columns || [])
+                    this.recipe.setFusionTableColumns(response.columns || [])
+                        .dispatch()
                 }),
-                map(this.recipe.setFusionTableColumns),
                 takeUntil(this.fusionTableChanged$))
         )
-            .dispatch()
     }
 
     loadFusionTableRows(column) {
-        this.props.asyncActionBuilder('LOAD_FUSION_TABLE_ROWS',
+        this.props.stream('LOAD_FUSION_TABLE_ROWS',
             queryFusionTable$(`
                     SELECT '${column}'
                     FROM ${this.props.inputs.fusionTable.value}
                     ORDER BY '${column}' ASC
             `).pipe(
-                map(e =>
-                    (e.response.rows || [])
-                        .map(row => row[0])
-                        .filter(value => value)
+                map(e => {
+                        this.recipe.setFusionTableRows(
+                            (e.response.rows || [])
+                                .map(row => row[0])
+                                .filter(value => value))
+                            .dispatch()
+                    }
                 ),
-                map(this.recipe.setFusionTableRows),
                 takeUntil(this.fusionTableColumnChanged$),
                 takeUntil(this.fusionTableChanged$)
             )
-        ).dispatch()
+        )
     }
 
     updateBounds(updatedBounds) {
@@ -73,13 +72,13 @@ class FusionTableSection extends React.Component {
     }
 
     render() {
-        const {action, columns, rows, inputs: {fusionTable, fusionTableColumn, fusionTableRow}} = this.props
-        const columnState = action('LOAD_FUSION_TABLE_COLUMNS').dispatching
+        const {stream, columns, rows, inputs: {fusionTable, fusionTableColumn, fusionTableRow}} = this.props
+        const columnState = stream('LOAD_FUSION_TABLE_COLUMNS') === 'ACTIVE'
             ? 'loading'
             : columns && columns.length > 0
                 ? 'loaded'
                 : 'noFusionTable'
-        const rowState = action('LOAD_FUSION_TABLE_ROWS').dispatching
+        const rowState = stream('LOAD_FUSION_TABLE_ROWS') === 'ACTIVE'
             ? 'loading'
             : rows
                 ? (rows.length === 0 ? 'noRows' : 'loaded')
@@ -112,7 +111,7 @@ class FusionTableSection extends React.Component {
                 <ComboBox
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.column.label')}
                     input={fusionTableColumn}
-                    isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
+                    isLoading={stream('LOAD_FUSION_TABLE_COLUMNS') === 'ACTIVE'}
                     disabled={!columns || columns.length === 0}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.column.placeholder.${columnState}`)}
                     options={(columns || []).map(({name}) => ({value: name, label: name}))}
@@ -129,7 +128,7 @@ class FusionTableSection extends React.Component {
                 <ComboBox
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.row.label')}
                     input={fusionTableRow}
-                    isLoading={action('LOAD_FUTION_TABLE_ROWS').dispatching}
+                    isLoading={stream('LOAD_FUTION_TABLE_ROWS') === 'ACTIVE'}
                     disabled={!rows}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.row.placeholder.${rowState}`)}
                     options={(rows || []).map(value => ({value, label: value}))}
@@ -138,6 +137,14 @@ class FusionTableSection extends React.Component {
                 />
             </React.Fragment>
         )
+    }
+
+    componentDidMount() {
+        const {inputs: {fusionTable, fusionTableColumn}} = this.props
+        if (fusionTable.value)
+            this.loadFusionTableColumns(fusionTable.value)
+        if (fusionTableColumn.value)
+            this.loadFusionTableRows(fusionTableColumn.value)
     }
 
     componentDidUpdate(prevProps) {
