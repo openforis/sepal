@@ -8,7 +8,7 @@ export default {
         }).pipe(toResponse),
 
     loadCurrentUserReport$: () =>
-        get$('/api/sandbox/report')
+        get$('/api/sessions/report')
             .pipe(toResponse),
 
     login$: (username, password) =>
@@ -54,14 +54,14 @@ export default {
             .pipe(toResponse),
 
     updateUserSession$: session =>
-        post$(`/api/sandbox/session/${session.id}/earliestTimeoutTime`, {
+        post$(`/api/sessions/session/${session.id}/earliestTimeoutTime`, {
             body: {
                 hours: session.keepAlive
             }
         }).pipe(toResponse),
 
     stopUserSession$: session =>
-        delete$(`/api/sandbox/session/${session.id}`),
+        delete$(`/api/sessions/session/${session.id}`),
 
     getUserList$: () =>
         get$('/api/user/list')

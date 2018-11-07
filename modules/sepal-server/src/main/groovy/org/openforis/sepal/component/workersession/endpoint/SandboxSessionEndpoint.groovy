@@ -32,39 +32,39 @@ class SandboxSessionEndpoint {
     void registerWith(Controller controller) {
         controller.with {
 
-            get('/sandbox/report') {
+            get('/sessions/report') {
                 currentUser(requestContext).generateReport()
             }
-            get('/sandbox/{username}/report', [ADMIN]) {
+            get('/sessions/{username}/report', [ADMIN]) {
                 otherUser(requestContext).generateReport()
             }
 
 
-            post('/sandbox/instance-type/{instanceType}') {
+            post('/sessions/instance-type/{instanceType}') {
                 currentUser(requestContext).requestSession()
             }
-            post('/sandbox/{username}/instance-type/{instanceType}', [ADMIN]) {
+            post('/sessions/{username}/instance-type/{instanceType}', [ADMIN]) {
                 otherUser(requestContext).requestSession()
             }
 
 
-            post('/sandbox/session/{sessionId}') {
+            post('/sessions/session/{sessionId}') {
                 currentUser(requestContext).sendHeartbeat()
         }
-            post('/sandbox/{username}/session/{sessionId}', [ADMIN]) {
+            post('/sessions/{username}/session/{sessionId}', [ADMIN]) {
                 otherUser(requestContext).sendHeartbeat()
             }
 
-            post('/sandbox/session/{sessionId}/earliestTimeoutTime') {
+            post('/sessions/session/{sessionId}/earliestTimeoutTime') {
                 currentUser(requestContext).setEarliestTimeoutTime()
             }
 
 
-            delete('/sandbox/session/{sessionId}') {
+            delete('/sessions/session/{sessionId}') {
                 currentUser(requestContext).closeSession()
                 send toJson(status: 'OK')
             }
-            delete('/sandbox/{username}/session/{sessionId}', [ADMIN]) {
+            delete('/sessions/{username}/session/{sessionId}', [ADMIN]) {
                 otherUser(requestContext).closeSession()
                 send toJson(status: 'OK')
             }
@@ -112,7 +112,7 @@ class SandboxSessionEndpoint {
                 ))
                 send toJson([
                         id      : session.id,
-                        path    : "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
+                        path    : "sessions/${forCurrentUser ? '' : "$username/"}session/$session.id",
                         username: username,
                         status  : sessionStatus(session),
                         host    : session.instance.host
@@ -129,7 +129,7 @@ class SandboxSessionEndpoint {
                 ))
                 send toJson([
                         id      : session.id,
-                        path    : "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
+                        path    : "sessions/${forCurrentUser ? '' : "$username/"}session/$session.id",
                         username: username,
                         status  : sessionStatus(session),
                         host    : session.instance.host
@@ -165,7 +165,7 @@ class SandboxSessionEndpoint {
                 [(it.id): it]
             } as Map<String, InstanceType>
             [
-                    sandbox: report.sandbox.collect { sessionAsMap(it, instanceTypeById[it.instanceType]) },
+                    sessions     : report.sessions.collect { sessionAsMap(it, instanceTypeById[it.instanceType]) },
                     instanceTypes: report.instanceTypes.collect { instanceTypeAsMap(it) },
                     spending     : spendingAsMap(report.spending)
             ]
@@ -175,7 +175,7 @@ class SandboxSessionEndpoint {
             def earliestTimeoutHours = Math.max(0, hoursBetween(new Date(), session.earliestTimeoutTime))
             [
                     id                  : session.id,
-                    path                : "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
+                    path                : "sessions/${forCurrentUser ? '' : "$username/"}session/$session.id",
                     username            : username,
                     status              : sessionStatus(session),
                     host                : session.instance.host,
@@ -189,7 +189,7 @@ class SandboxSessionEndpoint {
         private Map instanceTypeAsMap(InstanceType instanceType) {
             [
                     id         : instanceType.id,
-                    path       : "sandbox/${forCurrentUser ? '' : "$username/"}instance-type/$instanceType.id",
+                    path       : "sessions/${forCurrentUser ? '' : "$username/"}instance-type/$instanceType.id",
                     name       : instanceType.name,
                     description: instanceType.description,
                     hourlyCost : instanceType.hourlyCost

@@ -106,18 +106,18 @@ class MockServer extends AbstractMvcFilter {
                 send toJson("[budget-exceeded:" + value + "]")
             }
 
-            get('/api/sandbox/report') {
+            get('/api/sessions/report') {
                 response.contentType = 'application/json'
 
                 send toJson(
                         sessions: [[
                                            id               : 'some-session',
-                                           path             : 'sandbox/session/some-session',
+                                           path             : 'sessions/session/some-session',
                                            username         : authenticator.users.values().first().username,
                                            status           : 'STARTING',
                                            host             : 'some-host',
                                            instanceType     : [
-                                                   path       : "sandbox/instance-type/some-instance-type",
+                                                   path       : "sessions/instance-type/some-instance-type",
                                                    id         : 'some-instance-type',
                                                    name       : 'Some instance type',
                                                    description: 'Some instance type description',
@@ -127,7 +127,7 @@ class MockServer extends AbstractMvcFilter {
                                            costSinceCreation: 0.1 * 2 * 24 // hourly cost * two days
                                    ]],
                         instanceTypes: [[
-                                                path       : "sandbox/instance-type/some-instance-type",
+                                                path       : "sessions/instance-type/some-instance-type",
                                                 id         : 'some-instance-type',
                                                 name       : 'Some instance type',
                                                 description: 'Some instance type description',
