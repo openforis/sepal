@@ -49,7 +49,7 @@ class MosaicMigrations extends AbstractMigrations {
             if (r.sceneAreas) {
                 result.model.sceneSelectionOptions = [
                     type: 'SELECT',
-                    targetDateWeight: r.sortWeight
+                    targetDateWeight: r.sortWeight as double
                 ]
                 result.model.scenes = scenes(r.sceneAreas, r.sensorGroup)
             } else {

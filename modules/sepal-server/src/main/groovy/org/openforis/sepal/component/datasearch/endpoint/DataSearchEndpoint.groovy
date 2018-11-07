@@ -142,7 +142,7 @@ class DataSearchEndpoint {
                     fromDate: subtractFromDate(clientQuery.dates.seasonStart, clientQuery.dates.yearsBefore as int, YEARS),
                     toDate: addToDate(clientQuery.dates.seasonEnd, clientQuery.dates.yearsAfter as int, YEARS),
                     targetDayOfYear: dayOfYearIgnoringLeapDay(clientQuery.dates.targetDate),
-                    targetDayOfYearWeight: clientQuery.sceneSelectionOptions.targetDateWeight
+                    targetDayOfYearWeight: clientQuery.sceneSelectionOptions.targetDateWeight as double
                 )
                 def scenes = component.submit(new FindScenesForSceneArea(query))
                 def data = scenes.collect { sceneData(it, query.targetDayOfYear) }
