@@ -39,11 +39,12 @@ export function select(path) {
     }, state())
 }
 
-function includeDispatchingProp(mapStateToProps) {
+function includeDispatchingProp(id, mapStateToProps) {
     return (state, ownProps) => {
         return {
             ...mapStateToProps(state, ownProps),
-            actions: state.actions || {}
+            actions: state.actions || {},
+            streams: state.stream && state.stream[id]
         }
     }
 }
@@ -53,7 +54,8 @@ export function connect(mapStateToProps) {
     
     return WrappedComponent => {
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
-        WrappedComponent = connectToRedux(includeDispatchingProp(mapStateToProps), null, null, {
+        const id = `${displayName}:${guid()}`
+        WrappedComponent = connectToRedux(includeDispatchingProp(id, mapStateToProps), null, null, {
             areStatePropsEqual: _.isEqual
         })(WrappedComponent)
 
@@ -65,7 +67,7 @@ export function connect(mapStateToProps) {
         class ConnectedComponent extends React.Component {
             constructor(props) {
                 super(props)
-                this.id = `${displayName}:${guid()}`
+                this.id = id
                 this.componentWillUnmount$ = new Subject()
                 this.asyncActionBuilder = this.asyncActionBuilder.bind(this)
                 this.action = this.action.bind(this)
