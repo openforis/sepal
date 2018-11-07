@@ -62,7 +62,7 @@ const actionBuilder = (type, props) => {
         setValueByTemplate(path, template, value) {
             operations.push((immutableState, state) => {
                 const index = select(path, state)
-                    .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
+                    .findIndex(value => _.isEqual(_.merge({}, value, template), value))
                 return (index !== -1)
                     ? immutableState.set([...toPathList(path), index], value)
                     : immutableState
@@ -80,7 +80,7 @@ const actionBuilder = (type, props) => {
         assignValueByTemplate(path, template, value) {
             operations.push((immutableState, state) => {
                 const index = select(path, state)
-                    .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
+                    .findIndex(value => _.isEqual(_.merge({}, value, template), value))
                 return (index !== -1)
                     ? immutableState.assign([...toPathList(path), index], value)
                     : immutableState
@@ -159,7 +159,7 @@ const actionBuilder = (type, props) => {
         delValueByTemplate(path, template) {
             operations.push((immutableState, state) => {
                 const index = select(path, state)
-                    .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
+                    .findIndex(value => _.isEqual(_.merge({}, value, template), value))
                 return (index !== -1)
                     ? immutableState.del([...toPathList(path), index])
                     : immutableState
