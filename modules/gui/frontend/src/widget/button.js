@@ -61,19 +61,20 @@ const renderContents = ({icon, label, children}) =>
         </div>
     )
 
-const classNames = ({className, look, size, onClickHold}) =>
+const classNames = ({className, additionalClassName, look, size, onClickHold}) =>
     className ? className : [
         styles.button,
         styles[size],
         lookStyles.look,
         lookStyles[look],
-        onClickHold ? styles.hold : null
+        onClickHold ? styles.hold : null,
+        additionalClassName
     ].join(' ')
 
-const renderButton = ({type, className, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled}, contents) =>
+const renderButton = ({type, className, additionalClassName, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled}, contents) =>
     <button
         type={type}
-        className={classNames({className, look, size, onClickHold})}
+        className={classNames({className, additionalClassName, look, size, onClickHold})}
         style={{visibility: shown ? 'visible' : 'hidden'}}
         tabIndex={tabIndex}
         disabled={disabled || !shown}
@@ -129,6 +130,7 @@ const download = (url, filename) => {
 export const Button = ({
     type = 'button',
     className,
+    additionalClassName,
     look = 'default',
     size = 'normal',
     tabIndex,
@@ -152,7 +154,7 @@ export const Button = ({
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
             renderPropagationStopper({stopPropagation},
                 renderHammer({onClick, onClickHold, downloadUrl, downloadFilename, shown, disabled},
-                    renderButton({type, className, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled},
+                    renderButton({type, className, additionalClassName, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled},
                         renderContents({icon, label, children})
                     )
                 )
@@ -161,6 +163,7 @@ export const Button = ({
     )
 
 Button.propTypes = {
+    additionalClassName: PropTypes.string,
     children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
     className: PropTypes.string,
     disabled: PropTypes.any,
