@@ -75,7 +75,7 @@ class SceneSelection extends React.Component {
 
     renderScenes() {
         const {dates: {targetDate}, inputs: {selectedScenes}} = this.props
-        const {width, scenes, scenesById} = this.state
+        const {width, scenes, scenesById = {}} = this.state
         const availableSceneComponents = scenes
             .filter(scene => !selectedScenes.value.find(selectedScene => selectedScene.id === scene.id))
             .map(scene =>
@@ -125,7 +125,7 @@ class SceneSelection extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (!objectEquals(this.props, prevProps, ['dates', 'sources', 'sceneSelectionOptions']))
+        if (!objectEquals(this.props, prevProps, ['sceneAreaId', 'dates', 'sources', 'sceneSelectionOptions']))
             this.loadScenes()
     }
 
