@@ -2,7 +2,6 @@ import actionBuilder from 'action-builder'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject} from 'rxjs'
@@ -55,7 +54,7 @@ const loadCountryAreas$ = countryId => {
 const mapStateToProps = (state, ownProps) => {
     return {
         countries: select('countries'),
-        countryAreas: select(['areasByCountry', ownProps.inputs.country.value])
+        countryAreas: select(['areasByCountry', ownProps.inputs.country.value]),
     }
 }
 
@@ -72,13 +71,6 @@ class CountrySection extends React.Component {
                 loadCountryAreas$(countryId).pipe(
                     takeUntil(this.aoiChanged$)
                 ))
-    }
-
-    updateBounds(updatedBounds) {
-        const {recipeId, inputs: {bounds}} = this.props
-        if (!_.isEqual(bounds.value, updatedBounds))
-            bounds.set(updatedBounds)
-        sepalMap.getContext(recipeId).fitLayer('aoi')
     }
 
     render() {
@@ -144,8 +136,9 @@ class CountrySection extends React.Component {
             this.loadCountryAreas(country.value)
     }
 
-    componentDidUpdate() {
-        this.update()
+    componentDidUpdate(prevProps) {
+        if (!prevProps || prevProps.inputs !== this.props.inputs)
+            this.update(prevProps)
     }
 
     update() {
@@ -163,7 +156,7 @@ class CountrySection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: layer => this.updateBounds(layer.bounds)
+            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi')
         })
     }
 }

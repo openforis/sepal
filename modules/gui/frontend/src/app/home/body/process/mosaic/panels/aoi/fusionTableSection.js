@@ -1,7 +1,6 @@
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
-import _ from 'lodash'
 import React from 'react'
 import {Subject} from 'rxjs'
 import {map, takeUntil} from 'rxjs/operators'
@@ -62,13 +61,6 @@ class FusionTableSection extends React.Component {
                 takeUntil(this.fusionTableChanged$)
             )
         )
-    }
-
-    updateBounds(updatedBounds) {
-        const {recipeId, inputs: {bounds}} = this.props
-        if (!_.isEqual(bounds.value, updatedBounds))
-            bounds.set(updatedBounds)
-        sepalMap.getContext(recipeId).fitLayer('aoi')
     }
 
     render() {
@@ -145,25 +137,27 @@ class FusionTableSection extends React.Component {
             this.loadFusionTableColumns(fusionTable.value)
         if (fusionTableColumn.value)
             this.loadFusionTableRows(fusionTableColumn.value)
+        this.update()
     }
 
     componentDidUpdate(prevProps) {
-        if (prevProps.inputs === this.props.inputs)
-            return
+        if (!prevProps || prevProps.inputs !== this.props.inputs)
+            this.update()
+    }
 
-        const {recipeId, inputs: {fusionTable, fusionTableColumn, fusionTableRow, bounds}, componentWillUnmount$} = this.props
+    update() {
+        const {recipeId, inputs: {fusionTable, fusionTableColumn, fusionTableRow}, componentWillUnmount$} = this.props
         setAoiLayer({
             contextId: recipeId,
             aoi: {
                 type: 'FUSION_TABLE',
                 id: fusionTable.value,
                 keyColumn: fusionTableColumn.value,
-                key: fusionTableRow.value,
-                bounds: bounds.value
+                key: fusionTableRow.value
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: layer => this.updateBounds(layer.bounds)
+            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi')
         })
     }
 }

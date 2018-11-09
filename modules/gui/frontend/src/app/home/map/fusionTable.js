@@ -73,11 +73,10 @@ const authParam = () =>
         : {key: sepalMap.getKey()}
 
 class FusionTableLayer {
-    constructor({tableId, keyColumn, key, bounds, fill}) {
+    constructor({tableId, keyColumn, key, fill}) {
         this.tableId = tableId
         this.keyColumn = keyColumn
         this.key = key
-        this.bounds = bounds
         this.fill = fill
 
         this.layer = new google.maps.FusionTablesLayer({
