@@ -48,7 +48,7 @@ class MosaicMigrationsTest extends RecipeTest {
                     "BRDF"
                   ],
                   "filters": [
-                    {"type": "HAZE", "percentile": 0.95}
+                    {"type": "HAZE", "percentile": 95}
                   ],
                   "mask": [
                     "SNOW"
@@ -120,7 +120,7 @@ class MosaicMigrationsTest extends RecipeTest {
                     "BRDF"
                   ],
                   "filters": [
-                    {"type": "HAZE", "percentile": 0.95}
+                    {"type": "HAZE", "percentile": 95}
                   ],
                   "mask": [
                     "SNOW"
@@ -217,7 +217,7 @@ class MosaicMigrationsTest extends RecipeTest {
                     "BRDF"
                   ],
                   "filters": [
-                    {"type": "HAZE", "percentile": 0.95}
+                    {"type": "HAZE", "percentile": 95}
                   ],
                   "mask": [
                     "SNOW"
@@ -303,7 +303,7 @@ class MosaicMigrationsTest extends RecipeTest {
                     "BRDF"
                   ],
                   "filters": [
-                    {"type": "HAZE", "percentile": 0.95}
+                    {"type": "HAZE", "percentile": 95}
                   ],
                   "mask": [
                     "SNOW"

@@ -2,6 +2,7 @@ package component.processingrecipe
 
 import fake.Database
 import fake.FakeClock
+import groovy.json.JsonSlurper
 import org.openforis.sepal.component.processingrecipe.ProcessingRecipeComponent
 import org.openforis.sepal.component.processingrecipe.api.Recipe
 import org.openforis.sepal.component.processingrecipe.command.MigrateRecipes
@@ -14,6 +15,8 @@ import org.openforis.sepal.component.processingrecipe.query.LoadRecipe
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.sql.SqlConnectionManager
 import spock.lang.Specification
+
+import static groovy.json.JsonParserType.LAX
 
 abstract class RecipeTest extends Specification {
     final database = new Database(ProcessingRecipeComponent.SCHEMA)
@@ -54,7 +57,7 @@ abstract class RecipeTest extends Specification {
         new Recipe(
             id: args.id ?: UUID.randomUUID().toString(),
             name: args.name ?: 'some-name',
-            type: args.type ?: 'MOSAIC',
+            type: args.type ?: (args.contents ? new JsonSlurper(type: LAX).parseText(args.contents).type : 'MOSAIC'),
             typeVersion: args.typeVersion ?: currentTypeVersion,
             username: args.username ?: testUsername,
             contents: args.containsKey('contents') ? args.contents : '"some-contents"',
