@@ -33,6 +33,7 @@ task runDev(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
     main = 'manual.UserTestMain'
     systemProperties(System.getProperties())
+    systemProperties.remove("java.endorsed.dirs")
 }
 //  ./gradlew :sepal-server:runDev -DconfigDir=/path/to/sepal-config/user
 

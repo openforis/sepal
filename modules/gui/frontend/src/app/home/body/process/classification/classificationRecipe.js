@@ -64,7 +64,7 @@ const initRecipe = recipeState => {
     const actions = RecipeActions(recipeState.id)
     const model = recipeState.model
     if (model)
-        return actions.setInitialized(model.source && model.trainingData).dispatch()
+        return actions.setInitialized(model.source && model.trainingData && model.trainingData.fusionTableColumn).dispatch()
 }
 
 const submitRetrieveRecipeTask = recipe => {
