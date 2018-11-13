@@ -3,6 +3,7 @@ import {map} from 'rxjs/operators'
 import {of} from 'rxjs'
 import _ from 'lodash'
 import ee from 'earthengine-api'
+import guid from 'guid'
 
 export default class EarthEngineLayer {
     constructor({layerIndex, bounds, mapId$, props, onProgress}) {
@@ -21,8 +22,14 @@ export default class EarthEngineLayer {
         const layer = new ee.layers.ImageOverlay(
             new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', this.mapId, this.token)
         )
+
+        // [HACK] When fitting bounds with no change to bounds, after Google Maps v3.33,
+        // tiles were loaded then removed. GEE used same id for tiles at the same position.
+        // This caused freshly loaded tiles to be immediately removed.
+        // This workaround uses unique tile ids. Hopefully this doesn't lead to any memory leaks.
+        layer.getUniqueTileId_ = () => guid()
+
         googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
-        // googleMap.fitBounds(googleMap.getBounds())
 
         const notifyOnProgress = () => {
             // Manually calculate stats, since GEE returns stats from multiple zoom-levels
@@ -44,7 +51,6 @@ export default class EarthEngineLayer {
                 failed,
                 loaded
             }
-            // console.log(tileStats)
             tileStats.complete = tileStats.count === tileStats.loaded + tileStats.failed
 
             if (this.onProgress && tileStats.count > 0)
