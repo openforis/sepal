@@ -411,7 +411,7 @@ export class Input extends React.Component {
                 {...props}
                 ref={this.element}
                 name={input.name}
-                value={input.value || ''}
+                value={typeof input.value === 'number' || input.value ? input.value : ''}
                 tabIndex={tabIndex}
                 onChange={e => {
                     input.handleChange(e)
