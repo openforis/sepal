@@ -98,7 +98,7 @@ const setSceneAreaLayer = ({recipeId, component}) => {
     sepalMap.getContext(recipeId).setLayer({
         id: 'sceneAreas',
         layer,
-        destroy$: component.componentWillUnmount$
+        destroy$: component.props.componentWillUnmount$
     })
 }
 
@@ -112,12 +112,12 @@ class SceneAreaLayer {
     }
 
     addToMap() {
-        if (!this.component.state.show)
+        if (!this.component.state.show && !this.component.props.componentWillUnmount$.isStopped)
             this.component.setState(prevState => ({...prevState, show: true}))
     }
 
     removeFromMap() {
-        if (this.component.state.show)
+        if (this.component.state.show && !this.component.props.componentWillUnmount$.isStopped)
             this.component.setState(prevState => ({...prevState, show: false}))
     }
 
