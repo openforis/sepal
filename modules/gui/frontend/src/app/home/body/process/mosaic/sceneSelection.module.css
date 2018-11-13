@@ -2,6 +2,7 @@
     max-height: 80rem;
     max-width: 95rem;
     z-index: 1;
+    width: calc(100% - 7rem);
 }
 
 .content {
