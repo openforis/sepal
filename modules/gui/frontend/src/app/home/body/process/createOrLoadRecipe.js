@@ -1,16 +1,17 @@
-import {Button, ButtonGroup} from 'widget/button'
-import {CenteredProgress} from 'widget/progress'
-import {connect, select} from 'store'
-import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
-import {map} from 'rxjs/operators'
-import {msg} from 'translate'
-import {recipePath} from 'app/home/body/process/recipe'
-import PropTypes from 'prop-types'
-import React from 'react'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import {recipePath} from 'app/home/body/process/recipe'
 import flexy from 'flexy.module.css'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {map} from 'rxjs/operators'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import {Button, ButtonGroup} from 'widget/button'
+import {CenteredProgress} from 'widget/progress'
 import styles from './createOrLoadRecipe.module.css'
+import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
 
 const CreateOrLoadRecipe = ({recipeId}) =>
     <div className={[styles.container, flexy.container].join(' ')}>
@@ -30,12 +31,17 @@ CreateOrLoadRecipe.propTypes = {
 
 export default CreateOrLoadRecipe
 
-const mapStateToProps = () => ({
-    recipes: select('process.recipes')
-})
+const mapStateToProps = () => {
+    const recipes = select('process.recipes')
+    return {
+        recipes: recipes
+            ? _.sortBy(recipes, 'name')
+            : null
+    }
+}
 
 class RecipeList extends React.Component {
-    UNSAFE_componentWillMount() {
+    componentDidMount() {
         if (!this.props.recipes)
             this.props.asyncActionBuilder('LOAD_RECIPES', loadRecipes$())
                 .dispatch()
