@@ -76,12 +76,12 @@ class MosaicSpec(ImageSpec):
 
 _toa_viz_by_bands = {
     'red, green, blue': lambda params: {
-        'bands': 'red, green, blue',
+        'bands': 'red,green,blue',
         'min': '200, 400, 600',
         'max': '2400, 2200, 2400',
         'gamma': 1.2},
     'nir, red, green': lambda params: {
-        'bands': 'nir, red, green',
+        'bands': 'nir,red,green',
         'min': '500, 200, 400',
         'max': '5000, 2400, 2200'},
     'nir, swir1, red': lambda params: {
@@ -90,15 +90,15 @@ _toa_viz_by_bands = {
         'max': 5000,
         'gamma': 1.5},
     'swir2, nir, red': lambda params: {
-        'bands': 'swir2, nir, red',
+        'bands': 'swir2,nir,red',
         'min': '0, 500, 200',
         'max': '1800, 6000, 3500'},
     'swir2, swir1, red': lambda params: {
-        'bands': 'swir2, swir1, red',
+        'bands': 'swir2,swir1,red',
         'min': '0, 500, 200',
         'max': '1800, 3000, 2400'},
     'swir2, nir, green': lambda params: {
-        'bands': 'swir2, nir, green',
+        'bands': 'swir2,nir,green',
         'min': '0, 500, 400',
         'max': '1800, 6000, 3500'},
     'unixTimeDays': lambda params: {
@@ -123,29 +123,29 @@ _toa_viz_by_bands = {
 
 _sr_viz_by_bands = {
     'red, green, blue': lambda params: {
-        'bands': 'red, green, blue',
+        'bands': 'red,green,blue',
         'min': '300, 100, 0',
         'max': '2500, 2500, 2300',
         'gamma': 1.3},
     'nir, red, green': lambda params: {
-        'bands': 'nir, red, green',
+        'bands': 'nir,red,green',
         'min': '500, 200, 100',
         'max': '5000, 2400, 2500'},
     'nir, swir1, red': lambda params: {
-        'bands': 'nir, swir1, red',
+        'bands': 'nir,swir1,red',
         'min': 0,
         'max': '5000, 5000, 3000',
         'gamma': 1.3},
     'swir2, nir, red': lambda params: {
-        'bands': 'swir2, nir, red',
+        'bands': 'swir2,nir,red',
         'min': '100, 500, 300',
         'max': '2000, 6000, 2500'},
     'swir2, swir1, red': lambda params: {
-        'bands': 'swir2, swir1, red',
+        'bands': 'swir2,swir1,red',
         'min': '100, 200, 300',
         'max': '3300, 4800, 3100'},
     'swir2, nir, green': lambda params: {
-        'bands': 'swir2, nir, green',
+        'bands': 'swir2,nir,green',
         'min': '100, 500, 400',
         'max': '3300, 7500, 3000'},
     'unixTimeDays': lambda params: {

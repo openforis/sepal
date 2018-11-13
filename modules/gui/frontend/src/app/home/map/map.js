@@ -1,15 +1,15 @@
-import './map.module.css'
-import {NEVER, Observable, Subject} from 'rxjs'
-import {connect, select} from 'store'
-import {map, mergeMap, takeUntil} from 'rxjs/operators'
-import GoogleMapsLoader from 'google-maps'
-import Notifications from 'app/notifications'
-import Portal from 'widget/portal'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import Notifications from 'app/notifications'
+import GoogleMapsLoader from 'google-maps'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {NEVER, Observable, Subject} from 'rxjs'
+import {map, mergeMap, takeUntil} from 'rxjs/operators'
+import {connect, select} from 'store'
+import Portal from 'widget/portal'
+import './map.module.css'
 
 export let sepalMap = null
 export let google = null
@@ -34,7 +34,7 @@ export const initGoogleMapsApi$ = () => {
 
     const loadGoogleMapsApi$ = apiKey => Observable.create(observer => {
         GoogleMapsLoader.KEY = apiKey
-        GoogleMapsLoader.VERSION = '3.34'
+        GoogleMapsLoader.VERSION = '3.35'
         GoogleMapsLoader.LIBRARIES = ['drawing']
         GoogleMapsLoader.load(g => {
             google = g
@@ -136,13 +136,15 @@ const createMap = mapElement => {
         },
         fitBounds(bounds) {
             const googleBounds = toGoogleBounds(bounds)
-            !googleMap.getBounds().equals(googleBounds) && googleMap.fitBounds(googleBounds)
+            const boundsChanged = !googleMap.getBounds().equals(googleBounds)
+            if (boundsChanged)
+                googleMap.fitBounds(googleBounds)
         },
         getBounds() {
             return fromGoogleBounds(googleMap.getBounds())
         },
         onBoundsChanged(listener) {
-            return googleMap.addListener('bounds_changed', listener)
+            // return googleMap.addListener('bounds_changed', listener)
         },
         addListener(mapObject, event, listener) {
             return google.maps.event.addListener(mapObject, event, listener)
@@ -420,6 +422,7 @@ class WrappedMapObject extends React.Component {
 
     }
 }
+
 export const MapObject = connect(state => ({projectionChange: state.map.projectionChange}))(WrappedMapObject)
 
 const ProjectionContext = React.createContext()
