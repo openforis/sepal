@@ -30,7 +30,8 @@ form fieldset label {
     font-weight: normal;
 }
 
-form input {
+form input,
+form textarea {
     display: block;
     width: 100%;
     border: none;
@@ -55,20 +56,25 @@ form input:-webkit-autofill:active {
 }
 
 form input:hover,
-form input:focus:hover {
+form input:focus:hover,
+form textarea:hover,
+form textarea:focus:hover {
     border-bottom: 1px solid var(--input-border-hover-color);
 }
 
-form input:focus {
+form input:focus,
+form textarea:focus {
     border-bottom: 1px solid var(--input-border-focus-color);
 }
 
-form input::placeholder {
+form input::placeholder,
+form textarea::placeholder {
     font-size: calc(1.25rem * var(--scaling-factor));
     font-style: italic;
 }
 
-form input.error {
+form input.error,
+form textarea.error {
     border-bottom-color: var(--error-border-color) !important;
     background-color: var(--error-background-color) !important;
 }

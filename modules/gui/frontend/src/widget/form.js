@@ -3,6 +3,7 @@ import {msg} from 'translate'
 import Icon from './icon'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Textarea from 'react-textarea-autosize'
 import Tooltip from './tooltip'
 import _ from 'lodash'
 import moment from 'moment'
@@ -392,7 +393,7 @@ export class Input extends React.Component {
     }
 
     renderInput() {
-        const {input, validate = 'onBlur', tabIndex, onChange, className, onBlur, errorMessage, ...props} = this.props
+        const {input, validate = 'onBlur', tabIndex, onChange, className, onBlur, ...props} = this.props
         return (
             <input
                 {...props}
@@ -400,6 +401,35 @@ export class Input extends React.Component {
                 name={input.name}
                 value={input.value || ''}
                 tabIndex={tabIndex}
+                onChange={e => {
+                    input.handleChange(e)
+                    if (onChange)
+                        onChange(e)
+                    if (validate === 'onChange')
+                        input.validate()
+                }}
+                onBlur={e => {
+                    if (onBlur)
+                        onBlur(e)
+                    if (validate === 'onBlur')
+                        input.validate()
+                }}
+                className={[input.validationFailed ? styles.error : null, className].join(' ')}
+            />
+        )
+    }
+
+    renderTextArea() {
+        const {input, minRows, maxRows, validate = 'onBlur', tabIndex, onChange, className, onBlur, ...props} = this.props
+        return (
+            <Textarea
+                {...props}
+                ref={this.element}
+                name={input.name}
+                value={input.value || ''}
+                tabIndex={tabIndex}
+                minRows={minRows}
+                maxRows={maxRows}
                 onChange={e => {
                     input.handleChange(e)
                     if (onChange)
@@ -426,10 +456,11 @@ export class Input extends React.Component {
     }
 
     render() {
+        const {textArea} = this.props
         return (
             <div>
                 {this.renderLabel()}
-                {this.renderInput()}
+                {textArea ? this.renderTextArea() : this.renderInput()}
                 {this.renderErrorMessage()}
             </div>
         )
@@ -445,8 +476,11 @@ Input.propTypes = {
     autoComplete: PropTypes.string,
     className: PropTypes.string,
     label: PropTypes.string,
+    maxRows: PropTypes.number,
+    minRows: PropTypes.number,
     placeholder: PropTypes.string,
     tabIndex: PropTypes.number,
+    textArea: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     validate: PropTypes.oneOf(['onChange', 'onBlur']),
