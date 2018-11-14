@@ -3,28 +3,30 @@
 }
 
 .landingPanel {
-    border-radius: 3rem;
-    background-color: rgba(187, 192, 195, 0.05);
-    max-width: 1140px;
+    border-radius: 1.5rem;
+    background-color: rgba(187, 192, 195, 0.09);
+    max-width: 500px;
 }
+
 
 .contentContainer {
     display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: 1fr auto;
     grid-template-areas:
-            'caption  title    title'
-            'features form     form'
-            'features privacy  language';
-    grid-column-gap: 3rem;
+            'title    language'
+            'caption  caption'
+            'form     form'
+            '.        privacy';
     grid-row-gap: 3rem;
     height: 100%;
-    padding: 4rem 3rem 1rem 3rem;
+    padding: 1.5rem 2rem;
     align-items: flex-start;
 }
 
-@media screen and (min-width: 320px) {
 
+.featuresSection {
+    display: none;
 }
 
 .languageSection {
@@ -39,7 +41,8 @@
     grid-area: caption;
     font-style: italic;
     font-family: Merriweather, Georgia, Times New Roman, Times, serif;
-    color: #fff;
+    color: var(--secondary-text-color);
+    font-size: 1rem;
 }
 
 .titleSection {
@@ -116,7 +119,7 @@
 .featureTitle {
     font-family: var(--header-font-family);
     font-weight: normal;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     text-transform: uppercase;
     letter-spacing: 0.15rem;
     color: var(--secondary-text-color);
@@ -124,7 +127,7 @@
 }
 
 .featureDescription {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: lighter;
 }
 
@@ -150,4 +153,28 @@
 
 .formExit {
     display: none;
+}
+
+
+
+@media screen and (min-width: 1000px) {
+    .landingPanel {
+        max-width: 1000px;
+        background-color: rgba(187, 192, 195, 0.05);
+    }
+
+    .contentContainer {
+        grid-template-columns: 1fr 1fr auto;
+        grid-template-rows: auto 1fr auto;
+        grid-template-areas:
+                'caption  title    language'
+                'features form     form'
+                'features .        privacy';
+        grid-column-gap: 3rem;
+        padding: 3rem 4rem;
+    }
+
+    .featuresSection {
+        display: block;
+    }
 }

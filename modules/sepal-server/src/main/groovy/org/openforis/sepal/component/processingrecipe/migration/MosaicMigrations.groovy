@@ -49,7 +49,7 @@ class MosaicMigrations extends AbstractMigrations {
             if (r.sceneAreas) {
                 result.model.sceneSelectionOptions = [
                     type: 'SELECT',
-                    targetDateWeight: r.sortWeight
+                    targetDateWeight: r.sortWeight as double
                 ]
                 result.model.scenes = scenes(r.sceneAreas, r.sensorGroup)
             } else {
@@ -67,11 +67,11 @@ class MosaicMigrations extends AbstractMigrations {
     }
 
     private static filter(value, name) {
-        value != null && (value as String).isNumber() && (value as double) > 0 ? [type: name, percentile: value as double] : null
+        value != null && (value as String).isNumber() && (value as double) > 0 ? [type: name, percentile: Math.round(100 * (value as double))] : null
     }
 
     private static inverseFilter(value, name) {
-        value != null && (value as String).isNumber() && (value as double) < 1 ? [type: name, percentile: 1 - (value as double)] : null
+        value != null && (value as String).isNumber() && (value as double) < 1 ? [type: name, percentile: Math.round(100 * (1 - (value as double)))] : null
     }
 
     private static aoi(r) {

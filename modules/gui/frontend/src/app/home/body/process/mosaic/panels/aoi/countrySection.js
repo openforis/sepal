@@ -1,16 +1,15 @@
-import {ErrorMessage, Label} from 'widget/form'
-import {Subject} from 'rxjs'
-import {connect, select} from 'store'
+import actionBuilder from 'action-builder'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
-import {map, takeUntil} from 'rxjs/operators'
-import {msg} from 'translate'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
-import ComboBox from 'widget/comboBox'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
-import actionBuilder from 'action-builder'
+import {Subject} from 'rxjs'
+import {map, takeUntil} from 'rxjs/operators'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import ComboBox from 'widget/comboBox'
+import {ErrorMessage, Label} from 'widget/form'
 
 const loadCountries$ = () => {
     return queryFusionTable$(`
@@ -21,7 +20,19 @@ const loadCountries$ = () => {
         map(e =>
             actionBuilder('SET_COUNTRIES', {countries: e.response})
                 .set('countries', e.response.rows)
-                .build()
+                .dispatch()
+        )
+    )
+}
+
+const loadCountryForArea$ = areaId => {
+    return queryFusionTable$(`
+            SELECT parent_id 
+            FROM ${countryFusionTable} 
+            WHERE id = '${areaId}'
+            ORDER BY label ASC`).pipe(
+        map(e =>
+            e.response.rows && e.response.rows.length === 1 && e.response.rows[0][0]
         )
     )
 }
@@ -35,7 +46,7 @@ const loadCountryAreas$ = countryId => {
         map(e =>
             actionBuilder('SET_COUNTRY_AREA', {countries: e.response})
                 .set(['areasByCountry', countryId], e.response.rows)
-                .build()
+                .dispatch()
         )
     )
 }
@@ -43,7 +54,7 @@ const loadCountryAreas$ = countryId => {
 const mapStateToProps = (state, ownProps) => {
     return {
         countries: select('countries'),
-        countryAreas: select(['areasByCountry', ownProps.inputs.country.value])
+        countryAreas: select(['areasByCountry', ownProps.inputs.country.value]),
     }
 }
 
@@ -56,25 +67,18 @@ class CountrySection extends React.Component {
 
     loadCountryAreas(countryId) {
         if (!select(['areasByCountry', countryId]))
-            this.props.asyncActionBuilder('LOAD_COUNTRY_AREAS',
+            this.props.stream('LOAD_COUNTRY_AREAS',
                 loadCountryAreas$(countryId).pipe(
-                    takeUntil(this.aoiChanged$))
-            ).dispatch()
-    }
-
-    updateBounds(updatedBounds) {
-        const {recipeId, inputs: {bounds}} = this.props
-        if (!_.isEqual(bounds.value, updatedBounds))
-            bounds.set(updatedBounds)
-        sepalMap.getContext(recipeId).fitLayer('aoi')
+                    takeUntil(this.aoiChanged$)
+                ))
     }
 
     render() {
-        const {action, countries, countryAreas, inputs: {country, area}} = this.props
-        const countriesState = action('LOAD_COUNTRIES').dispatching
+        const {stream, countries, countryAreas, inputs: {country, area}} = this.props
+        const countriesState = stream('LOAD_COUNTRIES') === 'ACTIVE'
             ? 'loading'
             : 'loaded'
-        const areasState = action('LOAD_COUNTRY_AREAS').dispatching
+        const areasState = stream('LOAD_COUNTRY_AREAS') === 'ACTIVE'
             ? 'loading'
             : country.value
                 ? countryAreas && countryAreas.length > 0 ? 'loaded' : 'noAreas'
@@ -87,7 +91,7 @@ class CountrySection extends React.Component {
                     <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}/>
                     <ComboBox
                         input={country}
-                        isLoading={action('LOAD_COUNTRIES').dispatching}
+                        isLoading={stream('LOAD_COUNTRIES') === 'ACTIVE'}
                         disabled={!countries}
                         placeholder={countryPlaceholder}
                         options={(countries || []).map(([value, label]) => ({value, label}))}
@@ -105,7 +109,7 @@ class CountrySection extends React.Component {
                     <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}/>
                     <ComboBox
                         input={area}
-                        isLoading={action('LOAD_COUNTRY_AREAS').dispatching}
+                        isLoading={stream('LOAD_COUNTRY_AREAS') === 'ACTIVE'}
                         disabled={!countryAreas || countryAreas.length === 0}
                         placeholder={areaPlaceholder}
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}
@@ -117,16 +121,31 @@ class CountrySection extends React.Component {
         )
     }
 
-    componentDidUpdate() {
+    componentDidMount() {
+        const {stream, inputs: {country, area}} = this.props
+        if (area.value && !country.value)
+            stream('LOAD_COUNTRY_FOR_AREA',
+                loadCountryForArea$(area.value).pipe(
+                    map(countryId => {
+                        country.setInitialValue(countryId)
+                        this.loadCountryAreas(countryId)
+                    })
+                ))
         this.update()
+        if (country.value)
+            this.loadCountryAreas(country.value)
+    }
+
+    componentDidUpdate(prevProps) {
+        if (!prevProps || prevProps.inputs !== this.props.inputs)
+            this.update(prevProps)
     }
 
     update() {
-        const {recipeId, countries, action, asyncActionBuilder, inputs: {country, area}, componentWillUnmount$} = this.props
-        if (!countries && !action('LOAD_COUNTRIES').dispatching)
-            asyncActionBuilder('LOAD_COUNTRIES',
+        const {recipeId, countries, stream, inputs: {country, area}, componentWillUnmount$} = this.props
+        if (!countries && stream('LOAD_COUNTRIES') !== 'ACTIVE')
+            this.props.stream('LOAD_COUNTRIES',
                 loadCountries$())
-                .dispatch()
 
         setAoiLayer({
             contextId: recipeId,
@@ -137,7 +156,7 @@ class CountrySection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: layer => this.updateBounds(layer.bounds)
+            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi')
         })
     }
 }

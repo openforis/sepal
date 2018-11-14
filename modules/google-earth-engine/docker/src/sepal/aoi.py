@@ -83,8 +83,10 @@ class FusionTable(Aoi):
     def __init__(self, spec):
         self.table_name = spec['id']
         self.key_column = spec['keyColumn']
-        self.value_column = spec['key']
         table = ee.FeatureCollection('ft:' + self.table_name)
+        number_column = is_number(spec['key']) and table.getInfo()['columns'].get(self.key_column) == 'Number'
+        self.value_column = float(spec['key']) if number_column else spec['key']
+
         aoi = table.filterMetadata(self.key_column, 'equals', self.value_column)
         geometry = aoi.geometry()
         Aoi.__init__(self, geometry, spec)
@@ -98,3 +100,20 @@ class FusionTable(Aoi):
 class AssetAoi(Aoi):
     def __init__(self, geometry, spec):
         Aoi.__init__(self, geometry, spec)
+
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        pass
+
+    try:
+        import unicodedata
+        unicodedata.numeric(s)
+        return True
+    except (TypeError, ValueError):
+        pass
+
+    return False

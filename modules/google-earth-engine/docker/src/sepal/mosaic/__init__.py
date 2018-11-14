@@ -45,23 +45,22 @@ class Mosaic(object):
     def _to_mosaic(self, bands, collection):
         collection = collection.select(bands)
         distance_bands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
-        median = collection.select(distance_bands).median()
+        # The bands might have been set - use a default set of bands if that's the case
+        bands_to_select = self.mosaic_def.bands if self.mosaic_def.bands and len(self.mosaic_def.bands)  > 0 else bands
         if self.mosaic_def.median_composite:
-            mosaic = median
+            mosaic = collection.select(bands_to_select).median()
         else:
             def add_distance(image):
                 distanceByBand = image.expression(
                     '1 - abs((i - m) / (i + m))', {
                         'i': image.select(distance_bands),
-                        'm': median.select(distance_bands)})
+                        'm': collection.select(distance_bands).median().select(distance_bands)})
                 return image.addBands(
                     distanceByBand.reduce(ee.Reducer.sum()).rename(['distanceToMedian'])
                 )
 
             collection = collection.map(add_distance)
             mosaic = collection.qualityMosaic('distanceToMedian')
-        # The bands might have been set - use a default set of bands if that's the case
-        bands_to_select = self.mosaic_def.bands if self.mosaic_def.bands else bands
         return mosaic \
             .select(bands_to_select) \
             .uint16() \

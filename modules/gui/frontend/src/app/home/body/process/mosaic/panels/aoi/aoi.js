@@ -35,9 +35,7 @@ const fields = {
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.row.required'),
     polygon: new Field()
         .skip((value, {section}) => section !== 'polygon')
-        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
-    bounds: new Field()
-        .notBlank('process.mosaic.panel.areaOfInterest.form.bounds.required')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -65,7 +63,6 @@ class Aoi extends React.Component {
 
     onApply(values) {
         const {recipeId, componentWillUnmount$} = this.props
-        this.initialBounds = values.bounds
         this.recipeActions.setAoi({values, model: valuesToModel(values)}).dispatch()
         const aoi = RecipeState(recipeId)('ui.aoi')
         this.aoiUnchanged = _.isEqual(aoi, this.initialAoi)
@@ -143,8 +140,7 @@ const valuesToModel = values => {
             id: countryFusionTable,
             keyColumn: 'id',
             key: values.area || values.country,
-            level: values.area ? 'area' : 'country',
-            bounds: values.bounds
+            level: values.area ? 'AREA' : 'COUNTRY'
         }
     case 'FUSION_TABLE':
         return {
@@ -157,8 +153,7 @@ const valuesToModel = values => {
     case 'POLYGON':
         return {
             type: 'POLYGON',
-            path: values.polygon,
-            bounds: values.bounds
+            path: values.polygon
         }
     default:
         throw new Error('Invalid aoi section: ' + values.section)
@@ -170,22 +165,19 @@ const modelToValues = (model = {}) => {
         if (model.id === countryFusionTable)
             return {
                 section: 'COUNTRY',
-                [model.level]: model.key,
-                bounds: model.bounds
+                [model.level.toLowerCase()]: model.key
             }
         else
             return {
                 section: 'FUSION_TABLE',
                 fusionTable: model.id,
                 fusionTableColumn: model.keyColumn,
-                fusionTableRow: model.key,
-                bounds: model.bounds
+                fusionTableRow: model.key
             }
     else if (model.type === 'POLYGON')
         return {
             section: 'POLYGON',
-            polygon: model.path,
-            bounds: model.bounds
+            polygon: model.path
         }
     else
         return {}

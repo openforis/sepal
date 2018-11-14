@@ -12,7 +12,8 @@ const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
         initialized: recipeState('ui.initialized'),
-        source: recipeState('model.source'),
+        source1: recipeState('model.source1'),
+        source2: recipeState('model.source2'),
         tabCount: select('process.tabs').length
     }
 }
@@ -43,10 +44,11 @@ class ChangeDetection extends React.Component {
     }
 
     setAoiLayer() {
-        const {recipeId, source, componentWillUnmount$} = this.props
+        const {recipeId, source1, source2, componentWillUnmount$} = this.props
+        console.log({source1, source2})
         setRecipeGeometryLayer({
             contextId: recipeId,
-            layerSpec: {id: 'aoi', layerIndex: 0, recipe: source},
+            layerSpec: {id: 'aoi', layerIndex: 0, recipe: source1 || source2},
             destroy$: componentWillUnmount$,
             onInitialized: () => {
                 if (this.props.tabCount === 1) {

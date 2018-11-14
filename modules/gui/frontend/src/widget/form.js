@@ -167,6 +167,18 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                 })
             }
 
+            setInitialValue(name, value) {
+                this.setState(prevState => {
+                    const state = {...prevState, dirty: false}
+                    state.initialValues[name] = value
+                    state.values[name] = value
+                    state.errors[name] = ''
+                    if (prevState.dirty)
+                        this.onClean()
+                    return state
+                })
+            }
+
             reset() {
                 this.setState(prevState => {
                     const state = {...prevState, values: {...prevState.initialValues}, dirty: false}
@@ -214,6 +226,7 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                         validate: () => this.validateField(name),
                         isDirty: () => this.isValueDirty(name),
                         set: value => this.set(name, value),
+                        setInitialValue: value => this.setInitialValue(name, value),
                         handleChange: e => this.handleChange(e),
                         onChange: listener => {
                             const listeners = this.changeListenersByInputName[name] || []
@@ -399,7 +412,7 @@ export class Input extends React.Component {
                 {...props}
                 ref={this.element}
                 name={input.name}
-                value={input.value || ''}
+                value={typeof input.value === 'number' || input.value ? input.value : ''}
                 tabIndex={tabIndex}
                 onChange={e => {
                     input.handleChange(e)
@@ -553,7 +566,7 @@ export class Label extends React.Component {
             </label>
         )
     }
-    
+
     render() {
         const {tooltip} = this.props
         return tooltip

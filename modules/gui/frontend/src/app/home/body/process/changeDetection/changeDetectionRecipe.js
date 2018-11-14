@@ -1,8 +1,8 @@
-import {RecipeState as ParentRecipeState, recipePath} from '../recipe'
-import {msg} from 'translate'
-import _ from 'lodash'
-import api from 'api'
 import globalActionBuilder from 'action-builder'
+import api from 'api'
+import _ from 'lodash'
+import {msg} from 'translate'
+import {recipePath, RecipeState as ParentRecipeState} from '../recipe'
 
 export {recipePath}
 
@@ -64,7 +64,10 @@ const initRecipe = recipeState => {
     const actions = RecipeActions(recipeState.id)
     const model = recipeState.model
     if (model)
-        return actions.setInitialized(model.source1 && model.source2 && model.trainingData).dispatch()
+        return actions.setInitialized(
+            model.source1 && model.source2
+            && model.trainingData && model.trainingData.fusionTableColumn
+        ).dispatch()
 }
 
 const submitRetrieveRecipeTask = recipe => {

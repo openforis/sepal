@@ -3,11 +3,9 @@ package org.openforis.sepal.component.processingrecipe
 import groovymvc.Controller
 import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.processingrecipe.adapter.JdbcRecipeRepository
-import org.openforis.sepal.component.processingrecipe.api.Recipe
 import org.openforis.sepal.component.processingrecipe.command.*
 import org.openforis.sepal.component.processingrecipe.endpoint.ProcessingRecipeEndpoint
-import org.openforis.sepal.component.processingrecipe.migration.Migrations
-import org.openforis.sepal.component.processingrecipe.migration.MosaicMigrations
+import org.openforis.sepal.component.processingrecipe.migration.*
 import org.openforis.sepal.component.processingrecipe.query.ListRecipes
 import org.openforis.sepal.component.processingrecipe.query.ListRecipesHandler
 import org.openforis.sepal.component.processingrecipe.query.LoadRecipe
@@ -23,7 +21,9 @@ import org.openforis.sepal.util.SystemClock
 class ProcessingRecipeComponent extends DataSourceBackedComponent implements EndpointRegistry {
     static final String SCHEMA = 'processing_recipe'
     static final Map<String, Migrations> MIGRATIONS_BY_RECIPE_TYPE = [
-        MOSAIC: new MosaicMigrations()
+        MOSAIC: new MosaicMigrations(),
+        CLASSIFICATION: new ClassificationMigrations(),
+        CHANGE_DETECTION: new ChangeDetectionMigrations()
     ]
 
     static ProcessingRecipeComponent create() {

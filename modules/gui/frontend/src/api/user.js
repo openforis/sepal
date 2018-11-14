@@ -1,6 +1,5 @@
 import {delete$, get$, post$} from 'http-client'
 import {map} from 'rxjs/operators'
-import {of} from 'rxjs'
 import _ from 'lodash'
 
 export default {
@@ -28,9 +27,8 @@ export default {
         }).pipe(toResponse),
 
     loadCurrentUserReport$: () =>
-        of(_sampleUserReport),
-    // get$('/api/sandbox/report')
-    //     .pipe(toResponse),
+        get$('/api/sessions/report')
+            .pipe(toResponse),
 
     login$: (username, password) =>
         post$('/api/user/login', {
@@ -75,14 +73,14 @@ export default {
             .pipe(toResponse),
 
     updateUserSession$: session =>
-        post$(`/api/sandbox/session/${session.id}/earliestTimeoutTime`, {
+        post$(`/api/sessions/session/${session.id}/earliestTimeoutTime`, {
             body: {
                 hours: session.keepAlive
             }
         }).pipe(toResponse),
 
     stopUserSession$: session =>
-        delete$(`/api/sandbox/session/${session.id}`),
+        delete$(`/api/sessions/session/${session.id}`),
 
     getUserList$: () =>
         get$('/api/user/list')

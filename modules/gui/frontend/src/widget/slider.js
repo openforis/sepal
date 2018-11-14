@@ -199,6 +199,7 @@ class SliderDynamics extends React.Component {
     }
 
     componentDidMount() {
+        this.setHandlePositionByValue()
         const handle = new Hammer(this.handle.current, {
             threshold: 1
         })
@@ -302,7 +303,7 @@ class SliderDynamics extends React.Component {
 
     componentDidUpdate(prevProps) {
         if (!this.state.inhibitInput && !_.isEqual(prevProps, this.props))
-            this.setHandlePosition(this.toPosition(this.props.input.value))
+            this.setHandlePositionByValue()
     }
 
     toPosition(value) {
@@ -333,6 +334,10 @@ class SliderDynamics extends React.Component {
         } else {
             return value
         }
+    }
+
+    setHandlePositionByValue() {
+        this.setHandlePosition(this.toPosition(this.props.input.value))
     }
 
     setHandlePosition(position) {
@@ -400,9 +405,6 @@ export default class Slider extends React.Component {
                     const value = tick.value || index
                     const label = tick.label || value
                     return {value, label}
-                    // const externalValue = tick.externalValue || value
-                    // const label = tick.label || externalValue
-                    // return {value, externalValue, label}
                 }
                 if (_.isString(tick)) {
                     return {value: index, externalValue: tick, label: tick}
@@ -436,30 +438,37 @@ export default class Slider extends React.Component {
     }
 
     renderSlider() {
-        const {input, logScale, snap, range = 'left', info, disabled} = this.props
-        const {ticks, minValue, maxValue} = this.state
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
                     <ReactResizeDetector
                         handleWidth
-                        onResize={width => {
-                            return this.setState(prevState => ({...prevState, width}))
-                        }}/>
-                    <SliderContainer
-                        input={input}
-                        minValue={minValue}
-                        maxValue={maxValue}
-                        ticks={ticks}
-                        snap={snap}
-                        range={range}
-                        logScale={logScale}
-                        info={info}
-                        width={this.state.width}
-                        disabled={disabled}/>
+                        onResize={width =>
+                            this.setState(prevState => ({...prevState, width}))
+                        }/>
+                    {this.state.width ? this.renderContainer() : null}
                 </div>
             </div>
         )
+    }
+
+    renderContainer() {
+        const {input, logScale, snap, range = 'left', info, disabled} = this.props
+        const {ticks, minValue, maxValue, width} = this.state
+        return (
+            <SliderContainer
+            input={input}
+            minValue={minValue}
+            maxValue={maxValue}
+            ticks={ticks}
+            snap={snap}
+            range={range}
+            logScale={logScale}
+            info={info}
+            width={width}
+            disabled={disabled}/>
+        )
+
     }
 
     renderDisabledOverlay() {

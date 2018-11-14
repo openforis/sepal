@@ -1,10 +1,10 @@
-import {Msg} from 'translate'
-import {RecipeActions, RecipeState, isRecipeOpen} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {connect} from 'store'
-import {sepalMap} from '../../../../../map/map'
+import {isRecipeOpen, RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {connect} from 'store'
+import {Msg} from 'translate'
+import {sepalMap} from '../../../../../map/map'
 import styles from './aoi.module.css'
 
 const mapStateToProps = (state, ownProps) => {
@@ -41,12 +41,6 @@ class PolygonSection extends React.Component {
         sepalMap.getContext(recipeId).disableDrawingMode()
     }
 
-    updateBounds(updatedBounds) {
-        const {recipeId, inputs: {bounds}} = this.props
-        bounds.set(updatedBounds)
-        sepalMap.getContext(recipeId).fitLayer('aoi')
-    }
-
     render() {
         return (
             <React.Fragment>
@@ -61,17 +55,16 @@ class PolygonSection extends React.Component {
         if (prevProps.inputs === this.props.inputs)
             return
 
-        const {recipeId, inputs: {polygon, bounds}, componentWillUnmount$} = this.props
+        const {recipeId, inputs: {polygon}, componentWillUnmount$} = this.props
         setAoiLayer({
             contextId: recipeId,
             aoi: {
                 type: 'POLYGON',
-                path: polygon.value,
-                bounds: bounds.value
+                path: polygon.value
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: layer => this.updateBounds(layer.bounds)
+            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi')
         })
     }
 

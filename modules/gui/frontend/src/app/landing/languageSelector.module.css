@@ -1,5 +1,8 @@
+.languages span, .languages a {
+    font-size: 1rem !important;
+}
+
 .languages span {
-    font-size: 0.9rem;
     cursor: default;
 }
 

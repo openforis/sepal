@@ -24,7 +24,7 @@ class MigrateRecipesHandler implements CommandHandler<Void, MigrateRecipes> {
         def migrations = command.migrations
         repository.eachOfTypeBeforeVersion(migrations.type, migrations.currentVersion) { Recipe recipe ->
             try {
-                LOG.debug("Migrating ${recipe}")
+                LOG.info("Migrating ${recipe}")
                 def migratedRecipe = migrations.migrate(recipe)
                 repository.save(migratedRecipe)
             } catch (Exception e) {
