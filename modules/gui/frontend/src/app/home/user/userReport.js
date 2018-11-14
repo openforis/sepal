@@ -2,6 +2,7 @@ import {Button} from 'widget/button'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {connect} from 'store'
 import {msg} from 'translate'
+import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import React from 'react'
 import UserSessions from './userSessions'
@@ -103,6 +104,10 @@ class Usage extends React.Component {
                             </div>
                         </div>
                     </PanelContent>
+                    <PanelButtons
+                        statePath='userReport'
+                        isActionForm={true}
+                        onApply={() => closePanel()}/>
                 </Panel>
             </Portal>
         )
