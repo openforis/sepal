@@ -1,6 +1,5 @@
 import {delete$, get$, post$} from 'http-client'
 import {map} from 'rxjs/operators'
-import _ from 'lodash'
 
 export default {
     loadCurrentUser$: () =>

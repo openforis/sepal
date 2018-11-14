@@ -21,7 +21,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         user,
         values: {
-            id: message && message.id || uuid(),
+            id: (message && message.id) || uuid(),
             type: 'SYSTEM',
             subject: (message && message.subject) || '',
             contents: (message && message.contents) || '',
