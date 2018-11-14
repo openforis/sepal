@@ -53,17 +53,18 @@ const hammerOptions = ({onClick, onClickHold, downloadUrl}) => {
         : (onClickHold ? pressOnly : nothing)
 }
 
-const renderContents = ({icon, label, children}) =>
+const renderContents = ({icon, iconType, label, children}) =>
     children ? children : (
         <div className={styles.contents}>
-            {icon ? <Icon name={icon}/> : null}
+            {icon ? <Icon name={icon} type={iconType}/> : null}
             {label ? <span>{label}</span> : null}
         </div>
     )
 
-const classNames = ({className, additionalClassName, look, size, onClickHold}) =>
+const classNames = ({noButton, className, additionalClassName, look, size, onClickHold}) =>
     className ? className : [
         styles.button,
+        noButton ? styles.noButton : null,
         styles[size],
         lookStyles.look,
         lookStyles[look],
@@ -71,10 +72,10 @@ const classNames = ({className, additionalClassName, look, size, onClickHold}) =
         additionalClassName
     ].join(' ')
 
-const renderButton = ({type, className, additionalClassName, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled}, contents) =>
+const renderButton = ({type, noButton, className, additionalClassName, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled}, contents) =>
     <button
         type={type}
-        className={classNames({className, additionalClassName, look, size, onClickHold})}
+        className={classNames({noButton, className, additionalClassName, look, size, onClickHold})}
         style={{visibility: shown ? 'visible' : 'hidden'}}
         tabIndex={tabIndex}
         disabled={disabled || !shown}
@@ -129,12 +130,14 @@ const download = (url, filename) => {
 
 export const Button = ({
     type = 'button',
+    noButton,
     className,
     additionalClassName,
     look = 'default',
     size = 'normal',
     tabIndex,
     icon,
+    iconType,
     label,
     onMouseDown,
     onClick,
@@ -154,8 +157,8 @@ export const Button = ({
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
             renderPropagationStopper({stopPropagation},
                 renderHammer({onClick, onClickHold, downloadUrl, downloadFilename, shown, disabled},
-                    renderButton({type, className, additionalClassName, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled},
-                        renderContents({icon, label, children})
+                    renderButton({type, noButton, className, additionalClassName, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled},
+                        renderContents({icon, iconType, label, children})
                     )
                 )
             )
@@ -170,9 +173,11 @@ Button.propTypes = {
     downloadFilename: PropTypes.any,
     downloadUrl: PropTypes.any,
     icon: PropTypes.string,
+    iconType: PropTypes.string,
     label: PropTypes.string,
     link: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'apply', 'cancel']),
+    noButton: PropTypes.any,
     shown: PropTypes.any,
     size: PropTypes.oneOf(['normal', 'large', 'x-large']),
     stopPropagation: PropTypes.any,

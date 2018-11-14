@@ -6,6 +6,12 @@
     transition: all 100ms ease-in-out;
 }
 
+.button.noButton {
+    padding: 0;
+    border: none !important;
+    background-color: inherit !important;
+}
+
 .button.normal {
     font-size: .9rem;
     line-height: 1.8rem;
