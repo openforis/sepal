@@ -35,7 +35,7 @@ class PanelButtons extends React.Component {
 
     apply() {
         const {form, onApply} = this.props
-        onApply(form.values())
+        onApply(form && form.values())
     }
 
     closePanel() {
@@ -209,8 +209,7 @@ class PanelButtons extends React.Component {
 
     renderCancelButton() {
         const {isActionForm, cancelLabel = msg('button.cancel'), form} = this.props
-        const dirty = form.isDirty()
-        const showCancelButton = isActionForm || dirty
+        const showCancelButton = isActionForm || form.isDirty()
         return (
             <Button
                 look='cancel'
@@ -229,17 +228,16 @@ class PanelButtons extends React.Component {
 
     renderOkButton() {
         const {isActionForm, applyLabel = msg('button.ok'), form} = this.props
-        const dirty = form.isDirty()
         return (
             <Button
-                type='submit'
+                type={isActionForm ? 'button' : 'submit'}
                 look='apply'
                 icon='check'
                 label={applyLabel}
-                disabled={form.isInvalid()}
+                disabled={!isActionForm && form.isInvalid()}
                 onClick={e => {
                     e.preventDefault()
-                    dirty || isActionForm ? this.ok() : this.cancel()
+                    isActionForm || form.isDirty() ? this.ok() : this.cancel()
                 }}
                 onMouseDown={e => e.preventDefault()} // Prevent onBlur validation before canceling
             />
@@ -247,17 +245,17 @@ class PanelButtons extends React.Component {
     }
 
     renderFormButtons() {
+        const {isActionForm, onApply, onCancel} = this.props
         return (
             <ButtonGroup>
-                {this.renderCancelButton()}
-                {this.renderOkButton()}
+                {!isActionForm || onCancel ? this.renderCancelButton() : null}
+                {!isActionForm || onApply ? this.renderOkButton() : null}
             </ButtonGroup>
         )
     }
 }
 
 PanelButtons.propTypes = {
-    form: PropTypes.object.isRequired,
     statePath: PropTypes.string.isRequired,
     additionalButtons: PropTypes.arrayOf(
         PropTypes.shape({
@@ -269,6 +267,7 @@ PanelButtons.propTypes = {
     ),
     applyLabel: PropTypes.string,
     cancelLabel: PropTypes.string,
+    form: PropTypes.object,
     initialized: PropTypes.any,
     isActionForm: PropTypes.any,
     modalOnDirty: PropTypes.any,
