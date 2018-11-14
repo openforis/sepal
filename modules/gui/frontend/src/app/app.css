@@ -25,6 +25,8 @@ html {
     --link-hover-color: #ccc;
     --link-selected-color: #fff;
 
+    --error-color: #e81351;
+
     font-size: calc(14px * var(--scaling-factor));
 }
 

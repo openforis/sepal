@@ -89,7 +89,8 @@
       "collapse.tooltip": "Collapse menu (floating)",
       "user": {
         "profile.tooltip": "Manage user profile",
-        "report.tooltip": "Show user report"
+        "report.tooltip": "Show user report",
+        "messages.tooltip": "Show user messages"
       }
     }
   },
@@ -817,6 +818,44 @@
         "cost": "Cost",
         "hourlyCost": "Hourly cost",
         "earliestTimeoutHours": "Keep alive"
+      }
+    },
+    "userMessages": {
+      "title": "User messages",
+      "post": "Post message",
+      "edit": "Edit message",
+      "remove": "Remove message",
+      "author": "Message by {author}",
+      "created": "created {when}",
+      "updated": "updated {when}",
+      "state": {
+        "READ": "Mark as unread",
+        "UNREAD": "Mark as read"
+      }
+    },
+    "userMessage": {
+      "title": "User message",
+      "form": {
+        "subject": {
+          "label": "Subject",
+          "required": "Subject is required"
+        },
+        "contents": {
+          "label": "Contents",
+          "required": "Contents is required"
+        }
+      },
+      "update": {
+        "success.title": "User message has been updated",
+        "error.title": "Cannot update user message"
+      },
+      "updateState": {
+        "success.title": "User message state has been updated",
+        "error.title": "Cannot update user message state"
+      },
+      "remove": {
+        "success.title": "User message has been removed",
+        "error.title": "Cannot remove user message"
       }
     }
   },

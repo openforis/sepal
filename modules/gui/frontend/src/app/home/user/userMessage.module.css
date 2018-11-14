@@ -1,0 +1,37 @@
+.panel {
+    /* min-height: 15rem; */
+    max-height: 50rem;
+    max-width: 60rem;
+}
+
+.panelContent {
+    justify-content: initial;
+}
+
+.editorAndContents {
+    display: flex;
+    flex-direction: row;
+    margin: 1rem 0;
+}
+
+.editorAndContents > * {
+    width: 50%;
+}
+
+.editorAndContents > * + * {
+    margin-left: 3rem;
+}
+
+.contents {
+    background-color: hsla(0, 0%, 100%, .1);
+    padding: 1rem;
+    border-radius: 1rem;
+    height: 100%;
+}
+
+.contents:before {
+    content: '';
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}

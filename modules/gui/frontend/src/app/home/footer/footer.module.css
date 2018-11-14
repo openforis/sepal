@@ -13,17 +13,17 @@
     z-index: 10;
 }
 
-.footer button, .footer div, .footer a {
+.footer .button, .footer div, .footer a {
     color: var(--look-default-color);
 }
 
-.footer button {
+.footer .button {
     border: none;
     cursor: pointer;
     padding-right: 0;
 }
 
-.footer a:hover, .footer button:hover, footer button:hover svg {
+.footer a:hover, .footer .button:hover, footer button:hover svg {
     color: var(--highlight-color);
 }
 
@@ -33,7 +33,7 @@
 }
 
 .button svg {
-    font-size: .8rem;
+    font-size: 1rem;
 }
 
 .title {

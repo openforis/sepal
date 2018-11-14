@@ -1,0 +1,106 @@
+.panel {
+    max-height: 50rem;
+    max-width: 60rem;
+    --unread-color: rgb(15, 89, 226);
+    --read-color: hsla(0, 0%, 0%, .2)
+}
+
+button.unread i {
+    color: rgb(15, 89, 226);
+    /* color: var(--unread-color); */
+    animation: pulse 1500ms ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        opacity: .2;
+    }
+}
+
+.messages {
+    overflow: auto;
+}
+
+.messages ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.messages li {
+    padding: .5rem 1rem;
+    border-radius: var(--container-border-radius);
+}
+
+.messages li .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.messages li + li {
+    margin-top: 1rem;
+}
+
+.messages li .dot.UNREAD i {
+    color: var(--unread-color);
+    animation: pulse 1700ms ease-out infinite;
+}
+
+.messages li .dot.READ i {
+    color: var(--read-color);
+}
+
+.messages li .subject {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin: .5rem 0 0 .5rem;
+}
+
+.messages li .info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    font-size: .9rem;
+    color: grey;
+    font-weight: bold;
+    border-bottom: 1px dashed var(--wireframe-color);
+}
+
+/* markdown */
+
+.contents {
+    margin-top: 1rem;
+    font-size: 1rem;
+}
+
+/* .contents h1 {
+    font-size: 1.6rem;
+}
+
+.contents h2 {
+    font-size: 1.3rem;
+}
+
+.contents h4 {
+    font-size: 1.1rem;
+} */
+
+.contents ul {
+    margin-bottom: 1rem;
+    list-style-type: circle;
+}
+
+.contents li {
+    margin-left: 2rem;
+    padding: 0;
+}
+
+.contents li + li {
+    margin-top: 0rem;
+}
