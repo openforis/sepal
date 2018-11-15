@@ -8,6 +8,6 @@ class ListRecipesTest extends RecipeTest {
         saveRecipe(newRecipe(username: 'anotherUser'))
 
         expect:
-        listRecipes(testUsername) == [recipe1, recipe2]
+        listRecipes(testUsername).toSet() == [recipe1, recipe2].toSet()
     }
 }

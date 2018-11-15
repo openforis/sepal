@@ -1,6 +1,7 @@
 package org.openforis.sepal.component.processingrecipe.migration
 
 import groovy.json.JsonSlurper
+import groovy.transform.ToString
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

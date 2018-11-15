@@ -11,25 +11,17 @@ class ClassificationMigrationsTest extends RecipeTest {
         def recipe = saveRecipe(newRecipe(contents: '''
             {
                 "id": "recipe-id",
-                "type": "CHANGE_DETECTION",
-                "name": "change-detection-title",
-                "inputRecipe1": "mosaic-id-1",
-                "inputRecipe2": "mosaic-id-2",
+                "type": "CLASSIFICATION",
+                "name": "classification-title",
+                "inputRecipe": "mosaic-id",
                 "fusionTableId": "fusion-table-id",
                 "fusionTableClassColumn": "class",
                 "algorithm": "cart",
-                "aoiCode": "NGA_CRS",
-                "aoiName": "Nigeria_Cross_River_State",
-                "polygon": null,
-                "geeAssetId1": null,
-                "geeAssetId2": null,
-                "mosaicPreview": true,
-                "mosaic":
-                {
-                    "mapId": "b60ff1ac34986b21744020606ae80371",
-                    "token": "958a2b1aadd2fa456201b17cc6fede51"
-                }
-            }}'''))
+                "aoiCode": null,
+                "aoiName": null,
+                "polygon": "[[50.9765625,36.78289206199065],[50.7952880859375,36.39475669987386],[51.2841796875,36.26199220445664],[51.470947265625,36.66841891894785],[50.9765625,36.78289206199065]]",
+                "geeAssetId": null
+            }'''))
         withMigrations(new ClassificationMigrations())
 
         when:

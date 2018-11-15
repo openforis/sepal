@@ -3,6 +3,7 @@ package component.processingrecipe
 import fake.Database
 import fake.FakeClock
 import groovy.json.JsonSlurper
+import groovy.transform.ToString
 import org.openforis.sepal.component.processingrecipe.ProcessingRecipeComponent
 import org.openforis.sepal.component.processingrecipe.api.Recipe
 import org.openforis.sepal.component.processingrecipe.command.MigrateRecipes
@@ -54,10 +55,13 @@ abstract class RecipeTest extends Specification {
     }
 
     Recipe newRecipe(Map args = [:]) {
+        def type = args.type ?: (args.contents ? new JsonSlurper(type: LAX).parseText(args.contents).type : 'MOSAIC')
+        if (!type)
+            type = 'MOSAIC'
         new Recipe(
             id: args.id ?: UUID.randomUUID().toString(),
             name: args.name ?: 'some-name',
-            type: args.type ?: (args.contents ? new JsonSlurper(type: LAX).parseText(args.contents).type : 'MOSAIC'),
+            type: type,
             typeVersion: args.typeVersion ?: currentTypeVersion,
             username: args.username ?: testUsername,
             contents: args.containsKey('contents') ? args.contents : '"some-contents"',
@@ -83,6 +87,7 @@ abstract class RecipeTest extends Specification {
     }
 }
 
+@ToString
 class DelegatingMigrations implements Migrations {
     @Delegate private Migrations migrations
 

@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.processingrecipe.command
 
+
+import groovy.transform.ToString
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.processingrecipe.api.Recipe
@@ -8,6 +10,7 @@ import org.openforis.sepal.component.processingrecipe.migration.Migrations
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+@ToString
 class MigrateRecipes extends AbstractCommand<Void> {
     Migrations migrations
 }
@@ -22,8 +25,10 @@ class MigrateRecipesHandler implements CommandHandler<Void, MigrateRecipes> {
 
     Void execute(MigrateRecipes command) {
         def migrations = command.migrations
+        println("******** MigrateRecipes ${command}")
         repository.eachOfTypeBeforeVersion(migrations.type, migrations.currentVersion) { Recipe recipe ->
             try {
+                println("******** Migrating ${recipe}")
                 LOG.info("Migrating ${recipe}")
                 def migratedRecipe = migrations.migrate(recipe)
                 repository.save(migratedRecipe)
