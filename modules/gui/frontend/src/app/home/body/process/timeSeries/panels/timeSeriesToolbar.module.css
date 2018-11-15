@@ -1,0 +1,24 @@
+.top, .bottom {
+    --look-default-h: 37;
+    --look-default-s: 27%;
+    --look-default-l: 25%;
+    --look-default-a: .9;
+
+    --look-highlight-h: 40;
+    --look-highlight-s: 8%;
+    --look-highlight-l: 15%;
+    --look-highlight-a: .95;
+
+    --look-disabled-h: 37;
+    --look-disabled-s: 10%;
+    --look-disabled-l: 20%;
+    --look-disabled-a: .9;
+}
+
+.top {
+    margin-top: 3rem;
+}
+
+.bottom {
+    margin-bottom: 3rem;
+}

@@ -1,17 +1,22 @@
 import ee
 
-from ..landsat import LandsatDataSet
+from ..landsat import landsat_data_sets
 from ..mosaic.analyze import analyze
 from ..mosaic.clouds import mask_clouds
 from ..mosaic.shadows import mask_shadows
-from ..sentinel2 import Sentinel2DataSet
 
 
 class TimeSeries(object):
     def __init__(self, spec):
         super(TimeSeries, self).__init__()
         self.spec = spec
-        data_sets = [self._to_data_set(data_set) for data_set in spec.data_sets]
+        data_sets = landsat_data_sets(
+            spec.data_sets,
+            spec.aoi,
+            spec,
+            ee.Filter.date(spec.from_date, spec.to_date)
+        )
+        # data_sets = [self._to_data_set(data_set) for data_set in spec.data_sets]
         collection = ee.ImageCollection([])
         for data_set in data_sets:
             data_set_collection = analyze(spec, data_set, data_set.to_collection())
@@ -21,7 +26,7 @@ class TimeSeries(object):
             self._process_collection(collection, spec),
             ee.ImageCollection([])
         ))
-        self.stack = self._to_stack(collection, spec._aoi)
+        self.stack = self._to_stack(collection, spec.aoi)
         self.dates = collection.map(lambda image: ee.Feature(None, {'date': image.get('date')}))
 
     def _process_collection(self, collection, spec):
@@ -69,12 +74,15 @@ class TimeSeries(object):
 
     def _to_data_set(self, dataSetName):
         image_filter = ee.Filter.And(
-            ee.Filter.geometry(self.spec._aoi),
-            ee.Filter.date(self.spec.from_date, self.spec.to_date)
+            ee.Filter.geometry(self.spec.aoi),
+            ee.Filter.date(self.spec.from_date, self.spec.to_date),
+            ee.Filter.stringStartsWith('LO8').Not()
         )
-        if dataSetName.startswith('landsat'):
-            return LandsatDataSet.create(dataSetName, image_filter, self.spec)
-        if dataSetName == 'sentinel2':
-            return Sentinel2DataSet(image_filter)
+        if dataSetName.startswith('LANDSAT'):
+            collection_names = self._convert_sepal_sensor_name_to_ee_collection_names()
+            [self._data_set(name, image_filter) for name in collection_names]
+            # return LandsatDataSet.create(dataSetName, image_filter, self.spec)
+        # if dataSetName == 'SENTINEL_2':
+        #     return Sentinel2DataSet(image_filter)
 
         raise Exception('Invalid dataSetName: ' + dataSetName)

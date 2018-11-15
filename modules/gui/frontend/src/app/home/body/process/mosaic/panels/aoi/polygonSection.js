@@ -1,4 +1,5 @@
-import {isRecipeOpen, RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {isRecipeOpen} from 'app/home/body/process/recipe'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'

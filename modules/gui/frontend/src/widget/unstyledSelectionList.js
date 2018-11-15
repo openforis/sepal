@@ -49,7 +49,7 @@ export default class UnstyledSelectionList extends React.Component {
                     }}
                 />
             </li>
-        return tooltip && !disabled
+        return tooltip && !(disabled || alwaysSelected || neverSelected)
             ? <Tooltip
                 key={value}
                 msg={tooltip}

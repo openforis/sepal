@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 
 def create(spec, context):
     aoi_spec = spec['aoi']
-    if aoi_spec['type'] == 'fusionTableCollection':
-        aoi = ee.FeatureCollection('ft:' + aoi_spec['tableName'])
+    if aoi_spec['type'] == 'FUSION_TABLE' and not aoi_spec.get('keyColumn'):
+        aoi = ee.FeatureCollection('ft:' + aoi_spec['id'])
     else:
         aoi = Aoi.create(aoi_spec).geometry()
     return DownloadFeatures(
@@ -42,14 +42,15 @@ def create(spec, context):
         from_date=spec['fromDate'],
         to_date=spec['toDate'],
         mask_snow=spec['maskSnow'],
-        brdf_correct=spec['brdfCorrect']
+        brdf_correct=spec['brdfCorrect'],
+        surface_reflectance=spec['surfaceReflectance']
     )
 
 
 class DownloadFeatures(ThreadTask):
     def __init__(
             self, download_dir, description, credentials, expression,
-            data_sets, aoi, from_date, to_date, mask_snow, brdf_correct):
+            data_sets, aoi, from_date, to_date, mask_snow, brdf_correct, surface_reflectance):
         super(DownloadFeatures, self).__init__('download_features')
         self.spec = TimeSeriesSpec(
             credentials=credentials,
@@ -62,7 +63,7 @@ class DownloadFeatures(ThreadTask):
             mask_clouds=True,
             mask_snow=mask_snow,
             brdf_correct=brdf_correct,
-            surface_reflectance=True,
+            surface_reflectance=surface_reflectance,
             target_day=0,
             masked_on_analysis=False,
             bands=[]
@@ -288,7 +289,7 @@ class DownloadYear(ThreadTask):
             ImageToDrive(
                 credentials=self._spec.credentials,
                 image=stack,
-                region=self._spec._aoi,
+                region=self._spec.aoi,
                 description='_'.join([self._description, self._feature_description, str(self._year), 'stack']),
                 folder=self._drive_folder,
                 scale=30,

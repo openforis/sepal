@@ -1,5 +1,4 @@
 import _strptime
-
 import ee
 from datetime import datetime
 from datetime import timedelta
@@ -126,6 +125,28 @@ class LandsatManualMosaicSpec(LandsatMosaicSpec):
         return 'landsat.ManualMosaicSpec(' + str(self.spec) + ')'
 
 
+def _convert_data_set_names_to_ee_collection_names(data_set_names, sr):
+    def flatten(iterable): return [item for sublist in iterable for item in sublist]
+
+    collections = _sr if sr else _toa
+    collection_names_by_sensor = collections['collection_names_by_sensor']
+    return set(
+        flatten(
+            map(lambda sensor: collection_names_by_sensor[sensor], data_set_names)
+        )
+    )
+
+def landsat_data_sets(data_set_names, aoi, spec, dateFilter):
+    image_filter = ee.Filter.And(
+        ee.Filter.geometry(aoi),
+        dateFilter,
+        ee.Filter.stringStartsWith('LO8').Not()
+    )
+    collection_names = _convert_data_set_names_to_ee_collection_names(data_set_names, spec.surface_reflectance)
+    return [LandsatDataSet(name, image_filter, spec) for name in collection_names]
+
+
+
 _toa = {
     'collection_names_by_sensor': {
         'LANDSAT_8': ('LANDSAT/LC08/C01/T1_TOA',),
@@ -167,12 +188,6 @@ _sr = {
         'LE7': ('LANDSAT/LE07/C01/T1_SR', 'LANDSAT/LE07/C01/T2_SR'),
         'LT5': ('LANDSAT/LT05/C01/T1_SR', 'LANDSAT/LT05/C01/T2_SR'),
         'LT4': ('LANDSAT/LT04/C01/T1_SR', 'LANDSAT/LT04/C01/T2_SR')
-    },
-    'collection_name_by_data_set': {
-        'landsat8': 'LANDSAT/LC08/C01/T1_SR',
-        'landsat7': 'LANDSAT/LE07/C01/T1_SR',
-        'landsat5': 'LANDSAT/LT05/C01/T1_SR',
-        'landsat4': 'LANDSAT/LT04/C01/T1_SR'
     }
 }
 
@@ -183,14 +198,6 @@ class LandsatDataSet(DataSet):
         self.collection_name = collection_name
         self.image_filter = image_filter
         self.mosaic_spec = mosaic_spec
-
-    @staticmethod
-    def create(data_set_name, image_filter, mosaic_spec):
-        collections = _sr if mosaic_spec.surface_reflectance else _toa
-        return LandsatDataSet(
-            collections['collection_name_by_data_set'][data_set_name],
-            image_filter,
-            mosaic_spec)
 
     def to_collection(self):
         return ee.ImageCollection(self.collection_name).filter(self.image_filter)

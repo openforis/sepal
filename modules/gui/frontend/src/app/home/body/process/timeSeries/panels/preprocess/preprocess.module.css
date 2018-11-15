@@ -1,0 +1,13 @@
+.panel {
+    max-width: 29rem;
+}
+
+.content > *:not(:last-child) {
+    margin-bottom: 2rem;
+}
+
+.inline {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between; 
+}

@@ -131,7 +131,6 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
             }
 
             validateField(name) {
-                // TODO: Validate constraints containing name
                 this.setState(prevState => {
                     const state = Object.assign({}, prevState)
                     if (!state.invalidValue[name])
@@ -407,12 +406,13 @@ export class Input extends React.Component {
 
     renderInput() {
         const {input, validate = 'onBlur', tabIndex, onChange, className, onBlur, ...props} = this.props
+        const extraProps = _.omit(props, ['errorMessage'])
         return (
             <input
-                {...props}
+                {...extraProps}
                 ref={this.element}
                 name={input.name}
-                value={typeof input.value === 'number' || input.value ? input.value : ''}
+                value={typeof input.value === 'number' || typeof input.value === 'boolean' || input.value ? input.value : ''}
                 tabIndex={tabIndex}
                 onChange={e => {
                     input.handleChange(e)

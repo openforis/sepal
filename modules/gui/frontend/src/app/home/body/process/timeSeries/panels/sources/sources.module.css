@@ -1,0 +1,12 @@
+.panel {
+    max-width: 30rem;
+    min-height: 19rem;
+}
+
+.sources {
+    margin-bottom: 2rem;
+}
+
+.oneDataSet {
+    font-style: italic;
+}

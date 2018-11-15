@@ -16,9 +16,6 @@ export const SceneSelectionType = Object.freeze({
     SELECT: 'SELECT'
 })
 
-export const isRecipeOpen = (recipeId) =>
-    !!ParentRecipeState(recipeId)
-
 export const RecipeState = recipeId => {
     const recipeState = ParentRecipeState(recipeId)
     if (!recipeState)

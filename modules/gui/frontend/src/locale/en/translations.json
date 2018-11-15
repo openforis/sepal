@@ -620,9 +620,115 @@
         "error": "Failed to create preview"
       }
     },
+
     "timeSeries": {
-      "create": "Time series"
+      "create": "Time series",
+      "mapToolbar": {
+        "zoom.tooltip": "Zoom to area",
+        "zoomIn.tooltip": "Zoom in",
+        "zoomOut.tooltip": "Zoom out",
+        "labels.show.tooltip": "Show labels",
+        "labels.hide.tooltip": "Hide labels",
+        "centerMap.tooltip": "Zoom to area of interest"
+      },
+      "panel": {
+        "retrieve": {
+          "title": "Retrieve",
+          "tooltip": "Retrieve time-series",
+          "apply": "Retrieve",
+          "form": {
+            "indicator": {
+              "label": "Indicator",
+              "required": "You must select an indicator"
+            }
+          },
+          "task": "Retrieve {name} to Sepal workspace"
+        },
+        "dates": {
+          "title": "Dates",
+          "button": "DAT",
+          "tooltip": "Specify date range",
+          "form": {
+            "startDate": {
+              "label": "Start date",
+              "tooltip": "The first date of the time-series, inclusive.",
+              "required": "Date is required",
+              "malformed": "Invalid date",
+              "beforeEnd":"Must be before end"
+            },
+            "endDate": {
+              "label": "End date",
+              "tooltip": "The last date of the time-series, exclusive.",
+              "required": "Date is required",
+              "malformed": "Invalid date"
+            }
+          }
+        },
+        "sources": {
+          "title": "Sources",
+          "button": "SRC",
+          "tooltip": "Select image source",
+          "form": {
+            "dataSets": {
+              "label": "Datasets",
+              "options": {
+                "LANDSAT_8": {
+                  "label": "L8",
+                  "tooltip": "Landsat 8"
+                },
+                "LANDSAT_7": {
+                  "label": "L7",
+                  "tooltip": "Landsat 7"
+                },
+                "LANDSAT_TM": {
+                  "label": "L4-5",
+                  "tooltip": "Landsat 4-5"
+                },
+                "LANDSAT_8_T2": {
+                  "label": "L8 T2",
+                  "tooltip": "Landsat 8 Tier 2"
+                },
+                "LANDSAT_7_T2": {
+                  "label": "L7 T2",
+                  "tooltip": "Landsat 7 Tier 2"
+                },
+                "LANDSAT_TM_T2": {
+                  "label": "L4-5 T2",
+                  "tooltip": "Landsat 4-5 Tier 2"
+                }
+              }
+            },
+            "required": "A data source must be selected"
+          }
+        },
+        "preprocess": {
+          "title": "Pre-process",
+          "button": "PRC",
+          "tooltip": "Configure scene pre-processing",
+          "form": {
+            "corrections": {
+              "label": "Corrections",
+              "surfaceReflectance": {
+                "label": "Surface reflectance",
+                "tooltip": "Use scenes atmospherically corrected surface reflectance."
+              },
+              "brdf": {
+                "label": "BRDF correction",
+                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+              }
+            },
+            "mask": {
+              "label": "Mask",
+              "snow": {
+                "label": "Snow",
+                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
+              }
+            }
+          }
+        }
+      }
     },
+
     "landCover": {
       "create": "RLCMS",
       "panel": {

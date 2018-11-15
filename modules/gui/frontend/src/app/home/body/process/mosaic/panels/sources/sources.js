@@ -61,7 +61,7 @@ class Sources extends React.Component {
             ({
                 value,
                 label: msg(['process.mosaic.panel.sources.form.source.options', value]),
-                disabled: !this.isSourceInDateRange(value)
+                neverSelected: !this.isSourceInDateRange(value)
             })
         )
         return (

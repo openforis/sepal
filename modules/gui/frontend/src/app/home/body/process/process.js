@@ -8,6 +8,7 @@ import LandCover from './landCover/landCover'
 import Mosaic from './mosaic/mosaic'
 import ProcessMenu from './processMenu'
 import {saveRecipe} from './recipe'
+import TimeSeries from './timeSeries/timeSeries'
 
 const recipeComponent = (id, type) => {
     switch (type) {
@@ -17,6 +18,8 @@ const recipeComponent = (id, type) => {
             return <Classification recipeId={id}/>
         case 'CHANGE_DETECTION':
             return <ChangeDetection recipeId={id}/>
+        case 'TIME_SERIES':
+            return <TimeSeries recipeId={id}/>
         case 'LAND_COVER':
             return <LandCover recipeId={id}/>
         default:

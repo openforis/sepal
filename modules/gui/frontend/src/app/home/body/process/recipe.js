@@ -128,7 +128,7 @@ export const deleteRecipe$ = recipeId =>
 export const deleteRecipe = recipeId =>
     deleteRecipe$(recipeId).subscribe(action => action.dispatch())
 
-const isRecipeOpen = recipeId =>
+export const isRecipeOpen = recipeId =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
 
 const saveToBackend$ = new Subject()
