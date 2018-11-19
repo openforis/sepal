@@ -19,7 +19,7 @@ class DateTime {
 
     static String toUtcString(Date date) {
         TimeZone timeZone = TimeZone.getTimeZone("UTC")
-        def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
+        def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'")
         dateFormat.timeZone = timeZone
         return dateFormat.format(date)
     }
