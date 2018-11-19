@@ -8,14 +8,14 @@
   },
   {
     "prefix": "true",
-    "path": "/api/ceo/",
+    "path": "/ceo/",
     "target": "http://ceo:7766/",
     "https": "true",
     "authenticate": "true"
   },
   {
     "prefix": "true",
-    "path": "/api/peatlands/",
+    "path": "/peatlands/",
     "target": "http://peatlands:7767/",
     "https": "true",
     "authenticate": "true"
