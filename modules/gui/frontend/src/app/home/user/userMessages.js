@@ -47,9 +47,9 @@ class UserMessages extends React.Component {
         const {id} = message
         this.props.stream('REQUEST_UPDATE_USER_MESSAGE',
             api.user.updateMessage$(message),
-            () => {
+            message => {
                 actionBuilder('UPDATE_USER_MESSAGE')
-                    .assignValueByTemplate('user.userMessages', {message: {id}}, {message})
+                    .assignOrAddValueByTemplate('user.userMessages', {message: {id}}, {message, state: 'UNREAD'})
                     .dispatch()
                 // Notifications.success('user.userMessage.update').dispatch()
             },
@@ -111,6 +111,10 @@ class UserMessages extends React.Component {
         })
     }
 
+    newMessage() {
+        this.editMessage({})
+    }
+
     editMessage(userMessage) {
         this.setState(prevState => ({
             ...prevState,
@@ -134,16 +138,17 @@ class UserMessages extends React.Component {
 
     renderMessages() {
         const {userMessages} = this.props
+        const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.updateTime) || moment(), 'desc')
         return (
             <div className={styles.messages}>
                 <ul>
-                    {userMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
+                    {sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
                 </ul>
             </div>
         )
     }
 
-    renderOwnerButtons(message) {
+    renderAdminButtons(message) {
         return (
             <ButtonGroup>
                 <Button
@@ -189,7 +194,7 @@ class UserMessages extends React.Component {
                             {userMessage.message.subject}
                         </span>
                     </div>
-                    {isAdmin ? this.renderOwnerButtons(userMessage.message) : null}
+                    {isAdmin ? this.renderAdminButtons(userMessage.message) : null}
                 </div>
                 <div className={styles.info}>
                     <div>
@@ -222,7 +227,7 @@ class UserMessages extends React.Component {
                         additionalButtons={isAdmin ? [{
                             key: 'post',
                             label: msg('user.userMessages.post'),
-                            onClick: () => this.editMessage({})
+                            onClick: () => this.newMessage()
                         }] : []}/>
                 </Panel>
             </Portal>
@@ -234,7 +239,7 @@ class UserMessages extends React.Component {
             <UserMessage
                 message={message}
                 onApply={message => this.updateMessage(message)}
-                onCancel={() => this.editMessage(null)}/>
+                onCancel={() => this.editMessage()}/>
         )
     }
 

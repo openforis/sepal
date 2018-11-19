@@ -88,6 +88,17 @@ const actionBuilder = (type, props) => {
             return this
         },
 
+        assignOrAddValueByTemplate(path, template, value) {
+            operations.push((immutableState, state) => {
+                const index = select(path, state)
+                    .findIndex(value => _.isEqual(_.merge({}, value, template), value))
+                return (index !== -1)
+                    ? immutableState.assign([...toPathList(path), index], value)
+                    : immutableState.push(toPathList(path), value)
+            })
+            return this
+        },
+
         merge(path, value) {
             operations.push(immutableState =>
                 immutableState.merge(toPathList(path), value)
