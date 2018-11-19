@@ -10,11 +10,11 @@ import org.openforis.sepal.util.Clock
 
 @EqualsAndHashCode(callSuper = true)
 @Canonical
-class SaveMessage extends AbstractCommand<Void> {
+class SaveMessage extends AbstractCommand<Message> {
     Message message
 }
 
-class SaveMessageHandler implements CommandHandler<Void, SaveMessage> {
+class SaveMessageHandler implements CommandHandler<Message, SaveMessage> {
     private final MessageRepository repository
     private final Clock clock
 
@@ -23,9 +23,12 @@ class SaveMessageHandler implements CommandHandler<Void, SaveMessage> {
         this.clock = clock
     }
 
-    Void execute(SaveMessage command) {
-        def message = command.message.updated(clock.now())
+    Message execute(SaveMessage command) {
+        def now = clock.now()
+        def message = command.message
+            .created(command.message.creationTime ?: now)
+            .updated(now)
         repository.saveMessage(message)
-        return null
+        return message
     }
 }

@@ -28,28 +28,9 @@ class NotificationEndpoint {
 
     void registerWith(Controller controller) {
         controller.with {
-
-            get('/notification/messages', [Roles.ADMIN]) {
-                def messages = component.submit(new ListMessages())
-                def json = toJson(messages.collect { toMap(it) })
-                send(json)
-            }
-
-            get('/notification/messages/{id}', [Roles.ADMIN]) {
-                try {
-                    def message = component.submit(new LoadMessage(params.required('id', String)))
-                    def json = toJson(message.collect { toMap(it) })
-                    send(json)
-                } catch (QueryFailed e) {
-                    if (e.cause instanceof NotFound)
-                        return halt(404)
-                    else
-                        return halt(500)
-                }
-            }
-
             post('/notification/messages/{id}', [Roles.ADMIN]) {
-                component.submit(new SaveMessage(
+                response.status = 200
+                def message = component.submit(new SaveMessage(
                         username: currentUser.username,
                         message: new Message(
                                 id: params.required('id', String),
@@ -57,8 +38,9 @@ class NotificationEndpoint {
                                 subject: params.required('subject', String),
                                 contents: params.required('contents', String),
                                 type: params.required('type', String) as Message.Type
-                        )))
-                response.status = 204
+                )))
+                def json = toJson(toMap(message))
+                send(json)
             }
 
             delete('/notification/messages/{id}', [Roles.ADMIN]) {

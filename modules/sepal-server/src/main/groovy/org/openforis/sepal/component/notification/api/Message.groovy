@@ -16,10 +16,16 @@ class Message {
         SYSTEM
     }
 
-    Message updated(Date date) {
+    Message created(Date creationTime) {
         new Message(
             id: id, username: username, subject: subject, contents: contents, type: type,
-            creationTime: creationTime, updateTime: date)
+            creationTime: creationTime, updateTime: updateTime)
+    }
+
+    Message updated(Date updateTime) {
+        new Message(
+            id: id, username: username, subject: subject, contents: contents, type: type,
+            creationTime: creationTime, updateTime: updateTime)
     }
 
 }
