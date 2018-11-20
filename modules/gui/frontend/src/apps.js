@@ -73,9 +73,6 @@ export const runApp$ = path => {
     )
 
     const waitForSession$ = interval(1000).pipe(
-        switchMap(secondsPassed => secondsPassed < 30
-            ? of(secondsPassed)
-            : throwError({message: msg('')})),
         exhaustMap(() => api.apps.waitForSession$(app.endpoint)),
         filter(isSessionStarted),
         first()
