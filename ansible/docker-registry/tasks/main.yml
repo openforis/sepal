@@ -26,7 +26,7 @@
 
 - name: Start docker registry
   docker_container:
-    api_version: "1.22"
+    api_version: "1.39"
     name: "registry"
     pull: 'yes'
     image: "registry:2"
