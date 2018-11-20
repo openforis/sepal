@@ -9,11 +9,12 @@ set -e
 # libudunits2-dev required for udunits, needed by mapview
 apt-get install -y \
     libudunits2-dev \
-    r-cran-rmpi
+    r-cran-rmpi \
+    libopenmpi-dev
 
 export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
 export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
-export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/jre/lib/amd64/server:${JAVA_HOME}/jre/lib/amd64
+export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
 R CMD javareconf
 
 R -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.rstudio.com/')"
