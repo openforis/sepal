@@ -317,11 +317,6 @@ class MosaicMigrationsTest extends RecipeTest {
               }
             }''')
 
-        println '********'
-        println contents
-        println expectedContents
-        println '********'
-
         contents == expectedContents
     }
 

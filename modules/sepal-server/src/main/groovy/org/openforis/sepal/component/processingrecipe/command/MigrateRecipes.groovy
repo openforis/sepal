@@ -25,7 +25,6 @@ class MigrateRecipesHandler implements CommandHandler<Void, MigrateRecipes> {
 
     Void execute(MigrateRecipes command) {
         def migrations = command.migrations
-        println("******** MigrateRecipes ${command}")
         repository.eachOfTypeBeforeVersion(migrations.type, migrations.currentVersion) { Recipe recipe ->
             try {
                 println("******** Migrating ${recipe}")
