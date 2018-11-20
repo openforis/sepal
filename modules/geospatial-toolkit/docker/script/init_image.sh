@@ -62,6 +62,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     libgstreamer-plugins-base1.0-dev \
     libpython3-dev \
     libproj-dev \
+    libspatialindex-dev \
     libssl-dev \
     libxcursor-dev \
     libxinerama-dev \
