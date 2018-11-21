@@ -144,7 +144,7 @@ const createMap = mapElement => {
             return fromGoogleBounds(googleMap.getBounds())
         },
         onBoundsChanged(listener) {
-            // return googleMap.addListener('bounds_changed', listener)
+            return googleMap.addListener('bounds_changed', listener)
         },
         addListener(mapObject, event, listener) {
             return google.maps.event.addListener(mapObject, event, listener)
@@ -327,6 +327,7 @@ export const polygonOptions = fill => ({
 const defaultStyle = [
     {stylers: [{visibility: 'simplified'}]},
     {stylers: [{color: '#131314'}]},
+    {featureType: "poi", stylers: [{ visibility: "off" }]},
     {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
     {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
 ]
