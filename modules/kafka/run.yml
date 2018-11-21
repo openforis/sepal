@@ -19,7 +19,7 @@
     WORKDIR: "/data/kafka"
 
 - name: kafka | Wait until initialized
-  shell: docker run --rm --network sepal solsson/kafkacat -b kafka_kafka_1:9092 -L
+  shell: docker run --rm --network sepal solsson/kafkacat -b kafka:9092 -L
   register: result
   until: (result.rc == 0)
   retries: 10
