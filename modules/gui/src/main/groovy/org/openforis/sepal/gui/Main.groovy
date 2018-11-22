@@ -24,6 +24,10 @@ class Main {
                 '/static',
                 resource(new ClassPathResourceManager(getClass().classLoader, 'frontend/static'))
         )
+        handler.addPrefixPath(
+                '/resource',
+                resource(new ClassPathResourceManager(getClass().classLoader, 'frontend/resource'))
+        )
         def processorCount = Runtime.getRuntime().availableProcessors()
         server = Undertow.builder()
                 .addHttpListener(7667, "0.0.0.0")

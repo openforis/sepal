@@ -157,14 +157,6 @@
     "cached": "true"
   },
   {
-    "prefix": "false",
-    "path": "/privacy-policy",
-    "target": "http://gui:7667/privacy-policy.html",
-    "https": "true",
-    "authenticate": "false",
-    "no-cache": "true"
-  },
-  {
     "prefix": "true",
     "path": "/",
     "target": "http://gui:7667/",
