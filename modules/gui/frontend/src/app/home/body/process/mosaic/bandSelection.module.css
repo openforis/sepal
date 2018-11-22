@@ -50,7 +50,7 @@
     flex-wrap: wrap-reverse;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.5);
+    /* background-color: rgba(0, 0, 0, 0.5); */
     padding: 0 0.5rem;
     border-radius: var(--container-border-radius);
 }
@@ -60,20 +60,28 @@
 }
 
 .selectedBands {
+    --border-color: hsla(0, 0%, 30%, .5);
     cursor: pointer;
     display: flex;
     justify-content: center;
-    /*margin-top: 1rem;*/
 }
 
 .selectedBands > * {
     padding: 0 .5rem;
     border-radius: .25rem;
     color: var(--look-default-color);
+    border: 1px solid var(--border-color);
 }
 
 .selectedBands > *:not(:last-child) {
-    margin-right: .5rem;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.selectedBands > *:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
 }
 
 .selectedBands:hover > * {
@@ -81,32 +89,29 @@
 }
 
 .red {
-    background-color: hsla(0, 50%, 20%, 0.8);
-    border: 1px solid hsla(0, 50%, 21%, 0.8)
+    background-color: hsla(0, 50%, 20%, 0.95);
 }
 
 .selectedBands:hover > .red {
-    background-color: hsla(0, 50%, 25%, 0.8);
+    background-color: hsla(0, 50%, 25%, 0.95);
 }
 
 .green {
-    background-color: hsla(120, 50%, 15%, 0.8);
-    border: 1px solid hsla(120, 50%, 16%, 0.8)
+    background-color: hsla(120, 50%, 15%, 0.95);
 }
 
 .selectedBands:hover > .green {
-    background-color: hsla(120, 50%, 20%, 0.8);
+    background-color: hsla(120, 50%, 20%, 0.95);
 }
 
 .blue {
-    background-color: hsla(240, 50%, 35%, 0.8);
-    border: 1px solid hsla(240, 50%, 36%, 0.8)
+    background-color: hsla(240, 50%, 35%, 0.95);
 }
 
 .selectedBands:hover > .blue {
-    background-color: hsla(240, 50%, 43%, 0.8);
+    background-color: hsla(240, 50%, 43%, 0.95);
 }
 
 .single {
-    background-color: hsla(0, 0%, 50%, 0.8);
+    background-color: hsla(0, 0%, 50%, 0.95);
 }

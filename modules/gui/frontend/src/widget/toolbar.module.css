@@ -10,7 +10,7 @@
     position: absolute;
     --button-margin: .5rem;
     --button-size: 2.5rem;
-    --look-panel-background-color: rgba(0, 0, 0, 0.5);
+    --look-panel-background-color: transparent;
     --icon-size: 1.1rem;
     pointer-events: all;
     z-index: 0;
@@ -25,8 +25,9 @@
     left: calc(-1 * var(--button-margin));
     right: calc(-1 * var(--button-margin));
     background-color: var(--look-panel-background-color);
-    border: none;
     border-radius: var(--container-border-radius);
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 .toolbar.horizontal {
@@ -48,31 +49,31 @@
 }
 
 .toolbar.top {
-    top: .5rem;
+    top: var(--button-margin);
 }
 
 .toolbar.bottom {
-    bottom: .5rem;
+    bottom: var(--button-margin);
 }
 
 .toolbar.left {
-    left: .5rem;
+    left: var(--button-margin);
 }
 
 .toolbar.right {
-    right: .5rem;
+    right: var(--button-margin);
 }
 
 .toolbar button {
     width: var(--button-size);
     height: var(--button-size);
+    padding: 0;
     border-width: var(--selected-panel-border-width);
     border-style: solid;
     border-radius: var(--button-border-radius);
-    padding: 0;
+    border-color: var(--look-default-border-color);
     color: var(--look-default-color);
     background-color: var(--look-default-background-color);
-    border-color: var(--look-default-border-color);
 }
 
 .toolbar button:hover:not(:disabled) {
@@ -107,15 +108,16 @@
     border-color: var(--look-highlight-active-border-color);
 }
 
-.toolbar.vertical.panelButton button.selected, button.panelButton.selected {
-    width: calc(var(--button-size) + 1rem + var(--selected-panel-border-width));
+.toolbar.vertical.panelButton button.selected, 
+button.panelButton.selected {
+    width: calc(var(--button-size) + 1.5rem - var(--button-margin) + var(--selected-panel-border-width));
     margin-left: calc(-1rem - var(--selected-panel-border-width));
     padding-left: calc(1rem + 2 * var(--selected-panel-border-width));
+    border: 1px solid var(--wireframe-color);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     border-left: none;
     z-index: 2;
-
 }
 
 .toolbar button:disabled {
