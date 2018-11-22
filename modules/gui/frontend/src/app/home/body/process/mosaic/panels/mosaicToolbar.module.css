@@ -2,7 +2,7 @@
     --look-default-h: 37;
     --look-default-s: 27%;
     --look-default-l: 25%;
-    --look-default-a: .9;
+    --look-default-a: .95;
 
     --look-highlight-h: 40;
     --look-highlight-s: 8%;
@@ -12,7 +12,7 @@
     --look-disabled-h: 37;
     --look-disabled-s: 10%;
     --look-disabled-l: 20%;
-    --look-disabled-a: .9;
+    --look-disabled-a: .95;
 }
 
 .top {
