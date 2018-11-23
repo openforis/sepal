@@ -6,16 +6,15 @@
 .tabBar {
     display: flex;
     justify-content: space-between;
-    background-color: #1c1c1c;
-    padding: 0.5rem;
-    border: 1px solid hsla(0, 0%, 100%, .05);
-    border-bottom: 2px solid hsla(0, 0%, 100%, .05);
+    padding: 0 .5rem;
+    /* border-bottom: 2px solid hsla(0, 0%, 100%, .05); */
     pointer-events: all;
 }
 
 .tabs {
     display: flex;
     flex-wrap: wrap;
+    width: 100%;
 }
 
 .newTab {
@@ -41,27 +40,31 @@
 }
 
 .tab {
-    display: flex;
-    max-width: 17rem;
-    min-width: 9rem;
     position: relative;
+    display: flex;
     background-color: #2B2B29;
     border-bottom: 3px solid var(--tab-default-border-color);
     border-top-right-radius: 0.5rem;
     border-top-left-radius: 0.5rem;
     height: 2.5rem;
     white-space: nowrap;
+    margin-top: .5rem;
     margin-right: .3rem;
     line-height: 2.5rem;
     overflow: hidden;
     cursor: pointer;
 }
 
+.tab.regular {
+    max-width: 17rem;
+    min-width: 9rem;
+}
+
 .tab * {
     width: 100%;
 }
 
-.tab.selected {
+.tab.regular.selected {
     background-color: #1c1c1c;
     border-bottom: 3px solid var(--tab-selected-border-color);
 }
@@ -71,7 +74,7 @@
 }
 
 /* Prevent overflowing title from covering close button */
-.tab:after {
+.tab.regular:after {
     content: '';
     width: 1.7rem;
     height: 100%;
@@ -165,6 +168,7 @@ span.title.placeholder {
 .tab input {
     width: 100%;
 }
+
 .tab input:focus {
     z-index: 2;
 }
@@ -177,7 +181,20 @@ span.title.placeholder {
     line-height: 2.5rem;
 }
 
+.tabControls {
+    display: flex;
+    align-items: center;
+    height: fit-content;
+}
+
 .tabActions {
+    margin-top: .5rem;
+    display: flex;
+    align-items: center;
+}
+
+.tabActions > * + * {
+    margin-left: .5rem;
 }
 
 .tabContents {

@@ -1,4 +1,4 @@
-import {Button} from 'widget/button'
+import {Button, ButtonGroup} from 'widget/button'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -81,34 +81,56 @@ class Tabs extends React.Component {
             addTab(statePath)
     }
 
+    renderTab(tab) {
+        const {selectedTabId, statePath, onTitleChanged} = this.props
+        return (
+            <Tab
+                key={tab.id}
+                id={tab.id}
+                title={tab.title}
+                placeholder={tab.placeholder}
+                selected={tab.id === selectedTabId}
+                statePath={statePath}
+                onTitleChanged={onTitleChanged}
+            />
+        )
+    }
+
+    renderTabContent(tab) {
+        const {selectedTabId, children} = this.props
+        return (
+            <TabContent key={tab.id} tab={tab} selected={tab.id === selectedTabId}>
+                {children}
+            </TabContent>
+        )
+    }
+
     render() {
-        const {selectedTabId, statePath, tabActions, onTitleChanged, children} = this.props
+        const {selectedTabId, statePath, tabActions} = this.props
         return (
             <div className={[styles.container, flexy.container].join(' ')}>
                 <div className={styles.tabBar}>
                     <div className={styles.tabs}>
-                        {this.props.tabs.map(tab =>
-                            <Tab
-                                key={tab.id}
-                                id={tab.id}
-                                title={tab.title}
-                                placeholder={tab.placeholder}
-                                selected={tab.id === selectedTabId}
-                                statePath={statePath}
-                                onTitleChanged={onTitleChanged}
-                            />
-                        )}
-                        <NewTab onAdd={() => addTab(statePath)}/>
+                        {/* <div className={styles.tab}>
+                            <Button size='small' icon='plus' onClick={() => addTab(statePath)}/>
+                        </div> */}
+                        {this.props.tabs.map(tab => this.renderTab(tab))}
+                        {/* <div className={styles.tab}>
+                            <Button size='small' icon='plus' onClick={() => addTab(statePath)}/>
+                        </div> */}
                     </div>
-                    <div className={styles.tabActions}>{tabActions(selectedTabId)}</div>
+                    <div className={styles.tabControls}>
+                        {/* <div className={styles.tab}>
+                            <Button size='small' icon='plus' onClick={() => addTab(statePath)}/>
+                        </div> */}
+                        <div className={styles.tabActions}>
+                            <Button icon='plus' onClick={() => addTab(statePath)}/>
+                            {tabActions(selectedTabId)}
+                        </div>
+                    </div>
                 </div>
-
                 <div className={[styles.tabContents, flexy.container].join(' ')}>
-                    {this.props.tabs.map(tab =>
-                        <TabContent key={tab.id} tab={tab} selected={tab.id === selectedTabId}>
-                            {children}
-                        </TabContent>
-                    )}
+                    {this.props.tabs.map(tab => this.renderTabContent(tab))}
                 </div>
             </div>
         )
@@ -186,7 +208,7 @@ class Tab extends React.Component {
                 placement='bottom'
                 delay={1}>
                 <div
-                    className={[styles.tab, selected && styles.selected].join(' ')}
+                    className={[styles.tab, styles.regular, selected && styles.selected].join(' ')}
                     onClick={() => selectTab(id, statePath)}>
                     <span className={[
                         styles.title,
