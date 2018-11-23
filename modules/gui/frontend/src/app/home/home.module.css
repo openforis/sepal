@@ -1,12 +1,19 @@
 .container {
-    --footer-height: 1.8rem;
-    --footer-handle-height: 1rem;
-    --menu-margin-top: 1rem;
-    --menu-margin-bottom: calc(var(--footer-height) + 1rem);
-    --menu-width: 3rem;
-    --menu-handle-width: 1rem;
+
+    /* section transitions */
     --transition-time: 150ms;
     --transition-delay: 75ms;
+
+    /* footer dimensions */
+    --footer-height: 1.8rem;
+    --footer-handle-height: 1rem;
+
+    /* menu dimensions */
+    --menu-margin-top: 10rem;
+    --menu-margin-bottom: calc(var(--footer-height) + 2rem);
+    --menu-width: 2.6rem;
+    --menu-handle-width: .7rem;
+
     position: relative;
     height: 100%;
     pointer-events: none;
@@ -14,7 +21,7 @@
 
 .container.floatingMenu {
     --menu-position: calc(var(--menu-handle-width) - var(--menu-width));
-    --menu-margin: 0rem;
+    --menu-margin: 0;
 }
 
 .container:not(.floatingMenu) {
@@ -48,17 +55,12 @@
     bottom: var(--menu-margin-bottom);
     left: var(--menu-position);
     width: var(--menu-width);
-    background-color: rgba(0, 0, 0, 0);
-    border-radius: .5rem;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
     pointer-events: all;
 }
 
 .container:not(.floatingMenu) .menu,
 .menu:hover {
-    background-color: rgba(0, 0, 0, 0);
     left: 0;
 }
 
@@ -67,18 +69,13 @@
     z-index: 10;
     left: 0;
     right: 0;
-    bottom: var(--footer-position);
+    bottom: 0;
     height: var(--footer-height);
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
     pointer-events: all;
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-}
-
-.container:not(.floatingFooter) .footer,
-.footer:hover {
-    bottom: 0;
 }
 
 .body {

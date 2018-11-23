@@ -59,6 +59,7 @@ let SectionLink = ({active, name, icon}) => {
             className={[styles[name], activeClass].join(' ')}
             icon={icon}
             link={link}
+            onClick={(e, he) => console.log(e, he)}
             tooltip={msg(`home.sections.${name}.tooltip`)}
             tooltipPlacement='right'/>
     )

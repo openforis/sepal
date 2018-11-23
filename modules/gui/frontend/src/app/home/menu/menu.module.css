@@ -5,11 +5,7 @@
     justify-content: space-between;
     transition: transform 150ms ease-in-out 0ms;
     --button-size: var(--menu-width);
-    --icon-size: 1.3rem;
-}
-
-.menu:first-child {
-    padding-top: 9rem;
+    --icon-size: 1.1rem;
 }
 
 .menu .section {
