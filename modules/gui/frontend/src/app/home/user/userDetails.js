@@ -1,3 +1,4 @@
+import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, Input, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
@@ -61,23 +62,30 @@ class UserDetails extends React.Component {
         closePanel()
     }
 
+    renderGoogleAccountButton() {
+        const {user, form} = this.props
+        return user.googleTokens
+            ? (
+                <Button
+                    label={msg('user.userDetails.useSepalGoogleAccount.label')}
+                    icon='google-drive'
+                    tooltip={msg('user.userDetails.useSepalGoogleAccount.tooltip')}
+                    disabled={form.isDirty()}
+                    onClick={e => this.useSepalGoogleAccount(e)}
+                />
+            ) : (
+                <Button
+                    label={msg('user.userDetails.useUserGoogleAccount.label')}
+                    icon='google-drive'
+                    tooltip={msg('user.userDetails.useUserGoogleAccount.tooltip')}
+                    disabled={form.isDirty()}
+                    onClick={e => this.useUserGoogleAccount(e)}
+                />
+            )
+    }
+
     renderPanel() {
-        const {user, form, inputs: {name, email, organization}} = this.props
-        const googleAccountButton = user.googleTokens
-            ? {
-                key: 'useSepalGoogleAccount',
-                label: msg('user.userDetails.useSepalGoogleAccount.label'),
-                tooltip: msg('user.userDetails.useSepalGoogleAccount.tooltip'),
-                disabled: form.isDirty(),
-                onClick: e => this.useSepalGoogleAccount(e)
-            }
-            : {
-                key: 'useUserGoogleAccount',
-                label: msg('user.userDetails.useUserGoogleAccount.label'),
-                tooltip: msg('user.userDetails.useUserGoogleAccount.tooltip'),
-                disabled: form.isDirty(),
-                onClick: e => this.useUserGoogleAccount(e)
-            }
+        const {form, inputs: {name, email, organization}} = this.props
         return this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT') === 'ACTIVE'
             ? <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>
             : <React.Fragment>
@@ -100,6 +108,11 @@ class UserDetails extends React.Component {
                         input={organization}
                         spellCheck={false}
                     />
+                    <div className={styles.googleAccount}>
+                        <ButtonGroup>
+                            {this.renderGoogleAccountButton()}
+                        </ButtonGroup>
+                    </div>
                 </PanelContent>
                 <PanelButtons
                     form={form}
@@ -111,7 +124,7 @@ class UserDetails extends React.Component {
                         label: msg('user.changePassword.title'),
                         disabled: form.isDirty(),
                         onClick: () => showChangePassword()
-                    }, googleAccountButton]}/>
+                    }]}/>
             </React.Fragment>
     }
 
