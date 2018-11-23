@@ -8,7 +8,9 @@
     align-items: center;
 
     background-color: rgba(28, 28, 28, 0.99);
-    border-top: 1px solid hsla(0, 0%, 100%, .1);
+    border: 1px solid hsla(0, 0%, 100%, .1);
+    border-left: none;
+    border-right: none;
     padding: 0 .6rem;
     z-index: 10;
 }
