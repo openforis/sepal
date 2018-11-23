@@ -37,7 +37,7 @@
 }
 
 /* suppress icon for small devices */
-@media (max-width: 576px) {
+/* @media (max-width: 576px) {
     .button i {
         display: none;
     }
@@ -45,7 +45,7 @@
     .button > .contents > * + * {
         margin-left: 0;
     }
-}
+} */
 
 .group {
     --button-spacing: .5rem;
