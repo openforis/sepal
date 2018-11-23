@@ -36,17 +36,16 @@ class Menu extends React.Component {
     }
 
     render() {
-        const {warning, className, children} = this.props
+        const {warning, disabled, children} = this.props
         const {open} = this.state
         return <React.Fragment>
-            <div ref={this.button}>
+            <span ref={this.button}>
                 <Button
-                    className={[styles.menu, open ? styles.open : null, className].join(' ')}
-                    onClick={() => this.toggleOpen()}>
-                    <Icon name='bars'/>
-                    {warning && !open ? <Icon name='exclamation-triangle' className={styles.warning}/> : null}
-                </Button>
-            </div>
+                    icon='bars'
+                    additionalClassName={warning && !open ? styles.warning : null}
+                    disabled={disabled}
+                    onClick={() => this.toggleOpen()}/>
+            </span>
             {open
                 ? <Portal>
                     <MenuContext.Provider value={this}>
@@ -71,6 +70,7 @@ Menu.propTypes = {
     appDimensions: PropTypes.object,
     children: PropTypes.any,
     className: PropTypes.string,
+    disabled: PropTypes.any,
     warning: PropTypes.any,
     onClick: PropTypes.func
 }

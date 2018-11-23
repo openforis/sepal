@@ -17,11 +17,8 @@ button.menu:hover {
     cursor: pointer;
 }
 
-.menu .warning {
-    position: absolute;
-    color: hsl(49, 79%, 53%);
-    top: 10%;
-    left: 60%;
+.warning {
+    color: hsl(49, 79%, 53%) !important;
 }
 
 .menu:hover .warning {
