@@ -1,16 +1,21 @@
 
 .panel {
+    --margin-left: .5rem;
+    --margin-right: 3.5rem;
+    --margin-top: .5rem;
+    --margin-bottom: .5rem;
     --padding-top-bottom: .5rem;
     --padding-right-left: .8rem;
     --padding: var(--padding-top-bottom) var(--padding-right-left);
+    --scaling-factor: .8 !important;
+    
     position: absolute;
+    width: calc(100% - var(--margin-left) - var(--margin-right));
     background-color: var(--panel-default-background-color);
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
     pointer-events: all;
     z-index: 3;
-    width: calc(100% - 5rem);
-    --scaling-factor: .8 !important;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -18,15 +23,15 @@
 }
 
 .panel.top {
-    top: .5rem;
+    top: var(--margin-top);
 }
 
 .panel.bottom {
-    bottom: .5rem;
+    bottom: var(--margin-bottom);
 }
 
 .panel.right {
-    right: 4rem;
+    right: var(--margin-right);
 }
 
 .panel.left {
