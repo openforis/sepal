@@ -1,17 +1,18 @@
-import actionBuilder from 'action-builder'
-import api from 'api'
-import {recipePath} from 'app/home/body/process/recipe'
-import flexy from 'flexy.module.css'
-import _ from 'lodash'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {map} from 'rxjs/operators'
-import {connect, select} from 'store'
-import {msg} from 'translate'
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import styles from './createOrLoadRecipe.module.css'
+import {connect, select} from 'store'
 import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
+import {map} from 'rxjs/operators'
+import {msg} from 'translate'
+import {recipePath} from 'app/home/body/process/recipe'
+import PropTypes from 'prop-types'
+import React from 'react'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
+import api from 'api'
+import flexy from 'flexy.module.css'
+import lookStyles from 'style/look.module.css'
+import styles from './createOrLoadRecipe.module.css'
 
 const CreateOrLoadRecipe = ({recipeId}) =>
     <div className={[styles.container, flexy.container].join(' ')}>
@@ -79,7 +80,10 @@ class RecipeList extends React.Component {
 
     renderRecipe(recipe) {
         return (
-            <div key={recipe.id} className={styles.recipe} onClick={() => this.loadRecipe(recipe.id)}>
+            <div
+                key={recipe.id}
+                className={[styles.recipe, lookStyles.look, lookStyles.transparent].join(' ')}
+                onClick={() => this.loadRecipe(recipe.id)}>
                 <div className={styles.name}>{recipe.name}</div>
                 <div className={styles.type}>{recipe.type}</div>
                 <div className={styles.buttons}>
