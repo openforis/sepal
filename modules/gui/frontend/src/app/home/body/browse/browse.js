@@ -1,4 +1,4 @@
-import {Button} from 'widget/button'
+import {Button, ButtonGroup} from 'widget/button'
 import {Observable, Subject, forkJoin, timer} from 'rxjs'
 import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
@@ -315,36 +315,38 @@ class Browse extends React.Component {
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
         return (
             <div className={styles.toolbar}>
+                <ButtonGroup>
+                    <Button
+                        tooltip={msg('browse.controls.download.tooltip')}
+                        placement='bottom'
+                        icon='download'
+                        downloadUrl={downloadUrl}
+                        downloadFilename={downloadFilename}
+                        disabled={!oneFileSelected}
+                    />
+                    <Button
+                        tooltip={msg('browse.controls.remove.tooltip')}
+                        placement='bottom'
+                        icon='trash-alt'
+                        onClickHold={this.removeSelected.bind(this)}
+                        disabled={nothingSelected}
+                        stopPropagation={true}/>
+                    <Button
+                        tooltip={msg('browse.controls.clearSelection.tooltip')}
+                        placement='bottom'
+                        icon='times'
+                        onClick={this.clearSelection.bind(this)}
+                        disabled={nothingSelected}
+                    />
+                </ButtonGroup>
                 {nothingSelected ? null : (
-                    <span>
+                    <span className={styles.selected}>
                         {msg('browse.selected', {
                             files: selected.files,
                             directories: selected.directories
                         })}
                     </span>
                 )}
-                <Button
-                    tooltip={msg('browse.controls.download.tooltip')}
-                    placement='bottom'
-                    icon='download'
-                    downloadUrl={downloadUrl}
-                    downloadFilename={downloadFilename}
-                    disabled={!oneFileSelected}
-                />
-                <Button
-                    tooltip={msg('browse.controls.remove.tooltip')}
-                    placement='bottom'
-                    icon='trash-alt'
-                    onClickHold={this.removeSelected.bind(this)}
-                    disabled={nothingSelected}
-                    stopPropagation={true}/>
-                <Button
-                    tooltip={msg('browse.controls.clearSelection.tooltip')}
-                    placement='bottom'
-                    icon='times'
-                    onClick={this.clearSelection.bind(this)}
-                    disabled={nothingSelected}
-                />
             </div>
         )
     }
