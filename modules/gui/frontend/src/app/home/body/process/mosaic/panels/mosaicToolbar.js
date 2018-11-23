@@ -40,7 +40,7 @@ class MosaicToolbar extends React.Component {
             <PanelWizard
                 panels={['areaOfInterest', 'dates', 'sources']}
                 statePath={this.statePath}>
-                <Toolbar statePath={this.statePath} vertical top right className={styles.top}>
+                <Toolbar statePath={this.statePath} vertical top right panel className={styles.top}>
                     <PanelButton
                         name='auto'
                         icon='magic'
