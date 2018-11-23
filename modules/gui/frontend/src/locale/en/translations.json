@@ -101,7 +101,7 @@
     "controls.clearSelection.tooltip": "Clear selection",
     "controls.remove.tooltip": "Remove selected items",
     "controls.download.tooltip": "Download selected item",
-    "selected": "{files} {files, plural, one {file} other {files}} and {directories} {directories, plural, one {directory} other {directories}} selected",
+    "selected": "{directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}} selected",
     "info": {
       "directory": "{itemCount} {itemCount, plural, one {item} other {items}}",
       "file":  "{size} {size, plural, one {byte} other {bytes}}"
@@ -841,7 +841,7 @@
         }
       },
       "useUserGoogleAccount": {
-        "label": "Use my Google account",
+        "label": "Use my own Google account",
         "tooltip": "Give Sepal permission to use your Google drive and manage your Earth Engine assets. This gives you full access to Sepal's functionality."
       },
       "useSepalGoogleAccount": {
