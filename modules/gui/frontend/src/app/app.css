@@ -27,16 +27,14 @@ html {
 
     --error-color: #e81351;
 
-    font-size: calc(14px * var(--scaling-factor));
-}
+    --base-font-size: 14px;
 
-.portalTarget > * {
-    z-index: 999999 !important;
+    font-size: calc(var(--base-font-size) * var(--scaling-factor));
 }
 
 body, input, textarea, select, button, a, label {
     font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
-    line-height: calc(2 * var(--scaling-factor));
+    line-height: calc(1.5 * var(--base-font-size) * var(--scaling-factor));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: transparent;
@@ -65,7 +63,10 @@ a:hover, a:hover:not([href]):not([tabindex]) {
     opacity: 1;
 }
 
-
 .app {
     height: 100%
+}
+
+.portalTarget > * {
+    z-index: 999999 !important;
 }
