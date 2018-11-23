@@ -13,22 +13,23 @@
     --look-highlight-l: 26%;
     --look-highlight-a: .5;
 
-    margin: 3rem 1rem 1rem 1rem;
+    margin: 1rem;
 }
 
 .toolbar {
     display: flex;
     flex-direction: row;
-    justify-content: flex-end;
-    margin: 0 4rem 1rem 1rem;
+    justify-content: space-between;
 }
 
-.toolbar button {
-    margin-left: 1rem;
+.toolbar .selected {
+    font-size: .9rem;
 }
 
 .fileList {
+    margin-top: 1rem;
     overflow-x: auto;
+    line-height: 2rem;
 }
 
 .fileList > div {
