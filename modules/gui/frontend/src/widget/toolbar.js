@@ -34,7 +34,7 @@ class Toolbar extends React.Component {
             className
         ]
         return (
-            <div className={styles.container} ref={this.panelContainer}>
+            <div ref={this.panelContainer}>
                 <div className={classNames.join(' ')}>
                     <Context.Provider value={{
                         horizontal: !!horizontal,
