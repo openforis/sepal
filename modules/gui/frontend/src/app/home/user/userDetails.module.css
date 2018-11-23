@@ -1,5 +1,9 @@
 .panel {
     min-height: 15rem;
-    max-height: 25rem;
+    max-height: 30rem;
     max-width: 40rem;
+}
+
+.googleAccount {
+    margin-top: 2rem;
 }

@@ -1,5 +1,5 @@
 .panel {
-    max-height: 50rem;
+    max-height: 45rem;
     max-width: 60rem;
     --unread-color: rgb(15, 89, 226);
     --read-color: hsla(0, 0%, 0%, .2)
