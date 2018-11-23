@@ -31,8 +31,9 @@ class ProcessMenu extends React.Component {
                     </MenuItem>
                 </Menu>
             )
-        } else
-            return null
+        } else {
+            return <Menu disabled/>
+        }
     }
 
     renderUnsavedRecipeItems() {
