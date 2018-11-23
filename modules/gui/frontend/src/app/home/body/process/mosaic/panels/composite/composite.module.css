@@ -11,3 +11,7 @@
     flex-direction: row;
     justify-content: space-between; 
 }
+
+.inline > * + * {
+    margin-left: 1rem;
+}
