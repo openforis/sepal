@@ -42,7 +42,7 @@ class Menu extends React.Component {
             <span ref={this.button}>
                 <Button
                     icon='bars'
-                    additionalClassName={warning && !open ? styles.warning : null}
+                    additionalClassName={warning ? styles.warning : null}
                     disabled={disabled}
                     onClick={() => this.toggleOpen()}/>
             </span>
