@@ -16,29 +16,6 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class Panel extends React.Component {
-    state = {
-        selectedPanelIndex: 0,
-        first: true,
-        last: false,
-        panels: []
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        console.log({nextProps, prevState})
-        const {selectedPanel} = nextProps
-        const panels = prevState.panels
-        const selectedPanelIndex = panels.indexOf(selectedPanel)
-        const first = selectedPanelIndex === 0
-        const last = selectedPanelIndex !== -1 && selectedPanelIndex === panels.length - 1
-        return {
-            ...prevState,
-            selectedPanelIndex,
-            first,
-            last,
-            panels
-        }
-    }
-
     componentDidMount() {
         const {initialized, form, modalOnDirty = true} = this.props
         if (modalOnDirty) {
@@ -48,9 +25,6 @@ class Panel extends React.Component {
                 form.onClean(() => this.setModal(false))
             }
         }
-        console.log('mounted', this.state)
-        // ???
-        // this.setState(prevState => ({...prevState, panels: this.panels}))
     }
 
     setModal(modal) {
@@ -100,20 +74,14 @@ class Panel extends React.Component {
         this.closePanel()
     }
 
-    back() {
-        const {selectedPanelIndex, first} = this.state
-        if (!first) {
-            this.apply()
-            this.selectPanel(this.state.panels[selectedPanelIndex - 1])
-        }
+    back(panel) {
+        this.apply()
+        this.selectPanel(panel)
     }
 
-    next() {
-        const {selectedPanelIndex, last} = this.state
-        if (!last) {
-            this.apply()
-            this.selectPanel(this.state.panels[selectedPanelIndex + 1])
-        }
+    next(panel) {
+        this.apply()
+        this.selectPanel(panel)
     }
 
     done() {
@@ -157,34 +125,39 @@ class Panel extends React.Component {
 
     render() {
         const {form = false, isActionForm, initialized, onApply, top, bottom, left, right, center, inline, modal, className, children} = this.props
-        const {first, last} = this.state
-        console.log({first, last})
+        const {selectedPanel} = this.props
         return (
             <PanelWizardContext.Consumer>
-                {panels => (
-                    <PanelContext.Provider value={{
-                        initialized,
-                        panels,
-                        first,
-                        last,
-                        isActionForm: form && isActionForm,
-                        dirty: form && form.isDirty(),
-                        invalid: form && form.isInvalid(),
-                        onOk: () => this.ok(),
-                        onCancel: () => this.cancel(),
-                        onBack: () => this.back(),
-                        onNext: () => this.next(),
-                        onDone: () => this.done()
-                    }}>
-                        <PanelButtonContext.Consumer>
-                            {panelButtonPosition =>
-                                this.renderModal({modal},
-                                    this.renderForm({form, onApply, top, bottom, left, right, center, inline, panelButtonPosition, className}, children)
-                                )
-                            }
-                        </PanelButtonContext.Consumer>
-                    </PanelContext.Provider>
-                )}
+                {panels => {
+                    const wizard = panels && !initialized
+                    const selectedPanelIndex = panels.indexOf(selectedPanel)
+                    const first = selectedPanelIndex === 0
+                    const last = selectedPanelIndex === panels.length - 1
+                    // const first = _.first(panels) === selectedPanel
+                    // const last = _.last(panels) === selectedPanel
+                    return (
+                        <PanelContext.Provider value={{
+                            wizard,
+                            first,
+                            last,
+                            isActionForm: form && isActionForm,
+                            dirty: form && form.isDirty(),
+                            invalid: form && form.isInvalid(),
+                            onOk: () => this.ok(),
+                            onCancel: () => this.cancel(),
+                            onBack: () => !first && this.back(panels[selectedPanelIndex - 1]),
+                            onNext: () => !last && this.next(panels[selectedPanelIndex + 1]),
+                            onDone: () => this.done()
+                        }}>
+                            <PanelButtonContext.Consumer>
+                                {panelButtonPosition =>
+                                    this.renderModal({modal},
+                                        this.renderForm({form, onApply, top, bottom, left, right, center, inline, panelButtonPosition, className}, children)
+                                    )
+                                }
+                            </PanelButtonContext.Consumer>
+                        </PanelContext.Provider>
+                    )}}
             </PanelWizardContext.Consumer>
 
         )

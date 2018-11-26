@@ -135,12 +135,12 @@ export default class PanelButtons extends React.Component {
     render() {
         return (
             <PanelContext.Consumer>
-                {({isActionForm, panels, initialized, first, last, dirty, invalid, onOk, onCancel, onBack, onNext, onDone}) => (
+                {({isActionForm, wizard, first, last, dirty, invalid, onOk, onCancel, onBack, onNext, onDone}) => (
                     <div className={styles.buttons}>
                         {this.renderAdditionalButtons()}
-                        {!panels || initialized
-                            ? this.renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel})
-                            : this.renderWizardButtons({first, last, invalid, onBack, onNext, onDone})}
+                        {wizard
+                            ? this.renderWizardButtons({first, last, invalid, onBack, onNext, onDone})
+                            : this.renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel})}
                     </div>
                 )}
             </PanelContext.Consumer>
