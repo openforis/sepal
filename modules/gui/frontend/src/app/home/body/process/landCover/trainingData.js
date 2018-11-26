@@ -74,7 +74,14 @@ class TrainingData extends React.Component {
     render() {
         const {recipeId, primitiveTypes, form} = this.props
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                onApply={values => this.recipeActions.setTrainingData({
+                    values,
+                    model: valuesToModel(values, primitiveTypes)
+                }).dispatch()}>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.landCover.panel.trainingData.title')}/>
@@ -83,13 +90,7 @@ class TrainingData extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    onApply={values => this.recipeActions.setTrainingData({
-                        values,
-                        model: valuesToModel(values, primitiveTypes)
-                    }).dispatch()}/>
+                <PanelButtons/>
             </Panel>
         )
     }

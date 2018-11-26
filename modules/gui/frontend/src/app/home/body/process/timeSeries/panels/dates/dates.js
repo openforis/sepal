@@ -1,13 +1,13 @@
+import {Constraint, ErrorMessage, Field, form} from 'widget/form'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
+import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/timeSeries/timeSeriesRecipe'
-import moment from 'moment'
+import DatePicker from 'widget/datePicker'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg} from 'translate'
-import DatePicker from 'widget/datePicker'
-import {Constraint, ErrorMessage, Field, form, Label} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
+import moment from 'moment'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -83,7 +83,11 @@ class Dates extends React.Component {
     render() {
         const {recipeId, form} = this.props
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.timeSeries.panel.dates.title')}/>
@@ -94,11 +98,7 @@ class Dates extends React.Component {
                     </div>
                 </PanelContent>
 
-                <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}
-                />
+                <PanelButtons/>
             </Panel>
         )
     }

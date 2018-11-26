@@ -115,10 +115,6 @@ class UserDetails extends React.Component {
                     </div>
                 </PanelContent>
                 <PanelButtons
-                    form={form}
-                    statePath='userDetails'
-                    onApply={userDetails => this.updateUserDetails(userDetails)}
-                    onCancel={() => this.cancel()}
                     additionalButtons={[{
                         key: 'changePassword',
                         label: msg('user.changePassword.title'),
@@ -129,9 +125,17 @@ class UserDetails extends React.Component {
     }
 
     render() {
+        const {form} = this.props
         return (
             <Portal>
-                <Panel className={styles.panel} center modal>
+                <Panel
+                    className={styles.panel}
+                    form={form}
+                    statePath='userDetails'
+                    center
+                    modal
+                    onApply={userDetails => this.updateUserDetails(userDetails)}
+                    onCancel={() => this.cancel()}>
                     <PanelHeader
                         icon='user'
                         title={msg('user.userDetails.title')}/>

@@ -19,7 +19,12 @@ class ClearSelectedScenes extends React.Component {
     render() {
         const {recipeId, form} = this.props
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                isActionForm={true}
+                onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}>
                 <PanelHeader
                     icon='trash'
                     title={msg('process.mosaic.panel.sources.title')}/>
@@ -29,11 +34,7 @@ class ClearSelectedScenes extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    isActionForm={true}
-                    applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}
-                    onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}/>
+                    applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}/>
             </Panel>
         )
     }

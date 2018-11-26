@@ -1,14 +1,14 @@
+import {Field, Input, form} from 'widget/form'
+import {Msg, msg} from 'translate'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
+import {Subject} from 'rxjs'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
+import {map, takeUntil} from 'rxjs/operators'
+import ComboBox from 'widget/comboBox'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Subject} from 'rxjs'
-import {map, takeUntil} from 'rxjs/operators'
-import {msg, Msg} from 'translate'
-import ComboBox from 'widget/comboBox'
-import {Field, form, Input} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import {RecipeActions, recipePath, RecipeState} from '../classificationRecipe'
 import styles from './trainingData.module.css'
 
 const fields = {
@@ -67,7 +67,14 @@ class TrainingData extends React.Component {
     render() {
         const {recipeId, form} = this.props
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                onApply={values => this.recipeActions.setTrainingData({
+                    values,
+                    model: valuesToModel(values)
+                }).dispatch()}>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.classification.panel.trainingData.title')}/>
@@ -76,13 +83,7 @@ class TrainingData extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    onApply={values => this.recipeActions.setTrainingData({
-                        values,
-                        model: valuesToModel(values)
-                    }).dispatch()}/>
+                <PanelButtons/>
             </Panel>
         )
     }

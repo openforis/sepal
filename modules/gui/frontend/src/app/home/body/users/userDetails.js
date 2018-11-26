@@ -71,7 +71,15 @@ class UserDetails extends React.Component {
         const newUser = !this.props.userDetails.username
         return (
             <Portal>
-                <Panel className={[styles.panel, newUser ? styles.newUser : styles.existingUser].join(' ')} center modal>
+                <Panel
+                    className={[styles.panel, newUser ? styles.newUser : styles.existingUser].join(' ')}
+                    form={form}
+                    statePath='userDetails'
+                    isActionForm={true}
+                    center
+                    modal
+                    onApply={userDetails => this.save(userDetails)}
+                    onCancel={() => this.cancel()}>
                     <PanelHeader
                         icon='user'
                         title={msg('user.userDetails.title')}/>
@@ -121,12 +129,7 @@ class UserDetails extends React.Component {
                             </div>
                         </InputGroup>
                     </PanelContent>
-                    <PanelButtons
-                        form={form}
-                        statePath='userDetails'
-                        isActionForm={true}
-                        onApply={userDetails => this.save(userDetails)}
-                        onCancel={() => this.cancel()}/>
+                    <PanelButtons/>
                 </Panel>
             </Portal>
         )

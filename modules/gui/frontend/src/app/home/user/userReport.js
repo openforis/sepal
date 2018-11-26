@@ -88,7 +88,13 @@ class Usage extends React.Component {
     renderPanel() {
         return (
             <Portal>
-                <Panel className={styles.panel} center modal form={false}>
+                <Panel
+                    className={styles.panel}
+                    statePath='userReport'
+                    isActionForm={true}
+                    center
+                    modal
+                    onCancel={() => closePanel()}>
                     <PanelHeader
                         icon='user'
                         title={msg('user.report.title')}/>
@@ -104,10 +110,7 @@ class Usage extends React.Component {
                             </div>
                         </div>
                     </PanelContent>
-                    <PanelButtons
-                        statePath='userReport'
-                        isActionForm={true}
-                        onApply={() => closePanel()}/>
+                    <PanelButtons/>
                 </Panel>
             </Portal>
         )

@@ -50,7 +50,15 @@ class Revisions extends React.Component {
         const {recipeId, form} = this.props
         return (
             <Portal>
-                <Panel className={styles.panel} center modal>
+                <Panel
+                    className={styles.panel}
+                    form={form}
+                    isActionForm={true}
+                    statePath={recipePath(recipeId, 'ui')}
+                    center
+                    modal
+                    onApply={({revision}) => this.revertToRevision(revision)}
+                    onCancel={() => showRevisionsPanel(recipeId, false)}>
                     <PanelHeader
                         icon='clock'
                         title={msg('process.revisions.title')}/>
@@ -58,12 +66,7 @@ class Revisions extends React.Component {
                         {this.renderContent()}
                     </PanelContent>
                     <PanelButtons
-                        form={form}
-                        isActionForm={true}
-                        applyLabel={msg('process.revisions.revert')}
-                        statePath={recipePath(recipeId, 'ui')}
-                        onApply={({revision}) => this.revertToRevision(revision)}
-                        onCancel={() => showRevisionsPanel(recipeId, false)}/>
+                        applyLabel={msg('process.revisions.revert')}/>
                 </Panel>
             </Portal>
         )

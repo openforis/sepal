@@ -31,7 +31,14 @@ class Typology extends React.Component {
     render() {
         const {recipeId, form} = this.props
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                onApply={values => this.recipeActions.setTypology({
+                    values,
+                    model: valuesToModel(values)
+                }).dispatch()}>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.landCover.panel.typology.title')}/>
@@ -40,13 +47,7 @@ class Typology extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    onApply={values => this.recipeActions.setTypology({
-                        values,
-                        model: valuesToModel(values)
-                    }).dispatch()}/>
+                <PanelButtons/>
             </Panel>
         )
     }

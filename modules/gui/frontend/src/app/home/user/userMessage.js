@@ -53,7 +53,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tincidunt a lectu
 
 class UserMessage extends React.Component {
     renderPanel() {
-        const {onApply, onCancel, form, inputs: {subject, contents}} = this.props
+        const {inputs: {subject, contents}} = this.props
         return (
             <React.Fragment>
                 <PanelContent className={styles.panelContent}>
@@ -77,21 +77,24 @@ class UserMessage extends React.Component {
                     </div>
                     {/* </form> */}
                 </PanelContent>
-                <PanelButtons
-                    form={form}
-                    isActionForm={true}
-                    statePath='userMessage'
-                    onApply={message => onApply(message)}
-                    onCancel={() => onCancel()}
-                />
+                <PanelButtons/>
             </React.Fragment>
         )
     }
 
     render() {
+        const {form, onApply, onCancel} = this.props
         return (
             <Portal>
-                <Panel className={styles.panel} center modal>
+                <Panel
+                    className={styles.panel}
+                    form={form}
+                    isActionForm={true}
+                    statePath='userMessage'
+                    center
+                    modal
+                    onApply={message => onApply(message)}
+                    onCancel={() => onCancel()}>
                     <PanelHeader
                         icon='user'
                         title={msg('user.userMessage.title')}/>

@@ -89,7 +89,14 @@ class Scenes extends React.Component {
     render() {
         const {recipeId, form, inputs: {type}} = this.props
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                onApply={values => this.recipeActions.setSceneSelectionOptions({
+                    values,
+                    model: valuesToModel(values)
+                }).dispatch()}>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.mosaic.panel.scenes.title')}/>
@@ -101,13 +108,7 @@ class Scenes extends React.Component {
                     </div>
                 </PanelContent>
 
-                <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    onApply={values => this.recipeActions.setSceneSelectionOptions({
-                        values,
-                        model: valuesToModel(values)
-                    }).dispatch()}/>
+                <PanelButtons/>
             </Panel>
         )
     }

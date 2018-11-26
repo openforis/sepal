@@ -131,7 +131,12 @@ class Retrieve extends React.Component {
     render() {
         const {recipeId, form} = this.props
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                isActionForm={true}
+                onApply={values => this.recipeActions.retrieve(values).dispatch()}>
                 <PanelHeader
                     icon='cloud-download-alt'
                     title={msg('process.mosaic.panel.retrieve.title')}/>
@@ -141,11 +146,7 @@ class Retrieve extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    isActionForm={true}
-                    applyLabel={msg('process.mosaic.panel.retrieve.apply')}
-                    onApply={values => this.recipeActions.retrieve(values).dispatch()}/>
+                    applyLabel={msg('process.mosaic.panel.retrieve.apply')}/>
             </Panel>
         )
     }

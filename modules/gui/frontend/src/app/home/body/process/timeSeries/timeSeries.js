@@ -1,12 +1,11 @@
 import {RecipeState, recipePath} from './timeSeriesRecipe'
-import {SceneSelectionType} from 'app/home/body/process/timeSeries/timeSeriesRecipe'
 import {connect, select} from 'store'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import MapToolbar from 'app/home/map/mapToolbar'
-import TimeSeriesToolbar from './panels/timeSeriesToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
+import TimeSeriesToolbar from './panels/timeSeriesToolbar'
 import styles from './timeSeries.module.css'
 
 const mapStateToProps = (state, ownProps) => {

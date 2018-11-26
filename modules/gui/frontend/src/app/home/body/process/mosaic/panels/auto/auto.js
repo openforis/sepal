@@ -39,7 +39,12 @@ class Auto extends React.Component {
     render() {
         const {recipeId, form} = this.props
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                isActionForm={true}
+                onApply={sceneCount => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}>
                 <PanelHeader
                     icon='magic'
                     title={msg('process.mosaic.panel.auto.title')}/>
@@ -49,11 +54,7 @@ class Auto extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    isActionForm={true}
-                    applyLabel={msg('process.mosaic.panel.auto.form.selectScenes')}
-                    onApply={sceneCount => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}/>
+                    applyLabel={msg('process.mosaic.panel.auto.form.selectScenes')}/>
             </Panel>
         )
     }

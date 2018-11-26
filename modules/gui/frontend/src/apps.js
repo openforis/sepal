@@ -1,5 +1,5 @@
-import {EMPTY, Subject, interval, of, throwError} from 'rxjs'
-import {catchError, concat, exhaustMap, filter, first, map, switchMap, takeUntil} from 'rxjs/operators'
+import {EMPTY, Subject, interval, of} from 'rxjs'
+import {catchError, concat, exhaustMap, filter, first, map, takeUntil} from 'rxjs/operators'
 import {history, isPathInLocation} from 'route'
 import {msg} from 'translate'
 import {select} from 'store'

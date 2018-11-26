@@ -1,5 +1,4 @@
-import {arrayEquals} from 'collections'
-import {dataSetById, imageSourceById, isDataSetInDateRange, isSourceInDateRange, sources} from 'sources'
+import {isDataSetInDateRange} from 'sources'
 
 const updateDataSets = (dataSets, fromDate, toDate) => {
     const isDataSetInRange = dataSetId => isDataSetInDateRange(dataSetId, fromDate, toDate)

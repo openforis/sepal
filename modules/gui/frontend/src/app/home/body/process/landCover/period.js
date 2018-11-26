@@ -48,7 +48,14 @@ class Period extends React.Component {
     render() {
         const {recipeId, form} = this.props
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                statePath={recipePath(recipeId, 'ui')}
+                form={form}
+                onApply={values => this.recipeActions.setPeriod({
+                    values,
+                    model: valuesToModel(values)
+                }).dispatch()}>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.landCover.panel.period.title')}/>
@@ -57,13 +64,7 @@ class Period extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <PanelButtons
-                    statePath={recipePath(recipeId, 'ui')}
-                    form={form}
-                    onApply={values => this.recipeActions.setPeriod({
-                        values,
-                        model: valuesToModel(values)
-                    }).dispatch()}/>
+                <PanelButtons/>
             </Panel>
         )
     }

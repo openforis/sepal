@@ -1,4 +1,4 @@
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'

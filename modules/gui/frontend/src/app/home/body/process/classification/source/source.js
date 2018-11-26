@@ -60,16 +60,17 @@ class Source extends React.Component {
             }
         ]
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                onApply={values => this.recipeActions.setSource({
+                    values,
+                    model: valuesToModel(values)
+                }).dispatch()}>
                 <PanelSections sections={sections} selected={inputs.section} inputs={inputs}/>
 
-                <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    onApply={values => this.recipeActions.setSource({
-                        values,
-                        model: valuesToModel(values)
-                    }).dispatch()}/>
+                <PanelButtons/>
             </Panel>
         )
     }

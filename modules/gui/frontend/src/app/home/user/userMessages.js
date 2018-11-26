@@ -213,7 +213,12 @@ class UserMessages extends React.Component {
         const {isAdmin} = this.props
         return (
             <Portal>
-                <Panel className={styles.panel} center modal>
+                <Panel
+                    className={styles.panel}
+                    statePath='userMessages'
+                    center
+                    modal
+                    onCancel={() => closePanel()}>
                     <PanelHeader
                         icon='user'
                         title={msg('user.userMessages.title')}/>
@@ -221,9 +226,6 @@ class UserMessages extends React.Component {
                         {this.renderMessages()}
                     </PanelContent>
                     <PanelButtons
-                        statePath='userMessages'
-                        isActionForm={true}
-                        onApply={() => closePanel()}
                         additionalButtons={isAdmin ? [{
                             key: 'post',
                             label: msg('user.userMessages.post'),

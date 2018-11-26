@@ -1,23 +1,22 @@
-import api from 'api'
-import {RecipeActions, recipePath, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
+import {Button} from '../../../../../widget/button'
+import {CenteredProgress} from 'widget/progress'
+import {Field, form} from 'widget/form'
+import {Panel, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState, recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {dataSetById} from 'sources'
+import {map} from 'rxjs/operators'
+import {msg} from 'translate'
 import {objectEquals} from 'collections'
-import format from 'format'
+import Icon from 'widget/icon'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
-import {map} from 'rxjs/operators'
-import {dataSetById} from 'sources'
-import {msg} from 'translate'
-import {Field, form} from 'widget/form'
-import Icon from 'widget/icon'
-import {Panel, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import {CenteredProgress} from 'widget/progress'
-import {Button} from '../../../../../widget/button'
+import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
+import api from 'api'
 import daysBetween from './daysBetween'
+import format from 'format'
 import styles from './sceneSelection.module.css'
-
 
 const fields = {
     selectedScenes: new Field()
@@ -50,7 +49,14 @@ class SceneSelection extends React.Component {
         return (
             <React.Fragment>
                 <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
-                <Panel center className={styles.panel}>
+                <Panel
+                    className={styles.panel}
+                    form={form}
+                    statePath={recipePath(recipeId, 'ui')}
+                    modalOnDirty={false}
+                    center
+                    onApply={({selectedScenes}) => this.onApply(selectedScenes)}
+                    onCancel={() => this.deselectSceneArea()}>
                     <PanelHeader
                         icon='cog'
                         title={msg('process.mosaic.panel.auto.form.selectScenes')}/>
@@ -62,12 +68,7 @@ class SceneSelection extends React.Component {
                             : this.renderScenes()}
                     </div>
 
-                    <PanelButtons
-                        form={form}
-                        statePath={recipePath(recipeId, 'ui')}
-                        modalOnDirty={false}
-                        onApply={({selectedScenes}) => this.onApply(selectedScenes)}
-                        onCancel={() => this.deselectSceneArea()}/>
+                    <PanelButtons/>
                 </Panel>
             </React.Fragment>
         )

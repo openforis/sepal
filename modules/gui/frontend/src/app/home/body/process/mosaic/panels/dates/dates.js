@@ -187,7 +187,11 @@ class Dates extends React.Component {
     render() {
         const {recipeId, form, inputs: {advanced}} = this.props
         return (
-            <Panel className={advanced.value ? styles.advanced : styles.simple}>
+            <Panel
+                className={advanced.value ? styles.advanced : styles.simple}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.mosaic.panel.dates.title')}/>
@@ -199,9 +203,6 @@ class Dates extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}
                     additionalButtons={[{
                         key: 'advanced',
                         label: advanced.value ? msg('button.less') : msg('button.more'),

@@ -1,14 +1,12 @@
+import {Field, Label, form} from 'widget/form'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
+import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/timeSeries/timeSeriesRecipe'
+import Buttons from 'widget/buttons'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {dataSetById} from 'sources'
-import {msg} from 'translate'
-import {currentUser} from 'user'
-import Buttons from 'widget/buttons'
-import {Field, form, Label} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -54,7 +52,12 @@ class Retrieve extends React.Component {
     render() {
         const {recipeId, form} = this.props
         return (
-            <Panel className={styles.panel}>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath={recipePath(recipeId, 'ui')}
+                isActionForm={true}
+                onApply={values => this.recipeActions.retrieve(values).dispatch()}>
                 <PanelHeader
                     icon='cloud-download-alt'
                     title={msg('process.timeSeries.panel.retrieve.title')}/>
@@ -64,11 +67,7 @@ class Retrieve extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    form={form}
-                    statePath={recipePath(recipeId, 'ui')}
-                    isActionForm={true}
-                    applyLabel={msg('process.timeSeries.panel.retrieve.apply')}
-                    onApply={values => this.recipeActions.retrieve(values).dispatch()}/>
+                    applyLabel={msg('process.timeSeries.panel.retrieve.apply')}/>
             </Panel>
         )
     }

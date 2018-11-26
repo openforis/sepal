@@ -50,7 +50,7 @@ class ChangePassword extends React.Component {
     }
 
     renderPanel() {
-        const {form, inputs: {oldPassword, newPassword, confirmPassword}} = this.props
+        const {inputs: {oldPassword, newPassword, confirmPassword}} = this.props
         return this.props.stream('CHANGE_PASSWORD') === 'ACTIVE'
             ? <CenteredProgress title={msg('user.changePassword.updating')}/>
             : <React.Fragment>
@@ -78,19 +78,23 @@ class ChangePassword extends React.Component {
                         errorMessage={[confirmPassword, 'passwordsMatch']}
                     />
                 </PanelContent>
-                <PanelButtons
-                    form={form}
-                    isActionForm={true}
-                    statePath='userPassword'
-                    onApply={userPasswords => this.changePassword(userPasswords)}
-                    onCancel={() => this.cancel()}/>
+                <PanelButtons/>
             </React.Fragment>
     }
 
     render() {
+        const {form} = this.props
         return (
             <Portal>
-                <Panel className={styles.panel} center modal>
+                <Panel
+                    className={styles.panel}
+                    form={form}
+                    isActionForm={true}
+                    statePath='userPassword'
+                    center
+                    modal
+                    onApply={userPasswords => this.changePassword(userPasswords)}
+                    onCancel={() => this.cancel()}>
                     <PanelHeader
                         icon='user'
                         title={msg('user.changePassword.title')}/>

@@ -63,7 +63,11 @@ class UserSession extends React.Component {
         const {session, form, inputs: {keepAlive}} = this.props
         form.onDirty(this.props.onDirty)
         return (
-            <Panel className={styles.panel} inline>
+            <Panel
+                className={styles.panel}
+                inline
+                onApply={session => this.updateSession(session)}
+                onCancel={() => this.cancel()}>
                 <PanelContent>
                     <div>
                         <Label msg={msg('user.userSession.form.keepAlive.label')}/>
@@ -81,8 +85,6 @@ class UserSession extends React.Component {
                 <PanelButtons
                     form={form}
                     statePath='userSession'
-                    onApply={session => this.updateSession(session)}
-                    onCancel={() => this.cancel()}
                     additionalButtons={[{
                         key: 'suspend',
                         label: msg('user.userSession.suspend.label'),

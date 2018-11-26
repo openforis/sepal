@@ -1,131 +1,12 @@
 import {Button, ButtonGroup} from 'widget/button'
-import {PanelWizardContext} from './panel'
-import {connect, select} from 'store'
+import {PanelContext} from './panel'
+import {PanelWizardContext} from './panelWizard'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
 import styles from 'widget/panelButtons.module.css'
 
-const mapStateToProps = (state, ownProps) => {
-    const {statePath} = ownProps
-    return {
-        initialized: select([statePath, 'initialized']),
-        selectedPanel: select([statePath, 'selectedPanel'])
-    }
-}
-
-class PanelButtons extends React.Component {
-    state = {
-        selectedPanelIndex: 0,
-        first: true,
-        last: false,
-        panels: []
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        const {selectedPanel} = nextProps
-        const panels = prevState.panels
-        const selectedPanelIndex = panels.indexOf(selectedPanel)
-        const first = selectedPanelIndex === 0
-        const last = selectedPanelIndex === panels.length - 1
-        return {...prevState, selectedPanelIndex, first, last}
-
-    }
-
-    apply() {
-        const {form, onApply} = this.props
-        onApply(form && form.values())
-    }
-
-    closePanel() {
-        this.setModal(false)
-        this.selectPanel()
-    }
-
-    ok() {
-        this.apply()
-        this.closePanel()
-    }
-
-    cancel() {
-        const {onCancel} = this.props
-        this.closePanel()
-        onCancel && onCancel()
-    }
-
-    back() {
-        const {selectedPanelIndex, first} = this.state
-        if (!first) {
-            this.apply()
-            this.selectPanel(this.state.panels[selectedPanelIndex - 1])
-        }
-    }
-
-    next() {
-        const {selectedPanelIndex, last} = this.state
-        if (!last) {
-            this.apply()
-            this.selectPanel(this.state.panels[selectedPanelIndex + 1])
-        }
-    }
-
-    done() {
-        this.apply()
-        this.setInitialized()
-        this.closePanel()
-    }
-
-    render() {
-        const {initialized} = this.props
-        return (
-            <PanelWizardContext.Consumer>
-                {panels => {
-                    this.panels = panels || []
-                    return (
-                        <div className={styles.buttons}>
-                            {this.renderAdditionalButtons()}
-                            {!panels || initialized ? this.renderFormButtons() : this.renderWizardButtons()}
-                        </div>
-                    )
-                }}
-            </PanelWizardContext.Consumer>
-        )
-    }
-
-    componentDidMount() {
-        const {initialized, form, modalOnDirty = true} = this.props
-        if (modalOnDirty) {
-            this.setModal(!initialized)
-            if (initialized) {
-                form.onDirty(() => this.setModal(true))
-                form.onClean(() => this.setModal(false))
-            }
-        }
-        this.setState(prevState => ({...prevState, panels: this.panels}))
-    }
-
-    setModal(modal) {
-        const {statePath} = this.props
-        actionBuilder('SET_MODAL', {modal})
-            .set([statePath, 'modal'], modal)
-            .dispatch()
-    }
-
-    selectPanel(panel) {
-        const {statePath} = this.props
-        actionBuilder('SELECT_PANEL', {panel})
-            .set([statePath, 'selectedPanel'], panel)
-            .dispatch()
-    }
-
-    setInitialized() {
-        const {statePath} = this.props
-        actionBuilder('SET_INITIALIZED')
-            .set([statePath, 'initialized'], true)
-            .dispatch()
-    }
-
+export default class PanelButtons extends React.Component {
     renderAdditionalButtons() {
         const {additionalButtons = []} = this.props
         const renderButton = ({key, look, label, disabled, tooltip, onClick}) =>
@@ -149,69 +30,67 @@ class PanelButtons extends React.Component {
         )
     }
 
-    renderBackButton() {
+    renderBackButton(onClick) {
         return (
             <Button
                 icon='chevron-left'
                 label={msg('button.back')}
                 onClick={e => {
                     e.preventDefault()
-                    this.back()
+                    onClick && onClick()
                 }}
                 onMouseDown={e => e.preventDefault()} // Prevent onBlur validation before going back
             />
         )
     }
 
-    renderNextButton() {
-        const {form} = this.props
+    renderNextButton({invalid}, onClick) {
         return (
             <Button
                 type='submit'
                 look='apply'
                 icon='chevron-right'
                 label={msg('button.next')}
-                disabled={form.isInvalid()}
+                disabled={invalid}
                 onClick={e => {
                     e.preventDefault()
-                    this.next()
+                    onClick && onClick()
                 }}
             />
         )
     }
 
-    renderDoneButton() {
-        const {form} = this.props
+    renderDoneButton({invalid}, onClick) {
         return (
             <Button
                 type='submit'
                 look='apply'
                 icon='check'
                 label={msg('button.done')}
-                disabled={form.isInvalid()}
+                disabled={invalid}
                 onClick={e => {
                     e.preventDefault()
-                    this.done()
+                    onClick && onClick()
                 }}
             />
         )
     }
 
-    renderWizardButtons() {
-        const {first, last} = this.state
+    renderWizardButtons({invalid, first, last, onBack, onNext, onDone}) {
         return (
             <ButtonGroup>
-                {!first ? this.renderBackButton() : null}
-                {!last ? this.renderNextButton() : this.renderDoneButton()}
+                {!first ? this.renderBackButton(onBack) : null}
+                {!last ? this.renderNextButton({invalid}, onNext) : this.renderDoneButton({invalid}, onDone)}
             </ButtonGroup>
         )
     }
 
-    renderCancelButton() {
-        const {isActionForm, cancelLabel = msg('button.cancel'), form} = this.props
-        const showCancelButton = isActionForm || form.isDirty()
+    renderCancelButton({isActionForm, dirty}, onClick) {
+        const {cancelLabel = msg('button.cancel')} = this.props
+        const showCancelButton = isActionForm || dirty
         return (
             <Button
+                type='cancel'
                 look='cancel'
                 icon='undo-alt'
                 label={cancelLabel}
@@ -219,44 +98,61 @@ class PanelButtons extends React.Component {
                 disabled={!showCancelButton}
                 onClick={e => {
                     e.preventDefault()
-                    this.cancel()
+                    onClick && onClick()
                 }}
                 onMouseDown={e => e.preventDefault()} // Prevent onBlur validation before canceling
             />
         )
     }
 
-    renderOkButton() {
-        const {isActionForm, applyLabel = msg('button.ok'), form} = this.props
+    renderOkButton({isActionForm, invalid}, onClick) {
+        const {applyLabel = msg('button.ok')} = this.props
         return (
             <Button
                 type={isActionForm ? 'button' : 'submit'}
                 look='apply'
                 icon='check'
                 label={applyLabel}
-                disabled={!isActionForm && form.isInvalid()}
+                disabled={!isActionForm && invalid}
                 onClick={e => {
                     e.preventDefault()
-                    isActionForm || form.isDirty() ? this.ok() : this.cancel()
+                    onClick && onClick()
                 }}
                 onMouseDown={e => e.preventDefault()} // Prevent onBlur validation before canceling
             />
         )
     }
 
-    renderFormButtons() {
-        const {isActionForm, onApply, onCancel} = this.props
+    renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel}) {
         return (
             <ButtonGroup>
-                {!isActionForm || onCancel ? this.renderCancelButton() : null}
-                {!isActionForm || onApply ? this.renderOkButton() : null}
+                {this.renderCancelButton({isActionForm, dirty}, onCancel)}
+                {this.renderOkButton({isActionForm, invalid}, onOk)}
             </ButtonGroup>
+        )
+    }
+
+    render() {
+        return (
+            <PanelWizardContext.Consumer>
+                {panels => (
+                    <PanelContext.Consumer>
+                        {({isActionForm, initialized, first, last, dirty, invalid, onOk, onCancel, onBack, onNext, onDone}) => (
+                            <div className={styles.buttons}>
+                                {this.renderAdditionalButtons()}
+                                {!panels || initialized
+                                    ? this.renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel})
+                                    : this.renderWizardButtons({first, last, invalid, onBack, onNext, onDone})}
+                            </div>
+                        )}
+                    </PanelContext.Consumer>
+                )}
+            </PanelWizardContext.Consumer>
         )
     }
 }
 
 PanelButtons.propTypes = {
-    statePath: PropTypes.string.isRequired,
     additionalButtons: PropTypes.arrayOf(
         PropTypes.shape({
             key: PropTypes.string.isRequired,
@@ -266,13 +162,5 @@ PanelButtons.propTypes = {
         })
     ),
     applyLabel: PropTypes.string,
-    cancelLabel: PropTypes.string,
-    form: PropTypes.object,
-    initialized: PropTypes.any,
-    isActionForm: PropTypes.any,
-    modalOnDirty: PropTypes.any,
-    onApply: PropTypes.func,
-    onCancel: PropTypes.func
+    cancelLabel: PropTypes.string
 }
-
-export default connect(mapStateToProps)(PanelButtons)

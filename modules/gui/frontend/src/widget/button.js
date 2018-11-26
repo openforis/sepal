@@ -197,5 +197,5 @@ export const ButtonGroup = ({children}) =>
     </div>
 
 ButtonGroup.propTypes = {
-    children: PropTypes.array.isRequired
+    children: PropTypes.any.isRequired
 }
