@@ -48,8 +48,7 @@ class JdbcRecipeRepository implements RecipeRepository {
                 SELECT id, name, type, type_version, username, NULL AS contents, creation_time, update_time 
                 FROM recipe 
                 WHERE username = ? AND NOT removed
-                ORDER BY lower(name), update_time desc
-                LIMIT 100''', [username]) {
+                ORDER BY name, update_time desc''', [username]) {
             recipes << toRecipe(it)
         }
         return recipes
