@@ -1,5 +1,5 @@
 import {Field, form} from 'widget/form'
-import {Panel} from 'widget/panel'
+import Panel from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
 import {msg} from 'translate'
 import AssetSection from './assetSection'

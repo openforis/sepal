@@ -1,6 +1,6 @@
 import {Field, Label, form} from 'widget/form'
 import {Msg, msg} from 'translate'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
 import {arrayEquals} from 'collections'
 import {imageSourceById} from 'sources'

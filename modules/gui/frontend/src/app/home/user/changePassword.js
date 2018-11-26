@@ -1,6 +1,6 @@
 import {CenteredProgress} from 'widget/progress'
 import {Constraint, Field, Input, form} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {changeUserPassword$} from 'user'
 import {msg} from 'translate'
 import {showUserDetails} from './userProfile'

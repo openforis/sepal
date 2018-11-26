@@ -1,5 +1,5 @@
 import {Field, Label, form} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, SceneSelectionType} from '../../mosaicRecipe'
 import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'

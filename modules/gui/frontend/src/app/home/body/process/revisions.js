@@ -1,5 +1,5 @@
 import {Field, form} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeState, getRevisions, recipePath, revertToRevision$} from 'app/home/body/process/recipe'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'

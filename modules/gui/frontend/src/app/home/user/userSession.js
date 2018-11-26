@@ -1,5 +1,5 @@
 import {Field, Label, form} from 'widget/form'
-import {Panel, PanelContent} from 'widget/panel'
+import Panel, { PanelContent} from 'widget/panel'
 import {PropTypes} from 'prop-types'
 import {msg} from 'translate'
 import {stopUserSession$, updateUserSession$} from 'user'

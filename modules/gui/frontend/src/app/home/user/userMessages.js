@@ -1,6 +1,6 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {Msg, msg} from 'translate'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {connect} from 'store'
 import Markdown from 'react-markdown'
 import Notifications from 'app/notifications'
@@ -228,6 +228,7 @@ class UserMessages extends React.Component {
                     <PanelButtons
                         additionalButtons={isAdmin ? [{
                             key: 'post',
+                            icon: 'pencil-alt',
                             label: msg('user.userMessages.post'),
                             onClick: () => this.newMessage()
                         }] : []}/>

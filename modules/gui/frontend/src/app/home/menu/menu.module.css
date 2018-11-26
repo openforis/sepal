@@ -82,7 +82,7 @@
 }
 
 .menu button.tasks {
-    background-color: hsla(197, 60%, 25%, var(--opacity));
+    background-color: hsla(197, 30%, 25%, var(--opacity));
     border-color: hsla(197, 60%, 45%, var(--border-opacity));
 }
 

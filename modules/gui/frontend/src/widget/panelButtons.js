@@ -1,6 +1,5 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {PanelContext} from './panel'
-import {PanelWizardContext} from './panelWizard'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -9,10 +8,11 @@ import styles from 'widget/panelButtons.module.css'
 export default class PanelButtons extends React.Component {
     renderAdditionalButtons() {
         const {additionalButtons = []} = this.props
-        const renderButton = ({key, look, label, disabled, tooltip, onClick}) =>
+        const renderButton = ({key, look, icon, label, disabled, tooltip, onClick}) =>
             <Button
                 key={key}
                 look={look}
+                icon={icon}
                 label={label}
                 disabled={disabled}
                 onClick={e => {
@@ -134,20 +134,16 @@ export default class PanelButtons extends React.Component {
 
     render() {
         return (
-            <PanelWizardContext.Consumer>
-                {panels => (
-                    <PanelContext.Consumer>
-                        {({isActionForm, initialized, first, last, dirty, invalid, onOk, onCancel, onBack, onNext, onDone}) => (
-                            <div className={styles.buttons}>
-                                {this.renderAdditionalButtons()}
-                                {!panels || initialized
-                                    ? this.renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel})
-                                    : this.renderWizardButtons({first, last, invalid, onBack, onNext, onDone})}
-                            </div>
-                        )}
-                    </PanelContext.Consumer>
+            <PanelContext.Consumer>
+                {({isActionForm, panels, initialized, first, last, dirty, invalid, onOk, onCancel, onBack, onNext, onDone}) => (
+                    <div className={styles.buttons}>
+                        {this.renderAdditionalButtons()}
+                        {!panels || initialized
+                            ? this.renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel})
+                            : this.renderWizardButtons({first, last, invalid, onBack, onNext, onDone})}
+                    </div>
                 )}
-            </PanelWizardContext.Consumer>
+            </PanelContext.Consumer>
         )
     }
 }
@@ -159,6 +155,7 @@ PanelButtons.propTypes = {
             label: PropTypes.string.isRequired,
             onClick: PropTypes.func.isRequired,
             disabled: PropTypes.any,
+            icon: PropTypes.string
         })
     ),
     applyLabel: PropTypes.string,

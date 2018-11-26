@@ -1,5 +1,5 @@
 import {Msg, msg} from 'translate'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
 import {form} from 'widget/form'
 import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'

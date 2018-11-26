@@ -1,6 +1,6 @@
 import {Constraint} from 'widget/form'
 import {Field, Input, form} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
 import {Subject} from 'rxjs'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'

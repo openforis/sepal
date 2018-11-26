@@ -1,7 +1,7 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, Input, form} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {closePanel, showChangePassword} from './userProfile'
 import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
 import {map, switchMap} from 'rxjs/operators'

@@ -1,7 +1,7 @@
 import {Button} from '../../../../../widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, form} from 'widget/form'
-import {Panel, PanelHeader} from 'widget/panel'
+import Panel, { PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {dataSetById} from 'sources'
 import {map} from 'rxjs/operators'

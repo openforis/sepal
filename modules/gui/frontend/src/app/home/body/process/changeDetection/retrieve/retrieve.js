@@ -1,5 +1,5 @@
 import {Field, Label, form} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../changeDetectionRecipe'
 import {currentUser} from 'user'
 import {msg} from 'translate'

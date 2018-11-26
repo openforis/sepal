@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {connect} from 'store'
 import {msg} from 'translate'
 import PanelButtons from 'widget/panelButtons'

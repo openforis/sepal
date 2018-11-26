@@ -1,6 +1,6 @@
 import {Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
 import {Subject} from 'rxjs'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'

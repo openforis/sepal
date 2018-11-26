@@ -1,5 +1,5 @@
 import {Constraint, ErrorMessage, Field, Input, Label, form} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
 import {msg} from 'translate'
 import PanelButtons from 'widget/panelButtons'

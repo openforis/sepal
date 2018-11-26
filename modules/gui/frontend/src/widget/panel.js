@@ -1,4 +1,5 @@
 import {PanelButtonContext} from './toolbar'
+import {PanelWizardContext} from './panelWizard'
 import {connect, select} from 'store'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
@@ -14,7 +15,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-export class Panel extends React.Component {
+class Panel extends React.Component {
     state = {
         selectedPanelIndex: 0,
         first: true,
@@ -23,16 +24,18 @@ export class Panel extends React.Component {
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
+        console.log({nextProps, prevState})
         const {selectedPanel} = nextProps
         const panels = prevState.panels
         const selectedPanelIndex = panels.indexOf(selectedPanel)
         const first = selectedPanelIndex === 0
-        const last = selectedPanelIndex === panels.length - 1
+        const last = selectedPanelIndex !== -1 && selectedPanelIndex === panels.length - 1
         return {
             ...prevState,
             selectedPanelIndex,
             first,
-            last
+            last,
+            panels
         }
     }
 
@@ -45,6 +48,8 @@ export class Panel extends React.Component {
                 form.onClean(() => this.setModal(false))
             }
         }
+        console.log('mounted', this.state)
+        // ???
         // this.setState(prevState => ({...prevState, panels: this.panels}))
     }
 
@@ -152,33 +157,41 @@ export class Panel extends React.Component {
 
     render() {
         const {form = false, isActionForm, initialized, onApply, top, bottom, left, right, center, inline, modal, className, children} = this.props
+        const {first, last} = this.state
+        console.log({first, last})
         return (
-            <PanelContext.Provider value={{
-                initialized,
-                first: this.state.first,
-                last: this.state.last,
-                isActionForm: form && isActionForm,
-                dirty: form && form.isDirty(),
-                invalid: form && form.isInvalid(),
-                onOk: () => this.ok(),
-                onCancel: () => this.cancel(),
-                onBack: () => this.back(),
-                onNext: () => this.next(),
-                onDone: () => this.done()
-            }}>
-                <PanelButtonContext.Consumer>
-                    {panelButtonPosition =>
-                        this.renderModal({modal},
-                            this.renderForm({form, onApply, top, bottom, left, right, center, inline, panelButtonPosition, className}, children)
-                        )
-                    }
-                </PanelButtonContext.Consumer>
-            </PanelContext.Provider>
+            <PanelWizardContext.Consumer>
+                {panels => (
+                    <PanelContext.Provider value={{
+                        initialized,
+                        panels,
+                        first,
+                        last,
+                        isActionForm: form && isActionForm,
+                        dirty: form && form.isDirty(),
+                        invalid: form && form.isInvalid(),
+                        onOk: () => this.ok(),
+                        onCancel: () => this.cancel(),
+                        onBack: () => this.back(),
+                        onNext: () => this.next(),
+                        onDone: () => this.done()
+                    }}>
+                        <PanelButtonContext.Consumer>
+                            {panelButtonPosition =>
+                                this.renderModal({modal},
+                                    this.renderForm({form, onApply, top, bottom, left, right, center, inline, panelButtonPosition, className}, children)
+                                )
+                            }
+                        </PanelButtonContext.Consumer>
+                    </PanelContext.Provider>
+                )}
+            </PanelWizardContext.Consumer>
+
         )
     }
 }
 
-Panel = connect(mapStateToProps)(Panel)
+export default connect(mapStateToProps)(Panel)
 
 Panel.propTypes = {
     children: PropTypes.any.isRequired,

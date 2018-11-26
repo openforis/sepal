@@ -1,4 +1,4 @@
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
 import {form} from 'widget/form'
 import {msg} from 'translate'

@@ -1,5 +1,5 @@
 import {Field, Label, form} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
 import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/timeSeries/timeSeriesRecipe'
