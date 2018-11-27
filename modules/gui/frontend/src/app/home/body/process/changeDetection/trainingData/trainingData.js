@@ -129,6 +129,12 @@ class TrainingData extends React.Component {
             </React.Fragment>
         )
     }
+
+    componentDidMount() {
+        const {inputs: {fusionTable}} = this.props
+        if (fusionTable.value)
+            this.loadFusionTableColumns(fusionTable.value)
+    }
 }
 
 TrainingData.propTypes = {
