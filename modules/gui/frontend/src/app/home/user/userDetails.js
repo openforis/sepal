@@ -1,12 +1,12 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, Input, form} from 'widget/form'
-import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {closePanel, showChangePassword} from './userProfile'
 import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
 import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
 import Notifications from 'app/notifications'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import React from 'react'
@@ -52,10 +52,15 @@ class UserDetails extends React.Component {
     updateUserDetails(userDetails) {
         this.props.stream('UPDATE_CURRENT_USER_DETAILS',
             updateCurrentUserDetails$(userDetails),
-            () => Notifications.success('user.userDetails.update').dispatch(),
-            error => Notifications.caught('user.userDetails.update', null, error).dispatch()
+            () => {
+                Notifications.success('user.userDetails.update').dispatch()
+                closePanel()
+            },
+            error => {
+                Notifications.caught('user.userDetails.update', null, error).dispatch()
+                closePanel()
+            }
         )
-        closePanel()
     }
 
     cancel() {
