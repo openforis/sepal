@@ -327,6 +327,7 @@ export const polygonOptions = fill => ({
 const defaultStyle = [
     {stylers: [{visibility: 'simplified'}]},
     {stylers: [{color: '#131314'}]},
+    {featureType: "transit.station", stylers: [{ visibility: "off" }]},
     {featureType: "poi", stylers: [{ visibility: "off" }]},
     {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
     {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
