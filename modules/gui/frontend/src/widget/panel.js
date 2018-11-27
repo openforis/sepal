@@ -129,7 +129,6 @@ class Panel extends React.Component {
         return (
             <PanelWizardContext.Consumer>
                 {(panels = []) => {
-                    console.log({panels, initialized})
                     const wizard = panels.length && !initialized
                     const selectedPanelIndex = panels.indexOf(selectedPanel)
                     const first = selectedPanelIndex === 0
