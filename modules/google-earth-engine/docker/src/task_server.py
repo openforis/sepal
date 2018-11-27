@@ -110,7 +110,7 @@ def init(server_args):
     username = server_args['username']
     home_dir = server_args['home_dir']
     earthengine_credentials_file = os.path.expanduser(home_dir + '/.config/earthengine/credentials')
-    download_dir = home_dir + "/download"
+    download_dir = home_dir + "/downloads"
     sepal_host = server_args['sepal_host']
     sepal_username = server_args['sepal_username']
     sepal_password = server_args['sepal_password']
