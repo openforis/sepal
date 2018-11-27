@@ -55,17 +55,6 @@ const renderButton = ({type, chromeless, className, additionalClassName, look, s
     >
         {contents}
     </HoldButton>
-// <button
-//     type={type}
-//     className={classNames({chromeless, className, additionalClassName, look, size, shape})}
-//     style={{visibility: shown ? 'visible' : 'hidden'}}
-//     tabIndex={tabIndex}
-//     disabled={disabled || !shown}
-//     onMouseDown={e => handleMouseDown(e, {onMouseDown})}
-//     onClick={e => handleClick(e, {onClick, download, downloadUrl, downloadFilename})}
-// >
-//     {contents}
-// </button>
 
 const renderPropagationStopper = ({stopPropagation}, contents) =>
     stopPropagation ? (
