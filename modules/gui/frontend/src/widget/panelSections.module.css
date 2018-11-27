@@ -14,6 +14,22 @@
     margin-left: .3rem;
 }
 
+.backButton {
+    animation: pulse 500ms 1000ms 5 ease-out forwards;
+}
+
+@keyframes pulse {
+    0% {
+        color: var(--info-color);
+    }
+    10% {
+        color: var(--info-color);
+    }
+    100% {
+        color: inherit;
+    }
+}
+
 .enter {
     opacity: 1;
     z-index: 1;

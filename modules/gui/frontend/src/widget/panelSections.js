@@ -37,6 +37,7 @@ class Section extends React.Component {
                 chromeless
                 shape='none'
                 icon='arrow-left'
+                additionalClassName={styles.backButton}
                 onClick={() => selected.set('')}/>
             : <Icon name={section.icon}/>
     }

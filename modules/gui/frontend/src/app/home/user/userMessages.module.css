@@ -1,13 +1,12 @@
 .panel {
     max-height: 45rem;
     max-width: 60rem;
-    --unread-color: rgb(15, 89, 226);
+    --unread-color: var(--info-color);
     --read-color: hsla(0, 0%, 0%, .2)
 }
 
 button.unread i {
-    color: rgb(15, 89, 226);
-    /* color: var(--unread-color); */
+    color: var(--info-color);
     animation: pulse 1500ms ease-out infinite;
 }
 
