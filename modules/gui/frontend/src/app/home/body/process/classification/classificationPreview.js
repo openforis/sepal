@@ -108,12 +108,11 @@ class ClassificationPreview extends React.Component {
                     <div className={styles.retry}>
                         <Button
                             chromeless
+                            look='transparent'
+                            shape='pill'
                             icon='sync'
                             label={msg('button.retry')}
-                            onClick={e => {
-                                e.preventDefault()
-                                this.reload()
-                            }}
+                            onClick={() => this.reload()}
                         />
                     </div>
                 </div>
