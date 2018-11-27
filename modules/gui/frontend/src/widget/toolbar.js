@@ -83,10 +83,7 @@ export class ToolbarButton extends React.Component {
                         icon={icon}
                         label={label}
                         disabled={disabled}
-                        onClick={e => {
-                            console.log({e})
-                            onClick(e)
-                        }}
+                        onClick={e => onClick(e)}
                         tooltip={tooltip}
                         tooltipPlacement={horizontal ? 'top' : 'left'}
                         tooltipDisabled={!!(disabled || (panel && selected))}

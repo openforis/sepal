@@ -45,7 +45,7 @@ class ChangeDetection extends React.Component {
 
     setAoiLayer() {
         const {recipeId, source1, source2, componentWillUnmount$} = this.props
-        console.log({source1, source2})
+        // console.log({source1, source2})
         setRecipeGeometryLayer({
             contextId: recipeId,
             layerSpec: {id: 'aoi', layerIndex: 0, recipe: source1 || source2},
