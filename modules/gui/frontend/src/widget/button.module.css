@@ -41,15 +41,13 @@
     --font-size: var(--x-large-font-size);
 }
 
-.button.none {
-    --ratio: 1;
-    padding: 0;
-    border: none !important;
-    background: none !important;
-}
-
 .button.rectangle {
     border-radius: var(--button-border-radius);
+    padding: 0 .8rem;
+}
+
+.button.pill {
+    border-radius: 500px;
     padding: 0 .8rem;
 }
 
@@ -57,8 +55,11 @@
     border-radius: 50%;
 }
 
-.button.pill {
-    border-radius: 500px;
+.button.none {
+    --ratio: 1;
+    padding: 0;
+    border: none !important;
+    background: none !important;
 }
 
 .button > * {

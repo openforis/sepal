@@ -140,7 +140,7 @@ Button.propTypes = {
     label: PropTypes.string,
     link: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'apply', 'cancel']),
-    shape: PropTypes.oneOf(['none', 'rectangle', 'circle', 'pill']),
+    shape: PropTypes.oneOf(['rectangle', 'pill', 'circle', 'none']),
     shown: PropTypes.any,
     size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large']),
     stopPropagation: PropTypes.any,
