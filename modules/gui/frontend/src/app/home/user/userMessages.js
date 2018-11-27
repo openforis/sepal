@@ -3,7 +3,7 @@ import {Msg, msg} from 'translate'
 import {connect} from 'store'
 import Markdown from 'react-markdown'
 import Notifications from 'app/notifications'
-import Panel, { PanelContent, PanelHeader} from 'widget/panel'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -168,8 +168,9 @@ class UserMessages extends React.Component {
     renderMessageStateButton(userMessage) {
         return (
             <Button
-                size='large'
                 chromeless
+                size='large'
+                shape='none'
                 additionalClassName={[styles.dot, styles[userMessage.state]].join(' ')}
                 icon='circle'
                 tooltip={msg(`user.userMessages.state.${userMessage.state}`)}
