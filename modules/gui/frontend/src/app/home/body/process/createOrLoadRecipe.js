@@ -35,9 +35,7 @@ export default CreateOrLoadRecipe
 const mapStateToProps = () => {
     const recipes = select('process.recipes')
     return {
-        recipes: recipes
-            ? _.sortBy(recipes, 'name')
-            : null
+        recipes: recipes ? recipes : null
     }
 }
 

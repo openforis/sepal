@@ -36,12 +36,14 @@ export const saveRecipe$ = recipe => {
         name: recipe.title || recipe.placeholder,
         type: recipe.type
     }
-    const recipes = [...select('process.recipes')]
+    let recipes = [...select('process.recipes')]
     const index = recipes.findIndex(savedRecipe => savedRecipe.id === recipe.id)
     if (index > -1)
         recipes[index] = listItem
-    else
+    else {
         recipes.push(listItem)
+        recipes = _.sortBy(recipes, 'name')
+    }
 
     return of(
         actionBuilder('SET_RECIPES', {recipes})
