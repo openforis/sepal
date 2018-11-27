@@ -74,20 +74,8 @@
     border-bottom: var(--wireframe);
 }
 
-.header i {
-    display: inline-block;
-    border: none;
-    border-radius: 50%;
-    width: 1.6rem;
-    height: 1.6rem;
-    line-height: 1.6rem;
-    text-align: center;
-    margin-right: .2rem;
-}
-
-.header .svg {
-    width: .9rem;
-    height: .9rem;
+.header > *:first-child {
+    margin-right: .5rem;
 }
 
 .header a:hover i {

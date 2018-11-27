@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {getLanguage, setLanguage} from 'translate'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
@@ -25,12 +26,14 @@ const Language = ({code, name, selected}) =>
     <Tooltip msg={name}>
         {selected
             ? <span><span>{code}</span></span>
-            : <span><a
-                onMouseDown={e => e.preventDefault()}
-                onClick={() => {
-                    setLanguage(code)
-                    window.location = window.location
-                }}>
-                {code}
-            </a></span>}
+            : <span>
+                <Button
+                    chromeless
+                    label={code}
+                    onClick={() => {
+                        setLanguage(code)
+                        window.location.reload()
+                    }}
+                />
+            </span>}
     </Tooltip>

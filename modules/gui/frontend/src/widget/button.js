@@ -61,36 +61,50 @@ const renderContents = ({icon, iconType, label, children}) =>
         </div>
     )
 
-const classNames = ({noButton, className, additionalClassName, look, size, onClickHold}) =>
+const classNames = ({chromeless, className, additionalClassName, look, size, shape, onClickHold}) =>
     className ? className : [
         styles.button,
-        noButton ? styles.noButton : null,
+        chromeless ? styles.chromeless : null,
         styles[size],
+        styles[shape],
         lookStyles.look,
         lookStyles[look],
+        chromeless ? lookStyles.chromeless : null,
         onClickHold ? styles.hold : null,
         additionalClassName
     ].join(' ')
 
-const renderButton = ({type, noButton, className, additionalClassName, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled}, contents) =>
+const handleMouseDown = (e, {onMouseDown}) => {
+    onMouseDown && onMouseDown(e)
+}
+
+const handleClick = (e, {onClick, download, downloadUrl, downloadFilename}) => {
+    onClick && onClick(e)
+    downloadUrl && download(downloadUrl, downloadFilename)
+}
+
+const handleClickHold = (e, {onClickHold}) => {
+    onClickHold && onClickHold(e)
+}
+
+const renderButton = ({type, chromeless, className, additionalClassName, look, size, shape, tabIndex,
+    onMouseDown, onClickHold, shown, disabled}, contents) =>
     <button
         type={type}
-        className={classNames({noButton, className, additionalClassName, look, size, onClickHold})}
+        className={classNames({chromeless, className, additionalClassName, look, size, shape, onClickHold})}
         style={{visibility: shown ? 'visible' : 'hidden'}}
         tabIndex={tabIndex}
         disabled={disabled || !shown}
-        onMouseDown={e => onMouseDown && onMouseDown(e)}>
+        onMouseDown={e => handleMouseDown(e, {onMouseDown})}
+    >
         {contents}
     </button>
 
 const renderHammer = ({onClick, onClickHold, downloadUrl, downloadFilename, shown, disabled}, contents) =>
     shown && !disabled ? (
         <Hammer
-            onTap={e => {
-                onClick && onClick(e.srcEvent, e)
-                downloadUrl && download(downloadUrl, downloadFilename)
-            }}
-            onPressUp={e => onClickHold && onClickHold(e.srcEvent, e)}
+            onTap={e => handleClick(e.srcEvent, {onClick, download, downloadUrl, downloadFilename})}
+            onPressUp={e => handleClickHold(e.srcEvent, {onClickHold})}
             options={hammerOptions({onClick, onClickHold, downloadUrl})}>
             {contents}
         </Hammer>
@@ -98,7 +112,9 @@ const renderHammer = ({onClick, onClickHold, downloadUrl, downloadFilename, show
 
 const renderPropagationStopper = ({stopPropagation}, contents) =>
     stopPropagation ? (
-        <span onClick={e => e.stopPropagation()}>
+        <span onClick={e => {
+            e.stopPropagation()
+        }}>
             {contents}
         </span>
     ) : contents
@@ -130,11 +146,12 @@ const download = (url, filename) => {
 
 export const Button = ({
     type = 'button',
-    noButton,
+    chromeless,
     className,
     additionalClassName,
     look = 'default',
     size = 'normal',
+    shape = 'rectangle',
     tabIndex,
     icon,
     iconType,
@@ -157,7 +174,7 @@ export const Button = ({
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
             renderPropagationStopper({stopPropagation},
                 renderHammer({onClick, onClickHold, downloadUrl, downloadFilename, shown, disabled},
-                    renderButton({type, noButton, className, additionalClassName, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled},
+                    renderButton({type, chromeless, className, additionalClassName, look, size, shape, tabIndex, onMouseDown, onClickHold, shown, disabled},
                         renderContents({icon, iconType, label, children})
                     )
                 )
@@ -168,6 +185,7 @@ export const Button = ({
 Button.propTypes = {
     additionalClassName: PropTypes.string,
     children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+    chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     downloadFilename: PropTypes.any,
@@ -177,7 +195,7 @@ Button.propTypes = {
     label: PropTypes.string,
     link: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'apply', 'cancel']),
-    noButton: PropTypes.any,
+    shape: PropTypes.oneOf(['none', 'rectangle', 'circle', 'pill']),
     shown: PropTypes.any,
     size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large']),
     stopPropagation: PropTypes.any,

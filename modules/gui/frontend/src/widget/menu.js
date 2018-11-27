@@ -41,10 +41,17 @@ class Menu extends React.Component {
         return <React.Fragment>
             <span ref={this.button}>
                 <Button
+                    chromeless
+                    size='large'
+                    shape='circle'
                     icon='bars'
                     additionalClassName={warning ? styles.warning : null}
                     disabled={disabled}
-                    onClick={() => this.toggleOpen()}/>
+                    stopPropagation={true}
+                    onClick={(e) => {
+                        e.preventDefault()
+                        this.toggleOpen()}
+                    }/>
             </span>
             {open
                 ? <Portal>

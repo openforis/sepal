@@ -1,9 +1,9 @@
-import {Msg, msg} from 'translate'
+import {Button} from 'widget/button'
 import {RecipeState} from 'app/home/body/process/changeDetection/changeDetectionRecipe'
 import {connect} from 'store'
+import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
-import Icon from 'widget/icon'
 import MapStatus from 'widget/mapStatus'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -106,17 +106,16 @@ class ChangeDetectionPreview extends React.Component {
                 <div>
                     {message}
                     <div className={styles.retry}>
-                        <a
-                            href=''
+                        <Button
+                            chromeless
+                            icon='sync'
+                            label={msg('button.retry')}
                             onClick={e => {
                                 e.preventDefault()
                                 this.reload()
-                            }}>
-                            <Icon name='sync'/>
-                            <Msg id='button.retry'/>
-                        </a>
+                            }}
+                        />
                     </div>
-
                 </div>
         }))
     }

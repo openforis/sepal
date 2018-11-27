@@ -1,9 +1,9 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {Msg, msg} from 'translate'
-import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {connect} from 'store'
 import Markdown from 'react-markdown'
 import Notifications from 'app/notifications'
+import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -169,7 +169,7 @@ class UserMessages extends React.Component {
         return (
             <Button
                 size='large'
-                noButton={true}
+                chromeless
                 additionalClassName={[styles.dot, styles[userMessage.state]].join(' ')}
                 icon='circle'
                 tooltip={msg(`user.userMessages.state.${userMessage.state}`)}

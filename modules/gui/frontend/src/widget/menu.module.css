@@ -59,6 +59,7 @@ button.menu svg {
     position: absolute;
     z-index: 999;
     background-color: rgba(26, 26, 27, 0.91) !important;
+    margin-top: .5rem;
     border: var(--wireframe) !important;
     border-radius: var(--container-border-radius);
     border-top-right-radius: unset;

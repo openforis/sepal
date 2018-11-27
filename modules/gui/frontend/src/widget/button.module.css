@@ -1,35 +1,64 @@
 .button {
+    --small-font-size: .8rem;
+    --normal-font-size: .9rem;
+    --large-font-size: 1.1rem;
+    --x-large-font-size: 1.3rem;
+    --ratio: 2;
+
     position: relative;
-    border-radius: var(--button-border-radius);
-    padding: 0 .8rem;
     cursor: pointer;
     transition: all 100ms ease-in-out;
+    font-size: var(--font-size);
+    line-height: calc(var(--ratio) * var(--font-size));
+    min-width: calc(var(--ratio) * var(--font-size));
 }
 
-.button.noButton {
+.button.chromeless {
+    /* --ratio: 1.5; */
     padding: 0;
-    border: none !important;
-    background-color: inherit !important;
 }
+/* .button.chromeless:before {
+    --ratio: 2;
+    content: '';
+    position: absolute;
+    background-color: red;
+    z-index: 2inherit;
+} */
 
 .button.small {
-    font-size: .8rem;
-    line-height: 1.6rem;
+    --font-size: var(--small-font-size);
 }
 
 .button.normal {
-    font-size: .9rem;
-    line-height: 1.8rem;
+    --font-size: var(--normal-font-size);
 }
 
 .button.large {
-    font-size: 1.1rem;
-    line-height: 2.2rem;
+    --font-size: var(--large-font-size);
 }
 
 .button.x-large {
-    font-size: 1.3rem;
-    line-height: 2.6rem;
+    --font-size: var(--x-large-font-size);
+}
+
+.button.none {
+    --ratio: 1;
+    padding: 0;
+    border: none !important;
+    background: none !important;
+}
+
+.button.rectangle {
+    border-radius: var(--button-border-radius);
+    padding: 0 .8rem;
+}
+
+.button.circle {
+    border-radius: 50%;
+}
+
+.button.pill {
+    border-radius: 500px;
 }
 
 .button > * {
@@ -40,17 +69,6 @@
 .button > .contents > * + * {
     margin-left: .5rem;
 }
-
-/* suppress icon for small devices */
-/* @media (max-width: 576px) {
-    .button i {
-        display: none;
-    }
-    
-    .button > .contents > * + * {
-        margin-left: 0;
-    }
-} */
 
 .group {
     --button-spacing: .5rem;

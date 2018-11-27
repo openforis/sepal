@@ -10,6 +10,10 @@
     left: 0;
 }
 
+.header span {
+    margin-left: .3rem;
+}
+
 .enter {
     opacity: 1;
     z-index: 1;

@@ -1,9 +1,10 @@
 import * as PropTypes from 'prop-types'
 import {AnimateReplacement} from 'widget/animate'
+import {Button} from 'widget/button'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import Icon from 'widget/icon'
 import React from 'react'
-import styles from 'widget/panelSections.module.css'
+import styles from './panelSections.module.css'
 
 export default class PanelSections extends React.Component {
     render() {
@@ -29,20 +30,24 @@ PanelSections.propTypes = {
 }
 
 class Section extends React.Component {
-    render() {
+    renderSectionIcon(section) {
         const {selected} = this.props
+        return section.value
+            ? <Button
+                chromeless
+                shape='none'
+                icon='arrow-left'
+                onClick={() => selected.set('')}/>
+            : <Icon name={section.icon}/>
+    }
+
+    render() {
         const section = this.findSection()
         return (
             <div className={section.value ? styles.right : styles.left}>
                 <PanelHeader>
-                    {section.value
-                        ? <a
-                            onClick={() => selected.set('')}
-                            onMouseDown={e => e.preventDefault()}>
-                            <Icon name='arrow-left'/>
-                        </a>
-                        : <Icon name={section.icon}/>}
-                    {section.title}
+                    {this.renderSectionIcon(section)}
+                    <span>{section.title}</span>
                 </PanelHeader>
                 <PanelContent>
                     {section.component}

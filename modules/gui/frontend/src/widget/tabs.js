@@ -124,7 +124,12 @@ class Tabs extends React.Component {
                             <Button size='small' icon='plus' onClick={() => addTab(statePath)}/>
                         </div> */}
                         <div className={styles.tabActions}>
-                            <Button icon='plus' onClick={() => addTab(statePath)}/>
+                            <Button
+                                chromeless
+                                size='large'
+                                shape='circle'
+                                icon='plus'
+                                onClick={() => addTab(statePath)}/>
                             {tabActions(selectedTabId)}
                         </div>
                     </div>
@@ -231,13 +236,15 @@ class Tab extends React.Component {
                             : null
                         }
                     </span>
-                    <Button
-                        className={styles.close}
-                        label='&times;'
-                        onClick={e => {
-                            e.stopPropagation()
-                            closeTab(id, statePath)
-                        }}/>
+                    <span className={styles.close}>
+                        <Button
+                            chromeless
+                            look='cancel'
+                            size='small'
+                            shape='circle'
+                            icon='times'
+                            onClick={() => closeTab(id, statePath)}/>
+                    </span>
                 </div>
             </Tooltip>
         )
