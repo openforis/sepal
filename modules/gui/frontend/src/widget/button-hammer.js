@@ -1,11 +1,57 @@
-import {HoldButton} from 'widget/holdButton'
 import {Link} from 'route'
+import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
+
+const hammerOptions = ({onClick, onClickHold, downloadUrl}) => {
+    const tapOnly = {
+        recognizers: {
+            tap: {
+                time: 10000
+            },
+            press: {
+                enable: false
+            }
+        }
+    }
+    const tapAndPress = {
+        recognizers: {
+            tap: {
+                time: 750
+            },
+            press: {
+                time: 750
+            }
+        }
+    }
+    const pressOnly = {
+        recognizers: {
+            tap: {
+                enable: false
+            },
+            press: {
+                time: 750
+            }
+        }
+    }
+    const nothing = {
+        recognizers: {
+            tap: {
+                enable: false
+            },
+            press: {
+                enable: false
+            }
+        }
+    }
+    return onClick || downloadUrl
+        ? (onClickHold ? tapAndPress : tapOnly)
+        : (onClickHold ? pressOnly : nothing)
+}
 
 const renderContents = ({icon, iconType, label, children}) =>
     children ? children : (
@@ -42,30 +88,27 @@ const handleClickHold = (e, {onClickHold}) => {
 }
 
 const renderButton = ({type, chromeless, className, additionalClassName, look, size, shape, tabIndex,
-    onMouseDown, onClick, download, downloadUrl, downloadFilename, onClickHold, shown, disabled}, contents) =>
-    <HoldButton
+    onMouseDown, onClickHold, shown, disabled}, contents) =>
+    <button
         type={type}
         className={classNames({chromeless, className, additionalClassName, look, size, shape, onClickHold})}
         style={{visibility: shown ? 'visible' : 'hidden'}}
         tabIndex={tabIndex}
         disabled={disabled || !shown}
         onMouseDown={e => handleMouseDown(e, {onMouseDown})}
-        onClick={e => handleClick(e, {onClick, download, downloadUrl, downloadFilename})}
-        onClickHold={e => handleClickHold(e, {onClickHold})}
     >
         {contents}
-    </HoldButton>
-// <button
-//     type={type}
-//     className={classNames({chromeless, className, additionalClassName, look, size, shape})}
-//     style={{visibility: shown ? 'visible' : 'hidden'}}
-//     tabIndex={tabIndex}
-//     disabled={disabled || !shown}
-//     onMouseDown={e => handleMouseDown(e, {onMouseDown})}
-//     onClick={e => handleClick(e, {onClick, download, downloadUrl, downloadFilename})}
-// >
-//     {contents}
-// </button>
+    </button>
+
+const renderHammer = ({onClick, onClickHold, downloadUrl, downloadFilename, shown, disabled}, contents) =>
+    shown && !disabled ? (
+        <Hammer
+            onTap={e => handleClick(e.srcEvent, {onClick, download, downloadUrl, downloadFilename})}
+            onPressUp={e => handleClickHold(e.srcEvent, {onClickHold})}
+            options={hammerOptions({onClick, onClickHold, downloadUrl})}>
+            {contents}
+        </Hammer>
+    ) : contents
 
 const renderPropagationStopper = ({stopPropagation}, contents) =>
     stopPropagation ? (
@@ -130,9 +173,10 @@ export const Button = ({
     renderLink({link, shown, disabled},
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
             renderPropagationStopper({stopPropagation},
-                renderButton({type, chromeless, className, additionalClassName, look, size, shape, tabIndex, onMouseDown,
-                    onClick, download, downloadUrl, downloadFilename, onClickHold, shown, disabled},
-                renderContents({icon, iconType, label, children})
+                renderHammer({onClick, onClickHold, downloadUrl, downloadFilename, shown, disabled},
+                    renderButton({type, chromeless, className, additionalClassName, look, size, shape, tabIndex, onMouseDown, onClickHold, shown, disabled},
+                        renderContents({icon, iconType, label, children})
+                    )
                 )
             )
         )
