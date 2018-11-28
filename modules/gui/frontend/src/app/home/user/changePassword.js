@@ -1,10 +1,10 @@
 import {CenteredProgress} from 'widget/progress'
 import {Constraint, Field, Input, form} from 'widget/form'
-import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {changeUserPassword$} from 'user'
 import {msg} from 'translate'
 import {showUserDetails} from './userProfile'
 import Notifications from 'app/notifications'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import React from 'react'
@@ -96,7 +96,7 @@ class ChangePassword extends React.Component {
                     onApply={userPasswords => this.changePassword(userPasswords)}
                     onCancel={() => this.cancel()}>
                     <PanelHeader
-                        icon='user'
+                        icon='key'
                         title={msg('user.changePassword.title')}/>
                     {this.renderPanel()}
                 </Panel>
