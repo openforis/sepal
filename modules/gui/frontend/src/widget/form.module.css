@@ -37,7 +37,7 @@ form textarea {
     border: none;
     border-bottom: 1px dotted var(--input-border-color);
     margin-top: calc(.5rem * var(--scaling-factor));
-    padding: 0 calc(.3rem * var(--scaling-factor));
+    padding: calc(.3rem * var(--scaling-factor));
     background-color: transparent;
     font-size: calc(1.25rem * var(--scaling-factor));
     transition: background-color 800ms ease-out;
