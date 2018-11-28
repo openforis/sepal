@@ -96,7 +96,7 @@ class UserMessage extends React.Component {
                     onApply={message => onApply(message)}
                     onCancel={() => onCancel()}>
                     <PanelHeader
-                        icon='user'
+                        icon='bell'
                         title={msg('user.userMessage.title')}/>
                     {this.renderPanel()}
                 </Panel>

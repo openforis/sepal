@@ -221,7 +221,7 @@ class UserMessages extends React.Component {
                     modal
                     onCancel={() => closePanel()}>
                     <PanelHeader
-                        icon='user'
+                        icon='bell'
                         title={msg('user.userMessages.title')}/>
                     <PanelContent>
                         {this.renderMessages()}
