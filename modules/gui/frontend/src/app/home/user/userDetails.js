@@ -73,7 +73,8 @@ class UserDetails extends React.Component {
             ? (
                 <Button
                     label={msg('user.userDetails.useSepalGoogleAccount.label')}
-                    icon='google-drive'
+                    icon='google'
+                    iconType='brands'
                     tooltip={msg('user.userDetails.useSepalGoogleAccount.tooltip')}
                     disabled={form.isDirty()}
                     onClick={e => this.useSepalGoogleAccount(e)}
@@ -81,7 +82,8 @@ class UserDetails extends React.Component {
             ) : (
                 <Button
                     label={msg('user.userDetails.useUserGoogleAccount.label')}
-                    icon='google-drive'
+                    icon='google'
+                    iconType='brands'
                     tooltip={msg('user.userDetails.useUserGoogleAccount.tooltip')}
                     disabled={form.isDirty()}
                     onClick={e => this.useUserGoogleAccount(e)}
