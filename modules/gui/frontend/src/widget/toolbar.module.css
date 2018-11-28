@@ -47,9 +47,7 @@
     width: var(--button-size);
     height: var(--button-size);
     padding: 0;
-    border-width: var(--selected-panel-border-width);
-    border-style: solid;
-    border-color: var(--look-default-border-color);
+    border: var(--selected-panel-border-width) solid var(--look-default-border-color);
     border-radius: var(--button-border-radius);
     color: var(--look-default-color);
     background-color: var(--look-default-background-color);
