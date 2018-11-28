@@ -124,6 +124,7 @@ class UserDetails extends React.Component {
                 <PanelButtons
                     additionalButtons={[{
                         key: 'changePassword',
+                        icon: 'key',
                         label: msg('user.changePassword.title'),
                         disabled: form.isDirty(),
                         onClick: () => showChangePassword()
