@@ -152,6 +152,7 @@
 }
 
 .look.default.chromeless {
+    color: var(--look-default-color);
     background-color: transparent;
     border-style: none;
 }
@@ -192,6 +193,7 @@
 }
 
 .look.transparent.chromeless {
+    color: var(--look-default-color);
     background-color: transparent;
     border-style: none;
 }
@@ -232,6 +234,7 @@
 }
 
 .look.highlight.chromeless {
+    color: var(--look-default-color);
     background-color: transparent;
     border-style: none;
 }
@@ -272,6 +275,7 @@
 }
 
 .look.apply.chromeless {
+    color: var(--look-default-color);
     background-color: transparent;
     border-style: none;
 }
@@ -312,6 +316,7 @@
 }
 
 .look.cancel.chromeless {
+    color: var(--look-default-color);
     background-color: transparent;
     border-style: none;
 }
