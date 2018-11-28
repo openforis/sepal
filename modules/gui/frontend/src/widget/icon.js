@@ -1,11 +1,13 @@
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
 import PropTypes from 'prop-types'
 import React from 'react'
+import fab from '@fortawesome/fontawesome-free-brands'
 import far from '@fortawesome/fontawesome-free-regular'
 import fas from '@fortawesome/fontawesome-free-solid'
 import fontawesome from '@fortawesome/fontawesome'
 import styles from './icon.module.css'
 
+fontawesome.library.add(fab)
 fontawesome.library.add(fas)
 fontawesome.library.add(far)
 
@@ -31,9 +33,17 @@ const fontAwesomeCollection = type => {
         return 'fas'
     case 'regular':
         return 'far'
+    case 'brands':
+        return 'fab'
     default:
-        return 'fas'
+        throw Error('Unsupported icon type: ' + type)
     }
 }
 
 export default Icon
+
+Icon.propTypes = {
+    name: PropTypes.string.isRequired,
+    className: PropTypes.string,
+    type: PropTypes.string
+}
