@@ -15,15 +15,15 @@
 }
 
 .backButton {
-    animation: pulse 500ms 1000ms 5 ease-out forwards;
+    animation: pulse 2000ms 0ms 1 ease-out forwards;
 }
 
 @keyframes pulse {
     0% {
-        color: var(--info-color);
+        color: orange;
     }
-    10% {
-        color: var(--info-color);
+    50% {
+        color: orange;
     }
     100% {
         color: inherit;
