@@ -35,6 +35,20 @@ const treePath = (path = '/') =>
             (treePath, pathElement) => treePath.concat(['files', pathElement]), []
         ) : []
 
+const humanFriendlyFileSize = (size, precisionDigits = 3) => {
+    // safe up to yottabytes (10^24)...
+    const units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+    const digits = Math.trunc(Math.log10(size))
+    const periods = Math.trunc(digits / 3)
+    const multiplier = Math.pow(10, 3 * periods)
+    const decimals = multiplier > 1
+        ? Math.min(precisionDigits - 1, 2) - digits % 3
+        : 0
+    return size
+        ? (size / multiplier).toFixed(decimals) + ' ' + units[periods]
+        : msg('browse.info.empty')
+}
+
 class Browse extends React.Component {
     disableRefresh$ = new Subject()
 
@@ -360,7 +374,7 @@ class Browse extends React.Component {
     renderFileInfo(file) {
         return (
             <span className={styles.fileInfo}>
-                ({msg('browse.info.file', {size: file.size})})
+                ({humanFriendlyFileSize(file.size)})
             </span>
         )
     }

@@ -104,7 +104,7 @@
     "selected": "{directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}} selected",
     "info": {
       "directory": "{itemCount} {itemCount, plural, one {item} other {items}}",
-      "file":  "{size} {size, plural, one {byte} other {bytes}}"
+      "empty": "empty"
     }
   },
   "body": {
