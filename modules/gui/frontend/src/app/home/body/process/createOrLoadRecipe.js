@@ -89,14 +89,12 @@ class RecipeList extends React.Component {
                             icon='clone'
                             tooltip={msg('process.menu.duplicateRecipe')}
                             tooltipPlacement='bottom'
-                            onClick={() => this.duplicateRecipe(recipe.id)}
-                            stopPropagation={true}/>
+                            onClick={() => this.duplicateRecipe(recipe.id)}/>
                         <Button
                             icon='trash-alt'
                             tooltip={msg('process.menu.deleteRecipe')}
                             tooltipPlacement='bottom'
-                            onClickHold={() => deleteRecipe(recipe.id)}
-                            stopPropagation={true}/>
+                            onClickHold={() => deleteRecipe(recipe.id)}/>
                     </ButtonGroup>
                 </div>
             </div>

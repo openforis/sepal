@@ -343,8 +343,7 @@ class Browse extends React.Component {
                         placement='bottom'
                         icon='trash-alt'
                         onClickHold={this.removeSelected.bind(this)}
-                        disabled={nothingSelected}
-                        stopPropagation={true}/>
+                        disabled={nothingSelected}/>
                     <Button
                         tooltip={msg('browse.controls.clearSelection.tooltip')}
                         placement='bottom'

@@ -164,7 +164,7 @@ export const Button = ({
     link,
     shown = true,
     disabled,
-    stopPropagation,
+    stopPropagation = true,
     children,
     tooltip,
     tooltipPlacement,

@@ -47,11 +47,7 @@ class Menu extends React.Component {
                     icon='bars'
                     additionalClassName={warning ? styles.warning : null}
                     disabled={disabled}
-                    stopPropagation={true}
-                    onClick={(e) => {
-                        e.preventDefault()
-                        this.toggleOpen()}
-                    }/>
+                    onClick={() => this.toggleOpen()}/>
             </span>
             {open
                 ? <Portal>

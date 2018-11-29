@@ -204,8 +204,7 @@ class Tab extends React.Component {
                 size='small'
                 shape='circle'
                 icon='times'
-                onClick={() => closeTab(id, statePath)}
-                stopPropagation/>
+                onClick={() => closeTab(id, statePath)}/>
         )
     }
 
