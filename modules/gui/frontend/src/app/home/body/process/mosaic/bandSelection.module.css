@@ -68,6 +68,7 @@
 
 .selectedBands > * {
     padding: 0 .5rem;
+    line-height: 1.8rem;
     border-radius: .25rem;
     color: var(--look-default-color);
     border: 1px solid var(--border-color);
