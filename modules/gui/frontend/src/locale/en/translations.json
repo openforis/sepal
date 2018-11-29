@@ -159,16 +159,12 @@
           "title": "Auto-select scenes",
           "tooltip": "Auto-select scenes",
           "form": {
-            "sceneCount": "Scene count",
             "min": {
-              "label": "Min",
-              "atLeast1": "Min must be at least 1"
+              "label": "Minimum number of scenes"
             },
             "max": {
-              "label": "Max",
-              "atLeast1": "Max must be at least 1"
+              "label": "Maximum number of scenes"
             },
-            "minLessThanMax": "Min cannot exceed max",
             "selectScenes": "Select scenes"
           },
           "selecting": "Selecting scenes..."

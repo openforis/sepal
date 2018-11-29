@@ -1,26 +1,16 @@
-import {Constraint, ErrorMessage, Field, Input, Label, form} from 'widget/form'
+import {ErrorMessage, Field, Label, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
 import {msg} from 'translate'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Slider from 'widget/slider'
 import styles from './auto.module.css'
 
 const fields = {
-    min: new Field()
-        .int('process.mosaic.panel.auto.form.min.atLeast1')
-        .min(1, 'process.mosaic.panel.auto.form.min.atLeast1'),
+    min: new Field(),
     max: new Field()
-        .int('process.mosaic.panel.auto.form.max.atLeast1')
-        .min(1, 'process.mosaic.panel.auto.form.max.atLeast1')
-}
-
-const constraints = {
-    minLessThanMax: new Constraint(['min', 'max'])
-        .predicate(({min, max}) => {
-            return +min <= +max
-        }, 'process.mosaic.panel.auto.form.minLessThanMax')
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -63,25 +53,29 @@ class Auto extends React.Component {
         const {inputs: {min, max}} = this.props
         return (
             <div className={styles.form}>
-                <Label msg={msg('process.mosaic.panel.auto.form.sceneCount')}/>
-                <div className={styles.sceneCount}>
-                    <Input
-                        label={msg('process.mosaic.panel.auto.form.min.label')}
-                        type="number"
-                        min={0}
-                        max={999}
-                        step={1}
-                        autoFocus
-                        input={min}
-                    />
-                    <Input
-                        label={msg('process.mosaic.panel.auto.form.max.label')}
-                        type="number"
-                        min={0}
-                        max={999}
-                        step={1}
-                        input={max}
-                    />
+                <div className={styles.content}>
+                    <div>
+                        <Label msg={msg('process.mosaic.panel.auto.form.min.label')}/>
+                        <Slider
+                            input={min}
+                            minValue={1}
+                            maxValue={max.value}
+                            ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
+                            snap
+                            logScale
+                            range='left'/>
+                    </div>
+                    <div>
+                        <Label msg={msg('process.mosaic.panel.auto.form.max.label')}/>
+                        <Slider
+                            input={max}
+                            minValue={min.value}
+                            maxValue={999}
+                            ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
+                            snap
+                            logScale
+                            range='left'/>
+                    </div>
                 </div>
                 <ErrorMessage for={[min, max, 'minLessThanMax']}/>
             </div>
@@ -93,4 +87,4 @@ Auto.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default form({fields, constraints, mapStateToProps})(Auto)
+export default form({fields, mapStateToProps})(Auto)
