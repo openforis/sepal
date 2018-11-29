@@ -1,5 +1,5 @@
 import {combineLatest, fromEvent, merge, timer} from 'rxjs'
-import {switchMap, take, takeUntil, tap} from 'rxjs/operators'
+import {switchMap, take, takeUntil} from 'rxjs/operators'
 import PropTypes from 'prop-types'
 import React from 'react'
 
