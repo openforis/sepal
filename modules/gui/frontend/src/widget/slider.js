@@ -11,6 +11,7 @@ import _ from 'lodash'
 import styles from './slider.module.css'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
+
 const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
 
 const normalizeLinear = (value, min, max) => {
@@ -413,6 +414,7 @@ export default class Slider extends React.Component {
             })
 
         const ticks = mapTicks(props.ticks ? props.ticks : [props.minValue, props.maxValue])
+            .filter(({value}) => value >= props.minValue && value <= props.maxValue)
         const minValue = props.minValue || ticks.reduce((min, {value}) => Math.min(min, value), null)
         const maxValue = props.maxValue || ticks.reduce((max, {value}) => Math.max(max, value), null)
         return {
