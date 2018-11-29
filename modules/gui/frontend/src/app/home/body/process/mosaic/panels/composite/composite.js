@@ -1,9 +1,9 @@
 import {Field, Label, form} from 'widget/form'
-import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Buttons from 'widget/buttons'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -78,35 +78,33 @@ class Composite extends React.Component {
                     <PercentileField input={ndviPercentile}/>
                     <PercentileField input={dayOfYearPercentile}/>
                 </div>
-                <div className={styles.inline}>
-                    <Buttons
-                        label={msg('process.mosaic.panel.composite.form.mask.label')}
-                        input={mask}
-                        multiple={true}
-                        options={[{
-                            value: 'CLOUDS',
-                            label: msg('process.mosaic.panel.composite.form.mask.clouds.label'),
-                            tooltip: msg('process.mosaic.panel.composite.form.mask.clouds.tooltip')
-                        }, {
-                            value: 'SNOW',
-                            label: msg('process.mosaic.panel.composite.form.mask.snow.label'),
-                            tooltip: msg('process.mosaic.panel.composite.form.mask.snow.tooltip')
-                        }]}
-                    />
-                    <Buttons
-                        label={msg('process.mosaic.panel.composite.form.composingMethod.label')}
-                        input={compose}
-                        options={[{
-                            value: 'MEDOID',
-                            label: msg('process.mosaic.panel.composite.form.composingMethod.medoid.label'),
-                            tooltip: msg('process.mosaic.panel.composite.form.composingMethod.medoid.tooltip')
-                        }, {
-                            value: 'MEDIAN',
-                            label: msg('process.mosaic.panel.composite.form.composingMethod.median.label'),
-                            tooltip: msg('process.mosaic.panel.composite.form.composingMethod.median.tooltip')
-                        }]}
-                    />
-                </div>
+                <Buttons
+                    label={msg('process.mosaic.panel.composite.form.mask.label')}
+                    input={mask}
+                    multiple={true}
+                    options={[{
+                        value: 'CLOUDS',
+                        label: msg('process.mosaic.panel.composite.form.mask.clouds.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.mask.clouds.tooltip')
+                    }, {
+                        value: 'SNOW',
+                        label: msg('process.mosaic.panel.composite.form.mask.snow.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.mask.snow.tooltip')
+                    }]}
+                />
+                <Buttons
+                    label={msg('process.mosaic.panel.composite.form.composingMethod.label')}
+                    input={compose}
+                    options={[{
+                        value: 'MEDOID',
+                        label: msg('process.mosaic.panel.composite.form.composingMethod.medoid.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.composingMethod.medoid.tooltip')
+                    }, {
+                        value: 'MEDIAN',
+                        label: msg('process.mosaic.panel.composite.form.composingMethod.median.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.composingMethod.median.tooltip')
+                    }]}
+                />
             </div>
         )
     }
