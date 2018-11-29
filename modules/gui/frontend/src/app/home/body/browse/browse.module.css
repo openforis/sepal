@@ -13,6 +13,9 @@
     --look-highlight-l: 26%;
     --look-highlight-a: .5;
 
+    --remove-color: rgba(150, 0, 0, .6);
+    --add-color: rgba(0, 100, 0, .6);
+
     margin: 1rem;
 }
 
@@ -70,20 +73,20 @@
 
 @keyframes added {
     0% {
-        background-color: green;
+        background-color: var(--add-color);
     }
 }
 
 .fileList li div.removing,
 .fileList li div.removing:hover,
 .fileList li div.removing + ul li div {
-    background-color: red;
+    background-color: var(--remove-color);
 }
 
 .fileList li div.removed,
 .fileList li div.removed:hover,
 .fileList li div.removed + ul li div {
-    background-color: red;
+    background-color: var(--remove-color);
     animation: removed var(--animation-duration) forwards;
 }
 
