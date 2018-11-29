@@ -28,30 +28,33 @@ const classNames = ({chromeless, className, additionalClassName, look, size, sha
         additionalClassName
     ].join(' ')
 
-const handleMouseDown = (e, {onMouseDown}) => {
+const handleMouseDown = (e, {onMouseDown, stopPropagation}) => {
+    stopPropagation && e.stopPropagation()
     onMouseDown && onMouseDown(e)
 }
 
-const handleClick = (e, {onClick, download, downloadUrl, downloadFilename}) => {
+const handleClick = (e, {onClick, stopPropagation, download, downloadUrl, downloadFilename}) => {
+    stopPropagation && e.stopPropagation()
     onClick && onClick(e)
     downloadUrl && download(downloadUrl, downloadFilename)
 }
 
-const handleClickHold = (e, {onClickHold}) => {
+const handleClickHold = (e, {onClickHold, stopPropagation}) => {
+    stopPropagation && e.stopPropagation()
     onClickHold && onClickHold(e)
 }
 
 const renderButton = ({type, chromeless, className, additionalClassName, look, size, shape, tabIndex,
-    onMouseDown, onClick, download, downloadUrl, downloadFilename, onClickHold, shown, disabled}, contents) =>
+    onMouseDown, onClick, onClickHold, stopPropagation, download, downloadUrl, downloadFilename, shown, disabled}, contents) =>
     <HoldButton
         type={type}
         className={classNames({chromeless, className, additionalClassName, look, size, shape, onClickHold})}
         style={{visibility: shown ? 'visible' : 'hidden'}}
         tabIndex={tabIndex}
         disabled={disabled || !shown}
-        onMouseDown={e => handleMouseDown(e, {onMouseDown})}
-        onClick={e => handleClick(e, {onClick, download, downloadUrl, downloadFilename})}
-        onClickHold={e => handleClickHold(e, {onClickHold})}
+        onMouseDown={e => handleMouseDown(e, {onMouseDown, stopPropagation})}
+        onClick={e => handleClick(e, {onClick, stopPropagation, download, downloadUrl, downloadFilename})}
+        onClickHold={e => handleClickHold(e, {onClickHold, stopPropagation})}
     >
         {contents}
     </HoldButton>
@@ -118,11 +121,9 @@ export const Button = ({
 }) =>
     renderLink({link, shown, disabled},
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
-            renderPropagationStopper({stopPropagation},
-                renderButton({type, chromeless, className, additionalClassName, look, size, shape, tabIndex, onMouseDown,
-                    onClick, download, downloadUrl, downloadFilename, onClickHold, shown, disabled},
-                renderContents({icon, iconType, label, children})
-                )
+            renderButton({type, chromeless, className, additionalClassName, look, size, shape, tabIndex, onMouseDown,
+                onClick, onClickHold, stopPropagation, download, downloadUrl, downloadFilename, shown, disabled},
+            renderContents({icon, iconType, label, children})
             )
         )
     )
