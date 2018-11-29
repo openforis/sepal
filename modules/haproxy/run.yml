@@ -14,8 +14,12 @@
       tag: "haproxy"
     networks:
       - name: 'sepal'
+    volumes:
+    - "/data/letsencrypt:/etc/letsencrypt"
     ports:
-    - "80:80"
-    - "443:443"
+    - "{{ sepal_http_ip }}:80:80"
+    - "{{ sepal_http_ip }}:443:443"
     etc_hosts:
         syslog_host: "{{ syslog_host }}"
+    env:
+      SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
