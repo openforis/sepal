@@ -3,133 +3,133 @@
     "prefix": "true",
     "path": "/api/gee/",
     "target": "http://google-earth-engine:5001/",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/ceo/",
     "target": "http://ceo:7766/",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/peatlands/",
     "target": "http://peatlands:7767/",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/api/gateone/",
     "target": "https://gateone:8000/",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "false",
     "path": "/gateone/ws",
     "target": "https://gateone:8000/ws",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "false",
     "path": "/api/gateone/auth-object",
     "target": "http://sepal:1025/api/gateone/auth-object",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/api/user/",
     "target": "http://user/",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "false",
     "path": "/api/user/password/reset-request",
     "target": "http://user/password/reset-request",
-    "https": "true",
+    "https": "false",
     "authenticate": "false"
   },
   {
     "prefix": "false",
     "path": "/api/user/password/reset",
     "target": "http://user/password/reset",
-    "https": "true",
+    "https": "false",
     "authenticate": "false"
   },
   {
     "prefix": "false",
     "path": "/api/user/activate",
     "target": "http://user/activate",
-    "https": "true",
+    "https": "false",
     "authenticate": "false"
   },
   {
     "prefix": "false",
     "path": "/api/user/validate-token",
     "target": "http://user/validate-token",
-    "https": "true",
+    "https": "false",
     "authenticate": "false"
   },
   {
     "prefix": "true",
     "path": "/api/processing-recipes/",
     "target": "http://sepal:1025/api/processing-recipes",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/api/budget/",
     "target": "http://sepal:1025/api/budget",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/api/notification/",
     "target": "http://sepal:1025/api/notification/",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/api/apps/",
     "target": "http://sepal:1025/api/apps",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/api/files/",
     "target": "http://sepal:1025/api/files",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/api/tasks/",
     "target": "http://sepal:1025/api/tasks",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/api/sessions/",
     "target": "http://sepal:1025/api/sessions",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/api/data/",
     "target": "http://sepal:1025/api/data",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
@@ -137,7 +137,7 @@
     "path": "/api/sandbox/",
     "target": "http://sepal:9191/",
     "rewriteRedirects": "true",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
@@ -145,14 +145,14 @@
     "path": "/api/sandbox/jupyter/",
     "target": "http://sepal:9191/jupyter/api/sandbox/jupyter/",
     "rewriteRedirects": "false",
-    "https": "true",
+    "https": "false",
     "authenticate": "true"
   },
   {
     "prefix": "true",
     "path": "/static/",
     "target": "http://gui:7667/static",
-    "https": "true",
+    "https": "false",
     "authenticate": "false",
     "cached": "true"
   },
@@ -160,7 +160,7 @@
     "prefix": "false",
     "path": "/privacy-policy",
     "target": "http://gui:7667/resource/privacy-policy.html",
-    "https": "true",
+    "https": "false",
     "authenticate": "false",
     "no-cache": "true"
   },
@@ -168,7 +168,7 @@
     "prefix": "true",
     "path": "/",
     "target": "http://gui:7667/",
-    "https": "true",
+    "https": "false",
     "authenticate": "false",
     "no-cache": "true"
   }
