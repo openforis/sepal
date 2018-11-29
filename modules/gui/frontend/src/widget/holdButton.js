@@ -3,7 +3,7 @@ import {switchMap, take, takeUntil, tap} from 'rxjs/operators'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-const DELAY_MS = 100
+const DELAY_MS = 750
 
 export class HoldButton extends React.Component {
     button = React.createRef()
