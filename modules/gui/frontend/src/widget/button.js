@@ -59,15 +59,6 @@ const renderButton = ({type, chromeless, className, additionalClassName, look, s
         {contents}
     </HoldButton>
 
-const renderPropagationStopper = ({stopPropagation}, contents) =>
-    stopPropagation ? (
-        <span onClick={e => {
-            e.stopPropagation()
-        }}>
-            {contents}
-        </span>
-    ) : contents
-
 const renderTooltip = ({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled}, contents) =>
     tooltip && !tooltipDisabled && shown && !disabled ? (
         <Tooltip msg={tooltip} placement={tooltipPlacement}>
