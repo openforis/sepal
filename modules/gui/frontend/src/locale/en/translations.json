@@ -371,7 +371,7 @@
                 "tooltip": "Use scenes atmospherically corrected surface reflectance."
               },
               "brdf": {
-                "label": "BRDF correction",
+                "label": "BRDF",
                 "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
               }
             },
