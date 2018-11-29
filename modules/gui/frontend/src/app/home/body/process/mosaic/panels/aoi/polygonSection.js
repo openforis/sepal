@@ -1,11 +1,11 @@
+import {Msg} from 'translate'
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {connect} from 'store'
 import {isRecipeOpen} from 'app/home/body/process/recipe'
+import {sepalMap} from '../../../../../map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import {Msg} from 'translate'
-import {sepalMap} from '../../../../../map/map'
 import styles from './aoi.module.css'
 
 const mapStateToProps = (state, ownProps) => {

@@ -1,8 +1,8 @@
-import globalActionBuilder from 'action-builder'
-import api from 'api'
-import _ from 'lodash'
+import {RecipeState as ParentRecipeState, recipePath} from '../recipe'
 import {msg} from 'translate'
-import {recipePath, RecipeState as ParentRecipeState} from '../recipe'
+import _ from 'lodash'
+import api from 'api'
+import globalActionBuilder from 'action-builder'
 
 export {recipePath}
 

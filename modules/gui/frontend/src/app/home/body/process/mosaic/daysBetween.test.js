@@ -15,7 +15,6 @@ const test = (name) => {
     })
 }
 
-
 test('daysBetween(${from}, ${to}) == ${result}')
     .assert(({from, to, result}) => expect(daysBetween(from, to)).toEqual(result))
     .where(

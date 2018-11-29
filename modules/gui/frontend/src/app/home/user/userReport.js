@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
-import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {connect} from 'store'
 import {msg} from 'translate'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import React from 'react'

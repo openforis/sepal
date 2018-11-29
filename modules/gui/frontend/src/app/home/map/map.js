@@ -1,15 +1,15 @@
-import actionBuilder from 'action-builder'
-import api from 'api'
-import Notifications from 'app/notifications'
+import './map.module.css'
+import {NEVER, Observable, Subject} from 'rxjs'
+import {connect, select} from 'store'
+import {map, mergeMap, takeUntil} from 'rxjs/operators'
 import GoogleMapsLoader from 'google-maps'
-import _ from 'lodash'
+import Notifications from 'app/notifications'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {NEVER, Observable, Subject} from 'rxjs'
-import {map, mergeMap, takeUntil} from 'rxjs/operators'
-import {connect, select} from 'store'
-import Portal from 'widget/portal'
-import './map.module.css'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
+import api from 'api'
 
 export let sepalMap = null
 export let google = null
@@ -327,8 +327,8 @@ export const polygonOptions = fill => ({
 const defaultStyle = [
     {stylers: [{visibility: 'simplified'}]},
     {stylers: [{color: '#131314'}]},
-    {featureType: "transit.station", stylers: [{ visibility: "off" }]},
-    {featureType: "poi", stylers: [{ visibility: "off" }]},
+    {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
+    {featureType: 'poi', stylers: [{visibility: 'off'}]},
     {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
     {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
 ]

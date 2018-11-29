@@ -5,8 +5,8 @@ import {msg} from 'translate'
 import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import React from 'react'
-import styles from './scenePreview.module.css'
 import daysBetween from './daysBetween'
+import styles from './scenePreview.module.css'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)

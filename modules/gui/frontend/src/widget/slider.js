@@ -457,16 +457,16 @@ export default class Slider extends React.Component {
         const {ticks, minValue, maxValue, width} = this.state
         return (
             <SliderContainer
-            input={input}
-            minValue={minValue}
-            maxValue={maxValue}
-            ticks={ticks}
-            snap={snap}
-            range={range}
-            logScale={logScale}
-            info={info}
-            width={width}
-            disabled={disabled}/>
+                input={input}
+                minValue={minValue}
+                maxValue={maxValue}
+                ticks={ticks}
+                snap={snap}
+                range={range}
+                logScale={logScale}
+                info={info}
+                width={width}
+                disabled={disabled}/>
         )
 
     }

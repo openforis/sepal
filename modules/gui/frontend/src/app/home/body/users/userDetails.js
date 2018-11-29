@@ -1,6 +1,6 @@
 import {Field, Input, InputGroup, form} from 'widget/form'
-import Panel, { PanelContent, PanelHeader} from 'widget/panel'
 import {msg} from 'translate'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
