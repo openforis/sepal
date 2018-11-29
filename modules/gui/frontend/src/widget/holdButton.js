@@ -1,9 +1,9 @@
-import {combineLatest, fromEvent, timer} from 'rxjs'
-import {switchMap, take, takeUntil} from 'rxjs/operators'
+import {combineLatest, fromEvent, merge, timer} from 'rxjs'
+import {switchMap, take, takeUntil, tap} from 'rxjs/operators'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-const DELAY_MS = 750
+const DELAY_MS = 100
 
 export class HoldButton extends React.Component {
     button = React.createRef()
@@ -31,10 +31,10 @@ export class HoldButton extends React.Component {
         const {onClickHold} = this.props
         if (onClickHold) {
             const button = this.button.current
-            const buttonMouseDown$ = fromEvent(button, 'mousedown')
+            const buttonMouseDown$ = merge(fromEvent(button, 'mousedown'), fromEvent(button, 'touchstart'))
             const buttonMouseEnter$ = fromEvent(button, 'mouseenter')
-            const buttonMouseUp$ = fromEvent(button, 'mouseup')
-            const windowMouseUp$ = fromEvent(window, 'mouseup')
+            const buttonMouseUp$ = merge(fromEvent(button, 'mouseup'), fromEvent(button, 'touchend'))
+            const windowMouseUp$ = merge(fromEvent(window, 'mouseup'), fromEvent(window, 'touchend'))
 
             const trigger$ = combineLatest(buttonMouseDown$, buttonMouseEnter$)
             const cancel$ = windowMouseUp$
