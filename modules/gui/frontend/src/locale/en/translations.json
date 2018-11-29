@@ -367,7 +367,7 @@
             "corrections": {
               "label": "Corrections",
               "surfaceReflectance": {
-                "label": "Surface reflectance",
+                "label": "SR",
                 "tooltip": "Use scenes atmospherically corrected surface reflectance."
               },
               "brdf": {
