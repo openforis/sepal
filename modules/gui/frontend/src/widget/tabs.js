@@ -40,8 +40,8 @@ export const closeTab = (id, statePath) => {
             return
         const tabs = root.tabs
         const tabIndex = tabs.findIndex(tab => tab.id === id)
-        const last = tabIndex === tabs.length - 1
         const first = tabIndex === 0
+        const last = tabIndex === tabs.length - 1
         let nextSelectedId = null
         if (!last)
             nextSelectedId = tabs[tabIndex + 1].id
@@ -111,18 +111,9 @@ class Tabs extends React.Component {
             <div className={[styles.container, flexy.container].join(' ')}>
                 <div className={styles.tabBar}>
                     <div className={styles.tabs}>
-                        {/* <div className={styles.tab}>
-                            <Button size='small' icon='plus' onClick={() => addTab(statePath)}/>
-                        </div> */}
                         {this.props.tabs.map(tab => this.renderTab(tab))}
-                        {/* <div className={styles.tab}>
-                            <Button size='small' icon='plus' onClick={() => addTab(statePath)}/>
-                        </div> */}
                     </div>
                     <div className={styles.tabControls}>
-                        {/* <div className={styles.tab}>
-                            <Button size='small' icon='plus' onClick={() => addTab(statePath)}/>
-                        </div> */}
                         <div className={styles.tabActions}>
                             <Button
                                 chromeless
@@ -204,6 +195,20 @@ class Tab extends React.Component {
         )
     }
 
+    renderCloseButton() {
+        const {id, statePath} = this.props
+        return (
+            <Button
+                chromeless
+                look='cancel'
+                size='small'
+                shape='circle'
+                icon='times'
+                onClick={() => closeTab(id, statePath)}
+                stopPropagation/>
+        )
+    }
+
     render() {
         let {id, title, placeholder, selected, statePath} = this.props
         title = this.state.title || title
@@ -237,13 +242,7 @@ class Tab extends React.Component {
                         }
                     </span>
                     <span className={styles.close}>
-                        <Button
-                            chromeless
-                            look='cancel'
-                            size='small'
-                            shape='circle'
-                            icon='times'
-                            onClick={() => closeTab(id, statePath)}/>
+                        {this.renderCloseButton()}
                     </span>
                 </div>
             </Tooltip>
