@@ -23,6 +23,7 @@
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     margin-bottom: 1rem;
+    padding: 0;
     color: rgba(255, 255, 255, 0.8);
     --opacity: 1;
     --border-opacity: 0;
