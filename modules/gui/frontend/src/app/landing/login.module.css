@@ -1,8 +1,5 @@
-.submit {
+.buttons {
     display: flex;
     align-items: center;
-}
-
-.submit a {
-    margin-left: 2rem;
+    justify-content: space-between;
 }

@@ -1,8 +1,8 @@
+import {Button} from 'widget/button'
 import {Field, Input, form} from 'widget/form'
-import {ForgotPasswordLink} from './forgot-password'
-import {Msg, msg} from 'translate'
-import {SubmitButton} from 'widget/legacyButton'
 import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
+import {msg} from 'translate'
+import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './login.module.css'
 
@@ -28,43 +28,67 @@ class Login extends React.Component {
         resetInvalidCredentials()
     }
 
+    forgotPassword() {
+        const {onForgotPassword} = this.props
+        onForgotPassword()
+    }
+
     render() {
         const {form, inputs: {username, password}, action} = this.props
         return (
-            <form>
-                <Input
-                    label={msg('landing.login.username.label')}
-                    input={username}
-                    placeholder={msg('landing.login.username.placeholder')}
-                    autoFocus='on'
-                    autoComplete='off'
-                    tabIndex={1}
-                    errorMessage
-                />
-
-                <Input
-                    label={msg('landing.login.password.label')}
-                    input={password}
-                    type='password'
-                    placeholder={msg('landing.login.password.placeholder')}
-                    tabIndex={2}
-                    errorMessage
-                />
-                <div className={styles.submit}>
-                    <SubmitButton
+            <form className={styles.form}>
+                <div className={styles.inputs}>
+                    <Input
+                        label={msg('landing.login.username.label')}
+                        input={username}
+                        placeholder={msg('landing.login.username.placeholder')}
+                        autoFocus='on'
+                        autoComplete='off'
+                        tabIndex={1}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('landing.login.password.label')}
+                        input={password}
+                        type='password'
+                        placeholder={msg('landing.login.password.placeholder')}
+                        tabIndex={2}
+                        errorMessage
+                    />
+                </div>
+                <div className={styles.buttons}>
+                    <Button
+                        type='submit'
+                        look='highlight'
+                        size='large'
+                        shape='pill'
                         icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
+                        label={msg('landing.login.button')}
                         onClick={() => this.login(form.values())}
                         disabled={form.isInvalid() || action('LOGIN').dispatching}
-                        tabIndex={3}>
-                        <Msg id='landing.login.button'/>
-                    </SubmitButton>
-                    <ForgotPasswordLink tabIndex={4}/>
+                        tabIndex={3}
+                    />
+                    <Button
+                        chromeless
+                        look='transparent'
+                        size='large'
+                        shape='pill'
+                        // icon='question-circle'
+                        label={msg('landing.login.forgot-password-link')}
+                        tabIndex={4}
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => this.forgotPassword()}
+                    />
                 </div>
             </form>)
     }
 }
 
-Login.propTypes = {}
+Login.propTypes = {
+    onForgotPassword: PropTypes.func.isRequired,
+    form: PropTypes.object,
+    inputs: PropTypes.object
+}
 
 export default form({fields, mapStateToProps})(Login)
 

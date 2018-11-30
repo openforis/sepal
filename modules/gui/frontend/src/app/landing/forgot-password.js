@@ -1,9 +1,8 @@
+import {Button} from 'widget/button'
 import {Field, Input, form} from 'widget/form'
-import {Link, history} from 'route'
-import {Msg, msg} from 'translate'
-import {SubmitButton} from 'widget/legacyButton'
+import {history} from 'route'
+import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
-import Icon from 'widget/icon'
 import Notifications from 'app/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -16,6 +15,11 @@ const fields = {
 }
 
 export class ForgotPassword extends React.Component {
+    cancel() {
+        const {onCancel} = this.props
+        onCancel()
+    }
+
     requestPasswordReset(email) {
         this.props.asyncActionBuilder('REQUEST_PASSWORD_RESET',
             requestPasswordReset$(email))
@@ -29,55 +33,53 @@ export class ForgotPassword extends React.Component {
 
     render() {
         const {form, inputs: {email}, action} = this.props
-        return <form style={styles.form}>
-            <Input
-                label={msg('landing.forgot-password.label')}
-                input={email}
-                placeholder={msg('landing.forgot-password.placeholder')}
-                autoFocus='on'
-                autoComplete='off'
-                tabIndex={1}
-                validate='onBlur'
-                errorMessage
-            />
-
-            <SubmitButton
-                icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in-alt'}
-                onClick={() => this.requestPasswordReset(email.value)}
-                disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
-                tabIndex={2}>
-                <Msg id='landing.forgot-password.button'/>
-            </SubmitButton>
-
-            <LoginLink tabIndex={3}/>
-        </form>
-
+        return (
+            <form className={styles.form}>
+                <div className={styles.inputs}>
+                    <Input
+                        label={msg('landing.forgot-password.label')}
+                        input={email}
+                        placeholder={msg('landing.forgot-password.placeholder')}
+                        autoFocus='on'
+                        autoComplete='off'
+                        tabIndex={1}
+                        validate='onBlur'
+                        errorMessage
+                    />
+                </div>
+                <div className={styles.buttons}>
+                    <Button
+                        type='submit'
+                        look='highlight'
+                        size='large'
+                        shape='pill'
+                        icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in-alt'}
+                        label={msg('landing.forgot-password.button')}
+                        onClick={() => this.requestPasswordReset(email.value)}
+                        disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
+                        tabIndex={2}
+                    />
+                    <Button
+                        chromeless
+                        look='transparent'
+                        size='large'
+                        shape='pill'
+                        icon='undo'
+                        label={msg('landing.forgot-password.cancel-link')}
+                        tabIndex={3}
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => this.cancel()}
+                    />
+                </div>
+            </form>
+        )
     }
 }
 
-ForgotPassword.propTypes = {}
-
-export const LoginLink = ({tabIndex}) =>
-    <div className={styles.forgotPassword}>
-        <Link to='/' tabIndex={tabIndex} onMouseDown={e => e.preventDefault()}>
-            <Icon name='undo' className={styles.forgotPasswordIcon}/>
-            <Msg id='landing.forgot-password.cancel-link'/>
-        </Link>
-    </div>
-LoginLink.propTypes = {
-    tabIndex: PropTypes.number
-}
-
-export const ForgotPasswordLink = ({tabIndex}) =>
-    <div className={styles.forgotPassword}>
-        <Link to='/forgot-password' tabIndex={tabIndex} onMouseDown={e => e.preventDefault()}>
-            <Icon name='question-circle' className={styles.forgotPasswordIcon}/>
-            <Msg id='landing.login.forgot-password-link'/>
-        </Link>
-    </div>
-
-ForgotPasswordLink.propTypes = {
-    tabIndex: PropTypes.number
+ForgotPassword.propTypes = {
+    onCancel: PropTypes.func.isRequired,
+    form: PropTypes.object,
+    inputs: PropTypes.object
 }
 
 export default form({fields})(ForgotPassword)

@@ -1,6 +1,5 @@
 html {
     --scaling-factor: 1;
-    --secondary-text-color: #e8edf0;
     --header-font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
 
     --wireframe-color: rgba(100%, 100%, 100%, .15);
@@ -29,6 +28,22 @@ html {
     --info-color: rgb(15, 89, 226);
 
     --base-font-size: 14px;
+
+    --section-process-color-h: 37;
+    --section-process-color-s: 27%;
+    --section-process-color-l: 39%;
+
+    --section-browse-color-h: 127;
+    --section-browse-color-s: 6%;
+    --section-browse-color-l: 30%;
+
+    --section-apps-color-h: 310;
+    --section-apps-color-s: 10%;
+    --section-apps-color-l: 23%;
+
+    --section-terminal-color-h: 221;
+    --section-terminal-color-s: 19%;
+    --section-terminal-color-l: 26%;
 
     font-size: calc(var(--base-font-size) * var(--scaling-factor));
 }

@@ -33,14 +33,14 @@
         "invalid": "Invalid username/password"
       },
       "button": "Login",
-      "forgot-password-link": "Forgot password"
+      "forgot-password-link": "Forgot your password?"
     },
     "forgot-password": {
       "label": "Forgot your password ?",
       "placeholder": "Enter your email",
       "required": "Email is required",
       "invalid": "Not a valid email",
-      "button": "Request a new one",
+      "button": "Request new password",
       "cancel-link": "Cancel",
       "success": {
         "title": "Password reset requested",

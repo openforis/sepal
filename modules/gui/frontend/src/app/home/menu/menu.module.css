@@ -59,27 +59,23 @@
 }
 
 .menu button.process {
-    background-color: hsla(37, 27%, 39%, var(--opacity));
-    border-color: hsla(37, 27%, 59%, var(--border-opacity));
+    background-color: hsla(var(--section-process-color-h), var(--section-process-color-s), var(--section-process-color-l), var(--opacity));
+    border-color: hsla(var(--section-process-color-h), var(--section-process-color-s), calc(var(--section-process-color-l) + 20%), var(--border-opacity));
 }
 
 .menu button.browse {
-    background-color: hsla(127, 6%, 30%, var(--opacity));
-    border-color: hsla(127, 6%, 50%, var(--border-opacity));
+    background-color: hsla(var(--section-browse-color-h), var(--section-browse-color-s), var(--section-browse-color-l), var(--opacity));
+    border-color: hsla(var(--section-browse-color-h), var(--section-browse-color-s), calc(var(--section-browse-color-l) + 20%), var(--border-opacity));
 }
 
 .menu button.terminal {
-    background-color: hsla(221, 19%, 26%, var(--opacity));
-    border-color: hsla(221, 19%, 46%, var(--border-opacity));
-}
-
-.menu button.terminal svg {
-    font-size: calc(var(--icon-size) * .8);
+    background-color: hsla(var(--section-terminal-color-h), var(--section-terminal-color-s), var(--section-terminal-color-l), var(--opacity));
+    border-color: hsla(var(--section-terminal-color-h), var(--section-terminal-color-s), calc(var(--section-terminal-color-l) + 20%), var(--border-opacity));
 }
 
 .menu button.app-launch-pad {
-    background-color: hsla(310, 10%, 23%, var(--opacity));
-    border-color: hsla(310, 10%, 43%, var(--border-opacity));
+    background-color: hsla(var(--section-apps-color-h), var(--section-apps-color-s), var(--section-apps-color-l), var(--opacity));
+    border-color: hsla(var(--section-apps-color-h), var(--section-apps-color-s), calc(var(--section-apps-color-l) + 20%), var(--border-opacity));
 }
 
 .menu button.tasks {

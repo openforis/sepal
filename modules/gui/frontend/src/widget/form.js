@@ -400,6 +400,7 @@ export class Input extends React.Component {
                 msg={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
+                tabIndex={-1}
             />
         ) : null
     }
@@ -409,7 +410,6 @@ export class Input extends React.Component {
         const extraProps = _.omit(props, ['errorMessage'])
         return (
             <input
-                {...extraProps}
                 ref={this.element}
                 name={input.name}
                 value={typeof input.value === 'number' || typeof input.value === 'boolean' || input.value ? input.value : ''}
@@ -428,6 +428,7 @@ export class Input extends React.Component {
                         input.validate()
                 }}
                 className={[input.validationFailed ? styles.error : null, className].join(' ')}
+                {...extraProps}
             />
         )
     }
@@ -464,7 +465,7 @@ export class Input extends React.Component {
     renderErrorMessage() {
         const {errorMessage, input} = this.props
         return errorMessage ? (
-            <ErrorMessage for={errorMessage === true ? input.name : errorMessage}/>
+            <ErrorMessage for={errorMessage === true ? input.name : errorMessage} tabIndex={-1}/>
         ) : null
     }
 
