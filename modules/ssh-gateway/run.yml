@@ -22,8 +22,6 @@
     - "/data/user/home:/home" # Users home directories with ssh keys
     ports:
     - "{{ sepal_ssh_ip }}:443:22"
-    etc_hosts:
-        syslog_host: "{{ syslog_host }}"
     env:
       SEPAL_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
       LDAP_ADMIN_PASSWORD_SEPAL_ENV: "{{ ldap_admin_password }}"

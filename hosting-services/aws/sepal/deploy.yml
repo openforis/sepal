@@ -1,6 +1,6 @@
 - name: Configure Sepal instance
   hosts: "tag_Type_Sepal:&tag_Environment_{{ deploy_environment }}"
-  user: ubuntu
+  user: ec2-user
   become: yes
   gather_facts: true
 
@@ -11,22 +11,79 @@
     - set_fact:
         ldap_host: "{{ ec2_private_ip_address }}"
         elk_host: "{{ elk_host }}"
-        syslog_host: "172.17.0.1"
-        syslog_address: "tcp://172.17.0.1:514"
-
-    - file: path="/data/docker/storage/devicemapper/metadata" state=directory
-    - file: path="/data/docker/storage/tmp" state=directory
+        syslog_address: "unixgram:///dev/log"
 
     - file: path="/data/sepal/etc" state=directory
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
 
+    # rsyslog
+    - name: Install rsyslog-gnutls
+      yum:
+        name: "rsyslog-gnutls"
+
+    - name: Copy rsyslog.conf
+      template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+
+    - name: Start rsyslog
+      service: name=rsyslog state=started
+
+    # docker
+    - file: path="/data/docker/storage/devicemapper/metadata" state=directory
+    - file: path="/data/docker/storage/tmp" state=directory
+
+    - name: Create Docker LVM Volume Group
+      lvg: vg=vg-docker pvs=/dev/sdb
+
+    - name: Create Docker LVM Data Volume
+      lvol: vg=vg-docker lv=data size=30g
+
+    - name: Create Docker LVM Metadata Volume
+      lvol: vg=vg-docker lv=metadata size=19g
+
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        state: directory
+
+    - name: Copy docker-registry certificate
+      copy:
+        src: "{{ config_home }}/certificates/docker-registry.crt"
+        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+
+    - name: Install docker
+      command: "amazon-linux-extras install docker"      
+
+    - name: Install pip
+      yum:
+        name: "python-pip"
+
+    - name: Install docker-compose
+      pip:
+        name: docker-compose        
+
+    - name: Create /etc/docker
+      file:
+        path: "/etc/docker"
+        state: directory
+
+    - name: Copy /etc/docker/daemon.json
+      copy: src=docker-daemon.json dest=/etc/docker/daemon.json
+
+    - name: Start docker
+      service: name=docker state=started
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+
   roles:
-    - role: unattended-upgrades
-      unattended_origins_patterns:
-       - 'origin=Ubuntu,archive=${distro_codename}-security'
-       - 'o=Ubuntu,a=${distro_codename}-updates'
-    - { role: rsyslog }
-    - { role: docker, users: ['ubuntu'] }
+
+    # - role: unattended-upgrades
+    #   unattended_origins_patterns:
+    #    - 'origin=Ubuntu,archive=${distro_codename}-security'
+    #    - 'o=Ubuntu,a=${distro_codename}-updates'
+    # - { role: rsyslog }
     - { role: aws-mount-efs }
     - { role: docker-login }
 
