@@ -60,7 +60,9 @@ let SectionLink = ({active, name, icon}) => {
             icon={icon}
             link={link}
             tooltip={msg(`home.sections.${name}.tooltip`)}
-            tooltipPlacement='right'/>
+            tooltipPlacement='right'
+            stopPropagation={false}
+        />
     )
 }
 
