@@ -8,6 +8,7 @@
     state: "{{ state }}"
     restart_policy: "{{ restart_policy }}"
     network_mode: "{{ network_mode }}"
+    ulimits: nofile:65536:65536
     log_driver: syslog
     log_opt:
       syslog-address: "{{ syslog_address }}"
@@ -19,7 +20,5 @@
     ports:
     - "{{ sepal_http_ip }}:80:80"
     - "{{ sepal_http_ip }}:443:443"
-    etc_hosts:
-        syslog_host: "{{ syslog_host }}"
     env:
       SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"

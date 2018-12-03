@@ -9,7 +9,7 @@
   tasks:
     - name: Create Sepal security group
       ec2_group:
-        name: Sepal
+        name: Sepalt4
         description: The Sepal Security Group
         region: "{{ region }}"
         rules:
@@ -68,9 +68,16 @@
           Name: "Sepal - {{ deploy_environment}}"
           Type: Sepal
           Environment: "{{ deploy_environment }}"
+        ebs_optimized: true
         volumes:
-          - device_name: /dev/sda1
-            volume_size: 50
+          - device_name: /dev/xvda
+            delete_on_termination: true
+            volume_type: gp2
+            volume_size: 10
+          - device_name: /dev/sdb
+            delete_on_termination: true
+            volume_type: gp2
+            volume_size: 90
       register: ec2
 
     - name: Wait for SSH to be available in Sepal instance
