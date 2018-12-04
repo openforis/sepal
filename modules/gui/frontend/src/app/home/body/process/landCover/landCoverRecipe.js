@@ -38,7 +38,6 @@ export const RecipeActions = id => {
             }, {values, model})
         },
         setTrainingData({values, model}) {
-            // console.log({values, model})
             return setAll('SET_TRAINING_DATA', {
                 'ui.trainingData': values,
                 'model.trainingData': model,
@@ -53,9 +52,39 @@ export const RecipeActions = id => {
         setFusionTableColumns(columns) {
             return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
         },
+        setPreviewType(type, value) {
+            return setAll('SET_PREVIEW_TYPE', {
+                'ui.preview.type': type,
+                'ui.preview.value': value,
+            }, {previewType: type, value})
+        },
+        setPreviewYear(previewYear) {
+            return setAll('SET_PREVIEW_YEAR', {
+                'ui.preview.year': previewYear
+            }, {previewYear})
+        },
+        setCompositeTaskId(taskId) {
+            return setAll('SET_COMPOSITE_TASK_ID', {
+                'model.compositeTaskId': taskId
+            }, {taskId})
+        },
+        setLandCoverMapTaskId(taskId) {
+            return setAll('SET_LAND_COVER_MAP_TASK_ID', {
+                'model.compositeTaskId': taskId
+            }, {taskId})
+        },
+        setStatus(status) {
+            return setAll('SET_STATUS', {
+                'model.status': status
+            }, {status})
+        },
         setInitialized(initialized) {
             return set('SET_INITIALIZED', 'ui.initialized', !!initialized, {initialized})
+        },
+        selectPanel(name) {
+            return set('SELECT_PANEL', 'ui.selectedPanel', name, {name})
         }
+
     }
 }
 
@@ -81,7 +110,14 @@ const initRecipe = recipe => {
     actions.setTypology({
         model:
             { // TODO: Create a panel for collecting this data
-                primitiveTypes: ['otherland', 'settlement', 'forest', 'grassland', 'cropland', 'wetland']
+                primitiveTypes: [
+                    {id: 'otherland', label: 'Other land'},
+                    {id: 'settlement', label: 'Settlement'},
+                    {id: 'forest', label: 'Forest'},
+                    {id: 'grassland', label: 'Grassland'},
+                    {id: 'cropland', label: 'Cropland'},
+                    {id: 'wetland', label: 'Wetland'}
+                ]
             }
     }).dispatch()
 
@@ -92,9 +128,11 @@ const initRecipe = recipe => {
     actions.setCompositeOptions({
         model: {}
     }).dispatch()
+
+    actions.setStatus('UNINITIALIZED').dispatch()
 }
 
-export const createComposites = recipe => {
+export const createComposites = recipe =>
     api.tasks.submit$({
         operation: 'sepal.landcover.create_composites',
         params: {
@@ -105,10 +143,9 @@ export const createComposites = recipe => {
             sensors: ['L8', 'L7'], // TODO: Make sensors configurable
             scale: 30
         }
-    }).subscribe()
-}
+    }).subscribe(task => RecipeActions(recipe.id).setCompositeTaskId(task.id).dispatch())
 
-export const createLandCoverMap = recipe => {
+export const createLandCoverMap = recipe =>
     api.tasks.submit$({
         operation: 'sepal.landcover.create_land_cover_map',
         params: {
@@ -120,5 +157,11 @@ export const createLandCoverMap = recipe => {
             trainingData: recipe.model.trainingData,
             scale: 30,
         }
-    }).subscribe()
+    }).subscribe(task => RecipeActions(recipe.id).setLandCoverMapTaskId(task.id).dispatch())
+
+export const statuses = {
+    UNINITIALIZED: 'UNINITIALIZED',
+    COMPOSITES_PENDING_CREATION: 'COMPOSITES_PENDING_CREATION',
+    CREATING_COMPOSITES: 'CREATING_COMPOSITES',
+    COMPOSITES_CREATED: 'COMPOSITES_CREATED',
 }

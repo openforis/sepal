@@ -1,5 +1,5 @@
 import {PanelButton, Toolbar, ToolbarButton} from 'widget/toolbar'
-import {RecipeState, createComposites, createLandCoverMap, recipePath} from './landCoverRecipe'
+import {RecipeState, RecipeActions, createComposites, createLandCoverMap, recipePath, statuses} from './landCoverRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Aoi from '../mosaic/panels/aoi/aoi'
@@ -15,7 +15,6 @@ import styles from './landCoverToolbar.module.css'
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
-        initialized: recipeState('ui.initialized'),
         recipe: recipeState()
     }
 }
@@ -24,7 +23,7 @@ class LandCoverToolbar extends React.Component {
     state = {}
 
     render() {
-        const {recipeId, recipe, initialized} = this.props
+        const {recipeId, recipe} = this.props
         const {creatingComposites, creatingPrimitives} = this.state
         const statePath = recipePath(recipeId, 'ui')
         const trainingData = recipe.model.trainingData || {}
@@ -39,16 +38,14 @@ class LandCoverToolbar extends React.Component {
                     <ToolbarButton
                         name='createComposites'
                         icon={creatingComposites ? 'spinner' : 'cloud-download-alt'}
-                        tooltip={msg('process.landCover.panel.createComposites.tooltip')}
-                        // disabled={!initialized || creatingComposites}
-                        disabled={!initialized}
+                        tooltip={msg('process.landCover.panel.createComposites.tooltip')}c
+                        disabled={['UNINITIALIZED', 'CREATING_COMPOSITES'].includes(recipe.model.status)}
                         onClick={() => this.createComposites()}/>
                     <ToolbarButton
                         name='createPrimitives'
                         icon={creatingPrimitives ? 'spinner' : 'cloud-download-alt'}
                         tooltip={msg('process.landCover.panel.createLandCoverMap.tooltip')}
                         disabled={!trainingData.classColumn}
-                        // disabled={!creatingComposites || recipe.model.trainingData.classColumn}
                         onClick={() => this.createLandCoverMap()}/>
                 </Toolbar>
                 <Toolbar
@@ -90,6 +87,14 @@ class LandCoverToolbar extends React.Component {
         )
     }
 
+    componentDidMount() {
+        this.showMandatoryPanel()
+    }
+
+    componentDidUpdate() {
+        this.showMandatoryPanel()
+    }
+
     createComposites() {
         const {recipe} = this.props
         createComposites(recipe)
@@ -100,6 +105,13 @@ class LandCoverToolbar extends React.Component {
         const {recipe} = this.props
         createLandCoverMap(recipe)
         this.setState(prevState => ({...prevState, creatingPrimitives: true}))
+    }
+
+    showMandatoryPanel() {
+        const {recipe} = this.props
+        const {tableId} = recipe.model.trainingData
+        if (recipe.model.status === statuses.COMPOSITES_CREATED && !tableId)
+            RecipeActions(recipe.id).selectPanel('trainingData').dispatch()
     }
 }
 

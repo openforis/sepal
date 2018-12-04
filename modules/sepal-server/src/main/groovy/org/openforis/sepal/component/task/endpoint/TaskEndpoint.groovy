@@ -6,6 +6,7 @@ import org.openforis.sepal.command.Command
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.command.*
+import org.openforis.sepal.component.task.query.GetTask
 import org.openforis.sepal.component.task.query.UserTasks
 
 import static groovy.json.JsonOutput.toJson
@@ -37,13 +38,23 @@ class TaskEndpoint {
 
             post('/tasks') {
                 def task = fromJson(body)
-                submit(new SubmitTask(
+                def submittedTask = submit(new SubmitTask(
                         instanceType: task.instanceType,
                         operation: task.operation,
                         params: task.params,
                         username: currentUser.username
                 ))
-                response.status = 204
+                send toJson(submittedTask)
+            }
+
+            get('/tasks/task/{id}') {
+                def task = submit(
+                        new GetTask(
+                                taskId: params.required('id', String),
+                                username: currentUser.username
+                        )
+                )
+                send toJson(task)
             }
 
             post('/tasks/task/{id}/cancel') {
@@ -98,7 +109,7 @@ class TaskEndpoint {
         new JsonSlurper().parseText(json)
     }
 
-    private void submit(Command command) {
+    private <T> T submit(Command<T> command) {
         component.submit(command)
     }
 }

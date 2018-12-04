@@ -1,0 +1,127 @@
+
+
+.container {
+    pointer-events: all;
+    margin: auto;
+    width: fit-content;
+}
+
+.wrapper {
+    --scaling-factor: .9 !important;
+    position: absolute;
+    display: flex;
+    flex-wrap: wrap-reverse;
+    justify-content: center;
+    align-items: center;
+    right: 3.5rem;
+    bottom: 0;
+    left: 0;
+}
+
+.selector {
+    left: 0;
+    right: 0;
+    width: 17rem;
+    height: 3rem;
+}
+
+.yearPreview {
+    height: 2rem;
+    line-height: 2rem;
+    margin-left: 1rem;
+}
+
+.yearList {
+    width: 10rem;
+    height: 3rem;
+}
+
+.container :global .comboBox__value-container {
+    --scaling-factor: .8;
+    padding: 8px;
+}
+
+.container :global .comboBox__control {
+    background-color: rgba(19, 19, 20, 0.91) !important;
+    border: var(--wireframe) !important;
+    border-top: none !important;
+    border-radius: 0 0 var(--container-border-radius) var(--container-border-radius) !important;
+    height: 3rem !important;
+}
+
+.container :global .comboBox__single-value {
+    width: 100%;
+}
+
+.menu :global .comboBox__menu {
+    border: var(--wireframe) !important;
+    border-radius: var(--container-border-radius) var(--container-border-radius) 0 0 !important;
+}
+
+.selection {
+    /*display: flex;*/
+    /*padding: 0 0.5rem;*/
+    /*border-radius: var(--container-border-radius);*/
+}
+
+.selection > * {
+    padding: .5rem 0;
+}
+
+.selectedBands {
+    --border-color: hsla(0, 0%, 30%, .5);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+}
+
+.selectedBands > * {
+    padding: 0 .5rem;
+    line-height: 1.8rem;
+    border-radius: .25rem;
+    color: var(--look-default-color);
+    border: 1px solid var(--border-color);
+}
+
+.selectedBands > *:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.selectedBands > *:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+}
+
+.selectedBands:hover > * {
+    color: var(--look-default-hover-color);
+}
+
+.red {
+    background-color: hsla(0, 50%, 20%, 0.95);
+}
+
+.selectedBands:hover > .red {
+    background-color: hsla(0, 50%, 25%, 0.95);
+}
+
+.green {
+    background-color: hsla(120, 50%, 15%, 0.95);
+}
+
+.selectedBands:hover > .green {
+    background-color: hsla(120, 50%, 20%, 0.95);
+}
+
+.blue {
+    background-color: hsla(240, 50%, 35%, 0.95);
+}
+
+.selectedBands:hover > .blue {
+    background-color: hsla(240, 50%, 43%, 0.95);
+}
+
+.single {
+    background-color: hsla(0, 0%, 50%, 0.95);
+}

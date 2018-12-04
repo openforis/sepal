@@ -23,7 +23,7 @@ const fields = {
 
 const constraints = {
     yearAndClassColumnsSame: new Constraint(['yearColumn', 'classColumn'])
-        .skip((value, {fusionTable}) => {
+        .skip(({fusionTable}) => {
             return !fusionTable
         })
         .predicate(({yearColumn, classColumn}) => {
@@ -153,8 +153,8 @@ TrainingData.propTypes = {
 
 const valuesToModel = (values, primitiveTypes) => {
     const classByPrimitive = {}
-    primitiveTypes && primitiveTypes.forEach(primitiveType => // TODO: Make this configurable
-        classByPrimitive[primitiveType] = primitiveType
+    primitiveTypes && primitiveTypes.forEach(primitiveType =>
+        classByPrimitive[primitiveType] = primitiveType.id
     )
     return {
         type: 'fusionTable',

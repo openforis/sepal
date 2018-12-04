@@ -1,4 +1,4 @@
-import {RecipeState, recipePath} from './landCoverRecipe'
+import {RecipeState, recipePath, statuses} from './landCoverRecipe'
 import {connect, select} from 'store'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
@@ -6,13 +6,17 @@ import LandCoverToolbar from './landCoverToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import api from 'api'
+import CompositePreview from "./compositePreview"
+import CompositesMonitor from "./compositesMonitor"
+import PreviewSelection from "./previewSelection";
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
-        initialized: recipeState('ui.initialized'),
+        status: recipeState('model.status'),
+        preview: recipeState('ui.preview'),
         aoi: recipeState('model.aoi'),
-        tabCount: select('process.tabs').length
+        tabCount: select('process.tabs').length,
     }
 }
 
@@ -35,8 +39,31 @@ class LandCover extends React.Component {
                     mapContext={recipeId}
                     labelLayerIndex={1}/>
                 <LandCoverToolbar recipeId={recipeId}/>
+
+                {this.renderPreview()}
+                {this.inPreviewableState()
+                    ? <PreviewSelection recipeId={recipeId}/>
+                    : null}
+                <CompositesMonitor recipeId={recipeId}/>
             </React.Fragment>
         )
+    }
+
+    renderPreview() {
+        const {recipeId, preview} = this.props
+        if (!this.inPreviewableState() || !preview || !preview.type || !preview.value || !preview.year)
+            return null
+        switch (preview.type) {
+            case 'composite':
+                return <CompositePreview recipeId={recipeId}/>
+            default:
+                return null
+        }
+    }
+
+    inPreviewableState() {
+        const {status} = this.props
+        return ![statuses.UNINITIALIZED, statuses.COMPOSITES_PENDING_CREATION].includes(status)
     }
 
     // TODO: This is duplicated from mosaic. Will end up in classification too. Higher order component? AoiTab...

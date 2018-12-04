@@ -8,8 +8,7 @@ import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.endpoint.TaskEndpoint
-import org.openforis.sepal.component.task.query.UserTasks
-import org.openforis.sepal.component.task.query.UserTasksHandler
+import org.openforis.sepal.component.task.query.*
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
@@ -55,6 +54,7 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
         command(FailTasksInSession, new FailTasksInSessionHandler(taskRepository))
 
         query(UserTasks, new UserTasksHandler(taskRepository))
+        query(GetTask, new GetTaskHandler(taskRepository))
 
         sessionManager
                 .onSessionActivated { submit(new ExecuteTasksInSession(session: it)) }

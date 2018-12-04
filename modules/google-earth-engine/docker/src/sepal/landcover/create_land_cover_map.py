@@ -71,7 +71,9 @@ class CreateLandCoverMap(ThreadTask):
         )
         samples = ee.FeatureCollection([])
         for year in range(self.start_year, self.end_year + 1):
-            composite = ee.Image(_to_asset_id('{0}-{1}'.format(self.asset_path, year)))
+            composite = add_covariates(
+                ee.Image(_to_asset_id('{0}-{1}'.format(self.asset_path, year)))
+            )
             yearly_training_data = primitive_training_data_collection \
                 .filter(ee.Filter.eq('year', ee.Number(year)))
             yearly_sample = sample(composite=composite, training_data=yearly_training_data)
@@ -152,7 +154,9 @@ class CreatePrimitive(ThreadTask):
         self.samples = samples
         self.asset_path = asset_path
         self.aoi = aoi
-        self.composite = ee.Image(_to_asset_id('{0}-{1}'.format(asset_path, year)))
+        self.composite = add_covariates(
+            ee.Image(_to_asset_id('{0}-{1}'.format(asset_path, year)))
+        )
         self.drive_folder_name = drive_folder_name
 
     def run(self):
@@ -245,6 +249,8 @@ def create_primitive(year, type, composite, training_data):
         composite=composite,
         trainingData=training_data)
 
+def add_covariates(composite):
+    return landcoverPackage.addCovariates(composite)
 
 def assemble(year, primitive_collection):
     '''
