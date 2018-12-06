@@ -68,4 +68,6 @@ def create_composite(year, aoi, sensors):
     :param sensors: A list of sensors
     :return: A composite as an ee.Image
     '''
-    return landcoverPackage.composite(aoi=aoi, year=year, sensors=sensors)
+    return landcoverPackage.composite(aoi=aoi, year=year, sensors=sensors) \
+        .set('system:time_start', ee.Date.fromYMD(year, 1, 1).millis()) \
+        .set('year', year)

@@ -23,11 +23,12 @@ class Task(object):
     REJECTED = 'REJECTED'
     CANCELED = 'CANCELED'
 
-    def __init__(self):
+    def __init__(self, retries=0):
         super(Task, self).__init__()
+        self.state = Task.UNSUBMITTED
         self._state_lock = threading.Lock()
         self._close_lock = threading.Lock()
-        self.state = Task.UNSUBMITTED
+        self._retries = retries
         self._resolve = None
         self._reject = None
         self._exception = None
@@ -35,6 +36,7 @@ class Task(object):
         self._dependee = None
         self._dependents = []
         self._event_queue = queue.Queue()
+        self._current_try = 1
 
     # noinspection PyUnusedLocal
     def submit(self, *args):
@@ -55,10 +57,16 @@ class Task(object):
             self._close()
 
     def reject(self, exception):
+        if self._current_try <= self._retries:
+            self._set_state(Task.SUBMITTED)
+            logger.exception('Retrying {0}. Try: {1} of {2}'.format(self, self._current_try, self._retries + 1))
+            self._current_try = self._current_try + 1
+            self._start(self._resolve, self._reject)
+            return
         if not self._set_state(Task.REJECTED, lambda state: state in [Task.UNSUBMITTED, Task.SUBMITTED, Task.RUNNING]):
             return
         self._exception = exception
-        logger.exception('Rejected {0}'.format(self))
+        logger.exception('Rejected {0} after {1} tries'.format(self, self._current_try))
         try:
             return self._reject(exception) if self._reject else Promise.reject(exception)
         finally:
@@ -170,7 +178,7 @@ class Task(object):
         self._state_lock.acquire()
         try:
             if when(self.state) and (not dependee_lock or dependee.running() or new_state == Task.CANCELED):
-                logger.info('{0} -> {1}: {2}'.format(self.state, new_state, self))
+                logger.warn('{0} -> {1}: {2}'.format(self.state, new_state, self))
                 self.state = new_state
                 return True
             return False
@@ -287,13 +295,14 @@ class ProcessTask(Task):
 
 
 class ThreadTask(Task):
-    def __init__(self, name=None):
-        super(ThreadTask, self).__init__()
-        self._thread = threading.Thread(
-            name=name,
-            target=self._run_and_catch)
+    def __init__(self, name=None, retries=0):
+        super(ThreadTask, self).__init__(retries)
+        self.name = name
 
     def _start(self, resolve, reject):
+        self._thread = threading.Thread(
+            name=self.name,
+            target=self._run_and_catch)
         self._resolve = resolve
         self._reject = reject
         self._thread.start()

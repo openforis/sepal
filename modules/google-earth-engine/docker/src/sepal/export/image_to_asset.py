@@ -18,15 +18,20 @@ class ImageToAsset(ThreadTask):
             region,
             scale,
             maxPixels=1e12,
-            assetPath=None):
-        super(ImageToAsset, self).__init__()
+            pyramidingPolicy=None,
+            assetPath=None,
+            assetId=None,
+            retries=0):
+        super(ImageToAsset, self).__init__(None, retries)
         self.credentials = credentials
         self.image = image
         self.description = description
         self.scale = scale
         self.region = region
         self.maxPixels = maxPixels
+        self.pyramidingPolicy = pyramidingPolicy
         self._monitor = None
+        self.assetId = assetId
         self.assetPath = assetPath
 
     def status(self):
@@ -53,9 +58,16 @@ class ImageToAsset(ThreadTask):
         asset_roots = ee.data.getAssetRoots()
         if not asset_roots:
             raise Exception('User has no GEE asset roots: {}'.format(self.credentials))
-        asset_path = self.assetPath if self.assetPath else self.description
-        description = self.description if self.description else asset_path.split('/')[-1]
-        asset_id = asset_roots[0]['id'] + '/' + asset_path
+        if self.assetId:
+            asset_id = self.assetId
+        else:
+            asset_path = self.assetPath if self.assetPath else self.description
+            asset_id = asset_roots[0]['id'] + '/' + asset_path
+        description = self.description if self.description else asset_id.split('/')[-1]
+        try:
+            ee.data.deleteAsset(asset_id)
+        except:
+            pass
         task = ee.batch.Export.image.toAsset(
             image=self.image,
             description=description,
@@ -63,10 +75,12 @@ class ImageToAsset(ThreadTask):
             region=self.region.bounds().getInfo()['coordinates'],
             crs='EPSG:4326',
             scale=self.scale,
-            maxPixels=self.maxPixels
+            maxPixels=self.maxPixels,
+            pyramidingPolicy=self.pyramidingPolicy
         )
         task.start()
         return task.status()['id']
 
     def __str__(self):
-        return '{0}(description={1}, assetPath={2})'.format(type(self).__name__, self.description, self.assetPath)
+        return '{0}(description={1}, assetId={2}, assetPath={3})'.format(
+            type(self).__name__, self.description, self.assetId, self.assetPath)
