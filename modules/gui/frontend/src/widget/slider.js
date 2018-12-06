@@ -414,14 +414,15 @@ export default class Slider extends React.Component {
             })
 
         const ticks = mapTicks(props.ticks ? props.ticks : [props.minValue, props.maxValue])
-            .filter(({value}) => value >= props.minValue && value <= props.maxValue)
         const minValue = props.minValue || ticks.reduce((min, {value}) => Math.min(min, value), null)
         const maxValue = props.maxValue || ticks.reduce((max, {value}) => Math.max(max, value), null)
         return {
-            ticks: ticks.map(tick => ({
-                ...tick,
-                position: state.width * normalize(tick.value, minValue, maxValue, props.logScale)
-            })),
+            ticks: ticks
+                .filter(({value}) => value >= minValue && value <= maxValue)
+                .map(tick => ({
+                    ...tick,
+                    position: state.width * normalize(tick.value, minValue, maxValue, props.logScale)
+                })),
             minValue,
             maxValue
         }
