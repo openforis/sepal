@@ -23,7 +23,6 @@ import static groovyx.net.http.ContentType.URLENC
 
 abstract class AbstractGatewayTest extends Specification {
     final httpPort = Port.findFree()
-    final httpsPort = Port.findFree()
     final FakeUserServer userServer = new FakeUserServer().start() as FakeUserServer
     final TestServer endpoint = new TestServer().start()
     private ProxyServer server
@@ -31,7 +30,6 @@ abstract class AbstractGatewayTest extends Specification {
     final String validUsername = userServer.validUsername
     final String validPassword = userServer.validPassword
     final http = createHttp()
-    final https = createHttps()
 
     final void proxy(EndpointConfig endpointConfig,
                      @ClosureParams(value = SimpleType, options = ['groovymvc.RequestContext'])
@@ -40,7 +38,6 @@ abstract class AbstractGatewayTest extends Specification {
                 keyFile: new File(getClass().getResource('/test.key').file),
                 certificateFile: new File(getClass().getResource('/test.crt').file),
                 httpPort: httpPort,
-                httpsPort: httpsPort,
                 authenticationUrl: "${userServer.url}authenticate",
                 logoutPath: '/logout',
                 endpointConfigs: [endpointConfig]
@@ -52,31 +49,23 @@ abstract class AbstractGatewayTest extends Specification {
         }
     }
 
-    final HttpResponseDecorator httpsGet(String path) {
-        https.get(path: path) as HttpResponseDecorator
+    final HttpResponseDecorator httpGet(String path) {
+        http.get(path: path) as HttpResponseDecorator
     }
 
-    final HttpResponseDecorator httpsGetWithAuthentication(String path, String username, String password) {
-        def client = https
+    final HttpResponseDecorator httpGetWithAuthentication(String path, String username, String password) {
+        def client = http
         client.get(path: path, headers: [
                 'Authorization': 'Basic ' + "$username:$password".bytes.encodeBase64()
         ]) as HttpResponseDecorator
     }
 
-    final HttpResponseDecorator httpsGetWithHeaders(String path, Map<String, String> headers) {
-        https.get(path: path, headers: headers) as HttpResponseDecorator
-    }
-
-    final HttpResponseDecorator httpGet(String path) {
-        http.get(path: path) as HttpResponseDecorator
+    final HttpResponseDecorator httpGetWithHeaders(String path, Map<String, String> headers) {
+        http.get(path: path, headers: headers) as HttpResponseDecorator
     }
 
     final HttpResponseDecorator httpGetWithQuery(String path, Map<String, String> query) {
         http.get(path: path, query: query) as HttpResponseDecorator
-    }
-
-    final HttpResponseDecorator httpGetWithHeaders(String path, Map<String, String> headers) {
-        http.get(path: path, headers: headers) as HttpResponseDecorator
     }
 
     final HttpResponseDecorator httpPost(String path, Map<String, String> body) {
@@ -109,14 +98,6 @@ abstract class AbstractGatewayTest extends Specification {
         http.ignoreSSLIssues()
         http.client.setRedirectStrategy(new NoRedirect())
         return http
-    }
-
-    final RESTClient createHttps() {
-        def https = new RESTClient("https://localhost:$httpsPort/")
-        https.handler.failure = { return it }
-        https.ignoreSSLIssues()
-        https.client.redirectStrategy = new NoRedirect()
-        return https
     }
 
     final EndpointConfig prefixInsecure(String path, String target) {
