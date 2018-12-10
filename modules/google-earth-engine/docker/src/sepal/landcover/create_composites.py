@@ -51,7 +51,8 @@ class CreateComposites(ThreadTask):
                 region=self.aoi.bounds(),
                 description=None,
                 assetPath='{0}/{1}-composite'.format(self.asset_path, year),
-                scale=self.scale
+                scale=self.scale,
+                retries=3
             ))
 
     def __str__(self):

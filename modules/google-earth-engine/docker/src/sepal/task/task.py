@@ -23,7 +23,7 @@ class Task(object):
     REJECTED = 'REJECTED'
     CANCELED = 'CANCELED'
 
-    def __init__(self, retries=0):
+    def __init__(self, retries=2):
         super(Task, self).__init__()
         self.state = Task.UNSUBMITTED
         self._state_lock = threading.Lock()

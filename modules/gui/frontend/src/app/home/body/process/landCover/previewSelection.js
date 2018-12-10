@@ -46,17 +46,16 @@ class PreviewSelection extends React.Component {
 
     render() {
         const {status, primitiveTypes, period: {startYear, endYear}, inputs: {type, year}} = this.props
-        const compositeOptions = [
-            {
+        const compositeOptions = {
                 label: 'Composite',
                 options: [
                     {value: 'red,green,blue', label: 'RED, GREEN, BLUE', group: 'composite'},
                     {value: 'swir2,nir,red', label: 'SWIR2, NIR, RED', group: 'composite'}
                 ]
-            },
-        ]
+            }
 
-        const options = [statuses.LAND_COVER_MAP_CREATED].includes(status)
+        // const options = [statuses.LAND_COVER_MAP_CREATED].includes(status)
+        const options = true
             ? [
                 {
                     label: 'Result',
@@ -120,6 +119,8 @@ class Select extends React.Component {
 
     render() {
         const {input, options, placeholder, listClassName, onChange, children} = this.props
+        console.log({input: input.value})
+        console.log({options})
         const optionByValue = {} // TODO: Do this differently
         options.forEach(option => {
             if (option.options)
@@ -127,6 +128,7 @@ class Select extends React.Component {
             else
                 optionByValue[option.value] = option
         })
+        console.log({optionByValue})
         return (
             <React.Fragment>
                 {this.state.showList

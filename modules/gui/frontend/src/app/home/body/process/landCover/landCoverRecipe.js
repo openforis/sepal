@@ -115,31 +115,17 @@ const initRecipe = recipe => {
         model:
             { // TODO: Create a panel for collecting this data
                 primitiveTypes: [
-                    {id: 'native-forest', label: 'Native Forest', value: 2},
+                    {id: 'forest', label: 'Forest', value: 2},
                     {id: 'plantation', label: 'Plantation', value: 11},
-                    {id: 'shrubby-vegetation', label: 'Shrubby Vegetation', value: 12},
+                    {id: 'shrub', label: 'Shrub', value: 12},
+                    {id: 'grass', label: 'Grass', value: 10},
+                    {id: 'crop', label: 'Crop', value: 7},
                     {id: 'paramo', label: 'Paramo', value: 9},
-                    {id: 'herbland-vegetation', label: 'Herbland Vegetaion', value: 13},
-                    {id: 'annual-crop', label: 'Annual Crop', value: 3},
-                    {id: 'semipermanent-crop', label: 'Semipermanent Crop', value: 5},
-                    {id: 'permanent-crop', label: 'Permanent Crop', value: 4},
-                    {id: 'pasture', label: 'Pasture', value: 10},
-                    {id: 'agricultural-mosaic', label: 'Agricultural mosaic (association)', value: 7},
-                    {id: 'natural-water-body', label: 'Natural Water Body', value: 8},
-                    {id: 'inhabited-area', label: 'Inhabited area', value: 14},
-                    {id: 'infrastructure', label: 'Infrastructure', value: 6},
-                    {id: 'non-vegetated', label: 'Non-vegetated', value: 0}
+                    {id: 'agriculturalMosaic', label: 'Agricultural mosaic (association)', value: 7},
+                    {id: 'water', label: 'Water', value: 8},
+                    {id: 'urban', label: 'Inhabited area', value: 6},
+                    {id: 'barren', label: 'Barren', value: 0}
                 ]
-                // primitiveTypes: [
-                //     {id: 'primitiveA', label: 'Primitive A', value: 1},
-                //     {id: 'primitiveB', label: 'Primitive B', value: 2},
-                //     // {id: 'otherland', label: 'Other land'},
-                //     // {id: 'settlement', label: 'Settlement'},
-                //     // {id: 'forest', label: 'Forest'},
-                //     // {id: 'grassland', label: 'Grassland'},
-                //     // {id: 'cropland', label: 'Cropland'},
-                //     // {id: 'wetland', label: 'Wetland'}
-                // ]
             }
     }).dispatch()
 
@@ -166,7 +152,7 @@ export const createComposites = recipe => {
             endYear: recipe.model.period.endYear,
             aoi: recipe.model.aoi,
             sensors: ['L8', 'L7'], // TODO: Make sensors configurable
-            scale: 3000
+            scale: 30
         }
     }).subscribe(task => RecipeActions(recipe.id).setCompositeTaskId(task.id).dispatch())
 }
@@ -186,7 +172,7 @@ export const createLandCoverMap = recipe => {
             endYear: recipe.model.period.endYear,
             aoi: recipe.model.aoi,
             trainingData: recipe.model.trainingData,
-            scale: 3000,
+            scale: 30,
         }
     }).subscribe(task => RecipeActions(recipe.id).setLandCoverMapTaskId(task.id).dispatch())
 }
@@ -202,22 +188,46 @@ export const statuses = {
 }
 
 const tempDecisionTree = {
-    primitive: 'native-forest',
-    threshold: 50,
-    true: 'native-forest',
+    primitive: 'water',
+    threshold: 80,
+    true: 'water',
     false: {
-        primitive: 'plantation',
-        threshold: 50,
-        true: 'plantation',
+        primitive: 'forest',
+        threshold: 70,
+        true: {
+            primitive: 'plantation',
+            threshold: 70,
+            true: 'plantation',
+            false: 'forest'
+        },
         false: {
-            primitive: 'shrubby-vegetation',
-            threshold: 50,
-            true: 'shrubby-vegetation',
+            primitive: 'crop',
+            threshold: 65,
+            true: 'crop',
             false: {
-                primitive: 'paramo',
-                threshold: 50,
-                true: 'paramo',
-
+                primitive: 'urban',
+                threshold: 80,
+                true: 'urban',
+                false: {
+                    primitive: 'barren',
+                    threshold: 70,
+                    true: 'barren',
+                    false: {
+                        primitive: 'grass',
+                        threshold: 70,
+                        true: {
+                            primitive: 'paramo',
+                            threshold: 70,
+                            true: 'paramo',
+                            false: 'grass'
+                        },
+                        false: {
+                            primitive: 'shrub',
+                            threshold: 65,
+                            true: 'shrub'
+                        }
+                    }
+                }
             }
         }
     }

@@ -176,7 +176,7 @@ class CreateLandCoverMap(ThreadTask):
                 description=None,
                 assetId=_to_asset_id('{0}/{1}-assembly'.format(self.asset_path, year)),
                 scale=self.scale,
-                pyramidingPolicy={'.default': 'mode'},
+                pyramidingPolicy={'classification': 'mode'},
                 retries=3
             ))
         export_probabilities = self.dependent(
@@ -345,7 +345,7 @@ def create_primitive(year, type, composite, training_data):
     :param training_data: ee.FeatureCollection with the classes and sampled properties
     :return: An ee.Image with the primitive with a year property set.
     '''
-    return ee.Algorithms.If(
+    return ee.Image(ee.Algorithms.If(
         training_data.first(),
         landcoverPackage.primitive(
             year=year,
@@ -355,7 +355,7 @@ def create_primitive(year, type, composite, training_data):
             .set('system:time_start', ee.Date.fromYMD(year, 1, 1).millis()) \
             .set('year', year),
         ee.Image(0)
-    )
+    ))
 
 
 def add_covariates(composite):
