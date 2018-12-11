@@ -51,7 +51,7 @@ Route.propTypes = {
 
 export const Switch = router.Switch
 Switch.propTypes = {
-    location: PropTypes.object.isRequired
+    location: PropTypes.any.isRequired
 }
 
 export const Link = router.Link
