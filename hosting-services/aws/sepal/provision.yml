@@ -73,11 +73,11 @@
           - device_name: /dev/xvda
             delete_on_termination: true
             volume_type: gp2
-            volume_size: 10
+            volume_size: 100
           - device_name: /dev/sdb
             delete_on_termination: true
             volume_type: gp2
-            volume_size: 90
+            volume_size: 100
       register: ec2
 
     - name: Wait for SSH to be available in Sepal instance

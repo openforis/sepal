@@ -89,13 +89,17 @@
     - name: Copy /etc/docker/daemon.json
       copy: src=docker-daemon.json dest=/etc/docker/daemon.json
 
-    - name: Start docker
-      service: name=docker state=started
-
     - name: Add ec2-user to docker group
       user:
         name: ec2-user
         groups: docker
+
+    - name: Enable docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+        masked: no
 
     - name: Login to docker registry
       command: "docker login -p '{{ docker_password }}' -u '{{ docker_username }}' {{ docker_repository_host }}"
