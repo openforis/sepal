@@ -119,7 +119,6 @@
       "error.title": "Failed to load apps",
       "error.message": "Try to reload the page."
     },
-    "dataVis": "Data visualization",
     "run": {
       "error.title": "Failed to run {label}"
     }
