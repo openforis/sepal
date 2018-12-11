@@ -1,5 +1,5 @@
 import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState} from './landCoverRecipe'
+import {RecipeActions, RecipeState, statuses} from './landCoverRecipe'
 import {msg} from 'translate'
 import ComboBox from 'widget/comboBox'
 import React from 'react'
@@ -28,6 +28,7 @@ const mapStateToProps = (state, ownProps) => {
         recipeActions.setPreviewYear(period.startYear).dispatch()
     }
     return {
+        status: recipeState('model.status'),
         period: recipeState('model.period'),
         primitiveTypes: recipeState('model.typology.primitiveTypes'),
         values
@@ -44,30 +45,37 @@ class PreviewSelection extends React.Component {
     }
 
     render() {
-        const {primitiveTypes, period: {startYear, endYear}, inputs: {type, year}} = this.props
-        const options = [
-
-            {
-                label: 'Result',
-                options: [
-                    {value: 'map', label: 'Land cover map', group: 'result'},
-                    {value: 'uncertainty', label: 'Uncertainty', group: 'result'}
-                ]
-            },
-            {
-                label: 'Primitives',
-                options: primitiveTypes
-                    .map(primitiveType => ({value: primitiveType.id, label: primitiveType.label, group: 'primitive'}))
-            },
-            {
+        const {status, primitiveTypes, period: {startYear, endYear}, inputs: {type, year}} = this.props
+        const compositeOptions = {
                 label: 'Composite',
                 options: [
                     {value: 'red,green,blue', label: 'RED, GREEN, BLUE', group: 'composite'},
                     {value: 'swir2,nir,red', label: 'SWIR2, NIR, RED', group: 'composite'}
                 ]
-            },
-        ]
+            }
 
+        // const options = [statuses.LAND_COVER_MAP_CREATED].includes(status)
+        const options = true
+            ? [
+                {
+                    label: 'Result',
+                    options: [
+                        {value: 'map', label: 'Land cover map', group: 'result'},
+                        {value: 'uncertainty', label: 'Uncertainty', group: 'result'}
+                    ]
+                },
+                {
+                    label: 'Primitives',
+                    options: primitiveTypes
+                        .map(primitiveType => ({
+                            value: primitiveType.id,
+                            label: primitiveType.label,
+                            group: 'primitive'
+                        }))
+                },
+                compositeOptions
+            ]
+            : compositeOptions
         const yearOptions = _.range(startYear, endYear + 1)
             .map(year => ({value: year, label: '' + year}))
         return (
@@ -111,6 +119,8 @@ class Select extends React.Component {
 
     render() {
         const {input, options, placeholder, listClassName, onChange, children} = this.props
+        console.log({input: input.value})
+        console.log({options})
         const optionByValue = {} // TODO: Do this differently
         options.forEach(option => {
             if (option.options)
@@ -118,6 +128,7 @@ class Select extends React.Component {
             else
                 optionByValue[option.value] = option
         })
+        console.log({optionByValue})
         return (
             <React.Fragment>
                 {this.state.showList

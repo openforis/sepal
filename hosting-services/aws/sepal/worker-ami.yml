@@ -79,8 +79,7 @@
       lvol: vg=vg-docker lv=metadata size=100%FREE
 
     - name: Install docker
-      yum:
-        name: "docker"
+      command: "amazon-linux-extras install docker"
 
     - name: Create /etc/docker
       file:

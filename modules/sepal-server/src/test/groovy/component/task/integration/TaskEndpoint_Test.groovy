@@ -58,7 +58,7 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
         post(path: 'tasks', body: body, contentType: JSON)
 
         then:
-        status == 204
+        status == 200
         1 * component.submit(new SubmitTask(
                 instanceType: body.instanceType,
                 operation: body.operation,

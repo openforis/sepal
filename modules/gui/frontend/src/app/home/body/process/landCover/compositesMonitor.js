@@ -4,10 +4,13 @@ import React from 'react'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
-    const taskId = recipeState('model.compositeTaskId')
+    const compositeTaskId = recipeState('model.compositeTaskId')
+    const landCoverTaskId = recipeState('model.landCoverTaskId')
     return {
         status: recipeState('model.status'),
-        task: select('tasks').find(task => task.id === taskId)
+        compositeTask: select('tasks').find(task => task.id === compositeTaskId),
+        landCoverTask: select('tasks').find(task => task.id === landCoverTaskId),
+        trainingData: recipeState('model.trainingData')
     }
 }
 
@@ -32,17 +35,39 @@ class CompositesMonitor extends React.Component {
     // TODO: Monitor primitives and land cover map creation too
 
     update() {
-        const {status, task} = this.props
-        if (!task)
-            return
+        const {status, compositeTask, landCoverTask, trainingData} = this.props
+        console.log({status, compositeTask, landCoverTask, trainingData})
+
         const setTaskStatus = (nextStatus) =>
             status !== nextStatus && this.recipeActions.setStatus(nextStatus).dispatch()
-        if (['ACTIVE', 'PENDING'].includes(task.status))
-            setTaskStatus(statuses.CREATING_COMPOSITES)
-        else if (task.status === 'COMPLETED')
-            setTaskStatus(statuses.COMPOSITES_CREATED)
-        else if (['CANCELED', 'FAILED'].includes(task.status))
-            setTaskStatus(statuses.COMPOSITES_PENDING_CREATION)
+        if (!compositeTask) {
+            if (status === statuses.CREATING_COMPOSITES)
+                setTaskStatus(statuses.COMPOSITES_PENDING_CREATION)
+        }
+        if (compositeTask && [statuses.COMPOSITES_PENDING_CREATION, statuses.CREATING_COMPOSITES].includes(status)) {
+            if (['ACTIVE', 'PENDING'].includes(compositeTask.status))
+                setTaskStatus(statuses.CREATING_COMPOSITES)
+            else if (compositeTask.status === 'COMPLETED')
+                setTaskStatus(statuses.COMPOSITES_CREATED)
+            else if (['CANCELED', 'FAILED'].includes(compositeTask.status))
+                setTaskStatus(statuses.COMPOSITES_PENDING_CREATION)
+        }
+
+        if (!landCoverTask) {
+            if (status === statuses.CREATING_LAND_COVER_MAP)
+                setTaskStatus(statuses.LAND_COVER_MAP_PENDING_CREATION)
+        }
+        if (status === statuses.COMPOSITES_CREATED
+            && trainingData.tableId && trainingData.yearColumn && trainingData.classColumn)
+            setTaskStatus(statuses.LAND_COVER_MAP_PENDING_CREATION)
+        if (landCoverTask && [statuses.LAND_COVER_MAP_PENDING_CREATION, statuses.CREATING_LAND_COVER_MAP].includes(status)) {
+            if (['ACTIVE', 'PENDING'].includes(landCoverTask.status))
+                setTaskStatus(statuses.CREATING_LAND_COVER_MAP)
+            else if (landCoverTask.status === 'COMPLETED')
+                setTaskStatus(statuses.LAND_COVER_MAP_CREATED)
+            else if (['CANCELED', 'FAILED'].includes(landCoverTask.status))
+                setTaskStatus(statuses.LAND_COVER_MAP_PENDING_CREATION)
+        }
     }
 
 }

@@ -63,7 +63,8 @@ class LandCover extends React.Component {
 
     inPreviewableState() {
         const {status} = this.props
-        return ![statuses.UNINITIALIZED, statuses.COMPOSITES_PENDING_CREATION].includes(status)
+        // return ![statuses.UNINITIALIZED, statuses.COMPOSITES_PENDING_CREATION, statuses.CREATING_COMPOSITES].includes(status)
+        return true
     }
 
     // TODO: This is duplicated from mosaic. Will end up in classification too. Higher order component? AoiTab...

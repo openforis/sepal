@@ -5,11 +5,11 @@
         </encoder>
     </appender>
 
-    <logger name="org.openforis" additivity="false" level="DEBUG">
+    <logger name="org.openforis" additivity="false" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

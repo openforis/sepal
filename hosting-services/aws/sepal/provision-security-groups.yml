@@ -1,6 +1,6 @@
 - name: Setup Security Groups
   hosts: "tag_Type_Sepal:&tag_Environment_{{ deploy_environment }}:&{{ region }}"
-  user: ubuntu
+  user: ec2-user
   gather_facts: true
 
   vars_files:

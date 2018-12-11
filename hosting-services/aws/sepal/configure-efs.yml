@@ -1,6 +1,6 @@
 - name: Configure Sepal instance
   hosts: "tag_Type_Sepal:&tag_Environment_{{ deploy_environment }}:&{{ region }}"
-  user: ubuntu
+  user: ec2-user
   become: yes
   gather_facts: true
 
@@ -8,10 +8,6 @@
     - "{{ secret_vars_file }}"
 
   tasks:
-    - name: Install nfs-common
-      apt:
-        name: "nfs-common"
-
     - name: Create temp mount dir
       file:
         path: "/efs"

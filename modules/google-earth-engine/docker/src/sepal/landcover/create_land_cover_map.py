@@ -2,12 +2,16 @@ import uuid
 
 import ee
 import landcoverPackage
+import decision_tree_converter
+from landcoverPackage.smoothing import whittakerSmoothen
+from landcoverPackage.assemblage import assemblage
 from promise import Promise
 
 from .. import drive
 from ..aoi import Aoi
 from ..export.image_to_asset import ImageToAsset
 from ..task.task import ThreadTask, Task
+import traceback
 
 
 def create(spec, context):
@@ -20,6 +24,7 @@ class CreateLandCoverMap(ThreadTask):
         self.credentials = credentials
         self.asset_path = spec['assetPath']
         self.primitive_types = spec['primitiveTypes']
+        self.decision_tree = spec['decisionTree']
         self.start_year = spec['startYear']
         self.end_year = spec['endYear']
         self.training_data = spec['trainingData']
@@ -27,7 +32,6 @@ class CreateLandCoverMap(ThreadTask):
         self.scale = spec['scale']
         self.drive_folder = None
         self.drive_folder_name = '_'.join(['Sepal', self.asset_path.split('/')[-1], str(uuid.uuid4())])
-
         self.primitive_tasks = None
 
     def run(self):
@@ -35,6 +39,7 @@ class CreateLandCoverMap(ThreadTask):
         self.drive_folder = drive.create_folder(self.credentials, self.drive_folder_name)
         self.primitive_tasks = self._create_primitive_tasks()
         return Task.submit_all(self.primitive_tasks) \
+            .then(self._smooth, self.reject) \
             .then(self._assemble, self.reject) \
             .then(self.resolve, self.reject)
 
@@ -46,7 +51,6 @@ class CreateLandCoverMap(ThreadTask):
         primitive_tasks = []
         for primitive_type in self.primitive_types:
             samples = self._sample_primitive(primitive_type)
-
             for year in range(self.start_year, self.end_year + 1):
                 primitive_tasks.append(
                     CreatePrimitive(
@@ -71,9 +75,7 @@ class CreateLandCoverMap(ThreadTask):
         )
         samples = ee.FeatureCollection([])
         for year in range(self.start_year, self.end_year + 1):
-            composite = add_covariates(
-                ee.Image(_to_asset_id('{0}-{1}'.format(self.asset_path, year)))
-            )
+            composite = ee.Image(_composite_asset_path(self.asset_path, year))
             yearly_training_data = primitive_training_data_collection \
                 .filter(ee.Filter.eq('year', ee.Number(year)))
             yearly_sample = sample(composite=composite, training_data=yearly_training_data)
@@ -86,52 +88,154 @@ class CreateLandCoverMap(ThreadTask):
                 .set('class', int_class) \
                 .set('year', feature.get(year_column))
 
-        ee_primitive_class = ee.Number(int(primitive_class)) if primitive_class.isdigit() else primitive_class
-        return ee.FeatureCollection(training_data_collection
-                                    .filter(ee.Filter.eq(class_column, ee_primitive_class))
-                                    .map(lambda feature: to_primitive_feature(feature, 1))
-                                    .merge(
-            training_data_collection.filter(ee.Filter.neq(class_column, ee_primitive_class))
-                .map(lambda feature: to_primitive_feature(feature, 0))
-        ).copyProperties(training_data_collection))
+        ee_primitive_class = ee.Number(int(primitive_class)) if _is_number(primitive_class) else primitive_class
+        with_class = training_data_collection \
+            .filter(ee.Filter.eq(class_column, ee_primitive_class)) \
+            .map(lambda feature: to_primitive_feature(feature, 1))
+        with_other_class = training_data_collection.filter(ee.Filter.neq(class_column, ee_primitive_class)) \
+            .map(lambda feature: to_primitive_feature(feature, 0)) \
+            .randomColumn('__random__') \
+            .sort('__random__') \
+            .limit(with_class.size())
+        return ee.FeatureCollection(
+            with_class.merge(with_other_class)
+                .copyProperties(training_data_collection)
+        )
 
     def status_message(self):
-        return 'Some CreateLandCoverMap status message'
+        return 'Creating land cover map'  # TODO: More fine grained message
+
+    def _smooth(self, value):
+        tasks = []
+        for primitive_type in self.primitive_types:
+            primitive_collection = ee.ImageCollection(
+                [_primitive_asset_path(self.asset_path, year, primitive_type)
+                 for year in range(self.start_year, self.end_year + 1)]
+            )
+            smoothed_primitive_collection, rmse = smooth_primitive_collection(primitive_collection)
+            for year in range(self.start_year, self.end_year + 1):
+                smoothed_primitive = ee.Image(
+                    smoothed_primitive_collection.filterDate(
+                        ee.Date.fromYMD(year, 1, 1),
+                        ee.Date.fromYMD(year + 1, 1, 1)
+                    ).first()
+                )
+                tasks.append(
+                    self.dependent(
+                        ImageToAsset(
+                            credentials=self.credentials,
+                            image=smoothed_primitive,
+                            region=self.aoi.bounds(),
+                            description=None,
+                            assetId=_to_asset_id('{0}/{1}-{2}-smoothed'.format(self.asset_path, year, primitive_type)),
+                            scale=self.scale,
+                            retries=3
+                        )
+                    )
+                )
+        ee.InitializeThread(self.credentials)
+        return Task.submit_all(tasks)
 
     def _assemble(self, value):
-        primitive_collection = ee.ImageCollection([task.primitive_asset() for task in self.primitive_tasks])
+        merged_primitive_collection = ee.ImageCollection([])
+        for primitive_type in self.primitive_types:
+            primitive_collection = ee.ImageCollection(
+                [_smoothed_primitive_asset_path(self.asset_path, year, primitive_type)
+                 for year in range(self.start_year, self.end_year + 1)]
+            )
+            primitive_collection = primitive_collection.map(lambda primitive: primitive.rename([primitive_type]))
+            merged_primitive_collection = merged_primitive_collection.merge(primitive_collection)
 
         tasks = []
         for year in range(self.start_year, self.end_year + 1):
             year = int(year)
             export_assembly = self._assemble_year(
                 year,
-                primitive_collection
+                merged_primitive_collection
             )
             tasks.append(export_assembly)
         return Task.submit_all(tasks)
 
     def _assemble_year(self, year, primitive_collection):
-        year_filter = ee.Filter.eq('year', year)
-        assembly = assemble(
-            year=year,
-            primitive_collection=primitive_collection.filter(year_filter)
-        )
+        year_filter = ee.Filter.date(ee.Date.fromYMD(year, 1, 1), ee.Date.fromYMD(year + 1, 1, 1))
+        try:
+            assembly, probabilities = assemble(
+                year=year,
+                primitive_collection=primitive_collection.filter(year_filter),
+                decision_tree=self.decision_tree
+            )
+        except:
+            traceback.print_exc()
+            raise
+
         export_assembly = self.dependent(
             ImageToAsset(
                 credentials=self.credentials,
                 image=assembly,
                 region=self.aoi.bounds(),
                 description=None,
-                assetPath='{0}/{1}-assembly'.format(self.asset_path, year),
-                scale=self.scale
+                assetId=_to_asset_id('{0}/{1}-assembly'.format(self.asset_path, year)),
+                scale=self.scale,
+                pyramidingPolicy={'classification': 'mode'},
+                retries=3
             ))
-        return export_assembly
+        export_probabilities = self.dependent(
+            ImageToAsset(
+                credentials=self.credentials,
+                image=probabilities,
+                region=self.aoi.bounds(),
+                description=None,
+                assetId=_to_asset_id('{0}/{1}-probabilities'.format(self.asset_path, year)),
+                scale=self.scale,
+                retries=3
+            ))
+        return Task.submit_all([export_assembly, export_probabilities])
 
-    def __str__(self):
-        return '{0}()'.format(
-            type(self).__name__
-        )
+
+def __str__(self):
+    return '{0}()'.format(
+        type(self).__name__
+    )
+
+
+class SmoothPrimitives(ThreadTask):
+    def __init__(
+            self,
+            credentials,
+            start_year,
+            end_year,
+            primitive_types,
+            aoi,
+            scale,
+            asset_path
+    ):
+        super(SmoothPrimitives, self).__init__('smooth_primitives')
+        self.credentials = credentials
+        self.scale = scale
+        self.start_year = start_year
+        self.end_year = end_year
+        self.primitive_types = primitive_types
+        self.asset_path = asset_path
+        self.aoi = aoi
+
+    def run(self):
+        tasks = []
+        for primitive_type in self.primitive_types:
+            primitive_collection = ee.ImageCollection([])
+            for year in range(self.start_year, self.end_year + 1):
+                primitive = ee.Image(_primitive_asset_path(self.asset_path, year, primitive_type))
+                primitive_collection = primitive_collection.merge(ee.ImageCollection([primitive]))
+
+            smoothed_primitive_collection, rmse = smooth_primitive_collection(primitive_collection)
+            tasks.append(
+                self.export_smoothed(smoothed_primitive_collection)
+            )
+        ee.InitializeThread(self.credentials)
+        return Task.submit_all(tasks) \
+            .then(self._assemble, self.reject) \
+            .then(self.resolve, self.reject)
+
+    # def export_smoothed(self, smoothed_primitive):
 
 
 class CreatePrimitive(ThreadTask):
@@ -154,9 +258,7 @@ class CreatePrimitive(ThreadTask):
         self.samples = samples
         self.asset_path = asset_path
         self.aoi = aoi
-        self.composite = add_covariates(
-            ee.Image(_to_asset_id('{0}-{1}'.format(asset_path, year)))
-        )
+        self.composite = ee.Image(_composite_asset_path(asset_path, year))
         self.drive_folder_name = drive_folder_name
 
     def run(self):
@@ -170,10 +272,10 @@ class CreatePrimitive(ThreadTask):
         #     .then(self.resolve, self.reject)
 
     def primitive_asset(self):
-        return ee.Image(_to_asset_id(self.primitive_asset_path()))
+        return ee.Image(self.primitive_asset_path())
 
     def primitive_asset_path(self):
-        return '{0}/{1}-{2}'.format(self.asset_path, self.year, self.primitive_name)
+        return _primitive_asset_path(self.asset_path, self.year, self.primitive_name)
 
     # def _sample(self):
     #     samples = sample(
@@ -201,15 +303,15 @@ class CreatePrimitive(ThreadTask):
             composite=self.composite,
             training_data=sampled_data
         )
-
         return self.dependent(
             ImageToAsset(
                 credentials=self.credentials,
-                image=primitive,
+                image=primitive.clip(self.aoi).uint8(),
                 region=self.aoi.bounds(),
                 description=None,
-                assetPath=self.primitive_asset_path(),
-                scale=self.scale
+                assetId=self.primitive_asset_path(),
+                scale=self.scale,
+                retries=3
             )).submit()
 
 
@@ -243,20 +345,69 @@ def create_primitive(year, type, composite, training_data):
     :param training_data: ee.FeatureCollection with the classes and sampled properties
     :return: An ee.Image with the primitive with a year property set.
     '''
-    return landcoverPackage.primitive(
-        year=year,
-        primitiveType=type,
-        composite=composite,
-        trainingData=training_data)
+    return ee.Image(ee.Algorithms.If(
+        training_data.first(),
+        landcoverPackage.primitive(
+            year=year,
+            primitiveType=type,
+            composite=composite,
+            trainingData=training_data).rename(['Mode']) \
+            .set('system:time_start', ee.Date.fromYMD(year, 1, 1).millis()) \
+            .set('year', year),
+        ee.Image(0)
+    ))
+
 
 def add_covariates(composite):
     return landcoverPackage.addCovariates(composite)
 
-def assemble(year, primitive_collection):
+
+def smooth_primitive_collection(primitive_collection):
+    return whittakerSmoothen(primitive_collection)
+
+
+def assemble(year, primitive_collection, decision_tree):
     '''
     Assembles the primitives for a year.
     :param year: The year of the assembly
     :param primitive_collection: ee.ImageCollection of primitives for the year
     :return: ee.Image with land cover layers and ee.Image with class probabilities
     '''
-    return landcoverPackage.assemblage(year=year, primitiveCollection=primitive_collection)
+    image = assemblage().collectionToImage(primitive_collection)
+    nodeStruct = _to_node_struct(decision_tree)
+    print(decision_tree)
+    print(nodeStruct)
+    return assemblage().createAssemblage(image, nodeStruct)
+
+
+def _to_node_struct(decision_tree):
+    return decision_tree_converter.convert(decision_tree)
+
+
+def _primitive_asset_path(asset_path, year, primitive_type):
+    return _to_asset_id('{0}/{1}-{2}'.format(asset_path, year, primitive_type))
+
+
+def _smoothed_primitive_asset_path(asset_path, year, primitive_type):
+    return _to_asset_id('{0}/{1}-{2}-smoothed'.format(asset_path, year, primitive_type))
+
+
+def _composite_asset_path(asset_path, year):
+    return _to_asset_id('{0}/{1}-composite'.format(asset_path, year))
+
+
+def _is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        pass
+
+    try:
+        import unicodedata
+        unicodedata.numeric(s)
+        return True
+    except (TypeError, ValueError):
+        pass
+
+    return False

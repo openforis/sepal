@@ -19,7 +19,6 @@ class Asset(ImageSpec):
         self.scale = image.projection().nominalScale().getInfo()
         self.bands = image.bandNames().getInfo()
         self.viz_params = spec['recipe'].get('vizParams')
-        print(self.viz_params)
 
     def _ee_image(self):
         return self.image

@@ -616,7 +616,6 @@
         "error": "Failed to create preview"
       }
     },
-
     "timeSeries": {
       "create": "Time series",
       "mapToolbar": {
@@ -724,7 +723,6 @@
         }
       }
     },
-
     "landCover": {
       "create": "RLCMS",
       "panel": {
@@ -781,10 +779,12 @@
           "tooltip": "Configure how composite is created"
         },
         "createComposites": {
-          "tooltip": "Create composites"
+          "tooltip": "Create composites",
+          "task": "Create RLCMS composites"
         },
         "createLandCoverMap": {
-          "tooltip": "Create land-cover map"
+          "tooltip": "Create land-cover map",
+          "task": "Create RLCMS land-cover map"
         }
       }
     }

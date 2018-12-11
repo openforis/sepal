@@ -17,13 +17,6 @@
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
 
     # rsyslog
-    - name: Install rsyslog-gnutls
-      yum:
-        name: "rsyslog-gnutls"
-
-    - name: Copy rsyslog.conf
-      template: src="rsyslog.conf" dest=/etc/rsyslog.conf
-
     - name: Start rsyslog
       service: name=rsyslog state=started
 
@@ -51,7 +44,7 @@
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
     - name: Install docker
-      command: "amazon-linux-extras install docker"      
+      command: "amazon-linux-extras install docker"
 
     - name: Install pip
       yum:
@@ -59,7 +52,7 @@
 
     - name: Install docker-compose
       pip:
-        name: docker-compose        
+        name: docker-compose
 
     - name: Create /etc/docker
       file:
@@ -78,12 +71,6 @@
         groups: docker
 
   roles:
-
-    # - role: unattended-upgrades
-    #   unattended_origins_patterns:
-    #    - 'origin=Ubuntu,archive=${distro_codename}-security'
-    #    - 'o=Ubuntu,a=${distro_codename}-updates'
-    # - { role: rsyslog }
     - { role: aws-mount-efs }
     - { role: docker-login }
 

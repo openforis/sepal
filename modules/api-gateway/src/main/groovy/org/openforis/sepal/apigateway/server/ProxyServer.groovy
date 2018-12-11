@@ -9,12 +9,10 @@ class ProxyServer {
     private final RootHandler handler
 
     ProxyServer(ProxyConfig config) {
-        def sslContext = SslContextFactory.create(config.keyFile, config.certificateFile)
         handler = new RootHandler(config)
         def processorCount = Runtime.getRuntime().availableProcessors()
         server = Undertow.builder()
                 .addHttpListener(config.httpPort, '0.0.0.0')
-                .addHttpsListener(config.httpsPort, '0.0.0.0', sslContext)
                 .setHandler(handler)
                 .setIoThreads(processorCount)
                 .setWorkerThreads(processorCount * 32)

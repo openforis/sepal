@@ -51,7 +51,8 @@ class CreateComposites(ThreadTask):
                 region=self.aoi.bounds(),
                 description=None,
                 assetPath='{0}/{1}-composite'.format(self.asset_path, year),
-                scale=self.scale
+                scale=self.scale,
+                retries=3
             ))
 
     def __str__(self):
@@ -68,4 +69,6 @@ def create_composite(year, aoi, sensors):
     :param sensors: A list of sensors
     :return: A composite as an ee.Image
     '''
-    return landcoverPackage.composite(aoi=aoi, year=year, sensors=sensors)
+    return landcoverPackage.composite(aoi=aoi, year=year, sensors=sensors) \
+        .set('system:time_start', ee.Date.fromYMD(year, 1, 1).millis()) \
+        .set('year', year)

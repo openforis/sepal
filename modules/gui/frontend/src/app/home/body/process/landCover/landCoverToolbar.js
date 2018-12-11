@@ -20,13 +20,11 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class LandCoverToolbar extends React.Component {
-    state = {}
-
     render() {
         const {recipeId, recipe} = this.props
-        const {creatingComposites, creatingPrimitives} = this.state
         const statePath = recipePath(recipeId, 'ui')
         const trainingData = recipe.model.trainingData || {}
+        const status = recipe.model.status
         return (
             <PanelWizard
                 panels={['areaOfInterest', 'period', 'typology']}
@@ -37,15 +35,16 @@ class LandCoverToolbar extends React.Component {
                     className={styles.top}>
                     <ToolbarButton
                         name='createComposites'
-                        icon={creatingComposites ? 'spinner' : 'cloud-download-alt'}
-                        tooltip={msg('process.landCover.panel.createComposites.tooltip')}c
-                        disabled={['UNINITIALIZED', 'CREATING_COMPOSITES'].includes(recipe.model.status)}
+                        icon={status === statuses.CREATING_COMPOSITES ? 'spinner' : 'cloud-download-alt'}
+                        tooltip={msg('process.landCover.panel.createComposites.tooltip')}
+                        disabled={[statuses.UNINITIALIZED, statuses.CREATING_COMPOSITES].includes(recipe.model.status)}
                         onClick={() => this.createComposites()}/>
                     <ToolbarButton
                         name='createPrimitives'
-                        icon={creatingPrimitives ? 'spinner' : 'cloud-download-alt'}
+                        icon={status === statuses.CREATING_LAND_COVER_MAP ? 'spinner' : 'cloud-download-alt'}
                         tooltip={msg('process.landCover.panel.createLandCoverMap.tooltip')}
-                        disabled={!trainingData.classColumn}
+                        disabled={![statuses.LAND_COVER_MAP_PENDING_CREATION, statuses.LAND_COVER_MAP_CREATED]
+                            .includes(recipe.model.status) || !trainingData.classColumn}
                         onClick={() => this.createLandCoverMap()}/>
                 </Toolbar>
                 <Toolbar
@@ -98,13 +97,11 @@ class LandCoverToolbar extends React.Component {
     createComposites() {
         const {recipe} = this.props
         createComposites(recipe)
-        this.setState(prevState => ({...prevState, creatingComposites: true}))
     }
 
     createLandCoverMap() {
         const {recipe} = this.props
         createLandCoverMap(recipe)
-        this.setState(prevState => ({...prevState, creatingPrimitives: true}))
     }
 
     showMandatoryPanel() {
