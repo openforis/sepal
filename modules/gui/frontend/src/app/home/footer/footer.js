@@ -14,10 +14,10 @@ const Footer = ({className}) => {
         <div className={className}>
             <div className={styles.footer}>
                 <div>
-                    <MenuMode/>
+                    <MenuMode className={styles.button}/>
                 </div>
                 <div>
-                    <Title/>
+                    <Title className={styles.button}/>
                     <Copyright/>
                 </div>
                 <div>

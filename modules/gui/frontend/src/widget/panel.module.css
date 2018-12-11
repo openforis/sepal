@@ -39,10 +39,11 @@
 }
 
 .panel.center {
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    top: .25rem;
+    bottom: .25rem;
+    left: .25rem;
+    right: .25rem;
+    width: auto;
     margin: auto;
 }
 
