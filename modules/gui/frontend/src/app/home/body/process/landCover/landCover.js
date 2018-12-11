@@ -1,14 +1,14 @@
-import {RecipeState, recipePath, statuses} from './landCoverRecipe'
+import {RecipeState, recipePath} from './landCoverRecipe'
 import {connect, select} from 'store'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
+import CompositePreview from './compositePreview'
+import CompositesMonitor from './compositesMonitor'
 import LandCoverToolbar from './landCoverToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
+import PreviewSelection from './previewSelection'
 import React from 'react'
 import api from 'api'
-import CompositePreview from "./compositePreview"
-import CompositesMonitor from "./compositesMonitor"
-import PreviewSelection from "./previewSelection";
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -54,15 +54,15 @@ class LandCover extends React.Component {
         if (!this.inPreviewableState() || !preview || !preview.type || !preview.value || !preview.year)
             return null
         switch (preview.type) {
-            case 'composite':
-                return <CompositePreview recipeId={recipeId}/>
-            default:
-                return null
+        case 'composite':
+            return <CompositePreview recipeId={recipeId}/>
+        default:
+            return null
         }
     }
 
     inPreviewableState() {
-        const {status} = this.props
+        // const {status} = this.props
         // return ![statuses.UNINITIALIZED, statuses.COMPOSITES_PENDING_CREATION, statuses.CREATING_COMPOSITES].includes(status)
         return true
     }

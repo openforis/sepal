@@ -1,5 +1,5 @@
 import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState, statuses} from './landCoverRecipe'
+import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {msg} from 'translate'
 import ComboBox from 'widget/comboBox'
 import React from 'react'
@@ -22,7 +22,7 @@ const mapStateToProps = (state, ownProps) => {
         recipeActions.setPreviewType('composite', 'red,green,blue').dispatch()
     }
 
-    const startYear = period && period.startYear && values.year;
+    const startYear = period && period.startYear && values.year
     if (!startYear) {
         values.year = period.startYear
         recipeActions.setPreviewYear(period.startYear).dispatch()
@@ -45,14 +45,14 @@ class PreviewSelection extends React.Component {
     }
 
     render() {
-        const {status, primitiveTypes, period: {startYear, endYear}, inputs: {type, year}} = this.props
+        const {primitiveTypes, period: {startYear, endYear}, inputs: {type, year}} = this.props
         const compositeOptions = {
-                label: 'Composite',
-                options: [
-                    {value: 'red,green,blue', label: 'RED, GREEN, BLUE', group: 'composite'},
-                    {value: 'swir2,nir,red', label: 'SWIR2, NIR, RED', group: 'composite'}
-                ]
-            }
+            label: 'Composite',
+            options: [
+                {value: 'red,green,blue', label: 'RED, GREEN, BLUE', group: 'composite'},
+                {value: 'swir2,nir,red', label: 'SWIR2, NIR, RED', group: 'composite'}
+            ]
+        }
 
         // const options = [statuses.LAND_COVER_MAP_CREATED].includes(status)
         const options = true
@@ -139,7 +139,7 @@ class Select extends React.Component {
                         className={listClassName}
                         onChange={(option) => {
                             onChange(option)
-                            this.setListShown(false);
+                            this.setListShown(false)
                         }}/>
                     : <div onClick={() => this.setListShown(true)}>
                         {children(optionByValue[input.value])}
@@ -196,7 +196,6 @@ const SelectedPreview = ({selection}) => {
             <div className={styles.selectedBands}>
                 {previewElements}
             </div>
-
 
         </div>
     )
