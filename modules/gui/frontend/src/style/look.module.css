@@ -120,19 +120,19 @@
     transition: all 100ms ease-in-out;
 }
 
-.look.default:not(:disabled):not(.nonInteractive):focus {
-    color: var(--look-default-focus-color);
-    background-color: var(--look-default-focus-background-color);
-    border-color: var(--look-default-focus-border-color);
-}
-
 .look.default:not(:disabled):not(.nonInteractive):hover {
     color: var(--look-default-hover-color);
     background-color: var(--look-default-hover-background-color);
     border-color: var(--look-default-hover-border-color);
 }
 
-.look.default:not(:disabled):not(.nonInteractive):active {
+.look.default:not(:disabled):not(.nonInteractive):not(.chromeless):focus {
+    color: var(--look-default-focus-color);
+    background-color: var(--look-default-focus-background-color);
+    border-color: var(--look-default-focus-border-color);
+}
+
+.look.default:not(:disabled):not(.nonInteractive):not(.chromeless):active {
     color: var(--look-default-active-color);
     background-color: var(--look-default-active-background-color);
     border-color: var(--look-default-active-border-color);
@@ -142,11 +142,6 @@
     color: var(--look-default-disabled-color);
     background-color: var(--look-default-disabled-background-color);
     border-color: var(--look-default-disabled-border-color);
-}
-
-.look.default.chromeless {
-    background-color: transparent;
-    border-style: none;
 }
 
 .look.default.chromeless {
@@ -164,19 +159,19 @@
     transition: all 100ms ease-in-out;
 }
 
-.look.transparent:not(:disabled):not(.nonInteractive):focus {
-    color: var(--look-transparent-focus-color);
-    background-color: var(--look-transparent-focus-background-color);
-    border-color: var(--look-transparent-focus-border-color);
-}
-
 .look.transparent:not(:disabled):not(.nonInteractive):hover {
     color: var(--look-transparent-hover-color);
     background-color: var(--look-transparent-hover-background-color);
     border-color: var(--look-transparent-hover-border-color);
 }
 
-.look.transparent:not(:disabled):not(.nonInteractive):active {
+.look.transparent:not(:disabled):not(.nonInteractive):not(.chromeless):focus {
+    color: var(--look-transparent-focus-color);
+    background-color: var(--look-transparent-focus-background-color);
+    border-color: var(--look-transparent-focus-border-color);
+}
+
+.look.transparent:not(:disabled):not(.nonInteractive):not(.chromeless):active {
     color: var(--look-transparent-active-color);
     background-color: var(--look-transparent-active-background-color);
     border-color: var(--look-transparent-active-border-color);
@@ -203,19 +198,19 @@
     transition: all 100ms ease-in-out;
 }
 
-.look.highlight:not(:disabled):not(.nonInteractive):focus {
-    color: var(--look-highlight-focus-color);
-    background-color: var(--look-highlight-focus-background-color);
-    border-color: var(--look-highlight-focus-border-color);
-}
-
 .look.highlight:not(:disabled):not(.nonInteractive):hover {
     color: var(--look-highlight-hover-color);
     background-color: var(--look-highlight-hover-background-color);
     border-color: var(--look-highlight-hover-border-color);
 }
 
-.look.highlight:not(:disabled):not(.nonInteractive):active {
+.look.highlight:not(:disabled):not(.nonInteractive):not(.chromeless):focus {
+    color: var(--look-highlight-focus-color);
+    background-color: var(--look-highlight-focus-background-color);
+    border-color: var(--look-highlight-focus-border-color);
+}
+
+.look.highlight:not(:disabled):not(.nonInteractive):not(.chromeless):active {
     color: var(--look-highlight-active-color);
     background-color: var(--look-highlight-active-background-color);
     border-color: var(--look-highlight-active-border-color);
