@@ -10,6 +10,7 @@
   pre_tasks:
     - set_fact:
         ldap_host: "{{ ec2_private_ip_address }}"
+        syslog_host: "{{ ec2_private_ip_address }}"
         elk_host: "{{ elk_host }}"
         syslog_address: "unixgram:///dev/log"
 
@@ -17,6 +18,9 @@
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
 
     # rsyslog
+    - name: Copy rsyslog.conf
+      template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+
     - name: Start rsyslog
       service: name=rsyslog state=started
 
