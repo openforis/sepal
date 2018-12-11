@@ -38,11 +38,16 @@ class SceneAreaMarker extends React.Component {
         this.center = bounds.getCenter()
     }
 
+    renderSceneAreaCount(zoom, count) {
+        return zoom > 4
+            ? <text x={0} y={0} fontSize={40} textAnchor='middle' alignmentBaseline='central'>{count}</text>
+            : null
+    }
+
     render() {
         const {zoom, sceneAreaId, selectedSceneCount, loading} = this.props
         const scale = Math.min(1, Math.pow(zoom, 2.5) / Math.pow(8, 2.5))
         const size = `${1.5 * 4 * scale}rem`
-        const halfSize = `${1.5 * 2 * scale}rem`
         return (
             <MapObject
                 lat={this.center.lat()}
@@ -53,15 +58,12 @@ class SceneAreaMarker extends React.Component {
                 <svg
                     height={size}
                     width={size}
+                    viewBox={'-100 -100 200 200'}
                     onMouseOver={() => !loading && this.polygon.setMap(googleMap)}
                     onMouseLeave={() => this.polygon.setMap(null)}
                     onClick={() => loading ? null : this.selectScenes(sceneAreaId)}>
-                    <circle cx={halfSize} cy={halfSize} r={`${2 * scale}rem`}/>
-                    {zoom > 4
-                        ? <text x={halfSize} y={halfSize} textAnchor='middle' alignmentBaseline="central">
-                            {selectedSceneCount}
-                        </text>
-                        : null}
+                    <circle cx={0} cy={0} r={80}/>
+                    {this.renderSceneAreaCount(zoom, selectedSceneCount)}
                 </svg>
             </MapObject>
         )
