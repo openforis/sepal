@@ -31,12 +31,6 @@ export const loadApps$ = () =>
             return of([])
         }),
         map(apps => {
-            const dataVis = {
-                path: '/sandbox/data-vis',
-                label: msg('apps.dataVis'),
-                icon: 'map',
-                endpoint: 'geo-web-viz'
-            }
             const rStudio = {
                 path: '/sandbox/rstudio/',
                 image: rstudioIcon,
@@ -55,7 +49,7 @@ export const loadApps$ = () =>
                 }
             }
             return actionBuilder('SET_APPS')
-                .set('apps.list', [dataVis, rStudio, jupyter, ...apps])
+                .set('apps.list', [rStudio, jupyter, ...apps])
                 .build()
         })
     )
