@@ -437,7 +437,7 @@ class Browse extends React.Component {
                             <div
                                 className={[
                                     lookStyles.look,
-                                    isSelected ? lookStyles.highlight : lookStyles.default,
+                                    isSelected ? lookStyles.highlight : null,
                                     styles.item,
                                     isAdded ? styles.added : null,
                                     isRemoving ? styles.removing : null,
