@@ -70,8 +70,8 @@ class Login extends React.Component {
                     />
                     <Button
                         type='submit'
-                        look='highlight'
-                        size='large'
+                        look='apply'
+                        size='x-large'
                         shape='pill'
                         icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
                         label={msg('landing.login.button')}

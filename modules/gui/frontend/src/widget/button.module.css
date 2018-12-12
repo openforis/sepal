@@ -38,7 +38,7 @@
 }
 
 .button.x-large {
-    --font-size: var(--x-large-font-size);
+    --font-size: var(--large-font-size);
 }
 
 .button.rectangle {
@@ -46,9 +46,17 @@
     padding: 0 .8rem;
 }
 
+.button.rectangle.x-large {
+    padding: .2rem 1.2rem;
+}
+
 .button.pill {
     border-radius: 500px;
     padding: 0 .8rem;
+}
+
+.button.pill.x-large {
+    padding: .2rem 1.2rem;
 }
 
 .button.circle {

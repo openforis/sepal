@@ -15,6 +15,7 @@
     color: var(--primary-text-color);
     background-color: var(--backdrop-color);
     border-radius: 1.5rem;
+    margin: .5rem;
 }
 
 .landing > * {
@@ -89,55 +90,6 @@
 
 .privacy .content {
     animation: privacy 2000ms ease-in-out both;
-}
-
-@media screen and (max-width: 1000px) {
-    .landing {
-        width: 28rem;
-        height: 40rem;
-        display: grid;
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto 1fr auto;
-        grid-template-areas:
-            'title       language'
-            'tagline     tagline'
-            'credentials credentials'
-            'privacy     privacy';
-        grid-gap: 2rem;
-        padding: 1.5rem 2rem;
-    }
-
-    .features {
-        display: none;
-    }
-
-    .credentials {
-        padding-bottom: 1rem;
-    }
-}
-
-@media screen and (min-width: 1000px) {
-    .landing {
-        width: 65rem;
-        height: 42rem;
-        display: grid;
-        grid-template-columns: 1fr .75fr auto;
-        grid-template-rows: auto 1fr auto;
-        grid-template-areas:
-            'tagline  title       language'
-            'features credentials credentials'
-            'features privacy     privacy';
-        grid-gap: 3rem;
-        padding: 3rem 4rem;
-    }
-
-    .features {
-        display: block;
-    }
-
-    .credentials {
-        padding-bottom: 3rem;
-    }
 }
 
 @keyframes tagline {
@@ -251,4 +203,59 @@
     font-size: .9rem;
     font-weight: lighter;
     color: var(--secondary-text-color);
+}
+
+/* small displays */
+@media screen and (max-width: 1000px) {
+    .landing {
+        width: 28rem;
+        height: 40rem;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto 1fr auto;
+        grid-template-areas:
+            'title       language'
+            'tagline     tagline'
+            'credentials credentials'
+            'privacy     privacy';
+        grid-gap: 1rem;
+        padding: 1.5rem 2rem;
+    }
+
+    .title {
+        font-size: 3rem;
+    }
+
+    .features {
+        display: none;
+    }
+
+    .credentials {
+        padding-bottom: 2rem;
+    }
+}
+
+/* large displays */
+@media screen and (min-width: 1000px) {
+    .landing {
+        width: 65rem;
+        height: 42rem;
+        display: grid;
+        grid-template-columns: 1fr .75fr auto;
+        grid-template-rows: auto 1fr auto;
+        grid-template-areas:
+            'tagline  title       language'
+            'features credentials credentials'
+            'features privacy     privacy';
+        grid-gap: 3rem;
+        padding: 3rem 4rem;
+    }
+
+    .features {
+        display: block;
+    }
+
+    .credentials {
+        padding-bottom: 3rem;
+    }
 }

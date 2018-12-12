@@ -66,6 +66,28 @@
     --look-transparent-disabled-background-color: hsla(var(--look-transparent-h), calc(var(--look-transparent-s) * .5), calc(var(--look-transparent-l) * .9), var(--look-transparent-a));
     --look-transparent-disabled-border-color: hsla(var(--look-transparent-h), calc(var(--look-transparent-s) * .5), calc(var(--look-transparent-l) * .9), var(--look-transparent-a));
 
+    /* add */
+
+    --look-add-color: hsla(0, 0%, 100%, 1);
+    --look-add-background-color: hsla(var(--look-add-h), var(--look-add-s), var(--look-add-l), var(--look-add-a));
+    --look-add-border-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) + 2%), var(--look-add-a));
+    
+    --look-add-focus-color: hsla(0, 0%, 100%, 1);
+    --look-add-focus-background-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) - 2%), var(--look-add-a));
+    --look-add-focus-border-color: hsla(var(--look-add-h), var(--look-add-s), var(--look-add-l), var(--look-add-a));
+    
+    --look-add-hover-color: hsla(0, 0%, 100%, 1);
+    --look-add-hover-background-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) + 3%), var(--look-add-a));
+    --look-add-hover-border-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) + 5%), var(--look-add-a));
+    
+    --look-add-active-color: hsla(0, 0%, 100%, 1);
+    --look-add-active-background-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) + 0%), var(--look-add-a));
+    --look-add-active-border-color: hsla(var(--look-add-h), var(--look-add-s), calc(var(--look-add-l) - 2%), var(--look-add-a));
+
+    --look-add-disabled-color: var(--look-default-disabled-color);
+    --look-add-disabled-background-color: var(--look-default-disabled-background-color);
+    --look-add-disabled-border-color: var(--look-default-disabled-border-color);
+
     /* apply */
 
     --look-apply-color: hsla(0, 0%, 100%, 1);
@@ -84,9 +106,12 @@
     --look-apply-active-background-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) + 0%), var(--look-apply-a));
     --look-apply-active-border-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) - 2%), var(--look-apply-a));
 
-    --look-apply-disabled-color: var(--look-default-disabled-color);
+    /* --look-apply-disabled-color: var(--look-default-disabled-color);
     --look-apply-disabled-background-color: var(--look-default-disabled-background-color);
-    --look-apply-disabled-border-color: var(--look-default-disabled-border-color);
+    --look-apply-disabled-border-color: var(--look-default-disabled-border-color); */
+    --look-apply-disabled-color: hsla(0, 0%, 50%, 1);
+    --look-apply-disabled-background-color: hsla(var(--look-apply-h), calc(var(--look-apply-s) * .5), calc(var(--look-apply-l) * .6), var(--look-apply-a));
+    --look-apply-disabled-border-color: hsla(var(--look-apply-h), calc(var(--look-apply-s) * .5), calc(var(--look-apply-l) * .6), var(--look-apply-a));
 
     /* cancel */
 
@@ -262,6 +287,45 @@
 }
 
 .look.apply.chromeless {
+    color: var(--look-default-color);
+    background-color: transparent;
+    border-style: none;
+}
+
+/* add */
+
+.look.add {
+    color: var(--look-add-color);
+    background-color: var(--look-add-background-color);
+    border: 1px solid var(--look-add-border-color);
+    transition: all 100ms ease-in-out;
+}
+
+.look.add:not(:disabled):focus {
+    color: var(--look-add-focus-color);
+    background-color: var(--look-add-focus-background-color);
+    border-color: var(--look-add-focus-border-color);
+}
+
+.look.add:not(:disabled):hover {
+    color: var(--look-add-hover-color);
+    background-color: var(--look-add-hover-background-color);
+    border-color: var(--look-add-hover-border-color);
+}
+
+.look.add:not(:disabled):active {
+    color: var(--look-add-active-color);
+    background-color: var(--look-add-active-background-color);
+    border-color: var(--look-add-active-border-color);
+}
+
+.look.add:disabled {
+    color: var(--look-add-disabled-color);
+    background-color: var(--look-add-disabled-background-color);
+    border-color: var(--look-add-disabled-border-color);
+}
+
+.look.add.chromeless {
     color: var(--look-default-color);
     background-color: transparent;
     border-style: none;

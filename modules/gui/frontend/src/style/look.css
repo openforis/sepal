@@ -20,6 +20,13 @@ html {
     --look-transparent-l: 20%;
     --look-transparent-a: .5;
 
+    /* add */
+
+    --look-add-h: 105;
+    --look-add-s: 50%;
+    --look-add-l: 25%;
+    --look-add-a: 1;
+
     /* apply */
 
     --look-apply-h: 222;
