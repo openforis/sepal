@@ -316,37 +316,46 @@ class Browse extends React.Component {
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
         return (
             <div className={styles.toolbar}>
-                <ButtonGroup>
-                    <Button
-                        tooltip={msg('browse.controls.download.tooltip')}
-                        placement='bottom'
-                        icon='download'
-                        downloadUrl={downloadUrl}
-                        downloadFilename={downloadFilename}
-                        disabled={!oneFileSelected}
-                    />
-                    <Button
-                        tooltip={msg('browse.controls.remove.tooltip')}
-                        placement='bottom'
-                        icon='trash-alt'
-                        onClickHold={this.removeSelected.bind(this)}
-                        disabled={nothingSelected}/>
-                    <Button
-                        tooltip={msg('browse.controls.clearSelection.tooltip')}
-                        placement='bottom'
-                        icon='times'
-                        onClick={this.clearSelection.bind(this)}
-                        disabled={nothingSelected}
-                    />
-                </ButtonGroup>
-                {nothingSelected ? null : (
+                {/* {nothingSelected ? <div></div> : (
                     <span className={styles.selected}>
                         {msg('browse.selected', {
                             files: selected.files,
                             directories: selected.directories
                         })}
                     </span>
-                )}
+                )} */}
+                <ButtonGroup>
+                    <Button
+                        chromeless
+                        size='large'
+                        shape='circle'
+                        icon='download'
+                        tooltip={msg('browse.controls.download.tooltip')}
+                        placement='bottom'
+                        downloadUrl={downloadUrl}
+                        downloadFilename={downloadFilename}
+                        disabled={!oneFileSelected}
+                    />
+                    <Button
+                        chromeless
+                        size='large'
+                        shape='circle'
+                        icon='trash-alt'
+                        tooltip={msg('browse.controls.remove.tooltip')}
+                        placement='bottom'
+                        onClickHold={this.removeSelected.bind(this)}
+                        disabled={nothingSelected}/>
+                    <Button
+                        chromeless
+                        size='large'
+                        shape='circle'
+                        icon='times'
+                        tooltip={msg('browse.controls.clearSelection.tooltip')}
+                        placement='bottom'
+                        onClick={this.clearSelection.bind(this)}
+                        disabled={nothingSelected}
+                    />
+                </ButtonGroup>
             </div>
         )
     }
@@ -437,7 +446,8 @@ class Browse extends React.Component {
                             <div
                                 className={[
                                     lookStyles.look,
-                                    isSelected ? lookStyles.highlight : null,
+                                    isSelected ? lookStyles.highlight : lookStyles.transparent,
+                                    isSelected ? null : lookStyles.chromeless,
                                     styles.item,
                                     isAdded ? styles.added : null,
                                     isRemoving ? styles.removing : null,
