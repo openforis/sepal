@@ -2,14 +2,20 @@
 - name: Mount EFS Sepal Home Dir
   mount:
     name: "/data/sepal/home"
-    fstype: "nfs4"
+    fstype: "efs"
     state: "mounted"
-    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/home"
+    src: "{{ efs_id }}:/data/sepal/home"
+    opts: "defaults,_netdev"
+    dump: 0
+    passno: 0
 
 - name: Mount EFS Sepal Shiny Dir
   mount:
     name: "/data/sepal/shiny"
-    fstype: "nfs4"
+    fstype: "efs"
     state: "mounted"
-    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/shiny"
+    src: "{{ efs_id }}:/data/sepal/shiny"
+    opts: "defaults,_netdev"
+    dump: 0
+    passno: 0
 

@@ -84,7 +84,7 @@ class Main {
         }
     }
 
-    @Immutable(knownImmutableClasses = [File])
+    @Immutable(knownImmutables = ['workingDir'])
     static class ModuleConfig {
         String username
         String taskExecutorUsername

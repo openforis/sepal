@@ -4,7 +4,7 @@ import groovy.transform.Immutable
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.event.Event
 
-@Immutable(knownImmutableClasses = [Exception])
+@Immutable(knownImmutables = ['exception'])
 class FailedToProvisionInstance implements Event {
     WorkerInstance instance
     Exception exception

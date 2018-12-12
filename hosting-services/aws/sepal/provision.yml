@@ -9,7 +9,7 @@
   tasks:
     - name: Create Sepal security group
       ec2_group:
-        name: Sepalt4
+        name: Sepal
         description: The Sepal Security Group
         region: "{{ region }}"
         rules:
