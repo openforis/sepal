@@ -56,10 +56,10 @@ export class HoldButton extends React.Component {
                 )
             
             this.subscriptions.push(
-                clickHold$.subscribe(() => {
+                clickHold$.subscribe(e => {
                     const {onClickHold, disabled} = this.props
                     if (onClickHold && !disabled)
-                        onClickHold()
+                        onClickHold(e)
                 })
             )
         }
