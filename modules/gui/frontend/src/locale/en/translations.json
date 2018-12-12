@@ -131,6 +131,8 @@
       "loading": "Loading recipes"
     },
     "menu": {
+      "noSavedRecipies": "No saved recipies",
+      "savedRecipies": "Saved recipies",
       "recipeNotSaved": "Recipe is not saved.",
       "duplicateRecipe": "Duplicate recipe",
       "exportRecipe": "Export recipe",

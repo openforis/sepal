@@ -1,0 +1,30 @@
+.panel {
+    max-height: 40rem;
+    max-width: 60rem;
+}
+
+.recipeTypes {
+    overflow: auto;
+}
+
+.recipeTypes ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.recipeTypes li {
+    margin-bottom: .5rem;
+    border-radius: var(--container-border-radius);
+    padding: .25rem .5rem;
+    cursor: pointer;
+}
+
+.recipeTypes li .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.recipeTypes li + li {
+    margin-top: .5rem;
+}

@@ -1,0 +1,130 @@
+import {Button, ButtonGroup} from 'widget/button'
+import {CenteredProgress} from 'widget/progress'
+import {connect, select} from 'store'
+import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
+import {map} from 'rxjs/operators'
+import {msg} from 'translate'
+import {recipePath} from 'app/home/body/process/recipe'
+import CreateRecipe from './createRecipe'
+import PropTypes from 'prop-types'
+import React from 'react'
+import actionBuilder from 'action-builder'
+import api from 'api'
+import flexy from 'flexy.module.css'
+import lookStyles from 'style/look.module.css'
+import styles from './recipes.module.css'
+
+const mapStateToProps = () => {
+    const recipes = select('process.recipes')
+    return {
+        recipes: recipes ? recipes : null
+    }
+}
+
+class RecipeList extends React.Component {
+    componentDidMount() {
+        if (!this.props.recipes)
+            this.props.asyncActionBuilder('LOAD_RECIPES', loadRecipes$())
+                .dispatch()
+    }
+
+    loadRecipe(recipeId) {
+        this.props.asyncActionBuilder('LOAD_RECIPE', loadRecipe$(recipeId))
+            .dispatch()
+    }
+
+    duplicateRecipe(recipeIdToDuplicate) {
+        this.props.asyncActionBuilder('DUPLICATE_RECIPE', this.duplicateRecipe$(recipeIdToDuplicate))
+            .dispatch()
+    }
+
+    duplicateRecipe$(recipeIdToDuplicate) {
+        const {recipeId} = this.props
+        return api.recipe.load$(recipeIdToDuplicate).pipe(
+            map(recipe => ({
+                ...recipe,
+                id: recipeId,
+                title: (recipe.title || recipe.placeholder) + '_copy'
+            })),
+            map(duplicate =>
+                actionBuilder('DUPLICATE_RECIPE', {duplicate})
+                    .set(recipePath(recipeId), duplicate)
+                    .build()
+            )
+        )
+    }
+
+    renderProgress() {
+        return <CenteredProgress title={msg('process.recipe.loading')}/>
+    }
+
+    renderRecipe(recipe) {
+        return (
+            <div
+                key={recipe.id}
+                className={[styles.recipe, lookStyles.look, lookStyles.transparent].join(' ')}
+                onClick={() => this.loadRecipe(recipe.id)}>
+                <div className={styles.recipeInfo}>
+                    <div className={styles.type}>{recipe.type}</div>
+                    <div className={styles.name}>{recipe.name}</div>
+                </div>
+                <div className={styles.recipeButtons}>
+                    <ButtonGroup wrap={false}>
+                        <Button
+                            chromeless
+                            icon='clone'
+                            tooltip={msg('process.menu.duplicateRecipe')}
+                            tooltipPlacement='bottom'
+                            onClick={() => this.duplicateRecipe(recipe.id)}/>
+                        <Button
+                            chromeless
+                            icon='trash-alt'
+                            tooltip={msg('process.menu.deleteRecipe')}
+                            tooltipPlacement='bottom'
+                            onClickHold={() => deleteRecipe(recipe.id)}/>
+                    </ButtonGroup>
+                </div>
+            </div>
+        )
+    }
+
+    renderRecipies() {
+        const {recipes, action} = this.props
+        return !recipes && !action('LOAD_RECIPES').dispatched
+            ? this.renderProgress()
+            : (
+                <div className={[styles.recipesTable, flexy.container].join(' ')}>
+                    <div className={[styles.recipeRows, flexy.scrollable].join(' ')}>
+                        {(recipes || []).map(recipe => this.renderRecipe(recipe))}
+                    </div>
+                </div>
+            )
+    }
+
+    renderTitle() {
+        const {recipes} = this.props
+        return recipes && recipes.length
+            ? <div>{msg('process.menu.savedRecipies', {count: recipes.length})}</div>
+            : <div>{msg('process.menu.noSavedRecipies')}</div>
+    }
+
+    render() {
+        const {recipeId} = this.props
+        return (
+            <div className={[styles.container, flexy.container].join(' ')}>
+                <div className={styles.header}>
+                    {this.renderTitle()}
+                    <CreateRecipe recipeId={recipeId}/>
+                </div>
+                {this.renderRecipies()}
+            </div>
+        )
+    }
+}
+
+export default connect(mapStateToProps)(RecipeList)
+
+RecipeList.propTypes = {
+    recipeId: PropTypes.string.isRequired,
+    recipies: PropTypes.array
+}
