@@ -11,7 +11,7 @@
     border: 1px solid hsla(0, 0%, 100%, .1);
     border-left: none;
     border-right: none;
-    padding: 0 .6rem;
+    padding: 0 .5rem;
     z-index: 10;
 }
 
@@ -30,7 +30,7 @@
 }
 
 .button {
-    margin-left: 1rem;
+    margin: 0 .5rem;
     text-transform: lowercase;
 }
 
@@ -50,3 +50,14 @@
     font-weight: lighter;
     font-size: .9rem;
 }
+
+@media only screen and (max-width: 400px) {
+    .copyright {
+        display: none;
+    }
+
+    .title {
+        letter-spacing: .2rem;
+    }
+}
+

@@ -125,7 +125,7 @@ class Usage extends React.Component {
             <Button
                 className={className}
                 icon='dollar-sign'
-                label={hourlySpending.toFixed(2) + '/h'}
+                label={' ' + format.unitsPerHour(hourlySpending)}
                 onClick={() => this.buttonHandler()}
                 tooltip={msg('home.sections.user.report.tooltip')}
                 tooltipPlacement='top'
