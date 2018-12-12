@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {Field, Input, form} from 'widget/form'
+import {Field, Input, Label, form} from 'widget/form'
 import {history} from 'route'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
@@ -36,8 +36,11 @@ export class ForgotPassword extends React.Component {
         return (
             <form className={styles.form}>
                 <div className={styles.inputs}>
+                    <Label msg={msg('landing.forgot-password.label')}/>
+                    <div className={styles.instructions}>
+                        {msg('landing.forgot-password.instructions')}
+                    </div>
                     <Input
-                        label={msg('landing.forgot-password.label')}
                         input={email}
                         placeholder={msg('landing.forgot-password.placeholder')}
                         autoFocus='on'

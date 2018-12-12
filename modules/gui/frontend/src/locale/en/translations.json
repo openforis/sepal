@@ -42,6 +42,7 @@
       "invalid": "Not a valid email",
       "button": "Request new password",
       "cancel-link": "Cancel",
+      "instructions": "Provide us with the email address of your SEPAL account and we'll send you an email with instructions on how to reset your password.",
       "success": {
         "title": "Password reset requested",
         "message": "An email with password reset instructions has been sent to {email}."
