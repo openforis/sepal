@@ -7,7 +7,6 @@
     display: flex;
     justify-content: space-between;
     padding: 0 .5rem;
-    /* border-bottom: 2px solid hsla(0, 0%, 100%, .05); */
     pointer-events: all;
 }
 
@@ -167,16 +166,11 @@ span.title.placeholder {
     line-height: 2.5rem;
 }
 
-.tabControls {
+.tabActions {
     display: flex;
     align-items: center;
     height: fit-content;
-}
-
-.tabActions {
     margin-top: .5rem;
-    display: flex;
-    align-items: center;
 }
 
 .tabActions > * + * {

@@ -113,16 +113,14 @@ class Tabs extends React.Component {
                     <div className={styles.tabs}>
                         {this.props.tabs.map(tab => this.renderTab(tab))}
                     </div>
-                    <div className={styles.tabControls}>
-                        <div className={styles.tabActions}>
-                            <Button
-                                chromeless
-                                size='large'
-                                shape='circle'
-                                icon='plus'
-                                onClick={() => addTab(statePath)}/>
-                            {tabActions(selectedTabId)}
-                        </div>
+                    <div className={styles.tabActions}>
+                        <Button
+                            chromeless
+                            size='large'
+                            shape='circle'
+                            icon='plus'
+                            onClick={() => addTab(statePath)}/>
+                        {tabActions(selectedTabId)}
                     </div>
                 </div>
                 <div className={[styles.tabContents, flexy.container].join(' ')}>
