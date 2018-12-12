@@ -176,7 +176,7 @@ class UserEndpoint {
 
             post('/invite', [ADMIN]) {
                 response.contentType = 'application/json'
-                def command = new InviteUser()
+                def command = new InviteUser(invitedUsername: params.username)
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
