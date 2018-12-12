@@ -229,6 +229,7 @@ class UserMessages extends React.Component {
                     <PanelButtons
                         additionalButtons={isAdmin ? [{
                             key: 'post',
+                            look: 'add',
                             icon: 'pencil-alt',
                             label: msg('user.userMessages.post'),
                             onClick: () => this.newMessage()
