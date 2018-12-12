@@ -64,8 +64,8 @@ export class ForgotPassword extends React.Component {
                     />
                     <Button
                         type='submit'
-                        look='highlight'
-                        size='large'
+                        look='apply'
+                        size='x-large'
                         shape='pill'
                         icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in-alt'}
                         label={msg('landing.forgot-password.button')}
