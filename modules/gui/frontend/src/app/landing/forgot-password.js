@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {Field, Input, form} from 'widget/form'
+import {Field, Input, Label, form} from 'widget/form'
 import {history} from 'route'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
@@ -36,8 +36,11 @@ export class ForgotPassword extends React.Component {
         return (
             <form className={styles.form}>
                 <div className={styles.inputs}>
+                    <Label msg={msg('landing.forgot-password.label')}/>
+                    <div className={styles.instructions}>
+                        {msg('landing.forgot-password.instructions')}
+                    </div>
                     <Input
-                        label={msg('landing.forgot-password.label')}
                         input={email}
                         placeholder={msg('landing.forgot-password.placeholder')}
                         autoFocus='on'
@@ -49,17 +52,6 @@ export class ForgotPassword extends React.Component {
                 </div>
                 <div className={styles.buttons}>
                     <Button
-                        type='submit'
-                        look='highlight'
-                        size='large'
-                        shape='pill'
-                        icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in-alt'}
-                        label={msg('landing.forgot-password.button')}
-                        onClick={() => this.requestPasswordReset(email.value)}
-                        disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
-                        tabIndex={2}
-                    />
-                    <Button
                         chromeless
                         look='transparent'
                         size='large'
@@ -69,6 +61,17 @@ export class ForgotPassword extends React.Component {
                         tabIndex={3}
                         onMouseDown={e => e.preventDefault()}
                         onClick={() => this.cancel()}
+                    />
+                    <Button
+                        type='submit'
+                        look='highlight'
+                        size='large'
+                        shape='pill'
+                        icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in-alt'}
+                        label={msg('landing.forgot-password.button')}
+                        onClick={() => this.requestPasswordReset(email.value)}
+                        disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
+                        tabIndex={2}
                     />
                 </div>
             </form>

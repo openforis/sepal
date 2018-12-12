@@ -58,17 +58,6 @@ class Login extends React.Component {
                 </div>
                 <div className={styles.buttons}>
                     <Button
-                        type='submit'
-                        look='highlight'
-                        size='large'
-                        shape='pill'
-                        icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
-                        label={msg('landing.login.button')}
-                        onClick={() => this.login(form.values())}
-                        disabled={form.isInvalid() || action('LOGIN').dispatching}
-                        tabIndex={3}
-                    />
-                    <Button
                         chromeless
                         look='transparent'
                         size='large'
@@ -78,6 +67,17 @@ class Login extends React.Component {
                         tabIndex={4}
                         onMouseDown={e => e.preventDefault()}
                         onClick={() => this.forgotPassword()}
+                    />
+                    <Button
+                        type='submit'
+                        look='highlight'
+                        size='large'
+                        shape='pill'
+                        icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
+                        label={msg('landing.login.button')}
+                        onClick={() => this.login(form.values())}
+                        disabled={form.isInvalid() || action('LOGIN').dispatching}
+                        tabIndex={3}
                     />
                 </div>
             </form>)

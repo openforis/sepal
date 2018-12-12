@@ -28,42 +28,42 @@ const classNames = ({chromeless, className, additionalClassName, look, size, sha
         additionalClassName
     ].join(' ')
 
-const handleMouseDown = (e, {onMouseDown}) => {
+const handleMouseDown = (e, {onMouseDown, stopPropagation}) => {
     onMouseDown && onMouseDown(e)
+    if (stopPropagation) {
+        e.stopPropagation()
+    }
 }
 
-const handleClick = (e, {onClick, download, downloadUrl, downloadFilename}) => {
+const handleClick = (e, {onClick, download, downloadUrl, downloadFilename, stopPropagation}) => {
     onClick && onClick(e)
     downloadUrl && download(downloadUrl, downloadFilename)
+    if (stopPropagation) {
+        e.stopPropagation()
+    }
 }
 
-const handleClickHold = (e, {onClickHold}) => {
+const handleClickHold = (e, {onClickHold, stopPropagation}) => {
     onClickHold && onClickHold(e)
+    if (stopPropagation) {
+        e.stopPropagation()
+    }
 }
 
 const renderButton = ({type, chromeless, className, additionalClassName, look, size, shape, tabIndex,
-    onMouseDown, onClick, onClickHold, download, downloadUrl, downloadFilename, shown, disabled}, contents) =>
+    onMouseDown, onClick, onClickHold, download, downloadUrl, downloadFilename, shown, disabled, stopPropagation}, contents) =>
     <HoldButton
         type={type}
         className={classNames({chromeless, className, additionalClassName, look, size, shape, onClickHold})}
         style={{visibility: shown ? 'visible' : 'hidden'}}
         tabIndex={tabIndex}
         disabled={disabled || !shown}
-        onMouseDown={e => handleMouseDown(e, {onMouseDown})}
-        onClick={e => handleClick(e, {onClick, download, downloadUrl, downloadFilename})}
-        onClickHold={e => handleClickHold(e, {onClickHold})}
+        onMouseDown={e => handleMouseDown(e, {onMouseDown, stopPropagation})}
+        onClick={e => handleClick(e, {onClick, download, downloadUrl, downloadFilename, stopPropagation})}
+        onClickHold={e => handleClickHold(e, {onClickHold, stopPropagation})}
     >
         {contents}
     </HoldButton>
-
-const renderPropagationStopper = ({stopPropagation}, contents) =>
-    stopPropagation ? (
-        <span onClick={e => {
-            e.stopPropagation()
-        }}>
-            {contents}
-        </span>
-    ) : contents
 
 const renderTooltip = ({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled}, contents) =>
     tooltip && !tooltipDisabled && shown && !disabled ? (
@@ -118,10 +118,8 @@ export const Button = ({
 }) =>
     renderLink({link, shown, disabled},
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
-            renderPropagationStopper({stopPropagation},
-                renderButton({type, chromeless, className, additionalClassName, look, size, shape, tabIndex, onMouseDown, onClick, onClickHold, download, downloadUrl, downloadFilename, shown, disabled},
-                    renderContents({icon, iconType, label, children})
-                )
+            renderButton({type, chromeless, className, additionalClassName, look, size, shape, tabIndex, onMouseDown, onClick, onClickHold, download, downloadUrl, downloadFilename, shown, disabled, stopPropagation},
+                renderContents({icon, iconType, label, children})
             )
         )
     )

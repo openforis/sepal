@@ -42,7 +42,7 @@ const App = ({app, onClick}) =>
         onClick={() => onClick(app)}>
         <div className={styles.app}>
             <Image style={app.style} src={app.image}/>
-            <Icon name={app.icon} alt={app.alt}/>
+            {app.icon && <Icon name={app.icon} alt={app.alt}/>}
             <div>
                 <div className={styles.title}>{app.label}</div>
                 <div className={styles.description}>{app.description}</div>
