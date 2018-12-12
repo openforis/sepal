@@ -134,15 +134,19 @@
     --look-cancel-disabled-color: var(--look-default-disabled-color);
     --look-cancel-disabled-background-color: var(--look-default-disabled-background-color);
     --look-cancel-disabled-border-color: var(--look-default-disabled-border-color);
+
+    /* global */
+
+    transition: all 100ms ease-in-out;
+    border: 1px solid transparent;
 }
 
 /* default */
 
-.look.default {
+.look.default:not(.chromeless) {
     color: var(--look-default-color);
     background-color: var(--look-default-background-color);
-    border: 1px solid var(--look-default-border-color);
-    transition: all 100ms ease-in-out;
+    border-color: var(--look-default-border-color);
 }
 
 .look.default:not(:disabled):not(.nonInteractive):hover {
@@ -165,27 +169,19 @@
 
 .look.default:disabled {
     color: var(--look-default-disabled-color);
+}
+
+.look.default:not(.chromeless):disabled {
     background-color: var(--look-default-disabled-background-color);
     border-color: var(--look-default-disabled-border-color);
 }
 
-.look.default.chromeless {
-    color: var(--look-default-color);
-    background-color: transparent;
-    border-style: none;
-}
-
-.look.default.chromeless:disabled {
-    color: var(--look-default-disabled-color);
-}
-
 /* transparent */
 
-.look.transparent {
+.look.transparent:not(.chromeless) {
     color: var(--look-transparent-color);
     background-color: var(--look-transparent-background-color);
-    border: 1px solid var(--look-transparent-border-color);
-    transition: all 100ms ease-in-out;
+    border-color: var(--look-transparent-border-color);
 }
 
 .look.transparent:not(:disabled):not(.nonInteractive):hover {
@@ -206,29 +202,21 @@
     border-color: var(--look-transparent-active-border-color);
 }
 
-.look.transparent:not(.nonInteractive):disabled {
+.look.transparent:disabled {
     color: var(--look-transparent-disabled-color);
+}
+
+.look.transparent:not(.chromeless):disabled {
     background-color: var(--look-transparent-disabled-background-color);
     border-color: var(--look-transparent-disabled-border-color);
 }
 
-.look.transparent.chromeless {
-    color: var(--look-default-color);
-    background-color: transparent;
-    border-style: none;
-}
-
-.look.transparent.chromeless:disabled {
-    color: var(--look-transparent-disabled-color);
-}
-
 /* highlight */
 
-.look.highlight {
+.look.highlight:not(.chromeless) {
     color: var(--look-highlight-color);
     background-color: var(--look-highlight-background-color);
-    border: 1px solid var(--look-highlight-border-color);
-    transition: all 100ms ease-in-out;
+    border-color: var(--look-highlight-border-color);
 }
 
 .look.highlight:not(:disabled):not(.nonInteractive):hover {
@@ -251,27 +239,19 @@
 
 .look.highlight:disabled {
     color: var(--look-highlight-disabled-color);
+}
+
+.look.highlight:not(.chromeless):disabled {
     background-color: var(--look-highlight-disabled-background-color);
     border-color: var(--look-highlight-disabled-border-color);
 }
 
-.look.highlight.chromeless {
-    color: var(--look-default-color);
-    background-color: transparent;
-    border-style: none;
-}
-
-.look.highlight.chromeless:disabled {
-    color: var(--look-highlight-disabled-color);
-}
-
 /* add */
 
-.look.add {
+.look.add:not(.chromeless) {
     color: var(--look-add-color);
     background-color: var(--look-add-background-color);
-    border: 1px solid var(--look-add-border-color);
-    transition: all 100ms ease-in-out;
+    border-color: var(--look-add-border-color);
 }
 
 .look.add:not(:disabled):focus {
@@ -294,27 +274,19 @@
 
 .look.add:disabled {
     color: var(--look-add-disabled-color);
+}
+
+.look.add:not(.chromeless):disabled {
     background-color: var(--look-add-disabled-background-color);
     border-color: var(--look-add-disabled-border-color);
 }
 
-.look.add.chromeless {
-    color: var(--look-default-color);
-    background-color: transparent;
-    border-style: none;
-}
-
-.look.add.chromeless:disabled {
-    color: var(--look-add-disabled-color);
-}
-
 /* apply */
 
-.look.apply {
+.look.apply:not(.chromeless) {
     color: var(--look-apply-color);
     background-color: var(--look-apply-background-color);
-    border: 1px solid var(--look-apply-border-color);
-    transition: all 100ms ease-in-out;
+    border-color: var(--look-apply-border-color);
 }
 
 .look.apply:not(:disabled):focus {
@@ -341,23 +313,16 @@
     border-color: var(--look-apply-disabled-border-color);
 }
 
-.look.apply.chromeless {
-    color: var(--look-default-color);
-    background-color: transparent;
-    border-style: none;
-}
-
 .look.apply.chromeless:disabled {
     color: var(--look-apply-disabled-color);
 }
 
 /* cancel */
 
-.look.cancel {
+.look.cancel:not(.chromeless) {
     color: var(--look-cancel-color);
     background-color: var(--look-cancel-background-color);
-    border: 1px solid var(--look-cancel-border-color);
-    transition: all 100ms ease-in-out;
+    border-color: var(--look-cancel-border-color);
 }
 
 .look.cancel:not(:disabled):focus {
@@ -380,18 +345,19 @@
 
 .look.cancel:disabled {
     color: var(--look-cancel-disabled-color);
+}
+
+.look.cancel:not(.chromeless):disabled {
     background-color: var(--look-cancel-disabled-background-color);
     border-color: var(--look-cancel-disabled-border-color);
 }
 
-.look.cancel.chromeless {
+/* chromeless */
+
+.look.chromeless {
     color: var(--look-default-color);
     background-color: transparent;
     border-style: none;
-}
-
-.look.cancel.chromeless:disabled {
-    color: var(--look-cancel-disabled-color);
 }
 
 /* disabled */

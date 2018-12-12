@@ -20,6 +20,13 @@ html {
     --look-transparent-l: 20%;
     --look-transparent-a: .5;
 
+    /* cancel */
+
+    --look-cancel-h: 0;
+    --look-cancel-s: 45%;
+    --look-cancel-l: 33%;
+    --look-cancel-a: 1;
+
     /* add */
 
     --look-add-h: 105;
@@ -33,13 +40,6 @@ html {
     --look-apply-s: 44%;
     --look-apply-l: 37%;
     --look-apply-a: 1;
-
-    /* cancel */
-
-    --look-cancel-h: 0;
-    --look-cancel-s: 38%;
-    --look-cancel-l: 33%;
-    --look-cancel-a: 1;
 
     /* default */
 
