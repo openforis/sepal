@@ -4,7 +4,7 @@
     flex-grow: 0;
     flex-shrink: 0;
     justify-content: space-between;
-    padding: var(--padding);
+    padding: var(--padding-panel-buttons);
     border-top: var(--wireframe);
     transition: opacity 200ms ease-in-out;
 }

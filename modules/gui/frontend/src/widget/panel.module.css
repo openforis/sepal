@@ -4,10 +4,12 @@
     --margin-right: 3.5rem;
     --margin-top: .5rem;
     --margin-bottom: .5rem;
-    --padding-top-bottom: .5rem;
-    --padding-right-left: .8rem;
-    --padding: var(--padding-top-bottom) var(--padding-right-left);
+    --padding: .5rem .8rem;
+    --padding-panel-buttons: .5rem;
     --scaling-factor: .8 !important;
+
+    max-height: 90vh;
+    max-width: 60rem;
 
     position: absolute;
     width: calc(100% - var(--margin-left) - var(--margin-right));
@@ -20,6 +22,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;    
+    /* max-height: 90vh !important; */
 }
 
 .panel.top {

@@ -1,8 +1,3 @@
-.panel {
-    max-height: 40rem;
-    max-width: 60rem;
-}
-
 .panelContent {
     justify-content: initial;
 }

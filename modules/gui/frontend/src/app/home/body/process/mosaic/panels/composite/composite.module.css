@@ -1,10 +1,23 @@
 .panel {
     max-width: 26rem;
+    max-height: 100vh;
 }
 
 .content > *:not(:last-child) {
     margin-bottom: 2rem;
 }
+
+@media screen and (max-height: 700px) {
+    .content > *:not(:last-child) {
+        margin-bottom: 1.5rem;
+    }
+}       
+
+@media screen and (max-height: 600px) {
+    .content > *:not(:last-child) {
+        margin-bottom: 1rem;
+    }
+}       
 
 .inline {
     display: flex;
