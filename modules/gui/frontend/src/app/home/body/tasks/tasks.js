@@ -56,32 +56,43 @@ class Tasks extends React.Component {
         )
     }
 
+    renderTasks() {
+        const {tasks} = this.state
+        return tasks.length
+            ? (
+                <div className={styles.tasks}>
+                    {tasks.map(task => this.renderTask(task))}
+                </div>
+            )
+            : (
+                <div className={styles.none}>
+                    <Msg id='tasks.none'/>
+                </div>
+            )
+    }
+
     renderToolbar() {
+        const {tasks} = this.state
         return (
             <div className={styles.toolbar}>
-                <Tooltip
-                    msg={msg('tasks.removeAll.tooltip')}
-                    placement='bottom'>
-                    <IconButton
-                        icon='times'
-                        onClick={() => this.removeAllTasks()}/>
-                </Tooltip>
+                <Button
+                    chromeless
+                    size='large'
+                    shape='circle'
+                    icon='times'
+                    tooltip={msg('tasks.removeAll.tooltip')}
+                    tooltipPlacement='bottom'
+                    onClick={() => this.removeAllTasks()}
+                    disabled={!tasks.length}/>
             </div>
         )
     }
 
     render() {
-        const {tasks} = this.state
         return (
             <div className={styles.container}>
                 {this.renderToolbar()}
-                {tasks.length > 0 ?
-                    <div className={styles.tasks}>
-                        {tasks.map(task => this.renderTask(task))}
-                    </div>
-                    : <div className={styles.none}><Msg id='tasks.none'/></div>
-                }
-
+                {this.renderTasks()}
             </div>
         )
     }

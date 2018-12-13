@@ -1,23 +1,22 @@
 .container {
-    padding-top: 1rem;
-    padding-right: 1rem;
+    margin: .5rem .5rem .5rem 1rem;
 }
 
 .toolbar {
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
-    margin: 0 4rem 1rem 1rem;
 }
 
 .none {
     text-align: center;
-    margin-top: 30%;
+    margin-top: 20%;
     color: #ccc;
     font-style: italic;
 }
 
 .tasks {
+    margin-top: 1rem;
     display: grid;
     grid-template-columns: repeat(auto-fill, 21rem);
     grid-template-rows: repeat(auto-fill, 18rem);
