@@ -2,6 +2,7 @@
     --primary-text-color: #white;
     --secondary-text-color: #c7cacc;
     --backdrop-color: rgba(187, 192, 195, 0.05);
+    --feature-icon-size: 1.7rem;
 
     height: 100vh;
     display: flex;
@@ -12,98 +13,43 @@
 }
 
 .landing {
+    margin: .5rem;
+    border-radius: 1.5rem;
     color: var(--primary-text-color);
     background-color: var(--backdrop-color);
-    border-radius: 1.5rem;
-    margin: .5rem;
-}
-
-.landing > * {
     overflow: hidden;
 }
 
-.content {
-    height: 100%;
-    width: 100%;
-}
+/* grid and animations */
 
 .tagline {
     grid-area: tagline;
-    font-family: Merriweather, Georgia, Times New Roman, Times, serif;
-    font-style: italic;
-    color: var(--secondary-text-color);
-    font-size: 1rem;
-}
-
-.tagline .content {
     animation: tagline 1000ms 500ms ease-in-out both;
-}
-
-.title {
-    grid-area: title;
-    font-family: var(--header-font-family);
-    font-size: 3rem;
-    font-weight: bold;
-    letter-spacing: .3rem;
-    line-height: 1;
-    text-transform: uppercase;
-    margin: 0;
-}
-
-.title .content {
-    animation: title 2000ms ease-in-out both;
-}
-
-.language {
-    grid-area: language;
-    justify-self: right;
-}
-
-.language .content {
-    animation: language 2000ms ease-in-out both;
-}
-
-.features {
-    grid-area: features;
-}
-
-.features .content {
-    animation: features 2000ms ease-in-out both;
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr 1fr 1fr;
-    /* grid-row-gap: 1rem; */
-}
-
-.credentials {
-    grid-area: credentials;
-}
-
-.credentials .content {
-    animation: credentials 1000ms 1500ms ease-in-out both;
-}
-
-.privacy {
-    grid-area: privacy;
-    justify-self: right;
-}
-
-.privacy .content {
-    animation: privacy 2000ms ease-in-out both;
 }
 
 @keyframes tagline {
     0% {
         opacity: 0;
-        transform: translateY(100%);
+        transform: translateY(-100%);
     }
+}
+
+.title {
+    grid-area: title;
+    animation: title 2000ms 0ms ease-in-out both;
 }
 
 @keyframes title {
     0% {
         opacity: 0;
-        transform: translateY(100%);
+        transform: translateX(100%);
     }
+}
+
+.language {
+    grid-area: language;
+    animation: language 500ms 2000ms ease-in-out both;
+    justify-self: right;
 }
 
 @keyframes language {
@@ -113,6 +59,11 @@
     }
 }
 
+.features {
+    grid-area: features;
+    animation: features 2000ms 0ms ease-in-out both;
+}
+
 @keyframes features {
     0% {
         opacity: 0;
@@ -120,11 +71,22 @@
     }
 }
 
+.credentials {
+    grid-area: credentials;
+    animation: credentials 1000ms 1000ms ease-in-out both;
+}
+
 @keyframes credentials {
     0% {
         opacity: 0;
-        transform: translateY(100%);
+        transform: translateY(50%);
     }
+}
+
+.privacy {
+    grid-area: privacy;
+    animation: privacy 2000ms ease-in-out both;
+    justify-self: right;
 }
 
 @keyframes privacy {
@@ -134,15 +96,25 @@
     }
 }
 
+/* Tagline */
+
+.tagline {
+    font-family: Merriweather, Georgia, Times New Roman, Times, serif;
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    color: var(--secondary-text-color);
+}
+
 /* Title */
 
 .title {
     font-family: var(--header-font-family);
     font-size: 3.5rem;
     font-weight: 300;
+    line-height: 3.5rem;
     letter-spacing: .3rem;
     text-transform: uppercase;
-    margin: 0;
 }
 
 .titleUnderline {
@@ -152,7 +124,13 @@
     background-color: var(--primary-text-color);
 }
 
-/* Feature */
+/* Features */
+
+.features {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, 1fr);
+}
 
 .feature {
     display: grid;
@@ -160,17 +138,14 @@
     grid-column-gap: 1.5rem;
 }
 
-.feature p {
-    margin: 0;
-}
-
 .featureIcon {
+    width: calc(var(--feature-icon-size) * 2.5);
+    height: calc(var(--feature-icon-size) * 2.5);
     border-radius: 50%;
-    width: 4.5rem;
-    height: 4.5rem;
-    line-height: 4.5rem;
-    font-size: 1.8rem;
-    text-align: center;
+    font-size: var(--feature-icon-size);
+    display:grid;
+    justify-content: center;
+    align-content: center;
 }
 
 .featureIcon.process {
@@ -193,10 +168,9 @@
     font-family: var(--header-font-family);
     font-weight: normal;
     font-size: 1.4rem;
-    text-transform: uppercase;
     letter-spacing: 0.15rem;
+    text-transform: uppercase;
     color: var(--primary-text-color);
-    margin: 0 0 .5rem 0;
 }
 
 .featureDescription {
@@ -218,7 +192,7 @@
             'tagline     tagline'
             'credentials credentials'
             'privacy     privacy';
-        grid-gap: 1rem;
+        grid-gap: 2rem;
         padding: 1.5rem 2rem;
     }
 
@@ -249,10 +223,6 @@
             'features privacy     privacy';
         grid-gap: 3rem;
         padding: 3rem 4rem;
-    }
-
-    .features {
-        display: block;
     }
 
     .credentials {
