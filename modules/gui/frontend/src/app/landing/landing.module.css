@@ -101,7 +101,7 @@
 .tagline {
     font-family: Merriweather, Georgia, Times New Roman, Times, serif;
     font-style: italic;
-    font-size: 1rem;
+    font-size: 1.0rem;
     line-height: 1.5rem;
     color: var(--secondary-text-color);
 }

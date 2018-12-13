@@ -19,7 +19,7 @@ const Landing =
             <SlideShow/>
             <div className={styles.landing}>
                 <div className={styles.tagline}>
-                    <Msg id='landing.caption'/>
+                    <Msg id='landing.tagline'/>
                 </div>
                 <div className={styles.title}>
                     <Msg id='landing.title'/>
