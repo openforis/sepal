@@ -38,6 +38,7 @@
 }
 
 .button.x-large {
+    /* same size as large, but with padding */
     --font-size: var(--large-font-size);
 }
 
