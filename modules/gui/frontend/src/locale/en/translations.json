@@ -1,1082 +1,1082 @@
 {
-  "landing": {
-    "tagline": "System for earth observations, data access, processing & analysis for land monitoring",
-    "title": "Sepal",
-    "features": {
-      "process": {
-        "title": "Process geo data",
-        "description": "Fast and easy processing of geo data"
-      },
-      "browse": {
-        "title": "Browse your data",
-        "description": "Preview and download your products"
-      },
-      "apps": {
-        "title": "Extensible with apps",
-        "description": "Extend the features in Sepal with custom data processing applications"
-      },
-      "terminal": {
-        "title": "Terminal",
-        "description": "Powerful command-line tools for data processing"
-      }
-    },
-    "login": {
-      "username": {
-        "label": "Username",
-        "placeholder": "Enter your username",
-        "required": "Username is required"
-      },
-      "password": {
-        "label": "Password",
-        "placeholder": "Enter your password",
-        "required": "Password is required",
-        "invalid": "Invalid username/password"
-      },
-      "button": "Login",
-      "forgot-password-link": "Forgot your password?"
-    },
-    "forgot-password": {
-      "label": "Forgot your password ?",
-      "placeholder": "Enter your email",
-      "required": "Email is required",
-      "invalid": "Not a valid email",
-      "button": "Reset password",
-      "cancel-link": "Cancel",
-      "instructions": "Provide us with the email address of your SEPAL account and we'll send you an email with instructions on how to reset your password.",
-      "success": {
-        "title": "Password reset requested",
-        "message": "An email with password reset instructions has been sent to {email}."
-      }
-    },
-    "reset-password": {
-      "username": {
-        "label": "Username"
-      },
-      "password": {
-        "label": "Password",
-        "placeholder": "Enter a new password",
-        "required": "Password is required"
-      },
-      "password2": {
-        "label": "Confirm password",
-        "placeholder": "Enter the password again",
-        "required": "Password must be confirmed",
-        "not-matching": "Passwords are not the same"
-      },
-      "button": "Reset password",
-      "success.title": "Password has been reset",
-      "validating-link": "Validating link..."
-    },
-    "validate-token": {
-      "error": {
-        "title": "This link is not valid anymore",
-        "message": "Make sure you use the link in the latest email you received from Sepal."
-      }
-    },
-    "privacyPolicy": "Privacy policy"
-  },
-  "home": {
-    "sections": {
-      "dashboard.tooltip": "TBD",
-      "process.tooltip": "Process geo data",
-      "browse.tooltip": "Browse your files",
-      "terminal.tooltip": "Terminal",
-      "app-launch-pad.tooltip": "Launch custom apps",
-      "tasks.tooltip": "Manage your background tasks",
-      "users.tooltip": "Manage Sepal users",
-      "account.tooltip": "Modify your account settings",
-      "logout.tooltip": "Logout from Sepal",
-      "expand.tooltip": "Expand menu (fixed)",
-      "collapse.tooltip": "Collapse menu (floating)",
-      "user": {
-        "profile.tooltip": "Manage user profile",
-        "report.tooltip": "Show user report",
-        "messages.tooltip": "Show user messages"
-      }
-    }
-  },
-  "map": {
-    "layer.error.title": "Failed to load layer"
-  },
-  "browse": {
-    "controls.clearSelection.tooltip": "Clear selection",
-    "controls.remove.tooltip": "Remove selected items",
-    "controls.download.tooltip": "Download selected item",
-    "selected": "{directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}} selected",
-    "info": {
-      "directory": "{itemCount} {itemCount, plural, one {item} other {items}}",
-      "empty": "empty"
-    }
-  },
-  "body": {
-    "starting-sepal": "Starting SEPAL...",
-    "loading-apps": "Loading apps...",
-    "loading-initializing-google-maps": "Initializing map..."
-  },
-  "apps": {
-    "initializing": "Initializing {label}...",
-    "loading": {
-      "progress": "Loading {label}...",
-      "error.title": "Failed to load apps",
-      "error.message": "Try to reload the page."
-    },
-    "run": {
-      "error.title": "Failed to run {label}"
-    }
-  },
-  "process": {
-    "recipe": {
-      "name": "Name",
-      "type": "Type",
-      "loading": "Loading recipes"
-    },
-    "menu": {
-      "noSavedRecipies": "No saved recipies",
-      "savedRecipies": "Saved recipies",
-      "recipeNotSaved": "Recipe is not saved.",
-      "duplicateRecipe": "Duplicate recipe",
-      "exportRecipe": "Export recipe",
-      "saveRecipe": "Save recipe",
-      "deleteRecipe": "Delete recipe",
-      "revertToOldRevision": "Revert to old revision..."
-    },
-    "revisions": {
-      "title": "Revisions",
-      "revert": "Revert to revision"
-    },
-    "mosaic": {
-      "create": "Mosaic",
-      "mapToolbar": {
-        "zoom.tooltip": "Zoom to area",
-        "zoomIn.tooltip": "Zoom in",
-        "zoomOut.tooltip": "Zoom out",
-        "labels.show.tooltip": "Show labels",
-        "labels.hide.tooltip": "Hide labels",
-        "sceneAreas.show.tooltip": "Show scene areas",
-        "sceneAreas.hide.tooltip": "Hide scene areas",
-        "centerMap.tooltip": "Zoom to area of interest"
-      },
-      "panel": {
-        "auto": {
-          "title": "Auto-select scenes",
-          "tooltip": "Auto-select scenes",
-          "form": {
-            "min": {
-              "label": "Minimum number of scenes"
+    "landing": {
+        "tagline": "System for earth observations, data access, processing & analysis for land monitoring",
+        "title": "Sepal",
+        "features": {
+            "process": {
+                "title": "Process geo data",
+                "description": "Fast and easy processing of geo data"
             },
-            "max": {
-              "label": "Maximum number of scenes"
+            "browse": {
+                "title": "Browse your data",
+                "description": "Preview and download your products"
             },
-            "selectScenes": "Select scenes"
-          },
-          "selecting": "Selecting scenes..."
+            "apps": {
+                "title": "Extensible with apps",
+                "description": "Extend the features in Sepal with custom data processing applications"
+            },
+            "terminal": {
+                "title": "Terminal",
+                "description": "Powerful command-line tools for data processing"
+            }
         },
-        "clearSelectedScenes": {
-          "title": "Clear selected scenes",
-          "tooltip": "Clear selected scenes",
-          "message": "You are about to clear all selected scenes.",
-          "apply": "Clear scenes"
+        "login": {
+            "username": {
+                "label": "Username",
+                "placeholder": "Enter your username",
+                "required": "Username is required"
+            },
+            "password": {
+                "label": "Password",
+                "placeholder": "Enter your password",
+                "required": "Password is required",
+                "invalid": "Invalid username/password"
+            },
+            "button": "Login",
+            "forgot-password-link": "Forgot your password?"
         },
-        "retrieve": {
-          "title": "Retrieve",
-          "tooltip": "Retrieve mosaic",
-          "apply": "Retrieve",
-          "form": {
+        "forgot-password": {
+            "label": "Forgot your password ?",
+            "placeholder": "Enter your email",
+            "required": "Email is required",
+            "invalid": "Not a valid email",
+            "button": "Reset password",
+            "cancel-link": "Cancel",
+            "instructions": "Provide us with the email address of your SEPAL account and we'll send you an email with instructions on how to reset your password.",
+            "success": {
+                "title": "Password reset requested",
+                "message": "An email with password reset instructions has been sent to {email}."
+            }
+        },
+        "reset-password": {
+            "username": {
+                "label": "Username"
+            },
+            "password": {
+                "label": "Password",
+                "placeholder": "Enter a new password",
+                "required": "Password is required"
+            },
+            "password2": {
+                "label": "Confirm password",
+                "placeholder": "Enter the password again",
+                "required": "Password must be confirmed",
+                "not-matching": "Passwords are not the same"
+            },
+            "button": "Reset password",
+            "success.title": "Password has been reset",
+            "validating-link": "Validating link..."
+        },
+        "validate-token": {
+            "error": {
+                "title": "This link is not valid anymore",
+                "message": "Make sure you use the link in the latest email you received from Sepal."
+            }
+        },
+        "privacyPolicy": "Privacy policy"
+    },
+    "home": {
+        "sections": {
+            "dashboard.tooltip": "TBD",
+            "process.tooltip": "Process geo data",
+            "browse.tooltip": "Browse your files",
+            "terminal.tooltip": "Terminal",
+            "app-launch-pad.tooltip": "Launch custom apps",
+            "tasks.tooltip": "Manage your background tasks",
+            "users.tooltip": "Manage Sepal users",
+            "account.tooltip": "Modify your account settings",
+            "logout.tooltip": "Logout from Sepal",
+            "expand.tooltip": "Expand menu (fixed)",
+            "collapse.tooltip": "Collapse menu (floating)",
+            "user": {
+                "profile.tooltip": "Manage user profile",
+                "report.tooltip": "Show user report",
+                "messages.tooltip": "Show user messages"
+            }
+        }
+    },
+    "map": {
+        "layer.error.title": "Failed to load layer"
+    },
+    "browse": {
+        "controls.clearSelection.tooltip": "Clear selection",
+        "controls.remove.tooltip": "Remove selected items",
+        "controls.download.tooltip": "Download selected item",
+        "selected": "{directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}} selected",
+        "info": {
+            "directory": "{itemCount} {itemCount, plural, one {item} other {items}}",
+            "empty": "empty"
+        }
+    },
+    "body": {
+        "starting-sepal": "Starting SEPAL...",
+        "loading-apps": "Loading apps...",
+        "loading-initializing-google-maps": "Initializing map..."
+    },
+    "apps": {
+        "initializing": "Initializing {label}...",
+        "loading": {
+            "progress": "Loading {label}...",
+            "error.title": "Failed to load apps",
+            "error.message": "Try to reload the page."
+        },
+        "run": {
+            "error.title": "Failed to run {label}"
+        }
+    },
+    "process": {
+        "recipe": {
+            "name": "Name",
+            "type": "Type",
+            "loading": "Loading recipes"
+        },
+        "menu": {
+            "noSavedRecipies": "No saved recipies",
+            "savedRecipies": "Saved recipies",
+            "recipeNotSaved": "Recipe is not saved.",
+            "duplicateRecipe": "Duplicate recipe",
+            "exportRecipe": "Export recipe",
+            "saveRecipe": "Save recipe",
+            "deleteRecipe": "Delete recipe",
+            "revertToOldRevision": "Revert to old revision..."
+        },
+        "revisions": {
+            "title": "Revisions",
+            "revert": "Revert to revision"
+        },
+        "mosaic": {
+            "create": "Mosaic",
+            "mapToolbar": {
+                "zoom.tooltip": "Zoom to area",
+                "zoomIn.tooltip": "Zoom in",
+                "zoomOut.tooltip": "Zoom out",
+                "labels.show.tooltip": "Show labels",
+                "labels.hide.tooltip": "Hide labels",
+                "sceneAreas.show.tooltip": "Show scene areas",
+                "sceneAreas.hide.tooltip": "Hide scene areas",
+                "centerMap.tooltip": "Zoom to area of interest"
+            },
+            "panel": {
+                "auto": {
+                    "title": "Auto-select scenes",
+                    "tooltip": "Auto-select scenes",
+                    "form": {
+                        "min": {
+                            "label": "Minimum number of scenes"
+                        },
+                        "max": {
+                            "label": "Maximum number of scenes"
+                        },
+                        "selectScenes": "Select scenes"
+                    },
+                    "selecting": "Selecting scenes..."
+                },
+                "clearSelectedScenes": {
+                    "title": "Clear selected scenes",
+                    "tooltip": "Clear selected scenes",
+                    "message": "You are about to clear all selected scenes.",
+                    "apply": "Clear scenes"
+                },
+                "retrieve": {
+                    "title": "Retrieve",
+                    "tooltip": "Retrieve mosaic",
+                    "apply": "Retrieve",
+                    "form": {
+                        "bands": {
+                            "label": "Bands to retrieve",
+                            "atLeastOne": "At least one band must be retrieved"
+                        },
+                        "destination": {
+                            "label": "Retrieve to",
+                            "required": "A destination must be selected",
+                            "SEPAL": "Sepal workspace",
+                            "GEE": "Google Earth Engine asset"
+                        },
+                        "task": {
+                            "SEPAL": "Retrieve {name} to Sepal workspace",
+                            "GEE": "Export {name} as a Google Earth Engine asset"
+                        }
+                    }
+                },
+                "areaOfInterest": {
+                    "title": "Area of interest",
+                    "button": "AOI",
+                    "tooltip": "Specify area of interest",
+                    "form": {
+                        "section.required": "A section must be selected",
+                        "country": {
+                            "title": "Select country/province",
+                            "country.label": "Country",
+                            "country.placeholder.loading": "Loading countries...",
+                            "country.placeholder.loaded": "Select a country...",
+                            "area.title": "Select area",
+                            "area.label": "Province/area",
+                            "area.placeholder.loading": "Select a province",
+                            "area.placeholder.noCountry": "Select a country first",
+                            "area.placeholder.loaded": "Select a province",
+                            "area.placeholder.noAreas": "No provinces configured",
+                            "required": "Country is required"
+                        },
+                        "fusionTable": {
+                            "title": "Select from Fusion Table",
+                            "fusionTable.label": "Fusion Table",
+                            "fusionTable.placeholder": "Enter a Fusion Table ID",
+                            "fusionTable.required": "Fusion Table must be specified",
+                            "column.label": "Column",
+                            "column.placeholder.loading": "Loading columns...",
+                            "column.placeholder.noFusionTable": "Enter a Fusion Table ID first",
+                            "column.placeholder.loaded": "Select a column...",
+                            "column.required": "A column must be selected",
+                            "row.label": "Row",
+                            "row.placeholder.loading": "Loading rows...",
+                            "row.placeholder.noFusionTable": "Enter a Fusion Table ID first",
+                            "row.placeholder.noColumn": "Select a column first",
+                            "row.placeholder.loaded": "Select a row...",
+                            "row.placeholder.noRows": "No rows in Fusion Table",
+                            "row.required": "A row must be selected"
+                        },
+                        "polygon": {
+                            "title": "Draw a polygon",
+                            "description": "Draw a polygon on the map."
+                        },
+                        "bounds.required": "Bounds are not loaded"
+                    }
+                },
+                "dates": {
+                    "title": "Dates",
+                    "button": "DAT",
+                    "tooltip": "Specify dates",
+                    "form": {
+                        "targetYear": {
+                            "label": "Year",
+                            "tooltip": "The year which pixels in the mosaic should come from.",
+                            "malformed": "Not a year"
+                        },
+                        "targetDate": {
+                            "label": "Target date",
+                            "tooltip": "The date in which pixels in the mosaic should ideally come from.",
+                            "malformed": "Invalid date"
+                        },
+                        "pastSeasons": {
+                            "label": "Past seasons",
+                            "info": {
+                                "number": "Include {pastSeasons} {pastSeasons, plural, one {season} other {seasons}} from the past",
+                                "none": "Don't include seasons from the past"
+                            }
+                        },
+                        "futureSeasons": {
+                            "label": "Future seasons",
+                            "info": {
+                                "number": "Include {futureSeasons} {futureSeasons, plural, one {season} other {seasons}} from the future",
+                                "none": "Don't include seasons from the future"
+                            }
+                        },
+                        "season": {
+                            "label": "Season",
+                            "tooltip": "Restrict the time of year to include imagery for.",
+                            "tooEarly": "Must not be before {min}",
+                            "tooLate": "Must not be after {max}",
+                            "malformed": "Invalid date"
+                        }
+                    }
+                },
+                "sources": {
+                    "title": "Sources",
+                    "button": "SRC",
+                    "tooltip": "Select image source",
+                    "form": {
+                        "source": {
+                            "label": "Satellite family",
+                            "options": {
+                                "LANDSAT": "Landsat",
+                                "SENTINEL_2": "Sentinel 2"
+                            }
+                        },
+                        "dataSets": {
+                            "label": "Datasets",
+                            "oneDataSet": "Selected satellite family only have a single dataset.",
+                            "options": {
+                                "LANDSAT_8": {
+                                    "label": "L8",
+                                    "tooltip": "Landsat 8"
+                                },
+                                "LANDSAT_7": {
+                                    "label": "L7",
+                                    "tooltip": "Landsat 7"
+                                },
+                                "LANDSAT_TM": {
+                                    "label": "L4-5",
+                                    "tooltip": "Landsat 4-5"
+                                },
+                                "LANDSAT_8_T2": {
+                                    "label": "L8 T2",
+                                    "tooltip": "Landsat 8 Tier 2"
+                                },
+                                "LANDSAT_7_T2": {
+                                    "label": "L7 T2",
+                                    "tooltip": "Landsat 7 Tier 2"
+                                },
+                                "LANDSAT_TM_T2": {
+                                    "label": "L4-5 T2",
+                                    "tooltip": "Landsat 4-5 Tier 2"
+                                },
+                                "SENTINEL_2": {
+                                    "label": "S2",
+                                    "tooltip": "Sentinel 2"
+                                }
+                            }
+                        },
+                        "required": "A data source must be selected"
+                    }
+                },
+                "scenes": {
+                    "title": "Scenes",
+                    "button": "SCN",
+                    "tooltip": "Configure scenes selection",
+                    "form": {
+                        "required": "Scene selection must be configured",
+                        "type": {
+                            "label": "Scene selection",
+                            "all.label": "Use all scenes",
+                            "select.label": "Select individual scenes"
+                        },
+                        "targetDateWeight": {
+                            "label": "Priority",
+                            "cloudFree": {
+                                "label": "Cloud free",
+                                "tooltip": "[TODO] Some tooltip"
+                            },
+                            "balanced": {
+                                "label": "Balanced",
+                                "tooltip": "[TODO] Some tooltip"
+                            },
+                            "targetDate": {
+                                "label": "Target date",
+                                "tooltip": "[TODO] Some tooltip"
+                            }
+                        }
+                    }
+                },
+                "composite": {
+                    "title": "Composite",
+                    "button": "CMP",
+                    "tooltip": "Configure composite creation",
+                    "form": {
+                        "corrections": {
+                            "label": "Corrections",
+                            "surfaceReflectance": {
+                                "label": "SR",
+                                "tooltip": "Use scenes atmospherically corrected surface reflectance."
+                            },
+                            "brdf": {
+                                "label": "BRDF",
+                                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+                            }
+                        },
+                        "filters": {
+                            "label": "Pixel filters",
+                            "tooltip": "Filter out pixels in selected scenes based on the below properties",
+                            "shadowPercentile": {
+                                "off": "Don't filter based on shadow",
+                                "percentile": "Less shadows than {percentile}% of pixels",
+                                "max": "Pixel with least shadow"
+                            },
+                            "hazePercentile": {
+                                "off": "Don't filter based on haze",
+                                "percentile": "Less haze than {percentile}% of pixels",
+                                "max": "Pixel with least haze"
+                            },
+                            "ndviPercentile": {
+                                "off": "Don't filter based on NDVI",
+                                "percentile": "Higher NDVI than {percentile}% of pixels",
+                                "max": "Pixel with highest NDVI"
+                            },
+                            "dayOfYearPercentile": {
+                                "off": "Don't filter based on day of year",
+                                "percentile": "Closer to target day than {percentile}% of pixels",
+                                "max": "Pixel closest to target day"
+                            }
+                        },
+                        "mask": {
+                            "label": "Mask",
+                            "clouds": {
+                                "label": "Clouds",
+                                "tooltip": "Mask clouds instead of just trying to use cloud-free pixels. Can cause built-up areas to be masked out."
+                            },
+                            "snow": {
+                                "label": "Snow",
+                                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
+                            }
+                        },
+                        "composingMethod": {
+                            "label": "Composing method",
+                            "medoid": {
+                                "label": "Medoid",
+                                "tooltip": "Use the medoid of remaining pixels."
+                            },
+                            "median": {
+                                "label": "Median",
+                                "tooltip": "Use the median of remaining pixels. Pixel value will be artificial, and metadata for mosaic will be unavailable."
+                            }
+                        }
+                    }
+                },
+                "sceneSelection": {
+                    "preview": {
+                        "label": "Preview",
+                        "dataSet": "Data set",
+                        "date": "Acquisition date",
+                        "daysFromTarget": "Days from target",
+                        "cloudCover": "Cloud cover",
+                        "beforeTarget": "{daysFromTarget} before",
+                        "afterTarget": "{daysFromTarget} after",
+                        "onTarget": "On target day"
+                    },
+                    "loadingScenes": "Loading scenes..."
+                }
+            },
             "bands": {
-              "label": "Bands to retrieve",
-              "atLeastOne": "At least one band must be retrieved"
+                "placeholder": "Select bands to preview",
+                "combinations": "Combinations",
+                "metadata": "Metadata",
+                "panSharpen": "Pan sharpen"
             },
-            "destination": {
-              "label": "Retrieve to",
-              "required": "A destination must be selected",
-              "SEPAL": "Sepal workspace",
-              "GEE": "Google Earth Engine asset"
+            "preview": {
+                "initializing": "Loading preview...",
+                "loading": "Loaded {loaded} of {count} tiles",
+                "tilesFailed": "{failed} failed",
+                "error": "Failed to create preview"
             },
-            "task": {
-              "SEPAL": "Retrieve {name} to Sepal workspace",
-              "GEE": "Export {name} as a Google Earth Engine asset"
+            "sceneAreas": {
+                "loading": "Loading scene areas..."
             }
-          }
         },
-        "areaOfInterest": {
-          "title": "Area of interest",
-          "button": "AOI",
-          "tooltip": "Specify area of interest",
-          "form": {
-            "section.required": "A section must be selected",
-            "country": {
-              "title": "Select country/province",
-              "country.label": "Country",
-              "country.placeholder.loading": "Loading countries...",
-              "country.placeholder.loaded": "Select a country...",
-              "area.title": "Select area",
-              "area.label": "Province/area",
-              "area.placeholder.loading": "Select a province",
-              "area.placeholder.noCountry": "Select a country first",
-              "area.placeholder.loaded": "Select a province",
-              "area.placeholder.noAreas": "No provinces configured",
-              "required": "Country is required"
-            },
-            "fusionTable": {
-              "title": "Select from Fusion Table",
-              "fusionTable.label": "Fusion Table",
-              "fusionTable.placeholder": "Enter a Fusion Table ID",
-              "fusionTable.required": "Fusion Table must be specified",
-              "column.label": "Column",
-              "column.placeholder.loading": "Loading columns...",
-              "column.placeholder.noFusionTable": "Enter a Fusion Table ID first",
-              "column.placeholder.loaded": "Select a column...",
-              "column.required": "A column must be selected",
-              "row.label": "Row",
-              "row.placeholder.loading": "Loading rows...",
-              "row.placeholder.noFusionTable": "Enter a Fusion Table ID first",
-              "row.placeholder.noColumn": "Select a column first",
-              "row.placeholder.loaded": "Select a row...",
-              "row.placeholder.noRows": "No rows in Fusion Table",
-              "row.required": "A row must be selected"
-            },
-            "polygon": {
-              "title": "Draw a polygon",
-              "description": "Draw a polygon on the map."
-            },
-            "bounds.required": "Bounds are not loaded"
-          }
-        },
-        "dates": {
-          "title": "Dates",
-          "button": "DAT",
-          "tooltip": "Specify dates",
-          "form": {
-            "targetYear": {
-              "label": "Year",
-              "tooltip": "The year which pixels in the mosaic should come from.",
-              "malformed": "Not a year"
-            },
-            "targetDate": {
-              "label": "Target date",
-              "tooltip": "The date in which pixels in the mosaic should ideally come from.",
-              "malformed": "Invalid date"
-            },
-            "pastSeasons": {
-              "label": "Past seasons",
-              "info": {
-                "number": "Include {pastSeasons} {pastSeasons, plural, one {season} other {seasons}} from the past",
-                "none": "Don't include seasons from the past"
-              }
-            },
-            "futureSeasons": {
-              "label": "Future seasons",
-              "info": {
-                "number": "Include {futureSeasons} {futureSeasons, plural, one {season} other {seasons}} from the future",
-                "none": "Don't include seasons from the future"
-              }
-            },
-            "season": {
-              "label": "Season",
-              "tooltip": "Restrict the time of year to include imagery for.",
-              "tooEarly": "Must not be before {min}",
-              "tooLate": "Must not be after {max}",
-              "malformed": "Invalid date"
-            }
-          }
-        },
-        "sources": {
-          "title": "Sources",
-          "button": "SRC",
-          "tooltip": "Select image source",
-          "form": {
-            "source": {
-              "label": "Satellite family",
-              "options": {
-                "LANDSAT": "Landsat",
-                "SENTINEL_2": "Sentinel 2"
-              }
-            },
-            "dataSets": {
-              "label": "Datasets",
-              "oneDataSet": "Selected satellite family only have a single dataset.",
-              "options": {
-                "LANDSAT_8": {
-                  "label": "L8",
-                  "tooltip": "Landsat 8"
+        "classification": {
+            "create": "Classification",
+            "panel": {
+                "source": {
+                    "button": "IMG",
+                    "tooltip": "Select mosaic to classify",
+                    "title": "Image to classify",
+                    "recipe": {
+                        "title": "Select saved Sepal recipe"
+                    },
+                    "asset": {
+                        "title": "Select Earth Engine asset"
+                    },
+                    "form": {
+                        "section": {
+                            "required": "An image must be selected"
+                        },
+                        "recipe": {
+                            "label": "Recipe",
+                            "placeholder": "Select a recipe...",
+                            "required": "You must select a recipe"
+                        },
+                        "asset": {
+                            "label": "Earth Engine asset ID",
+                            "placeholder": "Enter an asset ID...",
+                            "required": "You must enter an asset ID"
+                        }
+                    },
+                    "retrieve": {
+                        "form": {
+                            "destination.label": "Destination"
+                        }
+                    }
                 },
-                "LANDSAT_7": {
-                  "label": "L7",
-                  "tooltip": "Landsat 7"
+                "trainingData": {
+                    "button": "TRN",
+                    "tooltip": "Configure training data source",
+                    "title": "Training data",
+                    "form": {
+                        "fusionTable": {
+                            "label": "Fusion table",
+                            "placeholder": "Enter a Fusion Table ID",
+                            "required": "Fusion Table must be specified",
+                            "invalid": "Invalid Fution Table ID"
+                        },
+                        "fusionTableColumn": {
+                            "label": "Class column",
+                            "placeholder.loading": "Loading columns...",
+                            "placeholder.noFusionTable": "Enter a Fusion Table ID first",
+                            "placeholder.loaded": "Select a column...",
+                            "required": "A column must be selected"
+                        },
+                        "openCeo": "Open training data collection tool"
+                    }
                 },
-                "LANDSAT_TM": {
-                  "label": "L4-5",
-                  "tooltip": "Landsat 4-5"
-                },
-                "LANDSAT_8_T2": {
-                  "label": "L8 T2",
-                  "tooltip": "Landsat 8 Tier 2"
-                },
-                "LANDSAT_7_T2": {
-                  "label": "L7 T2",
-                  "tooltip": "Landsat 7 Tier 2"
-                },
-                "LANDSAT_TM_T2": {
-                  "label": "L4-5 T2",
-                  "tooltip": "Landsat 4-5 Tier 2"
-                },
-                "SENTINEL_2": {
-                  "label": "S2",
-                  "tooltip": "Sentinel 2"
+                "retrieve": {
+                    "title": "Retrieve",
+                    "tooltip": "Retrieve classification",
+                    "apply": "Retrieve",
+                    "form": {
+                        "destination": {
+                            "label": "Retrieve to",
+                            "required": "A destination must be selected",
+                            "SEPAL": "Sepal workspace",
+                            "GEE": "Google Earth Engine asset"
+                        },
+                        "task": {
+                            "SEPAL": "Retrieve {name} to Sepal workspace",
+                            "GEE": "Export {name} as a Google Earth Engine asset"
+                        }
+                    }
                 }
-              }
             },
-            "required": "A data source must be selected"
-          }
-        },
-        "scenes": {
-          "title": "Scenes",
-          "button": "SCN",
-          "tooltip": "Configure scenes selection",
-          "form": {
-            "required": "Scene selection must be configured",
-            "type": {
-              "label": "Scene selection",
-              "all.label": "Use all scenes",
-              "select.label": "Select individual scenes"
-            },
-            "targetDateWeight": {
-              "label": "Priority",
-              "cloudFree": {
-                "label": "Cloud free",
-                "tooltip": "[TODO] Some tooltip"
-              },
-              "balanced": {
-                "label": "Balanced",
-                "tooltip": "[TODO] Some tooltip"
-              },
-              "targetDate": {
-                "label": "Target date",
-                "tooltip": "[TODO] Some tooltip"
-              }
+            "preview": {
+                "initializing": "Loading preview...",
+                "loading": "Loaded {loaded} of {count} tiles",
+                "tilesFailed": "{failed} failed",
+                "error": "Failed to create preview"
             }
-          }
         },
-        "composite": {
-          "title": "Composite",
-          "button": "CMP",
-          "tooltip": "Configure composite creation",
-          "form": {
-            "corrections": {
-              "label": "Corrections",
-              "surfaceReflectance": {
-                "label": "SR",
-                "tooltip": "Use scenes atmospherically corrected surface reflectance."
-              },
-              "brdf": {
-                "label": "BRDF",
-                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
-              }
-            },
-            "filters": {
-              "label": "Pixel filters",
-              "tooltip": "Filter out pixels in selected scenes based on the below properties",
-              "shadowPercentile": {
-                "off": "Don't filter based on shadow",
-                "percentile": "Less shadows than {percentile}% of pixels",
-                "max": "Pixel with least shadow"
-              },
-              "hazePercentile": {
-                "off": "Don't filter based on haze",
-                "percentile": "Less haze than {percentile}% of pixels",
-                "max": "Pixel with least haze"
-              },
-              "ndviPercentile": {
-                "off": "Don't filter based on NDVI",
-                "percentile": "Higher NDVI than {percentile}% of pixels",
-                "max": "Pixel with highest NDVI"
-              },
-              "dayOfYearPercentile": {
-                "off": "Don't filter based on day of year",
-                "percentile": "Closer to target day than {percentile}% of pixels",
-                "max": "Pixel closest to target day"
-              }
-            },
-            "mask": {
-              "label": "Mask",
-              "clouds": {
-                "label": "Clouds",
-                "tooltip": "Mask clouds instead of just trying to use cloud-free pixels. Can cause built-up areas to be masked out."
-              },
-              "snow": {
-                "label": "Snow",
-                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
-              }
-            },
-            "composingMethod": {
-              "label": "Composing method",
-              "medoid": {
-                "label": "Medoid",
-                "tooltip": "Use the medoid of remaining pixels."
-              },
-              "median": {
-                "label": "Median",
-                "tooltip": "Use the median of remaining pixels. Pixel value will be artificial, and metadata for mosaic will be unavailable."
-              }
-            }
-          }
-        },
-        "sceneSelection": {
-          "preview": {
-            "label": "Preview",
-            "dataSet": "Data set",
-            "date": "Acquisition date",
-            "daysFromTarget": "Days from target",
-            "cloudCover": "Cloud cover",
-            "beforeTarget": "{daysFromTarget} before",
-            "afterTarget": "{daysFromTarget} after",
-            "onTarget": "On target day"
-          },
-          "loadingScenes": "Loading scenes..."
-        }
-      },
-      "bands": {
-        "placeholder": "Select bands to preview",
-        "combinations": "Combinations",
-        "metadata": "Metadata",
-        "panSharpen": "Pan sharpen"
-      },
-      "preview": {
-        "initializing": "Loading preview...",
-        "loading": "Loaded {loaded} of {count} tiles",
-        "tilesFailed": "{failed} failed",
-        "error": "Failed to create preview"
-      },
-      "sceneAreas": {
-        "loading": "Loading scene areas..."
-      }
-    },
-    "classification": {
-      "create": "Classification",
-      "panel": {
-        "source": {
-          "button": "IMG",
-          "tooltip": "Select mosaic to classify",
-          "title": "Image to classify",
-          "recipe": {
-            "title": "Select saved Sepal recipe"
-          },
-          "asset": {
-            "title": "Select Earth Engine asset"
-          },
-          "form": {
-            "section": {
-              "required": "An image must be selected"
-            },
-            "recipe": {
-              "label": "Recipe",
-              "placeholder": "Select a recipe...",
-              "required": "You must select a recipe"
-            },
-            "asset": {
-              "label": "Earth Engine asset ID",
-              "placeholder": "Enter an asset ID...",
-              "required": "You must enter an asset ID"
-            }
-          },
-          "retrieve": {
-            "form":  {
-              "destination.label":  "Destination"
-            }
-          }
-        },
-        "trainingData": {
-          "button": "TRN",
-          "tooltip": "Configure training data source",
-          "title": "Training data",
-          "form": {
-            "fusionTable": {
-              "label": "Fusion table",
-              "placeholder": "Enter a Fusion Table ID",
-              "required": "Fusion Table must be specified",
-              "invalid": "Invalid Fution Table ID"
-            },
-            "fusionTableColumn": {
-              "label": "Class column",
-              "placeholder.loading": "Loading columns...",
-              "placeholder.noFusionTable": "Enter a Fusion Table ID first",
-              "placeholder.loaded": "Select a column...",
-              "required": "A column must be selected"
-            },
-            "openCeo": "Open training data collection tool"
-          }
-        },
-        "retrieve": {
-          "title": "Retrieve",
-          "tooltip": "Retrieve classification",
-          "apply": "Retrieve",
-          "form": {
-            "destination": {
-              "label": "Retrieve to",
-              "required": "A destination must be selected",
-              "SEPAL": "Sepal workspace",
-              "GEE": "Google Earth Engine asset"
-            },
-            "task": {
-              "SEPAL": "Retrieve {name} to Sepal workspace",
-              "GEE": "Export {name} as a Google Earth Engine asset"
-            }
-          }
-        }
-      },
-      "preview": {
-        "initializing": "Loading preview...",
-        "loading": "Loaded {loaded} of {count} tiles",
-        "tilesFailed": "{failed} failed",
-        "error": "Failed to create preview"
-      }
-    },
-    "changeDetection": {
-      "create": "Change detection",
-      "panel": {
-        "source": {
-          "recipe": {
-            "title": "Select saved Sepal recipe"
-          },
-          "asset": {
-            "title": "Select Earth Engine asset"
-          },
-          "form": {
-            "section": {
-              "required": "An image must be selected"
-            },
-            "recipe": {
-              "label": "Recipe",
-              "placeholder": "Select a recipe...",
-              "required": "You must select a recipe"
-            },
-            "asset": {
-              "label": "Earth Engine asset ID",
-              "placeholder": "Enter an asset ID...",
-              "required": "You must enter an asset ID"
-            }
-          },
-          "retrieve": {
-            "form":  {
-              "destination.label":  "Destination"
-            }
-          }
-        },
-        "source1": {
-          "button": "IM1",
-          "tooltip": "Select first mosaic",
-          "title": "First image"
-        },
-        "source2": {
-          "button": "IM2",
-          "tooltip": "Select second mosaic",
-          "title": "Second image"
-        },
-        "trainingData": {
-          "button": "TRN",
-          "tooltip": "Configure training data source",
-          "title": "Training data",
-          "form": {
-            "fusionTable": {
-              "label": "Fusion table",
-              "placeholder": "Enter a Fusion Table ID",
-              "required": "Fusion Table must be specified",
-              "invalid": "Invalid Fution Table ID"
-            },
-            "fusionTableColumn": {
-              "label": "Class column",
-              "placeholder.loading": "Loading columns...",
-              "placeholder.noFusionTable": "Enter a Fusion Table ID first",
-              "placeholder.loaded": "Select a column...",
-              "required": "A column must be selected"
-            },
-            "openCeo": "Open training data collection tool"
-          }
-        },
-        "retrieve": {
-          "title": "Retrieve",
-          "tooltip": "Retrieve classification",
-          "apply": "Retrieve",
-          "form": {
-            "destination": {
-              "label": "Retrieve to",
-              "required": "A destination must be selected",
-              "SEPAL": "Sepal workspace",
-              "GEE": "Google Earth Engine asset"
-            },
-            "task": {
-              "SEPAL": "Retrieve {name} to Sepal workspace",
-              "GEE": "Export {name} as a Google Earth Engine asset"
-            }
-          }
-        }
-      },
-      "preview": {
-        "initializing": "Loading preview...",
-        "loading": "Loaded {loaded} of {count} tiles",
-        "tilesFailed": "{failed} failed",
-        "error": "Failed to create preview"
-      }
-    },
-    "timeSeries": {
-      "create": "Time series",
-      "mapToolbar": {
-        "zoom.tooltip": "Zoom to area",
-        "zoomIn.tooltip": "Zoom in",
-        "zoomOut.tooltip": "Zoom out",
-        "labels.show.tooltip": "Show labels",
-        "labels.hide.tooltip": "Hide labels",
-        "centerMap.tooltip": "Zoom to area of interest"
-      },
-      "panel": {
-        "retrieve": {
-          "title": "Retrieve",
-          "tooltip": "Retrieve time-series",
-          "apply": "Retrieve",
-          "form": {
-            "indicator": {
-              "label": "Indicator",
-              "required": "You must select an indicator"
-            }
-          },
-          "task": "Retrieve {name} to Sepal workspace"
-        },
-        "dates": {
-          "title": "Dates",
-          "button": "DAT",
-          "tooltip": "Specify date range",
-          "form": {
-            "startDate": {
-              "label": "Start date",
-              "tooltip": "The first date of the time-series, inclusive.",
-              "required": "Date is required",
-              "malformed": "Invalid date",
-              "beforeEnd":"Must be before end"
-            },
-            "endDate": {
-              "label": "End date",
-              "tooltip": "The last date of the time-series, exclusive.",
-              "required": "Date is required",
-              "malformed": "Invalid date"
-            }
-          }
-        },
-        "sources": {
-          "title": "Sources",
-          "button": "SRC",
-          "tooltip": "Select image source",
-          "form": {
-            "dataSets": {
-              "label": "Datasets",
-              "options": {
-                "LANDSAT_8": {
-                  "label": "L8",
-                  "tooltip": "Landsat 8"
+        "changeDetection": {
+            "create": "Change detection",
+            "panel": {
+                "source": {
+                    "recipe": {
+                        "title": "Select saved Sepal recipe"
+                    },
+                    "asset": {
+                        "title": "Select Earth Engine asset"
+                    },
+                    "form": {
+                        "section": {
+                            "required": "An image must be selected"
+                        },
+                        "recipe": {
+                            "label": "Recipe",
+                            "placeholder": "Select a recipe...",
+                            "required": "You must select a recipe"
+                        },
+                        "asset": {
+                            "label": "Earth Engine asset ID",
+                            "placeholder": "Enter an asset ID...",
+                            "required": "You must enter an asset ID"
+                        }
+                    },
+                    "retrieve": {
+                        "form": {
+                            "destination.label": "Destination"
+                        }
+                    }
                 },
-                "LANDSAT_7": {
-                  "label": "L7",
-                  "tooltip": "Landsat 7"
+                "source1": {
+                    "button": "IM1",
+                    "tooltip": "Select first mosaic",
+                    "title": "First image"
                 },
-                "LANDSAT_TM": {
-                  "label": "L4-5",
-                  "tooltip": "Landsat 4-5"
+                "source2": {
+                    "button": "IM2",
+                    "tooltip": "Select second mosaic",
+                    "title": "Second image"
                 },
-                "LANDSAT_8_T2": {
-                  "label": "L8 T2",
-                  "tooltip": "Landsat 8 Tier 2"
+                "trainingData": {
+                    "button": "TRN",
+                    "tooltip": "Configure training data source",
+                    "title": "Training data",
+                    "form": {
+                        "fusionTable": {
+                            "label": "Fusion table",
+                            "placeholder": "Enter a Fusion Table ID",
+                            "required": "Fusion Table must be specified",
+                            "invalid": "Invalid Fution Table ID"
+                        },
+                        "fusionTableColumn": {
+                            "label": "Class column",
+                            "placeholder.loading": "Loading columns...",
+                            "placeholder.noFusionTable": "Enter a Fusion Table ID first",
+                            "placeholder.loaded": "Select a column...",
+                            "required": "A column must be selected"
+                        },
+                        "openCeo": "Open training data collection tool"
+                    }
                 },
-                "LANDSAT_7_T2": {
-                  "label": "L7 T2",
-                  "tooltip": "Landsat 7 Tier 2"
-                },
-                "LANDSAT_TM_T2": {
-                  "label": "L4-5 T2",
-                  "tooltip": "Landsat 4-5 Tier 2"
+                "retrieve": {
+                    "title": "Retrieve",
+                    "tooltip": "Retrieve classification",
+                    "apply": "Retrieve",
+                    "form": {
+                        "destination": {
+                            "label": "Retrieve to",
+                            "required": "A destination must be selected",
+                            "SEPAL": "Sepal workspace",
+                            "GEE": "Google Earth Engine asset"
+                        },
+                        "task": {
+                            "SEPAL": "Retrieve {name} to Sepal workspace",
+                            "GEE": "Export {name} as a Google Earth Engine asset"
+                        }
+                    }
                 }
-              }
             },
-            "required": "A data source must be selected"
-          }
-        },
-        "preprocess": {
-          "title": "Pre-process",
-          "button": "PRC",
-          "tooltip": "Configure scene pre-processing",
-          "form": {
-            "corrections": {
-              "label": "Corrections",
-              "surfaceReflectance": {
-                "label": "Surface reflectance",
-                "tooltip": "Use scenes atmospherically corrected surface reflectance."
-              },
-              "brdf": {
-                "label": "BRDF correction",
-                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
-              }
-            },
-            "mask": {
-              "label": "Mask",
-              "snow": {
-                "label": "Snow",
-                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
-              }
+            "preview": {
+                "initializing": "Loading preview...",
+                "loading": "Loaded {loaded} of {count} tiles",
+                "tilesFailed": "{failed} failed",
+                "error": "Failed to create preview"
             }
-          }
-        }
-      }
-    },
-    "landCover": {
-      "create": "RLCMS",
-      "panel": {
-        "period": {
-          "title": "Period",
-          "button": "PER",
-          "tooltip": "Specify time period",
-          "startYear": {
-            "label": "Start year",
-            "malformed": "Not a year"
-          },
-          "endYear": {
-            "label": "End year",
-            "malformed": "Not a year"
-          },
-          "startBeforeEnd": "Start must be before end year"
         },
-        "typology": {
-          "title": "Typology",
-          "button": "TYP",
-          "tooltip": "Select typology"
-        },
-        "trainingData": {
-          "button": "TRN",
-          "tooltip": "Configure training data source",
-          "title": "Training data",
-          "form": {
-            "fusionTable": {
-              "label": "Fusion table",
-              "placeholder": "Enter a Fusion Table ID",
-              "required": "Fusion Table must be specified",
-              "invalid": "Invalid Fusion Table ID"
+        "timeSeries": {
+            "create": "Time series",
+            "mapToolbar": {
+                "zoom.tooltip": "Zoom to area",
+                "zoomIn.tooltip": "Zoom in",
+                "zoomOut.tooltip": "Zoom out",
+                "labels.show.tooltip": "Show labels",
+                "labels.hide.tooltip": "Hide labels",
+                "centerMap.tooltip": "Zoom to area of interest"
             },
-            "yearColumn": {
-              "label": "Year column",
-              "placeholder.loading": "Loading columns...",
-              "placeholder.noFusionTable": "Enter a Fusion Table ID first",
-              "placeholder.loaded": "Select a column...",
-              "required": "A column must be selected"
+            "panel": {
+                "retrieve": {
+                    "title": "Retrieve",
+                    "tooltip": "Retrieve time-series",
+                    "apply": "Retrieve",
+                    "form": {
+                        "indicator": {
+                            "label": "Indicator",
+                            "required": "You must select an indicator"
+                        }
+                    },
+                    "task": "Retrieve {name} to Sepal workspace"
+                },
+                "dates": {
+                    "title": "Dates",
+                    "button": "DAT",
+                    "tooltip": "Specify date range",
+                    "form": {
+                        "startDate": {
+                            "label": "Start date",
+                            "tooltip": "The first date of the time-series, inclusive.",
+                            "required": "Date is required",
+                            "malformed": "Invalid date",
+                            "beforeEnd": "Must be before end"
+                        },
+                        "endDate": {
+                            "label": "End date",
+                            "tooltip": "The last date of the time-series, exclusive.",
+                            "required": "Date is required",
+                            "malformed": "Invalid date"
+                        }
+                    }
+                },
+                "sources": {
+                    "title": "Sources",
+                    "button": "SRC",
+                    "tooltip": "Select image source",
+                    "form": {
+                        "dataSets": {
+                            "label": "Datasets",
+                            "options": {
+                                "LANDSAT_8": {
+                                    "label": "L8",
+                                    "tooltip": "Landsat 8"
+                                },
+                                "LANDSAT_7": {
+                                    "label": "L7",
+                                    "tooltip": "Landsat 7"
+                                },
+                                "LANDSAT_TM": {
+                                    "label": "L4-5",
+                                    "tooltip": "Landsat 4-5"
+                                },
+                                "LANDSAT_8_T2": {
+                                    "label": "L8 T2",
+                                    "tooltip": "Landsat 8 Tier 2"
+                                },
+                                "LANDSAT_7_T2": {
+                                    "label": "L7 T2",
+                                    "tooltip": "Landsat 7 Tier 2"
+                                },
+                                "LANDSAT_TM_T2": {
+                                    "label": "L4-5 T2",
+                                    "tooltip": "Landsat 4-5 Tier 2"
+                                }
+                            }
+                        },
+                        "required": "A data source must be selected"
+                    }
+                },
+                "preprocess": {
+                    "title": "Pre-process",
+                    "button": "PRC",
+                    "tooltip": "Configure scene pre-processing",
+                    "form": {
+                        "corrections": {
+                            "label": "Corrections",
+                            "surfaceReflectance": {
+                                "label": "Surface reflectance",
+                                "tooltip": "Use scenes atmospherically corrected surface reflectance."
+                            },
+                            "brdf": {
+                                "label": "BRDF correction",
+                                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+                            }
+                        },
+                        "mask": {
+                            "label": "Mask",
+                            "snow": {
+                                "label": "Snow",
+                                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "landCover": {
+            "create": "RLCMS",
+            "panel": {
+                "period": {
+                    "title": "Period",
+                    "button": "PER",
+                    "tooltip": "Specify time period",
+                    "startYear": {
+                        "label": "Start year",
+                        "malformed": "Not a year"
+                    },
+                    "endYear": {
+                        "label": "End year",
+                        "malformed": "Not a year"
+                    },
+                    "startBeforeEnd": "Start must be before end year"
+                },
+                "typology": {
+                    "title": "Typology",
+                    "button": "TYP",
+                    "tooltip": "Select typology"
+                },
+                "trainingData": {
+                    "button": "TRN",
+                    "tooltip": "Configure training data source",
+                    "title": "Training data",
+                    "form": {
+                        "fusionTable": {
+                            "label": "Fusion table",
+                            "placeholder": "Enter a Fusion Table ID",
+                            "required": "Fusion Table must be specified",
+                            "invalid": "Invalid Fusion Table ID"
+                        },
+                        "yearColumn": {
+                            "label": "Year column",
+                            "placeholder.loading": "Loading columns...",
+                            "placeholder.noFusionTable": "Enter a Fusion Table ID first",
+                            "placeholder.loaded": "Select a column...",
+                            "required": "A column must be selected"
+                        },
+                        "classColumn": {
+                            "label": "Class column",
+                            "placeholder.loading": "Loading columns...",
+                            "placeholder.noFusionTable": "Enter a Fusion Table ID first",
+                            "placeholder.loaded": "Select a column...",
+                            "required": "A column must be selected"
+                        },
+                        "yearAndClassColumnsSame": "Year and class columns are the same"
+                    }
+                },
+                "compositeOptions": {
+                    "title": "Composite options",
+                    "button": "CMP",
+                    "tooltip": "Configure how composite is created"
+                },
+                "createComposites": {
+                    "tooltip": "Create composites",
+                    "task": "Create RLCMS composites"
+                },
+                "createLandCoverMap": {
+                    "tooltip": "Create land-cover map",
+                    "task": "Create RLCMS land-cover map"
+                }
+            }
+        }
+    },
+    "tasks": {
+        "removeAll.tooltip": "Remove all completed, failed, or stopped tasks",
+        "none": "You have no background tasks."
+    },
+    "user": {
+        "userDetails": {
+            "title": "User details",
+            "form": {
+                "username": {
+                    "label": "Username",
+                    "required": "Username is required",
+                    "format": "Username should start with a letter"
+                },
+                "name": {
+                    "label": "Name",
+                    "required": "Name is required"
+                },
+                "email": {
+                    "label": "Email",
+                    "required": "Email is required"
+                },
+                "organization": {
+                    "label": "Organization",
+                    "required": "Organization is required"
+                },
+                "status": {
+                    "label": "Status"
+                },
+                "monthlyLimits": {
+                    "label": "Monthly limits"
+                },
+                "monthlyInstanceBudget": {
+                    "label": "Instance US$",
+                    "required:": "Monthly instance budget is required",
+                    "atLeast1": "Monthly instance budget must be at least 1"
+                },
+                "monthlyStorageBudget": {
+                    "label": "Storage US$",
+                    "required:": "Monthly storage budget is required",
+                    "atLeast1": "Monthly storage budget must be at least 1"
+                },
+                "storageQuota": {
+                    "label": "Storage GB",
+                    "required:": "Monthly storage quota is required",
+                    "atLeast1": "Monthly storage must be at least 1"
+                }
             },
-            "classColumn": {
-              "label": "Class column",
-              "placeholder.loading": "Loading columns...",
-              "placeholder.noFusionTable": "Enter a Fusion Table ID first",
-              "placeholder.loaded": "Select a column...",
-              "required": "A column must be selected"
+            "useUserGoogleAccount": {
+                "label": "Use my own Google account",
+                "tooltip": "Give Sepal permission to use your Google drive and manage your Earth Engine assets. This gives you full access to Sepal's functionality."
             },
-            "yearAndClassColumnsSame": "Year and class columns are the same"
-          }
+            "useSepalGoogleAccount": {
+                "label": "Use Sepal's Google account",
+                "tooltip": "Revoke Sepal's permission to use your Google drive and manage your Earth Engine assets. Some features like exporting to Earth Engine assets will not be available."
+            },
+            "switchingToSepalGoogleAccount": "Switching to Sepal's Google Account",
+            "update": {
+                "success.title": "User details have been updated",
+                "error.title": "Could not update user details"
+            }
         },
-        "compositeOptions": {
-          "title": "Composite options",
-          "button": "CMP",
-          "tooltip": "Configure how composite is created"
+        "changePassword": {
+            "title": "Change password",
+            "form": {
+                "oldPassword": {
+                    "label": "Current password",
+                    "required": "Current password is required",
+                    "incorrect": "Incorrect password"
+                },
+                "newPassword": {
+                    "label": "New password",
+                    "required": "New password is required",
+                    "notMatching": "Passwords are not matching",
+                    "invalid": "Passwords must be at least 8 characters long"
+                },
+                "confirmPassword": {
+                    "label": "New password (confirm)",
+                    "required": "New password is required"
+                }
+            },
+            "updating": "Updating...",
+            "success": {
+                "title": "User password has been changed",
+                "message": " "
+            }
         },
-        "createComposites": {
-          "tooltip": "Create composites",
-          "task": "Create RLCMS composites"
+        "userSession": {
+            "form": {
+                "name": {
+                    "label": "Instance name"
+                },
+                "keepAlive": {
+                    "label": "Keep alive",
+                    "info": "Keep instance alive for at least {value} hours."
+                }
+            },
+            "suspend": {
+                "label": "Suspend",
+                "tooltip": "Suspend current session. Suspended sessions can be resumed."
+            },
+            "update": {
+                "success.title": "User session has been updated",
+                "error.title": "Could not update user session"
+            },
+            "stop": {
+                "label": "Stop",
+                "tooltip": "Stop current session. Stopped sessions cannot be resumed.",
+                "success.title": "Session stopped.",
+                "error.title": "Could not stop session."
+            }
         },
-        "createLandCoverMap": {
-          "tooltip": "Create land-cover map",
-          "task": "Create RLCMS land-cover map"
+        "report": {
+            "title": "User report",
+            "resources": {
+                "title": "Resources",
+                "monthlyInstance": "Instance budget",
+                "monthlyStorage": "Storage budget",
+                "storage": "Storage",
+                "quota": "Quota",
+                "used": "Used",
+                "used%": "Used"
+            },
+            "sessions": {
+                "title": "Sessions",
+                "noSessions": "No active sessions",
+                "instanceType": "Instance type",
+                "instanceDescription": "Instance description",
+                "time": "Date/time started",
+                "cost": "Cost",
+                "hourlyCost": "Hourly cost",
+                "earliestTimeoutHours": "Keep alive"
+            }
+        },
+        "userMessages": {
+            "title": "User messages",
+            "post": "Post message",
+            "edit": "Edit message",
+            "remove": "Remove message",
+            "author": "Message by {author}",
+            "created": "created {when}",
+            "updated": "updated {when}",
+            "state": {
+                "READ": "Mark as unread",
+                "UNREAD": "Mark as read"
+            }
+        },
+        "userMessage": {
+            "title": "User message",
+            "form": {
+                "subject": {
+                    "label": "Subject",
+                    "required": "Subject is required"
+                },
+                "contents": {
+                    "label": "Contents",
+                    "required": "Contents is required"
+                }
+            },
+            "update": {
+                "success.title": "User message has been updated",
+                "error.title": "Cannot update user message"
+            },
+            "updateState": {
+                "success.title": "User message state has been updated",
+                "error.title": "Cannot update user message state"
+            },
+            "remove": {
+                "success.title": "User message has been removed",
+                "error.title": "Cannot remove user message"
+            }
         }
-      }
-    }
-  },
-  "tasks": {
-    "removeAll.tooltip": "Remove all completed, failed, or stopped tasks",
-    "none": "You have no background tasks."
-  },
-  "user": {
-    "userDetails": {
-      "title": "User details",
-      "form": {
-        "username": {
-          "label": "Username",
-          "required": "Username is required",
-          "format": "Username should start with a letter"
-        },
-        "name": {
-          "label": "Name",
-          "required": "Name is required"
-        },
-        "email": {
-          "label": "Email",
-          "required": "Email is required"
-        },
-        "organization": {
-          "label": "Organization",
-          "required": "Organization is required"
-        },
-        "status": {
-          "label": "Status"
-        },
-        "monthlyLimits": {
-          "label": "Monthly limits"
-        },
-        "monthlyInstanceBudget": {
-          "label": "Instance US$",
-          "required:": "Monthly instance budget is required",
-          "atLeast1": "Monthly instance budget must be at least 1"
-        },
-        "monthlyStorageBudget": {
-          "label": "Storage US$",
-          "required:": "Monthly storage budget is required",
-          "atLeast1": "Monthly storage budget must be at least 1"
-        },
-        "storageQuota": {
-          "label": "Storage GB",
-          "required:": "Monthly storage quota is required",
-          "atLeast1": "Monthly storage must be at least 1"
+    },
+    "users": {
+        "countNoFilter": "{count} total users",
+        "countWithFilter": "{count} users matching \"{filter}\"",
+        "page": "Page {pageNumber} of {pageCount}",
+        "add.label": "Add user"
+    },
+    "unauthorized.warning": {
+        "title": "You are not logged in",
+        "message": "Perhaps you have been inactive too long?"
+    },
+    "action": {
+        "error.title": "Failed: {action}",
+        "type": {
+            "LOAD_CURRENT_USER": "Load current user",
+            "SCHEDULE_USER_INFO_REFRESH": "Schedule user info request",
+            "LOGIN": "Login",
+            "REQUEST_PASSWORD_RESET": "Request password reset",
+            "VALIDATE_TOKEN": "Validate link",
+            "RESET_PASSWORD": "Reset password",
+            "INIT_GOOGLE_MAPS_API": "Initialize Google Maps",
+            "LOAD_RECIPES": "Load recipes",
+            "LOAD_RECIPE": "Load recipe",
+            "DUPLICATE_RECIPE": "Duplicate recipe",
+            "LOAD_COUNTRIES": "Load countries",
+            "LOAD_COUNTRY_AREAS": "Load areas of country",
+            "LOAD_FUSION_TABLE_COLUMNS": "Load Fusion Table columns",
+            "LOAD_FUSION_TABLE_ROWS": "Load Fusion Table rows",
+            "LOAD_SCENE_AREAS": "Load scene areas",
+            "LOAD_SCENES": "Load scenes",
+            "AUTO_SELECT_SCENES": "Auto-select scenes",
+            "LOAD_DIRECTORY": "Load user directory",
+            "REMOVE_FILE": "Delete file",
+            "REMOVE_DIRECTORY": "Delete directory",
+            "LOAD_APPS": "Load applications",
+            "RUN_APP": "Open application",
+            "SCHEDULE_UPDATE_TASKS": "Update background tasks",
+            "RESTART_TASK": "Restart task",
+            "STOP_TASK": "Stop task",
+            "REMOVE_TASK": "Remove task"
         }
-      },
-      "useUserGoogleAccount": {
-        "label": "Use my own Google account",
-        "tooltip": "Give Sepal permission to use your Google drive and manage your Earth Engine assets. This gives you full access to Sepal's functionality."
-      },
-      "useSepalGoogleAccount": {
-        "label": "Use Sepal's Google account",
-        "tooltip": "Revoke Sepal's permission to use your Google drive and manage your Earth Engine assets. Some features like exporting to Earth Engine assets will not be available."
-      },
-      "switchingToSepalGoogleAccount": "Switching to Sepal's Google Account",
-      "update": {
-        "success.title": "User details have been updated",
-        "error.title": "Could not update user details"
-      }
     },
-    "changePassword": {
-      "title": "Change password",
-      "form": {
-        "oldPassword": {
-          "label": "Current password",
-          "required": "Current password is required",
-          "incorrect": "Incorrect password"
+    "bands": {
+        "blue": "Blue",
+        "green": "Green",
+        "red": "Red",
+        "nir": "NIR",
+        "swir1": "SWIR 1",
+        "swir2": "SWIR 2",
+        "redEdge1": "Red edge 1",
+        "redEdge2": "Red edge 2",
+        "redEdge3": "Red edge 3",
+        "redEdge4": "Red edge 4",
+        "aerosol": "Aerosol",
+        "waterVapor": "Water vapor",
+        "thermal": "Thermal",
+        "thermal2": "Thermal 2",
+        "cirrus": "Cirrus",
+        "pan": "Pan",
+        "unixTimeDays": "Date",
+        "dayOfYear": "Day of year",
+        "daysFromTarget": "Days from target"
+    },
+    "button": {
+        "ok": "OK",
+        "cancel": "Cancel",
+        "add": "Add",
+        "remove": "Remove",
+        "back": "Back",
+        "next": "Next",
+        "done": "Done",
+        "more": "More",
+        "less": "Less",
+        "retry": "Retry",
+        "restart": "Restart",
+        "stop": "Stop"
+    },
+    "widget": {
+        "seasonSelect": {
+            "from": "From",
+            "to": "To"
         },
-        "newPassword": {
-          "label": "New password",
-          "required": "New password is required",
-          "notMatching": "Passwords are not matching",
-          "invalid": "Passwords must be at least 8 characters long"
+        "tabs": {
+            "newTab": "New_Tab"
         },
-        "confirmPassword": {
-          "label": "New password (confirm)",
-          "required": "New password is required"
+        "comboBox": {
+            "loading": "Loading..."
         }
-      },
-      "updating": "Updating...",
-      "success": {
-        "title": "User password has been changed",
-        "message": " "
-      }
     },
-    "userSession": {
-      "form": {
-        "name": {
-          "label": "Instance name"
-        },
-        "keepAlive": {
-          "label": "Keep alive",
-          "info": "Keep instance alive for at least {value} hours."
+    "fusionTable": {
+        "unauthorized": "You don't have access to this Fusion Table",
+        "notFound": "Fusion Table not found",
+        "failedToLoad": "Failed to load Fusion Table"
+    },
+    "format": {
+        "dollars": "${value}",
+        "dollarsPerHour": "${value}/hr",
+        "hour": "{value}hr",
+        "GB": "{value}GB",
+        "percent": "{value}%"
+    },
+    "notifications": {
+        "error": {
+            "connectionError": "Failed to connect to server. Either your internet connection failed, or server is unavailable at the moment.",
+            "generic": "Sepal encountered an error. Please try again or contact support if the problem persists."
         }
-      },
-      "suspend": {
-        "label": "Suspend",
-        "tooltip": "Suspend current session. Suspended sessions can be resumed."
-      },
-      "update": {
-        "success.title": "User session has been updated",
-        "error.title": "Could not update user session"
-      },
-      "stop": {
-        "label": "Stop",
-        "tooltip": "Stop current session. Stopped sessions cannot be resumed.",
-        "success.title": "Session stopped.",
-        "error.title": "Could not stop session."
-      }
     },
-    "report": {
-      "title": "User report",
-      "resources": {
-        "title": "Resources",
-        "monthlyInstance": "Instance budget",
-        "monthlyStorage": "Storage budget",
-        "storage": "Storage",
-        "quota": "Quota",
-        "used": "Used",
-        "used%": "Used"
-      },
-      "sessions": {
-        "title": "Sessions",
-        "noSessions": "No active sessions",
-        "instanceType": "Instance type",
-        "instanceDescription": "Instance description",
-        "time": "Date/time started",
-        "cost": "Cost",
-        "hourlyCost": "Hourly cost",
-        "earliestTimeoutHours": "Keep alive"
-      }
+    "pagination": {
+        "info": "Page {pageNumber} of {pageCount}. Total results: {itemCount}"
     },
-    "userMessages": {
-      "title": "User messages",
-      "post": "Post message",
-      "edit": "Edit message",
-      "remove": "Remove message",
-      "author": "Message by {author}",
-      "created": "created {when}",
-      "updated": "updated {when}",
-      "state": {
-        "READ": "Mark as unread",
-        "UNREAD": "Mark as read"
-      }
-    },
-    "userMessage": {
-      "title": "User message",
-      "form": {
-        "subject": {
-          "label": "Subject",
-          "required": "Subject is required"
+    "gee": {
+        "classification": {
+            "error.noTrainingData": "There is no training data in selected area of interest."
         },
-        "contents": {
-          "label": "Contents",
-          "required": "Contents is required"
-        }
-      },
-      "update": {
-        "success.title": "User message has been updated",
-        "error.title": "Cannot update user message"
-      },
-      "updateState": {
-        "success.title": "User message state has been updated",
-        "error.title": "Cannot update user message state"
-      },
-      "remove": {
-        "success.title": "User message has been removed",
-        "error.title": "Cannot remove user message"
-      }
+        "error.earthEngineException": "Google Earth Engine returned an error: {earthEngineMessage}",
+        "error.failedToLoadRecipe": "Failed to load Sepal recipe"
     }
-  },
-  "users": {
-    "countNoFilter": "{count} total users",
-    "countWithFilter": "{count} users matching \"{filter}\"",
-    "page": "Page {pageNumber} of {pageCount}",
-    "add.label": "Add user"
-  },
-  "unauthorized.warning": {
-    "title": "You are not logged in",
-    "message": "Perhaps you have been inactive too long?"
-  },
-  "action": {
-    "error.title": "Failed: {action}",
-    "type": {
-      "LOAD_CURRENT_USER": "Load current user",
-      "SCHEDULE_USER_INFO_REFRESH": "Schedule user info request",
-      "LOGIN": "Login",
-      "REQUEST_PASSWORD_RESET": "Request password reset",
-      "VALIDATE_TOKEN": "Validate link",
-      "RESET_PASSWORD": "Reset password",
-      "INIT_GOOGLE_MAPS_API": "Initialize Google Maps",
-      "LOAD_RECIPES": "Load recipes",
-      "LOAD_RECIPE": "Load recipe",
-      "DUPLICATE_RECIPE": "Duplicate recipe",
-      "LOAD_COUNTRIES": "Load countries",
-      "LOAD_COUNTRY_AREAS": "Load areas of country",
-      "LOAD_FUSION_TABLE_COLUMNS": "Load Fusion Table columns",
-      "LOAD_FUSION_TABLE_ROWS": "Load Fusion Table rows",
-      "LOAD_SCENE_AREAS": "Load scene areas",
-      "LOAD_SCENES": "Load scenes",
-      "AUTO_SELECT_SCENES": "Auto-select scenes",
-      "LOAD_DIRECTORY": "Load user directory",
-      "REMOVE_FILE": "Delete file",
-      "REMOVE_DIRECTORY": "Delete directory",
-      "LOAD_APPS": "Load applications",
-      "RUN_APP": "Open application",
-      "SCHEDULE_UPDATE_TASKS": "Update background tasks",
-      "RESTART_TASK": "Restart task",
-      "STOP_TASK": "Stop task",
-      "REMOVE_TASK": "Remove task"
-    }
-  },
-  "bands": {
-    "blue": "Blue",
-    "green": "Green",
-    "red": "Red",
-    "nir": "NIR",
-    "swir1": "SWIR 1",
-    "swir2": "SWIR 2",
-    "redEdge1": "Red edge 1",
-    "redEdge2": "Red edge 2",
-    "redEdge3": "Red edge 3",
-    "redEdge4": "Red edge 4",
-    "aerosol": "Aerosol",
-    "waterVapor": "Water vapor",
-    "thermal": "Thermal",
-    "thermal2": "Thermal 2",
-    "cirrus": "Cirrus",
-    "pan": "Pan",
-    "unixTimeDays": "Date",
-    "dayOfYear": "Day of year",
-    "daysFromTarget": "Days from target"
-  },
-  "button": {
-    "ok": "OK",
-    "cancel": "Cancel",
-    "add": "Add",
-    "remove": "Remove",
-    "back": "Back",
-    "next": "Next",
-    "done": "Done",
-    "more": "More",
-    "less": "Less",
-    "retry": "Retry",
-    "restart": "Restart",
-    "stop": "Stop"
-  },
-  "widget": {
-    "seasonSelect": {
-      "from": "From",
-      "to": "To"
-    },
-    "tabs": {
-      "newTab": "New_Tab"
-    },
-    "comboBox": {
-      "loading": "Loading..."
-    }
-  },
-  "fusionTable": {
-    "unauthorized": "You don't have access to this Fusion Table",
-    "notFound": "Fusion Table not found",
-    "failedToLoad": "Failed to load Fusion Table"
-  },
-  "format": {
-    "dollars": "${value}",
-    "dollarsPerHour": "${value}/hr",
-    "hour": "{value}hr",
-    "GB": "{value}GB",
-    "percent": "{value}%"
-  },
-  "notifications": {
-    "error": {
-      "connectionError": "Failed to connect to server. Either your internet connection failed, or server is unavailable at the moment.",
-      "generic": "Sepal encountered an error. Please try again or contact support if the problem persists."
-    }
-  },
-  "pagination": {
-    "info": "Page {pageNumber} of {pageCount}. Total results: {itemCount}"
-  },
-  "gee": {
-    "classification": {
-      "error.noTrainingData": "There is no training data in selected area of interest."
-    },
-    "error.earthEngineException": "Google Earth Engine returned an error: {earthEngineMessage}",
-    "error.failedToLoadRecipe": "Failed to load Sepal recipe"
-  }
 }
