@@ -11,19 +11,16 @@
     font-size: var(--font-size);
     line-height: calc(var(--ratio) * var(--font-size));
     min-width: calc(var(--ratio) * var(--font-size));
+    width: fit-content;
+}
+
+.button > * {
+    white-space: nowrap;
 }
 
 .button.chromeless {
-    /* --ratio: 1.5; */
     padding: 0;
 }
-/* .button.chromeless:before {
-    --ratio: 2;
-    content: '';
-    position: absolute;
-    background-color: red;
-    z-index: 2inherit;
-} */
 
 .button.small {
     --font-size: var(--small-font-size);
