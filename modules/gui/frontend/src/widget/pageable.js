@@ -105,16 +105,32 @@ PageData.propTypes = {
 export const PageControls = props => {
     const renderDefaultControls = pageable =>
         <ButtonGroup>
-            <Button icon='fast-backward'
+            <Button
+                chromeless
+                size='large'
+                shape='circle'
+                icon='fast-backward'
                 onClick={() => pageable.firstPage()}
                 disabled={pageable.isFirstPage}/>
-            <Button icon='backward'
+            <Button
+                chromeless
+                size='large'
+                shape='circle'
+                icon='backward'
                 onClick={() => pageable.prevPage()}
                 disabled={pageable.isFirstPage}/>
-            <Button icon='forward'
+            <Button
+                chromeless
+                size='large'
+                shape='circle'
+                icon='forward'
                 onClick={() => pageable.nextPage()}
                 disabled={pageable.isLastPage}/>
-            <Button icon='fast-forward'
+            <Button
+                chromeless
+                size='large'
+                shape='circle'
+                icon='fast-forward'
                 onClick={() => pageable.lastPage()}
                 disabled={pageable.isLastPage}/>
         </ButtonGroup>
