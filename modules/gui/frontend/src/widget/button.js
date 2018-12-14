@@ -152,7 +152,7 @@ Button.propTypes = {
 }
 
 export const ButtonGroup = ({children, wrap = true}) =>
-    <div className={[styles.group, wrap ? wrap : null].join(' ')}>
+    <div className={[styles.group, wrap ? styles.wrap : null].join(' ')}>
         {children}
     </div>
 
