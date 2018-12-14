@@ -33,22 +33,22 @@ class BudgetEndpoint {
             post('/budget', [ADMIN]) {
                 response.contentType = 'application/json'
                 constrain(UpdateBudget, [
-                        username: [notNull(), notBlank()],
-                        budget  : notNull()
+                    username: [notNull(), notBlank()],
+                    budget: notNull()
                 ])
                 constrain(Budget, [
-                        instanceSpending: Constraints.min(0),
-                        storageSpending : Constraints.min(0),
-                        storageQuota    : Constraints.min(0)
+                    instanceSpending: Constraints.min(0),
+                    storageSpending: Constraints.min(0),
+                    storageQuota: Constraints.min(0)
                 ])
 
                 def command = new UpdateBudget(
-                        username: params.required('username', String),
-                        budget: new Budget(
-                                instanceSpending: params.required('monthlyInstanceBudget', double),
-                                storageSpending: params.required('monthlyStorageBudget', double),
-                                storageQuota: params.required('storageQuota', double)
-                        )
+                    username: params.required('username', String),
+                    budget: new Budget(
+                        instanceSpending: params.required('monthlyInstanceBudget', double),
+                        storageSpending: params.required('monthlyStorageBudget', double),
+                        storageQuota: params.required('storageQuota', double)
+                    )
                 )
                 def errors = bindAndValidate(command)
                 if (errors)
@@ -69,12 +69,14 @@ class BudgetEndpoint {
 
     private Map spendingAsMap(UserSpendingReport spending) {
         [
-                monthlyInstanceBudget  : spending.instanceBudget,
-                monthlyInstanceSpending: spending.instanceSpending.round(2),
-                monthlyStorageBudget   : spending.storageBudget,
-                monthlyStorageSpending : spending.storageSpending.round(2),
-                storageQuota           : spending.storageQuota,
-                storageUsed            : spending.storageUsage.round(2)
+            currentMonth: [
+                instanceSpending: spending.instanceSpending.round(2),
+                storageSpending: spending.storageSpending.round(2),
+                storageQuota: spending.storageUsage.round(2)],
+            monthlyBudget: [
+                instanceSpending: spending.instanceBudget,
+                storageSpending: spending.storageBudget,
+                storageQuota: spending.storageQuota]
         ]
     }
 
