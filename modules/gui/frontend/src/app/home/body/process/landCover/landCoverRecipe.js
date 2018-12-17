@@ -98,7 +98,7 @@ const initRecipe = recipe => {
     const model = recipe.model
     if (model) {
         actions.setInitialized(model.aoi && model.period && model.typology).dispatch()
-        actions.setStatus(statuses.COMPOSITES_PENDING_CREATION).dispatch()
+        actions.setStatus(Status.COMPOSITES_PENDING_CREATION).dispatch()
         return
     }
 
@@ -121,7 +121,6 @@ const initRecipe = recipe => {
                     {id: 'grass', label: 'Grass', value: 10},
                     {id: 'crop', label: 'Crop', value: 7},
                     {id: 'paramo', label: 'Paramo', value: 9},
-                    {id: 'agriculturalMosaic', label: 'Agricultural mosaic (association)', value: 7},
                     {id: 'water', label: 'Water', value: 8},
                     {id: 'urban', label: 'Inhabited area', value: 6},
                     {id: 'barren', label: 'Barren', value: 0}
@@ -137,11 +136,11 @@ const initRecipe = recipe => {
         model: {}
     }).dispatch()
 
-    actions.setStatus(statuses.UNINITIALIZED).dispatch()
+    actions.setStatus(Status.UNINITIALIZED).dispatch()
 }
 
 export const createComposites = recipe => {
-    RecipeActions(recipe.id).setStatus(statuses.CREATING_COMPOSITES).dispatch()
+    RecipeActions(recipe.id).setStatus(Status.CREATING_COMPOSITES).dispatch()
     const taskTitle = msg('process.landCover.panel.createComposites.task')
     api.tasks.submit$({
         operation: 'sepal.landcover.create_composites',
@@ -158,7 +157,7 @@ export const createComposites = recipe => {
 }
 
 export const createLandCoverMap = recipe => {
-    RecipeActions(recipe.id).setStatus(statuses.CREATING_LAND_COVER_MAP).dispatch()
+    RecipeActions(recipe.id).setStatus(Status.CREATING_LAND_COVER_MAP).dispatch()
     const taskTitle = msg('process.landCover.panel.createLandCoverMap.task')
     api.tasks.submit$({
         operation: 'sepal.landcover.create_land_cover_map',
@@ -177,7 +176,7 @@ export const createLandCoverMap = recipe => {
     }).subscribe(task => RecipeActions(recipe.id).setLandCoverMapTaskId(task.id).dispatch())
 }
 
-export const statuses = {
+export const Status = {
     UNINITIALIZED: 'UNINITIALIZED',
     COMPOSITES_PENDING_CREATION: 'COMPOSITES_PENDING_CREATION',
     CREATING_COMPOSITES: 'CREATING_COMPOSITES',

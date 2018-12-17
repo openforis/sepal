@@ -1,8 +1,9 @@
 import logging
+import random
 import threading
+import time
 from abc import abstractmethod
 
-import time
 from promise import Promise
 
 from ..exception import re_raisable
@@ -23,7 +24,7 @@ class Task(object):
     REJECTED = 'REJECTED'
     CANCELED = 'CANCELED'
 
-    def __init__(self, retries=2):
+    def __init__(self, retries=0):
         super(Task, self).__init__()
         self.state = Task.UNSUBMITTED
         self._state_lock = threading.Lock()
@@ -43,7 +44,6 @@ class Task(object):
         if not self._set_state(Task.SUBMITTED, lambda state: state == Task.UNSUBMITTED):
             return
         self._enqueue({'type': Task.SUBMITTED})
-        # noinspection PyTypeChecker
         return Promise(self._start)
 
     def resolve(self, value=None):
@@ -57,16 +57,21 @@ class Task(object):
             self._close()
 
     def reject(self, exception):
+        if not self._set_state(Task.REJECTED, lambda state: state in [Task.UNSUBMITTED, Task.SUBMITTED, Task.RUNNING]):
+            return
         if self._current_try <= self._retries:
             self._set_state(Task.SUBMITTED)
-            logger.exception('Retrying {0}. Try: {1} of {2}'.format(self, self._current_try, self._retries + 1))
+            delay_seconds = (2 ** self._current_try) + (random.randint(0, 1000) / 1000)
+            logger.error(
+                'Retrying {0} in {1} seconds. exception: {2}, try: {3} of {4}'
+                    .format(self, delay_seconds, exception, self._current_try, self._retries + 1)
+            )
+            time.sleep(delay_seconds)
             self._current_try = self._current_try + 1
             self._start(self._resolve, self._reject)
             return
-        if not self._set_state(Task.REJECTED, lambda state: state in [Task.UNSUBMITTED, Task.SUBMITTED, Task.RUNNING]):
-            return
+        logger.error('Rejected {0} after {1} tries. exception: {2}'.format(self, self._current_try, exception))
         self._exception = exception
-        logger.exception('Rejected {0} after {1} tries'.format(self, self._current_try))
         try:
             return self._reject(exception) if self._reject else Promise.reject(exception)
         finally:
@@ -140,6 +145,36 @@ class Task(object):
         task._dependee = self
         return task
 
+    def pipe(self, *callbacks):
+        callbacks = list(callbacks)
+        callbacks.append(self.resolve)
+        if self.state == Task.UNSUBMITTED:
+            next_promise = self.submit()
+        else:
+            next_promise = callbacks[0] if isinstance(callbacks[0], Promise) else callbacks[0]()
+            callbacks = callbacks[1:]
+
+        def create_callbacks(callback):
+            # argspec = getargspec(callback)
+            # pass_value = len(argspec.args) > 0
+
+            def did_fulfill(value):
+                if self.state == Task.REJECTED:
+                    return
+                try:
+                    # return callback(value) if pass_value else callback()
+                    return callback()
+                except:
+                    logger.exception('Failed to execute success callback for task {0}'.format(0))
+
+            return did_fulfill, self.reject
+
+        for callback in callbacks:
+            did_fulfill, did_reject = create_callbacks(callback)
+            next_promise = next_promise.then(did_fulfill, did_reject)
+
+        return next_promise
+
     def _start(self, resolve, reject):
         raise AssertionError('Method in subclass expected to have been invoked')
 
@@ -148,7 +183,8 @@ class Task(object):
             return
         try:
             self.run()
-        except Exception:
+        except:
+            logger.exception('Failed to execute task {0}'.format(self))
             self.reject(re_raisable())
         finally:
             if self.state != Task.RUNNING:
@@ -178,7 +214,7 @@ class Task(object):
         self._state_lock.acquire()
         try:
             if when(self.state) and (not dependee_lock or dependee.running() or new_state == Task.CANCELED):
-                logger.warn('{0} -> {1}: {2}'.format(self.state, new_state, self))
+                logger.info('{0} -> {1}: {2}'.format(self.state, new_state, self))
                 self.state = new_state
                 return True
             return False
@@ -219,7 +255,7 @@ import multiprocessing
 
 class ProcessTask(Task):
     def __init__(self):
-        super(ProcessTask, self).__init__()
+        super(ProcessTask, self).__init__(retries=0)
         self._process = None
 
     def _start(self, resolve, reject):

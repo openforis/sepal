@@ -11,6 +11,7 @@ def convert(decision_tree):
         if type(true_value) is dict:
             key = key + 1
             value['left'] = convert_key(true_value, key)
+            value['leftName'] = None
         else:
             value['left'] = 'terminal'
             value['leftName'] = 'other' if true_value is None else true_value

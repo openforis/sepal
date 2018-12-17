@@ -127,7 +127,7 @@ class CompositePreview extends React.Component {
         return {
             recipe: {
                 type: 'ASSET',
-                path: `${name}/${year}-composite`,
+                path: `${name}/composites/${year}`,
                 vizParams
             }
         }

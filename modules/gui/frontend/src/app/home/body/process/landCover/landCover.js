@@ -1,4 +1,4 @@
-import {RecipeState, recipePath} from './landCoverRecipe'
+import {RecipeState, recipePath, Status} from './landCoverRecipe'
 import {connect, select} from 'store'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
@@ -8,8 +8,6 @@ import LandCoverToolbar from './landCoverToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import PreviewSelection from './previewSelection'
 import React from 'react'
-import api from 'api'
-
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
@@ -21,15 +19,6 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class LandCover extends React.Component {
-    assessAccuracy() {
-        this.props.asyncActionBuilder('ASSES_ACCURACY',
-            api.tasks.submit$({
-                operation: 'sepal.landcover.assess_land_cover_map_accuracy',
-                params: {}
-            })
-        ).dispatch()
-    }
-
     render() {
         const {recipeId} = this.props
         return (
@@ -62,9 +51,8 @@ class LandCover extends React.Component {
     }
 
     inPreviewableState() {
-        // const {status} = this.props
-        // return ![statuses.UNINITIALIZED, statuses.COMPOSITES_PENDING_CREATION, statuses.CREATING_COMPOSITES].includes(status)
-        return true
+        const {status} = this.props
+        return ![Status.UNINITIALIZED, Status.COMPOSITES_PENDING_CREATION, Status.CREATING_COMPOSITES].includes(status)
     }
 
     // TODO: This is duplicated from mosaic. Will end up in classification too. Higher order component? AoiTab...

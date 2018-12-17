@@ -1,4 +1,4 @@
-import {RecipeActions, RecipeState, statuses} from './landCoverRecipe'
+import {RecipeActions, RecipeState, Status} from './landCoverRecipe'
 import {connect, select} from 'store'
 import React from 'react'
 
@@ -41,32 +41,32 @@ class CompositesMonitor extends React.Component {
         const setTaskStatus = (nextStatus) =>
             status !== nextStatus && this.recipeActions.setStatus(nextStatus).dispatch()
         if (!compositeTask) {
-            if (status === statuses.CREATING_COMPOSITES)
-                setTaskStatus(statuses.COMPOSITES_PENDING_CREATION)
+            if (status === Status.CREATING_COMPOSITES)
+                setTaskStatus(Status.COMPOSITES_PENDING_CREATION)
         }
-        if (compositeTask && [statuses.COMPOSITES_PENDING_CREATION, statuses.CREATING_COMPOSITES].includes(status)) {
+        if (compositeTask && [Status.COMPOSITES_PENDING_CREATION, Status.CREATING_COMPOSITES].includes(status)) {
             if (['ACTIVE', 'PENDING'].includes(compositeTask.status))
-                setTaskStatus(statuses.CREATING_COMPOSITES)
+                setTaskStatus(Status.CREATING_COMPOSITES)
             else if (compositeTask.status === 'COMPLETED')
-                setTaskStatus(statuses.COMPOSITES_CREATED)
+                setTaskStatus(Status.COMPOSITES_CREATED)
             else if (['CANCELED', 'FAILED'].includes(compositeTask.status))
-                setTaskStatus(statuses.COMPOSITES_PENDING_CREATION)
+                setTaskStatus(Status.COMPOSITES_PENDING_CREATION)
         }
 
         if (!landCoverTask) {
-            if (status === statuses.CREATING_LAND_COVER_MAP)
-                setTaskStatus(statuses.LAND_COVER_MAP_PENDING_CREATION)
+            if (status === Status.CREATING_LAND_COVER_MAP)
+                setTaskStatus(Status.LAND_COVER_MAP_PENDING_CREATION)
         }
-        if (status === statuses.COMPOSITES_CREATED
+        if (status === Status.COMPOSITES_CREATED
             && trainingData.tableId && trainingData.yearColumn && trainingData.classColumn)
-            setTaskStatus(statuses.LAND_COVER_MAP_PENDING_CREATION)
-        if (landCoverTask && [statuses.LAND_COVER_MAP_PENDING_CREATION, statuses.CREATING_LAND_COVER_MAP].includes(status)) {
+            setTaskStatus(Status.LAND_COVER_MAP_PENDING_CREATION)
+        if (landCoverTask && [Status.LAND_COVER_MAP_PENDING_CREATION, Status.CREATING_LAND_COVER_MAP].includes(status)) {
             if (['ACTIVE', 'PENDING'].includes(landCoverTask.status))
-                setTaskStatus(statuses.CREATING_LAND_COVER_MAP)
+                setTaskStatus(Status.CREATING_LAND_COVER_MAP)
             else if (landCoverTask.status === 'COMPLETED')
-                setTaskStatus(statuses.LAND_COVER_MAP_CREATED)
+                setTaskStatus(Status.LAND_COVER_MAP_CREATED)
             else if (['CANCELED', 'FAILED'].includes(landCoverTask.status))
-                setTaskStatus(statuses.LAND_COVER_MAP_PENDING_CREATION)
+                setTaskStatus(Status.LAND_COVER_MAP_PENDING_CREATION)
         }
     }
 

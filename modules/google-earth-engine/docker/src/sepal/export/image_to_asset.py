@@ -21,7 +21,7 @@ class ImageToAsset(ThreadTask):
             pyramidingPolicy=None,
             assetPath=None,
             assetId=None,
-            retries=0):
+            retries=3):
         super(ImageToAsset, self).__init__(None, retries)
         self.credentials = credentials
         self.image = image
@@ -64,10 +64,10 @@ class ImageToAsset(ThreadTask):
             asset_path = self.assetPath if self.assetPath else self.description
             asset_id = asset_roots[0]['id'] + '/' + asset_path
         description = self.description if self.description else asset_id.split('/')[-1]
-        try:
+
+        if ee.data.getInfo(asset_id):
             ee.data.deleteAsset(asset_id)
-        except:
-            pass
+
         task = ee.batch.Export.image.toAsset(
             image=self.image,
             description=description,

@@ -1,5 +1,5 @@
 import {PanelButton, Toolbar, ToolbarButton} from 'widget/toolbar'
-import {RecipeState, RecipeActions, createComposites, createLandCoverMap, recipePath, statuses} from './landCoverRecipe'
+import {RecipeState, RecipeActions, createComposites, createLandCoverMap, recipePath, Status} from './landCoverRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Aoi from '../mosaic/panels/aoi/aoi'
@@ -35,15 +35,15 @@ class LandCoverToolbar extends React.Component {
                     className={styles.top}>
                     <ToolbarButton
                         name='createComposites'
-                        icon={status === statuses.CREATING_COMPOSITES ? 'spinner' : 'cloud-download-alt'}
+                        icon={status === Status.CREATING_COMPOSITES ? 'spinner' : 'cloud-download-alt'}
                         tooltip={msg('process.landCover.panel.createComposites.tooltip')}
-                        disabled={[statuses.UNINITIALIZED, statuses.CREATING_COMPOSITES].includes(recipe.model.status)}
+                        disabled={[Status.UNINITIALIZED, Status.CREATING_COMPOSITES].includes(recipe.model.status)}
                         onClick={() => this.createComposites()}/>
                     <ToolbarButton
                         name='createPrimitives'
-                        icon={status === statuses.CREATING_LAND_COVER_MAP ? 'spinner' : 'cloud-download-alt'}
+                        icon={status === Status.CREATING_LAND_COVER_MAP ? 'spinner' : 'cloud-download-alt'}
                         tooltip={msg('process.landCover.panel.createLandCoverMap.tooltip')}
-                        disabled={![statuses.LAND_COVER_MAP_PENDING_CREATION, statuses.LAND_COVER_MAP_CREATED]
+                        disabled={![Status.LAND_COVER_MAP_PENDING_CREATION, Status.LAND_COVER_MAP_CREATED]
                             .includes(recipe.model.status) || !trainingData.classColumn}
                         onClick={() => this.createLandCoverMap()}/>
                 </Toolbar>
@@ -107,7 +107,7 @@ class LandCoverToolbar extends React.Component {
     showMandatoryPanel() {
         const {recipe} = this.props
         const {tableId} = recipe.model.trainingData
-        if (recipe.model.status === statuses.COMPOSITES_CREATED && !tableId)
+        if (recipe.model.status === Status.COMPOSITES_CREATED && !tableId)
             RecipeActions(recipe.id).selectPanel('trainingData').dispatch()
     }
 }

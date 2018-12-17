@@ -1,9 +1,10 @@
 import ee
 import landcoverPackage
 
-from ..export.image_to_asset import ImageToAsset
-from ..task.task import ThreadTask, Task
 from ..aoi import Aoi
+from ..export.image_to_asset import ImageToAsset
+from ..gee import create_asset_image_collection, to_asset_id
+from ..task.task import ThreadTask, Task
 
 
 def create(spec, context):
@@ -24,14 +25,17 @@ class CreateComposites(ThreadTask):
 
     def run(self):
         ee.InitializeThread(self.credentials)
+        return self.pipe(
+            self._create_composites
+        )
 
+    def _create_composites(self):
+        create_asset_image_collection(to_asset_id(self.asset_path + '/composites'))
         self.tasks = [
             self._create_composite_task(year, self.aoi)
             for year in range(self.from_year, self.to_year + 1)
         ]
-
-        return Task.submit_all(self.tasks) \
-            .then(self.resolve, self.reject)
+        return Task.submit_all(self.tasks)
 
     def status_message(self):
         completed = len([task for task in self.tasks if task.state == Task.RESOLVED])
@@ -50,9 +54,9 @@ class CreateComposites(ThreadTask):
                 image=composite,
                 region=self.aoi.bounds(),
                 description=None,
-                assetPath='{0}/{1}-composite'.format(self.asset_path, year),
+                assetId=to_asset_id('{0}/composites/{1}'.format(self.asset_path, year)),
                 scale=self.scale,
-                retries=3
+                retries=5
             ))
 
     def __str__(self):
@@ -70,5 +74,4 @@ def create_composite(year, aoi, sensors):
     :return: A composite as an ee.Image
     '''
     return landcoverPackage.composite(aoi=aoi, year=year, sensors=sensors) \
-        .set('system:time_start', ee.Date.fromYMD(year, 1, 1).millis()) \
-        .set('year', year)
+        .set('system:time_start', ee.Date.fromYMD(year, 1, 1).millis())

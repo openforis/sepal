@@ -1,5 +1,5 @@
 import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState} from './landCoverRecipe'
+import {RecipeActions, RecipeState, Status} from './landCoverRecipe'
 import {msg} from 'translate'
 import ComboBox from 'widget/comboBox'
 import React from 'react'
@@ -45,7 +45,7 @@ class PreviewSelection extends React.Component {
     }
 
     render() {
-        const {primitiveTypes, period: {startYear, endYear}, inputs: {type, year}} = this.props
+        const {status, primitiveTypes, period: {startYear, endYear}, inputs: {type, year}} = this.props
         const compositeOptions = {
             label: 'Composite',
             options: [
@@ -54,8 +54,7 @@ class PreviewSelection extends React.Component {
             ]
         }
 
-        // const options = [statuses.LAND_COVER_MAP_CREATED].includes(status)
-        const options = true
+        const options = [Status.LAND_COVER_MAP_CREATED].includes(status)
             ? [
                 {
                     label: 'Result',
@@ -75,7 +74,7 @@ class PreviewSelection extends React.Component {
                 },
                 compositeOptions
             ]
-            : compositeOptions
+            : [compositeOptions]
         const yearOptions = _.range(startYear, endYear + 1)
             .map(year => ({value: year, label: '' + year}))
         return (
