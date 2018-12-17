@@ -1,4 +1,4 @@
-import {Button} from '../../../../widget/button'
+import {Button, ButtonGroup} from 'widget/button'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {connect} from 'store'
 import {map, share, zip} from 'rxjs/operators'
@@ -7,26 +7,28 @@ import Highlight from 'react-highlighter'
 import Icon from 'widget/icon'
 import Notifications from 'app/notifications'
 import React from 'react'
-import UserDetails from './userDetails'
+import UserDetails from './user'
 import _ from 'lodash'
 import api from 'api'
 import escapeStringRegexp from 'escape-string-regexp'
 import format from 'format'
 import styles from './users.module.css'
 
-// import budgetReport from './apiSample/get.budgetReport'
-// import userList from './apiSample/get.userList'
-
-const getUserList$ = api.user.getUserList$().pipe(
-// const getUserList$ = of(userList).pipe(
+const getUserList$ = () => api.user.getUserList$().pipe(
     share()
 )
 
-const getBudgetReport$ = api.user.getBudgetReport$().pipe(
-// const getBudgetReport$ = of(budgetReport).pipe(
-    zip(getUserList$),
+const getBudgetReport$ = () => api.user.getBudgetReport$().pipe(
+    zip(getUserList$()),
     map(([budgetReport]) => budgetReport)
 )
+
+const mergeUserDetailsAndBudget = (userDetails, userBudget) => ({
+    ...userDetails,
+    report: {
+        budget: userBudget
+    }
+})
 
 class Users extends React.Component {
     state = {
@@ -43,10 +45,7 @@ class Users extends React.Component {
             this.setState(prevState => ({
                 ...prevState,
                 users: this.getSortedUsers(
-                    _.map(userList, user => ({
-                        ...user,
-                        report: {}
-                    }))
+                    _.map(userList, user => mergeUserDetailsAndBudget(user, {}))
                 )
             }))
         const mergeBudgetReport = budgetReport =>
@@ -59,11 +58,11 @@ class Users extends React.Component {
             }))
 
         this.props.stream('LOAD_USER_LIST',
-            getUserList$,
+            getUserList$(),
             userList => setUserList(userList)
         )
         this.props.stream('LOAD_BUDGET_REPORT',
-            getBudgetReport$,
+            getBudgetReport$(),
             budgetReport => mergeBudgetReport(budgetReport)
         )
     }
@@ -81,7 +80,7 @@ class Users extends React.Component {
     }
 
     getSortedUsers(users, sortingOrder = this.state.sortingOrder, sortingDirection = this.state.sortingDirection) {
-        return _.orderBy(users, user => _.get(user, sortingOrder), sortingDirection === 1 ? 'asc' : 'desc')
+        return _.orderBy(users, user => _.get(user, sortingOrder).toUpperCase(), sortingDirection === 1 ? 'asc' : 'desc')
     }
 
     setFilter(filter) {
@@ -131,12 +130,6 @@ class Users extends React.Component {
                     {msg('user.userDetails.form.name.label')}
                     {this.renderSortingHandle('name')}
                 </div>
-
-                {/* <div className={[styles.username, styles.clickable].join(' ')}
-                    onClick={() => this.setSorting('username')}>
-                    {msg('user.userDetails.form.username.label')}
-                    {this.renderSortingHandle('username')}
-                </div> */}
 
                 <div className={[styles.status, styles.clickable].join(' ')}
                     onClick={() => this.setSorting('status')}>
@@ -195,32 +188,34 @@ class Users extends React.Component {
         )
     }
 
-    renderSearch() {
-        return (
-            <input
-                type='text'
-                ref={this.search}
-                value={this.state.filter}
-                placeholder={'filter results'}
-                onChange={e => this.setFilter(e.target.value)}/>
-        )
-    }
-
-    renderAddUser() {
-        return (
-            <Button
-                icon='plus'
-                label={msg('users.add.label')}
-                onClick={() => this.addUser()}/>
-        )
-    }
-
     renderControls() {
         return (
             <div className={styles.pageControls}>
-                {this.renderSearch()}
-                {this.renderAddUser()}
-                <PageControls/>
+                <ButtonGroup wrap={true}>
+                    <Button
+                        look='transparent'
+                        size='large'
+                        shape='pill'
+                        disabled={true}>
+                        <input
+                            className={styles.search}
+                            type='text'
+                            ref={this.search}
+                            value={this.state.filter}
+                            placeholder={'showing all results, type to filter'}
+                            onChange={e => this.setFilter(e.target.value)}/>
+                    </Button>
+                    <Button
+                        look='add'
+                        size='large'
+                        shape='pill'
+                        icon='plus'
+                        label={msg('users.invite.label')}
+                        onClick={() => this.inviteUser()}/>
+                </ButtonGroup>
+                <div className={styles.pageNavigation}>
+                    <PageControls/>
+                </div>
             </div>
         )
     }
@@ -245,11 +240,12 @@ class Users extends React.Component {
     renderUsers() {
         return (
             <PageData>
-                {(user, index) => <User
-                    key={user.username || user.id || index}
-                    user={user}
-                    highlight={this.state.filter}
-                    onClick={() => this.editUser(user)}/>
+                {(user, index) =>
+                    <User
+                        key={user.username || user.id || index}
+                        user={user}
+                        highlight={this.state.filter}
+                        onClick={() => this.editUser(user)}/>
                 }
             </PageData>
         )
@@ -263,17 +259,22 @@ class Users extends React.Component {
                 name: user.name,
                 email: user.email,
                 organization: user.organization,
-                monthlyInstanceBudget: user.report.monthlyInstanceBudget,
-                monthlyStorageBudget: user.report.monthlyStorageBudget,
-                storageQuota: user.report.storageQuota
+                monthlyBudgetInstanceSpending: user.report.budget.instanceSpending,
+                monthlyBudgetStorageSpending: user.report.budget.storageSpending,
+                monthlyBudgetStorageQuota: user.report.budget.storageQuota
             }
         }))
     }
 
-    addUser() {
+    inviteUser() {
         this.setState(prevState => ({
             ...prevState,
-            userDetails: {}
+            userDetails: {
+                newUser: true,
+                monthlyBudgetInstanceSpending: 1,
+                monthlyBudgetStorageSpending: 1,
+                monthlyBudgetStorageQuota: 20
+            }
         }))
     }
 
@@ -285,58 +286,91 @@ class Users extends React.Component {
     }
 
     updateUser(userDetails) {
-        const updateUserDetails$ = (username, {name, email, organization}) =>
-            api.user.updateUserDetails$({username, name, email, organization})
 
-        const updateUserBudget$ = (username, {monthlyInstanceBudget, monthlyStorageBudget, storageQuota}) =>
-            api.user.updateUserBudget$({username, monthlyInstanceBudget, monthlyStorageBudget, storageQuota})
-
-        const update$ = (username, userDetails) =>
-            updateUserDetails$(username, userDetails).pipe(
-                zip(updateUserBudget$(username, userDetails)),
-                map(([userDetails]) => userDetails)
+        const update$ = userDetails =>
+            updateUserDetails$(userDetails).pipe(
+                zip(updateUserBudget$(userDetails)),
+                map(([userDetails, userBudget]) =>
+                    mergeUserDetailsAndBudget(userDetails, userBudget)
+                )
             )
 
-        const user = {
+        const updateUserDetails$ = ({newUser, username, name, email, organization}) =>
+            newUser
+                ? api.user.inviteUser$({username, name, email, organization})
+                : api.user.updateUser$({username, name, email, organization})
+
+        const updateUserBudget$ = ({username, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota}) =>
+            api.user.updateUserBudget$({
+                username,
+                instanceSpending: monthlyBudgetInstanceSpending,
+                storageSpending: monthlyBudgetStorageSpending,
+                storageQuota: monthlyBudgetStorageQuota
+            })
+
+        const updateLocalState = userDetails =>
+            this.setState(prevState => {
+                const users = prevState.users
+                if (userDetails) {
+                    const index = users.findIndex(user => user.username === userDetails.username)
+                    index === -1
+                        ? users.push(userDetails)
+                        : users[index] = userDetails
+                }
+                console.log(userDetails)
+                return {
+                    ...prevState,
+                    users,
+                    userDetails: null
+                }
+            })
+
+        const removeFromLocalState = userDetails =>
+            this.setState(prevState => {
+                const users = prevState.users
+                if (userDetails) {
+                    _.remove(users, user => user.username === userDetails.username)
+                }
+                return {
+                    ...prevState,
+                    users
+                }
+            })
+
+        this.cancelUser()
+
+        updateLocalState({
             username: userDetails.username,
             name: userDetails.name,
             email: userDetails.email,
             organization: userDetails.organization,
             report: {
-                monthlyInstanceBudget: userDetails.monthlyInstanceBudget,
-                monthlyStorageBudget: userDetails.monthlyStorageBudget,
-                storageQuota: userDetails.storageQuota
-            }
-        }
-
-        this.props.stream('UPDATE_USER',
-            update$(this.state.userDetails.username, userDetails),
-            () => Notifications.success('user.userDetails.update').dispatch(),
-            error => Notifications.caught('user.userDetails.update', {}, error).dispatch()
-        )
-
-        this.setState(prevState => {
-            const users = prevState.users
-            if (userDetails) {
-                const index = users.findIndex(user => user.username === prevState.userDetails.username)
-                if (index === -1) {
-                    users.push(user)
-                } else {
-                    _.merge(users[index], user)
+                budget: {
+                    instanceSpending: userDetails.monthlyBudgetInstanceSpending,
+                    storageSpending: userDetails.monthlyBudgetStorageSpending,
+                    storageQuota: userDetails.monthlyBudgetStorageQuota
                 }
             }
-            return {
-                ...prevState,
-                users,
-                userDetails: null
-            }
         })
+
+        this.props.stream('UPDATE_USER',
+            update$(userDetails),
+            userDetails => {
+                updateLocalState(userDetails)
+                Notifications.success('user.userDetails.update').dispatch()
+            },
+            error => {
+                removeFromLocalState(userDetails)
+                Notifications.caught('user.userDetails.update', {}, error).dispatch()
+            }
+        )
     }
 
     renderUserDetails() {
-        return this.state.userDetails ? (
+        const {userDetails} = this.state
+        return userDetails ? (
             <UserDetails
-                userDetails={this.state.userDetails}
+                userDetails={userDetails}
                 onCancel={() => this.cancelUser()}
                 onSave={userDetails => this.updateUser(userDetails)}/>
         ) : null
@@ -376,17 +410,12 @@ export default connect()(Users)
 class User extends React.Component {
     render() {
         const {
-            user:{
+            user: {
                 name,
-                // username,
                 status,
                 report: {
-                    monthlyInstanceBudget,
-                    monthlyInstanceSpending,
-                    monthlyStorageBudget,
-                    monthlyStorageSpending,
-                    storageQuota,
-                    storageUsed
+                    budget = {},
+                    current = {}
                 }
             },
             highlight,
@@ -397,14 +426,13 @@ class User extends React.Component {
                 className={[styles.grid, styles.clickable].join(' ')}
                 onClick={() => onClick()}>
                 <div><Highlight search={highlight} matchClass={styles.highlight}>{name}</Highlight></div>
-                {/* <div><Highlight search={highlight} matchClass={styles.highlight}>{username}</Highlight></div> */}
                 <div>{status}</div>
-                <div className={styles.number}>{format.dollars(monthlyInstanceBudget, 0)}</div>
-                <div className={styles.number}>{format.dollars(monthlyInstanceSpending)}</div>
-                <div className={styles.number}>{format.dollars(monthlyStorageBudget, 0)}</div>
-                <div className={styles.number}>{format.dollars(monthlyStorageSpending)}</div>
-                <div className={styles.number}>{format.fileSize(storageQuota, 0)}</div>
-                <div className={styles.number}>{format.fileSize(storageUsed)}</div>
+                <div className={styles.number}>{format.dollars(budget.instanceSpending, 0)}</div>
+                <div className={styles.number}>{format.dollars(current.instanceSpending)}</div>
+                <div className={styles.number}>{format.dollars(budget.storageSpending, 0)}</div>
+                <div className={styles.number}>{format.dollars(current.storageSpoending)}</div>
+                <div className={styles.number}>{format.fileSize(budget.storageQuota, 0)}</div>
+                <div className={styles.number}>{format.fileSize(current.storageQuota)}</div>
             </div>
         )
     }

@@ -42,13 +42,15 @@ class BudgetEndpoint {
                     storageQuota: Constraints.min(0)
                 ])
 
+                def budget = new Budget(
+                        instanceSpending: params.required('budget.instanceSpending', double),
+                        storageSpending: params.required('budget.storageSpending', double),
+                        storageQuota: params.required('budget.storageQuota', double)
+                )
+
                 def command = new UpdateBudget(
-                    username: params.required('username', String),
-                    budget: new Budget(
-                        instanceSpending: params.required('monthlyInstanceBudget', double),
-                        storageSpending: params.required('monthlyStorageBudget', double),
-                        storageQuota: params.required('storageQuota', double)
-                    )
+                        username: params.required('username', String),
+                        budget: budget
                 )
                 def errors = bindAndValidate(command)
                 if (errors)
@@ -56,7 +58,7 @@ class BudgetEndpoint {
                 component.submit(command)
                 if (currentUser.username == command.username) // Current user updated
                     response.addHeader('sepal-user-updated', 'true')
-                send toJson(status: 'success', message: 'Budget updated')
+                send toJson(budget)
             }
         }
     }
@@ -69,11 +71,11 @@ class BudgetEndpoint {
 
     private Map spendingAsMap(UserSpendingReport spending) {
         [
-            currentMonth: [
+            current: [
                 instanceSpending: spending.instanceSpending.round(2),
                 storageSpending: spending.storageSpending.round(2),
                 storageQuota: spending.storageUsage.round(2)],
-            monthlyBudget: [
+            budget: [
                 instanceSpending: spending.instanceBudget,
                 storageSpending: spending.storageBudget,
                 storageQuota: spending.storageQuota]

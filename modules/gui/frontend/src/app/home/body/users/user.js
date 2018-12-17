@@ -5,7 +5,7 @@ import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './userDetails.module.css'
+import styles from './user.module.css'
 
 const fields = {
     username: new Field()
@@ -14,31 +14,36 @@ const fields = {
     name: new Field()
         .notBlank('user.userDetails.form.name.required'),
     email: new Field()
-        .notBlank('user.userDetails.form.email.required'),
+        .notBlank('user.userDetails.form.email.required')
+        .email('user.userDetails.form.email.required'),
     organization: new Field()
         .notBlank('user.userDetails.form.organization.required'),
-    monthlyInstanceBudget: new Field()
-        .int('user.userDetails.form.monthlyInstanceBudget.atLeast1')
-        .min(1, 'user.userDetails.form.monthlyInstanceBudget.atLeast1'),
-    monthlyStorageBudget: new Field()
-        .int('user.userDetails.form.monthlyStorageBudget.atLeast1')
-        .min(1, 'user.userDetails.form.monthlyStorageBudget.atLeast1'),
-    storageQuota: new Field()
-        .int('user.userDetails.form.storageQuota.atLeast1')
-        .min(1, 'user.userDetails.form.storageQuota.atLeast1'),
+    monthlyBudgetInstanceSpending: new Field()
+        .notBlank('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
+        .int('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
+        .min(1, 'user.userDetails.form.monthlyBudget.instanceSpending.atLeast1'),
+    monthlyBudgetStorageSpending: new Field()
+        .notBlank('user.userDetails.form.monthlyBudget.storageSpending.atLeast1')
+        .int('user.userDetails.form.monthlyBudget.storageSpending.atLeast1')
+        .min(1, 'user.userDetails.form.monthlyBudget.storageSpending.atLeast1'),
+    monthlyBudgetStorageQuota: new Field()
+        .notBlank('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
+        .int('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
+        .min(1, 'user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
 }
 
 const mapStateToProps = (state, ownProps) => {
     const userDetails = ownProps.userDetails
     return {
         values: {
+            newUser: userDetails.newUser,
             username: userDetails.username,
             name: userDetails.name,
             email: userDetails.email,
             organization: userDetails.organization,
-            monthlyInstanceBudget: userDetails.monthlyInstanceBudget,
-            monthlyStorageBudget: userDetails.monthlyStorageBudget,
-            storageQuota: userDetails.storageQuota
+            monthlyBudgetInstanceSpending: userDetails.monthlyBudgetInstanceSpending,
+            monthlyBudgetStorageSpending: userDetails.monthlyBudgetStorageSpending,
+            monthlyBudgetStorageQuota: userDetails.monthlyBudgetStorageQuota
         }
     }
 }
@@ -66,7 +71,7 @@ class UserDetails extends React.Component {
 
     render() {
         const {form,
-            inputs: {name, email, organization, monthlyInstanceBudget, monthlyStorageBudget, storageQuota}
+            inputs: {name, email, organization, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota}
         } = this.props
         const newUser = !this.props.userDetails.username
         return (
@@ -106,24 +111,24 @@ class UserDetails extends React.Component {
                         />
                         <InputGroup
                             label={msg('user.userDetails.form.monthlyLimits.label')}
-                            errorMessage={[monthlyInstanceBudget, monthlyStorageBudget, storageQuota]}>
+                            errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
                             <div className={styles.monthlyLimits}>
                                 <Input
-                                    label={msg('user.userDetails.form.monthlyInstanceBudget.label')}
+                                    label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
                                     type='number'
-                                    input={monthlyInstanceBudget}
+                                    input={monthlyBudgetInstanceSpending}
                                     spellCheck={false}
                                 />
                                 <Input
-                                    label={msg('user.userDetails.form.monthlyStorageBudget.label')}
+                                    label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
                                     type='number'
-                                    input={monthlyStorageBudget}
+                                    input={monthlyBudgetStorageSpending}
                                     spellCheck={false}
                                 />
                                 <Input
-                                    label={msg('user.userDetails.form.storageQuota.label')}
+                                    label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
                                     type='number'
-                                    input={storageQuota}
+                                    input={monthlyBudgetStorageQuota}
                                     spellCheck={false}
                                 />
                             </div>

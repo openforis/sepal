@@ -146,6 +146,7 @@
         },
         "mosaic": {
             "create": "Mosaic",
+            "description": "Create a mosaic using Landsat or Sentinel 2.",
             "mapToolbar": {
                 "zoom.tooltip": "Zoom to area",
                 "zoomIn.tooltip": "Zoom in",
@@ -453,6 +454,7 @@
         },
         "classification": {
             "create": "Classification",
+            "description": "Classify a mosaic from SEPAL or Google Earth Engine.",
             "panel": {
                 "source": {
                     "button": "IMG",
@@ -533,6 +535,7 @@
         },
         "changeDetection": {
             "create": "Change detection",
+            "description": "Detect changes in mosaics from SEPAL or Google Earth Engine.",
             "panel": {
                 "source": {
                     "recipe": {
@@ -620,6 +623,7 @@
         },
         "timeSeries": {
             "create": "Time series",
+            "description": "Download Landsat time series to SEPAL.",
             "mapToolbar": {
                 "zoom.tooltip": "Zoom to area",
                 "zoomIn.tooltip": "Zoom in",
@@ -726,7 +730,8 @@
             }
         },
         "landCover": {
-            "create": "RLCMS",
+            "create": "Regional Land Cover Monitoring System",
+            "description": "Create land cover map along with confidence levels from Landsat or Sentinel 2.",
             "panel": {
                 "period": {
                     "title": "Period",
@@ -822,20 +827,22 @@
                 "monthlyLimits": {
                     "label": "Monthly limits"
                 },
-                "monthlyInstanceBudget": {
-                    "label": "Instance US$",
-                    "required:": "Monthly instance budget is required",
-                    "atLeast1": "Monthly instance budget must be at least 1"
-                },
-                "monthlyStorageBudget": {
-                    "label": "Storage US$",
-                    "required:": "Monthly storage budget is required",
-                    "atLeast1": "Monthly storage budget must be at least 1"
-                },
-                "storageQuota": {
-                    "label": "Storage GB",
-                    "required:": "Monthly storage quota is required",
-                    "atLeast1": "Monthly storage must be at least 1"
+                "monthlyBudget": {
+                    "instanceSpending": {
+                        "label": "Instance US$",
+                        "required:": "Monthly instance budget is required",
+                        "atLeast1": "Monthly instance budget must be at least 1"
+                    },
+                    "storageSpending": {
+                        "label": "Storage US$",
+                        "required:": "Monthly storage budget is required",
+                        "atLeast1": "Monthly storage budget must be at least 1"
+                    },
+                    "storageQuota": {
+                        "label": "Storage GB",
+                        "required:": "Monthly storage quota is required",
+                        "atLeast1": "Monthly storage must be at least 1"
+                    }
                 }
             },
             "useUserGoogleAccount": {
@@ -967,7 +974,7 @@
         "countNoFilter": "{count} total users",
         "countWithFilter": "{count} users matching \"{filter}\"",
         "page": "Page {pageNumber} of {pageCount}",
-        "add.label": "Add user"
+        "invite.label": "Invite user"
     },
     "unauthorized.warning": {
         "title": "You are not logged in",

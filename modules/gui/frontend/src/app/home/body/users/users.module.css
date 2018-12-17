@@ -1,5 +1,5 @@
 .container {
-    padding: 2rem;
+    padding: 0 .5rem .5rem 1rem;
 }
 
 .number {
@@ -10,10 +10,25 @@
 .pageControls {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: space-between;
 }
 
+.pageControls > * {
+    margin-top: .5rem;
+}
+
+.search {
+    width: 20rem;
+    border: none;
+}
+
+.pageNavigation {
+    justify-self: flex-end;
+}
+
 .pageInfo {
+    margin-top: 1rem;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -77,10 +92,6 @@
     font-size: .9rem;
     text-transform: uppercase;
     user-select: none;
-}
-
-.group {
-    /* font-weight: bolder; */
 }
 
 .clickable:hover {

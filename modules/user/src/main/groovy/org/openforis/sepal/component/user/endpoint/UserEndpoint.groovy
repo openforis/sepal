@@ -181,8 +181,8 @@ class UserEndpoint {
                 if (errors)
                     throw new InvalidRequest(errors)
                 command.username = sepalUser.username
-                component.submit(command)
-                send toJson([status: 'success', message: 'Invitation sent'])
+                def user = component.submit(command)
+                send toJson(user)
             }
 
             post('/delete', [ADMIN]) {
