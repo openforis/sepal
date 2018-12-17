@@ -6,6 +6,7 @@ import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/recipe'
 import CreateRecipe from './createRecipe'
+import CreateRecipeRLCMS from './createRecipeRLCMS'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -22,6 +23,34 @@ const mapStateToProps = () => {
 }
 
 class RecipeList extends React.Component {
+    recipeTypes = [{
+        type: 'MOSAIC',
+        name: msg('process.mosaic.create'),
+        description: msg('process.mosaic.description')
+    }, {
+        type: 'CLASSIFICATION',
+        name: msg('process.classification.create'),
+        description: msg('process.classification.description')
+    }, {
+        type: 'CHANGE_DETECTION',
+        name: msg('process.changeDetection.create'),
+        description: msg('process.changeDetection.description')
+    }, {
+        type: 'TIME_SERIES',
+        name: msg('process.timeSeries.create'),
+        description: msg('process.timeSeries.description')
+    }, {
+        type: 'LAND_COVER',
+        name: msg('process.landCover.create'),
+        description: msg('process.landCover.description'),
+        details: <CreateRecipeRLCMS/>
+    }]
+
+    getRecipeTypeName(type) {
+        const recipeType = this.recipeTypes.find(recipeType => recipeType.type === type)
+        return recipeType && recipeType.name
+    }
+
     componentDidMount() {
         if (!this.props.recipes)
             this.props.asyncActionBuilder('LOAD_RECIPES', loadRecipes$())
@@ -65,7 +94,7 @@ class RecipeList extends React.Component {
                 className={[styles.recipe, lookStyles.look, lookStyles.transparent].join(' ')}
                 onClick={() => this.loadRecipe(recipe.id)}>
                 <div className={styles.recipeInfo}>
-                    <div className={styles.type}>{recipe.type}</div>
+                    <div className='itemType'>{this.getRecipeTypeName(recipe.type)}</div>
                     <div className={styles.name}>{recipe.name}</div>
                 </div>
                 <div className={styles.recipeButtons}>
@@ -114,7 +143,7 @@ class RecipeList extends React.Component {
             <div className={[styles.container, flexy.container].join(' ')}>
                 <div className={styles.header}>
                     {this.renderTitle()}
-                    <CreateRecipe recipeId={recipeId}/>
+                    <CreateRecipe recipeId={recipeId} recipeTypes={this.recipeTypes}/>
                 </div>
                 {this.renderRecipies()}
             </div>

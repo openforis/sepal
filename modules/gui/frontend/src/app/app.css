@@ -45,6 +45,8 @@ html {
     --section-terminal-color-s: 19%;
     --section-terminal-color-l: 26%;
 
+
+
     font-size: calc(var(--base-font-size) * var(--scaling-factor));
 }
 
@@ -85,4 +87,11 @@ a:hover, a:hover:not([href]):not([tabindex]) {
 
 .portalTarget > * {
     z-index: 999999 !important;
+}
+
+.itemType {
+    font-size: .8rem;
+    font-weight: 800;
+    color: gray;
+    text-transform: uppercase;
 }

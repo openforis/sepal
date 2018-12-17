@@ -1,6 +1,5 @@
 import {Button} from 'widget/button'
 import {connect} from 'store'
-import {msg} from 'translate'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
@@ -24,12 +23,6 @@ export const showRecipeTypes = () =>
         .set('ui.modal', true)
         .dispatch()
 
-// export const showRecipeType = type =>
-//     actionBuilder('CREATE_RECIPE')
-//         .set('ui.createRecipe', type)
-//         .set('ui.modal', true)
-//         .dispatch()
-
 export const closePanel = () =>
     actionBuilder('CREATE_RECIPE')
         .del('ui.createRecipe')
@@ -52,17 +45,61 @@ const setTabType = (recipeId, type, title) =>
                 .set(['process', 'tabs', recipeIndex, 'placeholder'], `${title.replace(/[^\w-.]/g, '_')}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`)
         })
         .dispatch()
-    
+
 class CreateRecipe extends React.Component {
     state = {
         selectedRecipeType: null
     }
+
+    // test() {
+    //     const panels = [{
+    //         icon: 'icon',
+    //         title: 'title',
+    //         component: <CreateRecipe/>,
+    //         children: [{
+    //             key: 'MOSAIC',
+    //             title: msg('process.mosaic.create'),
+    //             description: msg('process.mosaic.description'),
+    //             component: <CreateMosaic/>
+    //         }, {
+    //             key: 'CLASSIFICATION',
+    //             title: msg('process.classification.create'),
+    //             description: msg('process.classification.description'),
+    //             component: <CreateClassification/>
+    //         }, {
+    //             key: 'CHANGE_DETECTION',
+    //             name: msg('process.changeDetection.create'),
+    //             description: msg('process.changeDetection.description'),
+    //             component: <CreateChangeDetection/>
+    //         }, {
+    //             key: 'TIME_SERIES',
+    //             name: msg('process.timeSeries.create'),
+    //             description: msg('process.timeSeries.description'),
+    //             component: <CreateTimeSeries/>
+    //         }, {
+    //             key: 'LAND_COVER',
+    //             name: msg('process.landCover.create'),
+    //             description: msg('process.landCover.description'),
+    //             component: <CreateRecipeRLCMS/>
+    //         }]
+    //     }]
+
+    //     return (
+    //         <PanelTree panels={panels}/>
+    //     )
+    
+    // }
 
     showRecipeType(type) {
         this.setState(prevState => ({
             ...prevState,
             selectedRecipeType: type
         }))
+    }
+
+    closePanel() {
+        this.showRecipeType()
+        closePanel()
     }
 
     renderButton() {
@@ -81,87 +118,74 @@ class CreateRecipe extends React.Component {
         )
     }
 
-    renderRecipeTypesPanel() {
+    renderBackButton() {
         return (
-            <Portal>
-                <Panel
-                    className={styles.panel}
-                    statePath='createRecipe'
-                    center
-                    modal
-                    onCancel={() => closePanel()}>
-                    <PanelHeader
-                        icon='book-open'
-                        title={'Available recipe types'}/>
-                    <PanelContent>
-                        {this.renderRecipeTypes()}
-                    </PanelContent>
-                    <PanelButtons/>
-                </Panel>
-            </Portal>
+            <Button
+                chromeless
+                icon='arrow-left'
+                shape='none'
+                additionalClassName={styles.backButton}
+                onClick={() => this.showRecipeType()}/>
         )
     }
 
-    renderRecipeType(recipeId, type, label) {
+    renderRecipeType(type) {
+        const {recipeTypes} = this.props
+        const recipeType = recipeTypes.find(recipeType => recipeType.type === type)
         return (
-            <li
-                key={type}
-                className={[styles.recipe, lookStyles.look, lookStyles.transparent].join(' ')}
-                onClick={() => createRecipe(recipeId, type, label)}>
-                <div className={styles.header}>
-                    <div>{label}</div>
-                    <Button
-                        chromeless
-                        size='large'
-                        icon='info-circle'
-                        onClick={() => this.showRecipeType(type)}
-                    />
-                </div>
-            </li>
+            <React.Fragment>
+                <PanelHeader>
+                    {this.renderBackButton()}
+                    <span>{recipeType.name}</span>
+                </PanelHeader>
+                <PanelContent>
+                    {recipeType ? recipeType.details : null}
+                </PanelContent>
+            </React.Fragment>
         )
     }
 
     renderRecipeTypes() {
-        const {recipeId} = this.props
+        const {recipeId, recipeTypes} = this.props
         return (
-            <div className={styles.recipeTypes}>
-                <ul>
-                    {this.renderRecipeType(recipeId, 'MOSAIC', msg('process.mosaic.create'))}
-                    {this.renderRecipeType(recipeId, 'CLASSIFICATION', msg('process.classification.create'))}
-                    {this.renderRecipeType(recipeId, 'CHANGE_DETECTION', msg('process.changeDetection.create'))}
-                    {this.renderRecipeType(recipeId, 'TIME_SERIES', msg('process.timeSeries.create'))}
-                    {this.renderRecipeType(recipeId, 'LAND_COVER', msg('process.landCover.create'))}
-                </ul>
-            </div>
-        )
-    }
-
-    renderRecipeTypePanel(recipeType) {
-        return (
-            <Portal>
-                <Panel
-                    className={styles.panel}
-                    statePath='createRecipe'
-                    center
-                    modal
-                    onCancel={() => this.showRecipeType()}>
-                    <PanelHeader
-                        icon='book-open'
-                        title={'Recipe type details'}/>
-                    <PanelContent>
-                        Details here
-                    </PanelContent>
-                    <PanelButtons/>
-                </Panel>
-            </Portal>
+            <React.Fragment>
+                <PanelHeader
+                    icon='plus-circle'
+                    title={'Create recipe'}/>
+                <PanelContent>
+                    <div className={styles.recipeTypes}>
+                        <ul>
+                            {recipeTypes.map(({type, name, description, details}) =>
+                                <RecipeType
+                                    key={type}
+                                    recipeId={recipeId}
+                                    type={type}
+                                    name={name}
+                                    description={description}
+                                    onInfo={details ? () => this.showRecipeType(type) : null}/>
+                            )}
+                        </ul>
+                    </div>
+                </PanelContent>
+            </React.Fragment>
         )
     }
 
     renderPanel() {
         const {selectedRecipeType} = this.state
-        return selectedRecipeType
-            ? this.renderRecipeTypePanel(selectedRecipeType)
-            : this.renderRecipeTypesPanel()
+        return (
+            <Portal>
+                <Panel
+                    className={styles.panel}
+                    statePath='createRecipe'
+                    center
+                    modal
+                    onCancel={() => this.closePanel()}>
+                    {selectedRecipeType ? this.renderRecipeType(selectedRecipeType) : this.renderRecipeTypes()}
+                    <PanelButtons/>
+                </Panel>
+            </Portal>
+        )
     }
 
     render() {
@@ -176,7 +200,40 @@ class CreateRecipe extends React.Component {
 }
 
 CreateRecipe.propTypes = {
-    recipeId: PropTypes.string.isRequired
+    recipeId: PropTypes.string.isRequired,
+    recipeTypes: PropTypes.array.isRequired
 }
 
 export default connect(mapStateToProps)(CreateRecipe)
+
+class RecipeType extends React.Component {
+    renderInfoButton() {
+        const {type, onInfo} = this.props
+        return (
+            <Button
+                chromeless
+                size='large'
+                icon='info-circle'
+                onClick={() => onInfo && onInfo(type)}
+            />
+        )
+    }
+
+    render() {
+        const {recipeId, type, name, description, onInfo} = this.props
+        return (
+            <li
+                key={type}
+                className={[styles.recipe, lookStyles.look, lookStyles.transparent].join(' ')}
+                onClick={() => createRecipe(recipeId, type, name)}>
+                <div className={styles.header}>
+                    <div>
+                        <div className='itemType'>{name}</div>
+                        <div>{description}</div>
+                    </div>
+                    {onInfo ? this.renderInfoButton(): null}
+                </div>
+            </li>
+        )
+    }
+}

@@ -81,7 +81,7 @@ const date = date =>
     moment(date).format('DD MMM YYYY')
 
 const fileSize = (size, precisionDigits = 3) =>
-    number({value: size, precisionDigits, unit: 'B', zero: msg('browse.info.empty')})
+    number({value: size, precisionDigits, unit: 'B'})
 
 const number = ({value, precisionDigits = 3, prefix = '', unit = '', zero}) => {
     const join = (...items) => _.compact(items).join(' ')
