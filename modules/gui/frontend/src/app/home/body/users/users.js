@@ -317,11 +317,9 @@ class Users extends React.Component {
                         ? users.push(userDetails)
                         : users[index] = userDetails
                 }
-                console.log(userDetails)
                 return {
                     ...prevState,
-                    users,
-                    userDetails: null
+                    users: this.getSortedUsers(users)
                 }
             })
 
