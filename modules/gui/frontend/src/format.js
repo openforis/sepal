@@ -1,4 +1,3 @@
-import {msg} from 'translate'
 import NumberFormat from 'react-number-format'
 import React from 'react'
 import _ from 'lodash'
@@ -15,43 +14,10 @@ const decimal = (value, decimals = 2) =>
         fixedDecimalScale={true}/>
 
 const units = (value, precisionDigits = 3) => number({value, precisionDigits})
-
 const unitsPerHour = (value, precisionDigits = 3) => number({value, precisionDigits, unit: '/h'})
-
-const dollars = (value, precisionDigits = 3, prefix = '$') => number({value, precisionDigits, prefix})
-
-// const dollars = (value, decimals = 2) =>
-//     <NumberFormat
-//         value={value}
-//         displayType={'text'}
-//         thousandSeparator={true}
-//         decimalScale={decimals}
-//         fixedDecimalScale={true}
-//         prefix={'$'}/>
-
-const dollarsPerHour = (value, precisionDigits = 3, prefix = '$') => number({value, precisionDigits, prefix, unit: '/h'})
-
-// const dollarsPerHour = (value, decimals = 2) =>
-//     <NumberFormat
-//         value={value}
-//         displayType={'text'}
-//         thousandSeparator={true}
-//         decimalScale={decimals}
-//         fixedDecimalScale={true}
-//         prefix={'$'}
-//         suffix={'/h'}/>
-
-const dollarsPerMonth = (value, {precisionDigits = 3, prefix = '$'}) => number({value, precisionDigits, prefix, unit: '/mon'})
-
-// const dollarsPerMonth = (value, decimals = 0) =>
-//     <NumberFormat
-//         value={value}
-//         displayType={'text'}
-//         thousandSeparator={true}
-//         decimalScale={decimals}
-//         fixedDecimalScale={true}
-//         prefix={'$'}
-//         suffix={'/mon'}/>
+const dollars = (value, {precisionDigits = 3, prefix = '$'} = {}) => number({value, precisionDigits, prefix})
+const dollarsPerHour = (value, {precisionDigits = 3, prefix = '$'} = {}) => number({value, precisionDigits, prefix, unit: '/h'})
+const dollarsPerMonth = (value, {precisionDigits = 3, prefix = '$'} = {}) => number({value, precisionDigits, prefix, unit: '/mon'})
 
 const hours = (value, decimals = 2) =>
     <NumberFormat
@@ -80,13 +46,14 @@ const fullDate = date =>
 const date = date =>
     moment(date).format('DD MMM YYYY')
 
-const fileSize = (size, precisionDigits = 3) =>
-    number({value: size, precisionDigits, unit: 'B'})
+const fileSize = (size = 0, {scale = 0, precisionDigits = 3} = {}) =>
+    number({value: size, scale, precisionDigits, unit: 'B'})
 
-const number = ({value, precisionDigits = 3, prefix = '', unit = '', zero}) => {
+const number = ({value, scale = '', precisionDigits = 3, prefix = '', unit = '', zero}) => {
     const join = (...items) => _.compact(items).join(' ')
     // safe up to yottabytes (10^24)...
-    const magnitude = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+    const magnitudes = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+    const magnitude = magnitudes.splice(Math.max(magnitudes.indexOf(scale), 0))
     const digits = Math.trunc(Math.log10(value))
     const periods = Math.trunc(digits / 3)
     const multiplier = Math.pow(10, 3 * periods)

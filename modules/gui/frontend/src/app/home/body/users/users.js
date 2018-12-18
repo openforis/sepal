@@ -420,12 +420,12 @@ class User extends React.Component {
                 onClick={() => onClick()}>
                 <div><Highlight search={highlight} matchClass={styles.highlight}>{name}</Highlight></div>
                 <div>{status}</div>
-                <div className={styles.number}>{format.dollars(budget.instanceSpending, 0)}</div>
+                <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
                 <div className={styles.number}>{format.dollars(current.instanceSpending)}</div>
-                <div className={styles.number}>{format.dollars(budget.storageSpending, 0)}</div>
+                <div className={styles.number}>{format.dollars(budget.storageSpending)}</div>
                 <div className={styles.number}>{format.dollars(current.storageSpoending)}</div>
-                <div className={styles.number}>{format.fileSize(budget.storageQuota, 0)}</div>
-                <div className={styles.number}>{format.fileSize(current.storageQuota)}</div>
+                <div className={styles.number}>{format.fileSize(budget.storageQuota, {scale: 'G'})}</div>
+                <div className={styles.number}>{format.fileSize(current.storageQuota, {scale: 'G'})}</div>
             </div>
         )
     }
