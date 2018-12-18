@@ -4,13 +4,18 @@
 }
 
 .tabBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     display: flex;
     justify-content: space-between;
-    padding: 0 .5rem;
+    background-color: rgba(0, 0, 0, .5);
     pointer-events: all;
 }
 
 .tabs {
+    padding: 0 0 0 1rem;
     display: flex;
     flex-wrap: wrap;
     width: 100%;
@@ -178,6 +183,7 @@ span.title.placeholder {
 }
 
 .tabContents {
+    padding-top: 3rem;
     height: 100%;
 }
 

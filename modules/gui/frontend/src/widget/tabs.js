@@ -1,13 +1,14 @@
-import {Button} from 'widget/button'
-import {connect, select} from 'store'
-import {msg} from 'translate'
-import PropTypes from 'prop-types'
-import React from 'react'
-import TabContent from './tabContent'
-import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
 import flexy from 'flexy.module.css'
 import guid from 'guid'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import Portal from 'widget/portal'
+import Tooltip from 'widget/tooltip'
+import TabContent from './tabContent'
 import styles from './tabs.module.css'
 
 export const addTab = statePath => {
@@ -68,15 +69,11 @@ const mapStateToProps = (state, ownProps) => ({
 })
 
 class Tabs extends React.Component {
+    state = {enabled: true}
+
     constructor(props) {
         super(props)
         const {tabs, statePath} = props
-        if (tabs.length === 0)
-            addTab(statePath)
-    }
-
-    UNSAFE_componentWillReceiveProps(nextProps) {
-        const {tabs, statePath} = nextProps
         if (tabs.length === 0)
             addTab(statePath)
     }
@@ -109,25 +106,40 @@ class Tabs extends React.Component {
         const {selectedTabId, statePath, tabActions} = this.props
         return (
             <div className={[styles.container, flexy.container].join(' ')}>
-                <div className={styles.tabBar}>
-                    <div className={styles.tabs}>
-                        {this.props.tabs.map(tab => this.renderTab(tab))}
-                    </div>
-                    <div className={styles.tabActions}>
-                        <Button
-                            chromeless
-                            size='large'
-                            shape='circle'
-                            icon='plus'
-                            onClick={() => addTab(statePath)}/>
-                        {tabActions(selectedTabId)}
-                    </div>
-                </div>
+                {this.state.enabled
+                    ? <Portal>
+                        <div className={styles.tabBar}>
+                            <div className={styles.tabs}>
+                                {this.props.tabs.map(tab => this.renderTab(tab))}
+                            </div>
+                            <div className={styles.tabActions}>
+                                <Button
+                                    chromeless
+                                    size='large'
+                                    shape='circle'
+                                    icon='plus'
+                                    onClick={() => addTab(statePath)}/>
+                                {tabActions(selectedTabId)}
+                            </div>
+                        </div>
+                    </Portal>
+                    : null}
                 <div className={[styles.tabContents, flexy.container].join(' ')}>
                     {this.props.tabs.map(tab => this.renderTabContent(tab))}
                 </div>
             </div>
         )
+    }
+
+    componentDidMount() {
+        this.props.onDisable(p => this.setState(prevState => ({...prevState, enabled: false})))
+        this.props.onEnable(p => this.setState(prevState => ({...prevState, enabled: true})))
+    }
+
+    componentDidUpdate() {
+        const {tabs, statePath} = this.props
+        if (tabs.length === 0)
+            addTab(statePath)
     }
 }
 
