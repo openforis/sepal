@@ -9,7 +9,8 @@ import {connect} from 'store'
 import {msg} from 'translate'
 import {Button} from 'widget/button'
 import MapStatus from 'widget/mapStatus'
-import {RecipeActions, RecipeState} from './landCoverRecipe'
+import {getPrimitiveTypes, RecipeState} from './landCoverRecipe'
+import Legend from './legend'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -32,7 +33,7 @@ class AssemblyPreview extends React.Component {
         //                 {id: 'grass', label: 'Grass', value: 10, color: 'F4C800'},
         //                 {id: 'crop', label: 'Crop', value: 7, color: 'FF8E00'},
         //                 {id: 'paramo', label: 'Paramo', value: 9, color: 'CEA262'},
-        //                 {id: 'water', label: 'Water', value: 8, color: 'A6BDD7'},
+        //                 {id: 'water', label: 'Water', value: 8, color: '00538A'},
         //                 {id: 'urban', label: 'Urban', value: 6, color: '817066'},
         //                 {id: 'barren', label: 'Barren', value: 0, color: 'F6768E'}
         //             ]
@@ -53,10 +54,24 @@ class AssemblyPreview extends React.Component {
     }
 
     render() {
-        const {initializing, tiles, error} = this.state
+        const {recipe} = this.props
+        const band = recipe.ui.preview.value
         if (this.isHidden())
             return null
-        else if (error) {
+        return (
+            <React.Fragment>
+                {band === 'classification'
+                    ? <Legend recipeId={recipe.id}/>
+                    : null}
+                {this.renderMapStatus()}
+            </React.Fragment>
+        )
+
+    }
+
+    renderMapStatus() {
+        const {initializing, tiles, error} = this.state
+        if (error) {
             return (
                 <MapStatus loading={false} error={error}/>
             )
@@ -152,9 +167,7 @@ class AssemblyPreview extends React.Component {
 
     classificationVizParams() {
         const {recipe} = this.props
-        const primitiveTypes = [{id: 'other', label: 'Other', color: '803E75'}].concat(
-            _.sortBy(recipe.model.typology.primitiveTypes, 'id')
-        )
+        const primitiveTypes = getPrimitiveTypes(recipe)
         return {
             bands: 'classification',
             min: 0,

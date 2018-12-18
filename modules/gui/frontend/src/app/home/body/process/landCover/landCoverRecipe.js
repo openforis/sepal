@@ -1,8 +1,9 @@
-import {RecipeState as GlobalRecipeState, recipePath} from '../recipe'
-import api from 'api'
 import globalActionBuilder from 'action-builder'
+import api from 'api'
+import _ from 'lodash'
 import moment from 'moment'
-import {msg} from "../../../../../translate";
+import {msg} from 'translate'
+import {recipePath, RecipeState as GlobalRecipeState} from '../recipe'
 
 export {recipePath}
 export const RecipeState = recipeId => {
@@ -121,7 +122,7 @@ const initRecipe = recipe => {
                     {id: 'grass', label: 'Grass', value: 10, color: 'F4C800'},
                     {id: 'crop', label: 'Crop', value: 7, color: 'FF8E00'},
                     {id: 'paramo', label: 'Paramo', value: 9, color: 'CEA262'},
-                    {id: 'water', label: 'Water', value: 8, color: 'A6BDD7'},
+                    {id: 'water', label: 'Water', value: 8, color: '00538A'},
                     {id: 'urban', label: 'Urban', value: 6, color: '817066'},
                     {id: 'barren', label: 'Barren', value: 0, color: 'F6768E'}
                 ]
@@ -232,41 +233,8 @@ const tempDecisionTree = {
     }
 }
 
-// const tempDecisionTree = {
-//     primitive: 'aquaculture',
-//     threshold: 50,
-//     true: 'aquaculture',
-//     false: {
-//         primitive: 'barren',
-//         threshold: 40,
-//         true: 'barren',
-//         false: {
-//             primitive: 'cropland',
-//             threshold: 60,
-//             true: {
-//                 primitive: 'forest',
-//                 threshold: 70
-//             },
-//             false: {
-//                 primitive: 'forest',
-//                 threshold: 50,
-//                 true: 'forest'
-//             }
-//         }
-//     }
-// }
-//
-// const foo = {
-//     'key1': {'band': 'aquaculture', 'threshold': 50, 'left': 'terminal', 'leftName': 'aquaculture', 'right': 'key2'},
-//     'key2': {'band': 'barren', 'threshold': 40, 'left': 'terminal', 'leftName': 'barren', 'right': 'key3'},
-//     'key3': {'band': 'cropland', 'threshold': 60, 'left': 'terminal', 'leftName': 'cropland', 'right': 'key4'},
-//     'key4': {
-//         'band': 'forest',
-//         'threshold': 5,
-//         'left': 'terminal',
-//         'leftName': 'other',
-//         'right': 'terminal',
-//         'rightName': 'forest'
-//     }
-// };
-
+export const getPrimitiveTypes = (recipe) => {
+    return [{id: 'other', label: 'Other', color: 'FFFFFF'}].concat(
+        _.sortBy(recipe.model.typology.primitiveTypes, 'id')
+    )
+}
