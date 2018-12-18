@@ -16,15 +16,18 @@ export default class CreateRecipeRLCMS extends React.Component {
                 THE REGIONAL LAND COVER MONITORING SYSTEM IS AN INITIATIVE OF
                 </div>
                 <div style={{'text-align': 'center'}}>
-                    <img style={{'max-width': '80%', 'max-height': '8vh'}} src='http://servir-rlcms.appspot.com/static/img/servir-hires.png'/>
+                    <img style={{'max-width': '80%', 'max-height': '8vh'}} alt='SERVIR logo'
+                        src='http://servir-rlcms.appspot.com/static/img/servir-hires.png'/>
                 </div>
                 <div style={{'text-align': 'center'}}>
                 a partnership between
                 </div>
                 <div style={{'text-align': 'center'}}>
                     <div>
-                        <img style={{'max-width': '30%', 'max-height': '8vh'}} src='http://servir-rlcms.appspot.com/static/img/USAID_Logo_Color.png'/>
-                        <img style={{'max-width': '30%', 'max-height': '8vh'}} src='http://servir-rlcms.appspot.com/static/img/NASA_Logo_Color.png'/>
+                        <img style={{'max-width': '30%', 'max-height': '8vh'}} alt='USAID logo'
+                            src='http://servir-rlcms.appspot.com/static/img/USAID_Logo_Color.png'/>
+                        <img style={{'max-width': '30%', 'max-height': '8vh'}} alt='NASA logo'
+                            src='http://servir-rlcms.appspot.com/static/img/NASA_Logo_Color.png'/>
                     </div>
                 </div>
                 <div style={{'text-align': 'right'}}>
