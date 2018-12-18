@@ -41,8 +41,8 @@ class CreateLandCoverMap(ThreadTask):
         create_asset_image_collection(to_asset_id(self.asset_path + '/assembly'))
         self.drive_folder = drive.create_folder(self.credentials, self.drive_folder_name)
         return self.pipe(
-            # self._sample,
-            # self._create_primitives,
+            self._sample,
+            self._create_primitives,
             self._smooth,
             self._assemble,
             self.resolve
@@ -283,7 +283,7 @@ def create_primitive(year, type, composite, training_data):
     :param training_data: ee.FeatureCollection with the classes and sampled properties
     :return: An ee.Image with the primitive with a year property set.
     """
-    return ee.Image(ee.Algorithms.If(
+    return ee.Image(100).subtract(ee.Image(ee.Algorithms.If(
         training_data.first(),
         landcoverPackage.primitive(
             year=year,
@@ -291,8 +291,8 @@ def create_primitive(year, type, composite, training_data):
             composite=composite,
             trainingData=training_data
         ),
-        ee.Image(0)
-    )) \
+        ee.Image(100)
+    ))) \
         .rename(['confidence']) \
         .set('system:time_start', ee.Date.fromYMD(year, 1, 1).millis())
 

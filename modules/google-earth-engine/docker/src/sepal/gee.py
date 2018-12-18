@@ -50,7 +50,7 @@ def delete_asset_collection(asset_id):
 
 
 def create_asset_image_collection(asset_id):
-    # delete_asset_collection(asset_id)
+    delete_asset_collection(asset_id)
     ee.data.create_assets(
         asset_ids=[asset_id],
         asset_type=ee.data.ASSET_TYPE_IMAGE_COLL,
