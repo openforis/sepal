@@ -115,15 +115,15 @@ const initRecipe = recipe => {
         model:
             { // TODO: Create a panel for collecting this data
                 primitiveTypes: [
-                    {id: 'forest', label: 'Forest', value: 2},
-                    {id: 'plantation', label: 'Plantation', value: 11},
-                    {id: 'shrub', label: 'Shrub', value: 12},
-                    {id: 'grass', label: 'Grass', value: 10},
-                    {id: 'crop', label: 'Crop', value: 7},
-                    {id: 'paramo', label: 'Paramo', value: 9},
-                    {id: 'water', label: 'Water', value: 8},
-                    {id: 'urban', label: 'Inhabited area', value: 6},
-                    {id: 'barren', label: 'Barren', value: 0}
+                    {id: 'forest', label: 'Forest', value: 2, color: '007D34'},
+                    {id: 'plantation', label: 'Plantation', value: 11, color: '93AA00'},
+                    {id: 'shrub', label: 'Shrub', value: 12, color: '593315'},
+                    {id: 'grass', label: 'Grass', value: 10, color: 'F4C800'},
+                    {id: 'crop', label: 'Crop', value: 7, color: 'FF8E00'},
+                    {id: 'paramo', label: 'Paramo', value: 9, color: 'CEA262'},
+                    {id: 'water', label: 'Water', value: 8, color: 'A6BDD7'},
+                    {id: 'urban', label: 'Urban', value: 6, color: '817066'},
+                    {id: 'barren', label: 'Barren', value: 0, color: 'F6768E'}
                 ]
             }
     }).dispatch()

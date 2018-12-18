@@ -1,9 +1,9 @@
-import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState, Status} from './landCoverRecipe'
+import _ from 'lodash'
+import React from 'react'
 import {msg} from 'translate'
 import ComboBox from 'widget/comboBox'
-import React from 'react'
-import _ from 'lodash'
+import {Field, form} from 'widget/form'
+import {RecipeActions, RecipeState, Status} from './landCoverRecipe'
 import styles from './previewSelection.module.css'
 
 const fields = {
@@ -15,6 +15,7 @@ const mapStateToProps = (state, ownProps) => {
     const recipeId = ownProps.recipeId
     const recipeState = RecipeState(recipeId)
     const recipeActions = RecipeActions(recipeId)
+
     const period = recipeState('model.period')
     let values = recipeState('ui.preview') || {}
     if (!values.type) {
@@ -57,10 +58,10 @@ class PreviewSelection extends React.Component {
         const options = [Status.LAND_COVER_MAP_CREATED].includes(status)
             ? [
                 {
-                    label: 'Result',
+                    label: 'Results',
                     options: [
-                        {value: 'map', label: 'Land cover map', group: 'result'},
-                        {value: 'uncertainty', label: 'Uncertainty', group: 'result'}
+                        {value: 'classification', label: 'Land cover map', group: 'assembly'},
+                        {value: 'confidence', label: 'Confidence', group: 'assembly'}
                     ]
                 },
                 {
@@ -118,8 +119,6 @@ class Select extends React.Component {
 
     render() {
         const {input, options, placeholder, listClassName, onChange, children} = this.props
-        console.log({input: input.value})
-        console.log({options})
         const optionByValue = {} // TODO: Do this differently
         options.forEach(option => {
             if (option.options)
@@ -127,7 +126,6 @@ class Select extends React.Component {
             else
                 optionByValue[option.value] = option
         })
-        console.log({optionByValue})
         return (
             <React.Fragment>
                 {this.state.showList

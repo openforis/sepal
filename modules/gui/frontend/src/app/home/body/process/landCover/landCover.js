@@ -4,6 +4,7 @@ import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import CompositePreview from './compositePreview'
 import PrimitivePreview from './primitivePreview'
+import AssemblyPreview from './assemblyPreview'
 import CompositesMonitor from './compositesMonitor'
 import LandCoverToolbar from './landCoverToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
@@ -48,6 +49,8 @@ class LandCover extends React.Component {
             return <CompositePreview recipeId={recipeId}/>
         case 'primitive':
             return <PrimitivePreview recipeId={recipeId}/>
+        case 'assembly':
+            return <AssemblyPreview recipeId={recipeId}/>
         default:
             return null
         }
