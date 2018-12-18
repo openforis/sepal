@@ -3,6 +3,7 @@ import {connect, select} from 'store'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import CompositePreview from './compositePreview'
+import PrimitivePreview from './primitivePreview'
 import CompositesMonitor from './compositesMonitor'
 import LandCoverToolbar from './landCoverToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
@@ -45,6 +46,8 @@ class LandCover extends React.Component {
         switch (preview.type) {
         case 'composite':
             return <CompositePreview recipeId={recipeId}/>
+        case 'primitive':
+            return <PrimitivePreview recipeId={recipeId}/>
         default:
             return null
         }
