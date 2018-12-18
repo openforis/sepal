@@ -39,14 +39,13 @@ AppLaunchPad.propTypes = {
 const App = ({app, onClick}) =>
     <Button
         look='transparent'
+        additionalClassName={styles.app}
         onClick={() => onClick(app)}>
-        <div className={styles.app}>
-            <Image style={app.style} src={app.image}/>
-            {app.icon && <Icon name={app.icon} alt={app.alt}/>}
-            <div>
-                <div className={styles.title}>{app.label}</div>
-                <div className={styles.description}>{app.description}</div>
-            </div>
+        <Image style={app.style} src={app.image}/>
+        {app.icon && <Icon name={app.icon} alt={app.alt}/>}
+        <div>
+            <div className={styles.title}>{app.label}</div>
+            <div className={styles.description}>{app.description}</div>
         </div>
     </Button>
 

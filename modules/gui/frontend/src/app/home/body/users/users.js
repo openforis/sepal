@@ -23,13 +23,6 @@ const getBudgetReport$ = () => api.user.getBudgetReport$().pipe(
     map(([budgetReport]) => budgetReport)
 )
 
-const mergeUserDetailsAndBudget = (userDetails, userBudget) => ({
-    ...userDetails,
-    report: {
-        budget: userBudget
-    }
-})
-
 class Users extends React.Component {
     state = {
         users: [],
@@ -38,16 +31,16 @@ class Users extends React.Component {
         filter: '',
         userDetails: null
     }
+
     search = React.createRef()
 
     componentDidMount() {
         const setUserList = userList =>
             this.setState(prevState => ({
                 ...prevState,
-                users: this.getSortedUsers(
-                    _.map(userList, user => mergeUserDetailsAndBudget(user, {}))
-                )
+                users: this.getSortedUsers(userList)
             }))
+
         const mergeBudgetReport = budgetReport =>
             this.setState(prevState => ({
                 ...prevState,
@@ -122,7 +115,7 @@ class Users extends React.Component {
             : <Icon name={'sort'}/>
     }
 
-    renderHeadings() {
+    renderHeader() {
         return (
             <div className={styles.grid}>
                 <div className={[styles.name, styles.clickable].join(' ')}
@@ -286,13 +279,16 @@ class Users extends React.Component {
     }
 
     updateUser(userDetails) {
-
+        
         const update$ = userDetails =>
             updateUserDetails$(userDetails).pipe(
                 zip(updateUserBudget$(userDetails)),
-                map(([userDetails, userBudget]) =>
-                    mergeUserDetailsAndBudget(userDetails, userBudget)
-                )
+                map(([userDetails, userBudget]) => ({
+                    ...userDetails,
+                    report: {
+                        budget: userBudget
+                    }
+                }))
             )
 
         const updateUserDetails$ = ({newUser, username, name, email, organization}) =>
@@ -300,13 +296,12 @@ class Users extends React.Component {
                 ? api.user.inviteUser$({username, name, email, organization})
                 : api.user.updateUser$({username, name, email, organization})
 
-        const updateUserBudget$ = ({username, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota}) =>
-            api.user.updateUserBudget$({
-                username,
-                instanceSpending: monthlyBudgetInstanceSpending,
-                storageSpending: monthlyBudgetStorageSpending,
-                storageQuota: monthlyBudgetStorageQuota
-            })
+        const updateUserBudget$ = ({
+            username,
+            monthlyBudgetInstanceSpending: instanceSpending,
+            monthlyBudgetStorageSpending: storageSpending,
+            monthlyBudgetStorageQuota: storageQuota
+        }) => api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
 
         const updateLocalState = userDetails =>
             this.setState(prevState => {
@@ -389,7 +384,7 @@ class Users extends React.Component {
                             {this.renderControls()}
                             {this.renderInfo()}
                             <div className={styles.heading}>
-                                {this.renderHeadings()}
+                                {this.renderHeader()}
                             </div>
                             <div className={styles.users}>
                                 {this.renderUsers()}
@@ -414,7 +409,7 @@ class User extends React.Component {
                 report: {
                     budget = {},
                     current = {}
-                }
+                } = {}
             },
             highlight,
             onClick
