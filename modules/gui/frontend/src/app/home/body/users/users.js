@@ -12,6 +12,8 @@ import _ from 'lodash'
 import api from 'api'
 import escapeStringRegexp from 'escape-string-regexp'
 import format from 'format'
+import lookStyles from 'style/look.module.css'
+import moment from 'moment'
 import styles from './users.module.css'
 
 const getUserList$ = () => api.user.getUserList$().pipe(
@@ -26,8 +28,8 @@ const getBudgetReport$ = () => api.user.getBudgetReport$().pipe(
 class Users extends React.Component {
     state = {
         users: [],
-        sortingOrder: 'name',
-        sortingDirection: 1,
+        sortingOrder: 'updateTime',
+        sortingDirection: -1,
         filter: '',
         userDetails: null
     }
@@ -73,7 +75,10 @@ class Users extends React.Component {
     }
 
     getSortedUsers(users, sortingOrder = this.state.sortingOrder, sortingDirection = this.state.sortingDirection) {
-        return _.orderBy(users, user => _.get(user, sortingOrder).toUpperCase(), sortingDirection === 1 ? 'asc' : 'desc')
+        return _.orderBy(users, user => {
+            const item = _.get(user, sortingOrder)
+            return _.isString(item) ? item.toUpperCase() : item
+        }, sortingDirection === 1 ? 'asc' : 'desc')
     }
 
     setFilter(filter) {
@@ -115,20 +120,28 @@ class Users extends React.Component {
             : <Icon name={'sort'}/>
     }
 
+    renderColumnHeader(column, label, className) {
+        return (
+            <div className={[styles[column], styles[className]].join(' ')}>
+                <Button
+                    chromeless
+                    shape='none'
+                    additionalClassName='itemType'
+                    onClick={() => this.setSorting(column)}>
+                    {label}
+                    <span className={styles.sortingHandle}>
+                        {this.renderSortingHandle(column)}
+                    </span>
+                </Button>
+            </div>
+        )
+    }
+
     renderHeader() {
         return (
             <div className={styles.grid}>
-                <div className={[styles.name, styles.clickable].join(' ')}
-                    onClick={() => this.setSorting('name')}>
-                    {msg('user.userDetails.form.name.label')}
-                    {this.renderSortingHandle('name')}
-                </div>
-
-                <div className={[styles.status, styles.clickable].join(' ')}
-                    onClick={() => this.setSorting('status')}>
-                    {msg('user.userDetails.form.status.label')}
-                    {this.renderSortingHandle('status')}
-                </div>
+                {this.renderColumnHeader('name', msg('user.userDetails.form.name.label'))}
+                {this.renderColumnHeader('status', msg('user.userDetails.form.status.label'))}
 
                 <div className={[styles.instanceBudget, styles.group].join(' ')}>
                     {msg('user.report.resources.monthlyInstance')}
@@ -142,41 +155,13 @@ class Users extends React.Component {
                     {msg('user.report.resources.storage')}
                 </div>
 
-                <div className={[styles.number, styles.clickable].join(' ')}
-                    onClick={() => this.setSorting('report.monthlyInstanceBudget')}>
-                    {msg('user.report.resources.quota')}
-                    {this.renderSortingHandle('report.monthlyInstanceBudget')}
-                </div>
-
-                <div className={[styles.number, styles.clickable].join(' ')}
-                    onClick={() => this.setSorting('report.monthlyInstanceSpending')}>
-                    {msg('user.report.resources.used')}
-                    {this.renderSortingHandle('report.monthlyInstanceSpending')}
-                </div>
-
-                <div className={[styles.number, styles.clickable].join(' ')}
-                    onClick={() => this.setSorting('report.monthlyStorageBudget')}>
-                    {msg('user.report.resources.quota')}
-                    {this.renderSortingHandle('report.monthlyStorageBudget')}
-                </div>
-
-                <div className={[styles.number, styles.clickable].join(' ')}
-                    onClick={() => this.setSorting('report.monthlyStorageSpending')}>
-                    {msg('user.report.resources.used')}
-                    {this.renderSortingHandle('report.monthlyStorageSpending')}
-                </div>
-
-                <div className={[styles.number, styles.clickable].join(' ')}
-                    onClick={() => this.setSorting('report.storageQuota')}>
-                    {msg('user.report.resources.quota')}
-                    {this.renderSortingHandle('report.storageQuota')}
-                </div>
-
-                <div className={[styles.number, styles.clickable].join(' ')}
-                    onClick={() => this.setSorting('report.storageUsed')}>
-                    {msg('user.report.resources.used')}
-                    {this.renderSortingHandle('report.storageUsed')}
-                </div>
+                {this.renderColumnHeader('updateTime', msg('user.userDetails.form.updateTime.label'))}
+                {this.renderColumnHeader('report.budget.instanceSpending', msg('user.report.resources.quota'), 'number')}
+                {this.renderColumnHeader('report.month.instanceSpending', msg('user.report.resources.used'), 'number')}
+                {this.renderColumnHeader('report.budget.storageSpending', msg('user.report.resources.quota'), 'number')}
+                {this.renderColumnHeader('report.month.storageSpending', msg('user.report.resources.used'), 'number')}
+                {this.renderColumnHeader('report.budget.storageQuota', msg('user.report.resources.quota'), 'number')}
+                {this.renderColumnHeader('report.month.storageQuota', msg('user.report.resources.used'), 'number')}
             </div>
         )
     }
@@ -383,7 +368,7 @@ class Users extends React.Component {
                             limit={20}>
                             {this.renderControls()}
                             {this.renderInfo()}
-                            <div className={styles.heading}>
+                            <div className={[styles.heading, 'itemType'].join(' ')}>
                                 {this.renderHeader()}
                             </div>
                             <div className={styles.users}>
@@ -406,6 +391,7 @@ class User extends React.Component {
             user: {
                 name,
                 status,
+                updateTime,
                 report: {
                     budget = {},
                     current = {}
@@ -415,11 +401,34 @@ class User extends React.Component {
             onClick
         } = this.props
         return (
+            // <Button
+            //     chromeless
+            //     look='transparent'
+            //     // size='large'
+            //     onClick={() => status ? onClick() : null}>
+            //     <div className={styles.grid}>
+            //         <div><Highlight search={highlight} matchClass={styles.highlight}>{name}</Highlight></div>
+            //         <div>{msg(`user.userDetails.form.status.${status}`) || <Icon name='spinner'/>}</div>
+            //         <div>{moment(updateTime).fromNow()}</div>
+            //         <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
+            //         <div className={styles.number}>{format.dollars(current.instanceSpending)}</div>
+            //         <div className={styles.number}>{format.dollars(budget.storageSpending)}</div>
+            //         <div className={styles.number}>{format.dollars(current.storageSpoending)}</div>
+            //         <div className={styles.number}>{format.fileSize(budget.storageQuota, {scale: 'G'})}</div>
+            //         <div className={styles.number}>{format.fileSize(current.storageQuota, {scale: 'G'})}</div>
+            //     </div>
+            // </Button>
             <div
-                className={[styles.grid, styles.clickable].join(' ')}
-                onClick={() => onClick()}>
+                className={[
+                    lookStyles.look,
+                    lookStyles.transparent,
+                    lookStyles.chromeless,
+                    styles.grid, status ? styles.clickable : null
+                ].join(' ')}
+                onClick={() => status ? onClick() : null}>
                 <div><Highlight search={highlight} matchClass={styles.highlight}>{name}</Highlight></div>
-                <div>{status}</div>
+                <div>{msg(`user.userDetails.form.status.${status}`) || <Icon name='spinner'/>}</div>
+                <div>{moment(updateTime).fromNow()}</div>
                 <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
                 <div className={styles.number}>{format.dollars(current.instanceSpending)}</div>
                 <div className={styles.number}>{format.dollars(budget.storageSpending)}</div>

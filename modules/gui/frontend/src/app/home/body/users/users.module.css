@@ -37,17 +37,14 @@
 .grid {
     display: grid;
     grid-template-areas: 
-        "name status ib  ib  sb  sb  st  st "
-        "name status ibq ibu sbq sbu stq stu";
-    grid-template-columns: 4fr 1fr repeat(6, 1fr);
-    /* grid-template-areas: 
-        "name username status ib  ib  sb  sb  st  st "
-        "name username status ibq ibu sbq sbu stq stu";
-    grid-template-columns: 3fr 1.5fr 1fr repeat(6, 1fr); */
+        "name status updateTime ib  ib  sb  sb  st  st "
+        "name status updateTime ibq ibu sbq sbu stq stu";
+    grid-template-columns: 4fr 1fr 2fr repeat(6, 1fr);
     grid-template-rows: auto;
     column-gap: 1rem;
     width: 100%;
     padding: .1rem .3rem;
+    /* justify-items: left; */
 }
 
 .grid > * {
@@ -70,6 +67,11 @@
     align-self: end;
 }
 
+.grid > .updateTime {
+    grid-area: updateTime;
+    align-self: end;
+}
+
 .grid > .instanceBudget {
     grid-area: ib;
     text-align: center;
@@ -88,21 +90,25 @@
 .heading {
     background-color: var(--look-default-background-color);
     color: var(--look-default-color);
-    font-weight: normal;
-    font-size: .9rem;
-    text-transform: uppercase;
     user-select: none;
 }
 
-.clickable:hover {
-    cursor: pointer;
+.users {
+    background-color: var(--look-transparent-background-color);
+    color: var(--look-transparent-color);
+    line-height: 2rem;
 }
 
 .users > :nth-child(even) {
-    background-color: hsla(0, 0%, 100%, .04);
+    background-color: hsla(0, 0%, 100%, .03);
 }
 
-.users > *:hover {
+.users > .clickable:hover {
+    cursor: pointer;
     background-color: var(--look-highlight-background-color);
     color: var(--look-highlight-color);
+}
+
+.sortingHandle {
+    margin-left: .5rem;
 }

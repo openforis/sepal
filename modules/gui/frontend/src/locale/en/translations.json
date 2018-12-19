@@ -822,7 +822,13 @@
                     "required": "Organization is required"
                 },
                 "status": {
-                    "label": "Status"
+                    "label": "Status",
+                    "PENDING": "Pending",
+                    "ACTIVE": "Active",
+                    "LOCKED": "Locked"
+                },
+                "updateTime": {
+                    "label": "Updated"
                 },
                 "monthlyLimits": {
                     "label": "Monthly limits"
