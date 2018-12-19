@@ -176,7 +176,7 @@ class UserEndpoint {
 
             post('/invite', [ADMIN]) {
                 response.contentType = 'application/json'
-                def command = new InviteUser(invitedUsername: params.username)
+                def command = new InviteUser(invitedUsername: params.username?.toLowerCase())
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
@@ -187,7 +187,7 @@ class UserEndpoint {
 
             post('/delete', [ADMIN]) {
                 response.contentType = 'application/json'
-                def command = new DeleteUser(username: params.required('username', String))
+                def command = new DeleteUser(username: params.required('username', String).toLowerCase())
                 component.submit(command)
                 send toJson([status: 'success', message: 'User deleted'])
             }
