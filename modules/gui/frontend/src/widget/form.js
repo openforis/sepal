@@ -390,6 +390,28 @@ ErrorMessage.propTypes = {
     className: PropTypes.string
 }
 
+export class Form extends React.Component {
+    render() {
+        const {className, onSubmit, children} = this.props
+        return (
+            <form
+                className={className}
+                onSubmit={e => {
+                    e.preventDefault()
+                    onSubmit && onSubmit(e)
+                }}>
+                {children}
+            </form>
+        )
+    }
+}
+
+Form.propTypes = {
+    children: PropTypes.any.isRequired,
+    onSubmit: PropTypes.func.isRequired,
+    className: PropTypes.string
+}
+
 export class Input extends React.Component {
     element = React.createRef()
 
