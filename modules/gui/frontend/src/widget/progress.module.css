@@ -61,5 +61,6 @@ div.centered {
 }
 
 .centered > * {
-    width: 25%;
+    width: 15rem;
+    max-width: 90%;
 }
