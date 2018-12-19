@@ -1,4 +1,4 @@
-import {filter, map, switchMap} from 'rxjs/operators'
+import {map, switchMap} from 'rxjs/operators'
 import {select} from 'store'
 import actionBuilder from 'action-builder'
 import api from 'api'
