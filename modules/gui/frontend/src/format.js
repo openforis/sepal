@@ -46,23 +46,23 @@ const fullDate = date =>
 const date = date =>
     moment(date).format('DD MMM YYYY')
 
-const fileSize = (size = 0, {scale = 0, precisionDigits = 3} = {}) =>
+const fileSize = (size, {scale, precisionDigits} = {}) =>
     number({value: size, scale, precisionDigits, unit: 'B'})
 
-const number = ({value, scale = '', precisionDigits = 3, prefix = '', unit = '', zero}) => {
+const number = ({value = 0, scale = '', precisionDigits = 3, prefix = '', unit = ''}) => {
     const join = (...items) => _.compact(items).join(' ')
     // safe up to yottabytes (10^24)...
     const magnitudes = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
-    const magnitude = magnitudes.splice(Math.max(magnitudes.indexOf(scale), 0))
-    const digits = Math.trunc(Math.log10(value))
-    const periods = Math.trunc(digits / 3)
-    const multiplier = Math.pow(10, 3 * periods)
+    const scaleIndex = Math.max(magnitudes.indexOf(scale), 0)
+    const scaleMultiplier = Math.pow(10, 3 * scaleIndex)
+    const scaledValue = value * scaleMultiplier
+    const digits = Math.max(Math.trunc(Math.log10(scaledValue)), 0)
+    const magnitude = Math.trunc(digits / 3)
+    const multiplier = Math.pow(10, 3 * magnitude)
     const decimals = multiplier > 1
         ? Math.min(precisionDigits - 1, 2) - digits % 3
         : 0
-    return value
-        ? join(prefix, (value / multiplier).toFixed(decimals), magnitude[periods] + unit)
-        : zero || join(prefix, '0', unit)
+    return join(prefix, (scaledValue / multiplier).toFixed(decimals), magnitudes[magnitude] + unit)
 }
 
 export default {
