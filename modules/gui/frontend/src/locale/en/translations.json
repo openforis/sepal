@@ -979,6 +979,7 @@
     "users": {
         "countNoFilter": "{count} total users",
         "countWithFilter": "{count} users matching \"{filter}\"",
+        "filter.placeholder": "Showing all users, start typing to filter",
         "page": "Page {pageNumber} of {pageCount}",
         "invite.label": "Invite user"
     },

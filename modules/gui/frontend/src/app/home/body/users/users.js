@@ -180,7 +180,7 @@ class Users extends React.Component {
                             type='text'
                             ref={this.search}
                             value={this.state.filter}
-                            placeholder={'showing all results, type to filter'}
+                            placeholder={msg('users.filter.placeholder')}
                             onChange={e => this.setFilter(e.target.value)}/>
                     </Button>
                     <Button
