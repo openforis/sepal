@@ -46,7 +46,7 @@ export default {
     validateToken$: token =>
         post$('/api/user/validate-token', {
             body: {token}
-        }),
+        }).pipe(toResponse),
 
     resetPassword$: (token, username, password) =>
         post$('/api/user/password/reset', {
