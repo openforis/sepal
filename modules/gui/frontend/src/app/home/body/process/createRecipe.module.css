@@ -28,3 +28,9 @@
 .recipeTypes li + li {
     margin-top: .5rem;
 }
+
+.beta {
+    margin-left: .5rem;
+    font-size: .7rem;
+    color: var(--warning-color);
+}

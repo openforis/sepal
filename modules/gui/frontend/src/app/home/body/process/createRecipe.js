@@ -1,13 +1,13 @@
-import {Button} from 'widget/button'
+import actionBuilder from 'action-builder'
+import moment from 'moment'
+import PropTypes from 'prop-types'
+import React from 'react'
 import {connect} from 'store'
+import lookStyles from 'style/look.module.css'
+import {Button} from 'widget/button'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
-import PropTypes from 'prop-types'
-import React from 'react'
-import actionBuilder from 'action-builder'
-import lookStyles from 'style/look.module.css'
-import moment from 'moment'
 import styles from './createRecipe.module.css'
 
 const mapStateToProps = state => {
@@ -33,7 +33,7 @@ const createRecipe = (recipeId, type, title) => {
     setTabType(recipeId, type, title)
     closePanel()
 }
-    
+
 const setTabType = (recipeId, type, title) =>
     actionBuilder('SET_TAB_TYPE')
         .withState('process.tabs', (recipes, stateBuilder) => {
@@ -87,7 +87,7 @@ class CreateRecipe extends React.Component {
     //     return (
     //         <PanelTree panels={panels}/>
     //     )
-    
+
     // }
 
     showRecipeType(type) {
@@ -155,13 +155,14 @@ class CreateRecipe extends React.Component {
                 <PanelContent>
                     <div className={styles.recipeTypes}>
                         <ul>
-                            {recipeTypes.map(({type, name, description, details}) =>
+                            {recipeTypes.map(({type, name, description, beta, details}) =>
                                 <RecipeType
                                     key={type}
                                     recipeId={recipeId}
                                     type={type}
                                     name={name}
                                     description={description}
+                                    beta={beta}
                                     onInfo={details ? () => this.showRecipeType(type) : null}/>
                             )}
                         </ul>
@@ -220,7 +221,7 @@ class RecipeType extends React.Component {
     }
 
     render() {
-        const {recipeId, type, name, description, onInfo} = this.props
+        const {recipeId, type, name, description, beta, onInfo} = this.props
         return (
             <li
                 key={type}
@@ -228,10 +229,13 @@ class RecipeType extends React.Component {
                 onClick={() => createRecipe(recipeId, type, name)}>
                 <div className={styles.header}>
                     <div>
-                        <div className='itemType'>{name}</div>
+                        <div className='itemType'>
+                            {name}
+                            {beta ? <sup className={styles.beta}>Beta</sup> : null}
+                        </div>
                         <div>{description}</div>
                     </div>
-                    {onInfo ? this.renderInfoButton(): null}
+                    {onInfo ? this.renderInfoButton() : null}
                 </div>
             </li>
         )

@@ -26,6 +26,7 @@ html {
 
     --error-color: #e81351;
     --info-color: rgb(15, 89, 226);
+    --warning-color: hsl(39, 100%, 35%);
 
     --base-font-size: 14px;
 

@@ -43,6 +43,7 @@ class RecipeList extends React.Component {
         type: 'LAND_COVER',
         name: msg('process.landCover.create'),
         description: msg('process.landCover.description'),
+        beta: true,
         details: <CreateRecipeRLCMS/>
     }]
 
