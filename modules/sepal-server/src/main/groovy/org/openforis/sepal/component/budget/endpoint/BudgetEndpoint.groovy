@@ -43,9 +43,9 @@ class BudgetEndpoint {
                 ])
 
                 def budget = new Budget(
-                        instanceSpending: params.required('budget.instanceSpending', double),
-                        storageSpending: params.required('budget.storageSpending', double),
-                        storageQuota: params.required('budget.storageQuota', double)
+                        instanceSpending: params.required('instanceSpending', double),
+                        storageSpending: params.required('storageSpending', double),
+                        storageQuota: params.required('storageQuota', double)
                 )
 
                 def command = new UpdateBudget(
