@@ -22,7 +22,7 @@ class SmtpEmailGateway implements EmailGateway {
                 body: '/org/openforis/sepal/component/user/adapter/email-invitation.html',
                 binding: [
                         user          : user,
-                        activationLink: "https://$sepalHost/?invitation=true&token=$token"
+                        activationLink: "https://$sepalHost/setup-account?token=$token"
                 ]
         )
         server.send(to, template)
@@ -36,7 +36,7 @@ class SmtpEmailGateway implements EmailGateway {
                 body: '/org/openforis/sepal/component/user/adapter/email-password-reset.html',
                 binding: [
                         user          : user,
-                        passwordResetLink: "https://$sepalHost/?password-reset=true&token=$token"
+                        passwordResetLink: "https://$sepalHost/reset-password?token=$token"
                 ]
         )
         server.send(to, template)
