@@ -42,9 +42,7 @@ export const login$ = (username, password) => {
 }
 
 export const requestPasswordReset$ = email =>
-    api.user.requestPasswordReset$(email).pipe(
-        filter(() => false)
-    )
+    api.user.requestPasswordReset$(email)
 
 export const validateToken$ = token =>
     api.user.validateToken$(token).pipe(

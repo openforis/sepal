@@ -1,6 +1,5 @@
 import {Button} from 'widget/button'
-import {Field, Input, Label, form} from 'widget/form'
-import {history} from 'route'
+import {Field, Form, Input, Label, form} from 'widget/form'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
 import Notifications from 'app/notifications'
@@ -21,20 +20,21 @@ export class ForgotPassword extends React.Component {
     }
 
     requestPasswordReset(email) {
-        this.props.asyncActionBuilder('REQUEST_PASSWORD_RESET',
-            requestPasswordReset$(email))
-            .onComplete(() => [
-                history().replace('/'),
-                Notifications.success('landing.forgot-password', {email})
-            ]
-            )
-            .dispatch()
+        this.props.stream('REQUEST_PASSWORD_RESET',
+            requestPasswordReset$(email),
+            () => {
+                Notifications.success('landing.forgot-password', {email}).dispatch()
+                this.cancel()
+            }
+        )
     }
 
     render() {
         const {form, inputs: {email}, action} = this.props
         return (
-            <form className={styles.form}>
+            <Form
+                className={styles.form}
+                onSubmit={() => this.requestPasswordReset(email.value)}>
                 <div className={styles.inputs}>
                     <Label msg={msg('landing.forgot-password.label')}/>
                     <div className={styles.instructions}>
@@ -69,12 +69,11 @@ export class ForgotPassword extends React.Component {
                         shape='pill'
                         icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in-alt'}
                         label={msg('landing.forgot-password.button')}
-                        onClick={() => this.requestPasswordReset(email.value)}
                         disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
                         tabIndex={2}
                     />
                 </div>
-            </form>
+            </Form>
         )
     }
 }

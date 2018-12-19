@@ -41,7 +41,7 @@ export default {
     requestPasswordReset$: email =>
         post$('/api/user/password/reset-request', {
             body: {email}
-        }),
+        }).pipe(toResponse),
 
     validateToken$: token =>
         post$('/api/user/validate-token', {
