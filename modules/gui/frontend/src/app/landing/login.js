@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {Field, Input, form} from 'widget/form'
+import {Field, Form, Input, form} from 'widget/form'
 import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -36,7 +36,7 @@ class Login extends React.Component {
     render() {
         const {form, inputs: {username, password}, action} = this.props
         return (
-            <form className={styles.form}>
+            <Form className={styles.form}>
                 <div className={styles.inputs}>
                     <Input
                         label={msg('landing.login.username.label')}
@@ -80,7 +80,7 @@ class Login extends React.Component {
                         tabIndex={3}
                     />
                 </div>
-            </form>)
+            </Form>)
     }
 }
 

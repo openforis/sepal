@@ -1,5 +1,5 @@
 import {CenteredProgress} from 'widget/progress'
-import {Constraint, Field, Input, form} from 'widget/form'
+import {Constraint, Field, Form, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {PropTypes} from 'prop-types'
 import {SubmitButton} from 'widget/legacyButton'
@@ -76,39 +76,41 @@ class ResetPassword extends React.Component {
 
     form() {
         const {form, inputs: {username, password, password2}} = this.props
-        return <form>
-            <Input
-                label={msg('landing.reset-password.username.label')}
-                input={username}
-                disabled={true}
-                errorMessage
-            />
-            <Input
-                label={msg('landing.reset-password.password.label')}
-                input={password}
-                type='password'
-                placeholder={msg('landing.reset-password.password.placeholder')}
-                autoFocus='on'
-                tabIndex={1}
-                errorMessage
-            />
-            <Input
-                label={msg('landing.reset-password.password2.label')}
-                input={password2}
-                type='password'
-                placeholder={msg('landing.reset-password.password2.placeholder')}
-                tabIndex={2}
-                errorMessage={[password2, 'passwordsMatch']}
-            />
+        return (
+            <Form>
+                <Input
+                    label={msg('landing.reset-password.username.label')}
+                    input={username}
+                    disabled={true}
+                    errorMessage
+                />
+                <Input
+                    label={msg('landing.reset-password.password.label')}
+                    input={password}
+                    type='password'
+                    placeholder={msg('landing.reset-password.password.placeholder')}
+                    autoFocus='on'
+                    tabIndex={1}
+                    errorMessage
+                />
+                <Input
+                    label={msg('landing.reset-password.password2.label')}
+                    input={password2}
+                    type='password'
+                    placeholder={msg('landing.reset-password.password2.placeholder')}
+                    tabIndex={2}
+                    errorMessage={[password2, 'passwordsMatch']}
+                />
 
-            <SubmitButton
-                icon='sign-in-alt'
-                onClick={() => this.resetPassword(form.values())}
-                disabled={form.isInvalid()}
-                tabIndex={3}>
-                <Msg id='landing.reset-password.button'/>
-            </SubmitButton>
-        </form>
+                <SubmitButton
+                    icon='sign-in-alt'
+                    onClick={() => this.resetPassword(form.values())}
+                    disabled={form.isInvalid()}
+                    tabIndex={3}>
+                    <Msg id='landing.reset-password.button'/>
+                </SubmitButton>
+            </Form>
+        )
     }
 }
 

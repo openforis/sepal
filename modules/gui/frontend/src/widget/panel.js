@@ -1,3 +1,4 @@
+import {Form} from 'widget/form'
 import {PanelButtonContext} from './toolbar'
 import {PanelWizardContext} from './panelWizard'
 import {connect, select} from 'store'
@@ -103,14 +104,11 @@ class Panel extends React.Component {
         ].join(' ')
         return form
             ? (
-                <form
+                <Form
                     className={classNames}
-                    onSubmit={e => {
-                        e.preventDefault()
-                        onApply && onApply(form && form.values())
-                    }}>
+                    onSubmit={() => onApply && onApply(form && form.values())}>
                     {content}
-                </form>
+                </Form>
             )
             : (
                 <div className={classNames}>{content}</div>

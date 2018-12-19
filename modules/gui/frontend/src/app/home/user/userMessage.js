@@ -57,7 +57,6 @@ class UserMessage extends React.Component {
         return (
             <React.Fragment>
                 <PanelContent className={styles.panelContent}>
-                    {/* <form> */}
                     <Input
                         label={msg('user.userMessage.form.subject.label')}
                         autoFocus
@@ -75,7 +74,6 @@ class UserMessage extends React.Component {
                         />
                         <Markdown className={styles.contents} source={contents.value || markdownInstructions}/>
                     </div>
-                    {/* </form> */}
                 </PanelContent>
                 <PanelButtons/>
             </React.Fragment>
