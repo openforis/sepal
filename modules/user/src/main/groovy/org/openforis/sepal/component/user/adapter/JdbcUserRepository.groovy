@@ -8,6 +8,8 @@ import org.openforis.sepal.sql.SqlConnectionProvider
 import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.user.User
 
+import java.sql.Timestamp
+
 class JdbcUserRepository implements UserRepository {
     private final SqlConnectionProvider connectionProvider
 
@@ -36,7 +38,8 @@ class JdbcUserRepository implements UserRepository {
     List<User> listUsers() {
         sql.rows('''
                 SELECT id, username, name, email, organization, admin, system_user, status, 
-                       google_refresh_token,  google_access_token, google_access_token_expiration
+                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       creation_time, update_time
                 FROM sepal_user 
                 ORDER BY creation_time DESC''').collect {
             createUser(it)
@@ -46,7 +49,8 @@ class JdbcUserRepository implements UserRepository {
     User lookupUser(String username) {
         def row = sql.firstRow('''
                 SELECT id, username, name, email, organization, admin, system_user, status, 
-                       google_refresh_token,  google_access_token, google_access_token_expiration 
+                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       creation_time, update_time
                 FROM sepal_user 
                 WHERE username = ?''', [username])
         if (!row)
@@ -57,7 +61,8 @@ class JdbcUserRepository implements UserRepository {
     User findUserByEmail(String email) {
         def row = sql.firstRow('''
                 SELECT id, username, name, email, organization, admin, system_user, status, 
-                       google_refresh_token,  google_access_token, google_access_token_expiration
+                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       creation_time, update_time
                 FROM sepal_user 
                 WHERE email = ?''', [email])
         return row ? createUser(row) : null
@@ -72,7 +77,8 @@ class JdbcUserRepository implements UserRepository {
     Map tokenStatus(String token) {
         def row = sql.firstRow('''
                 SELECT id, username, name, email, organization, admin, status, system_user, token_generation_time, 
-                       google_refresh_token,  google_access_token, google_access_token_expiration 
+                       google_refresh_token,  google_access_token, google_access_token_expiration, 
+                       creation_time, update_time 
                 FROM sepal_user 
                 WHERE token = ?''', [token])
 
@@ -119,9 +125,15 @@ class JdbcUserRepository implements UserRepository {
                         refreshToken: row.google_refresh_token,
                         accessToken: row.google_access_token,
                         accessTokenExpiryDate: row.google_access_token_expiration.time) : null,
-                status: row.status as User.Status
+                status: row.status as User.Status,
+            creationTime: toDate(row.creation_time),
+            updateTime: toDate(row.update_time),
         )
         return user
+    }
+
+    private Date toDate(date) {
+        return date ? new Date((date as Timestamp).time) : null
     }
 
     private Sql getSql() {

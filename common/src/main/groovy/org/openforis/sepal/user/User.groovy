@@ -17,6 +17,8 @@ class User implements groovymvc.security.User {
     Status status
     Set<String> roles
     boolean systemUser
+    Date creationTime
+    Date updateTime
 
     boolean hasUsername(String username) {
         this.username.equalsIgnoreCase(username)
@@ -36,53 +38,61 @@ class User implements groovymvc.security.User {
 
     User withId(long id) {
         new User(
-                id: id,
-                name: name,
-                username: username,
-                email: email,
-                organization: organization,
-                status: status,
-                roles: roles)
+            id: id,
+            name: name,
+            username: username,
+            email: email,
+            organization: organization,
+            status: status,
+            roles: roles,
+            creationTime: creationTime,
+            updateTime: updateTime)
     }
 
     User withDetails(String name, String email, String organization) {
         new User(
-                id: id,
-                name: name,
-                username: username,
-                email: email,
-                organization: organization,
-                status: status,
-                roles: roles)
+            id: id,
+            name: name,
+            username: username,
+            email: email,
+            organization: organization,
+            status: status,
+            roles: roles,
+            creationTime: creationTime,
+            updateTime: updateTime)
     }
 
     User active() {
         new User(
-                id: id,
-                name: name,
-                username: username,
-                email: email,
-                organization: organization,
-                status: ACTIVE,
-                roles: roles)
+            id: id,
+            name: name,
+            username: username,
+            email: email,
+            organization: organization,
+            status: ACTIVE,
+            roles: roles,
+            creationTime: creationTime,
+            updateTime: updateTime)
     }
 
     Map toMap() {
         [
-                id          : id,
-                name        : name,
-                username    : username,
-                email       : email,
-                organization: organization,
-                googleTokens: googleTokens ? [
-                        accessToken          : googleTokens.accessToken,
-                        accessTokenExpiryDate: googleTokens.accessTokenExpiryDate,
-                        refreshToken         : googleTokens.refreshToken
+            id: id,
+            name: name,
+            username: username,
+            email: email,
+            organization: organization,
+            googleTokens: googleTokens ? [
+                accessToken: googleTokens.accessToken,
+                accessTokenExpiryDate: googleTokens.accessTokenExpiryDate,
+                refreshToken: googleTokens.refreshToken
 
-                ] : null,
-                status      : status.name(),
-                roles       : roles,
-                systemUser  : systemUser
+            ] : null,
+            status: status.name(),
+            roles: roles,
+            systemUser: systemUser,
+            creationTime: creationTime,
+            updateTime: updateTime
         ]
     }
 
