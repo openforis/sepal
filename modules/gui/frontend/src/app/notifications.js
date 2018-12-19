@@ -9,7 +9,7 @@ const mapStateToProps = state => {
         style: {
             NotificationItem: {
                 DefaultStyle: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
                     color: '#fff',
                     lineHeight: '1.5'
                 }
