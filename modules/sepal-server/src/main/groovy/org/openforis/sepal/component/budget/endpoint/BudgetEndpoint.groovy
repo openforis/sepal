@@ -72,9 +72,9 @@ class BudgetEndpoint {
     private Map spendingAsMap(UserSpendingReport spending) {
         [
             current: [
-                instanceSpending: spending.instanceSpending.round(2),
-                storageSpending: spending.storageSpending.round(2),
-                storageQuota: spending.storageUsage.round(2)],
+                instanceSpending: spending.instanceSpending,
+                storageSpending: spending.storageSpending,
+                storageQuota: spending.storageUsage],
             budget: [
                 instanceSpending: spending.instanceBudget,
                 storageSpending: spending.storageBudget,
