@@ -427,7 +427,7 @@ class User extends React.Component {
                 ].join(' ')}
                 onClick={() => status ? onClick() : null}>
                 <div><Highlight search={highlight} matchClass={styles.highlight}>{name}</Highlight></div>
-                <div>{msg(`user.userDetails.form.status.${status}`) || <Icon name='spinner'/>}</div>
+                <div>{status ? msg(`user.userDetails.form.status.${status}`) : <Icon name='spinner'/>}</div>
                 <div>{moment(updateTime).fromNow()}</div>
                 <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
                 <div className={styles.number}>{format.dollars(current.instanceSpending)}</div>

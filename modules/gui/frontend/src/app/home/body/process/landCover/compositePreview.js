@@ -123,7 +123,7 @@ class CompositePreview extends React.Component {
         const year = recipe.ui.preview.year
         const bands = recipe.ui.preview.value
         const name = recipe.title || recipe.placeholder
-        const vizParams = vizParamsByBands[bands];
+        const vizParams = vizParamsByBands[bands]
         return {
             recipe: {
                 type: 'ASSET',

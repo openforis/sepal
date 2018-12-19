@@ -1,14 +1,14 @@
-import {RecipeState, recipePath, Status} from './landCoverRecipe'
+import {RecipeState, Status, recipePath} from './landCoverRecipe'
 import {connect, select} from 'store'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
-import CompositePreview from './compositePreview'
-import PrimitivePreview from './primitivePreview'
 import AssemblyPreview from './assemblyPreview'
+import CompositePreview from './compositePreview'
 import CompositesMonitor from './compositesMonitor'
 import LandCoverToolbar from './landCoverToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import PreviewSelection from './previewSelection'
+import PrimitivePreview from './primitivePreview'
 import React from 'react'
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)

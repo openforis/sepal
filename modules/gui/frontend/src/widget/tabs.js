@@ -1,14 +1,14 @@
+import {Button} from 'widget/button'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import Portal from 'widget/portal'
+import PropTypes from 'prop-types'
+import React from 'react'
+import TabContent from './tabContent'
+import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
 import flexy from 'flexy.module.css'
 import guid from 'guid'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {connect, select} from 'store'
-import {msg} from 'translate'
-import {Button} from 'widget/button'
-import Portal from 'widget/portal'
-import Tooltip from 'widget/tooltip'
-import TabContent from './tabContent'
 import styles from './tabs.module.css'
 
 export const addTab = statePath => {
@@ -132,8 +132,8 @@ class Tabs extends React.Component {
     }
 
     componentDidMount() {
-        this.props.onDisable(p => this.setState(prevState => ({...prevState, enabled: false})))
-        this.props.onEnable(p => this.setState(prevState => ({...prevState, enabled: true})))
+        this.props.onDisable(() => this.setState(prevState => ({...prevState, enabled: false})))
+        this.props.onEnable(() => this.setState(prevState => ({...prevState, enabled: true})))
     }
 
     componentDidUpdate() {

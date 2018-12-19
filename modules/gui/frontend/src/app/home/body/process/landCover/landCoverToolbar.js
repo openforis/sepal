@@ -1,5 +1,5 @@
 import {PanelButton, Toolbar, ToolbarButton} from 'widget/toolbar'
-import {RecipeState, RecipeActions, createComposites, createLandCoverMap, recipePath, Status} from './landCoverRecipe'
+import {RecipeActions, RecipeState, Status, createComposites, createLandCoverMap, recipePath} from './landCoverRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Aoi from '../mosaic/panels/aoi/aoi'

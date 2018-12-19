@@ -1,9 +1,9 @@
-import _ from 'lodash'
-import React from 'react'
-import {msg} from 'translate'
-import ComboBox from 'widget/comboBox'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, Status} from './landCoverRecipe'
+import {msg} from 'translate'
+import ComboBox from 'widget/comboBox'
+import React from 'react'
+import _ from 'lodash'
 import styles from './previewSelection.module.css'
 
 const fields = {

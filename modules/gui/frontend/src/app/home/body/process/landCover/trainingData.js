@@ -154,8 +154,8 @@ TrainingData.propTypes = {
 const valuesToModel = (values, primitiveTypes) => {
     const classByPrimitive = {}
     primitiveTypes && primitiveTypes.forEach(primitiveType => {
-            return classByPrimitive[primitiveType.id] = primitiveType.value;
-        }
+        return classByPrimitive[primitiveType.id] = primitiveType.value
+    }
     )
     return {
         type: 'fusionTable',

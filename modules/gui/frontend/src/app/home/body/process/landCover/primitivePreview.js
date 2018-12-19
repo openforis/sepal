@@ -134,7 +134,6 @@ class PrimitivePreview extends React.Component {
     }
 }
 
-
 PrimitivePreview.propTypes = {
     recipeId: PropTypes.string.isRequired
 }

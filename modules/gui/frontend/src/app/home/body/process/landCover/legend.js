@@ -1,7 +1,7 @@
+import {RecipeState, getPrimitiveTypes} from './landCoverRecipe'
+import {connect} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import {getPrimitiveTypes, RecipeState} from './landCoverRecipe'
 import styles from './legend.module.css'
 
 const mapStateToProps = (state, ownProps) => {
