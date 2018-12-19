@@ -1,5 +1,5 @@
 import {AnimateReplacement} from '../../widget/animate'
-import {Route, Switch, location, isPathInLocation} from 'route'
+import {isPathInLocation} from 'route'
 import ForgotPassword from './forgot-password'
 import Login from './login'
 import React from 'react'

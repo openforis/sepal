@@ -39,7 +39,6 @@
 
 .fileList li div {
     width: 100%;
-    color: #d0d0d0;
     cursor: pointer;
     border: none !important;
     padding-left: calc(var(--depth) * 1.5rem);
