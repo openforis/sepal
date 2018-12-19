@@ -62,6 +62,19 @@ class User implements groovymvc.security.User {
             updateTime: updateTime)
     }
 
+    User withUpdateTime(Date updateTime) {
+        new User(
+            id: id,
+            name: name,
+            username: username,
+            email: email,
+            organization: organization,
+            status: status,
+            roles: roles,
+            creationTime: creationTime,
+            updateTime: updateTime)
+    }
+
     User active() {
         new User(
             id: id,

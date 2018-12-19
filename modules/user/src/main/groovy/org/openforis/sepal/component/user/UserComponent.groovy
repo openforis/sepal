@@ -62,14 +62,14 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
     ) {
         super(connectionManager, eventDispatcher)
         this.messageBroker = messageBroker
-        def userRepository = new JdbcUserRepository(connectionManager)
+        def userRepository = new JdbcUserRepository(connectionManager, clock)
         def tokenManager = new TokenManager(userRepository, clock)
-        command(InviteUser, new InviteUserHandler(userRepository, messageBroker, externalUserDataGateway, emailGateway, changeListener))
+        command(InviteUser, new InviteUserHandler(userRepository, messageBroker, externalUserDataGateway, emailGateway, changeListener, clock))
         command(ValidateToken, new ValidateTokenHandler(tokenManager))
         command(ActivateUser, new ActivateUserHandler(tokenManager, externalUserDataGateway, userRepository, messageBroker, changeListener))
         command(ResetPassword, new ResetPasswordHandler(tokenManager, externalUserDataGateway))
         command(Authenticate, new AuthenticateHandler(usernamePasswordVerifier, userRepository))
-        command(UpdateUserDetails, new UpdateUserDetailsHandler(userRepository, messageBroker, changeListener))
+        command(UpdateUserDetails, new UpdateUserDetailsHandler(userRepository, messageBroker, changeListener, clock))
         command(ChangePassword, new ChangePasswordHandler(usernamePasswordVerifier, externalUserDataGateway))
         command(RequestPasswordReset, new RequestPasswordResetHandler(userRepository, emailGateway, messageBroker, clock))
         command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository, googleEarthEngineWhitelistChecker, googleAccessTokenFileGateway, messageBroker, changeListener))

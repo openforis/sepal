@@ -7,28 +7,33 @@ import org.openforis.sepal.security.Roles
 import org.openforis.sepal.sql.SqlConnectionProvider
 import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.user.User
+import org.openforis.sepal.util.Clock
 
 import java.sql.Timestamp
 
 class JdbcUserRepository implements UserRepository {
     private final SqlConnectionProvider connectionProvider
+    private final Clock clock
 
-    JdbcUserRepository(SqlConnectionProvider connectionProvider) {
+    JdbcUserRepository(SqlConnectionProvider connectionProvider, Clock clock) {
         this.connectionProvider = connectionProvider
+        this.clock = clock
     }
 
     User insertUser(User user, String token) {
         def result = sql.executeInsert('''
-                INSERT INTO sepal_user (username, name, email, organization, token, admin, system_user, status) 
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?)''',
-                [user.username, user.name, user.email, user.organization, token, user.admin, user.systemUser, User.Status.PENDING.name()])
+                INSERT INTO sepal_user (username, name, email, organization, token, admin, system_user, status, 
+                            creation_time, update_time) 
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                [user.username, user.name, user.email, user.organization, token, user.admin, user.systemUser,
+                 User.Status.PENDING.name(), user.creationTime, user.updateTime])
         return user.withId(result[0][0] as long)
     }
 
     void updateUserDetails(User user) {
         sql.executeUpdate('''
                 UPDATE sepal_user SET name = ?, email = ?, organization = ?, update_time = ? 
-                WHERE username = ?''', [user.name, user.email, user.organization, new Date(), user.username])
+                WHERE username = ?''', [user.name, user.email, user.organization, user.updateTime, user.username])
     }
 
     void deleteUser(String username) {
@@ -71,7 +76,7 @@ class JdbcUserRepository implements UserRepository {
     void updateToken(String username, String token, Date tokenGenerationTime) {
         sql.executeUpdate('''
                 UPDATE sepal_user SET token = ?, token_generation_time = ?, update_time = ? 
-                WHERE username = ?''', [token, tokenGenerationTime, new Date(), username])
+                WHERE username = ?''', [token, tokenGenerationTime, clock.now(), username])
     }
 
     Map tokenStatus(String token) {
@@ -107,7 +112,7 @@ class JdbcUserRepository implements UserRepository {
                 tokens?.refreshToken,
                 tokens?.accessToken,
                 tokens ? new Date(tokens.accessTokenExpiryDate) : null,
-                new Date(),
+                clock.now(),
                 username
         ])
     }
