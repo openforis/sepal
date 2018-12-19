@@ -51,6 +51,9 @@ const fileSize = (size, {scale, precisionDigits} = {}) =>
 
 const number = ({value = 0, scale = '', precisionDigits = 3, prefix = '', unit = ''}) => {
     const join = (...items) => _.compact(items).join(' ')
+    if (value === 0) {
+        return join(prefix, '0', unit)
+    }
     if (precisionDigits < 3) {
         throw new Error('Unsupported number of precision digits (less than 3).')
     }
@@ -60,15 +63,15 @@ const number = ({value = 0, scale = '', precisionDigits = 3, prefix = '', unit =
     if (scaleMagnitude === -1) {
         throw new Error('Unsupported scale.')
     }
-    const digits = Math.max(Math.trunc(Math.log10(value)), 0)
-    const valueMagnitude = Math.trunc(digits / 3)
-    const magnitude = valueMagnitude + scaleMagnitude
-    if (magnitude < 0 || magnitude > magnitudes.length - 1) {
-        throw new Error('Out of range.')
-    }
-    const multiplier = Math.pow(10, 3 * valueMagnitude)
-    const decimals = multiplier > 1 ? precisionDigits - digits % 3 - 1 : 0
-    return join(prefix, (value / multiplier).toFixed(decimals), magnitudes[magnitude] + unit)
+    const valueDigits = Math.floor(Math.log10(value))
+    const decimals = valueDigits >= 0
+        ? precisionDigits - valueDigits % 3 - 1
+        : (precisionDigits - valueDigits - 1) % 3
+    const shiftedValue = value * Math.pow(10, precisionDigits - valueDigits - 1)
+    const normalizedValue = Math.round(shiftedValue) / Math.pow(10, decimals)
+    const valueMagnitude = Math.floor(valueDigits / 3)
+    const magnitude = scaleMagnitude + valueMagnitude
+    return join(prefix, normalizedValue.toFixed(decimals), magnitudes[magnitude], unit)
 }
 
 export default {
@@ -84,5 +87,6 @@ export default {
     fullDateTime,
     fullDate,
     date,
-    fileSize
+    fileSize,
+    number
 }
