@@ -1,5 +1,5 @@
 import {AnimateReplacement} from '../../widget/animate'
-import {Route, Switch, location} from 'route'
+import {Route, Switch, location, isPathInLocation} from 'route'
 import ForgotPassword from './forgot-password'
 import Login from './login'
 import React from 'react'
@@ -39,6 +39,10 @@ export default class Credentials extends React.Component {
     }
 
     renderPanel() {
+        if (isPathInLocation('/reset-password'))
+            return <ResetPassword/>
+        else if (isPathInLocation('/setup-account'))
+            return <SetupAccount/>
         return this.state.forgotPassword
             ? this.renderForgotPassword()
             : this.renderLogin()
@@ -49,11 +53,6 @@ export default class Credentials extends React.Component {
         const ANIMATION_DURATION_MS = 500
         return (
             <React.Fragment>
-                <Switch location={location}>
-                    <Route path='/reset-password' component={ResetPassword}/>
-                    <Route path='/setup-account' component={SetupAccount}/>
-                    <Route path='/' component={Login}/>
-                </Switch>
                 <div className={styles.container}>
                     <AnimateReplacement
                         currentKey={forgotPassword}
