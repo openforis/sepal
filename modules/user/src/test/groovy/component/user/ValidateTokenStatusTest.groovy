@@ -14,7 +14,7 @@ class ValidateTokenStatusTest extends AbstractUserTest {
         def tokenStatus = validateToken(token)
 
         then:
-        tokenStatus.user == user
+        tokenStatus.user.id == user.id
         !tokenStatus.expired
     }
 
@@ -37,7 +37,7 @@ class ValidateTokenStatusTest extends AbstractUserTest {
         def tokenStatus = validateToken(token)
 
         then:
-        tokenStatus.user == user
+        tokenStatus.user.id == user.id
         tokenStatus.expired
     }
 

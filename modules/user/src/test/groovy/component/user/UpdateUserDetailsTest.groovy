@@ -23,6 +23,6 @@ class UpdateUserDetailsTest extends AbstractUserTest {
                 email       : 'updated@email.com',
                 organization: 'Updated organization',
         ]
-        changeListener.lastChange(testUsername) == loadedUser.toMap()
+        changeListener.lastChange(testUsername).id == loadedUser.id
     }
 }
