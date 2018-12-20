@@ -51,5 +51,5 @@ test('format({value: ${params.value}, scale: \'${params.scale}\'}) === ${result}
         {params: {value: .00000123, scale: 'G'}, result: '1.23 k'},
         {params: {value: .0001, scale: 'G'}, result: '100 k'},
 
-        // {params: {value: 999999, scale: 'k'}, result: '1.00 G'},
+        {params: {value: 999999}, result: '1.00 M'},
     )
