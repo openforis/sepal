@@ -28,8 +28,8 @@ class ExecutorBackedBackgroundExecutor implements BackgroundExecutor, Stoppable 
         def future = executor.submit {
             try {
                 taskExecutor.execute()
-                taskExecutionByTaskId.remove(taskExecutor.taskId)
-                progressMonitor.completed(taskExecutor.taskId)
+                if (taskExecutionByTaskId.remove(taskExecutor.taskId))
+                    progressMonitor.completed(taskExecutor.taskId)
             } catch (InterruptedException ignore) {
                 taskExecutionByTaskId.remove(taskExecutor.taskId)
                 Thread.currentThread().interrupt()
