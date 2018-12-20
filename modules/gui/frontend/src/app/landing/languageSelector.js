@@ -26,7 +26,8 @@ const Language = ({code, name, selected}) =>
     <Button
         look='highlight'
         chromeless={!selected}
-        disabled={selected}
+        disabled
+        // disabled={selected}
         label={code}
         tooltip={name}
         onClick={() => {
