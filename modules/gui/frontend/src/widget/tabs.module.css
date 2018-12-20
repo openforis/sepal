@@ -1,4 +1,5 @@
 .container {
+    position: relative;
     padding: 0;
     pointer-events: none;
 }
@@ -14,11 +15,24 @@
     pointer-events: all;
 }
 
+/* .tabBar:before {
+    content: '';
+    position: absolute;
+    height: 3rem;
+    width: 5rem;
+    right: 5.3rem;
+    z-index: 3;
+    background: red;
+    mask-image: linear-gradient(to right, rgba(0, 0, 0, 1), transparent);
+} */
+
 .tabs {
+    position: relative;
     padding: 0 0 0 1rem;
     display: flex;
-    flex-wrap: wrap;
     width: 100%;
+    overflow-x: auto;
+    margin-right: .5rem;
 }
 
 .newTab {
@@ -46,6 +60,7 @@
 .tab {
     position: relative;
     display: flex;
+    flex-grow: 1;
     background-color: #2B2B29;
     border-bottom: 3px solid var(--tab-default-border-color);
     border-top-right-radius: 0.5rem;
