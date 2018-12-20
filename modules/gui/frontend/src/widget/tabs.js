@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {autoFocusEnabled} from 'widget/userAgent'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Portal from 'widget/portal'
@@ -236,18 +237,25 @@ class Tab extends React.Component {
                     ].join(' ')}>
                         <span>{title || placeholder}</span>
                         {selected
-                            ? <input
-                                ref={this.titleInput}
-                                className={styles.title}
-                                defaultValue={title}
-                                placeholder={placeholder}
-                                autoFocus={!title}
-                                spellCheck={false}
-                                autoComplete='off'
-                                onKeyPress={e => this.onTitleKeyPress(e)}
-                                onChange={e => this.onTitleChange(e)}
-                                onBlur={() => this.saveTitle()}/>
-                            : null
+                            ? (
+                                <input
+                                    ref={this.titleInput}
+                                    className={styles.title}
+                                    defaultValue={title}
+                                    placeholder={placeholder}
+                                    autoFocus={!title && autoFocusEnabled()}
+                                    spellCheck={false}
+                                    autoComplete='off'
+                                    onKeyDown={e => {
+                                        if (['Enter', 'Escape'].includes(e.key)) {
+                                            e.target.blur()
+                                        } else {
+                                            this.onTitleKeyPress(e)
+                                        }
+                                    }}
+                                    onChange={e => this.onTitleChange(e)}
+                                    onBlur={() => this.saveTitle()}/>
+                            ) : null
                         }
                     </span>
                     <span className={styles.close}>
