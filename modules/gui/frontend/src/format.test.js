@@ -32,16 +32,18 @@ test('format({value: ${params.value}, scale: \'${params.scale}\'}) === ${result}
         {params: {value: .0001}, result: '100 µ'},
         {params: {value: .00001}, result: '10.0 µ'},
         {params: {value: .000001}, result: '1.00 µ'},
-
         {params: {value: 1.23456, scale: 'k'}, result: '1.23 k'},
         {params: {value: 12.3456}, result: '12.3'},
         {params: {value: 123.456}, result: '123'},
         {params: {value: 1234.56, scale: 'M'}, result: '1.23 G'},
         {params: {value: 12345.6, scale: 'µ'}, result: '12.3 m'},
         {params: {value: 123456, scale: 'm'}, result: '123'},
+        {params: {value: 123456, precisionDigits: 3}, result: '123 k'},
         {params: {value: 123456, precisionDigits: 4}, result: '123.5 k'},
+        {params: {value: 123456, precisionDigits: 5}, result: '123.46 k'},
+        {params: {value: 123456, precisionDigits: 6}, result: '123.456 k'},
+        {params: {value: 123456, precisionDigits: 7}, result: '123.4560 k'},
         {params: {value: 123456, scale: 'k', precisionDigits: 5}, result: '123.46 M'},
-
         {params: {value: 18245.23, scale: 'k'}, result: '18.2 M'},
         {params: {value: 18245.23, scale: 'µ'}, result: '18.2 m'},
         {params: {value: 1000, scale: 'k'}, result: '1.00 M'},
@@ -50,6 +52,5 @@ test('format({value: ${params.value}, scale: \'${params.scale}\'}) === ${result}
         {params: {value: .01, scale: 'G'}, result: '10.0 M'},
         {params: {value: .00000123, scale: 'G'}, result: '1.23 k'},
         {params: {value: .0001, scale: 'G'}, result: '100 k'},
-
-        // {params: {value: 999999, scale: 'k'}, result: '1.00 G'},
+        {params: {value: 999999}, result: '1.00 M'},
     )
