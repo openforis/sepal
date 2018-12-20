@@ -50,6 +50,11 @@
     grid-area: language;
     animation: language 500ms 2000ms ease-in-out both;
     justify-self: right;
+    /* opacity: .75; */
+}
+
+.language button:disabled {
+    color: var(--look-default-color) !important;
 }
 
 @keyframes language {
