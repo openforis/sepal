@@ -42,7 +42,7 @@
     "react-redux": "5.1.1",
     "react-resize-detector": "3.2.1",
     "react-router-dom": "4.3.1",
-    "react-scripts": "^2.1.1",
+    "react-scripts": "^2.1.3",
     "react-select": "^2.0.0-beta.6",
     "react-textarea-autosize": "^7.1.0-1",
     "react-transition-group": "2.5.0",
@@ -52,17 +52,17 @@
     "uuid": "^3.3.2"
   },
   "scripts": {
-    "start": "NODE_PATH=src/ HTTPS=true react-app-rewired start",
-    "build": "NODE_PATH=src/ react-app-rewired build",
-    "test": "NODE_PATH=src/ react-app-rewired test --env=jsdom",
-    "eject": "NODE_PATH=src/ react-app-rewired eject"
+    "start": "NODE_PATH=src/ HTTPS=true react-scripts start",
+    "build": "NODE_PATH=src/ react-scripts build",
+    "test": "NODE_PATH=src/ react-scripts test",
+    "eject": "NODE_PATH=src/ react-scripts eject"
+
   },
   "devDependencies": {
     "eslint-plugin-react": "7.11.1",
     "eslint-plugin-sort-imports-es6-autofix": "0.3.0",
     "imports-loader": "0.8.0",
     "prop-types": "15.6.2",
-    "react-app-rewired": "1.6.2",
     "redux-devtools-extension": "2.13.6"
   },
   "browserslist": [
