@@ -165,27 +165,6 @@ class Tab extends React.Component {
         this.titleInput = React.createRef()
     }
 
-    onTitleKeyPress(e) {
-        const insertCharAtSelection = (input, char) => {
-            const selectionStart = input.selectionStart
-            input.value = input.value.slice(0, selectionStart).concat(char).concat(input.value.slice(input.selectionEnd))
-            e.target.selectionStart = selectionStart + 1
-            e.target.selectionEnd = selectionStart + 1
-        }
-        const maxLength = 60
-        const charCode = e.which || e.keyCode
-        const enter = 13
-        if (charCode === enter)
-            return this.saveTitle()
-        const char = String.fromCharCode(charCode)
-        if ([' ', '-'].includes(char))
-            insertCharAtSelection(e.target, '_')
-        if (!char.match(/[\w-.]/) || e.target.value.length > maxLength) {
-            e.preventDefault()
-            return false
-        }
-    }
-
     onTitleChange(e) {
         const value = e.target.value.replace(/[^\w-.]/g, '_')
         e.target.value = value
@@ -249,8 +228,6 @@ class Tab extends React.Component {
                                     onKeyDown={e => {
                                         if (['Enter', 'Escape'].includes(e.key)) {
                                             e.target.blur()
-                                        } else {
-                                            this.onTitleKeyPress(e)
                                         }
                                     }}
                                     onChange={e => this.onTitleChange(e)}
