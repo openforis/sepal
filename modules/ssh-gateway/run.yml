@@ -23,7 +23,7 @@
     ports:
     - "{{ sepal_ssh_ip }}:443:22"
     etc_hosts:
-      syslog_host: "{{ syslog_host }}"
+      syslog_host: "{{ sepal_http_ip }}"
     env:
       SEPAL_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
       LDAP_ADMIN_PASSWORD_SEPAL_ENV: "{{ ldap_admin_password }}"
