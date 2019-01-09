@@ -4,3 +4,21 @@ oauth2client
 google-api-python-client
 git+git://github.com/openforis/earthengine-api.git@v0.1.159#egg=earthengine-api&subdirectory=python
 awscli
+
+
+######## Early Warning System for Canopy Disturbances in Ecuador (SATA) ########
+# dev
+nose
+nosexcover
+coverage
+pylint
+
+click
+numpy
+dateutils
+boto3
+pandas
+
+# web api
+falcon
+gunicorn

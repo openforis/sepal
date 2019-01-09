@@ -23,7 +23,9 @@ R -e "devtools::install_github('appelmar/strucchange')"
 R -e "pacman::p_load_gh(\
         'appelmar/bfast',\
         'loicdtx/bfastSpatial'\
+        'jreiche/bayts'\
     )"
+# jreiche/bayts is a dependency of Early Warning System for Canopy Disturbances in Ecuador (SATA)
 R -e "pacman::p_load(\
         'corrplot',\
         'dismo',\
@@ -60,8 +62,12 @@ R -e "pacman::p_load(\
         'shinyFiles',\
         'shinyjs',\
         'snow',\
+        'sp',\
+        'sqldf',\
         'stringr',\
         'strucchange',\
+        'tictoc',\
+        'tidyr',\
         'xtable',\
         'zoo'\
     )"
