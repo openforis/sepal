@@ -28,7 +28,6 @@ locale-gen en_US.utf8
 update-locale LC_ALL=en_US.UTF-8
 update-locale LANG=en_US.UTF-8
 
-# TODO: Add dans-gdal-scripts - this package currently won't install due to broken dependencies
 echo
 echo "*********************************"
 echo "*** Installing misc utilities ***"

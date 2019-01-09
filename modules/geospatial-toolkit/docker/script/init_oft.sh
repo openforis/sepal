@@ -5,8 +5,9 @@ echo
 echo "************************************************"
 echo "*** Installing Open Foris Geospatial Toolkit ***"
 echo "************************************************"
+
+# TODO: Add dans-gdal-scripts - this package currently won't install due to broken dependencies
 apt-get install -y \
-     dans-gdal-scripts \
 	 gcc \
 	 g++ \
 	 gdal-bin \
