@@ -55,6 +55,7 @@ R -e "pacman::p_load(\
         'rPython',\
         'RSQLite',\
         'RStoolbox',\
+        'sf',\
         'shiny',\
         'shinyBS',\
         'shinycssloaders',\
