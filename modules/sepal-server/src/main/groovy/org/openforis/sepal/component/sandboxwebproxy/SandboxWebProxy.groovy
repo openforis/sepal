@@ -152,7 +152,7 @@ class SandboxWebProxy {
                     URI locationURI = URI.create(location)
                     if (locationURI.getHost() == null || locationURI.getHost().equals(exchange.getHostName())) {
                         String path = locationURI.getPath() == null ? "" : locationURI.getPath()
-                        def rewrittenLocation = locationURI.resolve("/hums").getPath()
+                        def rewrittenLocation = locationURI.resolve("/${extractEndpoint(exchange)}${path}").getPath()
                         if (locationURI.query)
                             rewrittenLocation = rewrittenLocation + "?${locationURI.query}"
                         headers.remove(locationHeaderName)
