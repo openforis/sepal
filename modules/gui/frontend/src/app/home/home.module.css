@@ -52,8 +52,10 @@
     pointer-events: all;
 }
 
-/* Note: left column has zero width and grid column gap is variable, as
-   grid-column-gap property can be animated, while grid area width cannot. */
+/*
+    Note: left column has zero width and grid column gap is variable, as
+    grid-column-gap property can be animated, while grid area width cannot.
+*/
 
 .main {
     position: absolute;
