@@ -3,7 +3,7 @@ MAINTAINER OpenForis
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current \
     SDKMAN_DIR=/usr/local/lib/sdkman \
-    GDAL_DATA=/usr/share/gdal/2.2 \
+    GDAL_DATA=/usr/share/gdal \
     VERSION=2018-07-10
 # VERSION used to force complete rebuild of image
 
