@@ -77,7 +77,6 @@ SectionLink = connect(
 
 let AppLink = ({active, app: {path, label, alt}}) => {
     const activeClass = active ? styles.active : null
-    console.log({path})
     return (
         <div className={styles.app}>
             <div className={styles.stop} onClick={() => quitApp(path)}>
