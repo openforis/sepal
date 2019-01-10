@@ -110,7 +110,7 @@ export const Button = ({
     link,
     shown = true,
     disabled,
-    stopPropagation = true,
+    stopPropagation = !link,
     children,
     tooltip,
     tooltipPlacement,
