@@ -22,7 +22,7 @@ R -e "install.packages('pacman', dependencies=TRUE, repos='http://cran.rstudio.c
 R -e "devtools::install_github('appelmar/strucchange')"
 R -e "pacman::p_load_gh(\
         'appelmar/bfast',\
-        'loicdtx/bfastSpatial'\
+        'loicdtx/bfastSpatial',\
         'jreiche/bayts'\
     )"
 # jreiche/bayts is a dependency of Early Warning System for Canopy Disturbances in Ecuador (SATA)
