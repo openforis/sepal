@@ -22,3 +22,6 @@ pandas
 # web api
 falcon
 gunicorn
+
+# other deps
+requests
