@@ -10,7 +10,7 @@
     --menu-margin-top: 10rem;
     --menu-margin-bottom: 5rem;
     --menu-width: 2.6rem;
-    --menu-handle-width: .7rem;
+    --menu-handle-width: .6rem;
 
     position: relative;
     height: 100%;
@@ -26,7 +26,7 @@
 /* floating menu */
 .container.floatingMenu {
     --menu-position: calc(var(--menu-handle-width) - var(--menu-width));
-    --menu-container-width: var(--menu-handle-width);
+    --menu-container-width: 0;
 }
 
 .map {
@@ -77,8 +77,6 @@
 
 .menuContainer {
     grid-area: menu;
-    width: 0;
-    /* width: var(--menu-container-width); */
 }
 
 .topBar {
