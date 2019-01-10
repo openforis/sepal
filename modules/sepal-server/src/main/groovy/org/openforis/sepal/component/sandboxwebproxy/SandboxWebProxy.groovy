@@ -155,6 +155,10 @@ class SandboxWebProxy {
                         URI rewrittenURI = locationURI.resolve("/${extractEndpoint(exchange)}${path}")
                         headers.remove(locationHeaderName)
                         headers.add(locationHeaderName, rewrittenURI.toString())
+                        LOG.debug("Rewriting ${location} to ${rewrittenURI}")
+                    } else {
+                        LOG.debug("Not rewriting ${location} due to redirect to different host." +
+                            "Current host: ${exchange.getHostName()}")
                     }
                 }
             }
