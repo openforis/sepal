@@ -1,5 +1,4 @@
 .container {
-
     /* section transitions */
     --transition-time: 150ms;
     --transition-delay: 75ms;
@@ -48,9 +47,13 @@
     width: var(--menu-width);
     padding-top: var(--menu-margin-top);
     padding-bottom: var(--menu-margin-bottom);
+    z-index: 2;
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
     pointer-events: all;
 }
+
+/* Note: left column has zero width and grid column gap is variable, as
+   grid-column-gap property can be animated, while grid area width cannot. */
 
 .main {
     position: absolute;
@@ -59,19 +62,22 @@
     height: 100%;
     width: 100%;
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 0 1fr;
     grid-template-rows: auto 1fr auto auto;
-    grid-gap: 0;
+    grid-row-gap: 0;
+    grid-column-gap: var(--menu-container-width);
     grid-template-areas:
         'topBar    topBar'
         'menu      body'
         'bottomBar bottomBar'
         'footer    footer';
+    transition: all var(--transition-time) ease-in-out var(--transition-delay);
 }
 
 .menuContainer {
     grid-area: menu;
-    width: var(--menu-container-width);
+    width: 0;
+    /* width: var(--menu-container-width); */
 }
 
 .topBar {
