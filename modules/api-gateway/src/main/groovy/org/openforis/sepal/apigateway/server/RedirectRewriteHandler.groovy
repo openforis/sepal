@@ -27,7 +27,7 @@ class RedirectRewriteHandler implements HttpHandler {
                 URI locationURI = URI.create(location)
                 if (locationURI.getHost() == null || locationURI.getHost().equals(exchange.getHostName())) {
                     def clientRelativePath = locationURI.getPath() == null ? "" : locationURI.getPath()
-                    def rewrittenURI = "${exchange.requestScheme}://${exchange.hostAndPort}${exchange.resolvedPath}${clientRelativePath}"
+                    def rewrittenURI = "https://${exchange.hostAndPort}${exchange.resolvedPath}${clientRelativePath}"
                     headers.remove(locationHeaderName)
                     headers.add(locationHeaderName, rewrittenURI)
                 }
