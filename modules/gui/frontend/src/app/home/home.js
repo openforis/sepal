@@ -89,9 +89,15 @@ class Home extends React.Component {
                 floatingFooter && styles.floatingFooter
             ].join(' ')}>
                 <Map className={styles.map}/>
-                <Menu className={styles.menu} user={user}/>
-                <Footer className={styles.footer} user={user}/>
-                <Body className={styles.body}/>
+                <div className={styles.main}>
+                    <div className={styles.menuContainer}>
+                        <Menu className={styles.menu} user={user}/>
+                    </div>
+                    <div className={styles.topBar}></div>
+                    <Body className={styles.body}/>
+                    <div className={styles.bottomBar}></div>
+                    <Footer className={styles.footer} user={user}/>
+                </div>
             </div>
         )
     }

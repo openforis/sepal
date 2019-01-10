@@ -10,7 +10,7 @@
 
     /* menu dimensions */
     --menu-margin-top: 10rem;
-    --menu-margin-bottom: calc(var(--footer-height) + 2rem);
+    --menu-margin-bottom: 5rem;
     --menu-width: 2.6rem;
     --menu-handle-width: .7rem;
 
@@ -19,24 +19,16 @@
     pointer-events: none;
 }
 
-.container.floatingMenu {
-    --menu-position: calc(var(--menu-handle-width) - var(--menu-width));
-    --menu-margin: 0;
-}
-
+/* fixed menu */
 .container:not(.floatingMenu) {
     --menu-position: 0;
-    --menu-margin: calc(var(--menu-width) * 1.1);
+    --menu-container-width: var(--menu-width);
 }
 
-.container.floatingFooter {
-    --footer-position: calc(var(--footer-handle-height) - var(--footer-height));
-    --footer-margin: 0rem;
-}
-
-.container:not(.floatingFooter) {
-    --footer-position: 0;
-    --footer-margin: var(--footer-height);
+/* floating menu */
+.container.floatingMenu {
+    --menu-position: calc(var(--menu-handle-width) - var(--menu-width));
+    --menu-container-width: var(--menu-handle-width);
 }
 
 .map {
@@ -50,13 +42,46 @@
 
 .menu {
     position: absolute;
-    z-index: 2;
-    top: var(--menu-margin-top);
-    bottom: var(--menu-margin-bottom);
+    top: 0;
     left: var(--menu-position);
+    height: 100%;
     width: var(--menu-width);
+    padding-top: var(--menu-margin-top);
+    padding-bottom: var(--menu-margin-bottom);
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
     pointer-events: all;
+}
+
+.main {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto 1fr auto auto;
+    grid-gap: 0;
+    grid-template-areas:
+        'topBar    topBar'
+        'menu      body'
+        'bottomBar bottomBar'
+        'footer    footer';
+}
+
+.menuContainer {
+    grid-area: menu;
+    width: var(--menu-container-width);
+}
+
+.topBar {
+    grid-area: topBar;
+    height: fit-content;
+}
+
+.bottomBar {
+    grid-area: bottomBar;
+    height: fit-content;
 }
 
 .container:not(.floatingMenu) .menu,
@@ -65,11 +90,7 @@
 }
 
 .footer {
-    position: absolute;
-    z-index: 10;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    grid-area: footer;
     height: var(--footer-height);
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
     pointer-events: all;
@@ -79,12 +100,7 @@
 }
 
 .body {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1;
+    grid-area: body;
     pointer-events: none;
 }
 

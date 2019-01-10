@@ -13,12 +13,10 @@
 
 .section {
     position: absolute;
-    /* doesn't scroll without width!! */ 
     top: 0;
-    bottom: var(--footer-margin);
+    bottom: 0;
     left: 0;
     right: 0;
-    padding: 0;
     overflow-y: hidden;
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
 }
