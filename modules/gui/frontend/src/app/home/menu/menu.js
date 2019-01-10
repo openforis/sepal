@@ -61,7 +61,6 @@ let SectionLink = ({active, name, icon}) => {
             link={link}
             tooltip={msg(`home.sections.${name}.tooltip`)}
             tooltipPlacement='right'
-            stopPropagation={false}
         />
     )
 }
@@ -78,6 +77,7 @@ SectionLink = connect(
 
 let AppLink = ({active, app: {path, label, alt}}) => {
     const activeClass = active ? styles.active : null
+    console.log({path})
     return (
         <div className={styles.app}>
             <div className={styles.stop} onClick={() => quitApp(path)}>
