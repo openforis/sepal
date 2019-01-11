@@ -1,6 +1,6 @@
 .toolbar {
     --button-size: 2.5rem;
-    --button-edge-margin: .5rem;
+    --button-spacing: .5rem;
     --button-panel-margin: .5rem;
     --icon-size: 1.1rem;
     
@@ -15,7 +15,7 @@
 }
 
 .toolbar.horizontal * + * {
-    margin-left: var(--button-edge-margin);
+    margin-left: var(--button-spacing);
 }
 
 .toolbar.vertical {
@@ -24,23 +24,23 @@
 }
 
 .toolbar.vertical * + * {
-    margin-top: var(--button-edge-margin);
+    margin-top: var(--button-spacing);
 }
 
 .toolbar.top {
-    top: var(--button-edge-margin);
+    top: 0;
 }
 
 .toolbar.bottom {
-    bottom: var(--button-edge-margin);
+    bottom: 0;
 }
 
 .toolbar.left {
-    left: var(--button-edge-margin);
+    left: 0;
 }
 
 .toolbar.right {
-    right: var(--button-edge-margin);
+    right: 0;
 }
 
 .toolbar button {

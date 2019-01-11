@@ -1,4 +1,5 @@
 import {Button, ButtonGroup} from 'widget/button'
+import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {connect} from 'store'
 import {map, share, zip} from 'rxjs/operators'
@@ -110,6 +111,121 @@ class Users extends React.Component {
         const keyAction = keyMap[key]
         keyAction && keyAction()
         this.search.current.focus()
+    }
+
+    editUser(user) {
+        this.setState(prevState => ({
+            ...prevState,
+            userDetails: {
+                username: user.username,
+                name: user.name,
+                email: user.email,
+                organization: user.organization,
+                monthlyBudgetInstanceSpending: user.report.budget.instanceSpending,
+                monthlyBudgetStorageSpending: user.report.budget.storageSpending,
+                monthlyBudgetStorageQuota: user.report.budget.storageQuota
+            }
+        }))
+    }
+
+    inviteUser() {
+        this.setState(prevState => ({
+            ...prevState,
+            userDetails: {
+                newUser: true,
+                monthlyBudgetInstanceSpending: 1,
+                monthlyBudgetStorageSpending: 1,
+                monthlyBudgetStorageQuota: 20
+            }
+        }))
+    }
+
+    cancelUser() {
+        this.setState(prevState => ({
+            ...prevState,
+            userDetails: null
+        }))
+    }
+
+    updateUser(userDetails) {
+        
+        const update$ = userDetails =>
+            updateUserDetails$(userDetails).pipe(
+                zip(updateUserBudget$(userDetails)),
+                map(([userDetails, userBudget]) => ({
+                    ...userDetails,
+                    report: {
+                        budget: userBudget
+                    }
+                }))
+            )
+
+        const updateUserDetails$ = ({newUser, username, name, email, organization}) =>
+            newUser
+                ? api.user.inviteUser$({username, name, email, organization})
+                : api.user.updateUser$({username, name, email, organization})
+
+        const updateUserBudget$ = ({
+            username,
+            monthlyBudgetInstanceSpending: instanceSpending,
+            monthlyBudgetStorageSpending: storageSpending,
+            monthlyBudgetStorageQuota: storageQuota
+        }) => api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
+
+        const updateLocalState = userDetails =>
+            this.setState(prevState => {
+                const users = prevState.users
+                if (userDetails) {
+                    const index = users.findIndex(user => user.username === userDetails.username)
+                    index === -1
+                        ? users.push(userDetails)
+                        : users[index] = userDetails
+                }
+                return {
+                    ...prevState,
+                    users: this.getSortedUsers(users)
+                }
+            })
+
+        const removeFromLocalState = userDetails =>
+            this.setState(prevState => {
+                const users = prevState.users
+                if (userDetails) {
+                    _.remove(users, user => user.username === userDetails.username)
+                }
+                return {
+                    ...prevState,
+                    users
+                }
+            })
+
+        this.cancelUser()
+
+        updateLocalState({
+            username: userDetails.username,
+            name: userDetails.name,
+            email: userDetails.email,
+            organization: userDetails.organization,
+            report: {
+                budget: {
+                    instanceSpending: userDetails.monthlyBudgetInstanceSpending,
+                    storageSpending: userDetails.monthlyBudgetStorageSpending,
+                    storageQuota: userDetails.monthlyBudgetStorageQuota
+                }
+            }
+        })
+
+        this.props.stream('UPDATE_USER',
+            update$(userDetails),
+            userDetails => {
+                updateLocalState(userDetails)
+                Notifications.success('user.userDetails.update').dispatch()
+            },
+            error => {
+                removeFromLocalState(userDetails)
+                Notifications.caught('user.userDetails.update', {}, error).dispatch()
+            }
+        )
     }
 
     renderSortingHandle(sorting) {
@@ -229,121 +345,6 @@ class Users extends React.Component {
         )
     }
 
-    editUser(user) {
-        this.setState(prevState => ({
-            ...prevState,
-            userDetails: {
-                username: user.username,
-                name: user.name,
-                email: user.email,
-                organization: user.organization,
-                monthlyBudgetInstanceSpending: user.report.budget.instanceSpending,
-                monthlyBudgetStorageSpending: user.report.budget.storageSpending,
-                monthlyBudgetStorageQuota: user.report.budget.storageQuota
-            }
-        }))
-    }
-
-    inviteUser() {
-        this.setState(prevState => ({
-            ...prevState,
-            userDetails: {
-                newUser: true,
-                monthlyBudgetInstanceSpending: 1,
-                monthlyBudgetStorageSpending: 1,
-                monthlyBudgetStorageQuota: 20
-            }
-        }))
-    }
-
-    cancelUser() {
-        this.setState(prevState => ({
-            ...prevState,
-            userDetails: null
-        }))
-    }
-
-    updateUser(userDetails) {
-        
-        const update$ = userDetails =>
-            updateUserDetails$(userDetails).pipe(
-                zip(updateUserBudget$(userDetails)),
-                map(([userDetails, userBudget]) => ({
-                    ...userDetails,
-                    report: {
-                        budget: userBudget
-                    }
-                }))
-            )
-
-        const updateUserDetails$ = ({newUser, username, name, email, organization}) =>
-            newUser
-                ? api.user.inviteUser$({username, name, email, organization})
-                : api.user.updateUser$({username, name, email, organization})
-
-        const updateUserBudget$ = ({
-            username,
-            monthlyBudgetInstanceSpending: instanceSpending,
-            monthlyBudgetStorageSpending: storageSpending,
-            monthlyBudgetStorageQuota: storageQuota
-        }) => api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
-
-        const updateLocalState = userDetails =>
-            this.setState(prevState => {
-                const users = prevState.users
-                if (userDetails) {
-                    const index = users.findIndex(user => user.username === userDetails.username)
-                    index === -1
-                        ? users.push(userDetails)
-                        : users[index] = userDetails
-                }
-                return {
-                    ...prevState,
-                    users: this.getSortedUsers(users)
-                }
-            })
-
-        const removeFromLocalState = userDetails =>
-            this.setState(prevState => {
-                const users = prevState.users
-                if (userDetails) {
-                    _.remove(users, user => user.username === userDetails.username)
-                }
-                return {
-                    ...prevState,
-                    users
-                }
-            })
-
-        this.cancelUser()
-
-        updateLocalState({
-            username: userDetails.username,
-            name: userDetails.name,
-            email: userDetails.email,
-            organization: userDetails.organization,
-            report: {
-                budget: {
-                    instanceSpending: userDetails.monthlyBudgetInstanceSpending,
-                    storageSpending: userDetails.monthlyBudgetStorageSpending,
-                    storageQuota: userDetails.monthlyBudgetStorageQuota
-                }
-            }
-        })
-
-        this.props.stream('UPDATE_USER',
-            update$(userDetails),
-            userDetails => {
-                updateLocalState(userDetails)
-                Notifications.success('user.userDetails.update').dispatch()
-            },
-            error => {
-                removeFromLocalState(userDetails)
-                Notifications.caught('user.userDetails.update', {}, error).dispatch()
-            }
-        )
-    }
-
     renderUserDetails() {
         const {userDetails} = this.state
         return userDetails ? (
@@ -356,17 +357,16 @@ class Users extends React.Component {
 
     render() {
         return (
-            <React.Fragment>
-                <div
-                    className={styles.container}
-                    tabIndex='0'
-                    onKeyDown={e => this.onKeyDown(e)}>
-                    <div>
-                        <Pageable
-                            items={this.getFilteredUsers()}
-                            watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
-                            limit={20}>
+            <div tabIndex='0' onKeyDown={e => this.onKeyDown(e)}>
+                <Pageable
+                    items={this.getFilteredUsers()}
+                    watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
+                    limit={20}>
+                    <SectionLayout>
+                        <TopBar>
                             {this.renderControls()}
+                        </TopBar>
+                        <Content>
                             {this.renderInfo()}
                             <div className={[styles.heading, 'itemType'].join(' ')}>
                                 {this.renderHeader()}
@@ -374,11 +374,11 @@ class Users extends React.Component {
                             <div className={styles.users}>
                                 {this.renderUsers()}
                             </div>
-                        </Pageable>
-                    </div>
-                </div>
-                {this.renderUserDetails()}
-            </React.Fragment>
+                            {this.renderUserDetails()}
+                        </Content>
+                    </SectionLayout>
+                </Pageable>
+            </div>
         )
     }
 }

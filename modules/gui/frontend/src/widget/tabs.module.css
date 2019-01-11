@@ -5,30 +5,13 @@
 }
 
 .tabBar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
     display: flex;
     justify-content: space-between;
-    background-color: rgba(0, 0, 0, .5);
     pointer-events: all;
 }
 
-/* .tabBar:before {
-    content: '';
-    position: absolute;
-    height: 3rem;
-    width: 5rem;
-    right: 5.3rem;
-    z-index: 3;
-    background: red;
-    mask-image: linear-gradient(to right, rgba(0, 0, 0, 1), transparent);
-} */
-
 .tabs {
     position: relative;
-    padding: 0 0 0 1rem;
     display: flex;
     width: 100%;
     overflow-x: auto;
@@ -198,7 +181,6 @@ span.title.placeholder {
 }
 
 .tabContents {
-    padding-top: 3rem;
     height: 100%;
 }
 

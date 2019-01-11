@@ -1,7 +1,3 @@
-.container {
-    padding: 0 .5rem .5rem 1rem;
-}
-
 .number {
     width: 5rem;
     text-align: right;
@@ -12,10 +8,6 @@
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
-}
-
-.pageControls > * {
-    margin-top: .5rem;
 }
 
 .search {

@@ -9,9 +9,9 @@ export const SectionLayout = ({className, children}) => {
     )
 }
 
-export const TopBar = ({children}) => {
+export const TopBar = ({padding = true, children}) => {
     return (
-        <div className={styles.bar}>
+        <div className={[styles.bar, padding ? styles.padding : null].join(' ')}>
             {children}
         </div>
     )
@@ -25,9 +25,9 @@ export const Content = ({children}) => {
     )
 }
 
-export const BottomBar = ({children}) => {
+export const BottomBar = ({padding = true, children}) => {
     return (
-        <div className={styles.bar}>
+        <div className={[styles.bar, padding ? styles.padding : null].join(' ')}>
             {children}
         </div>
     )

@@ -83,7 +83,7 @@ export class Pageable extends React.Component {
 }
 
 Pageable.propTypes = {
-    children: PropTypes.array.isRequired,
+    children: PropTypes.any.isRequired,
     items: PropTypes.array.isRequired,
     limit: PropTypes.number.isRequired,
     watch: PropTypes.array.isRequired

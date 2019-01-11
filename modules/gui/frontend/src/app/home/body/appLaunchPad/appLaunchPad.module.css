@@ -1,4 +1,5 @@
 .apps {
+    height: 100%;
     display: grid;
     grid-template-columns: repeat(auto-fill, 21rem);
     grid-template-rows: repeat(auto-fill, 9rem);

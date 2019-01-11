@@ -1,14 +1,13 @@
 import {Button} from 'widget/button'
+import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {autoFocusEnabled} from 'widget/userAgent'
 import {connect, select} from 'store'
 import {msg} from 'translate'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import TabContent from './tabContent'
 import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
-import flexy from 'flexy.module.css'
 import guid from 'guid'
 import styles from './tabs.module.css'
 
@@ -103,32 +102,39 @@ class Tabs extends React.Component {
         )
     }
 
-    render() {
+    renderTabs() {
         const {selectedTabId, statePath, tabActions} = this.props
         return (
-            <div className={[styles.container, flexy.container].join(' ')}>
-                {this.state.enabled
-                    ? <Portal>
-                        <div className={styles.tabBar}>
-                            <div className={styles.tabs}>
-                                {this.props.tabs.map(tab => this.renderTab(tab))}
-                            </div>
-                            <div className={styles.tabActions}>
-                                <Button
-                                    chromeless
-                                    size='large'
-                                    shape='circle'
-                                    icon='plus'
-                                    onClick={() => addTab(statePath)}/>
-                                {tabActions(selectedTabId)}
-                            </div>
-                        </div>
-                    </Portal>
-                    : null}
-                <div className={[styles.tabContents, flexy.container].join(' ')}>
-                    {this.props.tabs.map(tab => this.renderTabContent(tab))}
+            <div className={styles.tabBar}>
+                <div className={styles.tabs}>
+                    {this.props.tabs.map(tab => this.renderTab(tab))}
+                </div>
+                <div className={styles.tabActions}>
+                    <Button
+                        chromeless
+                        size='large'
+                        shape='circle'
+                        icon='plus'
+                        onClick={() => addTab(statePath)}/>
+                    {tabActions(selectedTabId)}
                 </div>
             </div>
+        )
+    }
+
+    render() {
+        const {enabled} = this.state
+        return (
+            <SectionLayout className={styles.container}>
+                <TopBar padding={false}>
+                    {enabled ? this.renderTabs() : null}
+                </TopBar>
+                <Content>
+                    <div className={styles.tabContents}>
+                        {this.props.tabs.map(tab => this.renderTabContent(tab))}
+                    </div>
+                </Content>
+            </SectionLayout>
         )
     }
 

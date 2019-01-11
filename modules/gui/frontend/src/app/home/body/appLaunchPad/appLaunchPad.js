@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {Content, SectionLayout} from 'widget/sectionLayout'
 import {appList, requestedApps, runApp$} from 'apps'
 import {connect, dispatch} from 'store'
 import {history} from 'route'
@@ -24,9 +25,13 @@ class AppLaunchPad extends React.Component {
     render() {
         const {apps} = this.props
         return (
-            <div className={styles.apps}>
-                {apps.map(app => <App key={app.path} app={app} onClick={this.runApp.bind(this)}/>)}
-            </div>
+            <SectionLayout>
+                <Content>
+                    <div className={styles.apps}>
+                        {apps.map(app => <App key={app.path} app={app} onClick={this.runApp.bind(this)}/>)}
+                    </div>
+                </Content>
+            </SectionLayout>
         )
     }
 }
