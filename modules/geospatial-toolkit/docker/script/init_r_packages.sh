@@ -10,7 +10,8 @@ set -e
 apt-get install -y \
     libudunits2-dev \
     r-cran-rmpi \
-    libopenmpi-dev
+    libopenmpi-dev \
+    libgeos++-dev
 
 export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
 export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
