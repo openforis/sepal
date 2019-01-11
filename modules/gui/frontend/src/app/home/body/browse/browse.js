@@ -1,3 +1,4 @@
+import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button, ButtonGroup} from 'widget/button'
 import {Observable, Subject, forkJoin, timer} from 'rxjs'
 import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'
@@ -11,7 +12,6 @@ import React from 'react'
 import _ from 'lodash'
 import actionBuilder, {dotSafe} from 'action-builder'
 import api from 'api'
-import flexy from 'flexy.module.css'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
 import styles from './browse.module.css'
@@ -306,9 +306,7 @@ class Browse extends React.Component {
         }
     }
 
-    renderToolbar() {
-        const selected = this.countSelectedItems()
-        const nothingSelected = selected.files === 0 && selected.directories === 0
+    renderToolbar(selected, nothingSelected) {
         const oneFileSelected = selected.files === 1 && selected.directories === 0
         const selectedFiles = this.selectedItems().files
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
@@ -316,14 +314,6 @@ class Browse extends React.Component {
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
         return (
             <div className={styles.toolbar}>
-                {/* {nothingSelected ? <div></div> : (
-                    <span className={styles.selected}>
-                        {msg('browse.selected', {
-                            files: selected.files,
-                            directories: selected.directories
-                        })}
-                    </span>
-                )} */}
                 <ButtonGroup>
                     <Button
                         chromeless
@@ -471,15 +461,29 @@ class Browse extends React.Component {
     }
 
     render() {
+        const selected = this.countSelectedItems()
+        const nothingSelected = selected.files === 0 && selected.directories === 0
         return (
-            <div className={[styles.browse, flexy.container].join(' ')}>
-                {this.renderToolbar()}
-                <div className={[styles.fileList, flexy.scrollable].join(' ')}>
-                    <div>
+            <SectionLayout className={styles.browse}>
+                <TopBar>
+                    {this.renderToolbar(selected, nothingSelected)}
+                </TopBar>
+                <Content>
+                    <div className={styles.fileList}>
                         {this.renderList('/', this.props.tree)}
                     </div>
-                </div>
-            </div>
+                </Content>
+                {nothingSelected ? null : (
+                    <BottomBar>
+                        <div className={styles.info}>
+                            {msg('browse.selected', {
+                                files: selected.files,
+                                directories: selected.directories
+                            })}
+                        </div>
+                    </BottomBar>
+                )}
+            </SectionLayout>
         )
     }
 }

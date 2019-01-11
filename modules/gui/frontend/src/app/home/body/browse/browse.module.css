@@ -3,8 +3,6 @@
     --fx-saturation: 70%;
     --add-color: hsla(var(--look-add-h), var(--fx-saturation), var(--look-add-l), 1);
     --remove-color: hsla(var(--look-cancel-h), var(--fx-saturation), var(--look-cancel-l), 1);
-
-    margin: .5rem .5rem .5rem 1rem;
 }
 
 .toolbar {
@@ -14,8 +12,8 @@
     align-content: center;
 }
 
-.toolbar .selected {
-    font-size: .9rem;
+.info {
+    text-align: center;
 }
 
 .fileList {
