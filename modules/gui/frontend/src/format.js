@@ -49,7 +49,7 @@ const date = date =>
 const fileSize = (size, {scale, precisionDigits} = {}) =>
     number({value: size, scale, precisionDigits, unit: 'B'})
 
-const number = ({value = 0, scale = '', precisionDigits = 3, prefix = '', unit = ''}) => {
+const number = ({value = 0, scale = '', minScale = 'p', precisionDigits = 3, prefix = '', unit = ''}) => {
     const join = (...items) => _.compact(items).join(' ')
     const modulo3 = n => ((n % 3) + 3) % 3 // safe for negative numbers too
     const formattedValue = (normalizedValue, valueMagnitude, decimals) => {
@@ -59,10 +59,14 @@ const number = ({value = 0, scale = '', precisionDigits = 3, prefix = '', unit =
             throw new Error('Unsupported scale.')
         }
         const magnitude = scaleMagnitude + valueMagnitude
-        if (magnitude < 0 || magnitude > magnitudes.length - 1) {
+        const minMagnitude = magnitudes.indexOf(minScale)
+        if (magnitude < minMagnitude) {
+            return join(prefix, Number(0).toFixed(decimals), magnitudes[minMagnitude] + unit)
+        } else if (magnitude > magnitudes.length - 1) {
             throw new Error('Out of range.')
+        } else {
+            return join(prefix, normalizedValue.toFixed(decimals), magnitudes[magnitude] + unit)
         }
-        return join(prefix, normalizedValue.toFixed(decimals), magnitudes[magnitude] + unit)
     }
     if (value === 0) {
         return join(prefix, '0', unit)

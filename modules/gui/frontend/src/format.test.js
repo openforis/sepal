@@ -53,4 +53,8 @@ test('format({value: ${params.value}, scale: \'${params.scale}\'}) === ${result}
         {params: {value: .00000123, scale: 'G'}, result: '1.23 k'},
         {params: {value: .0001, scale: 'G'}, result: '100 k'},
         {params: {value: 999999}, result: '1.00 M'},
+        {params: {value: 999999, maxScale: 'M'}, result: '1.00 M'},
+        {params: {value: 999999, minScale: 'G'}, result: '0.00 G'},
+        {params: {value: 999999, minScale: 'T'}, result: '0.00 T'},
+        // {params: {value: .1, minScale: ''}, result: '0.10'},
     )
