@@ -5,13 +5,12 @@
 
     /* footer dimensions */
     --footer-height: 1.8rem;
-    --footer-handle-height: 1rem;
 
     /* menu dimensions */
     --menu-margin-top: 10rem;
     --menu-margin-bottom: 5rem;
     --menu-width: 2.6rem;
-    --menu-handle-width: .7rem;
+    --menu-handle-width: .6rem;
 
     position: relative;
     height: 100%;
@@ -27,7 +26,7 @@
 /* floating menu */
 .container.floatingMenu {
     --menu-position: calc(var(--menu-handle-width) - var(--menu-width));
-    --menu-container-width: var(--menu-handle-width);
+    --menu-container-width: 0;
 }
 
 .map {
@@ -52,8 +51,10 @@
     pointer-events: all;
 }
 
-/* Note: left column has zero width and grid column gap is variable, as
-   grid-column-gap property can be animated, while grid area width cannot. */
+/*
+    Note: left column has zero width and grid column gap is variable, as
+    grid-column-gap property can be animated, while grid area width cannot.
+*/
 
 .main {
     position: absolute;
@@ -76,8 +77,6 @@
 
 .menuContainer {
     grid-area: menu;
-    width: 0;
-    /* width: var(--menu-container-width); */
 }
 
 .topBar {
