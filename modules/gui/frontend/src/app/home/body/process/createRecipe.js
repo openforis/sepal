@@ -51,45 +51,6 @@ class CreateRecipe extends React.Component {
         selectedRecipeType: null
     }
 
-    // test() {
-    //     const panels = [{
-    //         icon: 'icon',
-    //         title: 'title',
-    //         component: <CreateRecipe/>,
-    //         children: [{
-    //             key: 'MOSAIC',
-    //             title: msg('process.mosaic.create'),
-    //             description: msg('process.mosaic.description'),
-    //             component: <CreateMosaic/>
-    //         }, {
-    //             key: 'CLASSIFICATION',
-    //             title: msg('process.classification.create'),
-    //             description: msg('process.classification.description'),
-    //             component: <CreateClassification/>
-    //         }, {
-    //             key: 'CHANGE_DETECTION',
-    //             name: msg('process.changeDetection.create'),
-    //             description: msg('process.changeDetection.description'),
-    //             component: <CreateChangeDetection/>
-    //         }, {
-    //             key: 'TIME_SERIES',
-    //             name: msg('process.timeSeries.create'),
-    //             description: msg('process.timeSeries.description'),
-    //             component: <CreateTimeSeries/>
-    //         }, {
-    //             key: 'LAND_COVER',
-    //             name: msg('process.landCover.create'),
-    //             description: msg('process.landCover.description'),
-    //             component: <CreateRecipeRLCMS/>
-    //         }]
-    //     }]
-
-    //     return (
-    //         <PanelTree panels={panels}/>
-    //     )
-
-    // }
-
     showRecipeType(type) {
         this.setState(prevState => ({
             ...prevState,
