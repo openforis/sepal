@@ -1,8 +1,9 @@
 .apps {
+    --app-height: 9rem;
     height: 100%;
     display: grid;
     grid-template-columns: repeat(auto-fill, 21rem);
-    grid-template-rows: repeat(auto-fill, 9rem);
+    grid-template-rows: repeat(auto-fill, var(--app-height));
     grid-row-gap: 2rem;
     grid-column-gap: 4rem;
     justify-content: center;
@@ -11,7 +12,7 @@
 }
 
 .app {
-    height: 100%;
+    height: var(--app-height);
     width: 100%;
     display: flex;
     align-items: center;
