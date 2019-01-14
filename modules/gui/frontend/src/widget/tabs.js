@@ -69,8 +69,6 @@ const mapStateToProps = (state, ownProps) => ({
 })
 
 class Tabs extends React.Component {
-    state = {enabled: true}
-
     constructor(props) {
         super(props)
         const {tabs, statePath} = props
@@ -123,11 +121,10 @@ class Tabs extends React.Component {
     }
 
     render() {
-        const {enabled} = this.state
         return (
             <SectionLayout className={styles.container}>
                 <TopBar padding={false}>
-                    {enabled ? this.renderTabs() : null}
+                    {this.renderTabs()}
                 </TopBar>
                 <Content>
                     <div className={styles.tabContents}>
@@ -136,11 +133,6 @@ class Tabs extends React.Component {
                 </Content>
             </SectionLayout>
         )
-    }
-
-    componentDidMount() {
-        this.props.onDisable(() => this.setState(prevState => ({...prevState, enabled: false})))
-        this.props.onEnable(() => this.setState(prevState => ({...prevState, enabled: true})))
     }
 
     componentDidUpdate() {
