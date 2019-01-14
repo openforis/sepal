@@ -36,7 +36,7 @@ class Login extends React.Component {
     render() {
         const {form, inputs: {username, password}, action} = this.props
         return (
-            <Form className={styles.form}>
+            <Form className={styles.form} onSubmit={() => this.login(form.values())}>
                 <div className={styles.inputs}>
                     <Input
                         label={msg('landing.login.username.label')}
@@ -62,7 +62,6 @@ class Login extends React.Component {
                         look='transparent'
                         size='large'
                         shape='pill'
-                        // icon='question-circle'
                         label={msg('landing.login.forgot-password-link')}
                         tabIndex={4}
                         onMouseDown={e => e.preventDefault()}
@@ -75,7 +74,6 @@ class Login extends React.Component {
                         shape='pill'
                         icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
                         label={msg('landing.login.button')}
-                        onClick={() => this.login(form.values())}
                         disabled={form.isInvalid() || action('LOGIN').dispatching}
                         tabIndex={3}
                     />
