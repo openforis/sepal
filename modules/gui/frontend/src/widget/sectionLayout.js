@@ -1,34 +1,35 @@
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import React from 'react'
 import styles from './sectionLayout.module.css'
 
 export const SectionLayout = ({className, children}) => {
     return (
-        <div className={[styles.sectionLayout, className].join(' ')}>
+        <ScrollableContainer className={className}>
             {children}
-        </div>
+        </ScrollableContainer>
     )
 }
 
 export const TopBar = ({padding = true, children}) => {
     return (
-        <div className={[styles.bar, padding ? styles.padding : null].join(' ')}>
+        <Unscrollable className={[styles.bar, styles.top, padding ? styles.padding : null].join(' ')}>
             {children}
-        </div>
+        </Unscrollable>
     )
 }
 
 export const Content = ({children}) => {
     return (
-        <div className={styles.content}>
+        <Scrollable className={styles.content}>
             {children}
-        </div>
+        </Scrollable>
     )
 }
 
 export const BottomBar = ({padding = true, children}) => {
     return (
-        <div className={[styles.bar, padding ? styles.padding : null].join(' ')}>
+        <Unscrollable className={[styles.bar, styles.bottom, padding ? styles.padding : null].join(' ')}>
             {children}
-        </div>
+        </Unscrollable>
     )
 }

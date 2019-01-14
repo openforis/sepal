@@ -1,5 +1,6 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {connect, select} from 'store'
 import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
 import {map} from 'rxjs/operators'
@@ -11,7 +12,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import api from 'api'
-import flexy from 'flexy.module.css'
 import lookStyles from 'style/look.module.css'
 import styles from './recipes.module.css'
 
@@ -123,11 +123,9 @@ class RecipeList extends React.Component {
         return !recipes && !action('LOAD_RECIPES').dispatched
             ? this.renderProgress()
             : (
-                <div className={[styles.recipesTable, flexy.container].join(' ')}>
-                    <div className={[styles.recipeRows, flexy.scrollable].join(' ')}>
-                        {(recipes || []).map(recipe => this.renderRecipe(recipe))}
-                    </div>
-                </div>
+                <React.Fragment>
+                    {(recipes || []).map(recipe => this.renderRecipe(recipe))}
+                </React.Fragment>
             )
     }
 
@@ -141,13 +139,15 @@ class RecipeList extends React.Component {
     render() {
         const {recipeId} = this.props
         return (
-            <div className={[styles.container, flexy.container].join(' ')}>
-                <div className={styles.header}>
+            <ScrollableContainer className={styles.container}>
+                <Unscrollable className={styles.header}>
                     {this.renderTitle()}
                     <CreateRecipe recipeId={recipeId} recipeTypes={this.recipeTypes}/>
-                </div>
-                {this.renderRecipies()}
-            </div>
+                </Unscrollable>
+                <Scrollable>
+                    {this.renderRecipies()}
+                </Scrollable>
+            </ScrollableContainer>
         )
     }
 }

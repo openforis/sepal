@@ -4,11 +4,14 @@
     height: 100%;
 }
 
-.container > :not(.container):not(.scrollable) {
+.unscrollable {
     flex-shrink: 0;
 }
 
 .scrollable {
+    flex-shrink: 1;
+    flex-grow: 1;
     height: 100%;
     overflow-y: auto;
+    padding-bottom: 2rem;
 }

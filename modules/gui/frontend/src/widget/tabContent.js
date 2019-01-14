@@ -2,14 +2,13 @@ import {Enabled, connect} from 'store'
 import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
-import flexy from 'flexy.module.css'
 import styles from './tabs.module.css'
 
 class TabContent extends React.Component {
     render() {
         const {tab, selected, children} = this.props
         return (
-            <div className={[styles.tabContent, selected && flexy.container, selected && styles.selected].join(' ')}>
+            <div className={[styles.tabContent, selected && styles.selected].join(' ')}>
                 <Enabled value={selected}>
                     {children(tab)}
                 </Enabled>
