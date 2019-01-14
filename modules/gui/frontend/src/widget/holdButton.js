@@ -19,8 +19,8 @@ export class HoldButton extends React.Component {
         ) : contents
     }
 
-    renderButton() {
-        const {type, className, style, tabIndex, disabled, onMouseDown, onClick, children} = this.props
+    renderButton(contents) {
+        const {type, className, style, tabIndex, disabled, onMouseDown, onClick} = this.props
         return (
             <button
                 ref={this.button}
@@ -32,15 +32,13 @@ export class HoldButton extends React.Component {
                 onMouseDown={onMouseDown}
                 onClick={onClick}
             >
-                {children}
+                {contents}
             </button>
         )
     }
 
     render() {
-        return this.renderTooltip(
-            this.renderButton()
-        )
+        return this.renderTooltip(this.renderButton(this.props.children))
     }
 
     componentDidMount() {
