@@ -6,12 +6,20 @@
 .bar {
     flex-shrink: 0;
     height: fit-content;
+    min-height: 3rem;
     padding: 0 .8rem;
     background-color: rgba(0, 0, 0, .25);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.bar > * {
+    width: 100%;
 }
 
 .padding {
-    padding: .5rem .8rem;
+    padding: .3rem .8rem;
     color: #ccc;
     font-size: .9rem;
 }

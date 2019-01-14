@@ -4,7 +4,7 @@
     pointer-events: none;
 }
 
-.tabBar {
+.tabBar {    
     display: flex;
     justify-content: space-between;
     pointer-events: all;
