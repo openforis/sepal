@@ -2,6 +2,7 @@ import {combineLatest, fromEvent, merge, timer} from 'rxjs'
 import {switchMap, take, takeUntil} from 'rxjs/operators'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Tooltip from 'widget/tooltip'
 
 const DELAY_MS = 750
 
@@ -9,7 +10,16 @@ export class HoldButton extends React.Component {
     button = React.createRef()
     subscriptions = []
 
-    render() {
+    renderTooltip(contents) {
+        const {tooltip, tooltipPlacement, tooltipDisabled, disabled} = this.props
+        return tooltip && !tooltipDisabled && !disabled ? (
+            <Tooltip msg={tooltip} placement={tooltipPlacement}>
+                {contents}
+            </Tooltip>
+        ) : contents
+    }
+
+    renderButton() {
         const {type, className, style, tabIndex, disabled, onMouseDown, onClick, children} = this.props
         return (
             <button
@@ -24,6 +34,12 @@ export class HoldButton extends React.Component {
             >
                 {children}
             </button>
+        )
+    }
+
+    render() {
+        return this.renderTooltip(
+            this.renderButton()
         )
     }
 

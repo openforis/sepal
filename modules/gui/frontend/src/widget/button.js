@@ -3,7 +3,7 @@ import {Link} from 'route'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
+// import Tooltip from 'widget/tooltip'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 
@@ -51,7 +51,8 @@ const handleClickHold = (e, {onClickHold, stopPropagation}) => {
 }
 
 const renderButton = ({type, chromeless, className, additionalClassName, look, size, shape, tabIndex,
-    onMouseDown, onClick, onClickHold, download, downloadUrl, downloadFilename, shown, disabled, stopPropagation}, contents) =>
+    onMouseDown, onClick, onClickHold, download, downloadUrl, downloadFilename, shown, disabled, stopPropagation,
+    tooltip, tooltipPlacement, tooltipDisabled}, contents) =>
     <HoldButton
         type={type}
         className={classNames({chromeless, className, additionalClassName, look, size, shape, onClickHold})}
@@ -61,16 +62,19 @@ const renderButton = ({type, chromeless, className, additionalClassName, look, s
         onMouseDown={e => handleMouseDown(e, {onMouseDown, stopPropagation})}
         onClick={e => handleClick(e, {onClick, download, downloadUrl, downloadFilename, stopPropagation})}
         onClickHold={e => handleClickHold(e, {onClickHold, stopPropagation})}
+        tooltip={tooltip}
+        tooltipPlacement={tooltipPlacement}
+        tooltipDisabled={tooltipDisabled}
     >
         {contents}
     </HoldButton>
 
-const renderTooltip = ({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled}, contents) =>
-    tooltip && !tooltipDisabled && shown && !disabled ? (
-        <Tooltip msg={tooltip} placement={tooltipPlacement}>
-            {contents}
-        </Tooltip>
-    ) : contents
+// const renderTooltip = ({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled}, contents) =>
+//     tooltip && !tooltipDisabled && shown && !disabled ? (
+//         <Tooltip msg={tooltip} placement={tooltipPlacement}>
+//             {contents}
+//         </Tooltip>
+//     ) : contents
 
 const renderLink = ({link, shown, disabled}, contents) =>
     link && shown && !disabled ? (
@@ -117,11 +121,13 @@ export const Button = ({
     tooltipDisabled
 }) =>
     renderLink({link, shown, disabled},
-        renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
-            renderButton({type, chromeless, className, additionalClassName, look, size, shape, tabIndex, onMouseDown, onClick, onClickHold, download, downloadUrl, downloadFilename, shown, disabled, stopPropagation},
-                renderContents({icon, iconType, label, children})
-            )
+        // renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
+        renderButton({type, chromeless, className, additionalClassName, look, size, shape, tabIndex,
+            onMouseDown, onClick, onClickHold, download, downloadUrl, downloadFilename, shown, disabled,
+            stopPropagation, tooltip, tooltipPlacement, tooltipDisabled},
+        renderContents({icon, iconType, label, children})
         )
+        // )
     )
 
 Button.propTypes = {
