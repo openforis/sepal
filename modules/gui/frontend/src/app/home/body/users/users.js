@@ -61,6 +61,8 @@ class Users extends React.Component {
             getBudgetReport$(),
             budgetReport => mergeBudgetReport(budgetReport)
         )
+
+        this.search.current.focus()
     }
 
     setSorting(sortingOrder) {
@@ -287,6 +289,13 @@ class Users extends React.Component {
             <div className={styles.pageControls}>
                 <ButtonGroup wrap={true}>
                     <Button
+                        look='add'
+                        size='large'
+                        shape='pill'
+                        icon='plus'
+                        label={msg('users.invite.label')}
+                        onClick={() => this.inviteUser()}/>
+                    <Button
                         look='transparent'
                         size='large'
                         shape='pill'
@@ -299,13 +308,6 @@ class Users extends React.Component {
                             placeholder={msg('users.filter.placeholder')}
                             onChange={e => this.setFilter(e.target.value)}/>
                     </Button>
-                    <Button
-                        look='add'
-                        size='large'
-                        shape='pill'
-                        icon='plus'
-                        label={msg('users.invite.label')}
-                        onClick={() => this.inviteUser()}/>
                 </ButtonGroup>
                 <div className={styles.pageNavigation}>
                     <PageControls/>
