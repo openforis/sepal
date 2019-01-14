@@ -26,6 +26,7 @@
 
 .content {
     transition: padding-left var(--transition-time) ease-in-out var(--transition-delay);
+    padding-left: calc(var(--menu-container-width) + .5rem);
 }
 
 .content.padding {
