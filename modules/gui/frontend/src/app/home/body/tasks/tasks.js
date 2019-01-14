@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Msg, msg} from 'translate'
 import {Progress} from 'widget/progress'
 import {connect} from 'store'
@@ -88,10 +89,14 @@ class Tasks extends React.Component {
 
     render() {
         return (
-            <div className={styles.container}>
-                {this.renderToolbar()}
-                {this.renderTasks()}
-            </div>
+            <SectionLayout>
+                <TopBar>
+                    {this.renderToolbar()}
+                </TopBar>
+                <Content>
+                    {this.renderTasks()}
+                </Content>
+            </SectionLayout>
         )
     }
 
