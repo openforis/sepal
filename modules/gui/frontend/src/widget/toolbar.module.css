@@ -1,4 +1,5 @@
 .toolbar {
+    --button-edge-margin: .5rem;
     --button-size: 2.5rem;
     --button-spacing: .5rem;
     --button-panel-margin: .5rem;
@@ -28,19 +29,19 @@
 }
 
 .toolbar.top {
-    top: 0;
+    top: var(--button-edge-margin);
 }
 
 .toolbar.bottom {
-    bottom: 0;
+    bottom: var(--button-edge-margin);
 }
 
 .toolbar.left {
-    left: 0;
+    left: var(--button-edge-margin);
 }
 
 .toolbar.right {
-    right: 0;
+    right: var(--button-edge-margin);
 }
 
 .toolbar button {

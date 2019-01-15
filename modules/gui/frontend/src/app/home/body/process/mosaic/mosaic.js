@@ -1,3 +1,4 @@
+import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {RecipeState, recipePath} from './mosaicRecipe'
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {connect, select} from 'store'
@@ -32,29 +33,34 @@ class Mosaic extends React.Component {
     render() {
         const {recipeId, initialized, aoi, source, sceneSelectionOptions: {type}, sceneSelection} = this.props
         return (
-            <div className={styles.mosaic}>
-                <MapToolbar statePath={recipePath(recipeId, 'ui')} mapContext={recipeId} labelLayerIndex={1}>
-                    <ShowSceneAreaToggle recipeId={recipeId}/>
-                </MapToolbar>
-                <MosaicToolbar recipeId={recipeId} className={styles.mosaicToolbar}/>
+            <SectionLayout>
+                <Content edgePadding={false} menuPadding={true}>
+                    <div className={styles.mosaic}>
+                        <MapToolbar statePath={recipePath(recipeId, 'ui')} mapContext={recipeId} labelLayerIndex={1}>
+                            <ShowSceneAreaToggle recipeId={recipeId}/>
+                        </MapToolbar>
+                        <MosaicToolbar recipeId={recipeId}/>
 
-                {initialized
-                    ? <React.Fragment>
-                        <MosaicPreview recipeId={recipeId}/>
-                        {aoi && source && type === SceneSelectionType.SELECT
+                        {initialized
                             ? <React.Fragment>
-                                <SceneAreas recipeId={recipeId}/>
-                                <AutoSelectScenes recipeId={recipeId}/>
+                                <MosaicPreview recipeId={recipeId}/>
+                                {aoi && source && type === SceneSelectionType.SELECT
+                                    ? <React.Fragment>
+                                        <SceneAreas recipeId={recipeId}/>
+                                        <AutoSelectScenes recipeId={recipeId}/>
+                                    </React.Fragment>
+                                    : null}
+                                {sceneSelection
+                                    ? <SceneSelection recipeId={recipeId} sceneAreaId={sceneSelection}/>
+                                    : null}
+                                <SceneDeselection recipeId={recipeId}/>
+                                <BandSelection recipeId={recipeId}/>
                             </React.Fragment>
                             : null}
-                        {sceneSelection
-                            ? <SceneSelection recipeId={recipeId} sceneAreaId={sceneSelection}/>
-                            : null}
-                        <SceneDeselection recipeId={recipeId}/>
-                        <BandSelection recipeId={recipeId}/>
-                    </React.Fragment>
-                    : null}
-            </div>
+                    </div>
+                </Content>
+                <BottomBar>TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST</BottomBar>
+            </SectionLayout>
         )
     }
 

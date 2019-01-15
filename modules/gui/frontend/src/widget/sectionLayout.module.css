@@ -29,11 +29,24 @@
 }
 
 .content {
+    --edge-padding: .5rem 1.5rem;
+    --menu-padding: 1.5rem;
     transition: padding-left var(--transition-time) ease-in-out var(--transition-delay);
-    padding-left: calc(var(--menu-container-width) + .5rem);
 }
 
-.content.padding {
-    padding: .5rem;
-    padding-left: calc(var(--menu-container-width) + 1rem);
+.content.edgePadding {
+    padding: var(--edge-padding);
+}
+
+.content.menuPadding {
+    padding-left: calc(var(--menu-container-width) + var(--menu-padding));
+}
+
+@media only screen and (max-width: 500px) {
+    .content.edgePadding {
+        --edge-padding: .5rem;
+    }
+    .content.menuPadding {
+        --menu-padding: 1rem;
+    }
 }

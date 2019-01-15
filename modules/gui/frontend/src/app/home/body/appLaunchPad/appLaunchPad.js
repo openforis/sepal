@@ -26,7 +26,7 @@ class AppLaunchPad extends React.Component {
         const {apps} = this.props
         return (
             <SectionLayout>
-                <Content>
+                <Content edgePadding={true} menuPadding={true}>
                     <div className={styles.apps}>
                         {apps.map(app => <App key={app.path} app={app} onClick={this.runApp.bind(this)}/>)}
                     </div>

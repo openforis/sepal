@@ -1,5 +1,6 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
+import {Content, SectionLayout} from 'widget/sectionLayout'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {connect, select} from 'store'
 import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
@@ -139,15 +140,19 @@ class RecipeList extends React.Component {
     render() {
         const {recipeId} = this.props
         return (
-            <ScrollableContainer className={styles.container}>
-                <Unscrollable className={styles.header}>
-                    {this.renderTitle()}
-                    <CreateRecipe recipeId={recipeId} recipeTypes={this.recipeTypes}/>
-                </Unscrollable>
-                <Scrollable>
-                    {this.renderRecipies()}
-                </Scrollable>
-            </ScrollableContainer>
+            <SectionLayout>
+                <Content edgePadding={true} menuPadding={true}>
+                    <ScrollableContainer className={styles.container}>
+                        <Unscrollable className={styles.header}>
+                            {this.renderTitle()}
+                            <CreateRecipe recipeId={recipeId} recipeTypes={this.recipeTypes}/>
+                        </Unscrollable>
+                        <Scrollable>
+                            {this.renderRecipies()}
+                        </Scrollable>
+                    </ScrollableContainer>
+                </Content>
+            </SectionLayout>
         )
     }
 }

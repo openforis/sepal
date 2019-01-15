@@ -1,6 +1,5 @@
-.mosaicToolbar {
-    position: absolute;
-    top: .5rem;
-    bottom: .5rem;
-    right: .5rem;
+.mosaic {
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
