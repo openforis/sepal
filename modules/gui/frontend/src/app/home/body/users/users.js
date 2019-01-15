@@ -368,42 +368,44 @@ class Users extends React.Component {
 
     render() {
         return (
-            <div tabIndex='0' onKeyDown={e => this.onKeyDown(e)}>
-                <Pageable
-                    items={this.getFilteredUsers()}
-                    watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
-                    limit={10}>
-                    <SectionLayout>
-                        <TopBar>
-                            {this.renderControls()}
-                        </TopBar>
-                        <Content>
-                            <ScrollableContainer>
-                                <Unscrollable>
-                                    {this.renderInviteUser()}
-                                    {/* {this.renderInfo()} */}
-                                </Unscrollable>
-                                <Scrollable direction='x'>
-                                    <ScrollableContainer className={styles.content}>
-                                        <Unscrollable>
-                                            {/* <div className={[styles.heading, 'itemType'].join(' ')}> */}
-                                            {this.renderHeader()}
-                                            {/* </div> */}
-                                        </Unscrollable>
-                                        <Scrollable direction='y' className={styles.users}>
-                                            {this.renderUsers()}
-                                        </Scrollable>
-                                    </ScrollableContainer>
-                                </Scrollable>
-                            </ScrollableContainer>
-                        </Content>
-                        <BottomBar>
-                            {this.renderInfo()}
-                        </BottomBar>
-                    </SectionLayout>
-                </Pageable>
+            <React.Fragment>
+                <div tabIndex='0' onKeyDown={e => this.onKeyDown(e)}>
+                    <Pageable
+                        items={this.getFilteredUsers()}
+                        watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
+                        limit={10}>
+                        <SectionLayout>
+                            <TopBar>
+                                {this.renderControls()}
+                            </TopBar>
+                            <Content>
+                                <ScrollableContainer>
+                                    <Unscrollable>
+                                        {this.renderInviteUser()}
+                                        {/* {this.renderInfo()} */}
+                                    </Unscrollable>
+                                    <Scrollable direction='x'>
+                                        <ScrollableContainer className={styles.content}>
+                                            <Unscrollable>
+                                                {/* <div className={[styles.heading, 'itemType'].join(' ')}> */}
+                                                {this.renderHeader()}
+                                                {/* </div> */}
+                                            </Unscrollable>
+                                            <Scrollable direction='y' className={styles.users}>
+                                                {this.renderUsers()}
+                                            </Scrollable>
+                                        </ScrollableContainer>
+                                    </Scrollable>
+                                </ScrollableContainer>
+                            </Content>
+                            <BottomBar>
+                                {this.renderInfo()}
+                            </BottomBar>
+                        </SectionLayout>
+                    </Pageable>
+                </div>
                 {this.renderUserDetails()}
-            </div>
+            </React.Fragment>
         )
     }
 }
