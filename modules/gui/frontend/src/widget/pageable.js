@@ -119,6 +119,9 @@ export const PageControls = props => {
                 icon='backward'
                 onClick={() => pageable.prevPage()}
                 disabled={pageable.isFirstPage}/>
+            <Button chromeless size='large'>
+                <span>{pageable.pageNumber}</span>
+            </Button>
             <Button
                 chromeless
                 size='large'
