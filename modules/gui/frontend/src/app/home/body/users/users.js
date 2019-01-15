@@ -1,5 +1,5 @@
-import {Button, ButtonGroup} from 'widget/button'
-import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {Button} from 'widget/button'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {connect} from 'store'
@@ -239,9 +239,9 @@ class Users extends React.Component {
             : <Icon name={'sort'}/>
     }
 
-    renderColumnHeader(column, label, className) {
+    renderColumnHeader(column, label, classNames = []) {
         return (
-            <div className={[styles[column], styles[className]].join(' ')}>
+            <div className={classNames.join(' ')}>
                 <Button
                     chromeless
                     shape='none'
@@ -259,50 +259,51 @@ class Users extends React.Component {
     renderHeader() {
         return (
             <div className={[styles.grid, styles.header].join(' ')}>
-                {this.renderColumnHeader('name', msg('user.userDetails.form.name.label'))}
-                {this.renderColumnHeader('status', msg('user.userDetails.form.status.label'))}
-
-                <div className={[styles.instanceBudget, styles.group].join(' ')}>
+                <div className={[styles.instanceBudget, 'itemType'].join(' ')}>
                     {msg('user.report.resources.monthlyInstance')}
                 </div>
-
-                <div className={[styles.storageBudget, styles.group].join(' ')}>
+                <div className={[styles.storageBudget, 'itemType'].join(' ')}>
                     {msg('user.report.resources.monthlyStorage')}
                 </div>
-
-                <div className={[styles.storage, styles.group].join(' ')}>
+                <div className={[styles.storage, 'itemType'].join(' ')}>
                     {msg('user.report.resources.storage')}
                 </div>
 
-                {this.renderColumnHeader('updateTime', msg('user.userDetails.form.updateTime.label'))}
-                {this.renderColumnHeader('report.budget.instanceSpending', msg('user.report.resources.quota'), 'number')}
-                {this.renderColumnHeader('report.month.instanceSpending', msg('user.report.resources.used'), 'number')}
-                {this.renderColumnHeader('report.budget.storageSpending', msg('user.report.resources.quota'), 'number')}
-                {this.renderColumnHeader('report.month.storageSpending', msg('user.report.resources.used'), 'number')}
-                {this.renderColumnHeader('report.budget.storageQuota', msg('user.report.resources.quota'), 'number')}
-                {this.renderColumnHeader('report.month.storageQuota', msg('user.report.resources.used'), 'number')}
+                {this.renderColumnHeader('name', msg('user.userDetails.form.name.label'), [styles.name])}
+                {this.renderColumnHeader('status', msg('user.userDetails.form.status.label'), [styles.status])}
+                {this.renderColumnHeader('updateTime', msg('user.userDetails.form.updateTime.label'), [styles.updateTime])}
+                {this.renderColumnHeader('report.budget.instanceSpending', msg('user.report.resources.quota'), [styles.instanceBudgetQuota, styles.number])}
+                {this.renderColumnHeader('report.month.instanceSpending', msg('user.report.resources.used'), [styles.instanceBudgetUsed, styles.number])}
+                {this.renderColumnHeader('report.budget.storageSpending', msg('user.report.resources.quota'), [styles.storageBudgetQuota, styles.number])}
+                {this.renderColumnHeader('report.month.storageSpending', msg('user.report.resources.used'), [styles.storageBudgetUsed, styles.number])}
+                {this.renderColumnHeader('report.budget.storageQuota', msg('user.report.resources.quota'), [styles.storageQuota, styles.number])}
+                {this.renderColumnHeader('report.month.storageQuota', msg('user.report.resources.used'), [styles.storageUsed, styles.number])}
             </div>
+        )
+    }
+
+    renderSearch() {
+        return (
+            <Button
+                look='transparent'
+                size='large'
+                shape='pill'
+                disabled={true}>
+                <input
+                    className={styles.search}
+                    type='text'
+                    ref={this.search}
+                    value={this.state.filter}
+                    placeholder={msg('users.filter.placeholder')}
+                    onChange={e => this.setFilter(e.target.value)}/>
+            </Button>
         )
     }
 
     renderControls() {
         return (
             <div className={styles.pageControls}>
-                <ButtonGroup wrap={true}>
-                    <Button
-                        look='transparent'
-                        size='large'
-                        shape='pill'
-                        disabled={true}>
-                        <input
-                            className={styles.search}
-                            type='text'
-                            ref={this.search}
-                            value={this.state.filter}
-                            placeholder={msg('users.filter.placeholder')}
-                            onChange={e => this.setFilter(e.target.value)}/>
-                    </Button>
-                </ButtonGroup>
+                {this.renderSearch()}
                 <div className={styles.pageNavigation}>
                     <PageControls/>
                 </div>
@@ -371,7 +372,7 @@ class Users extends React.Component {
                 <Pageable
                     items={this.getFilteredUsers()}
                     watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
-                    limit={20}>
+                    limit={10}>
                     <SectionLayout>
                         <TopBar>
                             {this.renderControls()}
@@ -380,14 +381,14 @@ class Users extends React.Component {
                             <ScrollableContainer>
                                 <Unscrollable>
                                     {this.renderInviteUser()}
-                                    {this.renderInfo()}
+                                    {/* {this.renderInfo()} */}
                                 </Unscrollable>
                                 <Scrollable direction='x'>
                                     <ScrollableContainer className={styles.content}>
                                         <Unscrollable>
-                                            <div className={[styles.heading, 'itemType'].join(' ')}>
-                                                {this.renderHeader()}
-                                            </div>
+                                            {/* <div className={[styles.heading, 'itemType'].join(' ')}> */}
+                                            {this.renderHeader()}
+                                            {/* </div> */}
                                         </Unscrollable>
                                         <Scrollable direction='y' className={styles.users}>
                                             {this.renderUsers()}
@@ -396,6 +397,9 @@ class Users extends React.Component {
                                 </Scrollable>
                             </ScrollableContainer>
                         </Content>
+                        <BottomBar>
+                            {this.renderInfo()}
+                        </BottomBar>
                     </SectionLayout>
                 </Pageable>
                 {this.renderUserDetails()}
