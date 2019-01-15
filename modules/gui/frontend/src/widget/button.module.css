@@ -14,6 +14,12 @@
     width: fit-content;
 }
 
+@media only screen and (max-width: 500px) {
+    .button {
+        --ratio: 1.8;
+    }
+}
+
 .button > * {
     white-space: nowrap;
 }
