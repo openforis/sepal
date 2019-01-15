@@ -69,13 +69,14 @@ class SliderContainer extends React.Component {
     }
 
     renderDynamics() {
-        const {input, width, range, ticks, snap, minValue, maxValue} = this.props
+        const {input, width, range, float, ticks, snap, minValue, maxValue} = this.props
         return (
             <SliderDynamics
                 input={input}
                 minValue={minValue}
                 maxValue={maxValue}
                 width={width}
+                float={float}
                 ticks={ticks}
                 snap={snap}
                 range={range}
@@ -114,6 +115,7 @@ SliderContainer.propTypes = {
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
     normalize: PropTypes.func,
+    float: PropTypes.bool,
     snap: PropTypes.bool,
     ticks: PropTypes.oneOfType([
         PropTypes.number,
@@ -346,8 +348,11 @@ class SliderDynamics extends React.Component {
             position = Math.round(position)
             if (position !== this.state.position) {
                 this.setState(prevState => ({...prevState, position}))
+                const value = this.toValue(this.snapPosition(position))
                 this.props.input.set(
-                    Math.round(this.toValue(this.snapPosition(position)))
+                    this.props.float
+                        ? value
+                        : Math.round(value)
                 )
             }
         }
@@ -386,6 +391,7 @@ SliderDynamics.propTypes = {
     maxValue: PropTypes.number.isRequired,
     minValue: PropTypes.number.isRequired,
     normalize: PropTypes.func.isRequired,
+    float: PropTypes.bool,
     snap: PropTypes.bool,
     ticks: PropTypes.array,
     width: PropTypes.number
@@ -456,13 +462,14 @@ export default class Slider extends React.Component {
     }
 
     renderContainer() {
-        const {input, logScale, snap, range = 'left', info, disabled} = this.props
+        const {input, logScale, float = false, snap, range = 'left', info, disabled} = this.props
         const {ticks, minValue, maxValue, width} = this.state
         return (
             <SliderContainer
                 input={input}
                 minValue={minValue}
                 maxValue={maxValue}
+                float={float}
                 ticks={ticks}
                 snap={snap}
                 range={range}
@@ -516,6 +523,7 @@ Slider.propTypes = {
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
     range: PropTypes.oneOf(['none', 'left', 'right']),
+    float: PropTypes.any,
     snap: PropTypes.any,
     ticks: PropTypes.oneOfType([
         // PropTypes.number,
