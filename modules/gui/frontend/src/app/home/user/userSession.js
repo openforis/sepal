@@ -1,11 +1,12 @@
-import {Field, Label, form} from 'widget/form'
+import Notifications from 'app/notifications'
+import moment from 'moment'
 import {PropTypes} from 'prop-types'
+import React from 'react'
 import {msg} from 'translate'
 import {stopUserSession$, updateUserSession$} from 'user'
-import Notifications from 'app/notifications'
+import {Field, form} from 'widget/form'
 import Panel, {PanelContent} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import React from 'react'
 import Slider from 'widget/slider'
 import styles from './userSession.module.css'
 
@@ -62,23 +63,28 @@ class UserSession extends React.Component {
     render() {
         const {session, form, inputs: {keepAlive}} = this.props
         form.onDirty(this.props.onDirty)
+        const sliderMessage = value => {
+            const keepAliveUntil = moment().add(value, 'hours').fromNow(true)
+            return msg('user.userSession.form.keepAlive.info', {keepAliveUntil})
+        }
         return (
             <Panel
+                statePath='userSessions.userSessionPanel'
                 className={styles.panel}
                 inline
+                form={form}
                 onApply={session => this.updateSession(session)}
                 onCancel={() => this.cancel()}>
-                <PanelContent>
+                <PanelContent className={styles.panelContent}>
                     <div>
-                        <Label msg={msg('user.userSession.form.keepAlive.label')}/>
                         <Slider
                             input={keepAlive}
                             minValue={0}
                             maxValue={72}
+                            decimals={2}
                             ticks={[0, 1, 3, 6, 12, 24, 36, 48, 60, 72]}
-                            snap
                             logScale
-                            info={value => msg('user.userSession.form.keepAlive.info', {value})}
+                            info={sliderMessage}
                         />
                     </div>
                 </PanelContent>
@@ -86,17 +92,9 @@ class UserSession extends React.Component {
                     form={form}
                     statePath='userSession'
                     additionalButtons={[{
-                        key: 'suspend',
-                        label: msg('user.userSession.suspend.label'),
-                        tooltip: msg('user.userSession.suspend.tooltip'),
-                        // disabled: form.isDirty(),
-                        disabled: true,
-                        onClick: () => this.suspendSession(session)
-                    }, {
                         key: 'stop',
                         label: msg('user.userSession.stop.label'),
                         tooltip: msg('user.userSession.stop.tooltip'),
-                        disabled: form.isDirty(),
                         onClick: () => this.stopSession(session)
                     }]}/>
             </Panel>
