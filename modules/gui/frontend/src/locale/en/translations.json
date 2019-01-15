@@ -897,7 +897,7 @@
                 },
                 "keepAlive": {
                     "label": "Keep alive",
-                    "info": "Keep instance alive for at least {value} hours."
+                    "info": "Keep instance alive for at least {keepAliveUntil}."
                 }
             },
             "suspend": {

@@ -1,7 +1,8 @@
 .panel {
     /* min-height: 15rem; */
     /* max-height: 40rem; */
-    max-width: 60rem;
+    max-width: 37rem;
+    max-height: max-content;
 }
 
 .report {
@@ -28,9 +29,16 @@
     font-weight: normal;
     font-size: .8rem;
     text-transform: uppercase;
-    text-decoration: underline;
     color: #dddddd;
     padding: .2rem .5rem;
+}
+
+.report th.quota {
+    text-align: right;
+}
+
+.report th.used {
+    text-align: right;
 }
 
 .report td {
@@ -44,6 +52,22 @@
 }
 
 .number {
-    width: 8rem;
     text-align: right;
+}
+
+.report td.percent {
+    margin-left: 1rem;
+    font-size: 0.8rem;
+}
+
+.report td.percent.low {
+    color: var(--success-color)
+}
+
+.report td.percent.medium {
+    color: var(--warning-color)
+}
+
+.report td.percent.high {
+    color: var(--error-color)
 }
