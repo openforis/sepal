@@ -1,6 +1,5 @@
 import NumberFormat from 'react-number-format'
 import React from 'react'
-import _ from 'lodash'
 import moment from 'moment'
 
 const integer = value => decimal(value, 0)
@@ -55,7 +54,6 @@ const fileSize = (size, {scale, precisionDigits} = {}) =>
 // prefix: the prefix to be prepended to the output value (e.g. '$')
 // unit: the suffix to be appended to the output magnitude (e.g. 'bytes')
 const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, prefix = '', suffix = '', unit = ''}) => {
-    const join = (...items) => _.compact(items).join(' ')
     const modulo3 = n => ((n % 3) + 3) % 3 // safe for negative numbers too
     const unitPadding = unit.length ? ' ' : ''
     const formattedValue = (normalizedValue, magnitude, decimals) =>
