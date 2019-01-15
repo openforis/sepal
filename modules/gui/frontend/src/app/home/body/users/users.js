@@ -332,10 +332,9 @@ class Users extends React.Component {
             : msg('users.countNoFilter', {count})
         return (
             <PageInfo>
-                {({pageNumber, pageCount, itemCount}) =>
+                {({itemCount}) =>
                     <div className={styles.pageInfo}>
-                        <div>{results(itemCount)}</div>
-                        <div>{msg('users.page', {pageNumber, pageCount})}</div>
+                        {results(itemCount)}
                     </div>
                 }
             </PageInfo>
@@ -373,7 +372,7 @@ class Users extends React.Component {
                     <Pageable
                         items={this.getFilteredUsers()}
                         watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
-                        limit={10}>
+                        limit={15}>
                         <SectionLayout>
                             <TopBar>
                                 {this.renderControls()}
