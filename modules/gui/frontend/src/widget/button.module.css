@@ -9,7 +9,7 @@
     cursor: pointer;
     transition: all 100ms ease-in-out;
     font-size: var(--font-size);
-    line-height: calc(var(--ratio) * var(--font-size));
+    height: calc(var(--ratio) * var(--font-size));
     min-width: calc(var(--ratio) * var(--font-size));
     width: fit-content;
 }

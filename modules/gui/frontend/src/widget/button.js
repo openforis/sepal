@@ -25,6 +25,25 @@ export class Button extends React.Component {
     button = React.createRef()
     subscriptions = []
 
+    stopPropagation() {
+        const {link, stopPropagation = !link} = this.props
+        return stopPropagation
+    }
+
+    active() {
+        const {shown = true, disabled = false} = this.props
+        return shown && !disabled
+    }
+
+    linked() {
+        const {onMouseDown, onClick, onClickHold, link, downloadUrl} = this.props
+        return onMouseDown || onClick || onClickHold || link || downloadUrl
+    }
+
+    nonInteractive() {
+        return !this.active() || !this.linked()
+    }
+
     classNames() {
         const {
             chromeless,
@@ -43,14 +62,10 @@ export class Button extends React.Component {
             lookStyles.look,
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
+            this.nonInteractive() ? lookStyles.nonInteractive : null,
             onClickHold ? styles.hold : null,
             additionalClassName
         ].join(' ')
-    }
-
-    stopPropagation() {
-        const {link, stopPropagation = !link} = this.props
-        return stopPropagation
     }
 
     handleMouseDown(e) {

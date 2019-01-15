@@ -362,6 +362,7 @@
 
 /* disabled */
 
-.look:disabled {
+.look:disabled,
+.look.nonInteractive {
     cursor: default;
 }
