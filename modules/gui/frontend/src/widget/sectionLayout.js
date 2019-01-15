@@ -1,13 +1,13 @@
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import PropTypes from 'prop-types'
 import React from 'react'
+import flexy from './flexy.module.css'
 import styles from './sectionLayout.module.css'
 
 export const SectionLayout = ({className, children}) => {
     return (
-        <ScrollableContainer className={className}>
+        <div className={[flexy.container, styles.container, className].join(' ')}>
             {children}
-        </ScrollableContainer>
+        </div>
     )
 }
 
@@ -18,9 +18,9 @@ SectionLayout.propTypes = {
 
 export const TopBar = ({padding = true, children}) => {
     return (
-        <Unscrollable className={[styles.bar, styles.top, padding ? styles.padding : null].join(' ')}>
+        <div className={[flexy.rigid, styles.bar, styles.top, padding ? styles.padding : null].join(' ')}>
             {children}
-        </Unscrollable>
+        </div>
     )
 }
 
@@ -31,9 +31,9 @@ TopBar.propTypes = {
 
 export const Content = ({padding = true, children}) => {
     return (
-        <Scrollable className={[styles.content, padding ? styles.padding : null].join(' ')}>
+        <div className={[flexy.elastic, styles.content, padding ? styles.padding : null].join(' ')}>
             {children}
-        </Scrollable>
+        </div>
     )
 }
 
@@ -44,9 +44,9 @@ Content.propTypes = {
 
 export const BottomBar = ({padding = true, children}) => {
     return (
-        <Unscrollable className={[styles.bar, styles.bottom, padding ? styles.padding : null].join(' ')}>
+        <div className={[flexy.rigid, styles.bar, styles.bottom, padding ? styles.padding : null].join(' ')}>
             {children}
-        </Unscrollable>
+        </div>
     )
 }
 

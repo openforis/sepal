@@ -1,3 +1,7 @@
+.container {
+    /* background-color: rgba(0, 0, 255, .2); */
+}
+
 .bar {
     padding: 0 .8rem;
     background-color: rgba(0, 0, 0, .25);
@@ -12,15 +16,15 @@
     width: 100%;
 }
 
-.top {
+.bar.top {
     min-height: 3rem;
 }
 
-.bottom {
+.bar.bottom {
     min-height: 2rem;
 }
 
-.bar .padding {
+.bar.padding {
     padding: .3rem .8rem;
 }
 

@@ -382,14 +382,11 @@ class Users extends React.Component {
                                 <ScrollableContainer>
                                     <Unscrollable>
                                         {this.renderInviteUser()}
-                                        {/* {this.renderInfo()} */}
                                     </Unscrollable>
                                     <Scrollable direction='x'>
                                         <ScrollableContainer className={styles.content}>
                                             <Unscrollable>
-                                                {/* <div className={[styles.heading, 'itemType'].join(' ')}> */}
                                                 {this.renderHeader()}
-                                                {/* </div> */}
                                             </Unscrollable>
                                             <Scrollable direction='y' className={styles.users}>
                                                 {this.renderUsers()}

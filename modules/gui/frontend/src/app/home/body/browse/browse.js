@@ -1,6 +1,7 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button, ButtonGroup} from 'widget/button'
 import {Observable, Subject, forkJoin, timer} from 'rxjs'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
@@ -469,9 +470,11 @@ class Browse extends React.Component {
                     {this.renderToolbar(selected, nothingSelected)}
                 </TopBar>
                 <Content>
-                    <div className={styles.fileList}>
-                        {this.renderList('/', this.props.tree)}
-                    </div>
+                    <ScrollableContainer>
+                        <Scrollable className={styles.fileList}>
+                            {this.renderList('/', this.props.tree)}
+                        </Scrollable>
+                    </ScrollableContainer>
                 </Content>
                 {nothingSelected ? null : (
                     <BottomBar>

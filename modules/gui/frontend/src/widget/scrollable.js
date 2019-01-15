@@ -1,10 +1,11 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
 
 export const ScrollableContainer = ({className, children}) => {
     return (
-        <div className={[className, styles.container].join(' ')}>
+        <div className={[flexy.container, styles.container, className].join(' ')}>
             {children}
         </div>
     )
@@ -17,7 +18,7 @@ ScrollableContainer.propTypes = {
 
 export const Unscrollable = ({className, children}) => {
     return (
-        <div className={[className, styles.unscrollable].join(' ')}>
+        <div className={[flexy.rigid, className].join(' ')}>
             {children}
         </div>
     )
@@ -30,7 +31,7 @@ Unscrollable.propTypes = {
 
 export const Scrollable = ({className, direction = 'y', children}) => {
     return (
-        <div className={[className, styles.scrollable, styles[direction]].join(' ')}>
+        <div className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
             {children}
         </div>
     )

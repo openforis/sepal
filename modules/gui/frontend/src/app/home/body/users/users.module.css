@@ -1,6 +1,5 @@
 .content {
     min-width: fit-content;
-    margin-top: 1rem;
 }
 
 .number {
@@ -19,6 +18,7 @@
     flex-direction: row;
     justify-content: flex-end;
     margin-top: 2rem;
+    margin-bottom: 1rem;
 }
 
 .search {

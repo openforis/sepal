@@ -1,0 +1,17 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.rigid {
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.elastic {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+    height: 100%;
+}
