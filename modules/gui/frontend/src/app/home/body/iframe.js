@@ -1,10 +1,10 @@
 import {CenteredProgress} from 'widget/progress'
+import {Content, SectionLayout} from 'widget/sectionLayout'
 import {appReady, appState} from 'apps'
 import {connect} from 'store'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Content, SectionLayout} from 'widget/sectionLayout'
 
 const mapStateToProps = (_, currentProps) => ({
     appState: appState(currentProps.app.path),
@@ -37,7 +37,7 @@ class IFrame extends React.Component {
                             style={{display: appState === 'READY' ? 'block' : 'none'}}
                             onLoad={() => appReady(this.props.app)}
                         />
-                        </Content>
+                    </Content>
                 </SectionLayout>
             )
     }

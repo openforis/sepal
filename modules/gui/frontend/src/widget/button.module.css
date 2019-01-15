@@ -111,7 +111,7 @@
 
 /* click-and-hold effect */
 .button.hold:not(:disabled):hover:active:before {
-    animation: fill 750ms ease-out forwards normal;
+    animation: fill var(--click-hold-delay-ms) ease-out forwards normal;
 }
 
 @keyframes fill {

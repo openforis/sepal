@@ -1,87 +1,14 @@
-import {HoldButton} from 'widget/holdButton'
 import {Link} from 'route'
+import {combineLatest, fromEvent, merge, timer} from 'rxjs'
+import {switchMap, take, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-// import Tooltip from 'widget/tooltip'
+import Tooltip from 'widget/tooltip'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 
-const renderContents = ({icon, iconType, label, children}) =>
-    children ? children : (
-        <div className={styles.contents}>
-            {icon ? <Icon name={icon} type={iconType}/> : null}
-            {label ? <span>{label}</span> : null}
-        </div>
-    )
-
-const classNames = ({chromeless, className, additionalClassName, look, size, shape, onClickHold}) =>
-    className ? className : [
-        styles.button,
-        chromeless ? styles.chromeless : null,
-        styles[size],
-        styles[shape],
-        lookStyles.look,
-        lookStyles[look],
-        chromeless ? lookStyles.chromeless : null,
-        onClickHold ? styles.hold : null,
-        additionalClassName
-    ].join(' ')
-
-const handleMouseDown = (e, {onMouseDown, stopPropagation}) => {
-    onMouseDown && onMouseDown(e)
-    if (stopPropagation) {
-        e.stopPropagation()
-    }
-}
-
-const handleClick = (e, {onClick, download, downloadUrl, downloadFilename, stopPropagation}) => {
-    onClick && onClick(e)
-    downloadUrl && download(downloadUrl, downloadFilename)
-    if (stopPropagation) {
-        e.stopPropagation()
-    }
-}
-
-const handleClickHold = (e, {onClickHold, stopPropagation}) => {
-    onClickHold && onClickHold(e)
-    if (stopPropagation) {
-        e.stopPropagation()
-    }
-}
-
-const renderButton = ({type, chromeless, className, additionalClassName, look, size, shape, tabIndex,
-    onMouseDown, onClick, onClickHold, download, downloadUrl, downloadFilename, shown, disabled, stopPropagation,
-    tooltip, tooltipPlacement, tooltipDisabled}, contents) =>
-    <HoldButton
-        type={type}
-        className={classNames({chromeless, className, additionalClassName, look, size, shape, onClickHold})}
-        style={{visibility: shown ? 'visible' : 'hidden'}}
-        tabIndex={tabIndex}
-        disabled={disabled || !shown}
-        onMouseDown={e => handleMouseDown(e, {onMouseDown, stopPropagation})}
-        onClick={e => handleClick(e, {onClick, download, downloadUrl, downloadFilename, stopPropagation})}
-        onClickHold={e => handleClickHold(e, {onClickHold, stopPropagation})}
-        tooltip={tooltip}
-        tooltipPlacement={tooltipPlacement}
-        tooltipDisabled={tooltipDisabled}
-    >
-        {contents}
-    </HoldButton>
-
-// const renderTooltip = ({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled}, contents) =>
-//     tooltip && !tooltipDisabled && shown && !disabled ? (
-//         <Tooltip msg={tooltip} placement={tooltipPlacement}>
-//             {contents}
-//         </Tooltip>
-//     ) : contents
-
-const renderLink = ({link, shown, disabled}, contents) =>
-    link && shown && !disabled ? (
-        <Link to={link} onMouseDown={e => e.preventDefault()}>
-            {contents}
-        </Link>
-    ) : contents
+const CLICK_HOLD_DELAY_MS = 750
 
 const download = (url, filename) => {
     // create hidden anchor, attach to DOM, click it and remove it from the DOM
@@ -94,41 +21,175 @@ const download = (url, filename) => {
     downloadElement.remove()
 }
 
-export const Button = ({
-    type = 'button',
-    chromeless,
-    className,
-    additionalClassName,
-    look = 'default',
-    size = 'normal',
-    shape = 'rectangle',
-    tabIndex,
-    icon,
-    iconType,
-    label,
-    onMouseDown,
-    onClick,
-    onClickHold,
-    downloadUrl,
-    downloadFilename,
-    link,
-    shown = true,
-    disabled,
-    stopPropagation = !link,
-    children,
-    tooltip,
-    tooltipPlacement,
-    tooltipDisabled
-}) =>
-    renderLink({link, shown, disabled},
-        // renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
-        renderButton({type, chromeless, className, additionalClassName, look, size, shape, tabIndex,
-            onMouseDown, onClick, onClickHold, download, downloadUrl, downloadFilename, shown, disabled,
-            stopPropagation, tooltip, tooltipPlacement, tooltipDisabled},
-        renderContents({icon, iconType, label, children})
+export class Button extends React.Component {
+    button = React.createRef()
+    subscriptions = []
+
+    classNames() {
+        const {
+            chromeless,
+            className,
+            additionalClassName,
+            look = 'default',
+            size = 'normal',
+            shape = 'rectangle',
+            onClickHold
+        } = this.props
+        return className ? className : [
+            styles.button,
+            chromeless ? styles.chromeless : null,
+            styles[size],
+            styles[shape],
+            lookStyles.look,
+            lookStyles[look],
+            chromeless ? lookStyles.chromeless : null,
+            onClickHold ? styles.hold : null,
+            additionalClassName
+        ].join(' ')
+    }
+
+    stopPropagation() {
+        const {link, stopPropagation = !link} = this.props
+        return stopPropagation
+    }
+
+    handleMouseDown(e) {
+        const {onMouseDown} = this.props
+        onMouseDown && onMouseDown(e)
+        if (this.stopPropagation()) {
+            e.stopPropagation()
+        }
+    }
+
+    handleClick(e) {
+        const {onClick, downloadUrl, downloadFilename} = this.props
+        onClick && onClick(e)
+        downloadUrl && download(downloadUrl, downloadFilename)
+        if (this.stopPropagation()) {
+            e.stopPropagation()
+        }
+    }
+
+    handleClickHold(e) {
+        const {onClickHold} = this.props
+        onClickHold && onClickHold(e)
+        if (this.stopPropagation()) {
+            e.stopPropagation()
+        }
+    }
+
+    renderWrapper(contents) {
+        const {onClickHold} = this.props
+        return onClickHold ? (
+            <span ref={this.button}>
+                {contents}
+            </span>
+        ) : contents
+    }
+
+    renderLink(contents) {
+        const {link, shown = true, disabled} = this.props
+        return link && shown && !disabled ? (
+            <Link to={link} onMouseDown={e => e.preventDefault()}>
+                {contents}
+            </Link>
+        ) : contents
+    }
+
+    renderTooltip(contents) {
+        const {tooltip, tooltipPlacement, tooltipDisabled, disabled} = this.props
+        return tooltip && !tooltipDisabled && !disabled ? (
+            <Tooltip msg={tooltip} placement={tooltipPlacement}>
+                {contents}
+            </Tooltip>
+        ) : contents
+    }
+
+    renderButton(contents) {
+        const {type = 'button', tabIndex, disabled, onClickHold} = this.props
+        const style = onClickHold ? {'--click-hold-delay-ms': `${CLICK_HOLD_DELAY_MS}ms`} : null
+        return (
+            <button
+                type={type}
+                className={this.classNames()}
+                style={style}
+                tabIndex={tabIndex}
+                disabled={disabled}
+                onMouseDown={e => this.handleMouseDown(e)}
+                onClick={e => this.handleClick(e)}
+            >
+                {contents}
+            </button>
         )
-        // )
-    )
+    }
+
+    renderContents() {
+        const {icon, iconType, label, children} = this.props
+        return children ? children : (
+            <div className={styles.contents}>
+                {icon ? <Icon name={icon} type={iconType}/> : null}
+                {label ? <span>{label}</span> : null}
+            </div>
+        )
+    }
+
+    render() {
+        return (
+            this.renderWrapper(
+                this.renderLink(
+                    this.renderTooltip(
+                        this.renderButton(
+                            this.renderContents()
+                        )
+                    )
+                )
+            )
+        )
+    }
+
+    componentDidMount() {
+        const {onClickHold} = this.props
+        if (onClickHold && this.button) {
+            const button = this.button.current
+            const buttonMouseDown$ = merge(fromEvent(button, 'mousedown'), fromEvent(button, 'touchstart'))
+            const buttonMouseEnter$ = fromEvent(button, 'mouseenter')
+            const buttonMouseUp$ = merge(fromEvent(button, 'mouseup'), fromEvent(button, 'touchend'))
+            const windowMouseUp$ = merge(fromEvent(window, 'mouseup'), fromEvent(window, 'touchend'))
+
+            const trigger$ = combineLatest(buttonMouseDown$, buttonMouseEnter$)
+            const cancel$ = windowMouseUp$
+            const activate$ = buttonMouseUp$
+
+            const clickHold$ =
+                trigger$.pipe(
+                    switchMap(() => {
+                        return timer(CLICK_HOLD_DELAY_MS).pipe(
+                            takeUntil(cancel$),
+                            switchMap(() =>
+                                activate$.pipe(
+                                    takeUntil(cancel$),
+                                    take(1)
+                                )
+                            )
+                        )
+                    })
+                )
+            
+            this.subscriptions.push(
+                clickHold$.subscribe(e => {
+                    const {onClickHold, disabled} = this.props
+                    if (onClickHold && !disabled) {
+                        this.handleClickHold(e)
+                    }
+                })
+            )
+        }
+    }
+
+    componentWillUnmount() {
+        this.subscriptions.forEach(subscription => subscription.unsubscribe())
+    }
+}
 
 Button.propTypes = {
     additionalClassName: PropTypes.string,
