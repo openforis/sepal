@@ -18,9 +18,9 @@ export const TopBar = ({padding = true, children}) => {
     )
 }
 
-export const Content = ({children}) => {
+export const Content = ({padding = true, children}) => {
     return (
-        <Scrollable className={styles.content}>
+        <Scrollable className={[styles.content, padding ? styles.padding : null].join(' ')}>
             {children}
         </Scrollable>
     )
