@@ -2,6 +2,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    /* min-width: fit-content; */
 }
 
 .unscrollable {
@@ -12,6 +13,17 @@
     flex-shrink: 1;
     flex-grow: 1;
     height: 100%;
+    overflow: hidden;
+}
+
+.scrollable.x {
+    overflow-x: auto;
+}
+
+.scrollable.y {
     overflow-y: auto;
-    /*padding-bottom: 2rem;*/
+}
+
+.scrollable.xy {
+    overflow: auto;
 }
