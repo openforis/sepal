@@ -69,14 +69,14 @@ class SliderContainer extends React.Component {
     }
 
     renderDynamics() {
-        const {input, width, range, float, ticks, snap, minValue, maxValue} = this.props
+        const {input, width, range, decimals, ticks, snap, minValue, maxValue} = this.props
         return (
             <SliderDynamics
                 input={input}
                 minValue={minValue}
                 maxValue={maxValue}
                 width={width}
-                float={float}
+                decimals={decimals}
                 ticks={ticks}
                 snap={snap}
                 range={range}
@@ -106,6 +106,7 @@ class SliderContainer extends React.Component {
 
 SliderContainer.propTypes = {
     input: PropTypes.object.isRequired,
+    decimals: PropTypes.number,
     denormalize: PropTypes.func,
     disabled: PropTypes.any,
     info: PropTypes.oneOfType([
@@ -115,7 +116,6 @@ SliderContainer.propTypes = {
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
     normalize: PropTypes.func,
-    float: PropTypes.bool,
     snap: PropTypes.bool,
     ticks: PropTypes.oneOfType([
         PropTypes.number,
@@ -349,11 +349,9 @@ class SliderDynamics extends React.Component {
             if (position !== this.state.position) {
                 this.setState(prevState => ({...prevState, position}))
                 const value = this.toValue(this.snapPosition(position))
-                this.props.input.set(
-                    this.props.float
-                        ? value
-                        : Math.round(value)
-                )
+                const factor = Math.pow(10, this.props.decimals)
+                const roundedValue = Math.round(value * factor) / factor
+                this.props.input.set(roundedValue)
             }
         }
     }
@@ -391,7 +389,7 @@ SliderDynamics.propTypes = {
     maxValue: PropTypes.number.isRequired,
     minValue: PropTypes.number.isRequired,
     normalize: PropTypes.func.isRequired,
-    float: PropTypes.bool,
+    decimals: PropTypes.number,
     snap: PropTypes.bool,
     ticks: PropTypes.array,
     width: PropTypes.number
@@ -462,14 +460,14 @@ export default class Slider extends React.Component {
     }
 
     renderContainer() {
-        const {input, logScale, float = false, snap, range = 'left', info, disabled} = this.props
+        const {input, logScale, decimals = 0, snap, range = 'left', info, disabled} = this.props
         const {ticks, minValue, maxValue, width} = this.state
         return (
             <SliderContainer
                 input={input}
                 minValue={minValue}
                 maxValue={maxValue}
-                float={float}
+                decimals={decimals}
                 ticks={ticks}
                 snap={snap}
                 range={range}
@@ -513,6 +511,7 @@ export default class Slider extends React.Component {
 
 Slider.propTypes = {
     input: PropTypes.object.isRequired,
+    decimals: PropTypes.number,
     disabled: PropTypes.any,
     info: PropTypes.oneOfType([
         PropTypes.string,
@@ -523,7 +522,6 @@ Slider.propTypes = {
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
     range: PropTypes.oneOf(['none', 'left', 'right']),
-    float: PropTypes.any,
     snap: PropTypes.any,
     ticks: PropTypes.oneOfType([
         // PropTypes.number,
