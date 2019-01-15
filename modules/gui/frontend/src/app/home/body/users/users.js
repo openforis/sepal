@@ -1,6 +1,7 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {connect} from 'store'
 import {map, share, zip} from 'rxjs/operators'
 import {msg} from 'translate'
@@ -257,7 +258,7 @@ class Users extends React.Component {
 
     renderHeader() {
         return (
-            <div className={styles.grid}>
+            <div className={[styles.grid, styles.header].join(' ')}>
                 {this.renderColumnHeader('name', msg('user.userDetails.form.name.label'))}
                 {this.renderColumnHeader('status', msg('user.userDetails.form.status.label'))}
 
@@ -289,13 +290,6 @@ class Users extends React.Component {
             <div className={styles.pageControls}>
                 <ButtonGroup wrap={true}>
                     <Button
-                        look='add'
-                        size='large'
-                        shape='pill'
-                        icon='plus'
-                        label={msg('users.invite.label')}
-                        onClick={() => this.inviteUser()}/>
-                    <Button
                         look='transparent'
                         size='large'
                         shape='pill'
@@ -312,6 +306,20 @@ class Users extends React.Component {
                 <div className={styles.pageNavigation}>
                     <PageControls/>
                 </div>
+            </div>
+        )
+    }
+
+    renderInviteUser() {
+        return (
+            <div className={styles.inviteUser}>
+                <Button
+                    look='add'
+                    size='large'
+                    shape='pill'
+                    icon='plus'
+                    label={msg('users.invite.label')}
+                    onClick={() => this.inviteUser()}/>
             </div>
         )
     }
@@ -369,17 +377,28 @@ class Users extends React.Component {
                             {this.renderControls()}
                         </TopBar>
                         <Content>
-                            {this.renderInfo()}
-                            <div className={[styles.heading, 'itemType'].join(' ')}>
-                                {this.renderHeader()}
-                            </div>
-                            <div className={styles.users}>
-                                {this.renderUsers()}
-                            </div>
-                            {this.renderUserDetails()}
+                            <ScrollableContainer>
+                                <Unscrollable>
+                                    {this.renderInviteUser()}
+                                    {this.renderInfo()}
+                                </Unscrollable>
+                                <Scrollable direction='x'>
+                                    <ScrollableContainer className={styles.content}>
+                                        <Unscrollable>
+                                            <div className={[styles.heading, 'itemType'].join(' ')}>
+                                                {this.renderHeader()}
+                                            </div>
+                                        </Unscrollable>
+                                        <Scrollable direction='y' className={styles.users}>
+                                            {this.renderUsers()}
+                                        </Scrollable>
+                                    </ScrollableContainer>
+                                </Scrollable>
+                            </ScrollableContainer>
                         </Content>
                     </SectionLayout>
                 </Pageable>
+                {this.renderUserDetails()}
             </div>
         )
     }

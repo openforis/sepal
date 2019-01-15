@@ -1,5 +1,8 @@
+.content {
+    min-width: fit-content;
+}
+
 .number {
-    width: 5rem;
     text-align: right;
 }
 
@@ -10,8 +13,14 @@
     justify-content: space-between;
 }
 
+.inviteUser {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
 .search {
-    width: 20rem;
+    width: 10rem;
     border: none;
 }
 
@@ -28,15 +37,18 @@
 
 .grid {
     display: grid;
-    grid-template-areas: 
-        "name status updateTime ib  ib  sb  sb  st  st "
-        "name status updateTime ibq ibu sbq sbu stq stu";
-    grid-template-columns: 4fr 1fr 2fr repeat(6, 1fr);
+    grid-template-columns: 3fr 3fr 3fr repeat(6, 2fr);
     grid-template-rows: auto;
     column-gap: 1rem;
     width: 100%;
     padding: .1rem .3rem;
-    /* justify-items: left; */
+}
+
+.grid.header {
+    grid-template-areas: 
+        'name status updateTime ib  ib  sb  sb  st  st '
+        'name status updateTime ibq ibu sbq sbu stq stu';
+    grid-template-rows: auto repeat(auto-fill, 1fr);
 }
 
 .grid > * {
@@ -89,6 +101,7 @@
     background-color: var(--look-transparent-background-color);
     color: var(--look-transparent-color);
     line-height: 2rem;
+    min-width: 60rem;
 }
 
 .users > :nth-child(even) {
