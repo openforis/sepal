@@ -321,7 +321,7 @@ class Browse extends React.Component {
                         shape='circle'
                         icon='download'
                         tooltip={msg('browse.controls.download.tooltip')}
-                        placement='bottom'
+                        tooltipPlacement='bottom'
                         downloadUrl={downloadUrl}
                         downloadFilename={downloadFilename}
                         disabled={!oneFileSelected}
@@ -332,7 +332,7 @@ class Browse extends React.Component {
                         shape='circle'
                         icon='trash-alt'
                         tooltip={msg('browse.controls.remove.tooltip')}
-                        placement='bottom'
+                        tooltipPlacement='bottom'
                         onClickHold={this.removeSelected.bind(this)}
                         disabled={nothingSelected}/>
                     <Button
@@ -341,7 +341,7 @@ class Browse extends React.Component {
                         shape='circle'
                         icon='times'
                         tooltip={msg('browse.controls.clearSelection.tooltip')}
-                        placement='bottom'
+                        tooltipPlacement='bottom'
                         onClick={this.clearSelection.bind(this)}
                         disabled={nothingSelected}
                     />
