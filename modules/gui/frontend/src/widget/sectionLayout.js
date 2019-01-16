@@ -5,7 +5,7 @@ import styles from './sectionLayout.module.css'
 
 export const SectionLayout = ({className, children}) => {
     return (
-        <div className={[flexy.container, styles.container, className].join(' ')}>
+        <div className={[flexy.container, className].join(' ')}>
             {children}
         </div>
     )
@@ -34,7 +34,7 @@ export const Content = ({menuPadding = false, appMenuPadding = false, edgePaddin
         <div className={[flexy.elastic, styles.content,
             edgePadding ? styles.edgePadding : null,
             menuPadding ? styles.menuPadding : null,
-            appMenuPadding ? styles.appMenuPadding  : null,
+            appMenuPadding ? styles.appMenuPadding : null,
         ].join(' ')}>
             {children}
         </div>
@@ -43,9 +43,9 @@ export const Content = ({menuPadding = false, appMenuPadding = false, edgePaddin
 
 Content.propTypes = {
     children: PropTypes.any.isRequired,
+    appMenuPadding: PropTypes.any,
     edgePadding: PropTypes.any,
     menuPadding: PropTypes.any,
-    appMenuPadding: PropTypes.any,
     padding: PropTypes.any,
 }
 
