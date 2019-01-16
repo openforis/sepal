@@ -19,7 +19,7 @@ import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.sql.SqlConnectionManager
-
+import java.lang.System
 import java.util.concurrent.TimeUnit
 
 final class DataSearchComponent extends DataSourceBackedComponent implements EndpointRegistry {
@@ -71,9 +71,12 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     }
 
     void onStart() {
-        schedule(1, TimeUnit.DAYS,
-                new UpdateSceneMetaData()
-        )
+        boolean updateSceneMetaData = System.getProperty("updateSceneMetaData", "true") == "true"
+        if (updateSceneMetaData) {
+            schedule(1, TimeUnit.DAYS,
+                    new UpdateSceneMetaData()
+            )
+        }
     }
 
     void registerEndpointsWith(Controller controller) {
