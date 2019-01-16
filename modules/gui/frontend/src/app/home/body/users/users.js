@@ -231,8 +231,8 @@ class Users extends React.Component {
         )
     }
 
-    renderSortingHandle(sorting) {
-        return this.state.sortingOrder === sorting
+    renderSortingHandle(column) {
+        return this.state.sortingOrder === column
             ? this.state.sortingDirection === 1
                 ? <Icon name={'sort-down'}/>
                 : <Icon name={'sort-up'}/>
@@ -240,6 +240,7 @@ class Users extends React.Component {
     }
 
     renderColumnHeader(column, label, classNames = []) {
+        const {sortingOrder} = this.state
         return (
             <div className={classNames.join(' ')}>
                 <Button
@@ -247,7 +248,9 @@ class Users extends React.Component {
                     shape='none'
                     additionalClassName='itemType'
                     onClick={() => this.setSorting(column)}>
-                    {label}
+                    <span className={sortingOrder === column ? styles.sorted : null}>
+                        {label}
+                    </span>
                     <span className={styles.sortingHandle}>
                         {this.renderSortingHandle(column)}
                     </span>
@@ -259,16 +262,27 @@ class Users extends React.Component {
     renderHeader() {
         return (
             <div className={[styles.grid, styles.header].join(' ')}>
-                <div className={[styles.instanceBudget, 'itemType'].join(' ')}>
-                    {msg('user.report.resources.monthlyInstance')}
+                <div className={styles.instanceBudget}>
+                    <Button
+                        chromeless
+                        shape='none'
+                        additionalClassName='itemType'
+                        label={msg('user.report.resources.monthlyInstance')}/>
                 </div>
-                <div className={[styles.storageBudget, 'itemType'].join(' ')}>
-                    {msg('user.report.resources.monthlyStorage')}
+                <div className={styles.storageBudget}>
+                    <Button
+                        chromeless
+                        shape='none'
+                        additionalClassName='itemType'
+                        label={msg('user.report.resources.monthlyStorage')}/>
                 </div>
-                <div className={[styles.storage, 'itemType'].join(' ')}>
-                    {msg('user.report.resources.storage')}
+                <div className={styles.storage}>
+                    <Button
+                        chromeless
+                        shape='none'
+                        additionalClassName='itemType'
+                        label={msg('user.report.resources.storage')}/>
                 </div>
-
                 {this.renderColumnHeader('name', msg('user.userDetails.form.name.label'), [styles.name])}
                 {this.renderColumnHeader('status', msg('user.userDetails.form.status.label'), [styles.status])}
                 {this.renderColumnHeader('updateTime', msg('user.userDetails.form.updateTime.label'), [styles.updateTime])}

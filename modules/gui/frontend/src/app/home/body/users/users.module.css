@@ -57,12 +57,13 @@
     grid-template-areas: 
         'name status updateTime ib  ib  sb  sb  st  st '
         'name status updateTime ibq ibu sbq sbu stq stu';
-    /* grid-template-rows: auto repeat(auto-fill, 1fr); */
-    /* background-color: var(--look-default-background-color); */
     color: var(--look-default-color);
     user-select: none;
-    padding-bottom: .5rem;
     border-bottom: 1px solid gray;
+}
+
+.grid.header > * {
+    padding: .25rem 0;
 }
 
 .grid > * {
@@ -88,16 +89,19 @@
 .grid > .instanceBudget {
     grid-area: ib;
     text-align: center;
+    border-bottom: 1px solid gray;
 }
 
 .grid > .storageBudget {
     grid-area: sb;
     text-align: center;
+    border-bottom: 1px solid gray;
 }
 
 .grid > .storage {
     grid-area: st;
     text-align: center;
+    border-bottom: 1px solid gray;
 }
 
 .grid > .instanceBudgetQuota {
@@ -122,6 +126,10 @@
 
 .grid > .storageUsed {
     grid-area: stu;
+}
+
+.sorted {
+    color: var(--success-color);
 }
 
 .users {
