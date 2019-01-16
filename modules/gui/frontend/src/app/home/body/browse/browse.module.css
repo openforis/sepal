@@ -23,8 +23,6 @@
 }
 
 .fileList > div {
-    min-width: 100%;
-    width: max-content;
     margin-bottom: 5rem;
 }
 
@@ -33,6 +31,7 @@
     padding: 0;
     overflow: visible;
     user-select: none;
+    min-width: max-content;
 }
 
 .fileList li div {
