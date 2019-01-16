@@ -60,21 +60,18 @@ class ChangePassword extends React.Component {
                         type='password'
                         autoFocus
                         input={oldPassword}
-                        spellCheck={false}
                         errorMessage
                     />
                     <Input
                         label={msg('user.changePassword.form.newPassword.label')}
                         type='password'
                         input={newPassword}
-                        spellCheck={false}
                         errorMessage
                     />
                     <Input
                         label={msg('user.changePassword.form.confirmPassword.label')}
                         type='password'
                         input={confirmPassword}
-                        spellCheck={false}
                         errorMessage={[confirmPassword, 'passwordsMatch']}
                     />
                 </PanelContent>

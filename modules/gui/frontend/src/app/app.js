@@ -1,4 +1,4 @@
-import {connect} from 'store'
+import {connect, select} from 'store'
 import {currentUser, loadCurrentUser$} from 'user'
 import Home from 'app/home/home'
 import Landing from 'app/landing/landing'
@@ -17,7 +17,8 @@ import css4 from '../style/look.module.css'
 const _css = [css1, css2, css3, css4]
 
 const mapStateToProps = () => ({
-    currentUser: currentUser()
+    currentUser: currentUser(),
+    hasDimensions: !!select('dimensions')
 })
 
 class App extends React.Component {
@@ -28,6 +29,7 @@ class App extends React.Component {
     }
 
     render() {
+        const {hasDimensions} = this.props 
         return (
             <div className='app'>
                 <Notifications/>
@@ -39,7 +41,7 @@ class App extends React.Component {
                             .set('dimensions', {width, height})
                             .dispatch()
                     }/>
-                {this.body()}
+                {hasDimensions && this.body()}
             </div>
         )
     }

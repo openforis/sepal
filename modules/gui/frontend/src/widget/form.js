@@ -1,3 +1,4 @@
+import {autoFocusEnabled} from 'widget/userAgent'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Icon from './icon'
@@ -428,14 +429,22 @@ export class Input extends React.Component {
     }
 
     renderInput() {
-        const {input, validate = 'onBlur', tabIndex, onChange, className, onBlur, ...props} = this.props
+        const {className, input, validate = 'onBlur', tabIndex,
+            autoFocus = false, autoComplete = false, autoCorrect = false, autoCapitalize = false, spellCheck = false,
+            onChange, onBlur, ...props} = this.props
         const extraProps = _.omit(props, ['errorMessage'])
         return (
             <input
                 ref={this.element}
+                className={[input.validationFailed ? styles.error : null, className].join(' ')}
                 name={input.name}
                 value={typeof input.value === 'number' || typeof input.value === 'boolean' || input.value ? input.value : ''}
                 tabIndex={tabIndex}
+                autoFocus={autoFocus && autoFocusEnabled()}
+                autoComplete={autoComplete ? 'on' : 'off'}
+                autoCorrect={autoCorrect ? 'on' : 'off'}
+                autoCapitalize={autoCapitalize ? 'on' : 'off'}
+                spellCheck={spellCheck ? 'true' : 'false'}
                 onChange={e => {
                     input.handleChange(e)
                     if (onChange)
@@ -449,7 +458,6 @@ export class Input extends React.Component {
                     if (validate === 'onBlur')
                         input.validate()
                 }}
-                className={[input.validationFailed ? styles.error : null, className].join(' ')}
                 {...extraProps}
             />
         )
@@ -509,12 +517,16 @@ export class Input extends React.Component {
 
 Input.propTypes = {
     input: PropTypes.object.isRequired,
-    autoComplete: PropTypes.string,
+    autoCapitalize: PropTypes.any,
+    autoComplete: PropTypes.any,
+    autoCorrect: PropTypes.any,
+    autoFocus: PropTypes.any,
     className: PropTypes.string,
     label: PropTypes.string,
     maxRows: PropTypes.number,
     minRows: PropTypes.number,
     placeholder: PropTypes.string,
+    spellCheck: PropTypes.string,
     tabIndex: PropTypes.number,
     textArea: PropTypes.any,
     tooltip: PropTypes.string,

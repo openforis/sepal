@@ -42,8 +42,7 @@ class Login extends React.Component {
                         label={msg('landing.login.username.label')}
                         input={username}
                         placeholder={msg('landing.login.username.placeholder')}
-                        autoFocus='on'
-                        autoComplete='off'
+                        autoFocus
                         tabIndex={1}
                         errorMessage
                     />

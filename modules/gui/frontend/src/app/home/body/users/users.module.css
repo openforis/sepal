@@ -56,10 +56,11 @@
     grid-template-areas: 
         'name status updateTime ib  ib  sb  sb  st  st '
         'name status updateTime ibq ibu sbq sbu stq stu';
-    grid-template-rows: auto repeat(auto-fill, 1fr);
+    /* grid-template-rows: auto repeat(auto-fill, 1fr); */
     /* background-color: var(--look-default-background-color); */
     color: var(--look-default-color);
     user-select: none;
+    padding-bottom: .5rem;
     border-bottom: 1px solid gray;
 }
 
