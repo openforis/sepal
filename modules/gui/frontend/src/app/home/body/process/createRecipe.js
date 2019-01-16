@@ -69,7 +69,7 @@ class CreateRecipe extends React.Component {
             <Button
                 look='add'
                 size='large'
-                icon='plus-circle'
+                icon='plus'
                 shape='pill'
                 label='Create recipe'
                 onClick={() => showRecipeTypes()}
