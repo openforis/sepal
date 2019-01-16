@@ -1,4 +1,4 @@
-import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
+import {Content, SectionLayout} from 'widget/sectionLayout'
 import {RecipeState, recipePath} from './mosaicRecipe'
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {connect, select} from 'store'
@@ -59,7 +59,6 @@ class Mosaic extends React.Component {
                             : null}
                     </div>
                 </Content>
-                <BottomBar>TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST</BottomBar>
             </SectionLayout>
         )
     }
