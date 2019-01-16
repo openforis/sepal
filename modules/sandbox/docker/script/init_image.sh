@@ -97,3 +97,5 @@ git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/local/bin/jupyter contrib nbextension install
 
 /usr/local/bin/jupyter nbextensions_configurator enable
+
+/usr/bin/python2 -m pip install folium
