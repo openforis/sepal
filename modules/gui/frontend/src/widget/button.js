@@ -252,8 +252,12 @@ Button.propTypes = {
     onMouseDown: PropTypes.func
 }
 
-export const ButtonGroup = ({children, wrap = true}) =>
-    <div className={[styles.group, wrap ? styles.wrap : null].join(' ')}>
+export const ButtonGroup = ({children, compact = false, wrap = true}) =>
+    <div className={[
+        styles.group,
+        compact ? styles.compact : null,
+        wrap ? styles.wrap : null,
+    ].join(' ')}>
         {children}
     </div>
 
