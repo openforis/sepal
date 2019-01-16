@@ -1,9 +1,9 @@
 .wrapper {
     --scaling-factor: .9 !important;
     position: absolute;
-    right: 3.5rem;
     bottom: 0;
     left: 0;
+    right: 0;
 }
 
 .container {

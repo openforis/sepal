@@ -93,7 +93,7 @@ class Tasks extends React.Component {
                 <TopBar>
                     {this.renderToolbar()}
                 </TopBar>
-                <Content edgePadding={true} menuPadding={true}>
+                <Content edgePadding menuPadding>
                     {this.renderTasks()}
                 </Content>
             </SectionLayout>

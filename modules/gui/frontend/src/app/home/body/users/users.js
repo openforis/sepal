@@ -377,7 +377,7 @@ class Users extends React.Component {
                             <TopBar>
                                 {this.renderControls()}
                             </TopBar>
-                            <Content edgePadding={true} menuPadding={true}>
+                            <Content edgePadding menuPadding>
                                 <ScrollableContainer>
                                     <Unscrollable>
                                         {this.renderInviteUser()}

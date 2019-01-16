@@ -469,7 +469,7 @@ class Browse extends React.Component {
                 <TopBar>
                     {this.renderToolbar(selected, nothingSelected)}
                 </TopBar>
-                <Content edgePadding={true} menuPadding={true}>
+                <Content edgePadding menuPadding>
                     <ScrollableContainer>
                         <Scrollable className={styles.fileList}>
                             {this.renderList('/', this.props.tree)}

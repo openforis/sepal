@@ -1,4 +1,4 @@
-import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
 import {RecipeState, recipePath} from './mosaicRecipe'
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {connect, select} from 'store'
@@ -34,7 +34,7 @@ class Mosaic extends React.Component {
         const {recipeId, initialized, aoi, source, sceneSelectionOptions: {type}, sceneSelection} = this.props
         return (
             <SectionLayout>
-                <Content edgePadding={false} menuPadding={true}>
+                <Content>
                     <div className={styles.mosaic}>
                         <MapToolbar statePath={recipePath(recipeId, 'ui')} mapContext={recipeId} labelLayerIndex={1}>
                             <ShowSceneAreaToggle recipeId={recipeId}/>

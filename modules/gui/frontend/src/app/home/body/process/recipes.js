@@ -141,7 +141,7 @@ class RecipeList extends React.Component {
         const {recipeId} = this.props
         return (
             <SectionLayout>
-                <Content edgePadding={true} menuPadding={true}>
+                <Content edgePadding menuPadding>
                     <ScrollableContainer className={styles.container}>
                         <Unscrollable className={styles.header}>
                             {this.renderTitle()}
