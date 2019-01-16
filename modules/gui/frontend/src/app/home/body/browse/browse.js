@@ -420,44 +420,45 @@ class Browse extends React.Component {
         ) : null
     }
 
+    renderListItem(path, depth, fileName, file) {
+        const fullPath = this.childPath(path, file ? fileName : null)
+        const isSelected = this.isSelected(fullPath) || this.isAncestorSelected(fullPath)
+        const isAdded = file.added
+        const isRemoved = file.removed || this.isRemoved(fullPath) || this.isAncestorRemoved(fullPath)
+        const isRemoving = file.removing && !isRemoved
+        return (
+            <li key={fileName}>
+                <div
+                    className={[
+                        lookStyles.look,
+                        isSelected ? lookStyles.highlight : lookStyles.transparent,
+                        isSelected ? null : lookStyles.chromeless,
+                        isAdded ? styles.added : null,
+                        isRemoving ? styles.removing : null,
+                        isRemoved ? styles.removed : null
+                    ].join(' ')}
+                    style={{
+                        '--depth': depth,
+                        '--animation-duration-ms': ANIMATION_DURATION_MS
+                    }}
+                    onClick={() => this.toggleSelected(fullPath)}
+                >
+                    {this.renderIcon(fullPath, fileName, file)}
+                    <span className={styles.fileName}>{fileName}</span>
+                    {this.renderNodeInfo(file)}
+                </div>
+                {this.renderList(fullPath, file, depth + 1)}
+            </li>
+        )
+    }
+
     renderListItems(path, files, depth) {
         return files ?
             _.chain(files)
                 .pickBy(file => file)
                 .toPairs()
                 .sortBy(0)
-                .map(([fileName, file]) => {
-                    const fullPath = this.childPath(path, file ? fileName : null)
-                    const isSelected = this.isSelected(fullPath) || this.isAncestorSelected(fullPath)
-                    const isAdded = file.added
-                    const isRemoved = file.removed || this.isRemoved(fullPath) || this.isAncestorRemoved(fullPath)
-                    const isRemoving = file.removing && !isRemoved
-                    return (
-                        <li key={fileName}>
-                            <div
-                                className={[
-                                    lookStyles.look,
-                                    isSelected ? lookStyles.highlight : lookStyles.transparent,
-                                    isSelected ? null : lookStyles.chromeless,
-                                    styles.item,
-                                    isAdded ? styles.added : null,
-                                    isRemoving ? styles.removing : null,
-                                    isRemoved ? styles.removed : null
-                                ].join(' ')}
-                                style={{
-                                    '--depth': depth,
-                                    '--animation-duration-ms': ANIMATION_DURATION_MS
-                                }}
-                                onClick={() => this.toggleSelected(fullPath)}
-                            >
-                                {this.renderIcon(fullPath, fileName, file)}
-                                <span className={styles.fileName}>{fileName}</span>
-                                {this.renderNodeInfo(file)}
-                            </div>
-                            {this.renderList(fullPath, file, depth + 1)}
-                        </li>
-                    )
-                }).value()
+                .map(([fileName, file]) => this.renderListItem(path, depth, fileName, file)).value()
             : null
     }
 
