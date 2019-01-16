@@ -1,3 +1,4 @@
+import {autoFocusEnabled} from 'widget/userAgent'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Icon from './icon'
@@ -428,7 +429,9 @@ export class Input extends React.Component {
     }
 
     renderInput() {
-        const {className, input, validate = 'onBlur', tabIndex, autoComplete, autoCorrect, autoCapitalize, spellCheck, onChange, onBlur, ...props} = this.props
+        const {className, input, validate = 'onBlur', tabIndex,
+            autoFocus = false, autoComplete = false, autoCorrect = false, autoCapitalize = false, spellCheck = false,
+            onChange, onBlur, ...props} = this.props
         const extraProps = _.omit(props, ['errorMessage'])
         return (
             <input
@@ -437,6 +440,7 @@ export class Input extends React.Component {
                 name={input.name}
                 value={typeof input.value === 'number' || typeof input.value === 'boolean' || input.value ? input.value : ''}
                 tabIndex={tabIndex}
+                autoFocus={autoFocus && autoFocusEnabled()}
                 autoComplete={autoComplete ? 'on' : 'off'}
                 autoCorrect={autoCorrect ? 'on' : 'off'}
                 autoCapitalize={autoCapitalize ? 'on' : 'off'}
@@ -513,9 +517,10 @@ export class Input extends React.Component {
 
 Input.propTypes = {
     input: PropTypes.object.isRequired,
-    autoCapitalize: PropTypes.string,
-    autoComplete: PropTypes.string,
-    autoCorrect: PropTypes.string,
+    autoCapitalize: PropTypes.any,
+    autoComplete: PropTypes.any,
+    autoCorrect: PropTypes.any,
+    autoFocus: PropTypes.any,
     className: PropTypes.string,
     label: PropTypes.string,
     maxRows: PropTypes.number,
