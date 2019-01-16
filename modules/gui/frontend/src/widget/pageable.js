@@ -104,7 +104,7 @@ PageData.propTypes = {
 
 export const PageControls = props => {
     const renderDefaultControls = pageable =>
-        <ButtonGroup>
+        <ButtonGroup compact>
             <Button
                 chromeless
                 size='large'
