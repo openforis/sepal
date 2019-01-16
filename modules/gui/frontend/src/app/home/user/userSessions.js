@@ -76,19 +76,6 @@ class UserSessions extends React.Component {
                     : null}
             </div>
         )
-        // return (
-        //     <React.Fragment key={session.id}>
-        //         <tr className={selectable ? styles.clickable : null}
-        //             onClick={() => selectable ? this.editSessionDetails(session.id) : null}>
-        //             <td>{session.instanceType.name}</td>
-        //             <td>{session.instanceType.description}</td>
-        //             <td>{format.fullDateTime(session.creationTime)}</td>
-        //             <td className={styles.number}>{format.dollars(session.costSinceCreation)}</td>
-        //             <td className={styles.number}>{format.dollarsPerHour(session.instanceType.hourlyCost)}</td>
-        //             <td className={styles.number}>{format.hours(session.earliestTimeoutHours)}</td>
-        //         </tr>
-        //     </React.Fragment>
-        // )
     }
 
     renderSessions(sessions) {
@@ -96,21 +83,6 @@ class UserSessions extends React.Component {
             <div>
                 {sessions.map(session => this.renderSession(session))}
             </div>
-            // <table className={styles.sessions}>
-            //     <thead>
-            //         <tr>
-            //             <th>{msg('user.report.sessions.instanceType')}</th>
-            //             <th>{msg('user.report.sessions.instanceDescription')}</th>
-            //             <th>{msg('user.report.sessions.time')}</th>
-            //             <th className={styles.number}>{msg('user.report.sessions.cost')}</th>
-            //             <th className={styles.number}>{msg('user.report.sessions.hourlyCost')}</th>
-            //             <th className={styles.number}>{msg('user.report.sessions.earliestTimeoutHours')}</th>
-            //         </tr>
-            //     </thead>
-            //     <tbody>
-            //         {sessions.map(session => this.renderSession(session))}
-            //     </tbody>
-            // </table>
         )
     }
 

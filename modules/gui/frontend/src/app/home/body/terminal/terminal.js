@@ -22,7 +22,7 @@ class Terminal extends React.Component {
     render() {
         return (
             <SectionLayout>
-                <Content>
+                <Content menuPadding>
                     <div id='terminal'>
                         <div className='container'>
                             <div id='gateone'/>
