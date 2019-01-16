@@ -71,7 +71,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     }
 
     void onStart() {
-        boolean updateSceneMetaData = System.getProperty("updateSceneMetaData", "true") == "true"
+        def updateSceneMetaData = System.getProperty("skipSceneMetaDataUpdate") == null
         if (updateSceneMetaData) {
             schedule(1, TimeUnit.DAYS,
                     new UpdateSceneMetaData()
