@@ -2,12 +2,12 @@
     --app-height: 9rem;
     height: 100%;
     display: grid;
-    grid-template-columns: repeat(auto-fill, 21rem);
+    grid-template-columns: repeat(auto-fill, 20rem);
     grid-template-rows: repeat(auto-fill, var(--app-height));
     grid-row-gap: 2rem;
     grid-column-gap: 4rem;
     justify-content: center;
-    padding: 2rem;
+    padding: 2rem 0;
     overflow: scroll;
 }
 
