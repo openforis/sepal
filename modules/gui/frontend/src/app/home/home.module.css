@@ -21,12 +21,14 @@
 .container:not(.floatingMenu) {
     --menu-position: 0;
     --menu-container-width: var(--menu-width);
+    --menu-clearance: var(--menu-container-width);
 }
 
 /* floating menu */
 .container.floatingMenu {
     --menu-position: calc(var(--menu-handle-width) - var(--menu-width));
     --menu-container-width: 0rem;
+    --menu-clearance: var(--menu-handle-width);
 }
 
 .map {
