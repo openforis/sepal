@@ -138,12 +138,30 @@ export class Button extends React.Component {
         )
     }
 
+    renderIcon() {
+        const {icon, iconType, iconFlipHorizontal} = this.props
+        return (
+            <Icon
+                name={icon}
+                type={iconType}
+                flip={iconFlipHorizontal ? 'horizontal' : null}
+            />
+        )
+    }
+
+    renderLabel() {
+        const {label} = this.props
+        return (
+            <span>{label}</span>
+        )
+    }
+
     renderContents() {
-        const {icon, iconType, label, children} = this.props
+        const {icon, label, children} = this.props
         return children ? children : (
             <div className={styles.contents}>
-                {icon ? <Icon name={icon} type={iconType}/> : null}
-                {label ? <span>{label}</span> : null}
+                {icon ? this.renderIcon() : null}
+                {label ? this.renderLabel() : null}
             </div>
         )
     }
@@ -215,6 +233,7 @@ Button.propTypes = {
     downloadFilename: PropTypes.any,
     downloadUrl: PropTypes.any,
     icon: PropTypes.string,
+    iconFlipHorizontal: PropTypes.any,
     iconType: PropTypes.string,
     label: PropTypes.string,
     link: PropTypes.string,
