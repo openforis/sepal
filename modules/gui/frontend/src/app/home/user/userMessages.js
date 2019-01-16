@@ -127,7 +127,9 @@ class UserMessages extends React.Component {
         const unread = _.filter(userMessages, {state: 'UNREAD'}).length
         return (
             <Button
-                className={[className, styles.icon, unread ? styles.unread : null].join(' ')}
+                chromeless
+                look='transparent'
+                additionalClassName={[className, unread ? styles.unread : null].join(' ')}
                 icon='bell'
                 onClick={() => this.buttonHandler()}
                 tooltip={msg('home.sections.user.messages.tooltip')}

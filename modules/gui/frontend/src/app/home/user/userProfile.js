@@ -43,7 +43,9 @@ class UserProfile extends React.Component {
         const {className, username, modal} = this.props
         return (
             <Button
-                className={className}
+                chromeless
+                look='transparent'
+                additionalClassName={className}
                 label={username}
                 onClick={() => this.buttonHandler()}
                 tooltip={msg('home.sections.user.profile.tooltip')}

@@ -1,4 +1,4 @@
-import {Button} from 'widget/button'
+import {Button, ButtonGroup} from 'widget/button'
 import {logout} from 'user'
 import {msg} from 'translate'
 import MenuMode from '../menu/menuMode'
@@ -21,10 +21,12 @@ const Footer = ({className}) => {
                     <Copyright/>
                 </div>
                 <div>
-                    <UserMessages className={styles.button}/>
-                    <UserReport className={styles.button}/>
-                    <UserProfile className={styles.button}/>
-                    <Logout className={styles.button}/>
+                    <ButtonGroup>
+                        <UserMessages className={styles.button}/>
+                        <UserReport className={styles.button}/>
+                        <UserProfile className={styles.button}/>
+                        <Logout className={styles.button}/>
+                    </ButtonGroup>
                 </div>
             </div>
         </div>
@@ -38,7 +40,9 @@ Footer.propTypes = {
 
 const Logout = props =>
     <Button
-        className={props.className}
+        chromeless
+        look='transparent'
+        additionalClassName={props.className}
         icon='sign-out-alt'
         onClick={logout}
         tooltip={msg('home.sections.logout.tooltip')}

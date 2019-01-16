@@ -122,9 +122,11 @@ class Usage extends React.Component {
             : 0
         return (
             <Button
-                className={className}
+                chromeless
+                look='transparent'
+                additionalClassName={className}
                 icon='dollar-sign'
-                label={' ' + format.unitsPerHour(hourlySpending)}
+                label={format.unitsPerHour(hourlySpending)}
                 onClick={() => this.buttonHandler()}
                 tooltip={msg('home.sections.user.report.tooltip')}
                 tooltipPlacement='top'
