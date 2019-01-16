@@ -1,4 +1,4 @@
-import './gateone'
+// import './gateone'
 import './gateone.css'
 import {connect} from 'store'
 import {currentUser} from 'user'
@@ -22,7 +22,7 @@ class Terminal extends React.Component {
     render() {
         return (
             <SectionLayout>
-                <Content>
+                <Content menuPadding edgePadding>
                     <div id='terminal'>
                         <div className='container'>
                             <div id='gateone'/>

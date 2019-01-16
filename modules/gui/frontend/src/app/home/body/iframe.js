@@ -26,7 +26,7 @@ class IFrame extends React.Component {
             ? this.initializing(label, alt)
             : (
                 <SectionLayout>
-                    <Content edgePadding={false} menuPadding={true}>
+                    <Content appMenuPadding>
                         {appState !== 'READY' && this.loading(label, alt)}
                         <iframe
                             width='100%'

@@ -31,6 +31,7 @@
 .content {
     --edge-padding: .5rem 1.5rem;
     --menu-padding: 1.5rem;
+    --app-menu-padding: .5rem;
     transition: padding-left var(--transition-time) ease-in-out var(--transition-delay);
 }
 
@@ -40,6 +41,10 @@
 
 .content.menuPadding {
     padding-left: calc(var(--menu-container-width) + var(--menu-padding));
+}
+
+.content.appMenuPadding {
+    padding-left: calc(var(--menu-container-width) + var(--app-menu-padding));
 }
 
 @media only screen and (max-width: 500px) {
