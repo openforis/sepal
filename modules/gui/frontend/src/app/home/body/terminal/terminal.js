@@ -1,4 +1,4 @@
-// import './gateone'
+import './gateone'
 import './gateone.css'
 import {connect} from 'store'
 import {currentUser} from 'user'
