@@ -5,6 +5,16 @@ plugins {
     id "com.moowork.node" version "1.2.0"
 }
 
+apply plugin: "idea"
+
+project.ext {
+    jsSources = file("frontend/src")
+}
+
+idea.module {
+    sourceDirs += jsSources
+}
+
 mainClassName = 'org.openforis.sepal.gui.Main'
 
 node {
