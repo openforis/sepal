@@ -6,8 +6,7 @@ import styles from './languageSelector.module.css'
 const LanguageSelector = () => {
     const languages = [
         {code: 'en', name: 'English'},
-        {code: 'es', name: 'Español'},
-        {code: 'fr', name: 'Français'}
+        {code: 'es', name: 'Español'}
     ]
 
     return (
@@ -26,8 +25,7 @@ const Language = ({code, name, selected}) =>
     <Button
         look='highlight'
         chromeless={!selected}
-        disabled
-        // disabled={selected}
+        disabled={selected}
         label={code}
         tooltip={name}
         onClick={() => {
