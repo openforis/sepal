@@ -1,9 +1,9 @@
-import {Button, ButtonGroup} from 'widget/button'
-import {PanelContext} from './panel'
-import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {msg} from 'translate'
+import {Button, ButtonGroup} from 'widget/button'
 import styles from 'widget/panelButtons.module.css'
+import {PanelContext} from './panel'
 
 export default class PanelButtons extends React.Component {
     renderAdditionalButtons() {
@@ -105,6 +105,22 @@ export default class PanelButtons extends React.Component {
         )
     }
 
+    renderCloseButton(onClick) {
+        const {cancelLabel = msg('button.close')} = this.props
+        return (
+            <Button
+                type='apply'
+                look='apply'
+                icon='undo-alt'
+                label={cancelLabel}
+                onClick={e => {
+                    e.preventDefault()
+                    onClick && onClick()
+                }}
+            />
+        )
+    }
+
     renderOkButton({isActionForm, invalid}, onClick) {
         const {applyLabel = msg('button.ok')} = this.props
         return (
@@ -123,24 +139,32 @@ export default class PanelButtons extends React.Component {
         )
     }
 
-    renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel}) {
-        return (
-            <ButtonGroup>
-                {this.renderCancelButton({isActionForm, dirty}, onCancel)}
-                {this.renderOkButton({isActionForm, invalid}, onOk)}
-            </ButtonGroup>
-        )
+    renderFormButtons({form, isActionForm, dirty, invalid, onOk, onCancel}) {
+        if (form)
+            return (
+                <ButtonGroup>
+                    {this.renderCancelButton({isActionForm, dirty}, onCancel)}
+                    {this.renderOkButton({isActionForm, invalid}, onOk)}
+                </ButtonGroup>
+            )
+        else
+            return (
+
+                <ButtonGroup>
+                    {this.renderCloseButton(onCancel)}
+                </ButtonGroup>
+            )
     }
 
     render() {
         return (
             <PanelContext.Consumer>
-                {({isActionForm, wizard, first, last, dirty, invalid, onOk, onCancel, onBack, onNext, onDone}) => (
+                {({form, isActionForm, wizard, first, last, dirty, invalid, onOk, onCancel, onBack, onNext, onDone}) => (
                     <div className={styles.buttons}>
                         {this.renderAdditionalButtons()}
                         {wizard
                             ? this.renderWizardButtons({first, last, invalid, onBack, onNext, onDone})
-                            : this.renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel})}
+                            : this.renderFormButtons({form, isActionForm, dirty, invalid, onOk, onCancel})}
                     </div>
                 )}
             </PanelContext.Consumer>
