@@ -141,7 +141,7 @@ class UserMessages extends React.Component {
 
     renderMessages() {
         const {userMessages} = this.props
-        const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.updateTime) || moment(), 'desc')
+        const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.creationTime) || moment(), 'desc')
         return (
             <div className={styles.messages}>
                 <ul>
