@@ -1,4 +1,7 @@
 .panel {
+    --thumbnail-size: 9rem;
+    --details-height: 4rem;
+
     z-index: 1;
     top: calc(var(--toolbar-clearance) + .5rem) !important;
     right: calc(var(--toolbar-clearance) + .5rem) !important;
@@ -45,8 +48,8 @@
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 9rem);
-    grid-template-rows: repeat(auto-fill, 14rem);
+    grid-template-columns: repeat(auto-fill, var(--thumbnail-size));
+    grid-template-rows: repeat(auto-fill, calc(var(--thumbnail-size) + var(--details-height)));
     grid-gap: 1rem;
     justify-content: center;
 }
@@ -61,23 +64,22 @@
 }
 
 .grid .thumbnail {
-    height: calc(9rem - 2px);
-    width: calc(9rem - 2px);
+    height: calc(var(--thumbnail-size) - 2px);
+    width: calc(var(--thumbnail-size) - 2px);
 }
 
 .details {
     font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-size: 0.7rem;
     color: #CCC;
-
-    height: 4rem;
+    height: var(--details-height);
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     grid-template-areas: 
         'dataSet cloudCover daysFromTarget' 'date date date';
     background-color: #3D3B3A;
-    padding: 0.5rem;
+    padding: 0.25rem;
 }
 
 .grid .details {
