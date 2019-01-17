@@ -114,7 +114,7 @@
         "loading-initializing-google-maps": "Initializing map..."
     },
     "apps": {
-        "initializing": "Initializing {label}...",
+        "initializing": "Starting session for {label}...",
         "loading": {
             "progress": "Loading {label}...",
             "error.title": "Failed to load apps",
