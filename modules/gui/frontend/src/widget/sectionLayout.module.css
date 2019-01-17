@@ -31,7 +31,6 @@
 
 .content {
     --edge-padding: .5rem 1.5rem;
-    --menu-padding: 1.5rem;
     --app-menu-padding: .5rem;
     transition: padding-left var(--transition-time) ease-in-out var(--transition-delay);
 }
@@ -41,7 +40,8 @@
 }
 
 .content.menuPadding {
-    padding-left: calc(var(--menu-container-width) + var(--menu-padding));
+    --left-padding: calc(var(--menu-container-width) + 1.5rem);
+    padding-left: var(--left-padding);
 }
 
 .content.appMenuPadding {
@@ -53,6 +53,6 @@
         --edge-padding: .5rem;
     }
     .content.menuPadding {
-        --menu-padding: 1rem;
+        --left-padding: calc(var(--menu-clearance) + .5rem);
     }
 }
