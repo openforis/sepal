@@ -938,42 +938,6 @@
                 "hourlyCost": "Hourly cost",
                 "earliestTimeoutHours": "Keep alive"
             }
-        },
-        "userMessages": {
-            "title": "User messages",
-            "post": "Post message",
-            "edit": "Edit message",
-            "remove": "Remove message",
-            "author": "Message by {author}",
-            "state": {
-                "READ": "Mark as unread",
-                "UNREAD": "Mark as read"
-            }
-        },
-        "userMessage": {
-            "title": "User message",
-            "form": {
-                "subject": {
-                    "label": "Subject",
-                    "required": "Subject is required"
-                },
-                "contents": {
-                    "label": "Contents",
-                    "required": "Contents is required"
-                }
-            },
-            "update": {
-                "success.title": "User message has been updated",
-                "error.title": "Cannot update user message"
-            },
-            "updateState": {
-                "success.title": "User message state has been updated",
-                "error.title": "Cannot update user message state"
-            },
-            "remove": {
-                "success.title": "User message has been removed",
-                "error.title": "Cannot remove user message"
-            }
         }
     },
     "users": {
@@ -982,6 +946,43 @@
         "filter.placeholder": "Search users",
         "page": "Page {pageNumber} of {pageCount}",
         "invite.label": "Invite user"
+    },
+    "userMessages": {
+        "noMessages": "There are no messages",
+        "title": "User messages",
+        "post": "Post message",
+        "edit": "Edit message",
+        "remove": "Remove message",
+        "author": "Message by {author}",
+        "state": {
+            "READ": "Mark as unread",
+            "UNREAD": "Mark as read"
+        }
+    },
+    "userMessage": {
+        "title": "User message",
+        "form": {
+            "subject": {
+                "label": "Subject",
+                "required": "Subject is required"
+            },
+            "contents": {
+                "label": "Contents",
+                "required": "Contents is required"
+            }
+        },
+        "update": {
+            "success.title": "User message has been updated",
+            "error.title": "Cannot update user message"
+        },
+        "updateState": {
+            "success.title": "User message state has been updated",
+            "error.title": "Cannot update user message state"
+        },
+        "remove": {
+            "success.title": "User message has been removed",
+            "error.title": "Cannot remove user message"
+        }
     },
     "unauthorized.warning": {
         "title": "You are not logged in",

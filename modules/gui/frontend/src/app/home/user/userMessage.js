@@ -11,9 +11,9 @@ import styles from './userMessage.module.css'
 
 const fields = {
     subject: new Field()
-        .notBlank('user.userMessage.form.subject.required'),
+        .notBlank('userMessage.form.subject.required'),
     contents: new Field()
-        .notBlank('user.userMessage.form.contents.required')
+        .notBlank('userMessage.form.contents.required')
 }
 const mapStateToProps = (state, ownProps) => {
     const user = state.user.currentUser
@@ -58,15 +58,15 @@ class UserMessage extends React.Component {
             <React.Fragment>
                 <PanelContent className={styles.panelContent}>
                     <Input
-                        label={msg('user.userMessage.form.subject.label')}
+                        label={msg('userMessage.form.subject.label')}
                         autoFocus
                         input={subject}
                         spellCheck={false}
                     />
                     <div className={styles.editorAndContents}>
                         <Input
-                            label={msg('user.userMessage.form.contents.label')}
-                            // tooltip={msg('user.userMessage.form.subject.tooltip')}
+                            label={msg('userMessage.form.contents.label')}
+                            // tooltip={msg('userMessage.form.subject.tooltip')}
                             input={contents}
                             placeholder={markdownInstructions}
                             textArea={true}
@@ -95,7 +95,7 @@ class UserMessage extends React.Component {
                     onCancel={() => onCancel()}>
                     <PanelHeader
                         icon='bell'
-                        title={msg('user.userMessage.title')}/>
+                        title={msg('userMessage.title')}/>
                     {this.renderPanel()}
                 </Panel>
             </Portal>

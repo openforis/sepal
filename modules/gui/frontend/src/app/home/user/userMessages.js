@@ -51,9 +51,9 @@ class UserMessages extends React.Component {
                 actionBuilder('UPDATE_USER_MESSAGE')
                     .assignOrAddValueByTemplate('user.userMessages', {message: {id}}, {message, state: 'UNREAD'})
                     .dispatch()
-                // Notifications.success('user.userMessage.update').dispatch()
+                // Notifications.success('userMessage.update').dispatch()
             },
-            error => Notifications.caught('user.userMessage.update', null, error).dispatch()
+            error => Notifications.caught('userMessage.update', null, error).dispatch()
         )
         this.editMessage(null)
     }
@@ -66,9 +66,9 @@ class UserMessages extends React.Component {
                 actionBuilder('REMOVE_USER_MESSAGE')
                     .delValueByTemplate('user.userMessages', {message: {id}})
                     .dispatch()
-                Notifications.success('user.userMessage.remove').dispatch()
+                Notifications.success('userMessage.remove').dispatch()
             },
-            error => Notifications.caught('user.userMessage.remove', null, error).dispatch()
+            error => Notifications.caught('userMessage.remove', null, error).dispatch()
         )
     }
 
@@ -81,9 +81,9 @@ class UserMessages extends React.Component {
                 actionBuilder('UPDATE_USER_MESSAGE_STATE', {id, state})
                     .assignValueByTemplate('user.userMessages', {message: {id}}, {state})
                     .dispatch()
-                // Notifications.success('user.userMessage.updateState').dispatch()
+                // Notifications.success('userMessage.updateState').dispatch()
             },
-            error => Notifications.caught('user.userMessage.updateState', null, error).dispatch()
+            error => Notifications.caught('userMessage.updateState', null, error).dispatch()
         )
     }
 
@@ -141,14 +141,22 @@ class UserMessages extends React.Component {
 
     renderMessages() {
         const {userMessages} = this.props
-        const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.creationTime) || moment(), 'desc')
-        return (
-            <div className={styles.messages}>
-                <ul>
-                    {sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
-                </ul>
-            </div>
-        )
+        if (userMessages.length) {
+            const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.creationTime) || moment(), 'desc')
+            return (
+                <div className={styles.messages}>
+                    <ul>
+                        {sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
+                    </ul>
+                </div>
+            )
+        } else {
+            return (
+                <div>
+                    {msg('userMessages.noMessages')}
+                </div>
+            )
+        }
     }
 
     renderAdminButtons(message) {
@@ -158,14 +166,14 @@ class UserMessages extends React.Component {
                     chromeless
                     look='transparent'
                     icon='edit'
-                    tooltip={msg('user.userMessages.edit')}
+                    tooltip={msg('userMessages.edit')}
                     onClick={() => this.editMessage(message)}
                 />
                 <Button
                     chromeless
                     look='transparent'
                     icon='trash'
-                    tooltip={msg('user.userMessages.remove')}
+                    tooltip={msg('userMessages.remove')}
                     onClickHold={() => this.removeMessage(message)}
                 />
             </ButtonGroup>
@@ -183,7 +191,7 @@ class UserMessages extends React.Component {
                 icon={state === 'UNREAD' ? 'bell' : 'check'}
                 additionalClassName={[styles.dot, styles[state]].join(' ')}
                 onClick={() => this.toggleMessageState(userMessage)}
-                tooltip={msg(`user.userMessages.state.${state}`)}
+                tooltip={msg(`userMessages.state.${state}`)}
                 tooltipPlacement='top'
             />
         )
@@ -205,7 +213,7 @@ class UserMessages extends React.Component {
                     {isAdmin ? this.renderAdminButtons(userMessage.message) : null}
                 </div>
                 <div className={styles.info}>
-                    <Msg id='user.userMessages.author' author={author}/>
+                    <Msg id='userMessages.author' author={author}/>
                     {creationTime ? moment(creationTime).fromNow() : ''}
                 </div>
                 <Markdown className={styles.contents} source={userMessage.message.contents}/>
@@ -225,7 +233,7 @@ class UserMessages extends React.Component {
                     onCancel={() => closePanel()}>
                     <PanelHeader
                         icon='bell'
-                        title={msg('user.userMessages.title')}/>
+                        title={msg('userMessages.title')}/>
                     <PanelContent>
                         {this.renderMessages()}
                     </PanelContent>
@@ -234,7 +242,7 @@ class UserMessages extends React.Component {
                             key: 'post',
                             look: 'add',
                             icon: 'pencil-alt',
-                            label: msg('user.userMessages.post'),
+                            label: msg('userMessages.post'),
                             onClick: () => this.newMessage()
                         }] : []}/>
                 </Panel>
