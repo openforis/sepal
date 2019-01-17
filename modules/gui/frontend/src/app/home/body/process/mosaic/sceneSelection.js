@@ -239,7 +239,7 @@ const SelectedSceneOverlay = ({scene, onRemove, recipeActions}) =>
         <ButtonGroup>
             <Button
                 look='cancel'
-                icon='times'
+                icon='minus'
                 label={msg('button.remove')}
                 onClick={() => onRemove(scene)}/>
             <Button
