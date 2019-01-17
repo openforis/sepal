@@ -42,10 +42,10 @@
 }
 
 .panel.center {
-    top: .25rem;
-    bottom: .25rem;
-    left: .25rem;
-    right: .25rem;
+    top: .5rem;
+    bottom: calc(var(--footer-height) + .5rem);
+    left: .5rem;
+    right: .5rem;
     width: auto;
     margin: auto;
 }
@@ -94,5 +94,4 @@
     justify-content: space-between;
     padding-top: 1.5rem;
     padding-bottom: 1.5rem;
-    overflow-y: auto;
 }
