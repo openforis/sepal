@@ -4,15 +4,16 @@
     --margin-right: 3.5rem;
     --margin-top: .5rem;
     --margin-bottom: .5rem;
-    --padding: .5rem .8rem;
+    --header-padding: .5rem .8rem;
+    --content-padding: 1.5rem .8rem;
     --padding-panel-buttons: .5rem;
     --scaling-factor: .8 !important;
-
-    max-height: 90vh;
-    max-width: 60rem;
+    --header-color: #e8e8e8;
+    --max-width: 60rem;
 
     position: absolute;
     width: calc(100% - var(--margin-left) - var(--margin-right));
+    max-width: var(--max-width);
     background-color: var(--panel-default-background-color);
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
@@ -37,17 +38,18 @@
     right: var(--margin-right);
 }
 
-.panel.left {
-    left: 0;
-}
-
 .panel.center {
     top: .5rem;
-    bottom: calc(var(--footer-height) + .5rem);
-    left: .5rem;
+    bottom: .5rem;
+    left: calc(var(--menu-clearance) + .5rem);
     right: .5rem;
     width: auto;
     margin: auto;
+}
+
+.modal .panel.center {
+    left: .5rem;
+    bottom: calc(var(--footer-height) + .5rem);
 }
 
 .panel.inline {
@@ -55,26 +57,25 @@
 }
 
 .modal {
+    --modal-background: hsla(0, 0%, 5%, .8);
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: hsla(0, 0%, 5%, .8);
+    background-color: var(--modal-background);
     z-index: 2;
 }
 
-.header, .content {
-    padding: var(--padding);
-    flex-grow: 1;
-}
+/* Header */
 
 .header {
     flex-grow: 0;
     font-size: .9rem;
     font-family: var(--header-font-family);
     text-transform: uppercase;
-    color: #e8e8e8;
+    color: var(--header-color);
+    padding: var(--header-padding);
     border-bottom: var(--wireframe);
 }
 
@@ -82,16 +83,12 @@
     margin-right: .5rem;
 }
 
-.header a:hover i {
-    background-color: hsla(0, 0%, 100%, .25);
-    border-radius: 50%;
-    cursor: pointer;
-}
+/* Content */
 
 .content {
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
+    padding: var(--content-padding);
 }
