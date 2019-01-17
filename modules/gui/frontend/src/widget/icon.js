@@ -1,9 +1,9 @@
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
+import {fab} from '@fortawesome/free-brands-svg-icons'
+import {far} from '@fortawesome/free-regular-svg-icons'
+import {fas} from '@fortawesome/free-solid-svg-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import fab from '@fortawesome/fontawesome-free-brands'
-import far from '@fortawesome/fontawesome-free-regular'
-import fas from '@fortawesome/fontawesome-free-solid'
 import fontawesome from '@fortawesome/fontawesome'
 import styles from './icon.module.css'
 
