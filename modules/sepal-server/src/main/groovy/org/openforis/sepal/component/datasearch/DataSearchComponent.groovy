@@ -19,40 +19,42 @@ import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.sql.SqlConnectionManager
-import java.lang.System
+import org.slf4j.LoggerFactory
+
 import java.util.concurrent.TimeUnit
 
 final class DataSearchComponent extends DataSourceBackedComponent implements EndpointRegistry {
+    private final static LOG = LoggerFactory.getLogger(this)
     private final Component taskComponent
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
 
     static DataSearchComponent create(
-            Component processingRecipeComponent,
-            Component taskComponent,
-            SqlConnectionManager connectionManager) {
+        Component processingRecipeComponent,
+        Component taskComponent,
+        SqlConnectionManager connectionManager) {
         def config = new DataSearchConfig()
         new DataSearchComponent(
-                processingRecipeComponent,
-                taskComponent,
-                connectionManager,
-                new HttpGoogleEarthEngineGateway(config.googleEarthEngineEndpoint),
-                CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
-                CsvBackedSentinel2Gateway.create(new File(config.downloadWorkingDirectory)),
-                config.googleMapsApiKey,
-                new AsynchronousEventDispatcher()
+            processingRecipeComponent,
+            taskComponent,
+            connectionManager,
+            new HttpGoogleEarthEngineGateway(config.googleEarthEngineEndpoint),
+            CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
+            CsvBackedSentinel2Gateway.create(new File(config.downloadWorkingDirectory)),
+            config.googleMapsApiKey,
+            new AsynchronousEventDispatcher()
         )
     }
 
     DataSearchComponent(
-            Component processingRecipeComponent,
-            Component taskComponent,
-            SqlConnectionManager connectionManager,
-            GoogleEarthEngineGateway geeGateway,
-            DataSetMetadataGateway landsatMetadata,
-            DataSetMetadataGateway sentinel2Metadata,
-            String googleMapsApiKey,
-            HandlerRegistryEventDispatcher eventDispatcher) {
+        Component processingRecipeComponent,
+        Component taskComponent,
+        SqlConnectionManager connectionManager,
+        GoogleEarthEngineGateway geeGateway,
+        DataSetMetadataGateway landsatMetadata,
+        DataSetMetadataGateway sentinel2Metadata,
+        String googleMapsApiKey,
+        HandlerRegistryEventDispatcher eventDispatcher) {
         super(connectionManager, eventDispatcher)
         this.taskComponent = taskComponent
         this.geeGateway = geeGateway
@@ -60,8 +62,8 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
         def sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
 
         command(UpdateSceneMetaData, new UpdateSceneMetaDataHandler([
-                new UpdateUsgsSceneMetaDataHandler(landsatMetadata, sceneMetaDataRepository),
-                new UpdateSentinel2SceneMetaDataHandler(sentinel2Metadata, sceneMetaDataRepository)
+            new UpdateUsgsSceneMetaDataHandler(landsatMetadata, sceneMetaDataRepository),
+            new UpdateSentinel2SceneMetaDataHandler(sentinel2Metadata, sceneMetaDataRepository)
         ]))
 
         query(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(geeGateway))
@@ -74,17 +76,18 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
         def updateSceneMetaData = System.getProperty("skipSceneMetaDataUpdate") == null
         if (updateSceneMetaData) {
             schedule(1, TimeUnit.DAYS,
-                    new UpdateSceneMetaData()
+                new UpdateSceneMetaData()
             )
-        }
+        } else
+            LOG.info('Disabled scene metadata updates.')
     }
 
     void registerEndpointsWith(Controller controller) {
         new DataSearchEndpoint(
-                this,
-                taskComponent,
-                geeGateway,
-                googleMapsApiKey
+            this,
+            taskComponent,
+            geeGateway,
+            googleMapsApiKey
         ).registerWith(controller)
     }
 }
