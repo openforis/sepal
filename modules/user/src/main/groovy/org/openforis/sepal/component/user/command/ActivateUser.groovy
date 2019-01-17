@@ -43,6 +43,8 @@ class ActivateUserHandler implements CommandHandler<User, ActivateUser> {
         this.userRepository = userRepository
         this.messageQueue = messageBroker.createMessageQueue('user.activate_user', Map) {
             def user = it.user
+            userRepository.updateStatus(user.username, ACTIVE)
+            tokenManager.invalidate(it.token)
             externalUserDataGateway.changePassword(user.username, it.password)
             changeListener.changed(user.username, user.toMap())
         }
@@ -50,12 +52,10 @@ class ActivateUserHandler implements CommandHandler<User, ActivateUser> {
 
     User execute(ActivateUser command) {
         def tokenStatus = tokenManager.validate(command.token, false)
-        if (!tokenStatus || tokenStatus.expired)
+        if (!tokenStatus)
             throw new UsingInvalidToken(command.token, tokenStatus)
         def user = tokenStatus.user.active()
-        userRepository.updateStatus(user.username, ACTIVE)
-        tokenManager.invalidate(command.token)
-        messageQueue.publish(user: user, password: command.password)
-        return user.active()
+        messageQueue.publish(user: user, password: command.password, token: command.token)
+        return user
     }
 }

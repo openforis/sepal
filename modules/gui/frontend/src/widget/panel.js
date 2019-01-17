@@ -138,6 +138,7 @@ class Panel extends React.Component {
                                     wizard,
                                     first,
                                     last,
+                                    form: form,
                                     isActionForm: form && isActionForm,
                                     dirty: form && form.isDirty(),
                                     invalid: form && form.isInvalid(),
