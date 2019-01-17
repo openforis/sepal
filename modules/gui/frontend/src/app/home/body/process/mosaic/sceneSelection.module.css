@@ -1,6 +1,5 @@
 .panel {
-    --thumbnail-size: 9rem;
-    --details-height: 4rem;
+    --max-width: 67rem;
 
     z-index: 1;
     top: calc(var(--toolbar-clearance) + .5rem) !important;
@@ -14,6 +13,8 @@
 
 .title {
     text-align: center;
+    border-bottom: 1px solid var(--wireframe-color);
+    margin-bottom: 1rem;
 }
 
 .scenes {
@@ -23,7 +24,6 @@
 
 .availableScenes, .selectedScenes {
     position: relative;
-    min-width: 9rem;
 }
 
 .availableScenes {
@@ -32,21 +32,24 @@
 
 .selectedScenes {
     flex-grow: 1;
-    max-width: 18rem;
+    min-width: 6rem;
+    max-width: 16rem;
     margin-left: 2rem;
 }
 
 @media only screen and (max-width: 500px) {
+    .panel {
+        --content-padding: 1.5rem .5rem;
+    }
     .selectedScenes {
         margin-left: .5rem;
     }
 }
 
-.thumbnail {
-    background-size: cover;
-}
-
 .grid {
+    --thumbnail-size: 9rem;
+    --details-height: 3.5rem;
+
     display: grid;
     grid-template-columns: repeat(auto-fill, var(--thumbnail-size));
     grid-template-rows: repeat(auto-fill, calc(var(--thumbnail-size) + var(--details-height)));
@@ -54,80 +57,82 @@
     justify-content: center;
 }
 
-.grid .scene {
+.scene {
     position: relative;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    background-color: #323030;
-    border: 1px solid #514F4E;
     justify-content: space-between;
+    background-color: #323030;
+    border: 1px solid var(--wireframe-color);
 }
 
-.grid .thumbnail {
+.thumbnail {
     height: calc(var(--thumbnail-size) - 2px);
     width: calc(var(--thumbnail-size) - 2px);
+    background-size: cover;
 }
 
 .details {
-    font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
-    font-size: 0.7rem;
-    color: #CCC;
+    font-size: .8rem;
+    color: #ccc;
     height: var(--details-height);
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    grid-template-areas: 
-        'dataSet cloudCover daysFromTarget' 'date date date';
-    background-color: #3D3B3A;
-    padding: 0.25rem;
+    background-color: hsl(37, 8%, 20%);
+    padding: .25rem .5rem;
+    border: 0 solid var(--wireframe-color);
+    border-width: 1px 0 0 0;
 }
 
-.grid .details {
-    border-top: 1px solid #514F4E;
+.line {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
 }
 
-.details > * {
-    white-space: nowrap;
+.details svg {
+    color: #ccc !important;
 }
 
-.dataSet {
+.details .dataSet {
     grid-area: dataSet;
 }
 
-.date {
+.details .date {
     grid-area: date;
 }
 
-.daysFromTarget {
+.details .daysFromTarget {
     grid-area: daysFromTarget;
+    font-weight: bold;
+    color: var(--success-color);
 }
 
-.cloudCover {
+.details .cloudCover {
     grid-area: cloudCover;
 }
 
 .sceneOverlay {
-    display: none;
-}
-
-.scene:hover .sceneOverlay, .scene.hover .sceneOverlay {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     background: hsla(0, 0%, 0%, 0.7);
-}
-
-.grid .scene:hover .sceneOverlay {
-    flex-direction: column;
     padding: 1rem;
+    opacity: 1;
+    transition: opacity var(--transition-time) ease-in-out var(--transition-delay);
 }
 
-.grid .sceneOverlay button:first-child {
-    margin-bottom: 1rem;
+.scene:not(:hover) .sceneOverlay {
+    opacity: 0;
+}
+
+.scene:not(:hover) .sceneOverlay > * {
+    display: none;
 }
 
 .scenes button {
@@ -136,122 +141,44 @@
     cursor: pointer;
 }
 
-.sceneOverlay .add {
-    -hue: 222;
-    -sat: 44%;
-    color: var(--look-default-color);
-    background-color: hsl(var(-hue), var(-sat), 37%);
-    border: 1px solid hsl(var(-hue), var(-sat), 39%);
-}
-
-.sceneOverlay .add:focus {
-    color: var(--look-default-focus-color);
-    background-color: hsl(var(-hue), var(-sat), 35%);
-    border: 1px solid hsl(var(-hue), var(-sat), 38%);
-}
-
-.sceneOverlay .add:hover {
-    color: var(--look-default-hover-color);
-    background-color: hsl(var(-hue), var(-sat), 33%);
-    border: 1px solid hsl(var(-hue), var(-sat), 35%);
-}
-
-.sceneOverlay .add:active {
-    color: var(--look-default-active-color);
-    background-color: hsl(var(-hue), var(-sat), 31%);
-    border: 1px solid hsl(var(-hue), var(-sat), 33%);
-}
-
-.sceneOverlay .remove {
-    -hue: 0;
-    -sat: 38%;
-    color: var(--look-default-color);
-    background-color: hsl(var(-hue), var(-sat), 37%);
-    border: 1px solid hsl(var(-hue), var(-sat), 39%);
-}
-
-.sceneOverlay .remove:focus {
-    color: var(--look-default-focus-color);
-    background-color: hsl(var(-hue), var(-sat), 35%);
-    border: 1px solid hsl(var(-hue), var(-sat), 38%);
-}
-
-.sceneOverlay .remove:hover {
-    color: var(--look-default-hover-color);
-    background-color: hsl(var(-hue), var(-sat), 33%);
-    border: 1px solid hsl(var(-hue), var(-sat), 35%);
-}
-
-.sceneOverlay .remove:active {
-    color: var(--look-default-active-color);
-    background-color: hsl(var(-hue), var(-sat), 31%);
-    border: 1px solid hsl(var(-hue), var(-sat), 33%);
-}
-
-.sceneOverlay .preview {
-    -hue: 0;
-    -sat: 0%;
-    border: 1px solid hsl(var(-hue), var(-sat), 78%);
-    color: var(--look-default-color);
-}
-
-.sceneOverlay .preview:focus {
-    color: var(--look-default-focus-color);
-    background-color: hsla(var(-hue), var(-sat), 50%, 0.1);
-    border: 1px solid hsl(var(-hue), var(-sat), 77%);
-}
-
-.sceneOverlay .preview:hover {
-    color: var(--look-default-hover-color);
-    background-color: hsla(var(-hue), var(-sat), 50%, 0.4);
-    border: 1px solid hsl(var(-hue), var(-sat), 75%);
-}
-
-.sceneOverlay .preview:active {
-    color: var(--look-default-active-color);
-    background-color: hsla(var(-hue), var(-sat), 55%, 0.4);
-    border: 1px solid hsl(var(-hue), var(-sat), 73%);
-}
-
-.list {
-    display: flex;
-    flex-direction: column;
-}
-
-.list .details {
-    border-left: 1px solid #514F4E;
-    height: calc(4rem - 2px);
+.sceneOverlay button {
     width: 100%;
-    padding-right: 2rem;
 }
 
-.list .scene {
-    position: relative;
-    flex-shrink: 0;
-    display: flex;
-    height: 4rem;
-    background-color: #3D3B3A;
-    border: 1px solid #514F4E;
-    margin-bottom: 1rem;
+@media only screen and (min-width: 500px) {
+    .selectedScenes .grid {
+        --thumbnail-size: 3.5rem;
+        --details-height: 3.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: left;
+    }
+    
+    .selectedScenes .scene {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .selectedScenes .scene + .scene {
+        margin-top: 1rem;
+    }
+    
+    .selectedScenes .details {
+        height: auto;
+        flex-grow: 1;
+        border-width: 0 0 0 1px;
+    }
+        
+    .selectedScenes .sceneOverlay {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .selectedScenes .sceneOverlay button {
+        width: auto;
+    }
 }
 
-.list .thumbnail {
-    height: calc(4rem - 2px);
-    width: calc(5rem - 2px);
-    overflow: hidden;
-}
-
-.list .sceneOverlay {
-    align-items: center;
-}
-
-.list .sceneOverlay button:first-child {
-    margin-right: 1rem;
-
-}
-
-.scenes i > svg {
-    color: white;
-    width: 1.5rem !important;
-    text-align: left;
+.details i {
+    margin-right: .5rem;
 }

@@ -1,4 +1,4 @@
-import {Button} from '../../../../../widget/button'
+import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, Label, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
@@ -12,7 +12,6 @@ import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReactResizeDetector from 'react-resize-detector'
 import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
 import api from 'api'
 import daysBetween from './daysBetween'
@@ -76,7 +75,7 @@ class SceneSelection extends React.Component {
 
     renderScenes() {
         const {dates: {targetDate}, inputs: {selectedScenes}} = this.props
-        const {width, scenes, scenesById = {}} = this.state
+        const {scenes, scenesById = {}} = this.state
         const availableSceneComponents = scenes
             .filter(scene => !selectedScenes.value.find(selectedScene => selectedScene.id === scene.id))
             .map(scene =>
@@ -117,13 +116,10 @@ class SceneSelection extends React.Component {
                         <Unscrollable className={styles.title}>
                             <Label msg={msg('process.mosaic.panel.sceneSelection.selectedScenes')}/>
                         </Unscrollable>
-                        <Scrollable className={width > 250 ? styles.list : styles.grid}>
+                        <Scrollable className={styles.grid}>
                             {selectedSceneComponents}
                         </Scrollable>
                     </ScrollableContainer>
-                    <ReactResizeDetector
-                        handleWidth
-                        onResize={width => this.widthUpdated(width)}/>
                 </div>
             </div>
         )
@@ -183,10 +179,6 @@ class SceneSelection extends React.Component {
             return {...prevState, scenes, scenesById}
         })
     }
-
-    widthUpdated(width) {
-        this.setState(prevState => ({...prevState, width}))
-    }
 }
 
 const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeActions}) => {
@@ -199,21 +191,23 @@ const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeA
         <div className={[styles.scene, className].join(' ')}>
             <div className={styles.thumbnail} style={thumbnailStyle}/>
             <div className={styles.details}>
-                <div className={styles.dataSet}>
-                    <Icon name='rocket'/>
-                    {dataSetById[dataSet].shortName}
+                <div className={styles.line}>
+                    <div className={styles.dataSet}>
+                        <Icon name='satellite-dish'/>
+                        {dataSetById[dataSet].shortName}
+                    </div>
+                    <div className={styles.cloudCover}>
+                        <Icon name='cloud'/>
+                        {format.integer(cloudCover)}
+                    </div>
                 </div>
-                <div className={styles.date}>
-                    <Icon name='calendar'/>
-                    {date}
-                </div>
-                <div className={styles.daysFromTarget}>
-                    <Icon name='calendar-check'/>
-                    {daysFromTarget}
-                </div>
-                <div className={styles.cloudCover}>
-                    <Icon name='cloud'/>
-                    {format.integer(cloudCover)}
+                <div className={styles.line}>
+                    <div className={styles.date}>
+                        {date}
+                    </div>
+                    <div className={styles.daysFromTarget}>
+                        {daysFromTarget > 0 ? '+' : '-'}{Math.abs(daysFromTarget)}d
+                    </div>
                 </div>
             </div>
             {selected
@@ -226,30 +220,34 @@ const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeA
 
 const AvailableSceneOverlay = ({scene, onAdd, recipeActions}) =>
     <div className={styles.sceneOverlay}>
-        <Button
-            className={styles.add}
-            icon='plus'
-            label={msg('button.add')}
-            onClick={() => onAdd(scene)}/>
-        <Button
-            className={styles.preview}
-            icon='eye'
-            label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-            onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
+        <ButtonGroup>
+            <Button
+                look='add'
+                icon='plus'
+                label={msg('button.add')}
+                onClick={() => onAdd(scene)}/>
+            <Button
+                look='default'
+                icon='eye'
+                label={msg('process.mosaic.panel.sceneSelection.preview.label')}
+                onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
+        </ButtonGroup>
     </div>
 
 const SelectedSceneOverlay = ({scene, onRemove, recipeActions}) =>
     <div className={styles.sceneOverlay}>
-        <Button
-            className={styles.remove}
-            icon='times'
-            label={msg('button.remove')}
-            onClick={() => onRemove(scene)}/>
-        <Button
-            className={styles.preview}
-            icon='eye'
-            label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-            onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
+        <ButtonGroup>
+            <Button
+                look='cancel'
+                icon='times'
+                label={msg('button.remove')}
+                onClick={() => onRemove(scene)}/>
+            <Button
+                look='transparent'
+                icon='eye'
+                label={msg('process.mosaic.panel.sceneSelection.preview.label')}
+                onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
+        </ButtonGroup>
     </div>
 
 SceneSelection.propTypes = {
