@@ -2,6 +2,7 @@ import {IntlProvider, injectIntl} from 'react-intl'
 import PropTypes from 'prop-types'
 import React from 'react'
 import flat from 'flat'
+import moment from 'moment'
 
 let intl
 export const initIntl = intlInstance => intl = intlInstance
@@ -55,12 +56,14 @@ export default class TranslationProvider extends React.Component {
             const messages = flat.flatten( // react-intl requires a flat object
                 require(`locale/${language}/translations.json`)
             )
+            require('moment/min/locales.min') // Load all moment locales
+            moment.locale(language)
             return {...state, messages, language}
         }
         let language = getLanguage()
-        if (language === state.language)
+        if (language === state.language) {
             return state
-        else {
+        } else {
             try {
                 return languageState(language)
             } catch (error) {
