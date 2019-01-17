@@ -943,8 +943,6 @@
             "edit": "Edit message",
             "remove": "Remove message",
             "author": "Message by {author}",
-            "created": "created {when}",
-            "updated": "updated {when}",
             "state": {
                 "READ": "Mark as unread",
                 "UNREAD": "Mark as read"

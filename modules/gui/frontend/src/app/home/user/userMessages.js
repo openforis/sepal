@@ -154,11 +154,15 @@ class UserMessages extends React.Component {
         return (
             <ButtonGroup>
                 <Button
+                    chromeless
+                    look='transparent'
                     icon='edit'
                     tooltip={msg('user.userMessages.edit')}
                     onClick={() => this.editMessage(message)}
                 />
                 <Button
+                    chromeless
+                    look='transparent'
                     icon='trash'
                     tooltip={msg('user.userMessages.remove')}
                     onClickHold={() => this.removeMessage(message)}
@@ -168,15 +172,18 @@ class UserMessages extends React.Component {
     }
 
     renderMessageStateButton(userMessage) {
+        const {state} = userMessage
         return (
             <Button
                 chromeless
+                look='transparent'
                 size='large'
                 shape='none'
-                additionalClassName={[styles.dot, styles[userMessage.state]].join(' ')}
-                icon='circle'
-                tooltip={msg(`user.userMessages.state.${userMessage.state}`)}
+                icon={state === 'UNREAD' ? 'bell' : 'check'}
+                additionalClassName={[styles.dot, styles[state]].join(' ')}
                 onClick={() => this.toggleMessageState(userMessage)}
+                tooltip={msg(`user.userMessages.state.${state}`)}
+                tooltipPlacement='top'
             />
         )
     }
@@ -184,10 +191,7 @@ class UserMessages extends React.Component {
     renderMessage(userMessage, index) {
         const {isAdmin} = this.props
         const author = userMessage.message.username
-        const creationTime = moment(userMessage.message.creationTime)
-        const updateTime = moment(userMessage.message.updateTime)
-        const isUpdated = updateTime.isAfter(creationTime)
-        const timestamp = isUpdated ? updateTime : creationTime
+        const creationTime = userMessage.message.creationTime
         return (
             <li key={index} className={[lookStyles.look, lookStyles.transparent, lookStyles.nonInteractive].join(' ')}>
                 <div className={styles.header}>
@@ -200,12 +204,8 @@ class UserMessages extends React.Component {
                     {isAdmin ? this.renderAdminButtons(userMessage.message) : null}
                 </div>
                 <div className={styles.info}>
-                    <div>
-                        <Msg id='user.userMessages.author' author={author}/>
-                        <span> &mdash; </span>
-                        <Msg id={isUpdated ? 'user.userMessages.updated' : 'user.userMessages.created'} when={timestamp.fromNow()}/>
-                    </div>
-                    <div>{timestamp.format('ddd, DD MMM YYYY @ HH:mm:ss Z')}</div>
+                    <Msg id='user.userMessages.author' author={author}/>
+                    {creationTime ? moment(creationTime).fromNow() : ''}
                 </div>
                 <Markdown className={styles.contents} source={userMessage.message.contents}/>
             </li>

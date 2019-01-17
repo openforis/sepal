@@ -1,11 +1,12 @@
 .panel {
-    --unread-color: var(--info-color);
-    --read-color: hsla(0, 0%, 0%, .2)
+    --unread-color: var(--warning-color);
+    --read-color: var(--success-color);
+    max-height: max-content;
 }
 
 button.unread i {
-    color: var(--info-color);
-    animation: pulse 1500ms ease-out infinite;
+    color: var(--warning-color);
+    animation: pulse 1000ms ease-out infinite;
 }
 
 @keyframes pulse {
@@ -46,7 +47,6 @@ button.unread i {
 
 .messages li .dot.UNREAD i {
     color: var(--unread-color);
-    animation: pulse 1700ms ease-out infinite;
 }
 
 .messages li .dot.READ i {
@@ -63,10 +63,9 @@ button.unread i {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    font-size: .9rem;
-    color: grey;
-    font-weight: bold;
-    border-bottom: 1px dashed var(--wireframe-color);
+    font-size: .8rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--wireframe-color);
 }
 
 /* markdown */
@@ -76,7 +75,7 @@ button.unread i {
     font-size: 1rem;
 }
 
-/* .contents h1 {
+.contents h1 {
     font-size: 1.6rem;
 }
 
@@ -86,7 +85,7 @@ button.unread i {
 
 .contents h4 {
     font-size: 1.1rem;
-} */
+}
 
 .contents ul {
     margin-bottom: 1rem;
