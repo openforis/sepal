@@ -58,15 +58,15 @@ class SceneSelection extends React.Component {
                     onApply={({selectedScenes}) => this.onApply(selectedScenes)}
                     onCancel={() => this.deselectSceneArea()}>
                     <PanelHeader
-                        icon='cog'
+                        icon='layer-group'
                         title={msg('process.mosaic.panel.auto.form.selectScenes')}/>
 
-                    {/* <PanelContent> */}
                     <PanelContent className={loading ? styles.loading : null}>
                         {loading
                             ? <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
                             : this.renderScenes()}
                     </PanelContent>
+
                     <PanelButtons/>
                 </Panel>
             </React.Fragment>
