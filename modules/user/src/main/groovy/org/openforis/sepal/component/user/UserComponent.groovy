@@ -67,7 +67,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
         command(InviteUser, new InviteUserHandler(userRepository, messageBroker, externalUserDataGateway, emailGateway, changeListener, clock))
         command(ValidateToken, new ValidateTokenHandler(tokenManager))
         command(ActivateUser, new ActivateUserHandler(tokenManager, externalUserDataGateway, userRepository, messageBroker, changeListener))
-        command(ResetPassword, new ResetPasswordHandler(tokenManager, externalUserDataGateway))
+        command(ResetPassword, new ResetPasswordHandler(tokenManager, externalUserDataGateway, userRepository, messageBroker, changeListener))
         command(Authenticate, new AuthenticateHandler(usernamePasswordVerifier, userRepository))
         command(UpdateUserDetails, new UpdateUserDetailsHandler(userRepository, messageBroker, changeListener, clock))
         command(ChangePassword, new ChangePasswordHandler(usernamePasswordVerifier, externalUserDataGateway))
