@@ -1,6 +1,4 @@
 .toolbar {
-    --button-edge-margin: .5rem;
-    --button-size: 2.5rem;
     --button-spacing: .5rem;
     --button-panel-margin: .5rem;
     --icon-size: 1.1rem;
@@ -29,24 +27,24 @@
 }
 
 .toolbar.top {
-    top: var(--button-edge-margin);
+    top: var(--toolbar-edge-margin);
 }
 
 .toolbar.bottom {
-    bottom: var(--button-edge-margin);
+    bottom: var(--toolbar-edge-margin);
 }
 
 .toolbar.left {
-    left: var(--button-edge-margin);
+    left: var(--toolbar-edge-margin);
 }
 
 .toolbar.right {
-    right: var(--button-edge-margin);
+    right: var(--toolbar-edge-margin);
 }
 
 .toolbar button {
-    width: var(--button-size);
-    height: var(--button-size);
+    width: var(--toolbar-button-size);
+    height: var(--toolbar-button-size);
     padding: 0;
     border: var(--selected-panel-border-width) solid var(--look-default-border-color);
     border-radius: var(--button-border-radius);
@@ -87,7 +85,7 @@
 }
 
 .toolbar.vertical.panelButton button.selected {
-    width: calc(var(--button-size) + var(--button-panel-margin));
+    width: calc(var(--toolbar-button-size) + var(--button-panel-margin));
     margin-left: calc(-1 * var(--button-panel-margin));
     padding-left: calc(var(--button-panel-margin) + var(--selected-panel-border-width));
     border: 1px solid var(--wireframe-color);
