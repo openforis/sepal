@@ -111,7 +111,7 @@ export default class PanelButtons extends React.Component {
             <Button
                 type='apply'
                 look='apply'
-                icon='undo-alt'
+                icon='times'
                 label={cancelLabel}
                 onClick={e => {
                     e.preventDefault()
