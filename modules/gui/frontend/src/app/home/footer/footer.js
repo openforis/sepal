@@ -14,18 +14,18 @@ const Footer = ({className}) => {
         <div className={className}>
             <div className={styles.footer}>
                 <div>
-                    <MenuMode className={styles.button}/>
+                    <MenuMode/>
                 </div>
                 <div>
-                    <Title className={styles.button}/>
+                    <Title/>
                     <Copyright/>
                 </div>
                 <div>
                     <ButtonGroup compact>
-                        <UserMessages className={styles.button}/>
-                        <UserReport className={styles.button}/>
-                        <UserProfile className={styles.button}/>
-                        <Logout className={styles.button}/>
+                        <UserMessages/>
+                        <UserReport/>
+                        <UserProfile/>
+                        <Logout/>
                     </ButtonGroup>
                 </div>
             </div>
@@ -42,6 +42,7 @@ const Logout = props =>
     <Button
         chromeless
         look='transparent'
+        size='large'
         additionalClassName={props.className}
         icon='sign-out-alt'
         onClick={logout}

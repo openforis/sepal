@@ -26,6 +26,7 @@ class MenuMode extends React.Component {
             <Button
                 chromeless
                 look='transparent'
+                size='large'
                 additionalClassName={className}
                 icon={'angle-double-right'}
                 iconFlipHorizontal={floating}

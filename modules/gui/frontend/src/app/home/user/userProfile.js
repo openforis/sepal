@@ -45,6 +45,7 @@ class UserProfile extends React.Component {
             <Button
                 chromeless
                 look='transparent'
+                size='large'
                 additionalClassName={className}
                 label={username}
                 onClick={() => this.buttonHandler()}

@@ -129,6 +129,7 @@ class UserMessages extends React.Component {
             <Button
                 chromeless
                 look='transparent'
+                size='large'
                 additionalClassName={[className, unread ? styles.unread : null].join(' ')}
                 icon='bell'
                 onClick={() => this.buttonHandler()}

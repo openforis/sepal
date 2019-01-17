@@ -123,6 +123,7 @@ class Usage extends React.Component {
             <Button
                 chromeless
                 look='transparent'
+                size='large'
                 additionalClassName={className}
                 icon='dollar-sign'
                 label={format.unitsPerHour(hourlySpending)}
