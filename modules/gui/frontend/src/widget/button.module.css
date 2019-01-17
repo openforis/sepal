@@ -1,14 +1,16 @@
 .button {
     --small-font-size: .8rem;
     --normal-font-size: .9rem;
-    --large-font-size: 1.1rem;
-    --x-large-font-size: 1.3rem;
-    --ratio: 2;
+    --large-font-size: 1.0rem;
+    --x-large-font-size: 1.1rem;
+    --ratio: 2.2;
 
     position: relative;
     cursor: pointer;
     transition: all 100ms ease-in-out;
     font-size: var(--font-size);
+    line-height: var(--font-size);
+    min-height: fit-content;
     height: calc(var(--ratio) * var(--font-size));
     min-width: calc(var(--ratio) * var(--font-size));
     width: fit-content;
@@ -16,7 +18,7 @@
 
 @media only screen and (max-width: 500px) {
     .button {
-        --ratio: 1.8;
+        --ratio: 1.9;
     }
 }
 
@@ -27,6 +29,8 @@
 .button.chromeless {
     padding: 0;
 }
+
+/* sizes */
 
 .button.small {
     --font-size: var(--small-font-size);
@@ -41,26 +45,19 @@
 }
 
 .button.x-large {
-    /* same size as large, but with padding */
-    --font-size: var(--large-font-size);
+    --font-size: var(--x-large-font-size);
 }
+
+/* shapes */
 
 .button.rectangle {
     border-radius: var(--button-border-radius);
-    padding: 0 .8rem;
-}
-
-.button.rectangle.x-large {
-    padding: .2rem 1.2rem;
+    padding: 0 calc(var(--font-size) * .8);
 }
 
 .button.pill {
     border-radius: 500px;
-    padding: 0 .8rem;
-}
-
-.button.pill.x-large {
-    padding: .2rem 1.2rem;
+    padding: 0 calc(var(--font-size) * .8);
 }
 
 .button.circle {
@@ -134,6 +131,8 @@
         background-color: hsla(var(--look-cancel-h), 70%, var(--look-cancel-l), 1);
     }
 }
+
+/* groups */
 
 .group {
     --button-spacing: .5rem;

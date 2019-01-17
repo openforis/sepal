@@ -25,7 +25,7 @@ html {
     --link-selected-color: #fff;
 
     --error-color: hsl(343, 85%, 49%);
-    --info-color: rgb(15, 89, 226);
+    --info-color: hsl(219, 88%, 47%);
     --warning-color: hsl(39, 100%, 35%);
     --success-color: hsl(90, 100%, 35%);
 

@@ -5,7 +5,7 @@ import styles from './scrollable.module.css'
 
 export const ScrollableContainer = ({className, children}) => {
     return (
-        <div className={[flexy.container, styles.container, className].join(' ')}>
+        <div className={[flexy.container, className].join(' ')}>
             {children}
         </div>
     )
