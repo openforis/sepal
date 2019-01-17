@@ -1042,6 +1042,7 @@
     "button": {
         "ok": "OK",
         "cancel": "Cancel",
+        "close": "Close",
         "add": "Add",
         "remove": "Remove",
         "back": "Back",
