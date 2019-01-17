@@ -22,7 +22,7 @@ class AssetExport(ThreadTask):
                         'set_band_names_status, build_vrt_status, build_overviews_status')
 
     def __init__(self, sepal_api, credentials, description, image_spec):
-        super(AssetExport, self).__init__()
+        super(AssetExport, self).__init__(retries=3)
         self.sepal_api = sepal_api
         self.credentials = credentials
         self.description = description

@@ -234,7 +234,7 @@ class Download(ThreadTask):
 
 class Touch(ThreadTask):
     def __init__(self, drive_items):
-        super(Touch, self).__init__()
+        super(Touch, self).__init__(retries=3)
         self.drive_items = drive_items
 
     def run(self):
