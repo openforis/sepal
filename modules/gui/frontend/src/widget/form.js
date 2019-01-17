@@ -526,7 +526,7 @@ Input.propTypes = {
     maxRows: PropTypes.number,
     minRows: PropTypes.number,
     placeholder: PropTypes.string,
-    spellCheck: PropTypes.string,
+    spellCheck: PropTypes.any,
     tabIndex: PropTypes.number,
     textArea: PropTypes.any,
     tooltip: PropTypes.string,
