@@ -98,7 +98,7 @@ class Scenes extends React.Component {
                     model: valuesToModel(values)
                 }).dispatch()}>
                 <PanelHeader
-                    icon='cog'
+                    icon='images'
                     title={msg('process.mosaic.panel.scenes.title')}/>
 
                 <PanelContent>

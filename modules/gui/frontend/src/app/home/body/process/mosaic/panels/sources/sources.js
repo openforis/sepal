@@ -112,7 +112,7 @@ class Sources extends React.Component {
                     model: valuesToModel(values)
                 }).dispatch()}>
                 <PanelHeader
-                    icon='cog'
+                    icon='satellite-dish'
                     title={msg('process.mosaic.panel.sources.title')}/>
 
                 <PanelContent>
@@ -121,7 +121,7 @@ class Sources extends React.Component {
                         {this.renderDataSets()}
                     </div>
                 </PanelContent>
-
+                
                 <PanelButtons/>
             </Panel>
         )

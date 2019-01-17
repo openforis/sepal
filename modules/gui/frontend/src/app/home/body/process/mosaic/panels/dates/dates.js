@@ -193,7 +193,7 @@ class Dates extends React.Component {
                 statePath={recipePath(recipeId, 'ui')}
                 onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}>
                 <PanelHeader
-                    icon='cog'
+                    icon='calendar-alt'
                     title={msg('process.mosaic.panel.dates.title')}/>
 
                 <PanelContent>

@@ -121,7 +121,7 @@ class Composite extends React.Component {
                     model: valuesToModel(values)
                 }).dispatch()}>
                 <PanelHeader
-                    icon='cog'
+                    icon='layer-group'
                     title={msg('process.mosaic.panel.composite.title')}/>
 
                 <PanelContent>
