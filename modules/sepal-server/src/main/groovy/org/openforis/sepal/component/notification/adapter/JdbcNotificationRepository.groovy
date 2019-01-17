@@ -8,14 +8,17 @@ import org.openforis.sepal.component.notification.api.NotFound
 import org.openforis.sepal.component.notification.api.Notification
 import org.openforis.sepal.component.notification.api.NotificationRepository
 import org.openforis.sepal.sql.SqlConnectionProvider
+import org.openforis.sepal.util.Clock
 
 import static org.openforis.sepal.component.notification.api.Notification.State.UNREAD
 
 class JdbcNotificationRepository implements MessageRepository, NotificationRepository {
     private final SqlConnectionProvider connectionProvider
+    private final Clock clock
 
-    JdbcNotificationRepository(SqlConnectionProvider connectionProvider) {
+    JdbcNotificationRepository(SqlConnectionProvider connectionProvider, Clock clock) {
         this.connectionProvider = connectionProvider
+        this.clock = clock
     }
 
     Message getMessageById(String id) {
@@ -31,17 +34,19 @@ class JdbcNotificationRepository implements MessageRepository, NotificationRepos
         return message
     }
 
-    void saveMessage(Message message) {
+    Message saveMessage(Message message) {
         def updated = sql.executeUpdate('''
                 UPDATE message 
                 SET username = ?, subject = ?, contents = ?, type = ?, update_time = ?
                 WHERE id = ?''', [message.username, message.subject, message.contents, message.type.name(), message.updateTime, message.id])
-        if (!updated)
+        if (!updated) {
             sql.executeInsert('''
                 INSERT INTO message(id, username, subject, contents, type, creation_time, update_time)
                 VALUES(?, ?, ?, ?, ?, ?, ?)''', [
-                    message.id, message.username, message.subject, message.contents, message.type.name(), message.updateTime, message.updateTime
+                    message.id, message.username, message.subject, message.contents, message.type.name(), message.creationTime, message.updateTime
             ])
+        }
+        return getMessageById(message.id)
     }
 
     void removeMessage(String id) {

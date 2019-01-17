@@ -31,7 +31,7 @@ class NotificationComponent extends DataSourceBackedComponent implements Endpoin
             Clock clock
     ) {
         super(connectionManager, eventDispatcher)
-        def repository = new JdbcNotificationRepository(connectionManager)
+        def repository = new JdbcNotificationRepository(connectionManager, clock)
 
         command(SaveMessage, new SaveMessageHandler(repository, clock))
         command(RemoveMessage, new RemoveMessageHandler(repository))

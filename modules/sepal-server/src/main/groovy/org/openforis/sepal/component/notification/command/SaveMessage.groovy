@@ -26,9 +26,7 @@ class SaveMessageHandler implements CommandHandler<Message, SaveMessage> {
     Message execute(SaveMessage command) {
         def now = clock.now()
         def message = command.message
-            .created(command.message.creationTime ?: now)
             .updated(now)
-        repository.saveMessage(message)
-        return message
+        return repository.saveMessage(message)
     }
 }

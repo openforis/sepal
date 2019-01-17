@@ -2,7 +2,7 @@ package org.openforis.sepal.component.notification.api
 
 interface MessageRepository {
 
-    void saveMessage(Message message)
+    Message saveMessage(Message message)
 
     void removeMessage(String id)
 
