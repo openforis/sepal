@@ -7,7 +7,7 @@ from ..task.task import ThreadTask
 
 class BuildOverviews(ThreadTask):
     def __init__(self, files):
-        super(BuildOverviews, self).__init__()
+        super(BuildOverviews, self).__init__(retries=3)
         self.files = files
 
     def run(self):

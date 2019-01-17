@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class TableToDrive(ThreadTask):
     def __init__(self, credentials, table, description, folder, fileFormat='CSV'):
-        super(TableToDrive, self).__init__('EarthEngineTableToDrive')
+        super(TableToDrive, self).__init__('EarthEngineTableToDrive', retries=3)
         self.credentials, self.table, self.description, self.folder, self.fileFormat = (
             credentials, table, description, folder, fileFormat)
 

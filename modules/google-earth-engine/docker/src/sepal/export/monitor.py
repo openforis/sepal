@@ -18,7 +18,7 @@ class State(object):
 
 class MonitorEarthEngineExportTask(ThreadTask):
     def __init__(self, credentials, task_id, destination):
-        super(MonitorEarthEngineExportTask, self).__init__('MonitorEarthEngineTask')
+        super(MonitorEarthEngineExportTask, self).__init__('MonitorEarthEngineTask', retries=3)
         self.credentials = credentials
         self.task_id = task_id
         self.destination = destination

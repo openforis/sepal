@@ -8,7 +8,7 @@ from ..task.task import ThreadTask
 
 class SetBandNames(ThreadTask):
     def __init__(self, band_names, files):
-        super(SetBandNames, self).__init__()
+        super(SetBandNames, self).__init__(retries=3)
         self.band_names = band_names
         self.files = files
 

@@ -7,7 +7,7 @@ from ..task.task import ThreadTask
 
 class BuildVrt(ThreadTask):
     def __init__(self, output_file, files):
-        super(BuildVrt, self).__init__()
+        super(BuildVrt, self).__init__(retries=3)
         self.output_file = output_file
         self.files = files
 

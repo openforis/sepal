@@ -22,7 +22,7 @@ class ImageToDrive(ThreadTask):
             shardSize=256,
             fileDimensions=4096,
             skipEmptyTiles=None):
-        super(ImageToDrive, self).__init__()
+        super(ImageToDrive, self).__init__(retries=3)
         self.credentials, self.image, self.description, self.folder, self.scale, self.region, self.maxPixels, \
         self.shardSize, self.fileDimensions, self.skipEmptyTiles = (
             credentials, image, description, folder, scale, region, maxPixels, shardSize, fileDimensions, skipEmptyTiles
