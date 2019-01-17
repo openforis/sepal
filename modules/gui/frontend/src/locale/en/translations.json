@@ -423,6 +423,8 @@
                     }
                 },
                 "sceneSelection": {
+                    "availableScenes": "Available scenes",
+                    "selectedScenes": "Selected scenes",
                     "preview": {
                         "label": "Preview",
                         "dataSet": "Data set",

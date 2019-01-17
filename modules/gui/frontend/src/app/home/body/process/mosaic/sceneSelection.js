@@ -1,13 +1,14 @@
 import {Button} from '../../../../../widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {Field, form} from 'widget/form'
+import {Field, Label, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {dataSetById} from 'sources'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import Icon from 'widget/icon'
-import Panel, {PanelHeader} from 'widget/panel'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -61,13 +62,12 @@ class SceneSelection extends React.Component {
                         icon='cog'
                         title={msg('process.mosaic.panel.auto.form.selectScenes')}/>
 
-                    <div className={[styles.content, loading ? styles.loading : null].join(' ')}>
+                    {/* <PanelContent> */}
+                    <PanelContent className={loading ? styles.loading : null}>
                         {loading
-                            ?
-                            <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
+                            ? <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
                             : this.renderScenes()}
-                    </div>
-
+                    </PanelContent>
                     <PanelButtons/>
                 </Panel>
             </React.Fragment>
@@ -101,23 +101,31 @@ class SceneSelection extends React.Component {
                     recipeActions={this.recipeActions}/>
             )
         return (
-            <React.Fragment>
+            <div className={styles.scenes}>
                 <div className={styles.availableScenes}>
-                    <div className={styles.title}>Available scenes</div>
-                    <div className={[styles.scrollable, styles.grid].join(' ')}>
-                        {availableSceneComponents}
-                    </div>
+                    <ScrollableContainer>
+                        <Unscrollable className={styles.title}>
+                            <Label msg={msg('process.mosaic.panel.sceneSelection.availableScenes')}/>
+                        </Unscrollable>
+                        <Scrollable className={styles.grid}>
+                            {availableSceneComponents}
+                        </Scrollable>
+                    </ScrollableContainer>
                 </div>
                 <div className={styles.selectedScenes}>
-                    <div className={styles.title}>Selected scenes</div>
-                    <div className={[styles.scrollable, width > 250 ? styles.list : styles.grid].join(' ')}>
-                        {selectedSceneComponents}
-                    </div>
+                    <ScrollableContainer>
+                        <Unscrollable className={styles.title}>
+                            <Label msg={msg('process.mosaic.panel.sceneSelection.selectedScenes')}/>
+                        </Unscrollable>
+                        <Scrollable className={width > 250 ? styles.list : styles.grid}>
+                            {selectedSceneComponents}
+                        </Scrollable>
+                    </ScrollableContainer>
                     <ReactResizeDetector
                         handleWidth
                         onResize={width => this.widthUpdated(width)}/>
                 </div>
-            </React.Fragment>
+            </div>
         )
     }
 
