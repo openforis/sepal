@@ -17,6 +17,10 @@
     pointer-events: none;
 }
 
+.portalContainer {
+    pointer-events: all;
+}
+
 /* fixed menu */
 .container:not(.floatingMenu) {
     --menu-position: 0;

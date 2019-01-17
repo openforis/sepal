@@ -94,6 +94,7 @@ class Home extends React.Component {
                     <Body className={styles.body}/>
                     <Footer className={styles.footer} user={user}/>
                 </div>
+                <div id='portalContainer' className={styles.portalContainer}/>
             </div>
         )
     }

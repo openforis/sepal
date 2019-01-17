@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import ReactDOM from 'react-dom'
 
-const Portal = ({container = document.body, content, children}) =>
+const Portal = ({container = document.getElementById('portalContainer'), content, children}) =>
     ReactDOM.createPortal(content || children, container || null)
 
 Portal.propTypes = {
