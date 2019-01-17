@@ -30,9 +30,9 @@ subprojects {
   repositories {
     mavenLocal()
 
-    maven { url "http://www.openforis.org/nexus/content/groups/public/" }
     maven { url "http://jcenter.bintray.com/" }
     maven { url "http://repo.maven.apache.org/maven2" }
+    maven { url "http://www.openforis.org/nexus/content/groups/public/" }
   }
 
 
