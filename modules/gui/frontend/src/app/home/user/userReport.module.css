@@ -1,8 +1,23 @@
 .panel {
-    /* min-height: 15rem; */
-    /* max-height: 40rem; */
     max-width: 37rem;
     max-height: max-content;
+}
+
+button.budgetExceeded {
+    color: var(--error-color) !important;
+    animation: pulse 1250ms ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        opacity: .2;
+    }
 }
 
 .report {

@@ -18,8 +18,8 @@ const Section = ({path, captureMouseEvents = true, children}) =>
 
 Section.propTypes = {
     captureMouseEvents: PropTypes.any,
+    path: PropTypes.string,
     children: PropTypes.any,
-    path: PropTypes.string
 }
 
 export default Section

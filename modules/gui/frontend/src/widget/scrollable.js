@@ -38,7 +38,6 @@ export const Scrollable = ({className, direction = 'y', children}) => {
 }
 
 Scrollable.propTypes = {
-    children: PropTypes.any.isRequired,
     className: PropTypes.string,
     direction: PropTypes.oneOf(['x', 'y', 'xy'])
 }

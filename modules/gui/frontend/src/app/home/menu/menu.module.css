@@ -14,14 +14,23 @@
     min-height: fit-content;
 }
 
+.menu button:disabled:before{
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: hsla(0, 0%, 0%, .5);
+}
+
+
 .menu button {
     position: relative;
     width: var(--button-size);
     height: var(--button-size);
     border: none;
-    border-radius: .25rem;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
+    border-radius: 0 .25rem .25rem 0;
     margin-bottom: 1rem;
     padding: 0;
     color: rgba(255, 255, 255, 0.8);
@@ -36,7 +45,7 @@
     transition: opacity 150ms ease-in-out 200ms;
 }
 
-.menu button:hover {
+.menu button:hover:not(:disabled) {
     color: white;
     cursor: pointer;
     --opacity: 1;

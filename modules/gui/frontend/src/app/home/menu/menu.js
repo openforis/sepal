@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {connect} from 'store'
+import {connect, select} from 'store'
 import {isFloating} from './menuMode'
 import {isPathInLocation} from 'route'
 import {msg} from 'translate'
@@ -12,7 +12,8 @@ import styles from './menu.module.css'
 const mapStateToProps = (state = {}) => ({
     requestedApps: requestedApps(),
     floating: isFloating(),
-    hasActiveTasks: !!(state.tasks && state.tasks.find(task => ['PENDING', 'ACTIVE'].includes(task.status)))
+    hasActiveTasks: !!(state.tasks && state.tasks.find(task => ['PENDING', 'ACTIVE'].includes(task.status))),
+    budgetExceeded: select('user.budgetExceeded'),
 })
 
 class Menu extends React.Component {
@@ -21,15 +22,15 @@ class Menu extends React.Component {
     }
 
     render() {
-        const {className, floating, requestedApps, user, hasActiveTasks} = this.props
+        const {className, floating, requestedApps, user, hasActiveTasks, budgetExceeded} = this.props
         return (
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
                     <div className={styles.section}>
-                        <SectionLink name='process' icon='globe'/>
+                        <SectionLink name='process' icon='globe' disabled={budgetExceeded}/>
                         <SectionLink name='browse' icon='folder-open'/>
-                        <SectionLink name='terminal' icon='terminal'/>
-                        <SectionLink name='app-launch-pad' icon='wrench'/>
+                        <SectionLink name='terminal' icon='terminal' disabled={budgetExceeded}/>
+                        <SectionLink name='app-launch-pad' icon='wrench' disabled={budgetExceeded}/>
                         {requestedApps.map(this.appSection)}
                     </div>
                     <div className={styles.section}>
@@ -51,7 +52,7 @@ Menu.propTypes = {
 
 export default connect(mapStateToProps)(Menu)
 
-let SectionLink = ({active, name, icon}) => {
+let SectionLink = ({active, name, icon, disabled}) => {
     const link = '/' + name
     const activeClass = active ? styles.active : null
     return (
@@ -61,13 +62,15 @@ let SectionLink = ({active, name, icon}) => {
             link={link}
             tooltip={msg(`home.sections.${name}.tooltip`)}
             tooltipPlacement='right'
+            disabled={disabled}
         />
     )
 }
 
 SectionLink.propTypes = {
     icon: PropTypes.string,
-    name: PropTypes.string
+    name: PropTypes.string,
+    disabled: PropTypes.any
 }
 SectionLink = connect(
     (state, {name}) => ({

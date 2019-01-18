@@ -1,31 +1,30 @@
-import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {Button, ButtonGroup} from 'widget/button'
-import {Observable, Subject, forkJoin, timer} from 'rxjs'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'
-import {connect, select} from 'store'
-import {msg} from 'translate'
-import Icon from 'widget/icon'
+import actionBuilder, {dotSafe} from 'action-builder'
+import api from 'api'
 import Notifications from 'app/notifications'
+import format from 'format'
+import _ from 'lodash'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
-import actionBuilder, {dotSafe} from 'action-builder'
-import api from 'api'
-import format from 'format'
+import {forkJoin, Observable, Subject, timer} from 'rxjs'
+import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'
+import {connect, select} from 'store'
 import lookStyles from 'style/look.module.css'
+import {msg} from 'translate'
+import {Button, ButtonGroup} from 'widget/button'
+import Icon from 'widget/icon'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import styles from './browse.module.css'
 
 const TREE = 'files.tree'
+const SHOW_DOT_FILES = 'files.showDotFiles'
 const REFRESH_INTERVAL_MS = 1000
 const ANIMATION_DURATION_MS = 1000
 
-const tree = () =>
-    select(TREE) || {}
-
 const mapStateToProps = () => ({
-    tree: tree()
+    tree: select(TREE) || {},
+    showDotFiles: select(SHOW_DOT_FILES)
 })
 
 const pathSections = path =>
@@ -34,7 +33,7 @@ const pathSections = path =>
 const treePath = (path = '/') =>
     path !== '/'
         ? _.reduce(pathSections(path),
-            (treePath, pathElement) => treePath.concat(['files', pathElement]), []
+        (treePath, pathElement) => treePath.concat(['files', pathElement]), []
         ) : []
 
 class Browse extends React.Component {
@@ -144,7 +143,7 @@ class Browse extends React.Component {
             )
         )
     }
-    
+
     pruneRemovedNodes(actionBuilder, path) {
         _.forEach(this.getFiles(path), (file, name) => {
             const childPath = this.childPath(path, name)
@@ -307,15 +306,32 @@ class Browse extends React.Component {
         }
     }
 
+    showDotFiles(show) {
+        actionBuilder('SET_SHOW_DOT_FILES', {show})
+            .set(SHOW_DOT_FILES, show)
+            .dispatch()
+    }
+
     renderToolbar(selected, nothingSelected) {
         const oneFileSelected = selected.files === 1 && selected.directories === 0
         const selectedFiles = this.selectedItems().files
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
         const downloadUrl = selectedFile && api.files.downloadUrl(selectedFile)
         const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
+        const {showDotFiles} = this.props
+        let dotFilesTooltip = `browse.controls.${showDotFiles ? 'hideDotFiles' : 'showDotFiles'}.tooltip`
         return (
             <div className={styles.toolbar}>
                 <ButtonGroup>
+                    <Button
+                        chromeless
+                        size='large'
+                        shape='circle'
+                        icon={showDotFiles ? 'eye' : 'eye-slash'}
+                        tooltip={msg(dotFilesTooltip)}
+                        tooltipPlacement='bottom'
+                        onClick={() => this.showDotFiles(!showDotFiles)}
+                    />
                     <Button
                         chromeless
                         size='large'
@@ -453,11 +469,13 @@ class Browse extends React.Component {
     }
 
     renderListItems(path, files, depth) {
+        const {showDotFiles} = this.props
         return files ?
             _.chain(files)
                 .pickBy(file => file)
                 .toPairs()
                 .sortBy(0)
+                .filter(([fileName]) => showDotFiles || !fileName.startsWith('.'))
                 .map(([fileName, file]) => this.renderListItem(path, depth, fileName, file)).value()
             : null
     }
