@@ -34,16 +34,14 @@ const Footer = ({className}) => {
 }
 
 Footer.propTypes = {
-    className: PropTypes.string,
     user: PropTypes.object
 }
 
-const Logout = props =>
+const Logout = () =>
     <Button
         chromeless
         look='transparent'
         size='large'
-        additionalClassName={props.className}
         icon='sign-out-alt'
         onClick={logout}
         tooltip={msg('home.sections.logout.tooltip')}

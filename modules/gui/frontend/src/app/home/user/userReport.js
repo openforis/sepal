@@ -128,7 +128,7 @@ class Usage extends React.Component {
                 chromeless
                 look='transparent'
                 size='large'
-                additionalClassName={budgetExceeded && styles.budgetExceeded}
+                additionalClassName={budgetExceeded ? styles.budgetExceeded : null}
                 icon='dollar-sign'
                 label={label}
                 onClick={() => this.buttonHandler()}
