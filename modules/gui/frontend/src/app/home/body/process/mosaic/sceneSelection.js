@@ -209,6 +209,10 @@ const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeA
                         {daysFromTarget > 0 ? '+' : '-'}{Math.abs(daysFromTarget)}d
                     </div>
                 </div>
+                <div
+                    className={[styles.bar, daysFromTarget > 0 ? styles.positive : styles.negative].join(' ')}
+                    style={{'--days-from-target': `${Math.abs(daysFromTarget) / 3.65}%`}}>
+                </div>
             </div>
             {selected
                 ? <SelectedSceneOverlay scene={scene} onRemove={onRemove} recipeActions={recipeActions}/>

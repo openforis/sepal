@@ -47,11 +47,9 @@
 
 .grid {
     --thumbnail-size: 9rem;
-    --details-height: 3.5rem;
 
     display: grid;
     grid-template-columns: repeat(auto-fill, var(--thumbnail-size));
-    grid-template-rows: repeat(auto-fill, calc(var(--thumbnail-size) + var(--details-height)));
     grid-gap: 1rem;
     justify-content: center;
 }
@@ -75,7 +73,6 @@
 .details {
     font-size: .8rem;
     color: #ccc;
-    height: var(--details-height);
     background-color: hsl(37, 8%, 20%);
     padding: .25rem .5rem;
     border: 0 solid var(--wireframe-color);
@@ -93,22 +90,51 @@
     color: #ccc !important;
 }
 
-.details .dataSet {
-    grid-area: dataSet;
+
+.bar {
+    --axis-color: hsl(0, 0%, 40%);
+    --half-height: 5px;
+    position: relative;
+    width: 100%;
+    height: calc(2 * var(--half-height) + 1px);
+    margin: .25rem 0;
+    padding: var(--half-height) 0;
+    border-left: 1px solid var(--axis-color);
+    border-right: 1px solid var(--axis-color);
+    background-color: var(--axis-color);
+    background-clip: content-box;
 }
 
-.details .date {
-    grid-area: date;
+.bar:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 0;
+    margin: auto;
+    border-right: 1px solid var(--axis-color);
 }
 
-.details .daysFromTarget {
-    grid-area: daysFromTarget;
-    font-weight: bold;
-    color: var(--success-color);
+.bar:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-image: linear-gradient(to right, red, yellow, green, green, yellow, red);
+    background-clip: content-box;
+    padding: 3px 50%;
 }
 
-.details .cloudCover {
-    grid-area: cloudCover;
+.bar.positive:after {
+    padding-right: calc(50% - var(--days-from-target));
+}
+
+.bar.negative:after {
+    padding-left: var(--days-from-target);
 }
 
 .sceneOverlay {
@@ -146,8 +172,8 @@
 
 @media only screen and (min-width: 500px) {
     .selectedScenes .grid {
-        --thumbnail-size: 3.5rem;
-        --details-height: 3.5rem;
+        --thumbnail-size: 5rem;
+
         display: flex;
         flex-direction: column;
         justify-content: left;
