@@ -299,13 +299,14 @@ class Users extends React.Component {
     renderSearch() {
         return (
             <Button
+                additionalClassName={
+                    styles.search}
                 look='transparent'
                 size='large'
                 shape='pill'
                 disabled={true}>
                 <input
-                    className={styles.search}
-                    type='text'
+                    type='search'
                     ref={this.search}
                     value={this.state.filter}
                     placeholder={msg('users.filter.placeholder')}

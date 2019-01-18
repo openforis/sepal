@@ -9,7 +9,6 @@
 .pageControls {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
     justify-content: space-between;
 }
 
@@ -29,11 +28,19 @@
 }
 
 .search {
-    width: 8rem;
+    flex-grow: 1;
+    flex-shrink: 1;
+    max-width: 17rem;
+    margin-right: .5rem;
+}
+
+.search input {
+    width: 100%;
     border: none;
 }
 
 .pageNavigation {
+    flex-shrink: 0;
     justify-self: flex-end;
 }
 
