@@ -90,7 +90,10 @@
             "collapse.tooltip": "Collapse menu (floating)",
             "user": {
                 "profile.tooltip": "Manage user profile",
-                "report.tooltip": "Show user report",
+                "report": {
+                    "tooltip": "Show user report",
+                    "budgetExceeded": "Exceeded"
+                },
                 "messages.tooltip": "Show user messages"
             }
         }

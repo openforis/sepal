@@ -1,17 +1,17 @@
-import {EMPTY, interval, timer} from 'rxjs'
-import {connect} from 'store'
-import {currentUser, loadCurrentUser$} from 'user'
-import {delay, exhaustMap, map, switchMap} from 'rxjs/operators'
-import {isFloating} from './menu/menuMode'
-import Body from './body/body'
-import Footer from './footer/footer'
-import Map from './map/map'
-import Menu from './menu/menu'
-import PropTypes from 'prop-types'
-import React from 'react'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {EMPTY, interval, timer} from 'rxjs'
+import {delay, exhaustMap, map, switchMap} from 'rxjs/operators'
+import {connect} from 'store'
+import {currentUser, loadCurrentUser$} from 'user'
+import Body from './body/body'
+import Footer from './footer/footer'
 import styles from './home.module.css'
+import Map from './map/map'
+import Menu from './menu/menu'
+import {isFloating} from './menu/menuMode'
 
 const mapStateToProps = () => ({
     floatingMenu: isFloating(),
@@ -46,12 +46,26 @@ const timedRefresh$ = (api$, refreshSeconds = 60) =>
 
 const updateUserReport$ = () =>
     timedRefresh$(api.user.loadCurrentUserReport$, 10).pipe(
-        map(currentUserReport =>
-            actionBuilder('UPDATE_CURRENT_USER_REPORT')
-                .set('user.currentUserReport', currentUserReport)
-                .dispatch()
+        map(currentUserReport => {
+                return actionBuilder('UPDATE_CURRENT_USER_REPORT')
+                    .set('user.currentUserReport', currentUserReport)
+                    .set('user.budgetExceeded', isBudgetExceeded(currentUserReport))
+                    .dispatch()
+
+            }
         )
     )
+
+const isBudgetExceeded = currentUserReport => {
+    const {
+        monthlyInstanceBudget, monthlyInstanceSpending,
+        monthlyStorageBudget, monthlyStorageSpending,
+        storageQuota, storageUsed
+    } = currentUserReport.spending
+    return monthlyInstanceSpending > monthlyInstanceBudget
+        || monthlyStorageSpending > monthlyStorageBudget
+        || storageUsed > storageQuota
+}
 
 const updateUserMessages$ = () =>
     timedRefresh$(api.user.loadUserMessages$, 60).pipe(

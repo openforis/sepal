@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {connect} from 'store'
+import {connect, select} from 'store'
 import {msg} from 'translate'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
@@ -14,7 +14,8 @@ const mapStateToProps = state => {
     return {
         userReport: (state.user && state.user.currentUserReport) || {},
         panel: state.ui && state.ui.userBudget,
-        modal: state.ui && state.ui.modal
+        modal: state.ui && state.ui.modal,
+        budgetExceeded: select('user.budgetExceeded'),
     }
 }
 
@@ -115,18 +116,21 @@ class Usage extends React.Component {
     }
 
     renderButton() {
-        const {className, modal, userReport} = this.props
+        const {modal, userReport, budgetExceeded} = this.props
         const hourlySpending = userReport.sessions
             ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
             : 0
+        const label = budgetExceeded
+            ? msg('home.sections.user.report.budgetExceeded')
+            : format.unitsPerHour(hourlySpending)
         return (
             <Button
                 chromeless
                 look='transparent'
                 size='large'
-                additionalClassName={className}
+                additionalClassName={budgetExceeded && styles.budgetExceeded}
                 icon='dollar-sign'
-                label={format.unitsPerHour(hourlySpending)}
+                label={label}
                 onClick={() => this.buttonHandler()}
                 tooltip={msg('home.sections.user.report.tooltip')}
                 tooltipPlacement='top'
