@@ -58,7 +58,7 @@ class SceneSelection extends React.Component {
                     onApply={({selectedScenes}) => this.onApply(selectedScenes)}
                     onCancel={() => this.deselectSceneArea()}>
                     <PanelHeader
-                        icon='layer-group'
+                        icon='scenes'
                         title={msg('process.mosaic.panel.auto.form.selectScenes')}/>
 
                     <PanelContent className={loading ? styles.loading : null}>
