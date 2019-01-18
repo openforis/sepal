@@ -197,7 +197,7 @@ const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeA
                     </div>
                     <div className={styles.cloudCover}>
                         <Icon name='cloud'/>
-                        {format.integer(cloudCover)}
+                        {format.integer(cloudCover)}%
                     </div>
                 </div>
                 <div>
@@ -242,7 +242,7 @@ const AvailableSceneOverlay = ({scene, onAdd, recipeActions}) =>
     </div>
 
 const SelectedSceneOverlay = ({scene, onRemove, recipeActions}) =>
-    <div className={styles.overlayControls}>
+    <div className={styles.overlayControls }>
         <ButtonGroup>
             <Button
                 look='cancel'
