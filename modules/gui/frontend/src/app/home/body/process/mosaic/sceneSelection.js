@@ -243,7 +243,7 @@ const SelectedSceneOverlay = ({scene, onRemove, recipeActions}) =>
                 label={msg('button.remove')}
                 onClick={() => onRemove(scene)}/>
             <Button
-                look='transparent'
+                look='default'
                 icon='eye'
                 label={msg('process.mosaic.panel.sceneSelection.preview.label')}
                 onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
