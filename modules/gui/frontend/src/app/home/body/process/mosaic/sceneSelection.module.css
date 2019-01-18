@@ -22,15 +22,13 @@
     flex-direction: row;
 }
 
-.availableScenes, .selectedScenes {
-    position: relative;
-}
-
 .availableScenes {
+    position: relative;
     flex-grow: 1;
 }
 
 .selectedScenes {
+    position: relative;
     flex-grow: 1;
     min-width: 6rem;
     max-width: 16rem;
@@ -41,6 +39,7 @@
     .panel {
         --content-padding: 1.5rem .5rem;
     }
+
     .selectedScenes {
         margin-left: .5rem;
     }
@@ -124,10 +123,10 @@
     background: hsla(0, 0%, 0%, 0.7);
     padding: 1rem;
     opacity: 1;
-    transition: opacity var(--transition-time) ease-in-out var(--transition-delay);
 }
 
 .scene:not(:hover) .sceneOverlay {
+    transition: opacity var(--transition-time) ease-in-out var(--transition-delay);
     opacity: 0;
 }
 
