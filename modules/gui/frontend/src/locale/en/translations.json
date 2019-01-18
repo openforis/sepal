@@ -105,6 +105,8 @@
         "controls.clearSelection.tooltip": "Clear selection",
         "controls.remove.tooltip": "Remove selected items",
         "controls.download.tooltip": "Download selected item",
+        "controls.showDotFiles.tooltip": "Show files beginning with .",
+        "controls.hideDotFiles.tooltip": "Hide files beginning with .",
         "selected": "{directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}} selected",
         "info": {
             "directory": "{itemCount} {itemCount, plural, one {item} other {items}}",
