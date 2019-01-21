@@ -1,11 +1,12 @@
-import {Button} from 'widget/button'
-import {Content, SectionLayout} from 'widget/sectionLayout'
 import {appList, requestedApps, runApp$} from 'apps'
-import {connect, dispatch} from 'store'
-import {history} from 'route'
-import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {history} from 'route'
+import {connect, dispatch} from 'store'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import Icon from 'widget/icon'
+import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import styles from './appLaunchPad.module.css'
 
 const mapStateToProps = () => ({
@@ -26,6 +27,7 @@ class AppLaunchPad extends React.Component {
         const {apps} = this.props
         return (
             <SectionLayout>
+                <TopBar label={msg('home.sections.app-launch-pad')}/>
                 <Content edgePadding menuPadding>
                     <div className={styles.apps}>
                         {apps.map(app => <App key={app.path} app={app} onClick={this.runApp.bind(this)}/>)}

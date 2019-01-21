@@ -49,7 +49,7 @@ class UserProfile extends React.Component {
                 additionalClassName={className}
                 label={username}
                 onClick={() => this.buttonHandler()}
-                tooltip={msg('home.sections.user.profile.tooltip')}
+                tooltip={msg('home.sections.user.profile')}
                 tooltipPlacement='top'
                 tooltipDisabled={modal}/>
         )

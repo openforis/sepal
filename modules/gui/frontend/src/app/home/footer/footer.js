@@ -44,7 +44,7 @@ const Logout = () =>
         size='large'
         icon='sign-out-alt'
         onClick={logout}
-        tooltip={msg('home.sections.logout.tooltip')}
+        tooltip={msg('home.sections.logout')}
         tooltipPlacement='top'/>
 
 const Title = () => {

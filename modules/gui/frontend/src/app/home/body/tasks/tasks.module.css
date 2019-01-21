@@ -12,14 +12,11 @@
 }
 
 .tasks {
-    margin-top: 1rem;
     display: grid;
     grid-template-columns: repeat(auto-fill, 21rem);
     grid-template-rows: repeat(auto-fill, 18rem);
-    grid-row-gap: 2rem;
-    grid-column-gap: 2rem;
+    grid-gap: 2rem;
     justify-content: center;
-    padding: 2rem;
     overflow: auto;
 }
 

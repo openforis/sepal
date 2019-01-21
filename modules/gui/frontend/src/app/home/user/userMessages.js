@@ -133,7 +133,7 @@ class UserMessages extends React.Component {
                 additionalClassName={[className, unread ? styles.unread : null].join(' ')}
                 icon='bell'
                 onClick={() => this.buttonHandler()}
-                tooltip={msg('home.sections.user.messages.tooltip')}
+                tooltip={msg('home.sections.user.messages')}
                 tooltipPlacement='top'
                 tooltipDisabled={modal}/>
         )

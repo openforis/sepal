@@ -212,15 +212,13 @@ class RecipeList extends React.Component {
                 watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
                 limit={15}>
                 <SectionLayout>
-                    <Content edgePadding menuPadding>
-                        <ScrollableContainer className={styles.container}>
-
+                    <Content edgePadding menuPadding className={styles.container}>
+                        <ScrollableContainer>
                             <Unscrollable>
                                 <div className={styles.header}>
                                     {recipes && recipes.length ? this.renderSearch() : <div/>}
 
-                                    <div className={styles.createAndSort}>
-                                        <CreateRecipe recipeId={recipeId} recipeTypes={this.recipeTypes}/>
+                                    <div>
                                         <div className={styles.orderBy}>
                                             {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
                                             {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
@@ -231,6 +229,7 @@ class RecipeList extends React.Component {
                             </Unscrollable>
                             <Scrollable className={styles.recipes}>
                                 {this.renderRecipies()}
+                                <CreateRecipe recipeId={recipeId} recipeTypes={this.recipeTypes}/>
                             </Scrollable>
                         </ScrollableContainer>
                     </Content>

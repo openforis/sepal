@@ -4,19 +4,11 @@
 }
 
 .header {
-    --margin-top: 2rem;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-top: var(--margin-top);
     margin-bottom: 1rem;
-}
-
-@media only screen and (max-width: 500px) {
-    .header {
-        --margin-top: .5rem;
-    }
 }
 
 .recipes {

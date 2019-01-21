@@ -1,21 +1,21 @@
-import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {Button} from 'widget/button'
-import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {connect} from 'store'
-import {map, share, zip} from 'rxjs/operators'
-import {msg} from 'translate'
-import Highlight from 'react-highlighter'
-import Icon from 'widget/icon'
-import Notifications from 'app/notifications'
-import React from 'react'
-import UserDetails from './user'
-import _ from 'lodash'
 import api from 'api'
+import Notifications from 'app/notifications'
 import escapeStringRegexp from 'escape-string-regexp'
 import format from 'format'
-import lookStyles from 'style/look.module.css'
+import _ from 'lodash'
 import moment from 'moment'
+import React from 'react'
+import Highlight from 'react-highlighter'
+import {map, share, zip} from 'rxjs/operators'
+import {connect} from 'store'
+import lookStyles from 'style/look.module.css'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import Icon from 'widget/icon'
+import {Pageable, PageControls, PageData, PageInfo} from 'widget/pageable'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import UserDetails from './user'
 import styles from './users.module.css'
 
 const getUserList$ = () => api.user.getUserList$().pipe(
@@ -91,7 +91,7 @@ class Users extends React.Component {
             filter
         }))
     }
- 
+
     getFilteredUsers() {
         const searchProperties = ['name', 'username', 'email', 'organization']
         if (this.state.filter) {
@@ -151,7 +151,7 @@ class Users extends React.Component {
     }
 
     updateUser(userDetails) {
-        
+
         const update$ = userDetails =>
             updateUserDetails$(userDetails).pipe(
                 zip(updateUserBudget$(userDetails)),
@@ -169,11 +169,16 @@ class Users extends React.Component {
                 : api.user.updateUser$({username, name, email, organization})
 
         const updateUserBudget$ = ({
+                                       username,
+                                       monthlyBudgetInstanceSpending: instanceSpending,
+                                       monthlyBudgetStorageSpending: storageSpending,
+                                       monthlyBudgetStorageQuota: storageQuota
+                                   }) => api.user.updateUserBudget$({
             username,
-            monthlyBudgetInstanceSpending: instanceSpending,
-            monthlyBudgetStorageSpending: storageSpending,
-            monthlyBudgetStorageQuota: storageQuota
-        }) => api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
+            instanceSpending,
+            storageSpending,
+            storageQuota
+        })
 
         const updateLocalState = userDetails =>
             this.setState(prevState => {
@@ -298,44 +303,35 @@ class Users extends React.Component {
 
     renderSearch() {
         return (
-            <Button
-                additionalClassName={styles.search}
-                look='transparent'
-                size='large'
-                shape='pill'
-                disabled={true}>
-                <input
-                    type='search'
-                    ref={this.search}
-                    value={this.state.filter}
-                    placeholder={msg('users.filter.placeholder')}
-                    onChange={e => this.setFilter(e.target.value)}/>
-            </Button>
-        )
-    }
+            <div className={styles.searchControls}>
+                <Button
+                    additionalClassName={styles.search}
+                    look='transparent'
+                    size='large'
+                    shape='pill'
+                    disabled={true}>
+                    <input
+                        type='search'
+                        ref={this.search}
+                        value={this.state.filter}
+                        placeholder={msg('users.filter.placeholder')}
+                        onChange={e => this.setFilter(e.target.value)}/>
+                </Button>
 
-    renderControls() {
-        return (
-            <div className={styles.pageControls}>
-                {this.renderSearch()}
-                <div className={styles.pageNavigation}>
-                    <PageControls/>
-                </div>
+                {this.renderInfo()}
             </div>
         )
     }
 
     renderInviteUser() {
         return (
-            <div className={styles.inviteUser}>
-                <Button
-                    look='add'
-                    size='large'
-                    shape='pill'
-                    icon='plus'
-                    label={msg('users.invite.label')}
-                    onClick={() => this.inviteUser()}/>
-            </div>
+            <Button
+                additionalClassName={styles.inviteUser}
+                look='add'
+                size='xx-large'
+                shape='circle'
+                icon='plus'
+                onClick={() => this.inviteUser()}/>
         )
     }
 
@@ -388,13 +384,11 @@ class Users extends React.Component {
                         watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
                         limit={15}>
                         <SectionLayout>
-                            <TopBar>
-                                {this.renderControls()}
-                            </TopBar>
+                            <TopBar label={msg('home.sections.users')}/>
                             <Content edgePadding menuPadding>
                                 <ScrollableContainer>
                                     <Unscrollable>
-                                        {this.renderInviteUser()}
+                                        {this.renderSearch()}
                                     </Unscrollable>
                                     <Scrollable direction='x'>
                                         <ScrollableContainer className={styles.content}>
@@ -407,9 +401,11 @@ class Users extends React.Component {
                                         </ScrollableContainer>
                                     </Scrollable>
                                 </ScrollableContainer>
+
+                                {this.renderInviteUser()}
                             </Content>
-                            <BottomBar>
-                                {this.renderInfo()}
+                            <BottomBar className={styles.bottomBar}>
+                                <PageControls/>
                             </BottomBar>
                         </SectionLayout>
                     </Pageable>
@@ -438,23 +434,6 @@ class User extends React.Component {
             onClick
         } = this.props
         return (
-            // <Button
-            //     chromeless
-            //     look='transparent'
-            //     // size='large'
-            //     onClick={() => status ? onClick() : null}>
-            //     <div className={styles.grid}>
-            //         <div><Highlight search={highlight} matchClass={styles.highlight}>{name}</Highlight></div>
-            //         <div>{msg(`user.userDetails.form.status.${status}`) || <Icon name='spinner'/>}</div>
-            //         <div>{moment(updateTime).fromNow()}</div>
-            //         <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
-            //         <div className={styles.number}>{format.dollars(current.instanceSpending)}</div>
-            //         <div className={styles.number}>{format.dollars(budget.storageSpending)}</div>
-            //         <div className={styles.number}>{format.dollars(current.storageSpoending)}</div>
-            //         <div className={styles.number}>{format.fileSize(budget.storageQuota, {scale: 'G'})}</div>
-            //         <div className={styles.number}>{format.fileSize(current.storageQuota, {scale: 'G'})}</div>
-            //     </div>
-            // </Button>
             <div
                 className={[
                     lookStyles.look,

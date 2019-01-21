@@ -90,7 +90,7 @@ class Tasks extends React.Component {
     render() {
         return (
             <SectionLayout>
-                <TopBar>
+                <TopBar label={msg('home.sections.tasks')}>
                     {this.renderToolbar()}
                 </TopBar>
                 <Content edgePadding menuPadding>

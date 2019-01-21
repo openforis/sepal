@@ -13,25 +13,32 @@
 }
 
 .inviteUser {
-    --margin-top: 2rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    margin-top: var(--margin-top);
-    margin-bottom: 1rem;
+    --right: 2.5rem;
+    --bottom: 5rem;
+    position: absolute;
+    right: var(--right);
+    bottom: var(--bottom);
+    box-shadow: .1rem .1rem 2rem .2rem hsla(0, 0%, 5%, .6);
+    z-index: 1;
 }
 
 @media only screen and (max-width: 500px) {
     .inviteUser {
-        --margin-top: .5rem;
+        --right: 1rem;
+        --bottom: 3.5rem;
     }
+}
+
+.searchControls {
+    display:flex;
+    flex-wrap: nowrap;
 }
 
 .search {
     flex-grow: 1;
     flex-shrink: 1;
     max-width: 17rem;
-    margin-right: .5rem;
+    margin-right: 2rem;
 }
 
 .search input {
@@ -46,8 +53,11 @@
 
 .pageInfo {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-around;
+    color: gray;
+    font-size: small;
+    margin-right: 1rem;
 }
 
 .grid {
@@ -158,4 +168,8 @@
 
 .sortingHandle {
     margin-left: .5rem;
+}
+
+.bottomBar {
+    justify-content: center;
 }

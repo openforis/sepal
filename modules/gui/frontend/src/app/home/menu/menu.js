@@ -60,7 +60,7 @@ let SectionLink = ({active, name, icon, disabled}) => {
             className={[styles[name], activeClass].join(' ')}
             icon={icon}
             link={link}
-            tooltip={msg(`home.sections.${name}.tooltip`)}
+            tooltip={msg(`home.sections.${name}`)}
             tooltipPlacement='right'
             disabled={disabled}
         />

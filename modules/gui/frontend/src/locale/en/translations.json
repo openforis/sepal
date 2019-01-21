@@ -77,24 +77,24 @@
     },
     "home": {
         "sections": {
-            "dashboard.tooltip": "TBD",
-            "process.tooltip": "Process geo data",
-            "browse.tooltip": "Browse your files",
-            "terminal.tooltip": "Terminal",
-            "app-launch-pad.tooltip": "Launch custom apps",
-            "tasks.tooltip": "Manage your background tasks",
-            "users.tooltip": "Manage Sepal users",
-            "account.tooltip": "Modify your account settings",
-            "logout.tooltip": "Logout from Sepal",
-            "expand.tooltip": "Expand menu (fixed)",
-            "collapse.tooltip": "Collapse menu (floating)",
+            "dashboard": "TBD",
+            "process": "Process geo data",
+            "browse": "User files",
+            "terminal": "Terminal",
+            "app-launch-pad": "Custom apps",
+            "tasks": "Background tasks",
+            "users": "Sepal users",
+            "account": "Account settings",
+            "logout": "Logout from Sepal",
+            "expand": "Expand menu (fixed)",
+            "collapse": "Collapse menu (floating)",
             "user": {
-                "profile.tooltip": "Manage user profile",
+                "profile": "Manage user profile",
                 "report": {
                     "tooltip": "Show user report",
                     "budgetExceeded": "Exceeded"
                 },
-                "messages.tooltip": "Show user messages"
+                "messages": "Show user messages"
             }
         }
     },

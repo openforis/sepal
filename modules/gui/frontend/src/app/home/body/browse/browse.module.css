@@ -13,11 +13,10 @@
 }
 
 .info {
-    text-align: center;
+    justify-content: center;
 }
 
 .fileList {
-    margin-top: 1rem;
     overflow-x: auto;
     line-height: 2rem;
 }

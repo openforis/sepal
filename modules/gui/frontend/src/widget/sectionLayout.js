@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {Label} from 'widget/form'
 import flexy from './flexy.module.css'
 import styles from './sectionLayout.module.css'
 
@@ -16,25 +17,28 @@ SectionLayout.propTypes = {
     className: PropTypes.string
 }
 
-export const TopBar = ({padding = true, className, children}) => {
+export const TopBar = ({padding = true, className, label, children}) => {
     return (
         <div className={[className, flexy.rigid, styles.bar, styles.top, padding ? styles.padding : null].join(' ')}>
+            {label ? <div className={styles.label}>{label}</div> : null}
+            {/*<Label msg={label}/>*/}
             {children}
         </div>
     )
 }
 
 TopBar.propTypes = {
-    children: PropTypes.any.isRequired,
+    children: PropTypes.any,
     padding: PropTypes.any
 }
 
-export const Content = ({menuPadding = false, appMenuPadding = false, edgePadding = false, children}) => {
+export const Content = ({menuPadding = false, appMenuPadding = false, edgePadding = false, className, children}) => {
     return (
         <div className={[flexy.elastic, styles.content,
             edgePadding ? styles.edgePadding : null,
             menuPadding ? styles.menuPadding : null,
             appMenuPadding ? styles.appMenuPadding : null,
+            className
         ].join(' ')}>
             {children}
         </div>
@@ -58,7 +62,7 @@ export const BottomBar = ({padding = true, className, children}) => {
 }
 
 BottomBar.propTypes = {
-    children: PropTypes.any.isRequired,
+    children: PropTypes.any,
     padding: PropTypes.any,
     className: PropTypes.string
 }
