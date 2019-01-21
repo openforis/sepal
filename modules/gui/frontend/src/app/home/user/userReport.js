@@ -150,7 +150,7 @@ class Usage extends React.Component {
     }
 }
 
-const PercentCell = ({used, budget, children}) => {
+const PercentCell = ({used, budget}) => {
     const ratio = used / budget
     let level = 'high'
     if (ratio < 0.75)

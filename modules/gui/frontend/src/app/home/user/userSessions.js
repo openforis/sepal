@@ -1,10 +1,10 @@
-import format from 'format'
-import moment from 'moment'
-import React from 'react'
 import {connect} from 'store'
-import lookStyles from 'style/look.module.css'
 import {msg} from 'translate'
+import React from 'react'
 import UserSession from './userSession'
+import format from 'format'
+import lookStyles from 'style/look.module.css'
+import moment from 'moment'
 import styles from './userSessions.module.css'
 
 const mapStateToProps = state => {

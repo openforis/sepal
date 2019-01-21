@@ -1,13 +1,13 @@
-import Notifications from 'app/notifications'
-import moment from 'moment'
+import {Field, form} from 'widget/form'
 import {PropTypes} from 'prop-types'
-import React from 'react'
 import {msg} from 'translate'
 import {stopUserSession$, updateUserSession$} from 'user'
-import {Field, form} from 'widget/form'
+import Notifications from 'app/notifications'
 import Panel, {PanelContent} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
+import React from 'react'
 import Slider from 'widget/slider'
+import moment from 'moment'
 import styles from './userSession.module.css'
 
 const fields = {

@@ -1,21 +1,21 @@
-import api from 'api'
+import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {Button} from 'widget/button'
+import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {connect} from 'store'
+import {map, share, zip} from 'rxjs/operators'
+import {msg} from 'translate'
+import Highlight from 'react-highlighter'
+import Icon from 'widget/icon'
 import Notifications from 'app/notifications'
+import React from 'react'
+import UserDetails from './user'
+import _ from 'lodash'
+import api from 'api'
 import escapeStringRegexp from 'escape-string-regexp'
 import format from 'format'
-import _ from 'lodash'
-import moment from 'moment'
-import React from 'react'
-import Highlight from 'react-highlighter'
-import {map, share, zip} from 'rxjs/operators'
-import {connect} from 'store'
 import lookStyles from 'style/look.module.css'
-import {msg} from 'translate'
-import {Button} from 'widget/button'
-import Icon from 'widget/icon'
-import {Pageable, PageControls, PageData, PageInfo} from 'widget/pageable'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import UserDetails from './user'
+import moment from 'moment'
 import styles from './users.module.css'
 
 const getUserList$ = () => api.user.getUserList$().pipe(
@@ -169,11 +169,11 @@ class Users extends React.Component {
                 : api.user.updateUser$({username, name, email, organization})
 
         const updateUserBudget$ = ({
-                                       username,
-                                       monthlyBudgetInstanceSpending: instanceSpending,
-                                       monthlyBudgetStorageSpending: storageSpending,
-                                       monthlyBudgetStorageQuota: storageQuota
-                                   }) => api.user.updateUserBudget$({
+            username,
+            monthlyBudgetInstanceSpending: instanceSpending,
+            monthlyBudgetStorageSpending: storageSpending,
+            monthlyBudgetStorageQuota: storageQuota
+        }) => api.user.updateUserBudget$({
             username,
             instanceSpending,
             storageSpending,

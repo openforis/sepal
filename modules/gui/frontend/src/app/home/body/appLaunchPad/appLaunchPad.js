@@ -1,12 +1,12 @@
+import {Button} from 'widget/button'
+import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {appList, requestedApps, runApp$} from 'apps'
+import {connect, dispatch} from 'store'
+import {history} from 'route'
+import {msg} from 'translate'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {history} from 'route'
-import {connect, dispatch} from 'store'
-import {msg} from 'translate'
-import {Button} from 'widget/button'
-import Icon from 'widget/icon'
-import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import styles from './appLaunchPad.module.css'
 
 const mapStateToProps = () => ({

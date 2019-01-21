@@ -5,10 +5,10 @@ import {isPathInLocation} from 'route'
 import {msg} from 'translate'
 import {quitApp, requestedApps} from 'apps'
 import Icon from 'widget/icon'
+import MenuMode from './menuMode'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './menu.module.css'
-import MenuMode from './menuMode'
 
 const mapStateToProps = (state = {}) => ({
     requestedApps: requestedApps(),
@@ -70,9 +70,9 @@ let SectionLink = ({active, name, icon, disabled}) => {
 }
 
 SectionLink.propTypes = {
+    disabled: PropTypes.any,
     icon: PropTypes.string,
-    name: PropTypes.string,
-    disabled: PropTypes.any
+    name: PropTypes.string
 }
 SectionLink = connect(
     (state, {name}) => ({

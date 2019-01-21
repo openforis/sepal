@@ -1,9 +1,9 @@
+import {Button, ButtonGroup} from 'widget/button'
+import {PanelContext} from './panel'
+import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg} from 'translate'
-import {Button, ButtonGroup} from 'widget/button'
 import styles from 'widget/panelButtons.module.css'
-import {PanelContext} from './panel'
 
 export default class PanelButtons extends React.Component {
     renderAdditionalButtons() {

@@ -1,11 +1,11 @@
 import './gateone'
 import './gateone.css'
+import {Content, SectionLayout} from 'widget/sectionLayout'
 import {connect} from 'store'
 import {currentUser} from 'user'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
-import {Content, SectionLayout} from 'widget/sectionLayout'
 
 let terminalId = null
 

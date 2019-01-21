@@ -1,20 +1,20 @@
-import actionBuilder, {dotSafe} from 'action-builder'
-import api from 'api'
+import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {Button, ButtonGroup} from 'widget/button'
+import {Observable, Subject, forkJoin, timer} from 'rxjs'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import Icon from 'widget/icon'
 import Notifications from 'app/notifications'
-import format from 'format'
-import _ from 'lodash'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {forkJoin, Observable, Subject, timer} from 'rxjs'
-import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'
-import {connect, select} from 'store'
+import _ from 'lodash'
+import actionBuilder, {dotSafe} from 'action-builder'
+import api from 'api'
+import format from 'format'
 import lookStyles from 'style/look.module.css'
-import {msg} from 'translate'
-import {Button, ButtonGroup} from 'widget/button'
-import Icon from 'widget/icon'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import styles from './browse.module.css'
 
 const TREE = 'files.tree'
@@ -33,7 +33,7 @@ const pathSections = path =>
 const treePath = (path = '/') =>
     path !== '/'
         ? _.reduce(pathSections(path),
-        (treePath, pathElement) => treePath.concat(['files', pathElement]), []
+            (treePath, pathElement) => treePath.concat(['files', pathElement]), []
         ) : []
 
 class Browse extends React.Component {

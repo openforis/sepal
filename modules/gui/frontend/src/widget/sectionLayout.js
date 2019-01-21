@@ -62,6 +62,6 @@ export const BottomBar = ({padding = true, className, children}) => {
 
 BottomBar.propTypes = {
     children: PropTypes.any,
-    padding: PropTypes.any,
-    className: PropTypes.string
+    className: PropTypes.string,
+    padding: PropTypes.any
 }

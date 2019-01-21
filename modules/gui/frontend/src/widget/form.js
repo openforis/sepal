@@ -518,7 +518,6 @@ export class Input extends React.Component {
 
 Input.propTypes = {
     input: PropTypes.object.isRequired,
-    type: PropTypes.string,
     autoCapitalize: PropTypes.any,
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,
@@ -533,6 +532,7 @@ Input.propTypes = {
     textArea: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
+    type: PropTypes.string,
     validate: PropTypes.oneOf(['onChange', 'onBlur']),
     onBlur: PropTypes.func,
     onChange: PropTypes.func
