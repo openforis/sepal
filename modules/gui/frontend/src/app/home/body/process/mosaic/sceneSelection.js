@@ -193,7 +193,7 @@ const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeA
     return (
         <HoverProvider className={[styles.scene, className].join(' ')}>
             <div className={styles.thumbnail} style={{'backgroundImage': `url("${thumbnailUrl}")`}}>
-                {thumbnailUrl !== browseUrl ? <img src={browseUrl}/> : null}
+                {thumbnailUrl !== browseUrl ? <img src={browseUrl} alt={scene.id}/> : null}
             </div>
             <div className={styles.details}>
                 <div>

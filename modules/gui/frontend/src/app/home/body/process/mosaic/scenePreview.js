@@ -37,8 +37,8 @@ class ScenePreview extends React.Component {
             return (
                 <Portal>
                     <Panel
+                        statePath='scenePreview'
                         className={styles.panel}
-                        statePath='userReport'
                         center
                         modal
                         onCancel={() => this.closePreview()}>
@@ -51,7 +51,7 @@ class ScenePreview extends React.Component {
                                 <div
                                     className={styles.thumbnail}
                                     style={{'backgroundImage': `url(${browseUrl})`}}>
-                                    <img src={browseUrl}/>
+                                    <img src={browseUrl} alt={id}/>
                                 </div>
                             </Hammer>
                             <div className={styles.details}>
