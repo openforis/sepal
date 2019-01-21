@@ -181,13 +181,16 @@ Panel.propTypes = {
     onCancel: PropTypes.func,
 }
 
-export const PanelHeader = ({icon, title, children}) =>
+export const PanelHeader = ({icon, title, label, children}) =>
     <div className={styles.header}>
         {children
             ? children
             : <React.Fragment>
-                <Icon name={icon}/>
-                {title}
+                <div>
+                    <Icon name={icon}/>
+                    {title}
+                </div>
+                {label ? <div>{label}</div> : null}
             </React.Fragment>
         }
     </div>
@@ -195,7 +198,8 @@ export const PanelHeader = ({icon, title, children}) =>
 PanelHeader.propTypes = {
     children: PropTypes.any,
     icon: PropTypes.string,
-    title: PropTypes.string,
+    label: PropTypes.string,
+    title: PropTypes.string
 }
 
 export const PanelContent = ({className, children}) =>

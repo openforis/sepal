@@ -43,13 +43,22 @@
     bottom: .5rem;
     left: calc(var(--menu-clearance) + .5rem);
     right: .5rem;
-    width: auto;
     margin: auto;
 }
 
 .modal .panel.center {
-    left: .5rem;
-    bottom: calc(var(--footer-height) + .5rem);
+    --top-clearance: .5rem;
+    --bottom-clearance: calc(var(--footer-height) + .5rem);
+    --left-clearance: .5rem;
+    --right-clearance: .5rem;
+    --vertical-clearance: calc(var(--top-clearance) + var(--bottom-clearance));
+    --horizontal-clearance: calc(var(--left-clearance) + var(--right-clearance));
+    left: var(--left-clearance);
+    right: var(--right-clearance);
+    top: var(--top-clearance);
+    bottom: var(--bottom-clearance);
+    max-height: calc(100vh - var(--vertical-clearance));
+    max-width: calc(100vw - var(--horizontal-clearance));
 }
 
 .panel.inline {
@@ -71,15 +80,18 @@
 
 .header {
     flex-grow: 0;
+    flex-shrink: 0;
     font-size: .9rem;
     font-family: var(--header-font-family);
     text-transform: uppercase;
     color: var(--header-color);
     padding: var(--header-padding);
     border-bottom: var(--wireframe);
+    display: flex;
+    justify-content: space-between;
 }
 
-.header > *:first-child {
+.header > div > *:first-child {
     margin-right: .5rem;
 }
 
