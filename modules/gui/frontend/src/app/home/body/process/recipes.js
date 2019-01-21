@@ -1,19 +1,23 @@
-import {Button, ButtonGroup} from 'widget/button'
-import {CenteredProgress} from 'widget/progress'
-import {Content, SectionLayout} from 'widget/sectionLayout'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {connect, select} from 'store'
-import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
-import {map} from 'rxjs/operators'
-import {msg} from 'translate'
-import {recipePath} from 'app/home/body/process/recipe'
-import CreateRecipe from './createRecipe'
-import CreateRecipeRLCMS from './createRecipeRLCMS'
-import PropTypes from 'prop-types'
-import React from 'react'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import {recipePath} from 'app/home/body/process/recipe'
+import escapeStringRegexp from 'escape-string-regexp'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {map} from 'rxjs/operators'
+import {connect, select} from 'store'
 import lookStyles from 'style/look.module.css'
+import {msg} from 'translate'
+import {Button, ButtonGroup} from 'widget/button'
+import Icon from 'widget/icon'
+import {Pageable, PageControls, PageData} from 'widget/pageable'
+import {CenteredProgress} from 'widget/progress'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
+import CreateRecipe from './createRecipe'
+import CreateRecipeRLCMS from './createRecipeRLCMS'
+import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
 import styles from './recipes.module.css'
 
 const mapStateToProps = () => {
@@ -24,6 +28,12 @@ const mapStateToProps = () => {
 }
 
 class RecipeList extends React.Component {
+    state = {
+        sortingOrder: 'updateTime',
+        sortingDirection: -1,
+        filter: ''
+    }
+
     recipeTypes = [{
         type: 'MOSAIC',
         name: msg('process.mosaic.create'),
@@ -85,6 +95,47 @@ class RecipeList extends React.Component {
         )
     }
 
+    setSorting(sortingOrder) {
+        this.setState(prevState => {
+            const sortingDirection = sortingOrder === prevState.sortingOrder ? -prevState.sortingDirection : 1
+            return {
+                ...prevState,
+                sortingOrder,
+                sortingDirection,
+                recipes: this.getSortedRecipes(this.props.recipes, sortingOrder, sortingDirection)
+            }
+        })
+    }
+
+    getSortedRecipes() {
+        const {sortingOrder, sortingDirection} = this.state
+        return _.orderBy(this.getFilteredRecipes(), recipe => {
+            const item = _.get(recipe, sortingOrder)
+            return _.isString(item) ? item.toUpperCase() : item
+        }, sortingDirection === 1 ? 'asc' : 'desc')
+    }
+
+    setFilter(filter) {
+        this.setState(prevState => ({
+            ...prevState,
+            filter
+        }))
+    }
+
+    getFilteredRecipes() {
+        const {recipes} = this.props
+        const searchProperties = ['name']
+        if (this.state.filter) {
+            const filter = RegExp(escapeStringRegexp(this.state.filter), 'i')
+            return recipes.filter(recipe =>
+                _.find(searchProperties, searchProperty =>
+                    filter.test(recipe[searchProperty])
+                )
+            )
+        } else
+            return recipes || [] // TODO: Implement filter
+    }
+
     renderProgress() {
         return <CenteredProgress title={msg('process.recipe.loading')}/>
     }
@@ -124,37 +175,104 @@ class RecipeList extends React.Component {
         return !recipes && !action('LOAD_RECIPES').dispatched
             ? this.renderProgress()
             : (
-                <React.Fragment>
-                    {(recipes || []).map(recipe => this.renderRecipe(recipe))}
-                </React.Fragment>
+
+                <PageData>
+                    {recipe => this.renderRecipe(recipe)}
+                </PageData>
             )
     }
 
-    renderTitle() {
-        const {recipes} = this.props
-        return recipes && recipes.length
-            ? <div>{msg('process.menu.savedRecipies', {count: recipes.length})}</div>
-            : <div>{msg('process.menu.noSavedRecipies')}</div>
+    renderSearch() {
+        return (
+            <Button
+                additionalClassName={styles.search}
+                look='transparent'
+                size='large'
+                shape='pill'
+                disabled={true}>
+                <input
+                    type='search'
+                    ref={this.search}
+                    value={this.state.filter}
+                    placeholder={msg('process.menu.searchRecipes')}
+                    onChange={e => this.setFilter(e.target.value)}
+                />
+            </Button>
+        )
     }
 
     render() {
-        const {recipeId} = this.props
+        const {recipeId, recipes} = this.props
         return (
-            <SectionLayout>
-                <Content edgePadding menuPadding>
-                    <ScrollableContainer className={styles.container}>
-                        <Unscrollable className={styles.header}>
-                            {this.renderTitle()}
-                            <CreateRecipe recipeId={recipeId} recipeTypes={this.recipeTypes}/>
-                        </Unscrollable>
-                        <Scrollable>
-                            {this.renderRecipies()}
-                        </Scrollable>
-                    </ScrollableContainer>
-                </Content>
-            </SectionLayout>
+
+            <Pageable
+                items={this.getSortedRecipes()}
+                watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
+                limit={15}>
+                <SectionLayout>
+                    <Content edgePadding menuPadding>
+                        <ScrollableContainer className={styles.container}>
+
+                            <Unscrollable>
+                                <div className={styles.header}>
+                                    {recipes && recipes.length ? this.renderSearch() : <div/>}
+
+                                    <div className={styles.createAndSort}>
+                                        <CreateRecipe recipeId={recipeId} recipeTypes={this.recipeTypes}/>
+                                        <div className={styles.orderBy}>
+                                            {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
+                                            {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </Unscrollable>
+                            <Scrollable className={styles.recipes}>
+                                {this.renderRecipies()}
+                            </Scrollable>
+                        </ScrollableContainer>
+                    </Content>
+                    <BottomBar className={styles.bottomBar}>
+                        {recipes && recipes.length
+                            ? <PageControls/>
+                            : <div>{msg('process.menu.noSavedRecipies')}</div>
+                        }
+                    </BottomBar>
+                </SectionLayout>
+            </Pageable>
         )
     }
+
+
+    renderSortButton(column, label, classNames = []) {
+        const {sortingOrder} = this.state
+        return (
+            <div className={classNames.join(' ')}>
+                <Button
+                    chromeless
+                    shape='none'
+                    additionalClassName='itemType'
+                    onClick={() => this.setSorting(column)}>
+                    <span className={sortingOrder === column ? styles.sorted : null}>
+                        {label}
+                    </span>
+                    <span className={styles.sortingHandle}>
+                        {this.renderSortingHandle(column)}
+                    </span>
+
+                </Button>
+            </div>
+        )
+    }
+
+    renderSortingHandle(column) {
+        return this.state.sortingOrder === column
+            ? this.state.sortingDirection === 1
+                ? <Icon name={'sort-down'}/>
+                : <Icon name={'sort-up'}/>
+            : <Icon name={'sort'}/>
+    }
+
 }
 
 export default connect(mapStateToProps)(RecipeList)

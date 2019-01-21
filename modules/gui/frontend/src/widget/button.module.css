@@ -3,8 +3,10 @@
     --normal-font-size: .9rem;
     --large-font-size: 1.0rem;
     --x-large-font-size: 1.1rem;
+    --xx-large-font-size: 1.4rem;
     --ratio: 2.2;
 
+    flex-shrink: 0;
     position: relative;
     cursor: pointer;
     transition: all 100ms ease-in-out;
@@ -46,6 +48,10 @@
 
 .button.x-large {
     --font-size: var(--x-large-font-size);
+}
+
+.button.xx-large {
+    --font-size: var(--xx-large-font-size);
 }
 
 /* shapes */

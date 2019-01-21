@@ -34,3 +34,20 @@
     font-size: .7rem;
     color: var(--warning-color);
 }
+
+.bottomRight button {
+    --right: 2.5rem;
+    --bottom: 5rem;
+    position: absolute;
+    right: var(--right);
+    bottom: var(--bottom);
+    box-shadow: .1rem .1rem 2rem .2rem hsla(0, 0%, 5%, .6);
+    z-index: 1;
+}
+
+@media only screen and (max-width: 500px) {
+    .bottomRight button {
+        --right: 1rem;
+        --bottom: 3.5rem;
+    }
+}

@@ -8,6 +8,7 @@
     display: flex;
     justify-content: space-between;
     pointer-events: all;
+    width: 100%;
 }
 
 .tabs {

@@ -429,7 +429,7 @@ export class Input extends React.Component {
     }
 
     renderInput() {
-        const {className, input, validate = 'onBlur', tabIndex,
+        const {className, input, type = 'text', validate = 'onBlur', tabIndex,
             autoFocus = false, autoComplete = false, autoCorrect = false, autoCapitalize = false, spellCheck = false,
             onChange, onBlur, ...props} = this.props
         const extraProps = _.omit(props, ['errorMessage'])
@@ -437,6 +437,7 @@ export class Input extends React.Component {
             <input
                 ref={this.element}
                 className={[input.validationFailed ? styles.error : null, className].join(' ')}
+                type={type}
                 name={input.name}
                 value={typeof input.value === 'number' || typeof input.value === 'boolean' || input.value ? input.value : ''}
                 tabIndex={tabIndex}
@@ -517,6 +518,7 @@ export class Input extends React.Component {
 
 Input.propTypes = {
     input: PropTypes.object.isRequired,
+    type: PropTypes.string,
     autoCapitalize: PropTypes.any,
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,

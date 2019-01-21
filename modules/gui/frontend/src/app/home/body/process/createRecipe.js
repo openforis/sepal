@@ -1,13 +1,13 @@
-import {Button} from 'widget/button'
+import actionBuilder from 'action-builder'
+import moment from 'moment'
+import PropTypes from 'prop-types'
+import React from 'react'
 import {connect} from 'store'
+import lookStyles from 'style/look.module.css'
+import {Button} from 'widget/button'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
-import PropTypes from 'prop-types'
-import React from 'react'
-import actionBuilder from 'action-builder'
-import lookStyles from 'style/look.module.css'
-import moment from 'moment'
 import styles from './createRecipe.module.css'
 
 const mapStateToProps = state => {
@@ -66,16 +66,19 @@ class CreateRecipe extends React.Component {
     renderButton() {
         const {modal} = this.props
         return (
-            <Button
-                look='add'
-                size='large'
-                icon='plus'
-                shape='pill'
-                label='Create recipe'
-                onClick={() => showRecipeTypes()}
-                tooltip={'Create a new recipe'}
-                tooltipPlacement='top'
-                tooltipDisabled={modal}/>
+            <div className={styles.bottomRight}>
+                <Button
+                    look='add'
+                    size='xx-large'
+                    icon='plus'
+                    shape='circle'
+                    // shape='pill'
+                    // label='Create recipe'
+                    onClick={() => showRecipeTypes()}
+                    tooltip={'Create a new recipe'}
+                    tooltipPlacement='top'
+                    tooltipDisabled={modal}/>
+            </div>
         )
     }
 

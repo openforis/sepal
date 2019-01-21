@@ -133,7 +133,8 @@
         "recipe": {
             "name": "Name",
             "type": "Type",
-            "loading": "Loading recipes"
+            "loading": "Loading recipes",
+            "updateTime": "Update time"
         },
         "menu": {
             "noSavedRecipies": "No saved recipies",
@@ -143,7 +144,8 @@
             "exportRecipe": "Export recipe",
             "saveRecipe": "Save recipe",
             "deleteRecipe": "Delete recipe",
-            "revertToOldRevision": "Revert to old revision..."
+            "revertToOldRevision": "Revert to old revision...",
+            "searchRecipes": "Search recipes"
         },
         "revisions": {
             "title": "Revisions",
@@ -737,8 +739,8 @@
             }
         },
         "landCover": {
-            "create": "Regional Land Cover Monitoring System",
-            "description": "Create land cover map along with confidence levels from Landsat or Sentinel 2.",
+            "create": "RLCMS",
+            "description": "Regional Land Cover Monitoring System. Create land cover map along with confidence levels from Landsat or Sentinel 2.",
             "panel": {
                 "period": {
                     "title": "Period",

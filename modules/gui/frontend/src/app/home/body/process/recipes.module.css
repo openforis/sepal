@@ -19,6 +19,10 @@
     }
 }
 
+.recipes {
+    padding-bottom: 5rem;
+}
+
 .recipe {
     display: flex;
     align-items: center;
@@ -31,4 +35,42 @@
 
 .recipe:last-child {
     margin-bottom: 0;
+}
+
+.bottomBar {
+    justify-content: center;
+}
+
+.search {
+    flex-grow: 1;
+    flex-shrink: 1;
+    max-width: 17rem;
+    margin-right: .5rem;
+}
+
+.search input {
+    width: 100%;
+    border: none;
+}
+
+.createAndSort {
+
+}
+
+.orderBy {
+    flex-wrap: nowrap;
+    display: flex;
+    margin-left: .5rem;
+}
+
+.nameSort{
+    margin-right: 2rem;
+}
+
+.sorted {
+    color: var(--success-color);
+}
+
+.sortingHandle {
+    margin-left: .5rem;
 }

@@ -16,9 +16,9 @@ SectionLayout.propTypes = {
     className: PropTypes.string
 }
 
-export const TopBar = ({padding = true, children}) => {
+export const TopBar = ({padding = true, className, children}) => {
     return (
-        <div className={[flexy.rigid, styles.bar, styles.top, padding ? styles.padding : null].join(' ')}>
+        <div className={[className, flexy.rigid, styles.bar, styles.top, padding ? styles.padding : null].join(' ')}>
             {children}
         </div>
     )
@@ -49,9 +49,9 @@ Content.propTypes = {
     padding: PropTypes.any,
 }
 
-export const BottomBar = ({padding = true, children}) => {
+export const BottomBar = ({padding = true, className, children}) => {
     return (
-        <div className={[flexy.rigid, styles.bar, styles.bottom, padding ? styles.padding : null].join(' ')}>
+        <div className={[className, flexy.rigid, styles.bar, styles.bottom, padding ? styles.padding : null].join(' ')}>
             {children}
         </div>
     )
@@ -59,5 +59,6 @@ export const BottomBar = ({padding = true, children}) => {
 
 BottomBar.propTypes = {
     children: PropTypes.any.isRequired,
-    padding: PropTypes.any
+    padding: PropTypes.any,
+    className: PropTypes.string
 }

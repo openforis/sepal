@@ -240,7 +240,7 @@ Button.propTypes = {
     look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'add', 'apply', 'cancel']),
     shape: PropTypes.oneOf(['rectangle', 'pill', 'circle', 'none']),
     shown: PropTypes.any,
-    size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large']),
+    size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large', 'xx-large']),
     stopPropagation: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
