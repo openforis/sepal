@@ -55,6 +55,17 @@
     height: calc(var(--thumbnail-size) - 2px);
     width: calc(var(--thumbnail-size) - 2px);
     background-size: cover;
+    position: relative;
+}
+
+.thumbnail img {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
 }
 
 .details {

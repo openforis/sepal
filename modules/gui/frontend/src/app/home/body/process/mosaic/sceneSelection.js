@@ -183,12 +183,18 @@ class SceneSelection extends React.Component {
 
 }
 
+const imageThumbnail = url =>
+    url.replace('https://earthexplorer.usgs.gov/browse/', 'https://earthexplorer.usgs.gov/browse/thumbnails/')
+
 const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeActions}) => {
     const {dataSet, date, cloudCover, browseUrl} = scene
     const daysFromTarget = daysBetween(targetDate, date)
+    const thumbnailUrl = imageThumbnail(browseUrl)
     return (
         <HoverProvider className={[styles.scene, className].join(' ')}>
-            <div className={styles.thumbnail} style={{'backgroundImage': `url("${browseUrl}")`}}/>
+            <div className={styles.thumbnail} style={{'backgroundImage': `url("${thumbnailUrl}")`}}>
+                {thumbnailUrl !== browseUrl ? <img src={browseUrl}/> : null}
+            </div>
             <div className={styles.details}>
                 <div>
                     <div className={styles.dataSet}>
