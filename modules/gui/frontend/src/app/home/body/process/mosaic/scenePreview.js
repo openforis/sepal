@@ -4,6 +4,9 @@ import {dataSetById} from 'sources'
 import {msg} from 'translate'
 import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
+import Portal from 'widget/portal'
 import React from 'react'
 import daysBetween from './daysBetween'
 import styles from './scenePreview.module.css'
@@ -32,21 +35,35 @@ class ScenePreview extends React.Component {
                     ? msg('process.mosaic.panel.sceneSelection.preview.beforeTarget', {daysFromTarget: -daysFromTarget})
                     : msg('process.mosaic.panel.sceneSelection.preview.afterTarget', {daysFromTarget})
             return (
-                <div className={styles.container}>
-                    <Hammer onTap={() => this.closePreview()}>
-                        <div className={styles.panel}>
-                            <div className={styles.id}>{id}</div>
-                            <div className={styles.thumbnail}><img src={browseUrl} alt={id}/></div>
+                <Portal>
+                    <Panel
+                        className={styles.panel}
+                        statePath='userReport'
+                        center
+                        modal
+                        onCancel={() => this.closePreview()}>
+                        <PanelHeader
+                            icon='image'
+                            title={'Scene preview'}
+                            label={id}/>
+                        <PanelContent>
+                            <Hammer onTap={() => this.closePreview()}>
+                                <div
+                                    className={styles.thumbnail}
+                                    style={{'backgroundImage': `url(${browseUrl})`}}>
+                                    <img src={browseUrl}/>
+                                </div>
+                            </Hammer>
                             <div className={styles.details}>
-                                <LabelValue name='dataSet' value={dataSetById[dataSet].name} icon='rocket'/>
+                                <LabelValue name='dataSet' value={dataSetById[dataSet].name} icon='satellite-dish'/>
                                 <LabelValue name='date' value={date} icon='calendar'/>
-                                <LabelValue name='daysFromTarget' value={daysFromTargetString}
-                                    icon='calendar-check'/>
+                                <LabelValue name='daysFromTarget' value={daysFromTargetString} icon='calendar-check'/>
                                 <LabelValue name='cloudCover' value={cloudCover + '%'} icon='cloud'/>
                             </div>
-                        </div>
-                    </Hammer>
-                </div>
+                        </PanelContent>
+                        <PanelButtons/>
+                    </Panel>
+                </Portal>
             )
         } else
             return null

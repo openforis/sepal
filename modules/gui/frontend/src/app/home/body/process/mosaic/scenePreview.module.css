@@ -1,58 +1,38 @@
-.container {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: rgba(29, 29, 29, 0.99);
-    z-index: 4;
-    box-shadow: 4px 4px 7px 2px rgba(0, 0, 0, 0.2);
-}
+/*
+  WARNING: Very fragile
+*/
 
 .panel {
-    pointer-events: all;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100%;
-    padding: 1rem;
-    cursor: pointer;
-}
-
-.id {
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
+    height: fit-content;
+    width: fit-content;
 }
 
 .thumbnail {
-    flex: 1 1 auto;
-    height: 100%;
-    width: 100%;
-    margin-bottom: 1rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    overflow: hidden;
 }
 
-.thumbnail img {
-    max-height: 100%;
-    max-width: 100%;
-    position: relative;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+/* 
+    [HACK]
+    Image is needed here for constraining dimensions, but already 
+    displayed as a background (to get autoscaling), thus hidden.
+*/
+.thumbnail > * {
+    width: 100%;
+    opacity: 0;
 }
 
 .details {
+    margin-top: 1rem;
+    font-size: .9rem;
     display: grid;
-    grid-template-columns: repeat(auto-fill, 11rem);
-    grid-template-rows: repeat(auto-fill, 3rem);
-    -ms-flex-pack: center;
+    grid-template-columns: repeat(auto-fit, 10rem);
+    grid-template-rows: repeat(auto-fit, 3rem);
+    grid-row-gap: 1rem;
+    grid-column-gap: 2rem;
     justify-content: center;
-    max-width: 50rem;
-    width: 100%;
-    grid-gap: 1rem;
-    border: 1px solid #514F4E;
-    padding: 1rem;
-    border-radius: 0.3rem;
-    background-color: #3D3B3A;
 }
 
 .label {
@@ -68,5 +48,4 @@
 .value {
     margin-left: 1.8rem;
     font-size: 1rem;
-    line-height: 1.5rem;
 }
