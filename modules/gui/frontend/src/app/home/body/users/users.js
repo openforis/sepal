@@ -331,6 +331,8 @@ class Users extends React.Component {
                 size='xx-large'
                 shape='circle'
                 icon='plus'
+                tooltip={msg('users.invite.label')}
+                tooltipPlacement='left'
                 onClick={() => this.inviteUser()}/>
         )
     }
