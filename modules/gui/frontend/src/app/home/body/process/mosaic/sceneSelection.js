@@ -1,6 +1,7 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, Label, form} from 'widget/form'
+import {HoverConsumer, HoverProvider} from 'widget/hover'
 import {RecipeActions, RecipeState, recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {dataSetById} from 'sources'
@@ -179,29 +180,27 @@ class SceneSelection extends React.Component {
             return {...prevState, scenes, scenesById}
         })
     }
+
 }
 
 const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeActions}) => {
     const {dataSet, date, cloudCover, browseUrl} = scene
     const daysFromTarget = daysBetween(targetDate, date)
-    const thumbnailStyle = {
-        backgroundImage: `url("${browseUrl}")`
-    }
     return (
-        <div className={[styles.scene, className].join(' ')}>
-            <div className={styles.thumbnail} style={thumbnailStyle}/>
+        <HoverProvider className={[styles.scene, className].join(' ')}>
+            <div className={styles.thumbnail} style={{'backgroundImage': `url("${browseUrl}")`}}/>
             <div className={styles.details}>
-                <div className={styles.line}>
+                <div>
                     <div className={styles.dataSet}>
                         <Icon name='satellite-dish'/>
                         {dataSetById[dataSet].shortName}
                     </div>
                     <div className={styles.cloudCover}>
                         <Icon name='cloud'/>
-                        {format.integer(cloudCover)}
+                        {format.integer(cloudCover)}%
                     </div>
                 </div>
-                <div className={styles.line}>
+                <div>
                     <div className={styles.date}>
                         {date}
                     </div>
@@ -209,21 +208,25 @@ const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeA
                         {daysFromTarget > 0 ? '+' : '-'}{Math.abs(daysFromTarget)}d
                     </div>
                 </div>
-                <div
-                    className={[styles.bar, daysFromTarget > 0 ? styles.positive : styles.negative].join(' ')}
-                    style={{'--days-from-target': `${Math.abs(daysFromTarget) / 3.65}%`}}>
-                </div>
+                <div className={[styles.bar, daysFromTarget > 0 ? styles.positive : styles.negative].join(' ')}
+                    style={{'--days-from-target': `${Math.abs(daysFromTarget) / 3.65}%`}}/>
             </div>
-            {selected
-                ? <SelectedSceneOverlay scene={scene} onRemove={onRemove} recipeActions={recipeActions}/>
-                : <AvailableSceneOverlay scene={scene} onAdd={onAdd} recipeActions={recipeActions}/>
-            }
-        </div>
+            <div className={styles.overlay}>
+                <HoverConsumer>
+                    {hover => hover
+                        ? selected
+                            ? <SelectedSceneOverlay scene={scene} onRemove={onRemove} recipeActions={recipeActions}/>
+                            : <AvailableSceneOverlay scene={scene} onAdd={onAdd} recipeActions={recipeActions}/>
+                        : null
+                    }
+                </HoverConsumer>
+            </div>
+        </HoverProvider>
     )
 }
 
 const AvailableSceneOverlay = ({scene, onAdd, recipeActions}) =>
-    <div className={styles.sceneOverlay}>
+    <div className={styles.overlayControls}>
         <ButtonGroup>
             <Button
                 look='add'
@@ -239,7 +242,7 @@ const AvailableSceneOverlay = ({scene, onAdd, recipeActions}) =>
     </div>
 
 const SelectedSceneOverlay = ({scene, onRemove, recipeActions}) =>
-    <div className={styles.sceneOverlay}>
+    <div className={styles.overlayControls }>
         <ButtonGroup>
             <Button
                 look='cancel'

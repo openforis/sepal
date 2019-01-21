@@ -1,6 +1,5 @@
 .panel {
     --max-width: 67rem;
-
     z-index: 1;
     top: calc(var(--toolbar-clearance) + .5rem) !important;
     right: calc(var(--toolbar-clearance) + .5rem) !important;
@@ -23,31 +22,18 @@
 }
 
 .availableScenes {
-    position: relative;
     flex-grow: 1;
 }
 
 .selectedScenes {
-    position: relative;
     flex-grow: 1;
     min-width: 6rem;
     max-width: 16rem;
     margin-left: 2rem;
 }
 
-@media only screen and (max-width: 500px) {
-    .panel {
-        --content-padding: 1.5rem .5rem;
-    }
-
-    .selectedScenes {
-        margin-left: .5rem;
-    }
-}
-
 .grid {
     --thumbnail-size: 9rem;
-
     display: grid;
     grid-template-columns: repeat(auto-fill, var(--thumbnail-size));
     grid-gap: 1rem;
@@ -62,6 +48,7 @@
     justify-content: space-between;
     background-color: #323030;
     border: 1px solid var(--wireframe-color);
+    height: fit-content;
 }
 
 .thumbnail {
@@ -79,7 +66,7 @@
     border-width: 1px 0 0 0;
 }
 
-.line {
+.details > * {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -89,7 +76,6 @@
 .details svg {
     color: #ccc !important;
 }
-
 
 .bar {
     --axis-color: hsl(0, 0%, 40%);
@@ -105,18 +91,7 @@
     background-clip: content-box;
 }
 
-.bar:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 0;
-    margin: auto;
-    border-right: 1px solid var(--axis-color);
-}
-
+.bar:before,
 .bar:after {
     content: '';
     position: absolute;
@@ -124,6 +99,15 @@
     bottom: 0;
     left: 0;
     right: 0;
+}
+
+.bar:before {
+    width: 0;
+    margin: auto;
+    border-right: 1px solid var(--axis-color);
+}
+
+.bar:after {
     background-image: linear-gradient(to right, red, yellow, green, green, yellow, red);
     background-clip: content-box;
     padding: 3px 50%;
@@ -134,40 +118,44 @@
 }
 
 .bar.negative:after {
-    padding-left: var(--days-from-target);
+    padding-left: calc(50% - var(--days-from-target));
 }
 
-.sceneOverlay {
+.overlay {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
     background: hsla(0, 0%, 0%, 0.7);
-    padding: 1rem;
     opacity: 1;
 }
 
-.scene:not(:hover) .sceneOverlay {
+.overlay:not(:hover) {
     transition: opacity var(--transition-time) ease-in-out var(--transition-delay);
     opacity: 0;
 }
 
-.scene:not(:hover) .sceneOverlay > * {
-    display: none;
+.overlayControls {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1rem;
 }
 
-.scenes button {
-    border-radius: var(--button-border-radius);
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-
-.sceneOverlay button {
+.overlayControls button {
     width: 100%;
+}
+
+@media only screen and (max-width: 500px) {
+    .panel {
+        --content-padding: 1.5rem .5rem;
+    }
+
+    .selectedScenes {
+        margin-left: .5rem;
+    }
 }
 
 @media only screen and (min-width: 500px) {
@@ -194,12 +182,12 @@
         border-width: 0 0 0 1px;
     }
         
-    .selectedScenes .sceneOverlay {
+    .selectedScenes .overlayControls {
         flex-direction: row;
         align-items: center;
     }
 
-    .selectedScenes .sceneOverlay button {
+    .selectedScenes .overlayControls button {
         width: auto;
     }
 }
