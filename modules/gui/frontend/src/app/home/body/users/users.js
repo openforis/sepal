@@ -299,8 +299,7 @@ class Users extends React.Component {
     renderSearch() {
         return (
             <Button
-                additionalClassName={
-                    styles.search}
+                additionalClassName={styles.search}
                 look='transparent'
                 size='large'
                 shape='pill'
