@@ -76,7 +76,7 @@ class CreateRecipe extends React.Component {
                     // label='Create recipe'
                     onClick={() => showRecipeTypes()}
                     tooltip={'Create a new recipe'}
-                    tooltipPlacement='top'
+                    tooltipPlacement='left'
                     tooltipDisabled={modal}/>
             </div>
         )

@@ -17,7 +17,7 @@ export class Pageable extends React.Component {
         if (!_.isEqual(prevProps, this.props)) {
             const {items, limit} = this.props
             const itemCount = items.length
-            const pageCount = Math.ceil(itemCount / limit)
+            const pageCount = Math.max(Math.ceil(itemCount / limit), 1)
             const watchUnchanged = _.isEqual(prevProps.watch, this.props.watch)
             this.setState(prevState => ({
                 ...prevState,

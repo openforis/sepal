@@ -952,7 +952,7 @@
         "countWithFilter": "{count} users matching \"{filter}\"",
         "filter.placeholder": "Search users",
         "page": "Page {pageNumber} of {pageCount}",
-        "invite.label": "Invite user"
+        "invite.label": "Invite a new user"
     },
     "userMessages": {
         "noMessages": "There are no messages",
