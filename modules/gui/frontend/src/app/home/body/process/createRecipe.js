@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
@@ -103,7 +104,11 @@ class CreateRecipe extends React.Component {
                     <span>{recipeType.name}</span>
                 </PanelHeader>
                 <PanelContent>
-                    {recipeType ? recipeType.details : null}
+                    <ScrollableContainer>
+                        <Scrollable>
+                            {recipeType ? recipeType.details : null}
+                        </Scrollable>
+                    </ScrollableContainer>
                 </PanelContent>
             </React.Fragment>
         )
