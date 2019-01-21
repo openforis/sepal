@@ -10,7 +10,6 @@
     --scaling-factor: .8 !important;
     --header-color: #e8e8e8;
     --max-width: 60rem;
-
     position: absolute;
     width: calc(100% - var(--margin-left) - var(--margin-right));
     max-width: var(--max-width);
@@ -57,8 +56,8 @@
     right: var(--right-clearance);
     top: var(--top-clearance);
     bottom: var(--bottom-clearance);
-    max-height: calc(100vh - var(--vertical-clearance));
-    max-width: calc(100vw - var(--horizontal-clearance));
+    height: calc(100vh - var(--vertical-clearance));
+    width: calc(100vw - var(--horizontal-clearance));
 }
 
 .panel.inline {

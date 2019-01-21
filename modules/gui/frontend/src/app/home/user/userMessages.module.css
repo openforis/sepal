@@ -2,6 +2,7 @@
     --unread-color: var(--warning-color);
     --read-color: var(--success-color);
     max-height: max-content;
+    max-width: 40rem;
 }
 
 button.unread i {

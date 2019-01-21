@@ -3,8 +3,8 @@
 */
 
 .panel {
-    height: fit-content;
-    width: fit-content;
+    max-height: fit-content; 
+    max-width: fit-content !important;
 }
 
 .thumbnail {

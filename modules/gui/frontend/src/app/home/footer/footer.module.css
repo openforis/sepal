@@ -26,17 +26,7 @@
 }
 
 .copyright {
-    margin-left: .5rem;
-    font-weight: lighter;
-    font-size: .85rem;
-}
-
-@media only screen and (max-width: 400px) {
-    .copyright {
-        display: none;
-    }
-
-    .title {
-        letter-spacing: .2rem;
-    }
+    margin-left: .25rem;
+    color: grey;
+    font-size: .9rem;
 }
