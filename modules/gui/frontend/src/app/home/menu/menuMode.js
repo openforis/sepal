@@ -24,11 +24,10 @@ class MenuMode extends React.Component {
         const {className, floating} = this.props
         return (
             <Button
-                chromeless
                 look='transparent'
-                size='large'
+                size='small'
                 additionalClassName={className}
-                icon={'angle-double-right'}
+                icon={floating ? 'lock-open' : 'lock'}
                 iconFlipHorizontal={floating}
                 onClick={() => this.toggle(floating)}
                 tooltip={msg(floating ? 'home.sections.expand.tooltip' : 'home.sections.collapse.tooltip')}

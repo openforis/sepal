@@ -8,6 +8,7 @@ import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './menu.module.css'
+import MenuMode from './menuMode'
 
 const mapStateToProps = (state = {}) => ({
     requestedApps: requestedApps(),
@@ -36,6 +37,7 @@ class Menu extends React.Component {
                     <div className={styles.section}>
                         <SectionLink name='tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'}/>
                         {user.admin ? <SectionLink name='users' icon='users'/> : null}
+                        <MenuMode className={styles.mode}/>
                     </div>
                 </div>
             </div>

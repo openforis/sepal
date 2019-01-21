@@ -1,9 +1,8 @@
-import {Button, ButtonGroup} from 'widget/button'
-import {logout} from 'user'
-import {msg} from 'translate'
-import MenuMode from '../menu/menuMode'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {msg} from 'translate'
+import {logout} from 'user'
+import {Button, ButtonGroup} from 'widget/button'
 import UserMessages from '../user/userMessages'
 import UserProfile from '../user/userProfile'
 import UserReport from '../user/userReport'
@@ -13,9 +12,6 @@ const Footer = ({className}) => {
     return (
         <div className={className}>
             <div className={styles.footer}>
-                <div>
-                    <MenuMode/>
-                </div>
                 <div>
                     <Title/>
                     <Copyright/>

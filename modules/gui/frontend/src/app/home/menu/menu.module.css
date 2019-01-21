@@ -38,6 +38,15 @@
     --border-opacity: 0;
 }
 
+.menu .mode {
+    opacity: 0;
+}
+
+
+.menu:hover .mode {
+    opacity: 1;
+}
+
 .menu button svg {
     font-size: var(--icon-size);
     vertical-align: middle;

@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Label} from 'widget/form'
 import flexy from './flexy.module.css'
 import styles from './sectionLayout.module.css'
 
