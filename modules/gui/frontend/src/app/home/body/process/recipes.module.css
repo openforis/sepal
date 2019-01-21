@@ -37,6 +37,12 @@
     margin-bottom: 0;
 }
 
+.updateTime {
+    font-size: small;
+    margin-right: 2rem;
+    color: gray;
+}
+
 .bottomBar {
     justify-content: center;
 }
@@ -53,18 +59,26 @@
     border: none;
 }
 
-.createAndSort {
-
-}
-
 .orderBy {
     flex-wrap: nowrap;
     display: flex;
     margin-left: .5rem;
 }
 
-.nameSort{
-    margin-right: 2rem;
+.nameSort {
+    --nameSort-margin: 3.5rem;
+    margin-left: var(--nameSort-margin);
+}
+
+
+@media only screen and (max-width: 500px) {
+    .nameSort {
+        --nameSort-margin: 1.5rem;
+    }
+
+    .updateTime {
+        display: none;
+    }
 }
 
 .sorted {
@@ -74,3 +88,4 @@
 .sortingHandle {
     margin-left: .5rem;
 }
+

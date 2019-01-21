@@ -3,6 +3,7 @@ import api from 'api'
 import {recipePath} from 'app/home/body/process/recipe'
 import escapeStringRegexp from 'escape-string-regexp'
 import _ from 'lodash'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {map} from 'rxjs/operators'
@@ -152,6 +153,7 @@ class RecipeList extends React.Component {
                 </div>
                 <div className={styles.recipeButtons}>
                     <ButtonGroup wrap={false}>
+                        <div className={styles.updateTime}>{moment(recipe.updateTime).fromNow()}</div>
                         <Button
                             chromeless
                             icon='clone'
@@ -220,8 +222,8 @@ class RecipeList extends React.Component {
                                     <div className={styles.createAndSort}>
                                         <CreateRecipe recipeId={recipeId} recipeTypes={this.recipeTypes}/>
                                         <div className={styles.orderBy}>
-                                            {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
                                             {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
+                                            {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
                                         </div>
                                     </div>
                                 </div>
