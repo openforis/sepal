@@ -7,6 +7,7 @@ import {map, share, zip} from 'rxjs/operators'
 import {msg} from 'translate'
 import Highlight from 'react-highlighter'
 import Icon from 'widget/icon'
+import Label from 'widget/label'
 import Notifications from 'app/notifications'
 import React from 'react'
 import UserDetails from './user'
@@ -265,27 +266,9 @@ class Users extends React.Component {
     renderHeader() {
         return (
             <div className={[styles.grid, styles.header].join(' ')}>
-                <div className={styles.instanceBudget}>
-                    <Button
-                        chromeless
-                        shape='none'
-                        additionalClassName='itemType'
-                        label={msg('user.report.resources.monthlyInstance')}/>
-                </div>
-                <div className={styles.storageBudget}>
-                    <Button
-                        chromeless
-                        shape='none'
-                        additionalClassName='itemType'
-                        label={msg('user.report.resources.monthlyStorage')}/>
-                </div>
-                <div className={styles.storage}>
-                    <Button
-                        chromeless
-                        shape='none'
-                        additionalClassName='itemType'
-                        label={msg('user.report.resources.storage')}/>
-                </div>
+                <Label className={styles.instanceBudget} msg={msg('user.report.resources.monthlyInstance')}/>
+                <Label className={styles.storageBudget} msg={msg('user.report.resources.monthlyStorage')}/>
+                <Label className={styles.storage} msg={msg('user.report.resources.storage')}/>
                 {this.renderColumnHeader('name', msg('user.userDetails.form.name.label'), [styles.name])}
                 {this.renderColumnHeader('status', msg('user.userDetails.form.status.label'), [styles.status])}
                 {this.renderColumnHeader('updateTime', msg('user.userDetails.form.updateTime.label'), [styles.updateTime])}
@@ -401,7 +384,6 @@ class Users extends React.Component {
                                         </ScrollableContainer>
                                     </Scrollable>
                                 </ScrollableContainer>
-
                                 {this.renderInviteUser()}
                             </Content>
                             <BottomBar className={styles.bottomBar}>
@@ -439,7 +421,9 @@ class User extends React.Component {
                     lookStyles.look,
                     lookStyles.transparent,
                     lookStyles.chromeless,
-                    styles.grid, status ? styles.clickable : null
+                    styles.grid,
+                    styles.user,
+                    status ? styles.clickable : null
                 ].join(' ')}
                 onClick={() => status ? onClick() : null}>
                 <div><Highlight search={highlight} matchClass={styles.highlight}>{name}</Highlight></div>
