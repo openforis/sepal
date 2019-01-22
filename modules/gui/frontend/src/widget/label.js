@@ -19,9 +19,9 @@ export default class Label extends React.Component {
     }
 
     renderLabelWithTooltip(contents) {
-        const {tooltip, tooltipPlacement} = this.props
+        const {className, tooltip, tooltipPlacement} = this.props
         return (
-            <label className={styles.label}>
+            <label className={[styles.label, className].join(' ')}>
                 {contents}
                 <Tooltip msg={tooltip} placement={tooltipPlacement}>
                     <Icon className={styles.info} name='question-circle'/>
@@ -40,6 +40,7 @@ export default class Label extends React.Component {
 
 Label.propTypes = {
     children: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+    className: PropTypes.string,
     msg: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
