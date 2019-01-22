@@ -78,6 +78,7 @@
     text-align: center;
     margin-left: -1rem;
     margin-top: .7rem;
+    user-select: none;
 }
 
 .cursor {
