@@ -102,4 +102,5 @@
     flex-direction: column;
     justify-content: space-between;
     padding: var(--content-padding);
+    overflow: hidden;
 }
