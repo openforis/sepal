@@ -43,7 +43,7 @@ class JdbcNotificationRepository implements MessageRepository, NotificationRepos
             sql.executeInsert('''
                 INSERT INTO message(id, username, subject, contents, type, creation_time, update_time)
                 VALUES(?, ?, ?, ?, ?, ?, ?)''', [
-                    message.id, message.username, message.subject, message.contents, message.type.name(), message.creationTime, message.updateTime
+                    message.id, message.username, message.subject, message.contents, message.type.name(), clock.now(), message.updateTime
             ])
         }
         return getMessageById(message.id)
