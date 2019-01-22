@@ -19,14 +19,6 @@
 }
 
 .bar.top .label {
-    /*font-family: var(--header-font-family);*/
-    /*font-weight: normal;*/
-    /*font-size: 1rem;*/
-    /*letter-spacing: 0.15rem;*/
-    /*word-spacing: 0.25rem;*/
-    /*text-transform: uppercase;*/
-    /*color: var(--primary-text-color);*/
-
     font-size: .9rem;
     font-weight: bold;
     color: #bbb;
@@ -44,13 +36,12 @@
 }
 
 .content {
-    --edge-padding: 2.5rem 1.5rem;
+    --edge-padding: 2.5rem 1.5rem 0.5rem 1.5rem;
     --app-menu-padding: .5rem;
     --toolbar-edge-margin: .5rem;
     --toolbar-button-size: 2.5rem;
     --toolbar-clearance: calc(var(--toolbar-edge-margin) + var(--toolbar-button-size));
     transition: padding-left var(--transition-time) ease-in-out var(--transition-delay);
-    /*padding-top: var(--padding-top);*/
 }
 
 .content .content {
