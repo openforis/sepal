@@ -16,6 +16,8 @@
     height: calc(var(--ratio) * var(--font-size));
     min-width: calc(var(--ratio) * var(--font-size));
     width: fit-content;
+    padding: 0; /* Needed for alignment of button contents */
+
 }
 
 @media only screen and (max-width: 500px) {
@@ -24,12 +26,11 @@
     }
 }
 
-.button > * {
-    white-space: nowrap;
-}
-
-.button.chromeless {
-    padding: 0;
+/* Flex needed for alignment of button contents */
+.button, .button * {
+    display: flex;
+    justify-content: center;
+    align-content: center;
 }
 
 /* sizes */
@@ -70,6 +71,10 @@
     border-radius: 50%;
 }
 
+.button.xx-large.circle{
+    --ratio: 2.3;
+}
+
 .button.none {
     --ratio: 1;
     padding: 0;
@@ -78,6 +83,7 @@
 }
 
 .button > * {
+    white-space: nowrap;
     position: relative;
 }
 
