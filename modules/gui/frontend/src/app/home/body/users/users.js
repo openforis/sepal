@@ -62,8 +62,6 @@ class Users extends React.Component {
             getBudgetReport$(),
             budgetReport => mergeBudgetReport(budgetReport)
         )
-
-        this.search.current.focus()
     }
 
     setSorting(sortingOrder) {
