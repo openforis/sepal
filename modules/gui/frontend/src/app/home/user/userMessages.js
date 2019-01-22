@@ -88,10 +88,8 @@ class UserMessages extends React.Component {
     }
 
     buttonHandler() {
-        const {panel, modal} = this.props
-        panel
-            ? closePanel()
-            : !modal && showUserMessages()
+        const {modal} = this.props
+        !modal && showUserMessages()
     }
 
     toggleMessageState(userMessage) {

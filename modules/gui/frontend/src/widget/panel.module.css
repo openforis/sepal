@@ -47,7 +47,7 @@
 
 .modal .panel.center {
     --top-clearance: .5rem;
-    --bottom-clearance: calc(var(--footer-height) + .5rem);
+    --bottom-clearance: .5rem;
     --left-clearance: .5rem;
     --right-clearance: .5rem;
     --vertical-clearance: calc(var(--top-clearance) + var(--bottom-clearance));

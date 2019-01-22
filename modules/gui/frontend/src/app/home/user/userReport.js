@@ -34,23 +34,11 @@ export const closePanel = () =>
 
 class Usage extends React.Component {
     buttonHandler() {
-        const {panel, modal} = this.props
-        panel
-            ? closePanel()
-            : !modal && showUserBudget()
+        const {modal} = this.props
+        !modal && showUserBudget()
     }
 
     renderResources() {
-        // const {spending} = {
-        //     spending: {
-        //         monthlyInstanceBudget: 10.0,
-        //         monthlyInstanceSpending: 0.0,
-        //         monthlyStorageBudget: 10.0,
-        //         monthlyStorageSpending: 0.0,
-        //         storageQuota: 100.0,
-        //         storageUsed: 0.0
-        //     }
-        // }
         const {spending} = this.props.userReport
         return (
             <table className={styles.resources}>

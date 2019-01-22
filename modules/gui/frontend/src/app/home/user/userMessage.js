@@ -1,13 +1,13 @@
-import PropTypes from 'prop-types'
-import React from 'react'
-import Markdown from 'react-markdown'
+import {Field, Input, Label, form} from 'widget/form'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
-import {Field, form, Input, Label} from 'widget/form'
+import Markdown from 'react-markdown'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './userMessage.module.css'
 
 const fields = {
@@ -30,27 +30,6 @@ const mapStateToProps = (state, ownProps) => {
         }
     }
 }
-
-// const markdownInstructions =
-//     `
-// Markdown syntax cheatsheet
-//
-// # Title
-// ## Subtitle
-// ### Sub-subtitle
-//
-// - unordered list, item one
-// - unordered list, item two
-// - unordered list, item three
-//
-// Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tincidunt a lectus at lobortis. Cras facilisis non lorem non bibendum. Aliquam egestas massa at nisl bibendum, vehicula consequat massa tempor.
-//
-// 1. ordered list, item one
-// 2. ordered list, item two
-// 3. ordered list, item three
-//
-// [link to SEPAL](http://sepal.io)
-// `
 
 class UserMessage extends React.Component {
     renderPreview() {
