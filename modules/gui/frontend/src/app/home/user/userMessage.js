@@ -1,12 +1,13 @@
-import {Field, Input, form} from 'widget/form'
+import PropTypes from 'prop-types'
+import React from 'react'
+import Markdown from 'react-markdown'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
-import Markdown from 'react-markdown'
+import {Field, form, Input, Label} from 'widget/form'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
-import PropTypes from 'prop-types'
-import React from 'react'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import styles from './userMessage.module.css'
 
 const fields = {
@@ -30,50 +31,60 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-const markdownInstructions =
-`
-Markdown syntax cheatsheet
-
-# Title
-## Subtitle
-### Sub-subtitle
-
-- unordered list, item one
-- unordered list, item two
-- unordered list, item three
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tincidunt a lectus at lobortis. Cras facilisis non lorem non bibendum. Aliquam egestas massa at nisl bibendum, vehicula consequat massa tempor.
-
-1. ordered list, item one
-2. ordered list, item two
-3. ordered list, item three
-
-[link to SEPAL](http://sepal.io)
-`
+// const markdownInstructions =
+//     `
+// Markdown syntax cheatsheet
+//
+// # Title
+// ## Subtitle
+// ### Sub-subtitle
+//
+// - unordered list, item one
+// - unordered list, item two
+// - unordered list, item three
+//
+// Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tincidunt a lectus at lobortis. Cras facilisis non lorem non bibendum. Aliquam egestas massa at nisl bibendum, vehicula consequat massa tempor.
+//
+// 1. ordered list, item one
+// 2. ordered list, item two
+// 3. ordered list, item three
+//
+// [link to SEPAL](http://sepal.io)
+// `
 
 class UserMessage extends React.Component {
+    renderPreview() {
+        const {inputs: {contents}} = this.props
+        return (
+            <div>
+                <Label msg={'Preview'}/>
+                <Markdown className={styles.contents} source={contents.value}/>
+            </div>
+        )
+    }
+
     renderPanel() {
         const {inputs: {subject, contents}} = this.props
         return (
             <React.Fragment>
-                <PanelContent className={styles.panelContent}>
-                    <Input
-                        label={msg('userMessage.form.subject.label')}
-                        autoFocus
-                        input={subject}
-                        spellCheck={false}
-                    />
-                    <div className={styles.editorAndContents}>
-                        <Input
-                            label={msg('userMessage.form.contents.label')}
-                            // tooltip={msg('userMessage.form.subject.tooltip')}
-                            input={contents}
-                            placeholder={markdownInstructions}
-                            textArea={true}
-                            spellCheck={false}
-                        />
-                        <Markdown className={styles.contents} source={contents.value || markdownInstructions}/>
-                    </div>
+                <PanelContent>
+                    <ScrollableContainer>
+                        <Scrollable className={styles.panelContent}>
+                            <Input
+                                label={msg('userMessage.form.subject.label')}
+                                autoFocus
+                                input={subject}
+                                spellCheck={false}
+                            />
+                            <Input
+                                label={msg('userMessage.form.contents.label')}
+                                input={contents}
+                                textArea={true}
+                                spellCheck={false}
+                            />
+                            {contents.value ? this.renderPreview() : null}
+                        </Scrollable>
+                    </ScrollableContainer>
                 </PanelContent>
                 <PanelButtons/>
             </React.Fragment>

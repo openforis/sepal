@@ -1,25 +1,22 @@
+.panel {
+    max-width: 40rem;
+    min-height: 30rem;
+    max-height: fit-content;
+}
+
 .panelContent {
-    justify-content: initial;
-}
-
-.editorAndContents {
     display: flex;
-    flex-direction: row;
-    margin: 1rem 0;
+    flex-direction: column;
 }
 
-.editorAndContents > * {
-    width: 50%;
-}
-
-.editorAndContents > * + * {
-    margin-left: 3rem;
+.panelContent > * + * {
+    margin-top: 2rem;
 }
 
 .contents {
-    background-color: hsla(0, 0%, 100%, .1);
+    background-color: var(--look-default-background-color);
     padding: 1rem;
-    border-radius: 1rem;
+    border-radius: var(--container-border-radius);
     height: 100%;
 }
 
