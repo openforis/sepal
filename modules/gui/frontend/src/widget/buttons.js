@@ -1,4 +1,4 @@
-import {Label} from 'widget/form'
+import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import UnstyledSelectionList from 'widget/unstyledSelectionList'

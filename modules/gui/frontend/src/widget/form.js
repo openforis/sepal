@@ -1,11 +1,10 @@
 import {autoFocusEnabled} from 'widget/userAgent'
 import {connect} from 'store'
 import {msg} from 'translate'
-import Icon from './icon'
+import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Textarea from 'react-textarea-autosize'
-import Tooltip from './tooltip'
 import _ from 'lodash'
 import moment from 'moment'
 import styles from './form.module.css'
@@ -574,47 +573,6 @@ export class InputGroup extends React.Component {
 InputGroup.propTypes = {
     children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
     label: PropTypes.string,
-    tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string
-}
-
-export class Label extends React.Component {
-    renderContents() {
-        const {msg, children} = this.props
-        return children ? children : msg
-    }
-
-    renderLabel(contents) {
-        return (
-            <label className={styles.label}>
-                {contents}
-            </label>
-        )
-    }
-
-    renderLabelWithTooltip(contents) {
-        const {tooltip, tooltipPlacement} = this.props
-        return (
-            <label className={styles.label}>
-                {contents}
-                <Tooltip msg={tooltip} placement={tooltipPlacement}>
-                    <Icon className={styles.info} name='question-circle'/>
-                </Tooltip>
-            </label>
-        )
-    }
-
-    render() {
-        const {tooltip} = this.props
-        return tooltip
-            ? this.renderLabelWithTooltip(this.renderContents())
-            : this.renderLabel(this.renderContents())
-    }
-}
-
-Label.propTypes = {
-    children: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
-    msg: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
 }
