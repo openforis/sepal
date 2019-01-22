@@ -157,7 +157,7 @@ class UserMessages extends React.Component {
         }
     }
 
-    renderAdminButtons(message) {
+    renderAdminControls(message) {
         return (
             <ButtonGroup>
                 <Button
@@ -178,7 +178,7 @@ class UserMessages extends React.Component {
         )
     }
 
-    renderMessageStateButton(userMessage) {
+    renderSubject(userMessage) {
         const {state} = userMessage
         return (
             <Button
@@ -187,7 +187,8 @@ class UserMessages extends React.Component {
                 size='large'
                 shape='none'
                 icon={state === 'UNREAD' ? 'bell' : 'check'}
-                additionalClassName={[styles.dot, styles[state]].join(' ')}
+                label={userMessage.message.subject}
+                additionalClassName={[styles.subject, styles[state]].join(' ')}
                 onClick={() => this.toggleMessageState(userMessage)}
                 tooltip={msg(`userMessages.state.${state}`)}
                 tooltipPlacement='top'
@@ -202,13 +203,8 @@ class UserMessages extends React.Component {
         return (
             <li key={index} className={[lookStyles.look, lookStyles.transparent, lookStyles.nonInteractive].join(' ')}>
                 <div className={styles.header}>
-                    <div>
-                        {this.renderMessageStateButton(userMessage)}
-                        <span className={[styles.subject, styles[userMessage.state]].join(' ')}>
-                            {userMessage.message.subject}
-                        </span>
-                    </div>
-                    {isAdmin ? this.renderAdminButtons(userMessage.message) : null}
+                    {this.renderSubject(userMessage)}
+                    {isAdmin ? this.renderAdminControls(userMessage.message) : null}
                 </div>
                 <div className={styles.info}>
                     <Msg id='userMessages.author' author={author}/>
