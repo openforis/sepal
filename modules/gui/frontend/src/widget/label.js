@@ -11,30 +11,27 @@ export default class Label extends React.Component {
     }
 
     renderLabel(contents) {
-        return (
-            <label className={styles.label}>
-                {contents}
-            </label>
-        )
-    }
-
-    renderLabelWithTooltip(contents) {
-        const {className, tooltip, tooltipPlacement} = this.props
+        const {className} = this.props
         return (
             <label className={[styles.label, className].join(' ')}>
                 {contents}
-                <Tooltip msg={tooltip} placement={tooltipPlacement}>
-                    <Icon className={styles.info} name='question-circle'/>
-                </Tooltip>
+                {this.renderTooltip()}
             </label>
         )
     }
 
-    render() {
-        const {tooltip} = this.props
+    renderTooltip() {
+        const {tooltip, tooltipPlacement} = this.props
         return tooltip
-            ? this.renderLabelWithTooltip(this.renderContents())
-            : this.renderLabel(this.renderContents())
+            ? (
+                <Tooltip msg={tooltip} placement={tooltipPlacement}>
+                    <Icon className={styles.info} name='question-circle'/>
+                </Tooltip>
+            ) : null
+    }
+
+    render() {
+        return this.renderLabel(this.renderContents())
     }
 }
 

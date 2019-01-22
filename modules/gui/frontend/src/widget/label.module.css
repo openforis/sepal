@@ -1,15 +1,14 @@
-label {
+.label {
     --label-color: #b0b0b0;
-    --label-background-color: transparent;
-    display: block;
     margin: 0;
-    margin-bottom: 0.75rem;
+    margin-bottom: .7rem;
+    font-size: .8rem;
     font-weight: 500;
     text-transform: uppercase;
     color: var(--label-color);
-    background-color: var(--label-background-color);
 }
 
-label .info {
+.label .info {
     cursor: help;
+    margin-left: .5rem;
 }
