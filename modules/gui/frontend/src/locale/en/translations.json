@@ -1060,7 +1060,8 @@
         "less": "Less",
         "retry": "Retry",
         "restart": "Restart",
-        "stop": "Stop"
+        "stop": "Stop",
+        "copyToClipboard": "Copy to clipboard"
     },
     "widget": {
         "seasonSelect": {
