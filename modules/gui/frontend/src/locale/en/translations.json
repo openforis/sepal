@@ -1060,7 +1060,8 @@
         "less": "Less",
         "retry": "Retry",
         "restart": "Restart",
-        "stop": "Stop"
+        "stop": "Stop",
+        "copyToClipboard": "Copy to clipboard"
     },
     "widget": {
         "seasonSelect": {
@@ -1072,6 +1073,9 @@
         },
         "comboBox": {
             "loading": "Loading..."
+        },
+        "tabs": {
+          "addTab.tooltip": "Create a new tab"
         }
     },
     "fusionTable": {

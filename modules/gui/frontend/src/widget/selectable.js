@@ -18,7 +18,7 @@ export class Select extends React.Component {
     }
 
     componentDidUpdate() {
-        this.elementToFocus && this.elementToFocus.focus()
+        this.elementToFocus && this.elementToFocus.blur()
     }
 }
 
@@ -51,14 +51,14 @@ export class Selectable extends React.Component {
             this.className = this.props.classNames.out
             this.active = false
 
-            this.activeElement = document.activeElement.tagName === 'IFRAME'
-                ? document.activeElement.contentWindow.document.activeElement
-                : document.activeElement
+            // this.activeElement = document.activeElement.tagName === 'IFRAME'
+            //     ? document.activeElement.contentWindow.document.activeElement
+            //     : document.activeElement
         } else if (!this.props.active && nextProps.active) {
             this.className = this.props.classNames.in
             this.hasBeenActive = true
             this.active = true
-            this.activeElement && this.context.focus(this.activeElement)
+            // this.activeElement && this.context.focus(this.activeElement)
         } else {
             this.active = false
         }

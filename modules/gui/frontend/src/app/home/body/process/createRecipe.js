@@ -143,27 +143,28 @@ class CreateRecipe extends React.Component {
 
     renderPanel() {
         const {selectedRecipeType} = this.state
+        const {trigger} = this.props
         return (
             <Portal>
                 <Panel
                     className={styles.panel}
                     statePath='createRecipe'
                     center
-                    modal
+                    modal={!trigger}
                     onCancel={() => this.closePanel()}>
                     {selectedRecipeType ? this.renderRecipeType(selectedRecipeType) : this.renderRecipeTypes()}
-                    <PanelButtons/>
+                    {trigger ? null : <PanelButtons/>}
                 </Panel>
             </Portal>
         )
     }
 
     render() {
-        const {panel} = this.props
+        const {panel, trigger} = this.props
         return (
             <React.Fragment>
-                {this.renderButton()}
-                {panel ? this.renderPanel() : null}
+                {trigger ? null : this.renderButton()}
+                {panel || trigger ? this.renderPanel() : null}
             </React.Fragment>
         )
     }
@@ -171,7 +172,8 @@ class CreateRecipe extends React.Component {
 
 CreateRecipe.propTypes = {
     recipeId: PropTypes.string.isRequired,
-    recipeTypes: PropTypes.array.isRequired
+    recipeTypes: PropTypes.array.isRequired,
+    trigger: PropTypes.any
 }
 
 export default connect(mapStateToProps)(CreateRecipe)

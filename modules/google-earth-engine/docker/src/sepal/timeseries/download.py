@@ -11,7 +11,7 @@ from os.path import abspath
 from os.path import isdir, join
 
 import ee
-# import osgeo.gdal
+import osgeo.gdal
 from dateutil.parser import parse
 
 from timeseries import TimeSeries

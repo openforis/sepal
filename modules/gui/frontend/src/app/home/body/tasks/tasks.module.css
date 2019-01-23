@@ -24,13 +24,12 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    border: 2px solid rgba(255, 255, 255, 0.105);
-    border-radius: 3px;
-    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: var(--container-border-radius);
     padding: 1rem;
     font-size: 0.9rem;
     text-align: center;
 }
+
 
 .name {
     flex-grow: 1;
@@ -64,67 +63,6 @@
     background-color: hsla(0, 0%, 0%, 0.7);
 }
 
-.overlay button {
-    width: 10rem;
-    border-radius: var(--button-border-radius);
-    font-size: 0.9rem;
-    cursor: pointer;
-    margin: 0.5rem;
-}
-
-.restart {
-    -hue: 222;
-    -sat: 44%;
-    color: var(--look-default-color);
-    background-color: hsl(var(-hue), var(-sat), 37%);
-    border: 1px solid hsl(var(-hue), var(-sat), 39%);
-}
-
-.restart:focus {
-    color: var(--look-default-focus-color);
-    background-color: hsl(var(-hue), var(-sat), 35%);
-    border: 1px solid hsl(var(-hue), var(-sat), 38%);
-}
-
-.restart:hover {
-    color: var(--look-default-hover-color);
-    background-color: hsl(var(-hue), var(-sat), 33%);
-    border: 1px solid hsl(var(-hue), var(-sat), 35%);
-}
-
-.restart:active {
-    color: var(--look-default-active-color);
-    background-color: hsl(var(-hue), var(-sat), 31%);
-    border: 1px solid hsl(var(-hue), var(-sat), 33%);
-}
-
-.remove, .stop {
-    -hue: 0;
-    -sat: 38%;
-    color: var(--look-default-color);
-    background-color: hsl(var(-hue), var(-sat), 37%);
-    border: 1px solid hsl(var(-hue), var(-sat), 39%);
-}
-
-.remove:focus, .stop:focus {
-    color: var(--look-default-focus-color);
-    background-color: hsl(var(-hue), var(-sat), 35%);
-    border: 1px solid hsl(var(-hue), var(-sat), 38%);
-}
-
-.remove:hover, .stop:hover {
-    color: var(--look-default-hover-color);
-    background-color: hsl(var(-hue), var(-sat), 33%);
-    border: 1px solid hsl(var(-hue), var(-sat), 35%);
-}
-
-.remove:active, .stop:active {
-    color: var(--look-default-active-color);
-    background-color: hsl(var(-hue), var(-sat), 31%);
-    border: 1px solid hsl(var(-hue), var(-sat), 33%);
-}
-.overlay svg {
-    color: white;
-    width: 1.5rem !important;
-    text-align: left;
+.overlay button:not(:last-child) {
+    margin-bottom: 1rem;
 }

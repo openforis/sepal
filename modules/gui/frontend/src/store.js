@@ -8,6 +8,7 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
+import {isMobile} from 'widget/userAgent'
 
 let storeInstance = null
 const storeInitListeners = []
@@ -160,6 +161,15 @@ export class Enabled extends React.Component {
                 {children}
             </EnabledContext.Provider>
         )
+    }
+
+    componentDidUpdate(prevProps) {
+        const prevValue = prevProps.value
+        const value = this.props.value
+        if (!value && value !== prevValue && document.activeElement && isMobile()) {
+            document.activeElement && document.activeElement.blur()
+        }
+
     }
 }
 

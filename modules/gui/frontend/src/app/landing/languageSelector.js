@@ -6,7 +6,8 @@ import styles from './languageSelector.module.css'
 const LanguageSelector = () => {
     const languages = [
         {code: 'en', name: 'English'},
-        {code: 'es', name: 'Español'}
+        {code: 'es', name: 'Español'},
+        {code: 'fr', name: 'Français'}
     ]
 
     return (

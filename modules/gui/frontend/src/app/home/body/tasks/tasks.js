@@ -6,6 +6,8 @@ import {connect} from 'store'
 import React from 'react'
 import api from 'api'
 import styles from './tasks.module.css'
+import look from 'style/look.module.css'
+import clipboard from 'clipboard'
 
 const mapStateToProps = (state) => ({
     tasks: state.tasks,
@@ -23,12 +25,11 @@ class Tasks extends React.Component {
                 {['FAILED', 'COMPLETED', 'CANCELED'].includes(task.status) ? (
                     <React.Fragment>
                         <Button
-                            className={styles.restart}
-                            icon='undo'
-                            label={msg('button.restart')}
-                            onClick={() => this.restartTask(task)}/>
+                            icon='copy'
+                            label={msg('button.copyToClipboard')}
+                            onClick={() => this.copyToClipboard(task)}/>
                         <Button
-                            className={styles.remove}
+                            look={'cancel'}
                             icon='times'
                             label={msg('button.remove')}
                             onClick={() => this.removeTask(task)}/>
@@ -46,7 +47,7 @@ class Tasks extends React.Component {
 
     renderTask(task) {
         return (
-            <div key={task.id} className={styles.task}>
+            <div key={task.id} className={[styles.task, look.look, look.transparent].join(' ')}>
                 <div className={styles.name}>{task.name}</div>
                 <Progress className={styles.progress} status={task.status}/>
                 <div className={styles.statusDescription}>{task.statusDescription}</div>
@@ -105,16 +106,8 @@ class Tasks extends React.Component {
             this.setState(prevState => ({...prevState, tasks: this.props.tasks}))
     }
 
-    restartTask(task) {
-        const {asyncActionBuilder} = this.props
-        this.updateTaskInState(task, () => ({
-            ...task,
-            status: 'PENDING',
-            statusDescription: 'Restarting...'
-        }))
-        asyncActionBuilder('RESTART_TASK',
-            api.tasks.restart$(task.id)
-        ).dispatch()
+    copyToClipboard(task) {
+        clipboard.copy(JSON.stringify(task, null, '  '))
     }
 
     removeTask(task) {

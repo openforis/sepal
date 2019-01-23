@@ -1,24 +1,24 @@
-import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
-import {Button, ButtonGroup} from 'widget/button'
-import {CenteredProgress} from 'widget/progress'
-import {PageControls, PageData, Pageable} from 'widget/pageable'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {connect, select} from 'store'
-import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
-import {map} from 'rxjs/operators'
-import {msg} from 'translate'
-import {recipePath} from 'app/home/body/process/recipe'
-import CreateRecipe from './createRecipe'
-import CreateRecipeRLCMS from './createRecipeRLCMS'
-import Icon from 'widget/icon'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import {recipePath} from 'app/home/body/process/recipe'
 import escapeStringRegexp from 'escape-string-regexp'
-import lookStyles from 'style/look.module.css'
+import _ from 'lodash'
 import moment from 'moment'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {map} from 'rxjs/operators'
+import {connect, select} from 'store'
+import lookStyles from 'style/look.module.css'
+import {msg} from 'translate'
+import {Button, ButtonGroup} from 'widget/button'
+import Icon from 'widget/icon'
+import {Pageable, PageControls, PageData} from 'widget/pageable'
+import {CenteredProgress} from 'widget/progress'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
+import CreateRecipe from './createRecipe'
+import CreateRecipeRLCMS from './createRecipeRLCMS'
+import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
 import styles from './recipes.module.css'
 
 const mapStateToProps = () => {
@@ -203,10 +203,28 @@ class RecipeList extends React.Component {
         )
     }
 
+    renderSearchAndSort() {
+        const {recipes} = this.props
+        if (!recipes || !recipes.length)
+            return null
+        else
+            return (
+                <div className={styles.header}>
+                    {this.renderSearch()}
+
+                    <div>
+                        <div className={styles.orderBy}>
+                            {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
+                            {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
+                        </div>
+                    </div>
+                </div>
+            )
+    }
+
     render() {
         const {recipeId, recipes} = this.props
         return (
-
             <Pageable
                 items={this.getSortedRecipes()}
                 watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
@@ -215,21 +233,14 @@ class RecipeList extends React.Component {
                     <Content edgePadding menuPadding className={styles.container}>
                         <ScrollableContainer>
                             <Unscrollable>
-                                <div className={styles.header}>
-                                    {recipes && recipes.length ? this.renderSearch() : <div/>}
-
-                                    <div>
-                                        <div className={styles.orderBy}>
-                                            {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
-                                            {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
-                                        </div>
-                                    </div>
-                                </div>
-
+                                {this.renderSearchAndSort()}
                             </Unscrollable>
                             <Scrollable className={styles.recipes}>
                                 {this.renderRecipies()}
-                                <CreateRecipe recipeId={recipeId} recipeTypes={this.recipeTypes}/>
+                                <CreateRecipe
+                                    recipeId={recipeId}
+                                    recipeTypes={this.recipeTypes}
+                                    trigger={recipes && !recipes.length}/>
                             </Scrollable>
                         </ScrollableContainer>
                     </Content>
