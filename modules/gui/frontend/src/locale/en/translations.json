@@ -1073,6 +1073,9 @@
         },
         "comboBox": {
             "loading": "Loading..."
+        },
+        "tabs": {
+          "addTab.tooltip": "Create a new tab"
         }
     },
     "fusionTable": {

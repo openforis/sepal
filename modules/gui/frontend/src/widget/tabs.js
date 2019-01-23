@@ -1,14 +1,14 @@
-import {Button} from 'widget/button'
-import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {autoFocusEnabled} from 'widget/userAgent'
-import {connect, select} from 'store'
-import {msg} from 'translate'
-import PropTypes from 'prop-types'
-import React from 'react'
-import TabContent from './tabContent'
-import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
 import guid from 'guid'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import Tooltip from 'widget/tooltip'
+import {autoFocusEnabled} from 'widget/userAgent'
+import TabContent from './tabContent'
 import styles from './tabs.module.css'
 
 export const addTab = statePath => {
@@ -108,15 +108,24 @@ class Tabs extends React.Component {
                     {this.props.tabs.map(tab => this.renderTab(tab))}
                 </div>
                 <div className={styles.tabActions}>
-                    <Button
-                        chromeless
-                        size='large'
-                        shape='circle'
-                        icon='plus'
-                        onClick={() => addTab(statePath)}/>
+                    {this.renderAddButton()}
                     {tabActions(selectedTabId)}
                 </div>
             </div>
+        )
+    }
+
+    renderAddButton() {
+        const {statePath} = this.props
+        return (
+            <Button
+                chromeless
+                size='large'
+                shape='circle'
+                icon='plus'
+                tooltip={msg('widget.tabs.addTab.tooltip')}
+                tooltipPlacement='left'
+                onClick={() => addTab(statePath)}/>
         )
     }
 
