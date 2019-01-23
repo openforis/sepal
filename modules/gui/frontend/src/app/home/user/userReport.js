@@ -64,8 +64,8 @@ class Usage extends React.Component {
                     </tr>
                     <tr>
                         <th>{msg('user.report.resources.storage')}</th>
-                        <td className={styles.number}>{format.number({value: spending.storageQuota, unit: 'B'})}</td>
-                        <td className={styles.number}>{format.number({value: spending.storageUsed, unit: 'B'})}</td>
+                        <td className={styles.number}>{format.number({value: spending.storageQuota, scale: 'G', unit: 'B'})}</td>
+                        <td className={styles.number}>{format.number({value: spending.storageUsed, scale: 'G', unit: 'B'})}</td>
                         <PercentCell used={spending.storageUsed} budget={spending.storageQuota}/>
                     </tr>
                 </tbody>
