@@ -252,7 +252,7 @@ class Tab extends React.Component {
 
     scrollSelectedTabIntoView() {
         const element = this.titleInput.current
-        element && element.scrollIntoView({inline: 'nearest', behavior: 'smooth'})
+        element && element.scrollIntoView({inline: 'nearest'})
     }
 
     componentDidMount() {
@@ -274,13 +274,4 @@ Tab.propTypes = {
     statePath: PropTypes.string,
     title: PropTypes.string,
     onTitleChanged: PropTypes.func
-}
-
-const NewTab = ({onAdd}) =>
-    <div className={styles.newTab} onClick={onAdd}>
-        +
-    </div>
-
-NewTab.propTypes = {
-    onAdd: PropTypes.func
 }
