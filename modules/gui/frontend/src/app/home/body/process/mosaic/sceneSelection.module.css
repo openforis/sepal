@@ -1,5 +1,5 @@
 .panel {
-    --max-width: 67rem;
+    --max-width: 69rem;
     z-index: 1;
     top: calc(var(--toolbar-clearance) + .5rem) !important;
     right: calc(var(--toolbar-clearance) + .5rem) !important;
