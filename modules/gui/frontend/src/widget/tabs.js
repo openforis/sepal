@@ -252,7 +252,7 @@ class Tab extends React.Component {
 
     scrollSelectedTabIntoView() {
         const element = this.titleInput.current
-        element && element.scrollIntoView({inline: 'start'})
+        element && element.scrollIntoView({inline: 'nearest', behavior: 'smooth'})
     }
 
     componentDidMount() {
@@ -261,7 +261,7 @@ class Tab extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         const {selected} = this.props
-        selected && this.scrollSelectedTabIntoView()
+        selected && prevProps.selected !== selected && this.scrollSelectedTabIntoView()
         if (!prevState.editing && this.state.editing)
             this.titleInput.current.select()
     }
