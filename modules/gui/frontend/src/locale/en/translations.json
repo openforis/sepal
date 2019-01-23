@@ -1068,14 +1068,12 @@
             "from": "From",
             "to": "To"
         },
-        "tabs": {
-            "newTab": "New_Tab"
-        },
         "comboBox": {
             "loading": "Loading..."
         },
         "tabs": {
-          "addTab.tooltip": "Create a new tab"
+          "addTab.tooltip": "Create a new tab",
+          "newTab": "New_Tab"
         }
     },
     "fusionTable": {
