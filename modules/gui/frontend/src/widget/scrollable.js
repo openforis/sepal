@@ -25,7 +25,7 @@ export const Unscrollable = ({className, children}) => {
 }
 
 Unscrollable.propTypes = {
-    children: PropTypes.any.isRequired,
+    children: PropTypes.any,
     className: PropTypes.string
 }
 
@@ -38,6 +38,7 @@ export const Scrollable = ({className, direction = 'y', children}) => {
 }
 
 Scrollable.propTypes = {
+    children: PropTypes.any,
     className: PropTypes.string,
     direction: PropTypes.oneOf(['x', 'y', 'xy'])
 }
