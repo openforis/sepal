@@ -464,10 +464,9 @@ export class Input extends React.Component {
     }
 
     renderTextArea() {
-        const {input, minRows, maxRows, validate = 'onBlur', tabIndex, onChange, className, onBlur, ...props} = this.props
+        const {input, minRows, maxRows, validate = 'onBlur', tabIndex, onChange, className, onBlur} = this.props
         return (
             <Textarea
-                {...props}
                 ref={this.element}
                 name={input.name}
                 value={input.value || ''}
