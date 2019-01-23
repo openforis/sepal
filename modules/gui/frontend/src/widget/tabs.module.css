@@ -4,17 +4,10 @@
     pointer-events: none;
 }
 
-.tabBar {    
-    display: flex;
-    justify-content: space-between;
-    pointer-events: all;
-    width: 100%;
-}
-
 .tabs {
     position: relative;
     display: flex;
-    width: 100%;
+    flex-grow: 1;
     overflow-x: auto;
     margin-right: .5rem;
 }
@@ -58,9 +51,13 @@
     cursor: pointer;
 }
 
+.tab:first-child {
+    margin-left: auto;
+}
+
 .tab.regular {
     max-width: 17rem;
-    min-width: 9rem;
+    min-width: 8.5rem;
 }
 
 .tab * {
