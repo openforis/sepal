@@ -153,7 +153,7 @@ class CreateRecipe extends React.Component {
                     modal={!trigger}
                     onCancel={() => this.closePanel()}>
                     {selectedRecipeType ? this.renderRecipeType(selectedRecipeType) : this.renderRecipeTypes()}
-                    <PanelButtons/>
+                    {trigger ? null : <PanelButtons/>}
                 </Panel>
             </Portal>
         )

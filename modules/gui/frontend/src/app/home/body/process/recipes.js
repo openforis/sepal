@@ -24,9 +24,7 @@ import styles from './recipes.module.css'
 const mapStateToProps = () => {
     const recipes = select('process.recipes')
     return {
-        // recipes: recipes ? recipes : null
-        // recipes: null
-        recipes: []
+        recipes: recipes ? recipes : null
     }
 }
 
@@ -205,6 +203,25 @@ class RecipeList extends React.Component {
         )
     }
 
+    renderSearchAndSort() {
+        const {recipes} = this.props
+        if (!recipes || !recipes.length)
+            return null
+        else
+            return (
+                <div className={styles.header}>
+                    {this.renderSearch()}
+
+                    <div>
+                        <div className={styles.orderBy}>
+                            {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
+                            {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
+                        </div>
+                    </div>
+                </div>
+            )
+    }
+
     render() {
         const {recipeId, recipes} = this.props
         return (
@@ -216,17 +233,7 @@ class RecipeList extends React.Component {
                     <Content edgePadding menuPadding className={styles.container}>
                         <ScrollableContainer>
                             <Unscrollable>
-                                <div className={styles.header}>
-                                    {recipes && recipes.length ? this.renderSearch() : <div/>}
-
-                                    <div>
-                                        <div className={styles.orderBy}>
-                                            {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
-                                            {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
-                                        </div>
-                                    </div>
-                                </div>
-
+                                {this.renderSearchAndSort()}
                             </Unscrollable>
                             <Scrollable className={styles.recipes}>
                                 {this.renderRecipies()}
