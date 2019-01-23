@@ -30,7 +30,7 @@
 .button, .button * {
     display: flex;
     justify-content: center;
-    align-content: center;
+    align-items: center;
 }
 
 /* sizes */
