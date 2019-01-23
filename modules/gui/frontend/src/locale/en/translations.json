@@ -78,12 +78,12 @@
     "home": {
         "sections": {
             "dashboard": "TBD",
-            "process": "Process geo data",
-            "browse": "User files",
+            "process": "Process",
+            "browse": "Files",
             "terminal": "Terminal",
-            "app-launch-pad": "Custom apps",
-            "tasks": "Background tasks",
-            "users": "Sepal users",
+            "app-launch-pad": "Apps",
+            "tasks": "Tasks",
+            "users": "Users",
             "account": "Account settings",
             "logout": "Logout from Sepal",
             "expand": "Expand menu (fixed)",
