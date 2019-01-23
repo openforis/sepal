@@ -45,7 +45,6 @@
     height: 2.5rem;
     white-space: nowrap;
     margin-top: .5rem;
-    margin-right: .3rem;
     line-height: 2.5rem;
     overflow: hidden;
     cursor: pointer;
@@ -53,6 +52,10 @@
 
 .tab:first-child {
     margin-left: auto;
+}
+
+.tab:not(:last-child) {
+    margin-right: .3rem;
 }
 
 .tab.regular {
