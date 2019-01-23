@@ -56,7 +56,7 @@ class ProcessMenu extends React.Component {
 
     isRecipeUnsaved() {
         const {recipe, recipes} = this.props
-        return !recipes.find(saved => saved.id === recipe.id)
+        return !(recipes && recipes.find(saved => saved.id === recipe.id))
     }
 
     duplicateRecipe() {
