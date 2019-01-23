@@ -1,7 +1,7 @@
-import {Label} from 'widget/form'
 import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
 import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
 import Hammer from 'hammerjs'
+import Label from 'widget/label'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'

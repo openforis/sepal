@@ -46,21 +46,21 @@ button.unread i {
     margin-top: 1rem;
 }
 
-.messages li .dot.UNREAD i {
+.messages .subject {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-top: .5rem;
+}
+
+.messages .subject.UNREAD i {
     color: var(--unread-color);
 }
 
-.messages li .dot.READ i {
+.messages .subject.READ i {
     color: var(--read-color);
 }
 
-.messages li .subject {
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin: .5rem 0 0 .5rem;
-}
-
-.messages li .info {
+.messages .info {
     display: flex;
     flex-direction: row;
     justify-content: space-between;

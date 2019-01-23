@@ -1,6 +1,7 @@
-import {ErrorMessage, Field, Label, form} from 'widget/form'
+import {ErrorMessage, Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
 import {msg} from 'translate'
+import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'

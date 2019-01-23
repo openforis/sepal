@@ -24,6 +24,8 @@
     color: #bbb;
     text-transform: uppercase;
     letter-spacing: .1rem;
+    margin-right: 1rem;
+    white-space: nowrap;
 }
 
 .bar.bottom {

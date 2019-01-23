@@ -1,6 +1,6 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {Field, Label, form} from 'widget/form'
+import {Field, form} from 'widget/form'
 import {HoverConsumer, HoverProvider} from 'widget/hover'
 import {RecipeActions, RecipeState, recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
@@ -9,6 +9,7 @@ import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import Icon from 'widget/icon'
+import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
@@ -195,27 +196,39 @@ const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeA
             <div className={styles.thumbnail} style={{'backgroundImage': `url("${thumbnailUrl}")`}}>
                 {thumbnailUrl !== browseUrl ? <img src={browseUrl} alt={scene.id}/> : null}
             </div>
-            <div className={styles.details}>
-                <div>
+            <div
+                className={styles.details}
+                style={{
+                    '--percent-from-target': `${daysFromTarget / 3.65}`,
+                    '--percent-cloud-cover': `${cloudCover}`
+                }}>
+                <div className={styles.date}>
                     <div className={styles.dataSet}>
                         <Icon name='satellite-dish'/>
                         {dataSetById[dataSet].shortName}
                     </div>
-                    <div className={styles.cloudCover}>
+                    <div>
+                        {date}
+                    </div>
+                </div>
+                <div className={styles.cloudCover}>
+                    <div className={styles.value}>
                         <Icon name='cloud'/>
                         {format.integer(cloudCover)}%
                     </div>
+                    <div className={styles.bar}/>
                 </div>
-                <div>
-                    <div className={styles.date}>
-                        {date}
-                    </div>
-                    <div className={styles.daysFromTarget}>
+                <div className={[
+                    styles.daysFromTarget,
+                    daysFromTarget > 0 && styles.positive,
+                    daysFromTarget < 0 && styles.negative
+                ].join(' ')}>
+                    <div className={styles.value}>
+                        <Icon name='calendar-check'/>
                         {daysFromTarget > 0 ? '+' : '-'}{Math.abs(daysFromTarget)}d
                     </div>
+                    <div className={styles.bar}/>
                 </div>
-                <div className={[styles.bar, daysFromTarget > 0 ? styles.positive : styles.negative].join(' ')}
-                    style={{'--days-from-target': `${Math.abs(daysFromTarget) / 3.65}%`}}/>
             </div>
             <div className={styles.overlay}>
                 <HoverConsumer>

@@ -1,7 +1,8 @@
-import {ErrorMessage, Label} from 'widget/form'
+import {ErrorMessage} from 'widget/form'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import ComboBox from 'widget/comboBox'
+import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 
