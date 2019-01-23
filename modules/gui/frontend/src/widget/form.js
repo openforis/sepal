@@ -1,4 +1,4 @@
-import {autoFocusEnabled} from 'widget/userAgent'
+import {isMobile} from 'widget/userAgent'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Icon from './icon'
@@ -441,7 +441,7 @@ export class Input extends React.Component {
                 name={input.name}
                 value={typeof input.value === 'number' || typeof input.value === 'boolean' || input.value ? input.value : ''}
                 tabIndex={tabIndex}
-                autoFocus={autoFocus && autoFocusEnabled()}
+                autoFocus={autoFocus && !isMobile()}
                 autoComplete={autoComplete ? 'on' : 'off'}
                 autoCorrect={autoCorrect ? 'on' : 'off'}
                 autoCapitalize={autoCapitalize ? 'on' : 'off'}

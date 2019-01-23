@@ -7,7 +7,7 @@ import {msg} from 'translate'
 import {Button} from 'widget/button'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import Tooltip from 'widget/tooltip'
-import {autoFocusEnabled} from 'widget/userAgent'
+import {isMobile} from 'widget/userAgent'
 import TabContent from './tabContent'
 import styles from './tabs.module.css'
 
@@ -229,7 +229,7 @@ class Tab extends React.Component {
                                     className={styles.title}
                                     defaultValue={title}
                                     placeholder={placeholder}
-                                    autoFocus={!title && autoFocusEnabled()}
+                                    autoFocus={!title && !isMobile()}
                                     spellCheck={false}
                                     autoComplete='off'
                                     onKeyDown={e => {
