@@ -1,14 +1,5 @@
 .panel {
-    min-height: 15rem;
-    max-width: 25rem;
-}
-
-.existingUser {
-    max-height: 35rem;
-}
-
-.newUser {
-    max-height: 41rem;
+    width: 25rem;
 }
 
 .monthlyLimits {

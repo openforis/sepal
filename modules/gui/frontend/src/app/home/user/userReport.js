@@ -1,6 +1,8 @@
 import {Button} from 'widget/button'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect, select} from 'store'
 import {msg} from 'translate'
+import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
@@ -85,16 +87,20 @@ class Usage extends React.Component {
                         icon='user'
                         title={msg('user.report.title')}/>
                     <PanelContent>
-                        <div className={styles.report}>
-                            <div className={styles.section}>
-                                <div className={styles.title}>{msg('user.report.resources.title')}</div>
-                                {this.renderResources()}
-                            </div>
-                            <div className={styles.section}>
-                                <div className={styles.title}>{msg('user.report.sessions.title')}</div>
-                                <UserSessions/>
-                            </div>
-                        </div>
+                        <ScrollableContainer>
+                            <Scrollable>
+                                <div className={styles.report}>
+                                    <div className={styles.section}>
+                                        <Label msg={msg('user.report.resources.title')} size='large'/>
+                                        {this.renderResources()}
+                                    </div>
+                                    <div className={styles.section}>
+                                        <Label msg={msg('user.report.sessions.title')} size='large'/>
+                                        <UserSessions/>
+                                    </div>
+                                </div>
+                            </Scrollable>
+                        </ScrollableContainer>
                     </PanelContent>
                     <PanelButtons/>
                 </Panel>

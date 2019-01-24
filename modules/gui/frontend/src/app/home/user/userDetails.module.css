@@ -1,6 +1,6 @@
 .panel {
-    max-height: 30rem;
-    max-width: 24rem;
+    height: 30rem;
+    width: 24rem;
 }
 
 .googleAccount {

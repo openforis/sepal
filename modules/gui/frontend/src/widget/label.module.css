@@ -1,11 +1,21 @@
 .label {
     --label-color: #b0b0b0;
+    --normal-font-size: .8rem;
+    --large-font-size: .9rem;
     margin: 0;
     margin-bottom: .7rem;
-    font-size: .8rem;
+    font-size: var(--font-size);
     font-weight: 500;
     text-transform: uppercase;
     color: var(--label-color);
+}
+
+.label.normal {
+    --font-size: var(--normal-font-size);
+}
+
+.label.large {
+    --font-size: var(--large-font-size);
 }
 
 .label .info {

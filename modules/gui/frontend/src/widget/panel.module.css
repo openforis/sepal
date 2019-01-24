@@ -22,9 +22,7 @@
     --padding-panel-buttons: .5rem;
     --scaling-factor: .8 !important;
     --header-color: #e8e8e8;
-    --max-width: 60rem;
     width: calc(100% - var(--margin-left) - var(--margin-right));
-    max-width: var(--max-width);
     background-color: var(--panel-default-background-color);
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
@@ -66,6 +64,8 @@
     right: .5rem;
     top: .5rem;
     bottom: .5rem;
+    max-height: calc(100vh - 1rem);
+    max-width: calc(100vw - 1rem);
 }
 
 .panel.inline {

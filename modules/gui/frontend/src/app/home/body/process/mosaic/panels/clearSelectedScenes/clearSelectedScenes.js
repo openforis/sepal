@@ -27,9 +27,9 @@ class ClearSelectedScenes extends React.Component {
                 onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}>
                 <PanelHeader
                     icon='trash'
-                    title={msg('process.mosaic.panel.sources.title')}/>
+                    title={msg('process.mosaic.panel.clearSelectedScenes.title')}/>
 
-                <PanelContent>
+                <PanelContent className={styles.content}>
                     <Msg id='process.mosaic.panel.clearSelectedScenes.message'/>
                 </PanelContent>
 

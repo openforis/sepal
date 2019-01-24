@@ -1,6 +1,6 @@
 .panel {
-    --max-width: 69rem;
-    z-index: 1;
+    max-width: 69rem;
+    z-index: 1; /* ensure toolbar panels stay above */
     top: calc(var(--toolbar-clearance) + .5rem) !important;
     right: calc(var(--toolbar-clearance) + .5rem) !important;
 }

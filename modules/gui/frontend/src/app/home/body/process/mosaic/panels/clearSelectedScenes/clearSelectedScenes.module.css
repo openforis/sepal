@@ -1,3 +1,9 @@
 .panel {
-    max-width: 20rem;
+    min-height: 12rem;
+    max-width: 22rem;
+}
+
+.content {
+    align-items: center;
+    justify-content: center;
 }

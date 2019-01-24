@@ -1,4 +1,5 @@
 import {Field, Input, InputGroup, form} from 'widget/form'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
@@ -88,50 +89,54 @@ class UserDetails extends React.Component {
                         icon='user'
                         title={msg('user.userDetails.title')}/>
                     <PanelContent>
-                        <Input
-                            label={msg('user.userDetails.form.name.label')}
-                            autoFocus
-                            input={name}
-                            spellCheck={false}
-                            errorMessage
-                        />
-                        {this.renderUsername(newUser)}
-                        <Input
-                            label={msg('user.userDetails.form.email.label')}
-                            input={email}
-                            spellCheck={false}
-                            errorMessage
-                        />
-                        <Input
-                            label={msg('user.userDetails.form.organization.label')}
-                            input={organization}
-                            spellCheck={false}
-                            errorMessage
-                        />
-                        <InputGroup
-                            label={msg('user.userDetails.form.monthlyLimits.label')}
-                            errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
-                            <div className={styles.monthlyLimits}>
+                        <ScrollableContainer>
+                            <Scrollable>
                                 <Input
-                                    label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
-                                    type='number'
-                                    input={monthlyBudgetInstanceSpending}
+                                    label={msg('user.userDetails.form.name.label')}
+                                    autoFocus
+                                    input={name}
                                     spellCheck={false}
+                                    errorMessage
+                                />
+                                {this.renderUsername(newUser)}
+                                <Input
+                                    label={msg('user.userDetails.form.email.label')}
+                                    input={email}
+                                    spellCheck={false}
+                                    errorMessage
                                 />
                                 <Input
-                                    label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
-                                    type='number'
-                                    input={monthlyBudgetStorageSpending}
+                                    label={msg('user.userDetails.form.organization.label')}
+                                    input={organization}
                                     spellCheck={false}
+                                    errorMessage
                                 />
-                                <Input
-                                    label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
-                                    type='number'
-                                    input={monthlyBudgetStorageQuota}
-                                    spellCheck={false}
-                                />
-                            </div>
-                        </InputGroup>
+                                <InputGroup
+                                    label={msg('user.userDetails.form.monthlyLimits.label')}
+                                    errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
+                                    <div className={styles.monthlyLimits}>
+                                        <Input
+                                            label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
+                                            type='number'
+                                            input={monthlyBudgetInstanceSpending}
+                                            spellCheck={false}
+                                        />
+                                        <Input
+                                            label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
+                                            type='number'
+                                            input={monthlyBudgetStorageSpending}
+                                            spellCheck={false}
+                                        />
+                                        <Input
+                                            label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
+                                            type='number'
+                                            input={monthlyBudgetStorageQuota}
+                                            spellCheck={false}
+                                        />
+                                    </div>
+                                </InputGroup>
+                            </Scrollable>
+                        </ScrollableContainer>
                     </PanelContent>
                     <PanelButtons/>
                 </Panel>

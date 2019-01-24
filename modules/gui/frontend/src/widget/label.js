@@ -11,9 +11,13 @@ export default class Label extends React.Component {
     }
 
     renderLabel(contents) {
-        const {className} = this.props
+        const {className, size = 'normal'} = this.props
         return (
-            <label className={[styles.label, className].join(' ')}>
+            <label className={[
+                styles.label,
+                styles[size],
+                className
+            ].join(' ')}>
                 {contents}
                 {this.renderTooltip()}
             </label>
@@ -39,6 +43,7 @@ Label.propTypes = {
     children: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
     className: PropTypes.string,
     msg: PropTypes.string,
+    size: PropTypes.oneOf(['normal', 'large']),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
 }

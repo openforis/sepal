@@ -1,7 +1,4 @@
 .panel {
     max-width: 26rem;
-}
-
-.content > *:not(:last-child) {
-    margin-bottom: 2rem;
+    height: 19rem;
 }

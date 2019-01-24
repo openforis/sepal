@@ -1,6 +1,5 @@
 .panel {
-    max-width: 37rem;
-    max-height: max-content;
+    width: 40rem;
 }
 
 button.budgetExceeded {
@@ -29,15 +28,8 @@ button.budgetExceeded {
     width: 100%;
 }
 
-.report .title {
-    font-size: 1rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    margin-bottom: 2rem;
-}
-
 .report .section:not(:first-child) {
-    margin-top: 3rem;
+    margin-top: 2rem;
 }
 
 .report th {

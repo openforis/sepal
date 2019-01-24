@@ -1,4 +1,4 @@
-import {ErrorMessage, Field, form} from 'widget/form'
+import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
 import {msg} from 'translate'
 import Label from 'widget/label'
@@ -53,33 +53,30 @@ class Auto extends React.Component {
     renderContent() {
         const {inputs: {min, max}} = this.props
         return (
-            <div className={styles.form}>
-                <div className={styles.content}>
-                    <div>
-                        <Label msg={msg('process.mosaic.panel.auto.form.min.label')}/>
-                        <Slider
-                            input={min}
-                            minValue={1}
-                            maxValue={max.value}
-                            ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
-                            snap
-                            logScale
-                            range='left'/>
-                    </div>
-                    <div>
-                        <Label msg={msg('process.mosaic.panel.auto.form.max.label')}/>
-                        <Slider
-                            input={max}
-                            minValue={min.value}
-                            maxValue={999}
-                            ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
-                            snap
-                            logScale
-                            range='left'/>
-                    </div>
+            <React.Fragment>
+                <div>
+                    <Label msg={msg('process.mosaic.panel.auto.form.min.label')}/>
+                    <Slider
+                        input={min}
+                        minValue={1}
+                        maxValue={max.value}
+                        ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
+                        snap
+                        logScale
+                        range='left'/>
                 </div>
-                <ErrorMessage for={[min, max, 'minLessThanMax']}/>
-            </div>
+                <div>
+                    <Label msg={msg('process.mosaic.panel.auto.form.max.label')}/>
+                    <Slider
+                        input={max}
+                        minValue={min.value}
+                        maxValue={999}
+                        ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
+                        snap
+                        logScale
+                        range='left'/>
+                </div>
+            </React.Fragment>
         )
     }
 }
