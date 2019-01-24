@@ -4,7 +4,6 @@ import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SelectionList from 'widget/selectionList'
@@ -49,25 +48,23 @@ class Revisions extends React.Component {
     renderPanel() {
         const {recipeId, form} = this.props
         return (
-            <Portal>
-                <Panel
-                    className={styles.panel}
-                    form={form}
-                    isActionForm={true}
-                    statePath={recipePath(recipeId, 'ui')}
-                    modal
-                    onApply={({revision}) => this.revertToRevision(revision)}
-                    onCancel={() => showRevisionsPanel(recipeId, false)}>
-                    <PanelHeader
-                        icon='clock'
-                        title={msg('process.revisions.title')}/>
-                    <PanelContent className={styles.content}>
-                        {this.renderContent()}
-                    </PanelContent>
-                    <PanelButtons
-                        applyLabel={msg('process.revisions.revert')}/>
-                </Panel>
-            </Portal>
+            <Panel
+                className={styles.panel}
+                form={form}
+                isActionForm={true}
+                statePath={recipePath(recipeId, 'ui')}
+                modal
+                onApply={({revision}) => this.revertToRevision(revision)}
+                onCancel={() => showRevisionsPanel(recipeId, false)}>
+                <PanelHeader
+                    icon='clock'
+                    title={msg('process.revisions.title')}/>
+                <PanelContent className={styles.content}>
+                    {this.renderContent()}
+                </PanelContent>
+                <PanelButtons
+                    applyLabel={msg('process.revisions.revert')}/>
+            </Panel>
         )
     }
 

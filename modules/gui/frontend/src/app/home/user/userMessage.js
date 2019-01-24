@@ -6,7 +6,6 @@ import Label from 'widget/label'
 import Markdown from 'react-markdown'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './userMessage.module.css'
@@ -74,21 +73,19 @@ class UserMessage extends React.Component {
     render() {
         const {form, onApply, onCancel} = this.props
         return (
-            <Portal>
-                <Panel
-                    className={styles.panel}
-                    form={form}
-                    isActionForm={true}
-                    statePath='userMessage'
-                    modal
-                    onApply={message => onApply(message)}
-                    onCancel={() => onCancel()}>
-                    <PanelHeader
-                        icon='bell'
-                        title={msg('userMessage.title')}/>
-                    {this.renderPanel()}
-                </Panel>
-            </Portal>
+            <Panel
+                className={styles.panel}
+                form={form}
+                isActionForm={true}
+                statePath='userMessage'
+                modal
+                onApply={message => onApply(message)}
+                onCancel={() => onCancel()}>
+                <PanelHeader
+                    icon='bell'
+                    title={msg('userMessage.title')}/>
+                {this.renderPanel()}
+            </Panel>
         )
     }
 }

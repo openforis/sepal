@@ -3,7 +3,6 @@ import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -43,7 +42,9 @@ const setTabType = (recipeId, type, title) =>
                 throw new Error('Unable to create recipe')
             return stateBuilder
                 .set(['process', 'tabs', recipeIndex, 'type'], type)
-                .set(['process', 'tabs', recipeIndex, 'placeholder'], `${title.replace(/[^\w-.]/g, '_')}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`)
+                .set(['process', 'tabs', recipeIndex, 'placeholder'],
+                    `${title.replace(/[^\w-.]/g, '_')}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`
+                )
         })
         .dispatch()
 
@@ -145,16 +146,15 @@ class CreateRecipe extends React.Component {
         const {selectedRecipeType} = this.state
         const {trigger} = this.props
         return (
-            <Portal>
-                <Panel
-                    className={styles.panel}
-                    statePath='createRecipe'
-                    modal={!trigger}
-                    onCancel={() => this.closePanel()}>
-                    {selectedRecipeType ? this.renderRecipeType(selectedRecipeType) : this.renderRecipeTypes()}
-                    {trigger ? null : <PanelButtons/>}
-                </Panel>
-            </Portal>
+            <Panel
+                className={styles.panel}
+                statePath='createRecipe'
+                modal={!trigger}
+                center={trigger}
+                onCancel={() => this.closePanel()}>
+                {selectedRecipeType ? this.renderRecipeType(selectedRecipeType) : this.renderRecipeTypes()}
+                {trigger ? null : <PanelButtons/>}
+            </Panel>
         )
     }
 

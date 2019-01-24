@@ -5,7 +5,6 @@ import Markdown from 'react-markdown'
 import Notifications from 'app/notifications'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import UserMessage from './userMessage'
@@ -218,28 +217,26 @@ class UserMessages extends React.Component {
     renderMessagesPanel() {
         const {isAdmin} = this.props
         return (
-            <Portal>
-                <Panel
-                    className={styles.panel}
-                    statePath='userMessages'
-                    modal
-                    onCancel={() => closePanel()}>
-                    <PanelHeader
-                        icon='bell'
-                        title={msg('userMessages.title')}/>
-                    <PanelContent>
-                        {this.renderMessages()}
-                    </PanelContent>
-                    <PanelButtons
-                        additionalButtons={isAdmin ? [{
-                            key: 'post',
-                            look: 'add',
-                            icon: 'pencil-alt',
-                            label: msg('userMessages.post'),
-                            onClick: () => this.newMessage()
-                        }] : []}/>
-                </Panel>
-            </Portal>
+            <Panel
+                className={styles.panel}
+                statePath='userMessages'
+                modal
+                onCancel={() => closePanel()}>
+                <PanelHeader
+                    icon='bell'
+                    title={msg('userMessages.title')}/>
+                <PanelContent>
+                    {this.renderMessages()}
+                </PanelContent>
+                <PanelButtons
+                    additionalButtons={isAdmin ? [{
+                        key: 'post',
+                        look: 'add',
+                        icon: 'pencil-alt',
+                        label: msg('userMessages.post'),
+                        onClick: () => this.newMessage()
+                    }] : []}/>
+            </Panel>
         )
     }
 

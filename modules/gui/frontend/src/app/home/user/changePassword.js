@@ -6,7 +6,6 @@ import {showUserDetails} from './userProfile'
 import Notifications from 'app/notifications'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import Portal from 'widget/portal'
 import React from 'react'
 import styles from './changePassword.module.css'
 
@@ -82,21 +81,19 @@ class ChangePassword extends React.Component {
     render() {
         const {form} = this.props
         return (
-            <Portal>
-                <Panel
-                    className={styles.panel}
-                    form={form}
-                    isActionForm={true}
-                    statePath='userPassword'
-                    modal
-                    onApply={userPasswords => this.changePassword(userPasswords)}
-                    onCancel={() => this.cancel()}>
-                    <PanelHeader
-                        icon='key'
-                        title={msg('user.changePassword.title')}/>
-                    {this.renderPanel()}
-                </Panel>
-            </Portal>
+            <Panel
+                className={styles.panel}
+                form={form}
+                isActionForm={true}
+                statePath='userPassword'
+                modal
+                onApply={userPasswords => this.changePassword(userPasswords)}
+                onCancel={() => this.cancel()}>
+                <PanelHeader
+                    icon='key'
+                    title={msg('user.changePassword.title')}/>
+                {this.renderPanel()}
+            </Panel>
         )
     }
 }

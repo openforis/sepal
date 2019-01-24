@@ -6,7 +6,6 @@ import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import Portal from 'widget/portal'
 import React from 'react'
 import daysBetween from './daysBetween'
 import styles from './scenePreview.module.css'
@@ -35,34 +34,32 @@ class ScenePreview extends React.Component {
                     ? msg('process.mosaic.panel.sceneSelection.preview.beforeTarget', {daysFromTarget: -daysFromTarget})
                     : msg('process.mosaic.panel.sceneSelection.preview.afterTarget', {daysFromTarget})
             return (
-                <Portal>
-                    <Panel
-                        statePath='scenePreview'
-                        className={styles.panel}
-                        modal
-                        onCancel={() => this.closePreview()}>
-                        <PanelHeader
-                            icon='image'
-                            title={'Scene preview'}
-                            label={id}/>
-                        <PanelContent>
-                            <Hammer onTap={() => this.closePreview()}>
-                                <div
-                                    className={styles.thumbnail}
-                                    style={{'backgroundImage': `url(${browseUrl})`}}>
-                                    <img src={browseUrl} alt={id}/>
-                                </div>
-                            </Hammer>
-                            <div className={styles.details}>
-                                <LabelValue name='dataSet' value={dataSetById[dataSet].name} icon='satellite-dish'/>
-                                <LabelValue name='date' value={date} icon='calendar'/>
-                                <LabelValue name='daysFromTarget' value={daysFromTargetString} icon='calendar-check'/>
-                                <LabelValue name='cloudCover' value={cloudCover + '%'} icon='cloud'/>
+                <Panel
+                    statePath='scenePreview'
+                    className={styles.panel}
+                    modal
+                    onCancel={() => this.closePreview()}>
+                    <PanelHeader
+                        icon='image'
+                        title={'Scene preview'}
+                        label={id}/>
+                    <PanelContent>
+                        <Hammer onTap={() => this.closePreview()}>
+                            <div
+                                className={styles.thumbnail}
+                                style={{'backgroundImage': `url(${browseUrl})`}}>
+                                <img src={browseUrl} alt={id}/>
                             </div>
-                        </PanelContent>
-                        <PanelButtons/>
-                    </Panel>
-                </Portal>
+                        </Hammer>
+                        <div className={styles.details}>
+                            <LabelValue name='dataSet' value={dataSetById[dataSet].name} icon='satellite-dish'/>
+                            <LabelValue name='date' value={date} icon='calendar'/>
+                            <LabelValue name='daysFromTarget' value={daysFromTargetString} icon='calendar-check'/>
+                            <LabelValue name='cloudCover' value={cloudCover + '%'} icon='cloud'/>
+                        </div>
+                    </PanelContent>
+                    <PanelButtons/>
+                </Panel>
             )
         } else
             return null

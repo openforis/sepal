@@ -3,6 +3,7 @@ import {PanelButtonContext} from './toolbar'
 import {PanelWizardContext} from './panelWizard'
 import {connect, select} from 'store'
 import Icon from 'widget/icon'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -118,10 +119,13 @@ class Panel extends React.Component {
 
     renderModal({modal}, content) {
         return modal
-            ? <div className={styles.modalOverlay}>
-                {content}
-            </div>
-            : content
+            ? (
+                <Portal>
+                    <div className={styles.modalOverlay}>
+                        {content}
+                    </div>
+                </Portal>
+            ) : content
     }
 
     render() {

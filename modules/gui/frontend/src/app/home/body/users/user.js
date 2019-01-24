@@ -3,7 +3,6 @@ import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './user.module.css'
@@ -76,71 +75,69 @@ class UserDetails extends React.Component {
         } = this.props
         const newUser = !this.props.userDetails.username
         return (
-            <Portal>
-                <Panel
-                    className={[styles.panel, newUser ? styles.newUser : styles.existingUser].join(' ')}
-                    form={form}
-                    statePath='userDetails'
-                    isActionForm={true}
-                    modal
-                    onApply={userDetails => this.save(userDetails)}
-                    onCancel={() => this.cancel()}>
-                    <PanelHeader
-                        icon='user'
-                        title={msg('user.userDetails.title')}/>
-                    <PanelContent>
-                        <ScrollableContainer>
-                            <Scrollable>
-                                <Input
-                                    label={msg('user.userDetails.form.name.label')}
-                                    autoFocus
-                                    input={name}
-                                    spellCheck={false}
-                                    errorMessage
-                                />
-                                {this.renderUsername(newUser)}
-                                <Input
-                                    label={msg('user.userDetails.form.email.label')}
-                                    input={email}
-                                    spellCheck={false}
-                                    errorMessage
-                                />
-                                <Input
-                                    label={msg('user.userDetails.form.organization.label')}
-                                    input={organization}
-                                    spellCheck={false}
-                                    errorMessage
-                                />
-                                <InputGroup
-                                    label={msg('user.userDetails.form.monthlyLimits.label')}
-                                    errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
-                                    <div className={styles.monthlyLimits}>
-                                        <Input
-                                            label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
-                                            type='number'
-                                            input={monthlyBudgetInstanceSpending}
-                                            spellCheck={false}
-                                        />
-                                        <Input
-                                            label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
-                                            type='number'
-                                            input={monthlyBudgetStorageSpending}
-                                            spellCheck={false}
-                                        />
-                                        <Input
-                                            label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
-                                            type='number'
-                                            input={monthlyBudgetStorageQuota}
-                                            spellCheck={false}
-                                        />
-                                    </div>
-                                </InputGroup>
-                            </Scrollable>
-                        </ScrollableContainer>
-                    </PanelContent>
-                    <PanelButtons/>
-                </Panel>
-            </Portal>
+            <Panel
+                className={[styles.panel, newUser ? styles.newUser : styles.existingUser].join(' ')}
+                form={form}
+                statePath='userDetails'
+                isActionForm={true}
+                modal
+                onApply={userDetails => this.save(userDetails)}
+                onCancel={() => this.cancel()}>
+                <PanelHeader
+                    icon='user'
+                    title={msg('user.userDetails.title')}/>
+                <PanelContent>
+                    <ScrollableContainer>
+                        <Scrollable>
+                            <Input
+                                label={msg('user.userDetails.form.name.label')}
+                                autoFocus
+                                input={name}
+                                spellCheck={false}
+                                errorMessage
+                            />
+                            {this.renderUsername(newUser)}
+                            <Input
+                                label={msg('user.userDetails.form.email.label')}
+                                input={email}
+                                spellCheck={false}
+                                errorMessage
+                            />
+                            <Input
+                                label={msg('user.userDetails.form.organization.label')}
+                                input={organization}
+                                spellCheck={false}
+                                errorMessage
+                            />
+                            <InputGroup
+                                label={msg('user.userDetails.form.monthlyLimits.label')}
+                                errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
+                                <div className={styles.monthlyLimits}>
+                                    <Input
+                                        label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
+                                        type='number'
+                                        input={monthlyBudgetInstanceSpending}
+                                        spellCheck={false}
+                                    />
+                                    <Input
+                                        label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
+                                        type='number'
+                                        input={monthlyBudgetStorageSpending}
+                                        spellCheck={false}
+                                    />
+                                    <Input
+                                        label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
+                                        type='number'
+                                        input={monthlyBudgetStorageQuota}
+                                        spellCheck={false}
+                                    />
+                                </div>
+                            </InputGroup>
+                        </Scrollable>
+                    </ScrollableContainer>
+                </PanelContent>
+                <PanelButtons/>
+            </Panel>
         )
     }
 }

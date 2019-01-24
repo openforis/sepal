@@ -5,7 +5,6 @@ import {msg} from 'translate'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import Portal from 'widget/portal'
 import React from 'react'
 import UserSessions from './userSessions'
 import actionBuilder from 'action-builder'
@@ -77,34 +76,32 @@ class Usage extends React.Component {
 
     renderPanel() {
         return (
-            <Portal>
-                <Panel
-                    className={styles.panel}
-                    statePath='userReport'
-                    modal
-                    onCancel={() => closePanel()}>
-                    <PanelHeader
-                        icon='user'
-                        title={msg('user.report.title')}/>
-                    <PanelContent>
-                        <ScrollableContainer>
-                            <Scrollable>
-                                <div className={styles.report}>
-                                    <div className={styles.section}>
-                                        <Label msg={msg('user.report.resources.title')} size='large'/>
-                                        {this.renderResources()}
-                                    </div>
-                                    <div className={styles.section}>
-                                        <Label msg={msg('user.report.sessions.title')} size='large'/>
-                                        <UserSessions/>
-                                    </div>
+            <Panel
+                className={styles.panel}
+                statePath='userReport'
+                modal
+                onCancel={() => closePanel()}>
+                <PanelHeader
+                    icon='user'
+                    title={msg('user.report.title')}/>
+                <PanelContent>
+                    <ScrollableContainer>
+                        <Scrollable>
+                            <div className={styles.report}>
+                                <div className={styles.section}>
+                                    <Label msg={msg('user.report.resources.title')} size='large'/>
+                                    {this.renderResources()}
                                 </div>
-                            </Scrollable>
-                        </ScrollableContainer>
-                    </PanelContent>
-                    <PanelButtons/>
-                </Panel>
-            </Portal>
+                                <div className={styles.section}>
+                                    <Label msg={msg('user.report.sessions.title')} size='large'/>
+                                    <UserSessions/>
+                                </div>
+                            </div>
+                        </Scrollable>
+                    </ScrollableContainer>
+                </PanelContent>
+                <PanelButtons/>
+            </Panel>
         )
     }
 

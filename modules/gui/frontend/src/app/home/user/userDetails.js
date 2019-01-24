@@ -8,7 +8,6 @@ import {msg} from 'translate'
 import Notifications from 'app/notifications'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import Portal from 'widget/portal'
 import React from 'react'
 import api from 'api'
 import styles from './userDetails.module.css'
@@ -135,20 +134,18 @@ class UserDetails extends React.Component {
     render() {
         const {form} = this.props
         return (
-            <Portal>
-                <Panel
-                    className={styles.panel}
-                    form={form}
-                    statePath='userDetails'
-                    modal
-                    onApply={userDetails => this.updateUserDetails(userDetails)}
-                    onCancel={() => this.cancel()}>
-                    <PanelHeader
-                        icon='user'
-                        title={msg('user.userDetails.title')}/>
-                    {this.renderPanel()}
-                </Panel>
-            </Portal>
+            <Panel
+                className={styles.panel}
+                form={form}
+                statePath='userDetails'
+                modal
+                onApply={userDetails => this.updateUserDetails(userDetails)}
+                onCancel={() => this.cancel()}>
+                <PanelHeader
+                    icon='user'
+                    title={msg('user.userDetails.title')}/>
+                {this.renderPanel()}
+            </Panel>
         )
     }
 }

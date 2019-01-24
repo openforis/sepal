@@ -72,7 +72,7 @@ export class Pageable extends React.Component {
     render() {
         const {itemCount, pageCount, pageNumber} = this.state
         const {children} = this.props
-        return itemCount ? (
+        return (
             <Provider value={{
                 itemCount,
                 pageCount,
@@ -87,7 +87,7 @@ export class Pageable extends React.Component {
             }}>
                 {children}
             </Provider>
-        ) : null
+        )
     }
 }
 
