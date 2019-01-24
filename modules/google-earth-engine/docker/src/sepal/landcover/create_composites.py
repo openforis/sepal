@@ -1,5 +1,5 @@
 import ee
-import landcoverPackage
+from landcoverPackage import landsat
 
 from ..aoi import Aoi
 from ..export.image_to_asset import ImageToAsset
@@ -15,12 +15,18 @@ class CreateComposites(ThreadTask):
     def __init__(self, credentials, spec):
         super(CreateComposites, self).__init__('create_composites')
         self.credentials = credentials
-        self.asset_path = spec['assetPath']
-        self.from_year = spec['startYear']
-        self.to_year = spec['endYear']
-        self.aoi = Aoi.create(spec['aoi']).geometry()
-        self.sensors = spec['sensors']
-        self.scale = spec['scale']
+        recipe = spec['recipe']
+        model = recipe['model']
+        self.asset_path = recipe.get('title', recipe['placeholder'])
+        self.from_year = model['period']['startYear']
+        self.to_year = model['period']['endYear']
+        self.aoi = Aoi.create(model['aoi']).geometry()
+        self.sensors = ['L8', 'L7']
+        self.scale = 30
+        composite_options = model['compositeOptions']
+        self.cloud_threshold = composite_options['cloudThreshold']
+        self.corrections = composite_options['corrections']
+        self.mask = composite_options['mask']
         self.tasks = []
 
     def run(self):
@@ -32,7 +38,7 @@ class CreateComposites(ThreadTask):
     def _create_composites(self):
         create_asset_image_collection(to_asset_id(self.asset_path + '/composites'))
         self.tasks = [
-            self._create_composite_task(year, self.aoi)
+            self._create_composite_task(year)
             for year in range(self.from_year, self.to_year + 1)
         ]
         return Task.submit_all(self.tasks)
@@ -42,11 +48,9 @@ class CreateComposites(ThreadTask):
         total = len(self.tasks)
         return 'Created composite {0} of {1}'.format(completed, total)
 
-    def _create_composite_task(self, year, aoi):
-        composite = create_composite(
-            year=year,
-            aoi=aoi,
-            sensors=self.sensors
+    def _create_composite_task(self, year):
+        composite = self._create_composite(
+            year=year
         )
         return self.dependent(
             ImageToAsset(
@@ -59,19 +63,27 @@ class CreateComposites(ThreadTask):
                 retries=5
             ))
 
+    def _create_composite(self, year):
+        '''
+        Creates composite for the given year and AOI, using provided sensors.
+        :param year: The year to create composite for
+        :param aoi: The area of interest as an ee.Feature
+        :param sensors: A list of sensors
+        :return: A composite as an ee.Image
+        '''
+        functions = landsat.functions()
+        env = functions.env
+        env.metadataCloudCoverMax = self.cloud_threshold + 1 # Add 1 since it's a strict less_then filtering
+        env.cloudMask = 'CLOUDS' in self.mask
+        env.hazeMask = 'HAZE' in self.mask
+        env.shadowMask = 'SHADOW' in self.mask
+        env.brdfCorrect = 'BRDF' in self.corrections
+        env.terrainCorrection = 'TERRAIN' in self.corrections
+
+        # TODO:
+        return functions.getLandsat(self.aoi, year)
+
     def __str__(self):
         return '{0}()'.format(
             type(self).__name__, self.from_year, self.to_year, str(self.aoi)
         )
-
-
-def create_composite(year, aoi, sensors):
-    '''
-    Creates composite for the given year and AOI, using provided sensors.
-    :param year: The year to create composite for
-    :param aoi: The area of interest as an ee.Feature
-    :param sensors: A list of sensors
-    :return: A composite as an ee.Image
-    '''
-    return landcoverPackage.composite(aoi=aoi, year=year, sensors=sensors) \
-        .set('system:time_start', ee.Date.fromYMD(year, 1, 1).millis())

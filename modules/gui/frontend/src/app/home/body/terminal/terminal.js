@@ -1,4 +1,4 @@
-import './gateone'
+// import './gateone'
 import './gateone.css'
 import {msg} from 'translate'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'

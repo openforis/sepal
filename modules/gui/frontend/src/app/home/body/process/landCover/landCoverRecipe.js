@@ -134,7 +134,11 @@ const initRecipe = recipe => {
     }).dispatch()
 
     actions.setCompositeOptions({
-        model: {}
+        model: {
+            cloudThreshold: 100,
+            corrections: ['BRDF'],
+            mask: ['CLOUDS', 'HAZE', 'SHADOW']
+        }
     }).dispatch()
 
     actions.setStatus(Status.UNINITIALIZED).dispatch()
@@ -147,12 +151,15 @@ export const createComposites = recipe => {
         operation: 'sepal.landcover.create_composites',
         params: {
             title: taskTitle,
-            assetPath: recipe.title || recipe.placeholder,
-            startYear: recipe.model.period.startYear,
-            endYear: recipe.model.period.endYear,
-            aoi: recipe.model.aoi,
-            sensors: ['L8', 'L7'], // TODO: Make sensors configurable
-            scale: 30
+            // assetPath: recipe.title || recipe.placeholder,
+            // startYear: recipe.model.period.startYear,
+            // endYear: recipe.model.period.endYear,
+            // aoi: recipe.model.aoi,
+            // sensors: ['L8', 'L7'], // TODO: Make sensors configurable
+            // scale: 30
+            //
+
+            recipe: _.omit(recipe, ['ui'])
         }
     }).subscribe(task => RecipeActions(recipe.id).setCompositeTaskId(task.id).dispatch())
 }
