@@ -1,9 +1,9 @@
 import * as PropTypes from 'prop-types'
+import React from 'react'
 import {AnimateReplacement} from 'widget/animate'
 import {Button} from 'widget/button'
-import {PanelContent, PanelHeader} from 'widget/panel'
 import Icon from 'widget/icon'
-import React from 'react'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import styles from './panelSections.module.css'
 
 export default class PanelSections extends React.Component {
@@ -47,8 +47,10 @@ class Section extends React.Component {
         return (
             <div className={section.value ? styles.right : styles.left}>
                 <PanelHeader>
-                    {this.renderSectionIcon(section)}
-                    <span>{section.title}</span>
+                    <span className={styles.header}>
+                        {this.renderSectionIcon(section)}
+                        <span className={styles.title}>{section.title}</span>
+                    </span>
                 </PanelHeader>
                 <PanelContent>
                     {section.component}
