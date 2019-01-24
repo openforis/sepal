@@ -1,5 +1,5 @@
-import {isMobile} from 'widget/userAgent'
 import {connect} from 'store'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'

@@ -1,7 +1,7 @@
 import {select} from 'store'
 
 export const isMobile = () => {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera
     if (/windows phone/i.test(userAgent))
         return true
 

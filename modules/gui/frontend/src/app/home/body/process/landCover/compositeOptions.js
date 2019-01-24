@@ -1,14 +1,14 @@
-import PropTypes from 'prop-types'
-import React from 'react'
+import {Field, form} from 'widget/form'
+import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
-import {Field, form} from 'widget/form'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
+import PropTypes from 'prop-types'
+import React from 'react'
 import Slider from 'widget/slider'
 import styles from './compositeOptions.module.css'
-import {RecipeActions, recipePath, RecipeState} from './landCoverRecipe'
 
 const fields = {
     cloudThreshold: new Field(),

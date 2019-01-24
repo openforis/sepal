@@ -1,5 +1,6 @@
 import {Subject} from 'rxjs'
 import {connect as connectToRedux} from 'react-redux'
+import {isMobile} from 'widget/userAgent'
 import {takeUntil} from 'rxjs/operators'
 import {toPathList} from 'collections'
 import PropTypes from 'prop-types'
@@ -8,7 +9,6 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
-import {isMobile} from 'widget/userAgent'
 
 let storeInstance = null
 const storeInitListeners = []

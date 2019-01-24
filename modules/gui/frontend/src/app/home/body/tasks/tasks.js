@@ -5,9 +5,9 @@ import {Progress} from 'widget/progress'
 import {connect} from 'store'
 import React from 'react'
 import api from 'api'
-import styles from './tasks.module.css'
-import look from 'style/look.module.css'
 import clipboard from 'clipboard'
+import look from 'style/look.module.css'
+import styles from './tasks.module.css'
 
 const mapStateToProps = (state) => ({
     tasks: state.tasks,
