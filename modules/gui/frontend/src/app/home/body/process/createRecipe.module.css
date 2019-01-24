@@ -1,6 +1,5 @@
 .panel {
-    max-height: fit-content;
-    max-width: 40rem;
+    width: 40rem;
 }
 
 .recipeTypes {
