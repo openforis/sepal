@@ -13,19 +13,26 @@ export class Pageable extends React.Component {
         pageNumber: 1
     }
 
+    componentDidMount() {
+        this.update()
+    }
+
     componentDidUpdate(prevProps) {
         if (!_.isEqual(prevProps, this.props)) {
-            const {items, limit} = this.props
-            const itemCount = items.length
-            const pageCount = Math.max(Math.ceil(itemCount / limit), 1)
-            const watchUnchanged = _.isEqual(prevProps.watch, this.props.watch)
-            this.setState(prevState => ({
-                ...prevState,
-                pageCount,
-                itemCount,
-                pageNumber: prevState.pageNumber && watchUnchanged ? prevState.pageNumber : 1
-            }))
+            this.update()
         }
+    }
+
+    update() {
+        const {items, limit} = this.props
+        const itemCount = items.length
+        const pageCount = Math.max(Math.ceil(itemCount / limit), 1)
+        this.setState(prevState => ({
+            ...prevState,
+            pageCount,
+            itemCount,
+            pageNumber: 1
+        }))
     }
 
     firstPage() {
@@ -42,7 +49,7 @@ export class Pageable extends React.Component {
         }))
     }
 
-    prevPage() {
+    previousPage() {
         this.setState(prevState => ({
             ...prevState,
             pageNumber: Math.max(prevState.pageNumber - 1, 1)
@@ -63,30 +70,31 @@ export class Pageable extends React.Component {
     }
 
     render() {
-        return (
+        const {itemCount, pageCount, pageNumber} = this.state
+        const {children} = this.props
+        return itemCount ? (
             <Provider value={{
-                itemCount: this.state.itemCount,
-                pageCount: this.state.pageCount,
-                pageNumber: this.state.pageNumber,
-                isFirstPage: this.state.pageNumber === 1,
-                isLastPage: this.state.pageNumber === this.state.pageCount,
+                itemCount,
+                pageCount,
+                pageNumber,
+                isFirstPage: pageNumber === 1,
+                isLastPage: pageNumber === pageCount,
                 pageItems: this.getPageItems(),
                 firstPage: () => this.firstPage(),
                 lastPage: () => this.lastPage(),
-                prevPage: () => this.prevPage(),
+                previousPage: () => this.previousPage(),
                 nextPage: () => this.nextPage()
             }}>
-                {this.props.children}
+                {children}
             </Provider>
-        )
+        ) : null
     }
 }
 
 Pageable.propTypes = {
     children: PropTypes.any.isRequired,
     items: PropTypes.array.isRequired,
-    limit: PropTypes.number.isRequired,
-    watch: PropTypes.array.isRequired
+    limit: PropTypes.number.isRequired
 }
 
 export const PageData = props =>
@@ -117,7 +125,7 @@ export const PageControls = props => {
                 size='large'
                 shape='circle'
                 icon='backward'
-                onClick={() => pageable.prevPage()}
+                onClick={() => pageable.previousPage()}
                 disabled={pageable.isFirstPage}/>
             <Button chromeless size='large'>
                 <span>{pageable.pageNumber}</span>
@@ -138,9 +146,9 @@ export const PageControls = props => {
                 disabled={pageable.isLastPage}/>
         </ButtonGroup>
 
-    const renderCustomControls = ({isFirstPage, isLastPage, firstPage, lastPage, prevPage, nextPage}) =>
+    const renderCustomControls = ({isFirstPage, isLastPage, firstPage, lastPage, previousPage, nextPage}) =>
         <React.Fragment>
-            {props.children({isFirstPage, isLastPage, firstPage, lastPage, prevPage, nextPage})}
+            {props.children({isFirstPage, isLastPage, firstPage, lastPage, previousPage, nextPage})}
         </React.Fragment>
 
     return (

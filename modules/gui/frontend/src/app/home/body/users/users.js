@@ -364,7 +364,6 @@ class Users extends React.Component {
                 <div tabIndex='0' onKeyDown={e => this.onKeyDown(e)}>
                     <Pageable
                         items={this.getFilteredUsers()}
-                        watch={[this.state.sortingOrder, this.state.sortingDirection, this.state.filter]}
                         limit={15}>
                         <SectionLayout>
                             <TopBar label={msg('home.sections.users')}/>
