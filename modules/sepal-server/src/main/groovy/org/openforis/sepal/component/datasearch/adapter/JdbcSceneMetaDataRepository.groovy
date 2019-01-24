@@ -58,14 +58,14 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
             SELECT id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, 
                    sun_azimuth, sun_elevation, browse_url, update_time,
                    
-                    (1 - ?) * cloud_cover / 100.0 + ? *
+                    (1.0 - ?) * cloud_cover / 100.0 + ? *
                     LEAST(
                         ABS(day_of_year - ?),
-                        365 - ABS(day_of_year - ?)) / 182.0 as sort_weight,
+                        365.0 - ABS(day_of_year - ?)) / 182.0 as sort_weight,
                         
                     LEAST(
                         ABS(day_of_year - ?),
-                        365 - ABS(day_of_year - ?)) days_from_target_date
+                        365.0 - ABS(day_of_year - ?)) days_from_target_date
                         
             FROM scene_meta_data
             WHERE scene_area_id = ?
