@@ -792,7 +792,49 @@
                 "compositeOptions": {
                     "title": "Composite options",
                     "button": "CMP",
-                    "tooltip": "Configure how composite is created"
+                    "tooltip": "Configure how composite is created",
+                    "form": {
+                        "cloudThreshold": {
+                            "label": "Max cloud-cover",
+                            "tooltip": "Exclude scenes with more clouds than the specified value.",
+                            "off": "Only include cloud-free scenes",
+                            "value": "Exclude scenes with more than {value}% clouds",
+                            "max": "Include all scenes, independent on cloud-cover"},
+                        "corrections": {
+                            "label": "Corrections",
+                            "surfaceReflectance": {
+                                "label": "SR",
+                                "tooltip": "Use scenes atmospherically corrected surface reflectance."
+                            },
+                            "brdf": {
+                                "label": "BRDF",
+                                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+                            },
+                            "terrain": {
+                                "label": "TERRAIN",
+                                "tooltip": "Apply terrain correction."
+                            }
+                        },
+                        "mask": {
+                            "label": "Mask",
+                            "clouds": {
+                                "label": "Clouds",
+                                "tooltip": "Apply more aggressive cloud masking."
+                            },
+                            "haze": {
+                                "label": "Haze",
+                                "tooltip": "Mask haze"
+                            },
+                            "shadow": {
+                                "label": "Shadow",
+                                "tooltip": "Mask Shadow"
+                            },
+                            "snow": {
+                                "label": "Snow",
+                                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
+                            }
+                        }
+                    }
                 },
                 "createComposites": {
                     "tooltip": "Create composites",

@@ -1,6 +1,7 @@
 import './gateone'
 import './gateone.css'
-import {Content, SectionLayout} from 'widget/sectionLayout'
+import {msg} from 'translate'
+import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {connect} from 'store'
 import {currentUser} from 'user'
 import PropTypes from 'prop-types'
@@ -22,6 +23,7 @@ class Terminal extends React.Component {
     render() {
         return (
             <SectionLayout>
+                <TopBar label={msg('home.sections.terminal')}/>
                 <Content menuPadding edgePadding>
                     <div id='terminal'>
                         <div className='container'>
