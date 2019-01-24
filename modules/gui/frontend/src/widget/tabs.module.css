@@ -25,7 +25,7 @@
 
 .newTab:hover {
     color: var(--look-default-hover-color);
-    background-color: #2B2B29;
+    background-color: rgb(43, 43, 41);
     border-radius: var(--button-border-radius);
 }
 
@@ -38,7 +38,7 @@
     position: relative;
     display: flex;
     flex-grow: 1;
-    background-color: #2B2B29;
+    background-color: rgb(43, 43, 41);
     border-bottom: 3px solid var(--tab-default-border-color);
     border-top-right-radius: 0.5rem;
     border-top-left-radius: 0.5rem;
@@ -68,12 +68,12 @@
 }
 
 .tab.regular.selected {
-    background-color: #1c1c1c;
+    background-color: rgb(28, 28, 28);
     border-bottom: 3px solid var(--tab-selected-border-color);
 }
 
 .tab:hover {
-    background-color: #1c1c1c;
+    background-color: rgb(28, 28, 28);
 }
 
 /* Prevent overflowing title from covering close button */
@@ -139,7 +139,7 @@ span.title.placeholder {
     position: absolute;
     right: 1.7rem;
     top: 0;
-    background: linear-gradient(to right, transparent, #2B2B29 100%);
+    background: linear-gradient(to right, rgba(43, 43, 41, 0), rgb(43, 43, 41) 100%);
     z-index: 1;
 }
 
@@ -148,11 +148,11 @@ span.title.placeholder {
 }
 
 .tab:hover .title:before {
-    background: linear-gradient(to right, transparent, #1c1c1c 100%);
+    background: linear-gradient(to right, rgba(28, 28, 28, 0), rgb(28, 28, 28) 100%);
 }
 
 .tab.selected .title:before {
-    background: linear-gradient(to right, transparent, #1c1c1c 100%);
+    background: linear-gradient(to right, rgba(28, 28, 28, 0), rgb(28, 28, 28) 100%);
 }
 
 .tab input {
