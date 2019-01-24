@@ -55,7 +55,6 @@ class Revisions extends React.Component {
                     form={form}
                     isActionForm={true}
                     statePath={recipePath(recipeId, 'ui')}
-                    center
                     modal
                     onApply={({revision}) => this.revertToRevision(revision)}
                     onCancel={() => showRevisionsPanel(recipeId, false)}>

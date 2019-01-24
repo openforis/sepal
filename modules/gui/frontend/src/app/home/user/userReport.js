@@ -79,7 +79,6 @@ class Usage extends React.Component {
                 <Panel
                     className={styles.panel}
                     statePath='userReport'
-                    center
                     modal
                     onCancel={() => closePanel()}>
                     <PanelHeader

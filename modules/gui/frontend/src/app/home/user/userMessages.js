@@ -222,7 +222,6 @@ class UserMessages extends React.Component {
                 <Panel
                     className={styles.panel}
                     statePath='userMessages'
-                    center
                     modal
                     onCancel={() => closePanel()}>
                     <PanelHeader

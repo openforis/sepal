@@ -1,3 +1,16 @@
+.modalOverlay {
+    --modal-background: hsla(0, 0%, 5%, .8);
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--modal-background);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
 .panel {
     --margin-left: calc(var(--menu-clearance) + .5rem);
@@ -10,7 +23,6 @@
     --scaling-factor: .8 !important;
     --header-color: #e8e8e8;
     --max-width: 60rem;
-    position: absolute;
     width: calc(100% - var(--margin-left) - var(--margin-right));
     max-width: var(--max-width);
     background-color: var(--panel-default-background-color);
@@ -26,18 +38,22 @@
 }
 
 .panel.top {
+    position: absolute;
     top: var(--margin-top);
 }
 
 .panel.bottom {
+    position: absolute;
     bottom: var(--margin-bottom);
 }
 
 .panel.right {
+    position: absolute;
     right: var(--margin-right);
 }
 
 .panel.center {
+    position: absolute;
     top: .5rem;
     bottom: .5rem;
     left: calc(var(--menu-clearance) + .5rem);
@@ -45,34 +61,15 @@
     margin: auto;
 }
 
-.modal .panel.center {
-    --top-clearance: .5rem;
-    --bottom-clearance: .5rem;
-    --left-clearance: .5rem;
-    --right-clearance: .5rem;
-    --vertical-clearance: calc(var(--top-clearance) + var(--bottom-clearance));
-    --horizontal-clearance: calc(var(--left-clearance) + var(--right-clearance));
-    left: var(--left-clearance);
-    right: var(--right-clearance);
-    top: var(--top-clearance);
-    bottom: var(--bottom-clearance);
-    height: calc(100vh - var(--vertical-clearance));
-    width: calc(100vw - var(--horizontal-clearance));
+.panel.modal {
+    left: .5rem;
+    right: .5rem;
+    top: .5rem;
+    bottom: .5rem;
 }
 
 .panel.inline {
     position: relative;
-}
-
-.modal {
-    --modal-background: hsla(0, 0%, 5%, .8);
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: var(--modal-background);
-    z-index: 2;
 }
 
 /* Header */

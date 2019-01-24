@@ -39,7 +39,6 @@ class ScenePreview extends React.Component {
                     <Panel
                         statePath='scenePreview'
                         className={styles.panel}
-                        center
                         modal
                         onCancel={() => this.closePreview()}>
                         <PanelHeader

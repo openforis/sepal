@@ -140,7 +140,6 @@ class UserDetails extends React.Component {
                     className={styles.panel}
                     form={form}
                     statePath='userDetails'
-                    center
                     modal
                     onApply={userDetails => this.updateUserDetails(userDetails)}
                     onCancel={() => this.cancel()}>

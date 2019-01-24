@@ -149,7 +149,6 @@ class CreateRecipe extends React.Component {
                 <Panel
                     className={styles.panel}
                     statePath='createRecipe'
-                    center
                     modal={!trigger}
                     onCancel={() => this.closePanel()}>
                     {selectedRecipeType ? this.renderRecipeType(selectedRecipeType) : this.renderRecipeTypes()}

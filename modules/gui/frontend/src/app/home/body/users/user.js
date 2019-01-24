@@ -81,7 +81,6 @@ class UserDetails extends React.Component {
                     form={form}
                     statePath='userDetails'
                     isActionForm={true}
-                    center
                     modal
                     onApply={userDetails => this.save(userDetails)}
                     onCancel={() => this.cancel()}>

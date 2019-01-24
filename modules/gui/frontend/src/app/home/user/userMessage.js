@@ -80,7 +80,6 @@ class UserMessage extends React.Component {
                     form={form}
                     isActionForm={true}
                     statePath='userMessage'
-                    center
                     modal
                     onApply={message => onApply(message)}
                     onCancel={() => onCancel()}>

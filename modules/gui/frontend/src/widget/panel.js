@@ -91,9 +91,10 @@ class Panel extends React.Component {
         this.closePanel()
     }
 
-    renderForm({form, onApply, top, bottom, left, right, center, inline, panelButtonPosition, className}, content) {
+    renderForm({modal, form, onApply, top, bottom, left, right, center, inline, panelButtonPosition, className}, content) {
         const classNames = [
             styles.panel,
+            modal && styles.modal,
             top || (panelButtonPosition && panelButtonPosition.top) ? styles.top : null,
             bottom || (panelButtonPosition && panelButtonPosition.bottom) ? styles.bottom : null,
             right || (panelButtonPosition && panelButtonPosition.right) ? styles.right : null,
@@ -117,7 +118,9 @@ class Panel extends React.Component {
 
     renderModal({modal}, content) {
         return modal
-            ? <div className={styles.modal}>{content}</div>
+            ? <div className={styles.modalOverlay}>
+                {content}
+            </div>
             : content
     }
 
@@ -149,7 +152,7 @@ class Panel extends React.Component {
                                     onDone: () => this.done()
                                 }}>
                                     {this.renderModal({modal},
-                                        this.renderForm({form, onApply, top, bottom, left, right, center, inline, panelButtonPosition, className}, children)
+                                        this.renderForm({modal, form, onApply, top, bottom, left, right, center, inline, panelButtonPosition, className}, children)
                                     )}
                                 </PanelContext.Provider>
                             )}

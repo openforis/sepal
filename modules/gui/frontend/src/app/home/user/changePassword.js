@@ -88,7 +88,6 @@ class ChangePassword extends React.Component {
                     form={form}
                     isActionForm={true}
                     statePath='userPassword'
-                    center
                     modal
                     onApply={userPasswords => this.changePassword(userPasswords)}
                     onCancel={() => this.cancel()}>
