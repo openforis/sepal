@@ -40,14 +40,14 @@ class SceneAreaMarker extends React.Component {
 
     renderSceneAreaCount(zoom, fontSize, count) {
         return zoom > 4
-            ? <text x={0} y={0} fontSize={fontSize} textAnchor='middle' alignmentBaseline='central'>{count}</text>
+            ? <text x={0} y={0} fontSize={fontSize} textAnchor='middle' dominantBaseline='middle'>{count}</text>
             : null
     }
 
     render() {
         const {zoom, sceneAreaId, selectedSceneCount, loading} = this.props
         const scale = Math.min(1, Math.pow(zoom, 2.5) / Math.pow(8, 2.5))
-        const size = `${1.5 * 4 * scale}rem`
+        const size = `${1.5 * 4 * scale}em`
         return (
             <MapObject
                 lat={this.center.lat()}
