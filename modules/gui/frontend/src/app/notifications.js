@@ -1,37 +1,24 @@
 import {connect} from 'react-redux'
 import {dispatchable} from 'store'
 import {msg} from 'translate'
+import {v4 as uuid} from 'uuid'
 import ReactNotifications, * as notifications from 'react-notification-system-redux'
+import _ from 'lodash'
 
-const mapStateToProps = state => {
-    return ({
-        notifications: state.notifications,
-        style: {
-            NotificationItem: {
-                DefaultStyle: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                    color: '#fff',
-                    lineHeight: '1.5'
-                }
-            },
-            Title: {
-                DefaultStyle: {}
+const mapStateToProps = state => ({
+    notifications: state.notifications,
+    style: {
+        NotificationItem: {
+            DefaultStyle: {
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                color: '#fff',
+                lineHeight: '1.5'
             }
+        },
+        Title: {
+            DefaultStyle: {}
         }
-    })
-}
-
-const toOpts = ({level, messageId, values = {}, message, autoDismiss = 5}) => ({
-    title: msg([messageId, level, 'title'].join('.'), values),
-    message: message || msg([messageId, level, 'message'].join('.'), values, ' '),
-    position: 'tr',
-    autoDismiss,
-    dismissible: 'click',
-    action: null,
-    children: null,
-    onAdd: null,
-    onRemove: null,
-    uid: null
+    }
 })
 
 const errorMessage = error => {
@@ -42,18 +29,44 @@ const errorMessage = error => {
         : msg('notifications.error.generic')
 }
 
-const notify = (level, messageId, values) =>
-    dispatchable(notifications[level](toOpts({level, messageId, values})))
-
 const Notifications = connect(mapStateToProps)(ReactNotifications)
-Notifications.caught = (messageId, values, error) => dispatchable(notifications.error(toOpts({
-    level: 'error', messageId, values, message: errorMessage(error), autoDismiss: 0
-})))
-Notifications.success = (messageId, values) => notify('success', messageId, values)
-Notifications.error = (messageId, values) => notify('error', messageId, values)
-Notifications.warning = (messageId, values) => notify('warning', messageId, values)
-Notifications.info = (messageId, values) => notify('info', messageId, values)
-Notifications.hide = dispatchable(notifications.hide)
-Notifications.removeAll = dispatchable(notifications.removeAll)
+
+Notifications.show = (level, {messageId, values = {}, content, uid = uuid(), ...options}) =>
+    dispatchable(
+        notifications[level](_.defaults(options, {
+            title: messageId && msg([messageId, level, 'title'].join('.'), values),
+            message: messageId && msg([messageId, level, 'message'].join('.'), values, ' '),
+            action: null,
+            position: 'tr',
+            dismissible: 'click',
+            autoDismiss: 5,
+            children: content && content(uid),
+            uid
+        }))
+    )
+
+Notifications.caught = (messageId, values, error) =>
+    Notifications.show('error', {messageId, values, message: errorMessage(error), autoDismiss: 0})
+
+Notifications.success = (messageId, values) =>
+    Notifications.show('error', {messageId, values})
+
+Notifications.success = (messageId, values) =>
+    Notifications.show('success', {messageId, values})
+
+Notifications.error = (messageId, values) =>
+    Notifications.show('error', {messageId, values})
+
+Notifications.warning = (messageId, values) =>
+    Notifications.show('warning', {messageId, values})
+
+Notifications.info = (messageId, values) =>
+    Notifications.show('info', {messageId, values})
+
+Notifications.hide = uid =>
+    dispatchable(notifications.hide(uid))
+
+Notifications.removeAll = () =>
+    dispatchable(notifications.removeAll())
 
 export default Notifications
