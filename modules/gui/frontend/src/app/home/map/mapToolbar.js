@@ -1,10 +1,10 @@
-import {Toolbar, ToolbarButton} from 'widget/toolbar'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {sepalMap} from './map'
 import Labels from 'app/home/map/labels'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Toolbar, {ToolbarButton} from 'widget/toolbar'
 import styles from './mapToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => ({

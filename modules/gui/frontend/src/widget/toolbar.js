@@ -69,8 +69,7 @@ Toolbar.propTypes = {
     vertical: PropTypes.any
 }
 
-Toolbar = connect(mapStateToProps)(Toolbar)
-export {Toolbar}
+export default connect(mapStateToProps)(Toolbar)
 
 export class ToolbarButton extends React.Component {
     render() {

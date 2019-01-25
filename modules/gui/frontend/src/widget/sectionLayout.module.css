@@ -38,7 +38,6 @@
 }
 
 .content {
-    --edge-padding: 2.5rem 1.5rem 0.5rem 1.5rem;
     --app-menu-padding: .5rem;
     --toolbar-edge-margin: .5rem;
     --toolbar-button-size: 2.5rem;
@@ -50,13 +49,8 @@
     --margin-top: 0rem;
 }
 
-@media only screen and (max-width: 500px) {
-    .content {
-        --edge-padding: .5rem 1.5rem;
-    }
-}
-
 .content.edgePadding {
+    --edge-padding: 2.5rem 1.5rem 0.5rem 1.5rem;
     padding: var(--edge-padding);
 }
 
@@ -71,7 +65,7 @@
 
 @media only screen and (max-width: 500px) {
     .content.edgePadding {
-        --edge-padding: .5rem;
+        --edge-padding: 1.5rem 1.5rem 0.5rem 1.5rem;
     }
     .content.menuPadding {
         --left-padding: calc(var(--menu-clearance) + .5rem);

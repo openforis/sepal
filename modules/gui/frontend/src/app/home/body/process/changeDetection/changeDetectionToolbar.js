@@ -1,4 +1,3 @@
-import {PanelButton, Toolbar} from 'widget/toolbar'
 import {RecipeState, recipePath} from './changeDetectionRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -7,6 +6,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import Retrieve from './retrieve/retrieve'
 import Source from './source/source'
+import Toolbar, {PanelButton} from 'widget/toolbar'
 import TrainingData from './trainingData/trainingData'
 import styles from './changeDetectionToolbar.module.css'
 

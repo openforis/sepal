@@ -1,6 +1,6 @@
-import {recipe} from 'app/home/body/process/recipe'
 import {RecipeState, recipePath} from './timeSeriesRecipe'
 import {connect, select} from 'store'
+import {recipe} from 'app/home/body/process/recipe'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import MapToolbar from 'app/home/map/mapToolbar'

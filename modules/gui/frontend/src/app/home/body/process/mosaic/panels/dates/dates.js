@@ -1,17 +1,17 @@
-import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {initValues} from 'app/home/body/process/recipe'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {msg} from 'translate'
-import DatePicker from 'widget/datePicker'
 import {ErrorMessage, Field, form} from 'widget/form'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {initValues} from 'app/home/body/process/recipe'
+import {msg} from 'translate'
+import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
+import DatePicker from 'widget/datePicker'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
+import PropTypes from 'prop-types'
+import React from 'react'
 import SeasonSelect from 'widget/seasonSelect'
 import Slider from 'widget/slider'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import moment from 'moment'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -212,7 +212,6 @@ const parseYear = dateString =>
 Dates.propTypes = {
     recipeId: PropTypes.string
 }
-
 
 const valuesToModel = values => {
     const DATE_FORMAT = 'YYYY-MM-DD'

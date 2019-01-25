@@ -1,6 +1,6 @@
-import {recipe} from 'app/home/body/process/recipe'
 import {RecipeState, Status, recipePath} from './landCoverRecipe'
 import {connect, select} from 'store'
+import {recipe} from 'app/home/body/process/recipe'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import AssemblyPreview from './assemblyPreview'

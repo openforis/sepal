@@ -1,4 +1,3 @@
-import {PanelButton, Toolbar} from 'widget/toolbar'
 import {RecipeState, SceneSelectionType, recipePath} from '../timeSeriesRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -10,6 +9,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import Retrieve from 'app/home/body/process/timeSeries/panels/retrieve/retrieve'
 import Sources from 'app/home/body/process/timeSeries/panels/sources/sources'
+import Toolbar, {PanelButton} from 'widget/toolbar'
 import styles from './timeSeriesToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
