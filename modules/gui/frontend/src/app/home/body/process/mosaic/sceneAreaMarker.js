@@ -11,7 +11,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         selectedSceneCount: selectedScenes.length,
         loading: recipeState('ui.autoSelectingScenes'),
-        zoom: state.map.zoom
+        zoom: state.map.zoom || googleMap.getZoom()
     }
 }
 
