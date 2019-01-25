@@ -8,7 +8,6 @@ import MapStatus from 'widget/mapStatus'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
-import styles from './mosaicPreview.module.css'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -55,19 +54,15 @@ class MosaicPreview extends React.Component {
             ...prevState,
             error:
                 <div>
-                    <div>
-                        {message}
-                        <div className={styles.retry}>
-                            <Button
-                                chromeless
-                                look='transparent'
-                                shape='pill'
-                                icon='sync'
-                                label={msg('button.retry')}
-                                onClick={() => this.reload()}
-                            />
-                        </div>
-                    </div>
+                    {message}
+                    <Button
+                        chromeless
+                        look='transparent'
+                        shape='pill'
+                        icon='sync'
+                        label={msg('button.retry')}
+                        onClick={() => this.reload()}
+                    />
                 </div>
         }))
     }
