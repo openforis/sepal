@@ -73,13 +73,15 @@ export function connect(mapStateToProps) {
 
         class AddEnabledProp extends Component {
             render() {
-                return <EnabledContext.Consumer>
-                    {enabled =>
-                        <ConnectedComponent {...this.props} enabled={enabled}>
-                            {this.props.children}
-                        </ConnectedComponent>
-                    }
-                </EnabledContext.Consumer>
+                return (
+                    <EnabledContext.Consumer>
+                        {enabled =>
+                            <ConnectedComponent {...this.props} enabled={enabled}>
+                                {this.props.children}
+                            </ConnectedComponent>
+                        }
+                    </EnabledContext.Consumer>
+                )
             }
         }
 
@@ -143,10 +145,11 @@ export function connect(mapStateToProps) {
             componentDidUpdate(prevProps) {
                 const wasEnabled = prevProps.enabled
                 const isEnabled = this.props.enabled
-                if (wasEnabled !== true && isEnabled === true && this.onEnable)
+                if (this.onEnable && wasEnabled !== true && isEnabled === true) {
                     this.onEnable()
-                else if (wasEnabled !== false && isEnabled === false && this.onDisable)
+                } else if (this.onDisable && wasEnabled !== false && isEnabled === false) {
                     this.onDisable()
+                }
             }
         }
 
@@ -154,6 +157,7 @@ export function connect(mapStateToProps) {
             = AddEnabledProp.displayName
             = PreventUpdateWhenDisabled.displayName
             = `Store(${WrappedComponent.displayName})`
+
         return AddEnabledProp
     }
 }
