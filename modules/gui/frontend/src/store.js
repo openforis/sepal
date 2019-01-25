@@ -1,14 +1,14 @@
-import actionBuilder from 'action-builder'
-import asyncActionBuilder from 'async-action-builder'
+import {Subject} from 'rxjs'
+import {connect as connectToRedux} from 'react-redux'
+import {isMobile} from 'widget/userAgent'
+import {takeUntil} from 'rxjs/operators'
 import {toPathList} from 'collections'
-import guid from 'guid'
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
-import {connect as connectToRedux} from 'react-redux'
-import {Subject} from 'rxjs'
-import {takeUntil} from 'rxjs/operators'
-import {isMobile} from 'widget/userAgent'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
+import asyncActionBuilder from 'async-action-builder'
+import guid from 'guid'
 
 let storeInstance = null
 const storeInitListeners = []
@@ -53,13 +53,12 @@ function includeDispatchingProp(id, mapStateToProps) {
 export function connect(mapStateToProps) {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
 
-
     return WrappedComponent => {
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
         const id = `${displayName}:${guid()}`
 
         class PreventUpdateWhenDisabled extends Component {
-            shouldComponentUpdate(nextProps, nextState, nextContext) {
+            shouldComponentUpdate(nextProps) {
                 return nextProps.enabled !== false
             }
 
@@ -219,21 +218,21 @@ const stream = component => {
             .pipe(
                 takeUntil(component.componentWillUnmount$)
             ).subscribe(
-            next => {
-                onSuccess && onSuccess(next)
-            },
-            error => {
-                unmounted || setStatus('FAILED')
-                if (onError) {
-                    onError(error)
-                } else {
-                    throw error
+                next => {
+                    onSuccess && onSuccess(next)
+                },
+                error => {
+                    unmounted || setStatus('FAILED')
+                    if (onError) {
+                        onError(error)
+                    } else {
+                        throw error
+                    }
+                },
+                () => {
+                    unmounted || setStatus('COMPLETED')
+                    onComplete && onComplete()
                 }
-            },
-            () => {
-                unmounted || setStatus('COMPLETED')
-                onComplete && onComplete()
-            }
-        )
+            )
     }
 }

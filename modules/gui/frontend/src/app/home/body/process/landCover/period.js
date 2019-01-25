@@ -1,6 +1,6 @@
-import {initValues} from 'app/home/body/process/recipe'
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
+import {initValues} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
 import Label from 'widget/label'

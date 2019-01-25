@@ -1,4 +1,3 @@
-import {PanelButton, Toolbar} from 'widget/toolbar'
 import {RecipeState, SceneSelectionType, recipePath} from '../mosaicRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -13,6 +12,7 @@ import React from 'react'
 import Retrieve from 'app/home/body/process/mosaic/panels/retrieve/retrieve'
 import Scenes from 'app/home/body/process/mosaic/panels/scenes/scenes'
 import Sources from 'app/home/body/process/mosaic/panels/sources/sources'
+import Toolbar, {PanelButton} from 'widget/toolbar'
 import _ from 'lodash'
 import styles from './mosaicToolbar.module.css'
 

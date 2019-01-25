@@ -1,6 +1,6 @@
-import {initValues} from 'app/home/body/process/recipe'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
 import {form} from 'widget/form'
+import {initValues} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'

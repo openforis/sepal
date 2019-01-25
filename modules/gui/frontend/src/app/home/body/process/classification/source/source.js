@@ -1,6 +1,6 @@
-import {initValues} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
+import {initValues} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import AssetSection from './assetSection'
 import Panel from 'widget/panel'

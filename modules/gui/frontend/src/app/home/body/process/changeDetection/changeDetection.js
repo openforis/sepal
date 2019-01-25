@@ -1,6 +1,6 @@
-import {recipe} from 'app/home/body/process/recipe'
 import {RecipeState, recipePath} from './changeDetectionRecipe'
 import {connect, select} from 'store'
+import {recipe} from 'app/home/body/process/recipe'
 import {sepalMap} from 'app/home/map/map'
 import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import ChangeDetectionPreview from './changeDetectionPreview'

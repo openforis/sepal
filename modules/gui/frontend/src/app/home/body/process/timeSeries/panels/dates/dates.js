@@ -1,6 +1,6 @@
-import {initValues} from 'app/home/body/process/recipe'
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
+import {initValues} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/timeSeries/timeSeriesRecipe'
 import DatePicker from 'widget/datePicker'

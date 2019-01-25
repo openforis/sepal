@@ -1,20 +1,20 @@
-import {initValues} from 'app/home/body/process/recipe'
-import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
-import {sepalMap} from 'app/home/map/map'
-import _ from 'lodash'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {msg} from 'translate'
 import {Field, form} from 'widget/form'
+import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
+import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
+import {initValues} from 'app/home/body/process/recipe'
+import {msg} from 'translate'
+import {sepalMap} from 'app/home/map/map'
+import CountrySection from './countrySection'
+import FusionTableSection from './fusionTableSection'
 import Panel from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PanelSections from 'widget/panelSections'
-import {RecipeActions, recipePath, RecipeState} from '../../mosaicRecipe'
-import styles from './aoi.module.css'
-import CountrySection from './countrySection'
-import FusionTableSection from './fusionTableSection'
 import PolygonSection from './polygonSection'
+import PropTypes from 'prop-types'
+import React from 'react'
 import SectionSelection from './sectionSelection'
+import _ from 'lodash'
+import styles from './aoi.module.css'
 
 const fields = {
     section: new Field()
@@ -113,10 +113,10 @@ class Aoi extends React.Component {
         const {recipeId} = this.props
         const recipeState = RecipeState(recipeId)
         setAoiLayer({
-                contextId: recipeId,
-                aoi: recipeState && recipeState('model.aoi'),
-                fill: false
-            }
+            contextId: recipeId,
+            aoi: recipeState && recipeState('model.aoi'),
+            fill: false
+        }
         )
         if (this.aoiUnchanged) {
             sepalMap.fitBounds(this.initialBounds)
@@ -132,29 +132,29 @@ Aoi.propTypes = {
 
 const valuesToModel = values => {
     switch (values.section) {
-        case 'COUNTRY':
-            return {
-                type: 'FUSION_TABLE',
-                id: countryFusionTable,
-                keyColumn: 'id',
-                key: values.area || values.country,
-                level: values.area ? 'AREA' : 'COUNTRY'
-            }
-        case 'FUSION_TABLE':
-            return {
-                type: 'FUSION_TABLE',
-                id: values.fusionTable,
-                keyColumn: values.fusionTableColumn,
-                key: values.fusionTableRow,
-                bounds: values.bounds
-            }
-        case 'POLYGON':
-            return {
-                type: 'POLYGON',
-                path: values.polygon
-            }
-        default:
-            throw new Error('Invalid aoi section: ' + values.section)
+    case 'COUNTRY':
+        return {
+            type: 'FUSION_TABLE',
+            id: countryFusionTable,
+            keyColumn: 'id',
+            key: values.area || values.country,
+            level: values.area ? 'AREA' : 'COUNTRY'
+        }
+    case 'FUSION_TABLE':
+        return {
+            type: 'FUSION_TABLE',
+            id: values.fusionTable,
+            keyColumn: values.fusionTableColumn,
+            key: values.fusionTableRow,
+            bounds: values.bounds
+        }
+    case 'POLYGON':
+        return {
+            type: 'POLYGON',
+            path: values.polygon
+        }
+    default:
+        throw new Error('Invalid aoi section: ' + values.section)
     }
 }
 

@@ -166,8 +166,11 @@ const LoadingIndicator = () => {
     )
 }
 
-const createSingleValue = children => props => (
-    <components.SingleValue {...props}>
-        {children && children(props)}
-    </components.SingleValue>
-)
+const createSingleValue = children => {
+    const SingleValue = props => (
+        <components.SingleValue {...props}>
+            {children && children(props)}
+        </components.SingleValue>
+    )
+    return SingleValue
+}
