@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
@@ -16,21 +17,6 @@ const fields = {
         .notBlank('process.classification.panel.trainingData.form.fusionTable.required'),
     fusionTableColumn: new Field()
         .notBlank('process.classification.panel.trainingData.form.fusionTableColumn.required')
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.trainingData')
-    if (!values) {
-        const model = recipeState('model.trainingData')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setTrainingData({values, model}).dispatch()
-    }
-    return {
-        values,
-        columns: recipeState('ui.fusionTable.columns')
-    }
 }
 
 class TrainingData extends React.Component {
@@ -149,4 +135,14 @@ const modelToValues = (model = {}) => ({
     ...model
 })
 
-export default form({fields, mapStateToProps})(TrainingData)
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.trainingData'),
+    getValues: props => RecipeState(props.recipeId)('ui.trainingData'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setTrainingData({values, model})
+            .dispatch()
+})(
+    form({fields})(TrainingData)
+)

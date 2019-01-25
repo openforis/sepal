@@ -1,24 +1,25 @@
-import {Content, SectionLayout} from 'widget/sectionLayout'
-import {RecipeState, recipePath} from './mosaicRecipe'
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {connect, select} from 'store'
-import {sepalMap} from 'app/home/map/map'
+import ShowSceneAreaToggle from 'app/home/body/process/mosaic/showSceneAreaToggle'
+import {recipe} from 'app/home/body/process/recipe'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
-import AutoSelectScenes from './autoSelectScenes'
-import BandSelection from './bandSelection'
+import {sepalMap} from 'app/home/map/map'
 import MapToolbar from 'app/home/map/mapToolbar'
-import MosaicPreview from './mosaicPreview'
-import MosaicToolbar from './panels/mosaicToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {connect, select} from 'store'
+import {Content, SectionLayout} from 'widget/sectionLayout'
+import AutoSelectScenes from './autoSelectScenes'
+import BandSelection from './bandSelection'
+import styles from './mosaic.module.css'
+import MosaicPreview from './mosaicPreview'
+import {recipePath, RecipeState} from './mosaicRecipe'
+import MosaicToolbar from './panels/mosaicToolbar'
 import SceneAreas from './sceneAreas'
 import SceneDeselection from './sceneDeselection'
 import SceneSelection from './sceneSelection'
-import ShowSceneAreaToggle from 'app/home/body/process/mosaic/showSceneAreaToggle'
-import styles from './mosaic.module.css'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const recipeState = ownProps.recipeState
     return {
         initialized: recipeState('ui.initialized'),
         aoi: recipeState('model.aoi'),
@@ -84,4 +85,6 @@ Mosaic.propTypes = {
     aoi: PropTypes.object
 }
 
-export default connect(mapStateToProps)(Mosaic)
+export default recipe(RecipeState)(
+    connect(mapStateToProps)(Mosaic)
+)

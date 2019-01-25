@@ -1,3 +1,4 @@
+import {recipe} from 'app/home/body/process/recipe'
 import {RecipeState, Status, recipePath} from './landCoverRecipe'
 import {connect, select} from 'store'
 import {sepalMap} from 'app/home/map/map'
@@ -10,8 +11,9 @@ import MapToolbar from 'app/home/map/mapToolbar'
 import PreviewSelection from './previewSelection'
 import PrimitivePreview from './primitivePreview'
 import React from 'react'
+
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const recipeState = ownProps.recipeState
     return {
         status: recipeState('model.status'),
         preview: recipeState('ui.preview'),
@@ -78,4 +80,6 @@ class LandCover extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(LandCover)
+export default recipe(RecipeState)(
+    connect(mapStateToProps)(LandCover)
+)

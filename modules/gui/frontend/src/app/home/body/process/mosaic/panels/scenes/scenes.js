@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, SceneSelectionType} from '../../mosaicRecipe'
 import {msg} from 'translate'
@@ -15,18 +16,6 @@ const fields = {
         .notEmpty('process.mosaic.panel.scenes.form.required'),
 
     targetDateWeight: new Field()
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.sceneSelectionOptions')
-    if (!values) {
-        const model = recipeState('model.sceneSelectionOptions')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setSceneSelectionOptions({values, model}).dispatch()
-    }
-    return {values}
 }
 
 class Scenes extends React.Component {
@@ -119,8 +108,6 @@ Scenes.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default form({fields, mapStateToProps})(Scenes)
-
 const valuesToModel = values => ({
     ...values
 })
@@ -128,3 +115,15 @@ const valuesToModel = values => ({
 const modelToValues = model => ({
     ...model
 })
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.sceneSelectionOptions'),
+    getValues: props => RecipeState(props.recipeId)('ui.sceneSelectionOptions'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setSceneSelectionOptions({values, model})
+            .dispatch()
+})(
+    form({fields})(Scenes)
+)

@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
@@ -16,20 +17,6 @@ import updateDataSets from './updateDataSets'
 const fields = {
     dataSets: new Field()
         .notEmpty('process.timeSeries.panel.sources.form.required')
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.sources')
-    if (!values) {
-        const model = recipeState('model.sources')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setSources({values, model}).dispatch()
-    }
-    return {
-        values: recipeState('ui.sources')
-    }
 }
 
 class Sources extends React.Component {
@@ -107,8 +94,6 @@ Sources.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default form({fields, mapStateToProps})(Sources)
-
 const valuesToModel = values => {
     return {LANDSAT: values.dataSets ? [...values.dataSets] : null}
 }
@@ -118,3 +103,15 @@ const modelToValues = model => {
         dataSets: [...Object.values(model)[0]]
     }
 }
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.sources'),
+    getValues: props => RecipeState(props.recipeId)('ui.sources'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setSources({values, model})
+            .dispatch()
+})(
+    form({fields})(Sources)
+)

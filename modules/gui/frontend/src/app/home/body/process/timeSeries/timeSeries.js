@@ -1,3 +1,4 @@
+import {recipe} from 'app/home/body/process/recipe'
 import {RecipeState, recipePath} from './timeSeriesRecipe'
 import {connect, select} from 'store'
 import {sepalMap} from 'app/home/map/map'
@@ -9,7 +10,7 @@ import TimeSeriesToolbar from './panels/timeSeriesToolbar'
 import styles from './timeSeries.module.css'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const recipeState = ownProps.recipeState
     return {
         initialized: recipeState('ui.initialized'),
         aoi: recipeState('model.aoi'),
@@ -49,4 +50,6 @@ TimeSeries.propTypes = {
     aoi: PropTypes.object
 }
 
-export default connect(mapStateToProps)(TimeSeries)
+export default recipe(RecipeState)(
+    connect(mapStateToProps)(TimeSeries)
+)

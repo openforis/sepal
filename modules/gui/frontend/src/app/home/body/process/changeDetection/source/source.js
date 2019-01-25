@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from '../changeDetectionRecipe'
 import {msg} from 'translate'
@@ -20,18 +21,6 @@ const fields = {
     asset: new Field()
         .skip((value, {section}) => section !== 'asset')
         .notBlank('process.changeDetection.panel.source.form.asset.required'),
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const {recipeId, number} = ownProps
-    const recipeState = RecipeState(recipeId)
-    const model = recipeState('model.source' + number)
-    let values = recipeState('ui.source' + number)
-    if (!values) {
-        values = modelToValues(model)
-        RecipeActions(recipeId).setSource({values, model, number}).dispatch()
-    }
-    return {model, values}
 }
 
 class Source extends React.Component {
@@ -80,8 +69,6 @@ Source.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default form({fields, mapStateToProps})(Source)
-
 const valuesToModel = values => {
     switch (values.section) {
     case 'ASSET':
@@ -117,3 +104,15 @@ const modelToValues = (model = {}) => {
         throw new Error('Unexpected source type: ' + model.type)
     }
 }
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.source' + props.number),
+    getValues: props => RecipeState(props.recipeId)('ui.source' + props.number),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setSource({values, model, number: props.number})
+            .dispatch()
+})(
+    form({fields})(Source)
+)

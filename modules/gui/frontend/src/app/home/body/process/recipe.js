@@ -1,12 +1,13 @@
-import {EMPTY, Subject, from, of} from 'rxjs'
-import {addTab, closeTab} from 'widget/tabs'
-import {gzip$, ungzip$} from 'gzip'
-import {map, switchMap} from 'rxjs/operators'
-import {select, subscribe} from 'store'
-import JSZip from 'jszip'
-import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import {gzip$, ungzip$} from 'gzip'
+import JSZip from 'jszip'
+import _ from 'lodash'
+import React from 'react'
+import {EMPTY, from, of, Subject} from 'rxjs'
+import {map, switchMap} from 'rxjs/operators'
+import {select, subscribe} from 'store'
+import {addTab, closeTab} from 'widget/tabs'
 
 export const recipePath = (recipeId, path) => {
     const recipeTabIndex = select('process.tabs')
@@ -139,23 +140,23 @@ let prevTabs = []
 const findPrevRecipe = recipe =>
     prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
 subscribe('process.tabs', recipes => {
-    if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
-        const recipesToSave = recipes
-            .filter(recipe =>
-                (select('process.recipes') || []).find(saved =>
-                    saved.id === recipe.id
+        if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
+            const recipesToSave = recipes
+                .filter(recipe =>
+                    (select('process.recipes') || []).find(saved =>
+                        saved.id === recipe.id
+                    )
                 )
-            )
-            .filter(recipe => {
-                const prevRecipe = findPrevRecipe(recipe)
-                return prevRecipe.model && !_.isEqual(prevRecipe.model, recipe.model)
-            })
-        if (recipesToSave.length > 0) {
-            recipesToSave.forEach(recipe => saveToBackend$.next(recipe))
+                .filter(recipe => {
+                    const prevRecipe = findPrevRecipe(recipe)
+                    return prevRecipe.model && !_.isEqual(prevRecipe.model, recipe.model)
+                })
+            if (recipesToSave.length > 0) {
+                recipesToSave.forEach(recipe => saveToBackend$.next(recipe))
+            }
+            prevTabs = recipes
         }
-        prevTabs = recipes
     }
-}
 )
 
 saveToBackend$.pipe(
@@ -225,4 +226,65 @@ const save$ = recipe => {
         ),
         map(() => recipe)
     )
+}
+
+export const recipe = (RecipeState) => {
+    return WrappedComponent => {
+        class RecipeComponent extends React.Component {
+            render() {
+                return this.recipeState
+                    ? React.createElement(WrappedComponent, {
+                        ...this.props,
+                        recipeState: this.recipeState
+                    })
+                    : null
+            }
+
+            componentDidMount() {
+                this.recipeState = RecipeState(this.props.recipeId)
+            }
+        }
+
+        return RecipeComponent
+    }
+}
+
+export const initValues = ({getModel, getValues, modelToValues, onInitialized}) => {
+    return WrappedComponent => {
+        class RecipeComponent extends React.Component {
+            state = {
+                initialized: false
+            }
+
+            static getDerivedStateFromProps(props, state) {
+                const model = getModel(props)
+                const values = getValues(props)
+                return {...state, model, values}
+            }
+
+            render() {
+                const {model, values} = this.state
+                return this.state.initialized || !model
+                    ? React.createElement(WrappedComponent, {
+                        ...this.props,
+                        model,
+                        values
+                    })
+                    : null
+            }
+
+            componentDidMount() {
+                const {model, values} = this.state
+                if (model && !values)
+                    this.convertModelToValues(model)
+                this.setState(prevState => ({...prevState, initialized: true}))
+            }
+
+            convertModelToValues(model) {
+                const values = modelToValues(model)
+                onInitialized({model, values, props: this.props})
+            }
+        }
+        return RecipeComponent
+    }
 }

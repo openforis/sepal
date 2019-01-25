@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
 import {msg} from 'translate'
@@ -17,18 +18,6 @@ const fields = {
     dayOfYearPercentile: new Field(),
     mask: new Field(),
     compose: new Field()
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.preprocessOptions')
-    if (!values) {
-        const model = recipeState('model.preprocessOptions')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setPreprocessOptions({values, model}).dispatch()
-    }
-    return {values}
 }
 
 class Preprocess extends React.Component {
@@ -102,8 +91,6 @@ Preprocess.propTypes = {
     source: PropTypes.string
 }
 
-export default form({fields, mapStateToProps})(Preprocess)
-
 const valuesToModel = values => ({
     corrections: values.corrections,
     mask: values.mask
@@ -115,3 +102,15 @@ const modelToValues = model => {
         mask: model.mask
     })
 }
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.preprocessOptions'),
+    getValues: props => RecipeState(props.recipeId)('ui.preprocessOptions'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setPreprocessOptions({values, model})
+            .dispatch()
+})(
+    form({fields})(Preprocess)
+)

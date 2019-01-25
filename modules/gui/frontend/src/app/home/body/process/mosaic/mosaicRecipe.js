@@ -174,7 +174,6 @@ export const RecipeActions = id => {
 const initRecipe = recipeState => {
     if (!recipeState || recipeState.ui)
         return
-
     const actions = RecipeActions(recipeState.id)
 
     actions.setLabelsShown(false).dispatch()

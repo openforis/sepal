@@ -1,19 +1,20 @@
-import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
+import {initValues} from 'app/home/body/process/recipe'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
-import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
-import CountrySection from './countrySection'
-import FusionTableSection from './fusionTableSection'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {msg} from 'translate'
+import {Field, form} from 'widget/form'
 import Panel from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PanelSections from 'widget/panelSections'
-import PolygonSection from './polygonSection'
-import PropTypes from 'prop-types'
-import React from 'react'
-import SectionSelection from './sectionSelection'
-import _ from 'lodash'
+import {RecipeActions, recipePath, RecipeState} from '../../mosaicRecipe'
 import styles from './aoi.module.css'
+import CountrySection from './countrySection'
+import FusionTableSection from './fusionTableSection'
+import PolygonSection from './polygonSection'
+import SectionSelection from './sectionSelection'
 
 const fields = {
     section: new Field()
@@ -39,18 +40,6 @@ const fields = {
     polygon: new Field()
         .skip((value, {section}) => section !== 'POLYGON')
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const {recipeId} = ownProps
-    const recipeState = RecipeState(recipeId)
-    const model = recipeState('model.aoi')
-    let values = recipeState('ui.aoi')
-    if (!values) {
-        values = modelToValues(model)
-        RecipeActions(recipeId).setAoi({values, model}).dispatch()
-    }
-    return {model, values}
 }
 
 class Aoi extends React.Component {
@@ -124,10 +113,10 @@ class Aoi extends React.Component {
         const {recipeId} = this.props
         const recipeState = RecipeState(recipeId)
         setAoiLayer({
-            contextId: recipeId,
-            aoi: recipeState && recipeState('model.aoi'),
-            fill: false
-        }
+                contextId: recipeId,
+                aoi: recipeState && recipeState('model.aoi'),
+                fill: false
+            }
         )
         if (this.aoiUnchanged) {
             sepalMap.fitBounds(this.initialBounds)
@@ -141,33 +130,31 @@ Aoi.propTypes = {
     allowWholeFusionTable: PropTypes.any
 }
 
-export default form({fields, mapStateToProps})(Aoi)
-
 const valuesToModel = values => {
     switch (values.section) {
-    case 'COUNTRY':
-        return {
-            type: 'FUSION_TABLE',
-            id: countryFusionTable,
-            keyColumn: 'id',
-            key: values.area || values.country,
-            level: values.area ? 'AREA' : 'COUNTRY'
-        }
-    case 'FUSION_TABLE':
-        return {
-            type: 'FUSION_TABLE',
-            id: values.fusionTable,
-            keyColumn: values.fusionTableColumn,
-            key: values.fusionTableRow,
-            bounds: values.bounds
-        }
-    case 'POLYGON':
-        return {
-            type: 'POLYGON',
-            path: values.polygon
-        }
-    default:
-        throw new Error('Invalid aoi section: ' + values.section)
+        case 'COUNTRY':
+            return {
+                type: 'FUSION_TABLE',
+                id: countryFusionTable,
+                keyColumn: 'id',
+                key: values.area || values.country,
+                level: values.area ? 'AREA' : 'COUNTRY'
+            }
+        case 'FUSION_TABLE':
+            return {
+                type: 'FUSION_TABLE',
+                id: values.fusionTable,
+                keyColumn: values.fusionTableColumn,
+                key: values.fusionTableRow,
+                bounds: values.bounds
+            }
+        case 'POLYGON':
+            return {
+                type: 'POLYGON',
+                path: values.polygon
+            }
+        default:
+            throw new Error('Invalid aoi section: ' + values.section)
     }
 }
 
@@ -193,3 +180,15 @@ const modelToValues = (model = {}) => {
     else
         return {}
 }
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.aoi'),
+    getValues: props => RecipeState(props.recipeId)('ui.aoi'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setAoi({values, model})
+            .dispatch()
+})(
+    form({fields})(Aoi)
+)

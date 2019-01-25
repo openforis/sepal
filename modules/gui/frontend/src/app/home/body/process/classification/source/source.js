@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
 import {msg} from 'translate'
@@ -20,18 +21,6 @@ const fields = {
     asset: new Field()
         .skip((value, {section}) => section !== 'asset')
         .notBlank('process.classification.panel.source.form.asset.required'),
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    const model = recipeState('model.source')
-    let values = recipeState('ui.source')
-    if (!values) {
-        values = modelToValues(model)
-        RecipeActions(recipeId).setSource({values, model}).dispatch()
-    }
-    return {model, values}
 }
 
 class Source extends React.Component {
@@ -80,8 +69,6 @@ Source.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default form({fields, mapStateToProps})(Source)
-
 const valuesToModel = values => {
     switch (values.section) {
     case 'ASSET':
@@ -117,3 +104,15 @@ const modelToValues = (model = {}) => {
         throw new Error('Unexpected source type: ' + model.type)
     }
 }
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.source'),
+    getValues: props => RecipeState(props.recipeId)('ui.source'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setSource({values, model})
+            .dispatch()
+})(
+    form({fields})(Source)
+)

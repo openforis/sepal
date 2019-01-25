@@ -1,3 +1,4 @@
+import {recipe} from 'app/home/body/process/recipe'
 import {RecipeState, recipePath} from './classificationRecipe'
 import {connect, select} from 'store'
 import {sepalMap} from 'app/home/map/map'
@@ -9,7 +10,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const recipeState = ownProps.recipeState
     return {
         initialized: recipeState('ui.initialized'),
         source: recipeState('model.source'),
@@ -62,4 +63,6 @@ Classification.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default connect(mapStateToProps)(Classification)
+export default recipe(RecipeState)(
+    connect(mapStateToProps)(Classification)
+)

@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
 import {form} from 'widget/form'
 import {msg} from 'translate'
@@ -8,18 +9,6 @@ import React from 'react'
 import styles from './typology.module.css'
 
 const fields = {}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.typology')
-    if (!values) {
-        const model = recipeState('model.typology')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setTypology({values, model}).dispatch()
-    }
-    return {values}
-}
 
 class Typology extends React.Component {
     constructor(props) {
@@ -65,8 +54,6 @@ Typology.propTypes = {
     recipeId: PropTypes.string,
 }
 
-export default form({fields, mapStateToProps})(Typology)
-
 const valuesToModel = values => ({
     ...values
 })
@@ -74,3 +61,15 @@ const valuesToModel = values => ({
 const modelToValues = (model = {}) => ({
     ...model
 })
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.typology'),
+    getValues: props => RecipeState(props.recipeId)('ui.typology'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setTypology({values, model})
+            .dispatch()
+})(
+    form({fields})(Typology)
+)

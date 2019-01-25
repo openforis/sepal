@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Constraint} from 'widget/form'
 import {Field, Input, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
@@ -29,22 +30,6 @@ const constraints = {
         .predicate(({yearColumn, classColumn}) => {
             return yearColumn !== classColumn
         }, 'process.landCover.panel.trainingData.form.yearAndClassColumnsSame')
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.trainingData')
-    if (!values) {
-        const model = recipeState('model.trainingData')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setTrainingData({values, model}).dispatch()
-    }
-    return {
-        values,
-        primitiveTypes: recipeState('model.typology.primitiveTypes'),
-        columns: recipeState('ui.fusionTable.columns')
-    }
 }
 
 class TrainingData extends React.Component {
@@ -172,4 +157,14 @@ const modelToValues = (model = {}) => ({
     classColumn: model.classColumn
 })
 
-export default form({fields, constraints, mapStateToProps})(TrainingData)
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.trainingData'),
+    getValues: props => RecipeState(props.recipeId)('ui.trainingData'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setTrainingData({values, model})
+            .dispatch()
+})(
+    form({fields, constraints})(TrainingData)
+)

@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {msg} from 'translate'
@@ -19,21 +20,6 @@ const fields = {
     dayOfYearPercentile: new Field(),
     mask: new Field(),
     compose: new Field()
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.compositeOptions')
-    if (!values) {
-        const model = recipeState('model.compositeOptions')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setCompositeOptions({values, model}).dispatch()
-    }
-    return {
-        values,
-        source: recipeState.source()
-    }
 }
 
 class Composite extends React.Component {
@@ -141,8 +127,6 @@ Composite.propTypes = {
     source: PropTypes.string
 }
 
-export default form({fields, mapStateToProps})(Composite)
-
 const PercentileField = ({input, disabled = false}) => {
     return (
         <Slider
@@ -192,3 +176,15 @@ const modelToValues = model => {
         compose: model.compose,
     })
 }
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.compositeOptions'),
+    getValues: props => RecipeState(props.recipeId)('ui.compositeOptions'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setCompositeOptions({values, model})
+            .dispatch()
+})(
+    form({fields})(Composite)
+)

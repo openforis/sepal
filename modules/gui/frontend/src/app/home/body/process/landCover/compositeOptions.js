@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
 import {msg} from 'translate'
@@ -14,18 +15,6 @@ const fields = {
     cloudThreshold: new Field(),
     corrections: new Field(),
     mask: new Field(),
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.compositeOptions')
-    if (!values) {
-        const model = recipeState('model.compositeOptions')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setCompositeOptions({values, model}).dispatch()
-    }
-    return {values}
 }
 
 class CompositeOptions extends React.Component {
@@ -133,8 +122,6 @@ CompositeOptions.propTypes = {
     recipeId: PropTypes.string,
 }
 
-export default form({fields, mapStateToProps})(CompositeOptions)
-
 const valuesToModel = values => ({
     ...values
 })
@@ -142,3 +129,15 @@ const valuesToModel = values => ({
 const modelToValues = (model = {}) => ({
     ...model
 })
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.compositeOptions'),
+    getValues: props => RecipeState(props.recipeId)('ui.compositeOptions'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setCompositeOptions({values, model})
+            .dispatch()
+})(
+    form({fields})(CompositeOptions)
+)

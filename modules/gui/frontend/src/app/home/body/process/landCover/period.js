@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
 import {msg} from 'translate'
@@ -25,18 +26,6 @@ const constraints = {
         .predicate(({startYear, endYear}) => {
             return +startYear < +endYear
         }, 'process.landCover.panel.period.startBeforeEnd')
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.period')
-    if (!values) {
-        const model = recipeState('model.period')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setPeriod({values, model}).dispatch()
-    }
-    return {values}
 }
 
 class Period extends React.Component {
@@ -110,8 +99,6 @@ Period.propTypes = {
     recipeId: PropTypes.string,
 }
 
-export default form({fields, constraints, mapStateToProps})(Period)
-
 const valuesToModel = values => ({
     startYear: +values.startYear,
     endYear: +values.endYear,
@@ -121,3 +108,15 @@ const modelToValues = (model = {}) => ({
     startYear: String(model.startYear || ''),
     endYear: String(model.endYear || ''),
 })
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.period'),
+    getValues: props => RecipeState(props.recipeId)('ui.period'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setPeriod({values, model})
+            .dispatch()
+})(
+    form({fields, constraints})(Period)
+)

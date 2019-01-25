@@ -1,3 +1,4 @@
+import {initValues} from 'app/home/body/process/recipe'
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
 import {msg} from 'translate'
@@ -28,18 +29,6 @@ const constraints = {
         .predicate(({startDate, endDate}) => {
             return startDate < endDate
         }, 'process.timeSeries.panel.dates.form.startDate.beforeEnd')
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.dates')
-    if (!values) {
-        const model = recipeState('model.dates')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setDates({values, model}).dispatch()
-    }
-    return {values}
 }
 
 class Dates extends React.Component {
@@ -108,8 +97,6 @@ Dates.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default form({fields, constraints, mapStateToProps})(Dates)
-
 const valuesToModel = values => {
     return {...values}
 }
@@ -117,3 +104,15 @@ const valuesToModel = values => {
 const modelToValues = (model = {}) => {
     return {...model}
 }
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.dates'),
+    getValues: props => RecipeState(props.recipeId)('ui.dates'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setDates({values, model})
+            .dispatch()
+})(
+    form({fields, constraints})(Dates)
+)

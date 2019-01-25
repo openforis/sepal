@@ -1,16 +1,17 @@
-import {ErrorMessage, Field, form} from 'widget/form'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {initValues} from 'app/home/body/process/recipe'
+import moment from 'moment'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
+import {ErrorMessage, Field, form} from 'widget/form'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import PropTypes from 'prop-types'
-import React from 'react'
 import SeasonSelect from 'widget/seasonSelect'
 import Slider from 'widget/slider'
-import moment from 'moment'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -62,18 +63,6 @@ const fields = {
 
     yearsBefore: new Field(),
     yearsAfter: new Field()
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.dates')
-    if (!values) {
-        const model = recipeState('model.dates')
-        values = modelToValues(model)
-        RecipeActions(recipeId).setDates({values, model}).dispatch()
-    }
-    return {values}
 }
 
 class Dates extends React.Component {
@@ -224,7 +213,6 @@ Dates.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default form({fields, mapStateToProps})(Dates)
 
 const valuesToModel = values => {
     const DATE_FORMAT = 'YYYY-MM-DD'
@@ -261,3 +249,15 @@ const modelToValues = (model = {}) => {
         yearsAfter: model.yearsAfter,
     }
 }
+
+export default initValues({
+    getModel: props => RecipeState(props.recipeId)('model.dates'),
+    getValues: props => RecipeState(props.recipeId)('ui.dates'),
+    modelToValues,
+    onInitialized: ({model, values, props}) =>
+        RecipeActions(props.recipeId)
+            .setDates({values, model})
+            .dispatch()
+})(
+    form({fields})(Dates)
+)
