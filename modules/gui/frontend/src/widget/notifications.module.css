@@ -1,0 +1,57 @@
+.container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    z-index: 1;
+    padding: .5rem;
+
+}
+
+.notification {
+    width: 20rem;
+    padding: .5rem 1rem;
+    pointer-events: all;
+    background-color: hsla(0, 0%, 10%, .95);
+    border-style: solid;
+    border-width: 0 0 0 .25rem;
+    border-color: var(--border-color);
+    border-radius: var(--container-border-radius);
+}
+
+.notification:not(:first-child) {
+    margin-top: .5rem;
+}
+
+.notification.success {
+    --border-color: var(--success-color);
+}
+
+.notification.info {
+    --border-color: var(--info-color);
+}
+
+.notification.warning {
+    --border-color: var(--warning-color);
+}
+
+.notification.error {
+    --border-color: var(--error-color);
+}
+
+.notification.dismissable:hover {
+    --background-opacity: .9;
+    cursor: pointer;
+}
+
+.notification.dismissing {
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all var(--dismiss-time-ms) ease-in-out;
+}
