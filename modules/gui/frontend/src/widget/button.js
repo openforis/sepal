@@ -195,8 +195,8 @@ export class Button extends React.Component {
 
             const clickHold$ =
                 trigger$.pipe(
-                    switchMap(() => {
-                        return timer(CLICK_HOLD_DELAY_MS).pipe(
+                    switchMap(() =>
+                        timer(CLICK_HOLD_DELAY_MS).pipe(
                             takeUntil(cancel$),
                             switchMap(() =>
                                 activate$.pipe(
@@ -205,7 +205,7 @@ export class Button extends React.Component {
                                 )
                             )
                         )
-                    })
+                    )
                 )
             
             this.subscriptions.push(
