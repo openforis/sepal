@@ -132,6 +132,13 @@ const actionBuilder = (type, props) => {
             return this
         },
 
+        unshift(path, value) {
+            operations.push(immutableState => {
+                return immutableState.insert(toPathList(path), value, 0)
+            })
+            return this
+        },
+
         sideEffect(callback) {
             sideEffects.push(callback)
             return this
