@@ -93,7 +93,7 @@ class SepalNotifications extends React.Component {
         this.subscriptions.push(
             publish$.subscribe(notification =>
                 actionBuilder('PUBLISH_NOTIFICATION')
-                    .unshift(PATH, notification)
+                    .push(PATH, notification)
                     .dispatch()
             )
         )

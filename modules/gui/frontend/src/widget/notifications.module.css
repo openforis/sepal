@@ -15,22 +15,32 @@
 
 .notification {
     width: 20rem;
-    padding: .5rem 1rem;
+    padding: .5rem .75rem;
     pointer-events: all;
     background-color: hsla(0, 0%, 0%, .85);
     border-style: solid;
-    border-width: 0 1px;
+    border-width: .5rem .1rem .1rem .1rem;
     border-color: var(--color);
 }
 
-/* .notification:not(.dismissing) {
-    animation: added 250ms ease-in-out forwards;
-} */
+.notification:not(.dismissing) {
+    animation: add 250ms ease-in-out normal forwards;
+}
  
-@keyframes added {
+@keyframes add {
     0% {
-        background-color: red;
-        /* transform: translateY(-100%); */
+        transform: translateX(50%);
+        opacity: 0;
+    }
+}
+
+.notification.dismissing {
+    animation: remove 250ms ease-in-out reverse forwards;
+}
+ 
+@keyframes remove {
+    0% {
+        transform: translateX(50%);
         opacity: 0;
     }
 }
@@ -61,10 +71,11 @@
 }
 
 .notification.dismissing {
-    pointer-events: none;
+    /* background-color: red; */
+    /* pointer-events: none;
     opacity: 0;
     transform: translateX(100%);
-    transition: all var(--dismiss-time-ms) ease-in-out;
+    transition: all var(--dismiss-time-ms) ease-in-out; */
 }
 
 .notification .title {

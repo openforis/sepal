@@ -109,7 +109,7 @@ class Home extends React.Component {
                     <Footer className={styles.footer} user={user}/>
                 </div>
                 <div id='portalContainer' className={styles.portalContainer}/>
-                {/* <SepalNotifications/> */}
+                <SepalNotifications/>
             </div>
         )
     }
@@ -118,11 +118,10 @@ class Home extends React.Component {
     //         SepalNotifications.info({
     //             message: 'This is a self-regenerating notification! :-)',
     //             timeout: 0,
-    //             content: dismiss => (
+    //             content: () => (
     //                 <div>
     //                     <div>Custom content here.</div>
-    //                     <Button label='Close' onClick={() => {
-    //                         // dismiss()
+    //                     <Button label='Clone me' onClick={() => {
     //                         regeneratingNotification()
     //                     }}/>
     //                 </div>
@@ -139,6 +138,13 @@ class Home extends React.Component {
     //             message: 'Success notification',
     //             timeout: 4800
     //         }), 2500)
+    //     setTimeout(() =>
+    //         SepalNotifications.error({
+    //             message: 'A serious error',
+    //             timeout: 0,
+    //             dismissable: true,
+    //             content: dismiss => <Button label='Retry' onClick={() => dismiss()}/>
+    //         }), 1500)
     //     setTimeout(() => regeneratingNotification(), 1000)
     //     setTimeout(() =>
     //         SepalNotifications.warning({
