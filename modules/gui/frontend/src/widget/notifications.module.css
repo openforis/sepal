@@ -10,18 +10,29 @@
     align-items: flex-end;
     z-index: 1;
     padding: .5rem;
-
+    overflow: hidden;
 }
 
 .notification {
     width: 20rem;
     padding: .5rem 1rem;
     pointer-events: all;
-    background-color: hsla(0, 0%, 10%, .95);
+    background-color: hsla(0, 0%, 0%, .85);
     border-style: solid;
-    border-width: 0 0 0 .25rem;
-    border-color: var(--border-color);
-    border-radius: var(--container-border-radius);
+    border-width: 0 1px;
+    border-color: var(--color);
+}
+
+/* .notification:not(.dismissing) {
+    animation: added 250ms ease-in-out forwards;
+} */
+ 
+@keyframes added {
+    0% {
+        background-color: red;
+        /* transform: translateY(-100%); */
+        opacity: 0;
+    }
 }
 
 .notification:not(:first-child) {
@@ -29,19 +40,19 @@
 }
 
 .notification.success {
-    --border-color: var(--success-color);
+    --color: var(--success-color);
 }
 
 .notification.info {
-    --border-color: var(--info-color);
+    --color: var(--info-color);
 }
 
 .notification.warning {
-    --border-color: var(--warning-color);
+    --color: var(--warning-color);
 }
 
 .notification.error {
-    --border-color: var(--error-color);
+    --color: var(--error-color);
 }
 
 .notification.dismissable:hover {
@@ -54,4 +65,19 @@
     opacity: 0;
     transform: translateX(100%);
     transition: all var(--dismiss-time-ms) ease-in-out;
+}
+
+.notification .title {
+    color: var(--color);
+    font-weight: bold;
+}
+
+.notification .message {
+}
+
+.notification .content {
+}
+
+.notification > * + * {
+    margin-top: .5rem;
 }

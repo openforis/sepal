@@ -8,7 +8,7 @@ import actionBuilder from 'action-builder'
 import styles from './notifications.module.css'
 
 const PATH = 'sepalNotifications'
-const DISMISS_DELAY_MS = 750
+const DISMISS_DELAY_MS = 500
 
 const publish$ = new Subject()
 const manualDismiss$ = new Subject()
@@ -31,6 +31,14 @@ const mapStateToProps = () => ({
 class SepalNotifications extends React.Component {
     subscriptions = []
 
+    renderTitle(title) {
+        return (
+            <div className={styles.title}>
+                {title}
+            </div>
+        )
+    }
+
     renderContent(content, dismiss) {
         return (
             <div className={styles.content}>
@@ -39,7 +47,15 @@ class SepalNotifications extends React.Component {
         )
     }
 
-    renderNotification({id, level, message, content, dismissable, dismissing}) {
+    renderMessage(message) {
+        return (
+            <div className={styles.message}>
+                {message}
+            </div>
+        )
+    }
+
+    renderNotification({id, level, title, message, content, dismissable, dismissing}) {
         const dismiss = () => manualDismiss$.next(id)
         return (
             <div
@@ -53,7 +69,8 @@ class SepalNotifications extends React.Component {
                 style={{'--dismiss-time-ms': `${DISMISS_DELAY_MS}ms`}}
                 onClick={() => dismissable && dismiss()}
             >
-                {message}
+                {title ? this.renderTitle(title) : null}
+                {message ? this.renderMessage(message) : null}
                 {content ? this.renderContent(content, dismiss) : null}
             </div>
         )
@@ -76,7 +93,7 @@ class SepalNotifications extends React.Component {
         this.subscriptions.push(
             publish$.subscribe(notification =>
                 actionBuilder('PUBLISH_NOTIFICATION')
-                    .push(PATH, notification)
+                    .unshift(PATH, notification)
                     .dispatch()
             )
         )
@@ -119,10 +136,10 @@ ConnectedSepalNotifications.info = notification =>
     ConnectedSepalNotifications.publish({...notification, level: 'info'})
 
 ConnectedSepalNotifications.warning = notification =>
-    ConnectedSepalNotifications.publish({...notification, level: 'warning'})
+    ConnectedSepalNotifications.publish({...notification, level: 'warning', title: 'Warning'})
 
 ConnectedSepalNotifications.error = notification =>
-    ConnectedSepalNotifications.publish({...notification, level: 'error'})
+    ConnectedSepalNotifications.publish({...notification, level: 'error', title: 'Error'})
 
 ConnectedSepalNotifications.caught = notification =>
     ConnectedSepalNotifications.publish({...notification, level: 'error'})
