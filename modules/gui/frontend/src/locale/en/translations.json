@@ -1012,6 +1012,10 @@
                 "required": "Contents is required"
             }
         },
+        "publish": {
+            "success": "User message has been published",
+            "error": "Cannot publish user message"
+        },
         "update": {
             "success": "User message has been updated",
             "error": "Cannot update user message"

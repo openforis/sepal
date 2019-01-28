@@ -1,7 +1,6 @@
 import {Field, Input, form} from 'widget/form'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
-import {v4 as uuid} from 'uuid'
 import Label from 'widget/label'
 import Markdown from 'react-markdown'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
@@ -22,7 +21,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         user,
         values: {
-            id: (message && message.id) || uuid(),
+            id: message && message.id,
             type: 'SYSTEM',
             subject: (message && message.subject) || '',
             contents: (message && message.contents) || '',

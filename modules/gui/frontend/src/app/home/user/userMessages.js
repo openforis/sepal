@@ -14,6 +14,7 @@ import api from 'api'
 import lookStyles from 'style/look.module.css'
 import moment from 'moment'
 import styles from './userMessages.module.css'
+import {v4 as uuid} from 'uuid'
 
 const mapStateToProps = state => {
     const currentUser = state.user.currentUser
@@ -45,12 +46,12 @@ class UserMessages extends React.Component {
     updateMessage(message) {
         const {id} = message
         this.props.stream('REQUEST_UPDATE_USER_MESSAGE',
-            api.user.updateMessage$(message),
+            api.user.updateMessage$({...message, id: id || uuid()}),
             message => {
                 actionBuilder('UPDATE_USER_MESSAGE')
                     .assignOrAddValueByTemplate('user.userMessages', {message: {id}}, {message, state: 'UNREAD'})
                     .dispatch()
-                Notifications.success({message: msg('userMessage.update.success')})
+                Notifications.success({message: id ? msg('userMessage.update.success') : msg('userMessage.publish.success')})
             },
             error => Notifications.error({message: msg('userMessage.update.error'), error})
         )
