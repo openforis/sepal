@@ -5,6 +5,7 @@ import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
@@ -23,11 +24,7 @@ class MosaicPreview extends React.Component {
         const {initializing, tiles, error} = this.state
         if (this.isHidden())
             return null
-        else if (error) {
-            return (
-                <MapStatus loading={false} error={error}/>
-            )
-        } else if (initializing)
+        else if (initializing)
             return (
                 <MapStatus message={msg('process.mosaic.preview.initializing')}/>
             )
@@ -47,24 +44,27 @@ class MosaicPreview extends React.Component {
     }
 
     onError(e) {
-        const message = e.response && e.response.code
-            ? msg(e.response.code, e.response.data)
-            : msg('process.mosaic.preview.error')
-        this.setState(prevState => ({
-            ...prevState,
-            error:
-                <div>
-                    {message}
-                    <Button
-                        chromeless
-                        look='transparent'
-                        shape='pill'
-                        icon='sync'
-                        label={msg('button.retry')}
-                        onClick={() => this.reload()}
-                    />
-                </div>
-        }))
+        // const message = e.response && e.response.code
+        //     ? msg(e.response.code, e.response.data)
+        //     : msg('process.mosaic.preview.error')
+        
+        Notifications.error({
+            title: msg('gee.error.title'),
+            message: msg('process.mosaic.preview.error'),
+            error: msg(e.response.code, e.response.data),
+            timeout: 0,
+            content: dismiss =>
+                <Button
+                    look='transparent'
+                    shape='pill'
+                    icon='sync'
+                    label={msg('button.retry')}
+                    onClick={() => {
+                        dismiss()
+                        this.reload()
+                    }}
+                />
+        })
     }
 
     reload() {

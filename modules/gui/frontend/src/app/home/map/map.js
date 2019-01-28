@@ -2,8 +2,9 @@ import './map.module.css'
 import {NEVER, Observable, Subject} from 'rxjs'
 import {connect, select} from 'store'
 import {map, mergeMap, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
 import GoogleMapsLoader from 'google-maps'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -178,12 +179,11 @@ const createMap = mapElement => {
                                         currentContextId === contextId && layer.addToMap(googleMap)
                                         onInitialized && onInitialized(layer)
                                     },
-                                    e => {
+                                    error => {
                                         if (onError)
-                                            onError(e)
+                                            onError(error)
                                         else
-                                            Notifications.caught('map.layer', {}, e)
-                                                .dispatch()
+                                            Notifications.error({message: msg('map.layer.error'), error})
                                     }
                                 )
                         }

@@ -2,7 +2,7 @@ import {Field, form} from 'widget/form'
 import {PropTypes} from 'prop-types'
 import {msg} from 'translate'
 import {stopUserSession$, updateUserSession$} from 'user'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import Panel, {PanelContent} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import React from 'react'
@@ -29,8 +29,8 @@ class UserSession extends React.Component {
     suspendSession(session) {
         this.props.stream('SUSPEND_USER_SESSION',
             updateUserSession$(session),
-            () => Notifications.success('user.userSession.suspend').dispatch(),
-            error => Notifications.caught('user.userSession.suspend', {}, error).dispatch()
+            () => Notifications.success({message: msg('user.userSession.suspend.success')}),
+            error => Notifications.error({message: msg('user.userSession.suspend.error'), error})
         )
     }
 
@@ -38,10 +38,10 @@ class UserSession extends React.Component {
         this.props.stream('STOP_USER_SESSION',
             stopUserSession$(session),
             () => {
-                Notifications.success('user.userSession.stop').dispatch()
+                Notifications.success({message: msg('user.userSession.stop.success')})
                 this.props.onClose()
             },
-            error => Notifications.caught('user.userSession.stop', {}, error).dispatch()
+            error => Notifications.error({message: msg('user.userSession.stop.error'), error})
         )
     }
 
@@ -49,10 +49,10 @@ class UserSession extends React.Component {
         this.props.stream('UPDATE_USER_SESSION',
             updateUserSession$(session),
             () => {
-                Notifications.success('user.userSession.update').dispatch()
+                Notifications.success({message: msg('user.userSession.update.success')})
                 this.props.onClose()
             },
-            error => Notifications.caught('user.userSession.update', {}, error).dispatch()
+            error => Notifications.error({message: msg('user.userSession.update.error'), error})
         )
     }
 

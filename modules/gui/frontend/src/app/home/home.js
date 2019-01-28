@@ -1,4 +1,3 @@
-import {Button} from 'widget/button'
 import {EMPTY, interval, timer} from 'rxjs'
 import {connect} from 'store'
 import {currentUser, loadCurrentUser$} from 'user'
@@ -10,7 +9,6 @@ import Map from './map/map'
 import Menu from './menu/menu'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SepalNotifications from 'widget/notifications'
 import actionBuilder from 'action-builder'
 import api from 'api'
 import styles from './home.module.css'
@@ -109,48 +107,9 @@ class Home extends React.Component {
                     <Footer className={styles.footer} user={user}/>
                 </div>
                 <div id='portalContainer' className={styles.portalContainer}/>
-                <SepalNotifications/>
             </div>
         )
     }
-    // componentDidMount() {
-    //     const regeneratingNotification = () =>
-    //         SepalNotifications.info({
-    //             message: 'This is a self-regenerating notification! :-)',
-    //             timeout: 0,
-    //             content: () => (
-    //                 <div>
-    //                     <div>Custom content here.</div>
-    //                     <Button label='Clone me' onClick={() => {
-    //                         regeneratingNotification()
-    //                     }}/>
-    //                 </div>
-    //             ),
-    //             dismissable: true
-    //         })
-
-    //     SepalNotifications.info({
-    //         message: 'Info message',
-    //         timeout: 5000
-    //     })
-    //     setTimeout(() =>
-    //         SepalNotifications.success({
-    //             message: 'Success notification',
-    //             timeout: 4800
-    //         }), 2500)
-    //     setTimeout(() =>
-    //         SepalNotifications.error({
-    //             message: 'A serious error',
-    //             timeout: 0,
-    //             dismissable: true,
-    //             content: dismiss => <Button label='Retry' onClick={() => dismiss()}/>
-    //         }), 1500)
-    //     setTimeout(() => regeneratingNotification(), 1000)
-    //     setTimeout(() =>
-    //         SepalNotifications.warning({
-    //             message: 'Warning message'
-    //         }), 3500)
-    // }
 }
 
 Home.propTypes = {

@@ -6,7 +6,7 @@ import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operat
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -58,7 +58,7 @@ class Browse extends React.Component {
     updateTree$() {
         return api.files.updateTree$(this.props.tree).pipe(
             catchError(() => {
-                Notifications.error('files.loading').dispatch()
+                Notifications.error({message: msg('browse.loading.error')})
                 return Observable.of([])
             }),
             filter(tree => tree),
@@ -99,7 +99,7 @@ class Browse extends React.Component {
             forkJoin(
                 api.files.loadPath$(path).pipe(
                     catchError(() => {
-                        Notifications.error('files.loading').dispatch()
+                        Notifications.error({message: msg('browse.loading.error')})
                         return Observable.of([])
                     })
                 ),
@@ -123,7 +123,7 @@ class Browse extends React.Component {
         this.props.stream('REQUEST_REMOVE_PATHS',
             api.files.removePaths$(paths).pipe(
                 catchError(() => {
-                    Notifications.error('files.removing').dispatch()
+                    Notifications.error({message: msg('browse.removing.error')})
                     return Observable.of([])
                 }),
                 map(() => actionBuilder('REMOVE_PATHS', {paths})

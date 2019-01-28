@@ -5,7 +5,7 @@ import {PropTypes} from 'prop-types'
 import {SubmitButton} from 'widget/legacyButton'
 import {history, query} from 'route'
 import {resetPassword$, tokenUser, validateToken$} from 'user'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import React from 'react'
 
 const fields = {
@@ -34,11 +34,10 @@ class ResetPassword extends React.Component {
         this.props.asyncActionBuilder('VALIDATE_TOKEN',
             validateToken$(token))
             .onComplete(([tokenValidated]) => {
-                if (!tokenValidated.valid)
-                    return [
-                        history().push('/'),
-                        Notifications.error('landing.validate-token')
-                    ]
+                if (!tokenValidated.valid) {
+                    Notifications.error({message: msg('landing.validate-token.error')})
+                    return history().push('/')
+                }
             })
             .dispatch()
     }
@@ -53,10 +52,8 @@ class ResetPassword extends React.Component {
         this.props.asyncActionBuilder('RESET_PASSWORD',
             resetPassword$(token, username, password))
             .onComplete(() => {
-                return [
-                    history().push('/'),
-                    Notifications.success('landing.reset-password')
-                ]
+                Notifications.success({message: msg('landing.reset-password.success')})
+                return history().push('/')
             })
             .dispatch()
     }

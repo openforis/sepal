@@ -43,10 +43,7 @@
             "button": "Reset password",
             "cancel-link": "Cancel",
             "instructions": "Provide us with the email address of your SEPAL account and we'll send you an email with instructions on how to reset your password.",
-            "success": {
-                "title": "Password reset requested",
-                "message": "An email with password reset instructions has been sent to {email}."
-            }
+            "success": "An email with password reset instructions has been sent to {email}."
         },
         "reset-password": {
             "username": {
@@ -64,15 +61,10 @@
                 "not-matching": "Passwords are not the same"
             },
             "button": "Reset password",
-            "success.title": "Password has been reset",
+            "success": "Password has been reset",
             "validating-link": "Validating link..."
         },
-        "validate-token": {
-            "error": {
-                "title": "This link is not valid anymore",
-                "message": "Make sure you use the link in the latest email you received from Sepal."
-            }
-        },
+        "validate-token.error": "This link is not valid anymore. Make sure you use the link in the latest email you received from Sepal.",
         "privacyPolicy": "Privacy policy"
     },
     "home": {
@@ -99,7 +91,7 @@
         }
     },
     "map": {
-        "layer.error.title": "Failed to load layer"
+        "layer.error": "Failed to load layer"
     },
     "browse": {
         "controls.clearSelection.tooltip": "Clear selection",
@@ -111,7 +103,9 @@
         "info": {
             "directory": "{itemCount} {itemCount, plural, one {item} other {items}}",
             "empty": "empty"
-        }
+        },
+        "loading.error": "Could not retrieve file information.",
+        "removing.error": "Could not remove files."
     },
     "body": {
         "starting-sepal": "Starting SEPAL...",
@@ -122,11 +116,10 @@
         "initializing": "Starting session for {label}...",
         "loading": {
             "progress": "Loading {label}...",
-            "error.title": "Failed to load apps",
-            "error.message": "Try to reload the page."
+            "error": "Failed to load apps. Try to reload the page."
         },
         "run": {
-            "error.title": "Failed to run {label}"
+            "error": "Failed to run {label}"
         }
     },
     "process": {
@@ -912,8 +905,8 @@
             },
             "switchingToSepalGoogleAccount": "Switching to Sepal's Google Account",
             "update": {
-                "success.title": "User details have been updated",
-                "error.title": "Could not update user details"
+                "success": "User details have been updated.",
+                "error": "Could not update user details."
             }
         },
         "changePassword": {
@@ -936,10 +929,7 @@
                 }
             },
             "updating": "Updating...",
-            "success": {
-                "title": "User password has been changed",
-                "message": " "
-            }
+            "success": "User password has been changed."
         },
         "userSession": {
             "form": {
@@ -953,17 +943,19 @@
             },
             "suspend": {
                 "label": "Suspend",
-                "tooltip": "Suspend current session. Suspended sessions can be resumed."
+                "tooltip": "Suspend current session. Suspended sessions can be resumed.",
+                "success": "Session has been suspended.",
+                "error": "Could not suspend session."
             },
             "update": {
-                "success.title": "User session has been updated",
-                "error.title": "Could not update user session"
+                "success": "Session has been updated.",
+                "error": "Could not update session."
             },
             "stop": {
                 "label": "Stop",
                 "tooltip": "Stop current session. Stopped sessions cannot be resumed.",
-                "success.title": "Session stopped.",
-                "error.title": "Could not stop session."
+                "success": "Session stopped.",
+                "error": "Could not stop session."
             }
         },
         "report": {
@@ -1021,22 +1013,19 @@
             }
         },
         "update": {
-            "success.title": "User message has been updated",
-            "error.title": "Cannot update user message"
+            "success": "User message has been updated",
+            "error": "Cannot update user message"
         },
         "updateState": {
-            "success.title": "User message state has been updated",
-            "error.title": "Cannot update user message state"
+            "success": "User message state has been updated",
+            "error": "Cannot update user message state"
         },
         "remove": {
-            "success.title": "User message has been removed",
-            "error.title": "Cannot remove user message"
+            "success": "User message has been removed",
+            "error": "Cannot remove user message"
         }
     },
-    "unauthorized.warning": {
-        "title": "You are not logged in",
-        "message": "Perhaps you have been inactive too long?"
-    },
+    "unauthorized.warning": "You are not logged in. Perhaps you have been inactive too long?",
     "action": {
         "error.title": "Failed: {action}",
         "type": {
@@ -1116,6 +1105,10 @@
         "tabs": {
           "addTab.tooltip": "Create a new tab",
           "newTab": "New_Tab"
+        },
+        "notification": {
+            "error.title": "Error",
+            "warning.title": "Warning"
         }
     },
     "fusionTable": {
@@ -1143,7 +1136,9 @@
         "classification": {
             "error.noTrainingData": "There is no training data in selected area of interest."
         },
-        "error.earthEngineException": "Google Earth Engine returned an error: {earthEngineMessage}",
-        "error.failedToLoadRecipe": "Failed to load Sepal recipe"
+        "error": {
+            "title": "Google Earth Engine error",
+            "earthEngineException": "{earthEngineMessage}"
+        }
     }
 }

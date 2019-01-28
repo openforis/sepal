@@ -1,8 +1,9 @@
 import {EMPTY, Subject, interval, of} from 'rxjs'
 import {catchError, concat, exhaustMap, filter, first, map, takeUntil} from 'rxjs/operators'
 import {history, isPathInLocation} from 'route'
+import {msg} from 'translate'
 import {select} from 'store'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import actionBuilder from 'action-builder'
 import api from 'api'
 import jupyterIcon from 'app/home/body/appLaunchPad/jupyter.png'
@@ -26,7 +27,7 @@ export const appReady = app => {
 export const loadApps$ = () =>
     api.apps.loadAll$().pipe(
         catchError(() => {
-            Notifications.error('apps.loading').dispatch()
+            Notifications.error({message: msg('apps.loading.error')})
             return of([])
         }),
         map(apps => {
@@ -83,7 +84,7 @@ export const runApp$ = path => {
         ),
         catchError(() => {
             quitApp(app.path)
-            Notifications.error('apps.run', {label: app.label || app.alt}).dispatch()
+            Notifications.error({message: msg('apps.run.error', {label: app.label || app.alt})})
             return EMPTY
         })
     )

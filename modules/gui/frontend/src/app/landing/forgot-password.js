@@ -3,7 +3,7 @@ import {Field, Form, Input, form} from 'widget/form'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
 import Label from 'widget/label'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './forgot-password.module.css'
@@ -24,7 +24,7 @@ export class ForgotPassword extends React.Component {
         this.props.stream('REQUEST_PASSWORD_RESET',
             requestPasswordReset$(email),
             () => {
-                Notifications.success('landing.forgot-password', {email}).dispatch()
+                Notifications.success({message: msg('landing.forgot-password.success', {email})})
                 this.cancel()
             }
         )
