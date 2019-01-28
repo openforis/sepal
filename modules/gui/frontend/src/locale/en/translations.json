@@ -127,7 +127,8 @@
             "name": "Name",
             "type": "Type",
             "loading": "Loading recipes",
-            "updateTime": "Update time"
+            "updateTime": "Update time",
+            "remove.success": "Recipe has been removed"
         },
         "menu": {
             "noSavedRecipies": "No saved recipies",

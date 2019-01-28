@@ -2,8 +2,10 @@ import {EMPTY, Subject, from, of} from 'rxjs'
 import {addTab, closeTab} from 'widget/tabs'
 import {gzip$, ungzip$} from 'gzip'
 import {map, switchMap} from 'rxjs/operators'
+import {msg} from 'translate'
 import {select, subscribe} from 'store'
 import JSZip from 'jszip'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
@@ -117,19 +119,17 @@ export const addRecipe = recipe => {
 }
 
 export const deleteRecipe$ = recipeId =>
-    api.recipe.delete$(recipeId).pipe(
-        map(() => {
-            closeTab(recipeId, 'process')
-            const recipes = select('process.recipes')
-                .filter(recipe => recipe.id !== recipeId)
-            return actionBuilder('SET_RECIPES', {recipes})
-                .set('process.recipes', recipes)
-                .build()
-        })
-    )
+    api.recipe.delete$(recipeId)
 
 export const deleteRecipe = recipeId =>
-    deleteRecipe$(recipeId).subscribe(action => action.dispatch())
+    deleteRecipe$(recipeId)
+        .subscribe(() => {
+            closeTab(recipeId, 'process')
+            Notifications.success({message: msg('process.recipe.remove.success')})
+            actionBuilder('DELETE_RECIPE', {recipeId})
+                .delValueByTemplate('process.recipes', {id: recipeId})
+                .dispatch()
+        })
 
 export const isRecipeOpen = recipeId =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
