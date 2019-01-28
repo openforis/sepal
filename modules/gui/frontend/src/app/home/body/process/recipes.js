@@ -156,12 +156,16 @@ class RecipeList extends React.Component {
                         <div className={styles.updateTime}>{moment(recipe.updateTime).fromNow()}</div>
                         <Button
                             chromeless
+                            shape='circle'
+                            size='large'
                             icon='clone'
                             tooltip={msg('process.menu.duplicateRecipe')}
                             tooltipPlacement='bottom'
                             onClick={() => this.duplicateRecipe(recipe.id)}/>
                         <Button
                             chromeless
+                            shape='circle'
+                            size='large'
                             icon='trash-alt'
                             tooltip={msg('process.menu.deleteRecipe')}
                             tooltipPlacement='bottom'

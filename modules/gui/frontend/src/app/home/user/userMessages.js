@@ -162,14 +162,16 @@ class UserMessages extends React.Component {
             <ButtonGroup>
                 <Button
                     chromeless
-                    look='transparent'
+                    shape='circle'
+                    size='large'
                     icon='edit'
                     tooltip={msg('userMessages.edit')}
                     onClick={() => this.editMessage(message)}
                 />
                 <Button
                     chromeless
-                    look='transparent'
+                    shape='circle'
+                    size='large'
                     icon='trash'
                     tooltip={msg('userMessages.remove')}
                     onClickHold={() => this.removeMessage(message)}
