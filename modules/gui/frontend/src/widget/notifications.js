@@ -24,11 +24,32 @@ const autoDismiss$ = publish$
 const dismiss$ = merge(manualDismiss$, autoDismiss$)
 const remove$ = dismiss$.pipe(delay(DISMISS_DELAY_MS))
 
+const publish = notification => {
+    const defaultTitle = {
+        'error': msg('widget.notification.error.title'),
+        'warning': msg('widget.notification.warning.title')
+    }
+    const applyDefaults = ({
+        id = uuid(),
+        level = 'info',
+        title = defaultTitle[level],
+        timeout = 3000,
+        dismissable = true,
+        ...notification
+    }) => ({id, level, title, timeout, dismissable, ...notification})
+
+    publish$.next(applyDefaults(notification))
+}
+
+const dismiss = notificationId =>
+    manualDismiss$.next(notificationId)
+
+
 const mapStateToProps = () => ({
     notifications: select(PATH) || []
 })
 
-class Notifications extends React.Component {
+class __Notifications extends React.Component {
     subscriptions = []
 
     renderTitle(title) {
@@ -127,38 +148,21 @@ class Notifications extends React.Component {
     }
 }
 
-const ConnectedNotifications = connect(mapStateToProps)(Notifications)
+const Notifications = connect(mapStateToProps)(__Notifications)
 
-ConnectedNotifications.publish = notification => {
-    const defaultTitle = {
-        'error': msg('widget.notification.error.title'),
-        'warning': msg('widget.notification.warning.title')
-    }
-    const applyDefaults = ({
-        id = uuid(),
-        level = 'info',
-        title = defaultTitle[level],
-        timeout = 3000,
-        dismissable = true,
-        ...notification
-    }) => ({id, level, title, timeout, dismissable, ...notification})
+Notifications.success = notification =>
+    publish({...notification, level: 'success'})
 
-    publish$.next(applyDefaults(notification))
-}
+Notifications.info = notification =>
+    publish({...notification, level: 'info'})
 
-ConnectedNotifications.success = notification =>
-    ConnectedNotifications.publish({...notification, level: 'success'})
+Notifications.warning = notification =>
+    publish({...notification, level: 'warning'})
 
-ConnectedNotifications.info = notification =>
-    ConnectedNotifications.publish({...notification, level: 'info'})
+Notifications.error = notification =>
+    publish({...notification, level: 'error'})
 
-ConnectedNotifications.warning = notification =>
-    ConnectedNotifications.publish({...notification, level: 'warning'})
+Notifications.dismiss = notificationId =>
+    dismiss(notificationId)
 
-ConnectedNotifications.error = notification =>
-    ConnectedNotifications.publish({...notification, level: 'error'})
-
-ConnectedNotifications.dismiss = notificationId =>
-    manualDismiss$.next(notificationId)
-
-export default ConnectedNotifications
+export default Notifications

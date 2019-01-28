@@ -32,7 +32,6 @@ class App extends React.Component {
         const {hasDimensions} = this.props 
         return (
             <div className='app'>
-                <Notifications/>
                 <ReactResizeDetector
                     handleWidth
                     handleHeight
@@ -42,6 +41,7 @@ class App extends React.Component {
                             .dispatch()
                     }/>
                 {hasDimensions && this.body()}
+                <Notifications/>
             </div>
         )
     }
