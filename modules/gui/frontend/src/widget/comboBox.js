@@ -1,12 +1,13 @@
-import {ErrorMessage} from 'widget/form'
-import {connect, select} from 'store'
-import {msg} from 'translate'
-import Icon from 'widget/icon'
-import Label from 'widget/label'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Select, {components} from 'react-select'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import {ErrorMessage} from 'widget/form'
+import Icon from 'widget/icon'
+import Label from 'widget/label'
+import Portal from 'widget/portal'
+import {isMobile} from 'widget/userAgent'
 import styles from './comboBox.css'
 
 const mapStateToProps = () => ({
@@ -37,6 +38,7 @@ class ComboBox extends React.Component {
             isLoading,
             showChevron = true,
             showCurrentSelection = true,
+            isSearchable = !isMobile(),
             menuPlacement = 'bottom',
             controlClassName,
             menuClassName,
@@ -51,7 +53,8 @@ class ComboBox extends React.Component {
         if (children)
             components.SingleValue = createSingleValue(children)
         return (
-            <div ref={this.element} className={[styles.comboBox, controlClassName, input.error ? 'error' : null].join(' ')}>
+            <div ref={this.element}
+                 className={[styles.comboBox, controlClassName, input.error ? 'error' : null].join(' ')}>
                 <Portal>
                     <div ref={this.menuPortalTarget} className={[menuClassName, 'portalTarget'].join(' ')}/>
                 </Portal>
@@ -65,6 +68,7 @@ class ComboBox extends React.Component {
                     menuPortalTarget={this.menuPortalTarget.current}
                     isClearable={isClearable}
                     isLoading={!!isLoading}
+                    isSearchable={isSearchable}
                     loadingMessage={() => msg('widget.comboBox.loading')}
                     components={components}
                     onChange={e => {
