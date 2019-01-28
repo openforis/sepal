@@ -22,6 +22,10 @@ const fields = {
     compose: new Field()
 }
 
+const mapStateToProps = (state, ownProps) => {
+    return {source: RecipeState(ownProps.recipeId).source()}
+}
+
 class Composite extends React.Component {
     constructor(props) {
         super(props)
@@ -35,6 +39,7 @@ class Composite extends React.Component {
             },
             source
         } = this.props
+        console.log(this.props)
         return (
             <div className={styles.content}>
                 <Buttons
@@ -186,5 +191,5 @@ export default initValues({
             .setCompositeOptions({values, model})
             .dispatch()
 })(
-    form({fields})(Composite)
+    form({fields, mapStateToProps})(Composite)
 )
