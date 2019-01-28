@@ -14,10 +14,10 @@
 }
 
 .notification {
+    --background-opacity: .85;
     width: 20rem;
-    padding-bottom: .5rem;
     pointer-events: all;
-    background-color: hsla(0, 0%, 0%, .9);
+    background-color: hsla(0, 0%, 0%, var(--background-opacity));
     border-style: solid;
     border-width: .5rem .1rem .1rem .1rem;
     border-color: var(--color);
@@ -76,10 +76,6 @@
     font-weight: bold;
 }
 
-.notification .message {
-    /* color: #ccc; */
-}
-
 .notification .error {
     color: #ccc;
     font-size: .9rem;
@@ -87,6 +83,7 @@
 
 .notification .content {
     color: #ccc;
+    padding: .5rem 0;
 }
 
 .notification > * {
