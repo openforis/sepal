@@ -40,13 +40,13 @@ class App extends React.Component {
                             .set('dimensions', {width, height})
                             .dispatch()
                     }/>
-                {hasDimensions && this.body()}
+                {hasDimensions ? this.renderBody() : null}
                 <Notifications/>
             </div>
         )
     }
 
-    body() {
+    renderBody() {
         const {currentUser, action} = this.props
         return action('LOAD_CURRENT_USER').dispatched
             ? currentUser
