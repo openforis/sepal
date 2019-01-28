@@ -1,6 +1,7 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {Msg, msg} from 'translate'
 import {connect} from 'store'
+import {v4 as uuid} from 'uuid'
 import Markdown from 'react-markdown'
 import Notifications from 'widget/notifications'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
@@ -45,12 +46,12 @@ class UserMessages extends React.Component {
     updateMessage(message) {
         const {id} = message
         this.props.stream('REQUEST_UPDATE_USER_MESSAGE',
-            api.user.updateMessage$(message),
+            api.user.updateMessage$({...message, id: id || uuid()}),
             message => {
                 actionBuilder('UPDATE_USER_MESSAGE')
                     .assignOrAddValueByTemplate('user.userMessages', {message: {id}}, {message, state: 'UNREAD'})
                     .dispatch()
-                Notifications.success({message: msg('userMessage.update.success')})
+                Notifications.success({message: id ? msg('userMessage.update.success') : msg('userMessage.publish.success')})
             },
             error => Notifications.error({message: msg('userMessage.update.error'), error})
         )

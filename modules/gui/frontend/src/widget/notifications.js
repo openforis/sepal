@@ -3,6 +3,7 @@ import {connect, select} from 'store'
 import {delay, filter, map, mergeMap} from 'rxjs/operators'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
+import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import styles from './notifications.module.css'
@@ -43,7 +44,6 @@ const publish = notification => {
 
 const dismiss = notificationId =>
     manualDismiss$.next(notificationId)
-
 
 const mapStateToProps = () => ({
     notifications: select(PATH) || []
@@ -166,3 +166,14 @@ Notifications.dismiss = notificationId =>
     dismiss(notificationId)
 
 export default Notifications
+
+Notifications.propTypes = {
+    content: PropTypes.func,
+    dismissable: PropTypes.any,
+    error: PropTypes.string,
+    id: PropTypes.string,
+    level: PropTypes.string,
+    message: PropTypes.string,
+    timeout: PropTypes.number,
+    title: PropTypes.string,
+}
