@@ -80,7 +80,7 @@ class UserMessages extends React.Component {
                 actionBuilder('UPDATE_USER_MESSAGE_STATE', {id, state})
                     .assignValueByTemplate('user.userMessages', {message: {id}}, {state})
                     .dispatch()
-                Notifications.success({message: msg('userMessage.updateState.success')})
+                // Notifications.success({message: msg('userMessage.updateState.success')})
             },
             error => Notifications.error({message: msg('userMessage.updateState.error'), error})
         )
