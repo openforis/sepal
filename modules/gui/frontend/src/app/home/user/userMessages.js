@@ -1,6 +1,7 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {Msg, msg} from 'translate'
 import {connect} from 'store'
+import {v4 as uuid} from 'uuid'
 import Markdown from 'react-markdown'
 import Notifications from 'widget/notifications'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
@@ -14,7 +15,6 @@ import api from 'api'
 import lookStyles from 'style/look.module.css'
 import moment from 'moment'
 import styles from './userMessages.module.css'
-import {v4 as uuid} from 'uuid'
 
 const mapStateToProps = state => {
     const currentUser = state.user.currentUser
