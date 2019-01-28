@@ -24,10 +24,10 @@ html {
     --link-hover-color: #ccc;
     --link-selected-color: #fff;
 
-    --error-color: hsl(343, 85%, 49%);
-    --info-color: hsl(219, 88%, 47%);
-    --warning-color: hsl(39, 100%, 35%);
-    --success-color: hsl(90, 100%, 35%);
+    --error-color: hsl(0, 80%, 40%);
+    --info-color: hsl(202, 80%, 40%);
+    --warning-color: hsl(39, 80%, 40%);
+    --success-color: hsl(90, 80%, 35%);
 
     --base-font-size: 14px;
 
