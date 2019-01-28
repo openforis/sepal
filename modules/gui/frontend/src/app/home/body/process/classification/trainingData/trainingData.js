@@ -1,15 +1,15 @@
-import {Field, Input, form} from 'widget/form'
-import {Msg, msg} from 'translate'
-import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
-import {Subject} from 'rxjs'
 import {initValues} from 'app/home/body/process/recipe'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
-import {map, takeUntil} from 'rxjs/operators'
-import ComboBox from 'widget/comboBox'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {Subject} from 'rxjs'
+import {map, takeUntil} from 'rxjs/operators'
+import {Msg, msg} from 'translate'
+import ComboBox from 'widget/comboBox'
+import {Field, form, Input} from 'widget/form'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
+import {RecipeActions, recipePath, RecipeState} from '../classificationRecipe'
 import styles from './trainingData.module.css'
 
 const fields = {
@@ -17,6 +17,11 @@ const fields = {
         .notBlank('process.classification.panel.trainingData.form.fusionTable.required'),
     fusionTableColumn: new Field()
         .notBlank('process.classification.panel.trainingData.form.fusionTableColumn.required')
+}
+
+const mapStateToProps = (state, ownProps) => {
+    const recipeState = RecipeState(ownProps.recipeId)
+    return {columns: recipeState('ui.fusionTable.columns')}
 }
 
 class TrainingData extends React.Component {
@@ -144,5 +149,5 @@ export default initValues({
             .setTrainingData({values, model})
             .dispatch()
 })(
-    form({fields})(TrainingData)
+    form({fields, mapStateToProps})(TrainingData)
 )
