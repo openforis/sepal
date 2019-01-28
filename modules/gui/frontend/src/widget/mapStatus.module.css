@@ -1,21 +1,17 @@
-.container {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    padding: 1rem;
-    padding-top: 5rem;
-}
-
 .status {
+    position: absolute;
+    top: calc(var(--toolbar-clearance) + 2rem);
+    left: calc(var(--menu-clearance) + .5rem);
+    right: calc(var(--toolbar-clearance) + .5rem);
+    margin: auto;
+    pointer-events: all;
+    max-width: 30rem;
+    width: fit-content;
     color: #ccc;
     background-color: rgba(0, 0, 0, 0.6);
-    width: max-content;
-    margin: auto;
     font-size: .9rem;
     font-family: var(--header-font-family);
-    text-transform: uppercase;
-    padding: .3rem 1rem;
+    padding: .5rem 1rem;
     border-radius: .5rem;
 }
 
@@ -27,9 +23,6 @@
     display: inline-block;
 }
 
-.initializing {
-
-}
 .error {
     margin-left: 0.5rem;
     color: #e81351;

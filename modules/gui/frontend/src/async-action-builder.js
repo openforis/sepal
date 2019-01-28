@@ -1,7 +1,7 @@
 import {dispatch} from 'store'
 import {msg} from 'translate'
 import {takeUntil} from 'rxjs/operators'
-import Notifications from 'app/notifications'
+// import Notifications from 'widget/notifications'
 import actionBuilder from 'action-builder'
 
 export default function asyncActionBuilder(type, action$, component) {
@@ -44,16 +44,17 @@ export default function asyncActionBuilder(type, action$, component) {
                     actions.forEach(action => addActions(action))
                     // console.log('error', error)
                     if (actions.length === 0)
-                        addActions(Notifications.caught(
-                            'action',
-                            {action: msg('action.type.' + type, {}, type)},
-                            error
-                        ))
-                    addActions(
-                        actionBuilder('ASYNC_ACTION_DISPATCHED', {componentId, actionType: type})
-                            .set(['actions', componentId, type], 'FAILED')
-                            .build()
-                    )
+                    // TODO: fix this!
+                    // Notifications.caught(
+                    //     'action',
+                    //     {action: msg('action.type.' + type, {}, type)},
+                    //     error
+                    // )
+                        addActions(
+                            actionBuilder('ASYNC_ACTION_DISPATCHED', {componentId, actionType: type})
+                                .set(['actions', componentId, type], 'FAILED')
+                                .build()
+                        )
                     return dispatch({
                         type: type,
                         actions: actionsToDispatch

@@ -2,7 +2,7 @@ import {Button, ButtonGroup} from 'widget/button'
 import {Msg, msg} from 'translate'
 import {connect} from 'store'
 import Markdown from 'react-markdown'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
@@ -50,9 +50,9 @@ class UserMessages extends React.Component {
                 actionBuilder('UPDATE_USER_MESSAGE')
                     .assignOrAddValueByTemplate('user.userMessages', {message: {id}}, {message, state: 'UNREAD'})
                     .dispatch()
-                // Notifications.success('userMessage.update').dispatch()
+                Notifications.success({message: msg('userMessage.update.success')})
             },
-            error => Notifications.caught('userMessage.update', null, error).dispatch()
+            error => Notifications.error({message: msg('userMessage.update.error'), error})
         )
         this.editMessage(null)
     }
@@ -65,9 +65,9 @@ class UserMessages extends React.Component {
                 actionBuilder('REMOVE_USER_MESSAGE')
                     .delValueByTemplate('user.userMessages', {message: {id}})
                     .dispatch()
-                Notifications.success('userMessage.remove').dispatch()
+                Notifications.success({message: msg('userMessage.remove.success')})
             },
-            error => Notifications.caught('userMessage.remove', null, error).dispatch()
+            error => Notifications.error({message: msg('userMessage.remove.error'), error})
         )
     }
 
@@ -80,9 +80,9 @@ class UserMessages extends React.Component {
                 actionBuilder('UPDATE_USER_MESSAGE_STATE', {id, state})
                     .assignValueByTemplate('user.userMessages', {message: {id}}, {state})
                     .dispatch()
-                // Notifications.success('userMessage.updateState').dispatch()
+                Notifications.success({message: msg('userMessage.updateState.success')})
             },
-            error => Notifications.caught('userMessage.updateState', null, error).dispatch()
+            error => Notifications.error({message: msg('userMessage.updateState.error'), error})
         )
     }
 

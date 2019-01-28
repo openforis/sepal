@@ -3,7 +3,7 @@ import {Constraint, Field, Input, form} from 'widget/form'
 import {changeUserPassword$} from 'user'
 import {msg} from 'translate'
 import {showUserDetails} from './userProfile'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import React from 'react'
@@ -36,7 +36,7 @@ class ChangePassword extends React.Component {
             changeUserPassword$(userPasswords),
             ({status}) => {
                 if (status === 'success') {
-                    Notifications.success('user.changePassword').dispatch()
+                    Notifications.success({message: msg('user.changePassword.success')})
                     showUserDetails()
                 } else
                     this.props.inputs.oldPassword.setInvalid(msg('user.changePassword.form.oldPassword.incorrect'))

@@ -3,7 +3,6 @@ import {Router} from 'react-router-dom'
 import {applyMiddleware, createStore} from 'redux'
 import {composeWithDevTools} from 'redux-devtools-extension'
 import {initStore} from 'store'
-import {reducer as notificationsReducer} from 'react-notification-system-redux'
 import {syncHistoryAndStore} from 'route'
 import App from 'app/app'
 import React from 'react'
@@ -15,10 +14,7 @@ const rootReducer = (state = [], action) => {
     if ('reduce' in action)
         return action.reduce(state)
     else
-        return {
-            ...state,
-            notifications: notificationsReducer(state.notifications, action)
-        }
+        return {...state}
 }
 
 const batchActions = () => next => action => {

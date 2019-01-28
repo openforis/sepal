@@ -8,18 +8,14 @@ export default class MapStatus extends React.Component {
 
     render() {
         const {loading = true, message, error} = this.props
-        if (message || error)
-            return (
-                <div className={styles.container}>
-                    <div className={styles.status}>
-                        {loading ? <Icon name='spinner'/> : null}
-                        {message ? <div>{message}</div> : null}
-                        {error ? <div className={styles.error}>{error}</div> : null}
-                    </div>
+        return message || error
+            ? (
+                <div className={styles.status}>
+                    {loading ? <Icon name='spinner'/> : null}
+                    {message ? <div>{message}</div> : null}
+                    {error ? <div className={styles.error}>{error}</div> : null}
                 </div>
-            )
-        else
-            return null
+            ) : null
     }
 }
 

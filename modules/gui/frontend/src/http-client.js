@@ -1,8 +1,9 @@
 import {ajax} from 'rxjs/ajax'
 import {catchError, flatMap, map, retryWhen, zip} from 'rxjs/operators'
 import {logout} from 'user'
+import {msg} from 'translate'
 import {of, range, throwError, timer} from 'rxjs'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import base64 from 'base-64'
 
 const DEFAULT_RETRIES = 4
@@ -88,7 +89,7 @@ function execute$(url, method, {retries, query, username, password, headers, val
             if (validStatuses && validStatuses.includes(e.status)) {
                 return of(e)
             } else if (e.status === 401 && isRelative(url)) {
-                Notifications.warning('unauthorized').dispatch()
+                Notifications.warning({message: msg('unauthorized.warning')})
                 logout()
             } else {
                 return throwError(e)

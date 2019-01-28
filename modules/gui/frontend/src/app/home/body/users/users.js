@@ -8,7 +8,7 @@ import {msg} from 'translate'
 import Highlight from 'react-highlighter'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import UserDetails from './user'
 import _ from 'lodash'
@@ -226,11 +226,11 @@ class Users extends React.Component {
             update$(userDetails),
             userDetails => {
                 updateLocalState(userDetails)
-                Notifications.success('user.userDetails.update').dispatch()
+                Notifications.success({message: msg('user.userDetails.update.success')})
             },
             error => {
                 removeFromLocalState(userDetails)
-                Notifications.caught('user.userDetails.update', {}, error).dispatch()
+                Notifications.caught({message: msg('user.userDetails.update.error'), error})
             }
         )
     }

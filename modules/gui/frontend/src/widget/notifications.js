@@ -1,13 +1,13 @@
 import {Subject, merge, timer} from 'rxjs'
 import {connect, select} from 'store'
 import {delay, filter, map, mergeMap} from 'rxjs/operators'
+import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
 import React from 'react'
-import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './notifications.module.css'
 
-const PATH = 'sepalNotifications'
+const PATH = 'Notifications'
 const DISMISS_DELAY_MS = 500
 
 const publish$ = new Subject()
@@ -28,21 +28,13 @@ const mapStateToProps = () => ({
     notifications: select(PATH) || []
 })
 
-class SepalNotifications extends React.Component {
+class Notifications extends React.Component {
     subscriptions = []
 
     renderTitle(title) {
         return (
             <div className={styles.title}>
                 {title}
-            </div>
-        )
-    }
-
-    renderContent(content, dismiss) {
-        return (
-            <div className={styles.content}>
-                {content(dismiss)}
             </div>
         )
     }
@@ -55,7 +47,23 @@ class SepalNotifications extends React.Component {
         )
     }
 
-    renderNotification({id, level, title, message, content, dismissable, dismissing}) {
+    renderError(error) {
+        return (
+            <div className={styles.error}>
+                {error}
+            </div>
+        )
+    }
+
+    renderContent(content, dismiss) {
+        return (
+            <div className={styles.content}>
+                {content(dismiss)}
+            </div>
+        )
+    }
+
+    renderNotification({id, level, title, message, error, content, dismissable, dismissing}) {
         const dismiss = () => manualDismiss$.next(id)
         return (
             <div
@@ -71,6 +79,7 @@ class SepalNotifications extends React.Component {
             >
                 {title ? this.renderTitle(title) : null}
                 {message ? this.renderMessage(message) : null}
+                {error ? this.renderError(error) : null}
                 {content ? this.renderContent(content, dismiss) : null}
             </div>
         )
@@ -118,33 +127,38 @@ class SepalNotifications extends React.Component {
     }
 }
 
-const ConnectedSepalNotifications = connect(mapStateToProps)(SepalNotifications)
+const ConnectedNotifications = connect(mapStateToProps)(Notifications)
 
-ConnectedSepalNotifications.publish = notification => {
-    const notificationId = uuid()
-    publish$.next(_.defaults(notification, {
-        id: notificationId,
-        level: 'info',
-        timeout: 3000
-    }))
+ConnectedNotifications.publish = notification => {
+    const defaultTitle = {
+        'error': msg('widget.notification.error.title'),
+        'warning': msg('widget.notification.warning.title')
+    }
+    const applyDefaults = ({
+        id = uuid(),
+        level = 'info',
+        title = defaultTitle[level],
+        timeout = 3000,
+        dismissable = true,
+        ...notification
+    }) => ({id, level, title, timeout, dismissable, ...notification})
+
+    publish$.next(applyDefaults(notification))
 }
 
-ConnectedSepalNotifications.success = notification =>
-    ConnectedSepalNotifications.publish({...notification, level: 'success'})
+ConnectedNotifications.success = notification =>
+    ConnectedNotifications.publish({...notification, level: 'success'})
 
-ConnectedSepalNotifications.info = notification =>
-    ConnectedSepalNotifications.publish({...notification, level: 'info'})
+ConnectedNotifications.info = notification =>
+    ConnectedNotifications.publish({...notification, level: 'info'})
 
-ConnectedSepalNotifications.warning = notification =>
-    ConnectedSepalNotifications.publish({...notification, level: 'warning', title: 'Warning'})
+ConnectedNotifications.warning = notification =>
+    ConnectedNotifications.publish({...notification, level: 'warning'})
 
-ConnectedSepalNotifications.error = notification =>
-    ConnectedSepalNotifications.publish({...notification, level: 'error', title: 'Error'})
+ConnectedNotifications.error = notification =>
+    ConnectedNotifications.publish({...notification, level: 'error'})
 
-ConnectedSepalNotifications.caught = notification =>
-    ConnectedSepalNotifications.publish({...notification, level: 'error'})
-
-ConnectedSepalNotifications.dismiss = notificationId =>
+ConnectedNotifications.dismiss = notificationId =>
     manualDismiss$.next(notificationId)
 
-export default ConnectedSepalNotifications
+export default ConnectedNotifications

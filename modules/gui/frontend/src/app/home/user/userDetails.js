@@ -5,7 +5,7 @@ import {closePanel, showChangePassword} from './userProfile'
 import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
 import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
-import Notifications from 'app/notifications'
+import Notifications from 'widget/notifications'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import React from 'react'
@@ -52,11 +52,11 @@ class UserDetails extends React.Component {
         this.props.stream('UPDATE_CURRENT_USER_DETAILS',
             updateCurrentUserDetails$(userDetails),
             () => {
-                Notifications.success('user.userDetails.update').dispatch()
+                Notifications.success({message: msg('user.userDetails.update.success')})
                 closePanel()
             },
             error => {
-                Notifications.caught('user.userDetails.update', null, error).dispatch()
+                Notifications.error({message: msg('user.userDetails.update.error'), error})
                 closePanel()
             }
         )
