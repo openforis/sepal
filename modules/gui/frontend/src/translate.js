@@ -1,12 +1,12 @@
-import flat from 'flat'
-import moment from 'moment'
+import {IntlProvider, addLocaleData, injectIntl} from 'react-intl'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {addLocaleData, injectIntl, IntlProvider} from 'react-intl'
+import flat from 'flat'
+import moment from 'moment'
 
 let intl, intlEn
 export const initIntl = intlInstance => intl = intlInstance
-export const initIntlEn = intlInstance => intlEn = intlInstance
+const initIntlEn = intlInstance => intlEn = intlInstance
 
 export const Msg = ({id, ...values}) => (
     <span>{msg(id, values)}</span>
