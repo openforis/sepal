@@ -1,4 +1,4 @@
-import {IntlProvider, injectIntl} from 'react-intl'
+import {addLocaleData, IntlProvider, injectIntl} from 'react-intl'
 import PropTypes from 'prop-types'
 import React from 'react'
 import flat from 'flat'
@@ -53,10 +53,13 @@ export default class TranslationProvider extends React.Component {
 
     static getDerivedStateFromProps(props, state) {
         const languageState = (language) => {
+            const localeData = require(`react-intl/locale-data/${language}`)
+            addLocaleData(localeData)
             const messages = flat.flatten( // react-intl requires a flat object
                 require(`locale/${language}/translations.json`)
             )
             require('moment/min/locales.min') // Load all moment locales
+
             moment.locale(language)
             return {...state, messages, language}
         }
@@ -75,6 +78,7 @@ export default class TranslationProvider extends React.Component {
     render() {
         const {children} = this.props
         const {language, messages} = this.state
+        console.log({language, messages})
         return (
             <IntlProvider locale={language} messages={messages}>
                 <IntlInit>
