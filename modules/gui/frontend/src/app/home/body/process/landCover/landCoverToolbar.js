@@ -1,7 +1,7 @@
-import {withRecipePath} from 'app/home/body/process/recipe'
 import {RecipeActions, RecipeState, Status, createComposites, createLandCoverMap} from './landCoverRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
+import {withRecipePath} from 'app/home/body/process/recipe'
 import Aoi from '../mosaic/panels/aoi/aoi'
 import CompositeOptions from './compositeOptions'
 import PanelWizard from 'widget/panelWizard'

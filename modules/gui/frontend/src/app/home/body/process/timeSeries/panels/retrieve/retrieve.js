@@ -1,7 +1,7 @@
-import {withRecipePath} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
 import {msg} from 'translate'
+import {withRecipePath} from 'app/home/body/process/recipe'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'

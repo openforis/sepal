@@ -1,7 +1,7 @@
-import {withRecipePath} from 'app/home/body/process/recipe'
 import {RecipeState, SceneSelectionType} from '../timeSeriesRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
+import {withRecipePath} from 'app/home/body/process/recipe'
 import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
 import Dates from 'app/home/body/process/timeSeries/panels/dates/dates'
 import PanelWizard from 'widget/panelWizard'

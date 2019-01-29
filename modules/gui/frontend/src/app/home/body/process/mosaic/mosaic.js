@@ -1,4 +1,4 @@
-import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
+import {Content, SectionLayout} from 'widget/sectionLayout'
 import {RecipeState} from './mosaicRecipe'
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {connect, select} from 'store'

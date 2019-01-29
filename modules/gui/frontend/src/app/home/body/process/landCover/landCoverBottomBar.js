@@ -1,10 +1,10 @@
+import {BottomBar} from 'widget/sectionLayout'
+import {Button, ButtonGroup} from 'widget/button'
+import {Field, form} from 'widget/form'
+import ComboBox from 'widget/comboBox'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
-import {Button, ButtonGroup} from 'widget/button'
-import ComboBox from 'widget/comboBox'
-import {Field, form} from 'widget/form'
-import Icon from 'widget/icon'
-import {BottomBar} from 'widget/sectionLayout'
 import styles from './landCoverBottomBar.module.css'
 
 const fields = {

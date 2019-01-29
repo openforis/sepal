@@ -1,13 +1,13 @@
-import PropTypes from 'prop-types'
-import React from 'react'
-import Select, {components} from 'react-select'
-import {connect, select} from 'store'
-import {msg} from 'translate'
 import {ErrorMessage} from 'widget/form'
+import {connect, select} from 'store'
+import {isMobile} from 'widget/userAgent'
+import {msg} from 'translate'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
 import Portal from 'widget/portal'
-import {isMobile} from 'widget/userAgent'
+import PropTypes from 'prop-types'
+import React from 'react'
+import Select, {components} from 'react-select'
 import styles from './comboBox.css'
 
 const mapStateToProps = () => ({
@@ -54,7 +54,7 @@ class ComboBox extends React.Component {
             components.SingleValue = createSingleValue(children)
         return (
             <div ref={this.element}
-                 className={[styles.comboBox, controlClassName, input.error ? 'error' : null].join(' ')}>
+                className={[styles.comboBox, controlClassName, input.error ? 'error' : null].join(' ')}>
                 <Portal>
                     <div ref={this.menuPortalTarget} className={[menuClassName, 'portalTarget'].join(' ')}/>
                 </Portal>

@@ -1,7 +1,7 @@
-import {withRecipePath} from 'app/home/body/process/recipe'
 import {RecipeState, SceneSelectionType} from '../mosaicRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
+import {withRecipePath} from 'app/home/body/process/recipe'
 import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
 import Auto from 'app/home/body/process/mosaic/panels/auto/auto'
 import ClearSelectedScenes from 'app/home/body/process/mosaic/panels/clearSelectedScenes/clearSelectedScenes'
