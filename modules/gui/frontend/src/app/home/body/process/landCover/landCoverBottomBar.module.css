@@ -1,0 +1,64 @@
+.container {
+    --icon-button-spacing: .5rem;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: all;
+}
+
+.container button {
+    display: flex;
+}
+
+.back span {
+    flex-grow: 1;
+    margin-left: var(--icon-button-spacing);
+}
+
+.middle {
+    margin-left: 1rem;
+    flex-shrink: 1;
+    display: flex;
+    width: 20rem;
+}
+
+.middle:not(.hasNext) {
+    margin-right: 1rem;
+}
+
+.primitiveSelector {
+    --scaling-factor: 0.8;
+    flex-grow: 1;
+}
+
+.nextPrimitive {
+    align-self: center;
+    font-size: 1.1rem;
+    color: var(--error-color) !important;
+    animation: pulse 1000ms ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        opacity: .2;
+    }
+}
+
+.next span {
+    margin-right: var(--icon-button-spacing);
+}
+
+@media only screen and (max-width: 500px) {
+    .back span {
+        display: none;
+    }
+
+    .next span {
+        display: none;
+    }
+}
