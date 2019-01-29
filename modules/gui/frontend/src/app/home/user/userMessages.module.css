@@ -46,7 +46,7 @@ button.unread i {
 }
 
 .messages .subject {
-    font-size: 1.1rem;
+    font-size: 1.0rem;
     font-weight: bold;
     margin-top: .5rem;
 }
@@ -76,11 +76,15 @@ button.unread i {
 }
 
 .contents h1 {
-    font-size: 1.6rem;
+    font-size: 1.25rem;
 }
 
 .contents h2 {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
+}
+
+.contents h3 {
+    font-size: 1.15rem;
 }
 
 .contents h4 {
