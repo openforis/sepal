@@ -1,6 +1,6 @@
 import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState, recipePath} from '../changeDetectionRecipe'
-import {initValues} from 'app/home/body/process/recipe'
+import {RecipeActions, RecipeState} from '../changeDetectionRecipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import AssetSection from './assetSection'
 import Panel from 'widget/panel'
@@ -30,7 +30,7 @@ class Source extends React.Component {
     }
 
     render() {
-        const {recipeId, number, form, inputs} = this.props
+        const {recipePath, number, form, inputs} = this.props
         const sections = [
             {
                 icon: 'cog',
@@ -51,7 +51,7 @@ class Source extends React.Component {
         return (
             <Panel
                 form={form}
-                statePath={recipePath(recipeId, 'ui')} className={styles.panel}
+                statePath={recipePath + '.ui'} className={styles.panel}
                 onApply={values => this.recipeActions.setSource({
                     values,
                     model: valuesToModel(values),
@@ -105,14 +105,16 @@ const modelToValues = (model = {}) => {
     }
 }
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.source' + props.number),
-    getValues: props => RecipeState(props.recipeId)('ui.source' + props.number),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setSource({values, model, number: props.number})
-            .dispatch()
-})(
-    form({fields})(Source)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.source' + props.number),
+        getValues: props => RecipeState(props.recipeId)('ui.source' + props.number),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setSource({values, model, number: props.number})
+                .dispatch()
+    })(
+        form({fields})(Source)
+    )
 )

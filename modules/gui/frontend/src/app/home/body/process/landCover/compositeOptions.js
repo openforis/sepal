@@ -1,6 +1,6 @@
 import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
-import {initValues} from 'app/home/body/process/recipe'
+import {RecipeActions, RecipeState} from './landCoverRecipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
@@ -25,11 +25,11 @@ class CompositeOptions extends React.Component {
     }
 
     render() {
-        const {recipeId, form} = this.props
+        const {recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 form={form}
                 onApply={values => this.recipeActions.setCompositeOptions({
                     values,
@@ -130,14 +130,16 @@ const modelToValues = (model = {}) => ({
     ...model
 })
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.compositeOptions'),
-    getValues: props => RecipeState(props.recipeId)('ui.compositeOptions'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setCompositeOptions({values, model})
-            .dispatch()
-})(
-    form({fields})(CompositeOptions)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.compositeOptions'),
+        getValues: props => RecipeState(props.recipeId)('ui.compositeOptions'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setCompositeOptions({values, model})
+                .dispatch()
+    })(
+        form({fields})(CompositeOptions)
+    )
 )

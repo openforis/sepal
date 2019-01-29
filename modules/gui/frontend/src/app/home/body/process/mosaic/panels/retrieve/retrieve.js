@@ -1,9 +1,9 @@
+import {withRecipePath} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {currentUser} from 'user'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'
-import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
@@ -130,12 +130,12 @@ class Retrieve extends React.Component {
     }
 
     render() {
-        const {recipeId, form} = this.props
+        const {recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 isActionForm={true}
                 onApply={values => this.recipeActions.retrieve(values).dispatch()}>
                 <PanelHeader
@@ -159,10 +159,13 @@ class Retrieve extends React.Component {
     }
 }
 
+const option = band => ({value: band, label: msg(['bands', band])})
+
 Retrieve.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default form({fields, mapStateToProps})(Retrieve)
+export default withRecipePath()(
+    form({fields, mapStateToProps})(Retrieve)
+)
 
-const option = band => ({value: band, label: msg(['bands', band])})

@@ -3,7 +3,7 @@ import {addTab, closeTab} from 'widget/tabs'
 import {gzip$, ungzip$} from 'gzip'
 import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
-import {select, subscribe} from 'store'
+import {connect, select, subscribe} from 'store'
 import JSZip from 'jszip'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -140,23 +140,23 @@ let prevTabs = []
 const findPrevRecipe = recipe =>
     prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
 subscribe('process.tabs', recipes => {
-    if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
-        const recipesToSave = recipes
-            .filter(recipe =>
-                (select('process.recipes') || []).find(saved =>
-                    saved.id === recipe.id
+        if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
+            const recipesToSave = recipes
+                .filter(recipe =>
+                    (select('process.recipes') || []).find(saved =>
+                        saved.id === recipe.id
+                    )
                 )
-            )
-            .filter(recipe => {
-                const prevRecipe = findPrevRecipe(recipe)
-                return prevRecipe.model && !_.isEqual(prevRecipe.model, recipe.model)
-            })
-        if (recipesToSave.length > 0) {
-            recipesToSave.forEach(recipe => saveToBackend$.next(recipe))
+                .filter(recipe => {
+                    const prevRecipe = findPrevRecipe(recipe)
+                    return prevRecipe.model && !_.isEqual(prevRecipe.model, recipe.model)
+                })
+            if (recipesToSave.length > 0) {
+                recipesToSave.forEach(recipe => saveToBackend$.next(recipe))
+            }
+            prevTabs = recipes
         }
-        prevTabs = recipes
     }
-}
 )
 
 saveToBackend$.pipe(
@@ -231,21 +231,46 @@ const save$ = recipe => {
 export const recipe = (RecipeState) => {
     return WrappedComponent => {
         class RecipeComponent extends React.Component {
+            state = {}
+
             render() {
-                return this.recipeState
+                const {recipeState} = this.state
+                return recipeState
                     ? React.createElement(WrappedComponent, {
                         ...this.props,
-                        recipeState: this.recipeState
+                        recipeState
                     })
                     : null
             }
 
             componentDidMount() {
-                this.recipeState = RecipeState(this.props.recipeId)
+                this.setState(prevState => ({
+                    ...prevState,
+                    recipeState: RecipeState(this.props.recipeId)
+                }))
             }
         }
 
-        return RecipeComponent
+        const mapStateToProps = (state, ownProps) => ({
+            recipePath: recipePath(ownProps.recipeId)
+        })
+        return connect(mapStateToProps)(RecipeComponent)
+    }
+}
+
+
+export const withRecipePath = () => {
+    return WrappedComponent => {
+        class RecipeComponent extends React.Component {
+            render() {
+                return React.createElement(WrappedComponent, {...this.props})
+            }
+        }
+
+        const mapStateToProps = (state, ownProps) => ({
+            recipePath: recipePath(ownProps.recipeId)
+        })
+        return connect(mapStateToProps)(RecipeComponent)
     }
 }
 

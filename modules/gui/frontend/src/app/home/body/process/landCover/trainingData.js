@@ -1,8 +1,8 @@
 import {Constraint} from 'widget/form'
 import {Field, Input, form} from 'widget/form'
-import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
+import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {Subject} from 'rxjs'
-import {initValues} from 'app/home/body/process/recipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
@@ -57,12 +57,12 @@ class TrainingData extends React.Component {
     }
 
     render() {
-        const {recipeId, primitiveTypes, form} = this.props
+        const {recipePath, primitiveTypes, form} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 onApply={values => this.recipeActions.setTrainingData({
                     values,
                     model: valuesToModel(values, primitiveTypes)
@@ -157,14 +157,16 @@ const modelToValues = (model = {}) => ({
     classColumn: model.classColumn
 })
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.trainingData'),
-    getValues: props => RecipeState(props.recipeId)('ui.trainingData'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setTrainingData({values, model})
-            .dispatch()
-})(
-    form({fields, constraints})(TrainingData)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.trainingData'),
+        getValues: props => RecipeState(props.recipeId)('ui.trainingData'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setTrainingData({values, model})
+                .dispatch()
+    })(
+        form({fields, constraints})(TrainingData)
+    )
 )

@@ -251,15 +251,6 @@ class Timeline extends React.Component {
                 <div className={styles.axisReference}>
                     <div className={styles.centerMarker}>
                         <div className={styles.label}>{this.formatDay(centerDay)}</div>
-                        {/* <div className={styles.label}>
-                                <DatePickerControl
-                                    startDate={'1982-08-22'}
-                                    endDate={moment().format(DATE_FORMAT)}
-                                    input={this.props.centerDate}
-                                    resolution='day'
-                                    onSelect={() => console.log('selected')}
-                                />
-                            </div> */}
                     </div>
                     <Handle
                         position={this.dateToPosition(startDate)}

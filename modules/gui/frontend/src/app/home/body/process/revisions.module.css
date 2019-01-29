@@ -1,7 +1,6 @@
 .panel {
-    min-height: 18rem;
-    max-height: 30rem;
-    max-width: 24rem;
+    height: 30rem;
+    width: 20rem;
 }
 
 .content {
@@ -10,6 +9,7 @@
 }
 
 .label {
+    width: 100%;
     display: flex;
     justify-content: space-between;
 }

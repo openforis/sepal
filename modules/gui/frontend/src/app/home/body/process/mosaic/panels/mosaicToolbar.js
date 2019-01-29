@@ -1,4 +1,5 @@
-import {RecipeState, SceneSelectionType, recipePath} from '../mosaicRecipe'
+import {withRecipePath} from 'app/home/body/process/recipe'
+import {RecipeState, SceneSelectionType} from '../mosaicRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
@@ -17,7 +18,8 @@ import _ from 'lodash'
 import styles from './mosaicToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const {recipeId} = ownProps
+    const recipeState = RecipeState(recipeId)
     const sceneAreas = recipeState('ui.sceneAreas')
 
     return {
@@ -29,18 +31,14 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class MosaicToolbar extends React.Component {
-    constructor(props) {
-        super(props)
-        this.statePath = recipePath(props.recipeId, 'ui')
-    }
-
     render() {
-        const {recipeId, initialized, sceneSelectionType, sceneAreasLoaded, scenesSelected} = this.props
+        const {recipeId, recipePath, initialized, sceneSelectionType, sceneAreasLoaded, scenesSelected} = this.props
+        const statePath = recipePath + '.ui'
         return (
             <PanelWizard
                 panels={['areaOfInterest', 'dates', 'sources']}
-                statePath={this.statePath}>
-                <Toolbar statePath={this.statePath} vertical top right panel className={styles.top}>
+                statePath={statePath}>
+                <Toolbar statePath={statePath} vertical top right panel className={styles.top}>
                     <PanelButton
                         name='auto'
                         icon='magic'
@@ -63,7 +61,7 @@ class MosaicToolbar extends React.Component {
                         <Retrieve recipeId={recipeId}/>
                     </PanelButton>
                 </Toolbar>
-                <Toolbar statePath={this.statePath} vertical bottom right panel className={styles.bottom}>
+                <Toolbar statePath={statePath} vertical bottom right panel className={styles.bottom}>
                     <PanelButton
                         name='areaOfInterest'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
@@ -101,7 +99,9 @@ class MosaicToolbar extends React.Component {
 }
 
 MosaicToolbar.propTypes = {
-    recipeId: PropTypes.string
+    recipeId: PropTypes.string.isRequired
 }
 
-export default connect(mapStateToProps)(MosaicToolbar)
+export default withRecipePath()(
+    connect(mapStateToProps)(MosaicToolbar)
+)

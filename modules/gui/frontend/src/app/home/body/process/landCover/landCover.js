@@ -1,16 +1,18 @@
-import {RecipeState, Status, recipePath} from './landCoverRecipe'
-import {connect, select} from 'store'
 import {recipe} from 'app/home/body/process/recipe'
-import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {sepalMap} from 'app/home/map/map'
+import MapToolbar from 'app/home/map/mapToolbar'
+import React from 'react'
+import {connect, select} from 'store'
+import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
 import AssemblyPreview from './assemblyPreview'
 import CompositePreview from './compositePreview'
 import CompositesMonitor from './compositesMonitor'
+import {RecipeState, Status} from './landCoverRecipe'
 import LandCoverToolbar from './landCoverToolbar'
-import MapToolbar from 'app/home/map/mapToolbar'
 import PreviewSelection from './previewSelection'
 import PrimitivePreview from './primitivePreview'
-import React from 'react'
+import LandCoverBottomBar from './landCoverBottomBar'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = ownProps.recipeState
@@ -24,21 +26,24 @@ const mapStateToProps = (state, ownProps) => {
 
 class LandCover extends React.Component {
     render() {
-        const {recipeId} = this.props
+        const {recipeId, recipePath} = this.props
         return (
-            <React.Fragment>
-                <MapToolbar
-                    statePath={recipePath(recipeId, 'ui')}
-                    mapContext={recipeId}
-                    labelLayerIndex={1}/>
-                <LandCoverToolbar recipeId={recipeId}/>
+            <SectionLayout>
+                <Content>
+                    <MapToolbar
+                        statePath={recipePath + '.ui'}
+                        mapContext={recipeId}
+                        labelLayerIndex={1}/>
+                    {/*<LandCoverToolbar recipeId={recipeId}/>*/}
 
-                {this.renderPreview()}
-                {this.inPreviewableState()
-                    ? <PreviewSelection recipeId={recipeId}/>
-                    : null}
-                <CompositesMonitor recipeId={recipeId}/>
-            </React.Fragment>
+                    {this.renderPreview()}
+                    {/*{this.inPreviewableState()*/}
+                        {/*? <PreviewSelection recipeId={recipeId}/>*/}
+                        {/*: null}*/}
+                    <CompositesMonitor recipeId={recipeId}/>
+                </Content>
+                <LandCoverBottomBar recipeId={recipeId}/>
+            </SectionLayout>
         )
     }
 
@@ -47,14 +52,14 @@ class LandCover extends React.Component {
         if (!this.inPreviewableState() || !preview || !preview.type || !preview.value || !preview.year)
             return null
         switch (preview.type) {
-        case 'composite':
-            return <CompositePreview recipeId={recipeId}/>
-        case 'primitive':
-            return <PrimitivePreview recipeId={recipeId}/>
-        case 'assembly':
-            return <AssemblyPreview recipeId={recipeId}/>
-        default:
-            return null
+            case 'composite':
+                return <CompositePreview recipeId={recipeId}/>
+            case 'primitive':
+                return <PrimitivePreview recipeId={recipeId}/>
+            case 'assembly':
+                return <AssemblyPreview recipeId={recipeId}/>
+            default:
+                return null
         }
     }
 

@@ -1,4 +1,4 @@
-import {RecipeState, recipePath} from './changeDetectionRecipe'
+import {RecipeState} from './changeDetectionRecipe'
 import {connect, select} from 'store'
 import {recipe} from 'app/home/body/process/recipe'
 import {sepalMap} from 'app/home/map/map'
@@ -21,11 +21,11 @@ const mapStateToProps = (state, ownProps) => {
 
 class ChangeDetection extends React.Component {
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, recipePath, initialized} = this.props
         return (
             <React.Fragment>
                 <MapToolbar
-                    statePath={recipePath(recipeId, 'ui')}
+                    statePath={recipePath + '.ui'}
                     mapContext={recipeId}
                     labelLayerIndex={2}/>
                 <ChangeDetectionToolbar recipeId={recipeId}/>
@@ -46,7 +46,6 @@ class ChangeDetection extends React.Component {
 
     setAoiLayer() {
         const {recipeId, source1, source2, componentWillUnmount$} = this.props
-        // console.log({source1, source2})
         setRecipeGeometryLayer({
             contextId: recipeId,
             layerSpec: {id: 'aoi', layerIndex: 0, recipe: source1 || source2},

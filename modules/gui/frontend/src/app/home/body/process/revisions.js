@@ -1,14 +1,15 @@
-import {Field, form} from 'widget/form'
-import {RecipeState, getRevisions, recipePath, revertToRevision$} from 'app/home/body/process/recipe'
-import {map} from 'rxjs/operators'
-import {msg} from 'translate'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
+import actionBuilder from 'action-builder'
+import {getRevisions, recipePath, RecipeState, revertToRevision$, withRecipePath} from 'app/home/body/process/recipe'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {map} from 'rxjs/operators'
+import {msg} from 'translate'
+import {Field, form} from 'widget/form'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import SelectionList from 'widget/selectionList'
-import actionBuilder from 'action-builder'
-import moment from 'moment'
 import styles from './revisions.module.css'
 
 const fields = {
@@ -46,13 +47,13 @@ class Revisions extends React.Component {
     }
 
     renderPanel() {
-        const {recipeId, form} = this.props
+        const {recipeId, recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
                 isActionForm={true}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 modal
                 onApply={({revision}) => this.revertToRevision(revision)}
                 onCancel={() => showRevisionsPanel(recipeId, false)}>
@@ -60,7 +61,11 @@ class Revisions extends React.Component {
                     icon='clock'
                     title={msg('process.revisions.title')}/>
                 <PanelContent className={styles.content}>
-                    {this.renderContent()}
+                    <ScrollableContainer>
+                        <Scrollable>
+                            {this.renderContent()}
+                        </Scrollable>
+                    </ScrollableContainer>
                 </PanelContent>
                 <PanelButtons
                     applyLabel={msg('process.revisions.revert')}/>
@@ -87,4 +92,6 @@ Revisions.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default form({fields, mapStateToProps})(Revisions)
+export default withRecipePath()(
+    form({fields, mapStateToProps})(Revisions)
+)

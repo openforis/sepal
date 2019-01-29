@@ -1,4 +1,4 @@
-import {RecipeState, recipePath} from './timeSeriesRecipe'
+import {RecipeState} from './timeSeriesRecipe'
 import {connect, select} from 'store'
 import {recipe} from 'app/home/body/process/recipe'
 import {sepalMap} from 'app/home/map/map'
@@ -20,10 +20,10 @@ const mapStateToProps = (state, ownProps) => {
 
 class TimeSeries extends React.Component {
     render() {
-        const {recipeId} = this.props
+        const {recipeId, recipePath} = this.props
         return (
             <div className={styles.timeSeries}>
-                <MapToolbar statePath={recipePath(recipeId, 'ui')} mapContext={recipeId} labelLayerIndex={1}/>
+                <MapToolbar statePath={recipePath + '.ui'} mapContext={recipeId} labelLayerIndex={1}/>
                 <TimeSeriesToolbar recipeId={recipeId} className={styles.timeSeriesToolbar}/>
             </div>
         )

@@ -1,4 +1,5 @@
-import {RecipeActions, RecipeState, Status, createComposites, createLandCoverMap, recipePath} from './landCoverRecipe'
+import {withRecipePath} from 'app/home/body/process/recipe'
+import {RecipeActions, RecipeState, Status, createComposites, createLandCoverMap} from './landCoverRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Aoi from '../mosaic/panels/aoi/aoi'
@@ -13,7 +14,8 @@ import Typology from './typology'
 import styles from './landCoverToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const {recipeId} = ownProps
+    const recipeState = RecipeState(recipeId)
     return {
         recipe: recipeState()
     }
@@ -21,8 +23,8 @@ const mapStateToProps = (state, ownProps) => {
 
 class LandCoverToolbar extends React.Component {
     render() {
-        const {recipeId, recipe} = this.props
-        const statePath = recipePath(recipeId, 'ui')
+        const {recipeId, recipePath, recipe} = this.props
+        const statePath = recipePath + '.ui'
         const trainingData = recipe.model.trainingData || {}
         const status = recipe.model.status
         return (
@@ -116,4 +118,6 @@ LandCoverToolbar.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default connect(mapStateToProps)(LandCoverToolbar)
+export default withRecipePath()(
+    connect(mapStateToProps)(LandCoverToolbar)
+)

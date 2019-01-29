@@ -1,6 +1,6 @@
 import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
-import {initValues} from 'app/home/body/process/recipe'
+import {RecipeActions, RecipeState} from '../classificationRecipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import AssetSection from './assetSection'
 import Panel from 'widget/panel'
@@ -30,7 +30,7 @@ class Source extends React.Component {
     }
 
     render() {
-        const {recipeId, form, inputs} = this.props
+        const {recipePath, form, inputs} = this.props
         const sections = [
             {
                 icon: 'cog',
@@ -52,7 +52,7 @@ class Source extends React.Component {
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 onApply={values => this.recipeActions.setSource({
                     values,
                     model: valuesToModel(values)
@@ -105,14 +105,16 @@ const modelToValues = (model = {}) => {
     }
 }
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.source'),
-    getValues: props => RecipeState(props.recipeId)('ui.source'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setSource({values, model})
-            .dispatch()
-})(
-    form({fields})(Source)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.source'),
+        getValues: props => RecipeState(props.recipeId)('ui.source'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setSource({values, model})
+                .dispatch()
+    })(
+        form({fields})(Source)
+    )
 )

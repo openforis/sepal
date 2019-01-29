@@ -1,8 +1,7 @@
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState, SceneSelectionType} from '../../mosaicRecipe'
-import {initValues} from 'app/home/body/process/recipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
-import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
@@ -77,12 +76,12 @@ class Scenes extends React.Component {
     }
 
     render() {
-        const {recipeId, form, inputs: {type}} = this.props
+        const {recipePath, form, inputs: {type}} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 onApply={values => this.recipeActions.setSceneSelectionOptions({
                     values,
                     model: valuesToModel(values)
@@ -116,14 +115,16 @@ const modelToValues = model => ({
     ...model
 })
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.sceneSelectionOptions'),
-    getValues: props => RecipeState(props.recipeId)('ui.sceneSelectionOptions'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setSceneSelectionOptions({values, model})
-            .dispatch()
-})(
-    form({fields})(Scenes)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.sceneSelectionOptions'),
+        getValues: props => RecipeState(props.recipeId)('ui.sceneSelectionOptions'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setSceneSelectionOptions({values, model})
+                .dispatch()
+    })(
+        form({fields})(Scenes)
+    )
 )

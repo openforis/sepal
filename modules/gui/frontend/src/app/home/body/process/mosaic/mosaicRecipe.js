@@ -9,8 +9,6 @@ import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
-export {recipePath}
-
 export const SceneSelectionType = Object.freeze({
     ALL: 'ALL',
     SELECT: 'SELECT'

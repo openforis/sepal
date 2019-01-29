@@ -1,7 +1,7 @@
 import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
-import {initValues} from 'app/home/body/process/recipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
 import CountrySection from './countrySection'
@@ -67,7 +67,7 @@ class Aoi extends React.Component {
     }
 
     render() {
-        const {recipeId, form, inputs} = this.props
+        const {recipeId, recipePath, form, inputs} = this.props
         const sections = [
             {
                 icon: 'cog',
@@ -94,7 +94,7 @@ class Aoi extends React.Component {
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 onApply={values => this.onApply(values)}>
                 <PanelSections inputs={inputs} selected={inputs.section} sections={sections}/>
 
@@ -181,14 +181,16 @@ const modelToValues = (model = {}) => {
         return {}
 }
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.aoi'),
-    getValues: props => RecipeState(props.recipeId)('ui.aoi'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setAoi({values, model})
-            .dispatch()
-})(
-    form({fields})(Aoi)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.aoi'),
+        getValues: props => RecipeState(props.recipeId)('ui.aoi'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setAoi({values, model})
+                .dispatch()
+    })(
+        form({fields})(Aoi)
+    )
 )

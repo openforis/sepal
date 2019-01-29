@@ -1,4 +1,5 @@
-import {RecipeState, recipePath} from './changeDetectionRecipe'
+import {withRecipePath} from 'app/home/body/process/recipe'
+import {RecipeState} from './changeDetectionRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
 import PanelWizard from 'widget/panelWizard'
@@ -11,16 +12,17 @@ import TrainingData from './trainingData/trainingData'
 import styles from './changeDetectionToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const {recipeId} = ownProps
+    const recipeState = RecipeState(recipeId)
     return {
-        initialized: recipeState('ui.initialized'),
+        initialized: recipeState('ui.initialized')
     }
 }
 
 class ChangeDetectionToolbar extends React.Component {
     render() {
-        const {recipeId, initialized} = this.props
-        const statePath = recipePath(recipeId, 'ui')
+        const {recipeId, recipePath, initialized} = this.props
+        const statePath = recipePath + '.ui'
         return (
             <PanelWizard
                 panels={['source1', 'source2', 'trainingData']}
@@ -70,4 +72,6 @@ ChangeDetectionToolbar.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default connect(mapStateToProps)(ChangeDetectionToolbar)
+export default withRecipePath()(
+    connect(mapStateToProps)(ChangeDetectionToolbar)
+)

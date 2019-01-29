@@ -1,5 +1,6 @@
+import {withRecipePath} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {msg} from 'translate'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
@@ -28,12 +29,12 @@ class Auto extends React.Component {
     }
 
     render() {
-        const {recipeId, form} = this.props
+        const {recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 isActionForm={true}
                 onApply={sceneCount => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}>
                 <PanelHeader
@@ -85,4 +86,6 @@ Auto.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default form({fields, mapStateToProps})(Auto)
+export default withRecipePath()(
+    form({fields, mapStateToProps})(Auto)
+)

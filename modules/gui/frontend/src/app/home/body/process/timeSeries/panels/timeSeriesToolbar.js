@@ -1,4 +1,5 @@
-import {RecipeState, SceneSelectionType, recipePath} from '../timeSeriesRecipe'
+import {withRecipePath} from 'app/home/body/process/recipe'
+import {RecipeState, SceneSelectionType} from '../timeSeriesRecipe'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
@@ -13,25 +14,22 @@ import Toolbar, {PanelButton} from 'widget/toolbar'
 import styles from './timeSeriesToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const {recipeId} = ownProps
+    const recipeState = RecipeState(recipeId)
     return {
-        initialized: recipeState('ui.initialized'),
+        initialized: recipeState('ui.initialized')
     }
 }
 
 class TimeSeriesToolbar extends React.Component {
-    constructor(props) {
-        super(props)
-        this.statePath = recipePath(props.recipeId, 'ui')
-    }
-
     render() {
-        const {recipeId, initialized, sceneSelectionType, scenesSelected} = this.props
+        const {recipeId, recipePath, initialized, sceneSelectionType, scenesSelected} = this.props
+        const statePath = recipePath + '.ui'
         return (
             <PanelWizard
                 panels={['areaOfInterest', 'dates', 'sources']}
-                statePath={this.statePath}>
-                <Toolbar statePath={this.statePath} vertical top right className={styles.top}>
+                statePath={statePath}>
+                <Toolbar statePath={statePath} vertical top right className={styles.top}>
                     <PanelButton
                         name='retrieve'
                         icon='cloud-download-alt'
@@ -40,7 +38,7 @@ class TimeSeriesToolbar extends React.Component {
                         <Retrieve recipeId={recipeId}/>
                     </PanelButton>
                 </Toolbar>
-                <Toolbar statePath={this.statePath} vertical bottom right panel className={styles.bottom}>
+                <Toolbar statePath={statePath} vertical bottom right panel className={styles.bottom}>
                     <PanelButton
                         name='areaOfInterest'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
@@ -75,4 +73,6 @@ TimeSeriesToolbar.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default connect(mapStateToProps)(TimeSeriesToolbar)
+export default withRecipePath()(
+    connect(mapStateToProps)(TimeSeriesToolbar)
+)

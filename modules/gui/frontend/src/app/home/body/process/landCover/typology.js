@@ -1,6 +1,6 @@
-import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
+import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {form} from 'widget/form'
-import {initValues} from 'app/home/body/process/recipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
@@ -18,12 +18,12 @@ class Typology extends React.Component {
     }
 
     render() {
-        const {recipeId, form} = this.props
+        const {recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 onApply={values => this.recipeActions.setTypology({
                     values,
                     model: valuesToModel(values)
@@ -62,14 +62,16 @@ const modelToValues = (model = {}) => ({
     ...model
 })
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.typology'),
-    getValues: props => RecipeState(props.recipeId)('ui.typology'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setTypology({values, model})
-            .dispatch()
-})(
-    form({fields})(Typology)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.typology'),
+        getValues: props => RecipeState(props.recipeId)('ui.typology'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setTypology({values, model})
+                .dispatch()
+    })(
+        form({fields})(Typology)
+    )
 )

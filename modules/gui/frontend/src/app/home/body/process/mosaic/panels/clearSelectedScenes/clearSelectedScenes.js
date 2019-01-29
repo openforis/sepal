@@ -1,7 +1,7 @@
+import {withRecipePath} from 'app/home/body/process/recipe'
 import {Msg, msg} from 'translate'
 import {RecipeActions} from '../../mosaicRecipe'
 import {form} from 'widget/form'
-import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
@@ -17,12 +17,12 @@ class ClearSelectedScenes extends React.Component {
     }
 
     render() {
-        const {recipeId, form} = this.props
+        const {recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 isActionForm={true}
                 onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}>
                 <PanelHeader
@@ -44,4 +44,6 @@ ClearSelectedScenes.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default form({fields})(ClearSelectedScenes)
+export default withRecipePath()(
+    form({fields})(ClearSelectedScenes)
+)

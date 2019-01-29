@@ -1,4 +1,4 @@
-import {initValues} from 'app/home/body/process/recipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -9,7 +9,7 @@ import ComboBox from 'widget/comboBox'
 import {Field, form, Input} from 'widget/form'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import {RecipeActions, recipePath, RecipeState} from '../classificationRecipe'
+import {RecipeActions, RecipeState} from '../classificationRecipe'
 import styles from './trainingData.module.css'
 
 const fields = {
@@ -56,12 +56,12 @@ class TrainingData extends React.Component {
     }
 
     render() {
-        const {recipeId, form} = this.props
+        const {recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 onApply={values => this.recipeActions.setTrainingData({
                     values,
                     model: valuesToModel(values)
@@ -140,14 +140,16 @@ const modelToValues = (model = {}) => ({
     ...model
 })
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.trainingData'),
-    getValues: props => RecipeState(props.recipeId)('ui.trainingData'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setTrainingData({values, model})
-            .dispatch()
-})(
-    form({fields, mapStateToProps})(TrainingData)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.trainingData'),
+        getValues: props => RecipeState(props.recipeId)('ui.trainingData'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setTrainingData({values, model})
+                .dispatch()
+    })(
+        form({fields, mapStateToProps})(TrainingData)
+    )
 )

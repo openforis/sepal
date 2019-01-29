@@ -1,8 +1,7 @@
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
-import {initValues} from 'app/home/body/process/recipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
-import {recipePath} from 'app/home/body/process/timeSeries/timeSeriesRecipe'
 import DatePicker from 'widget/datePicker'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
@@ -70,12 +69,12 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {recipeId, form} = this.props
+        const {recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}>
                 <PanelHeader
                     icon='cog'
@@ -105,14 +104,16 @@ const modelToValues = (model = {}) => {
     return {...model}
 }
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.dates'),
-    getValues: props => RecipeState(props.recipeId)('ui.dates'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setDates({values, model})
-            .dispatch()
-})(
-    form({fields, constraints})(Dates)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.dates'),
+        getValues: props => RecipeState(props.recipeId)('ui.dates'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setDates({values, model})
+                .dispatch()
+    })(
+        form({fields, constraints})(Dates)
+    )
 )

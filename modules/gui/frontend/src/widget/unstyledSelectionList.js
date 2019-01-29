@@ -41,13 +41,13 @@ export default class UnstyledSelectionList extends React.Component {
             <li key={value}>
                 <Button
                     look={alwaysSelected || (!neverSelected && this.isSelected(value)) ? 'highlight' : 'default'}
-                    label={label}
                     disabled={disabled || alwaysSelected || neverSelected}
                     onClick={e => {
                         e.preventDefault()
                         this.select(value)
-                    }}
-                />
+                    }}>
+                    {label}
+                </Button>
             </li>
         return tooltip && !(disabled || alwaysSelected || neverSelected)
             ? <Tooltip

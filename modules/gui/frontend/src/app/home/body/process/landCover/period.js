@@ -1,6 +1,6 @@
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
-import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
-import {initValues} from 'app/home/body/process/recipe'
+import {RecipeActions, RecipeState} from './landCoverRecipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
 import Label from 'widget/label'
@@ -36,11 +36,11 @@ class Period extends React.Component {
     }
 
     render() {
-        const {recipeId, form} = this.props
+        const {recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 form={form}
                 onApply={values => this.recipeActions.setPeriod({
                     values,
@@ -109,14 +109,16 @@ const modelToValues = (model = {}) => ({
     endYear: String(model.endYear || ''),
 })
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.period'),
-    getValues: props => RecipeState(props.recipeId)('ui.period'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setPeriod({values, model})
-            .dispatch()
-})(
-    form({fields, constraints})(Period)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.period'),
+        getValues: props => RecipeState(props.recipeId)('ui.period'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setPeriod({values, model})
+                .dispatch()
+    })(
+        form({fields, constraints})(Period)
+    )
 )

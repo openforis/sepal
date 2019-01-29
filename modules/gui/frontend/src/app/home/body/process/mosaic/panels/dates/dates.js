@@ -1,8 +1,7 @@
 import {ErrorMessage, Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import {initValues} from 'app/home/body/process/recipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
-import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import DatePicker from 'widget/datePicker'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
@@ -175,12 +174,12 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {recipeId, form, inputs: {advanced}} = this.props
+        const {recipePath, form, inputs: {advanced}} = this.props
         return (
             <Panel
                 className={advanced.value ? styles.advanced : styles.simple}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}>
                 <PanelHeader
                     icon='calendar-alt'
@@ -249,14 +248,16 @@ const modelToValues = (model = {}) => {
     }
 }
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.dates'),
-    getValues: props => RecipeState(props.recipeId)('ui.dates'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setDates({values, model})
-            .dispatch()
-})(
-    form({fields})(Dates)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.dates'),
+        getValues: props => RecipeState(props.recipeId)('ui.dates'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setDates({values, model})
+                .dispatch()
+    })(
+        form({fields})(Dates)
+    )
 )

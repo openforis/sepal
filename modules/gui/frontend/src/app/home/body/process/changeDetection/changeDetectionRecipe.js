@@ -4,8 +4,6 @@ import _ from 'lodash'
 import api from 'api'
 import globalActionBuilder from 'action-builder'
 
-export {recipePath}
-
 export const RecipeState = recipeId => {
     const recipeState = ParentRecipeState(recipeId)
     initRecipe(recipeState())

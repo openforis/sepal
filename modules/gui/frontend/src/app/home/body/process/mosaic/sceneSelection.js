@@ -1,8 +1,9 @@
+import {withRecipePath} from 'app/home/body/process/recipe'
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, form} from 'widget/form'
 import {HoverConsumer, HoverProvider} from 'widget/hover'
-import {RecipeActions, RecipeState, recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {dataSetById} from 'sources'
 import {map} from 'rxjs/operators'
@@ -46,7 +47,7 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        const {action, recipeId, dates: {targetDate}, form} = this.props
+        const {action, recipeId, recipePath, dates: {targetDate}, form} = this.props
         const loading = !action('LOAD_SCENES').dispatched
         return (
             <React.Fragment>
@@ -54,7 +55,7 @@ class SceneSelection extends React.Component {
                 <Panel
                     className={styles.panel}
                     form={form}
-                    statePath={recipePath(recipeId, 'ui')}
+                    statePath={recipePath + '.ui'}
                     modalOnDirty={false}
                     center
                     onApply={({selectedScenes}) => this.onApply(selectedScenes)}
@@ -281,4 +282,6 @@ SceneSelection.propTypes = {
     sceneAreaId: PropTypes.string.isRequired
 }
 
-export default form({fields, mapStateToProps})(SceneSelection)
+export default withRecipePath()(
+    form({fields, mapStateToProps})(SceneSelection)
+)

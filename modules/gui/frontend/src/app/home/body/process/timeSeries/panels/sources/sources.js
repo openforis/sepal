@@ -3,8 +3,7 @@ import {Msg, msg} from 'translate'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
 import {arrayEquals} from 'collections'
 import {imageSourceById} from 'sources'
-import {initValues} from 'app/home/body/process/recipe'
-import {recipePath} from 'app/home/body/process/timeSeries/timeSeriesRecipe'
+import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
@@ -57,12 +56,12 @@ class Sources extends React.Component {
     }
 
     render() {
-        const {recipeId, form} = this.props
+        const {recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 onApply={values => this.recipeActions.setSources({
                     values,
                     model: valuesToModel(values)
@@ -104,14 +103,16 @@ const modelToValues = model => {
     }
 }
 
-export default initValues({
-    getModel: props => RecipeState(props.recipeId)('model.sources'),
-    getValues: props => RecipeState(props.recipeId)('ui.sources'),
-    modelToValues,
-    onInitialized: ({model, values, props}) =>
-        RecipeActions(props.recipeId)
-            .setSources({values, model})
-            .dispatch()
-})(
-    form({fields})(Sources)
+export default withRecipePath()(
+    initValues({
+        getModel: props => RecipeState(props.recipeId)('model.sources'),
+        getValues: props => RecipeState(props.recipeId)('ui.sources'),
+        modelToValues,
+        onInitialized: ({model, values, props}) =>
+            RecipeActions(props.recipeId)
+                .setSources({values, model})
+                .dispatch()
+    })(
+        form({fields})(Sources)
+    )
 )

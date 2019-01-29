@@ -1,4 +1,4 @@
-import {RecipeState, recipePath} from './classificationRecipe'
+import {RecipeState} from './classificationRecipe'
 import {connect, select} from 'store'
 import {recipe} from 'app/home/body/process/recipe'
 import {sepalMap} from 'app/home/map/map'
@@ -20,11 +20,11 @@ const mapStateToProps = (state, ownProps) => {
 
 class Classification extends React.Component {
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, recipePath, initialized} = this.props
         return (
             <React.Fragment>
                 <MapToolbar
-                    statePath={recipePath(recipeId, 'ui')}
+                    statePath={recipePath + '.ui'}
                     mapContext={recipeId}
                     labelLayerIndex={2}/>
                 <ClassificationToolbar recipeId={recipeId}/>

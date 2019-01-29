@@ -1,8 +1,8 @@
+import {withRecipePath} from 'app/home/body/process/recipe'
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../classificationRecipe'
 import {currentUser} from 'user'
 import {msg} from 'translate'
-import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
@@ -61,12 +61,12 @@ class Retrieve extends React.Component {
     }
 
     render() {
-        const {recipeId, form} = this.props
+        const {recipePath, form} = this.props
         return (
             <Panel
                 className={styles.panel}
                 form={form}
-                statePath={recipePath(recipeId, 'ui')}
+                statePath={recipePath + '.ui'}
                 isActionForm={true}
                 onApply={values => this.recipeActions.retrieve(values).dispatch()}>
                 <PanelHeader
@@ -95,4 +95,6 @@ Retrieve.propTypes = {
     user: PropTypes.object
 }
 
-export default form({fields, mapStateToProps})(Retrieve)
+export default withRecipePath()(
+    form({fields, mapStateToProps})(Retrieve)
+)

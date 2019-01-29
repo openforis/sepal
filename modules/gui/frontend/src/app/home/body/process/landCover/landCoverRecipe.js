@@ -5,7 +5,6 @@ import api from 'api'
 import globalActionBuilder from 'action-builder'
 import moment from 'moment'
 
-export {recipePath}
 export const RecipeState = recipeId => {
     const recipeState = GlobalRecipeState(recipeId)
     initRecipe(recipeState())
