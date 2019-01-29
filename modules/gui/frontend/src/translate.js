@@ -5,7 +5,7 @@ import flat from 'flat'
 import moment from 'moment'
 
 let intl, intlEn
-export const initIntl = intlInstance => intl = intlInstance
+const initIntl = intlInstance => intl = intlInstance
 const initIntlEn = intlInstance => intlEn = intlInstance
 
 export const Msg = ({id, ...values}) => (
