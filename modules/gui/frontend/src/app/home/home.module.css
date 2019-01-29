@@ -46,12 +46,10 @@
 
 .menu {
     position: absolute;
-    top: 0;
     left: var(--menu-position);
-    height: 100%;
     width: var(--menu-width);
-    padding-top: var(--menu-margin-top);
-    padding-bottom: var(--menu-margin-bottom);
+    top: var(--menu-margin-top);
+    bottom: var(--menu-margin-bottom);
     z-index: 2;
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
     pointer-events: all;
