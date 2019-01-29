@@ -6,12 +6,14 @@ import fake.server.SepalServer
 import groovymvc.Params
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.taskexecutor.Main
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 import util.Port
 
 import static groovy.json.JsonOutput.toJson
 
+@Ignore
 class Main_Test extends Specification {
     def workingDir = File.createTempDir()
     def downloadDir = File.createTempDir()
