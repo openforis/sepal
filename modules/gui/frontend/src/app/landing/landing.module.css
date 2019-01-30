@@ -4,7 +4,7 @@
     --backdrop-color: rgba(187, 192, 195, 0.05);
     --feature-icon-size: 1.7rem;
 
-    height: 100vh;
+    height: 100%;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -199,7 +199,7 @@
         grid-gap: 3rem;
         padding: 3rem 4rem;
     }
-    
+
     .credentials {
         padding-bottom: 3rem;
     }

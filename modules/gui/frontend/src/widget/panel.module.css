@@ -17,7 +17,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;    
+    justify-content: space-between;
     transition: width var(--transition-time) ease-in-out var(--transition-delay);
 }
 
@@ -50,8 +50,8 @@
     right: .5rem;
     top: .5rem;
     bottom: .5rem;
-    max-height: calc(100vh - 1rem);
-    max-width: calc(100vw - 1rem);
+    max-height: calc(100% - 1rem);
+    max-width: calc(100% - 1rem);
 }
 
 .panel.inline {

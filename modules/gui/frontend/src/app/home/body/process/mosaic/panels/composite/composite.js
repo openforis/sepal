@@ -1,14 +1,15 @@
-import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
+import PropTypes from 'prop-types'
+import React from 'react'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
+import {Field, form} from 'widget/form'
 import Label from 'widget/label'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import PropTypes from 'prop-types'
-import React from 'react'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import Slider from 'widget/slider'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import styles from './composite.module.css'
 
 const fields = {
@@ -114,9 +115,13 @@ class Composite extends React.Component {
                     icon='layer-group'
                     title={msg('process.mosaic.panel.composite.title')}/>
 
-                <PanelContent>
-                    {this.renderContent()}
-                </PanelContent>
+                <ScrollableContainer>
+                    <Scrollable>
+                        <PanelContent>
+                            {this.renderContent()}
+                        </PanelContent>
+                    </Scrollable>
+                </ScrollableContainer>
 
                 <PanelButtons/>
             </Panel>
