@@ -145,12 +145,13 @@ class CreateRecipe extends React.Component {
     renderPanel() {
         const {selectedRecipeType} = this.state
         const {trigger} = this.props
+        const modal = !trigger
         return (
             <Panel
-                className={styles.panel}
+                className={[styles.panel, modal ? styles.modal : null].join(' ')}
                 statePath='createRecipe'
-                modal={!trigger}
-                center={trigger}
+                modal={modal}
+                center={!modal}
                 onCancel={() => this.closePanel()}>
                 {selectedRecipeType ? this.renderRecipeType(selectedRecipeType) : this.renderRecipeTypes()}
                 {trigger ? null : <PanelButtons/>}

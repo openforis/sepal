@@ -1,6 +1,10 @@
 .panel {
-    width: 40rem;
+    max-width: 40rem;
     max-height: fit-content;
+}
+
+.panel.modal {
+    width: 40rem;
 }
 
 .recipeTypes {
