@@ -259,7 +259,7 @@ export const ButtonGroup = ({children, compact = false, wrap = true, className})
         styles.group,
         compact ? styles.compact : null,
         wrap ? styles.wrap : null,
-        className ? className : null
+        className
     ].join(' ')}>
         {children}
     </div>
