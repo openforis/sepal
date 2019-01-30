@@ -96,7 +96,7 @@ export class Button extends React.Component {
     renderWrapper(contents) {
         const {onClickHold} = this.props
         return onClickHold ? (
-            <span ref={this.button}>
+            <span ref={this.button} className={styles.wrapper}>
                 {contents}
             </span>
         ) : contents
