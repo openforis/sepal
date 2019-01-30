@@ -1,12 +1,14 @@
-.status {
+.container {
     position: absolute;
     top: calc(var(--toolbar-clearance) + 2rem);
     left: calc(var(--menu-clearance) + .5rem);
     right: calc(var(--toolbar-clearance) + .5rem);
-    margin: auto;
+    display:flex;
+    flex-wrap: nowrap;
+    justify-content: space-around;
+}
+.status {
     pointer-events: all;
-    max-width: 30rem;
-    width: fit-content;
     color: #ccc;
     background-color: rgba(0, 0, 0, 0.6);
     font-size: .9rem;
@@ -21,6 +23,7 @@
 
 .status > * {
     display: inline-block;
+    white-space: nowrap;
 }
 
 .error {
