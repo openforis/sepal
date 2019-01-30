@@ -1,15 +1,15 @@
-import actionBuilder from 'action-builder'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {connect} from 'store'
-import lookStyles from 'style/look.module.css'
 import {Button} from 'widget/button'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {connect} from 'store'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import styles from './createRecipe.module.css'
+import PropTypes from 'prop-types'
+import React from 'react'
+import actionBuilder from 'action-builder'
+import lookStyles from 'style/look.module.css'
+import moment from 'moment'
 import panelSectionStyles from 'widget/panelSections.module.css'
+import styles from './createRecipe.module.css'
 
 const mapStateToProps = state => {
     return {
@@ -75,8 +75,6 @@ class CreateRecipe extends React.Component {
                     size='xx-large'
                     icon='plus'
                     shape='circle'
-                    // shape='pill'
-                    // label='Create recipe'
                     onClick={() => showRecipeTypes()}
                     tooltip={'Create a new recipe'}
                     tooltipPlacement='left'
@@ -187,6 +185,7 @@ class RecipeType extends React.Component {
         return (
             <Button
                 chromeless
+                shape='circle'
                 size='large'
                 icon='info-circle'
                 onClick={() => onInfo && onInfo(type)}
