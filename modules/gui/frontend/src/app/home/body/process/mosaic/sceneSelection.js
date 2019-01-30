@@ -246,36 +246,32 @@ const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeA
 }
 
 const AvailableSceneOverlay = ({scene, onAdd, recipeActions}) =>
-    <div className={styles.overlayControls}>
-        <ButtonGroup>
-            <Button
-                look='add'
-                icon='plus'
-                label={msg('button.add')}
-                onClick={() => onAdd(scene)}/>
-            <Button
-                look='default'
-                icon='eye'
-                label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-                onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
-        </ButtonGroup>
-    </div>
+    <ButtonGroup className={styles.overlayControls}>
+        <Button
+            look='add'
+            icon='plus'
+            label={msg('button.add')}
+            onClick={() => onAdd(scene)}/>
+        <Button
+            look='default'
+            icon='eye'
+            label={msg('process.mosaic.panel.sceneSelection.preview.label')}
+            onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
+    </ButtonGroup>
 
 const SelectedSceneOverlay = ({scene, onRemove, recipeActions}) =>
-    <div className={styles.overlayControls }>
-        <ButtonGroup>
-            <Button
-                look='cancel'
-                icon='minus'
-                label={msg('button.remove')}
-                onClick={() => onRemove(scene)}/>
-            <Button
-                look='default'
-                icon='eye'
-                label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-                onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
-        </ButtonGroup>
-    </div>
+    <ButtonGroup className={styles.overlayControls}>
+        <Button
+            look='cancel'
+            icon='minus'
+            label={msg('button.remove')}
+            onClick={() => onRemove(scene)}/>
+        <Button
+            look='default'
+            icon='eye'
+            label={msg('process.mosaic.panel.sceneSelection.preview.label')}
+            onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
+    </ButtonGroup>
 
 SceneSelection.propTypes = {
     recipeId: PropTypes.string.isRequired,
