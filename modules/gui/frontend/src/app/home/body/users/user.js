@@ -5,6 +5,7 @@ import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {isMobile} from 'widget/userAgent'
 import styles from './user.module.css'
 
 const fields = {
@@ -91,7 +92,7 @@ class UserDetails extends React.Component {
                         <Scrollable>
                             <Input
                                 label={msg('user.userDetails.form.name.label')}
-                                autoFocus
+                                autoFocus={!isMobile()}
                                 input={name}
                                 spellCheck={false}
                                 errorMessage

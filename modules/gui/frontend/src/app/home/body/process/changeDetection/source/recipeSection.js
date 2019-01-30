@@ -5,6 +5,7 @@ import ComboBox from 'widget/comboBox'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {isMobile} from 'widget/userAgent'
 
 const mapStateToProps = () => {
     return {
@@ -26,7 +27,7 @@ class RecipeSection extends React.Component {
                     input={recipe}
                     placeholder={msg('process.changeDetection.panel.source.form.recipe.placeholder')}
                     options={options}
-                    autoFocus={true}/>
+                    autoFocus={!isMobile()}/>
                 <ErrorMessage for={recipe}/>
             </React.Fragment>
         )

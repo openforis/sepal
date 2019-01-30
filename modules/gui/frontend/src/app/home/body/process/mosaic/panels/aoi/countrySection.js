@@ -11,6 +11,7 @@ import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
+import {isMobile} from 'widget/userAgent'
 
 const loadCountries$ = () => {
     return queryFusionTable$(`
@@ -96,7 +97,7 @@ class CountrySection extends React.Component {
                         disabled={!countries}
                         placeholder={countryPlaceholder}
                         options={(countries || []).map(([value, label]) => ({value, label}))}
-                        autoFocus={true}
+                        autoFocus={!isMobile()}
                         onChange={e => {
                             area.set('')
                             this.aoiChanged$.next()

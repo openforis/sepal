@@ -4,6 +4,7 @@ import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {isMobile} from 'widget/userAgent'
 import styles from './login.module.css'
 
 const fields = {
@@ -42,7 +43,7 @@ class Login extends React.Component {
                         label={msg('landing.login.username.label')}
                         input={username}
                         placeholder={msg('landing.login.username.placeholder')}
-                        autoFocus
+                        autoFocus={!isMobile()}
                         tabIndex={1}
                         errorMessage
                     />

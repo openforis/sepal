@@ -2,6 +2,7 @@ import {Input} from 'widget/form'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {isMobile} from 'widget/userAgent'
 
 export default class AssetSection extends React.Component {
     render() {
@@ -10,7 +11,7 @@ export default class AssetSection extends React.Component {
         return (
             <Input
                 label={msg('process.changeDetection.panel.source.form.asset.label')}
-                autoFocus
+                autoFocus={!isMobile()}
                 input={asset}
                 placeholder={msg('process.changeDetection.panel.source.form.asset.placeholder')}
                 spellCheck={false}

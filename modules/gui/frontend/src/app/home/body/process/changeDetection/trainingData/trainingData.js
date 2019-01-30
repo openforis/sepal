@@ -1,5 +1,6 @@
 import {Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
+import {isMobile} from 'widget/userAgent'
 import {RecipeActions, RecipeState} from '../changeDetectionRecipe'
 import {Subject} from 'rxjs'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
@@ -90,7 +91,7 @@ class TrainingData extends React.Component {
             <React.Fragment>
                 <Input
                     label={msg('process.changeDetection.panel.trainingData.form.fusionTable.label')}
-                    autoFocus
+                    autoFocus={!isMobile()}
                     input={fusionTable}
                     placeholder={msg('process.changeDetection.panel.trainingData.form.fusionTable.placeholder')}
                     spellCheck={false}

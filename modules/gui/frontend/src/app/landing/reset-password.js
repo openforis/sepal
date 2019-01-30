@@ -7,6 +7,7 @@ import {history, query} from 'route'
 import {resetPassword$, tokenUser, validateToken$} from 'user'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import {isMobile} from 'widget/userAgent'
 
 const fields = {
     username: null,
@@ -86,7 +87,7 @@ class ResetPassword extends React.Component {
                     input={password}
                     type='password'
                     placeholder={msg('landing.reset-password.password.placeholder')}
-                    autoFocus='on'
+                    autoFocus={!isMobile()}
                     tabIndex={1}
                     errorMessage
                 />

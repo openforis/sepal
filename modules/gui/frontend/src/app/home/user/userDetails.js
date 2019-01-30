@@ -1,6 +1,7 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, Input, form} from 'widget/form'
+import {isMobile} from 'widget/userAgent'
 import {closePanel, showChangePassword} from './userProfile'
 import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
 import {map, switchMap} from 'rxjs/operators'
@@ -98,7 +99,7 @@ class UserDetails extends React.Component {
                 <PanelContent>
                     <Input
                         label={msg('user.userDetails.form.name.label')}
-                        autoFocus
+                        autoFocus={!isMobile()}
                         input={name}
                         spellCheck={false}
                         errorMessage

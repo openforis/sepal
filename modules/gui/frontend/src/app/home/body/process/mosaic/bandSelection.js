@@ -5,6 +5,7 @@ import Checkbox from 'widget/checkbox'
 import ComboBox from 'widget/comboBox'
 import React from 'react'
 import _ from 'lodash'
+import {isMobile} from 'widget/userAgent'
 import styles from './bandSelection.module.css'
 
 const fields = {
@@ -102,8 +103,8 @@ const BandSelector = ({recipeActions, selection, options, onChange}) =>
         input={selection}
         placeholder={msg('process.mosaic.bands.placeholder')}
         options={options}
-        autoFocus={true}
-        openMenuOnFocus={true}
+        autoFocus={!isMobile()}
+        openMenuOnFocus
         menuPlacement='top'
         maxMenuHeight='40rem'
         isClearable={false}

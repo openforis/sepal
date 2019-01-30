@@ -2,6 +2,7 @@ import {CenteredProgress} from 'widget/progress'
 import {Constraint, Field, Input, form} from 'widget/form'
 import {changeUserPassword$} from 'user'
 import {msg} from 'translate'
+import {isMobile} from 'widget/userAgent'
 import {showUserDetails} from './userProfile'
 import Notifications from 'widget/notifications'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
@@ -57,7 +58,7 @@ class ChangePassword extends React.Component {
                     <Input
                         label={msg('user.changePassword.form.oldPassword.label')}
                         type='password'
-                        autoFocus
+                        autoFocus={!isMobile()}
                         input={oldPassword}
                         errorMessage
                     />

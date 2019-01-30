@@ -1,4 +1,5 @@
 import {Input} from 'widget/form'
+import {isMobile} from 'widget/userAgent'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
 import {connect} from 'store'
@@ -82,7 +83,7 @@ class FusionTableSection extends React.Component {
             <React.Fragment>
                 <Input
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.label')}
-                    autoFocus
+                    autoFocus={!isMobile()}
                     input={fusionTable}
                     placeholder={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.placeholder')}
                     spellCheck={false}

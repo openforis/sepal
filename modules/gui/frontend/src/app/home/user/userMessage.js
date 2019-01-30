@@ -7,6 +7,7 @@ import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {isMobile} from 'widget/userAgent'
 import styles from './userMessage.module.css'
 
 const fields = {
@@ -50,7 +51,7 @@ class UserMessage extends React.Component {
                         <Scrollable className={styles.panelContent}>
                             <Input
                                 label={msg('userMessage.form.subject.label')}
-                                autoFocus
+                                autoFocus={!isMobile()}
                                 input={subject}
                                 spellCheck={false}
                             />

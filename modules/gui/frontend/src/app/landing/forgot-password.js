@@ -6,6 +6,7 @@ import Label from 'widget/label'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {isMobile} from 'widget/userAgent'
 import styles from './forgot-password.module.css'
 
 const fields = {
@@ -44,7 +45,7 @@ export class ForgotPassword extends React.Component {
                     <Input
                         input={email}
                         placeholder={msg('landing.forgot-password.placeholder')}
-                        autoFocus='on'
+                        autoFocus={!isMobile()}
                         autoComplete='off'
                         tabIndex={1}
                         validate='onBlur'
