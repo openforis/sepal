@@ -1,4 +1,4 @@
-import {delay, distinctUntilChanged, map} from 'rxjs/operators'
+import {distinctUntilChanged, map} from 'rxjs/operators'
 import {fromEvent, merge} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -20,8 +20,7 @@ export class HoverProvider extends React.Component {
         
         const mouseStatus$ = merge(
             mouseOver$.pipe(
-                map(() => true),
-                delay(0)
+                map(() => true)
             ),
             mouseLeave$.pipe(
                 map(() => false)
