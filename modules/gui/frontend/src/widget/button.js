@@ -96,7 +96,7 @@ export class Button extends React.Component {
     renderWrapper(contents) {
         const {onClickHold} = this.props
         return onClickHold ? (
-            <span ref={this.button}>
+            <span ref={this.button} className={styles.wrapper}>
                 {contents}
             </span>
         ) : contents
@@ -157,11 +157,12 @@ export class Button extends React.Component {
     }
 
     renderContents() {
-        const {icon, label, children} = this.props
+        const {icon, iconPlacement = 'left', label, children} = this.props
         return children ? children : (
             <div className={styles.contents}>
-                {icon ? this.renderIcon() : null}
+                {icon && iconPlacement === 'left' ? this.renderIcon() : null}
                 {label ? this.renderLabel() : null}
+                {icon && iconPlacement === 'right' ? this.renderIcon() : null}
             </div>
         )
     }
@@ -207,7 +208,7 @@ export class Button extends React.Component {
                         )
                     )
                 )
-            
+
             this.subscriptions.push(
                 clickHold$.subscribe(e => {
                     const {onClickHold, disabled} = this.props
@@ -226,7 +227,7 @@ export class Button extends React.Component {
 
 Button.propTypes = {
     additionalClassName: PropTypes.string,
-    children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+    children: PropTypes.any,
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
@@ -234,6 +235,7 @@ Button.propTypes = {
     downloadUrl: PropTypes.any,
     icon: PropTypes.string,
     iconFlipHorizontal: PropTypes.any,
+    iconPlacement: PropTypes.oneOf(['left', 'right']),
     iconType: PropTypes.string,
     label: PropTypes.string,
     link: PropTypes.string,
