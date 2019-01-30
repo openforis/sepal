@@ -10,6 +10,8 @@ import styles from './button.module.css'
 
 const CLICK_HOLD_DELAY_MS = 750
 
+const windowMouseUp$ = merge(fromEvent(window, 'mouseup'), fromEvent(window, 'touchend'))
+
 const download = (url, filename) => {
     // create hidden anchor, attach to DOM, click it and remove it from the DOM
     var downloadElement = document.createElement('a')
@@ -78,6 +80,7 @@ export class Button extends React.Component {
 
     handleClick(e) {
         const {onClick, downloadUrl, downloadFilename} = this.props
+        e.preventDefault()
         onClick && onClick(e)
         downloadUrl && download(downloadUrl, downloadFilename)
         if (this.stopPropagation()) {
@@ -182,18 +185,41 @@ export class Button extends React.Component {
     }
 
     componentDidMount() {
+        // const {onClick, onClickHold} = this.props
         const {onClickHold} = this.props
-        if (onClickHold && this.button) {
-            const button = this.button.current
-            const buttonMouseDown$ = merge(fromEvent(button, 'mousedown'), fromEvent(button, 'touchstart'))
-            const buttonMouseEnter$ = fromEvent(button, 'mouseenter')
-            const buttonMouseUp$ = merge(fromEvent(button, 'mouseup'), fromEvent(button, 'touchend'))
-            const windowMouseUp$ = merge(fromEvent(window, 'mouseup'), fromEvent(window, 'touchend'))
 
-            const trigger$ = combineLatest(buttonMouseDown$, buttonMouseEnter$)
-            const cancel$ = windowMouseUp$
-            const activate$ = buttonMouseUp$
+        const button = this.button.current
 
+        const buttonMouseDown$ = merge(fromEvent(button, 'mousedown'), fromEvent(button, 'touchstart'))
+        const buttonMouseEnter$ = fromEvent(button, 'mouseenter')
+        const buttonMouseUp$ = merge(fromEvent(button, 'mouseup'), fromEvent(button, 'touchend'))
+
+        const trigger$ = combineLatest(buttonMouseDown$, buttonMouseEnter$)
+        const cancel$ = windowMouseUp$
+        const activate$ = buttonMouseUp$
+
+        // if (onClick) {
+        //     const click$ =
+        //         trigger$.pipe(
+        //             switchMap(() =>
+        //                 activate$.pipe(
+        //                     takeUntil(cancel$),
+        //                     take(1)
+        //                 )
+        //             )
+        //         )
+        //     this.subscriptions.push(
+        //         click$.subscribe(e => {
+        //             const {onClick, disabled} = this.props
+        //             if (onClick && !disabled) {
+        //                 e.preventDefault()
+        //                 this.handleClick(e)
+        //             }
+        //         })
+        //     )
+        // }
+
+        if (onClickHold) {
             const clickHold$ =
                 trigger$.pipe(
                     switchMap(() =>
