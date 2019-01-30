@@ -3,11 +3,12 @@ import {RecipeState, getRevisions, recipePath, revertToRevision$, withRecipePath
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
+import Buttons from 'widget/buttons'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SelectionList from 'widget/selectionList'
+// import SelectionList from 'widget/selectionList'
 import actionBuilder from 'action-builder'
 import moment from 'moment'
 import styles from './revisions.module.css'
@@ -42,7 +43,7 @@ class Revisions extends React.Component {
             return {value: timestamp, label}
         })
         return (
-            <SelectionList options={options} input={revision}/>
+            <Buttons vertical uppercase={false} options={options} input={revision}/>
         )
     }
 

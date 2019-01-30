@@ -1,11 +1,10 @@
 .panel {
-    height: 30rem;
+    min-height: 15rem;
     width: 20rem;
 }
 
 .content {
-    margin: 0;
-    padding: 0;
+    padding: .5rem;
 }
 
 .label {
