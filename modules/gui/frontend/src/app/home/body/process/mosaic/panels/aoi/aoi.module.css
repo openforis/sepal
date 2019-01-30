@@ -6,14 +6,15 @@
     justify-content: space-between;
 }
 
-.sources ul {
+.sources {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    justify-content: space-around;
+    margin: 1rem;
 }
 
-.sources li {
-    margin-top: 1.5rem;
+.sources > * > * {
+    margin: .75rem;
 }
 
 .polygon {

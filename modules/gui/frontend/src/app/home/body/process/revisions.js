@@ -43,7 +43,7 @@ class Revisions extends React.Component {
             return {value: timestamp, label}
         })
         return (
-            <Buttons vertical uppercase={false} options={options} input={revision}/>
+            <Buttons type='vertical' uppercase={false} options={options} input={revision}/>
         )
     }
 

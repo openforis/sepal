@@ -254,12 +254,10 @@ Button.propTypes = {
     onMouseDown: PropTypes.func
 }
 
-export const ButtonGroup = ({children, compact = false, vertical = false, wrap = true, className}) =>
+export const ButtonGroup = ({children, type = 'horizontal-wrap', className}) =>
     <div className={[
         styles.group,
-        compact ? styles.compact : null,
-        vertical ? styles.vertical : null,
-        wrap ? styles.wrap : null,
+        styles[type],
         className
     ].join(' ')}>
         {children}
@@ -268,6 +266,7 @@ export const ButtonGroup = ({children, compact = false, vertical = false, wrap =
 ButtonGroup.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
+    type: PropTypes.oneOf(['horizontal-wrap', 'horizontal-nowrap', 'horizontal-tight', 'vertical']),
     vertical: PropTypes.any,
     wrap: PropTypes.any
 }

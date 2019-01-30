@@ -1,17 +1,7 @@
-.buttons {
-    /* --vertical-gap: .5rem;
-    --horizontal-gap: .5rem;
-    list-style: none; */
-    /* margin: 0;
-    margin-right: calc(-1 * var(--horizontal-gap));
-    margin-bottom: calc(-1 * var(--vertical-gap));
-    padding: 0; */
+.buttons + .buttons {
+    margin-top: 1rem;
 }
 
 .uppercase {
     text-transform: uppercase;
-}
-
-.group {
-    margin-bottom: 1rem;
 }

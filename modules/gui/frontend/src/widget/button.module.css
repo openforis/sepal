@@ -160,20 +160,20 @@
     margin: calc(var(--button-spacing) / -2);
 }
 
-.group.compact {
+.group > * {
+    margin: calc(var(--button-spacing) / 2);
+}
+
+.group.horizontal-tight {
     --button-spacing: 0;
+}
+
+.group.horizontal-wrap {
+    flex-wrap: wrap;
 }
 
 .group.vertical {
     flex-direction: column;
-}
-
-.group.wrap {
-    flex-wrap: wrap;
-}
-
-.group > * {
-    margin: calc(var(--button-spacing) / 2);
 }
 
 .group.vertical .button {

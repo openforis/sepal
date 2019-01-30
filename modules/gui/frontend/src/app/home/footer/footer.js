@@ -17,7 +17,7 @@ const Footer = ({className}) => {
                     <Copyright/>
                 </div>
                 <div>
-                    <ButtonGroup compact>
+                    <ButtonGroup type='horizontal-tight'>
                         <UserMessages/>
                         <UserReport/>
                         <UserProfile/>

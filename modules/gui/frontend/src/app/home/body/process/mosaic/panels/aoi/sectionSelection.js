@@ -24,6 +24,7 @@ export default class SectionSelection extends React.Component {
         ]
         return (
             <Buttons
+                type='vertical'
                 className={styles.sources}
                 input={section}
                 options={options}/>

@@ -54,10 +54,10 @@ export default class Buttons extends React.Component {
         )
     }
 
-    renderButtons(options) {
-        const {vertical} = this.props
+    renderButtons(options, key) {
+        const {type} = this.props
         return (
-            <ButtonGroup className={styles.buttons} vertical={vertical}>
+            <ButtonGroup key={key} className={styles.buttons} type={type}>
                 {options.map(option => this.renderButton(option))}
             </ButtonGroup>
         )
@@ -66,9 +66,7 @@ export default class Buttons extends React.Component {
     renderOptionGroups(groups) {
         return (
             groups.map((group, i) =>
-                <div key={group.value || group.label || i} className={styles.group}>
-                    {this.renderButtons(group.options)}
-                </div>
+                this.renderButtons(group.options, group.value || group.label || i)
             )
         )
     }
@@ -108,6 +106,6 @@ Buttons.propTypes = {
     options: PropTypes.array,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
-    vertical: PropTypes.any,
+    type: PropTypes.string,
     onChange: PropTypes.any,
 }

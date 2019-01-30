@@ -152,7 +152,7 @@ class RecipeList extends React.Component {
                     <div className={styles.name}>{recipe.name}</div>
                 </div>
                 <div className={styles.recipeButtons}>
-                    <ButtonGroup wrap={false}>
+                    <ButtonGroup type='horizontal-nowrap'>
                         <div className={styles.updateTime}>{moment(recipe.updateTime).fromNow()}</div>
                         <Button
                             chromeless
