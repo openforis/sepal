@@ -87,8 +87,11 @@ echo "**************************"
 jupyter notebook --generate-config
 /usr/bin/python2 -m pip install ipykernel
 /usr/bin/python2 -m ipykernel install
+/usr/bin/python3 -m pip install ipykernel
+/usr/bin/python3 -m ipykernel install
 
 /usr/bin/python2 -m pip install ipywidgets
+/usr/bin/python3 -m pip install ipywidgets
 /usr/local/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension
 
 git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
@@ -99,3 +102,4 @@ git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/local/bin/jupyter nbextensions_configurator enable
 
 /usr/bin/python2 -m pip install folium
+/usr/bin/python3 -m pip install folium
