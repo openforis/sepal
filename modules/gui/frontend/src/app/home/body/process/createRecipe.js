@@ -1,14 +1,15 @@
-import {Button} from 'widget/button'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {connect} from 'store'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
+import actionBuilder from 'action-builder'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
+import {connect} from 'store'
 import lookStyles from 'style/look.module.css'
-import moment from 'moment'
+import {Button} from 'widget/button'
+import Panel, {PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import styles from './createRecipe.module.css'
+import panelSectionStyles from 'widget/panelSections.module.css'
 
 const mapStateToProps = state => {
     return {
@@ -101,8 +102,10 @@ class CreateRecipe extends React.Component {
         return (
             <React.Fragment>
                 <PanelHeader>
-                    {this.renderBackButton()}
-                    <span>{recipeType.name}</span>
+                    <span className={panelSectionStyles.header}>
+                        {this.renderBackButton()}
+                        <span className={panelSectionStyles.title}>{recipeType.name}</span>
+                    </span>
                 </PanelHeader>
                 <PanelContent>
                     <ScrollableContainer>
