@@ -164,10 +164,27 @@
     --button-spacing: 0;
 }
 
+.group.vertical {
+    flex-direction: column;
+}
+
 .group.wrap {
     flex-wrap: wrap;
 }
 
 .group > * {
     margin: calc(var(--button-spacing) / 2);
+}
+
+.group.vertical .button {
+    width: auto;
+}
+
+.group.vertical .button .contents {
+    width: 100%;
+}
+
+.group.vertical .button .contents > * {
+    width: 100%;
+    justify-content: space-between;
 }

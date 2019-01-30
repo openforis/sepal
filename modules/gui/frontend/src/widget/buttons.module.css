@@ -1,20 +1,14 @@
 .buttons {
-    --vertical-gap: .5rem;
+    /* --vertical-gap: .5rem;
     --horizontal-gap: .5rem;
-    list-style: none;
-    margin: 0;
+    list-style: none; */
+    /* margin: 0;
     margin-right: calc(-1 * var(--horizontal-gap));
     margin-bottom: calc(-1 * var(--vertical-gap));
-    padding: 0;
+    padding: 0; */
 }
 
-.buttons li {
-    display: inline-block;
-    margin-right: var(--horizontal-gap);
-    margin-bottom: var(--vertical-gap);
-}
-
-.buttons button {
+.uppercase {
     text-transform: uppercase;
 }
 
