@@ -49,7 +49,8 @@
     justify-content: space-between;
     background-color: #323030;
     border: 1px solid var(--wireframe-color);
-    height: fit-content;
+    /* [HACK] Prevents Firefox from stretching a single selected scene to fill available space */
+    max-height: calc(var(--thumbnail-size) + 5.5rem);
 }
 
 .thumbnail {
@@ -178,7 +179,7 @@
 
 .overlayControls button {
     width: auto;
-    margin: .75rem .5rem;
+    margin: .5rem;
 }
 
 @media only screen and (max-width: 500px) {
@@ -199,7 +200,7 @@
         flex-direction: column;
         justify-content: left;
     }
-    
+
     .selectedScenes .scene {
         flex-direction: row;
         align-items: center;
@@ -208,13 +209,13 @@
     .selectedScenes .scene + .scene {
         margin-top: 1rem;
     }
-    
+
     .selectedScenes .details {
         height: auto;
         flex-grow: 1;
         border-width: 0 0 0 1px;
     }
-        
+
     .selectedScenes .overlayControls {
         flex-direction: row;
         align-items: center;
@@ -222,6 +223,7 @@
 
     .selectedScenes .overlayControls button {
         width: auto;
+        margin: .35rem;
     }
 }
 
