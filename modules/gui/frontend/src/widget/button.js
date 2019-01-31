@@ -79,8 +79,10 @@ export class Button extends React.Component {
     }
 
     handleClick(e) {
-        const {onClick, type, downloadUrl, downloadFilename} = this.props
-        if (type !== 'submit')
+        const {onClick, type, link, downloadUrl, downloadFilename} = this.props
+        // If preventDefault on for type='submit', form is not submitted
+        // If preventDefault on for links, browser history is not updated
+        if (type !== 'submit' && !link && !downloadUrl)
             e.preventDefault()
         onClick && onClick(e)
         downloadUrl && download(downloadUrl, downloadFilename)
