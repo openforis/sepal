@@ -90,7 +90,6 @@ export default class PanelButtons extends React.Component {
         const showCancelButton = isActionForm || dirty
         return (
             <Button
-                type='cancel'
                 look='cancel'
                 icon='undo-alt'
                 label={cancelLabel}
@@ -109,7 +108,6 @@ export default class PanelButtons extends React.Component {
         const {cancelLabel = msg('button.close')} = this.props
         return (
             <Button
-                type='apply'
                 look='apply'
                 icon='times'
                 label={cancelLabel}
