@@ -1,0 +1,14 @@
+.overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: hsla(0, 0%, 0%, .7);
+    opacity: 1;
+}
+
+.overlay:not(.hover) {
+    transition: opacity var(--transition-time) ease-in-out var(--transition-delay);
+    opacity: 0;
+}

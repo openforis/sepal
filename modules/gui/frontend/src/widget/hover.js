@@ -2,10 +2,11 @@ import {delay, distinctUntilChanged, map} from 'rxjs/operators'
 import {fromEvent, merge} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
+import styles from './hover.module.css'
 
 const {Provider, Consumer} = React.createContext()
 
-export class HoverProvider extends React.Component {
+export class HoverDetector extends React.Component {
     state = {
         hover: false
     }
@@ -53,16 +54,23 @@ export class HoverProvider extends React.Component {
     }
 }
 
-HoverProvider.propTypes = {
+HoverDetector.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string
 }
 
-export const HoverConsumer = props =>
+export const HoverOverlay = props =>
     <Consumer>
-        {hover => props.children(hover)}
+        {hover =>
+            hover
+                ? (
+                    <div className={[styles.overlay, hover ? styles.hover : null].join(' ')}>
+                        {props.children}
+                    </div>
+                ) : null
+        }
     </Consumer>
 
-HoverConsumer.propTypes = {
+HoverOverlay.propTypes = {
     children: PropTypes.any.isRequired
 }
