@@ -176,15 +176,14 @@
     flex-direction: column;
 }
 
-.group.vertical .button {
+.group.vertical > * {
     width: auto;
 }
 
-.group.vertical .button .contents {
-    width: 100%;
+.group.vertical > * + * {
+    margin-top: 1rem;
 }
 
-.group.vertical .button .contents > * {
+.group.vertical .button {
     width: 100%;
-    justify-content: space-between;
 }
