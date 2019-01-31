@@ -159,12 +159,13 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
     padding: .75rem;
 }
 
 .overlayControls button {
-    width: auto;
-    margin: .5rem;
+    width: calc(var(--thumbnail-size) - 3rem);
+    margin: .3rem 0;
 }
 
 @media only screen and (max-width: 500px) {
@@ -203,12 +204,14 @@
 
     .selectedScenes .overlayControls {
         flex-direction: row;
-        align-items: center;
+    }
+
+    .selectedScenes .overlayControls > * {
+        flex-direction: row;
     }
 
     .selectedScenes .overlayControls button {
         width: auto;
-        margin: .35rem;
     }
 }
 
