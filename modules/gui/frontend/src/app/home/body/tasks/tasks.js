@@ -1,5 +1,6 @@
-import {Button} from 'widget/button'
+import {Button, ButtonGroup} from 'widget/button'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {HoverDetector, HoverOverlay} from 'widget/hover'
 import {Msg, msg} from 'translate'
 import {Progress} from 'widget/progress'
 import {connect} from 'store'
@@ -23,7 +24,7 @@ class Tasks extends React.Component {
         return (
             <div className={styles.overlay}>
                 {['FAILED', 'COMPLETED', 'CANCELED'].includes(task.status) ? (
-                    <React.Fragment>
+                    <ButtonGroup type='vertical'>
                         <Button
                             icon='copy'
                             label={msg('button.copyToClipboard')}
@@ -33,7 +34,7 @@ class Tasks extends React.Component {
                             icon='times'
                             label={msg('button.remove')}
                             onClick={() => this.removeTask(task)}/>
-                    </React.Fragment>
+                    </ButtonGroup>
                 ) : task.status === 'ACTIVE' ?
                     <Button
                         className={styles.stop}
@@ -47,12 +48,14 @@ class Tasks extends React.Component {
 
     renderTask(task) {
         return (
-            <div key={task.id} className={[styles.task, look.look, look.transparent].join(' ')}>
+            <HoverDetector key={task.id} className={[styles.task, look.look, look.transparent].join(' ')}>
                 <div className={styles.name}>{task.name}</div>
                 <Progress className={styles.progress} status={task.status}/>
                 <div className={styles.statusDescription}>{task.statusDescription}</div>
-                {this.renderOverlay(task)}
-            </div>
+                <HoverOverlay>
+                    {this.renderOverlay(task)}
+                </HoverOverlay>
+            </HoverDetector>
         )
     }
 
