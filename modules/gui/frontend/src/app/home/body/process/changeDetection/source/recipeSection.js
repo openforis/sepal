@@ -1,11 +1,11 @@
 import {ErrorMessage} from 'widget/form'
 import {connect, select} from 'store'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import ComboBox from 'widget/comboBox'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {isMobile} from 'widget/userAgent'
 
 const mapStateToProps = () => {
     return {

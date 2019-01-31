@@ -2,6 +2,7 @@ import {ErrorMessage} from 'widget/form'
 import {Subject} from 'rxjs'
 import {connect, select} from 'store'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
+import {isMobile} from 'widget/userAgent'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
@@ -11,7 +12,6 @@ import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
-import {isMobile} from 'widget/userAgent'
 
 const loadCountries$ = () => {
     return queryFusionTable$(`

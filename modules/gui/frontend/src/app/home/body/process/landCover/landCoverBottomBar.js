@@ -47,15 +47,15 @@ class LandCoverBottomBar extends Component {
     renderPrimitiveSelector() {
         const {inputs: {primitive}} = this.props
         const primitives = [
-            {value: 'forest', label: 'Forest', },
-            {value: 'plantation', label: 'Plantation', },
-            {value: 'shrub', label: 'Shrub', },
-            {value: 'grass', label: 'Grass', },
-            {value: 'crop', label: 'Crop', },
-            {value: 'paramo', label: 'Paramo', },
-            {value: 'water', label: 'Water', },
-            {value: 'urban', label: 'Urban', },
-            {value: 'barren', label: 'Barren', }
+            {value: 'forest', label: 'Forest'},
+            {value: 'plantation', label: 'Plantation'},
+            {value: 'shrub', label: 'Shrub'},
+            {value: 'grass', label: 'Grass'},
+            {value: 'crop', label: 'Crop'},
+            {value: 'paramo', label: 'Paramo'},
+            {value: 'water', label: 'Water'},
+            {value: 'urban', label: 'Urban'},
+            {value: 'barren', label: 'Barren'}
         ]
         return (
             <div className={styles.primitiveSelector}>

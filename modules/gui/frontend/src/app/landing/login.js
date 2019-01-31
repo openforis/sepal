@@ -1,10 +1,10 @@
 import {Button} from 'widget/button'
 import {Field, Form, Input, form} from 'widget/form'
 import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {isMobile} from 'widget/userAgent'
 import styles from './login.module.css'
 
 const fields = {

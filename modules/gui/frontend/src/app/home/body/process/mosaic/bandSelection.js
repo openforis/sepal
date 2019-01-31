@@ -1,11 +1,11 @@
 import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Checkbox from 'widget/checkbox'
 import ComboBox from 'widget/comboBox'
 import React from 'react'
 import _ from 'lodash'
-import {isMobile} from 'widget/userAgent'
 import styles from './bandSelection.module.css'
 
 const fields = {

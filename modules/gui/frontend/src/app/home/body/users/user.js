@@ -1,11 +1,11 @@
 import {Field, Input, InputGroup, form} from 'widget/form'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {isMobile} from 'widget/userAgent'
 import styles from './user.module.css'
 
 const fields = {

@@ -1,5 +1,5 @@
-import React from 'react'
 import {isMobile} from 'widget/userAgent'
+import React from 'react'
 
 export default class Account extends React.Component {
     render() {

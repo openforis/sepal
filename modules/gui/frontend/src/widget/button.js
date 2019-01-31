@@ -1,11 +1,11 @@
-import PropTypes from 'prop-types'
-import React from 'react'
 import {Link} from 'route'
 import {combineLatest, fromEvent, merge, timer} from 'rxjs'
 import {switchMap, take, takeUntil} from 'rxjs/operators'
-import lookStyles from 'style/look.module.css'
 import Icon from 'widget/icon'
+import PropTypes from 'prop-types'
+import React from 'react'
 import Tooltip from 'widget/tooltip'
+import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 
 const CLICK_HOLD_DELAY_MS = 750

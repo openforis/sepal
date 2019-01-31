@@ -1,5 +1,6 @@
 import {Field, Input, form} from 'widget/form'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Label from 'widget/label'
 import Markdown from 'react-markdown'
@@ -7,7 +8,6 @@ import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {isMobile} from 'widget/userAgent'
 import styles from './userMessage.module.css'
 
 const fields = {

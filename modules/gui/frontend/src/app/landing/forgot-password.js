@@ -1,12 +1,12 @@
 import {Button} from 'widget/button'
 import {Field, Form, Input, form} from 'widget/form'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'user'
 import Label from 'widget/label'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {isMobile} from 'widget/userAgent'
 import styles from './forgot-password.module.css'
 
 const fields = {

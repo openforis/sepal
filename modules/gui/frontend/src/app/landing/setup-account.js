@@ -4,10 +4,10 @@ import {Msg, msg} from 'translate'
 import {PropTypes} from 'prop-types'
 import {SubmitButton} from 'widget/legacyButton'
 import {history, query} from 'route'
+import {isMobile} from 'widget/userAgent'
 import {resetPassword$, tokenUser, validateToken$} from 'user'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import {isMobile} from 'widget/userAgent'
 
 const fields = {
     username: null,

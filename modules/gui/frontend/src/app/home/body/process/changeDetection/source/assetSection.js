@@ -1,8 +1,8 @@
 import {Input} from 'widget/form'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {isMobile} from 'widget/userAgent'
 
 export default class AssetSection extends React.Component {
     render() {

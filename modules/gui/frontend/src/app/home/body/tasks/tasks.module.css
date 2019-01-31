@@ -30,7 +30,6 @@
     text-align: center;
 }
 
-
 .name {
     flex-grow: 1;
     overflow-y: auto;
@@ -53,7 +52,3 @@
     align-items: center;
     height: 100%;   
 }
-/* 
-.overlay button:not(:last-child) {
-    margin-bottom: 1rem;
-} */
