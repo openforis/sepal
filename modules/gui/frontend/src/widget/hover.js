@@ -61,12 +61,10 @@ HoverDetector.propTypes = {
 
 export const HoverOverlay = props =>
     <Consumer>
-        {hover => hover
-            ? (
-                <div className={[styles.overlay, hover ? styles.hover : null].join(' ')}>
-                    {props.children}
-                </div>
-            ) : null
+        {hover =>
+            <div className={[styles.overlay, hover ? styles.hover : null].join(' ')}>
+                {hover ? props.children : null}
+            </div>
         }
     </Consumer>
 
