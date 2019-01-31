@@ -79,8 +79,9 @@ export class Button extends React.Component {
     }
 
     handleClick(e) {
-        const {onClick, downloadUrl, downloadFilename} = this.props
-        e.preventDefault()
+        const {onClick, type, downloadUrl, downloadFilename} = this.props
+        if (type !== 'submit')
+            e.preventDefault()
         onClick && onClick(e)
         downloadUrl && download(downloadUrl, downloadFilename)
         if (this.stopPropagation()) {
@@ -185,7 +186,6 @@ export class Button extends React.Component {
     }
 
     componentDidMount() {
-        // const {onClick, onClickHold} = this.props
         const {onClickHold} = this.props
 
         const button = this.button.current
@@ -197,27 +197,6 @@ export class Button extends React.Component {
         const trigger$ = combineLatest(buttonMouseDown$, buttonMouseEnter$)
         const cancel$ = windowMouseUp$
         const activate$ = buttonMouseUp$
-
-        // if (onClick) {
-        //     const click$ =
-        //         trigger$.pipe(
-        //             switchMap(() =>
-        //                 activate$.pipe(
-        //                     takeUntil(cancel$),
-        //                     take(1)
-        //                 )
-        //             )
-        //         )
-        //     this.subscriptions.push(
-        //         click$.subscribe(e => {
-        //             const {onClick, disabled} = this.props
-        //             if (onClick && !disabled) {
-        //                 e.preventDefault()
-        //                 this.handleClick(e)
-        //             }
-        //         })
-        //     )
-        // }
 
         if (onClickHold) {
             const clickHold$ =
