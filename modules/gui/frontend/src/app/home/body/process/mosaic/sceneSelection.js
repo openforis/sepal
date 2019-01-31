@@ -231,16 +231,17 @@ const Scene = ({selected, scene, targetDate, onAdd, onRemove, className, recipeA
                     <div className={styles.bar}/>
                 </div>
             </div>
-            <div className={styles.overlay}>
-                <HoverConsumer>
-                    {hover => hover
-                        ? selected
-                            ? <SelectedSceneOverlay scene={scene} onRemove={onRemove} recipeActions={recipeActions}/>
-                            : <AvailableSceneOverlay scene={scene} onAdd={onAdd} recipeActions={recipeActions}/>
-                        : null
-                    }
-                </HoverConsumer>
-            </div>
+            <HoverConsumer>
+                {hover =>
+                    <div className={[styles.overlay, hover ? styles.hover : null].join(' ')}>
+                        {hover
+                            ? selected
+                                ? <SelectedSceneOverlay scene={scene} onRemove={onRemove} recipeActions={recipeActions}/>
+                                : <AvailableSceneOverlay scene={scene} onAdd={onAdd} recipeActions={recipeActions}/>
+                            : null}
+                    </div>
+                }
+            </HoverConsumer>
         </HoverProvider>
     )
 }
