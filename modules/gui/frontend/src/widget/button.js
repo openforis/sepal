@@ -80,10 +80,13 @@ export class Button extends React.Component {
 
     handleClick(e) {
         const {onClick, type, link, downloadUrl, downloadFilename} = this.props
+        // [HACK] Prevent double handling of touch events for regular buttons
         // If preventDefault on for type='submit', form is not submitted
+        // If preventDefault on for type='reset', form is not reset
         // If preventDefault on for links, browser history is not updated
-        if (type !== 'submit' && !link && !downloadUrl)
+        if (type === 'button' && !link && !downloadUrl) {
             e.preventDefault()
+        }
         onClick && onClick(e)
         downloadUrl && download(downloadUrl, downloadFilename)
         if (this.stopPropagation()) {
@@ -255,7 +258,7 @@ Button.propTypes = {
     tooltip: PropTypes.string,
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
-    type: PropTypes.string,
+    type: PropTypes.oneOf(['button', 'submit', 'reset']),
     onClick: PropTypes.func,
     onClickHold: PropTypes.func,
     onMouseDown: PropTypes.func
