@@ -1,11 +1,11 @@
+import PropTypes from 'prop-types'
+import React from 'react'
 import {Link} from 'route'
 import {combineLatest, fromEvent, merge, timer} from 'rxjs'
 import {switchMap, take, takeUntil} from 'rxjs/operators'
-import Icon from 'widget/icon'
-import PropTypes from 'prop-types'
-import React from 'react'
-import Tooltip from 'widget/tooltip'
 import lookStyles from 'style/look.module.css'
+import Icon from 'widget/icon'
+import Tooltip from 'widget/tooltip'
 import styles from './button.module.css'
 
 const CLICK_HOLD_DELAY_MS = 750
@@ -95,6 +95,17 @@ export class Button extends React.Component {
         }
     }
 
+    // Make sure there is a DOM element above the tooltip with the ref.
+    // The tooltip masks events.
+    renderWrapper(contents) {
+        const {onClick, onClickHold} = this.props
+        return onClick || onClickHold ? (
+            <span ref={this.button} className={styles.wrapper}>
+                {contents}
+            </span>
+        ) : contents
+    }
+
     renderLink(contents) {
         const {link, shown = true, disabled} = this.props
         return link && shown && !disabled ? (
@@ -118,7 +129,6 @@ export class Button extends React.Component {
         const style = onClickHold ? {'--click-hold-delay-ms': `${CLICK_HOLD_DELAY_MS}ms`} : null
         return (
             <button
-                ref={this.button}
                 type={type}
                 className={this.classNames()}
                 style={style}
@@ -162,10 +172,12 @@ export class Button extends React.Component {
 
     render() {
         return (
-            this.renderLink(
-                this.renderTooltip(
-                    this.renderButton(
-                        this.renderContents()
+            this.renderWrapper(
+                this.renderLink(
+                    this.renderTooltip(
+                        this.renderButton(
+                            this.renderContents()
+                        )
                     )
                 )
             )
@@ -219,7 +231,7 @@ export class Button extends React.Component {
                     }
                 })
             )
-    
+
             this.subscriptions.push(
                 click$.subscribe(e => {
                     const {onClick, disabled} = this.props
