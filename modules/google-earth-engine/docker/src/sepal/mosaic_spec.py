@@ -85,7 +85,7 @@ _toa_viz_by_bands = {
         'min': '500, 200, 400',
         'max': '5000, 2400, 2200'},
     'nir, swir1, red': lambda params: {
-        'bands': 'nir, swir1, red',
+        'bands': 'nir,swir1,red',
         'min': 0,
         'max': 5000,
         'gamma': 1.5},
