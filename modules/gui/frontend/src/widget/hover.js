@@ -1,4 +1,4 @@
-import {distinctUntilChanged, map} from 'rxjs/operators'
+import {delay, distinctUntilChanged, map} from 'rxjs/operators'
 import {fromEvent, merge} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -26,7 +26,9 @@ export class HoverProvider extends React.Component {
                 map(() => false)
             )
         ).pipe(
-            distinctUntilChanged()
+            distinctUntilChanged(),
+            // [HACK] Prevent click-through on Android devices
+            delay(0)
         )
 
         this.subscriptions.push(
