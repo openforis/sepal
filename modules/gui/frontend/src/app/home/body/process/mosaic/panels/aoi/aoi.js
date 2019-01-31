@@ -104,8 +104,8 @@ class Aoi extends React.Component {
     }
 
     componentDidUpdate() {
-        let input = this.props.inputs.allowWholeFusionTable
-        let allowWholeFusionTable = this.props.allowWholeFusionTable
+        const input = this.props.inputs.allowWholeFusionTable
+        const allowWholeFusionTable = this.props.allowWholeFusionTable || ''
         input.set(allowWholeFusionTable)
     }
 
