@@ -1,10 +1,13 @@
-import {delay, distinctUntilChanged, map} from 'rxjs/operators'
-import {fromEvent, merge} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {fromEvent, merge, of} from 'rxjs'
+import {delay, distinctUntilChanged, map, switchMap, takeUntil, zip} from 'rxjs/operators'
 import styles from './hover.module.css'
 
 const {Provider, Consumer} = React.createContext()
+
+const windowTouchStart$ = fromEvent(window, 'touchstart')
+const windowTouchEnd$ = fromEvent(window, 'touchend')
 
 export class HoverDetector extends React.Component {
     state = {
@@ -15,16 +18,28 @@ export class HoverDetector extends React.Component {
     subscriptions = []
 
     componentDidMount() {
-        const button = this.ref.current
-        const mouseOver$ = fromEvent(button, 'mouseover')
-        const mouseLeave$ = fromEvent(button, 'mouseleave')
-        
+        const element = this.ref.current
+        const mouseOver$ = fromEvent(element, 'mouseover')
+        const mouseLeave$ = fromEvent(element, 'mouseleave')
+        const touchMove$ = fromEvent(element, 'touchmove')
+
         const mouseStatus$ = merge(
             mouseOver$.pipe(
                 map(() => true)
             ),
             mouseLeave$.pipe(
                 map(() => false)
+            ),
+            windowTouchStart$.pipe( // Cancel hover when touching outside of element
+                switchMap(e =>
+                    of(e).pipe(
+                        zip(windowTouchEnd$),
+                        map(([start, end]) =>
+                            element.contains(start.target) && element.contains(end.target)
+                        ),
+                        takeUntil(touchMove$)
+                    )
+                )
             )
         ).pipe(
             distinctUntilChanged(),
