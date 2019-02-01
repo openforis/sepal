@@ -170,18 +170,10 @@ class UserMessages extends React.Component {
                     onClick={() => this.editMessage(message)}
                 />
                 <RemoveButton
-                    confirmMessage={this.removeInfo()}
-                    tooltip={msg('userMessages.remove')}
-                    // tooltipPlacement='bottom'
-                    onConfirm={() => this.removeMessage(message)}/>
-                <Button
-                    chromeless
-                    shape='circle'
                     size='large'
-                    icon='trash'
+                    message={msg('userMessages.removeConfirmation', {subject: message.subject})}
                     tooltip={msg('userMessages.remove')}
-                    onClickHold={() => this.removeMessage(message)}
-                />
+                    onConfirm={() => this.removeMessage(message)}/>
             </ButtonGroup>
         )
     }

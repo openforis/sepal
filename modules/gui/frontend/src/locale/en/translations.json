@@ -996,6 +996,7 @@
         "post": "Post message",
         "edit": "Edit message",
         "remove": "Remove message",
+        "removeConfirmation": "Remove message '{subject}'?",
         "author": "Message by {author}",
         "state": {
             "READ": "Mark as unread",
