@@ -1,0 +1,68 @@
+.panel {
+    --margin-left: calc(var(--menu-clearance) + .5rem);
+    --margin-right: 3.5rem;
+    --margin-top: .5rem;
+    --margin-bottom: .5rem;
+    --header-padding: .5rem .8rem;
+    --content-padding: 1.5rem .8rem;
+    --padding-panel-buttons: .5rem;
+    --scaling-factor: .8 !important;
+    --header-color: #e8e8e8;
+    width: calc(100% - var(--margin-left) - var(--margin-right));
+    background-color: var(--panel-default-background-color);
+    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
+    border-radius: .5rem;
+    pointer-events: all;
+    z-index: 3;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: width var(--transition-time) ease-in-out var(--transition-delay);
+}
+
+.panel.modal {
+    left: .5rem;
+    right: .5rem;
+    top: .5rem;
+    bottom: .5rem;
+    max-height: calc(100% - 1rem);
+    max-width: calc(100% - 1rem);
+}
+
+.header {
+    flex-grow: 0;
+    flex-shrink: 0;
+    font-size: .9rem;
+    font-family: var(--header-font-family);
+    text-transform: uppercase;
+    color: var(--header-color);
+    padding: var(--header-padding);
+    border-bottom: var(--wireframe);
+    display: flex;
+    justify-content: space-between;
+}
+
+.header > div > *:first-child {
+    margin-right: .5rem;
+}
+
+.content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--content-padding);
+    overflow: hidden;
+}
+
+.buttons {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 0;
+    flex-shrink: 0;
+    justify-content: space-between;
+    padding: var(--padding-panel-buttons);
+    border-top: var(--wireframe);
+    transition: opacity 200ms ease-in-out;
+}
