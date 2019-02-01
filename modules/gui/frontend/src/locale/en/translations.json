@@ -100,6 +100,7 @@
         "controls.showDotFiles.tooltip": "Show files beginning with .",
         "controls.hideDotFiles.tooltip": "Hide files beginning with .",
         "selected": "{directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}} selected",
+        "removeConfirmation": "Remove {directories} {directories, plural, one {directory} other {directories}} and {files} {files, plural, one {file} other {files}}?",
         "info": {
             "directory": "{itemCount} {itemCount, plural, one {item} other {items}}",
             "empty": "empty"
@@ -137,7 +138,7 @@
             "duplicateRecipe": "Duplicate recipe",
             "exportRecipe": "Export recipe",
             "saveRecipe": "Save recipe",
-            "deleteRecipe": "Delete recipe",
+            "removeRecipe": "Remove recipe",
             "revertToOldRevision": "Revert to old revision...",
             "searchRecipes": "Search recipes"
         },
@@ -1052,8 +1053,8 @@
             "LOAD_SCENES": "Load scenes",
             "AUTO_SELECT_SCENES": "Auto-select scenes",
             "LOAD_DIRECTORY": "Load user directory",
-            "REMOVE_FILE": "Delete file",
-            "REMOVE_DIRECTORY": "Delete directory",
+            "REMOVE_FILE": "Remove file",
+            "REMOVE_DIRECTORY": "Remove directory",
             "LOAD_APPS": "Load applications",
             "RUN_APP": "Open application",
             "SCHEDULE_UPDATE_TASKS": "Update background tasks",
@@ -1100,6 +1101,9 @@
         "copyToClipboard": "Copy to clipboard"
     },
     "widget": {
+        "removeButton": {
+            "label": "Remove"
+        },
         "seasonSelect": {
             "from": "From",
             "to": "To"

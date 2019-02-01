@@ -501,7 +501,7 @@
       }
     },
     "menu": {
-      "deleteRecipe": "Supprimer une recette",
+      "removeRecipe": "Supprimer une recette",
       "duplicateRecipe": "Dupliquer une recette",
       "exportRecipe": "Exporter une recette",
       "noSavedRecipies": "Pas de recettes sauvées",

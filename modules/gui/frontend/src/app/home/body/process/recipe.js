@@ -118,15 +118,15 @@ export const addRecipe = recipe => {
         .dispatch()
 }
 
-export const deleteRecipe$ = recipeId =>
+export const removeRecipe$ = recipeId =>
     api.recipe.delete$(recipeId)
 
-export const deleteRecipe = recipeId =>
-    deleteRecipe$(recipeId)
+export const removeRecipe = recipeId =>
+    removeRecipe$(recipeId)
         .subscribe(() => {
             closeTab(recipeId, 'process')
             Notifications.success({message: msg('process.recipe.remove.success')})
-            actionBuilder('DELETE_RECIPE', {recipeId})
+            actionBuilder('REMOVE_RECIPE', {recipeId})
                 .delValueByTemplate('process.recipes', {id: recipeId})
                 .dispatch()
         })

@@ -10,6 +10,7 @@ import Notifications from 'widget/notifications'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
+import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import actionBuilder, {dotSafe} from 'action-builder'
 import api from 'api'
@@ -38,7 +39,7 @@ const treePath = (path = '/') =>
 
 class Browse extends React.Component {
     disableRefresh$ = new Subject()
-
+    
     componentDidMount() {
         this.loadPath('/')
         this.props.onEnable(() => this.enableRefresh())
@@ -312,6 +313,14 @@ class Browse extends React.Component {
             .dispatch()
     }
 
+    removeInfo() {
+        const selected = this.countSelectedItems()
+        return msg('browse.removeConfirmation', {
+            files: selected.files,
+            directories: selected.directories
+        })
+    }
+
     renderToolbar(selected, nothingSelected) {
         const oneFileSelected = selected.files === 1 && selected.directories === 0
         const selectedFiles = this.selectedItems().files
@@ -343,14 +352,11 @@ class Browse extends React.Component {
                         downloadFilename={downloadFilename}
                         disabled={!oneFileSelected}
                     />
-                    <Button
-                        chromeless
-                        size='large'
-                        shape='circle'
-                        icon='trash-alt'
+                    <RemoveButton
+                        message={this.removeInfo()}
                         tooltip={msg('browse.controls.remove.tooltip')}
                         tooltipPlacement='bottom'
-                        onClickHold={this.removeSelected.bind(this)}
+                        onConfirm={() => this.removeSelected()}
                         disabled={nothingSelected}/>
                     <Button
                         chromeless
@@ -359,7 +365,7 @@ class Browse extends React.Component {
                         icon='times'
                         tooltip={msg('browse.controls.clearSelection.tooltip')}
                         tooltipPlacement='bottom'
-                        onClick={this.clearSelection.bind(this)}
+                        onClick={() => this.clearSelection()}
                         disabled={nothingSelected}
                     />
                 </ButtonGroup>

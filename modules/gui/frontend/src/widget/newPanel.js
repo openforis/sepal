@@ -93,15 +93,17 @@ export class PanelButtons extends React.Component {
     renderButton({type, look, icon, label, shown = true, disabled = false, onClick}, key) {
         const defaultByType = {
             look: {
-                safe: 'apply',
-                lossy: 'cancel',
+                // safe: 'apply',
+                // lossy: 'cancel',
+                cancel: 'cancel',
                 apply: 'apply',
-                confirm: 'cancel',
+                confirm: 'apply',
                 close: 'apply'
             },
             icon: {
-                safe: 'undo-alt',
-                lossy: 'undo-alt',
+                // safe: 'undo-alt',
+                // lossy: 'undo-alt',
+                cancel: 'undo-alt',
                 apply: 'check',
                 confirm: 'check',
                 close: 'times'
@@ -147,7 +149,7 @@ export class PanelButtons extends React.Component {
 const buttonsPropTypes = PropTypes.arrayOf(
     PropTypes.shape({
         label: PropTypes.string.isRequired,
-        type: PropTypes.oneOf(['safe', 'lossy', 'apply', 'confirm', 'close']).isRequired,
+        type: PropTypes.oneOf(['cancel', 'apply', 'confirm', 'close']).isRequired,
         onClick: PropTypes.func.isRequired,
         disabled: PropTypes.any,
         icon: PropTypes.string,

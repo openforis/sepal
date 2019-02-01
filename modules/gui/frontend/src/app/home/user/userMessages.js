@@ -8,6 +8,7 @@ import Panel, {PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
+import RemoveButton from 'widget/removeButton'
 import UserMessage from './userMessage'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
@@ -168,6 +169,11 @@ class UserMessages extends React.Component {
                     tooltip={msg('userMessages.edit')}
                     onClick={() => this.editMessage(message)}
                 />
+                <RemoveButton
+                    confirmMessage={this.removeInfo()}
+                    tooltip={msg('userMessages.remove')}
+                    // tooltipPlacement='bottom'
+                    onConfirm={() => this.removeMessage(message)}/>
                 <Button
                     chromeless
                     shape='circle'

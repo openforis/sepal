@@ -4,7 +4,7 @@ import {CenteredProgress} from 'widget/progress'
 import {PageControls, PageData, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {connect, select} from 'store'
-import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
+import {loadRecipe$, loadRecipes$, removeRecipe} from './recipe'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/recipe'
@@ -13,6 +13,7 @@ import CreateRecipeRLCMS from './createRecipeRLCMS'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
+import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
@@ -162,14 +163,11 @@ class RecipeList extends React.Component {
                             tooltip={msg('process.menu.duplicateRecipe')}
                             tooltipPlacement='bottom'
                             onClick={() => this.duplicateRecipe(recipe.id)}/>
-                        <Button
-                            chromeless
-                            shape='circle'
-                            size='large'
-                            icon='trash-alt'
-                            tooltip={msg('process.menu.deleteRecipe')}
+                        <RemoveButton
+                            message={'Remove recipe?'}
+                            tooltip={msg('process.menu.removeRecipe')}
                             tooltipPlacement='bottom'
-                            onClickHold={() => deleteRecipe(recipe.id)}/>
+                            onConfirm={() => removeRecipe(recipe.id)}/>
                     </ButtonGroup>
                 </div>
             </div>

@@ -5,7 +5,7 @@ import styles from './confirm.module.css'
 
 export default class Confirm extends React.Component {
     render() {
-        const {message, onConfirm, onCancel} = this.props
+        const {message, label, onConfirm, onCancel} = this.props
         return (
             <Panel className={styles.panel} modal>
                 <PanelHeader
@@ -18,14 +18,14 @@ export default class Confirm extends React.Component {
                 </PanelContent>
                 <PanelButtons
                     buttons={[{
-                        type: 'close',
-                        label: 'No, thanks',
-                        onClick: () => onCancel(),
+                        type: 'confirm',
+                        label,
+                        onClick: () => onConfirm()
                     }]}
                     extraButtons={[{
-                        type: 'confirm',
-                        label: 'Yes, please',
-                        onClick: () => onConfirm()
+                        type: 'cancel',
+                        label: 'Cancel',
+                        onClick: () => onCancel(),
                     }]}
                 />
             </Panel>
@@ -34,6 +34,7 @@ export default class Confirm extends React.Component {
 }
 
 Confirm.propTypes = {
+    label: PropTypes.string.isRequired,
     message: PropTypes.string.isRequired,
     onCancel: PropTypes.func.isRequired,
     onConfirm: PropTypes.func.isRequired
