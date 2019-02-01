@@ -35,7 +35,7 @@ export default class RemoveButton extends React.Component {
                     chromeless
                     size={size}
                     shape='circle'
-                    icon='trash-alt'
+                    icon='trash'
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
                     onClick={() => this.confirm(true)}
