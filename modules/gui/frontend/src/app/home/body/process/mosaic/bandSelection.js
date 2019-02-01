@@ -104,6 +104,7 @@ const BandSelector = ({recipeActions, selection, options, onChange}) =>
         placeholder={msg('process.mosaic.bands.placeholder')}
         options={options}
         autoFocus={!isMobile()}
+        menuIsOpen={isMobile()}
         openMenuOnFocus
         menuPlacement='top'
         maxMenuHeight='40rem'
