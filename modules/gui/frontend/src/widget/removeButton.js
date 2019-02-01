@@ -5,7 +5,9 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 export default class RemoveButton extends React.Component {
-    state = {}
+    state = {
+        confirm: false
+    }
 
     confirm(confirm) {
         this.setState(prevState => ({...prevState, confirm}))
