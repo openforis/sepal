@@ -1,7 +1,8 @@
 import {Link} from 'route'
-import {combineLatest, fromEvent, merge, timer} from 'rxjs'
-import {switchMap, take, takeUntil} from 'rxjs/operators'
+import {combineLatest, fromEvent, timer} from 'rxjs'
+import {distinctUntilChanged, switchMap, take, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
@@ -10,7 +11,7 @@ import styles from './button.module.css'
 
 const CLICK_HOLD_DELAY_MS = 750
 
-const windowMouseUp$ = merge(fromEvent(window, 'mouseup'), fromEvent(window, 'touchend'))
+const windowMouseUp$ = fromEvent(window, 'mouseup').pipe(distinctUntilChanged())
 
 const download = (url, filename) => {
     // create hidden anchor, attach to DOM, click it and remove it from the DOM
@@ -26,6 +27,9 @@ const download = (url, filename) => {
 export class Button extends React.Component {
     button = React.createRef()
     subscriptions = []
+    state = {
+        pressed: false
+    }
 
     stopPropagation() {
         const {link, stopPropagation = !link} = this.props
@@ -95,15 +99,26 @@ export class Button extends React.Component {
         }
     }
 
-    // Make sure there is a DOM element above the tooltip with the ref.
-    // The tooltip masks events.
+    // Make sure there is a DOM element with ref is above the tooltip, as tooltip steals events.
     renderWrapper(contents) {
-        const {onClick, onClickHold} = this.props
-        return onClick || onClickHold ? (
-            <span ref={this.button} className={styles.wrapper}>
-                {contents}
-            </span>
+        const {onClickHold} = this.props
+        const style = {'--click-hold-delay-ms': `${CLICK_HOLD_DELAY_MS}ms`}
+        return onClickHold ? (
+            <React.Fragment>
+                <span ref={this.button} className={styles.wrapper} style={style}>
+                    {contents}
+                </span>
+                {this.state.pressed ? this.renderHoldOverlay(style) : null}
+            </React.Fragment>
         ) : contents
+    }
+
+    renderHoldOverlay(style) {
+        return this.state.pressed ? (
+            <Portal>
+                <div className={styles.holdOverlay} style={style}></div>
+            </Portal>
+        ) : null
     }
 
     renderLink(contents) {
@@ -125,16 +140,15 @@ export class Button extends React.Component {
     }
 
     renderButton(contents) {
-        const {type = 'button', tabIndex, disabled, onClickHold} = this.props
-        const style = onClickHold ? {'--click-hold-delay-ms': `${CLICK_HOLD_DELAY_MS}ms`} : null
+        const {type = 'button', tabIndex, disabled} = this.props
         return (
             <button
                 type={type}
                 className={this.classNames()}
-                style={style}
                 tabIndex={tabIndex}
                 disabled={disabled}
                 onMouseDown={e => this.handleMouseDown(e)}
+                onClick={e => this.handleClick(e)}
             >
                 {contents}
             </button>
@@ -185,79 +199,19 @@ export class Button extends React.Component {
     }
 
     componentDidMount() {
-        const {onClick, onClickHold} = this.props
+        const {onClickHold} = this.props
 
         const button = this.button.current
 
-        const buttonMouseDown$ = fromEvent(button, 'mousedown')
-        const buttonMouseEnter$ = fromEvent(button, 'mouseenter')
-        const buttonMouseUp$ = fromEvent(button, 'mouseup')
-        const touchStart$ = fromEvent(button, 'touchstart')
-        const touchEnd$ = fromEvent(button, 'touchend')
-
+        const mouseDown$ = fromEvent(button, 'mousedown')
+        const mouseUp$ = fromEvent(button, 'mouseup')
+        const mouseEnter$ = fromEvent(button, 'mouseenter')
         const cancel$ = windowMouseUp$
-        const mouseTrigger$ = combineLatest(buttonMouseDown$, buttonMouseEnter$)
-        const mouseActivate$ = buttonMouseUp$
-        const touchTrigger$ = touchStart$
-        const touchActivate$ = touchEnd$
 
-        if (onClick) {
-            const touch$ =
-                touchTrigger$.pipe(
-                    switchMap(() =>
-                        touchActivate$.pipe(
-                            takeUntil(cancel$),
-                            take(1)
-                        )
-                    )
-                )
-
-            const click$ =
-                mouseTrigger$.pipe(
-                    switchMap(() =>
-                        mouseActivate$.pipe(
-                            takeUntil(cancel$),
-                            take(1)
-                        )
-                    )
-                )
-
-            this.subscriptions.push(
-                touch$.subscribe(e => {
-                    const {onClick, disabled} = this.props
-                    e.preventDefault()
-                    if (onClick && !disabled) {
-                        this.handleClick(e)
-                    }
-                })
-            )
-
-            this.subscriptions.push(
-                click$.subscribe(e => {
-                    const {onClick, disabled} = this.props
-                    if (onClick && !disabled) {
-                        this.handleClick(e)
-                    }
-                })
-            )
-        }
+        const mouseTrigger$ = combineLatest(mouseDown$, mouseEnter$)
+        const mouseActivate$ = mouseUp$
 
         if (onClickHold) {
-            const touchHold$ =
-                touchTrigger$.pipe(
-                    switchMap(() =>
-                        timer(CLICK_HOLD_DELAY_MS).pipe(
-                            takeUntil(cancel$),
-                            switchMap(() =>
-                                touchActivate$.pipe(
-                                    takeUntil(cancel$),
-                                    take(1)
-                                )
-                            )
-                        )
-                    )
-                )
-
             const clickHold$ =
                 mouseTrigger$.pipe(
                     switchMap(() =>
@@ -272,16 +226,6 @@ export class Button extends React.Component {
                         )
                     )
                 )
-
-            this.subscriptions.push(
-                touchHold$.subscribe(e => {
-                    const {onClickHold, disabled} = this.props
-                    e.preventDefault()
-                    if (onClickHold && !disabled) {
-                        this.handleClickHold(e)
-                    }
-                })
-            )
 
             this.subscriptions.push(
                 clickHold$.subscribe(e => {
