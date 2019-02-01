@@ -103,7 +103,10 @@ export class Button extends React.Component {
     // Make sure there is a DOM element with ref is above the tooltip, as tooltip steals events.
     renderWrapper(contents) {
         const {onClickHold} = this.props
-        const style = {'--click-hold-delay-ms': `${CLICK_HOLD_DELAY_MS}ms`}
+        const style = {
+            '--click-hold-delay-ms': `${CLICK_CANCEL_DELAY_MS}ms`,
+            '--click-hold-duration-ms': `${CLICK_HOLD_DELAY_MS - CLICK_CANCEL_DELAY_MS}ms`
+        }
         return onClickHold ? (
             <React.Fragment>
                 <span ref={this.button} className={styles.wrapper} style={style}>

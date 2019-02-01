@@ -113,7 +113,7 @@
 }
 
 /* mouseover effect */
-.button.hold:not(:disabled):hover:before {
+/* .button.hold:not(:disabled):hover:before {
     top: 80%;
     background: hsla(0, 0%, 100%, 0.2);
     transition: top 250ms ease-in-out;
@@ -127,11 +127,11 @@
     100% {
         top: 95%;
     }
-}
+} */
 
 /* click-and-hold effect */
 .button.hold:not(:disabled):hover:active:before {
-    animation: fill var(--click-hold-delay-ms) ease-out forwards normal;
+    animation: fill var(--click-hold-duration-ms) ease-out var(--click-hold-delay-ms) forwards normal;
 }
 
 @keyframes fill {
