@@ -93,16 +93,12 @@ export class PanelButtons extends React.Component {
     renderButton({type, look, icon, label, shown = true, disabled = false, onClick}, key) {
         const defaultByType = {
             look: {
-                // safe: 'apply',
-                // lossy: 'cancel',
                 cancel: 'cancel',
                 apply: 'apply',
                 confirm: 'apply',
                 close: 'apply'
             },
             icon: {
-                // safe: 'undo-alt',
-                // lossy: 'undo-alt',
                 cancel: 'undo-alt',
                 apply: 'check',
                 confirm: 'check',
