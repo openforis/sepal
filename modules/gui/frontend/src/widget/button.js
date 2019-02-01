@@ -1,5 +1,5 @@
+import {EMPTY, combineLatest, fromEvent, merge, timer} from 'rxjs'
 import {Link} from 'route'
-import {combineLatest, fromEvent, timer} from 'rxjs'
 import {distinctUntilChanged, switchMap, take, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
 import Portal from 'widget/portal'
@@ -10,6 +10,7 @@ import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 
 const CLICK_HOLD_DELAY_MS = 750
+const CLICK_CANCEL_DELAY_MS = 250
 
 const windowMouseUp$ = fromEvent(window, 'mouseup').pipe(distinctUntilChanged())
 
@@ -140,7 +141,7 @@ export class Button extends React.Component {
     }
 
     renderButton(contents) {
-        const {type = 'button', tabIndex, disabled} = this.props
+        const {type = 'button', tabIndex, disabled, onClickHold} = this.props
         return (
             <button
                 type={type}
@@ -148,7 +149,7 @@ export class Button extends React.Component {
                 tabIndex={tabIndex}
                 disabled={disabled}
                 onMouseDown={e => this.handleMouseDown(e)}
-                onClick={e => this.handleClick(e)}
+                onClick={e => onClickHold ? e.stopPropagation() : this.handleClick(e)}
             >
                 {contents}
             </button>
@@ -212,6 +213,30 @@ export class Button extends React.Component {
         const mouseActivate$ = mouseUp$
 
         if (onClickHold) {
+            const click$ =
+                mouseTrigger$.pipe(
+                    switchMap(() =>
+                        mouseActivate$.pipe(
+                            takeUntil(
+                                merge(
+                                    cancel$,
+                                    onClickHold ? timer(CLICK_CANCEL_DELAY_MS) : EMPTY
+                                )
+                            ),
+                            take(1)
+                        )
+                    )
+                )
+
+            this.subscriptions.push(
+                click$.subscribe(e => {
+                    const {onClick, disabled} = this.props
+                    if (onClick && !disabled) {
+                        this.handleClick(e)
+                    }
+                })
+            )
+
             const clickHold$ =
                 mouseTrigger$.pipe(
                     switchMap(() =>
