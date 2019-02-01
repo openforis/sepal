@@ -164,6 +164,7 @@ class RecipeList extends React.Component {
                             tooltipPlacement='bottom'
                             onClick={() => this.duplicateRecipe(recipe.id)}/>
                         <RemoveButton
+                            size='large'
                             message={'Remove recipe?'}
                             tooltip={msg('process.menu.removeRecipe')}
                             tooltipPlacement='bottom'
