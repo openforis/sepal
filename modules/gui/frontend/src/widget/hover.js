@@ -1,7 +1,7 @@
+import {delay, distinctUntilChanged, map, switchMap, takeUntil, zip} from 'rxjs/operators'
+import {fromEvent, merge, of} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {fromEvent, merge, of} from 'rxjs'
-import {delay, distinctUntilChanged, map, switchMap, takeUntil, zip} from 'rxjs/operators'
 import styles from './hover.module.css'
 
 const {Provider, Consumer} = React.createContext()
@@ -43,8 +43,8 @@ export class HoverDetector extends React.Component {
             )
         ).pipe(
             distinctUntilChanged(),
-            // [HACK] Prevent click-through on Android devices
-            delay(0)
+            // [HACK] Prevent click-through on touch screens
+            delay(100)
         )
 
         this.subscriptions.push(
