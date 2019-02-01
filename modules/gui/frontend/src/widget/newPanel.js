@@ -123,20 +123,30 @@ export class PanelButtons extends React.Component {
 
     }
     
-    renderButtons(buttons) {
+    renderButtonGroup(buttons) {
         return (
             <ButtonGroup>
                 {buttons.map((button, index) => this.renderButton(button, index))}
             </ButtonGroup>
         )
     }
+
+    renderMainButtons() {
+        const {children, buttons} = this.props
+        return buttons ? this.renderButtonGroup(buttons) : children
+    }
+
+    renderExtraButtons() {
+        const {extraButtons} = this.props
+        return this.renderButtonGroup(extraButtons || [])
+    }
     
     render() {
-        const {className, children, buttons, extraButtons} = this.props
+        const {className} = this.props
         return (
             <div className={[styles.buttons, className].join(' ')}>
-                {this.renderButtons(extraButtons || [])}
-                {buttons ? this.renderButtons(buttons) : children}
+                {this.renderExtraButtons()}
+                {this.renderMainButtons()}
             </div>
         )
     }
