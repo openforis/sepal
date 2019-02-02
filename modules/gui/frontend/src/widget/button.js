@@ -2,7 +2,6 @@ import {EMPTY, combineLatest, fromEvent, merge, timer} from 'rxjs'
 import {Link} from 'route'
 import {distinctUntilChanged, switchMap, take, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
@@ -28,9 +27,6 @@ const download = (url, filename) => {
 export class Button extends React.Component {
     button = React.createRef()
     subscriptions = []
-    state = {
-        pressed: false
-    }
 
     stopPropagation() {
         const {link, stopPropagation = !link} = this.props
@@ -108,21 +104,10 @@ export class Button extends React.Component {
             '--click-hold-duration-ms': `${CLICK_HOLD_DELAY_MS - CLICK_CANCEL_DELAY_MS}ms`
         }
         return onClickHold ? (
-            <React.Fragment>
-                <span ref={this.button} className={styles.wrapper} style={style}>
-                    {contents}
-                </span>
-                {this.state.pressed ? this.renderHoldOverlay(style) : null}
-            </React.Fragment>
+            <span ref={this.button} className={styles.wrapper} style={style}>
+                {contents}
+            </span>
         ) : contents
-    }
-
-    renderHoldOverlay(style) {
-        return this.state.pressed ? (
-            <Portal>
-                <div className={styles.holdOverlay} style={style}></div>
-            </Portal>
-        ) : null
     }
 
     renderLink(contents) {
