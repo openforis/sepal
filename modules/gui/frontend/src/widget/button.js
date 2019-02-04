@@ -174,7 +174,8 @@ export class Button extends React.Component {
     }
 
     render() {
-        return (
+        const {shown = true} = this.props
+        return shown ? (
             this.renderWrapper(
                 this.renderLink(
                     this.renderTooltip(
@@ -184,24 +185,21 @@ export class Button extends React.Component {
                     )
                 )
             )
-        )
+        ) : null
     }
 
     componentDidMount() {
         const {onClickHold} = this.props
 
-        const button = this.button.current
-
-        const mouseDown$ = fromEvent(button, 'mousedown')
-        const mouseUp$ = fromEvent(button, 'mouseup')
-        const mouseEnter$ = fromEvent(button, 'mouseenter')
-        const cancel$ = windowMouseUp$
-
-        const mouseTrigger$ = combineLatest(mouseDown$, mouseEnter$)
-        const mouseActivate$ = mouseUp$
-
-        if (onClickHold) {
-
+        if (onClickHold && this.button.current) {
+            const button = this.button.current
+            const mouseDown$ = fromEvent(button, 'mousedown')
+            const mouseUp$ = fromEvent(button, 'mouseup')
+            const mouseEnter$ = fromEvent(button, 'mouseenter')
+            const cancel$ = windowMouseUp$
+            const mouseTrigger$ = combineLatest(mouseDown$, mouseEnter$)
+            const mouseActivate$ = mouseUp$
+    
             // Click-hold is triggered if button pressed more than CLICK_HOLD_DELAY_MS.
             const clickHold$ =
                 mouseTrigger$.pipe(
