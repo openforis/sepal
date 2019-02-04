@@ -97,8 +97,8 @@ PanelContent.propTypes = {
 // BUTTONS --------------------------------------------------------------------
 
 export class PanelButtons extends React.Component {
-    static renderButton({type, look, icon, label, shown = true, disabled = false, onClick}, key) {
-        const defaultByType = {
+    static renderButton({template, type, look, icon, label, shown = true, disabled = false, onClick}, key) {
+        const defaultByTemplate = {
             cancel: {
                 look: 'cancel',
                 icon: 'undo-alt',
@@ -123,14 +123,31 @@ export class PanelButtons extends React.Component {
                 look: 'add',
                 icon: 'pencil-alt',
                 label: msg('button.add')
+            },
+            back: {
+                icon: 'chevron-left',
+                label: msg('button.back')
+            },
+            next: {
+                type: 'submit',
+                look: 'apply',
+                icon: 'chevron-right',
+                label: msg('button.next')
+            },
+            done: {
+                type: 'submit',
+                look: 'apply',
+                icon: 'check',
+                label: msg('done')
             }
         }
         return (
             <Button
                 key={key}
-                look={look || defaultByType[type].look}
-                icon={icon || defaultByType[type].icon}
-                label={label || defaultByType[type].label}
+                type={type}
+                look={look || defaultByTemplate[template].look}
+                icon={icon || defaultByTemplate[template].icon}
+                label={label || defaultByTemplate[template].label}
                 shown={shown}
                 disabled={disabled}
                 onClick={e => {
@@ -143,23 +160,23 @@ export class PanelButtons extends React.Component {
     }
     
     static Cancel({size, shown, disabled, onClick}) {
-        return PanelButtons.renderButton({type: 'cancel', size, shown, disabled, onClick})
+        return PanelButtons.renderButton({template: 'cancel', size, shown, disabled, onClick})
     }
 
     static Apply({size, shown, disabled, onClick}) {
-        return PanelButtons.renderButton({type: 'apply', size, shown, disabled, onClick})
+        return PanelButtons.renderButton({template: 'apply', size, shown, disabled, onClick})
     }
 
     static Close({size, shown, disabled, onClick}) {
-        return PanelButtons.renderButton({type: 'close', size, shown, disabled, onClick})
+        return PanelButtons.renderButton({template: 'close', size, shown, disabled, onClick})
     }
 
     static Confirm({size, label, shown, disabled, onClick}) {
-        return PanelButtons.renderButton({type: 'confirm', size, label, shown, disabled, onClick})
+        return PanelButtons.renderButton({template: 'confirm', size, label, shown, disabled, onClick})
     }
 
     static Add({size, label, shown, disabled, onClick}) {
-        return PanelButtons.renderButton({type: 'add', size, label, shown, disabled, onClick})
+        return PanelButtons.renderButton({template: 'add', size, label, shown, disabled, onClick})
     }
 
     static Main({children}) {
@@ -223,7 +240,7 @@ const buttonsPropTypes = PropTypes.arrayOf(
         label: PropTypes.string,
         look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'cancel', 'apply', 'add']),
         shown: PropTypes.any,
-        type: PropTypes.oneOf(['cancel', 'apply', 'confirm', 'close'])
+        template: PropTypes.oneOf(['cancel', 'apply', 'confirm', 'close', 'add', 'back', 'next', 'done'])
     })
 )
 
