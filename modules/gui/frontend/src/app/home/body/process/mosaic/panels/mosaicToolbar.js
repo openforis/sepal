@@ -38,7 +38,12 @@ class MosaicToolbar extends React.Component {
             <PanelWizard
                 panels={['areaOfInterest', 'dates', 'sources']}
                 statePath={statePath}>
-                <Toolbar statePath={statePath} vertical top right panel className={styles.top}>
+                <Toolbar
+                    statePath={statePath}
+                    vertical
+                    placement='top-right'
+                    panel
+                    className={styles.top}>
                     <PanelButton
                         name='auto'
                         icon='magic'
@@ -61,7 +66,12 @@ class MosaicToolbar extends React.Component {
                         <Retrieve recipeId={recipeId}/>
                     </PanelButton>
                 </Toolbar>
-                <Toolbar statePath={statePath} vertical bottom right panel className={styles.bottom}>
+                <Toolbar
+                    statePath={statePath}
+                    vertical
+                    placement='bottom-right'
+                    panel
+                    className={styles.bottom}>
                     <PanelButton
                         name='areaOfInterest'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}

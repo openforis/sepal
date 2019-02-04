@@ -1,10 +1,11 @@
 import {Field, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './preprocess.module.css'
@@ -62,7 +63,7 @@ class Preprocess extends React.Component {
     render() {
         const {recipePath, form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -78,8 +79,8 @@ class Preprocess extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <PanelButtons/>
-            </Panel>
+                <FormPanelButtons/>
+            </FormPanel>
         )
     }
 }

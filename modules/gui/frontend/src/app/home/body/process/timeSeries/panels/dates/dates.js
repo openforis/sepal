@@ -1,10 +1,11 @@
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
@@ -71,7 +72,7 @@ class Dates extends React.Component {
     render() {
         const {recipePath, form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -86,8 +87,8 @@ class Dates extends React.Component {
                     </div>
                 </PanelContent>
 
-                <PanelButtons/>
-            </Panel>
+                <FormPanelButtons/>
+            </FormPanel>
         )
     }
 }

@@ -1,11 +1,12 @@
 import {Field, Input, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import Label from 'widget/label'
 import Markdown from 'react-markdown'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './userMessage.module.css'
@@ -65,7 +66,7 @@ class UserMessage extends React.Component {
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
-                <PanelButtons/>
+                <FormPanelButtons/>
             </React.Fragment>
         )
     }
@@ -73,7 +74,7 @@ class UserMessage extends React.Component {
     render() {
         const {form, onApply, onCancel} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 isActionForm={true}
@@ -85,7 +86,7 @@ class UserMessage extends React.Component {
                     icon='bell'
                     title={msg('userMessage.title')}/>
                 {this.renderPanel()}
-            </Panel>
+            </FormPanel>
         )
     }
 }

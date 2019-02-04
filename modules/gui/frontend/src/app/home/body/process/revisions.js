@@ -1,11 +1,12 @@
 import {Field, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeState, getRevisions, recipePath, revertToRevision$, withRecipePath} from 'app/home/body/process/recipe'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 // import SelectionList from 'widget/selectionList'
@@ -50,7 +51,7 @@ class Revisions extends React.Component {
     renderPanel() {
         const {recipeId, recipePath, form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 isActionForm={true}
@@ -68,9 +69,9 @@ class Revisions extends React.Component {
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
-                <PanelButtons
+                <FormPanelButtons
                     applyLabel={msg('process.revisions.revert')}/>
-            </Panel>
+            </FormPanel>
         )
     }
 

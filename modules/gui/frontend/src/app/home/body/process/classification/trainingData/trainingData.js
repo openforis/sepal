@@ -1,5 +1,6 @@
 import {Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../classificationRecipe'
 import {Subject} from 'rxjs'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
@@ -7,8 +8,8 @@ import {isMobile} from 'widget/userAgent'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
 import ComboBox from 'widget/comboBox'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './trainingData.module.css'
@@ -59,7 +60,7 @@ class TrainingData extends React.Component {
     render() {
         const {recipePath, form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -75,8 +76,8 @@ class TrainingData extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <PanelButtons/>
-            </Panel>
+                <FormPanelButtons/>
+            </FormPanel>
         )
     }
 

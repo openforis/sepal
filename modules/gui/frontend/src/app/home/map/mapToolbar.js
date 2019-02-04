@@ -18,7 +18,10 @@ class MapToolbar extends React.Component {
     render() {
         const {statePath, mapContext, labelsShown, labelLayerIndex, isZooming, hasBounds, children} = this.props
         return (
-            <Toolbar className={styles.mapToolbar} horizontal top right>
+            <Toolbar
+                className={styles.mapToolbar}
+                horizontal
+                placement='top-right'>
                 <ToolbarButton
                     disabled={sepalMap.isMaxZoom()}
                     onClick={() => sepalMap.zoomIn()}
