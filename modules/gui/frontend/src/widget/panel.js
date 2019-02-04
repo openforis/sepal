@@ -257,7 +257,7 @@ PanelButtons.Main.propTypes = {
 }
 
 PanelButtons.Extra.propTypes = {
-    children: PropTypes.any.isRequired
+    children: PropTypes.any
 }
 
 PanelButtons.Cancel.propTypes = {

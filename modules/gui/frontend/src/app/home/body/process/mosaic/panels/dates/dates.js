@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {ErrorMessage, Field, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
@@ -192,12 +193,11 @@ class Dates extends React.Component {
                     </div>
                 </PanelContent>
 
-                <FormPanelButtons
-                    additionalButtons={[{
-                        key: 'advanced',
-                        label: advanced.value ? msg('button.less') : msg('button.more'),
-                        onClick: () => this.setAdvanced(!advanced.value)
-                    }]}/>
+                <FormPanelButtons>
+                    <Button
+                        label={advanced.value ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setAdvanced(!advanced.value)}/>
+                </FormPanelButtons>
             </FormPanel>
         )
     }

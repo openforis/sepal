@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {Field, form} from 'widget/form'
 import {PanelContent} from 'widget/panel'
 import {PropTypes} from 'prop-types'
@@ -89,15 +90,12 @@ class UserSession extends React.Component {
                         />
                     </div>
                 </PanelContent>
-                <FormPanelButtons
-                    form={form}
-                    statePath='userSession'
-                    additionalButtons={[{
-                        key: 'stop',
-                        label: msg('user.userSession.stop.label'),
-                        tooltip: msg('user.userSession.stop.tooltip'),
-                        onClick: () => this.stopSession(session)
-                    }]}/>
+                <FormPanelButtons>
+                    <Button
+                        label={msg('user.userSession.stop.label')}
+                        tooltip={msg('user.userSession.stop.tooltip')}
+                        onClick={() => this.stopSession(session)}/>
+                </FormPanelButtons>
             </FormPanel>
         )
     }

@@ -122,14 +122,13 @@ class UserDetails extends React.Component {
                         </ButtonGroup>
                     </div>
                 </PanelContent>
-                <FormPanelButtons
-                    additionalButtons={[{
-                        key: 'changePassword',
-                        icon: 'key',
-                        label: msg('user.changePassword.title'),
-                        disabled: form.isDirty(),
-                        onClick: () => showChangePassword()
-                    }]}/>
+                <FormPanelButtons>
+                    <Button
+                        icon={'key'}
+                        label={msg('user.changePassword.title')}
+                        disabled={form.isDirty()}
+                        onClick={() => showChangePassword()}/>
+                </FormPanelButtons>
             </React.Fragment>
     }
 
