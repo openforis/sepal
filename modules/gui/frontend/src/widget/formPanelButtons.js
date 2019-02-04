@@ -1,5 +1,5 @@
 import {PanelButtons} from 'widget/panel'
-import {PanelContext} from './formPanel'
+import {PanelContext} from 'widget/formPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -14,15 +14,6 @@ export default class FormPanelButtons extends React.Component {
 
     renderDoneButton({invalid}, onClick) {
         return PanelButtons.renderButton({template: 'done', disabled: invalid, onClick})
-    }
-
-    renderWizardButtons({invalid, first, last, onBack, onNext, onDone}) {
-        return (
-            <React.Fragment>
-                {!first ? this.renderBackButton(onBack) : null}
-                {!last ? this.renderNextButton({invalid}, onNext) : this.renderDoneButton({invalid}, onDone)}
-            </React.Fragment>
-        )
     }
 
     renderCancelButton({isActionForm, dirty}, onClick) {
@@ -43,23 +34,28 @@ export default class FormPanelButtons extends React.Component {
         return PanelButtons.renderButton({template: 'apply', type, label, disabled, onClick})
     }
 
+    renderWizardButtons({invalid, first, last, onBack, onNext, onDone}) {
+        return (
+            <PanelButtons.Main>
+                {!first ? this.renderBackButton(onBack) : null}
+                {!last ? this.renderNextButton({invalid}, onNext) : this.renderDoneButton({invalid}, onDone)}
+            </PanelButtons.Main>
+        )
+    }
+
     renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel}) {
         return (
-            <React.Fragment>
+            <PanelButtons.Main>
                 {this.renderCancelButton({isActionForm, dirty}, onCancel)}
                 {this.renderApplyButton({isActionForm, invalid}, onOk)}
-            </React.Fragment>
+            </PanelButtons.Main>
         )
     }
 
     renderMainButtons({isActionForm, wizard, first, last, dirty, invalid, onOk, onCancel, onBack, onNext, onDone}) {
-        return (
-            <PanelButtons.Main>
-                {wizard
-                    ? this.renderWizardButtons({first, last, invalid, onBack, onNext, onDone})
-                    : this.renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel})}
-            </PanelButtons.Main>
-        )
+        return wizard
+            ? this.renderWizardButtons({first, last, invalid, onBack, onNext, onDone})
+            : this.renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel})
     }
 
     renderExtraButtons() {
