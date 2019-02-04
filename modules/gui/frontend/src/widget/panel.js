@@ -138,7 +138,7 @@ export class PanelButtons extends React.Component {
                 type: 'submit',
                 look: 'apply',
                 icon: 'check',
-                label: msg('done')
+                label: msg('button.done')
             }
         }
         return (
