@@ -1,13 +1,14 @@
 import {Field, form} from 'widget/form'
 import {Msg, msg} from 'translate'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {arrayEquals} from 'collections'
 import {imageSourceById, sources} from 'sources'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import Buttons from 'widget/buttons'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import Label from 'widget/label'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './sources.module.css'
@@ -90,7 +91,7 @@ class Sources extends React.Component {
     render() {
         const {recipePath, form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -109,8 +110,8 @@ class Sources extends React.Component {
                     </div>
                 </PanelContent>
 
-                <PanelButtons/>
-            </Panel>
+                <FormPanelButtons/>
+            </FormPanel>
         )
     }
 

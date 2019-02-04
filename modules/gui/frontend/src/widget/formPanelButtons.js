@@ -1,11 +1,11 @@
 import {Button, ButtonGroup} from 'widget/button'
-import {PanelContext} from './panel'
+import {PanelContext} from './formPanel'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from 'widget/panelButtons.module.css'
+import styles from 'widget/formPanelButtons.module.css'
 
-export default class PanelButtons extends React.Component {
+export default class FormPanelButtons extends React.Component {
     renderAdditionalButtons() {
         const {additionalButtons = []} = this.props
         const renderButton = ({key, look, icon, label, disabled, tooltip, onClick}) =>
@@ -170,7 +170,7 @@ export default class PanelButtons extends React.Component {
     }
 }
 
-PanelButtons.propTypes = {
+FormPanelButtons.propTypes = {
     additionalButtons: PropTypes.arrayOf(
         PropTypes.shape({
             key: PropTypes.string.isRequired,

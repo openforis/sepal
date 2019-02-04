@@ -3,8 +3,8 @@ import {RecipeActions, RecipeState} from '../classificationRecipe'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import AssetSection from './assetSection'
-import Panel from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import PanelSections from 'widget/panelSections'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -49,7 +49,7 @@ class Source extends React.Component {
             }
         ]
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -59,8 +59,8 @@ class Source extends React.Component {
                 }).dispatch()}>
                 <PanelSections sections={sections} selected={inputs.section} inputs={inputs}/>
 
-                <PanelButtons/>
-            </Panel>
+                <FormPanelButtons/>
+            </FormPanel>
         )
     }
 }

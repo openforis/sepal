@@ -1,9 +1,10 @@
 import {Msg, msg} from 'translate'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
 import {form} from 'widget/form'
 import {withRecipePath} from 'app/home/body/process/recipe'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './clearSelectedScenes.module.css'
@@ -19,7 +20,7 @@ class ClearSelectedScenes extends React.Component {
     render() {
         const {recipePath, form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -33,9 +34,9 @@ class ClearSelectedScenes extends React.Component {
                     <Msg id='process.mosaic.panel.clearSelectedScenes.message'/>
                 </PanelContent>
 
-                <PanelButtons
+                <FormPanelButtons
                     applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}/>
-            </Panel>
+            </FormPanel>
         )
     }
 }

@@ -29,7 +29,11 @@ class TimeSeriesToolbar extends React.Component {
             <PanelWizard
                 panels={['areaOfInterest', 'dates', 'sources']}
                 statePath={statePath}>
-                <Toolbar statePath={statePath} vertical top right className={styles.top}>
+                <Toolbar
+                    statePath={statePath}
+                    vertical
+                    placement='top-right'
+                    className={styles.top}>
                     <PanelButton
                         name='retrieve'
                         icon='cloud-download-alt'
@@ -38,7 +42,12 @@ class TimeSeriesToolbar extends React.Component {
                         <Retrieve recipeId={recipeId}/>
                     </PanelButton>
                 </Toolbar>
-                <Toolbar statePath={statePath} vertical bottom right panel className={styles.bottom}>
+                <Toolbar
+                    statePath={statePath}
+                    vertical
+                    placement='bottom-right'
+                    panel
+                    className={styles.bottom}>
                     <PanelButton
                         name='areaOfInterest'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}

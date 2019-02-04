@@ -1,10 +1,11 @@
 import {Field, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {msg} from 'translate'
 import {withRecipePath} from 'app/home/body/process/recipe'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import Label from 'widget/label'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Slider from 'widget/slider'
@@ -31,7 +32,7 @@ class Auto extends React.Component {
     render() {
         const {recipePath, form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -45,9 +46,9 @@ class Auto extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <PanelButtons
+                <FormPanelButtons
                     applyLabel={msg('process.mosaic.panel.auto.form.selectScenes')}/>
-            </Panel>
+            </FormPanel>
         )
     }
 

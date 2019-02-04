@@ -26,19 +26,13 @@
     margin-top: var(--button-spacing);
 }
 
-.toolbar.top {
+.toolbar.top-right {
     top: var(--toolbar-edge-margin);
+    right: var(--toolbar-edge-margin);
 }
 
-.toolbar.bottom {
+.toolbar.bottom-right {
     bottom: var(--toolbar-edge-margin);
-}
-
-.toolbar.left {
-    left: var(--toolbar-edge-margin);
-}
-
-.toolbar.right {
     right: var(--toolbar-edge-margin);
 }
 

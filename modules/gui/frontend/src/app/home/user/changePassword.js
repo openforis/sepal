@@ -1,12 +1,13 @@
 import {CenteredProgress} from 'widget/progress'
 import {Constraint, Field, Input, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {changeUserPassword$} from 'user'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {showUserDetails} from './userProfile'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import Notifications from 'widget/notifications'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import React from 'react'
 import styles from './changePassword.module.css'
 
@@ -75,14 +76,14 @@ class ChangePassword extends React.Component {
                         errorMessage={[confirmPassword, 'passwordsMatch']}
                     />
                 </PanelContent>
-                <PanelButtons/>
+                <FormPanelButtons/>
             </React.Fragment>
     }
 
     render() {
         const {form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 isActionForm={true}
@@ -94,7 +95,7 @@ class ChangePassword extends React.Component {
                     icon='key'
                     title={msg('user.changePassword.title')}/>
                 {this.renderPanel()}
-            </Panel>
+            </FormPanel>
         )
     }
 }

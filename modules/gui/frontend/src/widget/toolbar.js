@@ -20,17 +20,14 @@ class Toolbar extends React.Component {
     panelContainer = React.createRef()
 
     render() {
-        const {statePath, horizontal, vertical, panel, top, bottom, left, right, className, modal, selectedPanel} = this.props
+        const {statePath, horizontal, vertical, panel, placement, modal, className, selectedPanel} = this.props
         const classNames = [
             styles.toolbar,
             lookStyles.look,
             horizontal && styles.horizontal,
             vertical && styles.vertical,
             panel && styles.panelButton,
-            (top || !bottom) && styles.top,
-            bottom && styles.bottom,
-            left && styles.left,
-            (right || !left) && styles.right,
+            styles[placement],
             className
         ]
         return (
@@ -41,10 +38,7 @@ class Toolbar extends React.Component {
                         panel: !!panel,
                         panelContainer: this.panelContainer.current,
                         statePath,
-                        top: (top || !bottom),
-                        bottom: bottom,
-                        right: (right || !left),
-                        left: (left),
+                        placement,
                         modal,
                         selectedPanel
                     }}>
@@ -110,11 +104,11 @@ export class PanelButton extends React.Component {
             <Context.Consumer>
                 {toolbarProps => {
                     this.toolbarProps = toolbarProps
-                    const {panelContainer, top, right, bottom, left, modal, selectedPanel} = this.toolbarProps
+                    const {panelContainer, placement, modal, selectedPanel} = this.toolbarProps
                     const selected = selectedPanel === name
                     return <React.Fragment>
                         <ToolbarButton
-                            disabled={disabled || modal || selected}
+                            disabled={disabled || selected || modal}
                             selected={selected}
                             icon={icon}
                             label={label}
@@ -128,7 +122,7 @@ export class PanelButton extends React.Component {
                             panelContainer && selected
                                 ? (
                                     <Portal container={panelContainer}>
-                                        <PanelButtonContext.Provider value={{top, bottom, right, left}}>
+                                        <PanelButtonContext.Provider value={placement}>
                                             {children}
                                         </PanelButtonContext.Provider>
                                     </Portal>

@@ -1,10 +1,9 @@
 import {Button} from 'widget/button'
+import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Label from 'widget/label'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import React from 'react'
 import UserSessions from './userSessions'
 import actionBuilder from 'action-builder'
@@ -78,9 +77,7 @@ class Usage extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                statePath='userReport'
-                modal
-                onCancel={() => closePanel()}>
+                type='modal'>
                 <PanelHeader
                     icon='user'
                     title={msg('user.report.title')}/>
@@ -100,7 +97,12 @@ class Usage extends React.Component {
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
-                <PanelButtons/>
+                <PanelButtons>
+                    <PanelButtons.Main>
+                        <PanelButtons.Close
+                            onClick={() => closePanel()}/>
+                    </PanelButtons.Main>
+                </PanelButtons>
             </Panel>
         )
     }

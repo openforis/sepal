@@ -1,11 +1,10 @@
+import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {connect} from 'store'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'
 import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import React from 'react'
 import daysBetween from './daysBetween'
 import styles from './scenePreview.module.css'
@@ -35,10 +34,8 @@ class ScenePreview extends React.Component {
                     : msg('process.mosaic.panel.sceneSelection.preview.afterTarget', {daysFromTarget})
             return (
                 <Panel
-                    statePath='scenePreview'
                     className={styles.panel}
-                    modal
-                    onCancel={() => this.closePreview()}>
+                    type='modal'>
                     <PanelHeader
                         icon='image'
                         title={'Scene preview'}
@@ -58,7 +55,11 @@ class ScenePreview extends React.Component {
                             <LabelValue name='cloudCover' value={cloudCover + '%'} icon='cloud'/>
                         </div>
                     </PanelContent>
-                    <PanelButtons/>
+                    <PanelButtons>
+                        <PanelButtons.Main>
+                            <PanelButtons.Close onClick={() => this.closePreview()}/>
+                        </PanelButtons.Main>
+                    </PanelButtons>
                 </Panel>
             )
         } else
