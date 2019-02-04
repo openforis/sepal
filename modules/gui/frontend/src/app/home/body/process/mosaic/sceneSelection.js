@@ -2,6 +2,7 @@ import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, form} from 'widget/form'
 import {HoverDetector, HoverOverlay} from 'widget/hover'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {dataSetById} from 'sources'
@@ -9,10 +10,10 @@ import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import {withRecipePath} from 'app/home/body/process/recipe'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
@@ -52,7 +53,7 @@ class SceneSelection extends React.Component {
         return (
             <React.Fragment>
                 <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
-                <Panel
+                <FormPanel
                     className={styles.panel}
                     form={form}
                     statePath={recipePath + '.ui'}
@@ -70,8 +71,8 @@ class SceneSelection extends React.Component {
                             : this.renderScenes()}
                     </PanelContent>
 
-                    <PanelButtons/>
-                </Panel>
+                    <FormPanelButtons/>
+                </FormPanel>
             </React.Fragment>
         )
     }

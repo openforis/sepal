@@ -1,11 +1,12 @@
 import {ErrorMessage, Field, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import Label from 'widget/label'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SeasonSelect from 'widget/seasonSelect'
@@ -176,7 +177,7 @@ class Dates extends React.Component {
     render() {
         const {recipePath, form, inputs: {advanced}} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={advanced.value ? styles.advanced : styles.simple}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -191,13 +192,13 @@ class Dates extends React.Component {
                     </div>
                 </PanelContent>
 
-                <PanelButtons
+                <FormPanelButtons
                     additionalButtons={[{
                         key: 'advanced',
                         label: advanced.value ? msg('button.less') : msg('button.more'),
                         onClick: () => this.setAdvanced(!advanced.value)
                     }]}/>
-            </Panel>
+            </FormPanel>
         )
     }
 }

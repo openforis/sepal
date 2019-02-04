@@ -1,11 +1,10 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {Msg, msg} from 'translate'
+import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {connect} from 'store'
 import {v4 as uuid} from 'uuid'
 import Markdown from 'react-markdown'
 import Notifications from 'widget/notifications'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
@@ -220,23 +219,25 @@ class UserMessages extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                statePath='userMessages'
-                modal
-                onCancel={() => closePanel()}>
+                type='modal'>
                 <PanelHeader
                     icon='bell'
                     title={msg('userMessages.title')}/>
                 <PanelContent>
                     {this.renderMessages()}
                 </PanelContent>
-                <PanelButtons
-                    additionalButtons={isAdmin ? [{
-                        key: 'post',
-                        look: 'add',
-                        icon: 'pencil-alt',
-                        label: msg('userMessages.post'),
-                        onClick: () => this.newMessage()
-                    }] : []}/>
+                <PanelButtons>
+                    <PanelButtons.Main>
+                        <PanelButtons.Close
+                            onClick={() => closePanel()}/>
+                    </PanelButtons.Main>
+                    <PanelButtons.Extra>
+                        <PanelButtons.Add
+                            label={msg('userMessages.post')}
+                            onClick={() => this.newMessage()}
+                            shown={isAdmin}/>
+                    </PanelButtons.Extra>
+                </PanelButtons>
             </Panel>
         )
     }

@@ -5,9 +5,9 @@ import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
 import CountrySection from './countrySection'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import FusionTableSection from './fusionTableSection'
-import Panel from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PanelSections from 'widget/panelSections'
 import PolygonSection from './polygonSection'
 import PropTypes from 'prop-types'
@@ -91,15 +91,15 @@ class Aoi extends React.Component {
             },
         ]
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
                 onApply={values => this.onApply(values)}>
                 <PanelSections inputs={inputs} selected={inputs.section} sections={sections}/>
 
-                <PanelButtons/>
-            </Panel>
+                <FormPanelButtons/>
+            </FormPanel>
         )
     }
 

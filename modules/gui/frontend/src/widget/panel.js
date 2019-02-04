@@ -1,218 +1,281 @@
-import {Form} from 'widget/form'
+import {Button, ButtonGroup} from 'widget/button'
 import {Modal} from 'widget/modal'
-import {PanelButtonContext} from './toolbar'
-import {PanelWizardContext} from './panelWizard'
-import {connect, select} from 'store'
+import {msg} from 'translate'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
 import styles from './panel.module.css'
 
-const mapStateToProps = (state, ownProps) => {
-    const {statePath} = ownProps
-    return {
-        initialized: select([statePath, 'initialized']),
-        selectedPanel: select([statePath, 'selectedPanel'])
-    }
-}
+// PANEL ----------------------------------------------------------------------
 
-class Panel extends React.Component {
-    componentDidMount() {
-        const {initialized, form, modalOnDirty = true} = this.props
-        if (modalOnDirty) {
-            this.setModal(!initialized)
-            if (initialized) {
-                form.onDirty(() => this.setModal(true))
-                form.onClean(() => this.setModal(false))
-            }
-        }
+export class Panel extends React.Component {
+    renderContent() {
+        const {className, type, children} = this.props
+        return (
+            <div className={[
+                styles.panel,
+                styles[type],
+                className
+            ].join(' ')}>
+                {children}
+            </div>
+        )
     }
 
-    setModal(modal) {
-        const {statePath} = this.props
-        actionBuilder('SET_MODAL', {modal})
-            .set([statePath, 'modal'], modal)
-            .dispatch()
-    }
-
-    selectPanel(panel) {
-        const {statePath} = this.props
-        actionBuilder('SELECT_PANEL', {panel})
-            .set([statePath, 'selectedPanel'], panel)
-            .dispatch()
-    }
-
-    setInitialized() {
-        const {statePath} = this.props
-        actionBuilder('SET_INITIALIZED')
-            .set([statePath, 'initialized'], true)
-            .dispatch()
-    }
-
-    closePanel() {
-        this.setModal(false)
-        this.selectPanel()
-    }
-
-    apply() {
-        const {form, onApply} = this.props
-        onApply(form && form.values())
-    }
-
-    ok() {
-        const {form, isActionForm} = this.props
-        if (form && (isActionForm || form.isDirty())) {
-            this.apply()
-            this.closePanel()
-        } else {
-            this.cancel()
-        }
-    }
-
-    cancel() {
-        const {onCancel} = this.props
-        onCancel && onCancel()
-        this.closePanel()
-    }
-
-    back(panel) {
-        this.apply()
-        this.selectPanel(panel)
-    }
-
-    next(panel) {
-        this.apply()
-        this.selectPanel(panel)
-    }
-
-    done() {
-        this.apply()
-        this.setInitialized()
-        this.closePanel()
-    }
-
-    renderForm({modal, form, onApply, top, bottom, left, right, center, inline, panelButtonPosition, className}, content) {
-        const classNames = [
-            styles.panel,
-            modal && styles.modal,
-            top || (panelButtonPosition && panelButtonPosition.top) ? styles.top : null,
-            bottom || (panelButtonPosition && panelButtonPosition.bottom) ? styles.bottom : null,
-            right || (panelButtonPosition && panelButtonPosition.right) ? styles.right : null,
-            left ? styles.bottom : null,
-            center ? styles.center : null,
-            inline || (panelButtonPosition && panelButtonPosition.inline) ? styles.inline : null,
-            className
-        ].join(' ')
-        return form
-            ? (
-                <Form
-                    className={classNames}
-                    onSubmit={() => onApply && onApply(form && form.values())}>
-                    {content}
-                </Form>
-            )
-            : (
-                <div className={classNames}>{content}</div>
-            )
-    }
-
-    renderModal({modal}, content) {
-        return modal
+    renderModal(content) {
+        const {type} = this.props
+        return type === 'modal'
             ? (
                 <Modal>{content}</Modal>
             ) : content
     }
 
     render() {
-        const {form = false, isActionForm, initialized, onApply, top, bottom, left, right, center, inline, modal, className, children} = this.props
-        const {selectedPanel} = this.props
-        return (
-            <PanelWizardContext.Consumer>
-                {(panels = []) => {
-                    const wizard = panels.length && !initialized
-                    const selectedPanelIndex = panels.indexOf(selectedPanel)
-                    const first = selectedPanelIndex === 0
-                    const last = selectedPanelIndex === panels.length - 1
-                    return (
-                        <PanelButtonContext.Consumer>
-                            {panelButtonPosition => (
-                                <PanelContext.Provider value={{
-                                    wizard,
-                                    first,
-                                    last,
-                                    form: form,
-                                    isActionForm: form && isActionForm,
-                                    dirty: form && form.isDirty(),
-                                    invalid: form && form.isInvalid(),
-                                    onOk: () => this.ok(),
-                                    onCancel: () => this.cancel(),
-                                    onBack: () => !first && this.back(panels[selectedPanelIndex - 1]),
-                                    onNext: () => !last && this.next(panels[selectedPanelIndex + 1]),
-                                    onDone: () => this.done()
-                                }}>
-                                    {this.renderModal({modal},
-                                        this.renderForm({modal, form, onApply, top, bottom, left, right, center, inline, panelButtonPosition, className}, children)
-                                    )}
-                                </PanelContext.Provider>
-                            )}
-                        </PanelButtonContext.Consumer>
-                    )}}
-            </PanelWizardContext.Consumer>
+        return this.renderModal(
+            this.renderContent()
         )
     }
 }
 
-export default connect(mapStateToProps)(Panel)
-
 Panel.propTypes = {
     children: PropTypes.any.isRequired,
-    statePath: PropTypes.string.isRequired,
-    bottom: PropTypes.any,
-    center: PropTypes.any,
     className: PropTypes.string,
-    form: PropTypes.object,
-    initialized: PropTypes.any,
-    inline: PropTypes.any,
-    isActionForm: PropTypes.any,
-    left: PropTypes.any,
-    modal: PropTypes.any,
-    modalOnDirty: PropTypes.any,
-    right: PropTypes.any,
-    top: PropTypes.any,
-    onApply: PropTypes.func,
-    onCancel: PropTypes.func,
+    type: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline'])
 }
 
-export const PanelHeader = ({icon, title, label, children}) =>
-    <div className={styles.header}>
-        {children
-            ? children
-            : <React.Fragment>
+// HEADER ---------------------------------------------------------------------
+
+export class PanelHeader extends React.Component {
+    renderDefault() {
+        const {icon, title, label} = this.props
+        return (
+            <React.Fragment>
                 <div>
-                    <Icon name={icon}/>
+                    {icon ? <Icon name={icon}/> : null}
                     {title}
                 </div>
                 {label ? <div>{label}</div> : null}
             </React.Fragment>
-        }
-    </div>
+        )
+    }
+    render() {
+        const {className, children} = this.props
+        return (
+            <div className={[styles.header, className].join(' ')}>
+                {children ? children : this.renderDefault()}
+            </div>
+        )
+    }
+}
 
 PanelHeader.propTypes = {
     children: PropTypes.any,
+    className: PropTypes.string,
     icon: PropTypes.string,
     label: PropTypes.string,
     title: PropTypes.string
 }
 
-export const PanelContent = ({className, children}) =>
-    <div className={[styles.content, className].join(' ')}>
-        {children}
-    </div>
+// CONTENT --------------------------------------------------------------------
+
+export class PanelContent extends React.Component {
+    render () {
+        const {className, children} = this.props
+        return (
+            <div className={[styles.content, className].join(' ')}>
+                {children}
+            </div>
+        )
+    }
+}
 
 PanelContent.propTypes = {
     children: PropTypes.any.isRequired,
-    className: PropTypes.string,
+    className: PropTypes.string
 }
 
-export const PanelContext = React.createContext()
+// BUTTONS --------------------------------------------------------------------
+
+export class PanelButtons extends React.Component {
+    static renderButton({type, look, icon, label, shown = true, disabled = false, onClick}, key) {
+        const defaultByType = {
+            cancel: {
+                look: 'cancel',
+                icon: 'undo-alt',
+                label: msg('button.cancel')
+            },
+            apply: {
+                look: 'apply',
+                icon: 'check',
+                label: msg('button.apply')
+            },
+            confirm: {
+                look: 'apply',
+                icon: 'check',
+                label: msg('button.confirm')
+            },
+            close: {
+                look: 'apply',
+                icon: 'times',
+                label: msg('button.close')
+            },
+            add: {
+                look: 'add',
+                icon: 'pencil-alt',
+                label: msg('button.add')
+            }
+        }
+        return (
+            <Button
+                key={key}
+                look={look || defaultByType[type].look}
+                icon={icon || defaultByType[type].icon}
+                label={label || defaultByType[type].label}
+                shown={shown}
+                disabled={disabled}
+                onClick={e => {
+                    e.preventDefault()
+                    onClick && onClick()
+                }}
+                onMouseDown={e => e.preventDefault()} // Prevent onBlur validation before canceling
+            />
+        )
+    }
+    
+    static Cancel({size, shown, disabled, onClick}) {
+        return PanelButtons.renderButton({type: 'cancel', size, shown, disabled, onClick})
+    }
+
+    static Apply({size, shown, disabled, onClick}) {
+        return PanelButtons.renderButton({type: 'apply', size, shown, disabled, onClick})
+    }
+
+    static Close({size, shown, disabled, onClick}) {
+        return PanelButtons.renderButton({type: 'close', size, shown, disabled, onClick})
+    }
+
+    static Confirm({size, label, shown, disabled, onClick}) {
+        return PanelButtons.renderButton({type: 'confirm', size, label, shown, disabled, onClick})
+    }
+
+    static Add({size, label, shown, disabled, onClick}) {
+        return PanelButtons.renderButton({type: 'add', size, label, shown, disabled, onClick})
+    }
+
+    static Main({children}) {
+        return (
+            <ButtonGroup className={styles.main}>
+                {children}
+            </ButtonGroup>
+        )
+    }
+
+    static Extra({children}) {
+        return (
+            <ButtonGroup className={styles.extras}>
+                {children}
+            </ButtonGroup>
+        )
+    }
+
+    renderButtonGroup(buttons) {
+        return (
+            <ButtonGroup>
+                {buttons.map((button, index) => PanelButtons.renderButton(button, index))}
+            </ButtonGroup>
+        )
+    }
+
+    renderMainButtons() {
+        const {buttons} = this.props
+        return this.renderButtonGroup(buttons)
+    }
+
+    renderExtraButtons() {
+        const {extraButtons} = this.props
+        return this.renderButtonGroup(extraButtons || [])
+    }
+
+    renderButtons() {
+        return (
+            <React.Component>
+                {this.renderExtraButtons()}
+                {this.renderMainButtons()}
+            </React.Component>
+        )
+    }
+    
+    render() {
+        const {className, shown = true, children} = this.props
+        return shown ? (
+            <div className={[styles.buttons, className].join(' ')}>
+                {children ? children : this.renderButtons()}
+            </div>
+        ) : null
+    }
+}
+
+const buttonsPropTypes = PropTypes.arrayOf(
+    PropTypes.shape({
+        onClick: PropTypes.func.isRequired,
+        disabled: PropTypes.any,
+        icon: PropTypes.string,
+        label: PropTypes.string,
+        look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'cancel', 'apply', 'add']),
+        shown: PropTypes.any,
+        type: PropTypes.oneOf(['cancel', 'apply', 'confirm', 'close'])
+    })
+)
+
+PanelButtons.propTypes = {
+    buttons: buttonsPropTypes,
+    children: PropTypes.any,
+    className: PropTypes.string,
+    extraButtons: buttonsPropTypes,
+    shown: PropTypes.any
+}
+
+PanelButtons.Main.propTypes = {
+    children: PropTypes.any.isRequired
+}
+
+PanelButtons.Extra.propTypes = {
+    children: PropTypes.any.isRequired
+}
+
+PanelButtons.Cancel.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.string,
+    shown: PropTypes.any,
+    size: PropTypes.string
+}
+    
+PanelButtons.Apply.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.string,
+    shown: PropTypes.any,
+    size: PropTypes.string
+}
+
+PanelButtons.Close.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.string,
+    shown: PropTypes.any,
+    size: PropTypes.string
+}
+    
+PanelButtons.Confirm.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.string,
+    label: PropTypes.string,
+    shown: PropTypes.any,
+    size: PropTypes.string
+}
+    
+PanelButtons.Add.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.string,
+    label: PropTypes.string,
+    shown: PropTypes.any,
+    size: PropTypes.string
+}

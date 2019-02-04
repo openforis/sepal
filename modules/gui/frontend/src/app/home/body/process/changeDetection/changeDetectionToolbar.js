@@ -29,7 +29,8 @@ class ChangeDetectionToolbar extends React.Component {
                 statePath={statePath}>
                 <Toolbar
                     statePath={statePath}
-                    vertical top right
+                    vertical
+                    placement='top-right'
                     className={styles.top}>
                     <PanelButton
                         name='retrieve'
@@ -41,7 +42,8 @@ class ChangeDetectionToolbar extends React.Component {
                 </Toolbar>
                 <Toolbar
                     statePath={statePath}
-                    vertical bottom right
+                    vertical
+                    placement='bottom-right'
                     className={styles.bottom}>
                     <PanelButton
                         name='source1'

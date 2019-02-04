@@ -21,6 +21,30 @@
     transition: width var(--transition-time) ease-in-out var(--transition-delay);
 }
 
+.panel.top {
+    position: absolute;
+    top: var(--margin-top);
+}
+
+.panel.bottom {
+    position: absolute;
+    bottom: var(--margin-bottom);
+}
+
+.panel.right {
+    position: absolute;
+    right: var(--margin-right);
+}
+
+.panel.center {
+    position: absolute;
+    top: .5rem;
+    bottom: .5rem;
+    left: calc(var(--menu-clearance) + .5rem);
+    right: .5rem;
+    margin: auto;
+}
+
 .panel.modal {
     left: .5rem;
     right: .5rem;
@@ -29,6 +53,12 @@
     max-height: calc(100% - 1rem);
     max-width: calc(100% - 1rem);
 }
+
+.panel.inline {
+    position: relative;
+}
+
+/* Header */
 
 .header {
     flex-grow: 0;
@@ -47,6 +77,8 @@
     margin-right: .5rem;
 }
 
+/* Content */
+
 .content {
     flex-grow: 1;
     display: flex;
@@ -54,15 +86,4 @@
     justify-content: space-between;
     padding: var(--content-padding);
     overflow: hidden;
-}
-
-.buttons {
-    display: flex;
-    flex-direction: row;
-    flex-grow: 0;
-    flex-shrink: 0;
-    justify-content: space-between;
-    padding: var(--padding-panel-buttons);
-    border-top: var(--wireframe);
-    transition: opacity 200ms ease-in-out;
 }

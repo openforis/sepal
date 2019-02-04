@@ -1,8 +1,7 @@
 import {Button} from 'widget/button'
+import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -54,7 +53,7 @@ class CreateRecipe extends React.Component {
         selectedRecipeType: null
     }
 
-    showRecipeType(type) {
+    showRecipeTypeInfo(type) {
         this.setState(prevState => ({
             ...prevState,
             selectedRecipeType: type
@@ -62,7 +61,7 @@ class CreateRecipe extends React.Component {
     }
 
     closePanel() {
-        this.showRecipeType()
+        this.showRecipeTypeInfo()
         closePanel()
     }
 
@@ -90,11 +89,11 @@ class CreateRecipe extends React.Component {
                 icon='arrow-left'
                 shape='none'
                 additionalClassName={styles.backButton}
-                onClick={() => this.showRecipeType()}/>
+                onClick={() => this.showRecipeTypeInfo()}/>
         )
     }
 
-    renderRecipeType(type) {
+    renderRecipeTypeInfo(type) {
         const {recipeTypes} = this.props
         const recipeType = recipeTypes.find(recipeType => recipeType.type === type)
         return (
@@ -134,7 +133,7 @@ class CreateRecipe extends React.Component {
                                     name={name}
                                     description={description}
                                     beta={beta}
-                                    onInfo={details ? () => this.showRecipeType(type) : null}/>
+                                    onInfo={details ? () => this.showRecipeTypeInfo(type) : null}/>
                             )}
                         </ul>
                     </div>
@@ -150,12 +149,14 @@ class CreateRecipe extends React.Component {
         return (
             <Panel
                 className={[styles.panel, modal ? styles.modal : null].join(' ')}
-                statePath='createRecipe'
-                modal={modal}
-                center={!modal}
-                onCancel={() => this.closePanel()}>
-                {selectedRecipeType ? this.renderRecipeType(selectedRecipeType) : this.renderRecipeTypes()}
-                {trigger ? null : <PanelButtons/>}
+                type={modal ? 'modal' : 'center'}>
+                {selectedRecipeType ? this.renderRecipeTypeInfo(selectedRecipeType) : this.renderRecipeTypes()}
+                <PanelButtons shown={!trigger}>
+                    <PanelButtons.Main>
+                        <PanelButtons.Close
+                            onClick={() => closePanel()}/>
+                    </PanelButtons.Main>
+                </PanelButtons>
             </Panel>
         )
     }

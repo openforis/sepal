@@ -1,14 +1,15 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, Input, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {closePanel, showChangePassword} from './userProfile'
 import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
 import {isMobile} from 'widget/userAgent'
 import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import Notifications from 'widget/notifications'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import React from 'react'
 import api from 'api'
 import styles from './userDetails.module.css'
@@ -121,7 +122,7 @@ class UserDetails extends React.Component {
                         </ButtonGroup>
                     </div>
                 </PanelContent>
-                <PanelButtons
+                <FormPanelButtons
                     additionalButtons={[{
                         key: 'changePassword',
                         icon: 'key',
@@ -135,7 +136,7 @@ class UserDetails extends React.Component {
     render() {
         const {form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 statePath='userDetails'
@@ -146,7 +147,7 @@ class UserDetails extends React.Component {
                     icon='user'
                     title={msg('user.userDetails.title')}/>
                 {this.renderPanel()}
-            </Panel>
+            </FormPanel>
         )
     }
 }

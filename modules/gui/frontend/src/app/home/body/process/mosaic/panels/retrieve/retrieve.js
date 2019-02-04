@@ -1,13 +1,14 @@
 import {Field, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {currentUser} from 'user'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'
 import {withRecipePath} from 'app/home/body/process/recipe'
 import Buttons from 'widget/buttons'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import Label from 'widget/label'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -132,7 +133,7 @@ class Retrieve extends React.Component {
     render() {
         const {recipePath, form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -146,9 +147,9 @@ class Retrieve extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <PanelButtons
+                <FormPanelButtons
                     applyLabel={msg('process.mosaic.panel.retrieve.apply')}/>
-            </Panel>
+            </FormPanel>
         )
     }
 

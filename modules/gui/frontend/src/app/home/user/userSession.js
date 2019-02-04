@@ -1,10 +1,11 @@
 import {Field, form} from 'widget/form'
+import {PanelContent} from 'widget/panel'
 import {PropTypes} from 'prop-types'
 import {msg} from 'translate'
 import {stopUserSession$, updateUserSession$} from 'user'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import Notifications from 'widget/notifications'
-import Panel, {PanelContent} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import React from 'react'
 import Slider from 'widget/slider'
 import moment from 'moment'
@@ -68,11 +69,11 @@ class UserSession extends React.Component {
             return msg('user.userSession.form.keepAlive.info', {keepAliveUntil})
         }
         return (
-            <Panel
-                statePath='userSessions.userSessionPanel'
+            <FormPanel
                 className={styles.panel}
-                inline
                 form={form}
+                statePath='userSessions.userSessionPanel'
+                inline
                 onApply={session => this.updateSession(session)}
                 onCancel={() => this.cancel()}>
                 <PanelContent className={styles.panelContent}>
@@ -88,7 +89,7 @@ class UserSession extends React.Component {
                         />
                     </div>
                 </PanelContent>
-                <PanelButtons
+                <FormPanelButtons
                     form={form}
                     statePath='userSession'
                     additionalButtons={[{
@@ -97,7 +98,7 @@ class UserSession extends React.Component {
                         tooltip: msg('user.userSession.stop.tooltip'),
                         onClick: () => this.stopSession(session)
                     }]}/>
-            </Panel>
+            </FormPanel>
         )
     }
 }

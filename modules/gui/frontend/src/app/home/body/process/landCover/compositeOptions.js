@@ -1,11 +1,12 @@
 import {Field, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import Label from 'widget/label'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Slider from 'widget/slider'
@@ -27,10 +28,10 @@ class CompositeOptions extends React.Component {
     render() {
         const {recipePath, form} = this.props
         return (
-            <Panel
+            <FormPanel
                 className={styles.panel}
-                statePath={recipePath + '.ui'}
                 form={form}
+                statePath={recipePath + '.ui'}
                 onApply={values => this.recipeActions.setCompositeOptions({
                     values,
                     model: valuesToModel(values)
@@ -43,8 +44,8 @@ class CompositeOptions extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <PanelButtons/>
-            </Panel>
+                <FormPanelButtons/>
+            </FormPanel>
         )
     }
 

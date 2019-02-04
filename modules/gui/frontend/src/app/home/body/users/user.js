@@ -1,9 +1,10 @@
 import {Field, Input, InputGroup, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
-import Panel, {PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
+import FormPanel from 'widget/formPanel'
+import FormPanelButtons from 'widget/formPanelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './user.module.css'
@@ -76,7 +77,7 @@ class UserDetails extends React.Component {
         } = this.props
         const newUser = !this.props.userDetails.username
         return (
-            <Panel
+            <FormPanel
                 className={[styles.panel, newUser ? styles.newUser : styles.existingUser].join(' ')}
                 form={form}
                 statePath='userDetails'
@@ -137,8 +138,8 @@ class UserDetails extends React.Component {
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
-                <PanelButtons/>
-            </Panel>
+                <FormPanelButtons/>
+            </FormPanel>
         )
     }
 }

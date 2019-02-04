@@ -1087,6 +1087,7 @@
     },
     "button": {
         "ok": "OK",
+        "apply": "Apply",
         "cancel": "Cancel",
         "close": "Close",
         "add": "Add",
@@ -1099,7 +1100,8 @@
         "retry": "Retry",
         "restart": "Restart",
         "stop": "Stop",
-        "copyToClipboard": "Copy to clipboard"
+        "copyToClipboard": "Copy to clipboard",
+        "confirm": "Confirm"
     },
     "widget": {
         "removeButton": {

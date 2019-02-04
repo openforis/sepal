@@ -33,7 +33,8 @@ class LandCoverToolbar extends React.Component {
                 statePath={statePath}>
                 <Toolbar
                     statePath={statePath}
-                    vertical top right
+                    vertical
+                    placement='top-right'
                     className={styles.top}>
                     <ToolbarButton
                         name='createComposites'
@@ -51,7 +52,8 @@ class LandCoverToolbar extends React.Component {
                 </Toolbar>
                 <Toolbar
                     statePath={statePath}
-                    vertical bottom right
+                    vertical
+                    placement='bottom-right'
                     className={styles.bottom}>
                     <PanelButton
                         name='areaOfInterest'
