@@ -96,7 +96,7 @@ export class Button extends React.Component {
         }
     }
 
-    // Make sure there is a DOM element with ref is above the tooltip, as tooltip steals events.
+    // The Tooltip component stops propagation of events, thus the ref has to be on a wrapping element.
     renderWrapper(contents) {
         const {onClickHold} = this.props
         const style = {
@@ -201,30 +201,8 @@ export class Button extends React.Component {
         const mouseActivate$ = mouseUp$
 
         if (onClickHold) {
-            const click$ =
-                mouseTrigger$.pipe(
-                    switchMap(() =>
-                        mouseActivate$.pipe(
-                            takeUntil(
-                                merge(
-                                    cancel$,
-                                    onClickHold ? timer(CLICK_CANCEL_DELAY_MS) : EMPTY
-                                )
-                            ),
-                            take(1)
-                        )
-                    )
-                )
 
-            this.subscriptions.push(
-                click$.subscribe(e => {
-                    const {onClick, disabled} = this.props
-                    if (onClick && !disabled) {
-                        this.handleClick(e)
-                    }
-                })
-            )
-
+            // Click-hold is triggered if button pressed more than CLICK_HOLD_DELAY_MS.
             const clickHold$ =
                 mouseTrigger$.pipe(
                     switchMap(() =>
@@ -245,6 +223,34 @@ export class Button extends React.Component {
                     const {onClickHold, disabled} = this.props
                     if (onClickHold && !disabled) {
                         this.handleClickHold(e)
+                    }
+                })
+            )
+
+            // Click event needs to be handled here for two reasons:
+            // - to allow cancellation of click-hold without triggering click, when preesed longer than CLICK_CANCEL_DELAY_MS
+            // - to avoid concurrent handling of both click and click-hold when pressed longer than CLICK_HOLD_DELAY_MS
+            // Click is triggered only if button pressed less than CLICK_CANCEL_DELAY_MS.
+            const click$ =
+                mouseTrigger$.pipe(
+                    switchMap(() =>
+                        mouseActivate$.pipe(
+                            takeUntil(
+                                merge(
+                                    cancel$,
+                                    onClickHold ? timer(CLICK_CANCEL_DELAY_MS) : EMPTY
+                                )
+                            ),
+                            take(1)
+                        )
+                    )
+                )
+
+            this.subscriptions.push(
+                click$.subscribe(e => {
+                    const {onClick, disabled} = this.props
+                    if (onClick && !disabled) {
+                        this.handleClick(e)
                     }
                 })
             )
