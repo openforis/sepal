@@ -104,11 +104,19 @@ export class PanelButton extends React.Component {
             <Context.Consumer>
                 {toolbarProps => {
                     this.toolbarProps = toolbarProps
+<<<<<<< HEAD
                     const {panelContainer, placement, modal, selectedPanel} = this.toolbarProps
                     const selected = selectedPanel === name
                     return <React.Fragment>
                         <ToolbarButton
                             disabled={disabled || selected || modal}
+=======
+                    const {panelContainer, placement, selectedPanel} = this.toolbarProps
+                    const selected = selectedPanel === name
+                    return <React.Fragment>
+                        <ToolbarButton
+                            disabled={disabled || selected}
+>>>>>>> e86609e63fcb3af09021216680a55b0e37cf36b5
                             selected={selected}
                             icon={icon}
                             label={label}
