@@ -162,9 +162,9 @@ export class FormPanelButtons extends React.Component {
     }
 
     renderCancelButton({isActionForm, dirty}, onClick) {
-        const {label} = this.props
+        const {cancelLabel} = this.props
         const shown = isActionForm || dirty
-        return PanelButtons.renderButton({template: 'cancel', label, shown, onClick})
+        return PanelButtons.renderButton({template: 'cancel', label: cancelLabel, shown, onClick})
     }
 
     renderCloseButton(onClick) {
@@ -173,10 +173,10 @@ export class FormPanelButtons extends React.Component {
     }
 
     renderApplyButton({isActionForm, invalid}, onClick) {
-        const {label} = this.props
+        const {applyLabel} = this.props
         const type = isActionForm ? 'button' : 'submit'
         const disabled = !isActionForm && invalid
-        return PanelButtons.renderButton({template: 'apply', type, label, disabled, onClick})
+        return PanelButtons.renderButton({template: 'apply', type, label: applyLabel, disabled, onClick})
     }
 
     renderWizardButtons({invalid, first, last, onBack, onNext, onDone}) {
