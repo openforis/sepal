@@ -230,7 +230,6 @@ const createMap = mapElement => {
                     },
                     isZooming() {
                         const zooming = select(['map', contextId, 'zooming'])
-                        console.log('isZooming', !!zooming)
                         return !!zooming
                     },
                     drawPolygon(id, callback) {
@@ -264,7 +263,6 @@ const createMap = mapElement => {
                         }
                     },
                     disableDrawingMode() {
-                        console.log('disableDrawingMode')
                         this.pauseDrawingMode()
                         this._drawingPolygon = null
                     },
