@@ -45,12 +45,13 @@ export default class Buttons extends React.Component {
                 key={value}
                 look={alwaysSelected || (!neverSelected && this.isSelected(value)) ? 'highlight' : 'default'}
                 additionalClassName={uppercase ? styles.uppercase : null}
-                label={label}
                 disabled={disabled || alwaysSelected || neverSelected}
                 tooltip={tooltip}
                 tooltipPlacement='bottom'
                 onClick={() => this.select(value)}
-            />
+            >
+                {label}
+            </Button>
         )
     }
 
