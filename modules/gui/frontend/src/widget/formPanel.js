@@ -149,50 +149,36 @@ FormPanel.propTypes = {
 }
 
 export class FormPanelButtons extends React.Component {
-    renderBackButton(onClick) {
-        return PanelButtons.renderButton({template: 'back', onClick})
-    }
-
-    renderNextButton({invalid}, onClick) {
-        return PanelButtons.renderButton({template: 'next', disabled: invalid, onClick})
-    }
-
-    renderDoneButton({invalid}, onClick) {
-        return PanelButtons.renderButton({template: 'done', disabled: invalid, onClick})
-    }
-
-    renderCancelButton({isActionForm, dirty}, onClick) {
-        const {cancelLabel} = this.props
-        const shown = isActionForm || dirty
-        return PanelButtons.renderButton({template: 'cancel', label: cancelLabel, shown, onClick})
-    }
-
-    renderCloseButton(onClick) {
-        const {label} = this.props
-        return PanelButtons.renderButton({template: 'close', label, onClick})
-    }
-
-    renderApplyButton({isActionForm, invalid}, onClick) {
-        const {applyLabel} = this.props
-        const type = isActionForm ? 'button' : 'submit'
-        const disabled = !isActionForm && invalid
-        return PanelButtons.renderButton({template: 'apply', type, label: applyLabel, disabled, onClick})
-    }
-
     renderWizardButtons({invalid, first, last, onBack, onNext, onDone}) {
         return (
             <PanelButtons.Main>
-                {!first ? this.renderBackButton(onBack) : null}
-                {!last ? this.renderNextButton({invalid}, onNext) : this.renderDoneButton({invalid}, onDone)}
+                <PanelButtons.Back
+                    shown={!first}
+                    onClick={onBack}/>
+                <PanelButtons.Done
+                    shown={last}
+                    disabled={invalid}
+                    onClick={onDone}/>
+                <PanelButtons.Next
+                    shown={!last}
+                    disabled={invalid}
+                    onClick={onNext}/>
             </PanelButtons.Main>
         )
     }
 
     renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel}) {
+        const {applyLabel} = this.props
         return (
             <PanelButtons.Main>
-                {this.renderCancelButton({isActionForm, dirty}, onCancel)}
-                {this.renderApplyButton({isActionForm, invalid}, onOk)}
+                <PanelButtons.Cancel
+                    shown={isActionForm || dirty}
+                    onClick={onCancel}/>
+                <PanelButtons.Apply
+                    type={isActionForm ? 'button' : 'submit'}
+                    label={applyLabel}
+                    disabled={!isActionForm && invalid}
+                    onClick={onOk}/>
             </PanelButtons.Main>
         )
     }
@@ -228,6 +214,5 @@ export class FormPanelButtons extends React.Component {
 
 FormPanelButtons.propTypes = {
     applyLabel: PropTypes.string,
-    cancelLabel: PropTypes.string,
     children: PropTypes.any
 }

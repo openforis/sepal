@@ -125,17 +125,16 @@ export class PanelButtons extends React.Component {
                 label: msg('button.add')
             },
             back: {
+                look: 'default',
                 icon: 'chevron-left',
                 label: msg('button.back')
             },
             next: {
-                type: 'submit',
                 look: 'apply',
                 icon: 'chevron-right',
                 label: msg('button.next')
             },
             done: {
-                type: 'submit',
                 look: 'apply',
                 icon: 'check',
                 label: msg('button.done')
@@ -159,24 +158,36 @@ export class PanelButtons extends React.Component {
         )
     }
     
-    static Cancel({size, shown, disabled, onClick}) {
-        return PanelButtons.renderButton({template: 'cancel', size, shown, disabled, onClick})
+    static Cancel(props) {
+        return PanelButtons.renderButton({template: 'cancel', ...props})
     }
 
-    static Apply({size, shown, disabled, onClick}) {
-        return PanelButtons.renderButton({template: 'apply', size, shown, disabled, onClick})
+    static Apply(props) {
+        return PanelButtons.renderButton({template: 'apply', ...props})
     }
 
-    static Close({size, shown, disabled, onClick}) {
-        return PanelButtons.renderButton({template: 'close', size, shown, disabled, onClick})
+    static Close(props) {
+        return PanelButtons.renderButton({template: 'close', ...props})
     }
 
-    static Confirm({size, label, shown, disabled, onClick}) {
-        return PanelButtons.renderButton({template: 'confirm', size, label, shown, disabled, onClick})
+    static Confirm(props) {
+        return PanelButtons.renderButton({template: 'confirm', ...props})
     }
 
-    static Add({size, label, shown, disabled, onClick}) {
-        return PanelButtons.renderButton({template: 'add', size, label, shown, disabled, onClick})
+    static Add(props) {
+        return PanelButtons.renderButton({template: 'add', ...props})
+    }
+
+    static Back(props) {
+        return PanelButtons.renderButton({template: 'back', ...props})
+    }
+
+    static Next(props) {
+        return PanelButtons.renderButton({template: 'next', ...props})
+    }
+
+    static Done(props) {
+        return PanelButtons.renderButton({template: 'done', ...props})
     }
 
     static Main({children}) {
@@ -262,28 +273,28 @@ PanelButtons.Extra.propTypes = {
 
 PanelButtons.Cancel.propTypes = {
     onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.string,
+    disabled: PropTypes.any,
     shown: PropTypes.any,
     size: PropTypes.string
 }
     
 PanelButtons.Apply.propTypes = {
     onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.string,
+    disabled: PropTypes.any,
     shown: PropTypes.any,
     size: PropTypes.string
 }
 
 PanelButtons.Close.propTypes = {
     onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.string,
+    disabled: PropTypes.any,
     shown: PropTypes.any,
     size: PropTypes.string
 }
     
 PanelButtons.Confirm.propTypes = {
     onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.string,
+    disabled: PropTypes.any,
     label: PropTypes.string,
     shown: PropTypes.any,
     size: PropTypes.string
@@ -291,7 +302,31 @@ PanelButtons.Confirm.propTypes = {
     
 PanelButtons.Add.propTypes = {
     onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.string,
+    disabled: PropTypes.any,
+    label: PropTypes.string,
+    shown: PropTypes.any,
+    size: PropTypes.string
+}
+    
+PanelButtons.Back.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.any,
+    label: PropTypes.string,
+    shown: PropTypes.any,
+    size: PropTypes.string
+}
+
+PanelButtons.Next.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.any,
+    label: PropTypes.string,
+    shown: PropTypes.any,
+    size: PropTypes.string
+}
+
+PanelButtons.Done.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.any,
     label: PropTypes.string,
     shown: PropTypes.any,
     size: PropTypes.string
