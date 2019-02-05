@@ -1,16 +1,16 @@
-import './map.module.css'
-import {NEVER, Observable, Subject} from 'rxjs'
-import {connect, select} from 'store'
-import {map, mergeMap, takeUntil} from 'rxjs/operators'
-import {msg} from 'translate'
-import GoogleMapsLoader from 'google-maps'
-import Notifications from 'widget/notifications'
-import Portal from 'widget/portal'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import GoogleMapsLoader from 'google-maps'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {NEVER, Observable, Subject} from 'rxjs'
+import {map, mergeMap, takeUntil} from 'rxjs/operators'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import Notifications from 'widget/notifications'
+import Portal from 'widget/portal'
+import './map.module.css'
 
 export let sepalMap = null
 export let google = null
@@ -106,29 +106,6 @@ const createMap = mapElement => {
         zoomOut() {
             googleMap.setZoom(googleMap.getZoom() - 1)
         },
-        zoomArea() {
-            const setZooming = zooming =>
-                actionBuilder('SET_MAP_ZOOMING')
-                    .set('map.zooming', zooming)
-                    .set('map.zoom', googleMap.getZoom())
-                    .dispatch()
-            setZooming(true)
-            const drawingManager = new google.maps.drawing.DrawingManager({
-                drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
-                drawingControl: false,
-                rectangleOptions: drawingOptions
-            })
-            const drawingListener = e => {
-                const rectangle = e.overlay
-                rectangle.setMap(null)
-                drawingManager.setMap(null)
-                googleMap.fitBounds(rectangle.bounds)
-                setZooming(false)
-            }
-            google.maps.event.addListener(drawingManager, 'overlaycomplete', drawingListener)
-            drawingManager.setMap(googleMap)
-
-        },
         isMaxZoom() {
             return googleMap.getZoom() === googleMap.maxZoom
         },
@@ -158,6 +135,10 @@ const createMap = mapElement => {
             let context = contextById[contextId]
             if (!context) {
                 const layerById = {}
+                const setZooming = zooming =>
+                    actionBuilder('SET_MAP_ZOOMING')
+                        .set(['map', contextId, 'zooming'], zooming)
+                        .dispatch()
                 context = {
                     setLayer({id, layer, destroy$ = NEVER, onInitialized, onError}) {
                         const existingLayer = layerById[id]
@@ -226,8 +207,33 @@ const createMap = mapElement => {
                     removeFromMap() {
                         Object.keys(layerById).forEach(id => layerById[id].removeFromMap(googleMap))
                     },
+                    zoomArea() {
+                        setZooming(true)
+                        this._drawingManager = new google.maps.drawing.DrawingManager({
+                            drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
+                            drawingControl: false,
+                            rectangleOptions: drawingOptions
+                        })
+                        const drawingListener = e => {
+                            const rectangle = e.overlay
+                            rectangle.setMap(null)
+                            googleMap.fitBounds(rectangle.bounds)
+                            this.cancelZoomArea()
+                        }
+                        google.maps.event.addListener(this._drawingManager, 'overlaycomplete', drawingListener)
+                        this._drawingManager.setMap(googleMap)
+
+                    },
+                    cancelZoomArea() {
+                        setZooming(false)
+                        this.disableDrawingMode()
+                    },
+                    isZooming() {
+                        const zooming = select(['map', contextId, 'zooming'])
+                        return !!zooming
+                    },
                     drawPolygon(id, callback) {
-                        this._drawingMode = {id, callback}
+                        this._drawingPolygon = {id, callback}
                         this._drawingManager = this._drawingManager || new google.maps.drawing.DrawingManager({
                             drawingMode: google.maps.drawing.OverlayType.POLYGON,
                             drawingControl: false,
@@ -258,7 +264,7 @@ const createMap = mapElement => {
                     },
                     disableDrawingMode() {
                         this.pauseDrawingMode()
-                        this._drawingMode = null
+                        this._drawingPolygon = null
                     },
                 }
                 contextById[contextId] = context
@@ -279,7 +285,8 @@ const createMap = mapElement => {
             if (contextId) {
                 const context = this.getContext(contextId)
                 context.addToMap()
-                context._drawingMode && context.drawPolygon(context._drawingMode.id, context._drawingMode.callback)
+                context._drawingPolygon && context.drawPolygon(context._drawingPolygon.id, context._drawingPolygon.callback)
+                context.isZooming() && context.zoomArea()
             }
 
         },

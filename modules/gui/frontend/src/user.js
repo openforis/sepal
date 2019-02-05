@@ -63,10 +63,7 @@ export const resetPassword$ = (token, username, password) =>
     )
 
 export const logout = () => {
-    actionBuilder('LOGOUT')
-        .del('user')
-        .dispatch()
-    api.user.logout$().subscribe()
+    api.user.logout$().subscribe(() => document.location = '/')
 }
 
 export const updateCurrentUserDetails$ = ({name, email, organization}) =>
