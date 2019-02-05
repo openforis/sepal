@@ -24,7 +24,9 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                     values: {...props.values} || {},
                     errors: {...props.errors} || {},
                     invalidValue: {},
-                    dirty: false
+                    dirty: false,
+                    gotDirty: {},
+                    gotClean: {}
                 }
                 Object.keys(fields).forEach(name => {
                     state.initialValues[name] = name in state.initialValues ? state.initialValues[name] : ''
@@ -84,8 +86,8 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                         state.dirty = !!Object.keys(state.initialValues).find(name =>
                             state.initialValues[name] !== state.values[name]
                         )
-                        state.gotDirty = state.dirty && !prevState.dirty
-                        state.gotClean = !state.dirty && prevState.dirty
+                        state.gotDirty[name] = state.dirty && !prevState.dirty
+                        state.gotClean[name] = !state.dirty && prevState.dirty
                         return state
                     }, () => {
                         return this.notifyOnChange(name, value)
@@ -96,9 +98,9 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
             notifyOnChange(name, value) {
                 const listeners = this.changeListenersByInputName[name] || []
                 listeners.forEach(listener => listener(value))
-                if (this.state.gotDirty)
+                if (this.state.gotDirty[name])
                     this.onDirty()
-                else if (this.state.gotClean)
+                else if (this.state.gotClean[name])
                     this.onClean()
             }
 
@@ -178,18 +180,6 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                 })
             }
 
-            reset() {
-                this.setState(prevState => {
-                    const state = {...prevState, values: {...prevState.initialValues}, dirty: false}
-                    Object.keys(fields).forEach(name => {
-                        this.clearErrorsForField(name, state.errors)
-                    })
-                    state.gotDirty = false
-                    state.gotClean = prevState.dirty
-                    return state
-                }, () => this.notifyOnChange())
-            }
-
             isValueDirty(name) {
                 const state = this.state
                 return state.values[name] !== state.initialValues[name]
@@ -239,7 +229,6 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                     isInvalid: this.isInvalid,
                     isDirty: () => this.isDirty(),
                     setInitialValues: values => this.setInitialValues(values),
-                    reset: () => this.reset(),
                     values: () => this.state.values,
                     onDirty: listener => this.dirtyListeners.push(listener),
                     onClean: listener => this.cleanListeners.push(listener)
