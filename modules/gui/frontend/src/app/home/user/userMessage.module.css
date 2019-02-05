@@ -1,5 +1,5 @@
 .panel {
-    max-width: 40rem;
+    width: 38rem;
     min-height: 30rem;
     max-height: fit-content;
 }
