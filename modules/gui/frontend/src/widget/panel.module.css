@@ -110,6 +110,7 @@
     padding: var(--padding-panel-buttons);
     border-top: var(--wireframe);
     transition: opacity 200ms ease-in-out;
+    flex-shrink: 0;
 }
 
 .buttons .main {
