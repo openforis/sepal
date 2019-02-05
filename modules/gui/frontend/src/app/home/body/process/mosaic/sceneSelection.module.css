@@ -1,5 +1,6 @@
 .panel {
     max-width: 69rem;
+    min-height: 25rem;
     z-index: 1; /* ensure toolbar panels stay above */
     top: calc(var(--toolbar-clearance) + .5rem) !important;
     right: calc(var(--toolbar-clearance) + .5rem) !important;
@@ -20,6 +21,17 @@
     display: flex;
     flex-direction: row;
     overflow: hidden;
+}
+
+.noScenes {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    max-width: 35rem;
+    margin: auto;
+    color: #ccc;
+    padding: 1rem;
 }
 
 .availableScenes {
@@ -163,9 +175,9 @@
     padding: .75rem;
 }
 
-.overlayControls button {
+.overlayControls > * {
     width: calc(var(--thumbnail-size) - 3rem);
-    margin: .3rem 0;
+    margin: .75rem .5rem;
 }
 
 @media only screen and (max-width: 500px) {

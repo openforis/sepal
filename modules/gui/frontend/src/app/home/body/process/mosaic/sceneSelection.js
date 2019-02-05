@@ -46,6 +46,22 @@ class SceneSelection extends React.Component {
         this.recipeActions = RecipeActions(props.recipeId)
     }
 
+    getAvailableScenes() {
+        const {inputs: {selectedScenes}} = this.props
+        const {scenes} = this.state
+        return scenes
+            .filter(scene => !selectedScenes.value.find(selectedScene => selectedScene.id === scene.id))
+
+    }
+
+    getSelectedScenes() {
+        const {inputs: {selectedScenes}} = this.props
+        const {scenesById = {}} = this.state
+        return selectedScenes.value
+            .map(scene => scenesById[scene.id])
+            .filter(scene => scene)
+    }
+
     render() {
         const {action, recipeId, recipePath, dates: {targetDate}, form} = this.props
         const loading = !action('LOAD_SCENES').dispatched
@@ -76,54 +92,62 @@ class SceneSelection extends React.Component {
         )
     }
 
-    renderScenes() {
-        const {dates: {targetDate}, inputs: {selectedScenes}} = this.props
-        const {scenes, scenesById = {}} = this.state
-        const availableSceneComponents = scenes
-            .filter(scene => !selectedScenes.value.find(selectedScene => selectedScene.id === scene.id))
-            .map(scene =>
-                <Scene
-                    key={scene.id}
-                    targetDate={targetDate}
-                    scene={scene}
-                    selected={false}
-                    onAdd={() => this.addScene(scene)}
-                    recipeActions={this.recipeActions}/>
-            )
-        const selectedSceneComponents = selectedScenes.value
-            .map(scene => scenesById[scene.id])
-            .filter(scene => scene)
-            .map(scene =>
-                <Scene
-                    key={scene.id}
-                    targetDate={targetDate}
-                    scene={scene}
-                    selected={true}
-                    onRemove={() => this.removeScene(scene)}
-                    recipeActions={this.recipeActions}/>
-            )
+    renderScene(scene, selected) {
+        const {dates: {targetDate}} = this.props
         return (
+            <Scene
+                key={scene.id}
+                targetDate={targetDate}
+                scene={scene}
+                selected={selected}
+                onAdd={() => this.addScene(scene)}
+                onRemove={() => this.removeScene(scene)}
+                recipeActions={this.recipeActions}/>
+        )
+    }
+
+    renderAvailableScenes(scenes) {
+        return (
+            <ScrollableContainer>
+                <Unscrollable className={styles.title}>
+                    <Label msg={msg('process.mosaic.panel.sceneSelection.availableScenes')}/>
+                </Unscrollable>
+                <Scrollable className={styles.grid}>
+                    {scenes.map(scene => this.renderScene(scene, false))}
+                </Scrollable>
+            </ScrollableContainer>
+        )
+    }
+
+    renderSelectedScenes(scenes) {
+        return (
+            <ScrollableContainer>
+                <Unscrollable className={styles.title}>
+                    <Label msg={msg('process.mosaic.panel.sceneSelection.selectedScenes')}/>
+                </Unscrollable>
+                <Scrollable className={styles.grid}>
+                    {scenes.map(scene => this.renderScene(scene, true))}
+                </Scrollable>
+            </ScrollableContainer>
+        )
+    }
+
+    renderScenes() {
+        const availableScenes = this.getAvailableScenes()
+        const selectedScenes = this.getSelectedScenes()
+        const scenes = availableScenes.length && selectedScenes.length
+        return scenes ? (
             <div className={styles.scenes}>
                 <div className={styles.availableScenes}>
-                    <ScrollableContainer>
-                        <Unscrollable className={styles.title}>
-                            <Label msg={msg('process.mosaic.panel.sceneSelection.availableScenes')}/>
-                        </Unscrollable>
-                        <Scrollable className={styles.grid}>
-                            {availableSceneComponents}
-                        </Scrollable>
-                    </ScrollableContainer>
+                    {this.renderAvailableScenes(availableScenes)}
                 </div>
                 <div className={styles.selectedScenes}>
-                    <ScrollableContainer>
-                        <Unscrollable className={styles.title}>
-                            <Label msg={msg('process.mosaic.panel.sceneSelection.selectedScenes')}/>
-                        </Unscrollable>
-                        <Scrollable className={styles.grid}>
-                            {selectedSceneComponents}
-                        </Scrollable>
-                    </ScrollableContainer>
+                    {this.renderSelectedScenes(selectedScenes)}
                 </div>
+            </div>
+        ) : (
+            <div className={styles.noScenes}>
+                {msg('process.mosaic.panel.sceneSelection.noScenes')}
             </div>
         )
     }

@@ -427,6 +427,7 @@
                 "sceneSelection": {
                     "availableScenes": "Available scenes",
                     "selectedScenes": "Selected scenes",
+                    "noScenes": "No scenes are available for the current combination of area of interest, dates and data sources. Please revise the settings in AOI, DAT and/or SRC.",
                     "preview": {
                         "label": "Preview",
                         "dataSet": "Data set",
