@@ -7,7 +7,6 @@ import React from 'react'
 import actionBuilder from 'action-builder'
 import lookStyles from 'style/look.module.css'
 import moment from 'moment'
-import panelSectionStyles from 'widget/panelSections.module.css'
 import styles from './createRecipe.module.css'
 
 const mapStateToProps = state => {
@@ -98,11 +97,9 @@ class CreateRecipe extends React.Component {
         const recipeType = recipeTypes.find(recipeType => recipeType.type === type)
         return (
             <React.Fragment>
-                <PanelHeader>
-                    <span className={panelSectionStyles.header}>
-                        {this.renderBackButton()}
-                        <span className={panelSectionStyles.title}>{recipeType.name}</span>
-                    </span>
+                <PanelHeader
+                    icon='book-open'
+                    title={recipeType.name}>
                 </PanelHeader>
                 <PanelContent>
                     <ScrollableContainer>
@@ -111,16 +108,26 @@ class CreateRecipe extends React.Component {
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
+                <PanelButtons>
+                    <PanelButtons.Main>
+                        <PanelButtons.Close
+                            onClick={() => this.closePanel()}/>
+                    </PanelButtons.Main>
+                    <PanelButtons.Extra>
+                        <PanelButtons.Back
+                            onClick={() => this.showRecipeTypeInfo()}/>
+                    </PanelButtons.Extra>
+                </PanelButtons>
             </React.Fragment>
         )
     }
 
     renderRecipeTypes() {
-        const {recipeId, recipeTypes} = this.props
+        const {recipeId, recipeTypes, trigger} = this.props
         return (
             <React.Fragment>
                 <PanelHeader
-                    icon='plus-circle'
+                    icon='book-open'
                     title={'Create recipe'}/>
                 <PanelContent>
                     <div className={styles.recipeTypes}>
@@ -138,6 +145,12 @@ class CreateRecipe extends React.Component {
                         </ul>
                     </div>
                 </PanelContent>
+                <PanelButtons shown={!trigger}>
+                    <PanelButtons.Main>
+                        <PanelButtons.Close
+                            onClick={() => this.closePanel()}/>
+                    </PanelButtons.Main>
+                </PanelButtons>
             </React.Fragment>
         )
     }
@@ -150,13 +163,9 @@ class CreateRecipe extends React.Component {
             <Panel
                 className={[styles.panel, modal ? styles.modal : null].join(' ')}
                 type={modal ? 'modal' : 'center'}>
-                {selectedRecipeType ? this.renderRecipeTypeInfo(selectedRecipeType) : this.renderRecipeTypes()}
-                <PanelButtons shown={!trigger}>
-                    <PanelButtons.Main>
-                        <PanelButtons.Close
-                            onClick={() => closePanel()}/>
-                    </PanelButtons.Main>
-                </PanelButtons>
+                {selectedRecipeType
+                    ? this.renderRecipeTypeInfo(selectedRecipeType)
+                    : this.renderRecipeTypes()}
             </Panel>
         )
     }
