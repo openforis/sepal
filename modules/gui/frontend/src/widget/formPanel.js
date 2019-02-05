@@ -169,15 +169,22 @@ export class FormPanelButtons extends React.Component {
 
     renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel}) {
         const {applyLabel} = this.props
+        const canSubmit = isActionForm || dirty
         return (
             <PanelButtons.Main>
                 <PanelButtons.Cancel
-                    shown={isActionForm || dirty}
+                    shown={canSubmit}
                     onClick={onCancel}/>
                 <PanelButtons.Apply
-                    type={isActionForm ? 'button' : 'submit'}
+                    type={'submit'}
                     label={applyLabel}
-                    disabled={!isActionForm && invalid}
+                    shown={canSubmit}
+                    disabled={invalid}
+                    onClick={onOk}/>
+                <PanelButtons.Close
+                    type={'submit'}
+                    label={applyLabel}
+                    shown={!canSubmit}
                     onClick={onOk}/>
             </PanelButtons.Main>
         )
