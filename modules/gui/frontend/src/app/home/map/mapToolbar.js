@@ -10,13 +10,14 @@ import styles from './mapToolbar.module.css'
 const mapStateToProps = (state, ownProps) => ({
     labelsShown: select([ownProps.statePath, 'labelsShown']),
     zoomLevel: sepalMap.getZoom(),
-    isZooming: select('map.zooming'),
-    hasBounds: sepalMap.getContext(ownProps.mapContext).isLayerInitialized('aoi')
+    hasBounds: sepalMap.getContext(ownProps.mapContext).isLayerInitialized('aoi'),
+    isZooming: sepalMap.getContext(ownProps.mapContext).isZooming()
 })
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, mapContext, labelsShown, labelLayerIndex, isZooming, hasBounds, children} = this.props
+        const {statePath, mapContext, isZooming, labelsShown, labelLayerIndex, hasBounds, children} = this.props
+        const context = sepalMap.getContext(mapContext)
         return (
             <Toolbar
                 className={styles.mapToolbar}
@@ -24,7 +25,7 @@ class MapToolbar extends React.Component {
                 placement='top-right'>
                 <ToolbarButton
                     disabled={sepalMap.isMaxZoom()}
-                    onClick={() => sepalMap.zoomIn()}
+                    onClick={() => sepalMap.getzoomIn()}
                     icon={'plus'}
                     tooltip={msg('process.mosaic.mapToolbar.zoomIn.tooltip')}/>
                 <ToolbarButton
@@ -35,7 +36,7 @@ class MapToolbar extends React.Component {
                 <ToolbarButton
                     selected={isZooming}
                     disabled={sepalMap.isMaxZoom()}
-                    onClick={() => sepalMap.zoomArea()}
+                    onClick={() => isZooming ? context.cancelZoomArea() : context.zoomArea()}
                     icon={'search'}
                     tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
                 <ToolbarButton
