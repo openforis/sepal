@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect, select} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -104,9 +105,11 @@ class Tabs extends React.Component {
         const {selectedTabId, tabActions} = this.props
         return (
             <React.Fragment>
-                <div className={styles.tabs}>
-                    {this.props.tabs.map(tab => this.renderTab(tab))}
-                </div>
+                <ScrollableContainer>
+                    <Scrollable direction='x' className={styles.tabs}>
+                        {this.props.tabs.map(tab => this.renderTab(tab))}
+                    </Scrollable>
+                </ScrollableContainer>
                 <div className={styles.tabActions}>
                     {this.renderAddButton()}
                     {tabActions(selectedTabId)}

@@ -8,7 +8,6 @@
     position: relative;
     display: flex;
     flex-grow: 1;
-    overflow-x: auto;
     margin-right: .5rem;
 }
 
