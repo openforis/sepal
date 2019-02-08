@@ -1,14 +1,14 @@
-import {policesAllowsActivation} from './activation'
+import {policesAllowActivation} from './activation'
 import _ from 'lodash'
 
 /* eslint-disable no-undef */
 
 it('disallow activation when [a] has no policy', () => {
-    expect(policesAllowsActivation('a', {})).toEqual(false)
+    expect(policesAllowActivation('a', {})).toEqual(false)
 })
 
 it('allow activation when element is not active and no other elements exist', () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false
         }
@@ -16,7 +16,7 @@ it('allow activation when element is not active and no other elements exist', ()
 })
 
 it('disallow activation when element is active', () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: true
         }
@@ -24,7 +24,7 @@ it('disallow activation when element is active', () => {
 })
 
 it('allow activation when no element is active', () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false
         },
@@ -35,7 +35,7 @@ it('allow activation when no element is active', () => {
 })
 
 it('allow activation when other elements are active with default policy', () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false
         },
@@ -46,7 +46,7 @@ it('allow activation when other elements are active with default policy', () => 
 })
 
 it('allow activation when other elements are active with empty othersCanActivate', () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false
         },
@@ -58,7 +58,7 @@ it('allow activation when other elements are active with empty othersCanActivate
 })
 
 it('disallow activation when other elements are active and not allowing others to activate', () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false
         },
@@ -72,7 +72,7 @@ it('disallow activation when other elements are active and not allowing others t
 })
 
 it('allow activation of [a] when [b] is active and allowing [a] to activate', () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false
         },
@@ -86,7 +86,7 @@ it('allow activation of [a] when [b] is active and allowing [a] to activate', ()
 })
 
 it('disallow activation of [a] when [b] is active and not allowing [a] to activate', () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false
         },
@@ -100,7 +100,7 @@ it('disallow activation of [a] when [b] is active and not allowing [a] to activa
 })
 
 it('disallow activation of [a] when [b] is active and allowing [a] to activate, but [a] is not allowing [b]', () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false,
             othersCanActivate: {
@@ -120,7 +120,7 @@ it(`allow activation of [a] when
     [a] is not allowing [b]
     [b] is active, allowing [a] to activate and willing to deactivate when [a] activates
     `, () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false,
             othersCanActivate: {
@@ -143,7 +143,7 @@ it(`allow activation of [a] when
     [a] is allowing [b] to activate and willing to deactivate when [b] activates
     [b] is active, allowing [a] to activate and not willing to deactivate when [a] activates
     `, () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false,
             othersCanActivate: {
@@ -169,7 +169,7 @@ it(`disallow activation of [a] when
     [a] is allowing [b] to activate and is willing to deactivate when [b] activates
     [b] is active, allowing [a] to activate and not willing to deactivate when [a] activates
     `, () => {
-    expect(policesAllowsActivation('a', {
+    expect(policesAllowActivation('a', {
         a: {
             active: false,
             deactivateWhenActivated: {

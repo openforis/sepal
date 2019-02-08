@@ -1,4 +1,4 @@
-import {Button} from 'widget/button'
+import {Button, ButtonGroup} from 'widget/button'
 import {Panel, PanelContent} from 'widget/panel'
 import {coordinateActivation, withActivationStatus} from 'widget/activation'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -13,10 +13,38 @@ const recipeToProps = recipe => {
     }
 }
 
-const TypologyPanel = () =>
-    <Panel type='top-right' className={styles.panel}>
-        <PanelContent>Typology</PanelContent>
-    </Panel>
+const alphaPolicy = () => ({
+    othersCanActivate: {
+        // include: ['beta'],
+        exclude: ['gamma']
+    },
+    deactivateWhenActivated: {
+        // include: ['beta']
+        // exclude: ['beta']
+    }
+})
+
+const betaPolicy = () => ({
+    othersCanActivate: {
+        // include: ['alpha']
+        // exclude: ['alpha']
+    },
+    deactivateWhenActivated: {
+        // include: ['beta']
+        // exclude: ['beta']
+    }
+})
+
+const gammaPolicy = () => ({
+    othersCanActivate: {
+        // include: ['alpha']
+        // exclude: ['alpha']
+    },
+    deactivateWhenActivated: {
+        // include: ['beta']
+        // exclude: ['beta']
+    }
+})
 
 const typologyPolicy = () => ({
     othersCanActivate: {
@@ -36,19 +64,65 @@ const periodPolicy = () => ({
         // exclude: ['typology']
     },
     deactivateWhenActivated: {
-        include: ['typology']
+        // include: ['typology']
         // exclude: ['typology']
     }
 })
 
-const ManagedTypologyPanel = coordinateActivation('typology', typologyPolicy)(TypologyPanel)
+const AlphaPanel = () =>
+    <Panel type='top-right' className={styles.panel}>
+        <PanelContent>Alpha panel</PanelContent>
+    </Panel>
+
+const BetaPanel = () =>
+    <Panel type='bottom-right' className={styles.panel}>
+        <PanelContent>Beta panel</PanelContent>
+    </Panel>
+
+const GammaPanel = () =>
+    <Panel type='bottom' className={styles.panel}>
+        <PanelContent>Gamma panel</PanelContent>
+    </Panel>
+
+const TypologyPanel = () =>
+    <Panel type='bottom' className={styles.panel}>
+        <PanelContent>Typology</PanelContent>
+    </Panel>
 
 const PeriodPanel = () =>
-    <Panel type='bottom-right' className={styles.panel}>
+    <Panel type='right' className={styles.panel}>
         <PanelContent>Period</PanelContent>
     </Panel>
 
+const ManagedAlphaPanel = coordinateActivation('alpha', alphaPolicy)(AlphaPanel)
+const ManagedBetaPanel = coordinateActivation('beta', betaPolicy)(BetaPanel)
+const ManagedGammaPanel = coordinateActivation('gamma', gammaPolicy)(GammaPanel)
+const ManagedTypologyPanel = coordinateActivation('typology', typologyPolicy)(TypologyPanel)
 const ManagedPeriodPanel = coordinateActivation('period', periodPolicy)(PeriodPanel)
+
+const AlphaButton = ({activate, deactivate, active, canActivate}) =>
+    <Button
+        label='Alpha button'
+        disabled={!active && !canActivate}
+        look={active ? 'cancel' : 'add'}
+        onClick={() => active ? deactivate() : activate()}
+    />
+
+const BetaButton = ({activate, deactivate, active, canActivate}) =>
+    <Button
+        label='Beta button'
+        disabled={!active && !canActivate}
+        look={active ? 'cancel' : 'add'}
+        onClick={() => active ? deactivate() : activate()}
+    />
+
+const GammaButton = ({activate, deactivate, active, canActivate}) =>
+    <Button
+        label='Gamma button'
+        disabled={!active && !canActivate}
+        look={active ? 'cancel' : 'add'}
+        onClick={() => active ? deactivate() : activate()}
+    />
 
 const TypologyButton = ({activate, deactivate, active, canActivate}) =>
     <Button
@@ -58,8 +132,6 @@ const TypologyButton = ({activate, deactivate, active, canActivate}) =>
         onClick={() => active ? deactivate() : activate()}
     />
 
-const ManagedTypologyButton = withActivationStatus('typology')(TypologyButton)
-
 const PeriodButton = ({activate, deactivate, active, canActivate}) =>
     <Button
         label='Period'
@@ -67,6 +139,11 @@ const PeriodButton = ({activate, deactivate, active, canActivate}) =>
         look={active ? 'cancel' : 'add'}
         onClick={() => active ? deactivate() : activate()}
     />
+
+const ManagedAlphaButton = withActivationStatus('alpha')(AlphaButton)
+const ManagedBetaButton = withActivationStatus('beta')(BetaButton)
+const ManagedGammaButton = withActivationStatus('gamma')(GammaButton)
+const ManagedTypologyButton = withActivationStatus('typology')(TypologyButton)
 const ManagedPeriodButton = withActivationStatus('period')(PeriodButton)
 
 class InitToolbar extends React.Component {
@@ -75,11 +152,19 @@ class InitToolbar extends React.Component {
         // const uiStatePath = statePath + '.ui'
         return (
             <div style={{pointerEvents: 'all'}}>
-                <ManagedTypologyButton/>
-                <ManagedPeriodButton/>
+                <ButtonGroup>
+                    <ManagedAlphaButton/>
+                    <ManagedBetaButton/>
+                    <ManagedGammaButton/>
+                    {/* <ManagedTypologyButton/> */}
+                    {/* <ManagedPeriodButton/> */}
+                </ButtonGroup>
 
-                <ManagedTypologyPanel/>
-                <ManagedPeriodPanel/>
+                <ManagedAlphaPanel/>
+                <ManagedBetaPanel/>
+                <ManagedGammaPanel/>
+                {/* <ManagedTypologyPanel/> */}
+                {/* <ManagedPeriodPanel/> */}
             </div>
         )
 

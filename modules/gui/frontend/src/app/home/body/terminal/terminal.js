@@ -1,4 +1,4 @@
-import './gateone'
+// import './gateone'
 import './gateone.css'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {connect} from 'store'

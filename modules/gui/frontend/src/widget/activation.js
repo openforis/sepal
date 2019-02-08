@@ -62,36 +62,39 @@ export const coordinateActivation = (id, policy) =>
                 this.removePolicy()
             }
 
+            policyPath() {
+                const {activationContext: {statePath}} = this.props
+                return [statePath, 'policy', id]
+            }
+
+            shouldDeactivate(policy) {
+                const {activeElements, active, justTriggered} = this.props
+                return active && !justTriggered
+                    && _(activeElements)
+                        .filter(activeId => activeId !== id)
+                        .some(activeId => shouldDeactivate(activeId, policy))
+            }
+
             updatePolicy() {
+                const {active} = this.props
                 const policyToApply = policy(this.props)
-                const shouldDeactivate = this.shouldDeactivate(policyToApply)
-                const wasActive = this.props.active
-                this.setPolicy(policyToApply, !shouldDeactivate && wasActive)
+                this.setPolicy(policyToApply, active && !this.shouldDeactivate(policyToApply))
             }
 
             setPolicy(policy, active) {
-                const {activationContext: {statePath}} = this.props
-                const policyToSet = {...policy, active}
-                return actionBuilder('UPDATE_POLICY', {id, policy})
-                    .set([statePath, 'policy', id], policyToSet)
-                    .set([statePath, 'policy', id, 'id'], id)
-                    .set([statePath, 'policy', id, 'justTriggered'], false)
+                actionBuilder('UPDATE_POLICY', {id, policy})
+                    .set(this.policyPath(), {
+                        ...policy,
+                        active,
+                        justTriggered: false
+                    })
                     .dispatch()
             }
 
             removePolicy() {
                 actionBuilder('REMOVE_POLICY', {id})
-                    .del([this.props.activationContext.statePath, 'policy', id])
+                    .del(this.policyPath())
                     .dispatch()
-            }
-
-            shouldDeactivate(policy) {
-                const {activeElements, active, justTriggered} = this.props
-                return !!(
-                    !justTriggered && active && activeElements
-                        .filter(activeId => activeId !== id)
-                        .find(activeId => policyDeactivates(activeId, policy))
-                )
             }
         }
 
@@ -102,52 +105,44 @@ export const coordinateActivation = (id, policy) =>
         )
     }
 
-export const policesAllowsActivation = (id, policies = {}) => {
-    const policiesWithIds = _.mapValues(policies, (policy, id) => ({...policy, id}))
-    const policy = policiesWithIds[id]
+export const policesAllowActivation = (id, policies = {}) => {
+    const [[ownPolicy], otherPolicies] = _(policies)
+        .mapValues((policy, id) => ({...policy, id}))
+        .partition(policy => policy.id === id)
+        .value()
 
-    // make sure an active element does not allow activation
-    if (!policy || policy.active) return false
-
-    const otherPolicies = Object.keys(policiesWithIds)
-        .filter(elementId => elementId !== id)
-        .map(elementId => policiesWithIds[elementId])
-    const disallowsActivation = otherPolicies
-        .filter(policy => policy.active)
-        .find(otherActivePolicy => !policiesCompatible(policy, otherActivePolicy))
-    return !disallowsActivation
+    return ownPolicy && !ownPolicy.active
+        ? _(otherPolicies)
+            .pickBy(policy => policy.active)
+            .every(otherPolicy => policiesCompatible(ownPolicy, otherPolicy))
+        : false
 }
 
-const policiesCompatible = (policy, activePolicy) => {
-    const otherActiveAllowActivation = policyAllowsActivation(policy.id, activePolicy)
-    const otherActiveDeactivates = policyDeactivates(policy.id, activePolicy)
-    const allowActivationOfOtherActive = policyAllowsActivation(activePolicy.id, policy)
-    const deactivatesOtherActive = policyDeactivates(activePolicy.id, policy)
-    return otherActiveAllowActivation && (otherActiveDeactivates ||
-        (allowActivationOfOtherActive && !deactivatesOtherActive)
-    )
+const policiesCompatible = (ownPolicy, otherPolicy) => {
+    const canThisElementBeActivatedByOtherElement = canActivate(ownPolicy.id, otherPolicy)
+    const shouldOtherElementByDeactivatedByThisElement = shouldDeactivate(ownPolicy.id, otherPolicy)
+
+    const canOtherElementBeActivatedByThisElement = canActivate(otherPolicy.id, ownPolicy) && !shouldDeactivate(otherPolicy.id, ownPolicy)
+    return canThisElementBeActivatedByOtherElement
+        && (shouldOtherElementByDeactivatedByThisElement || canOtherElementBeActivatedByThisElement)
 }
 
-const policyDeactivates = (activeId, policy) => {
-    const {include, exclude} = policy.deactivateWhenActivated || {}
-    if (include && exclude)
-        throw Error('Both include and exclude section should not be specified ' +
-            'in policy.deactivateWhenActivated')
-
-    if (include) return include.includes(activeId)
-    if (exclude) return !exclude.includes(activeId)
-    return false
-}
-
-const policyAllowsActivation = (idToActivate, policy) => {
+const canActivate = (id, policy) => {
     const {include, exclude} = policy.othersCanActivate || {}
     if (include && exclude)
-        throw Error('Both include and exclude section should not be specified ' +
-            'in policy.othersCanActivate')
-
-    if (include) return include.includes(idToActivate)
-    if (exclude) return !exclude.includes(idToActivate)
+        throw Error('Policy include and exclude options are mutually exclusive')
+    if (include) return include.includes(id)
+    if (exclude) return !exclude.includes(id)
     return true
+}
+
+const shouldDeactivate = (id, policy) => {
+    const {include, exclude} = policy.deactivateWhenActivated || {}
+    if (include && exclude)
+        throw Error('Policy include and exclude options are mutually exclusive')
+    if (include) return include.includes(id)
+    if (exclude) return !exclude.includes(id)
+    return false
 }
 
 export const withActivationStatus = (id) => {
@@ -156,23 +151,30 @@ export const withActivationStatus = (id) => {
         const mapStateToProps = (state, ownProps) => {
             const {activationContext: {statePath}} = ownProps
             const policies = select([statePath, 'policy'])
-            const active = !!(policies && policies[id].active)
-            const canActivate = policesAllowsActivation(id, policies)
+            const active = !!(policies && policies[id] && policies[id].active)
+            const canActivate = policesAllowActivation(id, policies)
             return {
                 active,
                 canActivate,
-                activate: () => {
-                    return canActivate && actionBuilder('ACTIVATE')
-                        .set([statePath, 'policy', id, 'active'], true)
-                        .set([statePath, 'policy', id, 'justTriggered'], true)
-                        .dispatch()},
-                deactivate: () =>
-                    active && actionBuilder('DEACTIVATE')
-                        .set([statePath, 'policy', id, 'active'], false)
-                        .dispatch()
-                ,
+                activate: () => canActivate && activate([statePath, 'policy', id]),
+                deactivate: () => active && deactivate([statePath, 'policy', id])
             }
         }
+
+        const activate = (policyPath) =>
+            actionBuilder('ACTIVATE', {id})
+                .assign(policyPath, {
+                    active: true,
+                    justTriggered: true
+                })
+                .dispatch()
+
+        const deactivate = (policyPath) =>
+            actionBuilder('DEACTIVATE', {id})
+                .assign(policyPath, {
+                    active: false
+                })
+                .dispatch()
 
         return withActivationContext()(
             connect(mapStateToProps)(
