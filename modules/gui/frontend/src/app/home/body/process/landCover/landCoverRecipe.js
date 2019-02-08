@@ -93,14 +93,12 @@ const initRecipe = recipe => {
     if (!recipe || recipe.ui)
         return
 
-    const actions = RecipeActions(recipe.id)
-
     const model = recipe.model
-    if (model) {
-        actions.setInitialized(model.aoi && model.period && model.typology).dispatch()
-        actions.setStatus(Status.COMPOSITES_PENDING_CREATION).dispatch()
+    const initialized = model && model.aoi && model.period && model.typology
+    const actions = RecipeActions(recipe.id)
+    actions.setInitialized(initialized).dispatch()
+    if (initialized)
         return
-    }
 
     const now = moment()
     let endYear = now.year()
@@ -243,4 +241,11 @@ export const getPrimitiveTypes = (recipe) => {
     return [{id: 'other', label: 'Other', color: 'FFFFFF'}].concat(
         _.sortBy(recipe.model.typology.primitiveTypes, 'id')
     )
+}
+
+export const Steps = {
+    INIT: 'INIT',
+    COMPOSITES: 'COMPOSITES',
+    PRIMITIVES: 'PRIMITIVES',
+    ASSEMBLAGE: 'ASSEMBLAGE',
 }

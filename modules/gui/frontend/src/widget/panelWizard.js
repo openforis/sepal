@@ -1,12 +1,16 @@
-import {connect, select} from 'store'
+import actionBuilder from 'action-builder'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
+import {connect, select} from 'store'
 
 const mapStateToProps = (state, ownProps) => {
     const {statePath} = ownProps
+    const initialized = Object.keys(ownProps).includes('initialized')
+        ? ownProps.initialized
+        : select([statePath, 'initialized'])
+
     return {
-        initialized: select([statePath, 'initialized']),
+        initialized,
         selectedPanel: select([statePath, 'selectedPanel'])
     }
 }
@@ -22,11 +26,16 @@ class PanelWizard extends React.Component {
     }
 
     componentDidMount() {
-        const {panels, statePath, initialized, selectedPanel} = this.props
+        const {initialized, selectedPanel} = this.props
         if (!initialized && !selectedPanel)
-            actionBuilder('SELECT_PANEL', {name: panels[0]})
-                .set([statePath, 'selectedPanel'], panels[0])
-                .dispatch()
+            this.selectFirstPanel()
+    }
+
+    selectFirstPanel() {
+        const {panels, statePath} = this.props
+        actionBuilder('SELECT_PANEL', {name: panels[0]})
+            .set([statePath, 'selectedPanel'], panels[0])
+            .dispatch()
     }
 }
 

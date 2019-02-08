@@ -73,7 +73,7 @@ class SceneSelection extends React.Component {
                     form={form}
                     statePath={recipePath + '.ui'}
                     modalOnDirty={false}
-                    center
+                    type='center'
                     onApply={({selectedScenes}) => this.onApply(selectedScenes)}
                     onCancel={() => this.deselectSceneArea()}>
                     <PanelHeader
@@ -135,8 +135,8 @@ class SceneSelection extends React.Component {
     renderScenes() {
         const availableScenes = this.getAvailableScenes()
         const selectedScenes = this.getSelectedScenes()
-        const scenes = availableScenes.length && selectedScenes.length
-        return scenes ? (
+        const haveScenes = availableScenes.length || selectedScenes.length
+        return haveScenes ? (
             <div className={styles.scenes}>
                 <div className={styles.availableScenes}>
                     {this.renderAvailableScenes(availableScenes)}

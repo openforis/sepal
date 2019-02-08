@@ -1,31 +1,24 @@
-import {saveRecipe} from './recipe'
+import {RecipeContext} from 'app/home/body/process/recipeContext'
+import Revisions from 'app/home/body/process/revisions'
+import React from 'react'
+import Tabs from 'widget/tabs'
 import ChangeDetection from './changeDetection/changeDetection'
 import Classification from './classification/classification'
 import LandCover from './landCover/landCover'
 import Mosaic from './mosaic/mosaic'
 import ProcessMenu from './processMenu'
-import React from 'react'
+import {saveRecipe} from './recipe'
 import Recipes from './recipes'
-import Revisions from 'app/home/body/process/revisions'
-import Tabs from 'widget/tabs'
 import TimeSeries from './timeSeries/timeSeries'
 
-const recipeComponent = (id, type) => {
-    switch (type) {
-    case 'MOSAIC':
-        return <Mosaic recipeId={id}/>
-    case 'CLASSIFICATION':
-        return <Classification recipeId={id}/>
-    case 'CHANGE_DETECTION':
-        return <ChangeDetection recipeId={id}/>
-    case 'TIME_SERIES':
-        return <TimeSeries recipeId={id}/>
-    case 'LAND_COVER':
-        return <LandCover recipeId={id}/>
-    default:
-        return <Recipes recipeId={id}/>
-    }
-}
+const recipeComponent = (id, type) => (
+    {
+        MOSAIC: <Mosaic recipeId={id}/>,
+        CLASSIFICATION: <Classification recipeId={id}/>,
+        CHANGE_DETECTION: <ChangeDetection recipeId={id}/>,
+        TIME_SERIES: <TimeSeries recipeId={id}/>,
+        LAND_COVER: <LandCover/>
+    }[type] || <Recipes recipeId={id}/>)
 
 const Process = () => {
     return (
@@ -35,7 +28,9 @@ const Process = () => {
             onTitleChanged={recipe => saveRecipe(recipe)}>
             {({id, type}) =>
                 <React.Fragment>
-                    {recipeComponent(id, type)}
+                    <RecipeContext recipeId={id} rootStatePath='process.tabs'>
+                        {recipeComponent(id, type)}
+                    </RecipeContext>
                     <Revisions recipeId={id}/>
                 </React.Fragment>
             }
