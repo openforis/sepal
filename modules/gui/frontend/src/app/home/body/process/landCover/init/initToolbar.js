@@ -1,9 +1,9 @@
+import {Button} from 'widget/button'
+import {Panel, PanelContent} from 'widget/panel'
+import {coordinateActivation, withActivationStatus} from 'widget/activation'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {coordinateActivation, withActivationStatus} from 'widget/activation'
-import {Button} from 'widget/button'
-import {Panel, PanelContent} from 'widget/panel'
 import styles from './typology.module.css'
 
 const recipeToProps = recipe => {
@@ -25,10 +25,9 @@ const typologyPolicy = () => ({
     },
     deactivateWhenActivated: {
         // include: ['period']
-        exclude: ['period']
+        // exclude: ['period']
     }
 })
-
 
 const periodPolicy = () => ({
     // active: true, // TODO: Should open panel on mount
@@ -37,8 +36,8 @@ const periodPolicy = () => ({
         // exclude: ['typology']
     },
     deactivateWhenActivated: {
-        // include: ['typology']
-        exclude: ['typology']
+        include: ['typology']
+        // exclude: ['typology']
     }
 })
 
@@ -54,7 +53,7 @@ const ManagedPeriodPanel = coordinateActivation('period', periodPolicy)(PeriodPa
 const TypologyButton = ({activate, deactivate, active, canActivate}) =>
     <Button
         label='Typology'
-        disabled={!canActivate}
+        disabled={!active && !canActivate}
         look={active ? 'cancel' : 'add'}
         onClick={() => active ? deactivate() : activate()}
     />
@@ -64,7 +63,7 @@ const ManagedTypologyButton = withActivationStatus('typology')(TypologyButton)
 const PeriodButton = ({activate, deactivate, active, canActivate}) =>
     <Button
         label='Period'
-        disabled={!canActivate}
+        disabled={!active && !canActivate}
         look={active ? 'cancel' : 'add'}
         onClick={() => active ? deactivate() : activate()}
     />
@@ -79,12 +78,10 @@ class InitToolbar extends React.Component {
                 <ManagedTypologyButton/>
                 <ManagedPeriodButton/>
 
-
                 <ManagedTypologyPanel/>
                 <ManagedPeriodPanel/>
             </div>
         )
-
 
         // return (
         //     <PanelWizard
