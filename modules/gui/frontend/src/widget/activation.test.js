@@ -45,14 +45,14 @@ it('allow activation when other elements are active with default policy', () => 
     })).toEqual(true)
 })
 
-it('allow activation when other elements are active with empty othersCanActivate', () => {
+it('allow activation when other elements are active with empty compatibleWith', () => {
     expect(policesAllowActivation('a', {
         a: {
             active: false
         },
         b: {
             active: true,
-            othersCanActivate: {}
+            compatibleWith: {}
         }
     })).toEqual(true)
 })
@@ -64,7 +64,7 @@ it('disallow activation when other elements are active and not allowing others t
         },
         b: {
             active: true,
-            othersCanActivate: {
+            compatibleWith: {
                 include: []
             }
         }
@@ -78,7 +78,7 @@ it('allow activation of [a] when [b] is active and allowing [a] to activate', ()
         },
         b: {
             active: true,
-            othersCanActivate: {
+            compatibleWith: {
                 include: ['a']
             }
         }
@@ -92,7 +92,7 @@ it('disallow activation of [a] when [b] is active and not allowing [a] to activa
         },
         b: {
             active: true,
-            othersCanActivate: {
+            compatibleWith: {
                 exclude: ['a']
             }
         }
@@ -103,13 +103,13 @@ it('disallow activation of [a] when [b] is active and allowing [a] to activate, 
     expect(policesAllowActivation('a', {
         a: {
             active: false,
-            othersCanActivate: {
+            compatibleWith: {
                 exclude: ['b']
             }
         },
         b: {
             active: true,
-            othersCanActivate: {
+            compatibleWith: {
                 include: ['a']
             }
         }
@@ -123,16 +123,16 @@ it(`allow activation of [a] when
     expect(policesAllowActivation('a', {
         a: {
             active: false,
-            othersCanActivate: {
+            compatibleWith: {
                 exclude: ['b']
             }
         },
         b: {
             active: true,
-            othersCanActivate: {
+            compatibleWith: {
                 include: ['a']
             },
-            deactivateWhenActivated: {
+            deactivateWhen: {
                 include: ['a']
             }
         }
@@ -146,19 +146,19 @@ it(`allow activation of [a] when
     expect(policesAllowActivation('a', {
         a: {
             active: false,
-            othersCanActivate: {
+            compatibleWith: {
                 include: ['b']
             },
-            deactivateWhenActivated: {
+            deactivateWhen: {
                 include: ['b']
             }
         },
         b: {
             active: true,
-            othersCanActivate: {
+            compatibleWith: {
                 include: ['a']
             },
-            deactivateWhenActivated: {
+            deactivateWhen: {
                 exclude: ['a']
             }
         }
@@ -172,7 +172,7 @@ it(`disallow activation of [a] when
     expect(policesAllowActivation('a', {
         a: {
             active: false,
-            deactivateWhenActivated: {
+            deactivateWhen: {
                 include: ['b']
             }
         },

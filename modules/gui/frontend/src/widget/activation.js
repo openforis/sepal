@@ -72,7 +72,7 @@ export const coordinateActivation = (id, policy) =>
                 return active && !justTriggered
                     && _(activeElements)
                         .filter(activeId => activeId !== id)
-                        .some(activeId => shouldDeactivate(activeId, policy))
+                        .some(activeId => deactivateWhen(activeId, policy))
             }
 
             updatePolicy() {
@@ -118,17 +118,21 @@ export const policesAllowActivation = (id, policies = {}) => {
         : false
 }
 
-const policiesCompatible = (ownPolicy, otherPolicy) => {
-    const canThisElementBeActivatedByOtherElement = canActivate(ownPolicy.id, otherPolicy)
-    const shouldOtherElementByDeactivatedByThisElement = shouldDeactivate(ownPolicy.id, otherPolicy)
-
-    const canOtherElementBeActivatedByThisElement = canActivate(otherPolicy.id, ownPolicy) && !shouldDeactivate(otherPolicy.id, ownPolicy)
-    return canThisElementBeActivatedByOtherElement
-        && (shouldOtherElementByDeactivatedByThisElement || canOtherElementBeActivatedByThisElement)
+const policiesCompatible = (thisPolicy, otherPolicy) => {
+    const thisCompatibleWithOther = compatibleWith(thisPolicy.id, otherPolicy)
+    const otherCompatibleWithThis = compatibleWith(otherPolicy.id, thisPolicy)
+    
+    const otherShouldDeactivate = deactivateWhen(thisPolicy.id, otherPolicy)
+    const thisShouldDeactivate = deactivateWhen(otherPolicy.id, thisPolicy)
+    
+    return thisCompatibleWithOther && otherShouldDeactivate
+        || thisCompatibleWithOther && otherCompatibleWithThis && !thisShouldDeactivate
+    // return thisCompatibleWithOther
+    //     && (otherShouldDeactivate || otherCompatibleWithThis && !thisShouldDeactivate)
 }
 
-const canActivate = (id, policy) => {
-    const {include, exclude} = policy.othersCanActivate || {}
+const compatibleWith = (id, policy) => {
+    const {include, exclude} = policy.compatibleWith || {}
     if (include && exclude)
         throw Error('Policy include and exclude options are mutually exclusive')
     if (include) return include.includes(id)
@@ -136,8 +140,8 @@ const canActivate = (id, policy) => {
     return true
 }
 
-const shouldDeactivate = (id, policy) => {
-    const {include, exclude} = policy.deactivateWhenActivated || {}
+const deactivateWhen = (id, policy) => {
+    const {include, exclude} = policy.deactivateWhen || {}
     if (include && exclude)
         throw Error('Policy include and exclude options are mutually exclusive')
     if (include) return include.includes(id)

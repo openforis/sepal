@@ -14,44 +14,55 @@ const recipeToProps = recipe => {
 }
 
 const alphaPolicy = () => ({
-    othersCanActivate: {
-        // include: ['beta'],
-        exclude: ['gamma']
+    compatibleWith: {
+        include: ['beta', 'gamma'],
+        // exclude: ['delta']
     },
-    deactivateWhenActivated: {
-        // include: ['beta']
+    deactivateWhen: {
+        include: ['gamma']
         // exclude: ['beta']
     }
 })
 
 const betaPolicy = () => ({
-    othersCanActivate: {
+    compatibleWith: {
         // include: ['alpha']
         // exclude: ['alpha']
     },
-    deactivateWhenActivated: {
-        // include: ['beta']
+    deactivateWhen: {
+        // include: ['gamma']
         // exclude: ['beta']
     }
 })
 
 const gammaPolicy = () => ({
-    othersCanActivate: {
+    compatibleWith: {
         // include: ['alpha']
         // exclude: ['alpha']
     },
-    deactivateWhenActivated: {
-        // include: ['beta']
+    deactivateWhen: {
+        // include: ['alpha']
+        // exclude: ['beta']
+    }
+})
+
+const deltaPolicy = () => ({
+    compatibleWith: {
+        // include: ['alpha']
+        // exclude: ['alpha']
+    },
+    deactivateWhen: {
+        // include: ['alpha']
         // exclude: ['beta']
     }
 })
 
 const typologyPolicy = () => ({
-    othersCanActivate: {
+    compatibleWith: {
         // include: ['period']
         // exclude: ['period']
     },
-    deactivateWhenActivated: {
+    deactivateWhen: {
         // include: ['period']
         // exclude: ['period']
     }
@@ -59,11 +70,11 @@ const typologyPolicy = () => ({
 
 const periodPolicy = () => ({
     // active: true, // TODO: Should open panel on mount
-    othersCanActivate: {
+    compatibleWith: {
         // include: ['typology'],
         // exclude: ['typology']
     },
-    deactivateWhenActivated: {
+    deactivateWhen: {
         // include: ['typology']
         // exclude: ['typology']
     }
@@ -84,6 +95,11 @@ const GammaPanel = () =>
         <PanelContent>Gamma panel</PanelContent>
     </Panel>
 
+const DeltaPanel = () =>
+    <Panel type='bottom' className={styles.panel}>
+        <PanelContent>Delta panel</PanelContent>
+    </Panel>
+
 const TypologyPanel = () =>
     <Panel type='bottom' className={styles.panel}>
         <PanelContent>Typology</PanelContent>
@@ -97,6 +113,7 @@ const PeriodPanel = () =>
 const ManagedAlphaPanel = coordinateActivation('alpha', alphaPolicy)(AlphaPanel)
 const ManagedBetaPanel = coordinateActivation('beta', betaPolicy)(BetaPanel)
 const ManagedGammaPanel = coordinateActivation('gamma', gammaPolicy)(GammaPanel)
+const ManagedDeltaPanel = coordinateActivation('delta', deltaPolicy)(DeltaPanel)
 const ManagedTypologyPanel = coordinateActivation('typology', typologyPolicy)(TypologyPanel)
 const ManagedPeriodPanel = coordinateActivation('period', periodPolicy)(PeriodPanel)
 
@@ -124,6 +141,14 @@ const GammaButton = ({activate, deactivate, active, canActivate}) =>
         onClick={() => active ? deactivate() : activate()}
     />
 
+const DeltaButton = ({activate, deactivate, active, canActivate}) =>
+    <Button
+        label='Delta button'
+        disabled={!active && !canActivate}
+        look={active ? 'cancel' : 'add'}
+        onClick={() => active ? deactivate() : activate()}
+    />
+
 const TypologyButton = ({activate, deactivate, active, canActivate}) =>
     <Button
         label='Typology'
@@ -143,6 +168,7 @@ const PeriodButton = ({activate, deactivate, active, canActivate}) =>
 const ManagedAlphaButton = withActivationStatus('alpha')(AlphaButton)
 const ManagedBetaButton = withActivationStatus('beta')(BetaButton)
 const ManagedGammaButton = withActivationStatus('gamma')(GammaButton)
+const ManagedDeltaButton = withActivationStatus('delta')(DeltaButton)
 const ManagedTypologyButton = withActivationStatus('typology')(TypologyButton)
 const ManagedPeriodButton = withActivationStatus('period')(PeriodButton)
 
@@ -156,6 +182,7 @@ class InitToolbar extends React.Component {
                     <ManagedAlphaButton/>
                     <ManagedBetaButton/>
                     <ManagedGammaButton/>
+                    <ManagedDeltaButton/>
                     {/* <ManagedTypologyButton/> */}
                     {/* <ManagedPeriodButton/> */}
                 </ButtonGroup>
@@ -163,6 +190,7 @@ class InitToolbar extends React.Component {
                 <ManagedAlphaPanel/>
                 <ManagedBetaPanel/>
                 <ManagedGammaPanel/>
+                <ManagedDeltaPanel/>
                 {/* <ManagedTypologyPanel/> */}
                 {/* <ManagedPeriodPanel/> */}
             </div>
