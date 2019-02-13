@@ -162,15 +162,15 @@
     "features": {
       "apps": {
         "description": "Ajouter des fonctionnalités SEPAL avec des applications personnalisées",
-        "title": "Extensible avec des applications"
+        "title": "Applications"
       },
       "browse": {
         "description": "Prévisualiser et télécharger les produits",
-        "title": "Parcourir vos données"
+        "title": "Données"
       },
       "process": {
         "description": "Traitement rapide et facile de données géospatiales",
-        "title": "Traiter des géo-données"
+        "title": "Traitement"
       },
       "terminal": {
         "description": "Outils performants pour le traitement de données",
