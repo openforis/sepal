@@ -381,23 +381,23 @@
                             "tooltip": "Filter out pixels in selected scenes based on the below properties",
                             "shadowPercentile": {
                                 "off": "Don't filter based on shadow",
-                                "percentile": "Less shadows than {percentile}% of pixels",
-                                "max": "Pixel with least shadow"
+                                "percentile": "Exclude {percentile}% pixels (with shadow)",
+                                "max": "Select pixels with least shadow"
                             },
                             "hazePercentile": {
                                 "off": "Don't filter based on haze",
-                                "percentile": "Less haze than {percentile}% of pixels",
-                                "max": "Pixel with least haze"
+                                "percentile": "Exclude {percentile}% pixels (with haze)",
+                                "max": "Select pixels with least haze"
                             },
                             "ndviPercentile": {
                                 "off": "Don't filter based on NDVI",
-                                "percentile": "Higher NDVI than {percentile}% of pixels",
-                                "max": "Pixel with highest NDVI"
+                                "percentile": "Exclude {percentile}% pixels (low NDVI)",
+                                "max": "Select pixels with highest NDVI"
                             },
                             "dayOfYearPercentile": {
                                 "off": "Don't filter based on day of year",
-                                "percentile": "Closer to target day than {percentile}% of pixels",
-                                "max": "Pixel closest to target day"
+                                "percentile": "Exclude {percentile}% pixels (far from target)",
+                                "max": "Select pixels closest to target day"
                             }
                         },
                         "mask": {

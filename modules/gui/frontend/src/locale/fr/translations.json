@@ -26,7 +26,7 @@
       "RESET_PASSWORD": "Réinitialiser le mot de passe",
       "RESTART_TASK": "Recharger la tâche",
       "RUN_APP": "Ouvrir application",
-      "SCHEDULE_UPDATE_TASKS": "MAJ tâches de fonds",
+      "SCHEDULE_UPDATE_TASKS": "MAJ tâches de fond",
       "SCHEDULE_USER_INFO_REFRESH": "Requête d'information utilisateur",
       "STOP_TASK": "Arrêter la tâche",
       "VALIDATE_TOKEN": "Valider le lien"
@@ -139,20 +139,20 @@
     "sections": {
       "account": "Paramètres du compte",
       "app-launch-pad": "Applications",
-      "browse": "Fichiers de l'utilisateur",
+      "browse": "Fichiers",
       "collapse": "Réduire le menu",
       "dashboard": "A déterminer",
       "expand": "Étendre le menu",
       "logout": "Déconnexion",
-      "process": "Traitement de données géospatiales",
-      "tasks": "Tâches de fonds",
+      "process": "Traitement",
+      "tasks": "Tâches de fond",
       "terminal": "Console",
       "user": {
-        "messages": "Afficher les messages utilisateur",
+        "messages": "Afficher messages utilisateur",
         "profile": "Gérer le profil",
         "report": {
           "budgetExceeded": "Dépassé",
-          "tooltip": "Afficher le rapport utilisateur"
+          "tooltip": "Afficher rapport utilisateur"
         }
       },
       "users": "Utilisateurs"
@@ -324,7 +324,7 @@
               "required": "La table de fusion doit être spécifiée"
             },
             "fusionTableColumn": {
-              "label": "Attribut de la classe",
+              "label": "Attribut",
               "placeholder": {
                 "loaded": "Choisir un attribut...",
                 "loading": "Chargement des attributs",
@@ -409,7 +409,7 @@
               "required": "Il faut spécifier une table de fusion"
             },
             "fusionTableColumn": {
-              "label": "Attribut de la classe",
+              "label": "Attribut",
               "placeholder": {
                 "loaded": "Sélectionner l'attribut...",
                 "loading": "Chargement des attributs...",
@@ -465,7 +465,7 @@
           "button": "ETR",
           "form": {
             "classColumn": {
-              "label": "Attribut de la classe",
+              "label": "Attribut",
               "placeholder": {
                 "loaded": "Sélectionner un attribut...",
                 "loading": "Chargement des attributs...",
@@ -604,7 +604,7 @@
                 },
                 "required": "Une ligne doit être sélectionnée"
               },
-              "title": "Sélectionner à parit d'une table de fusion"
+              "title": "Sélectionner à partir d'une table de fusion"
             },
             "polygon": {
               "description": "Dessiner un polygone sur la carte.",
@@ -664,25 +664,25 @@
             },
             "filters": {
               "dayOfYearPercentile": {
-                "max": "Pixel le plus proche de la date cible",
+                "max": "Pixels les plus proches de la date cible",
                 "off": "Ne pas filtrer sur le jour julien",
-                "percentile": "Plus proche de la date cible que {percentile}% des pixels"
+                "percentile": "Exclure {percentile}% des pixels (loin de la cible)"
               },
               "hazePercentile": {
                 "max": "Pixels avec la brume minimale",
                 "off": "Ne pas filtrer sur la brume",
-                "percentile": "Moins de brume que {percentile}% des pixels"
+                "percentile": "Exclure {percentile}% des pixels (avec brume)"
               },
               "label": "Filtres des pixels",
               "ndviPercentile": {
-                "max": "Pixel avec le NDVI le plus haut",
+                "max": "Pixels avec le NDVI le plus haut",
                 "off": "Ne pas filtrer sur le NDVI",
-                "percentile": "NDVi plus haut que {percentile}% des pixels"
+                "percentile": "Exclure {percentile}% des pixels (NDVI bas)"
               },
               "shadowPercentile": {
                 "max": "Pixels avec le moins d'ombre",
                 "off": "Ne pas filtrer sur l'ombre",
-                "percentile": "Moins d'ombre que {percentile}% des pixels"
+                "percentile": "Exclure {percentile}% des pixels (avec ombre)"
               },
               "tooltip": "Filtrer les pixels des scènes sélectionnées à partir des propriétés suivantes"
             },
@@ -767,7 +767,7 @@
             "afterTarget": "{daysFromTarget} après",
             "beforeTarget": "{daysFromTarget} avant",
             "cloudCover": "Couverture nuageuse",
-            "dataSet": "Jeu de données",
+            "dataSet": "Collection",
             "date": "Date d'acquisition",
             "daysFromTarget": "Jours de la date cible",
             "label": "Prévisualisation",
@@ -811,8 +811,8 @@
           "button": "SRC",
           "form": {
             "dataSets": {
-              "label": "Jeux de données",
-              "oneDataSet": "Le satellite choisi a un seul jeu de données",
+              "label": "Collection",
+              "oneDataSet": "Le satellite choisi a une seule collection",
               "options": {
                 "LANDSAT_7": {
                   "label": "L7",
@@ -964,7 +964,7 @@
           "button": "SRC",
           "form": {
             "dataSets": {
-              "label": "Jeux de données",
+              "label": "Collection",
               "options": {
                 "LANDSAT_7": {
                   "label": "L7",
@@ -1001,7 +1001,7 @@
     }
   },
   "tasks": {
-    "none": "Vous n'avez aucune tâche de fonds en cours.",
+    "none": "Vous n'avez aucune tâche de fond en cours.",
     "removeAll": {
       "tooltip": "Supprimer toutes les tâches finalisées, arrêtées ou en échec"
     }
