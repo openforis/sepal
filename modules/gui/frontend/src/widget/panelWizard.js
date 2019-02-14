@@ -1,52 +1,94 @@
-import actionBuilder from 'action-builder'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect, select} from 'store'
-
-const mapStateToProps = (state, ownProps) => {
-    const {statePath} = ownProps
-    const initialized = Object.keys(ownProps).includes('initialized')
-        ? ownProps.initialized
-        : select([statePath, 'initialized'])
-
-    return {
-        initialized,
-        selectedPanel: select([statePath, 'selectedPanel'])
-    }
-}
+import {activator} from 'widget/activation'
 
 class PanelWizard extends React.Component {
+
+    constructor(props) {
+        super(props)
+        this.state = {initialized: props.initialized}
+    }
+
     render() {
-        const {panels = [], children} = this.props
+        const {panels = [], activatables, children} = this.props
+        const {initialized} = this.state
+        const currentId = !initialized && _(activatables)
+            .pickBy(({active}) => active)
+            .keys()
+            .find(id => panels.includes(id))
+        const currentIndex = panels.indexOf(currentId)
+        const currentActivatable = activatables[panels[currentIndex]]
+        const inRange = (index) => index >= 0 && index < panels.length
+        const navigate = (index) => {
+            if (!inRange(index))
+                return false
+            const activatable = activatables[panels[index]]
+            if (!activatable)
+                return false
+            return () => {
+                currentActivatable.deactivate()
+                activatable.activate()
+            }
+        }
+        const back = navigate(currentIndex - 1)
+        const next = navigate(currentIndex + 1)
+        const done = () => {
+            this.setState(prevState => ({...prevState, initialized: true}))
+            currentActivatable.deactivate()
+        }
         return (
-            <PanelWizardContext.Provider value={panels}>
+            <Context.Provider value={{wizard: !initialized, back, next, done}}>
                 {children}
-            </PanelWizardContext.Provider>
+            </Context.Provider>
         )
     }
 
     componentDidMount() {
-        const {initialized, selectedPanel} = this.props
-        if (!initialized && !selectedPanel)
+        this.update()
+    }
+
+    componentDidUpdate() {
+        this.update()
+    }
+
+    update() {
+        const {initialized = this.props.initialized} = this.state
+        if (initialized || this.selectedFirst)
+            return
+        const {panels, activatables} = this.props
+        const isAnyActive = _(activatables)
+            .pickBy(({active}) => active)
+            .keys()
+            .some(panels)
+        if (!isAnyActive)
             this.selectFirstPanel()
     }
 
     selectFirstPanel() {
-        const {panels, statePath} = this.props
-        actionBuilder('SELECT_PANEL', {name: panels[0]})
-            .set([statePath, 'selectedPanel'], panels[0])
-            .dispatch()
+        const {panels, activatables} = this.props
+        const activatable = activatables[panels[0]]
+        if (activatable) {
+            this.selectedFirst = true
+            activatable && activatable.activate()
+        }
     }
 }
 
-export default connect(mapStateToProps)(PanelWizard)
+export default activator()(PanelWizard)
 
 PanelWizard.propTypes = {
     panels: PropTypes.array.isRequired,
-    statePath: PropTypes.string.isRequired,
+    initialized: PropTypes.any.isRequired,
     children: PropTypes.any,
-    initialized: PropTypes.any,
     selectedPanel: PropTypes.any
 }
 
-export const PanelWizardContext = React.createContext()
+const Context = React.createContext()
+
+export const PanelWizardContext = ({children}) =>
+    <Context.Consumer>
+        {(value = {}) => children(value)}
+    </Context.Consumer>
+
+

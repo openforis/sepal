@@ -1,11 +1,12 @@
-import {RecipeState as ParentRecipeState, recipePath} from '../recipe'
+import globalActionBuilder from 'action-builder'
+import api from 'api'
+import {selectFrom} from 'collections'
+import _ from 'lodash'
+import moment from 'moment'
 import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
 import {msg} from 'translate'
 import Labels from '../../../map/labels'
-import _ from 'lodash'
-import api from 'api'
-import globalActionBuilder from 'action-builder'
-import moment from 'moment'
+import {recipePath} from '../recipe'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -14,13 +15,31 @@ export const SceneSelectionType = Object.freeze({
     SELECT: 'SELECT'
 })
 
-export const RecipeState = recipeId => {
-    const recipeState = ParentRecipeState(recipeId)
-    if (!recipeState)
-        return null
-    const get = path => recipeState(path)
-    get.dateRange = () => {
-        const dates = get('model.dates')
+export const defaultModel = {
+    dates: {
+        targetDate: moment().format(DATE_FORMAT),
+        seasonStart: moment().startOf('year').format(DATE_FORMAT),
+        seasonEnd: moment().add(1, 'years').startOf('year').format(DATE_FORMAT),
+        yearsBefore: 0,
+        yearsAfter: 0
+    },
+    sources: {LANDSAT: ['LANDSAT_8']},
+    sceneSelectionOptions: {
+        type: SceneSelectionType.ALL,
+        targetDateWeight: 0
+    },
+    compositeOptions: {
+        corrections: ['SR', 'BRDF'],
+        filters: [],
+        mask: ['CLOUDS', 'SNOW'],
+        compose: 'MEDOID'
+    }
+}
+
+export const RecipeState = recipe => {
+    const recipeState = (path) => selectFrom(recipe, path)
+    recipeState.dateRange = () => {
+        const dates = recipeState('model.dates')
         const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
         const seasonEnd = moment(dates.seasonEnd, DATE_FORMAT)
         return [
@@ -28,21 +47,21 @@ export const RecipeState = recipeId => {
             seasonEnd.add(dates.yearsAfter, 'years')
         ]
     }
-    get.isSourceInDateRange = sourceId => {
-        const [from, to] = get.dateRange()
+    recipeState.isSourceInDateRange = sourceId => {
+        const [from, to] = recipeState.dateRange()
         return isSourceInDateRange(sourceId, from, to)
     }
-    get.isDataSetInDateRange = dataSetId => {
-        const [from, to] = get.dateRange()
+    recipeState.isDataSetInDateRange = dataSetId => {
+        const [from, to] = recipeState.dateRange()
         return isDataSetInDateRange(dataSetId, from, to)
     }
 
-    get.source = () => {
-        const sources = get('model.sources')
+    recipeState.source = () => {
+        const sources = recipeState('model.sources')
         return sources && Object.keys(sources)[0]
     }
-    initRecipe(get())
-    return get
+    // initRecipe(recipeState())
+    return recipeState
 }
 
 export const RecipeActions = id => {
@@ -169,54 +188,6 @@ export const RecipeActions = id => {
     }
 }
 
-const initRecipe = recipeState => {
-    if (!recipeState || recipeState.ui)
-        return
-    const actions = RecipeActions(recipeState.id)
-
-    actions.setLabelsShown(false).dispatch()
-    actions.setSceneAreasShown(true).dispatch()
-    actions.setBands('red, green, blue').dispatch()
-    actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
-
-    const model = recipeState.model
-    if (model)
-        return actions.setInitialized(model.aoi && model.dates && model.sources).dispatch()
-
-    const now = moment()
-    actions.setDates({
-        model: {
-            targetDate: now.format(DATE_FORMAT),
-            seasonStart: now.startOf('year').format(DATE_FORMAT),
-            seasonEnd: now.add(1, 'years').startOf('year').format(DATE_FORMAT),
-            yearsBefore: 0,
-            yearsAfter: 0
-        }
-    }).dispatch()
-
-    actions.setSources({
-        model: {
-            LANDSAT: ['LANDSAT_8']
-        }
-    }).dispatch()
-
-    actions.setSceneSelectionOptions({
-        model: {
-            type: SceneSelectionType.ALL,
-            targetDateWeight: 0
-        }
-    }).dispatch()
-
-    actions.setCompositeOptions({
-        model: {
-            corrections: ['SR', 'BRDF'],
-            filters: [],
-            mask: ['CLOUDS', 'SNOW'],
-            compose: 'MEDOID'
-        }
-    }).dispatch()
-}
-
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const destination = recipe.ui.retrieveOptions.destination
@@ -244,6 +215,20 @@ export const inDateRange = (date, dates) => {
     return toDoy <= fromDoy
         ? doy >= fromDoy || doy < toDoy
         : doy >= fromDoy && doy < toDoy
+}
+
+export const dateRange = dates => {
+    const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
+    const seasonEnd = moment(dates.seasonEnd, DATE_FORMAT)
+    return [
+        seasonStart.subtract(dates.yearsBefore, 'years'),
+        seasonEnd.add(dates.yearsAfter, 'years')
+    ]
+}
+
+export const getSource = recipe => {
+    const sources = selectFrom(recipe, 'model.sources')
+    return sources && Object.keys(sources)[0]
 }
 
 const fromDate = dates =>

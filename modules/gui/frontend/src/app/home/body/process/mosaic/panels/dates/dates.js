@@ -1,8 +1,9 @@
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import {Button} from 'widget/button'
 import {ErrorMessage, Field, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
+import {RecipeActions} from '../../mosaicRecipe'
+import {initValues} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
@@ -13,6 +14,7 @@ import SeasonSelect from 'widget/seasonSelect'
 import Slider from 'widget/slider'
 import moment from 'moment'
 import styles from './dates.module.css'
+import {selectFrom} from 'collections'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -64,6 +66,12 @@ const fields = {
     yearsBefore: new Field(),
     yearsAfter: new Field()
 }
+
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    model: selectFrom(recipe, 'model.dates'),
+    values:selectFrom(recipe, 'ui.dates')
+})
 
 class Dates extends React.Component {
     modal = React.createRef()
@@ -175,12 +183,13 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {recipePath, form, inputs: {advanced}} = this.props
+        const {form, inputs: {advanced}} = this.props
         return (
             <FormPanel
+                id='dates'
                 className={advanced.value ? styles.advanced : styles.simple}
                 form={form}
-                statePath={recipePath + '.ui'}
+                placement='bottom-right'
                 onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}>
                 <PanelHeader
                     icon='calendar-alt'
@@ -248,10 +257,10 @@ const modelToValues = (model = {}) => {
     }
 }
 
-export default withRecipePath()(
+export default withRecipe(mapRecipeToProps)(
     initValues({
-        getModel: props => RecipeState(props.recipeId)('model.dates'),
-        getValues: props => RecipeState(props.recipeId)('ui.dates'),
+        getModel: props => props.model,
+        getValues: props => props.values,
         modelToValues,
         onInitialized: ({model, values, props}) =>
             RecipeActions(props.recipeId)

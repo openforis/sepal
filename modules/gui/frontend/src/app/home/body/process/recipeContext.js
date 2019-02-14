@@ -17,7 +17,7 @@ export const withRecipeContext = () =>
                 return (
                     <Context.Consumer>
                         {recipeContext =>
-                            <ActivationContext statePath={recipeContext.statePath}>
+                            <ActivationContext statePath={recipeContext.statePath + '.ui'}>
                                 {React.createElement(WrappedComponent, {
                                     ...this.props,
                                     recipeContext
@@ -28,12 +28,11 @@ export const withRecipeContext = () =>
                 )
             }
         }
-
         return HigherOrderComponent
     }
 
 
-export const recipe = defaultModel =>
+export const recipe = ({defaultModel, mapRecipeToProps}) =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {
             const {recipeContext: {statePath}} = ownProps
@@ -59,17 +58,20 @@ export const recipe = defaultModel =>
             }
         }
 
-        const ConnectedComponent = connect(mapStateToProps)(HigherOrderComponent)
-        return withRecipeContext()(ConnectedComponent)
+        return withRecipe(mapRecipeToProps)(
+            connect(mapStateToProps)(
+                HigherOrderComponent
+            )
+        )
     }
 
 
-export const withRecipe = recipeToProps =>
+export const withRecipe = mapRecipeToProps =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {
             const {recipeContext: {statePath}} = ownProps
-            const recipe = select(statePath)
-            return recipeToProps(recipe, ownProps)
+            const recipe = {...select(statePath)}
+            return mapRecipeToProps(recipe, ownProps)
         }
 
         const ConnectedComponent = connect(mapStateToProps)(WrappedComponent)

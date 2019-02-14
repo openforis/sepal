@@ -1,64 +1,22 @@
-import {Form} from 'widget/form'
-import {Panel} from 'widget/panel'
-import {PanelButtonContext} from './toolbar'
-import {PanelButtons} from 'widget/panel'
-import {PanelWizardContext} from './panelWizard'
-import {connect, select} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
-
-const mapStateToProps = (state, ownProps) => {
-    const {statePath} = ownProps
-    return {
-        initialized: select([statePath, 'initialized']),
-        selectedPanel: select([statePath, 'selectedPanel'])
-    }
-}
+import {Activatable} from 'widget/activation'
+import {Form} from 'widget/form'
+import {Panel, PanelButtons} from 'widget/panel'
+import {PanelWizardContext} from './panelWizard'
+import {PanelButtonContext} from './toolbar'
 
 const PanelContext = React.createContext()
 
-class FormPanel extends React.Component {
-    componentDidMount() {
-        const {initialized, form, modalOnDirty = true} = this.props
-        if (modalOnDirty) {
-            this.setModal(!initialized)
-            if (initialized) {
-                form.onDirty(() => this.setModal(true))
-                form.onClean(() => this.setModal(false))
-            }
-        }
-    }
-
-    setModal(modal) {
-        const {statePath} = this.props
-        actionBuilder('SET_MODAL', {modal})
-            .set([statePath, 'modal'], modal)
-            .dispatch()
-    }
-
-    selectPanel(panel) {
-        const {statePath} = this.props
-        actionBuilder('SELECT_PANEL', {panel})
-            .set([statePath, 'selectedPanel'], panel)
-            .dispatch()
-    }
-
-    setInitialized() {
-        const {statePath} = this.props
-        actionBuilder('SET_INITIALIZED')
-            .set([statePath, 'initialized'], true)
-            .dispatch()
-    }
-
+export default class FormPanel extends React.Component {
     closePanel() {
-        this.setModal(false)
-        this.selectPanel()
+        this.deactivate()
     }
 
     apply() {
         const {form, onApply} = this.props
         onApply(form && form.values())
+        return true
     }
 
     ok() {
@@ -77,49 +35,34 @@ class FormPanel extends React.Component {
         this.closePanel()
     }
 
-    back(panel) {
-        this.apply()
-        this.selectPanel(panel)
-    }
-
-    next(panel) {
-        this.apply()
-        this.selectPanel(panel)
-    }
-
-    done() {
-        this.apply()
-        this.setInitialized()
-        this.closePanel()
-    }
-
-    render() {
-        const {form = false, isActionForm, initialized, onApply, type = 'modal', className, children} = this.props
-        const {selectedPanel} = this.props
+    renderPanel() {
+        const {
+            form = false, isActionForm, onApply, type = 'modal', className, children,
+            placement
+        } = this.props
         return (
-            <PanelWizardContext.Consumer>
-                {(panels = []) => {
-                    const wizard = panels.length && !initialized
-                    const selectedPanelIndex = panels.indexOf(selectedPanel)
-                    const first = selectedPanelIndex === 0
-                    const last = selectedPanelIndex === panels.length - 1
+            <PanelWizardContext>
+                {({wizard, back, next, done}) => {
                     return (
                         <PanelButtonContext.Consumer>
-                            {placement => (
+                            {placementFromContext => (
                                 <PanelContext.Provider value={{
                                     wizard,
-                                    first,
-                                    last,
+                                    first: !back,
+                                    last: !next,
                                     isActionForm: form && isActionForm,
                                     dirty: form && form.isDirty(),
                                     invalid: form && form.isInvalid(),
                                     onOk: () => this.ok(),
                                     onCancel: () => this.cancel(),
-                                    onBack: () => !first && this.back(panels[selectedPanelIndex - 1]),
-                                    onNext: () => !last && this.next(panels[selectedPanelIndex + 1]),
-                                    onDone: () => this.done()
+                                    onBack: () => back && this.apply() && back(),
+                                    onNext: () => next && this.apply() && next(),
+                                    onDone: () => done && this.apply() && done()
                                 }}>
-                                    <Panel className={className} type={placement || type}>
+                                    <Panel
+                                        id={this.props.id}
+                                        className={className}
+                                        type={placement || placementFromContext || type}>
                                         <Form onSubmit={() => onApply && onApply(form && form.values())}>
                                             {children}
                                         </Form>
@@ -127,23 +70,41 @@ class FormPanel extends React.Component {
                                 </PanelContext.Provider>
                             )}
                         </PanelButtonContext.Consumer>
-                    )}}
-            </PanelWizardContext.Consumer>
+                    )
+                }}
+            </PanelWizardContext>
+        )
+    }
+
+    defaultPolicy() {
+        const {form} = this.props
+        const dirtyPolicy = {compatibleWith: {include: []}}
+        const cleanPolicy = {deactivateWhen: {exclude: []}}
+        return () => form.isDirty() ? dirtyPolicy : cleanPolicy
+    }
+
+    render() {
+        const {id, policy} = this.props
+        return (
+            <Activatable id={id} policy={policy || this.defaultPolicy()}>
+                {({deactivate}) => {
+                    this.deactivate = deactivate
+                    return this.renderPanel()
+                }}
+            </Activatable>
         )
     }
 }
 
-export default connect(mapStateToProps)(FormPanel)
-
 FormPanel.propTypes = {
     children: PropTypes.any.isRequired,
+    id: PropTypes.string.isRequired,
     form: PropTypes.object.isRequired,
-    statePath: PropTypes.string.isRequired,
+    policy: PropTypes.func,
     className: PropTypes.string,
-    initialized: PropTypes.any,
     isActionForm: PropTypes.any,
-    modalOnDirty: PropTypes.any,
     type: PropTypes.string,
+    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']), // TODO: Same as type?
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
 }

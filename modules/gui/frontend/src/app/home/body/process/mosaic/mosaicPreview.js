@@ -1,21 +1,16 @@
-import {Button} from 'widget/button'
-import {RecipeState, SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {connect} from 'store'
-import {msg} from 'translate'
-import {sepalMap} from 'app/home/map/map'
+import api from 'api'
+import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
+import {sepalMap} from 'app/home/map/map'
+import _ from 'lodash'
+import React from 'react'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
 import MapStatus from 'widget/mapStatus'
 import Notifications from 'widget/notifications'
-import React from 'react'
-import _ from 'lodash'
-import api from 'api'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        recipe: recipeState()
-    }
-}
+const mapRecipeToProps = recipe => ({recipe})
 
 class MosaicPreview extends React.Component {
     state = {}
@@ -44,10 +39,6 @@ class MosaicPreview extends React.Component {
     }
 
     onError(e) {
-        // const message = e.response && e.response.code
-        //     ? msg(e.response.code, e.response.data)
-        //     : msg('process.mosaic.preview.error')
-        
         Notifications.error({
             title: msg('gee.error.title'),
             message: msg('process.mosaic.preview.error'),
@@ -131,10 +122,10 @@ class MosaicPreview extends React.Component {
             recipe: _.omit(recipe, ['ui']),
             bands: {
                 selection: recipe.ui.bands.selection.split(', '),
-                panSharpen: recipe.ui.bands.panSharpen
+                panSharpen: !!recipe.ui.bands.panSharpen
             }
         }
     }
 }
 
-export default connect(mapStateToProps)(MosaicPreview)
+export default withRecipe(mapRecipeToProps)(MosaicPreview)

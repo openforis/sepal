@@ -25,7 +25,7 @@ class MapToolbar extends React.Component {
                 placement='top-right'>
                 <ToolbarButton
                     disabled={sepalMap.isMaxZoom()}
-                    onClick={() => sepalMap.getzoomIn()}
+                    onClick={() => sepalMap.zoomIn()}
                     icon={'plus'}
                     tooltip={msg('process.mosaic.mapToolbar.zoomIn.tooltip')}/>
                 <ToolbarButton

@@ -1,10 +1,10 @@
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import {Field, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {RecipeActions} from '../../mosaicRecipe'
 import {currentUser} from 'user'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'
-import {withRecipePath} from 'app/home/body/process/recipe'
 import Buttons from 'widget/buttons'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
@@ -12,6 +12,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './retrieve.module.css'
+import {selectFrom} from 'collections'
 
 const fields = {
     bands: new Field()
@@ -20,15 +21,13 @@ const fields = {
         .notEmpty('process.mosaic.panel.retrieve.form.destination.required')
 }
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        sources: recipeState('model.sources'),
-        compositeOptions: recipeState('model.compositeOptions'),
-        values: recipeState('ui.retrieveOptions'),
-        user: currentUser()
-    }
-}
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    sources: selectFrom(recipe, 'model.sources'),
+    compositeOptions: selectFrom(recipe, 'model.compositeOptions'),
+    values: selectFrom(recipe, 'ui.retrieveOptions'),
+    user: currentUser()
+})
 
 class Retrieve extends React.Component {
     constructor(props) {
@@ -124,19 +123,19 @@ class Retrieve extends React.Component {
                         multiple={false}
                         options={destinationOptions}/>
                 </div>
-
             </div>
         )
     }
 
     render() {
-        const {recipePath, form} = this.props
+        const {form} = this.props
         return (
             <FormPanel
+                id='retrieve'
                 className={styles.panel}
                 form={form}
-                statePath={recipePath + '.ui'}
                 isActionForm={true}
+                placement='top-right'
                 onApply={values => this.recipeActions.retrieve(values).dispatch()}>
                 <PanelHeader
                     icon='cloud-download-alt'
@@ -165,7 +164,7 @@ Retrieve.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default withRecipePath()(
-    form({fields, mapStateToProps})(Retrieve)
+export default withRecipe(mapRecipeToProps)(
+    form({fields})(Retrieve)
 )
 

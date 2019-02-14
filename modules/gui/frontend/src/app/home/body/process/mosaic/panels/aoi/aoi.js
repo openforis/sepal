@@ -1,19 +1,21 @@
-import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {initValues} from 'app/home/body/process/recipe'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
-import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
-import CountrySection from './countrySection'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import FusionTableSection from './fusionTableSection'
-import PanelSections from 'widget/panelSections'
-import PolygonSection from './polygonSection'
+import {selectFrom} from 'collections'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SectionSelection from './sectionSelection'
-import _ from 'lodash'
+import {msg} from 'translate'
+import {Field, form} from 'widget/form'
+import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import PanelSections from 'widget/panelSections'
+import {RecipeActions} from '../../mosaicRecipe'
 import styles from './aoi.module.css'
+import CountrySection from './countrySection'
+import FusionTableSection from './fusionTableSection'
+import PolygonSection from './polygonSection'
+import SectionSelection from './sectionSelection'
 
 const fields = {
     section: new Field()
@@ -41,12 +43,18 @@ const fields = {
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
 }
 
+const mapRecipeToProps = (recipe) => ({
+    recipeId: recipe.id,
+    model: selectFrom(recipe, 'model.aoi'),
+    values: selectFrom(recipe, 'ui.aoi')
+})
+
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
         const {values, recipeId} = props
         this.aoiUnchanged = true
-        this.initialAoi = values
+        this.initialValues = values
         this.initialBounds = sepalMap.getBounds()
         this.initialZoom = sepalMap.getZoom()
         this.recipeActions = RecipeActions(recipeId)
@@ -54,12 +62,12 @@ class Aoi extends React.Component {
 
     onApply(values) {
         const {recipeId, componentWillUnmount$} = this.props
-        this.recipeActions.setAoi({values, model: valuesToModel(values)}).dispatch()
-        const aoi = RecipeState(recipeId)('ui.aoi')
-        this.aoiUnchanged = _.isEqual(aoi, this.initialAoi)
+        const model = valuesToModel(values)
+        this.recipeActions.setAoi({values, model}).dispatch()
+        this.aoiUnchanged = _.isEqual(values, this.initialValues)
         setAoiLayer({
             contextId: recipeId,
-            aoi: aoi,
+            aoi: model,
             fill: false,
             destroy$: componentWillUnmount$
         })
@@ -91,9 +99,11 @@ class Aoi extends React.Component {
         ]
         return (
             <FormPanel
+                id='areaOfInterest'
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
+                placement='bottom-right'
                 onApply={values => this.onApply(values)}>
                 <PanelSections inputs={inputs} selected={inputs.section} sections={sections}/>
 
@@ -103,20 +113,17 @@ class Aoi extends React.Component {
     }
 
     componentDidUpdate() {
-        const input = this.props.inputs.allowWholeFusionTable
-        const allowWholeFusionTable = this.props.allowWholeFusionTable || ''
-        input.set(allowWholeFusionTable)
+        const {inputs, allowWholeFusionTable = ''} = this.props
+        inputs.allowWholeFusionTable.set(allowWholeFusionTable)
     }
 
     componentWillUnmount() {
-        const {recipeId} = this.props
-        const recipeState = RecipeState(recipeId)
+        const {recipeId, model} = this.props
         setAoiLayer({
             contextId: recipeId,
-            aoi: recipeState && recipeState('model.aoi'),
+            aoi: model,
             fill: false
-        }
-        )
+        })
         if (this.aoiUnchanged) {
             sepalMap.fitBounds(this.initialBounds)
             sepalMap.setZoom(this.initialZoom)
@@ -131,29 +138,29 @@ Aoi.propTypes = {
 
 const valuesToModel = values => {
     switch (values.section) {
-    case 'COUNTRY':
-        return {
-            type: 'FUSION_TABLE',
-            id: countryFusionTable,
-            keyColumn: 'id',
-            key: values.area || values.country,
-            level: values.area ? 'AREA' : 'COUNTRY'
-        }
-    case 'FUSION_TABLE':
-        return {
-            type: 'FUSION_TABLE',
-            id: values.fusionTable,
-            keyColumn: values.fusionTableColumn,
-            key: values.fusionTableRow,
-            bounds: values.bounds
-        }
-    case 'POLYGON':
-        return {
-            type: 'POLYGON',
-            path: values.polygon
-        }
-    default:
-        throw new Error('Invalid aoi section: ' + values.section)
+        case 'COUNTRY':
+            return {
+                type: 'FUSION_TABLE',
+                id: countryFusionTable,
+                keyColumn: 'id',
+                key: values.area || values.country,
+                level: values.area ? 'AREA' : 'COUNTRY'
+            }
+        case 'FUSION_TABLE':
+            return {
+                type: 'FUSION_TABLE',
+                id: values.fusionTable,
+                keyColumn: values.fusionTableColumn,
+                key: values.fusionTableRow,
+                bounds: values.bounds
+            }
+        case 'POLYGON':
+            return {
+                type: 'POLYGON',
+                path: values.polygon
+            }
+        default:
+            throw new Error('Invalid aoi section: ' + values.section)
     }
 }
 
@@ -180,10 +187,10 @@ const modelToValues = (model = {}) => {
         return {}
 }
 
-export default withRecipePath()(
+export default withRecipe(mapRecipeToProps)(
     initValues({
-        getModel: props => RecipeState(props.recipeId)('model.aoi'),
-        getValues: props => RecipeState(props.recipeId)('ui.aoi'),
+        getModel: props => props.model,
+        getValues: props => props.values,
         modelToValues,
         onInitialized: ({model, values, props}) =>
             RecipeActions(props.recipeId)

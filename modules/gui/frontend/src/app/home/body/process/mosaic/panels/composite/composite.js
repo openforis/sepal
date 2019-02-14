@@ -1,8 +1,10 @@
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'collections'
 import {Field, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {getSource, RecipeActions} from '../../mosaicRecipe'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
+import {initValues} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
@@ -22,9 +24,12 @@ const fields = {
     compose: new Field()
 }
 
-const mapStateToProps = (state, ownProps) => {
-    return {source: RecipeState(ownProps.recipeId).source()}
-}
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    model: selectFrom(recipe, 'model.composite'),
+    values: selectFrom(recipe, 'ui.composite'),
+    source: getSource(recipe)
+})
 
 class Composite extends React.Component {
     constructor(props) {
@@ -101,12 +106,13 @@ class Composite extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
+        const {form} = this.props
         return (
             <FormPanel
+                id='composite'
                 className={styles.panel}
                 form={form}
-                statePath={recipePath + '.ui'}
+                placement='bottom-right'
                 onApply={values => this.recipeActions.setCompositeOptions({
                     values,
                     model: valuesToModel(values)
@@ -185,16 +191,16 @@ const modelToValues = model => {
     })
 }
 
-export default withRecipePath()(
+export default withRecipe(mapRecipeToProps)(
     initValues({
-        getModel: props => RecipeState(props.recipeId)('model.compositeOptions'),
-        getValues: props => RecipeState(props.recipeId)('ui.compositeOptions'),
+        getModel: props => props.model,
+        getValues: props => props.values,
         modelToValues,
         onInitialized: ({model, values, props}) =>
             RecipeActions(props.recipeId)
                 .setCompositeOptions({values, model})
                 .dispatch()
     })(
-        form({fields, mapStateToProps})(Composite)
+        form({fields})(Composite)
     )
 )

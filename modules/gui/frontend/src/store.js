@@ -2,7 +2,7 @@ import {Subject} from 'rxjs'
 import {connect as connectToRedux} from 'react-redux'
 import {isMobile} from 'widget/userAgent'
 import {takeUntil} from 'rxjs/operators'
-import {toPathList} from 'collections'
+import {selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
@@ -35,9 +35,7 @@ export function dispatch(action) {
 }
 
 export function select(path) {
-    return toPathList(path).reduce((state, part) => {
-        return state != null && state[part] != null ? state[part] : undefined
-    }, state())
+    return selectFrom(state(), path)
 }
 
 function includeDispatchingProp(id, mapStateToProps) {
@@ -86,7 +84,14 @@ export function connect(mapStateToProps) {
         }
 
         const ReduxConnectedComponent = connectToRedux(
-            includeDispatchingProp(id, mapStateToProps), null, null, {areStatePropsEqual: _.isEqual}
+            includeDispatchingProp(id, mapStateToProps), null, null, {
+                areStatePropsEqual: (props1, props2) =>
+                    _.difference(Object.keys(props1), Object.keys(props2)).length === 0 &&
+                    _.isEqual(
+                        _.pickBy(props1, o => !_.isFunction(o)),
+                        _.pickBy(props2, o => !_.isFunction(o))
+                    )
+            }
         )(PreventUpdateWhenDisabled)
 
         class ConnectedComponent extends React.PureComponent {

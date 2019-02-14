@@ -1,25 +1,28 @@
-import {connect, select} from 'store'
-import React from 'react'
-import _ from 'lodash'
 import actionBuilder from 'action-builder'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {connect, select} from 'store'
 
 export const ActivationContext = ({statePath, children}) =>
     <Context.Provider value={{statePath}}>
         {children}
     </Context.Provider>
 
-const withActivationContext = () =>
-    WrappedComponent => {
+const withActivationContext = () => {
+    return WrappedComponent => {
         class HigherOrderComponent extends React.Component {
             render() {
                 return (
                     <Context.Consumer>
-                        {activationContext =>
-                            React.createElement(WrappedComponent, {
+                        {activationContext => {
+                            if (!activationContext)
+                                throw new Error(`Component has no ActivationContext: ${WrappedComponent}`)
+                            return React.createElement(WrappedComponent, {
                                 ...this.props,
                                 activationContext
                             })
-                        }
+                        }}
                     </Context.Consumer>
                 )
             }
@@ -27,74 +30,96 @@ const withActivationContext = () =>
 
         return HigherOrderComponent
     }
+}
 
-export const coordinateActivation = (id, policy) =>
-    WrappedComponent => {
-        const mapStateToProps = (state, ownProps) => {
-            const {activationContext: {statePath}} = ownProps
-            const policies = select([statePath, 'policy']) || {}
-            const policy = policies && policies[id]
-            const active = !!(policy && policy.active)
-            const justTriggered = !!(policy && policy.justTriggered)
-            return {
+const getActivatableProps = (statePath, id) => {
+    const policies = select([statePath, 'policy']) || {}
+    const policy = policies && policies[id]
+    const active = !!(policy && policy.active)
+    const justTriggered = !!(policy && policy.justTriggered)
+    return {
+        active,
+        justTriggered,
+        activeElements: Object.keys(policies).filter(elementId => policies[elementId].active),
+    }
+}
+
+
+class ActivatableWrapper extends React.Component {
+    render() {
+        const {id, active, children} = this.props
+        return active
+            ? <Activator id={id}>{props => children(props)}</Activator>
+            : null
+    }
+
+    componentDidMount() {
+        this.updatePolicy()
+    }
+
+    componentDidUpdate() {
+        this.updatePolicy()
+    }
+
+    componentWillUnmount() {
+        this.removePolicy()
+    }
+
+    policyPath() {
+        const {id, activationContext: {statePath}} = this.props
+        return [statePath, 'policy', id]
+    }
+
+    shouldDeactivate(policy) {
+        const {id, activeElements, active, justTriggered} = this.props
+        if (justTriggered)
+            return active && !justTriggered
+                && _(activeElements)
+                    .filter(activeId => activeId !== id)
+                    .some(activeId => deactivateWhen(activeId, policy))
+    }
+
+    updatePolicy() {
+        const {active, policy} = this.props
+        const policyToApply = policy ? policy(this.props) : {}
+        this.setPolicy(policyToApply, active && !this.shouldDeactivate(policyToApply))
+    }
+
+    setPolicy(policy, active) {
+        const {id} = this.props
+        actionBuilder('UPDATE_POLICY', {id, policy})
+            .set(this.policyPath(), {
+                ...policy,
                 active,
-                justTriggered,
-                activeElements: Object.keys(policies).filter(elementId => policies[elementId].active),
-            }
-        }
+                justTriggered: false
+            })
+            .dispatch()
+    }
 
+    removePolicy() {
+        const {id} = this.props
+        actionBuilder('REMOVE_POLICY', {id})
+            .del(this.policyPath())
+            .dispatch()
+    }
+}
+
+
+export const activatable = (id, policy) => {
+    const mapStateToProps = (state, ownProps) => {
+        const {activationContext: {statePath}} = ownProps
+        return getActivatableProps(statePath, id)
+    }
+
+    return WrappedComponent => {
         class HigherOrderComponent extends React.Component {
             render() {
-                return this.props.active
-                    ? React.createElement(WrappedComponent, this.props)
-                    : null
-            }
+                return (
+                    <ActivatableWrapper id={id} policy={policy} {...this.props}>
+                        {props => React.createElement(WrappedComponent, {...this.props, ...props})}
+                    </ActivatableWrapper>
+                )
 
-            componentDidMount() {
-                this.updatePolicy()
-            }
-
-            componentDidUpdate() {
-                this.updatePolicy()
-            }
-
-            componentWillUnmount() {
-                this.removePolicy()
-            }
-
-            policyPath() {
-                const {activationContext: {statePath}} = this.props
-                return [statePath, 'policy', id]
-            }
-
-            shouldDeactivate(policy) {
-                const {activeElements, active, justTriggered} = this.props
-                return active && !justTriggered
-                    && _(activeElements)
-                        .filter(activeId => activeId !== id)
-                        .some(activeId => deactivateWhen(activeId, policy))
-            }
-
-            updatePolicy() {
-                const {active} = this.props
-                const policyToApply = policy(this.props)
-                this.setPolicy(policyToApply, active && !this.shouldDeactivate(policyToApply))
-            }
-
-            setPolicy(policy, active) {
-                actionBuilder('UPDATE_POLICY', {id, policy})
-                    .set(this.policyPath(), {
-                        ...policy,
-                        active,
-                        justTriggered: false
-                    })
-                    .dispatch()
-            }
-
-            removePolicy() {
-                actionBuilder('REMOVE_POLICY', {id})
-                    .del(this.policyPath())
-                    .dispatch()
             }
         }
 
@@ -104,6 +129,35 @@ export const coordinateActivation = (id, policy) =>
             )
         )
     }
+}
+
+
+export const Activatable = ({id, policy, children}) =>
+    <Context.Consumer>
+        {activationContext => {
+            const activatableProps = getActivatableProps(activationContext.statePath, id)
+            return (
+                <ActivatableWrapper
+                    id={id}
+                    policy={policy}
+                    activationContext={activationContext}
+                    {...activatableProps}>
+                    {activatorProps =>
+                        children({
+                            ...activatorProps,
+                            ...activatableProps
+                        })}
+                </ActivatableWrapper>
+            )
+        }
+        }
+    </Context.Consumer>
+
+Activatable.propTypes = {
+    id: PropTypes.string.isRequired,
+    children: PropTypes.func.isRequired,
+    policy: PropTypes.func
+}
 
 export const policesAllowActivation = (id, policies = {}) => {
     const [[ownPolicy], otherPolicies] = _(policies)
@@ -121,14 +175,12 @@ export const policesAllowActivation = (id, policies = {}) => {
 const policiesCompatible = (thisPolicy, otherPolicy) => {
     const thisCompatibleWithOther = compatibleWith(thisPolicy.id, otherPolicy)
     const otherCompatibleWithThis = compatibleWith(otherPolicy.id, thisPolicy)
-    
+
     const otherShouldDeactivate = deactivateWhen(thisPolicy.id, otherPolicy)
     const thisShouldDeactivate = deactivateWhen(otherPolicy.id, thisPolicy)
-    
-    return thisCompatibleWithOther && otherShouldDeactivate
-        || thisCompatibleWithOther && otherCompatibleWithThis && !thisShouldDeactivate
-    // return thisCompatibleWithOther
-    //     && (otherShouldDeactivate || otherCompatibleWithThis && !thisShouldDeactivate)
+
+    return (thisCompatibleWithOther && otherShouldDeactivate)
+        || (thisCompatibleWithOther && otherCompatibleWithThis && !thisShouldDeactivate)
 }
 
 const compatibleWith = (id, policy) => {
@@ -149,43 +201,65 @@ const deactivateWhen = (id, policy) => {
     return false
 }
 
-export const withActivationStatus = (id) => {
-    return WrappedComponent => {
+const getActivatorProps = (statePath, id) => {
+    const activate = (id, policyPath) => {
+        return actionBuilder('ACTIVATE', {id})
+            .assign(policyPath, {
+                active: true,
+                justTriggered: true
+            })
+            .dispatch()
+    }
 
-        const mapStateToProps = (state, ownProps) => {
-            const {activationContext: {statePath}} = ownProps
-            const policies = select([statePath, 'policy'])
-            const active = !!(policies && policies[id] && policies[id].active)
-            const canActivate = policesAllowActivation(id, policies)
-            return {
-                active,
-                canActivate,
-                activate: () => canActivate && activate([statePath, 'policy', id]),
-                deactivate: () => active && deactivate([statePath, 'policy', id])
-            }
+    const deactivate = (id, policyPath) =>
+        actionBuilder('DEACTIVATE', {id})
+            .assign(policyPath, {
+                active: false
+            })
+            .dispatch()
+
+    const getPolicies = () => select([statePath, 'policy']) || {}
+    const isActive = id => !!(getPolicies()[id] || {}).active
+    const canActivate = id => policesAllowActivation(id, getPolicies())
+
+    const props = id => ({
+        active: isActive(id),
+        canActivate: canActivate(id),
+        activate: () => canActivate(id) && activate(id, [statePath, 'policy', id]),
+        deactivate: () => isActive(id) && deactivate(id, [statePath, 'policy', id]),
+
+    })
+    return id
+        ? props(id)
+        : {
+            activatables: _.transform(
+                Object.keys(getPolicies()),
+                (acc, id) => acc[id] = props(id), {})
         }
+}
 
-        const activate = (policyPath) =>
-            actionBuilder('ACTIVATE', {id})
-                .assign(policyPath, {
-                    active: true,
-                    justTriggered: true
-                })
-                .dispatch()
+export const activator = (id) => {
+    const mapStateToProps = (state, ownProps) => {
+        const {activationContext: {statePath}} = ownProps
+        return getActivatorProps(statePath, id)
+    }
 
-        const deactivate = (policyPath) =>
-            actionBuilder('DEACTIVATE', {id})
-                .assign(policyPath, {
-                    active: false
-                })
-                .dispatch()
-
-        return withActivationContext()(
+    return WrappedComponent =>
+        withActivationContext()(
             connect(mapStateToProps)(
                 WrappedComponent
             )
         )
-    }
+}
+
+export const Activator = ({id, children}) =>
+    <Context.Consumer>
+        {({statePath}) => children(getActivatorProps(statePath, id))}
+    </Context.Consumer>
+
+Activator.propTypes = {
+    id: PropTypes.string.isRequired,
+    children: PropTypes.func.isRequired
 }
 
 const Context = React.createContext()

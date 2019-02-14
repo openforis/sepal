@@ -1,8 +1,11 @@
+import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import W from 'widget/workflow'
 import InitToolbar from './initToolbar'
+import Period from './period'
+// import Typology from './typology'
 
 
 const recipeToProps = recipe => {
@@ -18,6 +21,10 @@ class LandCoverInit extends React.Component {
         return (
             <W.Step>
                 <W.Content>
+                    <Aoi recipeId={recipeId}/>
+                    <Period recipeId={recipeId}/>
+                    {/*<Typology recipeId={recipeId}/>*/}
+
                     <MapToolbar
                         statePath={statePath + '.ui'}
                         mapContext={recipeId}

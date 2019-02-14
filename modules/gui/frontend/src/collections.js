@@ -32,3 +32,8 @@ export const toPathList = path => {
     flatten(path)
     return pathList
 }
+
+export const selectFrom = (object, path) =>
+    toPathList(path).reduce((subObject, part) => {
+        return subObject != null && subObject[part] != null ? subObject[part] : undefined
+    }, object)

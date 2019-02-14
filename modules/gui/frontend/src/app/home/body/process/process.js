@@ -13,7 +13,7 @@ import TimeSeries from './timeSeries/timeSeries'
 
 const recipeComponent = (id, type) => (
     {
-        MOSAIC: <Mosaic recipeId={id}/>,
+        MOSAIC: <Mosaic/>,
         CLASSIFICATION: <Classification recipeId={id}/>,
         CHANGE_DETECTION: <ChangeDetection recipeId={id}/>,
         TIME_SERIES: <TimeSeries recipeId={id}/>,

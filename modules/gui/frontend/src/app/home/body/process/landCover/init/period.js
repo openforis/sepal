@@ -3,6 +3,7 @@ import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {msg} from 'translate'
+// import {activatable} from 'widget/activation'
 import DatePicker from 'widget/datePicker'
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
@@ -37,10 +38,18 @@ class Period extends React.Component {
 
     render() {
         const {recipePath, form} = this.props
+
+        const dirtyPolicy = {compatibleWith: {include: []}}
+        const cleanPolicy = {deactivateWhen: {exclude: []}}
+        const policy = () => form.isDirty() ? dirtyPolicy : cleanPolicy
+
         return (
             <FormPanel
+                id='period'
+                policy={policy}
                 className={styles.panel}
                 form={form}
+                placement='bottom-right'
                 statePath={recipePath + '.ui'}
                 onApply={values => this.recipeActions.setPeriod({
                     values,
@@ -119,6 +128,10 @@ export default withRecipePath()(
                 .setPeriod({values, model})
                 .dispatch()
     })(
-        form({fields, constraints})(Period)
+        form({fields, constraints})(
+            // coordinateActivation('period', policy)(
+                Period
+            // )
+        )
     )
 )

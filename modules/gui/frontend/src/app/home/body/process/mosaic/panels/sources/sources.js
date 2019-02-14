@@ -1,15 +1,16 @@
-import {Field, form} from 'widget/form'
-import {Msg, msg} from 'translate'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import {arrayEquals} from 'collections'
-import {imageSourceById, sources} from 'sources'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
-import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
+import {initValues} from 'app/home/body/process/recipe'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {arrayEquals, selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {imageSourceById, isDataSetInDateRange, isSourceInDateRange, sources} from 'sources'
+import {Msg, msg} from 'translate'
+import Buttons from 'widget/buttons'
+import {Field, form} from 'widget/form'
+import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import Label from 'widget/label'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, dateRange} from '../../mosaicRecipe'
 import styles from './sources.module.css'
 import updateSource from './updateSource'
 
@@ -20,15 +21,18 @@ const fields = {
         .notEmpty('process.mosaic.panel.sources.form.required')
 }
 
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    model: selectFrom(recipe, 'model.sources'),
+    values: selectFrom(recipe, 'ui.sources'),
+    dates: selectFrom(recipe, 'model.dates')
+})
+
 class Sources extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
         this.recipeActions = RecipeActions(recipeId)
-        const {dateRange, isSourceInDateRange, isDataSetInDateRange} = RecipeState(recipeId)
-        this.dateRange = dateRange
-        this.isSourceInDateRange = isSourceInDateRange
-        this.isDataSetInDateRange = isDataSetInDateRange
     }
 
     lookupDataSetNames(sourceValue) {
@@ -43,12 +47,13 @@ class Sources extends React.Component {
     }
 
     renderSources() {
-        const {inputs: {source}} = this.props
+        const {dates, inputs: {source}} = this.props
+        const [from, to] = dateRange(dates)
         const options = sources.map(value =>
             ({
                 value,
                 label: msg(['process.mosaic.panel.sources.form.source.options', value]),
-                neverSelected: !this.isSourceInDateRange(value)
+                neverSelected: !isSourceInDateRange(value, from, to)
             })
         )
         return (
@@ -64,16 +69,17 @@ class Sources extends React.Component {
     }
 
     renderDataSets() {
-        const {inputs: {source, dataSets}} = this.props
+        const {dates, inputs: {source, dataSets}} = this.props
         if (!source.value)
             return
         const dataSetNames = this.lookupDataSetNames(source.value)
+        const [from, to] = dateRange(dates)
         const options = (dataSetNames || []).map(value =>
             ({
                 value,
                 label: msg(['process.mosaic.panel.sources.form.dataSets.options', value, 'label']),
                 tooltip: msg(['process.mosaic.panel.sources.form.dataSets.options', value, 'tooltip']),
-                disabled: !this.isDataSetInDateRange(value)
+                disabled: !isDataSetInDateRange(value, from, to)
             })
         )
         const content = options.length > 1
@@ -88,12 +94,13 @@ class Sources extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
+        const {form} = this.props
         return (
             <FormPanel
+                id='sources'
                 className={styles.panel}
                 form={form}
-                statePath={recipePath + '.ui'}
+                placement='bottom-right'
                 onApply={values => this.recipeActions.setSources({
                     values,
                     model: valuesToModel(values)
@@ -115,8 +122,8 @@ class Sources extends React.Component {
     }
 
     componentDidUpdate() {
-        const {inputs: {source, dataSets}} = this.props
-        const [selectedSource, selectedDataSets] = updateSource(source.value, dataSets.value, ...this.dateRange())
+        const {dates, inputs: {source, dataSets}} = this.props
+        const [selectedSource, selectedDataSets] = updateSource(source.value, dataSets.value, ...dateRange(dates))
         if (selectedSource !== source.value)
             source.set(selectedSource)
 
@@ -140,10 +147,10 @@ const modelToValues = model => {
     }
 }
 
-export default withRecipePath()(
+export default withRecipe(mapRecipeToProps)(
     initValues({
-        getModel: props => RecipeState(props.recipeId)('model.sources'),
-        getValues: props => RecipeState(props.recipeId)('ui.sources'),
+        getModel: props => props.model,
+        getValues: props => props.values,
         modelToValues,
         onInitialized: ({model, values, props}) =>
             RecipeActions(props.recipeId)

@@ -1,13 +1,14 @@
-import {Field, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import {msg} from 'translate'
-import {withRecipePath} from 'app/home/body/process/recipe'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {msg} from 'translate'
+import {Field, form} from 'widget/form'
+import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import Label from 'widget/label'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import Slider from 'widget/slider'
+import {RecipeActions} from '../../mosaicRecipe'
 import styles from './auto.module.css'
 
 const fields = {
@@ -15,12 +16,10 @@ const fields = {
     max: new Field()
 }
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        values: recipeState('ui.sceneCount')
-    }
-}
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    values: selectFrom(recipe, 'ui.sceneCount')
+})
 
 class Auto extends React.Component {
     constructor(props) {
@@ -29,13 +28,14 @@ class Auto extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
+        const {form} = this.props
         return (
             <FormPanel
+                id='auto'
                 className={styles.panel}
                 form={form}
-                statePath={recipePath + '.ui'}
                 isActionForm={true}
+                placement='top-right'
                 onApply={sceneCount => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}>
                 <PanelHeader
                     icon='magic'
@@ -83,9 +83,10 @@ class Auto extends React.Component {
 }
 
 Auto.propTypes = {
-    recipeId: PropTypes.string
 }
 
-export default withRecipePath()(
-    form({fields, mapStateToProps})(Auto)
+export default withRecipe(mapRecipeToProps)(
+    form({fields})(
+        Auto
+    )
 )

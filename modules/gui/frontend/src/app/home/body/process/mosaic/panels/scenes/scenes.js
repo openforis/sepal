@@ -1,13 +1,15 @@
-import {Field, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState, SceneSelectionType} from '../../mosaicRecipe'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
+import {initValues} from 'app/home/body/process/recipe'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {msg} from 'translate'
+import Buttons from 'widget/buttons'
+import {Field, form} from 'widget/form'
+import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import Label from 'widget/label'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, SceneSelectionType} from '../../mosaicRecipe'
 import styles from './scenes.module.css'
 
 const fields = {
@@ -16,6 +18,12 @@ const fields = {
 
     targetDateWeight: new Field()
 }
+
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    model: selectFrom(recipe, 'model.sceneSelectionOptions'),
+    values: selectFrom(recipe, 'ui.sceneSelectionOptions')
+})
 
 class Scenes extends React.Component {
     constructor(props) {
@@ -76,12 +84,13 @@ class Scenes extends React.Component {
     }
 
     render() {
-        const {recipePath, form, inputs: {type}} = this.props
+        const {form, inputs: {type}} = this.props
         return (
             <FormPanel
+                id='scenes'
                 className={styles.panel}
                 form={form}
-                statePath={recipePath + '.ui'}
+                placement='bottom-right'
                 onApply={values => this.recipeActions.setSceneSelectionOptions({
                     values,
                     model: valuesToModel(values)
@@ -115,10 +124,10 @@ const modelToValues = model => ({
     ...model
 })
 
-export default withRecipePath()(
+export default withRecipe(mapRecipeToProps)(
     initValues({
-        getModel: props => RecipeState(props.recipeId)('model.sceneSelectionOptions'),
-        getValues: props => RecipeState(props.recipeId)('ui.sceneSelectionOptions'),
+        getModel: props => props.model,
+        getValues: props => props.values,
         modelToValues,
         onInitialized: ({model, values, props}) =>
             RecipeActions(props.recipeId)

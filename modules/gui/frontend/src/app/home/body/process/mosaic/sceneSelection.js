@@ -1,38 +1,39 @@
-import {Button, ButtonGroup} from 'widget/button'
-import {CenteredProgress} from 'widget/progress'
-import {Field, form} from 'widget/form'
-import {HoverDetector, HoverOverlay} from 'widget/hover'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {dataSetById} from 'sources'
+import api from 'api'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {objectEquals, selectFrom} from 'collections'
+import format from 'format'
+import React from 'react'
 import {map} from 'rxjs/operators'
+import {dataSetById} from 'sources'
 import {msg} from 'translate'
-import {objectEquals} from 'collections'
-import {withRecipePath} from 'app/home/body/process/recipe'
+import {activatable} from 'widget/activation'
+import {Button, ButtonGroup} from 'widget/button'
+import {Field, form} from 'widget/form'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import {HoverDetector, HoverOverlay} from 'widget/hover'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
-import PropTypes from 'prop-types'
-import React from 'react'
-import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
-import api from 'api'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {CenteredProgress} from 'widget/progress'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import daysBetween from './daysBetween'
-import format from 'format'
 import styles from './sceneSelection.module.css'
 
 const fields = {
     selectedScenes: new Field()
 }
 
-const mapStateToProps = (state, ownProps) => {
-    const {recipeId, sceneAreaId} = ownProps
-    const recipeState = RecipeState(recipeId)
-    const selectedScenes = recipeState(['model.scenes', sceneAreaId]) || []
+const mapRecipeToProps = recipe => {
+    const sceneAreaId = selectFrom(recipe, 'ui.sceneSelection')
+    const selectedScenes = selectFrom(recipe, ['model.scenes', sceneAreaId]) || []
     return {
-        sources: recipeState('model.sources'),
-        dates: recipeState('model.dates'),
-        sceneSelectionOptions: recipeState('model.sceneSelectionOptions'),
+        recipeId: recipe.id,
+        sceneAreaId,
+        sources: selectFrom(recipe, 'model.sources'),
+        dates: selectFrom(recipe, 'model.dates'),
+        sceneSelectionOptions: selectFrom(recipe, 'model.sceneSelectionOptions'),
         values: {selectedScenes}
     }
 }
@@ -63,16 +64,15 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        const {action, recipeId, recipePath, dates: {targetDate}, form} = this.props
+        const {action, recipeId, dates: {targetDate}, form} = this.props
         const loading = !action('LOAD_SCENES').dispatched
         return (
             <React.Fragment>
                 <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
                 <FormPanel
+                    id='sceneSelection'
                     className={styles.panel}
                     form={form}
-                    statePath={recipePath + '.ui'}
-                    modalOnDirty={false}
                     type='center'
                     onApply={({selectedScenes}) => this.onApply(selectedScenes)}
                     onCancel={() => this.deselectSceneArea()}>
@@ -82,7 +82,8 @@ class SceneSelection extends React.Component {
 
                     <PanelContent className={loading ? styles.loading : null}>
                         {loading
-                            ? <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
+                            ?
+                            <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
                             : this.renderScenes()}
                     </PanelContent>
 
@@ -340,11 +341,18 @@ class Scene extends React.Component {
     }
 }
 
-SceneSelection.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    sceneAreaId: PropTypes.string.isRequired
+SceneSelection.propTypes = {}
+
+
+const policy = () => {
 }
 
-export default withRecipePath()(
-    form({fields, mapStateToProps})(SceneSelection)
+export default (
+    withRecipe(mapRecipeToProps)(
+        activatable('sceneSelection', policy)(
+            form({fields})(
+                SceneSelection
+            )
+        )
+    )
 )

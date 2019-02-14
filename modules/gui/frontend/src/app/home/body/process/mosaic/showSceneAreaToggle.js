@@ -1,15 +1,15 @@
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {ToolbarButton} from 'widget/toolbar'
-import {connect} from 'store'
-import {msg} from 'translate'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {msg} from 'translate'
+import {ToolbarButton} from 'widget/toolbar'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    const sceneAreas = recipeState('ui.sceneAreas')
+const mapRecipeToProps = recipe => {
+    const sceneAreas = selectFrom(recipe, 'ui.sceneAreas')
     return {
-        sceneAreasShown: recipeState('ui.sceneAreasShown'),
+        sceneAreasShown: selectFrom(recipe, 'ui.sceneAreasShown'),
         sceneAreasLoaded: sceneAreas && Object.keys(sceneAreas).length > 0
     }
 }
@@ -37,4 +37,4 @@ ShowSceneAreaToggle.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default connect(mapStateToProps)(ShowSceneAreaToggle)
+export default withRecipe(mapRecipeToProps)(ShowSceneAreaToggle)

@@ -157,7 +157,7 @@ export class PanelButtons extends React.Component {
             />
         )
     }
-    
+
     static Cancel(props) {
         return PanelButtons.renderButton({template: 'cancel', ...props})
     }
@@ -232,7 +232,7 @@ export class PanelButtons extends React.Component {
             </React.Component>
         )
     }
-    
+
     render() {
         const {className, shown = true, children} = this.props
         return shown ? (
@@ -277,7 +277,7 @@ PanelButtons.Cancel.propTypes = {
     shown: PropTypes.any,
     size: PropTypes.string
 }
-    
+
 PanelButtons.Apply.propTypes = {
     onClick: PropTypes.func.isRequired,
     disabled: PropTypes.any,
@@ -291,7 +291,7 @@ PanelButtons.Close.propTypes = {
     shown: PropTypes.any,
     size: PropTypes.string
 }
-    
+
 PanelButtons.Confirm.propTypes = {
     onClick: PropTypes.func.isRequired,
     disabled: PropTypes.any,
@@ -299,7 +299,7 @@ PanelButtons.Confirm.propTypes = {
     shown: PropTypes.any,
     size: PropTypes.string
 }
-    
+
 PanelButtons.Add.propTypes = {
     onClick: PropTypes.func.isRequired,
     disabled: PropTypes.any,
@@ -307,7 +307,7 @@ PanelButtons.Add.propTypes = {
     shown: PropTypes.any,
     size: PropTypes.string
 }
-    
+
 PanelButtons.Back.propTypes = {
     onClick: PropTypes.func.isRequired,
     disabled: PropTypes.any,

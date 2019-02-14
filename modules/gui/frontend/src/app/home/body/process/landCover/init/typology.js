@@ -2,7 +2,7 @@ import {initValues} from 'app/home/body/process/recipe'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {msg} from 'translate'
-import {coordinateActivation} from 'widget/activation'
+import {activatable} from 'widget/activation'
 import {form} from 'widget/form'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
@@ -68,7 +68,7 @@ const policy = () => ({
     deactivateWhenActivated: {}
 })
 
-export default coordinateActivation('typology', policy)(
+export default activatable('typology', policy)(
     initValues({
         getModel: props => RecipeState(props.recipeId)('model.typology'),
         getValues: props => RecipeState(props.recipeId)('ui.typology'),
