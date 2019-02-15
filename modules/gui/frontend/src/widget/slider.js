@@ -1,5 +1,5 @@
-import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
-import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil, withLatestFrom} from 'rxjs/operators'
+import {animationFrameScheduler, combineLatest, fromEvent, interval, merge} from 'rxjs'
+import {distinctUntilChanged, filter, map, scan, switchMap, withLatestFrom} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Label from 'widget/label'
 import Portal from 'widget/portal'
@@ -203,7 +203,6 @@ class SliderDynamics extends React.Component {
 
     componentDidMount() {
         const {clickTarget} = this.props
-        const {position, previewPosition, clickTargetOffset} = this.state
 
         this.setHandlePositionByValue()
         const handle = new Hammer(this.handle.current, {
@@ -215,97 +214,111 @@ class SliderDynamics extends React.Component {
             threshold: 1
         })
 
+        const mouseMove$ = fromEvent(clickTarget.current, 'mousemove')
+        const mouseLeave$ = fromEvent(clickTarget.current, 'mouseleave')
         const pan$ = fromEvent(handle, 'panstart panmove panend')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
         const animationFrame$ = interval(0, animationFrameScheduler)
-        const stop$ = new Subject()
 
-        const drag$ = panStart$.pipe(
+        const hoverPosition$ = merge(
+            mouseMove$.pipe(
+                map(e => e.clientX - this.state.clickTargetOffset)
+            ),
+            mouseLeave$.pipe(
+                map(() => null)
+            )
+        )
+
+        // target position by clicking
+        const clickPosition$ = fromEvent(click, 'tap').pipe(
+            map(tap => this.snapPosition(tap.center.x - this.state.clickTargetOffset))
+        )
+
+        // target position by dragging
+        const dragPosition$ = panStart$.pipe(
             switchMap(() => {
-                const start = position
+                const {position} = this.state
                 return merge(
                     panMove$.pipe(
-                        map(pmEvent => this.clampPosition(start + pmEvent.deltaX)),
+                        map(event => this.clampPosition(position + event.deltaX)),
                         distinctUntilChanged()
                     ),
                     panEnd$.pipe(
-                        map(() => this.snapPosition(previewPosition))
+                        map(() => this.snapPosition(this.state.previewPosition))
                     )
                 )
             })
         )
 
-        const click$ = fromEvent(click, 'tap').pipe(
-            map(tap => this.snapPosition(tap.center.x - clickTargetOffset))
-        )
+        const targetPosition$ = merge(clickPosition$, dragPosition$)
 
-        const clickOrDrag$ = merge(click$, drag$)
-
-        // move on click or drag
-        const move$ = clickOrDrag$.pipe(
-            switchMap(cursor => {
-                const start = position
+        const handlePosition$ = targetPosition$.pipe(
+            switchMap(targetPosition => {
+                const {position} = this.state
                 return animationFrame$.pipe(
-                    map(() => cursor),
-                    scan(lerp(.1), start),
-                    takeUntil(stop$)
+                    map(() => targetPosition),
+                    scan(lerp(.1), position),
+                    map(position => Math.round(position)),
+                    distinctUntilChanged()
                 )
             })
         )
 
+        const handleMoving$ = combineLatest(handlePosition$, targetPosition$).pipe(
+            map(([currentPosition, targetPosition]) => currentPosition !== targetPosition),
+            distinctUntilChanged()
+        )
+
+        const handleDragging$ = merge(
+            panStart$.pipe(map(() => true)),
+            panEnd$.pipe(map(() => false)),
+        )
+
+        const previewPosition$ = merge(targetPosition$, hoverPosition$).pipe(
+            map(position => position === null ? null : this.snapPosition(position)),
+            distinctUntilChanged()
+        )
+
+        const inhibitInput$ = handleMoving$.pipe(
+            withLatestFrom(handleDragging$),
+            map(([dragging, moving]) => dragging || moving)
+        )
+
+        const updateInput$ = merge(clickPosition$, panEnd$)
+        
+        // animate slider
+        this.subscriptions.push(
+            handlePosition$.subscribe(position =>
+                this.setHandlePosition(position)
+            )
+        )
+
         // enable preview on mouseover, disable on mouseleave
         this.subscriptions.push(
-            merge(
-                drag$.pipe(
-                    map(cursor => this.snapPosition(cursor)),
-                ),
-                fromEvent(clickTarget.current, 'mousemove').pipe(
-                    map(e => this.snapPosition(e.clientX - clickTargetOffset)),
-                ),
-                fromEvent(clickTarget.current, 'mouseleave').pipe(
-                    map(() => null)
-                )
-            ).pipe(
-                distinctUntilChanged()
-            ).subscribe(previewPosition =>
+            previewPosition$.subscribe(previewPosition =>
                 this.setPreviewPosition(previewPosition)
             )
         )
 
         // enable fullscreen pointer while dragging, disable when drag end
         this.subscriptions.push(
-            merge(
-                panStart$.pipe(map(() => true)),
-                panEnd$.pipe(map(() => false))
-            ).subscribe(dragging =>
+            handleDragging$.subscribe(dragging =>
                 this.setDragging(dragging)
             )
         )
 
         // enable input when stopped, disabled when moving
         this.subscriptions.push(
-            move$.pipe(
-                withLatestFrom(clickOrDrag$),
-                map(([a, b]) => Math.trunc(a) !== Math.trunc(b)),
-                distinctUntilChanged()
-            ).subscribe(status => {
-                this.setInhibitInput(status)
-                status === false && stop$.next()
+            inhibitInput$.subscribe(inhibit => {
+                this.setInhibitInput(inhibit)
             })
-        )
-
-        // render animation
-        this.subscriptions.push(
-            move$.subscribe(position =>
-                this.setHandlePosition(position)
-            )
         )
 
         // update input on click or pan end
         this.subscriptions.push(
-            merge(click$, panEnd$).subscribe(() =>
+            updateInput$.subscribe(() =>
                 this.updateInputValue()
             )
         )
@@ -317,8 +330,9 @@ class SliderDynamics extends React.Component {
 
     componentDidUpdate(prevProps) {
         const {inhibitInput} = this.state
-        if (!inhibitInput && !_.isEqual(prevProps, this.props))
+        if (!inhibitInput && !_.isEqual(prevProps, this.props)) {
             this.setHandlePositionByValue()
+        }
     }
 
     toPosition(value) {
@@ -333,10 +347,12 @@ class SliderDynamics extends React.Component {
 
     clampPosition(position) {
         const {width} = this.props
-        return clamp(position, {
-            min: 0,
-            max: width
-        })
+        return Math.round(
+            clamp(position, {
+                min: 0,
+                max: width
+            })
+        )
     }
 
     snapPosition(value) {
@@ -346,7 +362,7 @@ class SliderDynamics extends React.Component {
                 .map(({position}) => ({position, distance: Math.abs(position - value)}))
                 .sortBy('distance')
                 .head()
-            return closest.position
+            return Math.round(closest.position)
         } else {
             return value
         }
@@ -361,7 +377,7 @@ class SliderDynamics extends React.Component {
         if (position >= 0) {
             position = Math.round(position)
             if (position !== this.state.position) {
-                this.setState(prevState => ({...prevState, position}))
+                this.setState({position})
             }
         }
     }
@@ -376,28 +392,22 @@ class SliderDynamics extends React.Component {
     }
 
     setPreviewPosition(previewPosition) {
-        this.setState(prevState => ({
-            ...prevState,
-            previewPosition
-        }))
+        this.setState({previewPosition})
     }
 
     setInhibitInput(inhibitInput) {
-        this.setState(prevState => ({...prevState, inhibitInput}))
+        this.setState({inhibitInput})
     }
 
     setDragging(dragging) {
-        this.setState(prevState => ({...prevState, dragging}))
+        this.setState({dragging})
     }
 
     setClickTargetOffset() {
         const {clickTarget} = this.props
-        const {clickTargetOffset} = this.state
-        if (clickTargetOffset !== Math.trunc(clickTarget.current.getBoundingClientRect().left)) {
-            this.setState(prevState => ({
-                ...prevState,
-                clickTargetOffset
-            }))
+        const clickTargetOffset = Math.trunc(clickTarget.current.getBoundingClientRect().left)
+        if (this.state.clickTargetOffset !== clickTargetOffset) {
+            this.setState({clickTargetOffset})
         }
     }
 
@@ -472,7 +482,7 @@ export default class Slider extends React.Component {
                     <ReactResizeDetector
                         handleWidth
                         onResize={width =>
-                            this.setState(prevState => ({...prevState, width}))
+                            this.setState({width})
                         }/>
                     {width ? this.renderContainer() : null}
                 </div>
