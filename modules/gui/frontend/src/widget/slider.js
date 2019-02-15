@@ -1,5 +1,5 @@
 import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
-import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
+import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil, withLatestFrom} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Label from 'widget/label'
 import Portal from 'widget/portal'
@@ -157,10 +157,10 @@ class SliderDynamics extends React.Component {
     }
 
     renderPreview() {
-        const position = this.state.previewPosition
-        return position !== null ? (
+        const {previewPosition} = this.state
+        return previewPosition !== null ? (
             <div className={[styles.cursor, styles.preview].join(' ')} ref={this.preview}
-                style={{left: `${position}px`}}/>
+                style={{left: `${previewPosition}px`}}/>
         ) : null
     }
 
@@ -202,13 +202,16 @@ class SliderDynamics extends React.Component {
     }
 
     componentDidMount() {
+        const {clickTarget} = this.props
+        const {position, previewPosition, clickTargetOffset} = this.state
+
         this.setHandlePositionByValue()
         const handle = new Hammer(this.handle.current, {
             threshold: 1
         })
         handle.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
 
-        const click = new Hammer(this.props.clickTarget.current, {
+        const click = new Hammer(clickTarget.current, {
             threshold: 1
         })
 
@@ -221,28 +224,29 @@ class SliderDynamics extends React.Component {
 
         const drag$ = panStart$.pipe(
             switchMap(() => {
-                const start = this.state.position
+                const start = position
                 return merge(
                     panMove$.pipe(
                         map(pmEvent => this.clampPosition(start + pmEvent.deltaX)),
-                        distinctUntilChanged(),
-                        takeUntil(panEnd$)
+                        distinctUntilChanged()
                     ),
                     panEnd$.pipe(
-                        map(() => this.snapPosition(this.state.position))
+                        map(() => this.snapPosition(previewPosition))
                     )
                 )
             })
         )
 
         const click$ = fromEvent(click, 'tap').pipe(
-            map(tap => this.snapPosition(tap.center.x - this.state.clickTargetOffset))
+            map(tap => this.snapPosition(tap.center.x - clickTargetOffset))
         )
 
+        const clickOrDrag$ = merge(click$, drag$)
+
         // move on click or drag
-        const move$ = merge(click$, drag$).pipe(
+        const move$ = clickOrDrag$.pipe(
             switchMap(cursor => {
-                const start = this.state.position
+                const start = position
                 return animationFrame$.pipe(
                     map(() => cursor),
                     scan(lerp(.1), start),
@@ -257,10 +261,10 @@ class SliderDynamics extends React.Component {
                 drag$.pipe(
                     map(cursor => this.snapPosition(cursor)),
                 ),
-                fromEvent(this.props.clickTarget.current, 'mousemove').pipe(
-                    map(e => this.snapPosition(e.clientX - this.state.clickTargetOffset)),
+                fromEvent(clickTarget.current, 'mousemove').pipe(
+                    map(e => this.snapPosition(e.clientX - clickTargetOffset)),
                 ),
-                fromEvent(this.props.clickTarget.current, 'mouseleave').pipe(
+                fromEvent(clickTarget.current, 'mouseleave').pipe(
                     map(() => null)
                 )
             ).pipe(
@@ -283,8 +287,8 @@ class SliderDynamics extends React.Component {
         // enable input when stopped, disabled when moving
         this.subscriptions.push(
             move$.pipe(
-                pairwise(),
-                map(([a, b]) => Math.abs(a - b) > .01),
+                withLatestFrom(clickOrDrag$),
+                map(([a, b]) => Math.trunc(a) !== Math.trunc(b)),
                 distinctUntilChanged()
             ).subscribe(status => {
                 this.setInhibitInput(status)
@@ -298,6 +302,13 @@ class SliderDynamics extends React.Component {
                 this.setHandlePosition(position)
             )
         )
+
+        // update input on click or pan end
+        this.subscriptions.push(
+            merge(click$, panEnd$).subscribe(() =>
+                this.updateInputValue()
+            )
+        )
     }
 
     componentWillUnmount() {
@@ -305,7 +316,8 @@ class SliderDynamics extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (!this.state.inhibitInput && !_.isEqual(prevProps, this.props))
+        const {inhibitInput} = this.state
+        if (!inhibitInput && !_.isEqual(prevProps, this.props))
             this.setHandlePositionByValue()
     }
 
@@ -320,9 +332,10 @@ class SliderDynamics extends React.Component {
     }
 
     clampPosition(position) {
+        const {width} = this.props
         return clamp(position, {
             min: 0,
-            max: this.props.width
+            max: width
         })
     }
 
@@ -340,7 +353,8 @@ class SliderDynamics extends React.Component {
     }
 
     setHandlePositionByValue() {
-        this.setHandlePosition(this.toPosition(this.props.input.value))
+        const {input} = this.props
+        this.setHandlePosition(this.toPosition(input.value))
     }
 
     setHandlePosition(position) {
@@ -348,12 +362,17 @@ class SliderDynamics extends React.Component {
             position = Math.round(position)
             if (position !== this.state.position) {
                 this.setState(prevState => ({...prevState, position}))
-                const value = this.toValue(this.snapPosition(position))
-                const factor = Math.pow(10, this.props.decimals)
-                const roundedValue = Math.round(value * factor) / factor
-                this.props.input.set(roundedValue)
             }
         }
+    }
+
+    updateInputValue() {
+        const {input, decimals} = this.props
+        const {previewPosition} = this.state
+        const value = this.toValue(this.snapPosition(previewPosition))
+        const factor = Math.pow(10, decimals)
+        const roundedValue = Math.round(value * factor) / factor
+        input.set(roundedValue)
     }
 
     setPreviewPosition(previewPosition) {
@@ -372,8 +391,9 @@ class SliderDynamics extends React.Component {
     }
 
     setClickTargetOffset() {
-        const clickTargetOffset = Math.trunc(this.props.clickTarget.current.getBoundingClientRect().left)
-        if (this.state.clickTargetOffset !== clickTargetOffset) {
+        const {clickTarget} = this.props
+        const {clickTargetOffset} = this.state
+        if (clickTargetOffset !== Math.trunc(clickTarget.current.getBoundingClientRect().left)) {
             this.setState(prevState => ({
                 ...prevState,
                 clickTargetOffset
@@ -445,6 +465,7 @@ export default class Slider extends React.Component {
     }
 
     renderSlider() {
+        const {width} = this.state
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
@@ -453,7 +474,7 @@ export default class Slider extends React.Component {
                         onResize={width =>
                             this.setState(prevState => ({...prevState, width}))
                         }/>
-                    {this.state.width ? this.renderContainer() : null}
+                    {width ? this.renderContainer() : null}
                 </div>
             </div>
         )
