@@ -202,20 +202,23 @@ class SliderDynamics extends React.Component {
     }
 
     componentDidMount() {
-        const {clickTarget} = this.props
-
-        this.setHandlePositionByValue()
-        const handle = new Hammer(this.handle.current, {
-            threshold: 1
+        this.initialize({
+            handleRef: this.handle.current,
+            clickableAreaRef: this.props.clickTarget.current
         })
+    }
+
+    initialize({handleRef, clickableAreaRef}) {
+        this.setHandlePositionByValue()
+
+        const handle = new Hammer(handleRef, {threshold: 1})
+        // limit handle movement to horizontal axis
         handle.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
 
-        const click = new Hammer(clickTarget.current, {
-            threshold: 1
-        })
+        const clickableArea = new Hammer(clickableAreaRef, {threshold: 1})
 
-        const mouseMove$ = fromEvent(clickTarget.current, 'mousemove')
-        const mouseLeave$ = fromEvent(clickTarget.current, 'mouseleave')
+        const mouseMove$ = fromEvent(clickableAreaRef, 'mousemove')
+        const mouseLeave$ = fromEvent(clickableAreaRef, 'mouseleave')
         const pan$ = fromEvent(handle, 'panstart panmove panend')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
@@ -232,7 +235,7 @@ class SliderDynamics extends React.Component {
         )
 
         // target position by clicking
-        const clickPosition$ = fromEvent(click, 'tap').pipe(
+        const clickPosition$ = fromEvent(clickableArea, 'tap').pipe(
             map(tap => this.snapPosition(tap.center.x - this.state.clickTargetOffset))
         )
 
@@ -287,41 +290,24 @@ class SliderDynamics extends React.Component {
         )
 
         const updateInput$ = merge(clickPosition$, panEnd$)
-        
-        // animate slider
-        this.subscriptions.push(
+
+        this.subscriptions = [
             handlePosition$.subscribe(position =>
                 this.setHandlePosition(position)
-            )
-        )
-
-        // enable preview on mouseover, disable on mouseleave
-        this.subscriptions.push(
+            ),
             previewPosition$.subscribe(previewPosition =>
                 this.setPreviewPosition(previewPosition)
-            )
-        )
-
-        // enable fullscreen pointer while dragging, disable when drag end
-        this.subscriptions.push(
+            ),
             handleDragging$.subscribe(dragging =>
                 this.setDragging(dragging)
-            )
-        )
-
-        // enable input when stopped, disabled when moving
-        this.subscriptions.push(
-            inhibitInput$.subscribe(inhibit => {
+            ),
+            inhibitInput$.subscribe(inhibit =>
                 this.setInhibitInput(inhibit)
-            })
-        )
-
-        // update input on click or pan end
-        this.subscriptions.push(
+            ),
             updateInput$.subscribe(() =>
                 this.updateInputValue()
             )
-        )
+        ]
     }
 
     componentWillUnmount() {
@@ -410,7 +396,6 @@ class SliderDynamics extends React.Component {
             this.setState({clickTargetOffset})
         }
     }
-
 }
 
 SliderDynamics.propTypes = {
