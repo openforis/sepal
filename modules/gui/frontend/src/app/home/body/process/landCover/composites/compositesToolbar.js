@@ -1,9 +1,9 @@
-import CompositeOptions from 'app/home/body/process/landCover/compositeOptions'
+import {msg} from 'translate'
 import {withRecipePath} from 'app/home/body/process/recipe'
+import CompositeOptions from 'app/home/body/process/landCover/compositeOptions'
+import PanelWizard from 'widget/panelWizard'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg} from 'translate'
-import PanelWizard from 'widget/panelWizard'
 import Toolbar, {PanelButton} from 'widget/toolbar'
 import styles from './compositesToolbar.module.css'
 

@@ -1,7 +1,7 @@
+import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg} from 'translate'
 // import PanelWizard from 'widget/panelWizard'
 import Toolbar, {ActivationButton} from 'widget/toolbar'
 import styles from './initToolbar.module.css'

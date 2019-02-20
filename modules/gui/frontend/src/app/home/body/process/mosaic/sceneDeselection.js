@@ -1,7 +1,6 @@
 import {RecipeActions, SceneSelectionType, inDateRange} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {connect} from 'store'
 import {objectEquals, selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 
 const mapRecipeToProps = recipe => {

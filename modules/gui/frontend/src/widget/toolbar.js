@@ -1,9 +1,9 @@
-import PropTypes from 'prop-types'
-import React from 'react'
-import lookStyles from 'style/look.module.css'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import Portal from 'widget/portal'
+import PropTypes from 'prop-types'
+import React from 'react'
+import lookStyles from 'style/look.module.css'
 import styles from './toolbar.module.css'
 
 const Context = React.createContext()
@@ -82,7 +82,6 @@ ToolbarButton.propTypes = {
     tooltip: PropTypes.string,
     onClick: PropTypes.func
 }
-
 
 export class PanelButton extends React.Component {
     render() {

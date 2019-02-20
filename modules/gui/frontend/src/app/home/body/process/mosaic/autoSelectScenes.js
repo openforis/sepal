@@ -1,11 +1,11 @@
-import api from 'api'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import React from 'react'
 import {Subject} from 'rxjs'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import MapStatus from 'widget/mapStatus'
+import React from 'react'
+import api from 'api'
 
 const mapRecipeToProps = recipe => ({recipe})
 
@@ -16,12 +16,12 @@ class AutoSelectScenes extends React.Component {
         this.recipeActions = RecipeActions(recipeId)
         this.request$ = new Subject()
         this.request$.subscribe(() => {
-                this.recipeActions.setAutoSelectScenesState('RUNNING').dispatch()
-                asyncActionBuilder('AUTO_SELECT_SCENES',
-                    this.autoSelectScenes$())
-                    .onComplete(() => this.recipeActions.setAutoSelectScenesState(null))
-                    .dispatch()
-            }
+            this.recipeActions.setAutoSelectScenesState('RUNNING').dispatch()
+            asyncActionBuilder('AUTO_SELECT_SCENES',
+                this.autoSelectScenes$())
+                .onComplete(() => this.recipeActions.setAutoSelectScenesState(null))
+                .dispatch()
+        }
         )
     }
 

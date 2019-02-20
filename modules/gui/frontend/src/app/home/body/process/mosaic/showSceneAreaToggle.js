@@ -1,10 +1,10 @@
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
+import {ToolbarButton} from 'widget/toolbar'
+import {msg} from 'translate'
 import {selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg} from 'translate'
-import {ToolbarButton} from 'widget/toolbar'
 
 const mapRecipeToProps = recipe => {
     const sceneAreas = selectFrom(recipe, 'ui.sceneAreas')

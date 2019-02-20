@@ -1,16 +1,16 @@
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
-import {sepalMap} from 'app/home/map/map'
-import {selectFrom} from 'collections'
-import React from 'react'
+import {Input} from 'widget/form'
+import {RecipeActions} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
+import {isMobile} from 'widget/userAgent'
+import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
+import {selectFrom} from 'collections'
+import {sepalMap} from 'app/home/map/map'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import ComboBox from 'widget/comboBox'
-import {Input} from 'widget/form'
-import {isMobile} from 'widget/userAgent'
-import {RecipeActions} from '../../mosaicRecipe'
+import React from 'react'
 
 const mapRecipeToProps = recipe => {
     return {
@@ -52,12 +52,12 @@ class FusionTableSection extends React.Component {
                     ORDER BY '${column}' ASC
             `).pipe(
                 map(e => {
-                        this.recipe.setFusionTableRows(
-                            (e.response.rows || [])
-                                .map(row => row[0])
-                                .filter(value => value))
-                            .dispatch()
-                    }
+                    this.recipe.setFusionTableRows(
+                        (e.response.rows || [])
+                            .map(row => row[0])
+                            .filter(value => value))
+                        .dispatch()
+                }
                 ),
                 takeUntil(this.fusionTableColumnChanged$),
                 takeUntil(this.fusionTableChanged$)

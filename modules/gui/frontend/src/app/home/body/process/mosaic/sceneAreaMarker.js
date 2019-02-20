@@ -1,10 +1,10 @@
+import {MapObject, google, googleMap} from 'app/home/map/map'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {google, googleMap, MapObject} from 'app/home/map/map'
-import {selectFrom} from 'collections'
-import React from 'react'
-import {select} from 'store'
 import {activator} from 'widget/activation/activator'
+import {select} from 'store'
+import {selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import React from 'react'
 import styles from './sceneAreas.module.css'
 
 const mapRecipeToProps = (recipe, ownProps) => {

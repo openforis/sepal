@@ -1,14 +1,14 @@
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {selectFrom} from 'collections'
-import React from 'react'
-import {msg} from 'translate'
-import {activatable} from 'widget/activation/activatable'
 import {Field, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions} from '../../mosaicRecipe'
+import {activatable} from 'widget/activation/activatable'
+import {msg} from 'translate'
+import {selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import React from 'react'
 import Slider from 'widget/slider'
-import {RecipeActions} from '../../mosaicRecipe'
 import styles from './auto.module.css'
 
 const fields = {
@@ -81,7 +81,6 @@ class Auto extends React.Component {
         )
     }
 }
-
 
 Auto.propTypes = {}
 

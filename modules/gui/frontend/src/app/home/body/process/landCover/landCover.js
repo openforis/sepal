@@ -1,9 +1,9 @@
+import {defaultModel} from './landCoverRecipe2'
+import {recipe} from 'app/home/body/process/recipeContext'
 import LandCoverComposites from 'app/home/body/process/landCover/composites/landCoverComposites'
 import LandCoverInit from 'app/home/body/process/landCover/init/landCoverInit'
-import {recipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import Workflow from 'widget/workflow'
-import {defaultModel} from './landCoverRecipe2'
 
 class LandCover extends React.Component {
     render() {

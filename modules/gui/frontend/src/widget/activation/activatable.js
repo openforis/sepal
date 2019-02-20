@@ -1,12 +1,12 @@
-import actionBuilder from 'action-builder'
+import {Activator} from './activator'
+import {connect} from 'store'
 import {selectFrom} from 'collections'
-import _ from 'lodash'
+import {shouldDeactivate} from 'widget/activation/activationPolicy'
+import {withActivationContext} from 'widget/activation/activationContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import {withActivationContext} from 'widget/activation/activationContext'
-import {shouldDeactivate} from 'widget/activation/activationPolicy'
-import {Activator} from './activator'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
 
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {statePath}} = ownProps
@@ -26,7 +26,7 @@ class UnconnectedActivatable extends React.Component {
         this.updateReduxStateIfChanged()
     }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate() {
         this.updateReduxStateIfChanged()
     }
 
@@ -70,8 +70,8 @@ export const Activatable = (
 )
 
 Activatable.propTypes = {
-    id: PropTypes.string.isRequired,
     children: PropTypes.func.isRequired,
+    id: PropTypes.string.isRequired,
     policy: PropTypes.func
 }
 

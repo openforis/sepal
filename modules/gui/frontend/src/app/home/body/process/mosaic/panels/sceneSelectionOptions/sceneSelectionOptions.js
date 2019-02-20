@@ -1,13 +1,13 @@
-import {recipeFormPanel, RecipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import PropTypes from 'prop-types'
-import React from 'react'
+import {Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {SceneSelectionType} from '../../mosaicRecipe'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
-import {Field, form} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {SceneSelectionType} from '../../mosaicRecipe'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './sceneSelectionOptions.module.css'
 
 const fields = {
@@ -21,12 +21,12 @@ class SceneSelectionOptions extends React.Component {
     renderTypes() {
         const {inputs: {type}} = this.props
         const options = [{
-                value: SceneSelectionType.ALL,
-                label: msg('process.mosaic.panel.scenes.form.type.all.label')
-            }, {
-                value: SceneSelectionType.SELECT,
-                label: msg('process.mosaic.panel.scenes.form.type.select.label')
-            }]
+            value: SceneSelectionType.ALL,
+            label: msg('process.mosaic.panel.scenes.form.type.all.label')
+        }, {
+            value: SceneSelectionType.SELECT,
+            label: msg('process.mosaic.panel.scenes.form.type.select.label')
+        }]
         return (
             <div className={styles.types}>
                 <Label msg={msg('process.mosaic.panel.scenes.form.type.label')}/>
@@ -41,15 +41,15 @@ class SceneSelectionOptions extends React.Component {
     renderTargetDateWeight() {
         const {inputs: {targetDateWeight}} = this.props
         const options = [{
-                value: 0,
-                label: msg('process.mosaic.panel.scenes.form.targetDateWeight.cloudFree.label')
-            }, {
-                value: 0.5,
-                label: msg('process.mosaic.panel.scenes.form.targetDateWeight.balanced.label')
-            }, {
-                value: 1,
-                label: msg('process.mosaic.panel.scenes.form.targetDateWeight.targetDate.label')
-            }]
+            value: 0,
+            label: msg('process.mosaic.panel.scenes.form.targetDateWeight.cloudFree.label')
+        }, {
+            value: 0.5,
+            label: msg('process.mosaic.panel.scenes.form.targetDateWeight.balanced.label')
+        }, {
+            value: 1,
+            label: msg('process.mosaic.panel.scenes.form.targetDateWeight.targetDate.label')
+        }]
         return (
             <div>
                 <Label msg={msg('process.mosaic.panel.scenes.form.targetDateWeight.label')}/>

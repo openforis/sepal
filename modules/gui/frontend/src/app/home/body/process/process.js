@@ -1,14 +1,14 @@
 import {RecipeContext} from 'app/home/body/process/recipeContext'
-import Revisions from 'app/home/body/process/revisions'
-import React from 'react'
-import Tabs from 'widget/tabs'
+import {saveRecipe} from './recipe'
 import ChangeDetection from './changeDetection/changeDetection'
 import Classification from './classification/classification'
 import LandCover from './landCover/landCover'
 import Mosaic from './mosaic/mosaic'
 import ProcessMenu from './processMenu'
-import {saveRecipe} from './recipe'
+import React from 'react'
 import Recipes from './recipes'
+import Revisions from 'app/home/body/process/revisions'
+import Tabs from 'widget/tabs'
 import TimeSeries from './timeSeries/timeSeries'
 
 const recipeComponent = (id, type) => (

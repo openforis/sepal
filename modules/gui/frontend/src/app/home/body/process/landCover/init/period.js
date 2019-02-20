@@ -1,15 +1,15 @@
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
-import moment from 'moment'
+import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg} from 'translate'
+import moment from 'moment'
 // import {activatable} from 'widget/activation'
-import DatePicker from 'widget/datePicker'
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../landCoverRecipe'
+import DatePicker from 'widget/datePicker'
+import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import Label from 'widget/label'
 import styles from './period.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -130,7 +130,7 @@ export default withRecipePath()(
     })(
         form({fields, constraints})(
             // coordinateActivation('period', policy)(
-                Period
+            Period
             // )
         )
     )

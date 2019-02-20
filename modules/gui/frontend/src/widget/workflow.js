@@ -1,9 +1,8 @@
+import {BottomBar, Content as SectionContent, SectionLayout} from 'widget/sectionLayout'
+import {Button} from 'widget/button'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Button} from 'widget/button'
-import {BottomBar, Content as SectionContent, SectionLayout} from 'widget/sectionLayout'
 import styles from './workflow.module.css'
-
 
 const WorkflowContext = React.createContext()
 
@@ -35,7 +34,6 @@ class Workflow extends React.Component {
 
     static Bar = ({children}) =>
         <BottomBar className={styles.content}>{children}</BottomBar>
-
 
     static Left = ({children}) =>
         <div className={styles.left}>{children}</div>
@@ -72,16 +70,15 @@ class Workflow extends React.Component {
 }
 
 Workflow.propTypes = {
-    steps: PropTypes.object.isRequired,
     start: PropTypes.string.isRequired,
+    steps: PropTypes.object.isRequired,
 }
 
 Workflow.NextButton.propTypes = {
-    label: PropTypes.string,
     step: PropTypes.string.isRequired,
-    disabled: PropTypes.any
+    disabled: PropTypes.any,
+    label: PropTypes.string
 }
 
 export default Workflow
-
 

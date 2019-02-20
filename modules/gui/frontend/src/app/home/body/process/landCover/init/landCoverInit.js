@@ -1,12 +1,11 @@
-import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
+import InitToolbar from './initToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
+import Period from './period'
 import React from 'react'
 import W from 'widget/workflow'
-import InitToolbar from './initToolbar'
-import Period from './period'
 // import Typology from './typology'
-
 
 const recipeToProps = recipe => {
     const model = recipe.model
@@ -52,7 +51,6 @@ class LandCoverInit extends React.Component {
 export default withRecipe(recipeToProps)(
     LandCoverInit
 )
-
 
 // import {withRecipePath} from 'app/home/body/process/recipe'
 // import MapToolbar from 'app/home/map/mapToolbar'

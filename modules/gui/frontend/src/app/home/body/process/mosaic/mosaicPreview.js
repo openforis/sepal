@@ -1,14 +1,14 @@
-import api from 'api'
+import {Button} from 'widget/button'
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {msg} from 'translate'
+import {sepalMap} from 'app/home/map/map'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
-import {sepalMap} from 'app/home/map/map'
-import _ from 'lodash'
-import React from 'react'
-import {msg} from 'translate'
-import {Button} from 'widget/button'
 import MapStatus from 'widget/mapStatus'
 import Notifications from 'widget/notifications'
+import React from 'react'
+import _ from 'lodash'
+import api from 'api'
 
 const mapRecipeToProps = recipe => ({recipe})
 

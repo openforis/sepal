@@ -1,9 +1,9 @@
-import PropTypes from 'prop-types'
-import React from 'react'
 import {Form} from 'widget/form'
 import {Panel, PanelButtons} from 'widget/panel'
-import {PanelWizardContext} from './panelWizard'
 import {PanelButtonContext} from './toolbar'
+import {PanelWizardContext} from './panelWizard'
+import PropTypes from 'prop-types'
+import React from 'react'
 
 const PanelContext = React.createContext()
 
@@ -79,12 +79,12 @@ export default class FormPanel extends React.Component {
 FormPanel.propTypes = {
     children: PropTypes.any.isRequired,
     form: PropTypes.object.isRequired,
-    close: PropTypes.func,
-    policy: PropTypes.func,
     className: PropTypes.string,
+    close: PropTypes.func,
     isActionForm: PropTypes.any,
-    type: PropTypes.string,
-    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']), // TODO: Same as type?
+    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
+    policy: PropTypes.func,
+    type: PropTypes.string, // TODO: Same as type?
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
 }

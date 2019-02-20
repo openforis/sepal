@@ -203,4 +203,3 @@ it(`disallow activation of [a] when
     })).toEqual(false)
 })
 
-

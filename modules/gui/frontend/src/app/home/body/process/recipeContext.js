@@ -1,14 +1,12 @@
-import actionBuilder from 'action-builder'
-import React from 'react'
-import {connect, select} from 'store'
 import {ActivationContext} from 'widget/activation/activationContext'
-
+import {connect, select} from 'store'
+import React from 'react'
+import actionBuilder from 'action-builder'
 
 export const RecipeContext = ({recipeId, rootStatePath, children}) =>
     <Context.Provider value={toContextValue(recipeId, statePath(recipeId, rootStatePath))}>
         {children}
     </Context.Provider>
-
 
 export const withRecipeContext = () =>
     WrappedComponent => {
@@ -30,7 +28,6 @@ export const withRecipeContext = () =>
         }
         return HigherOrderComponent
     }
-
 
 export const recipe = ({defaultModel, mapRecipeToProps}) =>
     WrappedComponent => {
@@ -65,7 +62,6 @@ export const recipe = ({defaultModel, mapRecipeToProps}) =>
         )
     }
 
-
 export const withRecipe = mapRecipeToProps =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {
@@ -77,7 +73,6 @@ export const withRecipe = mapRecipeToProps =>
         const ConnectedComponent = connect(mapStateToProps)(WrappedComponent)
         return withRecipeContext()(ConnectedComponent)
     }
-
 
 const Context = React.createContext()
 

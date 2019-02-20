@@ -1,11 +1,11 @@
+import {Button, ButtonGroup} from 'widget/button'
+import {RecipeState} from '../landCoverRecipe'
+import {connect, select} from 'store'
 import {withRecipePath} from 'app/home/body/process/recipe'
+import CompositesToolbar from './compositesToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
-import {connect, select} from 'store'
-import {Button, ButtonGroup} from 'widget/button'
 import W from 'widget/workflow'
-import {RecipeState} from '../landCoverRecipe'
-import CompositesToolbar from './compositesToolbar'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)

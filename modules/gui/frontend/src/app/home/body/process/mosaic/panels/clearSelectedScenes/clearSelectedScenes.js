@@ -1,12 +1,12 @@
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import PropTypes from 'prop-types'
-import React from 'react'
 import {Msg, msg} from 'translate'
-import {activatable} from 'widget/activation/activatable'
-import {form} from 'widget/form'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
+import {activatable} from 'widget/activation/activatable'
+import {form} from 'widget/form'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './clearSelectedScenes.module.css'
 
 const fields = {}

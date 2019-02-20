@@ -1,12 +1,11 @@
-import actionBuilder from 'action-builder'
-import {initValues} from 'app/home/body/process/recipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {selectFrom} from 'collections'
-import React from 'react'
 import {activatable} from 'widget/activation/activatable'
 import {form} from 'widget/form'
+import {initValues} from 'app/home/body/process/recipe'
+import {selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import FormPanel from 'widget/formPanel'
-
+import React from 'react'
+import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 
@@ -18,10 +17,10 @@ const policy = ({values}) => {
 
 export const recipeActionPanel =
     ({
-         id,
-         fields,
-         mapRecipeToProps = () => ({})
-     }) => {
+        id,
+        fields,
+        mapRecipeToProps = () => ({})
+    }) => {
 
         const createMapRecipeToProps = mapRecipeToProps =>
             recipe => {
@@ -108,7 +107,6 @@ const setModelAndValues = ({id, statePath, model, values}) =>
         .set([statePath, 'ui', id], values)
         .set([statePath, 'model', id], model)
         .dispatch()
-
 
 const setDirty = ({id, statePath, dirty}) =>
     actionBuilder('SET_DIRTY', {id, dirty})
