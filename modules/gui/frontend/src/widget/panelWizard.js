@@ -1,7 +1,7 @@
-import _ from 'lodash'
+import {activator} from 'widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {activator} from 'widget/activation/activator'
+import _ from 'lodash'
 
 class PanelWizard extends React.Component {
 
@@ -19,23 +19,19 @@ class PanelWizard extends React.Component {
             .find(id => panels.includes(id))
         const currentIndex = panels.indexOf(currentId)
         const currentActivatable = activatables[panels[currentIndex]]
-        const inRange = (index) => index >= 0 && index < panels.length
-        const navigate = (index) => {
+
+        const inRange = index => index >= 0 && index < panels.length
+
+        const navigate = index => {
             if (!inRange(index))
                 return false
-            const activatable = activatables[panels[index]]
-            if (!activatable)
-                return false
-            return () => {
-                updateActivatables([
+            const id = panels[index]
+            return activatables[id]
+                ? () => updateActivatables([
                     {id: currentId, active: false},
-                    {id: activatable.id, active: true}
+                    {id, active: true}
                 ])
-
-
-                // currentActivatable.deactivate()
-                // activatable.activate()
-            }
+                : false
         }
         const back = navigate(currentIndex - 1)
         const next = navigate(currentIndex + 1)
@@ -84,8 +80,8 @@ class PanelWizard extends React.Component {
 export default activator()(PanelWizard)
 
 PanelWizard.propTypes = {
-    panels: PropTypes.array.isRequired,
     initialized: PropTypes.any.isRequired,
+    panels: PropTypes.array.isRequired,
     children: PropTypes.any,
     selectedPanel: PropTypes.any
 }
@@ -96,5 +92,4 @@ export const PanelWizardContext = ({children}) =>
     <Context.Consumer>
         {(value = {}) => children(value)}
     </Context.Consumer>
-
 

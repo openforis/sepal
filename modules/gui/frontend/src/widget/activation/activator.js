@@ -1,11 +1,11 @@
-import actionBuilder from 'action-builder'
+import {activationAllowed} from 'widget/activation/activationPolicy'
+import {connect} from 'store'
 import {selectFrom} from 'collections'
-import _ from 'lodash'
+import {withActivationContext} from './activationContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import {activationAllowed} from 'widget/activation/activationPolicy'
-import {withActivationContext} from './activationContext'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
 
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {statePath}} = ownProps
@@ -38,32 +38,25 @@ class UnconnectedActivator extends React.Component {
                 })
                 .dispatch()
 
-
         const isActive = id => !!(activatables[id] || {}).active
         const canActivate = id => activationAllowed(id, activatables)
 
         const updateActivatables = updates => {
-            const currentActivatables = null
-            const updatedActivatables = _.transform(updates, (acc, update) => {
-                const currentActivatable = acc[update.id]
-                if (currentActivatable.active !== update.active) {
-                    const active = update.active && activationAllowed(update.id, acc)
-                    acc[update.id] = {...acc, active, justActivated: active}
+            const updatedActivatables = _.transform(updates, (activatables, {id, active}) => {
+                const activatable = activatables[id]
+                if (!activatable || activatable.active !== active) {
+                    const updatedActive = active && activationAllowed(id, activatables)
+                    activatable.active = updatedActive
+                    activatable.justActivated = updatedActive
                 }
-            }, currentActivatables)
-            if (!_.isEqual(currentActivatables, updatedActivatables)) {
-                actionBuilder() // TODO: ...
+            }, _.cloneDeep(activatables))
+            if (!_.isEqual(updatedActivatables, activatables)) {
+                actionBuilder('UPDATE_ACTIVATABLES')
+                    .set([statePath, 'activatables'], updatedActivatables)
+                    .dispatch()
             }
-            //
-            //
-            // (acc, update) => {
-            //     const wasActive
-            //     if (update.active) {
-            //         activationAllowed(update.id, acc)
-            //     }
-            // })
-            // Redux action
         }
+
         const props = id => ({
             active: isActive(id),
             canActivate: canActivate(id),
@@ -111,6 +104,6 @@ export const Activator = (
 )
 
 Activator.propTypes = {
-    id: PropTypes.string,
-    children: PropTypes.func.isRequired
+    children: PropTypes.func.isRequired,
+    id: PropTypes.string
 }
