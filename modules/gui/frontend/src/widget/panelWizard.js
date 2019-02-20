@@ -11,7 +11,7 @@ class PanelWizard extends React.Component {
     }
 
     render() {
-        const {panels = [], activatables, children} = this.props
+        const {panels = [], activatables, updateActivatables, children} = this.props
         const {initialized} = this.state
         const currentId = !initialized && _(activatables)
             .pickBy(({active}) => active)
@@ -27,8 +27,14 @@ class PanelWizard extends React.Component {
             if (!activatable)
                 return false
             return () => {
-                currentActivatable.deactivate()
-                activatable.activate()
+                updateActivatables([
+                    {id: currentId, active: false},
+                    {id: activatable.id, active: true}
+                ])
+
+
+                // currentActivatable.deactivate()
+                // activatable.activate()
             }
         }
         const back = navigate(currentIndex - 1)

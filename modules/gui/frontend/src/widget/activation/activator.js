@@ -38,9 +38,32 @@ class UnconnectedActivator extends React.Component {
                 })
                 .dispatch()
 
+
         const isActive = id => !!(activatables[id] || {}).active
         const canActivate = id => activationAllowed(id, activatables)
 
+        const updateActivatables = updates => {
+            const currentActivatables = null
+            const updatedActivatables = _.transform(updates, (acc, update) => {
+                const currentActivatable = acc[update.id]
+                if (currentActivatable.active !== update.active) {
+                    const active = update.active && activationAllowed(update.id, acc)
+                    acc[update.id] = {...acc, active, justActivated: active}
+                }
+            }, currentActivatables)
+            if (!_.isEqual(currentActivatables, updatedActivatables)) {
+                actionBuilder() // TODO: ...
+            }
+            //
+            //
+            // (acc, update) => {
+            //     const wasActive
+            //     if (update.active) {
+            //         activationAllowed(update.id, acc)
+            //     }
+            // })
+            // Redux action
+        }
         const props = id => ({
             active: isActive(id),
             canActivate: canActivate(id),
@@ -55,7 +78,10 @@ class UnconnectedActivator extends React.Component {
                 .value()
         return id
             ? props(id)
-            : {activatables: activatorProps}
+            : {
+                activatables: activatorProps,
+                updateActivatables
+            }
     }
 }
 

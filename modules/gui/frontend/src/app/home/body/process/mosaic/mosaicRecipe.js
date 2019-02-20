@@ -62,36 +62,6 @@ export const RecipeActions = id => {
         selectPanel(panel) {
             return set('SELECT_MOSAIC_PANEL', 'ui.selectedPanel', panel, {panel})
         },
-        setAoi({values, model}) {
-            return setAll('SET_AOI', {
-                'ui.aoi': values,
-                'model.aoi': model,
-            }, {values, model})
-        },
-        setDates({values, model}) {
-            return setAll('SET_DATES', {
-                'ui.dates': values,
-                'model.dates': model
-            }, {values, model})
-        },
-        setSources({values, model}) {
-            return setAll('SET_SOURCES', {
-                'ui.sources': values,
-                'model.sources': model
-            }, {values, model})
-        },
-        setSceneSelectionOptions({values, model}) {
-            return setAll('SET_SCENE_SELECTION_OPTIONS', {
-                'ui.sceneSelectionOptions': values,
-                'model.sceneSelectionOptions': model
-            }, {values, model})
-        },
-        setCompositeOptions({values, model}) {
-            return setAll('SET_COMPOSITE_OPTIONS', {
-                'ui.compositeOptions': values,
-                'model.compositeOptions': model
-            }, {values, model})
-        },
         setBands(bands) {
             return setAll('SET_BANDS', {
                 'ui.bands.selection': bands

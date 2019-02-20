@@ -16,13 +16,11 @@ const policy = ({values}) => {
         : {deactivateWhen: {exclude: []}}
 }
 
-export const recipeFormPanel =
+export const recipeActionPanel =
     ({
          id,
          fields,
-         mapRecipeToProps = () => ({}),
-         modelToValues = model => ({...model}),
-         valuesToModel = values => ({...values})
+         mapRecipeToProps = () => ({})
      }) => {
 
         const createMapRecipeToProps = mapRecipeToProps =>
