@@ -1,5 +1,4 @@
-import {initValues} from 'app/home/body/process/recipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
+import {recipeFormPanel, RecipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {arrayEquals, selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -7,10 +6,10 @@ import {imageSourceById, isDataSetInDateRange, isSourceInDateRange, sources} fro
 import {Msg, msg} from 'translate'
 import Buttons from 'widget/buttons'
 import {Field, form} from 'widget/form'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, dateRange} from '../../mosaicRecipe'
+import {dateRange} from '../../mosaicRecipe'
 import styles from './sources.module.css'
 import updateSource from './updateSource'
 
@@ -22,19 +21,10 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id,
-    model: selectFrom(recipe, 'model.sources'),
-    values: selectFrom(recipe, 'ui.sources'),
     dates: selectFrom(recipe, 'model.dates')
 })
 
 class Sources extends React.Component {
-    constructor(props) {
-        super(props)
-        const {recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
-    }
-
     lookupDataSetNames(sourceValue) {
         return sourceValue ? imageSourceById[sourceValue].dataSets : null
     }
@@ -94,17 +84,10 @@ class Sources extends React.Component {
     }
 
     render() {
-        const {form} = this.props
         return (
-            <FormPanel
-                id='sources'
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                placement='bottom-right'
-                onApply={values => this.recipeActions.setSources({
-                    values,
-                    model: valuesToModel(values)
-                }).dispatch()}>
+                placement='bottom-right'>
                 <PanelHeader
                     icon='satellite-dish'
                     title={msg('process.mosaic.panel.sources.title')}/>
@@ -117,7 +100,7 @@ class Sources extends React.Component {
                 </PanelContent>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 
@@ -147,16 +130,4 @@ const modelToValues = model => {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(
-    initValues({
-        getModel: props => props.model,
-        getValues: props => props.values,
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setSources({values, model})
-                .dispatch()
-    })(
-        form({fields})(Sources)
-    )
-)
+export default recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})(Sources)

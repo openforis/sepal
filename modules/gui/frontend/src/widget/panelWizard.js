@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {activator} from 'widget/activation'
+import {activator} from 'widget/activation/activator'
 
 class PanelWizard extends React.Component {
 

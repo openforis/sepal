@@ -54,6 +54,10 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                 this.isInvalid = this.isInvalid.bind(this)
             }
 
+            componentDidMount() {
+                this.onClean()
+            }
+
             subscribe(description, stream$, observer) {
                 this.props.subscribe(description, stream$, observer)
             }
@@ -231,7 +235,11 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                     setInitialValues: values => this.setInitialValues(values),
                     values: () => this.state.values,
                     onDirty: listener => this.dirtyListeners.push(listener),
-                    onClean: listener => this.cleanListeners.push(listener)
+                    onClean: listener => this.cleanListeners.push(listener),
+                    onDirtyChanged: listener => {
+                        this.dirtyListeners.push(() => listener(true))
+                        this.cleanListeners.push(() => listener(false))
+                    }
                 }
                 const element = React.createElement(WrappedComponent, {
                     ...this.props, form, inputs

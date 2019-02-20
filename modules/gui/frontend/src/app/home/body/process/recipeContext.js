@@ -1,7 +1,7 @@
 import actionBuilder from 'action-builder'
 import React from 'react'
 import {connect, select} from 'store'
-import {ActivationContext} from 'widget/activation'
+import {ActivationContext} from 'widget/activation/activationContext'
 
 
 export const RecipeContext = ({recipeId, rootStatePath, children}) =>
@@ -17,7 +17,7 @@ export const withRecipeContext = () =>
                 return (
                     <Context.Consumer>
                         {recipeContext =>
-                            <ActivationContext statePath={recipeContext.statePath + '.ui'}>
+                            <ActivationContext statePath={[recipeContext.statePath, 'ui']}>
                                 {React.createElement(WrappedComponent, {
                                     ...this.props,
                                     recipeContext

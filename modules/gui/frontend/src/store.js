@@ -2,10 +2,9 @@ import {Subject} from 'rxjs'
 import {connect as connectToRedux} from 'react-redux'
 import {isMobile} from 'widget/userAgent'
 import {takeUntil} from 'rxjs/operators'
-import {selectFrom} from 'collections'
+import {equalsIgnoreFunctions, selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
-import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
@@ -85,12 +84,7 @@ export function connect(mapStateToProps) {
 
         const ReduxConnectedComponent = connectToRedux(
             includeDispatchingProp(id, mapStateToProps), null, null, {
-                areStatePropsEqual: (props1, props2) =>
-                    _.difference(Object.keys(props1), Object.keys(props2)).length === 0 &&
-                    _.isEqual(
-                        _.pickBy(props1, o => !_.isFunction(o)),
-                        _.pickBy(props2, o => !_.isFunction(o))
-                    )
+                areStatePropsEqual: equalsIgnoreFunctions
             }
         )(PreventUpdateWhenDisabled)
 

@@ -2,6 +2,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
+import {activatable} from 'widget/activation/activatable'
 import {form} from 'widget/form'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
@@ -21,12 +22,12 @@ class ClearSelectedScenes extends React.Component {
     }
 
     render() {
-        const {form} = this.props
+        const {form, deactivate} = this.props
         return (
             <FormPanel
-                id='clearSelectedScenes'
                 className={styles.panel}
                 form={form}
+                close={deactivate}
                 isActionForm={true}
                 placement='top-right'
                 onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}>
@@ -49,6 +50,18 @@ ClearSelectedScenes.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default withRecipe(mapRecipeToProps)(
-    form({fields})(ClearSelectedScenes)
+const policy = (props) => {
+    return props.form.isDirty()
+        ? {compatibleWith: {include: []}}
+        : {deactivateWhen: {exclude: []}}
+}
+
+export default (
+    withRecipe(mapRecipeToProps)(
+        form({fields})(
+            activatable('clearSelectedScenes', policy)(
+                ClearSelectedScenes
+            )
+        )
+    )
 )

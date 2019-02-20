@@ -8,7 +8,7 @@ import React from 'react'
 import {map} from 'rxjs/operators'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'
-import {activatable} from 'widget/activation'
+import {activatable} from 'widget/activation/activatable'
 import {Button, ButtonGroup} from 'widget/button'
 import {Field, form} from 'widget/form'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
@@ -64,13 +64,14 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        const {action, recipeId, dates: {targetDate}, form} = this.props
+        const {action, recipeId, dates: {targetDate}, form, deactivate} = this.props
         const loading = !action('LOAD_SCENES').dispatched
         return (
             <React.Fragment>
                 <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
                 <FormPanel
-                    id='sceneSelection'
+                    close={deactivate}
+                    policy={policy}
                     className={styles.panel}
                     form={form}
                     type='center'
@@ -344,12 +345,11 @@ class Scene extends React.Component {
 SceneSelection.propTypes = {}
 
 
-const policy = () => {
-}
+const policy = () => ({compatibleWith: {include: []}})
 
 export default (
-    withRecipe(mapRecipeToProps)(
-        activatable('sceneSelection', policy)(
+    activatable('sceneSelection', policy)(
+        withRecipe(mapRecipeToProps)(
             form({fields})(
                 SceneSelection
             )

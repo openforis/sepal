@@ -1,16 +1,17 @@
-import {RecipeActions, RecipeState, SceneSelectionType, inDateRange} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, SceneSelectionType, inDateRange} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import {connect} from 'store'
-import {objectEquals} from 'collections'
+import {objectEquals, selectFrom} from 'collections'
 import React from 'react'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+const mapRecipeToProps = recipe => {
     return {
-        sceneAreas: recipeState('ui.sceneAreas'),
-        dates: recipeState('model.dates'),
-        sources: recipeState('model.sources'),
-        sceneSelectionOptions: recipeState('model.sceneSelectionOptions'),
-        scenes: recipeState('model.scenes')
+        recipeId: recipe.id,
+        sceneAreas: selectFrom(recipe, 'ui.sceneAreas'),
+        dates: selectFrom(recipe, 'model.dates'),
+        sources: selectFrom(recipe, 'model.sources'),
+        sceneSelectionOptions: selectFrom(recipe, 'model.sceneSelectionOptions'),
+        scenes: selectFrom(recipe, 'model.scenes')
     }
 }
 
@@ -56,4 +57,4 @@ class SceneDeselection extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(SceneDeselection)
+export default withRecipe(mapRecipeToProps)(SceneDeselection)

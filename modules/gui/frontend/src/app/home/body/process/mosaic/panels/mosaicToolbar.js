@@ -3,16 +3,16 @@ import Auto from 'app/home/body/process/mosaic/panels/auto/auto'
 import ClearSelectedScenes from 'app/home/body/process/mosaic/panels/clearSelectedScenes/clearSelectedScenes'
 import Dates from 'app/home/body/process/mosaic/panels/dates/dates'
 import Retrieve from 'app/home/body/process/mosaic/panels/retrieve/retrieve'
-import Scenes from 'app/home/body/process/mosaic/panels/scenes/scenes'
+import SceneSelectionOptions from 'app/home/body/process/mosaic/panels/sceneSelectionOptions/sceneSelectionOptions'
 import Sources from 'app/home/body/process/mosaic/panels/sources/sources'
-import Composite from 'app/home/body/process/mosaic/panels/composite/composite'
+import CompositeOptions from 'app/home/body/process/mosaic/panels/compositeOptions/compositeOptions'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'collections'
 import _ from 'lodash'
 import React from 'react'
 import {msg} from 'translate'
 import PanelWizard from 'widget/panelWizard'
-import Toolbar, {ActivationButton, PanelButton} from 'widget/toolbar'
+import Toolbar, {ActivationButton} from 'widget/toolbar'
 import {SceneSelectionType} from '../mosaicRecipe'
 import styles from './mosaicToolbar.module.css'
 
@@ -30,10 +30,10 @@ const mapRecipeToProps = recipe => {
 
 class MosaicToolbar extends React.Component {
     render() {
-        const {recipeId, initialized, sceneSelectionType, sceneAreasLoaded, scenesSelected} = this.props
+        const {initialized, sceneSelectionType, sceneAreasLoaded, scenesSelected} = this.props
         return (
             <PanelWizard
-                panels={['areaOfInterest', 'dates', 'sources']}
+                panels={['aoi', 'dates', 'sources']}
                 initialized={initialized}>
 
                 <Auto/>
@@ -43,8 +43,8 @@ class MosaicToolbar extends React.Component {
                 <Aoi/>
                 <Dates/>
                 <Sources/>
-                <Scenes/>
-                <Composite/>
+                <SceneSelectionOptions/>
+                <CompositeOptions/>
 
                 <Toolbar
                     vertical
@@ -75,7 +75,7 @@ class MosaicToolbar extends React.Component {
                     panel
                     className={styles.bottom}>
                     <ActivationButton
-                        id='areaOfInterest'
+                        id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}/>
                     <ActivationButton
@@ -87,11 +87,11 @@ class MosaicToolbar extends React.Component {
                         label={msg('process.mosaic.panel.sources.button')}
                         tooltip={msg('process.mosaic.panel.sources.tooltip')}/>
                     <ActivationButton
-                        id='scenes'
+                        id='sceneSelectionOptions'
                         label={msg('process.mosaic.panel.scenes.button')}
                         tooltip={msg('process.mosaic.panel.scenes.tooltip')}/>
                     <ActivationButton
-                        id='composite'
+                        id='compositeOptions'
                         label={msg('process.mosaic.panel.composite.button')}
                         tooltip={msg('process.mosaic.panel.composite.tooltip')}/>
                 </Toolbar>

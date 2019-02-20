@@ -1,8 +1,8 @@
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'collections'
-import PropTypes from 'prop-types'
 import React from 'react'
 import {msg} from 'translate'
+import {activatable} from 'widget/activation/activatable'
 import {Field, form} from 'widget/form'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
@@ -28,12 +28,12 @@ class Auto extends React.Component {
     }
 
     render() {
-        const {form} = this.props
+        const {form, deactivate} = this.props
         return (
             <FormPanel
-                id='auto'
                 className={styles.panel}
                 form={form}
+                close={deactivate}
                 isActionForm={true}
                 placement='top-right'
                 onApply={sceneCount => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}>
@@ -82,11 +82,21 @@ class Auto extends React.Component {
     }
 }
 
-Auto.propTypes = {
+
+Auto.propTypes = {}
+
+const policy = (props) => {
+    return props.form.isDirty()
+        ? {compatibleWith: {include: []}}
+        : {deactivateWhen: {exclude: []}}
 }
 
-export default withRecipe(mapRecipeToProps)(
-    form({fields})(
-        Auto
+export default (
+    withRecipe(mapRecipeToProps)(
+        form({fields})(
+            activatable('auto', policy)(
+                Auto
+            )
+        )
     )
 )

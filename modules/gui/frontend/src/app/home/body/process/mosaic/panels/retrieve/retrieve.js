@@ -1,18 +1,19 @@
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import {Field, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions} from '../../mosaicRecipe'
-import {currentUser} from 'user'
-import {dataSetById} from 'sources'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
+import {selectFrom} from 'collections'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {dataSetById} from 'sources'
+import {msg} from 'translate'
+import {currentUser} from 'user'
+import {activatable} from 'widget/activation/activatable'
+import Buttons from 'widget/buttons'
+import {Field, form} from 'widget/form'
+import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import Label from 'widget/label'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions} from '../../mosaicRecipe'
 import styles from './retrieve.module.css'
-import {selectFrom} from 'collections'
 
 const fields = {
     bands: new Field()
@@ -87,9 +88,9 @@ class Retrieve extends React.Component {
 
         const bandOptions = this.allBandOptions
             .map(group => ({
-                ...group,
-                options: group.options.filter(option => availableBands.has(option.value))
-            })
+                    ...group,
+                    options: group.options.filter(option => availableBands.has(option.value))
+                })
             )
             .filter(group =>
                 group.options.length
@@ -128,12 +129,12 @@ class Retrieve extends React.Component {
     }
 
     render() {
-        const {form} = this.props
+        const {form, deactivate} = this.props
         return (
             <FormPanel
-                id='retrieve'
                 className={styles.panel}
                 form={form}
+                close={deactivate}
                 isActionForm={true}
                 placement='top-right'
                 onApply={values => this.recipeActions.retrieve(values).dispatch()}>
@@ -164,7 +165,19 @@ Retrieve.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default withRecipe(mapRecipeToProps)(
-    form({fields})(Retrieve)
+const policy = (props) => {
+    return props.form.isDirty()
+        ? {compatibleWith: {include: []}}
+        : {deactivateWhen: {exclude: []}}
+}
+
+export default (
+    withRecipe(mapRecipeToProps)(
+        form({fields})(
+            activatable('retrieve', policy)(
+                Retrieve
+            )
+        )
+    )
 )
 

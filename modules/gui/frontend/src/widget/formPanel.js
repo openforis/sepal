@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Activatable} from 'widget/activation'
 import {Form} from 'widget/form'
 import {Panel, PanelButtons} from 'widget/panel'
 import {PanelWizardContext} from './panelWizard'
@@ -10,7 +9,7 @@ const PanelContext = React.createContext()
 
 export default class FormPanel extends React.Component {
     closePanel() {
-        this.deactivate()
+        this.props.close()
     }
 
     apply() {
@@ -35,7 +34,7 @@ export default class FormPanel extends React.Component {
         this.closePanel()
     }
 
-    renderPanel() {
+    render() {
         const {
             form = false, isActionForm, onApply, type = 'modal', className, children,
             placement
@@ -75,31 +74,12 @@ export default class FormPanel extends React.Component {
             </PanelWizardContext>
         )
     }
-
-    defaultPolicy() {
-        const {form} = this.props
-        const dirtyPolicy = {compatibleWith: {include: []}}
-        const cleanPolicy = {deactivateWhen: {exclude: []}}
-        return () => form.isDirty() ? dirtyPolicy : cleanPolicy
-    }
-
-    render() {
-        const {id, policy} = this.props
-        return (
-            <Activatable id={id} policy={policy || this.defaultPolicy()}>
-                {({deactivate}) => {
-                    this.deactivate = deactivate
-                    return this.renderPanel()
-                }}
-            </Activatable>
-        )
-    }
 }
 
 FormPanel.propTypes = {
     children: PropTypes.any.isRequired,
-    id: PropTypes.string.isRequired,
     form: PropTypes.object.isRequired,
+    close: PropTypes.func,
     policy: PropTypes.func,
     className: PropTypes.string,
     isActionForm: PropTypes.any,

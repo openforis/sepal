@@ -1,18 +1,16 @@
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {selectFrom} from 'collections'
-import {Field, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {getSource, RecipeActions} from '../../mosaicRecipe'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {initValues} from 'app/home/body/process/recipe'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
+import {recipeFormPanel, RecipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {msg} from 'translate'
+import Buttons from 'widget/buttons'
+import {Field, form} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import Label from 'widget/label'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import Slider from 'widget/slider'
-import styles from './composite.module.css'
+import {getSource} from '../../mosaicRecipe'
+import styles from './compositeOptions.module.css'
 
 const fields = {
     corrections: new Field(),
@@ -25,18 +23,10 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id,
-    model: selectFrom(recipe, 'model.composite'),
-    values: selectFrom(recipe, 'ui.composite'),
     source: getSource(recipe)
 })
 
-class Composite extends React.Component {
-    constructor(props) {
-        super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
-    }
-
+class CompositeOptions extends React.Component {
     renderContent() {
         const {
             inputs: {
@@ -106,17 +96,10 @@ class Composite extends React.Component {
     }
 
     render() {
-        const {form} = this.props
         return (
-            <FormPanel
-                id='composite'
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                placement='bottom-right'
-                onApply={values => this.recipeActions.setCompositeOptions({
-                    values,
-                    model: valuesToModel(values)
-                }).dispatch()}>
+                placement='bottom-right'>
                 <PanelHeader
                     icon='layer-group'
                     title={msg('process.mosaic.panel.composite.title')}/>
@@ -130,12 +113,12 @@ class Composite extends React.Component {
                 </ScrollableContainer>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 }
 
-Composite.propTypes = {
+CompositeOptions.propTypes = {
     disabled: PropTypes.any,
     recipeId: PropTypes.string,
     source: PropTypes.string
@@ -191,16 +174,4 @@ const modelToValues = model => {
     })
 }
 
-export default withRecipe(mapRecipeToProps)(
-    initValues({
-        getModel: props => props.model,
-        getValues: props => props.values,
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setCompositeOptions({values, model})
-                .dispatch()
-    })(
-        form({fields})(Composite)
-    )
-)
+export default recipeFormPanel({id: 'compositeOptions', fields, mapRecipeToProps, modelToValues, valuesToModel})(CompositeOptions)

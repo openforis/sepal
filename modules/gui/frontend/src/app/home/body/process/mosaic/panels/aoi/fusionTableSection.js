@@ -1,21 +1,22 @@
-import {Input} from 'widget/form'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import {Subject} from 'rxjs'
-import {connect} from 'store'
-import {isMobile} from 'widget/userAgent'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
+import {sepalMap} from 'app/home/map/map'
+import {selectFrom} from 'collections'
+import React from 'react'
+import {Subject} from 'rxjs'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
-import {sepalMap} from 'app/home/map/map'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
 import ComboBox from 'widget/comboBox'
-import React from 'react'
+import {Input} from 'widget/form'
+import {isMobile} from 'widget/userAgent'
+import {RecipeActions} from '../../mosaicRecipe'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+const mapRecipeToProps = recipe => {
     return {
-        columns: recipeState('ui.fusionTable.columns'),
-        rows: recipeState('ui.fusionTable.rows')
+        recipeId: recipe.id,
+        columns: selectFrom(recipe, 'ui.fusionTable.columns'),
+        rows: selectFrom(recipe, 'ui.fusionTable.rows')
     }
 }
 
@@ -51,12 +52,12 @@ class FusionTableSection extends React.Component {
                     ORDER BY '${column}' ASC
             `).pipe(
                 map(e => {
-                    this.recipe.setFusionTableRows(
-                        (e.response.rows || [])
-                            .map(row => row[0])
-                            .filter(value => value))
-                        .dispatch()
-                }
+                        this.recipe.setFusionTableRows(
+                            (e.response.rows || [])
+                                .map(row => row[0])
+                                .filter(value => value))
+                            .dispatch()
+                    }
                 ),
                 takeUntil(this.fusionTableColumnChanged$),
                 takeUntil(this.fusionTableChanged$)
@@ -163,4 +164,4 @@ class FusionTableSection extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(FusionTableSection)
+export default withRecipe(mapRecipeToProps)(FusionTableSection)

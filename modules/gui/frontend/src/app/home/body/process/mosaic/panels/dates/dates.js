@@ -1,20 +1,17 @@
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {Button} from 'widget/button'
-import {ErrorMessage, Field, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions} from '../../mosaicRecipe'
-import {initValues} from 'app/home/body/process/recipe'
-import {msg} from 'translate'
-import DatePicker from 'widget/datePicker'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
+import {recipeFormPanel, RecipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import DatePicker from 'widget/datePicker'
+import {ErrorMessage, Field, form} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import Label from 'widget/label'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import SeasonSelect from 'widget/seasonSelect'
 import Slider from 'widget/slider'
-import moment from 'moment'
 import styles from './dates.module.css'
-import {selectFrom} from 'collections'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -67,21 +64,14 @@ const fields = {
     yearsAfter: new Field()
 }
 
-const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id,
-    model: selectFrom(recipe, 'model.dates'),
-    values:selectFrom(recipe, 'ui.dates')
-})
-
 class Dates extends React.Component {
     modal = React.createRef()
 
     constructor(props) {
         super(props)
-        const {recipeId, inputs: {targetYear, targetDate}} = props
+        const {inputs: {targetYear, targetDate}} = props
         targetYear.onChange(yearString => this.handleYearChange(yearString))
         targetDate.onChange(dateString => this.handleDateChange(dateString))
-        this.recipeActions = RecipeActions(recipeId)
     }
 
     handleYearChange(yearString) {
@@ -183,14 +173,11 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {form, inputs: {advanced}} = this.props
+        const {inputs: {advanced}} = this.props
         return (
-            <FormPanel
-                id='dates'
+            <RecipeFormPanel
                 className={advanced.value ? styles.advanced : styles.simple}
-                form={form}
-                placement='bottom-right'
-                onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}>
+                placement='bottom-right'>
                 <PanelHeader
                     icon='calendar-alt'
                     title={msg('process.mosaic.panel.dates.title')}/>
@@ -206,7 +193,7 @@ class Dates extends React.Component {
                         label={advanced.value ? msg('button.less') : msg('button.more')}
                         onClick={() => this.setAdvanced(!advanced.value)}/>
                 </FormPanelButtons>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 }
@@ -257,16 +244,4 @@ const modelToValues = (model = {}) => {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(
-    initValues({
-        getModel: props => props.model,
-        getValues: props => props.values,
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setDates({values, model})
-                .dispatch()
-    })(
-        form({fields})(Dates)
-    )
-)
+export default recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel})(Dates)

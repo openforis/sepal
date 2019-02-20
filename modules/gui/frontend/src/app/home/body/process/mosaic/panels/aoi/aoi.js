@@ -1,16 +1,13 @@
-import {initValues} from 'app/home/body/process/recipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {sepalMap} from 'app/home/map/map'
-import {selectFrom} from 'collections'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {msg} from 'translate'
 import {Field, form} from 'widget/form'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import {FormPanelButtons} from 'widget/formPanel'
 import PanelSections from 'widget/panelSections'
-import {RecipeActions} from '../../mosaicRecipe'
 import styles from './aoi.module.css'
 import CountrySection from './countrySection'
 import FusionTableSection from './fusionTableSection'
@@ -43,27 +40,18 @@ const fields = {
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
 }
 
-const mapRecipeToProps = (recipe) => ({
-    recipeId: recipe.id,
-    model: selectFrom(recipe, 'model.aoi'),
-    values: selectFrom(recipe, 'ui.aoi')
-})
-
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
-        const {values, recipeId} = props
+        const {values} = props
         this.aoiUnchanged = true
         this.initialValues = values
         this.initialBounds = sepalMap.getBounds()
         this.initialZoom = sepalMap.getZoom()
-        this.recipeActions = RecipeActions(recipeId)
     }
 
-    onApply(values) {
+    onApply(values, model) {
         const {recipeId, componentWillUnmount$} = this.props
-        const model = valuesToModel(values)
-        this.recipeActions.setAoi({values, model}).dispatch()
         this.aoiUnchanged = _.isEqual(values, this.initialValues)
         setAoiLayer({
             contextId: recipeId,
@@ -74,7 +62,7 @@ class Aoi extends React.Component {
     }
 
     render() {
-        const {recipeId, recipePath, form, inputs} = this.props
+        const {recipeId, inputs} = this.props
         const sections = [
             {
                 icon: 'cog',
@@ -98,17 +86,14 @@ class Aoi extends React.Component {
             },
         ]
         return (
-            <FormPanel
-                id='areaOfInterest'
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
                 placement='bottom-right'
-                onApply={values => this.onApply(values)}>
+                onApply={(values, model) => this.onApply(values, model)}>
                 <PanelSections inputs={inputs} selected={inputs.section} sections={sections}/>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 
@@ -187,16 +172,4 @@ const modelToValues = (model = {}) => {
         return {}
 }
 
-export default withRecipe(mapRecipeToProps)(
-    initValues({
-        getModel: props => props.model,
-        getValues: props => props.values,
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setAoi({values, model})
-                .dispatch()
-    })(
-        form({fields})(Aoi)
-    )
-)
+export default recipeFormPanel({id: 'aoi', fields, modelToValues, valuesToModel})(Aoi)

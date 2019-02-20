@@ -3,7 +3,6 @@ import api from 'api'
 import {selectFrom} from 'collections'
 import _ from 'lodash'
 import moment from 'moment'
-import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
 import {msg} from 'translate'
 import Labels from '../../../map/labels'
 import {recipePath} from '../recipe'
@@ -36,34 +35,6 @@ export const defaultModel = {
     }
 }
 
-export const RecipeState = recipe => {
-    const recipeState = (path) => selectFrom(recipe, path)
-    recipeState.dateRange = () => {
-        const dates = recipeState('model.dates')
-        const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
-        const seasonEnd = moment(dates.seasonEnd, DATE_FORMAT)
-        return [
-            seasonStart.subtract(dates.yearsBefore, 'years'),
-            seasonEnd.add(dates.yearsAfter, 'years')
-        ]
-    }
-    recipeState.isSourceInDateRange = sourceId => {
-        const [from, to] = recipeState.dateRange()
-        return isSourceInDateRange(sourceId, from, to)
-    }
-    recipeState.isDataSetInDateRange = dataSetId => {
-        const [from, to] = recipeState.dateRange()
-        return isDataSetInDateRange(dataSetId, from, to)
-    }
-
-    recipeState.source = () => {
-        const sources = recipeState('model.sources')
-        return sources && Object.keys(sources)[0]
-    }
-    // initRecipe(recipeState())
-    return recipeState
-}
-
 export const RecipeActions = id => {
     const actionBuilder = (name, props) => {
         return globalActionBuilder(name, props)
@@ -79,6 +50,9 @@ export const RecipeActions = id => {
             .build()
 
     return {
+        set(dirty, prop) {
+            return set('SET', prop, dirty, {dirty, prop})
+        },
         setLabelsShown(shown) {
             return Labels.showLabelsAction({shown, mapContext: id, statePath: recipePath(id, 'ui'), layerIndex: 1})
         },

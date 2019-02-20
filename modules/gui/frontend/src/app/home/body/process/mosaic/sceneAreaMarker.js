@@ -4,7 +4,7 @@ import {google, googleMap, MapObject} from 'app/home/map/map'
 import {selectFrom} from 'collections'
 import React from 'react'
 import {select} from 'store'
-import {activator} from 'widget/activation'
+import {activator} from 'widget/activation/activator'
 import styles from './sceneAreas.module.css'
 
 const mapRecipeToProps = (recipe, ownProps) => {

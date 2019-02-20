@@ -15,7 +15,7 @@ const toPathList = (path, safe = false) => {
     if (_.isString(path)) {
         return safe ? path : path.split('.')
     }
-    throw new Error('Unsupported path element type: ', path)
+    throw new Error(`Unsupported path element type: '${path}'`)
 }
 
 const select = (path, state) => {
@@ -41,7 +41,7 @@ const actionBuilder = (type, props) => {
             prefix = _prefix
             return this
         },
-        
+
         withState(path, callback) {
             operations.push((immutableState, state) => {
                 const prevValue = select(path, state)
