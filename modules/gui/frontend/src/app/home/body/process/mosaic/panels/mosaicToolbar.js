@@ -1,19 +1,20 @@
-import {SceneSelectionType} from '../mosaicRecipe'
-import {msg} from 'translate'
-import {selectFrom} from 'collections'
-import {withRecipe} from 'app/home/body/process/recipeContext'
 import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
 import Auto from 'app/home/body/process/mosaic/panels/auto/auto'
 import ClearSelectedScenes from 'app/home/body/process/mosaic/panels/clearSelectedScenes/clearSelectedScenes'
 import CompositeOptions from 'app/home/body/process/mosaic/panels/compositeOptions/compositeOptions'
 import Dates from 'app/home/body/process/mosaic/panels/dates/dates'
-import PanelWizard from 'widget/panelWizard'
-import React from 'react'
 import Retrieve from 'app/home/body/process/mosaic/panels/retrieve/retrieve'
 import SceneSelectionOptions from 'app/home/body/process/mosaic/panels/sceneSelectionOptions/sceneSelectionOptions'
 import Sources from 'app/home/body/process/mosaic/panels/sources/sources'
-import Toolbar, {ActivationButton} from 'widget/toolbar'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'collections'
 import _ from 'lodash'
+import React from 'react'
+import {msg} from 'translate'
+import PanelWizard from 'widget/panelWizard'
+import Toolbar, {ActivationButton} from 'widget/toolbar'
+import {SceneSelectionType} from '../mosaicRecipe'
+import {setInitialized} from '../../recipe'
 import styles from './mosaicToolbar.module.css'
 
 const mapRecipeToProps = recipe => {
@@ -30,11 +31,13 @@ const mapRecipeToProps = recipe => {
 
 class MosaicToolbar extends React.Component {
     render() {
-        const {initialized, sceneSelectionType, sceneAreasLoaded, scenesSelected} = this.props
+        const {recipeId, initialized, sceneSelectionType, sceneAreasLoaded, scenesSelected} = this.props
         return (
             <PanelWizard
                 panels={['aoi', 'dates', 'sources']}
-                initialized={initialized}>
+                initialized={initialized}
+                onDone={() => setInitialized(recipeId)}
+            >
 
                 <Auto/>
                 <ClearSelectedScenes/>

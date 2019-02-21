@@ -1,15 +1,16 @@
-import {EMPTY, Subject, from, of} from 'rxjs'
-import {addTab, closeTab} from 'widget/tabs'
-import {connect, select, subscribe} from 'store'
-import {gzip$, ungzip$} from 'gzip'
-import {map, switchMap} from 'rxjs/operators'
-import {msg} from 'translate'
-import JSZip from 'jszip'
-import Notifications from 'widget/notifications'
-import React from 'react'
-import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import {selectFrom} from 'collections'
+import {gzip$, ungzip$} from 'gzip'
+import JSZip from 'jszip'
+import _ from 'lodash'
+import React from 'react'
+import {from, of, Subject} from 'rxjs'
+import {map, switchMap} from 'rxjs/operators'
+import {connect, select, subscribe} from 'store'
+import {msg} from 'translate'
+import Notifications from 'widget/notifications'
+import {addTab, closeTab} from 'widget/tabs'
 
 export const recipePath = (recipeId, path) => {
     const recipeTabIndex = select('process.tabs')
@@ -31,9 +32,22 @@ export const RecipeState = recipeId => {
         select(recipePath(recipeId, path))
 }
 
-export const saveRecipe$ = recipe => {
-    if (!recipe.type)
-        return EMPTY
+export const setInitialized = (recipeId) => {
+    console.log('setInitialized')
+    actionBuilder('SET_RECIPE_INITIALIZED', recipeId)
+        .set(recipePath(recipeId, 'ui.initialized'), true)
+        .dispatch()
+    const recipe = select(recipePath(recipeId))
+    if (recipe.title)
+        saveRecipe(recipe)
+}
+
+export const saveRecipe = recipe => {
+    if (!selectFrom(recipe, 'ui.initialized')) {
+        console.log('saveRecipe not initialized')
+        return
+    }
+    console.log('saveRecipe')
     const listItem = {
         id: recipe.id,
         name: recipe.title || recipe.placeholder,
@@ -48,16 +62,12 @@ export const saveRecipe$ = recipe => {
         recipes = _.sortBy(recipes, 'name')
     }
 
-    return of(
-        actionBuilder('SET_RECIPES', {recipes})
-            .set('process.recipes', recipes)
-            .sideEffect(() => saveToBackend$.next(recipe))
-            .build()
-    )
-}
+    actionBuilder('SET_RECIPES', {recipes})
+        .set('process.recipes', recipes)
+        .dispatch()
 
-export const saveRecipe = recipe =>
-    saveRecipe$(recipe).subscribe(action => action.dispatch())
+    saveToBackend$.next(recipe)
+}
 
 export const exportRecipe = recipe => {
     const name = `${recipe.title || recipe.placeholder}`
@@ -102,11 +112,26 @@ export const loadRecipe$ = recipeId => {
         return api.recipe.load$(recipeId).pipe(
             map(recipe =>
                 actionBuilder('OPEN_RECIPE')
-                    .set(recipePath(selectedTabId), recipe)
+                    .set(recipePath(selectedTabId), {...recipe, ui: {initialized: true}})
                     .set('process.selectedTabId', recipe.id)
                     .build())
         )
     }
+}
+
+export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) => {
+    return api.recipe.load$(sourceRecipeId).pipe(
+        map(recipe => ({
+            ...recipe,
+            id: destinationRecipeId,
+            title: (recipe.title || recipe.placeholder) + '_copy'
+        })),
+        map(duplicate =>
+            actionBuilder('DUPLICATE_RECIPE', {duplicate})
+                .set(recipePath(destinationRecipeId), {...duplicate, ui: {initialized: true}})
+                .build()
+        )
+    )
 }
 
 export const addRecipe = recipe => {
@@ -156,8 +181,7 @@ subscribe('process.tabs', recipes => {
         }
         prevTabs = recipes
     }
-}
-)
+})
 
 saveToBackend$.pipe(
     switchMap(recipe => {
@@ -309,6 +333,7 @@ export const initValues = ({getModel, getValues, modelToValues, onInitialized}) 
                 onInitialized({model, values, props: this.props})
             }
         }
+
         return RecipeComponent
     }
 }

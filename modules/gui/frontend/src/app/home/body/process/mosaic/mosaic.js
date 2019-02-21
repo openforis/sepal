@@ -34,10 +34,31 @@ const mapRecipeToProps = recipe => {
 }
 
 class Mosaic extends React.Component {
+    constructor(props) {
+        super(props)
+        const {recipeId, aoi, componentWillUnmount$} = props
+        const actions = RecipeActions(recipeId)
+        actions.setLabelsShown(false).dispatch()
+        actions.setSceneAreasShown(true).dispatch()
+        actions.setBands('red, green, blue').dispatch()
+        actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
+        setAoiLayer({
+            contextId: recipeId,
+            aoi,
+            destroy$: componentWillUnmount$,
+            onInitialized: () => {
+                if (this.props.tabCount === 1) {
+                    sepalMap.setContext(recipeId)
+                    sepalMap.getContext(recipeId).fitLayer('aoi')
+                }
+            }
+        })
+    }
+
     render() {
         const {recipeId, recipeContext: {statePath}, initialized, aoi, source, sceneSelectionOptions: {type}} = this.props
-        if (initialized === undefined)
-            return null
+        // if (initialized === undefined)
+        //     return null
         return (
             <SectionLayout>
                 <Content>
@@ -65,27 +86,6 @@ class Mosaic extends React.Component {
                 </Content>
             </SectionLayout>
         )
-    }
-
-    componentDidMount() {
-        const {recipeId, aoi, dates, source, componentWillUnmount$} = this.props
-        const actions = RecipeActions(recipeId)
-        actions.setInitialized(aoi && dates && source).dispatch()
-        actions.setLabelsShown(false).dispatch()
-        actions.setSceneAreasShown(true).dispatch()
-        actions.setBands('red, green, blue').dispatch()
-        actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
-        setAoiLayer({
-            contextId: recipeId,
-            aoi,
-            destroy$: componentWillUnmount$,
-            onInitialized: () => {
-                if (this.props.tabCount === 1) {
-                    sepalMap.setContext(recipeId)
-                    sepalMap.getContext(recipeId).fitLayer('aoi')
-                }
-            }
-        })
     }
 }
 

@@ -1,7 +1,7 @@
-import {activator} from 'widget/activation/activator'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {activator} from 'widget/activation/activator'
 
 class PanelWizard extends React.Component {
 
@@ -11,7 +11,7 @@ class PanelWizard extends React.Component {
     }
 
     render() {
-        const {panels = [], activatables, updateActivatables, children} = this.props
+        const {panels = [], activatables, updateActivatables, onDone, children} = this.props
         const {initialized} = this.state
         const currentId = !initialized && _(activatables)
             .pickBy(({active}) => active)
@@ -38,6 +38,7 @@ class PanelWizard extends React.Component {
         const done = () => {
             this.setState(prevState => ({...prevState, initialized: true}))
             currentActivatable.deactivate()
+            onDone && onDone()
         }
         return (
             <Context.Provider value={{wizard: !initialized, back, next, done}}>
@@ -80,10 +81,11 @@ class PanelWizard extends React.Component {
 export default activator()(PanelWizard)
 
 PanelWizard.propTypes = {
-    initialized: PropTypes.any.isRequired,
+    initialized: PropTypes.any,
     panels: PropTypes.array.isRequired,
     children: PropTypes.any,
-    selectedPanel: PropTypes.any
+    selectedPanel: PropTypes.any,
+    onDone: PropTypes.func
 }
 
 const Context = React.createContext()
@@ -93,3 +95,17 @@ export const PanelWizardContext = ({children}) =>
         {(value = {}) => children(value)}
     </Context.Consumer>
 
+export const withPanelWizardContext = () =>
+    WrappedComponent => {
+        class HigherOrderComponent extends React.Component {
+            render() {
+                return (
+                    <PanelWizardContext>
+                        {wizardContext => React.createElement(WrappedComponent, {...this.props, wizardContext})}
+                    </PanelWizardContext>
+                )
+            }
+        }
+
+        return HigherOrderComponent
+    }

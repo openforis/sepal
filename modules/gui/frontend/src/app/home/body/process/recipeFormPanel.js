@@ -1,28 +1,29 @@
+import actionBuilder from 'action-builder'
+import {initValues} from 'app/home/body/process/recipe'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'collections'
+import React from 'react'
 import {activatable} from 'widget/activation/activatable'
 import {form} from 'widget/form'
-import {initValues} from 'app/home/body/process/recipe'
-import {selectFrom} from 'collections'
-import {withRecipe} from 'app/home/body/process/recipeContext'
 import FormPanel from 'widget/formPanel'
-import React from 'react'
-import actionBuilder from 'action-builder'
+import {withPanelWizardContext} from 'widget/panelWizard'
 
 const Context = React.createContext()
 
-const policy = ({values}) => {
-    return selectFrom(values, 'dirty')
+const policy = ({values, wizardContext: {wizard}}) => {
+    return wizard || selectFrom(values, 'dirty')
         ? {compatibleWith: {include: []}}
         : {deactivateWhen: {exclude: []}}
 }
 
 export const recipeFormPanel =
     ({
-        id,
-        fields,
-        mapRecipeToProps = () => ({}),
-        modelToValues = model => ({...model}),
-        valuesToModel = values => ({...values})
-    }) => {
+         id,
+         fields,
+         mapRecipeToProps = () => ({}),
+         modelToValues = model => ({...model}),
+         valuesToModel = values => ({...values})
+     }) => {
 
         const createMapRecipeToProps = mapRecipeToProps =>
             recipe => {
@@ -64,10 +65,12 @@ export const recipeFormPanel =
 
             return (
                 withRecipe(createMapRecipeToProps(mapRecipeToProps))(
-                    activatable(id, policy)(
-                        initValues(valuesSpec)(
-                            form({fields})(
-                                HigherOrderComponent
+                    withPanelWizardContext()(
+                        activatable(id, policy)(
+                            initValues(valuesSpec)(
+                                form({fields})(
+                                    HigherOrderComponent
+                                )
                             )
                         )
                     )
