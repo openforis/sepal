@@ -2,6 +2,7 @@ import actionBuilder from 'action-builder'
 import {initValues} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'collections'
+import PropTypes from 'prop-types'
 import React from 'react'
 import {activatable} from 'widget/activation/activatable'
 import {form} from 'widget/form'
@@ -112,6 +113,13 @@ export class RecipeFormPanel extends React.Component {
             onApply && onApply(values, model)
         }
     }
+}
+
+RecipeFormPanel.propTypes = {
+    children: PropTypes.any.isRequired,
+    className: PropTypes.string,
+    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
+    isActionForm: PropTypes.any
 }
 
 const setModelAndValues = ({id, statePath, model, values}) =>

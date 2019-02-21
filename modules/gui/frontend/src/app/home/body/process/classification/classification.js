@@ -1,15 +1,14 @@
-import {defaultModel} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {selectFrom} from 'collections'
-import {RecipeState} from './classificationRecipe'
-import {connect, select} from 'store'
-import {recipe} from 'app/home/body/process/recipe'
+import {recipe} from 'app/home/body/process/recipeContext'
 import {sepalMap} from 'app/home/map/map'
-import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
-import ClassificationPreview from './classificationPreview'
-import ClassificationToolbar from './classificationToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
+import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
+import {selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {connect} from 'store'
+import ClassificationPreview from './classificationPreview'
+import {defaultModel} from './classificationRecipe'
+import ClassificationToolbar from './classificationToolbar'
 
 const mapStateToProps = state => ({
     tabCount: state.process.tabs.length
@@ -30,14 +29,15 @@ class Classification extends React.Component {
                     statePath={recipePath + '.ui'}
                     mapContext={recipeId}
                     labelLayerIndex={2}/>
-                <ClassificationToolbar recipeId={recipeId}/>
+                <ClassificationToolbar/>
 
                 {initialized
-                    ? <ClassificationPreview recipeId={recipeId}/>
+                    ? <ClassificationPreview/>
                     : null}
             </React.Fragment>
         )
     }
+
     componentDidMount() {
         this.setAoiLayer()
     }
