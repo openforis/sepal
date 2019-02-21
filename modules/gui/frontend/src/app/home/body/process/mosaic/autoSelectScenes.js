@@ -32,7 +32,7 @@ class AutoSelectScenes extends React.Component {
             sources: recipe.model.sources,
             dates: recipe.model.dates,
             sceneSelectionOptions: recipe.model.sceneSelectionOptions,
-            sceneCount: recipe.ui.sceneCount,
+            sceneCount: recipe.ui.autoSelectScenes,
             cloudCoverTarget: 0.001
         }).pipe(
             map(scenes =>
@@ -47,7 +47,7 @@ class AutoSelectScenes extends React.Component {
         return (
             <div>
                 {action('AUTO_SELECT_SCENES').dispatching
-                    ? <MapStatus message={msg('process.mosaic.panel.auto.selecting')}/>
+                    ? <MapStatus message={msg('process.mosaic.panel.autoSelectScenes.selecting')}/>
                     : null}
             </div>
         )

@@ -160,7 +160,7 @@
                 "centerMap.tooltip": "Zoom to area of interest"
             },
             "panel": {
-                "auto": {
+                "autoSelectScenes": {
                     "title": "Auto-select scenes",
                     "tooltip": "Auto-select scenes",
                     "form": {

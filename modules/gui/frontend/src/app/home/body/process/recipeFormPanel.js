@@ -16,16 +16,6 @@ const defaultPolicy = ({values, wizardContext: {wizard}}) => {
         : {deactivateWhen: {exclude: []}}
 }
 
-// const policy = ({values, wizardContext: {wizard}}) => {
-//     return wizard || selectFrom(values, 'dirty')
-//         ? {compatibleWith: {include: ['sceneSelection']}}
-//         : {
-//             compatibleWith: {exclude: []},
-//             deactivateWhen: {exclude: ['sceneSelection']}
-//         }
-// }
-
-
 export const recipeFormPanel =
     ({
          id,
@@ -92,7 +82,7 @@ export const recipeFormPanel =
 
 export class RecipeFormPanel extends React.Component {
     render() {
-        const {className, placement, children} = this.props
+        const {className, placement, isActionForm, children} = this.props
         return (
             <Context.Consumer>
                 {({id, form, statePath, valuesToModel, deactivate}) =>
@@ -101,6 +91,7 @@ export class RecipeFormPanel extends React.Component {
                         className={className}
                         form={form}
                         close={deactivate}
+                        isActionForm={isActionForm}
                         placement={placement}
                         onApply={values => this.onApply({id, statePath, values, valuesToModel})}>
                         {children}
@@ -111,10 +102,15 @@ export class RecipeFormPanel extends React.Component {
     }
 
     onApply({id, statePath, values, valuesToModel}) {
-        const {onApply} = this.props
-        const model = valuesToModel(values)
-        setModelAndValues({id, statePath, model, values})
-        onApply && onApply(values, model)
+        const {onApply, isActionForm} = this.props
+        if (isActionForm) {
+            setValues({id, statePath, values})
+            onApply && onApply(values)
+        } else {
+            const model = valuesToModel(values)
+            setModelAndValues({id, statePath, model, values})
+            onApply && onApply(values, model)
+        }
     }
 }
 
@@ -122,6 +118,11 @@ const setModelAndValues = ({id, statePath, model, values}) =>
     actionBuilder('SET_MODEL_AND_VALUES', {id, model, values})
         .set([statePath, 'ui', id], values)
         .set([statePath, 'model', id], model)
+        .dispatch()
+
+const setValues = ({id, statePath, model, values}) =>
+    actionBuilder('SET_VALUES', {id, values})
+        .set([statePath, 'ui', id], values)
         .dispatch()
 
 const setDirty = ({id, statePath, dirty}) =>
