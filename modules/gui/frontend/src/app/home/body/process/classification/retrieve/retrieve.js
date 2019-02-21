@@ -69,7 +69,8 @@ class Retrieve extends React.Component {
     }
 
     componentDidUpdate() {
-        const {user, inputs: {destination}} = this.props
+        const {inputs: {destination}} = this.props
+        const user = currentUser()
         if (!user.googleTokens && destination.value !== 'SEPAL')
             destination.set('SEPAL')
     }

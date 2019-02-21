@@ -1,4 +1,4 @@
-import {RecipeState as ParentRecipeState, recipePath} from '../recipe'
+import {recipePath} from '../recipe'
 import {msg} from 'translate'
 import _ from 'lodash'
 import api from 'api'
@@ -6,9 +6,6 @@ import globalActionBuilder from 'action-builder'
 
 export const defaultModel = {}
 
-export const RecipeState = recipeId => {
-    return ParentRecipeState(recipeId)
-}
 export const RecipeActions = id => {
 
     const actionBuilder = (name, props) => {

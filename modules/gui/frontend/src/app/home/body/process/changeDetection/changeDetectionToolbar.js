@@ -1,69 +1,62 @@
-import {RecipeState} from './changeDetectionRecipe'
-import {connect} from 'store'
-import {msg} from 'translate'
-import {withRecipePath} from 'app/home/body/process/recipe'
-import PanelWizard from 'widget/panelWizard'
+import {Source1, Source2} from './source/source'
+import {setInitialized} from 'app/home/body/process/recipe'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Retrieve from './retrieve/retrieve'
-import Source from './source/source'
-import Toolbar, {PanelButton} from 'widget/toolbar'
-import TrainingData from './trainingData/trainingData'
+import {msg} from 'translate'
+import PanelWizard from 'widget/panelWizard'
+import Toolbar, {ActivationButton} from 'widget/toolbar'
 import styles from './changeDetectionToolbar.module.css'
+import Retrieve from './retrieve/retrieve'
+import TrainingData from './trainingData/trainingData'
 
-const mapStateToProps = (state, ownProps) => {
-    const {recipeId} = ownProps
-    const recipeState = RecipeState(recipeId)
-    return {
-        initialized: recipeState('ui.initialized')
-    }
-}
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    initialized: selectFrom(recipe, 'ui.initialized'),
+})
 
 class ChangeDetectionToolbar extends React.Component {
     render() {
-        const {recipeId, recipePath, initialized} = this.props
-        const statePath = recipePath + '.ui'
+        const {recipeId, initialized} = this.props
         return (
             <PanelWizard
                 panels={['source1', 'source2', 'trainingData']}
-                statePath={statePath}>
+                initialized={initialized}
+                onDone={() => setInitialized(recipeId)}>
+
+                <Retrieve/>
+                <Source1/>
+                <Source2/>
+                <TrainingData recipeId={recipeId}/>
+
                 <Toolbar
-                    statePath={statePath}
                     vertical
                     placement='top-right'
                     className={styles.top}>
-                    <PanelButton
-                        name='retrieve'
+                    <ActivationButton
+                        id='retrieve'
                         icon='cloud-download-alt'
                         tooltip={msg('process.changeDetection.panel.retrieve.tooltip')}
-                        disabled={!initialized}>
-                        <Retrieve recipeId={recipeId}/>
-                    </PanelButton>
+                        disabled={!initialized}/>
                 </Toolbar>
                 <Toolbar
-                    statePath={statePath}
                     vertical
                     placement='bottom-right'
                     className={styles.bottom}>
-                    <PanelButton
-                        name='source1'
+                    <ActivationButton
+                        id='source1'
                         label={msg('process.changeDetection.panel.source1.button')}
-                        tooltip={msg('process.changeDetection.panel.source1.tooltip')}>
-                        <Source recipeId={recipeId} number={1}/>
-                    </PanelButton>
-                    <PanelButton
-                        name='source2'
+                        tooltip={msg('process.changeDetection.panel.source1.tooltip')}/>
+                    <ActivationButton
+                        id='source2'
                         label={msg('process.changeDetection.panel.source2.button')}
-                        tooltip={msg('process.changeDetection.panel.source2.tooltip')}>
-                        <Source recipeId={recipeId} number={2}/>
-                    </PanelButton>
+                        tooltip={msg('process.changeDetection.panel.source2.tooltip')}/>
 
-                    <PanelButton
-                        name='trainingData'
+                    <ActivationButton
+                        id='trainingData'
                         label={msg('process.changeDetection.panel.trainingData.button')}
-                        tooltip={msg('process.changeDetection.panel.trainingData.tooltip')}>
-                        <TrainingData recipeId={recipeId}/>
-                    </PanelButton>
+                        tooltip={msg('process.changeDetection.panel.trainingData.tooltip')}/>
                 </Toolbar>
             </PanelWizard>
         )
@@ -74,6 +67,4 @@ ChangeDetectionToolbar.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default withRecipePath()(
-    connect(mapStateToProps)(ChangeDetectionToolbar)
-)
+export default withRecipe(mapRecipeToProps)(ChangeDetectionToolbar)

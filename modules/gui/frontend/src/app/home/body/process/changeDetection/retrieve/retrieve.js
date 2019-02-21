@@ -1,14 +1,14 @@
-import {Field, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../changeDetectionRecipe'
-import {currentUser} from 'user'
-import {msg} from 'translate'
-import {withRecipePath} from 'app/home/body/process/recipe'
-import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
+import {recipeFormPanel, RecipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {msg} from 'translate'
+import {currentUser} from 'user'
+import Buttons from 'widget/buttons'
+import {Field, form} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import Label from 'widget/label'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions} from '../changeDetectionRecipe'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -16,24 +16,10 @@ const fields = {
         .notEmpty('process.changeDetection.panel.retrieve.form.destination.required')
 }
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        recipe: recipeState(),
-        values: recipeState('ui.retrieveOptions'),
-        user: currentUser()
-    }
-}
-
 class Retrieve extends React.Component {
-    constructor(props) {
-        super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
-
-    }
-
     renderContent() {
-        const {user, inputs: {destination}} = this.props
+        const {inputs: {destination}} = this.props
+        const user = currentUser()
         const destinationOptions = [
             {
                 value: 'SEPAL',
@@ -61,14 +47,13 @@ class Retrieve extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
+        const {recipeId} = this.props
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                isActionForm={true}
-                onApply={values => this.recipeActions.retrieve(values).dispatch()}>
+                isActionForm
+                placement='top-right'
+                onApply={values => RecipeActions(recipeId).retrieve(values).dispatch()}>
                 <PanelHeader
                     icon='cloud-download-alt'
                     title={msg('process.changeDetection.panel.retrieve.title')}/>
@@ -79,12 +64,13 @@ class Retrieve extends React.Component {
 
                 <FormPanelButtons
                     applyLabel={msg('process.changeDetection.panel.retrieve.apply')}/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 
     componentDidUpdate() {
-        const {user, inputs: {destination}} = this.props
+        const {inputs: {destination}} = this.props
+        const user = currentUser()
         if (!user.googleTokens && destination.value !== 'SEPAL')
             destination.set('SEPAL')
     }
@@ -95,6 +81,4 @@ Retrieve.propTypes = {
     user: PropTypes.object
 }
 
-export default withRecipePath()(
-    form({fields, mapStateToProps})(Retrieve)
-)
+export default recipeFormPanel({id: 'retrieve', fields})(Retrieve)
