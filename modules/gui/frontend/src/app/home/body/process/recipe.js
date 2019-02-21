@@ -5,7 +5,7 @@ import {downloadObject} from 'widget/download'
 import {gzip$, ungzip$} from 'gzip'
 import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
-import {selectFrom} from 'collections'
+import {selectFrom, toPathList} from 'collections'
 import JSZip from 'jszip'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -13,28 +13,23 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
 
-export const recipePath = (recipeId, path) => {
-    const recipeTabIndex = select('process.tabs')
-        .findIndex(recipe => recipe.id === recipeId)
-    if (recipeTabIndex === -1)
+const recipeTabIndex = recipeId => {
+    const index = select('process.tabs').findIndex(recipe => recipe.id === recipeId)
+    if (index === -1) {
         throw new Error(`Recipe not found: ${recipeId}`)
-    if (path && Array.isArray(path))
-        path = path.join('.')
-    return ['process.tabs', recipeTabIndex, path]
-        .filter(e => e !== undefined)
-        .join('.')
+    }
+    return index
 }
 
-export const RecipeState = recipeId => {
-    if (!isRecipeOpen(recipeId))
-        return null
+export const recipePath = (recipeId, path) =>
+    toPathList(['process.tabs', recipeTabIndex(recipeId), path])
 
-    return path =>
-        select(recipePath(recipeId, path))
-}
+export const RecipeState = recipeId =>
+    isRecipeOpen(recipeId)
+        ? path => select(recipePath(recipeId, path))
+        : null
 
 export const setInitialized = (recipeId) => {
-    console.log('setInitialized')
     actionBuilder('SET_RECIPE_INITIALIZED', recipeId)
         .set(recipePath(recipeId, 'ui.initialized'), true)
         .dispatch()
@@ -45,10 +40,8 @@ export const setInitialized = (recipeId) => {
 
 export const saveRecipe = recipe => {
     if (!selectFrom(recipe, 'ui.initialized')) {
-        console.log('saveRecipe not initialized')
         return
     }
-    console.log('saveRecipe')
     const listItem = {
         id: recipe.id,
         name: recipe.title || recipe.placeholder,
