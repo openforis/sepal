@@ -88,7 +88,7 @@ class MosaicPreview extends React.Component {
     }
 
     updateLayer(previewRequest) {
-        const {recipeId, componentWillUnmount$} = this.props
+        const {recipe, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = this.isPreviewShown()
             ? new EarthEngineLayer({
@@ -99,7 +99,7 @@ class MosaicPreview extends React.Component {
                 onProgress: tiles => this.onProgress(tiles)
             })
             : null
-        const context = sepalMap.getContext(recipeId)
+        const context = sepalMap.getContext(recipe.id)
         const changed = context.setLayer({
             id: 'preview',
             layer,
@@ -114,7 +114,7 @@ class MosaicPreview extends React.Component {
 
     isHidden() {
         const {recipe} = this.props
-        return !this.isPreviewShown() || !recipe || !recipe.ui || !!recipe.ui.selectedPanel
+        return !recipe || !recipe.ui || recipe.ui.hidePreview || !this.isPreviewShown()
     }
 
     toPreviewRequest(recipe) {

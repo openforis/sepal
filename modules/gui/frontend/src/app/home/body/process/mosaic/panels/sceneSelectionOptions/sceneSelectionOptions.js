@@ -3,7 +3,7 @@ import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {SceneSelectionType} from '../../mosaicRecipe'
+import {RecipeActions, SceneSelectionType} from '../../mosaicRecipe'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
@@ -81,6 +81,16 @@ class SceneSelectionOptions extends React.Component {
                 <FormPanelButtons/>
             </RecipeFormPanel>
         )
+    }
+
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 

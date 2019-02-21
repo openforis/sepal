@@ -4,7 +4,7 @@ import {Msg, msg} from 'translate'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {arrayEquals, selectFrom} from 'collections'
-import {dateRange} from '../../mosaicRecipe'
+import {dateRange, RecipeActions} from '../../mosaicRecipe'
 import {imageSourceById, isDataSetInDateRange, isSourceInDateRange, sources} from 'sources'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
@@ -104,6 +104,11 @@ class Sources extends React.Component {
         )
     }
 
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
     componentDidUpdate() {
         const {dates, inputs: {source, dataSets}} = this.props
         const [selectedSource, selectedDataSets] = updateSource(source.value, dataSets.value, ...dateRange(dates))
@@ -112,6 +117,11 @@ class Sources extends React.Component {
 
         if (!arrayEquals(selectedDataSets, dataSets.value))
             dataSets.set(selectedDataSets)
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 

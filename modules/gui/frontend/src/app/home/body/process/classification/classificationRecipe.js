@@ -4,10 +4,10 @@ import _ from 'lodash'
 import api from 'api'
 import globalActionBuilder from 'action-builder'
 
+export const defaultModel = {}
+
 export const RecipeState = recipeId => {
-    const recipeState = ParentRecipeState(recipeId)
-    initRecipe(recipeState())
-    return recipeState
+    return ParentRecipeState(recipeId)
 }
 export const RecipeActions = id => {
 
@@ -19,24 +19,7 @@ export const RecipeActions = id => {
         actionBuilder(name, otherProps)
             .set(prop, value)
             .build()
-    const setAll = (name, values, otherProps) =>
-        actionBuilder(name, otherProps)
-            .setAll(values)
-            .build()
-
     return {
-        setSource({values, model}) {
-            return setAll('SET_SOURCE', {
-                'ui.source': values,
-                'model.source': model,
-            }, {values, model})
-        },
-        setTrainingData({values, model}) {
-            return setAll('SET_TRAINING_DATA', {
-                'ui.trainingData': values,
-                'model.trainingData': model,
-            }, {values, model})
-        },
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_CLASSIFICATION_RETRIEVAL', {retrieveOptions})
                 .setAll({
@@ -51,18 +34,14 @@ export const RecipeActions = id => {
         },
         setInitialized(initialized) {
             return set('SET_INITIALIZED', 'ui.initialized', !!initialized, {initialized})
-        }
+        },
+        hidePreview() {
+            return set('HIDE_PREVIEW', 'ui.hidePreview', true)
+        },
+        showPreview() {
+            return set('SHOW_PREVIEW', 'ui.hidePreview', false)
+        },
     }
-}
-
-const initRecipe = recipeState => {
-    if (!recipeState || recipeState.ui)
-        return
-
-    const actions = RecipeActions(recipeState.id)
-    const model = recipeState.model
-    if (model)
-        return actions.setInitialized(model.source && model.trainingData && model.trainingData.fusionTableColumn).dispatch()
 }
 
 const submitRetrieveRecipeTask = recipe => {

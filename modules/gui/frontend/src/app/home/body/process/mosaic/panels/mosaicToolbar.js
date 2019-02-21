@@ -1,5 +1,5 @@
 import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
-import Auto from 'app/home/body/process/mosaic/panels/auto/auto'
+import AutoSelectScenes from 'app/home/body/process/mosaic/panels/autoSelectScenes/autoSelectScenes'
 import ClearSelectedScenes from 'app/home/body/process/mosaic/panels/clearSelectedScenes/clearSelectedScenes'
 import CompositeOptions from 'app/home/body/process/mosaic/panels/compositeOptions/compositeOptions'
 import Dates from 'app/home/body/process/mosaic/panels/dates/dates'
@@ -13,8 +13,8 @@ import React from 'react'
 import {msg} from 'translate'
 import PanelWizard from 'widget/panelWizard'
 import Toolbar, {ActivationButton} from 'widget/toolbar'
-import {SceneSelectionType} from '../mosaicRecipe'
 import {setInitialized} from '../../recipe'
+import {SceneSelectionType} from '../mosaicRecipe'
 import styles from './mosaicToolbar.module.css'
 
 const mapRecipeToProps = recipe => {
@@ -36,10 +36,9 @@ class MosaicToolbar extends React.Component {
             <PanelWizard
                 panels={['aoi', 'dates', 'sources']}
                 initialized={initialized}
-                onDone={() => setInitialized(recipeId)}
-            >
+                onDone={() => setInitialized(recipeId)}>
 
-                <Auto/>
+                <AutoSelectScenes/>
                 <ClearSelectedScenes/>
                 <Retrieve/>
 
@@ -56,9 +55,9 @@ class MosaicToolbar extends React.Component {
                     className={styles.top}>
 
                     <ActivationButton
-                        id='auto'
+                        id='autoSelectScenes'
                         icon='magic'
-                        tooltip={msg('process.mosaic.panel.auto.tooltip')}
+                        tooltip={msg('process.mosaic.panel.autoSelectScenes.tooltip')}
                         disabled={!sceneAreasLoaded}/>
                     <ActivationButton
                         id='clearSelectedScenes'

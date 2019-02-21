@@ -19,6 +19,7 @@ const mapRecipeToProps = recipe => {
     const values = selectFrom(recipe, 'ui.bands') || {}
     const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
     return {
+        recipeId: recipe.id,
         source: getSource(recipe),
         surfaceReflectance: compositeOptions.corrections.includes('SR'),
         median: compositeOptions.compose === 'MEDIAN',

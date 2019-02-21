@@ -106,13 +106,13 @@ export const RecipeActions = id => {
             return set('SET_AUTO_SELECTING_SCENES', 'ui.autoSelectScenesState', state, {state})
         },
         setAutoSelectSceneCount(sceneCount) {
-            return set('SET_SCENE_COUNT', 'ui.sceneCount', sceneCount, {sceneCount})
+            return set('SET_SCENE_COUNT', 'ui.autoSelectScenes', sceneCount, {sceneCount})
         },
-        autoSelectScenes(sceneCount) {
+        autoSelectScenes({min, max}) {
             return setAll('REQUEST_AUTO_SELECT_SCENES', {
                 'ui.autoSelectScenesState': 'SUBMITTED',
-                'ui.sceneCount': sceneCount,
-            }, {sceneCount})
+                'ui.autoSelectScenes': {min, max},
+            }, {min, max})
         },
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
@@ -126,9 +126,12 @@ export const RecipeActions = id => {
         setRetrieveState(state) {
             return set('SET_RETRIEVE_STATE', 'ui.retrieveState', state, {state})
         },
-        setInitialized(initialized) {
-            return set('SET_INITIALIZED', 'ui.initialized', !!initialized, {initialized})
-        }
+        hidePreview() {
+            return set('HIDE_PREVIEW', 'ui.hidePreview', true)
+        },
+        showPreview() {
+            return set('SHOW_PREVIEW', 'ui.hidePreview', false)
+        },
     }
 }
 

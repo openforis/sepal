@@ -1,3 +1,4 @@
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -97,6 +98,11 @@ class Aoi extends React.Component {
         )
     }
 
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
     componentDidUpdate() {
         const {inputs, allowWholeFusionTable = ''} = this.props
         inputs.allowWholeFusionTable.set(allowWholeFusionTable)
@@ -104,7 +110,6 @@ class Aoi extends React.Component {
 
     componentWillUnmount() {
         const {recipeId, model} = this.props
-        console.log({recipeId, model})
         setAoiLayer({
             contextId: recipeId,
             aoi: model,
@@ -114,6 +119,7 @@ class Aoi extends React.Component {
             sepalMap.fitBounds(this.initialBounds)
             sepalMap.setZoom(this.initialZoom)
         }
+        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 

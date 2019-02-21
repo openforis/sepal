@@ -1,3 +1,4 @@
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {selectFrom} from 'collections'
 import moment from 'moment'
@@ -196,6 +197,16 @@ class Dates extends React.Component {
                 </FormPanelButtons>
             </RecipeFormPanel>
         )
+    }
+
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 
