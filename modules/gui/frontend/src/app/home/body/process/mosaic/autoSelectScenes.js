@@ -12,8 +12,8 @@ const mapRecipeToProps = recipe => ({recipe})
 class AutoSelectScenes extends React.Component {
     constructor(props) {
         super(props)
-        const {recipeId, asyncActionBuilder} = props
-        this.recipeActions = RecipeActions(recipeId)
+        const {recipe, asyncActionBuilder} = props
+        this.recipeActions = RecipeActions(recipe.id)
         this.request$ = new Subject()
         this.request$.subscribe(() => {
             this.recipeActions.setAutoSelectScenesState('RUNNING').dispatch()

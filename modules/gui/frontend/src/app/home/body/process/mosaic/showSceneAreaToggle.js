@@ -9,6 +9,7 @@ import React from 'react'
 const mapRecipeToProps = recipe => {
     const sceneAreas = selectFrom(recipe, 'ui.sceneAreas')
     return {
+        recipeId: recipe.id,
         sceneAreasShown: selectFrom(recipe, 'ui.sceneAreasShown'),
         sceneAreasLoaded: sceneAreas && Object.keys(sceneAreas).length > 0
     }
