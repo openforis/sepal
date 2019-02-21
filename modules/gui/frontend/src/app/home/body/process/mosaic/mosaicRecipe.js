@@ -126,9 +126,12 @@ export const RecipeActions = id => {
         setRetrieveState(state) {
             return set('SET_RETRIEVE_STATE', 'ui.retrieveState', state, {state})
         },
-        setInitialized(initialized) {
-            return set('SET_INITIALIZED', 'ui.initialized', !!initialized, {initialized})
-        }
+        hidePreview() {
+            return set('HIDE_PREVIEW', 'ui.hidePreview', true)
+        },
+        showPreview() {
+            return set('SHOW_PREVIEW', 'ui.hidePreview', false)
+        },
     }
 }
 

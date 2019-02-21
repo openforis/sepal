@@ -4,7 +4,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {getSource} from '../../mosaicRecipe'
+import {getSource, RecipeActions} from '../../mosaicRecipe'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
@@ -116,6 +116,16 @@ class CompositeOptions extends React.Component {
                 <FormPanelButtons/>
             </RecipeFormPanel>
         )
+    }
+
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 
