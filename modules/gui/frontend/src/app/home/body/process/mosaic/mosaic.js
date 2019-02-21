@@ -57,8 +57,6 @@ class Mosaic extends React.Component {
 
     render() {
         const {recipeId, recipeContext: {statePath}, initialized, aoi, source, sceneSelectionOptions: {type}} = this.props
-        // if (initialized === undefined)
-        //     return null
         return (
             <SectionLayout>
                 <Content>

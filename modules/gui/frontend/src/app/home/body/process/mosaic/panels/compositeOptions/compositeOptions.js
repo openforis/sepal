@@ -1,3 +1,4 @@
+import {selectFrom} from 'collections'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
@@ -174,4 +175,15 @@ const modelToValues = model => {
     })
 }
 
-export default recipeFormPanel({id: 'compositeOptions', fields, mapRecipeToProps, modelToValues, valuesToModel})(CompositeOptions)
+const policy = ({values, wizardContext: {wizard}}) => {
+    return wizard || selectFrom(values, 'dirty')
+        ? {compatibleWith: {include: ['sceneSelection']}}
+        : {
+            compatibleWith: {exclude: []},
+            deactivateWhen: {exclude: ['sceneSelection']}
+        }
+}
+
+export default recipeFormPanel({id: 'compositeOptions', fields, mapRecipeToProps, modelToValues, valuesToModel, policy})(
+    CompositeOptions
+)

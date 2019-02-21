@@ -10,11 +10,21 @@ import {withPanelWizardContext} from 'widget/panelWizard'
 
 const Context = React.createContext()
 
-const policy = ({values, wizardContext: {wizard}}) => {
+const defaultPolicy = ({values, wizardContext: {wizard}}) => {
     return wizard || selectFrom(values, 'dirty')
         ? {compatibleWith: {include: []}}
         : {deactivateWhen: {exclude: []}}
 }
+
+// const policy = ({values, wizardContext: {wizard}}) => {
+//     return wizard || selectFrom(values, 'dirty')
+//         ? {compatibleWith: {include: ['sceneSelection']}}
+//         : {
+//             compatibleWith: {exclude: []},
+//             deactivateWhen: {exclude: ['sceneSelection']}
+//         }
+// }
+
 
 export const recipeFormPanel =
     ({
@@ -22,7 +32,8 @@ export const recipeFormPanel =
          fields,
          mapRecipeToProps = () => ({}),
          modelToValues = model => ({...model}),
-         valuesToModel = values => ({...values})
+         valuesToModel = values => ({...values}),
+         policy = defaultPolicy
      }) => {
 
         const createMapRecipeToProps = mapRecipeToProps =>
