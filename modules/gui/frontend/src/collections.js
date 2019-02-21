@@ -28,19 +28,39 @@ export const intersect = array => Array.from(new Set(array))
 export const range = (from, to) =>
     [...Array(to - from).keys()].map(i => from + i)
 
-export const toPathList = path => {
-    let pathList = []
-    const flatten = path => {
-        if (typeof path === 'string')
-            pathList = pathList.concat(path.split('.'))
-        else
-            path && path.forEach(part => flatten(part))
-    }
-    flatten(path)
-    return pathList
-}
-
 export const selectFrom = (object, path) =>
     toPathList(path).reduce((subObject, part) => {
         return subObject != null && subObject[part] != null ? subObject[part] : undefined
     }, object)
+
+const dotSafeUnwrap = safePath => safePath.dotSafe
+
+const dotSafeWrap = path => ({dotSafe: path})
+
+export const toPathList = (path, safe = false) => {
+    if (_.isArray(path)) {
+        return _.chain(path)
+            .map(pathElement => toPathList(pathElement, safe))
+            .filter(_.identity)
+            .flatten()
+            .value()
+    }
+    if (_.isObject(path)) {
+        return toPathList(dotSafeUnwrap(path), true)
+    }
+    if (_.isString(path)) {
+        return safe ? path : path.split('.')
+    }
+    if (_.isNumber(path)) {
+        return path.toString()
+    }
+    if (_.isUndefined(path)) {
+        return null
+    }
+    if (_.isNull(path)) {
+        return null
+    }
+    throw new Error(`Unsupported path element type: '${path}'`)
+}
+
+export const dotSafe = dotSafeWrap
