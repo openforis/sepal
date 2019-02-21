@@ -54,6 +54,14 @@ const actionBuilder = (type, props) => {
             return this
         },
 
+        sort(path, key) {
+            operations.push((immutableState, state) => {
+                const value = select(path, state)
+                return immutableState.set(toPathList(path), _.orderBy(value, key))
+            })
+            return this
+        },
+
         assign(path, value) {
             operations.push(immutableState =>
                 immutableState.assign(toPathList(path), value)
