@@ -1,7 +1,5 @@
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {sepalMap} from 'app/home/map/map'
 import {selectFrom} from 'collections'
 import moment from 'moment'
 import PropTypes from 'prop-types'
