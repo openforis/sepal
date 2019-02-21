@@ -1,12 +1,11 @@
-import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState} from '../changeDetectionRecipe'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
-import {msg} from 'translate'
-import AssetSection from './assetSection'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import PanelSections from 'widget/panelSections'
-import PropTypes from 'prop-types'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import React from 'react'
+import {msg} from 'translate'
+import {Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import PanelSections from 'widget/panelSections'
+import {RecipeActions} from '../changeDetectionRecipe'
+import AssetSection from './assetSection'
 import RecipeSection from './recipeSection'
 import SectionSelection from './sectionSelection'
 import styles from './source.module.css'
@@ -23,13 +22,8 @@ const fields = {
 }
 
 class Source extends React.Component {
-    constructor(props) {
-        super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
-    }
-
     render() {
-        const {recipePath, number, form, inputs} = this.props
+        const {recipeId, number, inputs} = this.props
         const sections = [
             {
                 icon: 'cog',
@@ -48,73 +42,61 @@ class Source extends React.Component {
             }
         ]
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                onApply={values => this.recipeActions.setSource({
-                    values,
-                    model: valuesToModel(values),
-                    number
-                }).dispatch()}>
+                placement='bottom-right'>
                 <PanelSections sections={sections} selected={inputs.section} inputs={inputs}/>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 }
 
-Source.propTypes = {
-    recipeId: PropTypes.string
-}
-
 const valuesToModel = values => {
     switch (values.section) {
-    case 'ASSET':
-        return {
-            type: 'ASSET',
-            id: values.asset
-        }
-    case 'RECIPE_REF':
-        return {
-            type: 'RECIPE_REF',
-            id: values.recipe
-        }
-    default:
-        throw new Error('Unexpected source section: ' + values.section)
+        case 'ASSET':
+            return {
+                type: 'ASSET',
+                id: values.asset
+            }
+        case 'RECIPE_REF':
+            return {
+                type: 'RECIPE_REF',
+                id: values.recipe
+            }
+        default:
+            throw new Error('Unexpected source section: ' + values.section)
     }
 }
 
 const modelToValues = (model = {}) => {
     switch (model.type) {
-    case 'ASSET':
-        return {
-            section: 'ASSET',
-            asset: model.id
-        }
-    case 'RECIPE_REF':
-        return {
-            section: 'RECIPE_REF',
-            recipe: model.id
-        }
-    case undefined:
-        return {}
-    default:
-        throw new Error('Unexpected source type: ' + model.type)
+        case 'ASSET':
+            return {
+                section: 'ASSET',
+                asset: model.id
+            }
+        case 'RECIPE_REF':
+            return {
+                section: 'RECIPE_REF',
+                recipe: model.id
+            }
+        case undefined:
+            return {}
+        default:
+            throw new Error('Unexpected source type: ' + model.type)
     }
 }
 
-export default withRecipePath()(
-    initValues({
-        getModel: props => RecipeState(props.recipeId)('model.source' + props.number),
-        getValues: props => RecipeState(props.recipeId)('ui.source' + props.number),
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setSource({values, model, number: props.number})
-                .dispatch()
-    })(
-        form({fields})(Source)
-    )
+export const Source1 = recipeFormPanel({id: 'source1', fields, modelToValues, valuesToModel})(
+    props => <Source number={1} {...props}/>
 )
+
+Source1.propTypes = {}
+
+export const Source2 = recipeFormPanel({id: 'source2', fields, modelToValues, valuesToModel})(
+    props => <Source number={2} {...props}/>
+)
+
+Source2.propTypes = {}

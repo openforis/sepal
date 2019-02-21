@@ -134,14 +134,6 @@ TrainingData.propTypes = {
     recipeId: PropTypes.string
 }
 
-const valuesToModel = values => ({
-    ...values
-})
-
-const modelToValues = (model = {}) => ({
-    ...model
-})
-
-export default recipeFormPanel({id: 'trainingData', fields, mapRecipeToProps, modelToValues, valuesToModel})(
+export default recipeFormPanel({id: 'trainingData', fields, mapRecipeToProps})(
     TrainingData
 )

@@ -1,39 +1,18 @@
-import {Button} from 'widget/button'
-import {RecipeState} from 'app/home/body/process/changeDetection/changeDetectionRecipe'
-import {connect} from 'store'
-import {msg} from 'translate'
-import {sepalMap} from 'app/home/map/map'
-import EarthEngineLayer from 'app/home/map/earthEngineLayer'
-import MapStatus from 'widget/mapStatus'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
 import api from 'api'
 import styles from 'app/home/body/process/changeDetection/changeDetectionPreview.module.css'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import EarthEngineLayer from 'app/home/map/earthEngineLayer'
+import {sepalMap} from 'app/home/map/map'
+import _ from 'lodash'
+import React from 'react'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import MapStatus from 'widget/mapStatus'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        recipe: recipeState()
-    }
-}
+const mapRecipeToProps = recipe => ({recipe})
 
 class ChangeDetectionPreview extends React.Component {
     state = {}
-
-    componentDidMount() {
-        this.updateLayer(this.toPreviewRequest(this.props.recipe))
-    }
-
-    componentDidUpdate(prevProps) {
-        const {recipe} = this.props
-        const previewRequest = this.toPreviewRequest(recipe)
-        const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
-        if (layerChanged)
-            this.updateLayer(previewRequest)
-        const context = sepalMap.getContext(recipe.id)
-        context.hideLayer('preview', this.isHidden(recipe))
-    }
 
     render() {
         const {initializing, tiles, error} = this.state
@@ -58,8 +37,22 @@ class ChangeDetectionPreview extends React.Component {
             return null
     }
 
+    componentDidMount() {
+        this.updateLayer(this.toPreviewRequest(this.props.recipe))
+    }
+
+    componentDidUpdate(prevProps) {
+        const {recipe} = this.props
+        const previewRequest = this.toPreviewRequest(recipe)
+        const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
+        if (layerChanged)
+            this.updateLayer(previewRequest)
+        const context = sepalMap.getContext(recipe.id)
+        context.hideLayer('preview', this.isHidden(recipe))
+    }
+
     updateLayer(previewRequest) {
-        const {recipeId, componentWillUnmount$} = this.props
+        const {recipe, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
             layerIndex: 1,
@@ -67,7 +60,7 @@ class ChangeDetectionPreview extends React.Component {
             props: previewRequest,
             onProgress: tiles => this.onProgress(tiles)
         })
-        const context = sepalMap.getContext(recipeId)
+        const context = sepalMap.getContext(recipe.id)
         const changed = context.setLayer({
             id: 'preview',
             layer,
@@ -126,8 +119,6 @@ class ChangeDetectionPreview extends React.Component {
     }
 }
 
-ChangeDetectionPreview.propTypes = {
-    recipeId: PropTypes.string.isRequired
-}
+ChangeDetectionPreview.propTypes = {}
 
-export default connect(mapStateToProps)(ChangeDetectionPreview)
+export default withRecipe(mapRecipeToProps)(ChangeDetectionPreview)
