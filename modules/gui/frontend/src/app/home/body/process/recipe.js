@@ -1,13 +1,10 @@
-import {Subject, from, of} from 'rxjs'
+import {Subject, of} from 'rxjs'
 import {addTab, closeTab} from 'widget/tabs'
 import {connect, select, subscribe} from 'store'
-import {downloadObject} from 'widget/download'
+import {downloadObjectZip$} from 'widget/download'
+import {groupBy, map, mergeMap, switchMap} from 'rxjs/operators'
 import {gzip$, ungzip$} from 'gzip'
-import {map, switchMap} from 'rxjs/operators'
-import {msg} from 'translate'
 import {selectFrom, toPathList} from 'collections'
-import JSZip from 'jszip'
-import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
@@ -38,74 +35,80 @@ export const setInitialized = (recipeId) => {
         saveRecipe(recipe)
 }
 
-export const saveRecipe = recipe => {
-    if (!selectFrom(recipe, 'ui.initialized')) {
-        return
-    }
-    const listItem = {
-        id: recipe.id,
-        name: recipe.title || recipe.placeholder,
-        type: recipe.type
-    }
-    let recipes = [...select('process.recipes')]
-    const index = recipes.findIndex(savedRecipe => savedRecipe.id === recipe.id)
-    if (index > -1)
-        recipes[index] = listItem
-    else {
-        recipes.push(listItem)
-        recipes = _.sortBy(recipes, 'name')
-    }
+const saveToBackend$ = new Subject()
 
-    actionBuilder('SET_RECIPES', {recipes})
-        .set('process.recipes', recipes)
+saveToBackend$.pipe(
+    groupBy(recipe => recipe.id),
+    mergeMap(group$ =>
+        group$.pipe(
+            map(recipe => _.omit(recipe, ['ui'])),
+            switchMap(recipe => {
+                saveRevision(recipe) // [TODO] is this the right place?
+                return save$(recipe)
+            })
+        )
+    )
+).subscribe()
+
+const updateRecipeList = recipe =>
+    actionBuilder('SET_RECIPES')
+        .assignOrAddValueByTemplate('process.recipes', {id: recipe.id}, {
+            id: recipe.id,
+            name: recipe.title || recipe.placeholder,
+            type: recipe.type
+        })
         .dispatch()
 
-    saveToBackend$.next(recipe)
+const isInitialized = recipe =>
+    selectFrom(recipe, 'ui.initialized')
+
+export const saveRecipe = recipe => {
+    if (isInitialized(recipe)) {
+        updateRecipeList(recipe)
+        saveToBackend$.next(recipe)
+    }
 }
 
-export const exportRecipe = recipe => {
-    const name = `${recipe.title || recipe.placeholder}`
-    const recipeString = JSON.stringify(_.omit(recipe, ['ui']), null, 2)
-    from(new JSZip().file(name + '.json', recipeString).generateAsync({
-        type: 'blob',
-        compression: 'DEFLATE',
-        compressionOptions: {
-            level: 5
-        }
-    })).pipe(
-        map(zippedRecipe => downloadObject(zippedRecipe, name + '.zip'))
-    ).subscribe()
-}
+export const exportRecipe$ = recipe =>
+    downloadObjectZip$({
+        filename: `${recipe.title || recipe.placeholder}.json`,
+        data: JSON.stringify(_.omit(recipe, ['ui']), null, 2)
+    })
 
 export const loadRecipes$ = () =>
     api.recipe.loadAll$().pipe(
         map(recipes => actionBuilder('SET_RECIPES', {recipes})
             .set('process.recipes', recipes)
-            .build())
+            .dispatch())
     )
 
-export const loadRecipe$ = recipeId => {
-    const selectedTabId = select('process.selectedTabId')
-    if (isRecipeOpen(recipeId)) {
-        const recipe = select(recipePath(recipeId))
-        return of([
-            actionBuilder('SELECT_RECIPE')
-                .set('process.selectedTabId', recipe.id)
-                .build()
-        ])
-    } else {
-        return api.recipe.load$(recipeId).pipe(
-            map(recipe =>
-                actionBuilder('OPEN_RECIPE')
-                    .set(recipePath(selectedTabId), {...recipe, ui: {initialized: true}})
-                    .set('process.selectedTabId', recipe.id)
-                    .build())
-        )
-    }
-}
+const initializedRecipe = recipe => ({
+    ...recipe,
+    ui: {initialized: true}
+})
+    
+export const openRecipe$ = recipeId =>
+    isRecipeOpen(recipeId)
+        ? of(selectRecipe(recipeId))
+        : loadRecipe$(recipeId)
 
-export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) => {
-    return api.recipe.load$(sourceRecipeId).pipe(
+const loadRecipe$ = recipeId =>
+    api.recipe.load$(recipeId).pipe(
+        map(recipe =>
+            actionBuilder('OPEN_RECIPE')
+                .set(recipePath(select('process.selectedTabId')), initializedRecipe(recipe))
+                .set('process.selectedTabId', recipe.id)
+                .dispatch()
+        )
+    )
+
+const selectRecipe = recipeId =>
+    actionBuilder('SELECT_RECIPE')
+        .set('process.selectedTabId', recipeId)
+        .dispatch()
+
+export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
+    api.recipe.load$(sourceRecipeId).pipe(
         map(recipe => ({
             ...recipe,
             id: destinationRecipeId,
@@ -113,12 +116,19 @@ export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) => {
         })),
         map(duplicate =>
             actionBuilder('DUPLICATE_RECIPE', {duplicate})
-                .set(recipePath(destinationRecipeId), {...duplicate, ui: {initialized: true}})
-                .build()
+                .set(recipePath(destinationRecipeId), initializedRecipe(recipe))
+                .dispatch()
         )
     )
-}
 
+export const removeRecipe$ = recipeId =>
+    api.recipe.delete$(recipeId).pipe(
+        map(() =>
+            actionBuilder('REMOVE_RECIPE', {recipeId})
+                .delValueByTemplate('process.recipes', {id: recipeId})
+                .dispatch()
+        )
+    )
 export const addRecipe = recipe => {
     const tab = addTab('process')
     recipe.id = tab.id
@@ -128,27 +138,16 @@ export const addRecipe = recipe => {
         .dispatch()
 }
 
-export const removeRecipe$ = recipeId =>
-    api.recipe.delete$(recipeId)
-
-export const removeRecipe = recipeId =>
-    removeRecipe$(recipeId)
-        .subscribe(() => {
-            closeTab(recipeId, 'process')
-            Notifications.success({message: msg('process.recipe.remove.success')})
-            actionBuilder('REMOVE_RECIPE', {recipeId})
-                .delValueByTemplate('process.recipes', {id: recipeId})
-                .dispatch()
-        })
-
 export const isRecipeOpen = recipeId =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
 
-const saveToBackend$ = new Subject()
+// [TODO] - to be cleaned up
 
 let prevTabs = []
+
 const findPrevRecipe = recipe =>
     prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
+
 subscribe('process.tabs', recipes => {
     if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
         const recipesToSave = recipes
@@ -168,14 +167,14 @@ subscribe('process.tabs', recipes => {
     }
 })
 
-saveToBackend$.pipe(
-    switchMap(recipe => {
-        gzip$(_.omit(recipe, ['ui']), {to: 'string'}).subscribe(revision =>
-            saveRevisionToLocalStorage(recipe.id, revision)
-        )
-        return save$(recipe)
-    })
-).subscribe()
+const compressRecipe$ = recipe => gzip$(recipe, {to: 'string'})
+
+const uncompressRecipe$ = compressedRecipe => ungzip$(compressedRecipe, {to: 'string'})
+
+const saveRevision = recipe =>
+    compressRecipe$(recipe).subscribe(revision =>
+        saveRevisionToLocalStorage(recipe.id, revision)
+    )
 
 const saveRevisionToLocalStorage = (recipeId, revision) => {
     try {
@@ -212,7 +211,7 @@ export const getRevisions = recipeId =>
 
 export const revertToRevision$ = (recipeId, revision) => {
     const compressed = localStorage[`sepal:${recipeId}:${revision}`]
-    return ungzip$(compressed, {to: 'string'}).pipe(
+    return uncompressRecipe$(compressed).pipe(
         map(recipe => {
             prevTabs = prevTabs.filter(tab => tab.id !== recipeId)
             closeTab(recipeId, 'process')

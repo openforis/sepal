@@ -11,30 +11,47 @@ import Revisions from 'app/home/body/process/revisions'
 import Tabs from 'widget/tabs'
 import TimeSeries from './timeSeries/timeSeries'
 
-const recipeComponent = (id, type) => (
-    {
-        MOSAIC: <Mosaic/>,
-        CLASSIFICATION: <Classification recipeId={id}/>,
-        CHANGE_DETECTION: <ChangeDetection recipeId={id}/>,
-        TIME_SERIES: <TimeSeries recipeId={id}/>,
-        LAND_COVER: <LandCover/>
-    }[type] || <Recipes recipeId={id}/>)
+const recipeByType = id => ({
+    MOSAIC: <Mosaic/>,
+    CLASSIFICATION: <Classification recipeId={id}/>,
+    CHANGE_DETECTION: <ChangeDetection recipeId={id}/>,
+    TIME_SERIES: <TimeSeries recipeId={id}/>,
+    LAND_COVER: <LandCover/>
+})
 
-const Process = () => {
-    return (
-        <Tabs
-            statePath='process'
-            tabActions={recipeId => <ProcessMenu recipeId={recipeId}/>}
-            onTitleChanged={recipe => saveRecipe(recipe)}>
-            {({id, type}) =>
-                <React.Fragment>
-                    <RecipeContext recipeId={id} rootStatePath='process.tabs'>
-                        {recipeComponent(id, type)}
-                    </RecipeContext>
-                    <Revisions recipeId={id}/>
-                </React.Fragment>
-            }
-        </Tabs>
-    )
+class Process extends React.Component {
+    renderRecipeList(id) {
+        return <Recipes recipeId={id}/>
+    }
+
+    renderRecipeByType(id, type) {
+        return recipeByType(id)[type]
+    }
+
+    renderRecipe(id, type) {
+        return type
+            ? this.renderRecipeByType(id, type)
+            : this.renderRecipeList(id)
+
+    }
+
+    render() {
+        return (
+            <Tabs
+                statePath='process'
+                tabActions={recipeId => <ProcessMenu recipeId={recipeId}/>}
+                onTitleChanged={recipe => saveRecipe(recipe)}>
+                {({id, type}) =>
+                    <React.Fragment>
+                        <RecipeContext recipeId={id} rootStatePath='process.tabs'>
+                            {this.renderRecipe(id, type)}
+                        </RecipeContext>
+                        <Revisions recipeId={id}/>
+                    </React.Fragment>
+                }
+            </Tabs>
+        )
+    }
 }
+
 export default Process

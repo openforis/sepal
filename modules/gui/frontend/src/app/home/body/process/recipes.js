@@ -1,21 +1,23 @@
-import escapeStringRegexp from 'escape-string-regexp'
-import _ from 'lodash'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {connect, select} from 'store'
-import lookStyles from 'style/look.module.css'
-import {msg} from 'translate'
-import {Button, ButtonGroup} from 'widget/button'
-import Icon from 'widget/icon'
-import {Pageable, PageControls, PageData} from 'widget/pageable'
-import {CenteredProgress} from 'widget/progress'
-import RemoveButton from 'widget/removeButton'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
+import {Button, ButtonGroup} from 'widget/button'
+import {CenteredProgress} from 'widget/progress'
+import {PageControls, PageData, Pageable} from 'widget/pageable'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {closeTab} from 'widget/tabs'
+import {connect, select} from 'store'
+import {duplicateRecipe$, loadRecipes$, openRecipe$, removeRecipe$} from './recipe'
+import {msg} from 'translate'
 import CreateRecipe from './createRecipe'
 import CreateRecipeRLCMS from './createRecipeRLCMS'
-import {duplicateRecipe$, loadRecipe$, loadRecipes$, removeRecipe} from './recipe'
+import Icon from 'widget/icon'
+import Notifications from 'widget/notifications'
+import PropTypes from 'prop-types'
+import React from 'react'
+import RemoveButton from 'widget/removeButton'
+import _ from 'lodash'
+import escapeStringRegexp from 'escape-string-regexp'
+import lookStyles from 'style/look.module.css'
+import moment from 'moment'
 import styles from './recipes.module.css'
 
 const mapStateToProps = () => {
@@ -62,19 +64,26 @@ class RecipeList extends React.Component {
     }
 
     componentDidMount() {
-        if (!this.props.recipes)
-            this.props.asyncActionBuilder('LOAD_RECIPES', loadRecipes$())
-                .dispatch()
+        if (!this.props.recipes) {
+            this.props.stream('LOAD_RECIPES', loadRecipes$())
+        }
     }
 
-    loadRecipe(recipeId) {
-        this.props.asyncActionBuilder('LOAD_RECIPE', loadRecipe$(recipeId))
-            .dispatch()
+    openRecipe(recipeId) {
+        this.props.stream('LOAD_RECIPE', openRecipe$(recipeId))
     }
 
     duplicateRecipe(recipeIdToDuplicate) {
-        this.props.asyncActionBuilder('DUPLICATE_RECIPE', duplicateRecipe$(recipeIdToDuplicate, this.props.recipeId))
-            .dispatch()
+        this.props.stream('DUPLICATE_RECIPE', duplicateRecipe$(recipeIdToDuplicate, this.props.recipeId))
+    }
+
+    removeRecipe(recipeId) {
+        this.props.stream('REMOVE_RECIPE',
+            removeRecipe$(recipeId),
+            () => {
+                closeTab(recipeId, 'process')
+                Notifications.success({message: msg('process.recipe.remove.success')})
+            })
     }
 
     setSorting(sortingOrder) {
@@ -127,7 +136,7 @@ class RecipeList extends React.Component {
             <div
                 key={recipe.id}
                 className={[styles.recipe, lookStyles.look, lookStyles.transparent].join(' ')}
-                onClick={() => this.loadRecipe(recipe.id)}>
+                onClick={() => this.openRecipe(recipe.id)}>
                 <div className={styles.recipeInfo}>
                     <div className='itemType'>{this.getRecipeTypeName(recipe.type)}</div>
                     <div className={styles.name}>{recipe.name}</div>
@@ -148,7 +157,7 @@ class RecipeList extends React.Component {
                             message={'Remove recipe?'}
                             tooltip={msg('process.menu.removeRecipe')}
                             tooltipPlacement='bottom'
-                            onConfirm={() => removeRecipe(recipe.id)}/>
+                            onConfirm={() => this.removeRecipe(recipe.id)}/>
                     </ButtonGroup>
                 </div>
             </div>

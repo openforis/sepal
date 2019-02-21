@@ -1,5 +1,5 @@
 import {Msg, msg} from 'translate'
-import {RecipeState, addRecipe, exportRecipe, saveRecipe} from './recipe'
+import {RecipeState, addRecipe, exportRecipe$, saveRecipe} from './recipe'
 import {connect, select} from 'store'
 import {showRevisionsPanel} from 'app/home/body/process/revisions'
 import Menu, {MenuItem} from 'widget/menu'
@@ -26,7 +26,7 @@ class ProcessMenu extends React.Component {
                     <MenuItem onSelect={() => this.duplicateRecipe()}>
                         <Msg id='process.menu.duplicateRecipe'/>
                     </MenuItem>
-                    <MenuItem onSelect={() => exportRecipe(recipe)}>
+                    <MenuItem onSelect={() => this.exportRecipe(recipe)}>
                         <Msg id='process.menu.exportRecipe'/>
                     </MenuItem>
                 </Menu>
@@ -57,6 +57,11 @@ class ProcessMenu extends React.Component {
     isRecipeUnsaved() {
         const {recipe, recipes} = this.props
         return !(recipes && recipes.find(saved => saved.id === recipe.id))
+    }
+
+    exportRecipe() {
+        const {recipe, stream} = this.props
+        stream('EXPORT_RECIPE', exportRecipe$(recipe))
     }
 
     duplicateRecipe() {
