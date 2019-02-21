@@ -1,6 +1,7 @@
 import {EMPTY, combineLatest, fromEvent, merge, timer} from 'rxjs'
 import {Link} from 'route'
 import {distinctUntilChanged, switchMap, take, takeUntil} from 'rxjs/operators'
+import {download} from 'widget/download'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -12,17 +13,6 @@ const CLICK_HOLD_DELAY_MS = 750
 const CLICK_CANCEL_DELAY_MS = 250
 
 const windowMouseUp$ = fromEvent(window, 'mouseup').pipe(distinctUntilChanged())
-
-const download = (url, filename) => {
-    // create hidden anchor, attach to DOM, click it and remove it from the DOM
-    var downloadElement = document.createElement('a')
-    downloadElement.setAttribute('style', 'display: none')
-    downloadElement.setAttribute('href', url)
-    downloadElement.setAttribute('download', filename)
-    document.body.appendChild(downloadElement)
-    downloadElement.click()
-    downloadElement.remove()
-}
 
 export class Button extends React.Component {
     button = React.createRef()

@@ -1,16 +1,17 @@
+import {Subject, from, of} from 'rxjs'
+import {addTab, closeTab} from 'widget/tabs'
+import {connect, select, subscribe} from 'store'
+import {downloadObject} from 'widget/download'
+import {gzip$, ungzip$} from 'gzip'
+import {map, switchMap} from 'rxjs/operators'
+import {msg} from 'translate'
+import {selectFrom} from 'collections'
+import JSZip from 'jszip'
+import Notifications from 'widget/notifications'
+import React from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
-import {selectFrom} from 'collections'
-import {gzip$, ungzip$} from 'gzip'
-import JSZip from 'jszip'
-import _ from 'lodash'
-import React from 'react'
-import {from, of, Subject} from 'rxjs'
-import {map, switchMap} from 'rxjs/operators'
-import {connect, select, subscribe} from 'store'
-import {msg} from 'translate'
-import Notifications from 'widget/notifications'
-import {addTab, closeTab} from 'widget/tabs'
 
 export const recipePath = (recipeId, path) => {
     const recipeTabIndex = select('process.tabs')
@@ -79,16 +80,7 @@ export const exportRecipe = recipe => {
             level: 5
         }
     })).pipe(
-        map(zippedRecipe => {
-            const data = window.URL.createObjectURL(zippedRecipe)
-            var downloadElement = document.createElement('a')
-            downloadElement.setAttribute('href', data)
-            downloadElement.setAttribute('download', name + '.zip')
-            document.body.appendChild(downloadElement)
-            downloadElement.click()
-            downloadElement.remove()
-            window.URL.revokeObjectURL(data)
-        })
+        map(zippedRecipe => downloadObject(zippedRecipe, name + '.zip'))
     ).subscribe()
 }
 
