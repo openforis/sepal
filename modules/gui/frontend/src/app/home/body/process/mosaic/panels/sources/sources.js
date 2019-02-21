@@ -130,4 +130,13 @@ const modelToValues = model => {
     }
 }
 
-export default recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})(Sources)
+const policy = ({values, wizardContext: {wizard}}) => {
+    return wizard || selectFrom(values, 'dirty')
+        ? {compatibleWith: {include: ['sceneSelection']}}
+        : {
+            compatibleWith: {exclude: []},
+            deactivateWhen: {exclude: ['sceneSelection']}
+        }
+}
+
+export default recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel, policy})(Sources)

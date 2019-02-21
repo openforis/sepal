@@ -1,24 +1,24 @@
-import {Button, ButtonGroup} from 'widget/button'
-import {CenteredProgress} from 'widget/progress'
-import {Field, form} from 'widget/form'
-import {HoverDetector, HoverOverlay} from 'widget/hover'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import api from 'api'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {activatable} from 'widget/activation/activatable'
-import {dataSetById} from 'sources'
-import {map} from 'rxjs/operators'
-import {msg} from 'translate'
-import {objectEquals, selectFrom} from 'collections'
+import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import {objectEquals, selectFrom} from 'collections'
+import format from 'format'
+import React from 'react'
+import {map} from 'rxjs/operators'
+import {dataSetById} from 'sources'
+import {msg} from 'translate'
+import {activatable} from 'widget/activation/activatable'
+import {Button, ButtonGroup} from 'widget/button'
+import {Field, form} from 'widget/form'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import {HoverDetector, HoverOverlay} from 'widget/hover'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
-import React from 'react'
-import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
-import api from 'api'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {CenteredProgress} from 'widget/progress'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import daysBetween from './daysBetween'
-import format from 'format'
 import styles from './sceneSelection.module.css'
 
 const fields = {
@@ -344,7 +344,10 @@ class Scene extends React.Component {
 
 SceneSelection.propTypes = {}
 
-const policy = () => ({compatibleWith: {include: []}})
+const policy = () => ({
+    compatibleWith: {include: ['dates', 'sources', 'sceneSelectionOptions', 'compositeOptions']},
+    deactivateWhen: {exclude: ['dates', 'sources', 'sceneSelectionOptions', 'compositeOptions']}
+})
 
 export default (
     activatable('sceneSelection', policy)(
