@@ -143,7 +143,6 @@
     height: fit-content;
     display: flex;
     margin: calc(var(--vertical-spacing) / -2) calc(var(--horizontal-spacing) / -2);
-    /* -webkit-margin-collapse: discard; */
 }
 
 .group > * {
@@ -152,9 +151,8 @@
 
 .group.horizontal {
     --horizontal-spacing: .5rem;
-    --vertical-spacing: 0rem;
+    --vertical-spacing: .5rem;
     flex-direction: row;
-    flex-wrap: nowrap;
     align-items: center;
 }
 
@@ -162,8 +160,22 @@
     --horizontal-spacing: 0rem;
 }
 
+.group.horizontal.nowrap {
+    flex-wrap: nowrap;
+}
+
 .group.horizontal.wrap {
     flex-wrap: wrap;
+}
+
+.group.horizontal.fill {
+    --horizontal-spacing: 1rem;
+    --vertical-spacing: 1rem;
+    flex-grow: 1;
+}
+
+.group.horizontal.fill > * {
+    flex-grow: 1;
 }
 
 .group.vertical {
@@ -171,7 +183,6 @@
     --vertical-spacing: 1rem;
     flex-direction: column;
     flex-wrap: nowrap;
-    align-items: center;
 }
 
 .group.vertical > * {

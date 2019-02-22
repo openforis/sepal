@@ -226,7 +226,7 @@ class Scene extends React.Component {
     renderAvailableSceneOverlay() {
         const {scene, onAdd, recipeActions} = this.props
         return (
-            <ButtonGroup className={styles.overlayControls}>
+            <ButtonGroup className={styles.overlayControls} type='horizontal-wrap-fill'>
                 <Button
                     look='add'
                     icon='plus'
@@ -244,7 +244,7 @@ class Scene extends React.Component {
     renderSelectedSceneOverlay() {
         const {scene, onRemove, recipeActions} = this.props
         return (
-            <ButtonGroup className={styles.overlayControls}>
+            <ButtonGroup className={styles.overlayControls} type='horizontal-wrap-fill'>
                 <Button
                     look='cancel'
                     icon='minus'
