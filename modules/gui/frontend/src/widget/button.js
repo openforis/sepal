@@ -280,12 +280,13 @@ Button.propTypes = {
 }
 
 export const ButtonGroup = ({children, type = 'horizontal-wrap', className}) =>
-    <div className={[
-        styles.group,
-        styles[type],
-        className
-    ].join(' ')}>
-        {children}
+    <div className={[styles.groupContainer, className].join(' ')}>
+        <div className={[
+            styles.group,
+            type.split('-').map(className => styles[className]).join(' ')
+        ].join(' ')}>
+            {children}
+        </div>
     </div>
 
 ButtonGroup.propTypes = {

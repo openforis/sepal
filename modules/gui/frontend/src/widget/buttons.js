@@ -86,14 +86,14 @@ export default class Buttons extends React.Component {
     render() {
         const {options, className} = this.props
         return (
-            <div>
+            <React.Fragment>
                 {this.renderLabel()}
                 <div className={className}>
                     {options.length && options[0].options
                         ? this.renderOptionGroups(options)
                         : this.renderButtons(options)}
                 </div>
-            </div>
+            </React.Fragment>
         )
     }
 }
