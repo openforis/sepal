@@ -9,13 +9,6 @@ const assertFallbackPolicy = activatable => {
     }
 }
 
-const assertActivatable = (id, activatable) => {
-    if (!activatable) {
-        console.log({id, activatable})
-        // throw Error(`Missing activatable with id '${id}'`)
-    }
-}
-
 const assertBehavior = behavior => {
     if (!VALID_BEHAVIORS.includes(behavior)) {
         throw Error(`Invalid policy behavior: ${behavior}`)
@@ -32,8 +25,6 @@ export const activationAllowed = (id, activatables = {}) => {
             .mapValues((activatable, id) => ({...activatable, id}))
             .partition(activatable => activatable.id === id)
             .value()
-
-    assertActivatable(id, thisActivatable)
 
     return thisActivatable && !thisActivatable.active
         ? _(otherActivatables)
