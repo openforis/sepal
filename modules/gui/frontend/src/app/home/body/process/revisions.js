@@ -18,7 +18,7 @@ const fields = {
 }
 
 class Revisions extends React.Component {
-    renderContent() {
+    renderRevisions() {
         const {recipeId, inputs: {revision}} = this.props
         const options = getRevisions(recipeId).map(timestamp => {
             const date = moment(+timestamp)
@@ -48,7 +48,7 @@ class Revisions extends React.Component {
                 <PanelContent className={styles.content}>
                     <ScrollableContainer>
                         <Scrollable>
-                            {this.renderContent()}
+                            {this.renderRevisions()}
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
