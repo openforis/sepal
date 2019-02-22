@@ -1,15 +1,14 @@
-import {RecipeState} from './changeDetectionRecipe'
-import {connect, select} from 'store'
 import {defaultModel} from 'app/home/body/process/classification/classificationRecipe'
 import {recipe} from 'app/home/body/process/recipeContext'
-import {selectFrom} from 'collections'
 import {sepalMap} from 'app/home/map/map'
-import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
-import ChangeDetectionPreview from './changeDetectionPreview'
-import ChangeDetectionToolbar from './changeDetectionToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
+import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
+import {selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {connect} from 'store'
+import ChangeDetectionPreview from './changeDetectionPreview'
+import ChangeDetectionToolbar from './changeDetectionToolbar'
 
 const mapStateToProps = state => ({
     tabCount: state.process.tabs.length
@@ -39,6 +38,7 @@ class ChangeDetection extends React.Component {
             </React.Fragment>
         )
     }
+
     componentDidMount() {
         this.setAoiLayer()
     }

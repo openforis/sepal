@@ -82,7 +82,7 @@ class ChangeDetectionPreview extends React.Component {
 
     isHidden() {
         const {recipe} = this.props
-        return !!recipe.ui.selectedPanel
+        return recipe.ui.hidePreview
     }
 
     onProgress(tiles) {

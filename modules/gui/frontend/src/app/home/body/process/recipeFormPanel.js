@@ -21,6 +21,7 @@ export const recipeFormPanel =
     ({
         id,
         fields,
+        constraints,
         mapRecipeToProps = () => ({}),
         modelToValues = model => ({...model}),
         valuesToModel = values => ({...values}),
@@ -70,7 +71,7 @@ export const recipeFormPanel =
                     withPanelWizardContext()(
                         activatable(id, policy)(
                             initValues(valuesSpec)(
-                                form({fields})(
+                                form({fields, constraints})(
                                     HigherOrderComponent
                                 )
                             )

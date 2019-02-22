@@ -1,13 +1,11 @@
-import {Constraint, ErrorMessage, Field, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import moment from 'moment'
+import React from 'react'
 import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import PropTypes from 'prop-types'
-import React from 'react'
-import moment from 'moment'
+import {Constraint, ErrorMessage, Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -31,13 +29,6 @@ const constraints = {
 }
 
 class Dates extends React.Component {
-    modal = React.createRef()
-
-    constructor(props) {
-        super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
-    }
-
     renderContent() {
         const {inputs: {startDate, endDate}} = this.props
         return (
@@ -69,51 +60,26 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}>
+                placement='bottom-right'>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.timeSeries.panel.dates.title')}/>
 
                 <PanelContent>
-                    <div ref={this.modal} className={styles.form}>
+                    <div className={styles.form}>
                         {this.renderContent()}
                     </div>
                 </PanelContent>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 }
 
-Dates.propTypes = {
-    recipeId: PropTypes.string
-}
+Dates.propTypes = {}
 
-const valuesToModel = values => {
-    return {...values}
-}
-
-const modelToValues = (model = {}) => {
-    return {...model}
-}
-
-export default withRecipePath()(
-    initValues({
-        getModel: props => RecipeState(props.recipeId)('model.dates'),
-        getValues: props => RecipeState(props.recipeId)('ui.dates'),
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setDates({values, model})
-                .dispatch()
-    })(
-        form({fields, constraints})(Dates)
-    )
-)
+export default recipeFormPanel({id: 'dates', fields, constraints})(Dates)

@@ -1,15 +1,14 @@
-import {Field, form} from 'widget/form'
-import {Msg, msg} from 'translate'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
-import {arrayEquals} from 'collections'
-import {imageSourceById} from 'sources'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
-import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
-import PropTypes from 'prop-types'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {arrayEquals, selectFrom} from 'collections'
 import React from 'react'
+import {imageSourceById, isDataSetInDateRange} from 'sources'
+import {Msg, msg} from 'translate'
+import Buttons from 'widget/buttons'
+import {Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import Label from 'widget/label'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {dateRange} from '../../timeSeriesRecipe'
 import styles from './sources.module.css'
 import updateDataSets from './updateDataSets'
 
@@ -18,29 +17,25 @@ const fields = {
         .notEmpty('process.timeSeries.panel.sources.form.required')
 }
 
-class Sources extends React.Component {
-    constructor(props) {
-        super(props)
-        const {recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
-        const {dateRange, isDataSetInDateRange} = RecipeState(recipeId)
-        this.dateRange = dateRange
-        this.isDataSetInDateRange = isDataSetInDateRange
-    }
+const mapRecipeToProps = recipe => ({
+    dates: selectFrom(recipe, 'model.dates')
+})
 
+class Sources extends React.Component {
     lookupDataSetNames(sourceValue) {
         return sourceValue ? imageSourceById[sourceValue].dataSets : null
     }
 
     renderDataSets() {
-        const {inputs: {dataSets}} = this.props
+        const {dates, inputs: {dataSets}} = this.props
+        const [from, to] = dateRange(dates)
         const dataSetNames = this.lookupDataSetNames('LANDSAT')
         const options = (dataSetNames || []).map(value =>
             ({
                 value,
                 label: msg(['process.timeSeries.panel.sources.form.dataSets.options', value, 'label']),
                 tooltip: msg(['process.timeSeries.panel.sources.form.dataSets.options', value, 'tooltip']),
-                neverSelected: !this.isDataSetInDateRange(value)
+                neverSelected: !isDataSetInDateRange(value, from, to)
             })
         )
         const content = options.length > 1
@@ -56,16 +51,10 @@ class Sources extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                onApply={values => this.recipeActions.setSources({
-                    values,
-                    model: valuesToModel(values)
-                }).dispatch()}>
+                placement='bottom-right'>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.timeSeries.panel.sources.title')}/>
@@ -77,21 +66,19 @@ class Sources extends React.Component {
                 </PanelContent>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 
     componentDidUpdate() {
-        const {inputs: {dataSets}} = this.props
-        const selectedDataSets = updateDataSets(dataSets.value, ...this.dateRange())
+        const {dates, inputs: {dataSets}} = this.props
+        const selectedDataSets = updateDataSets(dataSets.value, ...dateRange(dates))
         if (!arrayEquals(selectedDataSets, dataSets.value))
             dataSets.set(selectedDataSets)
     }
 }
 
-Sources.propTypes = {
-    recipeId: PropTypes.string
-}
+Sources.propTypes = {}
 
 const valuesToModel = values => {
     return {LANDSAT: values.dataSets ? [...values.dataSets] : null}
@@ -103,16 +90,4 @@ const modelToValues = model => {
     }
 }
 
-export default withRecipePath()(
-    initValues({
-        getModel: props => RecipeState(props.recipeId)('model.sources'),
-        getValues: props => RecipeState(props.recipeId)('ui.sources'),
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setSources({values, model})
-                .dispatch()
-    })(
-        form({fields})(Sources)
-    )
-)
+export default recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})(Sources)

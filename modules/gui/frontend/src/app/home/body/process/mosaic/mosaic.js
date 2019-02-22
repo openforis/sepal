@@ -36,7 +36,6 @@ class Mosaic extends React.Component {
         super(props)
         const {recipeId, aoi, componentWillUnmount$} = props
         const actions = RecipeActions(recipeId)
-        actions.setLabelsShown(false).dispatch()
         actions.setSceneAreasShown(true).dispatch()
         actions.setBands('red, green, blue').dispatch()
         actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()

@@ -1,87 +1,74 @@
-import {RecipeState, SceneSelectionType} from '../timeSeriesRecipe'
-import {connect} from 'store'
-import {msg} from 'translate'
-import {withRecipePath} from 'app/home/body/process/recipe'
 import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
+import {setInitialized} from 'app/home/body/process/recipe'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import Dates from 'app/home/body/process/timeSeries/panels/dates/dates'
-import PanelWizard from 'widget/panelWizard'
-import Preprocess from 'app/home/body/process/timeSeries/panels/preprocess/preprocess'
-import PropTypes from 'prop-types'
-import React from 'react'
+import PreProcessingOptions from 'app/home/body/process/timeSeries/panels/preProcessingOptions/preProcessingOptions'
 import Retrieve from 'app/home/body/process/timeSeries/panels/retrieve/retrieve'
 import Sources from 'app/home/body/process/timeSeries/panels/sources/sources'
-import Toolbar, {PanelButton} from 'widget/toolbar'
+import {selectFrom} from 'collections'
+import React from 'react'
+import {msg} from 'translate'
+import PanelWizard from 'widget/panelWizard'
+import Toolbar, {ActivationButton} from 'widget/toolbar'
 import styles from './timeSeriesToolbar.module.css'
 
-const mapStateToProps = (state, ownProps) => {
-    const {recipeId} = ownProps
-    const recipeState = RecipeState(recipeId)
-    return {
-        initialized: recipeState('ui.initialized')
-    }
-}
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    initialized: selectFrom(recipe, 'ui.initialized')
+})
 
 class TimeSeriesToolbar extends React.Component {
     render() {
-        const {recipeId, recipePath, initialized, sceneSelectionType, scenesSelected} = this.props
-        const statePath = recipePath + '.ui'
+        const {recipeId, initialized} = this.props
         return (
             <PanelWizard
-                panels={['areaOfInterest', 'dates', 'sources']}
-                statePath={statePath}>
+                panels={['aoi', 'dates', 'sources']}
+                initialized={initialized}
+                onDone={() => setInitialized(recipeId)}>
+
+                <Retrieve/>
+                <Aoi allowWholeFusionTable={true}/>
+                <Dates/>
+                <Sources/>
+                <PreProcessingOptions/>
+
                 <Toolbar
-                    statePath={statePath}
                     vertical
                     placement='top-right'
                     className={styles.top}>
-                    <PanelButton
-                        name='retrieve'
+                    <ActivationButton
+                        id='retrieve'
                         icon='cloud-download-alt'
                         tooltip={msg('process.timeSeries.panel.retrieve.tooltip')}
-                        disabled={!initialized || (sceneSelectionType === SceneSelectionType.SELECT && !scenesSelected)}>
-                        <Retrieve recipeId={recipeId}/>
-                    </PanelButton>
+                        disabled={!initialized}/>
                 </Toolbar>
                 <Toolbar
-                    statePath={statePath}
                     vertical
                     placement='bottom-right'
                     panel
                     className={styles.bottom}>
-                    <PanelButton
-                        name='areaOfInterest'
+                    <ActivationButton
+                        id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
-                        tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}>
-                        <Aoi recipeId={recipeId} allowWholeFusionTable={true}/>
-                    </PanelButton>
-                    <PanelButton
-                        name='dates'
+                        tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}/>
+                    <ActivationButton
+                        id='dates'
                         label={msg('process.timeSeries.panel.dates.button')}
-                        tooltip={msg('process.timeSeries.panel.dates.tooltip')}>
-                        <Dates recipeId={recipeId}/>
-                    </PanelButton>
-                    <PanelButton
-                        name='sources'
+                        tooltip={msg('process.timeSeries.panel.dates.tooltip')}/>
+                    <ActivationButton
+                        id='sources'
                         label={msg('process.timeSeries.panel.sources.button')}
-                        tooltip={msg('process.timeSeries.panel.sources.tooltip')}>
-                        <Sources recipeId={recipeId}/>
-                    </PanelButton>
-                    <PanelButton
-                        name='preprocess'
+                        tooltip={msg('process.timeSeries.panel.sources.tooltip')}/>
+                    <ActivationButton
+                        id='preProcessingOptions'
                         label={msg('process.timeSeries.panel.preprocess.button')}
-                        tooltip={msg('process.timeSeries.panel.preprocess.tooltip')}>
-                        <Preprocess recipeId={recipeId}/>
-                    </PanelButton>
+                        tooltip={msg('process.timeSeries.panel.preprocess.tooltip')}/>
                 </Toolbar>
             </PanelWizard>
         )
     }
 }
 
-TimeSeriesToolbar.propTypes = {
-    recipeId: PropTypes.string
-}
+TimeSeriesToolbar.propTypes = {}
 
-export default withRecipePath()(
-    connect(mapStateToProps)(TimeSeriesToolbar)
-)
+export default withRecipe(mapRecipeToProps)(TimeSeriesToolbar)
