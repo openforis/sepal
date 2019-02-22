@@ -42,7 +42,7 @@ class MosaicPreview extends React.Component {
         Notifications.error({
             title: msg('gee.error.title'),
             message: msg('process.mosaic.preview.error'),
-            error: msg(e.response.code, e.response.data),
+            error: e.response ? msg(e.response.code, e.response.data) : null,
             timeout: 0,
             content: dismiss =>
                 <Button
