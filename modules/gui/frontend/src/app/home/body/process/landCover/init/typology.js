@@ -63,10 +63,7 @@ const modelToValues = (model = {}) => ({
     ...model
 })
 
-const policy = () => ({
-    othersCanActivate: {},
-    deactivateWhenActivated: {}
-})
+const policy = () => ({_: 'allow-then-deactivate'})
 
 export default activatable('typology', policy)(
     initValues({

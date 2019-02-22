@@ -1,11 +1,11 @@
-import {selectFrom} from 'collections'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, getSource} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {getSource, RecipeActions} from '../../mosaicRecipe'
 import {msg} from 'translate'
+import {selectFrom} from 'collections'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
@@ -187,10 +187,13 @@ const modelToValues = model => {
 
 const policy = ({values, wizardContext: {wizard}}) => {
     return wizard || selectFrom(values, 'dirty')
-        ? {compatibleWith: {include: ['sceneSelection']}}
+        ? {
+            _: 'disallow',
+            sceneSelection: 'allow'
+        }
         : {
-            compatibleWith: {exclude: []},
-            deactivateWhen: {exclude: ['sceneSelection']}
+            _: 'allow-then-deactivate',
+            sceneSelection: 'allow'
         }
 }
 

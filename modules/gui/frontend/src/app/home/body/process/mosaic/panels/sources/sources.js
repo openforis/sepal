@@ -4,7 +4,7 @@ import {Msg, msg} from 'translate'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {arrayEquals, selectFrom} from 'collections'
-import {dateRange, RecipeActions} from '../../mosaicRecipe'
+import {RecipeActions, dateRange} from '../../mosaicRecipe'
 import {imageSourceById, isDataSetInDateRange, isSourceInDateRange, sources} from 'sources'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
@@ -142,10 +142,13 @@ const modelToValues = model => {
 
 const policy = ({values, wizardContext: {wizard}}) => {
     return wizard || selectFrom(values, 'dirty')
-        ? {compatibleWith: {include: ['sceneSelection']}}
+        ? {
+            _: 'disallow',
+            sceneSelection: 'allow'
+        }
         : {
-            compatibleWith: {exclude: []},
-            deactivateWhen: {exclude: ['sceneSelection']}
+            _: 'allow-then-deactivate',
+            sceneSelection: 'allow'
         }
 }
 

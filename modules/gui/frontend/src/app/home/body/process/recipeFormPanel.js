@@ -1,31 +1,31 @@
-import actionBuilder from 'action-builder'
-import {initValues} from 'app/home/body/process/recipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {selectFrom} from 'collections'
-import PropTypes from 'prop-types'
-import React from 'react'
 import {activatable} from 'widget/activation/activatable'
 import {form} from 'widget/form'
-import FormPanel from 'widget/formPanel'
+import {initValues} from 'app/home/body/process/recipe'
+import {selectFrom} from 'collections'
 import {withPanelWizardContext} from 'widget/panelWizard'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import FormPanel from 'widget/formPanel'
+import PropTypes from 'prop-types'
+import React from 'react'
+import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 
 const defaultPolicy = ({values, wizardContext: {wizard}}) => {
     return wizard || selectFrom(values, 'dirty')
-        ? {compatibleWith: {include: []}}
-        : {deactivateWhen: {exclude: []}}
+        ? {_: 'disallow'}
+        : {_: 'allow-then-deactivate'}
 }
 
 export const recipeFormPanel =
     ({
-         id,
-         fields,
-         mapRecipeToProps = () => ({}),
-         modelToValues = model => ({...model}),
-         valuesToModel = values => ({...values}),
-         policy = defaultPolicy
-     }) => {
+        id,
+        fields,
+        mapRecipeToProps = () => ({}),
+        modelToValues = model => ({...model}),
+        valuesToModel = values => ({...values}),
+        policy = defaultPolicy
+    }) => {
 
         const createMapRecipeToProps = mapRecipeToProps =>
             recipe => {
@@ -118,8 +118,8 @@ export class RecipeFormPanel extends React.Component {
 RecipeFormPanel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
-    isActionForm: PropTypes.any
+    isActionForm: PropTypes.any,
+    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline'])
 }
 
 const setModelAndValues = ({id, statePath, model, values}) =>

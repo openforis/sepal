@@ -39,9 +39,9 @@ class Period extends React.Component {
     render() {
         const {recipePath, form} = this.props
 
-        const dirtyPolicy = {compatibleWith: {include: []}}
-        const cleanPolicy = {deactivateWhen: {exclude: []}}
-        const policy = () => form.isDirty() ? dirtyPolicy : cleanPolicy
+        const policy = () => form.isDirty()
+            ? {_: 'disallow'}
+            : {_: 'allow-then-deactivate'}
 
         return (
             <FormPanel

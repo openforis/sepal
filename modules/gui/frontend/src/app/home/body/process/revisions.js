@@ -82,10 +82,10 @@ Revisions.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-const policy = () => ({modal: true})
+const policy = () => ({_: 'allow'})
 
 export default (
-    activatable('revisions')(
+    activatable('revisions', policy)(
         form({fields})(Revisions)
     )
 )

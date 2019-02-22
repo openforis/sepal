@@ -1,18 +1,18 @@
-import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {selectFrom} from 'collections'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {msg} from 'translate'
 import {Button} from 'widget/button'
-import DatePicker from 'widget/datePicker'
 import {ErrorMessage, Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
 import {PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {msg} from 'translate'
+import {selectFrom} from 'collections'
+import DatePicker from 'widget/datePicker'
+import Label from 'widget/label'
+import PropTypes from 'prop-types'
+import React from 'react'
 import SeasonSelect from 'widget/seasonSelect'
 import Slider from 'widget/slider'
+import moment from 'moment'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -258,10 +258,13 @@ const modelToValues = (model = {}) => {
 
 const policy = ({values, wizardContext: {wizard}}) => {
     return wizard || selectFrom(values, 'dirty')
-        ? {compatibleWith: {include: ['sceneSelection']}}
+        ? {
+            _: 'disallow',
+            sceneSelection: 'allow'
+        }
         : {
-            compatibleWith: {exclude: []},
-            deactivateWhen: {exclude: ['sceneSelection']}
+            _: 'allow-then-deactivate',
+            sceneSelection: 'allow'
         }
 }
 

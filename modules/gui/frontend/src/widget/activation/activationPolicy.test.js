@@ -2,6 +2,14 @@ import {activationAllowed} from './activationPolicy'
 
 /* eslint-disable no-undef */
 
+it('throw error when policy is missing the fallback behavior (_) ', () => {
+    expect(() => activationAllowed('a', {
+        a: {
+            policy: {}
+        }
+    })).toThrow()
+})
+
 it('disallow activation when [a] has no policy', () => {
     expect(activationAllowed('a', {})).toEqual(false)
 })
@@ -52,7 +60,7 @@ it('allow activation when other elements are active with empty compatibleWith', 
         b: {
             active: true,
             policy: {
-                compatibleWith: {}
+                _: 'allow'
             }
         }
     })).toEqual(true)
@@ -66,9 +74,7 @@ it('disallow activation when other elements are active and not allowing others t
         b: {
             active: true,
             policy: {
-                compatibleWith: {
-                    include: []
-                }
+                _: 'disallow'
             }
         }
     })).toEqual(false)
@@ -82,9 +88,8 @@ it('allow activation of [a] when [b] is active and allowing [a] to activate', ()
         b: {
             active: true,
             policy: {
-                compatibleWith: {
-                    include: ['a']
-                }
+                _: 'disallow',
+                a: 'allow'
             }
         }
     })).toEqual(true)
@@ -98,9 +103,8 @@ it('disallow activation of [a] when [b] is active and not allowing [a] to activa
         b: {
             active: true,
             policy: {
-                compatibleWith: {
-                    exclude: ['a']
-                }
+                _: 'allow',
+                a: 'disallow'
             }
         }
     })).toEqual(false)
@@ -111,23 +115,21 @@ it('disallow activation of [a] when [b] is active and allowing [a] to activate, 
         a: {
             active: false,
             policy: {
-                compatibleWith: {
-                    exclude: ['b']
-                }
+                _: 'allow',
+                b: 'disallow'
             }
         },
         b: {
             active: true,
             policy: {
-                compatibleWith: {
-                    include: ['a']
-                }
+                _: 'disallow',
+                a: 'allow'
             }
         }
     })).toEqual(false)
 })
 
-it(`allow activation of [a] when 
+it(`allow activation of [a] when
     [a] is not allowing [b]
     [b] is active, allowing [a] to activate and willing to deactivate when [a] activates
     `, () => {
@@ -135,56 +137,43 @@ it(`allow activation of [a] when
         a: {
             active: false,
             policy: {
-                compatibleWith: {
-                    exclude: ['b']
-                }
+                _: 'allow',
+                b: 'disallow'
             }
         },
         b: {
             active: true,
             policy: {
-                compatibleWith: {
-                    include: ['a']
-                },
-                deactivateWhen: {
-                    include: ['a']
-                }
+                _: 'disallow',
+                a: 'allow-then-deactivate'
             }
         }
     })).toEqual(true)
 })
 
-it(`allow activation of [a] when 
-    [a] is allowing [b] to activate and willing to deactivate when [b] activates
-    [b] is active, allowing [a] to activate and not willing to deactivate when [a] activates
+it(`allow activation of [a] when
+    [a] is allowing [b] to activate and will deactivate when [b] activates
+    [b] is active, allowing [a] to activate
     `, () => {
     expect(activationAllowed('a', {
         a: {
             active: false,
             policy: {
-                compatibleWith: {
-                    include: ['b']
-                },
-                deactivateWhen: {
-                    include: ['b']
-                }
+                _: 'disallow',
+                b: 'allow-then-deactivate'
             }
         },
         b: {
             active: true,
             policy: {
-                compatibleWith: {
-                    include: ['a']
-                },
-                deactivateWhen: {
-                    exclude: ['a']
-                }
+                _: 'disallow',
+                a: 'allow'
             }
         }
     })).toEqual(false)
 })
 
-it(`disallow activation of [a] when 
+it(`disallow activation of [a] when
     [a] is allowing [b] to activate and is willing to deactivate when [b] activates
     [b] is active, allowing [a] to activate and not willing to deactivate when [a] activates
     `, () => {
@@ -192,9 +181,8 @@ it(`disallow activation of [a] when
         a: {
             active: false,
             policy: {
-                deactivateWhen: {
-                    include: ['b']
-                }
+                _: 'allow',
+                b: 'allow-then-deactivate'
             }
         },
         b: {
@@ -202,4 +190,3 @@ it(`disallow activation of [a] when
         }
     })).toEqual(false)
 })
-

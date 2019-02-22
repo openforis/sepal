@@ -36,7 +36,7 @@ class UnconnectedActivatable extends React.Component {
         const currentActive = currentActivatable.active
         const currentPolicy = currentActivatable.policy
         const justActivated = currentActivatable.justActivated
-        const nextPolicy = policy ? policy(this.props) : {}
+        const nextPolicy = policy ? policy(this.props) : undefined
         const nextActive = currentActive && (justActivated || !shouldDeactivate(id, activatables, nextPolicy))
         const shouldUpdatePolicy = currentActive !== nextActive
             || !_.isEqual(currentPolicy, nextPolicy)
