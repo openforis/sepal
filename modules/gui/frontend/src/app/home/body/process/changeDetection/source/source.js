@@ -1,6 +1,6 @@
+import {RecipeActions} from 'app/home/body/process/classification/classificationRecipe'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import {RecipeActions} from '../changeDetectionRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {msg} from 'translate'
 import AssetSection from './assetSection'
@@ -23,7 +23,7 @@ const fields = {
 
 class Source extends React.Component {
     render() {
-        const {recipeId, number, inputs} = this.props
+        const {number, inputs} = this.props
         const sections = [
             {
                 icon: 'cog',
@@ -50,6 +50,16 @@ class Source extends React.Component {
                 <FormPanelButtons/>
             </RecipeFormPanel>
         )
+    }
+
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 

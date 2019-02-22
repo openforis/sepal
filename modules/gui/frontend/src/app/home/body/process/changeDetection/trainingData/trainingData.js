@@ -10,7 +10,6 @@ import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
 import {selectFrom} from 'collections'
 import ComboBox from 'widget/comboBox'
-import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './trainingData.module.css'
 
@@ -57,7 +56,6 @@ class TrainingData extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -119,15 +117,19 @@ class TrainingData extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {fusionTable}} = this.props
+        const {recipeId, inputs: {fusionTable}} = this.props
         if (fusionTable.value)
             this.loadFusionTableColumns(fusionTable.value)
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 
-TrainingData.propTypes = {
-    recipeId: PropTypes.string
-}
+TrainingData.propTypes = {}
 
 export default recipeFormPanel({id: 'trainingData', fields, mapRecipeToProps})(
     TrainingData

@@ -1,4 +1,4 @@
-import {Field, form} from 'widget/form'
+import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../changeDetectionRecipe'

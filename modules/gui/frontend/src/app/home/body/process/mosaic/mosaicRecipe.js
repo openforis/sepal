@@ -50,17 +50,11 @@ export const RecipeActions = id => {
             .build()
 
     return {
-        set(dirty, prop) {
-            return set('SET', prop, dirty, {dirty, prop})
-        },
         setLabelsShown(shown) {
             return Labels.showLabelsAction({shown, mapContext: id, statePath: recipePath(id, 'ui'), layerIndex: 1})
         },
         setSceneAreasShown(shown) {
             return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})
-        },
-        selectPanel(panel) {
-            return set('SELECT_MOSAIC_PANEL', 'ui.selectedPanel', panel, {panel})
         },
         setBands(bands) {
             return setAll('SET_BANDS', {
@@ -71,12 +65,6 @@ export const RecipeActions = id => {
             return setAll('SET_PAN_SHARPEN', {
                 'ui.bands.panSharpen': enabled
             }, {enabled})
-        },
-        setModal(enabled) {
-            return set('SET_MODAL', 'ui.modal', enabled, {enabled})
-        },
-        setBounds(bounds) {
-            return set('SET_BOUNDS', 'ui.bounds', bounds, {bounds})
         },
         setFusionTableColumns(columns) {
             return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
@@ -122,9 +110,6 @@ export const RecipeActions = id => {
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
-        },
-        setRetrieveState(state) {
-            return set('SET_RETRIEVE_STATE', 'ui.retrieveState', state, {state})
         },
         hidePreview() {
             return set('HIDE_PREVIEW', 'ui.hidePreview', true)

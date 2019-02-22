@@ -124,7 +124,6 @@ class Aoi extends React.Component {
 }
 
 Aoi.propTypes = {
-    recipeId: PropTypes.string.isRequired,
     allowWholeFusionTable: PropTypes.any
 }
 

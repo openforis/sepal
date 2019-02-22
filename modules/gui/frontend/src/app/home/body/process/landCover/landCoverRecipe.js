@@ -1,13 +1,12 @@
-import {RecipeState as GlobalRecipeState, recipePath} from '../recipe'
-import {msg} from 'translate'
-import _ from 'lodash'
-import api from 'api'
 import globalActionBuilder from 'action-builder'
-import moment from 'moment'
+import api from 'api'
+import _ from 'lodash'
+import {msg} from 'translate'
+import {recipePath, RecipeState as GlobalRecipeState} from '../recipe'
 
 export const RecipeState = recipeId => {
     const recipeState = GlobalRecipeState(recipeId)
-    initRecipe(recipeState())
+    // initRecipe(recipeState())
     return recipeState
 }
 
@@ -88,58 +87,58 @@ export const RecipeActions = id => {
 
     }
 }
-
-const initRecipe = recipe => {
-    if (!recipe || recipe.ui)
-        return
-
-    const model = recipe.model
-    const initialized = model && model.aoi && model.period && model.typology
-    const actions = RecipeActions(recipe.id)
-    actions.setInitialized(initialized).dispatch()
-    if (initialized)
-        return
-
-    const now = moment()
-    let endYear = now.year()
-    actions.setPeriod({
-        model: {
-            startYear: 2000,
-            endYear: endYear
-        }
-    }).dispatch()
-
-    actions.setTypology({
-        model:
-            { // TODO: Create a panel for collecting this data
-                primitiveTypes: [
-                    {id: 'forest', label: 'Forest', value: 2, color: '007D34'},
-                    {id: 'plantation', label: 'Plantation', value: 11, color: '93AA00'},
-                    {id: 'shrub', label: 'Shrub', value: 12, color: '593315'},
-                    {id: 'grass', label: 'Grass', value: 10, color: 'F4C800'},
-                    {id: 'crop', label: 'Crop', value: 7, color: 'FF8E00'},
-                    {id: 'paramo', label: 'Paramo', value: 9, color: 'CEA262'},
-                    {id: 'water', label: 'Water', value: 8, color: '00538A'},
-                    {id: 'urban', label: 'Urban', value: 6, color: '817066'},
-                    {id: 'barren', label: 'Barren', value: 0, color: 'F6768E'}
-                ]
-            }
-    }).dispatch()
-
-    actions.setTrainingData({
-        model: {}
-    }).dispatch()
-
-    actions.setCompositeOptions({
-        model: {
-            cloudThreshold: 100,
-            corrections: ['BRDF'],
-            mask: ['CLOUDS', 'HAZE', 'SHADOW']
-        }
-    }).dispatch()
-
-    actions.setStatus(Status.UNINITIALIZED).dispatch()
-}
+//
+// const initRecipe = recipe =>
+//     if (!recipe || recipe.ui)
+//         return
+//
+//     const model = recipe.model
+//     const initialized = model && model.aoi && model.period && model.typology
+//     const actions = RecipeActions(recipe.id)
+//     actions.setInitialized(initialized).dispatch()
+//     if (initialized)
+//         return
+//
+//     const now = moment()
+//     let endYear = now.year()
+//     actions.setPeriod({
+//         model: {
+//             startYear: 2000,
+//             endYear: endYear
+//         }
+//     }).dispatch()
+//
+//     actions.setTypology({
+//         model:
+//             { // TODO: Create a panel for collecting this data
+//                 primitiveTypes: [
+//                     {id: 'forest', label: 'Forest', value: 2, color: '007D34'},
+//                     {id: 'plantation', label: 'Plantation', value: 11, color: '93AA00'},
+//                     {id: 'shrub', label: 'Shrub', value: 12, color: '593315'},
+//                     {id: 'grass', label: 'Grass', value: 10, color: 'F4C800'},
+//                     {id: 'crop', label: 'Crop', value: 7, color: 'FF8E00'},
+//                     {id: 'paramo', label: 'Paramo', value: 9, color: 'CEA262'},
+//                     {id: 'water', label: 'Water', value: 8, color: '00538A'},
+//                     {id: 'urban', label: 'Urban', value: 6, color: '817066'},
+//                     {id: 'barren', label: 'Barren', value: 0, color: 'F6768E'}
+//                 ]
+//             }
+//     }).dispatch()
+//
+//     actions.setTrainingData({
+//         model: {}
+//     }).dispatch()
+//
+//     actions.setCompositeOptions({
+//         model: {
+//             cloudThreshold: 100,
+//             corrections: ['BRDF'],
+//             mask: ['CLOUDS', 'HAZE', 'SHADOW']
+//         }
+//     }).dispatch()
+//
+//     actions.setStatus(Status.UNINITIALIZED).dispatch()
+// }
 
 export const createComposites = recipe => {
     RecipeActions(recipe.id).setStatus(Status.CREATING_COMPOSITES).dispatch()
