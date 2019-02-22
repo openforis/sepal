@@ -291,7 +291,7 @@ export const ButtonGroup = ({children, type = 'horizontal-wrap', className}) =>
 ButtonGroup.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    type: PropTypes.oneOf(['horizontal-wrap', 'horizontal-nowrap', 'horizontal-tight', 'vertical']),
+    type: PropTypes.oneOf(['horizontal-wrap', 'horizontal-nowrap', 'horizontal-tight', 'vertical', 'vertical-tight']),
     vertical: PropTypes.any,
     wrap: PropTypes.any
 }

@@ -35,18 +35,26 @@ class Process extends React.Component {
 
     }
 
+    renderMenu(recipeId) {
+        return (
+            <RecipeContext recipeId={recipeId} rootStatePath='process.tabs'>
+                <ProcessMenu recipeId={recipeId}/>
+            </RecipeContext>
+        )
+    }
+
     render() {
         return (
             <Tabs
                 statePath='process'
-                tabActions={recipeId => <ProcessMenu recipeId={recipeId}/>}
+                tabActions={recipeId => this.renderMenu(recipeId)}
                 onTitleChanged={recipe => saveRecipe(recipe)}>
                 {({id, type}) =>
                     <React.Fragment>
                         <RecipeContext recipeId={id} rootStatePath='process.tabs'>
                             {this.renderRecipe(id, type)}
+                            <Revisions recipeId={id}/>
                         </RecipeContext>
-                        <Revisions recipeId={id}/>
                     </React.Fragment>
                 }
             </Tabs>

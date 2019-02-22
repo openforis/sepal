@@ -3,10 +3,16 @@ import {connect, select} from 'store'
 import React from 'react'
 import actionBuilder from 'action-builder'
 
-export const RecipeContext = ({recipeId, rootStatePath, children}) =>
-    <Context.Provider value={toContextValue(recipeId, statePath(recipeId, rootStatePath))}>
-        {children}
-    </Context.Provider>
+export const RecipeContext = ({recipeId, rootStatePath, children}) => {
+    const statePath = getStatePath(recipeId, rootStatePath)
+    return (
+        <Context.Provider value={toContextValue(recipeId, statePath)}>
+            <ActivationContext statePath={[statePath, 'ui']}>
+                {children}
+            </ActivationContext>
+        </Context.Provider>
+    )
+}
 
 export const withRecipeContext = () =>
     WrappedComponent => {
@@ -15,12 +21,10 @@ export const withRecipeContext = () =>
                 return (
                     <Context.Consumer>
                         {recipeContext =>
-                            <ActivationContext statePath={[recipeContext.statePath, 'ui']}>
-                                {React.createElement(WrappedComponent, {
-                                    ...this.props,
-                                    recipeContext
-                                })}
-                            </ActivationContext>
+                            React.createElement(WrappedComponent, {
+                                ...this.props,
+                                recipeContext
+                            })
                         }
                     </Context.Consumer>
                 )
@@ -81,11 +85,12 @@ const toContextValue = (recipeId, statePath) => ({
     statePath
 })
 
-const statePath = (recipeId, rootStatePath) => {
+const getStatePath = (recipeId, rootStatePath) => {
     const recipeTabIndex = select(rootStatePath)
         .findIndex(recipe => recipe.id === recipeId)
     if (recipeTabIndex === -1)
-        throw new Error(`Recipe not found: ${recipeId}`)
+        return 'foo'
+        // throw new Error(`Recipe not found: ${recipeId}`)
     return [rootStatePath, recipeTabIndex]
         .filter(e => e !== undefined)
         .join('.')

@@ -156,11 +156,13 @@
     flex-wrap: wrap;
 }
 
-.group.vertical {
+.group.vertical,
+.group.vertical-tight {
     flex-direction: column;
 }
 
-.group.vertical > * {
+.group.vertical > *,
+.group.vertical-tight > *  {
     width: auto;
 }
 
@@ -168,6 +170,11 @@
     margin-top: 1rem;
 }
 
-.group.vertical .button {
+.group.vertical-tight > * + * {
+    margin-top: 0;
+}
+
+.group.vertical .button,
+.group.vertical-tight .button {
     width: 100%;
 }

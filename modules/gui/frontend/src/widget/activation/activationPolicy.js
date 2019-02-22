@@ -49,4 +49,3 @@ const deactivateWhen = (id, policy = {}) => {
     if (exclude) return !exclude.includes(id)
     return false
 }
-

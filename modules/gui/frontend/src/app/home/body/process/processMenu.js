@@ -1,7 +1,7 @@
+import {Activator} from 'widget/activation/activator'
 import {Msg, msg} from 'translate'
 import {RecipeState, addRecipe, exportRecipe$, saveRecipe} from './recipe'
 import {connect, select} from 'store'
-import {showRevisionsPanel} from 'app/home/body/process/revisions'
 import Menu, {MenuItem} from 'widget/menu'
 import React from 'react'
 
@@ -46,11 +46,14 @@ class ProcessMenu extends React.Component {
     }
 
     renderSavedRecipeItems() {
-        const {recipe} = this.props
         return (
-            <MenuItem onSelect={() => showRevisionsPanel(recipe.id)}>
-                <Msg id='process.menu.revertToOldRevision'/>
-            </MenuItem>
+            <Activator id='revisions'>
+                {({activate}) =>
+                    <MenuItem onSelect={() => activate()}>
+                        <Msg id='process.menu.revertToOldRevision'/>
+                    </MenuItem>
+                }
+            </Activator>
         )
     }
 

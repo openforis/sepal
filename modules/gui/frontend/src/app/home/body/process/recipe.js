@@ -42,13 +42,12 @@ saveToBackend$.pipe(
     mergeMap(group$ =>
         group$.pipe(
             map(recipe => _.omit(recipe, ['ui'])),
-            switchMap(recipe => {
-                saveRevision(recipe) // [TODO] is this the right place?
-                return save$(recipe)
-            })
+            switchMap(recipe => save$(recipe))
         )
     )
-).subscribe()
+).subscribe(
+    recipe => saveRevision(recipe)
+)
 
 const updateRecipeList = recipe =>
     actionBuilder('SET_RECIPES')
@@ -217,7 +216,7 @@ export const revertToRevision$ = (recipeId, revision) => {
             closeTab(recipeId, 'process')
             const selectedTabId = select('process.selectedTabId')
             actionBuilder('REVERT_RECIPE')
-                .set(recipePath(selectedTabId), recipe)
+                .set(recipePath(selectedTabId), initializedRecipe(recipe))
                 .set('process.selectedTabId', recipeId)
                 .dispatch()
             save$(recipe).subscribe()
