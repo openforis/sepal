@@ -1,7 +1,7 @@
-import _ from 'lodash'
+import {activator} from 'widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {activator} from 'widget/activation/activator'
+import _ from 'lodash'
 
 class PanelWizard extends React.Component {
 
@@ -81,9 +81,9 @@ class PanelWizard extends React.Component {
 export default activator()(PanelWizard)
 
 PanelWizard.propTypes = {
-    initialized: PropTypes.any,
     panels: PropTypes.array.isRequired,
     children: PropTypes.any,
+    initialized: PropTypes.any,
     selectedPanel: PropTypes.any,
     onDone: PropTypes.func
 }

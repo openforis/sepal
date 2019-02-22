@@ -1,16 +1,16 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {selectFrom} from 'collections'
-import _ from 'lodash'
-import React from 'react'
-import {dataSetById} from 'sources'
-import {msg} from 'translate'
-import {currentUser} from 'user'
-import Buttons from 'widget/buttons'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {currentUser} from 'user'
+import {dataSetById} from 'sources'
+import {msg} from 'translate'
+import {selectFrom} from 'collections'
+import Buttons from 'widget/buttons'
+import Label from 'widget/label'
+import React from 'react'
+import _ from 'lodash'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -83,9 +83,9 @@ class Retrieve extends React.Component {
 
         const bandOptions = this.allBandOptions
             .map(group => ({
-                    ...group,
-                    options: group.options.filter(option => availableBands.has(option.value))
-                })
+                ...group,
+                options: group.options.filter(option => availableBands.has(option.value))
+            })
             )
             .filter(group =>
                 group.options.length

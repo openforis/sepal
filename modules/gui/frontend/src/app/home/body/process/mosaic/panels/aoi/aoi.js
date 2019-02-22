@@ -1,6 +1,6 @@
-import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {msg} from 'translate'

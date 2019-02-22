@@ -1,9 +1,9 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import React from 'react'
-import {Msg, msg} from 'translate'
 import {FormPanelButtons} from 'widget/formPanel'
+import {Msg, msg} from 'translate'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import React from 'react'
 import styles from './clearSelectedScenes.module.css'
 
 const fields = {}

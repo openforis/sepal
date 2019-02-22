@@ -1,13 +1,13 @@
-import api from 'api'
-import styles from 'app/home/body/process/classification/classificationPreview.module.css'
+import {Button} from 'widget/button'
+import {msg} from 'translate'
+import {sepalMap} from 'app/home/map/map'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
-import {sepalMap} from 'app/home/map/map'
-import _ from 'lodash'
-import React from 'react'
-import {msg} from 'translate'
-import {Button} from 'widget/button'
 import MapStatus from 'widget/mapStatus'
+import React from 'react'
+import _ from 'lodash'
+import api from 'api'
+import styles from 'app/home/body/process/classification/classificationPreview.module.css'
 
 const mapRecipeToProps = recipe => ({recipe})
 

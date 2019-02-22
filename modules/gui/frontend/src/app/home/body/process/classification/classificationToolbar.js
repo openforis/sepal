@@ -1,15 +1,15 @@
+import {msg} from 'translate'
+import {selectFrom} from 'collections'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import {selectFrom} from 'collections'
+import PanelWizard from 'widget/panelWizard'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg} from 'translate'
-import PanelWizard from 'widget/panelWizard'
-import Toolbar, {ActivationButton} from 'widget/toolbar'
-import styles from './classificationToolbar.module.css'
 import Retrieve from './retrieve/retrieve'
 import Source from './source/source'
+import Toolbar, {ActivationButton} from 'widget/toolbar'
 import TrainingData from './trainingData/trainingData'
+import styles from './classificationToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,

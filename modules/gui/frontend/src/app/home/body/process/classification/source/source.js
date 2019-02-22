@@ -1,11 +1,11 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import React from 'react'
-import {msg} from 'translate'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import PanelSections from 'widget/panelSections'
 import {RecipeActions} from '../classificationRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {msg} from 'translate'
 import AssetSection from './assetSection'
+import PanelSections from 'widget/panelSections'
+import React from 'react'
 import RecipeSection from './recipeSection'
 import SectionSelection from './sectionSelection'
 import styles from './source.module.css'
@@ -67,37 +67,37 @@ Source.propTypes = {}
 
 const valuesToModel = values => {
     switch (values.section) {
-        case 'ASSET':
-            return {
-                type: 'ASSET',
-                id: values.asset
-            }
-        case 'RECIPE_REF':
-            return {
-                type: 'RECIPE_REF',
-                id: values.recipe
-            }
-        default:
-            throw new Error('Unexpected source section: ' + values.section)
+    case 'ASSET':
+        return {
+            type: 'ASSET',
+            id: values.asset
+        }
+    case 'RECIPE_REF':
+        return {
+            type: 'RECIPE_REF',
+            id: values.recipe
+        }
+    default:
+        throw new Error('Unexpected source section: ' + values.section)
     }
 }
 
 const modelToValues = (model = {}) => {
     switch (model.type) {
-        case 'ASSET':
-            return {
-                section: 'ASSET',
-                asset: model.id
-            }
-        case 'RECIPE_REF':
-            return {
-                section: 'RECIPE_REF',
-                recipe: model.id
-            }
-        case undefined:
-            return {}
-        default:
-            throw new Error('Unexpected source type: ' + model.type)
+    case 'ASSET':
+        return {
+            section: 'ASSET',
+            asset: model.id
+        }
+    case 'RECIPE_REF':
+        return {
+            section: 'RECIPE_REF',
+            recipe: model.id
+        }
+    case undefined:
+        return {}
+    default:
+        throw new Error('Unexpected source type: ' + model.type)
     }
 }
 

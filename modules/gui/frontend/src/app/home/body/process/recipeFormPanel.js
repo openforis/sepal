@@ -128,7 +128,7 @@ const setModelAndValues = ({id, statePath, model, values}) =>
         .set([statePath, 'model', id], model)
         .dispatch()
 
-const setValues = ({id, statePath, model, values}) =>
+const setValues = ({id, statePath, values}) =>
     actionBuilder('SET_VALUES', {id, values})
         .set([statePath, 'ui', id], values)
         .dispatch()

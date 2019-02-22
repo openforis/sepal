@@ -1,11 +1,11 @@
-import actionBuilder from 'action-builder'
+import {activationAllowed} from 'widget/activation/activationPolicy'
+import {connect} from 'store'
 import {selectFrom} from 'collections'
-import _ from 'lodash'
+import {withActivationContext} from './activationContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import {activationAllowed} from 'widget/activation/activationPolicy'
-import {withActivationContext} from './activationContext'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
 
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {statePath}} = ownProps
@@ -53,8 +53,8 @@ class UnconnectedActivator extends React.Component {
             if (!_.isEqual(updatedActivatables, activatables)) {
                 setTimeout( // [HACK] Allow activatable.componentWillUnmount() to get updated state
                     () => actionBuilder('UPDATE_ACTIVATABLES')
-                    .set([statePath, 'activatables'], updatedActivatables)
-                    .dispatch()
+                        .set([statePath, 'activatables'], updatedActivatables)
+                        .dispatch()
                 )
             }
         }
