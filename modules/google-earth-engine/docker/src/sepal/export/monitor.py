@@ -32,7 +32,8 @@ class MonitorEarthEngineExportTask(ThreadTask):
         ee.InitializeThread(self.credentials)
         while self.running():
             time.sleep(10)
-            status = Task(self.task_id).status()
+            task = find_task(self.task_id)
+            status = task.status()
             state = status['state']
             if state == Task.State.READY:
                 self._update_state(State.PENDING)
@@ -43,7 +44,8 @@ class MonitorEarthEngineExportTask(ThreadTask):
                 self.resolve()
                 return
             else:
-                error_message = status['error_message'] if state == Task.State.FAILED else 'Earth Engine export was canceled'
+                error_message = status[
+                    'error_message'] if state == Task.State.FAILED else 'Earth Engine export was canceled'
                 self._status = {
                     'state': State.FAILED,
                     'message': error_message
@@ -69,14 +71,10 @@ class MonitorEarthEngineExportTask(ThreadTask):
     def close(self):
         try:
             ee.InitializeThread(self.credentials)
-            status = Task(self.task_id).status()
-            if status['state'] in (Task.State.READY, Task.State.RUNNING):
-                logger.debug('Canceling Earth Engine Task {0}: {1}'.format(self, status))
-                Task(status['id'], {
-                    'type': status['task_type'],
-                    'description': status['description'],
-                    'state': status['state'],
-                }).cancel()
+            task = find_task(self.task_id)
+            if task and task.state in (Task.State.READY, Task.State.RUNNING):
+                logger.debug('Canceling Earth Engine Task {0}: {1}'.format(self, task.status()))
+                task.cancel()
         except ee.EEException as e:
             logger.warn('Failed to cancel task {0}: {1}'.format(self, e))
 
@@ -89,3 +87,7 @@ class MonitorEarthEngineExportTask(ThreadTask):
 
     def __str__(self):
         return '{0}(destination={1}, task_id={2})'.format(type(self).__name__, self.destination, self.task_id)
+
+
+def find_task(task_id):
+    return next(task for task in Task.list() if task.id == task_id)
