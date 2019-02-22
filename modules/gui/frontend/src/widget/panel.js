@@ -192,7 +192,7 @@ export class PanelButtons extends React.Component {
 
     static Main({children}) {
         return (
-            <ButtonGroup className={styles.main}>
+            <ButtonGroup className={styles.main} type='horizontal-nowrap'>
                 {children}
             </ButtonGroup>
         )
@@ -200,7 +200,7 @@ export class PanelButtons extends React.Component {
 
     static Extra({children}) {
         return (
-            <ButtonGroup className={styles.extras}>
+            <ButtonGroup className={styles.extras} type='horizontal-nowrap'>
                 {children}
             </ButtonGroup>
         )
