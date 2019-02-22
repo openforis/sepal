@@ -1,8 +1,8 @@
-import globalActionBuilder from 'action-builder'
-import api from 'api'
-import moment from 'moment'
 import {msg} from 'translate'
 import {recipePath} from '../recipe'
+import api from 'api'
+import globalActionBuilder from 'action-builder'
+import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -61,16 +61,16 @@ const submitRetrieveRecipeTask = recipe => {
 
 const toExpression = (indicator) => {
     switch (indicator) {
-        case 'NDVI':
-            return '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
-        case 'NDMI':
-            return '10000 * (1 + (i.nir - i.swir1) / (i.nir + i.swir1))'
-        case 'EVI':
-            return '10000 * (1 + 2.5 * (i.nir - i.red) / (i.nir + 6 * i.red - 7.5 * i.blue + 1))'
-        case 'EVI2':
-            return '10000 * (1 + 2.5 * (i.nir - i.red) / (i.nir + 2.4 * i.red + 1))'
-        default:
-            throw new Error('Unexpected indicator: ' + indicator)
+    case 'NDVI':
+        return '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
+    case 'NDMI':
+        return '10000 * (1 + (i.nir - i.swir1) / (i.nir + i.swir1))'
+    case 'EVI':
+        return '10000 * (1 + 2.5 * (i.nir - i.red) / (i.nir + 6 * i.red - 7.5 * i.blue + 1))'
+    case 'EVI2':
+        return '10000 * (1 + 2.5 * (i.nir - i.red) / (i.nir + 2.4 * i.red + 1))'
+    default:
+        throw new Error('Unexpected indicator: ' + indicator)
     }
 }
 

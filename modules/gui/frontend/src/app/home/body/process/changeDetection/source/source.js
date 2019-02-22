@@ -1,6 +1,6 @@
-import {RecipeActions} from 'app/home/body/process/classification/classificationRecipe'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
+import {RecipeActions} from 'app/home/body/process/classification/classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {msg} from 'translate'
 import AssetSection from './assetSection'
