@@ -1,4 +1,4 @@
-import {Subject, of} from 'rxjs'
+import {Subject} from 'rxjs'
 import {addTab, closeTab} from 'widget/tabs'
 import {connect, select, subscribe} from 'store'
 import {debounceTime, groupBy, map, mergeMap, switchMap} from 'rxjs/operators'
@@ -35,9 +35,12 @@ const saveToBackend$ = (() => {
     return save$
 })()
 
+const saveRevision = (recipeId, recipe) => localStorage.setItem(`sepal:${recipeId}:${Date.now()}`, recipe)
+const loadRevision = (recipeId, revision) => localStorage[`sepal:${recipeId}:${revision}`]
+
 const saveToLocalStorage$ = (() => {
     const save$ = new Subject()
-    const DEBOUNCE_SECONDS = 60
+    const DEBOUNCE_SECONDS = 10
 
     save$.pipe(
         groupBy(recipe => recipe.id),
@@ -47,7 +50,7 @@ const saveToLocalStorage$ = (() => {
                 map(recipe => _.omit(recipe, ['ui'])),
                 switchMap(recipe =>
                     gzip$(recipe, {to: 'string'}).pipe(
-                        map(compressedRecipe => ({id: recipe.id, revision: compressedRecipe}))
+                        map(compressedRecipe => ({recipeId: recipe.id, revision: compressedRecipe}))
                     )
                 )
             )
@@ -58,15 +61,17 @@ const saveToLocalStorage$ = (() => {
     
     const saveRevisionToLocalStorage = (recipeId, revision) => {
         try {
-            localStorage.setItem(`sepal:${recipeId}:${Date.now()}`, revision)
+            saveRevision(recipeId, revision)
         } catch (exception) {
-            if (expireRevisionFromLocalStorage(recipeId))
+            if (removeRevisionFromLocalStorage(recipeId)) {
                 saveRevisionToLocalStorage(recipeId, revision)
+            }
         }
     }
     
-    const expireRevisionFromLocalStorage = _recipeId => {
-        const keyToExpire = _(localStorage)
+    const removeRevisionFromLocalStorage = _recipeId => {
+        // [TODO] implement removal strategy
+        const key = _(localStorage)
             .keys()
             .filter(key => key.startsWith('sepal:'))
             .map(key => ({key, timestamp: key.split(':')[2]}))
@@ -74,8 +79,10 @@ const saveToLocalStorage$ = (() => {
             .sortBy({key: 1})
             .first()
             .key
-        localStorage.removeItem(keyToExpire)
-        return true
+        if (key) {
+            localStorage.removeItem(key)
+        }
+        return key
     }
 
     return save$
@@ -118,6 +125,11 @@ const updateRecipeList = recipe =>
 const isInitialized = recipe =>
     selectFrom(recipe, 'ui.initialized')
 
+const initializedRecipe = recipe => ({
+    ...recipe,
+    ui: {initialized: true}
+})
+        
 export const saveRecipe = recipe => {
     if (isInitialized(recipe)) {
         updateRecipeList(recipe)
@@ -139,27 +151,17 @@ export const loadRecipes$ = () =>
             .dispatch())
     )
 
-const initializedRecipe = recipe => ({
-    ...recipe,
-    ui: {initialized: true}
-})
-    
-export const openRecipe$ = recipeId =>
-    isRecipeOpen(recipeId)
-        ? of(selectRecipe(recipeId))
-        : loadRecipe$(recipeId)
-
-const loadRecipe$ = recipeId =>
+export const loadRecipe$ = recipeId =>
     api.recipe.load$(recipeId).pipe(
         map(recipe =>
-            actionBuilder('OPEN_RECIPE')
+            actionBuilder('LOAD_RECIPE')
                 .set(recipePath(select('process.selectedTabId')), initializedRecipe(recipe))
                 .set('process.selectedTabId', recipe.id)
                 .dispatch()
         )
     )
 
-const selectRecipe = recipeId =>
+export const selectRecipe = recipeId =>
     actionBuilder('SELECT_RECIPE')
         .set('process.selectedTabId', recipeId)
         .dispatch()
@@ -178,8 +180,8 @@ export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
         )
     )
 
-// [TODO] remove from local storage as well
 export const removeRecipe$ = recipeId =>
+    // [TODO] remove from local storage as well?
     api.recipe.delete$(recipeId).pipe(
         map(() =>
             actionBuilder('REMOVE_RECIPE', {recipeId})
@@ -187,6 +189,7 @@ export const removeRecipe$ = recipeId =>
                 .dispatch()
         )
     )
+
 export const addRecipe = recipe => {
     const tab = addTab('process')
     recipe.id = tab.id
@@ -241,9 +244,8 @@ export const getRevisions = recipeId =>
         .reverse()
         .value()
 
-export const revertToRevision$ = (recipeId, revision) => {
-    const compressed = localStorage[`sepal:${recipeId}:${revision}`]
-    return uncompressRecipe$(compressed).pipe(
+export const revertToRevision$ = (recipeId, revision) =>
+    uncompressRecipe$(loadRevision(recipeId, revision)).pipe(
         map(recipe => {
             prevTabs = prevTabs.filter(tab => tab.id !== recipeId)
             closeTab(recipeId, 'process')
@@ -256,7 +258,6 @@ export const revertToRevision$ = (recipeId, revision) => {
             return recipe
         })
     )
-}
 
 export const recipe = (RecipeState) => {
     return WrappedComponent => {

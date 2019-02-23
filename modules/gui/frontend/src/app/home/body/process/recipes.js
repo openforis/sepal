@@ -5,7 +5,7 @@ import {PageControls, PageData, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {closeTab} from 'widget/tabs'
 import {connect, select} from 'store'
-import {duplicateRecipe$, loadRecipes$, openRecipe$, removeRecipe$} from './recipe'
+import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
 import {msg} from 'translate'
 import CreateRecipe from './createRecipe'
 import CreateRecipeRLCMS from './createRecipeRLCMS'
@@ -70,7 +70,11 @@ class RecipeList extends React.Component {
     }
 
     openRecipe(recipeId) {
-        this.props.stream('LOAD_RECIPE', openRecipe$(recipeId))
+        if (isRecipeOpen(recipeId)) {
+            selectRecipe(recipeId)
+        } else {
+            this.props.stream('LOAD_RECIPE', loadRecipe$(recipeId))
+        }
     }
 
     duplicateRecipe(recipeIdToDuplicate) {
