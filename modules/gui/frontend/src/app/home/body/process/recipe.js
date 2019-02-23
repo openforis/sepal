@@ -35,8 +35,10 @@ const saveToBackend$ = (() => {
     return save$
 })()
 
-const saveRevision = (recipeId, recipe) => localStorage.setItem(`sepal:${recipeId}:${Date.now()}`, recipe)
-const loadRevision = (recipeId, revision) => localStorage[`sepal:${recipeId}:${revision}`]
+const revisionId = (recipeId, revision) => `sepal:${recipeId}:${revision}`
+const saveRevision = (recipeId, recipe) => localStorage.setItem(revisionId(recipeId, Date.now()), recipe)
+const loadRevision = (recipeId, revision) => localStorage.getItem(revisionId(recipeId, revision))
+const removeRevision = (recipeId, revision) => localStorage.removeItem(revisionId(recipeId, revision))
 
 const saveToLocalStorage$ = (() => {
     const save$ = new Subject()
@@ -166,28 +168,30 @@ export const selectRecipe = recipeId =>
         .set('process.selectedTabId', recipeId)
         .dispatch()
 
+const duplicateRecipe = (sourceRecipe, destinationRecipeId) => ({
+    ...sourceRecipe,
+    id: destinationRecipeId,
+    title: (sourceRecipe.title || sourceRecipe.placeholder) + '_copy'
+})
+
 export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
     api.recipe.load$(sourceRecipeId).pipe(
-        map(recipe => ({
-            ...recipe,
-            id: destinationRecipeId,
-            title: (recipe.title || recipe.placeholder) + '_copy'
-        })),
-        map(duplicate =>
-            actionBuilder('DUPLICATE_RECIPE', {duplicate})
+        map(sourceRecipe => duplicateRecipe(sourceRecipe, destinationRecipeId)),
+        map(recipe =>
+            actionBuilder('DUPLICATE_RECIPE', {duplicate: recipe})
                 .set(recipePath(destinationRecipeId), initializedRecipe(recipe))
                 .dispatch()
         )
     )
 
 export const removeRecipe$ = recipeId =>
-    // [TODO] remove from local storage as well?
     api.recipe.delete$(recipeId).pipe(
-        map(() =>
+        map(() => {
+            removeAllRevisions(recipeId)
             actionBuilder('REMOVE_RECIPE', {recipeId})
                 .delValueByTemplate('process.recipes', {id: recipeId})
                 .dispatch()
-        )
+        })
     )
 
 export const addRecipe = recipe => {
@@ -243,6 +247,10 @@ export const getRevisions = recipeId =>
         .sortBy()
         .reverse()
         .value()
+
+const removeAllRevisions = recipeId =>
+    getRevisions(recipeId)
+        .forEach(revision => removeRevision(recipeId, revision))
 
 export const revertToRevision$ = (recipeId, revision) =>
     uncompressRecipe$(loadRevision(recipeId, revision)).pipe(
