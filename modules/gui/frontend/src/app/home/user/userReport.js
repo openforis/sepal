@@ -1,43 +1,23 @@
+import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {activatable} from 'widget/activation/activatable'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Label from 'widget/label'
 import React from 'react'
 import UserSessions from './userSessions'
-import actionBuilder from 'action-builder'
 import format from 'format'
 import styles from './userReport.module.css'
 
 const mapStateToProps = state => {
     return {
-        userReport: (state.user && state.user.currentUserReport) || {},
-        panel: state.ui && state.ui.userBudget,
-        modal: state.ui && state.ui.modal,
-        budgetExceeded: select('user.budgetExceeded'),
+        userReport: (state.user && state.user.currentUserReport) || {}
     }
 }
 
-const action = mode =>
-    actionBuilder('USER_BUDGET')
-        .set('ui.userBudget', mode)
-        .set('ui.modal', !!mode)
-        .dispatch()
-
-export const showUserBudget = () => {
-    action('USER_BUDGET')
-}
-
-export const closePanel = () =>
-    action()
-
-class Usage extends React.Component {
-    buttonHandler() {
-        const {modal} = this.props
-        !modal && showUserBudget()
-    }
-
+class _Usage extends React.Component {
     renderResources() {
         const {spending} = this.props.userReport
         return (
@@ -73,7 +53,8 @@ class Usage extends React.Component {
         )
     }
 
-    renderPanel() {
+    render() {
+        const {deactivate} = this.props
         return (
             <Panel
                 className={styles.panel}
@@ -100,44 +81,10 @@ class Usage extends React.Component {
                 <PanelButtons>
                     <PanelButtons.Main>
                         <PanelButtons.Close
-                            onClick={() => closePanel()}/>
+                            onClick={() => deactivate()}/>
                     </PanelButtons.Main>
                 </PanelButtons>
             </Panel>
-        )
-    }
-
-    renderButton() {
-        const {modal, userReport, budgetExceeded} = this.props
-        const hourlySpending = userReport.sessions
-            ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
-            : 0
-        const label = budgetExceeded
-            ? msg('home.sections.user.report.budgetExceeded')
-            : format.unitsPerHour(hourlySpending)
-        return (
-            <Button
-                chromeless
-                look='transparent'
-                size='large'
-                additionalClassName={budgetExceeded ? styles.budgetExceeded : null}
-                icon='dollar-sign'
-                label={label}
-                onClick={() => this.buttonHandler()}
-                tooltip={msg('home.sections.user.report.tooltip')}
-                tooltipPlacement='top'
-                tooltipDisabled={modal}/>
-        )
-    }
-
-    render() {
-        const {panel} = this.props
-        const showUserBudget = panel === 'USER_BUDGET'
-        return (
-            <React.Fragment>
-                {this.renderButton()}
-                {showUserBudget ? this.renderPanel() : null}
-            </React.Fragment>
         )
     }
 }
@@ -154,6 +101,50 @@ const PercentCell = ({used, budget}) => {
     </td>
 }
 
+const policy = () => ({
+    _: 'disallow'
+})
+
+const Usage = (
+    activatable('userReport', policy)(
+        connect(mapStateToProps)(
+            _Usage
+        )
+    )
+)
+
 Usage.propTypes = {}
 
-export default connect(mapStateToProps)(Usage)
+const _UserReportButton = ({userReport, budgetExceeded}) => {
+    const hourlySpending = userReport.sessions
+        ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
+        : 0
+    const label = budgetExceeded
+        ? msg('home.sections.user.report.budgetExceeded')
+        : format.unitsPerHour(hourlySpending)
+    return (
+        <Activator id='userReport'>
+            {({active, activate}) =>
+                <React.Fragment>
+                    <Button
+                        chromeless
+                        look='transparent'
+                        size='large'
+                        additionalClassName={budgetExceeded ? styles.budgetExceeded : null}
+                        icon='dollar-sign'
+                        label={label}
+                        disabled={active}
+                        onClick={() => activate()}
+                        tooltip={msg('home.sections.user.report.tooltip')}
+                        tooltipPlacement='top'/>
+                    <Usage/>
+                </React.Fragment>
+            }
+        </Activator>
+    )
+}
+
+export const UserReportButton = connect(state => ({
+    userReport: (state.user && state.user.currentUserReport) || {},
+    budgetExceeded: select('user.budgetExceeded')
+}))(_UserReportButton)

@@ -1,3 +1,4 @@
+import {ActivationContext} from 'widget/activation/activationContext'
 import {EMPTY, interval, timer} from 'rxjs'
 import {connect} from 'store'
 import {currentUser, loadCurrentUser$} from 'user'
@@ -95,19 +96,21 @@ class Home extends React.Component {
     render() {
         const {user, floatingMenu, floatingFooter} = this.props
         return (
-            <div className={[
-                styles.container,
-                floatingMenu && styles.floatingMenu,
-                floatingFooter && styles.floatingFooter
-            ].join(' ')}>
-                <Map className={styles.map}/>
-                <Menu className={styles.menu} user={user}/>
-                <div className={styles.main}>
-                    <Body className={styles.body}/>
-                    <Footer className={styles.footer} user={user}/>
+            <ActivationContext statePath={['ui']}>
+                <div className={[
+                    styles.container,
+                    floatingMenu && styles.floatingMenu,
+                    floatingFooter && styles.floatingFooter
+                ].join(' ')}>
+                    <Map className={styles.map}/>
+                    <Menu className={styles.menu} user={user}/>
+                    <div className={styles.main}>
+                        <Body className={styles.body}/>
+                        <Footer className={styles.footer} user={user}/>
+                    </div>
+                    <div id='portalContainer' className={styles.portalContainer}/>
                 </div>
-                <div id='portalContainer' className={styles.portalContainer}/>
-            </div>
+            </ActivationContext>
         )
     }
 }
