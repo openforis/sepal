@@ -1,15 +1,19 @@
-import actionBuilder from 'action-builder'
+import {activationAllowed} from 'widget/activation/activationPolicy'
+import {connect} from 'store'
 import {selectFrom} from 'collections'
-import _ from 'lodash'
+import {withActivationContext} from './activationContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import {activationAllowed} from 'widget/activation/activationPolicy'
-import {withActivationContext} from './activationContext'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
 
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {statePath}} = ownProps
-    return {activatables: selectFrom(state, [statePath, 'activatables']) || {}}
+    const activatables = selectFrom(state, [statePath, 'activatables']) || {}
+    const id = ownProps.id
+    return id
+        ? {activatables: _.pick(activatables, id)}
+        : {activatables}
 }
 
 class UnconnectedActivator extends React.Component {
@@ -63,15 +67,13 @@ class UnconnectedActivator extends React.Component {
             activate: () => canActivate(id) && activate(id),
             deactivate: () => isActive(id) && deactivate(id)
         })
-        const activatorProps =
-            _(activatables)
-                .keys()
-                .transform((acc, id) => acc[id] = props(id), {})
-                .value()
-        return id
+        return _.isString(id)
             ? props(id)
             : {
-                activatables: activatorProps,
+                activatables: _(activatables)
+                    .keys()
+                    .transform((acc, id) => acc[id] = props(id), {})
+                    .value(),
                 updateActivatables
             }
     }
@@ -82,9 +84,9 @@ export const activator = (id) => {
         class HigherOrderComponent extends React.Component {
             render() {
                 return (
-                    <Activator id={id} {...this.props}>
-                        {activatorProps =>
-                            React.createElement(WrappedComponent, {...activatorProps, ...this.props})}
+                    <Activator id={id}>
+                        {activator =>
+                            React.createElement(WrappedComponent, {activator, ...this.props})}
                     </Activator>
                 )
             }
@@ -104,5 +106,5 @@ export const Activator = (
 
 Activator.propTypes = {
     children: PropTypes.func.isRequired,
-    id: PropTypes.string
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.array])
 }

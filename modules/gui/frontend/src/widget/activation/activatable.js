@@ -31,12 +31,12 @@ class UnconnectedActivatable extends React.Component {
     }
 
     updateReduxStateIfChanged() {
-        const {id, policy, activatables} = this.props
+        const {id, policy, activatables, otherProps} = this.props
         const currentActivatable = activatables[id] || {}
         const currentActive = currentActivatable.active
         const currentPolicy = currentActivatable.policy
         const justActivated = currentActivatable.justActivated
-        const nextPolicy = policy ? policy(this.props) : undefined
+        const nextPolicy = policy ? policy(otherProps) : undefined
         const nextActive = currentActive && (justActivated || !shouldDeactivate(id, activatables, nextPolicy))
         const shouldUpdatePolicy = currentActive !== nextActive
             || !_.isEqual(currentPolicy, nextPolicy)
@@ -80,11 +80,11 @@ export const activatable = (id, policy) => {
         class HigherOrderComponent extends React.Component {
             render() {
                 return (
-                    <Activatable id={id} policy={policy} {...this.props}>
-                        {activatableProps =>
+                    <Activatable id={id} policy={policy} otherProps={this.props}>
+                        {activatable =>
                             React.createElement(
                                 WrappedComponent,
-                                {...activatableProps, ...this.props}
+                                {activatable, ...this.props}
                             )
                         }
                     </Activatable>
