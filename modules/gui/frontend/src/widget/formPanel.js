@@ -2,36 +2,55 @@ import {Form} from 'widget/form'
 import {Panel, PanelButtons} from 'widget/panel'
 import {PanelButtonContext} from './toolbar'
 import {PanelWizardContext} from './panelWizard'
+import {connect} from 'store'
+import {isObservable} from 'rxjs'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-
+import styles from './formPanel.module.css'
 const PanelContext = React.createContext()
 
-export default class FormPanel extends React.Component {
-    closePanel() {
-        this.props.close()
-    }
-
-    apply() {
+class FormPanel extends React.Component {
+    apply(onSuccess) {
         const {form, onApply} = this.props
-        onApply(form && form.values())
+        const result = onApply(form && form.values())
+        if (isObservable(result)) {
+            const result$ = result
+            this.props.stream('FORM_PANEL_APPLY', result$,
+                () => null,
+                _error => null,
+                () => onSuccess()
+            )
+        } else {
+            onSuccess && onSuccess()
+        }
+
         return true
     }
 
     ok() {
-        const {form, isActionForm} = this.props
+        const {form, isActionForm, close} = this.props
         if (form && (isActionForm || form.isDirty())) {
-            this.apply()
-            this.closePanel()
+            this.apply(() => close())
         } else {
             this.cancel()
         }
     }
 
     cancel() {
-        const {onCancel} = this.props
+        const {onCancel, close} = this.props
         onCancel && onCancel()
-        this.closePanel()
+        close()
+    }
+
+    renderSpinner() {
+        return this.props.stream('FORM_PANEL_APPLY') === 'ACTIVE'
+            ? (
+                <div className={styles.spinner}>
+                    <Icon name='spinner'/>
+                </div>
+            )
+            : null
     }
 
     render() {
@@ -54,9 +73,9 @@ export default class FormPanel extends React.Component {
                                     invalid: form && form.isInvalid(),
                                     onOk: () => this.ok(),
                                     onCancel: () => this.cancel(),
-                                    onBack: () => back && this.apply() && back(),
-                                    onNext: () => next && this.apply() && next(),
-                                    onDone: () => done && this.apply() && done()
+                                    onBack: () => back && this.apply(() => back()),
+                                    onNext: () => next && this.apply(() => next()),
+                                    onDone: () => done && this.apply(() => done())
                                 }}>
                                     <Panel
                                         id={this.props.id}
@@ -65,6 +84,7 @@ export default class FormPanel extends React.Component {
                                         <Form onSubmit={() => onApply && onApply(form && form.values())}>
                                             {children}
                                         </Form>
+                                        {this.renderSpinner()}
                                     </Panel>
                                 </PanelContext.Provider>
                             )}
@@ -75,6 +95,8 @@ export default class FormPanel extends React.Component {
         )
     }
 }
+
+export default connect()(FormPanel)
 
 FormPanel.propTypes = {
     children: PropTypes.any.isRequired,
