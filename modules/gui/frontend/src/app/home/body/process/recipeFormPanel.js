@@ -52,7 +52,7 @@ export const recipeFormPanel =
         return WrappedComponent => {
             class HigherOrderComponent extends React.Component {
                 render() {
-                    const {form, recipeContext: {statePath}, deactivate} = this.props
+                    const {form, recipeContext: {statePath}, activatable: {deactivate}} = this.props
                     return (
                         <Context.Provider value={{id, form, statePath, valuesToModel, deactivate}}>
                             {React.createElement(WrappedComponent, this.props)}
@@ -121,9 +121,9 @@ RecipeFormPanel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
     isActionForm: PropTypes.any,
+    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
     onApply: PropTypes.func,
-    onCancel: PropTypes.func,
-    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline'])
+    onCancel: PropTypes.func
 }
 
 const setModelAndValues = ({id, statePath, model, values}) =>

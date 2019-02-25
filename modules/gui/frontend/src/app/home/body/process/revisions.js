@@ -35,7 +35,7 @@ class Revisions extends React.Component {
     }
 
     render() {
-        const {form, inputs: {revision}, deactivate} = this.props
+        const {form, inputs: {revision}, activatable: {deactivate}} = this.props
         return (
             <FormPanel
                 className={styles.panel}

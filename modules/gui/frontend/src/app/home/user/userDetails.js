@@ -1,12 +1,15 @@
+import {Activator} from 'widget/activation/activator'
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, Input, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {closePanel, showChangePassword} from './userProfile'
+import {activatable} from 'widget/activation/activatable'
+import {connect} from 'store'
 import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
 import {isMobile} from 'widget/userAgent'
 import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
+import ChangePassword from './changePassword'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -32,7 +35,7 @@ const mapStateToProps = () => {
     }
 }
 
-class UserDetails extends React.Component {
+class _UserDetails extends React.Component {
     useUserGoogleAccount(e) {
         e.preventDefault()
         api.user.getGoogleAccessRequestUrl$(window.location.hostname)
@@ -50,21 +53,19 @@ class UserDetails extends React.Component {
     }
 
     updateUserDetails(userDetails) {
-        this.props.stream('UPDATE_CURRENT_USER_DETAILS',
-            updateCurrentUserDetails$(userDetails),
-            () => {
-                Notifications.success({message: msg('user.userDetails.update.success')})
-                closePanel()
-            },
-            error => {
-                Notifications.error({message: msg('user.userDetails.update.error'), error})
-                closePanel()
-            }
+        updateCurrentUserDetails$(userDetails).subscribe(
+            () => Notifications.success({message: msg('user.userDetails.update.success')}),
+            error => Notifications.error({message: msg('user.userDetails.update.error'), error})
         )
     }
 
     cancel() {
-        closePanel()
+        this.closePanel()
+    }
+
+    closePanel() {
+        const {activatable: {deactivate}} = this.props
+        deactivate()
     }
 
     renderGoogleAccountButton() {
@@ -122,17 +123,20 @@ class UserDetails extends React.Component {
                     </div>
                 </PanelContent>
                 <FormPanelButtons>
-                    <Button
-                        icon={'key'}
-                        label={msg('user.changePassword.title')}
-                        disabled={form.isDirty()}
-                        onClick={() => showChangePassword()}/>
+                    <Activator id='changePassword'>
+                        {({canActivate, activate}) => <Button
+                            icon={'key'}
+                            label={msg('user.changePassword.title')}
+                            disabled={!canActivate || form.isDirty()}
+                            onClick={() => activate()}/>
+                        }
+                    </Activator>
                 </FormPanelButtons>
             </React.Fragment>
     }
 
     render() {
-        const {form} = this.props
+        const {form, activatable: {deactivate}} = this.props
         return (
             <FormPanel
                 className={styles.panel}
@@ -140,7 +144,8 @@ class UserDetails extends React.Component {
                 statePath='userDetails'
                 modal
                 onApply={userDetails => this.updateUserDetails(userDetails)}
-                onCancel={() => this.cancel()}>
+                onCancel={() => this.cancel()}
+                close={() => deactivate()}>
                 <PanelHeader
                     icon='user'
                     title={msg('user.userDetails.title')}/>
@@ -150,6 +155,44 @@ class UserDetails extends React.Component {
     }
 }
 
+const policy = () => ({
+    _: 'disallow',
+    changePassword: 'allow-then-deactivate'
+})
+
+const UserDetails = (
+    activatable('userDetails', policy)(
+        form({fields, mapStateToProps})(
+            _UserDetails
+        )
+    )
+)
+
 UserDetails.propTypes = {}
 
-export default form({fields, mapStateToProps})(UserDetails)
+const _UserDetailsButton = ({className, username}) =>
+    <React.Fragment>
+        <Activator id='userDetails'>
+            {({active, activate}) =>
+                <Button
+                    chromeless
+                    look='transparent'
+                    size='large'
+                    additionalClassName={className}
+                    label={username}
+                    disabled={active}
+                    onClick={() => activate()}
+                    tooltip={msg('home.sections.user.profile')}
+                    tooltipPlacement='top'
+                    tooltipDisabled={active}/>
+            }
+        </Activator>
+        <UserDetails/>
+        <ChangePassword/>
+    </React.Fragment>
+
+export const UserDetailsButton = connect(state => ({
+    username: state.user.currentUser.username
+}))(_UserDetailsButton)
+
+UserDetailsButton.propTypes = {}

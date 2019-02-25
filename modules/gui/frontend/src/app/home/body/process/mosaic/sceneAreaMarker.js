@@ -73,10 +73,9 @@ class SceneAreaMarker extends React.Component {
     }
 
     selectScenes(sceneAreaId) {
-        const {activate} = this.props
+        const {activator: {activate}} = this.props
         this.recipeActions.setSceneSelection(sceneAreaId).dispatch()
         activate()
-
     }
 
 }

@@ -11,7 +11,7 @@ class PanelWizard extends React.Component {
     }
 
     render() {
-        const {panels = [], activatables, updateActivatables, onDone, children} = this.props
+        const {panels = [], activator: {activatables, updateActivatables}, onDone, children} = this.props
         const {initialized} = this.state
         const currentId = !initialized && _(activatables)
             .pickBy(({active}) => active)
@@ -59,7 +59,7 @@ class PanelWizard extends React.Component {
         const {initialized = this.props.initialized} = this.state
         if (initialized || this.selectedFirst)
             return
-        const {panels, activatables} = this.props
+        const {panels, activator: {activatables}} = this.props
         const isAnyActive = _(activatables)
             .pickBy(({active}) => active)
             .keys()
@@ -69,7 +69,7 @@ class PanelWizard extends React.Component {
     }
 
     selectFirstPanel() {
-        const {panels, activatables} = this.props
+        const {panels, activator: {activatables}} = this.props
         const activatable = activatables[panels[0]]
         if (activatable) {
             this.selectedFirst = true

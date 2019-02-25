@@ -196,7 +196,7 @@ class _UserMessages extends React.Component {
     }
 
     renderMessagesPanel() {
-        const {isAdmin, deactivate} = this.props
+        const {isAdmin, activatable: {deactivate}} = this.props
         return (
             <Panel
                 className={styles.panel}

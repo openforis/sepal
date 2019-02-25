@@ -54,7 +54,7 @@ class _Usage extends React.Component {
     }
 
     render() {
-        const {deactivate} = this.props
+        const {activatable: {deactivate}} = this.props
         return (
             <Panel
                 className={styles.panel}

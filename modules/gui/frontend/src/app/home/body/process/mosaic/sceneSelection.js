@@ -64,7 +64,7 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        const {action, recipeId, dates: {targetDate}, form, deactivate} = this.props
+        const {action, recipeId, dates: {targetDate}, form, activatable: {deactivate}} = this.props
         const loading = !action('LOAD_SCENES').dispatched
         return (
             <React.Fragment>
