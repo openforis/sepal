@@ -1,5 +1,4 @@
 import {Button} from 'widget/button'
-import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -65,14 +64,6 @@ class MosaicPreview extends React.Component {
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
-    isPreviewShown() {
-        const {recipe} = this.props
-        return !recipe.ui.autoSelectingScenes
-            && (recipe.model.sceneSelectionOptions.type === SceneSelectionType.ALL
-                || (recipe.model.scenes
-                    && Object.keys(recipe.model.scenes).find(sceneAreaId => recipe.model.scenes[sceneAreaId].length > 0)))
-    }
-
     componentDidMount() {
         this.updateLayer(this.toPreviewRequest(this.props.recipe))
     }
@@ -90,15 +81,13 @@ class MosaicPreview extends React.Component {
     updateLayer(previewRequest) {
         const {recipe, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
-        const layer = this.isPreviewShown()
-            ? new EarthEngineLayer({
+        const layer = new EarthEngineLayer({
                 layerIndex: 0,
                 bounds: previewRequest.recipe.model.aoi.bounds,
                 mapId$: api.gee.preview$(previewRequest),
                 props: previewRequest,
                 onProgress: tiles => this.onProgress(tiles)
             })
-            : null
         const context = sepalMap.getContext(recipe.id)
         const changed = context.setLayer({
             id: 'preview',
@@ -114,7 +103,7 @@ class MosaicPreview extends React.Component {
 
     isHidden() {
         const {recipe} = this.props
-        return !recipe || !recipe.ui || recipe.ui.hidePreview || !this.isPreviewShown()
+        return recipe.ui.hidePreview
     }
 
     toPreviewRequest(recipe) {
@@ -127,5 +116,7 @@ class MosaicPreview extends React.Component {
         }
     }
 }
+
+MosaicPreview.propTypes = {}
 
 export default withRecipe(mapRecipeToProps)(MosaicPreview)
