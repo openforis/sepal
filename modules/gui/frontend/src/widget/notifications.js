@@ -1,11 +1,11 @@
-import {Subject, merge, timer} from 'rxjs'
-import {connect, select} from 'store'
-import {delay, filter, map, mergeMap} from 'rxjs/operators'
-import {msg} from 'translate'
-import {v4 as uuid} from 'uuid'
+import actionBuilder from 'action-builder'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
+import {merge, Subject, timer} from 'rxjs'
+import {delay, filter, map, mergeMap} from 'rxjs/operators'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import {v4 as uuid} from 'uuid'
 import styles from './notifications.module.css'
 
 const PATH = 'Notifications'
@@ -31,13 +31,13 @@ const publish = notification => {
         'warning': msg('widget.notification.warning.title')
     }
     const applyDefaults = ({
-        id = uuid(),
-        level = 'info',
-        title = defaultTitle[level],
-        timeout = 3000,
-        dismissable = true,
-        ...notification
-    }) => ({id, level, title, timeout, dismissable, ...notification})
+                               id = uuid(),
+                               level = 'info',
+                               title = defaultTitle[level],
+                               timeout = 3000,
+                               dismissable = true,
+                               ...notification
+                           }) => ({id, level, title, timeout, dismissable, ...notification})
 
     publish$.next(applyDefaults(notification))
 }
@@ -69,9 +69,10 @@ class __Notifications extends React.Component {
     }
 
     renderError(error) {
+        const errorMessage = typeof error === 'string' ? error : error.message
         return (
             <div className={styles.error}>
-                {error}
+                {errorMessage}
             </div>
         )
     }
