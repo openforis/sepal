@@ -123,9 +123,9 @@ const _UserReportButton = ({userReport, budgetExceeded}) => {
         ? msg('home.sections.user.report.budgetExceeded')
         : format.unitsPerHour(hourlySpending)
     return (
-        <Activator id='userReport'>
-            {({active, activate}) =>
-                <React.Fragment>
+        <React.Fragment>
+            <Activator id='userReport'>
+                {({active, activate}) =>
                     <Button
                         chromeless
                         look='transparent'
@@ -136,11 +136,12 @@ const _UserReportButton = ({userReport, budgetExceeded}) => {
                         disabled={active}
                         onClick={() => activate()}
                         tooltip={msg('home.sections.user.report.tooltip')}
-                        tooltipPlacement='top'/>
-                    <Usage/>
-                </React.Fragment>
-            }
-        </Activator>
+                        tooltipPlacement='top'
+                        tooltipDisabled={active}/>
+                }
+            </Activator>
+            <Usage/>
+        </React.Fragment>
     )
 }
 

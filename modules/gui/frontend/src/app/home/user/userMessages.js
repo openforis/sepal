@@ -1,6 +1,8 @@
+import {Activator} from 'widget/activation/activator'
 import {Button, ButtonGroup} from 'widget/button'
 import {Msg, msg} from 'translate'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {activatable} from 'widget/activation/activatable'
 import {connect} from 'store'
 import {v4 as uuid} from 'uuid'
 import Markdown from 'react-markdown'
@@ -20,25 +22,21 @@ const mapStateToProps = state => {
     const currentUser = state.user.currentUser
     return {
         isAdmin: currentUser.roles && currentUser.roles.includes('application_admin'),
-        userMessages: state.user.userMessages,
-        panel: state.ui && state.ui.userMessages,
-        modal: state.ui && state.ui.modal
+        userMessages: state.user.userMessages
     }
 }
 
 export const showUserMessages = () =>
     actionBuilder('USER_MESSAGES')
         .set('ui.userMessages', 'SHOW_MESSAGES')
-        .set('ui.modal', true)
         .dispatch()
 
 export const closePanel = () =>
     actionBuilder('USER_MESSAGES')
         .del('ui.userMessages')
-        .del('ui.modal')
         .dispatch()
 
-class UserMessages extends React.Component {
+class _UserMessages extends React.Component {
     state = {
         selectedMessage: null
     }
@@ -120,23 +118,6 @@ class UserMessages extends React.Component {
         }))
     }
 
-    renderButton() {
-        const {className, modal, userMessages} = this.props
-        const unread = _.filter(userMessages, {state: 'UNREAD'}).length
-        return (
-            <Button
-                chromeless
-                look='transparent'
-                size='large'
-                additionalClassName={[className, unread ? styles.unread : null].join(' ')}
-                icon='bell'
-                onClick={() => this.buttonHandler()}
-                tooltip={msg('home.sections.user.messages')}
-                tooltipPlacement='top'
-                tooltipDisabled={modal}/>
-        )
-    }
-
     renderMessages() {
         const {userMessages} = this.props
         if (userMessages.length) {
@@ -215,7 +196,7 @@ class UserMessages extends React.Component {
     }
 
     renderMessagesPanel() {
-        const {isAdmin} = this.props
+        const {isAdmin, deactivate} = this.props
         return (
             <Panel
                 className={styles.panel}
@@ -229,7 +210,7 @@ class UserMessages extends React.Component {
                 <PanelButtons>
                     <PanelButtons.Main>
                         <PanelButtons.Close
-                            onClick={() => closePanel()}/>
+                            onClick={() => deactivate()}/>
                     </PanelButtons.Main>
                     <PanelButtons.Extra>
                         <PanelButtons.Add
@@ -251,26 +232,48 @@ class UserMessages extends React.Component {
         )
     }
 
-    renderPanel() {
+    render() {
         const {selectedMessage} = this.state
         return selectedMessage
             ? this.renderMessagePanel(selectedMessage)
             : this.renderMessagesPanel()
     }
-
-    render() {
-        const {panel} = this.props
-        return (
-            <React.Fragment>
-                {this.renderButton()}
-                {panel ? this.renderPanel() : null}
-            </React.Fragment>
-        )
-    }
 }
+
+const UserMessages = (
+    activatable('userMessages', () => ({_: 'disallow'}))(
+        connect(mapStateToProps)(_UserMessages)
+    )
+)
 
 UserMessages.propTypes = {
     className: PropTypes.string
 }
 
-export default connect(mapStateToProps)(UserMessages)
+const _UserMessagesButton = ({className, userMessages}) => {
+    const unread = _.filter(userMessages, {state: 'UNREAD'}).length
+    return (
+        <React.Fragment>
+            <Activator id='userMessages'>
+                {({active, activate}) =>
+                    <Button
+                        chromeless
+                        look='transparent'
+                        size='large'
+                        additionalClassName={[className, unread ? styles.unread : null].join(' ')}
+                        icon='bell'
+                        disabled={active}
+                        onClick={() => activate()}
+                        tooltip={msg('home.sections.user.messages')}
+                        tooltipPlacement='top'
+                        tooltipDisabled={active}/>
+                }
+            </Activator>
+            <UserMessages/>
+        </React.Fragment>
+    )
+}
+
+export const UserMessagesButton = connect(state => ({
+    userMessages: state.user.userMessages
+}))(_UserMessagesButton)
