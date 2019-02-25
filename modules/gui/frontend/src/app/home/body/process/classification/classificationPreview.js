@@ -4,10 +4,10 @@ import {sepalMap} from 'app/home/map/map'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
-import styles from 'app/home/body/process/classification/classificationPreview.module.css'
 
 const mapRecipeToProps = recipe => ({recipe})
 
@@ -18,11 +18,7 @@ class ClassificationPreview extends React.Component {
         const {initializing, tiles, error} = this.state
         if (this.isHidden())
             return null
-        else if (error) {
-            return (
-                <MapStatus loading={false} error={error}/>
-            )
-        } else if (initializing)
+        else if (initializing)
             return (
                 <MapStatus message={msg('process.classification.preview.initializing')}/>
             )
@@ -35,6 +31,37 @@ class ClassificationPreview extends React.Component {
             )
         else
             return null
+    }
+
+    onProgress(tiles) {
+        this.setState(prevState => ({...prevState, tiles, initializing: false}))
+    }
+
+    onError(e) {
+        Notifications.error({
+            title: msg('gee.error.title'),
+            message: msg('process.classification.preview.error'),
+            error: e.response ? msg(e.response.code, e.response.data) : null,
+            timeout: 0,
+            content: dismiss =>
+                <Button
+                    look='transparent'
+                    shape='pill'
+                    icon='sync'
+                    label={msg('button.retry')}
+                    onClick={() => {
+                        dismiss()
+                        this.reload()
+                    }}
+                />
+        })
+    }
+
+    reload() {
+        const {recipe} = this.props
+        const context = sepalMap.getContext(recipe.id)
+        context.removeLayer('preview')
+        this.updateLayer(this.toPreviewRequest(recipe))
     }
 
     componentDidMount() {
@@ -52,7 +79,7 @@ class ClassificationPreview extends React.Component {
     }
 
     updateLayer(previewRequest) {
-        const {componentWillUnmount$, recipe} = this.props
+        const {recipe, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
             layerIndex: 1,
@@ -73,43 +100,9 @@ class ClassificationPreview extends React.Component {
             this.setState(prevState => ({...prevState, error: null}))
     }
 
-    reload() {
-        const {recipe} = this.props
-        const context = sepalMap.getContext(recipe.id)
-        context.removeLayer('preview')
-        this.updateLayer(this.toPreviewRequest(recipe))
-    }
-
     isHidden() {
         const {recipe} = this.props
         return recipe.ui.hidePreview
-    }
-
-    onProgress(tiles) {
-        this.setState(prevState => ({...prevState, tiles, initializing: false}))
-    }
-
-    onError(e) {
-        const message = e.response && e.response.code
-            ? msg(e.response.code, e.response.data)
-            : msg('process.classification.preview.error')
-        this.setState(prevState => ({
-            ...prevState,
-            error:
-                <div>
-                    {message}
-                    <div className={styles.retry}>
-                        <Button
-                            chromeless
-                            look='transparent'
-                            shape='pill'
-                            icon='sync'
-                            label={msg('button.retry')}
-                            onClick={() => this.reload()}
-                        />
-                    </div>
-                </div>
-        }))
     }
 
     toPreviewRequest(recipe) {
