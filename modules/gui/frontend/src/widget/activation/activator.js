@@ -1,11 +1,11 @@
-import {activationAllowed} from 'widget/activation/activationPolicy'
-import {connect} from 'store'
+import actionBuilder from 'action-builder'
 import {selectFrom} from 'collections'
-import {withActivationContext} from './activationContext'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
-import actionBuilder from 'action-builder'
+import {connect} from 'store'
+import {activationAllowed} from 'widget/activation/activationPolicy'
+import {withActivationContext} from './activationContext'
 
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {statePath}} = ownProps
@@ -51,11 +51,9 @@ class UnconnectedActivator extends React.Component {
                 }
             }, _.cloneDeep(activatables))
             if (!_.isEqual(updatedActivatables, activatables)) {
-                setTimeout( // [HACK] Allow activatable.componentWillUnmount() to get updated state
-                    () => actionBuilder('UPDATE_ACTIVATABLES')
-                        .set([statePath, 'activatables'], updatedActivatables)
-                        .dispatch()
-                )
+                actionBuilder('UPDATE_ACTIVATABLES')
+                    .set([statePath, 'activatables'], updatedActivatables)
+                    .dispatch()
             }
         }
 
@@ -63,9 +61,7 @@ class UnconnectedActivator extends React.Component {
             active: isActive(id),
             canActivate: canActivate(id),
             activate: () => canActivate(id) && activate(id),
-            deactivate: () => isActive(id) && setTimeout( // [HACK] Allow activatable.componentWillUnmount() to get updated state
-                () => deactivate(id)
-            ),
+            deactivate: () => isActive(id) && deactivate(id)
         })
         const activatorProps =
             _(activatables)

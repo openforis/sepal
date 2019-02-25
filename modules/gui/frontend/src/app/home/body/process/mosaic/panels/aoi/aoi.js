@@ -1,19 +1,18 @@
-import {Field} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
-import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
-import CountrySection from './countrySection'
-import FusionTableSection from './fusionTableSection'
-import PanelSections from 'widget/panelSections'
-import PolygonSection from './polygonSection'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SectionSelection from './sectionSelection'
-import _ from 'lodash'
+import {msg} from 'translate'
+import {Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import PanelSections from 'widget/panelSections'
 import styles from './aoi.module.css'
+import CountrySection from './countrySection'
+import FusionTableSection from './fusionTableSection'
+import PolygonSection from './polygonSection'
+import SectionSelection from './sectionSelection'
 
 const fields = {
     section: new Field()
@@ -44,22 +43,8 @@ const fields = {
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
-        const {values} = props
-        this.aoiUnchanged = true
-        this.initialValues = values
         this.initialBounds = sepalMap.getBounds()
         this.initialZoom = sepalMap.getZoom()
-    }
-
-    onApply(values, model) {
-        const {recipeId, componentWillUnmount$} = this.props
-        this.aoiUnchanged = _.isEqual(values, this.initialValues)
-        setAoiLayer({
-            contextId: recipeId,
-            aoi: model,
-            fill: false,
-            destroy$: componentWillUnmount$
-        })
     }
 
     render() {
@@ -90,7 +75,8 @@ class Aoi extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'
-                onApply={(values, model) => this.onApply(values, model)}>
+                onApply={(values, model) => this.onApply(values, model)}
+                onCancel={() => this.onCancel()}>
                 <PanelSections inputs={inputs} selected={inputs.section} sections={sections}/>
 
                 <FormPanelButtons/>
@@ -109,17 +95,28 @@ class Aoi extends React.Component {
     }
 
     componentWillUnmount() {
-        const {recipeId, model} = this.props
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
+    }
+
+    onApply(values, model) {
+        this.updateLayer(model)
+    }
+
+    onCancel() {
+        const {model} = this.props
+        this.updateLayer(model)
+        sepalMap.fitBounds(this.initialBounds)
+        sepalMap.setZoom(this.initialZoom)
+    }
+
+    updateLayer(model) {
+        const {recipeId} = this.props
         setAoiLayer({
             contextId: recipeId,
             aoi: model,
-            fill: false
+            fill: false,
         })
-        if (this.aoiUnchanged) {
-            sepalMap.fitBounds(this.initialBounds)
-            sepalMap.setZoom(this.initialZoom)
-        }
-        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 
@@ -129,29 +126,29 @@ Aoi.propTypes = {
 
 const valuesToModel = values => {
     switch (values.section) {
-    case 'COUNTRY':
-        return {
-            type: 'FUSION_TABLE',
-            id: countryFusionTable,
-            keyColumn: 'id',
-            key: values.area || values.country,
-            level: values.area ? 'AREA' : 'COUNTRY'
-        }
-    case 'FUSION_TABLE':
-        return {
-            type: 'FUSION_TABLE',
-            id: values.fusionTable,
-            keyColumn: values.fusionTableColumn,
-            key: values.fusionTableRow,
-            bounds: values.bounds
-        }
-    case 'POLYGON':
-        return {
-            type: 'POLYGON',
-            path: values.polygon
-        }
-    default:
-        throw new Error('Invalid aoi section: ' + values.section)
+        case 'COUNTRY':
+            return {
+                type: 'FUSION_TABLE',
+                id: countryFusionTable,
+                keyColumn: 'id',
+                key: values.area || values.country,
+                level: values.area ? 'AREA' : 'COUNTRY'
+            }
+        case 'FUSION_TABLE':
+            return {
+                type: 'FUSION_TABLE',
+                id: values.fusionTable,
+                keyColumn: values.fusionTableColumn,
+                key: values.fusionTableRow,
+                bounds: values.bounds
+            }
+        case 'POLYGON':
+            return {
+                type: 'POLYGON',
+                path: values.polygon
+            }
+        default:
+            throw new Error('Invalid aoi section: ' + values.section)
     }
 }
 

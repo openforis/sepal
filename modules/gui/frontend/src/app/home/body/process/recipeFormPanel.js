@@ -84,7 +84,7 @@ export const recipeFormPanel =
 
 export class RecipeFormPanel extends React.Component {
     render() {
-        const {className, placement, isActionForm, children} = this.props
+        const {className, placement, isActionForm, onCancel, children} = this.props
         return (
             <Context.Consumer>
                 {({id, form, statePath, valuesToModel, deactivate}) =>
@@ -95,7 +95,8 @@ export class RecipeFormPanel extends React.Component {
                         close={deactivate}
                         isActionForm={isActionForm}
                         placement={placement}
-                        onApply={values => this.onApply({id, statePath, values, valuesToModel})}>
+                        onApply={values => this.onApply({id, statePath, values, valuesToModel})}
+                        onCancel={onCancel}>
                         {children}
                     </FormPanel>
                 }
@@ -120,6 +121,8 @@ RecipeFormPanel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
     isActionForm: PropTypes.any,
+    onApply: PropTypes.func,
+    onCancel: PropTypes.func,
     placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline'])
 }
 
