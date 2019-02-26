@@ -94,17 +94,19 @@ class Aoi extends React.Component {
         inputs.allowWholeFusionTable.set(allowWholeFusionTable)
     }
 
-    componentWillUnmount() {
+    showPreview() {
         const {recipeId} = this.props
         RecipeActions(recipeId).showPreview().dispatch()
     }
 
     onApply(values, model) {
+        this.showPreview()
         this.updateLayer(model)
     }
 
     onCancel() {
         const {model} = this.props
+        this.showPreview()
         this.updateLayer(model)
         sepalMap.fitBounds(this.initialBounds)
         sepalMap.setZoom(this.initialZoom)
