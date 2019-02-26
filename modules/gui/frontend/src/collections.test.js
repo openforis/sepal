@@ -61,6 +61,39 @@ test('selectFrom((${object}, ${path})) === ${result}')
         {object: {a: {b: {c: [{x: 1, v: 10}, {y: 2, v: 20}, {z: 3, v: 30}]}}}, path: ['a', 'b.c', {x: 1}], result: {x: 1, v: 10}},
         {object: {a: [{x: 1, v: 10}, {y: 2, v: 20}, {z: 3, v: 30}]}, path: ['a', {y: 2}], result: {y: 2, v: 20}},
         {object: {a: [{x: 1, v: 10}, {y: 2, v: 20}]}, path: ['a', {y: 2}, 'v'], result: 20},
-        {object: {a: [{x: 1, v: {k: 10}}, {y: 2, v: {k: 20}}]}, path: ['a', {y: 2}, 'v'], result: {k: 20}}
+        {object: {a: [{x: 1, v: {k: 10}}, {y: 2, v: {k: 20}}]}, path: ['a', {y: 2}, 'v'], result: {k: 20}},
+        {object: {
+            a: [{
+                x: {y: 1},
+                v: {
+                    k: [
+                        {z: 1, m: 'one'},
+                        {z: 2, m: 'two'},
+                        {z: 3, m: 'three'},
+                        {z: 4, m: 'four'}
+                    ]
+                }
+            }, {
+                x: {y: 2},
+                v: {
+                    k: [
+                        {z: 1, m: 'A'},
+                        {z: 2, m: 'B'},
+                        {z: 3, m: 'C'},
+                        {z: 4, m: 'D'}
+                    ]
+                }
+            }, {
+                x: {y: 3},
+                v: {
+                    k: [
+                        {z: 1, m: 'alpha'},
+                        {z: 2, m: 'beta'},
+                        {z: 3, m: 'gamma'},
+                        {z: 4, m: 'delta'}
+                    ]
+                }
+            }]
+        }, path: ['a', {x: {y: 2}}, 'v.k', {z: 3}, 'm'], result: 'C'}
     )
     
