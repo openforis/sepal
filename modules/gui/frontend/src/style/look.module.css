@@ -141,6 +141,25 @@
     border: 1px solid transparent;
 }
 
+.look {
+    cursor: pointer;
+}
+
+/* chromeless */
+
+.look.chromeless {
+    color: var(--look-default-color);
+    background-color: transparent;
+    border-style: none;
+}
+
+/* disabled */
+
+.look:disabled,
+.look.nonInteractive {
+    cursor: default;
+}
+
 /* default */
 
 .look.default:not(.chromeless) {
@@ -350,19 +369,4 @@
 .look.cancel:not(.chromeless):disabled {
     background-color: var(--look-cancel-disabled-background-color);
     border-color: var(--look-cancel-disabled-border-color);
-}
-
-/* chromeless */
-
-.look.chromeless {
-    color: var(--look-default-color);
-    background-color: transparent;
-    border-style: none;
-}
-
-/* disabled */
-
-.look:disabled,
-.look.nonInteractive {
-    cursor: default;
 }
