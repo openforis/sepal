@@ -51,6 +51,14 @@ class UserSessions extends React.Component {
         )
     }
 
+    renderCost(session) {
+        return format.dollars(session.costSinceCreation)
+    }
+
+    renderHourlyCost(session) {
+        return format.dollarsPerHour(session.instanceType.hourlyCost)
+    }
+
     renderSession(session) {
         const {selectedSession, clean} = this.state
         const selectable = selectedSession !== session.id && clean
@@ -64,7 +72,7 @@ class UserSessions extends React.Component {
                         {moment.utc(session.creationTime).fromNow()}
                     </span>
                     <span className={styles.cost}>
-                        {format.dollars(session.costSinceCreation)} ({format.dollarsPerHour(session.instanceType.hourlyCost)})
+                        {this.renderCost(session)} ({this.renderHourlyCost(session)})
                     </span>
                 </div>
                 <div>{session.instanceType.name} ({session.instanceType.description})</div>

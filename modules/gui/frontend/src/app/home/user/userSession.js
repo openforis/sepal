@@ -28,7 +28,8 @@ const mapStateToProps = (state, ownProps) => {
 
 class UserSession extends React.Component {
     suspendSession(session) {
-        this.props.stream('SUSPEND_USER_SESSION',
+        const {stream} = this.props
+        stream('SUSPEND_USER_SESSION',
             updateUserSession$(session),
             () => Notifications.success({message: msg('user.userSession.suspend.success')}),
             error => Notifications.error({message: msg('user.userSession.suspend.error'), error})
@@ -36,33 +37,31 @@ class UserSession extends React.Component {
     }
 
     stopSession(session) {
-        this.props.stream('STOP_USER_SESSION',
+        const {stream, onClose} = this.props
+        stream('STOP_USER_SESSION',
             stopUserSession$(session),
             () => {
                 Notifications.success({message: msg('user.userSession.stop.success')})
-                this.props.onClose()
+                onClose()
             },
             error => Notifications.error({message: msg('user.userSession.stop.error'), error})
         )
     }
 
     updateSession(session) {
-        this.props.stream('UPDATE_USER_SESSION',
+        const {stream, onClose} = this.props
+        stream('UPDATE_USER_SESSION',
             updateUserSession$(session),
             () => {
                 Notifications.success({message: msg('user.userSession.update.success')})
-                this.props.onClose()
+                onClose()
             },
             error => Notifications.error({message: msg('user.userSession.update.error'), error})
         )
     }
 
-    cancel() {
-        this.props.onClose()
-    }
-
     render() {
-        const {session, form, inputs: {keepAlive}} = this.props
+        const {session, form, inputs: {keepAlive}, onClose} = this.props
         form.onDirty(this.props.onDirty)
         const sliderMessage = value => {
             const keepAliveUntil = moment().add(value, 'hours').fromNow(true)
@@ -75,13 +74,11 @@ class UserSession extends React.Component {
                 statePath='userSessions.userSessionPanel'
                 inline
                 onApply={session => this.updateSession(session)}
-                onCancel={() => this.cancel()}>
+                close={() => onClose()}>
                 <PanelContent className={styles.panelContent}>
                     <div>
                         <Slider
                             input={keepAlive}
-                            minValue={0}
-                            maxValue={72}
                             decimals={2}
                             ticks={[0, 1, 3, 6, 12, 24, 36, 48, 60, 72]}
                             logScale
