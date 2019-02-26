@@ -9,7 +9,7 @@ import Markdown from 'react-markdown'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import RemoveButton from 'widget/removeButton'
+import SafetyButton from 'widget/safetyButton'
 import UserMessage from './userMessage'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
@@ -149,7 +149,7 @@ class _UserMessages extends React.Component {
                     tooltip={msg('userMessages.edit')}
                     onClick={() => this.editMessage(message)}
                 />
-                <RemoveButton
+                <SafetyButton
                     size='large'
                     message={msg('userMessages.removeConfirmation', {subject: message.subject})}
                     tooltip={msg('userMessages.remove')}

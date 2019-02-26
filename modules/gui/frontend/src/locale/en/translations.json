@@ -1105,8 +1105,8 @@
         "confirm": "Confirm"
     },
     "widget": {
-        "removeButton": {
-            "label": "Remove"
+        "safetyButton": {
+            "label": "Proceed"
         },
         "seasonSelect": {
             "from": "From",

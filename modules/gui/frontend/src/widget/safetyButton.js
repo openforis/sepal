@@ -4,13 +4,13 @@ import Confirm from 'widget/confirm'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-export default class RemoveButton extends React.Component {
+export default class SafetyButton extends React.Component {
     state = {
-        confirm: false
+        askConfirmation: false
     }
 
-    confirm(confirm) {
-        this.setState(prevState => ({...prevState, confirm}))
+    askConfirmation(askConfirmation) {
+        this.setState({askConfirmation})
     }
 
     renderConfirm() {
@@ -18,42 +18,56 @@ export default class RemoveButton extends React.Component {
         return (
             <Confirm
                 message={message}
-                label={label || msg('widget.removeButton.label')}
+                label={label || msg('widget.safetyButton.label')}
                 onConfirm={() => {
-                    this.confirm(false)
+                    this.askConfirmation(false)
                     onConfirm()
                 }}
-                onCancel={() => this.confirm(false)}
+                onCancel={() => this.askConfirmation(false)}
             />
         )
     }
 
     render() {
-        const {size, tooltip, tooltipPlacement, disabled, onConfirm} = this.props
-        const {confirm} = this.state
+        const {
+            look,
+            size,
+            shape = 'circle',
+            icon = 'trash',
+            tooltip,
+            tooltipPlacement,
+            disabled,
+            confirm = true,
+            onConfirm
+        } = this.props
+        const {askConfirmation} = this.state
         return (
             <React.Fragment>
                 <Button
                     chromeless
+                    look={look}
                     size={size}
-                    shape='circle'
-                    icon='trash'
+                    shape={shape}
+                    icon={icon}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
-                    onClick={() => this.confirm(true)}
+                    onClick={() => confirm ? this.askConfirmation(true) : onConfirm()}
                     onClickHold={() => onConfirm()}
                     disabled={disabled}/>
-                {confirm ? this.renderConfirm() : null}
+                {askConfirmation ? this.renderConfirm() : null}
             </React.Fragment>
         )
     }
 }
 
-RemoveButton.propTypes = {
+SafetyButton.propTypes = {
     message: PropTypes.string.isRequired,
     onConfirm: PropTypes.func.isRequired,
+    confirm: PropTypes.any,
     disabled: PropTypes.any,
+    icon: PropTypes.string,
     label: PropTypes.string,
+    look: PropTypes.string,
     size: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string

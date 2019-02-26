@@ -13,7 +13,7 @@ import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import RemoveButton from 'widget/removeButton'
+import SafetyButton from 'widget/safetyButton'
 import _ from 'lodash'
 import escapeStringRegexp from 'escape-string-regexp'
 import lookStyles from 'style/look.module.css'
@@ -156,7 +156,7 @@ class RecipeList extends React.Component {
                             tooltip={msg('process.menu.duplicateRecipe')}
                             tooltipPlacement='bottom'
                             onClick={() => this.duplicateRecipe(recipe.id)}/>
-                        <RemoveButton
+                        <SafetyButton
                             size='large'
                             message={'Remove recipe?'}
                             tooltip={msg('process.menu.removeRecipe')}
