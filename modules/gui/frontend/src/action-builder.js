@@ -163,7 +163,7 @@ const actionBuilder = (type, props) => {
         delValue(path, value) {
             operations.push((immutableState, state) => {
                 const index = select(path, state).indexOf(value)
-                return (index == -1)
+                return (index !== -1)
                     ? immutableState.del([...toPathList(path), index])
                     : immutableState
             })
