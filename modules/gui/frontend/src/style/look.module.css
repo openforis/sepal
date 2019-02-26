@@ -254,19 +254,19 @@
     border-color: var(--look-add-border-color);
 }
 
-.look.add:not(:disabled):focus {
-    color: var(--look-add-focus-color);
-    background-color: var(--look-add-focus-background-color);
-    border-color: var(--look-add-focus-border-color);
-}
-
-.look.add:not(:disabled):hover {
+.look.add:not(:disabled):not(.nonInteractive):hover {
     color: var(--look-add-hover-color);
     background-color: var(--look-add-hover-background-color);
     border-color: var(--look-add-hover-border-color);
 }
 
-.look.add:not(:disabled):active {
+.look.add:not(:disabled):not(.nonInteractive):not(.chromeless):focus {
+    color: var(--look-add-focus-color);
+    background-color: var(--look-add-focus-background-color);
+    border-color: var(--look-add-focus-border-color);
+}
+
+.look.add:not(:disabled):not(.nonInteractive):not(.chromeless):active {
     color: var(--look-add-active-color);
     background-color: var(--look-add-active-background-color);
     border-color: var(--look-add-active-border-color);
@@ -289,19 +289,19 @@
     border-color: var(--look-apply-border-color);
 }
 
-.look.apply:not(:disabled):focus {
-    color: var(--look-apply-focus-color);
-    background-color: var(--look-apply-focus-background-color);
-    border-color: var(--look-apply-focus-border-color);
-}
-
-.look.apply:not(:disabled):hover {
+.look.apply:not(:disabled):not(.nonInteractive):hover {
     color: var(--look-apply-hover-color);
     background-color: var(--look-apply-hover-background-color);
     border-color: var(--look-apply-hover-border-color);
 }
 
-.look.apply:not(:disabled):active {
+.look.apply:not(:disabled):not(.nonInteractive):not(.chromeless):focus {
+    color: var(--look-apply-focus-color);
+    background-color: var(--look-apply-focus-background-color);
+    border-color: var(--look-apply-focus-border-color);
+}
+
+.look.apply:not(:disabled):not(.nonInteractive):not(.chromeless):active {
     color: var(--look-apply-active-color);
     background-color: var(--look-apply-active-background-color);
     border-color: var(--look-apply-active-border-color);
@@ -325,19 +325,19 @@
     border-color: var(--look-cancel-border-color);
 }
 
-.look.cancel:not(:disabled):focus {
-    color: var(--look-cancel-focus-color);
-    background-color: var(--look-cancel-focus-background-color);
-    border-color: var(--look-cancel-focus-border-color);
-}
-
-.look.cancel:not(:disabled):hover {
+.look.cancel:not(:disabled):not(.nonInteractive):hover {
     color: var(--look-cancel-hover-color);
     background-color: var(--look-cancel-hover-background-color);
     border-color: var(--look-cancel-hover-border-color);
 }
 
-.look.cancel:not(:disabled):active {
+.look.cancel:not(:disabled):not(.nonInteractive):not(.chromeless):focus {
+    color: var(--look-cancel-focus-color);
+    background-color: var(--look-cancel-focus-background-color);
+    border-color: var(--look-cancel-focus-border-color);
+}
+
+.look.cancel:not(:disabled):not(.nonInteractive):not(.chromeless):active {
     color: var(--look-cancel-active-color);
     background-color: var(--look-cancel-active-background-color);
     border-color: var(--look-cancel-active-border-color);
