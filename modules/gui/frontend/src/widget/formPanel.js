@@ -54,10 +54,7 @@ class FormPanel extends React.Component {
     }
 
     render() {
-        const {
-            form = false, isActionForm, onApply, type = 'modal', className, children,
-            placement
-        } = this.props
+        const {form = false, isActionForm, onApply, type = 'modal', className, children, placement} = this.props
         return (
             <PanelWizardContext>
                 {({wizard, back, next, done}) => {
