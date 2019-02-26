@@ -40,10 +40,11 @@ const setTabType = (recipeId, type, title) =>
             if (recipeIndex === -1)
                 throw new Error('Unable to create recipe')
             return stateBuilder
-                .set(['process', 'tabs', recipeIndex, 'type'], type)
-                .set(['process', 'tabs', recipeIndex, 'placeholder'],
-                    `${title.replace(/[^\w-.]/g, '_')}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`
-                )
+                .merge(['process', 'tabs', recipeIndex], {
+                    type,
+                    placeholder: `${title.replace(/[^\w-.]/g, '_')}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`,
+                    ui: {unsaved: true}
+                })
         })
         .dispatch()
 

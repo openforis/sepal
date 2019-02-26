@@ -49,7 +49,8 @@ class Process extends React.Component {
             <Tabs
                 statePath='process'
                 tabActions={recipeId => this.renderMenu(recipeId)}
-                onTitleChanged={recipe => saveRecipe(recipe)}>
+                onTitleChanged={recipe => saveRecipe(recipe)}
+                isDirty={recipe => recipe.ui && recipe.ui.unsaved}>
                 {({id, type}) =>
                     <React.Fragment>
                         <RecipeContext recipeId={id} rootStatePath='process.tabs'>
