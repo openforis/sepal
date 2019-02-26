@@ -30,7 +30,15 @@ export const range = (from, to) =>
 
 export const selectFrom = (object, path) =>
     toPathList(path).reduce((subObject, part) => {
-        return subObject != null && subObject[part] != null ? subObject[part] : undefined
+        if (subObject != null) {
+            if (_.isObject(part) && _.isArray(subObject)) {
+                return subObject.find(item => _.isEqual(_.merge({}, item, part), item))
+            }
+            if (subObject[part] != null) {
+                return subObject[part]
+            }
+        }
+        return undefined
     }, object)
 
 const DOT_SAFE = '__dotSafe__'
