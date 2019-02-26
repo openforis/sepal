@@ -234,8 +234,8 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                     isDirty: () => this.isDirty(),
                     setInitialValues: values => this.setInitialValues(values),
                     values: () => this.state.values,
-                    onDirty: listener => this.dirtyListeners.push(listener),
-                    onClean: listener => this.cleanListeners.push(listener),
+                    onDirty: listener => listener && this.dirtyListeners.push(listener),
+                    onClean: listener => listener && this.cleanListeners.push(listener),
                     onDirtyChanged: listener => {
                         this.dirtyListeners.push(() => listener(true))
                         this.cleanListeners.push(() => listener(false))
