@@ -59,15 +59,6 @@ class _UserDetails extends React.Component {
         )
     }
 
-    cancel() {
-        this.closePanel()
-    }
-
-    closePanel() {
-        const {activatable: {deactivate}} = this.props
-        deactivate()
-    }
-
     renderGoogleAccountButton() {
         const {user, form} = this.props
         return user.googleTokens
@@ -144,7 +135,6 @@ class _UserDetails extends React.Component {
                 statePath='userDetails'
                 modal
                 onApply={userDetails => this.updateUserDetails(userDetails)}
-                onCancel={() => this.cancel()}
                 close={() => deactivate()}>
                 <PanelHeader
                     icon='user'

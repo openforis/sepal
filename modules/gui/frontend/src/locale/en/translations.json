@@ -932,7 +932,7 @@
                 }
             },
             "updating": "Updating...",
-            "success": "User password has been changed."
+            "success": "Password has been changed."
         },
         "userSession": {
             "form": {

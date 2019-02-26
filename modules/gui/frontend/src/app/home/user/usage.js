@@ -9,7 +9,7 @@ import Label from 'widget/label'
 import React from 'react'
 import UserSessions from './userSessions'
 import format from 'format'
-import styles from './userReport.module.css'
+import styles from './usage.module.css'
 
 const mapStateToProps = state => {
     return {
@@ -115,7 +115,7 @@ const Usage = (
 
 Usage.propTypes = {}
 
-const _UserReportButton = ({userReport, budgetExceeded}) => {
+const _UsageButton = ({userReport, budgetExceeded}) => {
     const hourlySpending = userReport.sessions
         ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
         : 0
@@ -145,7 +145,7 @@ const _UserReportButton = ({userReport, budgetExceeded}) => {
     )
 }
 
-export const UserReportButton = connect(state => ({
+export const UsageButton = connect(state => ({
     userReport: (state.user && state.user.currentUserReport) || {},
     budgetExceeded: select('user.budgetExceeded')
-}))(_UserReportButton)
+}))(_UsageButton)

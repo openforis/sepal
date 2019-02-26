@@ -1,7 +1,7 @@
 import {Button, ButtonGroup} from 'widget/button'
+import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
 import {UserMessagesButton} from '../user/userMessages'
-import {UserReportButton} from '../user/userReport'
 import {logout} from 'user'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -19,7 +19,7 @@ const Footer = ({className}) => {
                 <div>
                     <ButtonGroup type='horizontal-tight'>
                         <UserMessagesButton/>
-                        <UserReportButton/>
+                        <UsageButton/>
                         <UserDetailsButton/>
                         <Logout/>
                     </ButtonGroup>

@@ -80,7 +80,6 @@ class UserDetails extends React.Component {
                 className={[styles.panel, newUser ? styles.newUser : styles.existingUser].join(' ')}
                 form={form}
                 statePath='userDetails'
-                // isActionForm={true}
                 modal
                 onApply={userDetails => this.save(userDetails)}
                 close={() => this.cancel()}>
