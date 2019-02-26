@@ -6,6 +6,7 @@ import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+import SafetyButton from 'widget/safetyButton'
 import TabContent from './tabContent'
 import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
@@ -78,7 +79,7 @@ class Tabs extends React.Component {
     }
 
     renderTab(tab) {
-        const {selectedTabId, statePath, onTitleChanged} = this.props
+        const {selectedTabId, statePath, onTitleChanged, isDirty} = this.props
         return (
             <Tab
                 key={tab.id}
@@ -88,6 +89,7 @@ class Tabs extends React.Component {
                 selected={tab.id === selectedTabId}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
+                dirty={isDirty && isDirty(tab)}
             />
         )
     }
@@ -157,6 +159,7 @@ class Tabs extends React.Component {
 Tabs.propTypes = {
     statePath: PropTypes.string.isRequired,
     children: PropTypes.any,
+    isDirty: PropTypes.func,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
     tabs: PropTypes.array,
@@ -196,15 +199,18 @@ class Tab extends React.Component {
     }
 
     renderCloseButton() {
-        const {id, statePath} = this.props
+        const {id, statePath, dirty} = this.props
         return (
-            <Button
+            <SafetyButton
                 chromeless
                 look='cancel'
                 size='small'
                 shape='circle'
                 icon='times'
-                onClick={() => closeTab(id, statePath)}/>
+                message={'Remove this tab?'}
+                onConfirm={() => closeTab(id, statePath)}
+                skip={!dirty}
+            />
         )
     }
 
@@ -271,6 +277,7 @@ class Tab extends React.Component {
 }
 
 Tab.propTypes = {
+    dirty: PropTypes.bool,
     id: PropTypes.string,
     placeholder: PropTypes.string,
     selected: PropTypes.any,

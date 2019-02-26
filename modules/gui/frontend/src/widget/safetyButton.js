@@ -37,7 +37,7 @@ export default class SafetyButton extends React.Component {
             tooltip,
             tooltipPlacement,
             disabled,
-            confirm = true,
+            skip,
             onConfirm
         } = this.props
         const {askConfirmation} = this.state
@@ -51,7 +51,7 @@ export default class SafetyButton extends React.Component {
                     icon={icon}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
-                    onClick={() => confirm ? this.askConfirmation(true) : onConfirm()}
+                    onClick={() => skip ? onConfirm() : this.askConfirmation(true)}
                     onClickHold={() => onConfirm()}
                     disabled={disabled}/>
                 {askConfirmation ? this.renderConfirm() : null}
@@ -63,12 +63,12 @@ export default class SafetyButton extends React.Component {
 SafetyButton.propTypes = {
     message: PropTypes.string.isRequired,
     onConfirm: PropTypes.func.isRequired,
-    confirm: PropTypes.any,
     disabled: PropTypes.any,
     icon: PropTypes.string,
     label: PropTypes.string,
     look: PropTypes.string,
     size: PropTypes.string,
+    skip: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
 }
