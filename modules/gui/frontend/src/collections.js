@@ -33,9 +33,9 @@ export const selectFrom = (object, path) =>
         return subObject != null && subObject[part] != null ? subObject[part] : undefined
     }, object)
 
-const dotSafeUnwrap = safePath => safePath.dotSafe
-
-const dotSafeWrap = path => ({dotSafe: path})
+const DOT_SAFE = '__dotSafe__'
+const dotSafeWrap = unsafePath => ({[DOT_SAFE]: unsafePath})
+const dotSafeUnwrap = safePath => safePath[DOT_SAFE]
 
 export const toPathList = (path, safe = false) => {
     if (_.isArray(path)) {
@@ -46,13 +46,16 @@ export const toPathList = (path, safe = false) => {
             .value()
     }
     if (_.isObject(path)) {
-        return toPathList(dotSafeUnwrap(path), true)
+        const unwrapped = dotSafeUnwrap(path)
+        return _.isUndefined(unwrapped)
+            ? path
+            : toPathList([unwrapped], true)
     }
     if (_.isString(path)) {
-        return safe ? path : path.split('.')
+        return safe ? [path] : path.split('.')
     }
     if (_.isNumber(path)) {
-        return path.toString()
+        return [path.toString()]
     }
     if (_.isUndefined(path)) {
         return null
