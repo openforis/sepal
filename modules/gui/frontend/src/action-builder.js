@@ -152,14 +152,18 @@ const actionBuilder = (type, props) => {
         },
 
         del(path) {
-            operations.push(immutableState => immutableState.del(toPathList(path)))
+            operations.push((immutableState, state) =>
+                select(path, state) !== undefined
+                    ? immutableState.del(toPathList(path))
+                    : immutableState
+            )
             return this
         },
 
         delValue(path, value) {
             operations.push((immutableState, state) => {
                 const index = select(path, state).indexOf(value)
-                return (index !== -1)
+                return (index == -1)
                     ? immutableState.del([...toPathList(path), index])
                     : immutableState
             })
