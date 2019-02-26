@@ -30,6 +30,13 @@ class UnconnectedActivatable extends React.Component {
         this.updateReduxStateIfChanged()
     }
 
+    componentWillUnmount() {
+        const {id, activationContext: {statePath}} = this.props
+        actionBuilder('REMOVE_ACTIVATABLE')
+            .del([statePath, 'activatables', id])
+            .dispatch()
+    }
+
     updateReduxStateIfChanged() {
         const {id, policy, activatables, otherProps} = this.props
         const currentActivatable = activatables[id] || {}

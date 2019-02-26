@@ -39,6 +39,7 @@ class Process extends React.Component {
         return (
             <RecipeContext recipeId={recipeId} rootStatePath='process.tabs'>
                 <ProcessMenu recipeId={recipeId}/>
+                <Revisions recipeId={recipeId}/>
             </RecipeContext>
         )
     }
@@ -53,7 +54,6 @@ class Process extends React.Component {
                     <React.Fragment>
                         <RecipeContext recipeId={id} rootStatePath='process.tabs'>
                             {this.renderRecipe(id, type)}
-                            <Revisions recipeId={id}/>
                         </RecipeContext>
                     </React.Fragment>
                 }
