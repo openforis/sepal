@@ -102,12 +102,12 @@ class Tabs extends React.Component {
     }
 
     renderTabs() {
-        const {selectedTabId, tabActions} = this.props
+        const {tabs, selectedTabId, tabActions} = this.props
         return (
             <React.Fragment>
                 <ScrollableContainer>
                     <Scrollable direction='x' className={styles.tabs}>
-                        {this.props.tabs.map(tab => this.renderTab(tab))}
+                        {tabs.map(tab => this.renderTab(tab))}
                     </Scrollable>
                 </ScrollableContainer>
                 <div className={styles.tabActions}>
