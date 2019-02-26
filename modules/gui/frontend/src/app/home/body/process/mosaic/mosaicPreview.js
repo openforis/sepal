@@ -82,12 +82,12 @@ class MosaicPreview extends React.Component {
         const {recipe, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-                layerIndex: 0,
-                bounds: previewRequest.recipe.model.aoi.bounds,
-                mapId$: api.gee.preview$(previewRequest),
-                props: previewRequest,
-                onProgress: tiles => this.onProgress(tiles)
-            })
+            layerIndex: 0,
+            bounds: previewRequest.recipe.model.aoi.bounds,
+            mapId$: api.gee.preview$(previewRequest),
+            props: previewRequest,
+            onProgress: tiles => this.onProgress(tiles)
+        })
         const context = sepalMap.getContext(recipe.id)
         const changed = context.setLayer({
             id: 'preview',
