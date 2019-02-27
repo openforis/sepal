@@ -50,7 +50,7 @@ class AutoSelectScenes extends React.Component {
                         ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
                         snap
                         logScale
-                        range='left'/>
+                        range='low'/>
                 </div>
                 <div>
                     <Label msg={msg('process.mosaic.panel.autoSelectScenes.form.max.label')}/>
@@ -61,7 +61,7 @@ class AutoSelectScenes extends React.Component {
                         ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
                         snap
                         logScale
-                        range='left'/>
+                        range='low'/>
                 </div>
             </React.Fragment>
         )

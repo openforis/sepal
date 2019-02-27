@@ -34,11 +34,14 @@ const denormalizeLog = (value, min, max) => {
     return Math.exp(value * Math.log(max - offset)) + offset
 }
 
-const normalize = (value, min, max, logScale) =>
-    logScale ? normalizeLog(value, min, max) : normalizeLinear(value, min, max)
+const invertNormalized = (value, invert) =>
+    invert ? 1 - value : value
 
-const denormalize = (value, min, max, logScale) =>
-    logScale ? denormalizeLog(value, min, max) : denormalizeLinear(value, min, max)
+const normalize = (value, min, max, logScale, invert) =>
+    invertNormalized(logScale ? normalizeLog(value, min, max) : normalizeLinear(value, min, max), invert)
+
+const denormalize = (value, min, max, logScale, invert) =>
+    logScale ? denormalizeLog(invertNormalized(value, invert), min, max) : denormalizeLinear(invertNormalized(value, invert), min, max)
 
 class SliderContainer extends React.Component {
     clickTarget = React.createRef()
@@ -69,7 +72,7 @@ class SliderContainer extends React.Component {
     }
 
     renderDynamics() {
-        const {input, width, range, decimals, ticks, snap, minValue, maxValue} = this.props
+        const {input, width, range, decimals, ticks, snap, minValue, maxValue, invert} = this.props
         return (
             <SliderDynamics
                 input={input}
@@ -80,14 +83,15 @@ class SliderContainer extends React.Component {
                 ticks={ticks}
                 snap={snap}
                 range={range}
+                invert={invert}
                 clickTarget={this.clickTarget}
                 normalize={value => {
                     const {logScale, minValue, maxValue} = this.props
-                    return normalize(value, minValue, maxValue, logScale)
+                    return normalize(value, minValue, maxValue, logScale, invert)
                 }}
                 denormalize={value => {
                     const {logScale, minValue, maxValue} = this.props
-                    return denormalize(value, minValue, maxValue, logScale)
+                    return denormalize(value, minValue, maxValue, logScale, invert)
                 }}
             />
         )
@@ -147,11 +151,11 @@ class SliderDynamics extends React.Component {
     }
 
     renderRanges() {
-        const {range} = this.props
+        const {range, invert} = this.props
         return (
             <React.Fragment>
-                {range === 'left' ? this.renderLeftRange() : null}
-                {range === 'right' ? this.renderRightRange() : null}
+                {((range === 'low' && !invert) || (range === 'high' && invert)) ? this.renderLeftRange() : null}
+                {((range === 'high' && !invert ) || (range === 'low' && invert)) ? this.renderRightRange() : null}
             </React.Fragment>
         )
     }
@@ -405,6 +409,7 @@ SliderDynamics.propTypes = {
     minValue: PropTypes.number.isRequired,
     normalize: PropTypes.func.isRequired,
     decimals: PropTypes.number,
+    invert: PropTypes.bool,
     snap: PropTypes.bool,
     ticks: PropTypes.array,
     width: PropTypes.number
@@ -440,7 +445,7 @@ export default class Slider extends React.Component {
                 .filter(({value}) => value >= minValue && value <= maxValue)
                 .map(tick => ({
                     ...tick,
-                    position: state.width * normalize(tick.value, minValue, maxValue, props.logScale)
+                    position: state.width * normalize(tick.value, minValue, maxValue, props.logScale, props.invert)
                 })),
             minValue,
             maxValue
@@ -448,12 +453,12 @@ export default class Slider extends React.Component {
     }
 
     renderInfo() {
-        const {input, info} = this.props
+        const {input, info, alignment} = this.props
         const {ticks} = this.state
         const tick = ticks && ticks.find(tick => tick.value === input.value)
         const label = (tick && tick.label) || input.value
         return info ? (
-            <div className={styles.info}>
+            <div className={[styles.info, styles.alignment, styles[alignment]].join(' ')}>
                 {_.isFunction(info) ? info(label) : info}
             </div>
         ) : null
@@ -476,7 +481,7 @@ export default class Slider extends React.Component {
     }
 
     renderContainer() {
-        const {input, logScale, decimals = 0, snap, range = 'left', info, disabled} = this.props
+        const {input, logScale, decimals = 0, snap, range = 'left', invert = false, info, disabled} = this.props
         const {ticks, minValue, maxValue, width} = this.state
         return (
             <SliderContainer
@@ -488,6 +493,7 @@ export default class Slider extends React.Component {
                 snap={snap}
                 range={range}
                 logScale={logScale}
+                invert={invert}
                 info={info}
                 width={width}
                 disabled={disabled}/>
@@ -503,9 +509,10 @@ export default class Slider extends React.Component {
     }
 
     renderLabel() {
-        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        const {label, tooltip, tooltipPlacement = 'top', alignment} = this.props
         return label ? (
             <Label
+                className={[styles.alignment, styles[alignment]].join(' ')}
                 msg={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
@@ -527,17 +534,19 @@ export default class Slider extends React.Component {
 
 Slider.propTypes = {
     input: PropTypes.object.isRequired,
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
     decimals: PropTypes.number,
     disabled: PropTypes.any,
     info: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.func
     ]),
+    invert: PropTypes.any,
     label: PropTypes.string,
     logScale: PropTypes.any,
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
-    range: PropTypes.oneOf(['none', 'left', 'right']),
+    range: PropTypes.oneOf(['none', 'low', 'high']),
     snap: PropTypes.any,
     ticks: PropTypes.oneOfType([
         // PropTypes.number,
