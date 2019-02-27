@@ -141,7 +141,7 @@ class Dates extends React.Component {
                         input={yearsBefore}
                         ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
                         snap
-                        logScale
+                        scale='log'
                         invert
                         range='low'
                     />
@@ -157,7 +157,7 @@ class Dates extends React.Component {
                         input={yearsAfter}
                         ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
                         snap
-                        logScale
+                        scale='log'
                         range='low'
                     />
                 </div>

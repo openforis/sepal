@@ -37,11 +37,13 @@ const denormalizeLog = (value, min, max) => {
 const invertNormalized = (value, invert) =>
     invert ? 1 - value : value
 
-const normalize = (value, min, max, logScale, invert) =>
-    invertNormalized(logScale ? normalizeLog(value, min, max) : normalizeLinear(value, min, max), invert)
+const normalize = (value, min, max, scale, invert) =>
+    invertNormalized(scale === 'log' ? normalizeLog(value, min, max) : normalizeLinear(value, min, max), invert)
 
-const denormalize = (value, min, max, logScale, invert) =>
-    logScale ? denormalizeLog(invertNormalized(value, invert), min, max) : denormalizeLinear(invertNormalized(value, invert), min, max)
+const denormalize = (value, min, max, scale, invert) =>
+    scale === 'log'
+        ? denormalizeLog(invertNormalized(value, invert), min, max)
+        : denormalizeLinear(invertNormalized(value, invert), min, max)
 
 class SliderContainer extends React.Component {
     clickTarget = React.createRef()
@@ -86,12 +88,12 @@ class SliderContainer extends React.Component {
                 invert={invert}
                 clickTarget={this.clickTarget}
                 normalize={value => {
-                    const {logScale, minValue, maxValue} = this.props
-                    return normalize(value, minValue, maxValue, logScale, invert)
+                    const {scale, minValue, maxValue} = this.props
+                    return normalize(value, minValue, maxValue, scale, invert)
                 }}
                 denormalize={value => {
-                    const {logScale, minValue, maxValue} = this.props
-                    return denormalize(value, minValue, maxValue, logScale, invert)
+                    const {scale, minValue, maxValue} = this.props
+                    return denormalize(value, minValue, maxValue, scale, invert)
                 }}
             />
         )
@@ -445,7 +447,7 @@ export default class Slider extends React.Component {
                 .filter(({value}) => value >= minValue && value <= maxValue)
                 .map(tick => ({
                     ...tick,
-                    position: state.width * normalize(tick.value, minValue, maxValue, props.logScale, props.invert)
+                    position: state.width * normalize(tick.value, minValue, maxValue, props.scale, props.invert)
                 })),
             minValue,
             maxValue
@@ -481,7 +483,7 @@ export default class Slider extends React.Component {
     }
 
     renderContainer() {
-        const {input, logScale, decimals = 0, snap, range = 'left', invert = false, info, disabled} = this.props
+        const {input, scale = 'linear', decimals = 0, snap, range = 'left', invert = false, info, disabled} = this.props
         const {ticks, minValue, maxValue, width} = this.state
         return (
             <SliderContainer
@@ -492,7 +494,7 @@ export default class Slider extends React.Component {
                 ticks={ticks}
                 snap={snap}
                 range={range}
-                logScale={logScale}
+                scale={scale}
                 invert={invert}
                 info={info}
                 width={width}
@@ -543,10 +545,10 @@ Slider.propTypes = {
     ]),
     invert: PropTypes.any,
     label: PropTypes.string,
-    logScale: PropTypes.any,
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
     range: PropTypes.oneOf(['none', 'low', 'high']),
+    scale: PropTypes.oneOf(['linear', 'log']),
     snap: PropTypes.any,
     ticks: PropTypes.oneOfType([
         // PropTypes.number,

@@ -49,7 +49,7 @@ class AutoSelectScenes extends React.Component {
                         maxValue={max.value}
                         ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
                         snap
-                        logScale
+                        scale='log'
                         range='low'/>
                 </div>
                 <div>
@@ -60,7 +60,7 @@ class AutoSelectScenes extends React.Component {
                         maxValue={999}
                         ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
                         snap
-                        logScale
+                        scale='log'
                         range='low'/>
                 </div>
             </React.Fragment>
