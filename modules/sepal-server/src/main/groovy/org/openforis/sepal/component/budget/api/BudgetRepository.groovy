@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.budget.api
 
+import org.openforis.sepal.component.workersession.api.UserSessionReport
+
 interface BudgetRepository {
     List<InstanceUse> userInstanceUses(String username, int year, int month)
 
@@ -14,4 +16,8 @@ interface BudgetRepository {
     void updateDefaultBudget(Budget budget)
 
     void updateBudget(String username, Budget budget)
+
+    void saveSpendingReport(Map<String, UserSpendingReport> report)
+
+    Map<String, UserSpendingReport> spendingReport()
 }

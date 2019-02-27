@@ -6,7 +6,7 @@ import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.budget.api.Budget
 import org.openforis.sepal.component.budget.api.UserSpendingReport
 import org.openforis.sepal.component.budget.command.UpdateBudget
-import org.openforis.sepal.component.budget.query.GenerateSpendingReport
+import org.openforis.sepal.component.budget.query.LoadSpendingReport
 import org.openforis.sepal.endpoint.InvalidRequest
 
 import static groovy.json.JsonOutput.toJson
@@ -25,7 +25,7 @@ class BudgetEndpoint {
         controller.with {
             get('/budget/report', [ADMIN]) {
                 response.contentType = 'application/json'
-                def report = component.submit(new GenerateSpendingReport())
+                def report = component.submit(new LoadSpendingReport())
                 def map = reportToMap(report)
                 send toJson(map)
             }
@@ -43,14 +43,14 @@ class BudgetEndpoint {
                 ])
 
                 def budget = new Budget(
-                        instanceSpending: params.required('instanceSpending', double),
-                        storageSpending: params.required('storageSpending', double),
-                        storageQuota: params.required('storageQuota', double)
+                    instanceSpending: params.required('instanceSpending', double),
+                    storageSpending: params.required('storageSpending', double),
+                    storageQuota: params.required('storageQuota', double)
                 )
 
                 def command = new UpdateBudget(
-                        username: params.required('username', String),
-                        budget: budget
+                    username: params.required('username', String),
+                    budget: budget
                 )
                 def errors = bindAndValidate(command)
                 if (errors)
