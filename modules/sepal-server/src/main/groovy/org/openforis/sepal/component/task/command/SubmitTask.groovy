@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 @EqualsAndHashCode(callSuper = true)
 @Canonical
 class SubmitTask extends AbstractCommand<Task> {
+    String recipeId
     String instanceType
     String operation
     Map params
@@ -50,6 +51,7 @@ class SubmitTaskHandler implements CommandHandler<Task, SubmitTask> {
         def now = clock.now()
         def task = new Task(
             id: UUID.randomUUID().toString(),
+            recipeId: command.recipeId,
             state: Task.State.PENDING,
             username: username,
             operation: command.operation,

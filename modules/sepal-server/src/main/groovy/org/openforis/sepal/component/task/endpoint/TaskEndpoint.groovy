@@ -27,10 +27,11 @@ class TaskEndpoint {
                 response.contentType = 'application/json'
                 def tasks = component.submit(new UserTasks(username: currentUser.username)).collect {
                     [
-                            id               : it.id,
-                            name             : it.title,
-                            status           : it.state,
-                            statusDescription: it.statusDescription
+                        id: it.id,
+                        recipeId: it.recipeId,
+                        name: it.title,
+                        status: it.state,
+                        statusDescription: it.statusDescription
                     ]
                 }
                 send toJson(tasks)
@@ -39,20 +40,21 @@ class TaskEndpoint {
             post('/tasks') {
                 def task = fromJson(body)
                 def submittedTask = submit(new SubmitTask(
-                        instanceType: task.instanceType,
-                        operation: task.operation,
-                        params: task.params,
-                        username: currentUser.username
+                    recipeId: task.recipeId,
+                    instanceType: task.instanceType,
+                    operation: task.operation,
+                    params: task.params,
+                    username: currentUser.username
                 ))
                 send toJson(submittedTask)
             }
 
             get('/tasks/task/{id}') {
                 def task = submit(
-                        new GetTask(
-                                taskId: params.required('id', String),
-                                username: currentUser.username
-                        )
+                    new GetTask(
+                        taskId: params.required('id', String),
+                        username: currentUser.username
+                    )
                 )
                 send toJson(task)
             }
@@ -69,8 +71,8 @@ class TaskEndpoint {
 
             post('/tasks/task/{id}/execute') {
                 submit(new ResubmitTask(
-                        taskId: params.required('id', String),
-                        username: currentUser.username
+                    taskId: params.required('id', String),
+                    username: currentUser.username
                 ))
                 response.status = 204
             }
@@ -82,10 +84,10 @@ class TaskEndpoint {
 
             post('/tasks/task/{id}/state-updated', [ADMIN, TASK_EXECUTOR]) {
                 submit(new UpdateTaskProgress(
-                        taskId: params.required('id', String),
-                        state: params.required('state', Task.State),
-                        statusDescription: params.required('statusDescription'),
-                        username: currentUser.username
+                    taskId: params.required('id', String),
+                    state: params.required('state', Task.State),
+                    statusDescription: params.required('statusDescription'),
+                    username: currentUser.username
                 ))
                 response.status = 204
             }
@@ -94,10 +96,10 @@ class TaskEndpoint {
                 def progress = new JsonSlurper().parseText(params.required('progress', String)) as Map
                 progress.each { taskId, description ->
                     submit(new UpdateTaskProgress(
-                            taskId: taskId,
-                            state: Task.State.ACTIVE,
-                            statusDescription: description,
-                            username: currentUser.username
+                        taskId: taskId,
+                        state: Task.State.ACTIVE,
+                        statusDescription: description,
+                        username: currentUser.username
                     ))
                 }
                 response.status = 204

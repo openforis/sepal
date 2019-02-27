@@ -1,0 +1,2 @@
+ALTER TABLE task
+  ADD COLUMN recipe_id VARCHAR(255);
