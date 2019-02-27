@@ -354,7 +354,7 @@ class SliderDynamics extends React.Component {
                 .map(({position}) => ({position, distance: Math.abs(position - value)}))
                 .sortBy('distance')
                 .head()
-            return Math.round(closest.position)
+            return closest.position
         } else {
             return value
         }
