@@ -81,6 +81,18 @@
     user-select: none;
 }
 
+.alignment.left {
+    text-align: left;
+}
+
+.alignment.center {
+    text-align: center;
+}
+
+.alignment.right {
+    text-align: right;
+}
+
 .cursor {
     position: absolute;
     top: calc((var(--handle-height) - var(--slider-height)) / -2);
