@@ -1105,6 +1105,9 @@
         "confirm": "Confirm"
     },
     "widget": {
+        "confirm": {
+            "title": "Confirmation required"
+        },
         "safetyButton": {
             "label": "Proceed"
         },
