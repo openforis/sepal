@@ -126,9 +126,9 @@ class JdbcBudgetRepository implements BudgetRepository {
     }
 
     void saveSpendingReport(Map<String, UserSpendingReport> report) {
-        sql.execute('DELETE FROM USER_SPENDING')
+        sql.execute('DELETE FROM user_spending')
         sql.withBatch('''
-            INSERT INTO USER_SPENDING 
+            INSERT INTO user_spending 
                 (username, instance_spending, storage_spending, storage_usage)
                 values (?, ?, ?, ?)''') {ps ->
             report.values().forEach {
