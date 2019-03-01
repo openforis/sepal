@@ -140,13 +140,16 @@ class JdbcBudgetRepository implements BudgetRepository {
     Map<String, UserSpendingReport> spendingReport() {
         def report = [:]
         sql.rows('''
-            SELECT s.username, s.instance_spending, s.storage_spending, s.storage_usage, 
+            SELECT b.username, 
+                   IFNULL(s.instance_spending, 0) instance_spending, 
+                   IFNULL(s.storage_spending, 0) storage_spending, 
+                   IFNULL(s.storage_usage, 0) storage_usage, 
                    IFNULL(b.monthly_instance, d.monthly_instance) monthly_instance,
                    IFNULL(b.monthly_storage, d.monthly_storage) monthly_storage,
                    IFNULL(b.storage_quota, d.storage_quota) storage_quota
-            FROM user_spending s
+            FROM user_budget b
             JOIN default_user_budget d
-            LEFT JOIN user_budget b ON s.username = b.username
+            LEFT JOIN user_spending s ON s.username = b.username
             ''').each {
             report[it.username] = new UserSpendingReport(
                 username: it.username,
