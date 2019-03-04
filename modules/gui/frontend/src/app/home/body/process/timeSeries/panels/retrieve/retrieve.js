@@ -26,6 +26,7 @@ class Retrieve extends React.Component {
         const indicatorOptions = [
             {value: 'NDVI', label: 'NDVI'},
             {value: 'NDMI', label: 'NDMI'},
+            {value: 'NBR', label: 'NBR'},
             {value: 'EVI', label: 'EVI'},
             {value: 'EVI2', label: 'EVI2'}
         ]

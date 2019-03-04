@@ -65,6 +65,8 @@ const toExpression = (indicator) => {
         return '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
     case 'NDMI':
         return '10000 * (1 + (i.nir - i.swir1) / (i.nir + i.swir1))'
+    case 'NBR':
+        return '10000 * (1 + (i.nir - i.swir2) / (i.nir + i.swir2))'
     case 'EVI':
         return '10000 * (1 + 2.5 * (i.nir - i.red) / (i.nir + 6 * i.red - 7.5 * i.blue + 1))'
     case 'EVI2':
