@@ -5,6 +5,7 @@ import {isMobile} from 'widget/userAgent'
 import {takeUntil} from 'rxjs/operators'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
@@ -12,12 +13,12 @@ import guid from 'guid'
 let storeInstance = null
 const storeInitListeners = []
 
-export function initStore(store) {
+export const initStore = (store) => {
     storeInstance = store
     storeInitListeners.forEach(listener => listener(store))
 }
 
-export function subscribe(path, listener) {
+export const subscribe = (path, listener) => {
     const subscribe = () => storeInstance.subscribe(() => listener(select(path)))
     if (storeInstance)
         subscribe()
@@ -25,29 +26,25 @@ export function subscribe(path, listener) {
         storeInitListeners.push(subscribe)
 }
 
-export function state() {
-    return storeInstance.getState() || {}
-}
+export const state = () =>
+    storeInstance.getState() || {}
 
-export function dispatch(action) {
+export const dispatch = (action) =>
     storeInstance.dispatch(action)
-}
 
-export function select(path) {
-    return selectFrom(state(), path)
-}
+export const select = (...path) =>
+    selectFrom(state(), path)
 
-function includeDispatchingProp(id, mapStateToProps) {
-    return (state, ownProps) => {
+const includeDispatchingProp = (id, mapStateToProps) =>
+    (state, ownProps) => {
         return {
             ...mapStateToProps(state, ownProps),
             actions: state.actions || {},
             streams: state.stream && state.stream[id]
         }
     }
-}
 
-export function connect(mapStateToProps) {
+export const connect = (mapStateToProps) => {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
 
     return WrappedComponent => {
@@ -161,12 +158,10 @@ export function connect(mapStateToProps) {
     }
 }
 
-export function dispatchable(action) {
-    return {
-        ...action,
-        dispatch: () => dispatch(action)
-    }
-}
+export const dispatchable = (action) => ({
+    ...action,
+    dispatch: () => dispatch(action)
+})
 
 const EnabledContext = React.createContext()
 
