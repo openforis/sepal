@@ -97,7 +97,7 @@ PanelContent.propTypes = {
 // BUTTONS --------------------------------------------------------------------
 
 export class PanelButtons extends React.Component {
-    static renderButton({template, type, look, icon, label, shown = true, disabled = false, onClick}, key) {
+    static renderButton({template, type, look, icon, label, dots, shown = true, disabled = false, onClick}, key) {
         const defaultByTemplate = {
             cancel: {
                 look: 'cancel',
@@ -140,6 +140,7 @@ export class PanelButtons extends React.Component {
                 label: msg('button.done')
             },
             save: {
+                type: 'submit',
                 look: 'apply',
                 icon: 'check',
                 label: msg('button.save')
@@ -153,10 +154,10 @@ export class PanelButtons extends React.Component {
         return (
             <Button
                 key={key}
-                type={type}
+                type={type || defaultByTemplate[template].type}
                 look={look || defaultByTemplate[template].look}
                 icon={icon || defaultByTemplate[template].icon}
-                label={label || defaultByTemplate[template].label}
+                label={[label || defaultByTemplate[template].label, dots ? '...' : null].join('')}
                 shown={shown}
                 disabled={disabled}
                 onClick={e => {
@@ -261,16 +262,20 @@ export class PanelButtons extends React.Component {
     }
 }
 
+const buttonPropTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.any,
+    dots: PropTypes.any,
+    icon: PropTypes.string,
+    label: PropTypes.string,
+    look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'cancel', 'apply', 'add']),
+    shown: PropTypes.any,
+    template: PropTypes.oneOf(['cancel', 'apply', 'confirm', 'close', 'add', 'back', 'next', 'done']),
+    type: PropTypes.string
+}
+
 const buttonsPropTypes = PropTypes.arrayOf(
-    PropTypes.shape({
-        onClick: PropTypes.func.isRequired,
-        disabled: PropTypes.any,
-        icon: PropTypes.string,
-        label: PropTypes.string,
-        look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'cancel', 'apply', 'add']),
-        shown: PropTypes.any,
-        template: PropTypes.oneOf(['cancel', 'apply', 'confirm', 'close', 'add', 'back', 'next', 'done'])
-    })
+    PropTypes.shape(buttonPropTypes)
 )
 
 PanelButtons.propTypes = {
@@ -289,79 +294,13 @@ PanelButtons.Extra.propTypes = {
     children: PropTypes.any
 }
 
-PanelButtons.Cancel.propTypes = {
-    onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    shown: PropTypes.any,
-    size: PropTypes.string
-}
-
-PanelButtons.Apply.propTypes = {
-    onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    shown: PropTypes.any,
-    size: PropTypes.string
-}
-
-PanelButtons.Close.propTypes = {
-    onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    shown: PropTypes.any,
-    size: PropTypes.string
-}
-
-PanelButtons.Confirm.propTypes = {
-    onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    label: PropTypes.string,
-    shown: PropTypes.any,
-    size: PropTypes.string
-}
-
-PanelButtons.Add.propTypes = {
-    onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    label: PropTypes.string,
-    shown: PropTypes.any,
-    size: PropTypes.string
-}
-
-PanelButtons.Back.propTypes = {
-    onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    label: PropTypes.string,
-    shown: PropTypes.any,
-    size: PropTypes.string
-}
-
-PanelButtons.Next.propTypes = {
-    onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    label: PropTypes.string,
-    shown: PropTypes.any,
-    size: PropTypes.string
-}
-
-PanelButtons.Done.propTypes = {
-    onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    label: PropTypes.string,
-    shown: PropTypes.any,
-    size: PropTypes.string
-}
-
-PanelButtons.Save.propTypes = {
-    onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    label: PropTypes.string,
-    shown: PropTypes.any,
-    size: PropTypes.string
-}
-
-PanelButtons.Discard.propTypes = {
-    onClick: PropTypes.func.isRequired,
-    disabled: PropTypes.any,
-    label: PropTypes.string,
-    shown: PropTypes.any,
-    size: PropTypes.string
-}
+PanelButtons.Add.propTypes = buttonPropTypes
+PanelButtons.Apply.propTypes = buttonPropTypes
+PanelButtons.Back.propTypes = buttonPropTypes
+PanelButtons.Cancel.propTypes = buttonPropTypes
+PanelButtons.Close.propTypes = buttonPropTypes
+PanelButtons.Confirm.propTypes = buttonPropTypes
+PanelButtons.Discard.propTypes = buttonPropTypes
+PanelButtons.Done.propTypes = buttonPropTypes
+PanelButtons.Next.propTypes = buttonPropTypes
+PanelButtons.Save.propTypes = buttonPropTypes
