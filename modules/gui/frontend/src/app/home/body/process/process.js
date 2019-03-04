@@ -50,7 +50,7 @@ class Process extends React.Component {
 
     onCloseTab(recipe) {
         const {activator: {activatables}} = this.props
-        const unsaved = recipe.ui && recipe.ui.unsaved
+        const unsaved = recipe.ui && recipe.ui.unsaved && recipe.ui.initialized
         if (unsaved) {
             activatables['closeRecipeDialog'].activate({recipe})
         } else {
