@@ -216,7 +216,7 @@ export class Button extends React.Component {
             )
 
             // Click event needs to be handled here for two reasons:
-            // - to allow cancellation of click-hold without triggering click, when preesed longer than CLICK_CANCEL_DELAY_MS
+            // - to allow cancellation of click-hold without triggering click, when pressed longer than CLICK_CANCEL_DELAY_MS
             // - to avoid concurrent handling of both click and click-hold when pressed longer than CLICK_HOLD_DELAY_MS
             // Click is triggered only if button pressed less than CLICK_CANCEL_DELAY_MS.
             const click$ =
