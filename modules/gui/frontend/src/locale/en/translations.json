@@ -124,6 +124,18 @@
         }
     },
     "process": {
+        "closeRecipe": {
+            "message": "Do you want to save this recipe?"
+        },
+        "saveRecipe": {
+            "title": "Save recipe",
+            "form": {
+                "name": {
+                    "label": "Name",
+                    "required": "Recipe name is required"
+                }
+            }
+        },
         "recipe": {
             "name": "Name",
             "type": "Type",
@@ -1092,7 +1104,7 @@
         "ok": "OK",
         "apply": "Apply",
         "cancel": "Cancel",
-        "save": "Save...",
+        "save": "Save",
         "discard": "Don't save",
         "close": "Close",
         "add": "Add",
