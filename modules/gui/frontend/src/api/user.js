@@ -1,5 +1,6 @@
 import {delete$, get$, post$} from 'http-client'
 import {map} from 'rxjs/operators'
+import {of} from 'rxjs'
 
 export default {
     loadCurrentUser$: () =>
@@ -26,8 +27,9 @@ export default {
         }).pipe(toResponse),
 
     loadCurrentUserReport$: () =>
-        get$('/api/sessions/report')
-            .pipe(toResponse),
+        of(_sampleUserReport),
+        // get$('/api/sessions/report')
+        //     .pipe(toResponse),
 
     login$: (username, password) =>
         post$('/api/user/login', {
@@ -305,7 +307,7 @@ const _sampleUserReport = {
         'monthlyInstanceBudget': 1.0,
         'monthlyInstanceSpending': 0.025,
         'monthlyStorageBudget': 1.0,
-        'monthlyStorageSpending': 2.233275753451851E-5,
+        'monthlyStorageSpending': 2.23,
         'storageQuota': 20.0,
         'storageUsed': 9.6E-5
     }
