@@ -138,6 +138,16 @@ export class PanelButtons extends React.Component {
                 look: 'apply',
                 icon: 'check',
                 label: msg('button.done')
+            },
+            save: {
+                look: 'apply',
+                icon: 'check',
+                label: msg('button.save')
+            },
+            discard: {
+                look: 'cancel',
+                icon: 'times',
+                label: msg('button.discard')
             }
         }
         return (
@@ -164,6 +174,14 @@ export class PanelButtons extends React.Component {
 
     static Apply(props) {
         return PanelButtons.renderButton({template: 'apply', ...props})
+    }
+
+    static Save(props) {
+        return PanelButtons.renderButton({template: 'save', ...props})
+    }
+
+    static Discard(props) {
+        return PanelButtons.renderButton({template: 'discard', ...props})
     }
 
     static Close(props) {
@@ -325,6 +343,22 @@ PanelButtons.Next.propTypes = {
 }
 
 PanelButtons.Done.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.any,
+    label: PropTypes.string,
+    shown: PropTypes.any,
+    size: PropTypes.string
+}
+
+PanelButtons.Save.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    disabled: PropTypes.any,
+    label: PropTypes.string,
+    shown: PropTypes.any,
+    size: PropTypes.string
+}
+
+PanelButtons.Discard.propTypes = {
     onClick: PropTypes.func.isRequired,
     disabled: PropTypes.any,
     label: PropTypes.string,
