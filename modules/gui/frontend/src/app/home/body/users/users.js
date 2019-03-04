@@ -431,7 +431,7 @@ class User extends React.Component {
                 <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
                 <div className={styles.number}>{format.dollars(current.instanceSpending)}</div>
                 <div className={styles.number}>{format.dollars(budget.storageSpending)}</div>
-                <div className={styles.number}>{format.dollars(current.storageSpoending)}</div>
+                <div className={styles.number}>{format.dollars(current.storageSpending)}</div>
                 <div className={styles.number}>{format.fileSize(budget.storageQuota, {scale: 'G'})}</div>
                 <div className={styles.number}>{format.fileSize(current.storageQuota, {scale: 'G'})}</div>
             </div>
