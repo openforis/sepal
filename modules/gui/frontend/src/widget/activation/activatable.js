@@ -18,7 +18,7 @@ class UnconnectedActivatable extends React.Component {
         const {id, activatables, children} = this.props
         const currentActivatable = activatables[id] || {}
         return currentActivatable.active
-            ? <Activator id={id}>{activatorProps => children({...this.props, ...activatorProps})}</Activator>
+            ? <Activator id={id}>{activatorProps => children({...this.props, ...activatorProps, ...currentActivatable.activationProps})}</Activator>
             : null
     }
 
@@ -63,7 +63,7 @@ class UnconnectedActivatable extends React.Component {
         }
 
         actionBuilder('UPDATE_ACTIVATABLE', activatable)
-            .set([statePath, 'activatables', id], activatable)
+            .merge([statePath, 'activatables', id], activatable)
             .dispatch()
     }
 }
