@@ -946,17 +946,19 @@
             },
             "suspend": {
                 "label": "Suspend",
-                "tooltip": "Suspend current session. Suspended sessions can be resumed.",
+                "tooltip": "Suspend session. Suspended sessions can be resumed.",
                 "success": "Session has been suspended.",
                 "error": "Could not suspend session."
             },
             "update": {
+                "tooltip": "Edit session.",
                 "success": "Session has been updated.",
                 "error": "Could not update session."
             },
             "stop": {
                 "label": "Stop",
-                "tooltip": "Stop current session. Stopped sessions cannot be resumed.",
+                "message": "Stop session?",
+                "tooltip": "Stop session (cannot be resumed).",
                 "success": "Session stopped.",
                 "error": "Could not stop session."
             }
