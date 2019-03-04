@@ -97,7 +97,7 @@ class Tabs extends React.Component {
     renderTabContent(tab) {
         const {selectedTabId, children} = this.props
         return (
-            <TabContent key={tab.id} tab={tab} selected={tab.id === selectedTabId}>
+            <TabContent key={tab.id} id={tab.id} type={tab.type} selected={tab.id === selectedTabId}>
                 {children}
             </TabContent>
         )
