@@ -42,9 +42,9 @@ class _UserMessages extends React.Component {
     }
 
     updateMessage(message) {
-        const {id} = message
+        const {id = uuid()} = message
         this.props.stream('REQUEST_UPDATE_USER_MESSAGE',
-            api.user.updateMessage$({...message, id: id || uuid()}),
+            api.user.updateMessage$({...message, id}),
             message => {
                 actionBuilder('UPDATE_USER_MESSAGE')
                     .assignOrAddValueByTemplate('user.userMessages', {message: {id}}, {message, state: 'UNREAD'})
@@ -150,10 +150,14 @@ class _UserMessages extends React.Component {
                     onClick={() => this.editMessage(message)}
                 />
                 <SafetyButton
+                    chromeless
+                    shape='circle'
                     size='large'
-                    message={msg('userMessages.removeConfirmation', {subject: message.subject})}
+                    icon='trash'
                     tooltip={msg('userMessages.remove')}
-                    onConfirm={() => this.removeMessage(message)}/>
+                    message={msg('userMessages.removeConfirmation', {subject: message.subject})}
+                    onConfirm={() => this.removeMessage(message)}
+                />
             </ButtonGroup>
         )
     }
