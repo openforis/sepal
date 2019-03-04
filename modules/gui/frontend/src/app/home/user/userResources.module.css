@@ -1,0 +1,73 @@
+button.budgetExceeded {
+    color: var(--error-color) !important;
+    animation: pulse 1250ms ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        opacity: .2;
+    }
+}
+
+.resources {
+    width: 100%;
+    padding: 0 1rem;
+}
+
+.resources table {
+    margin: auto;
+    width: 100%;
+}
+
+.resources th {
+    font-weight: normal;
+    font-size: .8rem;
+    text-transform: uppercase;
+    color: #dddddd;
+    padding: .2rem .5rem .2rem 0;
+}
+
+.resources th.quota {
+    text-align: right;
+}
+
+.resources th.used {
+    text-align: right;
+}
+
+.resources td {
+    font-size: 1rem;
+    padding: .2rem .5rem;
+}
+
+.resources tr.clickable:hover {
+    background-color: #404040;
+    cursor: pointer;
+}
+
+.number {
+    text-align: right;
+}
+
+.resources td.percent {
+    margin-left: 1rem;
+    font-size: 0.8rem;
+}
+
+.resources td.percent.low {
+    color: var(--success-color)
+}
+
+.resources td.percent.medium {
+    color: var(--warning-color)
+}
+
+.resources td.percent.high {
+    color: var(--error-color)
+}
