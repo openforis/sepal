@@ -3,13 +3,17 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './modal.module.css'
 
-export const Modal = ({children}) =>
+export const Modal = ({onClick, children}) =>
     <Portal>
-        <div className={styles.modal}>
+        <div className={styles.modal} onClick={e => {
+            e.stopPropagation()
+            onClick && onClick()
+        }}>
             {children}
         </div>
     </Portal>
 
 Modal.propTypes = {
-    children: PropTypes.any.isRequired
+    children: PropTypes.any.isRequired,
+    onClick: PropTypes.func
 }
