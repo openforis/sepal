@@ -1,6 +1,5 @@
 import {delete$, get$, post$} from 'http-client'
 import {map} from 'rxjs/operators'
-import {of} from 'rxjs'
 
 export default {
     loadCurrentUser$: () =>
@@ -27,9 +26,8 @@ export default {
         }).pipe(toResponse),
 
     loadCurrentUserReport$: () =>
-        of(_sampleUserReport),
-        // get$('/api/sessions/report')
-        //     .pipe(toResponse),
+        get$('/api/sessions/report')
+            .pipe(toResponse),
 
     login$: (username, password) =>
         post$('/api/user/login', {
