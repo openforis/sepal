@@ -19,7 +19,7 @@ class ProcessMenu extends React.Component {
         if (recipe && recipe.type) {
             const unsaved = this.isRecipeUnsaved()
             return (
-                <Menu warning={unsaved ? msg('process.menu.recipeNotSaved') : null}>
+                <Menu>
                     {unsaved
                         ? this.renderUnsavedRecipeItems()
                         : this.renderSavedRecipeItems()}
