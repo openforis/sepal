@@ -103,7 +103,8 @@ export const recipePath = (recipeId, path) =>
 
 export const RecipeState = recipeId =>
     isRecipeOpen(recipeId)
-        ? path => select(recipePath(recipeId, path))
+        // ? path => select(recipePath(recipeId, path))
+        ? path => select('process.tabs', {id: recipeId}, path)
         : null
 
 export const setInitialized = (recipeId) => {
@@ -124,14 +125,14 @@ const updateRecipeList = recipe =>
         })
         .dispatch()
 
-const isInitialized = recipe =>
-    selectFrom(recipe, 'ui.initialized')
-
 const initializedRecipe = recipe => ({
     ...recipe,
     ui: {initialized: true}
 })
         
+const isInitialized = recipe =>
+    selectFrom(recipe, 'ui.initialized')
+
 export const saveRecipe = recipe => {
     if (isInitialized(recipe)) {
         actionBuilder('SET_RECIPE_SAVED', recipe.id)
@@ -142,6 +143,9 @@ export const saveRecipe = recipe => {
         saveToLocalStorage$.next(recipe)
     }
 }
+
+export const closeRecipe = id =>
+    closeTab(id, 'process')
 
 export const exportRecipe$ = recipe =>
     downloadObjectZip$({

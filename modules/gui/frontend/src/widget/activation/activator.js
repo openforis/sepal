@@ -26,11 +26,12 @@ class UnconnectedActivator extends React.Component {
         const {id, activatables, activationContext: {statePath}} = this.props
         const activatablePath = id => [statePath, 'activatables', id]
 
-        const activate = id =>
+        const activate = (id, activationProps) =>
             actionBuilder('ACTIVATE', {id})
                 .assign(activatablePath(id), {
                     active: true,
-                    justActivated: true
+                    justActivated: true,
+                    activationProps
                 })
                 .dispatch()
 
@@ -64,7 +65,7 @@ class UnconnectedActivator extends React.Component {
         const props = id => ({
             active: isActive(id),
             canActivate: canActivate(id),
-            activate: () => canActivate(id) && activate(id),
+            activate: activationProps => canActivate(id) && activate(id, activationProps),
             deactivate: () => isActive(id) && deactivate(id)
         })
         return _.isString(id)

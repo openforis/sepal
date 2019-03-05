@@ -14,17 +14,19 @@ export default class SafetyButton extends React.Component {
     }
 
     renderConfirm() {
-        const {message, label, onConfirm} = this.props
+        const {title, message, label, onConfirm, children} = this.props
         return (
             <Confirm
+                title={title}
                 message={message}
                 label={label || msg('widget.safetyButton.label')}
                 onConfirm={() => {
                     this.askConfirmation(false)
                     onConfirm()
                 }}
-                onCancel={() => this.askConfirmation(false)}
-            />
+                onCancel={() => this.askConfirmation(false)}>
+                {children}
+            </Confirm>
         )
     }
 
@@ -63,12 +65,14 @@ export default class SafetyButton extends React.Component {
 SafetyButton.propTypes = {
     message: PropTypes.string.isRequired,
     onConfirm: PropTypes.func.isRequired,
+    children: PropTypes.any,
     disabled: PropTypes.any,
     icon: PropTypes.string,
     label: PropTypes.string,
     look: PropTypes.string,
     size: PropTypes.string,
     skip: PropTypes.any,
+    title: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
 }

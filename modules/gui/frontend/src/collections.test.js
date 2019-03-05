@@ -48,6 +48,7 @@ test('selectFrom((${object}, ${path})) === ${result}')
         {object: {a: 1}, path: '', result: undefined},
         {object: {a: 1}, path: 'a', result: 1},
         {object: {a: 1}, path: 'b', result: undefined},
+        {object: {a: null}, path: 'a.b', result: undefined},
         {object: {a: {b: 2}}, path: 'a.b', result: 2},
         {object: {a: {b: {c: 3}}}, path: 'a.b.c', result: 3},
         {object: {a: {b: {c: [1, 2, 3]}}}, path: 'a.b.c', result: [1, 2, 3]},

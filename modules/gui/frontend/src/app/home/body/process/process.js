@@ -1,13 +1,17 @@
 import {RecipeContext} from 'app/home/body/process/recipeContext'
+import {activator} from 'widget/activation/activator'
+import {closeRecipe} from './recipe'
 import {saveRecipe} from './recipe'
 import ChangeDetection from './changeDetection/changeDetection'
 import Classification from './classification/classification'
+import CloseRecipe from './closeRecipe'
 import LandCover from './landCover/landCover'
 import Mosaic from './mosaic/mosaic'
 import ProcessMenu from './processMenu'
 import React from 'react'
 import Recipes from './recipes'
 import Revisions from 'app/home/body/process/revisions'
+import SaveRecipe from './saveRecipe'
 import Tabs from 'widget/tabs'
 import TimeSeries from './timeSeries/timeSeries'
 
@@ -44,23 +48,39 @@ class Process extends React.Component {
         )
     }
 
+    onCloseTab(recipe) {
+        const {activator: {activatables}} = this.props
+        const unsaved = recipe.ui && recipe.ui.unsaved && recipe.ui.initialized
+        if (unsaved) {
+            activatables['closeRecipeDialog'].activate({recipe})
+        } else {
+            closeRecipe(recipe.id)
+        }
+    }
+
     render() {
         return (
-            <Tabs
-                statePath='process'
-                tabActions={recipeId => this.renderMenu(recipeId)}
-                onTitleChanged={recipe => saveRecipe(recipe)}
-                isDirty={recipe => recipe.ui && recipe.ui.unsaved}>
-                {({id, type}) =>
-                    <React.Fragment>
-                        <RecipeContext recipeId={id} rootStatePath='process.tabs'>
-                            {this.renderRecipe(id, type)}
-                        </RecipeContext>
-                    </React.Fragment>
-                }
-            </Tabs>
+            <React.Fragment>
+                <Tabs
+                    statePath='process'
+                    tabActions={recipeId => this.renderMenu(recipeId)}
+                    onTitleChanged={recipe => saveRecipe(recipe)}
+                    onClose={recipe => this.onCloseTab(recipe)}>
+                    {({id, type}) =>
+                        <React.Fragment>
+                            <RecipeContext recipeId={id} rootStatePath='process.tabs'>
+                                {this.renderRecipe(id, type)}
+                            </RecipeContext>
+                        </React.Fragment>
+                    }
+                </Tabs>
+                <CloseRecipe/>
+                <SaveRecipe/>
+            </React.Fragment>
         )
     }
 }
 
-export default Process
+export default (
+    activator(['closeRecipeDialog'])(Process)
+)

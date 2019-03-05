@@ -1,6 +1,6 @@
-import {Activator} from 'widget/activation/activator'
+import {Activator, activator} from 'widget/activation/activator'
 import {Msg, msg} from 'translate'
-import {RecipeState, addRecipe, exportRecipe$, saveRecipe} from './recipe'
+import {RecipeState, addRecipe, exportRecipe$} from './recipe'
 import {connect, select} from 'store'
 import Menu, {MenuItem} from 'widget/menu'
 import React from 'react'
@@ -37,9 +37,9 @@ class ProcessMenu extends React.Component {
     }
 
     renderUnsavedRecipeItems() {
-        const {recipe} = this.props
+        const {recipe, activator: {activatables: {saveRecipeDialog}}} = this.props
         return (
-            <MenuItem onSelect={() => saveRecipe(recipe)}>
+            <MenuItem onSelect={() => saveRecipeDialog.activate({recipe, closeTabOnSave: false})}>
                 <Msg id='process.menu.saveRecipe'/>
             </MenuItem>
         )
@@ -77,4 +77,10 @@ class ProcessMenu extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(ProcessMenu)
+export default (
+    activator(['saveRecipeDialog'])(
+        connect(mapStateToProps)(
+            ProcessMenu
+        )
+    )
+)

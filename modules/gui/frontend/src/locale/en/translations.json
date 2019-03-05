@@ -124,6 +124,18 @@
         }
     },
     "process": {
+        "closeRecipe": {
+            "message": "Do you want to save this recipe?"
+        },
+        "saveRecipe": {
+            "title": "Save recipe",
+            "form": {
+                "name": {
+                    "label": "Name",
+                    "required": "Recipe name is required"
+                }
+            }
+        },
         "recipe": {
             "name": "Name",
             "type": "Type",
@@ -946,17 +958,19 @@
             },
             "suspend": {
                 "label": "Suspend",
-                "tooltip": "Suspend current session. Suspended sessions can be resumed.",
+                "tooltip": "Suspend session. Suspended sessions can be resumed.",
                 "success": "Session has been suspended.",
                 "error": "Could not suspend session."
             },
             "update": {
+                "tooltip": "Edit session.",
                 "success": "Session has been updated.",
                 "error": "Could not update session."
             },
             "stop": {
                 "label": "Stop",
-                "tooltip": "Stop current session. Stopped sessions cannot be resumed.",
+                "message": "Stop session?",
+                "tooltip": "Stop session (cannot be resumed).",
                 "success": "Session stopped.",
                 "error": "Could not stop session."
             }
@@ -1090,6 +1104,8 @@
         "ok": "OK",
         "apply": "Apply",
         "cancel": "Cancel",
+        "save": "Save",
+        "discard": "Don't save",
         "close": "Close",
         "add": "Add",
         "remove": "Remove",
@@ -1105,6 +1121,9 @@
         "confirm": "Confirm"
     },
     "widget": {
+        "confirm": {
+            "title": "Confirmation required"
+        },
         "safetyButton": {
             "label": "Proceed"
         },

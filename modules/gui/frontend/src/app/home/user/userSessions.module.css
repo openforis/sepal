@@ -1,26 +1,40 @@
-.clickable:hover {
-    background-color: #404040;
-    cursor: pointer;
+.sessions {
+    overflow: auto;
+}
+
+.sessions ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sessions li {
+    padding: .5rem 1rem;
+    border-radius: var(--container-border-radius);
+}
+
+.sessions li + li {
+    margin-top: .5rem;
+}
+
+.sessions .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.sessions .info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    font-size: .8rem;
+}
+
+.sessions .cost {
+    /*text-align: right;*/
+    color: var(--warning-color);
+    font-size: 0.9rem;
 }
 
 .number {
     text-align: right;
-}
-
-.session {
-    margin-bottom: .5rem;
-    border-radius: var(--button-border-radius);
-    padding: .25rem .5rem;
-    cursor: pointer;
-}
-
-.session .header {
-    display: flex;
-    justify-content: space-between;
-}
-
-.session .cost {
-    /*text-align: right;*/
-    color: var(--warning-color);
-    font-size: 0.9rem;
 }

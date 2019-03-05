@@ -30,11 +30,11 @@ export const range = (from, to) =>
 
 export const selectFrom = (object, path) =>
     toPathList(path).reduce((subObject, part) => {
-        if (subObject != null) {
-            if (_.isObject(part) && _.isArray(subObject)) {
+        if (subObject) {
+            if (_.isArray(subObject) && _.isObject(part)) {
                 return subObject.find(item => _.isEqual(_.merge({}, item, part), item))
             }
-            if (subObject[part] != null) {
+            if (subObject[part]) {
                 return subObject[part]
             }
         }
