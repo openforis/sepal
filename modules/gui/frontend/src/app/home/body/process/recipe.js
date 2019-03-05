@@ -60,7 +60,7 @@ const saveToLocalStorage$ = (() => {
     ).subscribe(({recipeId, revision}) => {
         saveRevisionToLocalStorage(recipeId, revision)
     })
-    
+
     const saveRevisionToLocalStorage = (recipeId, revision) => {
         try {
             saveRevision(recipeId, revision)
@@ -70,7 +70,7 @@ const saveToLocalStorage$ = (() => {
             }
         }
     }
-    
+
     const removeRevisionFromLocalStorage = _recipeId => {
         // [TODO] implement removal strategy
         const key = _(localStorage)
@@ -129,7 +129,7 @@ const initializedRecipe = recipe => ({
     ...recipe,
     ui: {initialized: true}
 })
-        
+
 const isInitialized = recipe =>
     selectFrom(recipe, 'ui.initialized')
 
@@ -137,6 +137,7 @@ export const saveRecipe = recipe => {
     if (isInitialized(recipe)) {
         actionBuilder('SET_RECIPE_SAVED', recipe.id)
             .del(recipePath(recipe.id, 'ui.unsaved'))
+            .set(recipePath(recipe.id, 'title'), recipe.title)
             .dispatch()
         updateRecipeList(recipe)
         saveToBackend$.next(recipe)
