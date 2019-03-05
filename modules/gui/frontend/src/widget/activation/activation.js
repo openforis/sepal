@@ -5,7 +5,6 @@ const parentPathList = pathList =>
     pathList.slice(0, -2)
 
 export const collectActivatables = (state, pathList) => {
-    // console.log('collectActivatables')
     const selectActivatables = pathList => {
         return selectFrom(state, [pathList, 'activatables'])
     }
@@ -24,16 +23,14 @@ export const collectActivatables = (state, pathList) => {
 
     const parentActivatables = (pathList) => {
         const parent = parentPathList(pathList)
-        if (parent.length < 3)
-            return {} // pathList points to root, which has no parents
-        return {...parentActivatables(parent), ...selectActivatables(parent)}
+        return parent.length > 2
+            ? {...parentActivatables(parent), ...selectActivatables(parent)}
+            : {} // pathList points to root, which has no parents
     }
 
-    const activatables = {
+    return {
         ...parentActivatables(pathList),
         ...childrenActivatables(pathList),
         ...selectActivatables(pathList),
     }
-
-    return activatables
 }

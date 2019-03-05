@@ -13,7 +13,7 @@ const mapStateToProps = (state, ownProps) => {
     return {activatables: collectActivatables(state, pathList)}
 }
 
-class UnconnectedActivatable extends React.Component {
+class _Activatable extends React.Component {
     render() {
         const {id, activatables, children} = this.props
         const currentActivatable = activatables[id] || {}
@@ -73,7 +73,7 @@ class UnconnectedActivatable extends React.Component {
 export const Activatable = (
     withActivationContext()(
         connect(mapStateToProps)(
-            UnconnectedActivatable
+            _Activatable
         )
     )
 )

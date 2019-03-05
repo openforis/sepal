@@ -1,5 +1,5 @@
-import {activationAllowed} from 'widget/activation/activationPolicy'
-import {collectActivatables} from 'widget/activation/activation'
+import {activationAllowed} from './activationPolicy'
+import {collectActivatables} from './activation'
 import {connect} from 'store'
 import {withActivationContext} from './activationContext'
 import PropTypes from 'prop-types'
@@ -11,12 +11,12 @@ const mapStateToProps = (state, ownProps) => {
     const {activationContext: {pathList}} = ownProps
     const activatables = collectActivatables(state, pathList)
     const id = ownProps.id
-    return id.length
-        ? {activatables: _.pick(activatables, id)}
-        : {activatables}
+    return _.isEmpty(id)
+        ? {activatables}
+        : {activatables: _.pick(activatables, id)}
 }
 
-class UnconnectedActivator extends React.Component {
+class _Activator extends React.Component {
     render() {
         const {children} = this.props
         return children(this.getActivatorProps())
@@ -80,12 +80,12 @@ class UnconnectedActivator extends React.Component {
     }
 }
 
-export const activator = (...id) => {
+export const activator = (...ids) => {
     return WrappedComponent => {
         class HigherOrderComponent extends React.Component {
             render() {
                 return (
-                    <Activator id={id}>
+                    <Activator id={ids}>
                         {activator =>
                             React.createElement(WrappedComponent, {activator, ...this.props})}
                     </Activator>
@@ -100,7 +100,7 @@ export const activator = (...id) => {
 export const Activator = (
     withActivationContext()(
         connect(mapStateToProps)(
-            UnconnectedActivator
+            _Activator
         )
     )
 )
