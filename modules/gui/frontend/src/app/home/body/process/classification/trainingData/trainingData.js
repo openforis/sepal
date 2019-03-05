@@ -1,14 +1,15 @@
-import {Field, Input, form} from 'widget/form'
+import {Field, Input} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
 import {Msg, msg} from 'translate'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../classificationRecipe'
+import {RecipeActions} from '../classificationRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {isMobile} from 'widget/userAgent'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
+import {selectFrom} from 'collections'
 import ComboBox from 'widget/comboBox'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './trainingData.module.css'
@@ -20,10 +21,9 @@ const fields = {
         .notBlank('process.classification.panel.trainingData.form.fusionTableColumn.required')
 }
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {columns: recipeState('ui.fusionTable.columns')}
-}
+const mapRecipeToProps = recipe => ({
+    columns: selectFrom(recipe, 'ui.fusionTable.columns')
+})
 
 class TrainingData extends React.Component {
     constructor(props) {
@@ -57,16 +57,10 @@ class TrainingData extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
         return (
-            <FormPanel
-                className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                onApply={values => this.recipeActions.setTrainingData({
-                    values,
-                    model: valuesToModel(values)
-                }).dispatch()}>
+            <RecipeFormPanel
+                placement='bottom-right'
+                className={styles.panel}>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.classification.panel.trainingData.title')}/>
@@ -76,7 +70,7 @@ class TrainingData extends React.Component {
                 </PanelContent>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 
@@ -116,16 +110,23 @@ class TrainingData extends React.Component {
                 />
 
                 <p>
-                    <a href='/ceo' target='_blank'><Msg id='process.classification.panel.trainingData.form.openCeo'/></a>
+                    <a href='/ceo' target='_blank'><Msg
+                        id='process.classification.panel.trainingData.form.openCeo'/></a>
                 </p>
             </React.Fragment>
         )
     }
 
     componentDidMount() {
-        const {inputs: {fusionTable}} = this.props
+        const {recipeId, inputs: {fusionTable}} = this.props
         if (fusionTable.value)
             this.loadFusionTableColumns(fusionTable.value)
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 
@@ -133,24 +134,6 @@ TrainingData.propTypes = {
     recipeId: PropTypes.string
 }
 
-const valuesToModel = values => ({
-    ...values
-})
-
-const modelToValues = (model = {}) => ({
-    ...model
-})
-
-export default withRecipePath()(
-    initValues({
-        getModel: props => RecipeState(props.recipeId)('model.trainingData'),
-        getValues: props => RecipeState(props.recipeId)('ui.trainingData'),
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setTrainingData({values, model})
-                .dispatch()
-    })(
-        form({fields, mapStateToProps})(TrainingData)
-    )
+export default recipeFormPanel({id: 'trainingData', fields, mapRecipeToProps})(
+    TrainingData
 )

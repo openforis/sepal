@@ -442,7 +442,7 @@ http://www.gosquared.com/liquidicity/archives/122
                 pingTimeout: 10000,
                 url: go.prefs.url // Preserve
             }
-            go.Events.trigger('go:restore_defaults');
+            go.Events.activator('go:restore_defaults');
             go.Utils.savePrefs(true); // 'true' here skips the notification
         },
         // This starts up GateOne using the given *prefs*
@@ -733,7 +733,7 @@ http://www.gosquared.com/liquidicity/archives/122
                     go.prefs.disableTransitions = false;
                 }
                 v.updateDimensions();
-                E.trigger("go:save_prefs");
+                E.activator("go:save_prefs");
                 // savePrefsCallbacks is DEPRECATED.  Use GateOne.Events.on("go:save_prefs", yourFunc) instead
                 if (go.savePrefsCallbacks.length) {
                     // Call any registered prefs callbacks
@@ -860,7 +860,7 @@ http://www.gosquared.com/liquidicity/archives/122
                 });
             }
             go.initialized = true; // Don't use this to determine if everything is loaded yet.  Use the "go:js_loaded" event for that.
-            E.trigger("go:initialized");
+            E.activator("go:initialized");
             setTimeout(function() {
                 // Make sure all the panels have their style set to 'display:none' to prevent their form elements from gaining focus when the user presses the tab key (only matters when a dialog or other panel is open)
                 u.hideElements('.✈panel');
@@ -1454,7 +1454,7 @@ http://www.gosquared.com/liquidicity/archives/122
                         go.Utils._ranPostInit.push(moduleObj.__name__);
                     }
                 });
-                go.Events.trigger("go:js_loaded");
+                go.Events.activator("go:js_loaded");
             }, 250); // postInit() functions need to de-bounced separately from init() functions
         },
         cacheFileAction: function(fileObj, /*opt*/callback) {
@@ -1578,7 +1578,7 @@ http://www.gosquared.com/liquidicity/archives/122
                     }
                     go.Visual.updateDimensions(); // In case the styles changed the size of text
                     go.node.removeEventListener(go.Visual.transitionEndName, transitionEndFunc, false);
-                    go.Events.trigger("go:css_loaded", message);
+                    go.Events.activator("go:css_loaded", message);
                 };
             if (message.result == 'Success') {
                 // This is for handling any given CSS file
@@ -2465,7 +2465,7 @@ http://www.gosquared.com/liquidicity/archives/122
                     logError(gettext("Pinging Gate One server took longer than ") + timeout + gettext("ms.  Attempting to reconnect..."));
                     if (go.ws.readyState == 1) { go.ws.close(); }
                     go.Net.connectionProblem = true;
-                    go.Events.trigger('go:ping_timeout');
+                    go.Events.activator('go:ping_timeout');
                 }, timeout);
             }
         },
@@ -2520,7 +2520,7 @@ http://www.gosquared.com/liquidicity/archives/122
                     clearTimeout(go.Net.reconnectTimeout);
                 }
             }, 500);
-            go.Events.trigger("go:reauthenticate");
+            go.Events.activator("go:reauthenticate");
             if (go.Net.reauthForceReload) {
                 takeAction();
             }
@@ -2566,7 +2566,7 @@ http://www.gosquared.com/liquidicity/archives/122
             go.Visual.displayMessage(message);
             // Fire a connection_error event.  DEVELOPERS: It's a good event to attach to in order to grab a new/valid API authentication object.
             // For reference, to reset the auth object just assign it:  GateOne.prefs.auth = <your auth object>
-            go.Events.trigger("go:connection_error");
+            go.Events.activator("go:connection_error");
             go.Net.reconnectTimeout = setTimeout(go.Net.connect, 5000);
         },
         sslError: function() {
@@ -2658,7 +2658,7 @@ http://www.gosquared.com/liquidicity/archives/122
             if (go.Net.connectionProblem) {
                 go.Net.connectionError();
             }
-            go.Events.trigger("go:disconnected");
+            go.Events.activator("go:disconnected");
         },
         disconnect: function(/*opt*/reason) {
             /**:GateOne.Net.disconnect([reason])
@@ -2752,7 +2752,7 @@ http://www.gosquared.com/liquidicity/archives/122
                     // NOTE: The "go:connection_established" event is only useful to plugins/applications in *reconnect* situations.
                     // Why?  Because it gets fired before plugin/application JS gets downloaded on initial page load.
                     // So the only time a plugin/application can use it is when the connection to the server is re-established.
-                    go.Events.trigger("go:connection_established");
+                    go.Events.activator("go:connection_established");
                     go.initialize();
                     if (callback) {
                         callback();
@@ -2817,7 +2817,7 @@ http://www.gosquared.com/liquidicity/archives/122
                 logDebug("WebSocket Closed");
             }
             go.ws.close(); // No reason to leave it open taking up resources on the server.
-            E.trigger('go:timeout');
+            E.activator('go:timeout');
         },
         addAction: function(name, func) {
             /**:GateOne.Net.addAction(name, func)
@@ -2922,7 +2922,7 @@ http://www.gosquared.com/liquidicity/archives/122
             }
         */
             go.locations = locations;
-            go.Events.trigger('go:locations', locations);
+            go.Events.activator('go:locations', locations);
         },
         setLocation: function(location) {
             /**:GateOne.Net.setLocation(location)
@@ -2937,7 +2937,7 @@ http://www.gosquared.com/liquidicity/archives/122
                 history.pushState({}, document.title, "?location=" + location);
             }
             go.ws.send(JSON.stringify({'go:set_location': location}));
-            go.Events.trigger("go:set_location", location);
+            go.Events.activator("go:set_location", location);
         }
     });
 // Protocol actions
@@ -3423,7 +3423,7 @@ http://www.gosquared.com/liquidicity/archives/122
             if (workspaceNum) {
                 v.switchWorkspace(workspaceNum);
             }
-            E.trigger('go:app_chooser', where);
+            E.activator('go:app_chooser', where);
             return acContainer;
         },
         setTitle: function(title) {
@@ -3450,7 +3450,7 @@ http://www.gosquared.com/liquidicity/archives/122
                     v.applyTransform(sideinfo, "rotate(90deg) scale(" + scaleDown + ")" + "translateY(" + scrollbarAdjust + "px)");
                 }
             }
-            go.Events.trigger('go:set_title_action', title);
+            go.Events.activator('go:set_title_action', title);
         },
         updateDimensions: function(/*opt*/force) {
             /**:GateOne.Visual.updateDimensions([force])
@@ -3518,7 +3518,7 @@ http://www.gosquared.com/liquidicity/archives/122
                     "screen": {"width": screen.width, "height": screen.height}
                 }
             }));
-            go.Events.trigger("go:update_dimensions", v.goDimensions);
+            go.Events.activator("go:update_dimensions", v.goDimensions);
         },
         transitionEvent: function() {
             /**:GateOne.Visual.transitionEvent()
@@ -3720,7 +3720,7 @@ http://www.gosquared.com/liquidicity/archives/122
                 if (panels[i] && v.getTransform(panels[i]) == "scale(1)") {
                     v.applyTransform(panels[i], 'scale(0)');
                     // Call any registered 'out' callbacks for all of these panels
-                    E.trigger("go:panel_toggle:out", panels[i]);
+                    E.activator("go:panel_toggle:out", panels[i]);
                     // Set the panels to display:none after they scale out to make sure they don't mess with user's tabbing (tabIndex)
                     setHideTimeout(panels[i]);
                 }
@@ -3745,7 +3745,7 @@ http://www.gosquared.com/liquidicity/archives/122
                     v.applyTransform(panel, 'scale(1)');
                 }, 10);
                 // Call any registered 'in' callbacks for all of these panels
-                E.trigger("go:panel_toggle:in", panel)
+                E.activator("go:panel_toggle:in", panel)
                 // Make it so the user can press the ESC key to close the panel
                 panel.onkeyup = function(e) {
                     if (e.keyCode == 27) { // ESC key
@@ -3759,7 +3759,7 @@ http://www.gosquared.com/liquidicity/archives/122
             } else {
                 v.applyTransform(panel, 'scale(0)');
                 // Call any registered 'out' callbacks for all of these panels
-                E.trigger("go:panel_toggle:out", panel);
+                E.activator("go:panel_toggle:out", panel);
                 setTimeout(function() {
                     // Hide the panel completely now that it has been scaled out to avoid tabIndex issues
                     u.hideElement(panel);
@@ -3901,11 +3901,11 @@ http://www.gosquared.com/liquidicity/archives/122
                 // Page has become visibile again
                 logDebug(gettext("Ninja Mode disabled."));
                 go.Visual.visible = true;
-                go.Events.trigger("go:visible");
+                go.Events.activator("go:visible");
             } else {
                 logDebug(gettext("Ninja Mode!  Gate One has become hidden."));
                 go.Visual.visible = false;
-                go.Events.trigger("go:invisible");
+                go.Events.activator("go:invisible");
             }
         },
         newWorkspace: function() {
@@ -3955,7 +3955,7 @@ http://www.gosquared.com/liquidicity/archives/122
             go.workspaces[workspaceNum] = workspaceObj;
             gridwrapper.appendChild(workspaceNode);
             workspaceNode.focus();
-            go.Events.trigger('go:new_workspace', workspaceNum);
+            go.Events.activator('go:new_workspace', workspaceNum);
             return workspaceNode;
         },
         closeWorkspace: function(workspace, /*opt*/message) {
@@ -3994,7 +3994,7 @@ http://www.gosquared.com/liquidicity/archives/122
                     }
                 }
             }
-            go.Events.trigger('go:close_workspace', workspace);
+            go.Events.activator('go:close_workspace', workspace);
         },
         switchWorkspace: function(workspace) {
             /**:GateOne.Visual.switchWorkspace(workspace)
@@ -4005,7 +4005,7 @@ http://www.gosquared.com/liquidicity/archives/122
              */
             var activeWS = localStorage[go.prefs.prefix+'selectedWorkspace'];
             logDebug('switchWorkspace(' + workspace + '), active workspace: ' + activeWS);
-            go.Events.trigger('go:switch_workspace', workspace);
+            go.Events.activator('go:switch_workspace', workspace);
             // NOTE: The following *must* come after the tiggered event above!
             localStorage[go.prefs.prefix+'selectedWorkspace'] = workspace;
         },
@@ -4049,7 +4049,7 @@ http://www.gosquared.com/liquidicity/archives/122
             var workspaceNode = go.Utils.getNode('#'+go.prefs.prefix+'workspace'+workspace),
                 app = workspaceNode.getAttribute('data-application');
             if (app && go.loadedApplications[app].__appinfo__.relocatable) {
-                go.Events.trigger("go:relocate_workspace", workspace, location);
+                go.Events.activator("go:relocate_workspace", workspace, location);
                 if (workspaceNode) { // Some apps will close the workspace on their own
                     go.Visual.closeWorkspace(workspace);
                 }
@@ -4062,7 +4062,7 @@ http://www.gosquared.com/liquidicity/archives/122
             v.applyTransform(e.target, 'translate(0px, 0px)');
             e.target.style.display = ''; // Reset
             v.transitioning = false;
-            go.Events.trigger("go:ws_transitionend", e.target);
+            go.Events.activator("go:ws_transitionend", e.target);
         },
         _slideEndBackground: function(e) {
             var v = GateOne.Visual;
@@ -4125,7 +4125,7 @@ http://www.gosquared.com/liquidicity/archives/122
                                     v.applyTransform(wsNode, 'translate(0px, 0px)');
                                     wsNode.style.display = ''; // Reset
                                     v.transitioning = false;
-                                    go.Events.trigger("go:ws_transitionend", wsNode);
+                                    go.Events.activator("go:ws_transitionend", wsNode);
                                 }, 1050);
                             }
                         }
@@ -4478,7 +4478,7 @@ http://www.gosquared.com/liquidicity/archives/122
             go.workspaces[ws2].node = ws1node;
             ws1node.setAttribute('data-title', ws2title);
             ws2node.setAttribute('data-title', ws1title);
-            go.Events.trigger('go:swapped_workspaces', ws1, ws2);
+            go.Events.activator('go:swapped_workspaces', ws1, ws2);
         },
         _selectWorkspace: function(e) {
             // Internal function for toggleGridView() so we can remove it after calling addEventListener()
@@ -4538,12 +4538,12 @@ http://www.gosquared.com/liquidicity/archives/122
                     });
                     u.showElement(sideinfo);
                 }, 1100);
-                go.Events.trigger('go:grid_view:close');
+                go.Events.activator('go:grid_view:close');
             } else {
                 // Bring up the grid
                 v.gridView = true;
                 u.hideElement(sideinfo);
-                go.Events.trigger('go:grid_view:open');
+                go.Events.activator('go:grid_view:open');
                 setTimeout(function() {
                     // We call go:grid_view:open here because it is important that it happens after everything has settled down
                     go.node.style.overflowY = 'visible';
@@ -4763,7 +4763,7 @@ http://www.gosquared.com/liquidicity/archives/122
                     }
                     // Remove the event that called us so we're not constantly looping over the dialogs array
                     dialogContainer.removeEventListener("mousedown", dialogToForeground, true);
-                    go.Events.trigger('go:dialog_to_foreground', dialogContainer);
+                    go.Events.activator('go:dialog_to_foreground', dialogContainer);
                 },
                 containerMouseUp = function(e) {
                     // Reattach our mousedown function since it auto-removes itself the first time it runs (so we're not wasting cycles constantly looping over the dialogs array)
@@ -5173,7 +5173,7 @@ http://www.gosquared.com/liquidicity/archives/122
             setTimeout(function() {
                 OKButton.focus();
             }, 250);
-            go.Events.trigger('go:alert', title, message, closeDialog);
+            go.Events.activator('go:alert', title, message, closeDialog);
         },
         showDock: function(name) {
             /**:GateOne.Visual.showDock(name)
@@ -5220,7 +5220,7 @@ http://www.gosquared.com/liquidicity/archives/122
 //             }
                 go.node.appendChild(overlay);
                 v.overlay = true;
-                go.Events.trigger('go:overlay_enabled');
+                go.Events.activator('go:overlay_enabled');
             }
         },
         disableOverlay: function() {
@@ -5239,7 +5239,7 @@ http://www.gosquared.com/liquidicity/archives/122
                 // Remove it
                 u.removeElement(existingOverlay);
                 v.overlay = false;
-                go.Events.trigger('go:overlay_disabled');
+                go.Events.activator('go:overlay_disabled');
             }
         }
     });
@@ -5928,7 +5928,7 @@ http://www.gosquared.com/liquidicity/archives/122
                 if (prefsPanelUserID) {
                     prefsPanelUserID.innerHTML = username + " ";
                 }
-                go.Events.trigger("go:user_login", username);
+                go.Events.activator("go:user_login", username);
                 if (go.User.userLoginCallbacks.length) {
                     // Call any registered callbacks
                     go.Logging.deprecated("userLoginCallbacks", gettext("Use GateOne.Events.on('go:user_login', func) instead."));
@@ -5960,7 +5960,7 @@ http://www.gosquared.com/liquidicity/archives/122
             }
             // This only works in IE but fortunately only IE needs it:
             document.execCommand("ClearAuthenticationCache");
-            go.Events.trigger("go:user_logout", go.User.username);
+            go.Events.activator("go:user_logout", go.User.username);
             // NOTE: This takes care of deleting the "user" cookie
             u.xhrGet(go.prefs.url+'auth?logout=True&redirect='+redirectURL, function(response) {
                 logDebug(gettext("Logout Response: ") + response);
@@ -5994,7 +5994,7 @@ http://www.gosquared.com/liquidicity/archives/122
                 v.appChooser();
             }
             // NOTE: In most cases applications' JavaScript will not be sent to the user if that user is not allowed to run it but this does not cover all use case scenarios.  For example, a user that has access to an application only if certain conditions are met (e.g. during a specific time window).  In those instances we don't want to force the user to reload the page...  We'll just send a new applications list when it changes (which is a feature that's on the way).
-            GateOne.Events.trigger("go:applications", apps);
+            GateOne.Events.activator("go:applications", apps);
         },
         preference: function(title, content, /*opt*/callback) {
             /**:GateOne.User.preference(title, content)
@@ -6089,7 +6089,7 @@ http://www.gosquared.com/liquidicity/archives/122
              Attached to the `go:user_list` WebSocket action; sets `GateOne.User.userList` and triggers the `go:user_list` event passing the list of users as the only argument.
              */
             go.User.userList = userList;
-            go.Events.trigger("go:user_list", userList);
+            go.Events.activator("go:user_list", userList);
         }
     });
 // Register our GateOne.User actions (needs to be called immediately; before init() functions)

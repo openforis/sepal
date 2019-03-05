@@ -8,6 +8,7 @@ import static org.openforis.sepal.component.task.api.Task.State.*
 class Task {
     String id
     State state
+    String recipeId
     String username
     String operation
     Map params
@@ -58,15 +59,16 @@ class Task {
 
     Task update(State state, String statusDescription) {
         new Task(
-                id: id,
-                state: state,
-                username: username,
-                operation: operation,
-                params: params,
-                sessionId: sessionId,
-                statusDescription: statusDescription ?: state.description,
-                creationTime: creationTime,
-                updateTime: updateTime
+            id: id,
+            state: state,
+            recipeId: recipeId,
+            username: username,
+            operation: operation,
+            params: params,
+            sessionId: sessionId,
+            statusDescription: statusDescription ?: state.description,
+            creationTime: creationTime,
+            updateTime: updateTime
         )
     }
 

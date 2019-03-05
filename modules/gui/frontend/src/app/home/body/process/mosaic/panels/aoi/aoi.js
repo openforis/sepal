@@ -1,18 +1,17 @@
-import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
 import CountrySection from './countrySection'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import FusionTableSection from './fusionTableSection'
 import PanelSections from 'widget/panelSections'
 import PolygonSection from './polygonSection'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SectionSelection from './sectionSelection'
-import _ from 'lodash'
 import styles from './aoi.module.css'
 
 const fields = {
@@ -44,29 +43,12 @@ const fields = {
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
-        const {values, recipeId} = props
-        this.aoiUnchanged = true
-        this.initialAoi = values
         this.initialBounds = sepalMap.getBounds()
         this.initialZoom = sepalMap.getZoom()
-        this.recipeActions = RecipeActions(recipeId)
-    }
-
-    onApply(values) {
-        const {recipeId, componentWillUnmount$} = this.props
-        this.recipeActions.setAoi({values, model: valuesToModel(values)}).dispatch()
-        const aoi = RecipeState(recipeId)('ui.aoi')
-        this.aoiUnchanged = _.isEqual(aoi, this.initialAoi)
-        setAoiLayer({
-            contextId: recipeId,
-            aoi: aoi,
-            fill: false,
-            destroy$: componentWillUnmount$
-        })
     }
 
     render() {
-        const {recipeId, recipePath, form, inputs} = this.props
+        const {recipeId, inputs} = this.props
         const sections = [
             {
                 icon: 'cog',
@@ -90,42 +72,57 @@ class Aoi extends React.Component {
             },
         ]
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                onApply={values => this.onApply(values)}>
+                placement='bottom-right'
+                onApply={(values, model) => this.onApply(values, model)}
+                onCancel={() => this.onCancel()}>
                 <PanelSections inputs={inputs} selected={inputs.section} sections={sections}/>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
+    }
+
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
     }
 
     componentDidUpdate() {
-        const input = this.props.inputs.allowWholeFusionTable
-        const allowWholeFusionTable = this.props.allowWholeFusionTable || ''
-        input.set(allowWholeFusionTable)
+        const {inputs, allowWholeFusionTable = ''} = this.props
+        inputs.allowWholeFusionTable.set(allowWholeFusionTable)
     }
 
-    componentWillUnmount() {
+    showPreview() {
         const {recipeId} = this.props
-        const recipeState = RecipeState(recipeId)
+        RecipeActions(recipeId).showPreview().dispatch()
+    }
+
+    onApply(values, model) {
+        this.showPreview()
+        this.updateLayer(model)
+    }
+
+    onCancel() {
+        const {model} = this.props
+        this.showPreview()
+        this.updateLayer(model)
+        sepalMap.fitBounds(this.initialBounds)
+        sepalMap.setZoom(this.initialZoom)
+    }
+
+    updateLayer(model) {
+        const {recipeId} = this.props
         setAoiLayer({
             contextId: recipeId,
-            aoi: recipeState && recipeState('model.aoi'),
-            fill: false
-        }
-        )
-        if (this.aoiUnchanged) {
-            sepalMap.fitBounds(this.initialBounds)
-            sepalMap.setZoom(this.initialZoom)
-        }
+            aoi: model,
+            fill: false,
+        })
     }
 }
 
 Aoi.propTypes = {
-    recipeId: PropTypes.string.isRequired,
     allowWholeFusionTable: PropTypes.any
 }
 
@@ -180,16 +177,4 @@ const modelToValues = (model = {}) => {
         return {}
 }
 
-export default withRecipePath()(
-    initValues({
-        getModel: props => RecipeState(props.recipeId)('model.aoi'),
-        getValues: props => RecipeState(props.recipeId)('ui.aoi'),
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setAoi({values, model})
-                .dispatch()
-    })(
-        form({fields})(Aoi)
-    )
-)
+export default recipeFormPanel({id: 'aoi', fields, modelToValues, valuesToModel})(Aoi)

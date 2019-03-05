@@ -1,6 +1,7 @@
-import {RecipeState} from './classificationRecipe'
-import {connect, select} from 'store'
-import {recipe} from 'app/home/body/process/recipe'
+import {connect} from 'store'
+import {defaultModel} from './classificationRecipe'
+import {recipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'collections'
 import {sepalMap} from 'app/home/map/map'
 import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import ClassificationPreview from './classificationPreview'
@@ -9,14 +10,15 @@ import MapToolbar from 'app/home/map/mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = ownProps.recipeState
-    return {
-        initialized: recipeState('ui.initialized'),
-        source: recipeState('model.source'),
-        tabCount: select('process.tabs').length
-    }
-}
+const mapStateToProps = state => ({
+    tabCount: state.process.tabs.length
+})
+
+const mapRecipeToProps = recipe => ({
+    recipeId: selectFrom(recipe, 'id'),
+    initialized: selectFrom(recipe, 'ui.initialized'),
+    source: selectFrom(recipe, 'model.source')
+})
 
 class Classification extends React.Component {
     render() {
@@ -27,14 +29,15 @@ class Classification extends React.Component {
                     statePath={recipePath + '.ui'}
                     mapContext={recipeId}
                     labelLayerIndex={2}/>
-                <ClassificationToolbar recipeId={recipeId}/>
+                <ClassificationToolbar/>
 
                 {initialized
-                    ? <ClassificationPreview recipeId={recipeId}/>
+                    ? <ClassificationPreview/>
                     : null}
             </React.Fragment>
         )
     }
+
     componentDidMount() {
         this.setAoiLayer()
     }
@@ -63,6 +66,10 @@ Classification.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default recipe(RecipeState)(
-    connect(mapStateToProps)(Classification)
+export default (
+    recipe({defaultModel, mapRecipeToProps})(
+        connect(mapStateToProps)(
+            Classification
+        )
+    )
 )

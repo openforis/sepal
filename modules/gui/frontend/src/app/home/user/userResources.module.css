@@ -1,7 +1,3 @@
-.panel {
-    width: 40rem;
-}
-
 button.budgetExceeded {
     color: var(--error-color) !important;
     animation: pulse 1250ms ease-out infinite;
@@ -19,20 +15,17 @@ button.budgetExceeded {
     }
 }
 
-.report {
+.resources {
+    width: 100%;
     padding: 0 1rem;
 }
 
-.report table {
+.resources table {
     margin: auto;
     width: 100%;
 }
 
-.report .section:not(:first-child) {
-    margin-top: 2rem;
-}
-
-.report th {
+.resources th {
     font-weight: normal;
     font-size: .8rem;
     text-transform: uppercase;
@@ -40,20 +33,20 @@ button.budgetExceeded {
     padding: .2rem .5rem .2rem 0;
 }
 
-.report th.quota {
+.resources th.quota {
     text-align: right;
 }
 
-.report th.used {
+.resources th.used {
     text-align: right;
 }
 
-.report td {
+.resources td {
     font-size: 1rem;
     padding: .2rem .5rem;
 }
 
-.report tr.clickable:hover {
+.resources tr.clickable:hover {
     background-color: #404040;
     cursor: pointer;
 }
@@ -62,19 +55,19 @@ button.budgetExceeded {
     text-align: right;
 }
 
-.report td.percent {
+.resources td.percent {
     margin-left: 1rem;
     font-size: 0.8rem;
 }
 
-.report td.percent.low {
+.resources td.percent.low {
     color: var(--success-color)
 }
 
-.report td.percent.medium {
+.resources td.percent.medium {
     color: var(--warning-color)
 }
 
-.report td.percent.high {
+.resources td.percent.high {
     color: var(--error-color)
 }

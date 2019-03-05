@@ -1,37 +1,24 @@
 import {Field, form} from 'widget/form'
+import {PanelButtons} from 'widget/panel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeState, getRevisions, recipePath, revertToRevision$, withRecipePath} from 'app/home/body/process/recipe'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {activatable} from 'widget/activation/activatable'
+import {getRevisions, revertToRevision$} from 'app/home/body/process/recipe'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
+import FormPanel from 'widget/formPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
-// import SelectionList from 'widget/selectionList'
-import actionBuilder from 'action-builder'
 import moment from 'moment'
 import styles from './revisions.module.css'
 
 const fields = {
-    revision: new Field()
-        .notBlank('process.revisions.required')
-}
-
-export const showRevisionsPanel = (recipeId, shown = true) =>
-    actionBuilder('SHOW_REVISIONS', {shown})
-        .set([recipePath(recipeId), 'ui.showRevisions'], shown)
-        .dispatch()
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        open: recipeState('ui.showRevisions')
-    }
+    revision: new Field().notBlank('process.revisions.required')
 }
 
 class Revisions extends React.Component {
-    renderContent() {
+    renderRevisions() {
         const {recipeId, inputs: {revision}} = this.props
         const options = getRevisions(recipeId).map(timestamp => {
             const date = moment(+timestamp)
@@ -43,49 +30,51 @@ class Revisions extends React.Component {
             return {value: timestamp, label}
         })
         return (
-            <Buttons type='vertical' uppercase={false} options={options} input={revision}/>
+            <Buttons type='vertical-tight' uppercase={false} options={options} input={revision}/>
         )
     }
 
-    renderPanel() {
-        const {recipeId, recipePath, form} = this.props
+    render() {
+        const {form, inputs: {revision}, activatable: {deactivate}} = this.props
         return (
             <FormPanel
                 className={styles.panel}
                 form={form}
-                isActionForm={true}
-                statePath={recipePath + '.ui'}
-                modal
-                onApply={({revision}) => this.revertToRevision(revision)}
-                onCancel={() => showRevisionsPanel(recipeId, false)}>
+                isActionForm
+                modal>
                 <PanelHeader
                     icon='clock'
                     title={msg('process.revisions.title')}/>
                 <PanelContent className={styles.content}>
                     <ScrollableContainer>
                         <Scrollable>
-                            {this.renderContent()}
+                            {this.renderRevisions()}
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
-                <FormPanelButtons
-                    applyLabel={msg('process.revisions.revert')}/>
+                <PanelButtons>
+                    <PanelButtons.Main>
+                        <PanelButtons.Confirm
+                            label={msg('process.revisions.revert')}
+                            disabled={form.isInvalid()}
+                            onClick={() => this.revertToRevision(revision.value)}/>
+                    </PanelButtons.Main>
+                    <PanelButtons.Extra>
+                        <PanelButtons.Cancel
+                            onClick={() => deactivate()}/>
+                    </PanelButtons.Extra>
+                </PanelButtons>
             </FormPanel>
         )
     }
 
-    render() {
-        const {open} = this.props
-        return open ? this.renderPanel() : null
-    }
-
     revertToRevision(revision) {
-        const {recipeId, asyncActionBuilder} = this.props
-        asyncActionBuilder('REVERT_TO_REVISION',
+        const {recipeId, stream, deactivate} = this.props
+        stream('REVERT_TO_REVISION',
             revertToRevision$(recipeId, revision).pipe(
-                map(() => showRevisionsPanel(recipeId, false))
-            ))
-            .dispatch()
+                map(() => deactivate())
+            )
+        )
     }
 }
 
@@ -93,6 +82,10 @@ Revisions.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default withRecipePath()(
-    form({fields, mapStateToProps})(Revisions)
+const policy = () => ({_: 'allow'})
+
+export default (
+    activatable('revisions', policy)(
+        form({fields})(Revisions)
+    )
 )

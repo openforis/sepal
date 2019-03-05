@@ -1,14 +1,14 @@
-import {Field, form} from 'widget/form'
+import {Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {RecipeActions} from '../../mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {currentUser} from 'user'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'
-import {withRecipePath} from 'app/home/body/process/recipe'
+import {selectFrom} from 'collections'
 import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
-import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './retrieve.module.css'
@@ -20,20 +20,15 @@ const fields = {
         .notEmpty('process.mosaic.panel.retrieve.form.destination.required')
 }
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        sources: recipeState('model.sources'),
-        compositeOptions: recipeState('model.compositeOptions'),
-        values: recipeState('ui.retrieveOptions'),
-        user: currentUser()
-    }
-}
+const mapRecipeToProps = recipe => ({
+    sources: selectFrom(recipe, 'model.sources'),
+    compositeOptions: selectFrom(recipe, 'model.compositeOptions'),
+    user: currentUser()
+})
 
 class Retrieve extends React.Component {
     constructor(props) {
         super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
         this.allBandOptions = [
             {
                 options: [
@@ -124,20 +119,18 @@ class Retrieve extends React.Component {
                         multiple={false}
                         options={destinationOptions}/>
                 </div>
-
             </div>
         )
     }
 
     render() {
-        const {recipePath, form} = this.props
+        const {recipeId} = this.props
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                isActionForm={true}
-                onApply={values => this.recipeActions.retrieve(values).dispatch()}>
+                isActionForm
+                placement='top-right'
+                onApply={values => RecipeActions(recipeId).retrieve(values).dispatch()}>
                 <PanelHeader
                     icon='cloud-download-alt'
                     title={msg('process.mosaic.panel.retrieve.title')}/>
@@ -148,7 +141,7 @@ class Retrieve extends React.Component {
 
                 <FormPanelButtons
                     applyLabel={msg('process.mosaic.panel.retrieve.apply')}/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 
@@ -161,11 +154,6 @@ class Retrieve extends React.Component {
 
 const option = band => ({value: band, label: msg(['bands', band])})
 
-Retrieve.propTypes = {
-    recipeId: PropTypes.string
-}
+Retrieve.propTypes = {}
 
-export default withRecipePath()(
-    form({fields, mapStateToProps})(Retrieve)
-)
-
+export default recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})(Retrieve)

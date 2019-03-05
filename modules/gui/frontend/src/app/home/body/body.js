@@ -35,8 +35,8 @@ class Body extends React.Component {
     }
 
     componentDidUpdate() {
-        const {budgetExceeded} = this.props
-        if (budgetExceeded)
+        const {budgetExceeded, location} = this.props
+        if (budgetExceeded && location.pathname !== '/browse')
             history().replace('/browse').dispatch()
         else if (this.props.location.pathname === '/')
             history().replace('/process').dispatch()

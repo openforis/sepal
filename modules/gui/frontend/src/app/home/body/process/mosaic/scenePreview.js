@@ -1,20 +1,19 @@
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {connect} from 'store'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'
+import {selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import React from 'react'
 import daysBetween from './daysBetween'
 import styles from './scenePreview.module.css'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        scene: recipeState('ui.sceneToPreview')
-    }
-}
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    scene: selectFrom(recipe, 'ui.sceneToPreview')
+})
 
 class ScenePreview extends React.Component {
     constructor(props) {
@@ -71,7 +70,7 @@ class ScenePreview extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(ScenePreview)
+export default withRecipe(mapRecipeToProps)(ScenePreview)
 
 const LabelValue = ({name, value, icon}) =>
     <div className={styles[name]}>

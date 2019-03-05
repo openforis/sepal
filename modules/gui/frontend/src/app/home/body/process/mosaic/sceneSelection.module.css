@@ -169,15 +169,10 @@
 .overlayControls {
     height: 100%;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center;
     align-items: center;
-    padding: .75rem;
-}
-
-.overlayControls > * {
-    width: calc(var(--thumbnail-size) - 3rem);
-    margin: .75rem .5rem;
+    padding: 1rem;
 }
 
 @media only screen and (max-width: 500px) {

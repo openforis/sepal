@@ -132,42 +132,63 @@
     }
 }
 
-/* groups */
+.groupContainer {
+    /* prevent unwanted scrolling due to negative margins */
+    overflow: hidden;
+}
 
 .group {
-    --button-spacing: .5rem;
+    --horizontal-spacing: 1rem;
+    --vertical-spacing: 1rem;
     height: fit-content;
     display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    margin: calc(var(--button-spacing) / -2);
+    margin: calc(var(--vertical-spacing) / -2) calc(var(--horizontal-spacing) / -2);
 }
 
 .group > * {
-    margin: calc(var(--button-spacing) / 2);
+    margin: calc(var(--vertical-spacing) / 2) calc(var(--horizontal-spacing) / 2);
 }
 
-.group.horizontal-tight {
-    --button-spacing: 0;
+.group.horizontal {
+    --horizontal-spacing: .5rem;
+    --vertical-spacing: .5rem;
+    flex-direction: row;
+    align-items: center;
 }
 
-.group.horizontal-wrap {
+.group.horizontal.tight {
+    --horizontal-spacing: 0rem;
+}
+
+.group.horizontal.nowrap {
+    flex-wrap: nowrap;
+}
+
+.group.horizontal.wrap {
     flex-wrap: wrap;
 }
 
+.group.horizontal.fill {
+    --horizontal-spacing: 1rem;
+    --vertical-spacing: 1rem;
+    flex-grow: 1;
+}
+
+.group.horizontal.fill > * {
+    flex-grow: 1;
+}
+
 .group.vertical {
+    --horizontal-spacing: 0rem;
+    --vertical-spacing: 1rem;
     flex-direction: column;
+    flex-wrap: nowrap;
 }
 
 .group.vertical > * {
-    width: auto;
-}
-
-.group.vertical > * + * {
-    margin-top: 1rem;
-}
-
-.group.vertical .button {
     width: 100%;
+}
+
+.group.vertical.tight {
+    --vertical-spacing: .5rem;
 }

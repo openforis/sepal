@@ -1,11 +1,12 @@
 import {Button} from 'widget/button'
-import {ErrorMessage, Field, form} from 'widget/form'
+import {ErrorMessage, Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {msg} from 'translate'
+import {selectFrom} from 'collections'
 import DatePicker from 'widget/datePicker'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -70,10 +71,9 @@ class Dates extends React.Component {
 
     constructor(props) {
         super(props)
-        const {recipeId, inputs: {targetYear, targetDate}} = props
+        const {inputs: {targetYear, targetDate}} = props
         targetYear.onChange(yearString => this.handleYearChange(yearString))
         targetDate.onChange(dateString => this.handleDateChange(dateString))
-        this.recipeActions = RecipeActions(recipeId)
     }
 
     handleYearChange(yearString) {
@@ -137,11 +137,13 @@ class Dates extends React.Component {
                             ? msg('process.mosaic.panel.dates.form.pastSeasons.info.number', {pastSeasons})
                             : msg('process.mosaic.panel.dates.form.pastSeasons.info.none')
                         }
+                        alignment='left'
                         input={yearsBefore}
                         ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
                         snap
-                        logScale
-                        range='left'
+                        scale='log'
+                        invert
+                        range='low'
                     />
                 </div>
                 <div className={styles.futureSeasons}>
@@ -151,11 +153,12 @@ class Dates extends React.Component {
                             ? msg('process.mosaic.panel.dates.form.futureSeasons.info.number', {futureSeasons})
                             : msg('process.mosaic.panel.dates.form.futureSeasons.info.none')
                         }
+                        alignment='right'
                         input={yearsAfter}
                         ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
                         snap
-                        logScale
-                        range='left'
+                        scale='log'
+                        range='low'
                     />
                 </div>
                 <div className={styles.season}>
@@ -175,13 +178,11 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {recipePath, form, inputs: {advanced}} = this.props
+        const {inputs: {advanced}} = this.props
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={advanced.value ? styles.advanced : styles.simple}
-                form={form}
-                statePath={recipePath + '.ui'}
-                onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}>
+                placement='bottom-right'>
                 <PanelHeader
                     icon='calendar-alt'
                     title={msg('process.mosaic.panel.dates.title')}/>
@@ -197,8 +198,18 @@ class Dates extends React.Component {
                         label={advanced.value ? msg('button.less') : msg('button.more')}
                         onClick={() => this.setAdvanced(!advanced.value)}/>
                 </FormPanelButtons>
-            </FormPanel>
+            </RecipeFormPanel>
         )
+    }
+
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 
@@ -248,16 +259,16 @@ const modelToValues = (model = {}) => {
     }
 }
 
-export default withRecipePath()(
-    initValues({
-        getModel: props => RecipeState(props.recipeId)('model.dates'),
-        getValues: props => RecipeState(props.recipeId)('ui.dates'),
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setDates({values, model})
-                .dispatch()
-    })(
-        form({fields})(Dates)
-    )
-)
+const policy = ({values, wizardContext: {wizard}}) => {
+    return wizard || selectFrom(values, 'dirty')
+        ? {
+            _: 'disallow',
+            sceneSelection: 'allow'
+        }
+        : {
+            _: 'allow-then-deactivate',
+            sceneSelection: 'allow'
+        }
+}
+
+export default recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel, policy})(Dates)

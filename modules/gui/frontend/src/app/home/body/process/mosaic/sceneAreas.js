@@ -1,10 +1,10 @@
 import {MapLayer, sepalMap} from 'app/home/map/map'
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, getSource} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Subject, of} from 'rxjs'
-import {connect} from 'store'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
-import {objectEquals} from 'collections'
+import {objectEquals, selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import MapStatus from 'widget/mapStatus'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -12,14 +12,14 @@ import SceneAreaMarker from './sceneAreaMarker'
 import api from 'api'
 import styles from './sceneAreas.module.css'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+const mapRecipeToProps = recipe => {
     return {
-        initialized: recipeState('ui.initialized'),
-        sceneAreasShown: recipeState('ui.sceneAreasShown'),
-        sceneAreas: recipeState('ui.sceneAreas'),
-        aoi: recipeState('model.aoi'),
-        source: recipeState.source()
+        recipeId: recipe.id,
+        initialized: selectFrom(recipe, 'ui.initialized'),
+        sceneAreasShown: selectFrom(recipe, 'ui.sceneAreasShown'),
+        sceneAreas: selectFrom(recipe, 'ui.sceneAreas'),
+        aoi: selectFrom(recipe, 'model.aoi'),
+        source: getSource(recipe)
     }
 }
 
@@ -54,7 +54,6 @@ class SceneAreas extends React.Component {
                     {sceneAreas.map(sceneArea =>
                         <SceneAreaMarker
                             key={sceneArea.id}
-                            recipeId={this.props.recipeId}
                             sceneAreaId={sceneArea.id}
                             center={sceneArea.center}
                             polygon={sceneArea.polygon}/>
@@ -91,7 +90,7 @@ SceneAreas.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default connect(mapStateToProps)(SceneAreas)
+export default withRecipe(mapRecipeToProps)(SceneAreas)
 
 const setSceneAreaLayer = ({recipeId, component}) => {
     const layer = new SceneAreaLayer(component)

@@ -1,63 +1,58 @@
-import {RecipeState} from './classificationRecipe'
-import {connect} from 'store'
 import {msg} from 'translate'
-import {withRecipePath} from 'app/home/body/process/recipe'
+import {selectFrom} from 'collections'
+import {setInitialized} from 'app/home/body/process/recipe'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import PanelWizard from 'widget/panelWizard'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Retrieve from './retrieve/retrieve'
 import Source from './source/source'
-import Toolbar, {PanelButton} from 'widget/toolbar'
+import Toolbar, {ActivationButton} from 'widget/toolbar'
 import TrainingData from './trainingData/trainingData'
 import styles from './classificationToolbar.module.css'
 
-const mapStateToProps = (state, ownProps) => {
-    const {recipeId} = ownProps
-    const recipeState = RecipeState(recipeId)
-    return {
-        initialized: recipeState('ui.initialized')
-    }
-}
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    initialized: selectFrom(recipe, 'ui.initialized'),
+})
 
 class ClassificationToolbar extends React.Component {
     render() {
-        const {recipeId, recipePath, initialized} = this.props
-        const statePath = recipePath + '.ui'
+        const {recipeId, initialized} = this.props
         return (
             <PanelWizard
-                panels={['mosaic', 'trainingData']}
-                statePath={statePath}>
+                panels={['source', 'trainingData']}
+                initialized={initialized}
+                onDone={() => setInitialized(recipeId)}>
+
+                <Retrieve/>
+                <Source/>
+                <TrainingData/>
+
                 <Toolbar
-                    statePath={statePath}
                     vertical
                     placement='top-right'
                     className={styles.top}>
-                    <PanelButton
-                        name='retrieve'
+
+                    <ActivationButton
+                        id='retrieve'
                         icon='cloud-download-alt'
                         tooltip={msg('process.classification.panel.retrieve.tooltip')}
-                        disabled={!initialized}>
-                        <Retrieve recipeId={recipeId}/>
-                    </PanelButton>
+                        disabled={!initialized}/>
                 </Toolbar>
                 <Toolbar
-                    statePath={statePath}
                     vertical
                     placement='bottom-right'
                     className={styles.bottom}>
-                    <PanelButton
-                        name='mosaic'
+                    <ActivationButton
+                        id='source'
                         label={msg('process.classification.panel.source.button')}
-                        tooltip={msg('process.classification.panel.source.tooltip')}>
-                        <Source recipeId={recipeId}/>
-                    </PanelButton>
+                        tooltip={msg('process.classification.panel.source.tooltip')}/>
 
-                    <PanelButton
-                        name='trainingData'
+                    <ActivationButton
+                        id='trainingData'
                         label={msg('process.classification.panel.trainingData.button')}
-                        tooltip={msg('process.classification.panel.trainingData.tooltip')}>
-                        <TrainingData recipeId={recipeId}/>
-                    </PanelButton>
+                        tooltip={msg('process.classification.panel.trainingData.tooltip')}/>
                 </Toolbar>
             </PanelWizard>
         )
@@ -68,6 +63,4 @@ ClassificationToolbar.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default withRecipePath()(
-    connect(mapStateToProps)(ClassificationToolbar)
-)
+export default withRecipe(mapRecipeToProps)(ClassificationToolbar)

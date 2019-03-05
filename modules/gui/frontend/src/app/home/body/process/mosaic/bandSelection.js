@@ -1,7 +1,9 @@
 import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, getSource} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
+import {selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import Checkbox from 'widget/checkbox'
 import ComboBox from 'widget/comboBox'
 import React from 'react'
@@ -13,13 +15,12 @@ const fields = {
     panSharpen: new Field()
 }
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeId = ownProps.recipeId
-    const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.bands') || {}
-    const compositeOptions = recipeState('model.compositeOptions')
+const mapRecipeToProps = recipe => {
+    const values = selectFrom(recipe, 'ui.bands') || {}
+    const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
     return {
-        source: recipeState.source(),
+        recipeId: recipe.id,
+        source: getSource(recipe),
         surfaceReflectance: compositeOptions.corrections.includes('SR'),
         median: compositeOptions.compose === 'MEDIAN',
         values
@@ -156,4 +157,8 @@ const SelectedBands = ({recipeActions, selectedOption, canPanSharpen, panSharpen
 
 }
 
-export default form({fields, mapStateToProps})(BandSelection)
+export default withRecipe(mapRecipeToProps)(
+    form({fields})(
+        BandSelection
+    )
+)

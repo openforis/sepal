@@ -1,21 +1,22 @@
 import {Input} from 'widget/form'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {RecipeActions} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
-import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
+import {selectFrom} from 'collections'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import ComboBox from 'widget/comboBox'
 import React from 'react'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+const mapRecipeToProps = recipe => {
     return {
-        columns: recipeState('ui.fusionTable.columns'),
-        rows: recipeState('ui.fusionTable.rows')
+        recipeId: recipe.id,
+        columns: selectFrom(recipe, 'ui.fusionTable.columns'),
+        rows: selectFrom(recipe, 'ui.fusionTable.rows')
     }
 }
 
@@ -163,4 +164,4 @@ class FusionTableSection extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(FusionTableSection)
+export default withRecipe(mapRecipeToProps)(FusionTableSection)

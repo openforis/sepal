@@ -1,16 +1,17 @@
-import {Field, form} from 'widget/form'
+import {Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {RecipeActions, getSource} from '../../mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
+import {selectFrom} from 'collections'
 import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Slider from 'widget/slider'
-import styles from './composite.module.css'
+import styles from './compositeOptions.module.css'
 
 const fields = {
     corrections: new Field(),
@@ -22,16 +23,11 @@ const fields = {
     compose: new Field()
 }
 
-const mapStateToProps = (state, ownProps) => {
-    return {source: RecipeState(ownProps.recipeId).source()}
-}
+const mapRecipeToProps = recipe => ({
+    source: getSource(recipe)
+})
 
-class Composite extends React.Component {
-    constructor(props) {
-        super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
-    }
-
+class CompositeOptions extends React.Component {
     renderContent() {
         const {
             inputs: {
@@ -101,16 +97,10 @@ class Composite extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                onApply={values => this.recipeActions.setCompositeOptions({
-                    values,
-                    model: valuesToModel(values)
-                }).dispatch()}>
+                placement='bottom-right'>
                 <PanelHeader
                     icon='layer-group'
                     title={msg('process.mosaic.panel.composite.title')}/>
@@ -124,12 +114,22 @@ class Composite extends React.Component {
                 </ScrollableContainer>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
+    }
+
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 
-Composite.propTypes = {
+CompositeOptions.propTypes = {
     disabled: PropTypes.any,
     recipeId: PropTypes.string,
     source: PropTypes.string
@@ -143,7 +143,7 @@ const PercentileField = ({input, disabled = false}) => {
             maxValue={100}
             ticks={[0, 10, 25, 50, 75, 90, 100]}
             snap
-            range='right'
+            range='high'
             info={percentile => {
                 const type = percentile === 0 ? 'off' : percentile === 100 ? 'max' : 'percentile'
                 return msg(['process.mosaic.panel.composite.form.filters', input.name, type], {percentile})
@@ -185,16 +185,18 @@ const modelToValues = model => {
     })
 }
 
-export default withRecipePath()(
-    initValues({
-        getModel: props => RecipeState(props.recipeId)('model.compositeOptions'),
-        getValues: props => RecipeState(props.recipeId)('ui.compositeOptions'),
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setCompositeOptions({values, model})
-                .dispatch()
-    })(
-        form({fields, mapStateToProps})(Composite)
-    )
+const policy = ({values, wizardContext: {wizard}}) => {
+    return wizard || selectFrom(values, 'dirty')
+        ? {
+            _: 'disallow',
+            sceneSelection: 'allow'
+        }
+        : {
+            _: 'allow-then-deactivate',
+            sceneSelection: 'allow'
+        }
+}
+
+export default recipeFormPanel({id: 'compositeOptions', fields, mapRecipeToProps, modelToValues, valuesToModel, policy})(
+    CompositeOptions
 )

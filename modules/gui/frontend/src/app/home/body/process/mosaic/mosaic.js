@@ -1,8 +1,8 @@
 import {Content, SectionLayout} from 'widget/sectionLayout'
-import {RecipeState} from './mosaicRecipe'
-import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {connect, select} from 'store'
-import {recipe} from 'app/home/body/process/recipe'
+import {RecipeActions, SceneSelectionType, defaultModel, getSource} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {connect} from 'store'
+import {recipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'collections'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import AutoSelectScenes from './autoSelectScenes'
@@ -18,54 +18,27 @@ import SceneSelection from './sceneSelection'
 import ShowSceneAreaToggle from 'app/home/body/process/mosaic/showSceneAreaToggle'
 import styles from './mosaic.module.css'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = ownProps.recipeState
-    return {
-        initialized: recipeState('ui.initialized'),
-        aoi: recipeState('model.aoi'),
-        source: recipeState.source(),
-        sceneSelectionOptions: recipeState('model.sceneSelectionOptions'),
-        sceneSelection: recipeState('ui.sceneSelection'),
-        tabCount: select('process.tabs').length
-    }
-}
+const mapStateToProps = state => ({
+    tabCount: state.process.tabs.length
+})
+
+const mapRecipeToProps = recipe => ({
+    recipeId: selectFrom(recipe, 'id'),
+    initialized: selectFrom(recipe, 'ui.initialized'),
+    aoi: selectFrom(recipe, 'model.aoi'),
+    dates: selectFrom(recipe, 'model.dates'),
+    source: getSource(recipe),
+    sceneSelectionOptions: selectFrom(recipe, 'model.sceneSelectionOptions')
+})
 
 class Mosaic extends React.Component {
-    render() {
-        const {recipeId, recipePath, initialized, aoi, source, sceneSelectionOptions: {type}, sceneSelection} = this.props
-        return (
-            <SectionLayout>
-                <Content>
-                    <div className={styles.mosaic}>
-                        <MapToolbar statePath={recipePath} mapContext={recipeId} labelLayerIndex={1}>
-                            <ShowSceneAreaToggle recipeId={recipeId}/>
-                        </MapToolbar>
-                        <MosaicToolbar recipeId={recipeId}/>
-
-                        {initialized
-                            ? <React.Fragment>
-                                <MosaicPreview recipeId={recipeId}/>
-                                {aoi && source && type === SceneSelectionType.SELECT
-                                    ? <React.Fragment>
-                                        <SceneAreas recipeId={recipeId}/>
-                                        <AutoSelectScenes recipeId={recipeId}/>
-                                    </React.Fragment>
-                                    : null}
-                                {sceneSelection
-                                    ? <SceneSelection recipeId={recipeId} sceneAreaId={sceneSelection}/>
-                                    : null}
-                                <SceneDeselection recipeId={recipeId}/>
-                                <BandSelection recipeId={recipeId}/>
-                            </React.Fragment>
-                            : null}
-                    </div>
-                </Content>
-            </SectionLayout>
-        )
-    }
-
-    componentDidMount() {
-        const {recipeId, aoi, componentWillUnmount$} = this.props
+    constructor(props) {
+        super(props)
+        const {recipeId, aoi, componentWillUnmount$} = props
+        const actions = RecipeActions(recipeId)
+        actions.setSceneAreasShown(true).dispatch()
+        actions.setBands('red, green, blue').dispatch()
+        actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
         setAoiLayer({
             contextId: recipeId,
             aoi,
@@ -78,13 +51,47 @@ class Mosaic extends React.Component {
             }
         })
     }
+
+    render() {
+        const {recipeId, recipeContext: {statePath}, initialized, aoi, source, sceneSelectionOptions: {type}} = this.props
+        return (
+            <SectionLayout>
+                <Content>
+                    <div className={styles.mosaic}>
+                        <MapToolbar statePath={statePath + '.ui'} mapContext={recipeId} labelLayerIndex={1}>
+                            <ShowSceneAreaToggle/>
+                        </MapToolbar>
+                        <MosaicToolbar/>
+
+                        {initialized
+                            ? <React.Fragment>
+                                <MosaicPreview/>
+                                {aoi && source && type === SceneSelectionType.SELECT
+                                    ? <React.Fragment>
+                                        <SceneAreas/>
+                                        <AutoSelectScenes/>
+                                    </React.Fragment>
+                                    : null}
+                                <SceneSelection/>
+                                <SceneDeselection/>
+                                <BandSelection/>
+                            </React.Fragment>
+                            : null}
+                    </div>
+                </Content>
+            </SectionLayout>
+        )
+    }
 }
 
 Mosaic.propTypes = {
-    recipeId: PropTypes.string.isRequired,
     aoi: PropTypes.object
 }
 
-export default recipe(RecipeState)(
-    connect(mapStateToProps)(Mosaic)
+export default (
+    recipe({defaultModel, mapRecipeToProps})(
+        connect(mapStateToProps)(
+            Mosaic
+        )
+    )
 )

@@ -37,7 +37,8 @@ class LandCoverBottomBar extends Component {
             <Button
                 additionalClassName={styles.back}
                 look={'transparent'}
-                onClick={() => console.log('Going back to composites')}>
+                // onClick={() => console.log('Going back to composites')}
+            >
                 <Icon name='backward'/>
                 <span>Composite</span>
             </Button>
@@ -73,7 +74,7 @@ class LandCoverBottomBar extends Component {
                 icon='angle-double-right'
                 tooltip={'Select next primitive'}
                 chromeless
-                onClick={() => console.log('Next primitive')}
+                // onClick={() => console.log('Next primitive')}
                 additionalClassName={styles.nextPrimitive}/>
         )
     }
@@ -82,7 +83,7 @@ class LandCoverBottomBar extends Component {
         return (
             <Button
                 look={'transparent'}
-                onClick={() => console.log('Starting to create primitive')}
+                // onClick={() => console.log('Starting to create primitive')}
                 label='Create primitive'/>
         )
     }
@@ -93,7 +94,8 @@ class LandCoverBottomBar extends Component {
                 disabled={!this.allPrimitivesCreated()}
                 additionalClassName={styles.next}
                 look={'transparent'}
-                onClick={() => console.log('Navigate to assemblage')}>
+                // onClick={() => console.log('Navigate to assemblage')}
+            >
                 <span>Assemblage</span>
                 <Icon name='forward'/>
             </Button>

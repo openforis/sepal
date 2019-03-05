@@ -1,11 +1,11 @@
 import {Button, ButtonGroup} from 'widget/button'
+import {UsageButton} from '../user/usage'
+import {UserDetailsButton} from '../user/userDetails'
+import {UserMessagesButton} from '../user/userMessages'
 import {logout} from 'user'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import UserMessages from '../user/userMessages'
-import UserProfile from '../user/userProfile'
-import UserReport from '../user/userReport'
 import styles from './footer.module.css'
 
 const Footer = ({className}) => {
@@ -18,9 +18,9 @@ const Footer = ({className}) => {
                 </div>
                 <div>
                     <ButtonGroup type='horizontal-tight'>
-                        <UserMessages/>
-                        <UserReport/>
-                        <UserProfile/>
+                        <UserMessagesButton/>
+                        <UsageButton/>
+                        <UserDetailsButton/>
                         <Logout/>
                     </ButtonGroup>
                 </div>

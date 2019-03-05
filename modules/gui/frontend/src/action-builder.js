@@ -1,29 +1,13 @@
 import {dispatch} from 'store'
+import {toPathList} from 'collections'
 import _ from 'lodash'
 import immutable from 'object-path-immutable'
-
-const dotSafeWrap = path => ({dotSafe: path})
-const dotSafeUnwrap = safePath => safePath.dotSafe
-
-const toPathList = (path, safe = false) => {
-    if (_.isArray(path)) {
-        return _.flatten(path.map(pathElement => toPathList(pathElement, safe)))
-    }
-    if (_.isObject(path)) {
-        return toPathList(dotSafeUnwrap(path), true)
-    }
-    if (_.isString(path)) {
-        return safe ? path : path.split('.')
-    }
-    throw new Error('Unsupported path element type: ', path)
-}
 
 const select = (path, state) => {
     const pathList = toPathList(path)
     return pathList.reduce((state, part) => {
         return state != null && state[part] != null ? state[part] : undefined
     }, state)
-
 }
 
 const actionBuilder = (type, props) => {
@@ -41,7 +25,7 @@ const actionBuilder = (type, props) => {
             prefix = _prefix
             return this
         },
-        
+
         withState(path, callback) {
             operations.push((immutableState, state) => {
                 const prevValue = select(path, state)
@@ -66,6 +50,14 @@ const actionBuilder = (type, props) => {
                 return (index !== -1)
                     ? immutableState.set([...toPathList(path), index], value)
                     : immutableState
+            })
+            return this
+        },
+
+        sort(path, key) {
+            operations.push((immutableState, state) => {
+                const value = select(path, state)
+                return immutableState.set(toPathList(path), _.orderBy(value, key))
             })
             return this
         },
@@ -160,7 +152,11 @@ const actionBuilder = (type, props) => {
         },
 
         del(path) {
-            operations.push(immutableState => immutableState.del(toPathList(path)))
+            operations.push((immutableState, state) =>
+                select(path, state) !== undefined
+                    ? immutableState.del(toPathList(path))
+                    : immutableState
+            )
             return this
         },
 
@@ -223,4 +219,3 @@ const actionBuilder = (type, props) => {
 }
 
 export default actionBuilder
-export const dotSafe = path => dotSafeWrap(path)

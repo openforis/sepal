@@ -617,7 +617,7 @@
           "title": "Zone d'intérêt",
           "tooltip": "Spécifier une zone d'intérêt"
         },
-        "auto": {
+        "autoSelectScenes": {
           "form": {
             "max": {
               "label": "Nombre maximum de scènes"

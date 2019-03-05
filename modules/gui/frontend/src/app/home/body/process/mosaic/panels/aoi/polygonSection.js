@@ -1,17 +1,18 @@
 import {Msg} from 'translate'
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {connect} from 'store'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {isRecipeOpen} from 'app/home/body/process/recipe'
+import {selectFrom} from 'collections'
 import {sepalMap} from '../../../../../map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './aoi.module.css'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+const mapRecipeToProps = recipe => {
     return {
-        labelsShown: recipeState('ui.labelsShown')
+        recipeId: recipe.id,
+        labelsShown: selectFrom(recipe, 'ui.labelsShown')
     }
 }
 
@@ -77,4 +78,4 @@ PolygonSection.propTypes = {
     labelsShown: PropTypes.any
 }
 
-export default connect(mapStateToProps)(PolygonSection)
+export default withRecipe(mapRecipeToProps)(PolygonSection)

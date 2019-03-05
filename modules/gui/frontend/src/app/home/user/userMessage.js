@@ -80,7 +80,7 @@ class UserMessage extends React.Component {
                 statePath='userMessage'
                 modal
                 onApply={message => onApply(message)}
-                onCancel={() => onCancel()}>
+                close={() => onCancel()}>
                 <PanelHeader
                     icon='bell'
                     title={msg('userMessage.title')}/>

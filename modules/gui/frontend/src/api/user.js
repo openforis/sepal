@@ -305,7 +305,7 @@ const _sampleUserReport = {
         'monthlyInstanceBudget': 1.0,
         'monthlyInstanceSpending': 0.025,
         'monthlyStorageBudget': 1.0,
-        'monthlyStorageSpending': 2.233275753451851E-5,
+        'monthlyStorageSpending': 2.23,
         'storageQuota': 20.0,
         'storageUsed': 9.6E-5
     }

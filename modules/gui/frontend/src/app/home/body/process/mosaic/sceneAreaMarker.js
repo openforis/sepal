@@ -1,17 +1,20 @@
 import {MapObject, google, googleMap} from 'app/home/map/map'
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {connect} from 'store'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {activator} from 'widget/activation/activator'
+import {select} from 'store'
+import {selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './sceneAreas.module.css'
 
-const mapStateToProps = (state, ownProps) => {
-    const {recipeId, sceneAreaId} = ownProps
-    const recipeState = RecipeState(recipeId)
-    const selectedScenes = recipeState(['model.scenes', sceneAreaId]) || []
+const mapRecipeToProps = (recipe, ownProps) => {
+    const {sceneAreaId} = ownProps
+    const selectedScenes = selectFrom(recipe, ['model.scenes', sceneAreaId]) || []
     return {
+        recipeId: recipe.id,
         selectedSceneCount: selectedScenes.length,
-        loading: recipeState('ui.autoSelectingScenes'),
-        zoom: state.map.zoom || googleMap.getZoom()
+        loading: selectFrom(recipe, 'ui.autoSelectingScenes'),
+        zoom: select('map.zoom') || googleMap.getZoom()
     }
 }
 
@@ -70,9 +73,15 @@ class SceneAreaMarker extends React.Component {
     }
 
     selectScenes(sceneAreaId) {
+        const {activator: {activate}} = this.props
         this.recipeActions.setSceneSelection(sceneAreaId).dispatch()
+        activate()
     }
 
 }
 
-export default connect(mapStateToProps)(SceneAreaMarker)
+export default withRecipe(mapRecipeToProps)(
+    activator('sceneSelection')(
+        SceneAreaMarker
+    )
+)

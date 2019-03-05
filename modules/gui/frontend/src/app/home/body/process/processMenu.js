@@ -1,7 +1,7 @@
+import {Activator, activator} from 'widget/activation/activator'
 import {Msg, msg} from 'translate'
-import {RecipeState, addRecipe, exportRecipe, saveRecipe} from './recipe'
+import {RecipeState, addRecipe, exportRecipe$} from './recipe'
 import {connect, select} from 'store'
-import {showRevisionsPanel} from 'app/home/body/process/revisions'
 import Menu, {MenuItem} from 'widget/menu'
 import React from 'react'
 
@@ -26,7 +26,7 @@ class ProcessMenu extends React.Component {
                     <MenuItem onSelect={() => this.duplicateRecipe()}>
                         <Msg id='process.menu.duplicateRecipe'/>
                     </MenuItem>
-                    <MenuItem onSelect={() => exportRecipe(recipe)}>
+                    <MenuItem onSelect={() => this.exportRecipe(recipe)}>
                         <Msg id='process.menu.exportRecipe'/>
                     </MenuItem>
                 </Menu>
@@ -37,26 +37,34 @@ class ProcessMenu extends React.Component {
     }
 
     renderUnsavedRecipeItems() {
-        const {recipe} = this.props
+        const {recipe, activator: {activatables: {saveRecipeDialog}}} = this.props
         return (
-            <MenuItem onSelect={() => saveRecipe(recipe)}>
+            <MenuItem onSelect={() => saveRecipeDialog.activate({recipe, closeTabOnSave: false})}>
                 <Msg id='process.menu.saveRecipe'/>
             </MenuItem>
         )
     }
 
     renderSavedRecipeItems() {
-        const {recipe} = this.props
         return (
-            <MenuItem onSelect={() => showRevisionsPanel(recipe.id)}>
-                <Msg id='process.menu.revertToOldRevision'/>
-            </MenuItem>
+            <Activator id='revisions'>
+                {({activate}) =>
+                    <MenuItem onSelect={() => activate()}>
+                        <Msg id='process.menu.revertToOldRevision'/>
+                    </MenuItem>
+                }
+            </Activator>
         )
     }
 
     isRecipeUnsaved() {
         const {recipe, recipes} = this.props
         return !(recipes && recipes.find(saved => saved.id === recipe.id))
+    }
+
+    exportRecipe() {
+        const {recipe, stream} = this.props
+        stream('EXPORT_RECIPE', exportRecipe$(recipe))
     }
 
     duplicateRecipe() {
@@ -69,4 +77,10 @@ class ProcessMenu extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(ProcessMenu)
+export default (
+    activator(['saveRecipeDialog'])(
+        connect(mapStateToProps)(
+            ProcessMenu
+        )
+    )
+)

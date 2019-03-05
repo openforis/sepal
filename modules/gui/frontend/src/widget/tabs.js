@@ -78,7 +78,7 @@ class Tabs extends React.Component {
     }
 
     renderTab(tab) {
-        const {selectedTabId, statePath, onTitleChanged} = this.props
+        const {selectedTabId, statePath, onTitleChanged, onClose} = this.props
         return (
             <Tab
                 key={tab.id}
@@ -88,6 +88,7 @@ class Tabs extends React.Component {
                 selected={tab.id === selectedTabId}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
+                onClose={() => onClose(tab)}
             />
         )
     }
@@ -95,19 +96,19 @@ class Tabs extends React.Component {
     renderTabContent(tab) {
         const {selectedTabId, children} = this.props
         return (
-            <TabContent key={tab.id} tab={tab} selected={tab.id === selectedTabId}>
+            <TabContent key={tab.id} id={tab.id} type={tab.type} selected={tab.id === selectedTabId}>
                 {children}
             </TabContent>
         )
     }
 
     renderTabs() {
-        const {selectedTabId, tabActions} = this.props
+        const {tabs, selectedTabId, tabActions} = this.props
         return (
             <React.Fragment>
                 <ScrollableContainer>
                     <Scrollable direction='x' className={styles.tabs}>
-                        {this.props.tabs.map(tab => this.renderTab(tab))}
+                        {tabs.map(tab => this.renderTab(tab))}
                     </Scrollable>
                 </ScrollableContainer>
                 <div className={styles.tabActions}>
@@ -157,6 +158,7 @@ class Tabs extends React.Component {
 Tabs.propTypes = {
     statePath: PropTypes.string.isRequired,
     children: PropTypes.any,
+    isDirty: PropTypes.func,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
     tabs: PropTypes.array,
@@ -196,7 +198,7 @@ class Tab extends React.Component {
     }
 
     renderCloseButton() {
-        const {id, statePath} = this.props
+        const {onClose} = this.props
         return (
             <Button
                 chromeless
@@ -204,7 +206,9 @@ class Tab extends React.Component {
                 size='small'
                 shape='circle'
                 icon='times'
-                onClick={() => closeTab(id, statePath)}/>
+                message='message'
+                onClick={() => onClose()}
+            />
         )
     }
 
@@ -271,6 +275,7 @@ class Tab extends React.Component {
 }
 
 Tab.propTypes = {
+    // dirty: PropTypes.bool,
     id: PropTypes.string,
     placeholder: PropTypes.string,
     selected: PropTypes.any,

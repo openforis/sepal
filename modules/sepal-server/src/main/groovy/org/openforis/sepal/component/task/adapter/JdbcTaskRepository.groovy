@@ -28,10 +28,10 @@ class JdbcTaskRepository implements TaskRepository {
     void insert(Task task) {
         def taskParams = JsonOutput.toJson(task.params)
         sql.executeInsert('''
-                INSERT INTO task(id, state, username, session_id, operation, params, status_description, creation_time, update_time, removed)
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE)''', [
-                task.id, task.state.name(), task.username, task.sessionId, task.operation, taskParams,
-                task.statusDescription ?: task.state.description, task.creationTime, task.updateTime
+                INSERT INTO task(id, state, recipe_id, username, session_id, operation, params, status_description, creation_time, update_time, removed)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE)''', [
+            task.id, task.state.name(), task.recipeId, task.username, task.sessionId, task.operation, taskParams,
+            task.statusDescription ?: task.state.description, task.creationTime, task.updateTime
         ])
         LOG.debug("Inserted $task")
     }
@@ -61,7 +61,7 @@ class JdbcTaskRepository implements TaskRepository {
     Task getTask(String taskId) {
         Task task = null
         sql.eachRow('''
-                SELECT id, state, username, session_id, operation, params, status_description, creation_time, update_time
+                SELECT id, state, recipe_id, username, session_id, operation, params, status_description, creation_time, update_time
                 FROM task
                 WHERE id = ?''', [taskId]) {
             task = toTask(it)
@@ -75,13 +75,13 @@ class JdbcTaskRepository implements TaskRepository {
         def now = clock.now()
         def tasks = []
         sql.eachRow('''
-                SELECT id, state, username, session_id, operation, params, status_description, creation_time, update_time
+                SELECT id, state, recipe_id, username, session_id, operation, params, status_description, creation_time, update_time
                 FROM task
                 WHERE (state = ? AND update_time < ?)
                 OR (state = ? AND update_time < ?)
             ''', [
-                PENDING.name(), Timeout.PENDING.lastValidUpdate(now),
-                ACTIVE.name(), Timeout.ACTIVE.lastValidUpdate(now)
+            PENDING.name(), Timeout.PENDING.lastValidUpdate(now),
+            ACTIVE.name(), Timeout.ACTIVE.lastValidUpdate(now)
         ]) { tasks << toTask(it) }
         return tasks
     }
@@ -89,7 +89,7 @@ class JdbcTaskRepository implements TaskRepository {
     List<Task> pendingOrActiveTasksInSession(String sessionId) {
         def tasks = []
         sql.eachRow('''
-                SELECT id, state, username, session_id, operation, params, status_description, creation_time, update_time
+                SELECT id, state, recipe_id, username, session_id, operation, params, status_description, creation_time, update_time
                 FROM task
                 WHERE session_id = ?
                 AND state IN (?, ?)''', [sessionId, PENDING.name(), ACTIVE.name()]) { tasks << toTask(it) }
@@ -99,7 +99,7 @@ class JdbcTaskRepository implements TaskRepository {
     List<Task> userTasks(String username) {
         def tasks = []
         sql.eachRow('''
-                SELECT id, state, username, session_id, operation, params, status_description, creation_time, update_time
+                SELECT id, state, recipe_id, username, session_id, operation, params, status_description, creation_time, update_time
                 FROM task
                 WHERE username = ?
                 AND REMOVED = FALSE
@@ -111,7 +111,7 @@ class JdbcTaskRepository implements TaskRepository {
     List<Task> pendingOrActiveUserTasks(String username) {
         def tasks = []
         sql.eachRow('''
-                SELECT id, state, username, session_id, operation, params, status_description, creation_time, update_time
+                SELECT id, state, recipe_id, username, session_id, operation, params, status_description, creation_time, update_time
                 FROM task
                 WHERE username = ?
                 AND state IN (?, ?)''', [username, PENDING.name(), ACTIVE.name()]) { tasks << toTask(it) }
@@ -121,15 +121,16 @@ class JdbcTaskRepository implements TaskRepository {
     private Task toTask(row) {
         def state = row.state as Task.State
         new Task(
-                id: row.id,
-                state: state,
-                username: row.username,
-                operation: row.operation,
-                params: new JsonSlurper().parseText(row.params instanceof Clob ? ((Clob) row.params).asciiStream.text : row.params) as Map,
-                sessionId: row.session_id,
-                statusDescription: row.status_description ?: state.description,
-                creationTime: row.creation_time,
-                updateTime: row.update_time
+            id: row.id,
+            state: state,
+            recipeId: row.recipe_id,
+            username: row.username,
+            operation: row.operation,
+            params: new JsonSlurper().parseText(row.params instanceof Clob ? ((Clob) row.params).asciiStream.text : row.params) as Map,
+            sessionId: row.session_id,
+            statusDescription: row.status_description ?: state.description,
+            creationTime: row.creation_time,
+            updateTime: row.update_time
         )
     }
 

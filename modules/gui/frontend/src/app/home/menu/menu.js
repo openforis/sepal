@@ -35,7 +35,7 @@ class Menu extends React.Component {
                         {requestedApps.map(this.appSection)}
                     </div>
                     <div className={styles.section}>
-                        <SectionLink name='tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'}/>
+                        <SectionLink name='tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'} disabled={budgetExceeded}/>
                         {user.admin ? <SectionLink name='users' icon='users'/> : null}
                         <MenuMode className={styles.mode}/>
                     </div>

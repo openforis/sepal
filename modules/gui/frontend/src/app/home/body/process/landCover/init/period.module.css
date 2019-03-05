@@ -1,0 +1,37 @@
+.panel {
+    max-width: 16rem;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+            'startYearLabel endYearLabel'
+            'startYear      endYear'
+            'error          error';
+    grid-column-gap: 2rem;
+    grid-row-gap: 0;
+    min-height: 13rem;
+}
+
+.startYearLabel {
+    grid-area: startYearLabel;
+}
+
+.startYear {
+    grid-area: startYear;
+}
+
+.endYearLabel {
+    grid-area: endYearLabel;
+}
+
+.endYear {
+    grid-area: endYear;
+}
+
+.error {
+    grid-area: error;
+    margin-top: -2rem;
+}

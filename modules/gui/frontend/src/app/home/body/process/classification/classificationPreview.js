@@ -1,25 +1,68 @@
 import {Button} from 'widget/button'
-import {RecipeState} from 'app/home/body/process/classification/classificationRecipe'
-import {connect} from 'store'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
-import PropTypes from 'prop-types'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
-import styles from 'app/home/body/process/classification/classificationPreview.module.css'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        recipe: recipeState()
-    }
-}
+const mapRecipeToProps = recipe => ({recipe})
 
 class ClassificationPreview extends React.Component {
     state = {}
+
+    render() {
+        const {initializing, tiles, error} = this.state
+        if (this.isHidden())
+            return null
+        else if (initializing)
+            return (
+                <MapStatus message={msg('process.classification.preview.initializing')}/>
+            )
+        else if (tiles && (!tiles.complete || tiles.failed))
+            return (
+                <MapStatus
+                    loading={!tiles.complete}
+                    message={msg('process.classification.preview.loading', {loaded: tiles.loaded, count: tiles.count})}
+                    error={tiles.failed ? msg('process.classification.preview.tilesFailed', {failed: tiles.failed}) : error}/>
+            )
+        else
+            return null
+    }
+
+    onProgress(tiles) {
+        this.setState(prevState => ({...prevState, tiles, initializing: false}))
+    }
+
+    onError(e) {
+        Notifications.error({
+            title: msg('gee.error.title'),
+            message: msg('process.classification.preview.error'),
+            error: e.response ? msg(e.response.code, e.response.data) : null,
+            timeout: 0,
+            content: dismiss =>
+                <Button
+                    look='transparent'
+                    shape='pill'
+                    icon='sync'
+                    label={msg('button.retry')}
+                    onClick={() => {
+                        dismiss()
+                        this.reload()
+                    }}
+                />
+        })
+    }
+
+    reload() {
+        const {recipe} = this.props
+        const context = sepalMap.getContext(recipe.id)
+        context.removeLayer('preview')
+        this.updateLayer(this.toPreviewRequest(recipe))
+    }
 
     componentDidMount() {
         this.updateLayer(this.toPreviewRequest(this.props.recipe))
@@ -35,31 +78,8 @@ class ClassificationPreview extends React.Component {
         context.hideLayer('preview', this.isHidden(recipe))
     }
 
-    render() {
-        const {initializing, tiles, error} = this.state
-        if (this.isHidden())
-            return null
-        else if (error) {
-            return (
-                <MapStatus loading={false} error={error}/>
-            )
-        } else if (initializing)
-            return (
-                <MapStatus message={msg('process.classification.preview.initializing')}/>
-            )
-        else if (tiles && (!tiles.complete || tiles.failed))
-            return (
-                <MapStatus
-                    loading={!tiles.complete}
-                    message={msg('process.classification.preview.loading', {loaded: tiles.loaded, count: tiles.count})}
-                    error={tiles.failed ? msg('process.classification.preview.tilesFailed', {failed: tiles.failed}) : error}/>
-            )
-        else
-            return null
-    }
-
     updateLayer(previewRequest) {
-        const {recipeId, componentWillUnmount$} = this.props
+        const {recipe, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
             layerIndex: 1,
@@ -67,7 +87,7 @@ class ClassificationPreview extends React.Component {
             props: previewRequest,
             onProgress: tiles => this.onProgress(tiles)
         })
-        const context = sepalMap.getContext(recipeId)
+        const context = sepalMap.getContext(recipe.id)
         const changed = context.setLayer({
             id: 'preview',
             layer,
@@ -80,43 +100,9 @@ class ClassificationPreview extends React.Component {
             this.setState(prevState => ({...prevState, error: null}))
     }
 
-    reload() {
-        const {recipe} = this.props
-        const context = sepalMap.getContext(recipe.id)
-        context.removeLayer('preview')
-        this.updateLayer(this.toPreviewRequest(recipe))
-    }
-
     isHidden() {
         const {recipe} = this.props
-        return !!recipe.ui.selectedPanel
-    }
-
-    onProgress(tiles) {
-        this.setState(prevState => ({...prevState, tiles, initializing: false}))
-    }
-
-    onError(e) {
-        const message = e.response && e.response.code
-            ? msg(e.response.code, e.response.data)
-            : msg('process.classification.preview.error')
-        this.setState(prevState => ({
-            ...prevState,
-            error:
-                <div>
-                    {message}
-                    <div className={styles.retry}>
-                        <Button
-                            chromeless
-                            look='transparent'
-                            shape='pill'
-                            icon='sync'
-                            label={msg('button.retry')}
-                            onClick={() => this.reload()}
-                        />
-                    </div>
-                </div>
-        }))
+        return recipe.ui.hidePreview
     }
 
     toPreviewRequest(recipe) {
@@ -126,8 +112,6 @@ class ClassificationPreview extends React.Component {
     }
 }
 
-ClassificationPreview.propTypes = {
-    recipeId: PropTypes.string.isRequired
-}
+ClassificationPreview.propTypes = {}
 
-export default connect(mapStateToProps)(ClassificationPreview)
+export default withRecipe(mapRecipeToProps)(ClassificationPreview)

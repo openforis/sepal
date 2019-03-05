@@ -1,6 +1,7 @@
-import {RecipeState} from './changeDetectionRecipe'
-import {connect, select} from 'store'
-import {recipe} from 'app/home/body/process/recipe'
+import {connect} from 'store'
+import {defaultModel} from 'app/home/body/process/classification/classificationRecipe'
+import {recipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'collections'
 import {sepalMap} from 'app/home/map/map'
 import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import ChangeDetectionPreview from './changeDetectionPreview'
@@ -9,15 +10,16 @@ import MapToolbar from 'app/home/map/mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = ownProps.recipeState
-    return {
-        initialized: recipeState('ui.initialized'),
-        source1: recipeState('model.source1'),
-        source2: recipeState('model.source2'),
-        tabCount: select('process.tabs').length
-    }
-}
+const mapStateToProps = state => ({
+    tabCount: state.process.tabs.length
+})
+
+const mapRecipeToProps = recipe => ({
+    recipeId: selectFrom(recipe, 'id'),
+    initialized: selectFrom(recipe, 'ui.initialized'),
+    source1: selectFrom(recipe, 'model.source1'),
+    source2: selectFrom(recipe, 'model.source2'),
+})
 
 class ChangeDetection extends React.Component {
     render() {
@@ -28,14 +30,15 @@ class ChangeDetection extends React.Component {
                     statePath={recipePath + '.ui'}
                     mapContext={recipeId}
                     labelLayerIndex={2}/>
-                <ChangeDetectionToolbar recipeId={recipeId}/>
+                <ChangeDetectionToolbar/>
 
                 {initialized
-                    ? <ChangeDetectionPreview recipeId={recipeId}/>
+                    ? <ChangeDetectionPreview/>
                     : null}
             </React.Fragment>
         )
     }
+
     componentDidMount() {
         this.setAoiLayer()
     }
@@ -64,6 +67,10 @@ ChangeDetection.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default recipe(RecipeState)(
-    connect(mapStateToProps)(ChangeDetection)
+export default (
+    recipe({defaultModel, mapRecipeToProps})(
+        connect(mapStateToProps)(
+            ChangeDetection
+        )
+    )
 )

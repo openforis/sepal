@@ -4,20 +4,20 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './tabs.module.css'
 
-class TabContent extends React.Component {
+class TabContent extends React.PureComponent {
     render() {
-        const {tab, selected, children} = this.props
+        const {id, type, selected, children} = this.props
         return (
             <div className={[styles.tabContent, selected && styles.selected].join(' ')}>
                 <Enabled value={selected}>
-                    {children(tab)}
+                    {children({id, type})}
                 </Enabled>
             </div>
         )
     }
 
     componentDidMount() {
-        const {tab: {id}} = this.props
+        const {id} = this.props
         this.props.onEnable(() => {
             if (this.props.selected)
                 sepalMap.setContext(id)
@@ -29,7 +29,7 @@ class TabContent extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {tab: {id}, selected} = this.props
+        const {id, selected} = this.props
         const gotDeselected = prevProps.selected && !selected
         if (gotDeselected)
             sepalMap.clearContext(id)
@@ -39,15 +39,16 @@ class TabContent extends React.Component {
     }
 
     componentWillUnmount() {
-        const {tab: {id}} = this.props
+        const {id} = this.props
         sepalMap.removeContext(id)
     }
 }
 
 TabContent.propTypes = {
     children: PropTypes.any,
+    id: PropTypes.string,
+    type: PropTypes.string,
     selected: PropTypes.any,
-    tab: PropTypes.any,
     onDisable: PropTypes.func,
     onEnable: PropTypes.func
 }

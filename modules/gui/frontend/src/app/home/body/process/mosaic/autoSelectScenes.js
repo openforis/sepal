@@ -1,24 +1,19 @@
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Subject} from 'rxjs'
-import {connect} from 'store'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import MapStatus from 'widget/mapStatus'
 import React from 'react'
 import api from 'api'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        recipe: recipeState()
-    }
-}
+const mapRecipeToProps = recipe => ({recipe})
 
 class AutoSelectScenes extends React.Component {
     constructor(props) {
         super(props)
-        const {recipeId, asyncActionBuilder} = props
-        this.recipeActions = RecipeActions(recipeId)
+        const {recipe, asyncActionBuilder} = props
+        this.recipeActions = RecipeActions(recipe.id)
         this.request$ = new Subject()
         this.request$.subscribe(() => {
             this.recipeActions.setAutoSelectScenesState('RUNNING').dispatch()
@@ -37,7 +32,7 @@ class AutoSelectScenes extends React.Component {
             sources: recipe.model.sources,
             dates: recipe.model.dates,
             sceneSelectionOptions: recipe.model.sceneSelectionOptions,
-            sceneCount: recipe.ui.sceneCount,
+            sceneCount: recipe.ui.autoSelectScenes,
             cloudCoverTarget: 0.001
         }).pipe(
             map(scenes =>
@@ -52,7 +47,7 @@ class AutoSelectScenes extends React.Component {
         return (
             <div>
                 {action('AUTO_SELECT_SCENES').dispatching
-                    ? <MapStatus message={msg('process.mosaic.panel.auto.selecting')}/>
+                    ? <MapStatus message={msg('process.mosaic.panel.autoSelectScenes.selecting')}/>
                     : null}
             </div>
         )
@@ -68,4 +63,4 @@ class AutoSelectScenes extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(AutoSelectScenes)
+export default withRecipe(mapRecipeToProps)(AutoSelectScenes)

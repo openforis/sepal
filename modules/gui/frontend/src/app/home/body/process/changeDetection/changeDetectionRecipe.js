@@ -1,14 +1,9 @@
-import {RecipeState as ParentRecipeState, recipePath} from '../recipe'
 import {msg} from 'translate'
+import {recipePath} from '../recipe'
 import _ from 'lodash'
 import api from 'api'
 import globalActionBuilder from 'action-builder'
 
-export const RecipeState = recipeId => {
-    const recipeState = ParentRecipeState(recipeId)
-    initRecipe(recipeState())
-    return recipeState
-}
 export const RecipeActions = id => {
 
     const actionBuilder = (name, props) => {
@@ -19,24 +14,8 @@ export const RecipeActions = id => {
         actionBuilder(name, otherProps)
             .set(prop, value)
             .build()
-    const setAll = (name, values, otherProps) =>
-        actionBuilder(name, otherProps)
-            .setAll(values)
-            .build()
 
     return {
-        setSource({values, model, number}) {
-            return setAll('SET_SOURCE', {
-                ['ui.source' + number]: values,
-                ['model.source' + number]: model,
-            }, {values, model})
-        },
-        setTrainingData({values, model}) {
-            return setAll('SET_TRAINING_DATA', {
-                'ui.trainingData': values,
-                'model.trainingData': model,
-            }, {values, model})
-        },
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_ChangeDetection_RETRIEVAL', {retrieveOptions})
                 .setAll({
@@ -49,23 +28,13 @@ export const RecipeActions = id => {
         setFusionTableColumns(columns) {
             return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
         },
-        setInitialized(initialized) {
-            return set('SET_INITIALIZED', 'ui.initialized', !!initialized, {initialized})
-        }
+        hidePreview() {
+            return set('HIDE_PREVIEW', 'ui.hidePreview', true)
+        },
+        showPreview() {
+            return set('SHOW_PREVIEW', 'ui.hidePreview', false)
+        },
     }
-}
-
-const initRecipe = recipeState => {
-    if (!recipeState || recipeState.ui)
-        return
-
-    const actions = RecipeActions(recipeState.id)
-    const model = recipeState.model
-    if (model)
-        return actions.setInitialized(
-            model.source1 && model.source2
-            && model.trainingData && model.trainingData.fusionTableColumn
-        ).dispatch()
 }
 
 const submitRetrieveRecipeTask = recipe => {

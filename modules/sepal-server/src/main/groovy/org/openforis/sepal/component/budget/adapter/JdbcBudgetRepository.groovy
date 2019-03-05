@@ -6,6 +6,7 @@ import org.openforis.sepal.component.budget.api.Budget
 import org.openforis.sepal.component.budget.api.BudgetRepository
 import org.openforis.sepal.component.budget.api.InstanceUse
 import org.openforis.sepal.component.budget.api.StorageUse
+import org.openforis.sepal.component.budget.api.UserSpendingReport
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.DateTime
@@ -122,6 +123,42 @@ class JdbcBudgetRepository implements BudgetRepository {
             sql.executeInsert('''
                     INSERT INTO user_budget(monthly_instance, monthly_storage, storage_quota, username)
                     VALUES(?, ?, ?, ?) ''', params)
+    }
+
+    void saveSpendingReport(Map<String, UserSpendingReport> report) {
+        sql.execute('DELETE FROM user_spending')
+        sql.withBatch('''
+            INSERT INTO user_spending 
+                (username, instance_spending, storage_spending, storage_usage)
+                values (?, ?, ?, ?)''') {ps ->
+            report.values().forEach {
+                ps.addBatch([it.username, it.instanceSpending, it.storageSpending, it.storageUsage])
+            }
+        }
+    }
+
+    Map<String, UserSpendingReport> spendingReport() {
+        def report = [:]
+        sql.rows('''
+            SELECT s.username, s.instance_spending, s.storage_spending, s.storage_usage, 
+                   IFNULL(b.monthly_instance, d.monthly_instance) monthly_instance,
+                   IFNULL(b.monthly_storage, d.monthly_storage) monthly_storage,
+                   IFNULL(b.storage_quota, d.storage_quota) storage_quota
+            FROM user_spending s
+            JOIN default_user_budget d
+            LEFT JOIN user_budget b ON s.username = b.username
+            ''').each {
+            report[it.username] = new UserSpendingReport(
+                username: it.username,
+                instanceSpending: it.instance_spending,
+                storageSpending: it.storage_spending,
+                storageUsage: it.storage_usage,
+                instanceBudget: it.monthly_instance,
+                storageBudget: it.monthly_storage,
+                storageQuota: it.storage_quota
+            )
+        }
+        return report
     }
 
     private Sql getSql() {

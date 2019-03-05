@@ -24,6 +24,7 @@ import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.SystemClock
 
+import static java.util.concurrent.TimeUnit.HOURS
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class BudgetComponent extends DataSourceBackedComponent implements EndpointRegistry {
@@ -52,6 +53,7 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
         def budgetRepository = new JdbcBudgetRepository(connectionManager, clock)
         def instanceSpendingService = new InstanceSpendingService(budgetRepository, hostingService, clock)
         def storageUseService = new StorageUseService(budgetRepository, userFiles, hostingService, clock)
+        def generateSpendingReportHandler = new GenerateSpendingReportHandler(instanceSpendingService, storageUseService, budgetRepository, userRepository)
 
         def instanceSpendingChecker = new CheckUserInstanceSpendingHandler(instanceSpendingService, budgetRepository, eventDispatcher)
         command(CheckUserInstanceSpending, instanceSpendingChecker)
@@ -59,16 +61,19 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
         command(CheckUserStorageUse, storageUseChecker)
         command(UpdateBudget, new UpdateBudgetHandler(budgetRepository))
         command(DetermineUserStorageUsage, new DetermineUserStorageUsageHandler(storageUseService, userRepository))
+        command(UpdateSpendingReport, new UpdateSpendingReportHandler(budgetRepository, generateSpendingReportHandler))
 
         query(GenerateSpendingReport,
-            new GenerateSpendingReportHandler(instanceSpendingService, storageUseService, budgetRepository, userRepository))
+            generateSpendingReportHandler)
         query(GenerateUserSpendingReport,
             new GenerateUserSpendingReportHandler(instanceSpendingService, storageUseService, budgetRepository))
         query(FindUsersExceedingBudget, new FindUsersExceedingBudgetHandler(userRepository, instanceSpendingChecker, storageUseChecker))
+        query(LoadSpendingReport, new LoadSpendingReportHandler(budgetRepository))
     }
 
     void onStart() {
         schedule(1, MINUTES, new DetermineUserStorageUsage())
+        schedule(1, HOURS, new UpdateSpendingReport())
     }
 
     void registerEndpointsWith(Controller controller) {

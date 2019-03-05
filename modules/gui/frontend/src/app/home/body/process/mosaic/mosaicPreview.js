@@ -1,8 +1,7 @@
 import {Button} from 'widget/button'
-import {RecipeState, SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {connect} from 'store'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
 import Notifications from 'widget/notifications'
@@ -10,12 +9,7 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        recipe: recipeState()
-    }
-}
+const mapRecipeToProps = recipe => ({recipe})
 
 class MosaicPreview extends React.Component {
     state = {}
@@ -44,14 +38,10 @@ class MosaicPreview extends React.Component {
     }
 
     onError(e) {
-        // const message = e.response && e.response.code
-        //     ? msg(e.response.code, e.response.data)
-        //     : msg('process.mosaic.preview.error')
-        
         Notifications.error({
             title: msg('gee.error.title'),
             message: msg('process.mosaic.preview.error'),
-            error: msg(e.response.code, e.response.data),
+            error: e.response ? msg(e.response.code, e.response.data) : null,
             timeout: 0,
             content: dismiss =>
                 <Button
@@ -74,14 +64,6 @@ class MosaicPreview extends React.Component {
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
-    isPreviewShown() {
-        const {recipe} = this.props
-        return !recipe.ui.autoSelectingScenes
-            && (recipe.model.sceneSelectionOptions.type === SceneSelectionType.ALL
-                || (recipe.model.scenes
-                    && Object.keys(recipe.model.scenes).find(sceneAreaId => recipe.model.scenes[sceneAreaId].length > 0)))
-    }
-
     componentDidMount() {
         this.updateLayer(this.toPreviewRequest(this.props.recipe))
     }
@@ -97,18 +79,16 @@ class MosaicPreview extends React.Component {
     }
 
     updateLayer(previewRequest) {
-        const {recipeId, componentWillUnmount$} = this.props
+        const {recipe, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
-        const layer = this.isPreviewShown()
-            ? new EarthEngineLayer({
-                layerIndex: 0,
-                bounds: previewRequest.recipe.model.aoi.bounds,
-                mapId$: api.gee.preview$(previewRequest),
-                props: previewRequest,
-                onProgress: tiles => this.onProgress(tiles)
-            })
-            : null
-        const context = sepalMap.getContext(recipeId)
+        const layer = new EarthEngineLayer({
+            layerIndex: 0,
+            bounds: previewRequest.recipe.model.aoi.bounds,
+            mapId$: api.gee.preview$(previewRequest),
+            props: previewRequest,
+            onProgress: tiles => this.onProgress(tiles)
+        })
+        const context = sepalMap.getContext(recipe.id)
         const changed = context.setLayer({
             id: 'preview',
             layer,
@@ -123,7 +103,7 @@ class MosaicPreview extends React.Component {
 
     isHidden() {
         const {recipe} = this.props
-        return !this.isPreviewShown() || !recipe || !recipe.ui || !!recipe.ui.selectedPanel
+        return recipe.ui.hidePreview
     }
 
     toPreviewRequest(recipe) {
@@ -131,10 +111,12 @@ class MosaicPreview extends React.Component {
             recipe: _.omit(recipe, ['ui']),
             bands: {
                 selection: recipe.ui.bands.selection.split(', '),
-                panSharpen: recipe.ui.bands.panSharpen
+                panSharpen: !!recipe.ui.bands.panSharpen
             }
         }
     }
 }
 
-export default connect(mapStateToProps)(MosaicPreview)
+MosaicPreview.propTypes = {}
+
+export default withRecipe(mapRecipeToProps)(MosaicPreview)

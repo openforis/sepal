@@ -1,6 +1,7 @@
 import {EMPTY, combineLatest, fromEvent, merge, timer} from 'rxjs'
 import {Link} from 'route'
 import {distinctUntilChanged, switchMap, take, takeUntil} from 'rxjs/operators'
+import {download} from 'widget/download'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -12,17 +13,6 @@ const CLICK_HOLD_DELAY_MS = 750
 const CLICK_CANCEL_DELAY_MS = 250
 
 const windowMouseUp$ = fromEvent(window, 'mouseup').pipe(distinctUntilChanged())
-
-const download = (url, filename) => {
-    // create hidden anchor, attach to DOM, click it and remove it from the DOM
-    var downloadElement = document.createElement('a')
-    downloadElement.setAttribute('style', 'display: none')
-    downloadElement.setAttribute('href', url)
-    downloadElement.setAttribute('download', filename)
-    document.body.appendChild(downloadElement)
-    downloadElement.click()
-    downloadElement.remove()
-}
 
 export class Button extends React.Component {
     button = React.createRef()
@@ -226,7 +216,7 @@ export class Button extends React.Component {
             )
 
             // Click event needs to be handled here for two reasons:
-            // - to allow cancellation of click-hold without triggering click, when preesed longer than CLICK_CANCEL_DELAY_MS
+            // - to allow cancellation of click-hold without triggering click, when pressed longer than CLICK_CANCEL_DELAY_MS
             // - to avoid concurrent handling of both click and click-hold when pressed longer than CLICK_HOLD_DELAY_MS
             // Click is triggered only if button pressed less than CLICK_CANCEL_DELAY_MS.
             const click$ =
@@ -290,18 +280,24 @@ Button.propTypes = {
 }
 
 export const ButtonGroup = ({children, type = 'horizontal-wrap', className}) =>
-    <div className={[
-        styles.group,
-        styles[type],
-        className
-    ].join(' ')}>
-        {children}
+    <div className={[styles.groupContainer, className].join(' ')}>
+        <div className={[
+            styles.group,
+            type.split('-').map(className => styles[className]).join(' ')
+        ].join(' ')}>
+            {children}
+        </div>
     </div>
 
 ButtonGroup.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    type: PropTypes.oneOf(['horizontal-wrap', 'horizontal-nowrap', 'horizontal-tight', 'vertical']),
+    type: PropTypes.oneOf([
+        'horizontal-wrap', 'horizontal-wrap-fill',
+        'horizontal-nowrap', 'horizontal-nowrap-fill',
+        'horizontal-tight',
+        'vertical', 'vertical-tight'
+    ]),
     vertical: PropTypes.any,
     wrap: PropTypes.any
 }

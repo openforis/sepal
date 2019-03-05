@@ -1,5 +1,5 @@
-import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
-import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
+import {animationFrameScheduler, combineLatest, fromEvent, interval, merge} from 'rxjs'
+import {distinctUntilChanged, filter, map, scan, switchMap, withLatestFrom} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Label from 'widget/label'
 import Portal from 'widget/portal'
@@ -34,11 +34,16 @@ const denormalizeLog = (value, min, max) => {
     return Math.exp(value * Math.log(max - offset)) + offset
 }
 
-const normalize = (value, min, max, logScale) =>
-    logScale ? normalizeLog(value, min, max) : normalizeLinear(value, min, max)
+const invertNormalized = (value, invert) =>
+    invert ? 1 - value : value
 
-const denormalize = (value, min, max, logScale) =>
-    logScale ? denormalizeLog(value, min, max) : denormalizeLinear(value, min, max)
+const normalize = (value, min, max, scale, invert) =>
+    invertNormalized(scale === 'log' ? normalizeLog(value, min, max) : normalizeLinear(value, min, max), invert)
+
+const denormalize = (value, min, max, scale, invert) =>
+    scale === 'log'
+        ? denormalizeLog(invertNormalized(value, invert), min, max)
+        : denormalizeLinear(invertNormalized(value, invert), min, max)
 
 class SliderContainer extends React.Component {
     clickTarget = React.createRef()
@@ -69,7 +74,7 @@ class SliderContainer extends React.Component {
     }
 
     renderDynamics() {
-        const {input, width, range, decimals, ticks, snap, minValue, maxValue} = this.props
+        const {input, width, range, decimals, ticks, snap, minValue, maxValue, invert} = this.props
         return (
             <SliderDynamics
                 input={input}
@@ -80,14 +85,15 @@ class SliderContainer extends React.Component {
                 ticks={ticks}
                 snap={snap}
                 range={range}
+                invert={invert}
                 clickTarget={this.clickTarget}
                 normalize={value => {
-                    const {logScale, minValue, maxValue} = this.props
-                    return normalize(value, minValue, maxValue, logScale)
+                    const {scale, minValue, maxValue} = this.props
+                    return normalize(value, minValue, maxValue, scale, invert)
                 }}
                 denormalize={value => {
-                    const {logScale, minValue, maxValue} = this.props
-                    return denormalize(value, minValue, maxValue, logScale)
+                    const {scale, minValue, maxValue} = this.props
+                    return denormalize(value, minValue, maxValue, scale, invert)
                 }}
             />
         )
@@ -147,20 +153,20 @@ class SliderDynamics extends React.Component {
     }
 
     renderRanges() {
-        const {range} = this.props
+        const {range, invert} = this.props
         return (
             <React.Fragment>
-                {range === 'left' ? this.renderLeftRange() : null}
-                {range === 'right' ? this.renderRightRange() : null}
+                {((range === 'low' && !invert) || (range === 'high' && invert)) ? this.renderLeftRange() : null}
+                {((range === 'high' && !invert ) || (range === 'low' && invert)) ? this.renderRightRange() : null}
             </React.Fragment>
         )
     }
 
     renderPreview() {
-        const position = this.state.previewPosition
-        return position !== null ? (
+        const {previewPosition} = this.state
+        return previewPosition !== null ? (
             <div className={[styles.cursor, styles.preview].join(' ')} ref={this.preview}
-                style={{left: `${position}px`}}/>
+                style={{left: `${previewPosition}px`}}/>
         ) : null
     }
 
@@ -202,102 +208,112 @@ class SliderDynamics extends React.Component {
     }
 
     componentDidMount() {
-        this.setHandlePositionByValue()
-        const handle = new Hammer(this.handle.current, {
-            threshold: 1
+        this.initialize({
+            handleRef: this.handle.current,
+            clickableAreaRef: this.props.clickTarget.current
         })
+    }
+
+    initialize({handleRef, clickableAreaRef}) {
+        this.setHandlePositionByValue()
+
+        const handle = new Hammer(handleRef, {threshold: 1})
+        // limit handle movement to horizontal axis
         handle.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
 
-        const click = new Hammer(this.props.clickTarget.current, {
-            threshold: 1
-        })
+        const clickableArea = new Hammer(clickableAreaRef, {threshold: 1})
 
+        const mouseMove$ = fromEvent(clickableAreaRef, 'mousemove')
+        const mouseLeave$ = fromEvent(clickableAreaRef, 'mouseleave')
         const pan$ = fromEvent(handle, 'panstart panmove panend')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
         const animationFrame$ = interval(0, animationFrameScheduler)
-        const stop$ = new Subject()
 
-        const drag$ = panStart$.pipe(
+        const hoverPosition$ = merge(
+            mouseMove$.pipe(
+                map(e => e.clientX - this.state.clickTargetOffset)
+            ),
+            mouseLeave$.pipe(
+                map(() => null)
+            )
+        )
+
+        // target position by clicking
+        const clickPosition$ = fromEvent(clickableArea, 'tap').pipe(
+            map(tap => this.snapPosition(tap.center.x - this.state.clickTargetOffset))
+        )
+
+        // target position by dragging
+        const dragPosition$ = panStart$.pipe(
             switchMap(() => {
-                const start = this.state.position
+                const {position} = this.state
                 return merge(
                     panMove$.pipe(
-                        map(pmEvent => this.clampPosition(start + pmEvent.deltaX)),
-                        distinctUntilChanged(),
-                        takeUntil(panEnd$)
+                        map(event => this.clampPosition(position + event.deltaX)),
+                        distinctUntilChanged()
                     ),
                     panEnd$.pipe(
-                        map(() => this.snapPosition(this.state.position))
+                        map(() => this.snapPosition(this.state.previewPosition))
                     )
                 )
             })
         )
 
-        const click$ = fromEvent(click, 'tap').pipe(
-            map(tap => this.snapPosition(tap.center.x - this.state.clickTargetOffset))
-        )
+        const targetPosition$ = merge(clickPosition$, dragPosition$)
 
-        // move on click or drag
-        const move$ = merge(click$, drag$).pipe(
-            switchMap(cursor => {
-                const start = this.state.position
+        const handlePosition$ = targetPosition$.pipe(
+            switchMap(targetPosition => {
+                const {position} = this.state
                 return animationFrame$.pipe(
-                    map(() => cursor),
-                    scan(lerp(.1), start),
-                    takeUntil(stop$)
+                    map(() => targetPosition),
+                    scan(lerp(.1), position),
+                    map(position => Math.round(position)),
+                    distinctUntilChanged()
                 )
             })
         )
 
-        // enable preview on mouseover, disable on mouseleave
-        this.subscriptions.push(
-            merge(
-                drag$.pipe(
-                    map(cursor => this.snapPosition(cursor)),
-                ),
-                fromEvent(this.props.clickTarget.current, 'mousemove').pipe(
-                    map(e => this.snapPosition(e.clientX - this.state.clickTargetOffset)),
-                ),
-                fromEvent(this.props.clickTarget.current, 'mouseleave').pipe(
-                    map(() => null)
-                )
-            ).pipe(
-                distinctUntilChanged()
-            ).subscribe(previewPosition =>
-                this.setPreviewPosition(previewPosition)
-            )
+        const handleMoving$ = combineLatest(handlePosition$, targetPosition$).pipe(
+            map(([currentPosition, targetPosition]) => currentPosition !== targetPosition),
+            distinctUntilChanged()
         )
 
-        // enable fullscreen pointer while dragging, disable when drag end
-        this.subscriptions.push(
-            merge(
-                panStart$.pipe(map(() => true)),
-                panEnd$.pipe(map(() => false))
-            ).subscribe(dragging =>
-                this.setDragging(dragging)
-            )
+        const handleDragging$ = merge(
+            panStart$.pipe(map(() => true)),
+            panEnd$.pipe(map(() => false)),
         )
 
-        // enable input when stopped, disabled when moving
-        this.subscriptions.push(
-            move$.pipe(
-                pairwise(),
-                map(([a, b]) => Math.abs(a - b) > .01),
-                distinctUntilChanged()
-            ).subscribe(status => {
-                this.setInhibitInput(status)
-                status === false && stop$.next()
-            })
+        const previewPosition$ = merge(targetPosition$, hoverPosition$).pipe(
+            map(position => position === null ? null : this.snapPosition(position)),
+            distinctUntilChanged()
         )
 
-        // render animation
-        this.subscriptions.push(
-            move$.subscribe(position =>
+        const inhibitInput$ = handleMoving$.pipe(
+            withLatestFrom(handleDragging$),
+            map(([dragging, moving]) => dragging || moving)
+        )
+
+        const updateInput$ = merge(clickPosition$, panEnd$)
+
+        this.subscriptions = [
+            handlePosition$.subscribe(position =>
                 this.setHandlePosition(position)
+            ),
+            previewPosition$.subscribe(previewPosition =>
+                this.setPreviewPosition(previewPosition)
+            ),
+            handleDragging$.subscribe(dragging =>
+                this.setDragging(dragging)
+            ),
+            inhibitInput$.subscribe(inhibit =>
+                this.setInhibitInput(inhibit)
+            ),
+            updateInput$.subscribe(() =>
+                this.updateInputValue()
             )
-        )
+        ]
     }
 
     componentWillUnmount() {
@@ -305,8 +321,10 @@ class SliderDynamics extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (!this.state.inhibitInput && !_.isEqual(prevProps, this.props))
+        const {inhibitInput} = this.state
+        if (!inhibitInput && !_.isEqual(prevProps, this.props)) {
             this.setHandlePositionByValue()
+        }
     }
 
     toPosition(value) {
@@ -320,10 +338,13 @@ class SliderDynamics extends React.Component {
     }
 
     clampPosition(position) {
-        return clamp(position, {
-            min: 0,
-            max: this.props.width
-        })
+        const {width} = this.props
+        return Math.round(
+            clamp(position, {
+                min: 0,
+                max: width
+            })
+        )
     }
 
     snapPosition(value) {
@@ -340,47 +361,47 @@ class SliderDynamics extends React.Component {
     }
 
     setHandlePositionByValue() {
-        this.setHandlePosition(this.toPosition(this.props.input.value))
+        const {input} = this.props
+        this.setHandlePosition(this.toPosition(input.value))
     }
 
     setHandlePosition(position) {
         if (position >= 0) {
             position = Math.round(position)
             if (position !== this.state.position) {
-                this.setState(prevState => ({...prevState, position}))
-                const value = this.toValue(this.snapPosition(position))
-                const factor = Math.pow(10, this.props.decimals)
-                const roundedValue = Math.round(value * factor) / factor
-                this.props.input.set(roundedValue)
+                this.setState({position})
             }
         }
     }
 
+    updateInputValue() {
+        const {input, decimals} = this.props
+        const {previewPosition} = this.state
+        const value = this.toValue(this.snapPosition(previewPosition))
+        const factor = Math.pow(10, decimals)
+        const roundedValue = Math.round(value * factor) / factor
+        input.set(roundedValue)
+    }
+
     setPreviewPosition(previewPosition) {
-        this.setState(prevState => ({
-            ...prevState,
-            previewPosition
-        }))
+        this.setState({previewPosition})
     }
 
     setInhibitInput(inhibitInput) {
-        this.setState(prevState => ({...prevState, inhibitInput}))
+        this.setState({inhibitInput})
     }
 
     setDragging(dragging) {
-        this.setState(prevState => ({...prevState, dragging}))
+        this.setState({dragging})
     }
 
     setClickTargetOffset() {
-        const clickTargetOffset = Math.trunc(this.props.clickTarget.current.getBoundingClientRect().left)
+        const {clickTarget} = this.props
+        const clickTargetOffset = Math.trunc(clickTarget.current.getBoundingClientRect().left)
         if (this.state.clickTargetOffset !== clickTargetOffset) {
-            this.setState(prevState => ({
-                ...prevState,
-                clickTargetOffset
-            }))
+            this.setState({clickTargetOffset})
         }
     }
-
 }
 
 SliderDynamics.propTypes = {
@@ -390,6 +411,7 @@ SliderDynamics.propTypes = {
     minValue: PropTypes.number.isRequired,
     normalize: PropTypes.func.isRequired,
     decimals: PropTypes.number,
+    invert: PropTypes.bool,
     snap: PropTypes.bool,
     ticks: PropTypes.array,
     width: PropTypes.number
@@ -425,7 +447,7 @@ export default class Slider extends React.Component {
                 .filter(({value}) => value >= minValue && value <= maxValue)
                 .map(tick => ({
                     ...tick,
-                    position: state.width * normalize(tick.value, minValue, maxValue, props.logScale)
+                    position: state.width * normalize(tick.value, minValue, maxValue, props.scale, props.invert)
                 })),
             minValue,
             maxValue
@@ -433,34 +455,35 @@ export default class Slider extends React.Component {
     }
 
     renderInfo() {
-        const {input, info} = this.props
+        const {input, info, alignment} = this.props
         const {ticks} = this.state
         const tick = ticks && ticks.find(tick => tick.value === input.value)
         const label = (tick && tick.label) || input.value
         return info ? (
-            <div className={styles.info}>
+            <div className={[styles.info, styles.alignment, styles[alignment]].join(' ')}>
                 {_.isFunction(info) ? info(label) : info}
             </div>
         ) : null
     }
 
     renderSlider() {
+        const {width} = this.state
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
                     <ReactResizeDetector
                         handleWidth
                         onResize={width =>
-                            this.setState(prevState => ({...prevState, width}))
+                            this.setState({width})
                         }/>
-                    {this.state.width ? this.renderContainer() : null}
+                    {width ? this.renderContainer() : null}
                 </div>
             </div>
         )
     }
 
     renderContainer() {
-        const {input, logScale, decimals = 0, snap, range = 'left', info, disabled} = this.props
+        const {input, scale = 'linear', decimals = 0, snap, range = 'left', invert = false, info, disabled} = this.props
         const {ticks, minValue, maxValue, width} = this.state
         return (
             <SliderContainer
@@ -471,7 +494,8 @@ export default class Slider extends React.Component {
                 ticks={ticks}
                 snap={snap}
                 range={range}
-                logScale={logScale}
+                scale={scale}
+                invert={invert}
                 info={info}
                 width={width}
                 disabled={disabled}/>
@@ -487,9 +511,10 @@ export default class Slider extends React.Component {
     }
 
     renderLabel() {
-        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        const {label, tooltip, tooltipPlacement = 'top', alignment} = this.props
         return label ? (
             <Label
+                className={[styles.alignment, styles[alignment]].join(' ')}
                 msg={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
@@ -511,17 +536,19 @@ export default class Slider extends React.Component {
 
 Slider.propTypes = {
     input: PropTypes.object.isRequired,
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
     decimals: PropTypes.number,
     disabled: PropTypes.any,
     info: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.func
     ]),
+    invert: PropTypes.any,
     label: PropTypes.string,
-    logScale: PropTypes.any,
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
-    range: PropTypes.oneOf(['none', 'left', 'right']),
+    range: PropTypes.oneOf(['none', 'low', 'high']),
+    scale: PropTypes.oneOf(['linear', 'log']),
     snap: PropTypes.any,
     ticks: PropTypes.oneOfType([
         // PropTypes.number,

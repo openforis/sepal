@@ -3,20 +3,18 @@ import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {PageControls, PageData, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {closeTab} from 'widget/tabs'
 import {connect, select} from 'store'
-import {loadRecipe$, loadRecipes$, removeRecipe} from './recipe'
-import {map} from 'rxjs/operators'
+import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
 import {msg} from 'translate'
-import {recipePath} from 'app/home/body/process/recipe'
 import CreateRecipe from './createRecipe'
 import CreateRecipeRLCMS from './createRecipeRLCMS'
 import Icon from 'widget/icon'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import RemoveButton from 'widget/removeButton'
+import SafetyButton from 'widget/safetyButton'
 import _ from 'lodash'
-import actionBuilder from 'action-builder'
-import api from 'api'
 import escapeStringRegexp from 'escape-string-regexp'
 import lookStyles from 'style/look.module.css'
 import moment from 'moment'
@@ -66,35 +64,30 @@ class RecipeList extends React.Component {
     }
 
     componentDidMount() {
-        if (!this.props.recipes)
-            this.props.asyncActionBuilder('LOAD_RECIPES', loadRecipes$())
-                .dispatch()
+        if (!this.props.recipes) {
+            this.props.stream('LOAD_RECIPES', loadRecipes$())
+        }
     }
 
-    loadRecipe(recipeId) {
-        this.props.asyncActionBuilder('LOAD_RECIPE', loadRecipe$(recipeId))
-            .dispatch()
+    openRecipe(recipeId) {
+        if (isRecipeOpen(recipeId)) {
+            selectRecipe(recipeId)
+        } else {
+            this.props.stream('LOAD_RECIPE', loadRecipe$(recipeId))
+        }
     }
 
     duplicateRecipe(recipeIdToDuplicate) {
-        this.props.asyncActionBuilder('DUPLICATE_RECIPE', this.duplicateRecipe$(recipeIdToDuplicate))
-            .dispatch()
+        this.props.stream('DUPLICATE_RECIPE', duplicateRecipe$(recipeIdToDuplicate, this.props.recipeId))
     }
 
-    duplicateRecipe$(recipeIdToDuplicate) {
-        const {recipeId} = this.props
-        return api.recipe.load$(recipeIdToDuplicate).pipe(
-            map(recipe => ({
-                ...recipe,
-                id: recipeId,
-                title: (recipe.title || recipe.placeholder) + '_copy'
-            })),
-            map(duplicate =>
-                actionBuilder('DUPLICATE_RECIPE', {duplicate})
-                    .set(recipePath(recipeId), duplicate)
-                    .build()
-            )
-        )
+    removeRecipe(recipeId) {
+        this.props.stream('REMOVE_RECIPE',
+            removeRecipe$(recipeId),
+            () => {
+                closeTab(recipeId, 'process')
+                Notifications.success({message: msg('process.recipe.remove.success')})
+            })
     }
 
     setSorting(sortingOrder) {
@@ -147,7 +140,7 @@ class RecipeList extends React.Component {
             <div
                 key={recipe.id}
                 className={[styles.recipe, lookStyles.look, lookStyles.transparent].join(' ')}
-                onClick={() => this.loadRecipe(recipe.id)}>
+                onClick={() => this.openRecipe(recipe.id)}>
                 <div className={styles.recipeInfo}>
                     <div className='itemType'>{this.getRecipeTypeName(recipe.type)}</div>
                     <div className={styles.name}>{recipe.name}</div>
@@ -163,12 +156,12 @@ class RecipeList extends React.Component {
                             tooltip={msg('process.menu.duplicateRecipe')}
                             tooltipPlacement='bottom'
                             onClick={() => this.duplicateRecipe(recipe.id)}/>
-                        <RemoveButton
+                        <SafetyButton
                             size='large'
                             message={'Remove recipe?'}
                             tooltip={msg('process.menu.removeRecipe')}
                             tooltipPlacement='bottom'
-                            onConfirm={() => removeRecipe(recipe.id)}/>
+                            onConfirm={() => this.removeRecipe(recipe.id)}/>
                     </ButtonGroup>
                 </div>
             </div>

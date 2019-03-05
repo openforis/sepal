@@ -1,88 +1,77 @@
-import {Content, SectionLayout} from 'widget/sectionLayout'
-import {RecipeState, Status} from './landCoverRecipe'
-import {connect, select} from 'store'
-import {recipe} from 'app/home/body/process/recipe'
-import {sepalMap} from 'app/home/map/map'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import AssemblyPreview from './assemblyPreview'
-import CompositePreview from './compositePreview'
-import CompositesMonitor from './compositesMonitor'
-import LandCoverBottomBar from './landCoverBottomBar'
-import MapToolbar from 'app/home/map/mapToolbar'
-import PrimitivePreview from './primitivePreview'
+import {defaultModel} from './landCoverRecipe2'
+import {recipe} from 'app/home/body/process/recipeContext'
+import LandCoverComposites from 'app/home/body/process/landCover/composites/landCoverComposites'
+import LandCoverInit from 'app/home/body/process/landCover/init/landCoverInit'
 import React from 'react'
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = ownProps.recipeState
-    return {
-        status: recipeState('model.status'),
-        preview: recipeState('ui.preview'),
-        aoi: recipeState('model.aoi'),
-        tabCount: select('process.tabs').length,
-    }
-}
+import Workflow from 'widget/workflow'
 
 class LandCover extends React.Component {
     render() {
-        const {recipeId, recipePath} = this.props
         return (
-            <SectionLayout>
-                <Content>
-                    <MapToolbar
-                        statePath={recipePath + '.ui'}
-                        mapContext={recipeId}
-                        labelLayerIndex={1}/>
-                    {/*<LandCoverToolbar recipeId={recipeId}/>*/}
-
-                    {this.renderPreview()}
-                    {/*{this.inPreviewableState()*/}
-                    {/*? <PreviewSelection recipeId={recipeId}/>*/}
-                    {/*: null}*/}
-                    <CompositesMonitor recipeId={recipeId}/>
-                </Content>
-                <LandCoverBottomBar recipeId={recipeId}/>
-            </SectionLayout>
+            <Workflow
+                start='init'
+                steps={{
+                    init: <LandCoverInit/>,
+                    composites: <LandCoverComposites/>
+                }}
+            />
         )
-    }
-
-    renderPreview() {
-        const {recipeId, preview} = this.props
-        if (!this.inPreviewableState() || !preview || !preview.type || !preview.value || !preview.year)
-            return null
-        switch (preview.type) {
-        case 'composite':
-            return <CompositePreview recipeId={recipeId}/>
-        case 'primitive':
-            return <PrimitivePreview recipeId={recipeId}/>
-        case 'assembly':
-            return <AssemblyPreview recipeId={recipeId}/>
-        default:
-            return null
-        }
-    }
-
-    inPreviewableState() {
-        const {status} = this.props
-        return ![Status.UNINITIALIZED, Status.COMPOSITES_PENDING_CREATION, Status.CREATING_COMPOSITES].includes(status)
-    }
-
-    // TODO: This is duplicated from mosaic. Will end up in classification too. Higher order component? AoiTab...
-    componentDidMount() {
-        const {recipeId, aoi, componentWillUnmount$} = this.props
-        setAoiLayer({
-            contextId: recipeId,
-            aoi,
-            destroy$: componentWillUnmount$,
-            onInitialized: () => {
-                if (this.props.tabCount === 1) {
-                    sepalMap.setContext(recipeId)
-                    sepalMap.getContext(recipeId).fitLayer('aoi')
-                }
-            }
-        })
     }
 }
 
-export default recipe(RecipeState)(
-    connect(mapStateToProps)(LandCover)
+export default recipe(defaultModel)(
+    LandCover
 )
+
+// import LandCoverComposites from 'app/home/body/process/landCover/composites/landCoverComposites'
+// import LandCoverInit from 'app/home/body/process/landCover/init/landCoverInit'
+// import {recipe} from 'app/home/body/process/recipe'
+// import {setAoiLayer} from 'app/home/map/aoiLayer'
+// import React from 'react'
+// import {connect, select} from 'store'
+// import Workflow from 'widget/workflow'
+// import {RecipeState} from './landCoverRecipe'
+// import {sepalMap} from 'app/home/map/map'
+//
+// const mapStateToProps = (state, ownProps) => {
+//     const recipeState = ownProps.recipeState
+//     return {
+//         step: recipeState('model.step'),
+//         aoi: recipeState('model.aoi'),
+//         tabCount: select('process.tabs').length,
+//     }
+// }
+//
+// class LandCover extends React.Component {
+//     render() {
+//         const {recipeId} = this.props
+//         return (
+//             <Workflow
+//                 start='init'
+//                 steps={{
+//                     init: <LandCoverInit recipeId={recipeId}/>,
+//                     composites: <LandCoverComposites recipeId={recipeId}/>
+//                 }}
+//             />
+//         )
+//     }
+//
+//     componentDidMount() {
+//         const {recipeId, aoi, componentWillUnmount$} = this.props
+//         setAoiLayer({
+//             contextId: recipeId,
+//             aoi,
+//             destroy$: componentWillUnmount$,
+//             onInitialized: () => {
+//                 if (this.props.tabCount === 1) {
+//                     sepalMap.setContext(recipeId)
+//                     sepalMap.getContext(recipeId).fitLayer('aoi')
+//                 }
+//             }
+//         })
+//     }
+// }
+//
+// export default recipe(RecipeState)(
+//     connect(mapStateToProps)(LandCover)
+// )

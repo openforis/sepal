@@ -69,9 +69,10 @@ class __Notifications extends React.Component {
     }
 
     renderError(error) {
+        const errorMessage = typeof error === 'string' ? error : error.message
         return (
             <div className={styles.error}>
-                {error}
+                {errorMessage}
             </div>
         )
     }

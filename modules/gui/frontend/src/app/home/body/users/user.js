@@ -80,10 +80,9 @@ class UserDetails extends React.Component {
                 className={[styles.panel, newUser ? styles.newUser : styles.existingUser].join(' ')}
                 form={form}
                 statePath='userDetails'
-                isActionForm={true}
                 modal
                 onApply={userDetails => this.save(userDetails)}
-                onCancel={() => this.cancel()}>
+                close={() => this.cancel()}>
                 <PanelHeader
                     icon='user'
                     title={msg('user.userDetails.title')}/>

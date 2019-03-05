@@ -1,10 +1,12 @@
-import {CenteredProgress} from 'widget/progress'
 import {Constraint, Field, Input, form} from 'widget/form'
+import {EMPTY, throwError} from 'rxjs'
 import {PanelContent, PanelHeader} from 'widget/panel'
+import {activatable} from 'widget/activation/activatable'
+import {activator} from 'widget/activation/activator'
 import {changeUserPassword$} from 'user'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
-import {showUserDetails} from './userProfile'
+import {switchMap} from 'rxjs/operators'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -32,51 +34,51 @@ const constraints = {
 const mapStateToProps = () => ({values: {}})
 
 class ChangePassword extends React.Component {
-    changePassword(userPasswords) {
-        this.props.stream('CHANGE_PASSWORD',
-            changeUserPassword$(userPasswords),
-            ({status}) => {
-                if (status === 'success') {
-                    Notifications.success({message: msg('user.changePassword.success')})
-                    showUserDetails()
-                } else
-                    this.props.inputs.oldPassword.setInvalid(msg('user.changePassword.form.oldPassword.incorrect'))
-            }
-        )
+    close() {
+        const {activator: {activatables: {userDetails}}} = this.props
+        userDetails.activate()
     }
 
-    cancel() {
-        showUserDetails()
+    changePassword$(userPasswords) {
+        return changeUserPassword$(userPasswords).pipe(
+            switchMap(({status}) => {
+                if (status === 'success') {
+                    Notifications.success({message: msg('user.changePassword.success')})
+                    return EMPTY
+                } else {
+                    this.props.inputs.oldPassword.setInvalid(msg('user.changePassword.form.oldPassword.incorrect'))
+                    return throwError()
+                }
+            })
+        )
     }
 
     renderPanel() {
         const {inputs: {oldPassword, newPassword, confirmPassword}} = this.props
-        return this.props.stream('CHANGE_PASSWORD') === 'ACTIVE'
-            ? <CenteredProgress title={msg('user.changePassword.updating')}/>
-            : <React.Fragment>
-                <PanelContent>
-                    <Input
-                        label={msg('user.changePassword.form.oldPassword.label')}
-                        type='password'
-                        autoFocus={!isMobile()}
-                        input={oldPassword}
-                        errorMessage
-                    />
-                    <Input
-                        label={msg('user.changePassword.form.newPassword.label')}
-                        type='password'
-                        input={newPassword}
-                        errorMessage
-                    />
-                    <Input
-                        label={msg('user.changePassword.form.confirmPassword.label')}
-                        type='password'
-                        input={confirmPassword}
-                        errorMessage={[confirmPassword, 'passwordsMatch']}
-                    />
-                </PanelContent>
-                <FormPanelButtons/>
-            </React.Fragment>
+        return <React.Fragment>
+            <PanelContent>
+                <Input
+                    label={msg('user.changePassword.form.oldPassword.label')}
+                    type='password'
+                    autoFocus={!isMobile()}
+                    input={oldPassword}
+                    errorMessage
+                />
+                <Input
+                    label={msg('user.changePassword.form.newPassword.label')}
+                    type='password'
+                    input={newPassword}
+                    errorMessage
+                />
+                <Input
+                    label={msg('user.changePassword.form.confirmPassword.label')}
+                    type='password'
+                    input={confirmPassword}
+                    errorMessage={[confirmPassword, 'passwordsMatch']}
+                />
+            </PanelContent>
+            <FormPanelButtons/>
+        </React.Fragment>
     }
 
     render() {
@@ -86,12 +88,12 @@ class ChangePassword extends React.Component {
                 className={styles.panel}
                 form={form}
                 isActionForm={true}
-                statePath='userPassword'
                 modal
-                onApply={userPasswords => this.changePassword(userPasswords)}
-                onCancel={() => this.cancel()}>
+                // onApply={userPasswords => this.changePassword(userPasswords)}
+                onApply={userPasswords => this.changePassword$(userPasswords)}
+                close={() => this.close()}>
                 <PanelHeader
-                    icon='key'
+                    iscon='key'
                     title={msg('user.changePassword.title')}/>
                 {this.renderPanel()}
             </FormPanel>
@@ -101,4 +103,18 @@ class ChangePassword extends React.Component {
 
 ChangePassword.propTypes = {}
 
-export default form({fields, constraints, mapStateToProps})(ChangePassword)
+const policy = () => ({
+    _: 'disallow',
+    userDetails: 'allow-then-deactivate'
+})
+
+export default (
+    activatable('changePassword', policy)(
+        activator(['userDetails'])(
+        // activator('foo')(
+            form({fields, constraints, mapStateToProps})(
+                ChangePassword
+            )
+        )
+    )
+)

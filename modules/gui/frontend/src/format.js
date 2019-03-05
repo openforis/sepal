@@ -15,8 +15,8 @@ const decimal = (value, decimals = 2) =>
 const units = (value, precisionDigits = 3) => number({value, precisionDigits})
 const unitsPerHour = (value, precisionDigits = 3) => number({value, precisionDigits, suffix: '/h'})
 const dollars = (value, {precisionDigits = 3, prefix = '$'} = {}) => number({value, precisionDigits, prefix, minScale: ''})
-const dollarsPerHour = (value, {precisionDigits = 3, prefix = '$'} = {}) => number({value, precisionDigits, minScale: '', prefix, unit: '/h'})
-const dollarsPerMonth = (value, {precisionDigits = 3, prefix = '$'} = {}) => number({value, precisionDigits, minScale: '', prefix, unit: '/mon'})
+const dollarsPerHour = (value, {precisionDigits = 3, prefix = '$'} = {}) => number({value, precisionDigits, minScale: '', prefix, suffix: '/h'})
+const dollarsPerMonth = (value, {precisionDigits = 3, prefix = '$'} = {}) => number({value, precisionDigits, minScale: '', prefix, suffix: '/mon'})
 
 const hours = (value, decimals = 2) =>
     <NumberFormat

@@ -3,17 +3,17 @@ import {CenteredProgress} from 'widget/progress'
 import {Field, form} from 'widget/form'
 import {HoverDetector, HoverOverlay} from 'widget/hover'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {activatable} from 'widget/activation/activatable'
 import {dataSetById} from 'sources'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
-import {objectEquals} from 'collections'
-import {withRecipePath} from 'app/home/body/process/recipe'
+import {objectEquals, selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
-import PropTypes from 'prop-types'
 import React from 'react'
 import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
 import api from 'api'
@@ -25,14 +25,15 @@ const fields = {
     selectedScenes: new Field()
 }
 
-const mapStateToProps = (state, ownProps) => {
-    const {recipeId, sceneAreaId} = ownProps
-    const recipeState = RecipeState(recipeId)
-    const selectedScenes = recipeState(['model.scenes', sceneAreaId]) || []
+const mapRecipeToProps = recipe => {
+    const sceneAreaId = selectFrom(recipe, 'ui.sceneSelection')
+    const selectedScenes = selectFrom(recipe, ['model.scenes', sceneAreaId]) || []
     return {
-        sources: recipeState('model.sources'),
-        dates: recipeState('model.dates'),
-        sceneSelectionOptions: recipeState('model.sceneSelectionOptions'),
+        recipeId: recipe.id,
+        sceneAreaId,
+        sources: selectFrom(recipe, 'model.sources'),
+        dates: selectFrom(recipe, 'model.dates'),
+        sceneSelectionOptions: selectFrom(recipe, 'model.sceneSelectionOptions'),
         values: {selectedScenes}
     }
 }
@@ -63,26 +64,27 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        const {action, recipeId, recipePath, dates: {targetDate}, form} = this.props
+        const {action, recipeId, dates: {targetDate}, form, activatable: {deactivate}} = this.props
         const loading = !action('LOAD_SCENES').dispatched
         return (
             <React.Fragment>
                 <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
                 <FormPanel
+                    close={deactivate}
+                    policy={policy}
                     className={styles.panel}
                     form={form}
-                    statePath={recipePath + '.ui'}
-                    modalOnDirty={false}
-                    center
+                    type='center'
                     onApply={({selectedScenes}) => this.onApply(selectedScenes)}
                     onCancel={() => this.deselectSceneArea()}>
                     <PanelHeader
                         icon='images'
-                        title={msg('process.mosaic.panel.auto.form.selectScenes')}/>
+                        title={msg('process.mosaic.panel.autoSelectScenes.form.selectScenes')}/>
 
                     <PanelContent className={loading ? styles.loading : null}>
                         {loading
-                            ? <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
+                            ?
+                            <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
                             : this.renderScenes()}
                     </PanelContent>
 
@@ -135,8 +137,8 @@ class SceneSelection extends React.Component {
     renderScenes() {
         const availableScenes = this.getAvailableScenes()
         const selectedScenes = this.getSelectedScenes()
-        const scenes = availableScenes.length && selectedScenes.length
-        return scenes ? (
+        const haveScenes = availableScenes.length || selectedScenes.length
+        return haveScenes ? (
             <div className={styles.scenes}>
                 <div className={styles.availableScenes}>
                     {this.renderAvailableScenes(availableScenes)}
@@ -224,7 +226,7 @@ class Scene extends React.Component {
     renderAvailableSceneOverlay() {
         const {scene, onAdd, recipeActions} = this.props
         return (
-            <ButtonGroup className={styles.overlayControls}>
+            <ButtonGroup className={styles.overlayControls} type='horizontal-wrap-fill'>
                 <Button
                     look='add'
                     icon='plus'
@@ -242,7 +244,7 @@ class Scene extends React.Component {
     renderSelectedSceneOverlay() {
         const {scene, onRemove, recipeActions} = this.props
         return (
-            <ButtonGroup className={styles.overlayControls}>
+            <ButtonGroup className={styles.overlayControls} type='horizontal-wrap-fill'>
                 <Button
                     look='cancel'
                     icon='minus'
@@ -340,11 +342,22 @@ class Scene extends React.Component {
     }
 }
 
-SceneSelection.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    sceneAreaId: PropTypes.string.isRequired
-}
+SceneSelection.propTypes = {}
 
-export default withRecipePath()(
-    form({fields, mapStateToProps})(SceneSelection)
+const policy = () => ({
+    _: 'disallow',
+    dates: 'allow',
+    sources: 'allow',
+    sceneSelectionOptions: 'allow',
+    compositeOptions: 'allow'
+})
+
+export default (
+    activatable('sceneSelection', policy)(
+        withRecipe(mapRecipeToProps)(
+            form({fields})(
+                SceneSelection
+            )
+        )
+    )
 )

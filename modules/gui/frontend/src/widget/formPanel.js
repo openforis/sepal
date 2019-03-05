@@ -1,149 +1,109 @@
 import {Form} from 'widget/form'
-import {Panel} from 'widget/panel'
+import {Panel, PanelButtons} from 'widget/panel'
 import {PanelButtonContext} from './toolbar'
-import {PanelButtons} from 'widget/panel'
 import {PanelWizardContext} from './panelWizard'
-import {connect, select} from 'store'
+import {connect} from 'store'
+import {isObservable} from 'rxjs'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
-
-const mapStateToProps = (state, ownProps) => {
-    const {statePath} = ownProps
-    return {
-        initialized: select([statePath, 'initialized']),
-        selectedPanel: select([statePath, 'selectedPanel'])
-    }
-}
-
+import styles from './formPanel.module.css'
 const PanelContext = React.createContext()
 
 class FormPanel extends React.Component {
-    componentDidMount() {
-        const {initialized, form, modalOnDirty = true} = this.props
-        if (modalOnDirty) {
-            this.setModal(!initialized)
-            if (initialized) {
-                form.onDirty(() => this.setModal(true))
-                form.onClean(() => this.setModal(false))
-            }
-        }
-    }
-
-    setModal(modal) {
-        const {statePath} = this.props
-        actionBuilder('SET_MODAL', {modal})
-            .set([statePath, 'modal'], modal)
-            .dispatch()
-    }
-
-    selectPanel(panel) {
-        const {statePath} = this.props
-        actionBuilder('SELECT_PANEL', {panel})
-            .set([statePath, 'selectedPanel'], panel)
-            .dispatch()
-    }
-
-    setInitialized() {
-        const {statePath} = this.props
-        actionBuilder('SET_INITIALIZED')
-            .set([statePath, 'initialized'], true)
-            .dispatch()
-    }
-
-    closePanel() {
-        this.setModal(false)
-        this.selectPanel()
-    }
-
-    apply() {
+    apply(onSuccess) {
         const {form, onApply} = this.props
-        onApply(form && form.values())
+        const result = onApply(form && form.values())
+        if (isObservable(result)) {
+            const result$ = result
+            this.props.stream('FORM_PANEL_APPLY', result$,
+                () => null,
+                _error => null,
+                () => onSuccess()
+            )
+        } else {
+            onSuccess && onSuccess()
+        }
+
+        return true
     }
 
     ok() {
-        const {form, isActionForm} = this.props
+        const {form, isActionForm, close} = this.props
         if (form && (isActionForm || form.isDirty())) {
-            this.apply()
-            this.closePanel()
+            this.apply(() => close())
         } else {
             this.cancel()
         }
     }
 
     cancel() {
-        const {onCancel} = this.props
+        const {onCancel, close} = this.props
         onCancel && onCancel()
-        this.closePanel()
+        close()
     }
 
-    back(panel) {
-        this.apply()
-        this.selectPanel(panel)
-    }
-
-    next(panel) {
-        this.apply()
-        this.selectPanel(panel)
-    }
-
-    done() {
-        this.apply()
-        this.setInitialized()
-        this.closePanel()
+    renderSpinner() {
+        return this.props.stream('FORM_PANEL_APPLY') === 'ACTIVE'
+            ? (
+                <div className={styles.spinner}>
+                    <Icon name='spinner'/>
+                </div>
+            )
+            : null
     }
 
     render() {
-        const {form = false, isActionForm, initialized, onApply, type = 'modal', className, children} = this.props
-        const {selectedPanel} = this.props
+        const {form = false, isActionForm, onApply, type = 'modal', className, children, placement} = this.props
         return (
-            <PanelWizardContext.Consumer>
-                {(panels = []) => {
-                    const wizard = panels.length && !initialized
-                    const selectedPanelIndex = panels.indexOf(selectedPanel)
-                    const first = selectedPanelIndex === 0
-                    const last = selectedPanelIndex === panels.length - 1
+            <PanelWizardContext>
+                {({wizard, back, next, done}) => {
                     return (
                         <PanelButtonContext.Consumer>
-                            {placement => (
+                            {placementFromContext => (
                                 <PanelContext.Provider value={{
                                     wizard,
-                                    first,
-                                    last,
+                                    first: !back,
+                                    last: !next,
                                     isActionForm: form && isActionForm,
                                     dirty: form && form.isDirty(),
                                     invalid: form && form.isInvalid(),
                                     onOk: () => this.ok(),
                                     onCancel: () => this.cancel(),
-                                    onBack: () => !first && this.back(panels[selectedPanelIndex - 1]),
-                                    onNext: () => !last && this.next(panels[selectedPanelIndex + 1]),
-                                    onDone: () => this.done()
+                                    onBack: () => back && this.apply(() => back()),
+                                    onNext: () => next && this.apply(() => next()),
+                                    onDone: () => done && this.apply(() => done())
                                 }}>
-                                    <Panel className={className} type={placement || type}>
+                                    <Panel
+                                        id={this.props.id}
+                                        className={className}
+                                        type={placement || placementFromContext || type}>
                                         <Form onSubmit={() => onApply && onApply(form && form.values())}>
                                             {children}
                                         </Form>
+                                        {this.renderSpinner()}
                                     </Panel>
                                 </PanelContext.Provider>
                             )}
                         </PanelButtonContext.Consumer>
-                    )}}
-            </PanelWizardContext.Consumer>
+                    )
+                }}
+            </PanelWizardContext>
         )
     }
 }
 
-export default connect(mapStateToProps)(FormPanel)
+export default connect()(FormPanel)
 
 FormPanel.propTypes = {
     children: PropTypes.any.isRequired,
     form: PropTypes.object.isRequired,
-    statePath: PropTypes.string.isRequired,
     className: PropTypes.string,
-    initialized: PropTypes.any,
+    close: PropTypes.func,
     isActionForm: PropTypes.any,
-    modalOnDirty: PropTypes.any,
-    type: PropTypes.string,
+    placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
+    policy: PropTypes.func,
+    type: PropTypes.string, // TODO: Same as type?
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
 }

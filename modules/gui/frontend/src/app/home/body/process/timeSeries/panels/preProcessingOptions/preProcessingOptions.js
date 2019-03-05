@@ -1,13 +1,12 @@
-import {Field, form} from 'widget/form'
+import {Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
+import {RecipeActions} from '../../timeSeriesRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './preprocess.module.css'
+import styles from './preProcessingOptions.module.css'
 
 const fields = {
     corrections: new Field(),
@@ -19,7 +18,7 @@ const fields = {
     compose: new Field()
 }
 
-class Preprocess extends React.Component {
+class PreProcessingOptions extends React.Component {
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
@@ -60,16 +59,10 @@ class Preprocess extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                onApply={values => this.recipeActions.setPreprocessOptions({
-                    values,
-                    model: valuesToModel(values)
-                }).dispatch()}>
+                placement='bottom-right'>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.timeSeries.panel.preprocess.title')}/>
@@ -79,16 +72,12 @@ class Preprocess extends React.Component {
                 </PanelContent>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 }
 
-Preprocess.propTypes = {
-    disabled: PropTypes.any,
-    recipeId: PropTypes.string,
-    source: PropTypes.string
-}
+PreProcessingOptions.propTypes = {}
 
 const valuesToModel = values => ({
     corrections: values.corrections,
@@ -102,16 +91,4 @@ const modelToValues = model => {
     })
 }
 
-export default withRecipePath()(
-    initValues({
-        getModel: props => RecipeState(props.recipeId)('model.preprocessOptions'),
-        getValues: props => RecipeState(props.recipeId)('ui.preprocessOptions'),
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setPreprocessOptions({values, model})
-                .dispatch()
-    })(
-        form({fields})(Preprocess)
-    )
-)
+export default recipeFormPanel({id: 'preProcessingOptions', fields, modelToValues, valuesToModel})(PreProcessingOptions)

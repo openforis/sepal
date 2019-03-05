@@ -1,26 +1,18 @@
+import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
-import {connect, select} from 'store'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
 import lookStyles from 'style/look.module.css'
 import styles from './toolbar.module.css'
 
 const Context = React.createContext()
 
-const mapStateToProps = (state, ownProps) => {
-    return {
-        modal: select([ownProps.statePath, 'modal']),
-        selectedPanel: select([ownProps.statePath, 'selectedPanel'])
-    }
-}
-
-class Toolbar extends React.Component {
+export default class Toolbar extends React.Component {
     panelContainer = React.createRef()
 
     render() {
-        const {statePath, horizontal, vertical, panel, placement, modal, className, selectedPanel} = this.props
+        const {horizontal, vertical, panel, placement, className} = this.props
         const classNames = [
             styles.toolbar,
             lookStyles.look,
@@ -37,10 +29,7 @@ class Toolbar extends React.Component {
                         horizontal: !!horizontal,
                         panel: !!panel,
                         panelContainer: this.panelContainer.current,
-                        statePath,
-                        placement,
-                        modal,
-                        selectedPanel
+                        placement
                     }}>
                         {this.props.children}
                     </Context.Provider>
@@ -58,12 +47,9 @@ Toolbar.propTypes = {
     left: PropTypes.any,
     panel: PropTypes.any,
     right: PropTypes.any,
-    statePath: PropTypes.any,
     top: PropTypes.any,
     vertical: PropTypes.any
 }
-
-export default connect(mapStateToProps)(Toolbar)
 
 export class ToolbarButton extends React.Component {
     render() {
@@ -133,19 +119,43 @@ export class PanelButton extends React.Component {
             </Context.Consumer>
         )
     }
-
-    select() {
-        const {name} = this.props
-        const {statePath} = this.toolbarProps
-        actionBuilder('SELECT_PANEL', {name})
-            .set([statePath, 'selectedPanel'], name)
-            .dispatch()
-    }
 }
 
 PanelButton.propTypes = {
     children: PropTypes.any.isRequired,
     name: PropTypes.string.isRequired,
+    disabled: PropTypes.any,
+    icon: PropTypes.string,
+    label: PropTypes.string,
+    tooltip: PropTypes.string,
+    onClick: PropTypes.func
+}
+
+export class ActivationButton extends React.Component {
+    render() {
+        const {id, icon, label, tooltip, disabled, onClick} = this.props
+        return (
+            <Activator id={id}>
+                {({activate, deactivate, active, canActivate}) =>
+                    <ToolbarButton
+                        disabled={disabled || !canActivate}
+                        selected={active}
+                        icon={icon}
+                        label={label}
+                        tooltip={tooltip}
+                        className={[styles.panelButton, active ? styles.selected : null].join(' ')}
+                        onClick={e => {
+                            active ? deactivate() : activate()
+                            onClick && onClick(e)
+                        }}/>
+                }
+            </Activator>
+        )
+    }
+}
+
+ActivationButton.propTypes = {
+    id: PropTypes.string.isRequired,
     disabled: PropTypes.any,
     icon: PropTypes.string,
     label: PropTypes.string,

@@ -1,0 +1,7 @@
+.panel {
+    width: 40rem;
+}
+
+.section:not(:first-child) {
+    margin-top: 2rem;
+}

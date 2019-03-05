@@ -1,6 +1,6 @@
-import {RecipeState as ParentRecipeState, recipePath} from '../recipe'
-import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
 import {msg} from 'translate'
+import {recipePath} from '../recipe'
+import {selectFrom} from 'collections'
 import Labels from '../../../map/labels'
 import _ from 'lodash'
 import api from 'api'
@@ -14,35 +14,25 @@ export const SceneSelectionType = Object.freeze({
     SELECT: 'SELECT'
 })
 
-export const RecipeState = recipeId => {
-    const recipeState = ParentRecipeState(recipeId)
-    if (!recipeState)
-        return null
-    const get = path => recipeState(path)
-    get.dateRange = () => {
-        const dates = get('model.dates')
-        const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
-        const seasonEnd = moment(dates.seasonEnd, DATE_FORMAT)
-        return [
-            seasonStart.subtract(dates.yearsBefore, 'years'),
-            seasonEnd.add(dates.yearsAfter, 'years')
-        ]
+export const defaultModel = {
+    dates: {
+        targetDate: moment().format(DATE_FORMAT),
+        seasonStart: moment().startOf('year').format(DATE_FORMAT),
+        seasonEnd: moment().add(1, 'years').startOf('year').format(DATE_FORMAT),
+        yearsBefore: 0,
+        yearsAfter: 0
+    },
+    sources: {LANDSAT: ['LANDSAT_8']},
+    sceneSelectionOptions: {
+        type: SceneSelectionType.ALL,
+        targetDateWeight: 0
+    },
+    compositeOptions: {
+        corrections: ['SR', 'BRDF'],
+        filters: [],
+        mask: ['CLOUDS', 'SNOW'],
+        compose: 'MEDOID'
     }
-    get.isSourceInDateRange = sourceId => {
-        const [from, to] = get.dateRange()
-        return isSourceInDateRange(sourceId, from, to)
-    }
-    get.isDataSetInDateRange = dataSetId => {
-        const [from, to] = get.dateRange()
-        return isDataSetInDateRange(dataSetId, from, to)
-    }
-
-    get.source = () => {
-        const sources = get('model.sources')
-        return sources && Object.keys(sources)[0]
-    }
-    initRecipe(get())
-    return get
 }
 
 export const RecipeActions = id => {
@@ -66,39 +56,6 @@ export const RecipeActions = id => {
         setSceneAreasShown(shown) {
             return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})
         },
-        selectPanel(panel) {
-            return set('SELECT_MOSAIC_PANEL', 'ui.selectedPanel', panel, {panel})
-        },
-        setAoi({values, model}) {
-            return setAll('SET_AOI', {
-                'ui.aoi': values,
-                'model.aoi': model,
-            }, {values, model})
-        },
-        setDates({values, model}) {
-            return setAll('SET_DATES', {
-                'ui.dates': values,
-                'model.dates': model
-            }, {values, model})
-        },
-        setSources({values, model}) {
-            return setAll('SET_SOURCES', {
-                'ui.sources': values,
-                'model.sources': model
-            }, {values, model})
-        },
-        setSceneSelectionOptions({values, model}) {
-            return setAll('SET_SCENE_SELECTION_OPTIONS', {
-                'ui.sceneSelectionOptions': values,
-                'model.sceneSelectionOptions': model
-            }, {values, model})
-        },
-        setCompositeOptions({values, model}) {
-            return setAll('SET_COMPOSITE_OPTIONS', {
-                'ui.compositeOptions': values,
-                'model.compositeOptions': model
-            }, {values, model})
-        },
         setBands(bands) {
             return setAll('SET_BANDS', {
                 'ui.bands.selection': bands
@@ -108,12 +65,6 @@ export const RecipeActions = id => {
             return setAll('SET_PAN_SHARPEN', {
                 'ui.bands.panSharpen': enabled
             }, {enabled})
-        },
-        setModal(enabled) {
-            return set('SET_MODAL', 'ui.modal', enabled, {enabled})
-        },
-        setBounds(bounds) {
-            return set('SET_BOUNDS', 'ui.bounds', bounds, {bounds})
         },
         setFusionTableColumns(columns) {
             return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
@@ -143,13 +94,13 @@ export const RecipeActions = id => {
             return set('SET_AUTO_SELECTING_SCENES', 'ui.autoSelectScenesState', state, {state})
         },
         setAutoSelectSceneCount(sceneCount) {
-            return set('SET_SCENE_COUNT', 'ui.sceneCount', sceneCount, {sceneCount})
+            return set('SET_SCENE_COUNT', 'ui.autoSelectScenes', sceneCount, {sceneCount})
         },
-        autoSelectScenes(sceneCount) {
+        autoSelectScenes({min, max}) {
             return setAll('REQUEST_AUTO_SELECT_SCENES', {
                 'ui.autoSelectScenesState': 'SUBMITTED',
-                'ui.sceneCount': sceneCount,
-            }, {sceneCount})
+                'ui.autoSelectScenes': {min, max},
+            }, {min, max})
         },
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
@@ -160,61 +111,13 @@ export const RecipeActions = id => {
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
         },
-        setRetrieveState(state) {
-            return set('SET_RETRIEVE_STATE', 'ui.retrieveState', state, {state})
+        hidePreview() {
+            return set('HIDE_PREVIEW', 'ui.hidePreview', true)
         },
-        setInitialized(initialized) {
-            return set('SET_INITIALIZED', 'ui.initialized', !!initialized, {initialized})
-        }
+        showPreview() {
+            return set('SHOW_PREVIEW', 'ui.hidePreview', false)
+        },
     }
-}
-
-const initRecipe = recipeState => {
-    if (!recipeState || recipeState.ui)
-        return
-    const actions = RecipeActions(recipeState.id)
-
-    actions.setLabelsShown(false).dispatch()
-    actions.setSceneAreasShown(true).dispatch()
-    actions.setBands('red, green, blue').dispatch()
-    actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
-
-    const model = recipeState.model
-    if (model)
-        return actions.setInitialized(model.aoi && model.dates && model.sources).dispatch()
-
-    const now = moment()
-    actions.setDates({
-        model: {
-            targetDate: now.format(DATE_FORMAT),
-            seasonStart: now.startOf('year').format(DATE_FORMAT),
-            seasonEnd: now.add(1, 'years').startOf('year').format(DATE_FORMAT),
-            yearsBefore: 0,
-            yearsAfter: 0
-        }
-    }).dispatch()
-
-    actions.setSources({
-        model: {
-            LANDSAT: ['LANDSAT_8']
-        }
-    }).dispatch()
-
-    actions.setSceneSelectionOptions({
-        model: {
-            type: SceneSelectionType.ALL,
-            targetDateWeight: 0
-        }
-    }).dispatch()
-
-    actions.setCompositeOptions({
-        model: {
-            corrections: ['SR', 'BRDF'],
-            filters: [],
-            mask: ['CLOUDS', 'SNOW'],
-            compose: 'MEDOID'
-        }
-    }).dispatch()
 }
 
 const submitRetrieveRecipeTask = recipe => {
@@ -244,6 +147,20 @@ export const inDateRange = (date, dates) => {
     return toDoy <= fromDoy
         ? doy >= fromDoy || doy < toDoy
         : doy >= fromDoy && doy < toDoy
+}
+
+export const dateRange = dates => {
+    const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
+    const seasonEnd = moment(dates.seasonEnd, DATE_FORMAT)
+    return [
+        seasonStart.subtract(dates.yearsBefore, 'years'),
+        seasonEnd.add(dates.yearsAfter, 'years')
+    ]
+}
+
+export const getSource = recipe => {
+    const sources = selectFrom(recipe, 'model.sources')
+    return sources && Object.keys(sources)[0]
 }
 
 const fromDate = dates =>

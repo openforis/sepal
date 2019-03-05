@@ -1,11 +1,10 @@
-import {Field, form} from 'widget/form'
-import {RecipeActions, RecipeState} from '../changeDetectionRecipe'
-import {initValues, withRecipePath} from 'app/home/body/process/recipe'
+import {Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import {RecipeActions} from 'app/home/body/process/classification/classificationRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {msg} from 'translate'
 import AssetSection from './assetSection'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import PanelSections from 'widget/panelSections'
-import PropTypes from 'prop-types'
 import React from 'react'
 import RecipeSection from './recipeSection'
 import SectionSelection from './sectionSelection'
@@ -23,13 +22,8 @@ const fields = {
 }
 
 class Source extends React.Component {
-    constructor(props) {
-        super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
-    }
-
     render() {
-        const {recipePath, number, form, inputs} = this.props
+        const {number, inputs} = this.props
         const sections = [
             {
                 icon: 'cog',
@@ -48,25 +42,25 @@ class Source extends React.Component {
             }
         ]
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                onApply={values => this.recipeActions.setSource({
-                    values,
-                    model: valuesToModel(values),
-                    number
-                }).dispatch()}>
+                placement='bottom-right'>
                 <PanelSections sections={sections} selected={inputs.section} inputs={inputs}/>
 
                 <FormPanelButtons/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
-}
 
-Source.propTypes = {
-    recipeId: PropTypes.string
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).showPreview().dispatch()
+    }
 }
 
 const valuesToModel = values => {
@@ -105,16 +99,14 @@ const modelToValues = (model = {}) => {
     }
 }
 
-export default withRecipePath()(
-    initValues({
-        getModel: props => RecipeState(props.recipeId)('model.source' + props.number),
-        getValues: props => RecipeState(props.recipeId)('ui.source' + props.number),
-        modelToValues,
-        onInitialized: ({model, values, props}) =>
-            RecipeActions(props.recipeId)
-                .setSource({values, model, number: props.number})
-                .dispatch()
-    })(
-        form({fields})(Source)
-    )
+export const Source1 = recipeFormPanel({id: 'source1', fields, modelToValues, valuesToModel})(
+    props => <Source number={1} {...props}/>
 )
+
+Source1.propTypes = {}
+
+export const Source2 = recipeFormPanel({id: 'source2', fields, modelToValues, valuesToModel})(
+    props => <Source number={2} {...props}/>
+)
+
+Source2.propTypes = {}

@@ -1,10 +1,10 @@
-import {Field, form} from 'widget/form'
+import {Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, RecipeState} from '../../timeSeriesRecipe'
+import {RecipeActions} from '../../timeSeriesRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {msg} from 'translate'
-import {withRecipePath} from 'app/home/body/process/recipe'
 import Buttons from 'widget/buttons'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -13,13 +13,6 @@ import styles from './retrieve.module.css'
 const fields = {
     indicator: new Field()
         .notEmpty('process.timeSeries.panel.retrieve.form.indicator.required')
-}
-
-const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        values: recipeState('ui.retrieveOptions')
-    }
 }
 
 class Retrieve extends React.Component {
@@ -33,6 +26,7 @@ class Retrieve extends React.Component {
         const indicatorOptions = [
             {value: 'NDVI', label: 'NDVI'},
             {value: 'NDMI', label: 'NDMI'},
+            {value: 'NBR', label: 'NBR'},
             {value: 'EVI', label: 'EVI'},
             {value: 'EVI2', label: 'EVI2'}
         ]
@@ -51,13 +45,11 @@ class Retrieve extends React.Component {
     }
 
     render() {
-        const {recipePath, form} = this.props
         return (
-            <FormPanel
+            <RecipeFormPanel
                 className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                isActionForm={true}
+                isActionForm
+                placement='top-right'
                 onApply={values => this.recipeActions.retrieve(values).dispatch()}>
                 <PanelHeader
                     icon='cloud-download-alt'
@@ -69,7 +61,7 @@ class Retrieve extends React.Component {
 
                 <FormPanelButtons
                     applyLabel={msg('process.timeSeries.panel.retrieve.apply')}/>
-            </FormPanel>
+            </RecipeFormPanel>
         )
     }
 }
@@ -78,6 +70,4 @@ Retrieve.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default withRecipePath()(
-    form({fields, mapStateToProps})(Retrieve)
-)
+export default recipeFormPanel({id: 'retrieve', fields})(Retrieve)
