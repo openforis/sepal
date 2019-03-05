@@ -1,6 +1,6 @@
+import {collectActivatables} from 'widget/activation/activation'
 import {activationAllowed} from 'widget/activation/activationPolicy'
 import {connect} from 'store'
-import {selectFrom} from 'collections'
 import {withActivationContext} from './activationContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -8,8 +8,8 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 
 const mapStateToProps = (state, ownProps) => {
-    const {activationContext: {statePath}} = ownProps
-    const activatables = selectFrom(state, [statePath, 'activatables']) || {}
+    const {activationContext: {pathList}} = ownProps
+    const activatables = collectActivatables(state, pathList)
     const id = ownProps.id
     return id
         ? {activatables: _.pick(activatables, id)}
@@ -23,11 +23,11 @@ class UnconnectedActivator extends React.Component {
     }
 
     getActivatorProps() {
-        const {id, activatables, activationContext: {statePath}} = this.props
-        const activatablePath = id => [statePath, 'activatables', id]
+        const {id, activatables, activationContext: {pathList}} = this.props
+        const activatablePath = id => activatables[id].path
 
         const activate = (id, activationProps) =>
-            actionBuilder('ACTIVATE', {id})
+            actionBuilder('ACTIVATE', {id, pathList})
                 .assign(activatablePath(id), {
                     active: true,
                     justActivated: true,
@@ -36,7 +36,7 @@ class UnconnectedActivator extends React.Component {
                 .dispatch()
 
         const deactivate = id =>
-            actionBuilder('DEACTIVATE', {id})
+            actionBuilder('DEACTIVATE', {id, pathList})
                 .assign(activatablePath(id), {
                     active: false,
                     justActivated: false
@@ -56,8 +56,8 @@ class UnconnectedActivator extends React.Component {
                 }
             }, _.cloneDeep(activatables))
             if (!_.isEqual(updatedActivatables, activatables)) {
-                actionBuilder('UPDATE_ACTIVATABLES')
-                    .set([statePath, 'activatables'], updatedActivatables)
+                actionBuilder('UPDATE_ACTIVATABLES', {pathList})
+                    .set([pathList, 'activatables'], updatedActivatables)
                     .dispatch()
             }
         }

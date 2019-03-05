@@ -96,7 +96,7 @@ class Home extends React.Component {
     render() {
         const {user, floatingMenu, floatingFooter} = this.props
         return (
-            <ActivationContext statePath={['ui']}>
+            <ActivationContext id='root'>
                 <div className={[
                     styles.container,
                     floatingMenu && styles.floatingMenu,

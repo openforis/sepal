@@ -1,16 +1,17 @@
-import {Activator} from './activator'
-import {connect} from 'store'
-import {selectFrom} from 'collections'
-import {shouldDeactivate} from 'widget/activation/activationPolicy'
-import {withActivationContext} from 'widget/activation/activationContext'
+import actionBuilder from 'action-builder'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
-import actionBuilder from 'action-builder'
+import {connect} from 'store'
+import {collectActivatables} from 'widget/activation/activation'
+import {withActivationContext} from 'widget/activation/activationContext'
+import {shouldDeactivate} from 'widget/activation/activationPolicy'
+import {Activator} from './activator'
+
 
 const mapStateToProps = (state, ownProps) => {
-    const {activationContext: {statePath}} = ownProps
-    return {activatables: selectFrom(state, [statePath, 'activatables']) || {}}
+    const {activationContext: {pathList}} = ownProps
+    return {activatables: collectActivatables(state, pathList)}
 }
 
 class UnconnectedActivatable extends React.Component {
@@ -18,7 +19,8 @@ class UnconnectedActivatable extends React.Component {
         const {id, activatables, children} = this.props
         const currentActivatable = activatables[id] || {}
         return currentActivatable.active
-            ? <Activator id={id}>{activatorProps => children({...this.props, ...activatorProps, ...currentActivatable.activationProps})}</Activator>
+            ? <Activator
+                id={id}>{activatorProps => children({...this.props, ...activatorProps, ...currentActivatable.activationProps})}</Activator>
             : null
     }
 
@@ -31,9 +33,9 @@ class UnconnectedActivatable extends React.Component {
     }
 
     componentWillUnmount() {
-        const {id, activationContext: {statePath}} = this.props
+        const {id, activationContext: {pathList}} = this.props
         actionBuilder('REMOVE_ACTIVATABLE')
-            .del([statePath, 'activatables', id])
+            .del([pathList, 'activatables', id])
             .dispatch()
     }
 
@@ -54,16 +56,17 @@ class UnconnectedActivatable extends React.Component {
     }
 
     updateReduxState(nextPolicy, active) {
-        const {id, activationContext: {statePath}} = this.props
+        const {id, activationContext: {pathList}} = this.props
         const activatable = {
             id,
+            path: [...pathList, 'activatables', id],
             active: !!active,
             justActivated: false,
             policy: nextPolicy
         }
 
         actionBuilder('UPDATE_ACTIVATABLE', activatable)
-            .merge([statePath, 'activatables', id], activatable)
+            .merge([pathList, 'activatables', id], activatable)
             .dispatch()
     }
 }

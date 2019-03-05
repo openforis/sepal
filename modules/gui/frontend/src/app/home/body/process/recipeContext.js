@@ -1,17 +1,19 @@
-import {ActivationContext} from 'widget/activation/activationContext'
-import {connect, select} from 'store'
-import React from 'react'
 import actionBuilder from 'action-builder'
+import React from 'react'
+import {connect, select} from 'store'
+import {ActivationContext} from 'widget/activation/activationContext'
 
 export const RecipeContext = ({recipeId, rootStatePath, children}) => {
     const statePath = getStatePath(recipeId, rootStatePath)
-    return (
-        <Context.Provider value={toContextValue(recipeId, statePath)}>
-            <ActivationContext statePath={[statePath, 'ui']}>
-                {children}
-            </ActivationContext>
-        </Context.Provider>
-    )
+    return recipeId
+        ? (
+            <Context.Provider value={toContextValue(recipeId, statePath)}>
+                <ActivationContext id={'recipe-' + recipeId}>
+                    {children}
+                </ActivationContext>
+            </Context.Provider>
+        )
+        : null
 }
 
 export const withRecipeContext = () =>
@@ -30,6 +32,7 @@ export const withRecipeContext = () =>
                 )
             }
         }
+
         return HigherOrderComponent
     }
 
@@ -90,7 +93,7 @@ const getStatePath = (recipeId, rootStatePath) => {
         .findIndex(recipe => recipe.id === recipeId)
     if (recipeTabIndex === -1)
         return 'foo'
-        // throw new Error(`Recipe not found: ${recipeId}`)
+    // throw new Error(`Recipe not found: ${recipeId}`)
     return [rootStatePath, recipeTabIndex]
         .filter(e => e !== undefined)
         .join('.')
