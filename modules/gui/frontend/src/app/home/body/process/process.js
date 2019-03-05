@@ -82,7 +82,7 @@ class Process extends React.Component {
 }
 
 export default (
-    activator(['closeRecipeDialog'])(
+    activator('closeRecipeDialog')(
         Process
     )
 )

@@ -109,7 +109,7 @@ const policy = () => ({
 
 export default (
     activatable('changePassword', policy)(
-        activator(['userDetails'])(
+        activator('userDetails')(
             form({fields, constraints, mapStateToProps})(
                 ChangePassword
             )

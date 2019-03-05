@@ -81,7 +81,7 @@ class SceneAreaMarker extends React.Component {
 }
 
 export default withRecipe(mapRecipeToProps)(
-    activator(['sceneSelection'])(
+    activator('sceneSelection')(
         SceneAreaMarker
     )
 )

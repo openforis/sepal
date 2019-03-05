@@ -11,7 +11,7 @@ const mapStateToProps = (state, ownProps) => {
     const {activationContext: {pathList}} = ownProps
     const activatables = collectActivatables(state, pathList)
     const id = ownProps.id
-    return id
+    return id.length
         ? {activatables: _.pick(activatables, id)}
         : {activatables}
 }
@@ -80,7 +80,7 @@ class UnconnectedActivator extends React.Component {
     }
 }
 
-export const activator = (id) => {
+export const activator = (...id) => {
     return WrappedComponent => {
         class HigherOrderComponent extends React.Component {
             render() {

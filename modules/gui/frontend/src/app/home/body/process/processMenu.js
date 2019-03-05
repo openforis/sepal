@@ -78,7 +78,7 @@ class ProcessMenu extends React.Component {
 }
 
 export default (
-    activator(['saveRecipeDialog'])(
+    activator('saveRecipeDialog')(
         connect(mapStateToProps)(
             ProcessMenu
         )
