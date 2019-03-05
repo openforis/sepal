@@ -1,4 +1,3 @@
-import {Button} from 'widget/button'
 import {Subject, merge, timer} from 'rxjs'
 import {connect, select} from 'store'
 import {delay, filter, map, mergeMap} from 'rxjs/operators'
@@ -86,7 +85,15 @@ class _Notifications extends React.Component {
         )
     }
 
-    renderNotification({id, level, title, message, error, content, dismissable, dismissing}) {
+    renderDismissMessage() {
+        return (
+            <div className={styles.dismiss}>
+                {msg('widget.notification.dismiss')}
+            </div>
+        )
+    }
+
+    renderNotification({id, level, title, message, error, content, timeout, dismissable, dismissing}) {
         const dismiss = () => manualDismiss$.next(id)
         return (
             <div
@@ -104,6 +111,7 @@ class _Notifications extends React.Component {
                 {message ? this.renderMessage(message) : null}
                 {error ? this.renderError(error) : null}
                 {content ? this.renderContent(content, dismiss) : null}
+                {timeout === 0 ? this.renderDismissMessage() : null}
             </div>
         )
     }

@@ -71,6 +71,12 @@
     cursor: pointer;
 }
 
+.notification .dismiss {
+    text-align: center;
+    font-size: .8rem;
+    color: #ccc;
+}
+
 .notification .title {
     color: var(--color);
     font-weight: bold;
