@@ -8,7 +8,7 @@ import styles from './closeRecipe.module.css'
 
 class CloseRecipe extends React.Component {
     render() {
-        const {activator, activatable} = this.props
+        const {activator: {activatables: saveRecipeDialog}, activatable} = this.props
         const recipe = activatable.recipe
         const title = recipe.title || recipe.placeholder
         return (
@@ -31,7 +31,7 @@ class CloseRecipe extends React.Component {
                             dots
                             onClick={() => {
                                 activatable.deactivate()
-                                activator.activate({recipe, closeTabOnSave: true})
+                                saveRecipeDialog.activate({recipe, closeTabOnSave: true})
                             }}/>
                     </PanelButtons.Main>
                     <PanelButtons.Extra>
@@ -55,7 +55,7 @@ const policy = () => ({
 
 export default (
     activatable('closeRecipeDialog', policy)(
-        activator('saveRecipeDialog')(
+        activator(['saveRecipeDialog'])(
             CloseRecipe
         )
     )

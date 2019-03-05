@@ -89,7 +89,6 @@ class ChangePassword extends React.Component {
                 form={form}
                 isActionForm={true}
                 modal
-                // onApply={userPasswords => this.changePassword(userPasswords)}
                 onApply={userPasswords => this.changePassword$(userPasswords)}
                 close={() => this.close()}>
                 <PanelHeader
@@ -111,7 +110,6 @@ const policy = () => ({
 export default (
     activatable('changePassword', policy)(
         activator(['userDetails'])(
-        // activator('foo')(
             form({fields, constraints, mapStateToProps})(
                 ChangePassword
             )

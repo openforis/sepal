@@ -49,10 +49,10 @@ class Process extends React.Component {
     }
 
     onCloseTab(recipe) {
-        const {activator: {activatables}} = this.props
+        const {activator: {activatables: {closeRecipeDialog}}} = this.props
         const unsaved = recipe.ui && recipe.ui.unsaved && recipe.ui.initialized
         if (unsaved) {
-            activatables['closeRecipeDialog'].activate({recipe})
+            closeRecipeDialog.activate({recipe})
         } else {
             closeRecipe(recipe.id)
         }
@@ -82,5 +82,7 @@ class Process extends React.Component {
 }
 
 export default (
-    activator(['closeRecipeDialog'])(Process)
+    activator(['closeRecipeDialog'])(
+        Process
+    )
 )
