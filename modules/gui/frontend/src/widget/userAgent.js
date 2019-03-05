@@ -12,5 +12,5 @@ export const isMobile = () => {
         return true
 
     const dimensions = select('dimensions')
-    return dimensions.width < 500 || dimensions.height < 500
+    return dimensions.width < 500 || (dimensions.height < 500 && dimensions.height > 0)
 }
