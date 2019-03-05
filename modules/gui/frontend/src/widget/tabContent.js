@@ -47,8 +47,8 @@ class TabContent extends React.PureComponent {
 TabContent.propTypes = {
     children: PropTypes.any,
     id: PropTypes.string,
-    type: PropTypes.string,
     selected: PropTypes.any,
+    type: PropTypes.string,
     onDisable: PropTypes.func,
     onEnable: PropTypes.func
 }

@@ -1,5 +1,5 @@
-import {collectActivatables} from 'widget/activation/activation'
 import {activationAllowed} from 'widget/activation/activationPolicy'
+import {collectActivatables} from 'widget/activation/activation'
 import {connect} from 'store'
 import {withActivationContext} from './activationContext'
 import PropTypes from 'prop-types'

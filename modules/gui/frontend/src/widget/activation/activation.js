@@ -4,7 +4,6 @@ import _ from 'lodash'
 const parentPathList = pathList =>
     pathList.slice(0, -2)
 
-
 export const collectActivatables = (state, pathList) => {
     // console.log('collectActivatables')
     const selectActivatables = pathList => {

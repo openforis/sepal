@@ -1,5 +1,5 @@
 import {Activator, activator} from 'widget/activation/activator'
-import {Msg, msg} from 'translate'
+import {Msg} from 'translate'
 import {RecipeState, addRecipe, exportRecipe$} from './recipe'
 import {connect, select} from 'store'
 import Menu, {MenuItem} from 'widget/menu'

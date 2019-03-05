@@ -1,7 +1,7 @@
-import actionBuilder from 'action-builder'
-import React from 'react'
-import {connect, select} from 'store'
 import {ActivationContext} from 'widget/activation/activationContext'
+import {connect, select} from 'store'
+import React from 'react'
+import actionBuilder from 'action-builder'
 
 export const RecipeContext = ({recipeId, rootStatePath, children}) => {
     const statePath = getStatePath(recipeId, rootStatePath)

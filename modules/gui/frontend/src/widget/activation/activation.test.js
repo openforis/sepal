@@ -1,5 +1,5 @@
-import {toPathList} from 'collections'
 import {collectActivatables as collect} from './activation'
+import {toPathList} from 'collections'
 
 /* eslint-disable no-undef */
 
