@@ -16,7 +16,7 @@ const mapStateToProps = (state, ownProps) => {
 class ProcessMenu extends React.Component {
     render() {
         const {recipe} = this.props
-        if (recipe && recipe.type) {
+        if (recipe && recipe.type && recipe.ui.initialized) {
             const unsaved = this.isRecipeUnsaved()
             return (
                 <Menu>
