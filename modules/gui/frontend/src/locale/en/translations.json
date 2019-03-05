@@ -149,7 +149,7 @@
             "recipeNotSaved": "Recipe is not saved.",
             "duplicateRecipe": "Duplicate recipe",
             "exportRecipe": "Export recipe",
-            "saveRecipe": "Save recipe",
+            "saveRecipe": "Save recipe...",
             "removeRecipe": "Remove recipe",
             "revertToOldRevision": "Revert to old revision...",
             "searchRecipes": "Search recipes"
