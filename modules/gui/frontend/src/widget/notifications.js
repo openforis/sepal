@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {Subject, merge, timer} from 'rxjs'
 import {connect, select} from 'store'
 import {delay, filter, map, mergeMap} from 'rxjs/operators'
@@ -49,7 +50,7 @@ const mapStateToProps = () => ({
     notifications: select(PATH) || []
 })
 
-class __Notifications extends React.Component {
+class _Notifications extends React.Component {
     subscriptions = []
 
     renderTitle(title) {
@@ -149,7 +150,7 @@ class __Notifications extends React.Component {
     }
 }
 
-const Notifications = connect(mapStateToProps)(__Notifications)
+const Notifications = connect(mapStateToProps)(_Notifications)
 
 Notifications.success = notification =>
     publish({...notification, level: 'success'})
