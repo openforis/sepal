@@ -42,7 +42,6 @@ export default function asyncActionBuilder(type, action$, component) {
                     if (actions && !(actions instanceof Array))
                         actions = [actions]
                     actions.forEach(action => addActions(action))
-                    // console.log('error', error)
                     if (actions.length === 0)
                     // TODO: fix this!
                     // Notifications.caught(
