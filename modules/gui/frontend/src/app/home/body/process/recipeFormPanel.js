@@ -49,18 +49,20 @@ export const recipeFormPanel = ({
 
     return WrappedComponent => {
         class HigherOrderComponent extends React.Component {
+            constructor(props) {
+                super(props)
+                const {values, recipeContext: {statePath}, form} = props
+                this.prevValues = values
+                form.onDirtyChanged(dirty => setDirty({id, statePath, dirty}))
+            }
+
             render() {
                 const {form, recipeContext: {statePath}, activatable: {deactivate}} = this.props
                 return (
-                    <Context.Provider value={{id, form, statePath, valuesToModel, deactivate}}>
+                    <Context.Provider value={{id, form, statePath, valuesToModel, deactivate, prevValues: this.prevValues}}>
                         {React.createElement(WrappedComponent, this.props)}
                     </Context.Provider>
                 )
-            }
-
-            componentDidMount() {
-                const {recipeContext: {statePath}, form} = this.props
-                form.onDirtyChanged(dirty => setDirty({id, statePath, dirty}))
             }
         }
 
@@ -85,7 +87,7 @@ export class RecipeFormPanel extends React.Component {
         const {className, placement, isActionForm, onCancel, onClose, children} = this.props
         return (
             <Context.Consumer>
-                {({id, form, statePath, valuesToModel, deactivate}) =>
+                {({id, form, statePath, valuesToModel, deactivate, prevValues}) =>
                     <FormPanel
                         id={id}
                         className={className}
@@ -93,7 +95,7 @@ export class RecipeFormPanel extends React.Component {
                         close={deactivate}
                         isActionForm={isActionForm}
                         placement={placement}
-                        onApply={values => this.onApply({id, statePath, values, valuesToModel})}
+                        onApply={values => this.onApply({id, statePath, values, valuesToModel, prevValues})}
                         onCancel={onCancel}
                         onClose={onClose}>
                         {children}
@@ -103,7 +105,7 @@ export class RecipeFormPanel extends React.Component {
         )
     }
 
-    onApply({id, statePath, values, valuesToModel}) {
+    onApply({id, statePath, values, valuesToModel, prevValues}) {
         const {onApply, isActionForm} = this.props
         if (isActionForm) {
             setValues({id, statePath, values})
@@ -111,7 +113,7 @@ export class RecipeFormPanel extends React.Component {
         } else {
             const model = valuesToModel(values)
             setModelAndValues({id, statePath, model, values})
-            onApply && onApply(values, model)
+            onApply && onApply(values, model, prevValues)
         }
     }
 }
