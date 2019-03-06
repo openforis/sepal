@@ -1,13 +1,16 @@
-import {Button} from 'widget/button'
-import {msg} from 'translate'
-import {sepalMap} from 'app/home/map/map'
+import api from 'api'
+import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
+import {sepalMap} from 'app/home/map/map'
+import {selectFrom} from 'collections'
+import _ from 'lodash'
+import React from 'react'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import {enabled} from 'widget/enableWhen'
 import MapStatus from 'widget/mapStatus'
 import Notifications from 'widget/notifications'
-import React from 'react'
-import _ from 'lodash'
-import api from 'api'
 
 const mapRecipeToProps = recipe => ({recipe})
 
@@ -70,11 +73,11 @@ class MosaicPreview extends React.Component {
 
     componentDidUpdate(prevProps) {
         const {recipe} = this.props
+        const context = sepalMap.getContext(recipe.id)
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
         if (layerChanged)
             this.updateLayer(previewRequest)
-        const context = sepalMap.getContext(recipe.id)
         context.hideLayer('preview', this.isHidden(recipe))
     }
 
@@ -117,6 +120,25 @@ class MosaicPreview extends React.Component {
     }
 }
 
+
+const hasScenes = ({recipe}) => {
+    const type = selectFrom(recipe, 'model.sceneSelectionOptions.type')
+    const scenes = selectFrom(recipe, 'model.scenes') || {}
+    return type !== SceneSelectionType.SELECT || Object.values(scenes)
+        .find(scenes => scenes.length)
+}
+
+const removeLayer = ({recipe}) => {
+    const context = sepalMap.getContext(recipe.id)
+    context.removeLayer('preview')
+}
+
 MosaicPreview.propTypes = {}
 
-export default withRecipe(mapRecipeToProps)(MosaicPreview)
+export default (
+    withRecipe(mapRecipeToProps)(
+        enabled({when: hasScenes, onDisable: removeLayer})(
+            MosaicPreview
+        )
+    )
+)
