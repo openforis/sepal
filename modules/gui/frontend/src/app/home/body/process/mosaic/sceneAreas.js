@@ -1,25 +1,29 @@
-import {MapLayer, sepalMap} from 'app/home/map/map'
-import {RecipeActions, getSource} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {Subject, of} from 'rxjs'
-import {map, takeUntil} from 'rxjs/operators'
-import {msg} from 'translate'
-import {objectEquals, selectFrom} from 'collections'
+import api from 'api'
+import {getSource, RecipeActions, SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import MapStatus from 'widget/mapStatus'
+import {MapLayer, sepalMap} from 'app/home/map/map'
+import {objectEquals, selectFrom} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {of, Subject} from 'rxjs'
+import {map, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
+import {enabled} from 'widget/enableWhen'
+import MapStatus from 'widget/mapStatus'
 import SceneAreaMarker from './sceneAreaMarker'
-import api from 'api'
 import styles from './sceneAreas.module.css'
 
 const mapRecipeToProps = recipe => {
+    const sceneSelectionType = selectFrom(recipe, 'model.sceneSelectionOptions.type')
+    const manualSelection = sceneSelectionType === SceneSelectionType.SELECT
     return {
         recipeId: recipe.id,
         initialized: selectFrom(recipe, 'ui.initialized'),
         sceneAreasShown: selectFrom(recipe, 'ui.sceneAreasShown'),
         sceneAreas: selectFrom(recipe, 'ui.sceneAreas'),
         aoi: selectFrom(recipe, 'model.aoi'),
-        source: getSource(recipe)
+        source: getSource(recipe),
+        manualSelection
     }
 }
 
@@ -36,10 +40,10 @@ class SceneAreas extends React.Component {
     }
 
     render() {
-        const {sceneAreasShown, action} = this.props
+        const {sceneAreasShown, stream} = this.props
         return (
             <React.Fragment>
-                {action('LOAD_SCENE_AREAS').dispatched
+                {stream('LOAD_SCENE_AREAS') === 'COMPLETED'
                     ? sceneAreasShown && this.state.show ? this.renderSceneAreas() : null
                     : <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
             </React.Fragment>
@@ -75,14 +79,14 @@ class SceneAreas extends React.Component {
     loadSceneAreas(aoi, source) {
         this.loadSceneArea$.next()
         this.recipeActions.setSceneAreas(null).dispatch()
-        this.props.asyncActionBuilder('LOAD_SCENE_AREAS',
+        this.props.stream('LOAD_SCENE_AREAS',
             api.gee.sceneAreas$({aoi, source}).pipe(
-                map(sceneAreas =>
-                    this.recipeActions.setSceneAreas(sceneAreas)
+                map(sceneAreas => {
+                        this.recipeActions.setSceneAreas(sceneAreas).dispatch()
+                    }
                 ),
                 takeUntil(this.loadSceneArea$)
             ))
-            .dispatch()
     }
 }
 
@@ -90,7 +94,13 @@ SceneAreas.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default withRecipe(mapRecipeToProps)(SceneAreas)
+export default (
+    withRecipe(mapRecipeToProps)(
+        enabled({when: ({manualSelection}) => manualSelection})(
+            SceneAreas
+        )
+    )
+)
 
 const setSceneAreaLayer = ({recipeId, component}) => {
     const layer = new SceneAreaLayer(component)

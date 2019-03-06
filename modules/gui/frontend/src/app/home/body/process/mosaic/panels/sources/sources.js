@@ -89,6 +89,10 @@ class Sources extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'
+                onApply={(values, model, prevValues) => {
+                    if (values.source !== prevValues.source)
+                        RecipeActions(recipeId).setSelectedScenes().dispatch()
+                }}
                 onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
                 <PanelHeader
                     icon='satellite-dish'
