@@ -23,7 +23,7 @@ const fields = {
 
 class Source extends React.Component {
     render() {
-        const {number, inputs} = this.props
+        const {recipeId, number, inputs} = this.props
         const sections = [
             {
                 icon: 'cog',
@@ -44,7 +44,8 @@ class Source extends React.Component {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='bottom-right'>
+                placement='bottom-right'
+                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
                 <PanelSections sections={sections} selected={inputs.section} inputs={inputs}/>
 
                 <FormPanelButtons/>
@@ -55,11 +56,6 @@ class Source extends React.Component {
     componentDidMount() {
         const {recipeId} = this.props
         RecipeActions(recipeId).hidePreview().dispatch()
-    }
-
-    componentWillUnmount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 

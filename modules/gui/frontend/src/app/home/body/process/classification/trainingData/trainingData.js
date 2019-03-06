@@ -57,10 +57,12 @@ class TrainingData extends React.Component {
     }
 
     render() {
+        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 placement='bottom-right'
-                className={styles.panel}>
+                className={styles.panel}
+                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
                 <PanelHeader
                     icon='cog'
                     title={msg('process.classification.panel.trainingData.title')}/>
@@ -122,11 +124,6 @@ class TrainingData extends React.Component {
         if (fusionTable.value)
             this.loadFusionTableColumns(fusionTable.value)
         RecipeActions(recipeId).hidePreview().dispatch()
-    }
-
-    componentWillUnmount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 
