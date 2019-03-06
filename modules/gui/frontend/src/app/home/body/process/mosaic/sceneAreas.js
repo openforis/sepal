@@ -40,10 +40,10 @@ class SceneAreas extends React.Component {
     }
 
     render() {
-        const {sceneAreasShown, action} = this.props
+        const {sceneAreasShown, stream} = this.props
         return (
             <React.Fragment>
-                {action('LOAD_SCENE_AREAS').dispatched
+                {stream('LOAD_SCENE_AREAS') === 'COMPLETED'
                     ? sceneAreasShown && this.state.show ? this.renderSceneAreas() : null
                     : <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
             </React.Fragment>
@@ -79,14 +79,14 @@ class SceneAreas extends React.Component {
     loadSceneAreas(aoi, source) {
         this.loadSceneArea$.next()
         this.recipeActions.setSceneAreas(null).dispatch()
-        this.props.asyncActionBuilder('LOAD_SCENE_AREAS',
+        this.props.stream('LOAD_SCENE_AREAS',
             api.gee.sceneAreas$({aoi, source}).pipe(
-                map(sceneAreas =>
-                    this.recipeActions.setSceneAreas(sceneAreas)
+                map(sceneAreas => {
+                        this.recipeActions.setSceneAreas(sceneAreas).dispatch()
+                    }
                 ),
                 takeUntil(this.loadSceneArea$)
             ))
-            .dispatch()
     }
 }
 
