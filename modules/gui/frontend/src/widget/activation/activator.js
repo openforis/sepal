@@ -11,10 +11,6 @@ const mapStateToProps = (state, ownProps) => {
     const {activationContext: {pathList}} = ownProps
     const activatables = collectActivatables(state, pathList)
     return {activatables}
-    // const id = ownProps.id
-    // return _.isEmpty(id)
-    //     ? {activatables}
-    //     : {activatables: _.pick(activatables, id)}
 }
 
 class _Activator extends React.Component {
@@ -24,7 +20,11 @@ class _Activator extends React.Component {
     }
 
     getActivatorProps() {
-        const {id, activatables, activationContext: {pathList}} = this.props
+        const {id, ids, activatables, activationContext: {pathList}} = this.props
+        if (id && ids) {
+            throw Error('Cannot provide both id and ids props.')
+        }
+        
         const activatablePath = id => activatables[id].path
 
         const activate = (id, activationProps) =>
@@ -45,8 +45,8 @@ class _Activator extends React.Component {
                 .dispatch()
 
         const isActive = id => !!(activatables[id] || {}).active
-        const canActivate = id =>
-            activationAllowed(id, activatables)
+
+        const canActivate = id => activationAllowed(id, activatables)
 
         const updateActivatables = updates => {
             const updatedActivatables = _.transform(updates, (activatables, {id, active}) => {
@@ -70,17 +70,17 @@ class _Activator extends React.Component {
             activate: activationProps => canActivate(id) && activate(id, activationProps),
             deactivate: () => isActive(id) && deactivate(id)
         })
-        const result = _.isString(id)
+
+        return id
             ? props(id)
             : {
                 activatables: _(activatables)
-                    .pick(id)
                     .keys()
+                    .filter(activatableId => _.isEmpty(ids) || ids.includes(activatableId))
                     .transform((acc, id) => acc[id] = props(id), {})
                     .value(),
                 updateActivatables
             }
-        return result
     }
 }
 
@@ -89,7 +89,7 @@ export const activator = (...ids) => {
         class HigherOrderComponent extends React.Component {
             render() {
                 return (
-                    <Activator id={ids}>
+                    <Activator ids={ids}>
                         {activator =>
                             React.createElement(WrappedComponent, {activator, ...this.props})}
                     </Activator>
@@ -111,5 +111,6 @@ export const Activator = (
 
 Activator.propTypes = {
     children: PropTypes.func.isRequired,
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.array])
+    id: PropTypes.string,
+    ids: PropTypes.array
 }
