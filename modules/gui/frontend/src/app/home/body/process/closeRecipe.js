@@ -8,7 +8,7 @@ import styles from './closeRecipe.module.css'
 
 class CloseRecipe extends React.Component {
     render() {
-        const {activator: {activatables: saveRecipeDialog}, activatable} = this.props
+        const {activator: {activatables: {saveRecipeDialog}}, activatable} = this.props
         const recipe = activatable.recipe
         const title = recipe.title || recipe.placeholder
         return (
