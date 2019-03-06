@@ -108,7 +108,7 @@ const policy = () => ({
 })
 
 export default (
-    activatable('changePassword', policy)(
+    activatable({id: 'changePassword', policy, alwaysAllow: true})(
         activator('userDetails')(
             form({fields, constraints, mapStateToProps})(
                 ChangePassword

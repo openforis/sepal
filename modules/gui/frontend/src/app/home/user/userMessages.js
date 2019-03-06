@@ -244,8 +244,10 @@ class _UserMessages extends React.Component {
     }
 }
 
+const policy = () => ({_: 'disallow'})
+
 const UserMessages = (
-    activatable('userMessages', () => ({_: 'disallow'}))(
+    activatable({id: 'userMessages', policy, alwaysAllow: true})(
         connect(mapStateToProps)(_UserMessages)
     )
 )

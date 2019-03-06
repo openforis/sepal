@@ -353,7 +353,7 @@ const policy = () => ({
 })
 
 export default (
-    activatable('sceneSelection', policy)(
+    activatable({id: 'sceneSelection', policy})(
         withRecipe(mapRecipeToProps)(
             form({fields})(
                 SceneSelection

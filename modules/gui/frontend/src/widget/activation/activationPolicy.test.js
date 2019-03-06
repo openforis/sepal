@@ -190,3 +190,46 @@ it(`disallow activation of [a] when
         }
     })).toEqual(false)
 })
+
+it(`allow activation of [a] when
+    [a] is always allowed
+    [b] is active and disallowing [a]
+    `, () => {
+    expect(activationAllowed('a', {
+        a: {
+            active: false,
+            policy: {
+                _: 'disallow'
+            },
+            alwaysAllow: true
+        },
+        b: {
+            active: true,
+            policy: {
+                _: 'disallow'
+            }
+        }
+    })).toEqual(true)
+})
+
+it(`allow activation of [a] when
+    [a] is always allowed
+    [b] is always allowed, active and disallowing [a]
+    `, () => {
+    expect(activationAllowed('a', {
+        a: {
+            active: false,
+            policy: {
+                _: 'disallow'
+            },
+            alwaysAllow: true
+        },
+        b: {
+            active: true,
+            policy: {
+                _: 'disallow'
+            },
+            alwaysAllow: true
+        }
+    })).toEqual(true)
+})

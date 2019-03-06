@@ -85,7 +85,7 @@ Revisions.propTypes = {
 const policy = () => ({_: 'allow'})
 
 export default (
-    activatable('revisions', policy)(
+    activatable({id: 'revisions', policy})(
         form({fields})(Revisions)
     )
 )

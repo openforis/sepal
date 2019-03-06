@@ -55,13 +55,14 @@ class _Activatable extends React.Component {
     }
 
     updateReduxState(nextPolicy, active) {
-        const {id, activationContext: {pathList}} = this.props
+        const {id, activationContext: {pathList}, alwaysAllow} = this.props
         const activatable = {
             id,
             path: [...pathList, 'activatables', id],
             active: !!active,
             justActivated: false,
-            policy: nextPolicy
+            policy: nextPolicy,
+            alwaysAllow
         }
 
         actionBuilder('UPDATE_ACTIVATABLE', activatable)
@@ -84,12 +85,12 @@ Activatable.propTypes = {
     policy: PropTypes.func
 }
 
-export const activatable = (id, policy) => {
+export const activatable = ({id, policy, alwaysAllow}) => {
     return WrappedComponent => {
         class HigherOrderComponent extends React.Component {
             render() {
                 return (
-                    <Activatable id={id} policy={policy} otherProps={this.props}>
+                    <Activatable id={id} policy={policy} alwaysAllow={alwaysAllow} otherProps={this.props}>
                         {activatable =>
                             React.createElement(
                                 WrappedComponent,

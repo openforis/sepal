@@ -54,7 +54,7 @@ const policy = () => ({
 })
 
 export default (
-    activatable('closeRecipeDialog', policy)(
+    activatable({id: 'closeRecipeDialog', policy})(
         activator('saveRecipeDialog')(
             CloseRecipe
         )

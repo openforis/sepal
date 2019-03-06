@@ -67,7 +67,7 @@ export const recipeFormPanel = ({
         return (
             withRecipe(createMapRecipeToProps(mapRecipeToProps))(
                 withPanelWizardContext()(
-                    activatable(id, policy)(
+                    activatable({id, policy})(
                         initValues(valuesSpec)(
                             form({fields, constraints})(
                                 HigherOrderComponent

@@ -151,7 +151,7 @@ const policy = () => ({
 })
 
 const UserDetails = (
-    activatable('userDetails', policy)(
+    activatable({id: 'userDetails', policy, alwaysAllow: true})(
         form({fields, mapStateToProps})(
             _UserDetails
         )

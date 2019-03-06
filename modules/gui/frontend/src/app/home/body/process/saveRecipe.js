@@ -83,7 +83,7 @@ const policy = () => ({
 })
 
 export default (
-    activatable('saveRecipeDialog', policy)(
+    activatable({id: 'saveRecipeDialog', policy})(
         form({fields, mapStateToProps})(
             SaveRecipe
         )

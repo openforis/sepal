@@ -71,7 +71,7 @@ const policy = () => ({
 })
 
 const Usage = (
-    activatable('userReport', policy)(
+    activatable({id: 'userReport', policy, alwaysAllow: true})(
         connect(mapStateToProps)(
             _Usage
         )

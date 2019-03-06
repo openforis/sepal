@@ -27,7 +27,7 @@ export const activationAllowed = (id, activatables = {}) => {
             .value()
 
     return thisActivatable && !thisActivatable.active
-        ? _(otherActivatables)
+        ? thisActivatable.alwaysAllow || _(otherActivatables)
             .pickBy(otherActivatable => otherActivatable.active)
             .every(otherActivatable => policiesCompatible(thisActivatable, otherActivatable))
         : false
