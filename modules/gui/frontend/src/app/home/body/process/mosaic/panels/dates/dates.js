@@ -178,11 +178,12 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {inputs: {advanced}} = this.props
+        const {recipeId, inputs: {advanced}} = this.props
         return (
             <RecipeFormPanel
                 className={advanced.value ? styles.advanced : styles.simple}
-                placement='bottom-right'>
+                placement='bottom-right'
+                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
                 <PanelHeader
                     icon='calendar-alt'
                     title={msg('process.mosaic.panel.dates.title')}/>
@@ -205,11 +206,6 @@ class Dates extends React.Component {
     componentDidMount() {
         const {recipeId} = this.props
         RecipeActions(recipeId).hidePreview().dispatch()
-    }
-
-    componentWillUnmount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 

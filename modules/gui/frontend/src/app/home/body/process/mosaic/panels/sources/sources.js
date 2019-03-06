@@ -84,10 +84,12 @@ class Sources extends React.Component {
     }
 
     render() {
+        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='bottom-right'>
+                placement='bottom-right'
+                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
                 <PanelHeader
                     icon='satellite-dish'
                     title={msg('process.mosaic.panel.sources.title')}/>
@@ -117,11 +119,6 @@ class Sources extends React.Component {
 
         if (!arrayEquals(selectedDataSets, dataSets.value))
             dataSets.set(selectedDataSets)
-    }
-
-    componentWillUnmount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 

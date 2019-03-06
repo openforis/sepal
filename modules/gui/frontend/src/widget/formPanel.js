@@ -29,18 +29,24 @@ class FormPanel extends React.Component {
     }
 
     ok() {
-        const {form, isActionForm, close} = this.props
+        const {form, isActionForm} = this.props
         if (form && (isActionForm || form.isDirty())) {
-            this.apply(() => close())
+            this.apply(() => this.close())
         } else {
             this.cancel()
         }
     }
 
     cancel() {
-        const {onCancel, close} = this.props
+        const {onCancel} = this.props
         onCancel && onCancel()
+        this.close()
+    }
+
+    close() {
+        const {close, onClose} = this.props
         close()
+        onClose && onClose()
     }
 
     renderSpinner() {
@@ -97,15 +103,16 @@ export default connect()(FormPanel)
 
 FormPanel.propTypes = {
     children: PropTypes.any.isRequired,
+    close: PropTypes.func.isRequired,
     form: PropTypes.object.isRequired,
     className: PropTypes.string,
-    close: PropTypes.func,
     isActionForm: PropTypes.any,
     placement: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline']),
     policy: PropTypes.func,
     type: PropTypes.string, // TODO: Same as type?
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
+    onClose: PropTypes.func
 }
 
 export class FormPanelButtons extends React.Component {

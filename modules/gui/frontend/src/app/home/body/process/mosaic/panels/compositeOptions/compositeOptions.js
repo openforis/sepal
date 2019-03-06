@@ -97,10 +97,12 @@ class CompositeOptions extends React.Component {
     }
 
     render() {
+        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='bottom-right'>
+                placement='bottom-right'
+                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
                 <PanelHeader
                     icon='layer-group'
                     title={msg('process.mosaic.panel.composite.title')}/>
@@ -121,11 +123,6 @@ class CompositeOptions extends React.Component {
     componentDidMount() {
         const {recipeId} = this.props
         RecipeActions(recipeId).hidePreview().dispatch()
-    }
-
-    componentWillUnmount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 

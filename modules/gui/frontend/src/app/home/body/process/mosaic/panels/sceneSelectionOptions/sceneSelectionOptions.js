@@ -62,11 +62,12 @@ class SceneSelectionOptions extends React.Component {
     }
 
     render() {
-        const {inputs: {type}} = this.props
+        const {recipeId, inputs: {type}} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='bottom-right'>
+                placement='bottom-right'
+                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
                 <PanelHeader
                     icon='images'
                     title={msg('process.mosaic.panel.scenes.title')}/>
@@ -86,11 +87,6 @@ class SceneSelectionOptions extends React.Component {
     componentDidMount() {
         const {recipeId} = this.props
         RecipeActions(recipeId).hidePreview().dispatch()
-    }
-
-    componentWillUnmount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).showPreview().dispatch()
     }
 }
 
