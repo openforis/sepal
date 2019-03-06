@@ -22,28 +22,39 @@
     z-index: 1;
 }
 
-@media only screen and (max-width: 500px) {
-    .inviteUser {
-        --right: 1rem;
-        --bottom: 3.5rem;
-    }
+.filters {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.searchControls {
-    display: flex;
-    flex-wrap: nowrap;
+.filters > * {
+    margin-top: 1rem;
+    /* flex-grow: 1; */
 }
 
 .search {
     flex-grow: 1;
     flex-shrink: 1;
-    max-width: 17rem;
-    margin-right: 2rem;
+    max-width: 20rem;
+    margin-right: 1rem;
 }
 
 .search input {
     width: 100%;
     border: none;
+}
+
+@media only screen and (max-width: 500px) {
+    .inviteUser {
+        --right: 1rem;
+        --bottom: 3.5rem;
+    }
+    .search {
+        max-width: 12rem;
+    }
 }
 
 .pageNavigation {
@@ -71,7 +82,7 @@
 
 .grid.header {
     grid-template-areas: 
-        'name status updateTime ib  ib  sb  sb  st  st '
+        'info info   info       ib  ib  sb  sb  st  st '
         'name status updateTime ibq ibu sbq sbu stq stu';
     color: var(--look-default-color);
     user-select: none;
@@ -86,6 +97,11 @@
 .grid > * {
     white-space: nowrap;
     overflow: hidden;
+}
+
+.grid > .info {
+    grid-area: info;
+    align-self: flex-start;
 }
 
 .grid > .name {
@@ -159,6 +175,11 @@
     color: var(--success-color);
 }
 
+.budgetFilter {
+    color: var(--success-color);
+    border-bottom: 1px dotted var(--success-color);
+}
+
 .users {
     background-color: var(--look-transparent-background-color);
     color: var(--look-transparent-color);
@@ -182,4 +203,8 @@
 
 .bottomBar {
     justify-content: center;
+}
+
+.overBudget {
+    color: red;
 }

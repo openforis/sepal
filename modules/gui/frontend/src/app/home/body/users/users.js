@@ -1,5 +1,5 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {Button} from 'widget/button'
+import {Button, ButtonGroup} from 'widget/button'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {connect} from 'store'
@@ -33,7 +33,9 @@ class Users extends React.Component {
         users: [],
         sortingOrder: 'updateTime',
         sortingDirection: -1,
-        filter: '',
+        textFilter: '',
+        budgetFilter: false,
+        budgetFilterRegexp: null,
         userDetails: null
     }
 
@@ -41,15 +43,13 @@ class Users extends React.Component {
 
     componentDidMount() {
         const setUserList = userList =>
-            this.setState(prevState => ({
-                ...prevState,
+            this.setState({
                 users: this.getSortedUsers(userList)
-            }))
+            })
 
         const mergeBudgetReport = budgetReport =>
-            this.setState(prevState => ({
-                ...prevState,
-                users: _.map(prevState.users, user => ({
+            this.setState(({users}) => ({
+                users: _.map(users, user => ({
                     ...user,
                     report: budgetReport[user.username || {}]
                 }))
@@ -66,7 +66,7 @@ class Users extends React.Component {
     }
 
     setSorting(sortingOrder) {
-        this.setState(prevState => {
+        this.setState((prevState) => {
             const sortingDirection = sortingOrder === prevState.sortingOrder ? -prevState.sortingDirection : 1
             return {
                 ...prevState,
@@ -84,30 +84,51 @@ class Users extends React.Component {
         }, sortingDirection === 1 ? 'asc' : 'desc')
     }
 
-    setFilter(filter) {
-        this.setState(prevState => ({
-            ...prevState,
-            filter
-        }))
+    setTextFilter(textFilter) {
+        this.setState({
+            textFilter,
+            textFilterRegexp: RegExp(escapeStringRegexp(textFilter), 'i')
+        })
+    }
+
+    setBudgetFilter(budgetFilter) {
+        this.setState({budgetFilter})
     }
 
     getFilteredUsers() {
+        const {users} = this.state
+        return users
+            .filter(user => this.userMatchesTextFilter(user))
+            .filter(user => this.userMatchesBudgetFilter(user))
+    }
+
+    userMatchesTextFilter(user) {
+        const {textFilter, textFilterRegexp} = this.state
         const searchProperties = ['name', 'username', 'email', 'organization']
-        if (this.state.filter) {
-            const filter = RegExp(escapeStringRegexp(this.state.filter), 'i')
-            return this.state.users.filter(user =>
-                _.find(searchProperties, searchProperty =>
-                    filter.test(user[searchProperty])
-                )
+        return textFilter
+            ? _.find(searchProperties, searchProperty =>
+                textFilterRegexp.test(user[searchProperty])
             )
-        }
-        return this.state.users
+            : true
+    }
+
+    userMatchesBudgetFilter(user) {
+        const {budgetFilter} = this.state
+        return budgetFilter
+            ? !this.isUserOverBudget(user)
+            : true
+    }
+
+    isUserOverBudget({report: {budget, current}}) {
+        return current.instanceSpending > budget.instanceSpending
+            || current.storageSpending > budget.storageSpending
+            || current.storageQuota > budget.storageQuota
     }
 
     onKeyDown({key}) {
         const keyMap = {
             Escape: () => {
-                this.setFilter('')
+                this.setTextFilter('')
             }
         }
         const keyAction = keyMap[key]
@@ -116,8 +137,7 @@ class Users extends React.Component {
     }
 
     editUser(user) {
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             userDetails: {
                 username: user.username,
                 name: user.name,
@@ -127,26 +147,24 @@ class Users extends React.Component {
                 monthlyBudgetStorageSpending: user.report.budget.storageSpending,
                 monthlyBudgetStorageQuota: user.report.budget.storageQuota
             }
-        }))
+        })
     }
 
     inviteUser() {
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             userDetails: {
                 newUser: true,
                 monthlyBudgetInstanceSpending: 1,
                 monthlyBudgetStorageSpending: 1,
                 monthlyBudgetStorageQuota: 20
             }
-        }))
+        })
     }
 
     cancelUser() {
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             userDetails: null
-        }))
+        })
     }
 
     updateUser(userDetails) {
@@ -180,8 +198,7 @@ class Users extends React.Component {
         })
 
         const updateLocalState = userDetails =>
-            this.setState(prevState => {
-                const users = prevState.users
+            this.setState(({users}) => {
                 if (userDetails) {
                     const index = users.findIndex(user => user.username === userDetails.username)
                     index === -1
@@ -189,21 +206,16 @@ class Users extends React.Component {
                         : users[index] = userDetails
                 }
                 return {
-                    ...prevState,
                     users: this.getSortedUsers(users)
                 }
             })
 
         const removeFromLocalState = userDetails =>
-            this.setState(prevState => {
-                const users = prevState.users
+            this.setState(({users}) => {
                 if (userDetails) {
                     _.remove(users, user => user.username === userDetails.username)
                 }
-                return {
-                    ...prevState,
-                    users
-                }
+                return {users}
             })
 
         this.cancelUser()
@@ -269,6 +281,9 @@ class Users extends React.Component {
                 <Label className={styles.instanceBudget} msg={msg('user.report.resources.monthlyInstance')}/>
                 <Label className={styles.storageBudget} msg={msg('user.report.resources.monthlyStorage')}/>
                 <Label className={styles.storage} msg={msg('user.report.resources.storage')}/>
+                <div className={styles.info}>
+                    {this.renderInfo()}
+                </div>
                 {this.renderColumnHeader('name', msg('user.userDetails.form.name.label'), [styles.name])}
                 {this.renderColumnHeader('status', msg('user.userDetails.form.status.label'), [styles.status])}
                 {this.renderColumnHeader('updateTime', msg('user.userDetails.form.updateTime.label'), [styles.updateTime])}
@@ -282,25 +297,49 @@ class Users extends React.Component {
         )
     }
 
-    renderSearch() {
+    renderTextFilter() {
+        const {textFilter} = this.state
         return (
-            <div className={styles.searchControls}>
-                <Button
-                    additionalClassName={styles.search}
-                    look='transparent'
-                    size='large'
-                    shape='pill'
-                    disabled={true}>
-                    <input
-                        type='search'
-                        ref={this.search}
-                        value={this.state.filter}
-                        placeholder={msg('users.filter.placeholder')}
-                        onChange={e => this.setFilter(e.target.value)}/>
-                </Button>
+            <Button
+                additionalClassName={styles.search}
+                look='transparent'
+                size='large'
+                shape='pill'
+                disabled={true}>
+                <input
+                    type='search'
+                    ref={this.search}
+                    value={textFilter}
+                    placeholder={msg('users.filter.search.placeholder')}
+                    onChange={e => this.setTextFilter(e.target.value)}/>
+            </Button>
+        )
+    }
 
-                {this.renderInfo()}
-            </div>
+    renderBudgetFilter() {
+        const {budgetFilter} = this.state
+        return (
+            <ButtonGroup>
+                <Button
+                    chromeless
+                    shape='none'
+                    additionalClassName='itemType'
+                    onClick={() => this.setBudgetFilter(false)}>
+                    <span className={!budgetFilter ? styles.budgetFilter : null}>
+                        {msg('users.filter.budget.ignore.label')}
+                    </span>
+                </Button>
+                <span style={{color: '#888'}}> | </span>
+                <Button
+                    chromeless
+                    shape='none'
+                    additionalClassName='itemType'
+                    onClick={() => this.setBudgetFilter(true)}>
+                    <span className={budgetFilter ? styles.budgetFilter : null}>
+                        {msg('users.filter.budget.over.label')}
+                    </span>
+                </Button>
+            </ButtonGroup>
         )
     }
 
@@ -319,15 +358,15 @@ class Users extends React.Component {
     }
 
     renderInfo() {
-        const {filter} = this.state
-        const results = count => filter
-            ? msg('users.countWithFilter', {count, filter})
-            : msg('users.countNoFilter', {count})
+        const {textFilter, budgetFilter, users} = this.state
+        const isFiltered = textFilter || budgetFilter
+        const results = (count, total) =>
+            msg(isFiltered ? 'users.countWithFilter' : 'users.countNoFilter', {count, total})
         return (
             <PageInfo>
                 {({itemCount}) =>
                     <div className={styles.pageInfo}>
-                        {results(itemCount)}
+                        {results(itemCount, users.length)}
                     </div>
                 }
             </PageInfo>
@@ -335,13 +374,14 @@ class Users extends React.Component {
     }
 
     renderUsers() {
+        const {textFilter} = this.state
         return (
             <PageData>
                 {(user, index) =>
                     <User
                         key={user.username || user.id || index}
                         user={user}
-                        highlight={this.state.filter}
+                        highlight={textFilter}
                         onClick={() => this.editUser(user)}/>
                 }
             </PageData>
@@ -369,8 +409,10 @@ class Users extends React.Component {
                             <TopBar label={msg('home.sections.users')}/>
                             <Content edgePadding menuPadding>
                                 <ScrollableContainer>
-                                    <Unscrollable>
-                                        {this.renderSearch()}
+                                    <Unscrollable className={styles.filters}>
+                                        {this.renderTextFilter()}
+                                        {/* {this.renderInfo()} */}
+                                        {this.renderBudgetFilter()}
                                     </Unscrollable>
                                     <Scrollable direction='x'>
                                         <ScrollableContainer className={styles.content}>
@@ -429,11 +471,17 @@ class User extends React.Component {
                 <div>{status ? msg(`user.userDetails.form.status.${status}`) : <Icon name='spinner'/>}</div>
                 <div>{moment(updateTime).fromNow()}</div>
                 <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
-                <div className={styles.number}>{format.dollars(current.instanceSpending)}</div>
+                <div className={[styles.number, current.instanceSpending > budget.instanceSpending ? styles.overBudget : null].join(' ')}>
+                    {format.dollars(current.instanceSpending)}
+                </div>
                 <div className={styles.number}>{format.dollars(budget.storageSpending)}</div>
-                <div className={styles.number}>{format.dollars(current.storageSpending)}</div>
+                <div className={[styles.number, current.storageSpending > budget.storageSpending ? styles.overBudget : null].join(' ')}>
+                    {format.dollars(current.storageSpending)}
+                </div>
                 <div className={styles.number}>{format.fileSize(budget.storageQuota, {scale: 'G'})}</div>
-                <div className={styles.number}>{format.fileSize(current.storageQuota, {scale: 'G'})}</div>
+                <div className={[styles.number, current.storageQuota > budget.storageQuota ? styles.overBudget : null].join(' ')}>
+                    {format.fileSize(current.storageQuota, {scale: 'G'})}
+                </div>
             </div>
         )
     }

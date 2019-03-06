@@ -999,9 +999,15 @@
         }
     },
     "users": {
-        "countNoFilter": "{count} total users",
-        "countWithFilter": "{count} users matching \"{filter}\"",
-        "filter.placeholder": "Search users",
+        "countNoFilter": "{count} {count, plural, one {user} other {users}}",
+        "countWithFilter": "{count} {count, plural, one {user} other {users}} out of {total}",
+        "filter": {
+            "search.placeholder": "Search users",
+            "budget": {
+                "ignore.label": "All",
+                "over.label": "Over budget"
+            }
+        },
         "page": "Page {pageNumber} of {pageCount}",
         "invite.label": "Invite a new user"
     },
@@ -1136,7 +1142,7 @@
         },
         "tabs": {
           "addTab.tooltip": "Create a new tab",
-          "newTab": "New_Tab"
+        "newTab": "New_Tab"
         },
         "notification": {
             "error.title": "Error",
