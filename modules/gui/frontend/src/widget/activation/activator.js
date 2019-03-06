@@ -10,10 +10,11 @@ import actionBuilder from 'action-builder'
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {pathList}} = ownProps
     const activatables = collectActivatables(state, pathList)
-    const id = ownProps.id
-    return _.isEmpty(id)
-        ? {activatables}
-        : {activatables: _.pick(activatables, id)}
+    return {activatables}
+    // const id = ownProps.id
+    // return _.isEmpty(id)
+    //     ? {activatables}
+    //     : {activatables: _.pick(activatables, id)}
 }
 
 class _Activator extends React.Component {
@@ -44,7 +45,8 @@ class _Activator extends React.Component {
                 .dispatch()
 
         const isActive = id => !!(activatables[id] || {}).active
-        const canActivate = id => activationAllowed(id, activatables)
+        const canActivate = id =>
+            activationAllowed(id, activatables)
 
         const updateActivatables = updates => {
             const updatedActivatables = _.transform(updates, (activatables, {id, active}) => {
@@ -68,15 +70,17 @@ class _Activator extends React.Component {
             activate: activationProps => canActivate(id) && activate(id, activationProps),
             deactivate: () => isActive(id) && deactivate(id)
         })
-        return _.isString(id)
+        const result = _.isString(id)
             ? props(id)
             : {
                 activatables: _(activatables)
+                    .pick(id)
                     .keys()
                     .transform((acc, id) => acc[id] = props(id), {})
                     .value(),
                 updateActivatables
             }
+        return result
     }
 }
 

@@ -11,76 +11,74 @@ import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 
-const defaultPolicy = ({values, wizardContext: {wizard}}) => {
-    return wizard || selectFrom(values, 'dirty')
+const defaultPolicy = ({values, wizardContext: {wizard}}) =>
+    wizard || selectFrom(values, 'dirty')
         ? {_: 'disallow'}
         : {_: 'allow-then-deactivate'}
-}
 
-export const recipeFormPanel =
-    ({
-        id,
-        fields,
-        constraints,
-        mapRecipeToProps = () => ({}),
-        modelToValues = model => ({...model}),
-        valuesToModel = values => ({...values}),
-        policy = defaultPolicy
-    }) => {
+export const recipeFormPanel = ({
+    id,
+    fields,
+    constraints,
+    mapRecipeToProps = () => ({}),
+    modelToValues = model => ({...model}),
+    valuesToModel = values => ({...values}),
+    policy = defaultPolicy
+}) => {
 
-        const createMapRecipeToProps = mapRecipeToProps =>
-            recipe => {
-                const additionalProps = mapRecipeToProps(recipe)
-                return ({
-                    recipeId: recipe.id,
-                    model: selectFrom(recipe, ['model', id]),
-                    values: selectFrom(recipe, ['ui', id]),
-                    ...additionalProps
-                })
+    const createMapRecipeToProps = mapRecipeToProps =>
+        recipe => {
+            const additionalProps = mapRecipeToProps(recipe)
+            return ({
+                recipeId: recipe.id,
+                model: selectFrom(recipe, ['model', id]),
+                values: selectFrom(recipe, ['ui', id]),
+                ...additionalProps
+            })
+        }
+
+    const valuesSpec = {
+        getModel: props => props.model,
+        getValues: props => props.values,
+        modelToValues,
+        onInitialized: ({model, values, props}) => {
+            const {recipeContext: {statePath}} = props
+            setModelAndValues({id, statePath, model, values})
+        }
+    }
+
+    return WrappedComponent => {
+        class HigherOrderComponent extends React.Component {
+            render() {
+                const {form, recipeContext: {statePath}, activatable: {deactivate}} = this.props
+                return (
+                    <Context.Provider value={{id, form, statePath, valuesToModel, deactivate}}>
+                        {React.createElement(WrappedComponent, this.props)}
+                    </Context.Provider>
+                )
             }
 
-        const valuesSpec = {
-            getModel: props => props.model,
-            getValues: props => props.values,
-            modelToValues,
-            onInitialized: ({model, values, props}) => {
-                const {recipeContext: {statePath}} = props
-                setModelAndValues({id, statePath, model, values})
+            componentDidMount() {
+                const {recipeContext: {statePath}, form} = this.props
+                form.onDirtyChanged(dirty => setDirty({id, statePath, dirty}))
             }
         }
 
-        return WrappedComponent => {
-            class HigherOrderComponent extends React.Component {
-                render() {
-                    const {form, recipeContext: {statePath}, activatable: {deactivate}} = this.props
-                    return (
-                        <Context.Provider value={{id, form, statePath, valuesToModel, deactivate}}>
-                            {React.createElement(WrappedComponent, this.props)}
-                        </Context.Provider>
-                    )
-                }
-
-                componentDidMount() {
-                    const {id, recipeContext: {statePath}, form} = this.props
-                    form.onDirtyChanged(dirty => setDirty({id, statePath, dirty}))
-                }
-            }
-
-            return (
-                withRecipe(createMapRecipeToProps(mapRecipeToProps))(
-                    withPanelWizardContext()(
-                        activatable(id, policy)(
-                            initValues(valuesSpec)(
-                                form({fields, constraints})(
-                                    HigherOrderComponent
-                                )
+        return (
+            withRecipe(createMapRecipeToProps(mapRecipeToProps))(
+                withPanelWizardContext()(
+                    activatable(id, policy)(
+                        initValues(valuesSpec)(
+                            form({fields, constraints})(
+                                HigherOrderComponent
                             )
                         )
                     )
                 )
             )
-        }
+        )
     }
+}
 
 export class RecipeFormPanel extends React.Component {
     render() {
