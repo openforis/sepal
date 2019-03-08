@@ -242,7 +242,7 @@ class Users extends React.Component {
             },
             error => {
                 removeFromLocalState(userDetails)
-                Notifications.caught({message: msg('user.userDetails.update.error'), error})
+                Notifications.error({message: msg('user.userDetails.update.error'), error})
             }
         )
     }
