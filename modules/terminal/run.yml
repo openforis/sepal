@@ -1,0 +1,20 @@
+---
+- name: "terminal | Start container"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      tag: "terminal"
+    networks:
+      - name: 'sepal'
+    volumes:
+    - "/data/user/home:/sepalUsers" # Users home directories with ssh keys
+    env:
+      SSH_GATEWAY_HOST: 'ssh-gateway'
