@@ -1,6 +1,6 @@
 import {RecipeContext} from 'app/home/body/process/recipeContext'
 import {activator} from 'widget/activation/activator'
-import {closeRecipe} from './recipe'
+import {msg} from 'translate'
 import {saveRecipe} from './recipe'
 import ChangeDetection from './changeDetection/changeDetection'
 import Classification from './classification/classification'
@@ -48,13 +48,13 @@ class Process extends React.Component {
         )
     }
 
-    onCloseTab(recipe) {
+    onCloseTab(recipe, close) {
         const {activator: {activatables: {closeRecipeDialog}}} = this.props
         const unsaved = recipe.ui && recipe.ui.unsaved && recipe.ui.initialized
         if (unsaved) {
             closeRecipeDialog.activate({recipe})
         } else {
-            closeRecipe(recipe.id)
+            close()
         }
     }
 
@@ -62,10 +62,11 @@ class Process extends React.Component {
         return (
             <React.Fragment>
                 <Tabs
+                    label={msg('home.sections.process')}
                     statePath='process'
                     tabActions={recipeId => this.renderMenu(recipeId)}
                     onTitleChanged={recipe => saveRecipe(recipe)}
-                    onClose={recipe => this.onCloseTab(recipe)}>
+                    onClose={(recipe, close) => this.onCloseTab(recipe, close)}>
                     {({id, type}) =>
                         <React.Fragment>
                             <RecipeContext recipeId={id} rootStatePath='process.tabs'>

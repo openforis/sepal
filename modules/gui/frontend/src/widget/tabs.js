@@ -79,6 +79,7 @@ class Tabs extends React.Component {
 
     renderTab(tab) {
         const {selectedTabId, statePath, onTitleChanged, onClose} = this.props
+        const close = () => closeTab(tab.id, statePath)
         return (
             <Tab
                 key={tab.id}
@@ -88,7 +89,7 @@ class Tabs extends React.Component {
                 selected={tab.id === selectedTabId}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
-                onClose={() => onClose(tab)}
+                onClose={() => {onClose ? onClose(tab, close) : close()}}
             />
         )
     }
@@ -113,7 +114,7 @@ class Tabs extends React.Component {
                 </ScrollableContainer>
                 <div className={styles.tabActions}>
                     {this.renderAddButton()}
-                    {tabActions(selectedTabId)}
+                    {tabActions && tabActions(selectedTabId)}
                 </div>
             </React.Fragment>
         )
@@ -134,12 +135,17 @@ class Tabs extends React.Component {
     }
 
     render() {
+        const {label, menuPadding, edgePadding} = this.props
         return (
             <SectionLayout className={styles.container}>
-                <TopBar padding={false} label={msg('home.sections.process')}>
+                <TopBar
+                    padding={false}
+                    label={label}>
                     {this.renderTabs()}
                 </TopBar>
-                <Content>
+                <Content
+                    menuPadding={menuPadding}
+                    edgePadding={edgePadding}>
                     <div className={styles.tabContents}>
                         {this.props.tabs.map(tab => this.renderTabContent(tab))}
                     </div>
@@ -156,12 +162,16 @@ class Tabs extends React.Component {
 }
 
 Tabs.propTypes = {
+    label: PropTypes.string.isRequired,
     statePath: PropTypes.string.isRequired,
     children: PropTypes.any,
+    edgePadding: PropTypes.any,
     isDirty: PropTypes.func,
+    menuPadding: PropTypes.any,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
     tabs: PropTypes.array,
+    onClose: PropTypes.func,
     onTitleChanged: PropTypes.func
 }
 
@@ -213,6 +223,7 @@ class Tab extends React.Component {
     }
 
     render() {
+        // [TODO] fix let
         let {id, title, placeholder, selected, statePath} = this.props
         title = this.state.title || title
         return (
@@ -275,7 +286,6 @@ class Tab extends React.Component {
 }
 
 Tab.propTypes = {
-    // dirty: PropTypes.bool,
     id: PropTypes.string,
     placeholder: PropTypes.string,
     selected: PropTypes.any,
