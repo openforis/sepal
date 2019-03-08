@@ -13,8 +13,7 @@ import css2 from './app.css'
 import css3 from '../style/look.css'
 import css4 from '../style/look.module.css'
 
-/* eslint-disable */
-const _css = [css1, css2, css3, css4]
+const _css = [css1, css2, css3, css4] // eslint-disable-line
 
 const mapStateToProps = () => ({
     currentUser: currentUser(),
@@ -29,7 +28,7 @@ class App extends React.Component {
     }
 
     render() {
-        const {hasDimensions} = this.props 
+        const {hasDimensions} = this.props
         return (
             <div className='app'>
                 <ReactResizeDetector
