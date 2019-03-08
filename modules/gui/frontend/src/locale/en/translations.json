@@ -90,6 +90,9 @@
             }
         }
     },
+    "terminal": {
+        "server.error": "Failed to connect to server"
+    },
     "map": {
         "layer.error": "Failed to load layer"
     },

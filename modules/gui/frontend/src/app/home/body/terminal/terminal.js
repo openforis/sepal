@@ -1,98 +1,154 @@
-// import './gateone'
-import './gateone.css'
-import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import 'xterm/dist/xterm.css'
+import * as attach from 'xterm/lib/addons/attach/attach'
+import * as fit from 'xterm/lib/addons/fit/fit'
+
+import {Subject} from 'rxjs'
+import {Terminal as Xterm} from 'xterm'
 import {connect} from 'store'
-import {currentUser} from 'user'
+import {distinctUntilChanged, filter, map} from 'rxjs/operators'
 import {msg} from 'translate'
-import PropTypes from 'prop-types'
+import {post$} from 'http-client'
+import {withLatestFrom} from 'rxjs/operators'
+import Notifications from 'widget/notifications'
 import React from 'react'
-import api from 'api'
+import ReactResizeDetector from 'react-resize-detector'
+import Tabs from 'widget/tabs'
+import styles from './terminal.module.css'
 
-let terminalId = null
+Xterm.applyAddon(fit)
+Xterm.applyAddon(attach)
 
-const mapStateToProps = () => ({
-    username: currentUser().username
-})
+export default class Terminal extends React.Component {
+    render() {
+        return (
+            <Tabs
+                label={msg('home.sections.terminal')}
+                menuPadding
+                edgePadding
+                statePath='terminal'>
+                {() => <TerminalSession/>}
+            </Tabs>
+        )
+    }
+}
 
-class Terminal extends React.Component {
-    UNSAFE_componentWillMount() {
-        api.terminal.init$()
-            .subscribe(({authObject}) => this.initTerminal(authObject))
+class _TerminalSession extends React.Component {
+    terminalContainer = React.createRef()
+    terminal = new Xterm()
+    webSocket = null
+    enabled$ = new Subject()
+    resize$ = new Subject()
+    fit$ = new Subject()
+    focus$ = new Subject()
+
+    constructor(props) {
+        super(props)
+        const {stream} = props
+        const {terminal, filterEnabled$, resize$, fit$, focus$} = this
+
+        const sizeChanged$ = resize$.pipe(
+            distinctUntilChanged(),
+            filter(({dimensions}) => dimensions)
+        )
+
+        stream('REQUEST_RESIZE_TERMINAL',
+            filterEnabled$(sizeChanged$),
+            ({sessionId, dimensions}) => this.resize(sessionId, dimensions)
+        )
+        stream('REQUEST_FIT_TERMINAL',
+            filterEnabled$(fit$),
+            () => terminal.fit()
+        )
+        stream('REQUEST_FOCUS_TERMINAL',
+            filterEnabled$(focus$),
+            () => terminal.focus()
+        )
+    }
+
+    filterEnabled$ = stream$ =>
+        stream$.pipe(
+            withLatestFrom(this.enabled$),
+            filter(([, enabled]) => enabled),
+            map(([stream$]) => stream$)
+        )
+
+    resize(sessionId, dimensions) {
+        this.props.stream('RESIZE_TERMINAL',
+            post$(`/api/terminal/${sessionId}/size`, {
+                query: dimensions
+            })
+        )
     }
 
     render() {
         return (
-            <SectionLayout>
-                <TopBar label={msg('home.sections.terminal')}/>
-                <Content menuPadding edgePadding>
-                    <div id='terminal'>
-                        <div className='container'>
-                            <div id='gateone'/>
-                        </div>
-                    </div>
-                </Content>
-            </SectionLayout>
+            <ReactResizeDetector
+                handleWidth
+                handleHeight
+                refreshMode='debounce'
+                refreshRate={500}
+                onResize={() => this.fit$.next()}
+            >
+                <div className={styles.terminal} ref={this.terminalContainer}/>
+            </ReactResizeDetector>
         )
     }
 
-    /* eslint-disable */
-    componentWillReceiveProps(nextProps, nextContext) {
-        if (nextContext.active && terminalId) {
-            GateOne.Terminal.Input.capture()
-            const terminalElements = document.getElementsByClassName('✈terminal')
-            terminalElements[0].click()
-        }
-
+    componentDidMount() {
+        this.initializeSession()
     }
 
-    initTerminal(auth) {
-        this.purgeUserPrefs()
-        GateOne.Events.on('go:js_loaded', this.createGateOneTerminal.bind(this))
-        GateOne.init({
-            url: `https://${window.location.host}/gateone`,
-            auth: auth,
-            embedded: true
+    componentWillUnmount() {
+        this.terminal.dispose()
+        this.webSocket.close()
+    }
+
+    initializeSession() {
+        this.props.stream('INITIALIZE_TERMINAL',
+            post$('/api/terminal').pipe(
+                map(e => e.response)
+            ),
+            sessionId => this.startSession(sessionId),
+            error => Notifications.error({
+                message: msg('terminal.server.error'),
+                error
+            })
+        )
+    }
+
+    createWebSocket(sessionId) {
+        const webSocket = new WebSocket(`ws://${window.location.hostname}:8000/${sessionId}`)
+        this.webSocket = webSocket
+        return webSocket
+    }
+
+    startSession(sessionId) {
+        const {terminal, terminalContainer, resize$} = this
+        const {onEnable, onDisable} = this.props
+
+        terminal.open(terminalContainer.current)
+        terminal.attach(this.createWebSocket(sessionId))
+        terminal.setOption('allowTransparency', true)
+        terminal.setOption('fontSize', 13)
+        terminal.setOption('bellStyle', 'both')
+        terminal.setOption('theme', {
+            background: 'transparent',
+            foreground: '#ccc'
+        })
+        this.enabled$.next(true)
+        this.fit$.next()
+        this.focus$.next()
+        this.resize$.next({})
+        terminal.on('resize', dimensions => resize$.next({sessionId, dimensions}))
+        onEnable(() => {
+            this.enabled$.next(true)
+            this.fit$.next()
+            this.focus$.next()
+        })
+        onDisable(() => {
+            this.enabled$.next(false)
         })
     }
-
-    newTerminal() {
-        terminalId = GateOne.Terminal.newTerminal(this.randomTerminalId())
-        GateOne.Terminal.setTerminal(terminalId)
-        GateOne.Terminal.clearScrollback(terminalId)
-        GateOne.Terminal.sendString(
-            `ssh://${this.props.username}@ssh-gateway?identities=id_rsa\n`,
-            terminalId
-        )
-        setTimeout(() => {
-            GateOne.Visual.updateDimensions(true)
-        }, 10000) // Hack to get terminal size correct.
-    }
-
-    createGateOneTerminal() {
-        if (terminalId || GateOne.Terminal == null)
-            return
-
-        GateOne.Logging.setLevel('ERROR')
-        if (GateOne.Terminal.closeTermCallbacks.length === 0)
-            GateOne.Terminal.closeTermCallbacks.push(this.newTerminal.bind(this))
-        // Avoid printing host fingerprints on the browser console
-        GateOne.Net.addAction('terminal:sshjs_display_fingerprint', () => null)
-        this.newTerminal()
-    }
-
-    purgeUserPrefs() {
-        if (typeof Storage !== 'undefined')
-            window.localStorage.removeItem('go_default_prefs')
-    }
-
-    randomTerminalId() {
-        return Math.floor(Math.random() * (Number.MAX_SAFE_INTEGER)) + 1
-    }
-
 }
 
-Terminal.contextTypes = {
-    active: PropTypes.bool
-}
-
-export default connect(mapStateToProps)(Terminal)
+const TerminalSession = connect()(_TerminalSession)

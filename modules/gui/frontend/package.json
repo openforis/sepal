@@ -46,7 +46,8 @@
     "redux": "4.0.1",
     "redux-logger": "3.0.6",
     "rxjs": "6.4.0",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "xterm": "^3.11.0"
   },
   "scripts": {
     "start": "NODE_PATH=src/ HTTPS=true react-scripts start",
