@@ -9,7 +9,6 @@ const terminals = {}
 const logs = {}
 
 const connect = (req, res) => {
-    // console.log(req.headers)
     const cols = parseInt(req.query.cols)
     const rows = parseInt(req.query.rows)
     const username = JSON.parse(req.headers['sepal-user']).username

@@ -1,16 +1,16 @@
-import api from 'api'
+import {Button} from 'widget/button'
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {enabled} from 'widget/enableWhen'
+import {msg} from 'translate'
+import {selectFrom} from 'collections'
+import {sepalMap} from 'app/home/map/map'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
-import {sepalMap} from 'app/home/map/map'
-import {selectFrom} from 'collections'
-import _ from 'lodash'
-import React from 'react'
-import {msg} from 'translate'
-import {Button} from 'widget/button'
-import {enabled} from 'widget/enableWhen'
 import MapStatus from 'widget/mapStatus'
 import Notifications from 'widget/notifications'
+import React from 'react'
+import _ from 'lodash'
+import api from 'api'
 
 const mapRecipeToProps = recipe => ({recipe})
 
@@ -119,7 +119,6 @@ class MosaicPreview extends React.Component {
         }
     }
 }
-
 
 const hasScenes = ({recipe}) => {
     const type = selectFrom(recipe, 'model.sceneSelectionOptions.type')

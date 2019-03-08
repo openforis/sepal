@@ -1,10 +1,9 @@
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {sepalMap} from 'app/home/map/map'
-import {selectFrom} from 'collections'
-import React from 'react'
 import {connect} from 'store'
-
+import {selectFrom} from 'collections'
+import {sepalMap} from 'app/home/map/map'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import React from 'react'
 
 const mapStateToProps = state => ({
     tabCount: state.process.tabs.length

@@ -9,7 +9,6 @@ export const enabled = ({when, onDisable}) =>
                 return {enabled: when(props)}
             }
 
-
             render() {
                 return this.state.enabled
                     ? React.createElement(WrappedComponent, this.props)

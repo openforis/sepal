@@ -1,16 +1,16 @@
-import api from 'api'
-import {getSource, RecipeActions, SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
 import {MapLayer, sepalMap} from 'app/home/map/map'
-import {objectEquals, selectFrom} from 'collections'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {of, Subject} from 'rxjs'
+import {RecipeActions, SceneSelectionType, getSource} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {Subject, of} from 'rxjs'
+import {enabled} from 'widget/enableWhen'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
-import {enabled} from 'widget/enableWhen'
+import {objectEquals, selectFrom} from 'collections'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import MapStatus from 'widget/mapStatus'
+import PropTypes from 'prop-types'
+import React from 'react'
 import SceneAreaMarker from './sceneAreaMarker'
+import api from 'api'
 import styles from './sceneAreas.module.css'
 
 const mapRecipeToProps = recipe => {
@@ -82,8 +82,8 @@ class SceneAreas extends React.Component {
         this.props.stream('LOAD_SCENE_AREAS',
             api.gee.sceneAreas$({aoi, source}).pipe(
                 map(sceneAreas => {
-                        this.recipeActions.setSceneAreas(sceneAreas).dispatch()
-                    }
+                    this.recipeActions.setSceneAreas(sceneAreas).dispatch()
+                }
                 ),
                 takeUntil(this.loadSceneArea$)
             ))
