@@ -102,7 +102,7 @@ to prevent firewalls from blocking SSH.
 **nginx** -
 Off-the-shelf HTTP and reverse proxy server, proxying all SEPAL HTTP endpoints.
 
-**GateOne** -
+**Xterm.js** -
 Off-the-shelf web-based SSH client. Gives  users SSH access to their Sandbox in a web browser.
 
 **Sepal server** -

@@ -14,7 +14,6 @@ import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.endpoint.Server
-import org.openforis.sepal.security.GateOneAuthEndpoint
 import org.openforis.sepal.security.PathRestrictionsFactory
 import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
@@ -52,10 +51,8 @@ class Main {
         def appsComponent = new AppsComponent(config.appsFile)
         def notificationComponent = start NotificationComponent.create()
 
-        def gateOneAuthEndpoint = new GateOneAuthEndpoint(config.gateOnePublicKey, config.gateOnePrivateKey)
         def endpoints = new Endpoints(
                 PathRestrictionsFactory.create(),
-                gateOneAuthEndpoint,
                 dataSearchComponent,
                 workerSessionComponent,
                 budgetComponent,

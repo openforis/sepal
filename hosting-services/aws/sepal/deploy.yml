@@ -95,7 +95,7 @@
     - { role: run-module, module: ceo }
     - { role: run-module, module: peatlands }
     - { role: run-module, module: ssh-gateway }
-    - { role: run-module, module: gateone }
+    - { role: run-module, module: terminal }
     - { role: run-module, module: api-gateway }
     - { role: run-module, module: letsencrypt }
     - { role: run-module, module: haproxy }

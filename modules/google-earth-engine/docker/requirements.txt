@@ -1,4 +1,4 @@
-git+git://github.com/openforis/earthengine-api.git@v0.1.169#egg=earthengine-api&subdirectory=python
+git+git://github.com/openforis/earthengine-api.git@v0.1.171#egg=earthengine-api&subdirectory=python
 git+git://github.com/Servir-Mekong/landcoverPackage#egg=servir-mekong-land-cover
 Flask>=0.12.2
 google-api-python-client>=1.6.6

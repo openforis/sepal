@@ -19,7 +19,7 @@ docker push localhost/openforis/api-gateway:{{ version }}
 docker push localhost/openforis/ssh-gateway:{{ version }}
 docker push localhost/openforis/sandbox:{{ version }}
 docker push localhost/openforis/task-executor:{{ version }}
-docker push localhost/openforis/gateone:{{ version }}
+docker push localhost/openforis/terminal:{{ version }}
 docker push localhost/openforis/letsencrypt:{{ version }}
 docker push localhost/openforis/haproxy:{{ version }}
 docker logout localhost

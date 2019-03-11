@@ -59,7 +59,7 @@
     - { role: build-module, module: mysql }
     - { role: build-module, module: mysql-backup }
     - { role: build-module, module: api-gateway }
-    - { role: build-module, module: gateone }
+    - { role: build-module, module: terminal }
     - { role: build-module, module: ssh-gateway }
     - { role: build-module, module: geospatial-toolkit }
     - { role: build-module, module: sandbox }
@@ -85,7 +85,7 @@
     - { role: run-module, module: peatlands }
     - { role: run-module, module: ceo }
     - { role: run-module, module: ssh-gateway }
-    - { role: run-module, module: gateone }
+    - { role: run-module, module: terminal§ }
     - { role: run-module, module: api-gateway }
     - { role: run-module, module: letsencrypt }
     - { role: run-module, module: haproxy }

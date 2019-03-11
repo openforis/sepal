@@ -1,1 +1,0 @@
-- include_tasks: "{{ build_image_task }}"
