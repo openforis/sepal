@@ -183,8 +183,11 @@ span.title.placeholder {
     height: 100%;
     width: 100%;
     opacity: 0;
+    pointer-events: none;
+    z-index: 0;
 }
 
 .tabContent.selected {
     opacity: 1;
+    z-index: 1;
 }
