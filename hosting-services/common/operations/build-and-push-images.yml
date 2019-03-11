@@ -19,7 +19,7 @@
     - { role: build-module, module: mysql-backup }
     - { role: build-module, module: mysql }
     - { role: build-module, module: api-gateway }
-    - { role: build-module, module: gateone }
+    - { role: build-module, module: terminal }
     - { role: build-module, module: ssh-gateway }
     - { role: build-module, module: geospatial-toolkit }
     - { role: build-module, module: sandbox }

@@ -64,14 +64,6 @@ class SepalConfiguration {
         Integer.parseInt(getValue(WEBAPP_PORT_PARAMETER))
     }
 
-    String getGateOnePublicKey() {
-        getValue('gateone.publicKey')
-    }
-
-    String getGateOnePrivateKey() {
-        getValue('gateone.privateKey')
-    }
-
     String getSepalUsername() {
         getValue('sepalUsername')
     }

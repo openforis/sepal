@@ -4,7 +4,6 @@ import gee from './api/gee'
 import map from './api/map'
 import recipe from './api/recipe'
 import tasks from './api/tasks'
-import terminal from './api/terminal'
 import user from './api/user'
 
 export default {
@@ -14,6 +13,5 @@ export default {
     map,
     recipe,
     tasks,
-    terminal,
     user
 }
