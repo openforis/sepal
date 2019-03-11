@@ -117,7 +117,7 @@ class _TerminalSession extends React.Component {
     }
 
     createWebSocket(sessionId) {
-        const webSocket = new WebSocket(`ws://${window.location.hostname}:8000/${sessionId}`)
+        const webSocket = new WebSocket(`wss://${window.location.hostname}:${window.location.port}/api/terminal/${sessionId}`)
         this.webSocket = webSocket
         return webSocket
     }
@@ -152,3 +152,4 @@ class _TerminalSession extends React.Component {
 }
 
 const TerminalSession = connect()(_TerminalSession)
+
