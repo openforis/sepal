@@ -51,12 +51,11 @@ def retry(action, times=1):
     except HttpError as e:
         content = json.loads(e.content)
         reason = content.get('reason', None)
-        if reason in ['userRateLimitExceeded', 'rateLimitExceeded']:
-            if times < 20:
-                throttle_seconds = max(2 ^ retries * random.uniform(0.1, 0.2), 30)
-                logger.warn('Retrying drive operation in {0} seconds: {1}'.format(throttle_seconds, reason))
-                time.sleep(throttle_seconds)
-                return retry(action, times + 1)
+        if times < 20:
+            throttle_seconds = max(2 ^ retries * random.uniform(0.1, 0.2), 30)
+            logger.warn('Retrying drive operation in {0} seconds: {1}'.format(throttle_seconds, reason))
+            time.sleep(throttle_seconds)
+            return retry(action, times + 1)
         e.message = e._get_reason()
         re_raisable()
         raise e
