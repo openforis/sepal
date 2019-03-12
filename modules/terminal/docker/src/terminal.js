@@ -14,7 +14,7 @@ const connect = (req, res) => {
     const username = JSON.parse(req.headers['sepal-user']).username
     const keyFile = `/sepalUsers/${username}/.ssh/id_rsa`
     const sshGateway = process.env.SSH_GATEWAY_HOST
-    const term = pty.spawn('ssh', ['-q', '-o', 'StrictHostKeyChecking=no', '-i', keyFile, `${username}@${sshGateway}`], {
+    const term = pty.spawn('sudo', ['ssh', '-q', '-o', 'StrictHostKeyChecking=no', '-i', keyFile, `${username}@${sshGateway}`], {
         name: 'xterm-color',
         cols: cols || 80,
         rows: rows || 24,
