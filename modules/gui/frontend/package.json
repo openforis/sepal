@@ -12,7 +12,7 @@
     "base-64": "0.1.0",
     "bootstrap": "4.3.1",
     "cross-fetch": "3.0.1",
-    "earthengine-api": "git+https://github.com/openforis/earthengine-api.git#v0.1.171",
+    "earthengine-api": "git+https://github.com/openforis/earthengine-api.git#v0.1.171.1.1",
     "escape-string-regexp": "^1.0.5",
     "flat": "4.1.0",
     "google-maps": "3.3.0",
