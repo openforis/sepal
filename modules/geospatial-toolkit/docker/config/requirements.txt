@@ -2,7 +2,7 @@ python-dateutil
 pyCrypto
 oauth2client
 google-api-python-client
-git+git://github.com/openforis/earthengine-api.git@v0.1.171.1#egg=earthengine-api&subdirectory=python
+git+git://github.com/openforis/earthengine-api.git@v0.1.171#egg=earthengine-api&subdirectory=python
 git+https://github.com/ESA-PhiLab/OpenSarToolkit.git
 awscli
 
