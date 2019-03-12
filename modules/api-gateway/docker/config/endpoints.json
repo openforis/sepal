@@ -23,7 +23,7 @@
   {
     "prefix": "true",
     "path": "/api/terminal/",
-    "target": "https://terminal:8000/",
+    "target": "http://terminal:8000/",
     "https": "false",
     "authenticate": "true"
   },

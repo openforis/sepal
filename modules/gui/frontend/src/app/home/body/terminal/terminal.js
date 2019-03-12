@@ -2,10 +2,10 @@ import 'xterm/dist/xterm.css'
 import * as attach from 'xterm/lib/addons/attach/attach'
 import * as fit from 'xterm/lib/addons/fit/fit'
 
-import {Subject} from 'rxjs'
+import {Subject, interval} from 'rxjs'
 import {Terminal as Xterm} from 'xterm'
 import {connect} from 'store'
-import {distinctUntilChanged, filter, map} from 'rxjs/operators'
+import {distinctUntilChanged, filter, map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {post$} from 'http-client'
 import {withLatestFrom} from 'rxjs/operators'
@@ -17,6 +17,8 @@ import styles from './terminal.module.css'
 
 Xterm.applyAddon(fit)
 Xterm.applyAddon(attach)
+
+const HEARTBEAT_INTERVAL_MS = 3000
 
 export default class Terminal extends React.Component {
     render() {
@@ -40,6 +42,7 @@ class _TerminalSession extends React.Component {
     resize$ = new Subject()
     fit$ = new Subject()
     focus$ = new Subject()
+    closed$ = new Subject()
 
     constructor(props) {
         super(props)
@@ -118,6 +121,13 @@ class _TerminalSession extends React.Component {
 
     createWebSocket(sessionId) {
         const webSocket = new WebSocket(`wss://${window.location.hostname}:${window.location.port}/api/terminal/${sessionId}`)
+        this.props.stream('SEND_TERMINAL_HEARTBEAT',
+            interval(HEARTBEAT_INTERVAL_MS).pipe(
+                takeUntil(this.closed$)
+            ),
+            () => webSocket.send('')
+        )
+        webSocket.onclose = () => this.closed$.next()
         this.webSocket = webSocket
         return webSocket
     }
