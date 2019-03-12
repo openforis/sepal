@@ -28,7 +28,8 @@ class Retrieve extends React.Component {
             {value: 'NDMI', label: 'NDMI'},
             {value: 'NBR', label: 'NBR'},
             {value: 'EVI', label: 'EVI'},
-            {value: 'EVI2', label: 'EVI2'}
+            {value: 'EVI2', label: 'EVI2'},
+            {value: 'SAVI', label: 'SAVI'}
         ]
 
         return (

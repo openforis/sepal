@@ -62,15 +62,17 @@ const submitRetrieveRecipeTask = recipe => {
 const toExpression = (indicator) => {
     switch (indicator) {
     case 'NDVI':
-        return '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
+        return '10000 * (i.nir - i.red) / (i.nir + i.red)'
     case 'NDMI':
-        return '10000 * (1 + (i.nir - i.swir1) / (i.nir + i.swir1))'
+        return '10000 * (i.nir - i.swir1) / (i.nir + i.swir1)'
     case 'NBR':
-        return '10000 * (1 + (i.nir - i.swir2) / (i.nir + i.swir2))'
+        return '10000 * (i.nir - i.swir2) / (i.nir + i.swir2)'
     case 'EVI':
-        return '10000 * (1 + 2.5 * (i.nir - i.red) / (i.nir + 6 * i.red - 7.5 * i.blue + 1))'
+        return '10000 * 2.5 * (i.nir - i.red) / (i.nir + 6 * i.red - 7.5 * i.blue + 1)'
     case 'EVI2':
-        return '10000 * (1 + 2.5 * (i.nir - i.red) / (i.nir + 2.4 * i.red + 1))'
+        return '10000 * 2.5 * (i.nir - i.red) / (i.nir + 2.4 * i.red + 1)'
+    case 'SAVI':
+        return '10000 * 1.5 * (i.nir - i.red) / (i.nir + i.red + 0.5)'
     default:
         throw new Error('Unexpected indicator: ' + indicator)
     }
