@@ -8,7 +8,11 @@ ENV PORT 8000
 
 WORKDIR ${ROOT}
 ADD package.json ${ROOT}/package.json
-RUN npm install
+RUN apt-get update && \
+    apt-get install sudo && \
+    adduser node sudo && \
+    echo -e "\nnode ALL = (root) NOPASSWD: /usr/bin/ssh\n" >> /etc/sudoers && \
+    npm install
 
 ADD src ${ROOT}/src
 
