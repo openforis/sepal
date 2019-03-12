@@ -22,6 +22,7 @@
     - "/data/user/home:/home" # Users home directories with ssh keys
     ports:
     - "{{ sepal_ssh_ip }}:443:22"
+    - "{{ sepal_ssh_ip }}:22:22"
     etc_hosts:
       syslog_host: "{{ sepal_http_ip }}"
     env:
