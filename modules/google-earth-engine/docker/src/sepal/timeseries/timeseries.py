@@ -42,9 +42,9 @@ class TimeSeries(object):
             )
 
         stack = ee.Image(
-            collection.iterate(append_band, ee.Image().uint16())
+            collection.iterate(append_band, ee.Image().int16())
         )
-        return stack.slice(1).clip(aoi).uint16()
+        return stack.slice(1).clip(aoi).int16()
 
     def _to_daily_mosaics(self, collection):
         def evaluate_expression(image):
@@ -81,8 +81,5 @@ class TimeSeries(object):
         if dataSetName.startswith('LANDSAT'):
             collection_names = self._convert_sepal_sensor_name_to_ee_collection_names()
             [self._data_set(name, image_filter) for name in collection_names]
-            # return LandsatDataSet.create(dataSetName, image_filter, self.spec)
-        # if dataSetName == 'SENTINEL_2':
-        #     return Sentinel2DataSet(image_filter)
 
         raise Exception('Invalid dataSetName: ' + dataSetName)
