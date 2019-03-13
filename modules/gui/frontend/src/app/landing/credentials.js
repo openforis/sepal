@@ -3,8 +3,7 @@ import {isPathInLocation} from 'route'
 import ForgotPassword from './forgot-password'
 import Login from './login'
 import React from 'react'
-import ResetPassword from './reset-password'
-import SetupAccount from './setup-account'
+import SetPassword from './setPassword'
 import styles from './credentials.module.css'
 
 export default class Credentials extends React.Component {
@@ -40,10 +39,10 @@ export default class Credentials extends React.Component {
 
     renderPanel() {
         if (isPathInLocation('/reset-password')) {
-            return <ResetPassword/>
+            return <SetPassword type='reset'/>
         }
         if (isPathInLocation('/setup-account')) {
-            return <SetupAccount/>
+            return <SetPassword type='assign'/>
         }
         return this.state.forgotPassword
             ? this.renderForgotPassword()

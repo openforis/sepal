@@ -29,7 +29,7 @@ const mapStateToProps = () => ({
     user: tokenUser()
 })
 
-class ResetPassword extends React.Component {
+class SetPassword extends React.Component {
     UNSAFE_componentWillMount() {
         const token = query().token
         this.props.asyncActionBuilder('VALIDATE_TOKEN',
@@ -117,8 +117,9 @@ class ResetPassword extends React.Component {
     }
 }
 
-ResetPassword.propTypes = {
+SetPassword.propTypes = {
+    type: PropTypes.oneOf(['reset', 'assign']).isRequired,
     user: PropTypes.object
 }
 
-export default form({fields, constraints, mapStateToProps})(ResetPassword)
+export default form({fields, constraints, mapStateToProps})(SetPassword)
