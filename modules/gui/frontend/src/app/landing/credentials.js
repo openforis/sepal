@@ -39,10 +39,12 @@ export default class Credentials extends React.Component {
     }
 
     renderPanel() {
-        if (isPathInLocation('/reset-password'))
+        if (isPathInLocation('/reset-password')) {
             return <ResetPassword/>
-        else if (isPathInLocation('/setup-account'))
+        }
+        if (isPathInLocation('/setup-account')) {
             return <SetupAccount/>
+        }
         return this.state.forgotPassword
             ? this.renderForgotPassword()
             : this.renderLogin()
