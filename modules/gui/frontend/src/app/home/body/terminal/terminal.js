@@ -19,6 +19,7 @@ Xterm.applyAddon(fit)
 Xterm.applyAddon(attach)
 
 const HEARTBEAT_INTERVAL_MS = 3000
+const RESIZE_DEBOUNCE_MS = 250
 
 export default class Terminal extends React.Component {
     render() {
@@ -91,7 +92,7 @@ class _TerminalSession extends React.Component {
                 handleWidth
                 handleHeight
                 refreshMode='debounce'
-                refreshRate={500}
+                refreshRate={RESIZE_DEBOUNCE_MS}
                 onResize={() => this.fit$.next()}
             >
                 <div className={styles.terminal} ref={this.terminalContainer}/>
