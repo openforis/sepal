@@ -94,7 +94,8 @@ export default class EarthEngineLayer {
     }
 }
 
-
+// Creates a ee.data.RawMapId.
+// https://github.com/google/earthengine-api/blob/1a3121aa7574ecf2d5432c047621081aed8e1b28/javascript/src/data.js#L2198
 const toMapId = (mapid, token) => {
     const path = `https://earthengine.googleapis.com/map/${mapid}`
     const suffix = `?token=${token}`
@@ -105,8 +106,7 @@ const toMapId = (mapid, token) => {
         if (x < 0) {
             x += width
         }
-        const tileUrl = [path, z, x, y].join('/') + suffix
-        return tileUrl
+        return [path, z, x, y].join('/') + suffix
     }
     return {mapid, token, formatTileUrl}
 }
