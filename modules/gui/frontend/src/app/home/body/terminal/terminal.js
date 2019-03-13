@@ -36,7 +36,9 @@ export default class Terminal extends React.Component {
 
 class _TerminalSession extends React.Component {
     terminalContainer = React.createRef()
-    terminal = new Xterm()
+    terminal = new Xterm({
+        rendererType: 'canvas'
+    })
     webSocket = null
     enabled$ = new Subject()
     resize$ = new Subject()
@@ -145,11 +147,12 @@ class _TerminalSession extends React.Component {
             background: 'transparent',
             foreground: '#ccc'
         })
+        terminal.on('resize',
+            dimensions => resize$.next({sessionId, dimensions})
+        )
         this.enabled$.next(true)
         this.fit$.next()
         this.focus$.next()
-        this.resize$.next({})
-        terminal.on('resize', dimensions => resize$.next({sessionId, dimensions}))
         onEnable(() => {
             this.enabled$.next(true)
             this.fit$.next()
