@@ -2,10 +2,11 @@ const express = require('express')
 const expressWs = require('express-ws')
 const pty = require('node-pty')
 
-const {Subject} = require('rxjs')
+const {interval, Subject} = require('rxjs')
 const {map, filter, bufferTime} = require('rxjs/operators')
 
 const terminals = {}
+const subscriptions = []
 const logs = {}
 
 const connect = (req, res) => {
@@ -49,27 +50,34 @@ const terminal = (ws, req) => {
     } catch (ex) {}
 
     const downStream$ = new Subject()
-    const subscription = downStream$
-        .pipe(
-            bufferTime(10),
-            map(buffered => buffered.join('')),
-            filter(data => data)
-        )
-        .subscribe(
-            data => {
-                try {
-                    ws.send(data)
-                } catch (ex) {}
-            }
-        )
+    subscriptions.push(
+        downStream$
+            .pipe(
+                bufferTime(10),
+                map(buffered => buffered.join('')),
+                filter(data => data)
+            )
+            .subscribe(
+                data => {
+                    try {
+                        ws.send(data)
+                    } catch (ex) {}
+                }
+            )
+    )
+
+    subscriptions.push(
+        interval(3000)
+            .subscribe(() => ws.send(''))
+    )
 
     term.on('data', data => downStream$.next(data))
 
     ws.on('message', msg => term.write(msg))
-    
+
     ws.on('close', () => {
         term.kill()
-        subscription.unsubscribe()
+        subscriptions.forEach(subscription => subscription.unsubscribe())
         console.log('Closed terminal ' + term.pid)
         delete terminals[term.pid]
         delete logs[term.pid]
