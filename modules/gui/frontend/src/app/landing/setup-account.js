@@ -1,10 +1,10 @@
+import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Constraint, Field, Form, Input, form} from 'widget/form'
-import {Msg, msg} from 'translate'
 import {PropTypes} from 'prop-types'
-import {SubmitButton} from 'widget/legacyButton'
 import {history, query} from 'route'
 import {isMobile} from 'widget/userAgent'
+import {msg} from 'translate'
 import {resetPassword$, tokenUser, validateToken$} from 'user'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -60,10 +60,11 @@ class ResetPassword extends React.Component {
     }
 
     render() {
-        if (!this.props.action('VALIDATE_TOKEN').dispatched)
-            return this.spinner()
-        else
-            return this.form()
+        const {action} = this.props
+        const tokenValidated = action('VALIDATE_TOKEN').dispatched
+        return tokenValidated
+            ? this.form()
+            : this.spinner()
     }
 
     spinner() {
@@ -73,9 +74,10 @@ class ResetPassword extends React.Component {
     }
 
     form() {
-        const {form, inputs: {username, password, password2}} = this.props
+        const {form, inputs: {username, password, password2}, action} = this.props
+        const resettingPassword = action('RESET_PASSWORD').dispatching
         return (
-            <Form>
+            <Form onSubmit={() => this.resetPassword(form.values())}>
                 <Input
                     label={msg('landing.reset-password.username.label')}
                     input={username}
@@ -100,13 +102,16 @@ class ResetPassword extends React.Component {
                     errorMessage={[password2, 'passwordsMatch']}
                 />
 
-                <SubmitButton
-                    icon='sign-in-alt'
-                    onClick={() => this.resetPassword(form.values())}
-                    disabled={form.isInvalid()}
-                    tabIndex={3}>
-                    <Msg id='landing.reset-password.button'/>
-                </SubmitButton>
+                <Button
+                    type='submit'
+                    look='apply'
+                    size='x-large'
+                    shape='pill'
+                    icon={resettingPassword ? 'spinner' : 'sign-in-alt'}
+                    label={msg('landing.reset-password.button')}
+                    disabled={form.isInvalid() || resettingPassword}
+                    tabIndex={3}
+                />
             </Form>
         )
     }
