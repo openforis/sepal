@@ -20,8 +20,13 @@ export default class EarthEngineLayer {
 
     addToMap(googleMap) {
         const layer = new ee.layers.ImageOverlay(
-            new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', this.mapId, this.token)
+            new ee.layers.EarthEngineTileSource(
+                toMapId(this.mapId, this.token)
+            )
         )
+
+
+
 
         // [HACK] When fitting bounds with no change to bounds, after Google Maps v3.33,
         // tiles were loaded then removed. GEE used same id for tiles at the same position.
@@ -87,4 +92,21 @@ export default class EarthEngineLayer {
             })
         )
     }
+}
+
+
+const toMapId = (mapid, token) => {
+    const path = `https://earthengine.googleapis.com/map/${mapid}`
+    const suffix = `?token=${token}`
+    // Builds a URL of the form {tileBaseUrl}{path}/{z}/{x}/{y}{suffix}
+    const formatTileUrl = (x, y, z) => {
+        const width = Math.pow(2, z)
+        x = x % width
+        if (x < 0) {
+            x += width
+        }
+        const tileUrl = [path, z, x, y].join('/') + suffix
+        return tileUrl
+    }
+    return {mapid, token, formatTileUrl}
 }
