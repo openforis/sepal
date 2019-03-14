@@ -71,14 +71,14 @@ export default {
         post$('/api/user/google/revoke-access')
             .pipe(toResponse),
 
-    updateUserSession$: session =>
+    updateCurrentUserSession$: session =>
         post$(`/api/sessions/session/${session.id}/earliestTimeoutTime`, {
             body: {
                 hours: session.keepAlive
             }
         }).pipe(toResponse),
 
-    stopUserSession$: session =>
+    stopCurrentUserSession$: session =>
         delete$(`/api/sessions/session/${session.id}`),
 
     getUserList$: () =>

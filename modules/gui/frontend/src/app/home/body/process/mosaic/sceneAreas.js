@@ -43,7 +43,7 @@ class SceneAreas extends React.Component {
         const {sceneAreasShown, stream} = this.props
         return (
             <React.Fragment>
-                {stream('LOAD_SCENE_AREAS') === 'COMPLETED'
+                {stream('LOAD_SCENE_AREAS').completed
                     ? sceneAreasShown && this.state.show ? this.renderSceneAreas() : null
                     : <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
             </React.Fragment>

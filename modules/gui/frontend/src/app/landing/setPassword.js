@@ -5,7 +5,7 @@ import {PropTypes} from 'prop-types'
 import {history, query} from 'route'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
-import {resetPassword$, tokenUser, validateToken$} from 'user'
+import {resetPassword$, tokenUser, validateToken$} from 'widget/user'
 import Notifications from 'widget/notifications'
 import React from 'react'
 

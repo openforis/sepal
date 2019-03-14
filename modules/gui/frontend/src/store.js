@@ -190,11 +190,19 @@ Enabled.propTypes = {
 }
 
 const stream = component => {
+    const streamStatus = status => ({
+        active: status === 'ACTIVE',
+        failed: status === 'FAILED',
+        completed: status === 'COMPLETED'
+    })
+    
     return (name, stream$, onSuccess, onError, onComplete) => {
         const componentPath = `stream.${component.id}`
         const statePath = `${componentPath}.${name}`
-        if (!stream$)
-            return select(statePath)
+
+        if (!stream$) {
+            return streamStatus(select(statePath))
+        }
 
         const setStatus = status =>
             actionBuilder('SET_STREAM_STATUS', {statePath, status})

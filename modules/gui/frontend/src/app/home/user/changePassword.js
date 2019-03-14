@@ -3,7 +3,7 @@ import {EMPTY, throwError} from 'rxjs'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
-import {changeUserPassword$} from 'user'
+import {changeCurrentUserPassword$} from 'widget/user'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {switchMap} from 'rxjs/operators'
@@ -40,7 +40,7 @@ class ChangePassword extends React.Component {
     }
 
     changePassword$(userPasswords) {
-        return changeUserPassword$(userPasswords).pipe(
+        return changeCurrentUserPassword$(userPasswords).pipe(
             switchMap(({status}) => {
                 if (status === 'success') {
                     Notifications.success({message: msg('user.changePassword.success')})

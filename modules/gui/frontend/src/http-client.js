@@ -1,6 +1,6 @@
 import {ajax} from 'rxjs/ajax'
 import {catchError, flatMap, map, retryWhen, zip} from 'rxjs/operators'
-import {logout} from 'user'
+import {logout} from 'widget/user'
 import {msg} from 'translate'
 import {of, range, throwError, timer} from 'rxjs'
 import Notifications from 'widget/notifications'
@@ -90,7 +90,7 @@ function execute$(url, method, {retries, query, username, password, headers, val
                 return of(e)
             } else if (e.status === 401 && isRelative(url)) {
                 Notifications.warning({message: msg('unauthorized.warning')})
-                logout()
+                return logout()
             } else {
                 return throwError(e)
             }

@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {Field, Form, Input, form} from 'widget/form'
-import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
+import {invalidCredentials, login$, resetInvalidCredentials} from 'widget/user'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -20,9 +20,7 @@ const mapStateToProps = () => ({
 
 class Login extends React.Component {
     login({username, password}) {
-        this.props.asyncActionBuilder('LOGIN',
-            login$(username, password))
-            .dispatch()
+        this.props.stream('LOGIN', login$(username, password))
     }
 
     componentWillUnmount() {
