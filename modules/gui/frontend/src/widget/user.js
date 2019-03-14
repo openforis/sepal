@@ -38,9 +38,7 @@ export const resetInvalidCredentials = () =>
 
 export const resetPassword$ = (token, username, password) =>
     api.user.resetPassword$(token, username, password).pipe(
-        switchMap(
-            () => login$(username, password)
-        )
+        switchMap(() => login$(username, password))
     )
     
 export const requestPasswordReset$ = email =>
@@ -48,10 +46,13 @@ export const requestPasswordReset$ = email =>
 
 export const validateToken$ = token =>
     api.user.validateToken$(token).pipe(
-        map(({user}) =>
-            actionBuilder('TOKEN_VALIDATED', {valid: !!user})
-                .set('user.tokenUser', user)
-                .build())
+        map(({user}) => {
+            if (user) {
+                return user
+            } else {
+                throw new Error('Invalid token')
+            }
+        })
     )
 
 export const tokenUser = () =>
@@ -69,11 +70,7 @@ export const updateCurrentUserDetails$ = ({name, email, organization}) =>
     )
     
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
-    api.user.changePassword$({oldPassword, newPassword}).pipe(
-        map(({status}) => actionBuilder('PASSWORD_CHANGE_POSTED', {status})
-            .build()
-        )
-    )
+    api.user.changePassword$({oldPassword, newPassword})
     
 export const updateCurrentUserSession$ = session =>
     api.user.updateCurrentUserSession$(session).pipe(
