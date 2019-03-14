@@ -57,16 +57,6 @@ export const validateToken$ = token =>
 export const tokenUser = () =>
     select('user.tokenUser')
 
-export const loadCurrentUserReport$ = () => {
-    api.user.loadCurrentUserReport$().pipe(
-        map(userReport =>
-            actionBuilder('SET_CURRENT_USER_REPORT', {userReport})
-                .set('user.currentUserReport', userReport)
-                .build()
-        )
-    )
-}
-    
 export const updateCurrentUserDetails$ = ({name, email, organization}) =>
     api.user.updateCurrentUserDetails$({name, email, organization}).pipe(
         map(({name, email, organization}) =>
