@@ -11,28 +11,31 @@ from os.path import abspath
 from os.path import isdir, join
 
 import ee
-import osgeo.gdal
+from osgeo import gdal
 from dateutil.parser import parse
 
 from timeseries import TimeSeries
 from .. import drive
 from ..aoi import Aoi
 from ..drive import Download
-from ..export.image_to_drive import ImageToDrive
-from ..export.table_to_drive import TableToDrive
+from ..export.image_to_cloud_storage import ImageToCloudStorage
+from ..export.table_to_cloud_storage import TableToCloudStorage
 from ..format import format_bytes
 from ..task.task import ThreadTask, Task
+from .. import gee
 
 logger = logging.getLogger(__name__)
 
 
 def create(spec, context):
+    print(context)
     aoi_spec = spec['aoi']
     if aoi_spec['type'] == 'FUSION_TABLE' and not aoi_spec.get('keyColumn'):
         aoi = ee.FeatureCollection('ft:' + aoi_spec['id'])
     else:
         aoi = Aoi.create(aoi_spec).geometry()
     return DownloadFeatures(
+        username=context.username,
         download_dir=context.download_dir,
         description=spec['description'],
         credentials=context.credentials,
@@ -49,7 +52,7 @@ def create(spec, context):
 
 class DownloadFeatures(ThreadTask):
     def __init__(
-            self, download_dir, description, credentials, expression,
+            self, username, download_dir, description, credentials, expression,
             data_sets, aoi, from_date, to_date, mask_snow, brdf_correct, surface_reflectance):
         super(DownloadFeatures, self).__init__('download_features')
         self.spec = TimeSeriesSpec(
@@ -71,7 +74,7 @@ class DownloadFeatures(ThreadTask):
         self.download_dir = download_dir
         self.description = description
         self.download_tasks = []
-        self.drive_folder_name = '_'.join(['Sepal', self.description, str(uuid.uuid4())])
+        self.drive_folder_name = username + '/' + self.description + '_' + str(uuid.uuid4())
         self.drive_folder = None
 
     def run(self):
@@ -134,7 +137,7 @@ class DownloadFeature(ThreadTask):
         super(DownloadFeature, self).__init__()
         self.drive_folder = drive_folder
         self.download_dir = download_dir
-        self.feature_dir = '/'.join([download_dir, description, feature_description])
+        self.feature_dir = '_'.join([download_dir, description, feature_description])
         self.description = description
         self.feature_description = feature_description
         self.spec = spec
@@ -200,7 +203,8 @@ class DownloadFeature(ThreadTask):
         tile_dirs = sorted([d for d in glob(join(self.feature_dir, '*')) if isdir(d)])
         for tile_dir in tile_dirs:
             self._tile_to_vrt(tile_dir)
-        vrt = osgeo.gdal.BuildVRT(
+        gdal.SetConfigOption('VRT_SHARED_SOURCE', '0')
+        vrt = gdal.BuildVRT(
             self.feature_dir + '/stack.vrt', sorted(glob(join(self.feature_dir, '*.vrt'))),
             VRTNodata=0
         )
@@ -210,12 +214,13 @@ class DownloadFeature(ThreadTask):
     def _tile_to_vrt(self, tile_dir):
         tif_paths = sorted(glob(join(tile_dir, '*.tif')))
         for tif_path in tif_paths:
-            tif_file = osgeo.gdal.Open(tif_path)
+            tif_file = gdal.Open(tif_path)
             tif_path_no_extension = os.path.splitext(tif_path)[0]
             if tif_file:
                 for band_index in range(1, tif_file.RasterCount + 1):
                     tif_vrt_path = '{0}_{1}.vrt'.format(tif_path_no_extension, str(band_index).zfill(10))
-                    vrt = osgeo.gdal.BuildVRT(
+                    gdal.SetConfigOption('VRT_SHARED_SOURCE', '0')
+                    vrt = gdal.BuildVRT(
                         tif_vrt_path, tif_path,
                         bandList=[band_index],
                         VRTNodata=0)
@@ -223,7 +228,8 @@ class DownloadFeature(ThreadTask):
                         vrt.FlushCache()
         stack_vrt_path = tile_dir + '_stack.vrt'
         vrt_paths = sorted(glob(join(tile_dir, '*.vrt')))
-        vrt = osgeo.gdal.BuildVRT(
+        gdal.SetConfigOption('VRT_SHARED_SOURCE', '0')
+        vrt = gdal.BuildVRT(
             stack_vrt_path, vrt_paths,
             separate=True,
             VRTNodata=0)
@@ -271,8 +277,8 @@ class DownloadYear(ThreadTask):
             return self.resolve()
 
         self._table_export = self.dependent(
-            TableToDrive(
-                credentials=self._spec.credentials,
+            TableToCloudStorage(
+                credentials=gee.service_account_credentials,
                 table=dates,
                 description='_'.join([self._description, self._feature_description, str(self._year), 'dates']),
                 folder=self._drive_folder
@@ -286,8 +292,8 @@ class DownloadYear(ThreadTask):
                 move=True
             ))
         self._image_export = self.dependent(
-            ImageToDrive(
-                credentials=self._spec.credentials,
+            ImageToCloudStorage(
+                credentials=gee.service_account_credentials,
                 image=stack,
                 region=self._spec.aoi,
                 description='_'.join([self._description, self._feature_description, str(self._year), 'stack']),
