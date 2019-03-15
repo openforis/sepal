@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {connect, select} from 'store'
+import {currentUser} from 'widget/user'
 import {isFloating} from './menuMode'
 import {isPathInLocation} from 'route'
 import {msg} from 'translate'
@@ -15,6 +16,7 @@ const mapStateToProps = (state = {}) => ({
     floating: isFloating(),
     hasActiveTasks: !!(state.tasks && state.tasks.find(task => ['PENDING', 'ACTIVE'].includes(task.status))),
     budgetExceeded: select('user.budgetExceeded'),
+    user: currentUser()
 })
 
 class Menu extends React.Component {

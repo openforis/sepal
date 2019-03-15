@@ -5,7 +5,7 @@ import {PropTypes} from 'prop-types'
 import {history, query} from 'route'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
-import {resetPassword$, tokenUser, validateToken$} from 'widget/user'
+import {resetPassword, tokenUser, validateToken$} from 'widget/user'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -43,7 +43,7 @@ class SetPassword extends React.Component {
                     message: msg('landing.validate-token.error'),
                     timeout: 10000
                 })
-                history().push('/process').dispatch() // [TODO] fix this
+                history().push('/process') // [TODO] fix this
             }
         )
     }
@@ -55,13 +55,7 @@ class SetPassword extends React.Component {
 
     resetPassword({username, password}) {
         const token = query().token
-        this.props.stream('RESET_PASSWORD',
-            resetPassword$(token, username, password),
-            () => {
-                Notifications.success({message: msg('landing.reset-password.success')})
-                history().push('/process').dispatch() // [TODO] fix this
-            }
-        )
+        resetPassword({token, username, password})
     }
 
     render() {

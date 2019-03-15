@@ -93,7 +93,7 @@ export const runApp$ = path => {
 export const quitApp = path => {
     quitApp$.next(path)
     isPathInLocation('/app' + path)
-    && history().replace('/app-launch-pad').dispatch()
+    && history().replace('/app-launch-pad')
     actionBuilder('QUIT_APP', {path})
         .del(['apps', 'state', path])
         .delValue(['apps', 'active'], path)

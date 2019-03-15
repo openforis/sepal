@@ -1,6 +1,5 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {connect} from 'store'
-import {currentUser} from 'widget/user'
 import {exhaustMap, map} from 'rxjs/operators'
 import {isFloating} from './menu/menuMode'
 import {timer} from 'rxjs'
@@ -16,8 +15,7 @@ import styles from './home.module.css'
 
 const mapStateToProps = () => ({
     floatingMenu: isFloating(),
-    floatingFooter: false,
-    user: currentUser()
+    floatingFooter: false
 })
 
 const timedRefresh$ = (api$, refreshSeconds = 60) =>
@@ -73,7 +71,7 @@ class Home extends React.Component {
     }
 
     render() {
-        const {user, floatingMenu, floatingFooter} = this.props
+        const {floatingMenu, floatingFooter} = this.props
         return (
             <ActivationContext id='root'>
                 <div className={[
@@ -82,10 +80,10 @@ class Home extends React.Component {
                     floatingFooter && styles.floatingFooter
                 ].join(' ')}>
                     <Map className={styles.map}/>
-                    <Menu className={styles.menu} user={user}/>
+                    <Menu className={styles.menu}/>
                     <div className={styles.main}>
                         <Body className={styles.body}/>
-                        <Footer className={styles.footer} user={user}/>
+                        <Footer className={styles.footer}/>
                     </div>
                     <div id='portalContainer' className={styles.portalContainer}/>
                 </div>
@@ -96,8 +94,7 @@ class Home extends React.Component {
 
 Home.propTypes = {
     floatingFooter: PropTypes.bool.isRequired,
-    floatingMenu: PropTypes.bool.isRequired,
-    user: PropTypes.object.isRequired
+    floatingMenu: PropTypes.bool.isRequired
 }
 
 export default connect(mapStateToProps)(Home)

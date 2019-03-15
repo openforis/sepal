@@ -4,7 +4,6 @@ import {UserDetailsButton} from '../user/userDetails'
 import {UserMessagesButton} from '../user/userMessages'
 import {logout} from 'widget/user'
 import {msg} from 'translate'
-import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './footer.module.css'
 
@@ -29,9 +28,7 @@ const Footer = ({className}) => {
     )
 }
 
-Footer.propTypes = {
-    user: PropTypes.object
-}
+Footer.propTypes = {}
 
 const Logout = () =>
     <Button

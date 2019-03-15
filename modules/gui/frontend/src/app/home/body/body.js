@@ -37,9 +37,9 @@ class Body extends React.Component {
     componentDidUpdate() {
         const {budgetExceeded, location} = this.props
         if (budgetExceeded && location.pathname !== '/browse')
-            history().replace('/browse').dispatch()
+            history().replace('/browse')
         else if (this.props.location.pathname === '/')
-            history().replace('/process').dispatch()
+            history().replace('/process')
     }
 
     UNSAFE_componentWillReceiveProps({action, location, requestedApps}) {

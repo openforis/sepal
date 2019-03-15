@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {appList, requestedApps, runApp$} from 'apps'
-import {connect, dispatch} from 'store'
+import {connect} from 'store'
 import {history} from 'route'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
@@ -16,7 +16,7 @@ const mapStateToProps = () => ({
 
 class AppLaunchPad extends React.Component {
     runApp(app) {
-        dispatch(history().push('/app' + app.path))
+        history().push('/app' + app.path)
         if (!this.props.requestedApps.includes(app))
             this.props.asyncActionBuilder('RUN_APP',
                 runApp$(app.path))
