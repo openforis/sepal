@@ -52,7 +52,7 @@ def retry(action, times=1):
         content = json.loads(e.content)
         reason = content.get('reason', None)
         if times < 20:
-            throttle_seconds = max(2 ^ retries * random.uniform(0.1, 0.2), 30)
+            throttle_seconds = max(2 ^ times * random.uniform(0.1, 0.2), 30)
             logger.warn('Retrying drive operation in {0} seconds: {1}'.format(throttle_seconds, reason))
             time.sleep(throttle_seconds)
             return retry(action, times + 1)
