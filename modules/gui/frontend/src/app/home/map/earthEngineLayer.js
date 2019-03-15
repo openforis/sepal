@@ -25,9 +25,6 @@ export default class EarthEngineLayer {
             )
         )
 
-
-
-
         // [HACK] When fitting bounds with no change to bounds, after Google Maps v3.33,
         // tiles were loaded then removed. GEE used same id for tiles at the same position.
         // This caused freshly loaded tiles to be immediately removed.

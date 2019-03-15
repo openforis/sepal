@@ -15,6 +15,7 @@ const resetPassword$ = new Subject()
 
 export const currentUser = () => select('user.currentUser')
 export const invalidCredentials = () => select('user.login.invalidCredentials')
+export const tokenUser = () => select('user.tokenUser')
 
 export const login = ({username, password}) =>
     login$.next({username, password})
@@ -26,16 +27,16 @@ export const resetPassword = ({token, username, password}) => {
     resetPassword$.next({token, username, password})
 }
 
-export const revokeGoogleAccess$ = () =>
-    api.user.revokeGoogleAccess$().pipe(
-        map(() => loadUser$.next())
-    )
-    
 export const resetInvalidCredentials = () =>
     actionBuilder('RESET_INVALID_CREDENTIALS')
         .del('user.login.invalidCredentials')
         .dispatch()
 
+export const revokeGoogleAccess$ = () =>
+    api.user.revokeGoogleAccess$().pipe(
+        map(() => loadUser$.next())
+    )
+    
 export const requestPasswordReset$ = email =>
     api.user.requestPasswordReset$(email)
 
@@ -49,9 +50,6 @@ export const validateToken$ = token =>
             }
         })
     )
-
-export const tokenUser = () =>
-    select('user.tokenUser')
 
 export const updateCurrentUserDetails$ = ({name, email, organization}) =>
     api.user.updateCurrentUserDetails$({name, email, organization}).pipe(
