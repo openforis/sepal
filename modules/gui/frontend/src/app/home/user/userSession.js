@@ -2,7 +2,7 @@ import {Field, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {msg} from 'translate'
 import {select} from 'store'
-import {updateUserSession$} from 'user'
+import {updateCurrentUserSession$} from 'widget/user'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -33,7 +33,7 @@ class UserSession extends React.Component {
     suspendSession(session) {
         const {stream} = this.props
         stream('SUSPEND_USER_SESSION',
-            updateUserSession$(session),
+            updateCurrentUserSession$(session),
             () => Notifications.success({message: msg('user.userSession.suspend.success')}),
             error => Notifications.error({message: msg('user.userSession.suspend.error'), error})
         )
@@ -46,7 +46,7 @@ class UserSession extends React.Component {
     }
 
     updateSession(session) {
-        updateUserSession$(session).subscribe(
+        updateCurrentUserSession$(session).subscribe(
             () => {
                 actionBuilder('UPDATE_USER_SESSION')
                     .set(['users.currentUserReport.sessions.earliestTimeoutHours'], session.earliestTimeoutHours)

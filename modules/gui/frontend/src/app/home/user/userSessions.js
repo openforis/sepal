@@ -1,7 +1,7 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {connect, select} from 'store'
 import {msg} from 'translate'
-import {stopUserSession$} from 'user'
+import {stopCurrentUserSession$} from 'widget/user'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import SafetyButton from 'widget/safetyButton'
@@ -19,7 +19,7 @@ class UserSessions extends React.Component {
     stopSession(session) {
         const {stream, onClose} = this.props
         stream('STOP_USER_SESSION',
-            stopUserSession$(session),
+            stopCurrentUserSession$(session),
             () => {
                 Notifications.success({message: msg('user.userSession.stop.success')})
                 onClose()

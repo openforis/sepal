@@ -77,10 +77,10 @@ class CountrySection extends React.Component {
 
     render() {
         const {stream, countries, countryAreas, inputs: {country, area}} = this.props
-        const countriesState = stream('LOAD_COUNTRIES') === 'ACTIVE'
+        const countriesState = stream('LOAD_COUNTRIES').active
             ? 'loading'
             : 'loaded'
-        const areasState = stream('LOAD_COUNTRY_AREAS') === 'ACTIVE'
+        const areasState = stream('LOAD_COUNTRY_AREAS').active
             ? 'loading'
             : country.value
                 ? countryAreas && countryAreas.length > 0 ? 'loaded' : 'noAreas'
@@ -93,7 +93,7 @@ class CountrySection extends React.Component {
                     <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}/>
                     <ComboBox
                         input={country}
-                        isLoading={stream('LOAD_COUNTRIES') === 'ACTIVE'}
+                        isLoading={stream('LOAD_COUNTRIES').active}
                         disabled={!countries}
                         placeholder={countryPlaceholder}
                         options={(countries || []).map(([value, label]) => ({value, label}))}
@@ -111,7 +111,7 @@ class CountrySection extends React.Component {
                     <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}/>
                     <ComboBox
                         input={area}
-                        isLoading={stream('LOAD_COUNTRY_AREAS') === 'ACTIVE'}
+                        isLoading={stream('LOAD_COUNTRY_AREAS').active}
                         disabled={!countryAreas || countryAreas.length === 0}
                         placeholder={areaPlaceholder}
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}
@@ -145,7 +145,7 @@ class CountrySection extends React.Component {
 
     update() {
         const {recipeId, countries, stream, inputs: {country, area}, componentWillUnmount$} = this.props
-        if (!countries && stream('LOAD_COUNTRIES') !== 'ACTIVE')
+        if (!countries && stream('LOAD_COUNTRIES').active)
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$())
 

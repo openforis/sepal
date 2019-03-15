@@ -67,12 +67,12 @@ class FusionTableSection extends React.Component {
 
     render() {
         const {stream, columns, rows, inputs: {fusionTable, fusionTableColumn, fusionTableRow}} = this.props
-        const columnState = stream('LOAD_FUSION_TABLE_COLUMNS') === 'ACTIVE'
+        const columnState = stream('LOAD_FUSION_TABLE_COLUMNS').active
             ? 'loading'
             : columns && columns.length > 0
                 ? 'loaded'
                 : 'noFusionTable'
-        const rowState = stream('LOAD_FUSION_TABLE_ROWS') === 'ACTIVE'
+        const rowState = stream('LOAD_FUSION_TABLE_ROWS').active
             ? 'loading'
             : rows
                 ? (rows.length === 0 ? 'noRows' : 'loaded')
@@ -105,7 +105,7 @@ class FusionTableSection extends React.Component {
                 <ComboBox
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.column.label')}
                     input={fusionTableColumn}
-                    isLoading={stream('LOAD_FUSION_TABLE_COLUMNS') === 'ACTIVE'}
+                    isLoading={stream('LOAD_FUSION_TABLE_COLUMNS').active}
                     disabled={!columns || columns.length === 0}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.column.placeholder.${columnState}`)}
                     options={(columns || []).map(({name}) => ({value: name, label: name}))}
@@ -122,7 +122,7 @@ class FusionTableSection extends React.Component {
                 <ComboBox
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.row.label')}
                     input={fusionTableRow}
-                    isLoading={stream('LOAD_FUTION_TABLE_ROWS') === 'ACTIVE'}
+                    isLoading={stream('LOAD_FUSION_TABLE_ROWS').active}
                     disabled={!rows}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.row.placeholder.${rowState}`)}
                     options={(rows || []).map(value => ({value, label: value}))}

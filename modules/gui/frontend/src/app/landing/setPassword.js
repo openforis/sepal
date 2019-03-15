@@ -5,9 +5,10 @@ import {PropTypes} from 'prop-types'
 import {history, query} from 'route'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
-import {resetPassword$, tokenUser, validateToken$} from 'user'
+import {resetPassword$, tokenUser, validateToken$} from 'widget/user'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import actionBuilder from 'action-builder'
 
 const fields = {
     username: null,
@@ -30,17 +31,21 @@ const mapStateToProps = () => ({
 })
 
 class SetPassword extends React.Component {
-    UNSAFE_componentWillMount() {
+    componentDidMount() {
         const token = query().token
-        this.props.asyncActionBuilder('VALIDATE_TOKEN',
-            validateToken$(token))
-            .onComplete(([tokenValidated]) => {
-                if (!tokenValidated.valid) {
-                    Notifications.error({message: msg('landing.validate-token.error')})
-                    return history().push('/')
-                }
-            })
-            .dispatch()
+        this.props.stream('VALIDATE_TOKEN',
+            validateToken$(token),
+            user => actionBuilder('TOKEN_VALIDATED')
+                .set('user.tokenUser', user)
+                .dispatch(),
+            () => {
+                Notifications.error({
+                    message: msg('landing.validate-token.error'),
+                    timeout: 10000
+                })
+                history().push('/process').dispatch() // [TODO] fix this
+            }
+        )
     }
 
     UNSAFE_componentWillReceiveProps(nextProps) {
@@ -50,21 +55,20 @@ class SetPassword extends React.Component {
 
     resetPassword({username, password}) {
         const token = query().token
-        this.props.asyncActionBuilder('RESET_PASSWORD',
-            resetPassword$(token, username, password))
-            .onComplete(() => {
+        this.props.stream('RESET_PASSWORD',
+            resetPassword$(token, username, password),
+            () => {
                 Notifications.success({message: msg('landing.reset-password.success')})
-                return history().push('/')
-            })
-            .dispatch()
+                history().push('/process').dispatch() // [TODO] fix this
+            }
+        )
     }
 
     render() {
-        const {action} = this.props
-        const tokenValidated = action('VALIDATE_TOKEN').dispatched
-        return tokenValidated
-            ? this.form()
-            : this.spinner()
+        const {stream} = this.props
+        return stream('VALIDATE_TOKEN').active
+            ? this.spinner()
+            : this.form()
     }
 
     spinner() {
@@ -74,8 +78,8 @@ class SetPassword extends React.Component {
     }
 
     form() {
-        const {form, inputs: {username, password, password2}, action} = this.props
-        const resettingPassword = action('RESET_PASSWORD').dispatching
+        const {form, inputs: {username, password, password2}, stream} = this.props
+        const resettingPassword = stream('RESET_PASSWORD').active
         return (
             <Form onSubmit={() => this.resetPassword(form.values())}>
                 <Input

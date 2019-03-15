@@ -1,9 +1,9 @@
 import {ActivationContext} from 'widget/activation/activationContext'
-import {EMPTY, interval, timer} from 'rxjs'
 import {connect} from 'store'
-import {currentUser, loadCurrentUser$} from 'user'
-import {delay, exhaustMap, map, switchMap} from 'rxjs/operators'
+import {currentUser} from 'widget/user'
+import {exhaustMap, map} from 'rxjs/operators'
 import {isFloating} from './menu/menuMode'
+import {timer} from 'rxjs'
 import Body from './body/body'
 import Footer from './footer/footer'
 import Map from './map/map'
@@ -19,26 +19,6 @@ const mapStateToProps = () => ({
     floatingFooter: false,
     user: currentUser()
 })
-
-const refreshUserAccessTokens$ = user => {
-    const oneMinute = 60 * 1000
-    const minRefreshTime = oneMinute
-    const maxRefreshTime = 20 * oneMinute
-    const calculateDelayMillis = expiryDate =>
-        Math.min(maxRefreshTime, Math.max(minRefreshTime, expiryDate - 5 * oneMinute - Date.now()))
-    return interval(0).pipe(
-        delay(calculateDelayMillis(user.googleTokens.accessTokenExpiryDate)),
-        exhaustMap(() => loadCurrentUser$().pipe(
-            map(currentUserAction => {
-                currentUserAction.dispatch()
-                return currentUserAction.user.googleTokens.accessTokenExpiryDate
-            }),
-            map(calculateDelayMillis),
-            switchMap(delayMillis => EMPTY.pipe(delay(delayMillis))
-            )
-        ))
-    )
-}
 
 const timedRefresh$ = (api$, refreshSeconds = 60) =>
     timer(0, refreshSeconds * 1000).pipe(
@@ -86,11 +66,10 @@ const updateTasks$ = () =>
 
 class Home extends React.Component {
     UNSAFE_componentWillMount() {
-        const {stream, user} = this.props
+        const {stream} = this.props
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$())
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$())
         stream('SCHEDULE_UPDATE_TASKS', updateTasks$())
-        user.googleTokens && stream('SCHEDULE_USER_INFO_REFRESH', refreshUserAccessTokens$(user))
     }
 
     render() {

@@ -5,10 +5,10 @@ import {Field, Input, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {connect} from 'store'
-import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
+import {currentUser} from 'widget/user'
 import {isMobile} from 'widget/userAgent'
-import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
+import {revokeGoogleAccess$, updateCurrentUserDetails$} from 'widget/user'
 import ChangePassword from './changePassword'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Notifications from 'widget/notifications'
@@ -44,12 +44,7 @@ class _UserDetails extends React.Component {
 
     useSepalGoogleAccount(e) {
         e.preventDefault()
-        this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT',
-            api.user.revokeGoogleAccess$().pipe(
-                switchMap(() => loadCurrentUser$()),
-                map(loadCurrentUser => loadCurrentUser.dispatch())
-            )
-        )
+        this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT', revokeGoogleAccess$())
     }
 
     updateUserDetails(userDetails) {
@@ -85,7 +80,7 @@ class _UserDetails extends React.Component {
 
     renderPanel() {
         const {form, inputs: {name, email, organization}} = this.props
-        return this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT') === 'ACTIVE'
+        return this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT').active
             ? <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>
             : <React.Fragment>
                 <PanelContent>

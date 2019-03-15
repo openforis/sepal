@@ -50,7 +50,7 @@ class FormPanel extends React.Component {
     }
 
     renderSpinner() {
-        return this.props.stream('FORM_PANEL_APPLY') === 'ACTIVE'
+        return this.props.stream('FORM_PANEL_APPLY').active
             ? (
                 <div className={styles.spinner}>
                     <Icon name='spinner'/>
