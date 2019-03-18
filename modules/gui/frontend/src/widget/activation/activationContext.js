@@ -5,6 +5,14 @@ import actionBuilder from 'action-builder'
 const Context = React.createContext()
 
 export class ActivationContext extends Component {
+    constructor(props) {
+        super(props)
+        const pathList = this.pathList()
+        actionBuilder('CREATE_ACTIVATION_CONTEXT', {pathList})
+            .set(pathList, {})
+            .dispatch()
+    }
+
     pathList() {
         const {id} = this.props
         const parentPathList = (this.context && this.context.pathList) || ['activation']
@@ -19,13 +27,6 @@ export class ActivationContext extends Component {
                 {children}
             </Context.Provider>
         )
-    }
-
-    componentDidMount() {
-        const pathList = this.pathList()
-        actionBuilder('CREATE_ACTIVATION_CONTEXT', {pathList})
-            .set(pathList, {})
-            .dispatch()
     }
 
     componentWillUnmount() {
