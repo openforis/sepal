@@ -18,7 +18,7 @@
     left: 0;
     right: 0;
     overflow-y: hidden;
-    transition: all var(--transition-time) ease-in-out var(--transition-delay);
+    z-index: -1;
 }
 .section.app {
     padding: 0;
@@ -40,14 +40,6 @@
     animation-timing-function: ease-in-out;
 }
 
-.out {
-    z-index: -1;
-    animation-name: hide;
-    animation-duration: 200ms;
-    animation-fill-mode: forwards;
-    animation-timing-function: ease-in-out;
-}
-
 @keyframes show {
     0% {
         opacity: 0;
@@ -56,16 +48,5 @@
     100% {
         opacity: 1;
         transform: none;
-    }
-}
-
-@keyframes hide {
-    0% {
-        opacity: 1;
-        transform: none;
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(1%);
     }
 }
