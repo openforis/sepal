@@ -58,7 +58,7 @@
 }
 
 .nameSort {
-    --nameSort-margin: 3.5rem;
+    --nameSort-margin: 2rem;
     margin-left: var(--nameSort-margin);
 }
 
