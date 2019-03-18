@@ -1,7 +1,7 @@
 .bar {
     --bar-background-color:hsla(0, 0%, 8%, 0.7);
     --bar-border-color:hsla(0, 0%, 20%, 0.5);
-    padding: 0 .8rem;
+    padding: 0 .5rem;
     background-color: var(--bar-background-color);
     border: 0 solid var(--bar-border-color);
     color: #ccc;
@@ -14,7 +14,8 @@
 }
 
 .bar.top {
-    min-height: 3rem;
+    --bar-height: 3rem;
+    height: var(--bar-height);
     border-bottom-width: 1px;
 }
 
@@ -29,12 +30,9 @@
 }
 
 .bar.bottom {
-    min-height: 2rem;
+    --bar-height: 2rem;
+    min-height: var(--bar-height);
     border-top-width: 1px;
-}
-
-.bar.padding {
-    padding: .3rem .5rem;
 }
 
 .content {

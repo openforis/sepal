@@ -164,7 +164,6 @@ span.title.placeholder {
     display: flex;
     align-items: center;
     height: fit-content;
-    margin-top: .5rem;
 }
 
 .tabActions > * + * {

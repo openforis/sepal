@@ -16,11 +16,10 @@ SectionLayout.propTypes = {
     className: PropTypes.string
 }
 
-export const TopBar = ({padding = true, className, label, children}) => {
+export const TopBar = ({className, label, children}) => {
     return (
-        <div className={[className, flexy.rigid, styles.bar, styles.top, padding ? styles.padding : null].join(' ')}>
+        <div className={[className, flexy.rigid, styles.bar, styles.top].join(' ')}>
             {label ? <div className={styles.label}>{label}</div> : null}
-            {/*<Label msg={label}/>*/}
             {children}
         </div>
     )
