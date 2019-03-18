@@ -55,7 +55,7 @@ export const initGoogleMapsApi$ = () => {
 }
 
 const createMap = mapElement => {
-    googleMap = new google.maps.Map(mapElement, {
+    const mapOptions = {
         zoom: 3,
         minZoom: 3,
         maxZoom: 17,
@@ -69,9 +69,22 @@ const createMap = mapElement => {
         fullscreenControl: false,
         backgroundColor: '#131314',
         gestureHandling: 'greedy'
-    })
-    googleMap.mapTypes.set('styled_map', new google.maps.StyledMapType(defaultStyle, {name: 'sepalMap'}))
-    googleMap.setMapTypeId('styled_map')
+    }
+
+    // https://developers.google.com/maps/documentation/javascript/style-reference
+    const sepalStyle = new google.maps.StyledMapType([
+        {stylers: [{visibility: 'simplified'}]},
+        {stylers: [{color: '#131314'}]},
+        {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
+        {featureType: 'poi', stylers: [{visibility: 'off'}]},
+        {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
+        {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
+    ], {name: 'sepalMap'})
+
+    googleMap = new google.maps.Map(mapElement, mapOptions)
+    googleMap.mapTypes.set('sepalStyle', sepalStyle)
+    googleMap.setMapTypeId('sepalStyle')
+
     googleMap.addListener('zoom_changed', () =>
         actionBuilder('SET_MAP_ZOOM')
             .set('map.zoom', googleMap.getZoom())
@@ -93,7 +106,6 @@ const createMap = mapElement => {
         getKey() {
             return GoogleMapsLoader.KEY
         },
-
         getZoom() {
             return googleMap.getZoom()
         },
@@ -330,16 +342,6 @@ export const polygonOptions = fill => ({
     strokeWeight: 1
 })
 
-// https://developers.google.com/maps/documentation/javascript/style-reference
-const defaultStyle = [
-    {stylers: [{visibility: 'simplified'}]},
-    {stylers: [{color: '#131314'}]},
-    {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
-    {featureType: 'poi', stylers: [{visibility: 'off'}]},
-    {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
-    {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
-]
-
 const mapStateToProps = () => ({
     apiKey: select('map.apiKey')
 })
@@ -416,7 +418,7 @@ class WrappedMapObject extends React.Component {
                     const style = {
                         position: 'absolute',
                         top: `calc(${point.y}px - ${height} / 2)`,
-                        left: `calc(${point.x}px - ${width} /2)`
+                        left: `calc(${point.x}px - ${width} / 2)`
                     }
                     return <div style={style} className={className}>
                         {children}
