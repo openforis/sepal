@@ -32,8 +32,8 @@ class ClassificationToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
+                    panel
                     className={styles.top}>
-
                     <ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
@@ -43,6 +43,7 @@ class ClassificationToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='bottom-right'
+                    panel
                     className={styles.bottom}>
                     <ActivationButton
                         id='source'

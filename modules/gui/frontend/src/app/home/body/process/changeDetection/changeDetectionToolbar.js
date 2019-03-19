@@ -33,6 +33,7 @@ class ChangeDetectionToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='top-right'
+                    panel
                     className={styles.top}>
                     <ActivationButton
                         id='retrieve'
@@ -43,6 +44,7 @@ class ChangeDetectionToolbar extends React.Component {
                 <Toolbar
                     vertical
                     placement='bottom-right'
+                    panel
                     className={styles.bottom}>
                     <ActivationButton
                         id='source1'
