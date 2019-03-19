@@ -72,13 +72,17 @@ export class Pageable extends React.Component {
     render() {
         const {itemCount, pageCount, pageNumber} = this.state
         const {children} = this.props
+        const isFirstPage = !itemCount || pageNumber === 1
+        const isLastPage = !itemCount || pageNumber === pageCount
+        const isSinglePage = isFirstPage && isLastPage
         return (
             <Provider value={{
                 itemCount,
                 pageCount,
                 pageNumber,
-                isFirstPage: !itemCount || pageNumber === 1,
-                isLastPage: !itemCount || pageNumber === pageCount,
+                isFirstPage,
+                isLastPage,
+                isSinglePage,
                 pageItems: this.getPageItems(),
                 firstPage: () => this.firstPage(),
                 lastPage: () => this.lastPage(),
@@ -99,9 +103,9 @@ Pageable.propTypes = {
 
 export const PageData = props =>
     <Consumer>
-        {pageable =>
+        {({pageItems}) =>
             <React.Fragment>
-                {pageable.pageItems.map((item, index) => props.children(item, index))}
+                {pageItems.map((item, index) => props.children(item, index))}
             </React.Fragment>
         }
     </Consumer>
@@ -146,9 +150,9 @@ export const PageControls = props => {
                 disabled={pageable.isLastPage}/>
         </ButtonGroup>
 
-    const renderCustomControls = ({isFirstPage, isLastPage, firstPage, lastPage, previousPage, nextPage}) =>
+    const renderCustomControls = pageable =>
         <React.Fragment>
-            {props.children({isFirstPage, isLastPage, firstPage, lastPage, previousPage, nextPage})}
+            {props.children({...pageable, renderDefaultControls: () => renderDefaultControls(pageable)})}
         </React.Fragment>
 
     return (
