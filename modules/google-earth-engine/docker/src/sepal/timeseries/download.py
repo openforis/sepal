@@ -18,8 +18,8 @@ from timeseries import TimeSeries
 from .. import drive
 from ..aoi import Aoi
 from ..drive import Download
-from ..export.image_to_cloud_storage import ImageToCloudStorage
-from ..export.table_to_cloud_storage import TableToCloudStorage
+from ..export.image_to_drive import ImageToDrive
+from ..export.table_to_drive import TableToDrive
 from ..format import format_bytes
 from ..task.task import ThreadTask, Task
 from .. import gee
@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 
 
 def create(spec, context):
-    print(context)
     aoi_spec = spec['aoi']
     if aoi_spec['type'] == 'FUSION_TABLE' and not aoi_spec.get('keyColumn'):
         aoi = ee.FeatureCollection('ft:' + aoi_spec['id'])
@@ -74,7 +73,7 @@ class DownloadFeatures(ThreadTask):
         self.download_dir = download_dir
         self.description = description
         self.download_tasks = []
-        self.drive_folder_name = username + '/' + self.description + '_' + str(uuid.uuid4())
+        self.drive_folder_name = '_'.join(['Sepal', self.description, str(uuid.uuid4())])
         self.drive_folder = None
 
     def run(self):
@@ -101,7 +100,7 @@ class DownloadFeatures(ThreadTask):
                 spec=self.spec._replace(aoi=aoi))
             for i, aoi in enumerate(aois)
         ]
-        return Task.submit_all(self.download_tasks) \
+        return Task.submit_all(self.download_tasks, delay=10) \
             .then(self.resolve, self.reject)
 
     def status(self):
@@ -137,7 +136,7 @@ class DownloadFeature(ThreadTask):
         super(DownloadFeature, self).__init__()
         self.drive_folder = drive_folder
         self.download_dir = download_dir
-        self.feature_dir = '_'.join([download_dir, description, feature_description])
+        self.feature_dir = '/'.join([download_dir, description, feature_description])
         self.description = description
         self.feature_description = feature_description
         self.spec = spec
@@ -155,7 +154,7 @@ class DownloadFeature(ThreadTask):
             for from_date, to_date in self._yearly_ranges()
         ]
 
-        return Task.submit_all(self.download_tasks) \
+        return Task.submit_all(self.download_tasks, delay=10) \
             .then(self._preprocess_feature, self.reject) \
             .catch(self.reject)
 
@@ -277,8 +276,8 @@ class DownloadYear(ThreadTask):
             return self.resolve()
 
         self._table_export = self.dependent(
-            TableToCloudStorage(
-                credentials=gee.service_account_credentials,
+            TableToDrive(
+                credentials=self._spec.credentials,
                 table=dates,
                 description='_'.join([self._description, self._feature_description, str(self._year), 'dates']),
                 folder=self._drive_folder
@@ -292,8 +291,8 @@ class DownloadYear(ThreadTask):
                 move=True
             ))
         self._image_export = self.dependent(
-            ImageToCloudStorage(
-                credentials=gee.service_account_credentials,
+            ImageToDrive(
+                credentials=self._spec.credentials,
                 image=stack,
                 region=self._spec.aoi,
                 description='_'.join([self._description, self._feature_description, str(self._year), 'stack']),
@@ -301,7 +300,7 @@ class DownloadYear(ThreadTask):
                 scale=30,
                 maxPixels=1e12,
                 shardSize=256,
-                fileDimensions=4096
+                fileDimensions=1024
             ))
         self._image_download = self.dependent(
             Download(
@@ -320,7 +319,7 @@ class DownloadYear(ThreadTask):
                 .then(self._table_download.submit, self.reject).catch(self.reject),
             self._image_export.submit()
                 .then(self._image_download.submit, self.reject).catch(self.reject)
-        ]) \
+        ], delay=10) \
             .then(self._process_year.submit, self.reject) \
             .then(self.resolve, self.reject)
 
