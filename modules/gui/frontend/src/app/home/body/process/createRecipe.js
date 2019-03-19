@@ -68,7 +68,7 @@ class CreateRecipe extends React.Component {
     renderButton() {
         const {modal} = this.props
         return (
-            <div className={styles.bottomRight}>
+            <div className={styles.createButton}>
                 <Button
                     look='add'
                     size='xx-large'

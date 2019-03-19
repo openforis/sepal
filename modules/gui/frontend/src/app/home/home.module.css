@@ -5,6 +5,7 @@
 
     /* footer dimensions */
     --footer-height: 2rem;
+    --map-overlay-height: 2rem;
 
     /* menu dimensions */
     --menu-margin-top: 10rem;
@@ -38,10 +39,18 @@
 .map {
     position: absolute;
     top: 0;
+    bottom: calc(var(--footer-height));
     left: 0;
-    height: 100%;
-    width: 100%;
+    right: 0;
     pointer-events: all;
+}
+
+.mapOverlay {
+    position: absolute;
+    bottom: var(--footer-height);
+    width: 100%;
+    height: var(--map-overlay-height);
+    background-color: hsla(0, 0%, 0%, .4);
 }
 
 .menu {
@@ -49,7 +58,7 @@
     left: var(--menu-position);
     width: var(--menu-width);
     top: var(--menu-margin-top);
-    bottom: var(--menu-margin-bottom);
+    bottom: calc(var(--menu-margin-bottom) + var(--map-overlay-height));
     z-index: 2;
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
     pointer-events: all;

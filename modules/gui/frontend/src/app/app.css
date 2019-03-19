@@ -96,3 +96,13 @@ a:hover, a:hover:not([href]):not([tabindex]) {
     color: gray;
     text-transform: uppercase;
 }
+
+.gm-style-cc {
+    height: 20px !important;
+    line-height: 20px !important;
+}
+
+.gm-style-cc * {
+    color: #fff !important;
+    background-color: transparent !important;
+}

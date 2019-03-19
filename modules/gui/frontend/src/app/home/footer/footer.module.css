@@ -7,18 +7,15 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-
     background-color: rgba(28, 28, 28, 0.99);
-    border: 1px solid hsla(0, 0%, 100%, .1);
-    border-left: none;
-    border-right: none;
+    border-top: 1px solid hsla(0, 0%, 100%, .1);
     padding: 0 .5rem;
     z-index: 2;  /* stay over the menu */
 }
 
 .title {
     font-family: var(--header-font-family);
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: bold;
     letter-spacing: .5rem;
     text-transform: uppercase;

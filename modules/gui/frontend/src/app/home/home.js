@@ -83,6 +83,7 @@ class Home extends React.Component {
                     <Menu className={styles.menu}/>
                     <div className={styles.main}>
                         <Body className={styles.body}/>
+                        <div className={styles.mapOverlay}></div>
                         <Footer className={styles.footer}/>
                     </div>
                     <div id='portalContainer' className={styles.portalContainer}/>

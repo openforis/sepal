@@ -1,6 +1,5 @@
 .bar {
-    --bar-background-color:hsla(0, 0%, 8%, 0.7);
-    --bar-border-color:hsla(0, 0%, 20%, 0.5);
+    --bar-border-color:hsla(0, 0%, 100%, .2);
     padding: 0 .5rem;
     background-color: var(--bar-background-color);
     border: 0 solid var(--bar-border-color);
@@ -15,6 +14,7 @@
 
 .bar.top {
     --bar-height: 3rem;
+    --bar-background-color:hsla(0, 0%, 8%, .7);
     height: var(--bar-height);
     border-bottom-width: 1px;
 }
@@ -30,9 +30,12 @@
 }
 
 .bar.bottom {
-    --bar-height: 2rem;
+    --bar-height: 3rem;
+    --bar-background-color:hsla(0, 0%, 0%, .4);
+    margin-bottom: var(--map-overlay-height);
     min-height: var(--bar-height);
     border-top-width: 1px;
+    border-bottom-width: 1px;
 }
 
 .content {
