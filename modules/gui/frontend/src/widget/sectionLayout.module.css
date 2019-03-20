@@ -52,8 +52,8 @@
     transition: padding-left var(--transition-time) ease-in-out var(--transition-delay);
     margin-top: var(--edgePadding-top);
     margin-bottom: calc(var(--edgePadding-bottom) + var(--bottomPadding-bottom));
-    margin-right: var(--edgePadding-right);
-    margin-left: calc(var(--edgePadding-left) + var(--menuPadding-left));
+    padding-left: calc(var(--edgePadding-left) + var(--menuPadding-left));
+    padding-right: var(--edgePadding-right);
 }
 
 .content .content {
@@ -72,7 +72,7 @@
 }
 
 .content.menuPadding {
-    --menuPadding-left: calc(var(--menu-container-width) + 1.5rem);
+    --menuPadding-left: var(--menu-container-width);
 }
 
 .content.appMenuPadding {
@@ -81,9 +81,9 @@
 
 @media only screen and (max-width: 500px) {
     .content.edgePadding {
-        --edge-padding: 1.5rem 1.5rem 0.5rem 1.5rem;
-    }
+        --edgePadding-top: 1.5rem;
+        }
     .content.menuPadding {
-        --left-padding: calc(var(--menu-clearance) + .5rem);
+        --menuPadding-left: calc(var(--menu-clearance));
     }
 }
