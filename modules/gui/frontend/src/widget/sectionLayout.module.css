@@ -33,6 +33,7 @@
     --bar-height: 3rem;
     --bar-background-color:hsla(0, 0%, 0%, .4);
     min-height: var(--bar-height);
+    margin-bottom: var(--map-overlay-height);
     border-top-width: 1px;
     border-bottom-width: 1px;
 }
