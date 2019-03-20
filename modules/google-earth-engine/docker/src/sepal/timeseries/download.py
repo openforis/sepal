@@ -22,7 +22,6 @@ from ..export.image_to_drive import ImageToDrive
 from ..export.table_to_drive import TableToDrive
 from ..format import format_bytes
 from ..task.task import ThreadTask, Task
-from .. import gee
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +99,7 @@ class DownloadFeatures(ThreadTask):
                 spec=self.spec._replace(aoi=aoi))
             for i, aoi in enumerate(aois)
         ]
-        return Task.submit_all(self.download_tasks, delay=10) \
+        return Task.submit_all(self.download_tasks) \
             .then(self.resolve, self.reject)
 
     def status(self):
@@ -120,6 +119,8 @@ class DownloadFeatures(ThreadTask):
         return str(self.status())
 
     def close(self):
+        for task in self.download_tasks:
+            task.cancel()
         if self.drive_folder:
             drive.delete(self.spec.credentials, self.drive_folder)
 
@@ -154,9 +155,13 @@ class DownloadFeature(ThreadTask):
             for from_date, to_date in self._yearly_ranges()
         ]
 
-        return Task.submit_all(self.download_tasks, delay=10) \
+        return Task.submit_all(self.download_tasks) \
             .then(self._preprocess_feature, self.reject) \
             .catch(self.reject)
+
+    def close(self):
+        for task in self.download_tasks:
+            task.cancel()
 
     def status(self):
         statuses = [task.status() for task in self.download_tasks]
@@ -319,7 +324,7 @@ class DownloadYear(ThreadTask):
                 .then(self._table_download.submit, self.reject).catch(self.reject),
             self._image_export.submit()
                 .then(self._image_download.submit, self.reject).catch(self.reject)
-        ], delay=10) \
+        ]) \
             .then(self._process_year.submit, self.reject) \
             .then(self.resolve, self.reject)
 

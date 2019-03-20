@@ -1,4 +1,5 @@
 import json
+from threading import Semaphore
 
 import ee
 from flask import request
@@ -7,6 +8,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 service_account_credentials = None
 import logging
+
+export_semaphore = Semaphore(5)
 
 
 def init_service_account_credentials(args):

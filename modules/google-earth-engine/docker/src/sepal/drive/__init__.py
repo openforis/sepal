@@ -6,6 +6,7 @@ import random
 import time
 from collections import namedtuple
 from datetime import datetime
+from threading import Semaphore
 
 import httplib2
 from apiclient import discovery
@@ -21,6 +22,7 @@ except ImportError:
     import queue
 
 logger = logging.getLogger(__name__)
+download_semaphore = Semaphore(1)
 
 
 def create_folder(credentials, name):
@@ -67,7 +69,7 @@ class Download(ThreadTask):
 
     def __init__(self, credentials, drive_path, destination_path, matching=None, move=False):
         self.spec = self.DownloadSpec(credentials, drive_path, destination_path, matching, move)
-        super(Download, self).__init__()
+        super(Download, self).__init__(semaphore=download_semaphore)
         self._status = self.Status(
             state=self.state,
             total_files=None,

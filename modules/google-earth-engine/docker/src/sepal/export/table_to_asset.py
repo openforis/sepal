@@ -3,6 +3,7 @@ import logging
 import ee
 
 from monitor import MonitorEarthEngineExportTask
+from ..gee import export_semaphore
 from ..task.task import ThreadTask
 
 logger = logging.getLogger(__name__)
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class TableToAsset(ThreadTask):
     def __init__(self, credentials, table, asset_id, retries=2):
-        super(TableToAsset, self).__init__('EarthEngineTableToAsset', retries)
+        super(TableToAsset, self).__init__('EarthEngineTableToAsset', retries, semaphore=export_semaphore)
         self.credentials, self.table, self.asset_id = (
             credentials, table, asset_id
         )

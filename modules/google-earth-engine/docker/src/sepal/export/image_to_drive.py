@@ -4,6 +4,7 @@ import ee
 
 import monitor
 from monitor import MonitorEarthEngineExportTask
+from ..gee import export_semaphore
 from ..task.task import ThreadTask
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ class ImageToDrive(ThreadTask):
             shardSize=256,
             fileDimensions=4096,
             skipEmptyTiles=None):
-        super(ImageToDrive, self).__init__(retries=3)
+        super(ImageToDrive, self).__init__(retries=3, semaphore=export_semaphore)
         self.credentials, self.image, self.description, self.folder, self.scale, self.region, self.maxPixels, \
         self.shardSize, self.fileDimensions, self.skipEmptyTiles = (
             credentials, image, description, folder, scale, region, maxPixels, shardSize, fileDimensions, skipEmptyTiles
