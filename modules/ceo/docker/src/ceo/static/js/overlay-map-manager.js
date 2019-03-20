@@ -196,52 +196,25 @@ let overlayMapManager = {
             callback();
         } else if (overlay.type === 'sepal') {
             $.ajax({
-                url: 'https://' + this.config.sepalHost + '/processing-recipes/' + overlay.sepalMosaicName,
+                url: 'https://' + this.config.sepalHost + '/api/processing-recipes/' + overlay.sepalMosaicName,
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
-            }).done(function(data, textStatus, jqXHR) {
-                var type = data['type'];
-                var serviceSubPath = 'mosaic';
-                var req = {
-                    'imageType': type
-                };
+            }).done(function(recipe, textStatus, jqXHR) {
+                var type = recipe.type;
+                var req = {recipe: recipe};
                 if (type === 'MOSAIC') {
-                    var sceneIds = [];
-                    for (var key in data['sceneAreas']) {
-                        sceneIds = sceneIds.concat(data['sceneAreas'][key]['selection']);
-                    }
-                    req['targetDayOfYearWeight'] = data['sortWeight'];
-                    req['bands'] = overlay.sepalBands; //data['mosaicPreviewBand']
-                    req['dataSet'] = data['sensorGroup'];
-                    req['sceneIds'] = sceneIds.join();
-                    req['targetDayOfYear'] = $.dayOfYear(data['targetDate']);
-                    if (data.hasOwnProperty('aoiCode') && data['aoiCode'] != null) {
-                        req['countryIso'] = data['aoiCode'];
-                    } else if (data.hasOwnProperty('polygon')) {
-                        req['polygon'] = data['polygon'];
-                    }
-                    req['panSharpening'] = !!parseInt(overlay.sepalPansharpening);
+                    req.bands = {
+                        selection: overlay.sepalBands.split(', '),
+                        panSharpen: !!parseInt(overlay.sepalPansharpening)
+                    };
                 } else if (type === 'CLASSIFICATION') {
-                    serviceSubPath = 'classification';
-                    req['imageRecipeId'] = data['inputRecipe'];
-                    req['assetId'] = data['geeAssetId'];
-                    req['tableName'] = data['fusionTableId'];
-                    req['classProperty'] = data['fusionTableClassColumn'];
-                    req['algorithm'] = data['algorithm'];
                 } else if (type === 'CHANGE_DETECTION') {
-                    serviceSubPath = 'change-detection';
-                    req['fromImageRecipeId'] = data['inputRecipe1'];
-                    req['toImageRecipeId'] = data['inputRecipe2'];
-                    req['fromAssetId'] = data['geeAssetId1'];
-                    req['toAssetId'] = data['geeAssetId2'];
-                    req['tableName'] = data['fusionTableId'];
-                    req['classProperty'] = data['fusionTableClassColumn'];
-                    req['algorithm'] = data['algorithm'];
                 }
                 $.ajax({
-                    url: 'https://' + that.config.sepalHost + '/api/data/' + serviceSubPath + '/preview',
+                    url: 'https://' + that.config.sepalHost + '/api/gee/preview',
+                    contentType: 'application/json',
                     type: 'POST',
-                    data: $.param(req)
+                    data: JSON.stringify(req)
                 }).fail(function(jqXHR, textStatus, errorThrown) {
                     console.error(jqXHR, textStatus, errorThrown);
                 }).done(function(data, textStatus, jqXHR) {
@@ -271,10 +244,34 @@ let overlayMapManager = {
             return new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {});
           } else {
             // Requires Content-Security-Policy, not available in IE
-            return new ee.layers.ImageOverlay(new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', mapId, token));
+            return new ee.layers.ImageOverlay(
+                new ee.layers.EarthEngineTileSource(
+                    toMapId(mapId, token)
+                )
+            )
           }
         }
 
     }
 
 };
+
+
+
+
+// Creates a ee.data.RawMapId.
+// https://github.com/google/earthengine-api/blob/1a3121aa7574ecf2d5432c047621081aed8e1b28/javascript/src/data.js#L2198
+const toMapId = (mapid, token) => {
+    const path = `https://earthengine.googleapis.com/map/${mapid}`
+    const suffix = `?token=${token}`
+    // Builds a URL of the form {tileBaseUrl}{path}/{z}/{x}/{y}{suffix}
+    const formatTileUrl = (x, y, z) => {
+        const width = Math.pow(2, z)
+        x = x % width
+        if (x < 0) {
+            x += width
+        }
+        return [path, z, x, y].join('/') + suffix
+    }
+    return {mapid, token, formatTileUrl}
+}
