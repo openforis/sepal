@@ -82,5 +82,5 @@
 @media only screen and (max-width: 500px) {
     .content.edgePadding {
         --edgePadding-top: 1.5rem;
-        }
+    }
 }
