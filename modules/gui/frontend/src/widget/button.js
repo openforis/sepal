@@ -29,8 +29,8 @@ export class Button extends React.Component {
     }
 
     linked() {
-        const {onMouseDown, onClick, onClickHold, link, downloadUrl} = this.props
-        return onMouseDown || onClick || onClickHold || link || downloadUrl
+        const {onMouseDown, onClick, onClickHold, link, downloadUrl, type} = this.props
+        return onMouseDown || onClick || onClickHold || link || downloadUrl || ['submit', 'reset'].includes(type)
     }
 
     nonInteractive() {

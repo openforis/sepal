@@ -106,9 +106,6 @@
     --look-apply-active-background-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) + 0%), var(--look-apply-a));
     --look-apply-active-border-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) - 2%), var(--look-apply-a));
 
-    /* --look-apply-disabled-color: var(--look-default-disabled-color);
-    --look-apply-disabled-background-color: var(--look-default-disabled-background-color);
-    --look-apply-disabled-border-color: var(--look-default-disabled-border-color); */
     --look-apply-disabled-color: hsla(0, 0%, 50%, 1);
     --look-apply-disabled-background-color: hsla(var(--look-apply-h), calc(var(--look-apply-s) * .5), calc(var(--look-apply-l) * .6), var(--look-apply-a));
     --look-apply-disabled-border-color: hsla(var(--look-apply-h), calc(var(--look-apply-s) * .5), calc(var(--look-apply-l) * .6), var(--look-apply-a));
@@ -332,8 +329,9 @@
     border-color: var(--look-apply-disabled-border-color);
 }
 
-.look.apply.chromeless:disabled {
-    color: var(--look-apply-disabled-color);
+.look.apply:not(.chromeless):disabled {
+    background-color: var(--look-apply-disabled-background-color);
+    border-color: var(--look-apply-disabled-border-color);
 }
 
 /* cancel */
