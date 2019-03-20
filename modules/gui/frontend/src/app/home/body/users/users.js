@@ -66,7 +66,7 @@ class Users extends React.Component {
     }
 
     setSorting(sortingOrder) {
-        this.setState((prevState) => {
+        this.setState(prevState => {
             const sortingDirection = sortingOrder === prevState.sortingOrder ? -prevState.sortingDirection : 1
             return {
                 ...prevState,
@@ -288,11 +288,11 @@ class Users extends React.Component {
                 {this.renderColumnHeader('status', msg('user.userDetails.form.status.label'), [styles.status])}
                 {this.renderColumnHeader('updateTime', msg('user.userDetails.form.updateTime.label'), [styles.updateTime])}
                 {this.renderColumnHeader('report.budget.instanceSpending', msg('user.report.resources.quota'), [styles.instanceBudgetQuota, styles.number])}
-                {this.renderColumnHeader('report.month.instanceSpending', msg('user.report.resources.used'), [styles.instanceBudgetUsed, styles.number])}
+                {this.renderColumnHeader('report.current.instanceSpending', msg('user.report.resources.used'), [styles.instanceBudgetUsed, styles.number])}
                 {this.renderColumnHeader('report.budget.storageSpending', msg('user.report.resources.quota'), [styles.storageBudgetQuota, styles.number])}
-                {this.renderColumnHeader('report.month.storageSpending', msg('user.report.resources.used'), [styles.storageBudgetUsed, styles.number])}
+                {this.renderColumnHeader('report.current.storageSpending', msg('user.report.resources.used'), [styles.storageBudgetUsed, styles.number])}
                 {this.renderColumnHeader('report.budget.storageQuota', msg('user.report.resources.quota'), [styles.storageQuota, styles.number])}
-                {this.renderColumnHeader('report.month.storageQuota', msg('user.report.resources.used'), [styles.storageUsed, styles.number])}
+                {this.renderColumnHeader('report.current.storageQuota', msg('user.report.resources.used'), [styles.storageUsed, styles.number])}
             </div>
         )
     }
