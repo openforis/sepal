@@ -83,7 +83,4 @@
     .content.edgePadding {
         --edgePadding-top: 1.5rem;
         }
-    .content.menuPadding {
-        --menuPadding-left: calc(var(--menu-clearance));
-    }
 }
