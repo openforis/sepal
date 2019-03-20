@@ -411,7 +411,6 @@ class Users extends React.Component {
                                 <ScrollableContainer>
                                     <Unscrollable className={styles.filters}>
                                         {this.renderTextFilter()}
-                                        {/* {this.renderInfo()} */}
                                         {this.renderBudgetFilter()}
                                     </Unscrollable>
                                     <Scrollable direction='x'>
