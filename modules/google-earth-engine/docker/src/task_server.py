@@ -32,7 +32,7 @@ sepal_password = None
 
 earthengine_credentials_file = None
 
-Context = namedtuple('Context', 'credentials, download_dir, sepal_api')
+Context = namedtuple('Context', 'credentials, username, download_dir, sepal_api')
 
 
 class AccessTokenCredentials(oauth2client.client.OAuth2Credentials):
@@ -70,6 +70,7 @@ def before():
     thread_local.context = Context(
         credentials=credentials,
         download_dir=download_dir,
+        username=username,
         sepal_api=SepalApi(host=sepal_host, username=sepal_username, password=sepal_password),
     )
     ee.InitializeThread(credentials)

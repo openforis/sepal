@@ -38,6 +38,7 @@ class Task(object):
         self._dependents = []
         self._event_queue = queue.Queue()
         self._current_try = 1
+        self._delay = 0
 
     # noinspection PyUnusedLocal
     def submit(self, *args):
@@ -45,6 +46,10 @@ class Task(object):
             return
         self._enqueue({'type': Task.SUBMITTED})
         return Promise(self._start)
+
+    def submit_with_delay(self, delay=0):
+        self._delay = delay
+        return self.submit()
 
     def resolve(self, value=None):
         if not self._set_state(Task.RESOLVED, lambda state: state in [Task.UNSUBMITTED, Task.SUBMITTED, Task.RUNNING]):
@@ -134,10 +139,10 @@ class Task(object):
         raise AssertionError('Method in subclass expected to have been invoked')
 
     @staticmethod
-    def submit_all(tasks):
+    def submit_all(tasks, delay=0):
         return Promise.all([
-            (task.submit() if isinstance(task, Task) else task)
-            for task in tasks
+            (task.submit_with_delay(i * delay * random.random()) if isinstance(task, Task) else task)
+            for i, task in enumerate(tasks)
         ])
 
     def dependent(self, task):
@@ -155,9 +160,6 @@ class Task(object):
             callbacks = callbacks[1:]
 
         def create_callbacks(callback):
-            # argspec = getargspec(callback)
-            # pass_value = len(argspec.args) > 0
-
             def did_fulfill(value):
                 if self.state == Task.REJECTED:
                     return
@@ -181,6 +183,9 @@ class Task(object):
     def _run_and_catch(self):
         if not self._set_state(Task.RUNNING, lambda state: state == Task.SUBMITTED):
             return
+        if self._delay:
+            logger.info('Delaying running the task for {0} seconds: {1}'.format(self._delay, self))
+            time.sleep(float(self._delay))
         try:
             self.run()
         except:
