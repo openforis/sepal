@@ -42,7 +42,17 @@
     --toolbar-edge-margin: .5rem;
     --toolbar-button-size: 2.5rem;
     --toolbar-clearance: calc(var(--toolbar-edge-margin) + var(--toolbar-button-size));
+    --bottomPadding-bottom: 0rem;
+    --edgePadding-top: 0rem;
+    --edgePadding-right: 0rem;
+    --edgePadding-bottom: 0rem;
+    --edgePadding-left: 0rem;
+    --menuPadding-left: 0rem;
     transition: padding-left var(--transition-time) ease-in-out var(--transition-delay);
+    margin-top: var(--edgePadding-top);
+    margin-bottom: calc(var(--edgePadding-bottom) + var(--bottomPadding-bottom));
+    margin-right: var(--edgePadding-right);
+    margin-left: calc(var(--edgePadding-left) + var(--menuPadding-left));
 }
 
 .content .content {
@@ -50,17 +60,22 @@
 }
 
 .content.edgePadding {
-    --edge-padding: 2.5rem 1.5rem 0.5rem 1.5rem;
-    padding: var(--edge-padding);
+    --edgePadding-top: 2.5rem;
+    --edgePadding-right: 1.5rem;
+    --edgePadding-bottom: .5rem;
+    --edgePadding-left: 1.5rem;
+}
+
+.content.bottomPadding {
+    --bottomPadding-bottom: var(--map-overlay-height);
 }
 
 .content.menuPadding {
-    --left-padding: calc(var(--menu-container-width) + 1.5rem);
-    padding-left: var(--left-padding);
+    --menuPadding-left: calc(var(--menu-container-width) + 1.5rem);
 }
 
 .content.appMenuPadding {
-    padding-left: calc(var(--menu-container-width) + var(--app-menu-padding));
+    --menuPadding-left: calc(var(--menu-container-width) + var(--app-menu-padding));
 }
 
 @media only screen and (max-width: 500px) {

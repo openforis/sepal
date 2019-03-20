@@ -30,10 +30,11 @@ TopBar.propTypes = {
     padding: PropTypes.any
 }
 
-export const Content = ({menuPadding = false, appMenuPadding = false, edgePadding = false, className, children}) => {
+export const Content = ({menuPadding = false, appMenuPadding = false, edgePadding = false, bottomPadding = false, className, children}) => {
     return (
         <div className={[flexy.elastic, styles.content,
             edgePadding ? styles.edgePadding : null,
+            bottomPadding ? styles.bottomPadding : null,
             menuPadding ? styles.menuPadding : null,
             appMenuPadding ? styles.appMenuPadding : null,
             className
@@ -46,6 +47,7 @@ export const Content = ({menuPadding = false, appMenuPadding = false, edgePaddin
 Content.propTypes = {
     children: PropTypes.any.isRequired,
     appMenuPadding: PropTypes.any,
+    bottomPadding: PropTypes.any,
     edgePadding: PropTypes.any,
     menuPadding: PropTypes.any,
     padding: PropTypes.any,

@@ -100,7 +100,6 @@
 .body {
     grid-area: body;
     height: 100%;
-    padding-bottom: var(--map-overlay-height);
     pointer-events: none;
 }
 

@@ -28,6 +28,7 @@ export default class Terminal extends React.Component {
                 label={msg('home.sections.terminal')}
                 menuPadding
                 edgePadding
+                bottomPadding
                 statePath='terminal'>
                 {() => <TerminalSession/>}
             </Tabs>
