@@ -32,7 +32,6 @@
 .bar.bottom {
     --bar-height: 3rem;
     --bar-background-color:hsla(0, 0%, 0%, .4);
-    margin-bottom: var(--map-overlay-height);
     min-height: var(--bar-height);
     border-top-width: 1px;
     border-bottom-width: 1px;
