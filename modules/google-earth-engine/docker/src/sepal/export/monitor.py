@@ -1,10 +1,11 @@
 import logging
+import random
+import time
 
 import ee
-import time
 from ee.batch import Task
-from ..retry import retry
 
+from ..retry import retry
 from ..task.task import ThreadTask
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ class State(object):
 
 class MonitorEarthEngineExportTask(ThreadTask):
     def __init__(self, credentials, task_id, destination):
-        super(MonitorEarthEngineExportTask, self).__init__('MonitorEarthEngineTask', retries=3)
+        super(MonitorEarthEngineExportTask, self).__init__('MonitorEarthEngineTask', retries=0)
         self.credentials = credentials
         self.task_id = task_id
         self.destination = destination
@@ -32,10 +33,12 @@ class MonitorEarthEngineExportTask(ThreadTask):
                     .format(self.task_id, self.destination))
         ee.InitializeThread(self.credentials)
         while self.running():
-                time.sleep(10)
-                self.check()
+            time.sleep(10)
+            self.check()
 
     def check(self):
+        if not self.running():
+            return
         status = retry(lambda: self.load_status(), 'Load GEE background task status', 10)
         state = status['state']
         if state == Task.State.READY:
@@ -76,7 +79,7 @@ class MonitorEarthEngineExportTask(ThreadTask):
         if state == State.FAILED:
             return 'Export failed: {}'.format(self.status()['message'])
 
-    def close(self):
+    def close(self, retry=0):
         try:
             ee.InitializeThread(self.credentials)
             task = find_task(self.task_id)
@@ -85,6 +88,10 @@ class MonitorEarthEngineExportTask(ThreadTask):
                 task.cancel()
         except ee.EEException as e:
             logger.warn('Failed to cancel task {0}: {1}'.format(self, e))
+            if retry < 3:
+                throttle_seconds = max(2 ^ retry * random.uniform(0.1, 0.2), 30)
+                time.sleep(throttle_seconds)
+                self.close(retry + 1)
 
     def _update_state(self, state):
         previous_state = self._status['state']

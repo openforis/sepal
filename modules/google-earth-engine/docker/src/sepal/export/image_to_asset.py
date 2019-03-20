@@ -4,6 +4,7 @@ import ee
 
 import monitor
 from monitor import MonitorEarthEngineExportTask
+from ..gee import export_semaphore
 from ..task.task import ThreadTask
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ class ImageToAsset(ThreadTask):
             assetPath=None,
             assetId=None,
             retries=3):
-        super(ImageToAsset, self).__init__(None, retries)
+        super(ImageToAsset, self).__init__(None, retries, semaphore=export_semaphore)
         self.credentials = credentials
         self.image = image
         self.description = description

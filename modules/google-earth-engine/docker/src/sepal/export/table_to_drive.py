@@ -3,6 +3,7 @@ import logging
 import ee
 
 from monitor import MonitorEarthEngineExportTask
+from ..gee import export_semaphore
 from ..task.task import ThreadTask
 
 logger = logging.getLogger(__name__)
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class TableToDrive(ThreadTask):
     def __init__(self, credentials, table, description, folder, fileFormat='CSV'):
-        super(TableToDrive, self).__init__('EarthEngineTableToDrive', retries=3)
+        super(TableToDrive, self).__init__('EarthEngineTableToDrive', retries=3, semaphore=export_semaphore)
         self.credentials, self.table, self.description, self.folder, self.fileFormat = (
             credentials, table, description, folder, fileFormat)
 
