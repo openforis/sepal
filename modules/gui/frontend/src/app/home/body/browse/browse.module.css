@@ -17,17 +17,16 @@
 }
 
 .fileList {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
     overflow-x: auto;
     line-height: 2rem;
-}
-
-.fileList > div {
-    margin-bottom: 5rem;
 }
 
 .fileList ul {
     list-style: none;
     padding: 0;
+    margin: 0;
     overflow: visible;
     user-select: none;
     min-width: max-content;
