@@ -115,7 +115,7 @@ class Users extends React.Component {
     userMatchesBudgetFilter(user) {
         const {budgetFilter} = this.state
         return budgetFilter
-            ? !this.isUserOverBudget(user)
+            ? this.isUserOverBudget(user)
             : true
     }
 
