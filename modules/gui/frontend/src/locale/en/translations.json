@@ -1144,7 +1144,7 @@
             "loading": "Loading..."
         },
         "tabs": {
-          "addTab.tooltip": "Create a new tab",
+          "addTab.tooltip": "New tab",
         "newTab": "New_Tab"
         },
         "notification": {
