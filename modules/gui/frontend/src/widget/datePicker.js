@@ -3,7 +3,6 @@ import {Subject, animationFrameScheduler, interval} from 'rxjs'
 import {debounceTime, filter, first, map, scan, skip, switchMap, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
@@ -68,15 +67,6 @@ class DatePicker extends React.Component {
                 tooltipPlacement={tooltipPlacement}
             />
         ) : null
-    }
-
-    portalWrapper(children) {
-        const {portal} = this.props
-        return portal ? (
-            <Portal container={portal}>
-                {children}
-            </Portal>
-        ) : children
     }
 
     renderDatePicker() {

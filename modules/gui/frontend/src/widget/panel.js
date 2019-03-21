@@ -2,6 +2,7 @@ import {Button, ButtonGroup} from 'widget/button'
 import {Modal} from 'widget/modal'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './panel.module.css'
@@ -27,7 +28,7 @@ export class Panel extends React.Component {
         return type === 'modal'
             ? (
                 <Modal>{content}</Modal>
-            ) : content
+            ) : <Portal containerId='sectionPortalContainer'>{content}</Portal>
     }
 
     render() {

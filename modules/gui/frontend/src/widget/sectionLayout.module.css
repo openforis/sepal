@@ -13,9 +13,8 @@
 }
 
 .bar.top {
-    --bar-height: 3rem;
     --bar-background-color:hsla(0, 0%, 8%, .7);
-    height: var(--bar-height);
+    height: var(--top-bar-height);
     border-bottom-width: 1px;
 }
 
@@ -30,10 +29,8 @@
 }
 
 .bar.bottom {
-    --bar-height: 3rem;
     --bar-background-color:hsla(0, 0%, 0%, .4);
-    min-height: var(--bar-height);
-    margin-bottom: var(--map-overlay-height);
+    min-height: var(--bottom-bar-height);
     border-top-width: 1px;
     border-bottom-width: 1px;
 }
@@ -43,7 +40,6 @@
     --toolbar-edge-margin: .5rem;
     --toolbar-button-size: 2.5rem;
     --toolbar-clearance: calc(var(--toolbar-edge-margin) + var(--toolbar-button-size));
-    --bottomPadding-bottom: 0rem;
     --edgePadding-top: 0rem;
     --edgePadding-right: 0rem;
     --edgePadding-bottom: 0rem;
@@ -51,7 +47,7 @@
     --menuPadding-left: 0rem;
     transition: padding-left var(--transition-time) ease-in-out var(--transition-delay);
     margin-top: var(--edgePadding-top);
-    margin-bottom: calc(var(--edgePadding-bottom) + var(--bottomPadding-bottom));
+    margin-bottom: var(--edgePadding-bottom);
     padding-left: calc(var(--edgePadding-left) + var(--menuPadding-left));
     padding-right: var(--edgePadding-right);
 }
@@ -65,10 +61,6 @@
     --edgePadding-right: 1.5rem;
     --edgePadding-bottom: .5rem;
     --edgePadding-left: 1.5rem;
-}
-
-.content.bottomPadding {
-    --bottomPadding-bottom: var(--map-overlay-height);
 }
 
 .content.menuPadding {

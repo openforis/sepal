@@ -7,6 +7,10 @@
     --footer-height: 2rem;
     --map-overlay-height: 2rem;
 
+    /* bar dimensions */
+    --top-bar-height: 3rem;
+    --bottom-bar-height: 3rem;
+
     /* menu dimensions */
     --menu-margin-top: 10rem;
     --menu-margin-bottom: 5rem;
@@ -19,7 +23,16 @@
 }
 
 .portalContainer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
     pointer-events: all;
+}
+
+.portalContainer.section {
+    top: var(--top-bar-height);
+    bottom: var(--footer-height);
 }
 
 /* fixed menu */
@@ -45,14 +58,6 @@
     pointer-events: all;
 }
 
-.mapOverlay {
-    position: absolute;
-    bottom: var(--footer-height);
-    width: 100%;
-    height: var(--map-overlay-height);
-    background-color: hsla(0, 0%, 0%, .4);
-}
-
 .menu {
     position: absolute;
     left: var(--menu-position);
@@ -71,11 +76,12 @@
     height: 100%;
     width: 100%;
     display: grid;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: 1fr auto auto;
     grid-template-columns: 1fr;
     grid-gap: 0;
     grid-template-areas:
         'body'
+        'google'
         'footer';
 }
 
@@ -86,6 +92,13 @@
 .container:not(.floatingMenu) .menu,
 .menu:hover {
     left: 0;
+}
+
+.google {
+    grid-area: 'google';
+    width: 100%;
+    height: var(--map-overlay-height);
+    background-color: hsla(0, 0%, 0%, .4);
 }
 
 .footer {

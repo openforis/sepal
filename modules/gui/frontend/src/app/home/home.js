@@ -83,10 +83,11 @@ class Home extends React.Component {
                     <Menu className={styles.menu}/>
                     <div className={styles.main}>
                         <Body className={styles.body}/>
-                        <div className={styles.mapOverlay}></div>
+                        <div className={styles.google}></div>
                         <Footer className={styles.footer}/>
                     </div>
-                    <div id='portalContainer' className={styles.portalContainer}/>
+                    <div id='fullScreenPortalContainer' className={styles.portalContainer}/>
+                    <div id='sectionPortalContainer' className={[styles.portalContainer, styles.section].join(' ')}/>
                 </div>
             </ActivationContext>
         )

@@ -1,7 +1,7 @@
 .wrapper {
     --scaling-factor: .8 !important;
     position: absolute;
-    bottom: var(--map-overlay-height);
+    bottom: 0;
     left: 0;
     right: 0;
 }
@@ -38,6 +38,11 @@
 
 .container :global .comboBox__single-value {
     width: 100%;
+}
+
+.menu {
+    position: absolute;
+    z-index: 0;
 }
 
 .menu :global .comboBox__menu {
