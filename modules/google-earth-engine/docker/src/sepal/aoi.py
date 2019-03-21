@@ -1,5 +1,7 @@
 import ee
 
+from gee import get_info
+
 
 class Aoi:
     _fusion_table_by_data_set = {
@@ -46,11 +48,12 @@ class Aoi:
             raise ValueError('Unsupported data set: ' + data_set)
         table = self._fusion_table_by_data_set[data_set]
         aoi = self._geometry
-        scene_area_table = ee.FeatureCollection(table['table_id']) \
-            .filterBounds(aoi) \
-            .reduceColumns(ee.Reducer.toList(2), ['.geo', table['id_column']]) \
-            .get('list') \
-            .getInfo()
+        scene_area_table = get_info(
+            ee.FeatureCollection(table['table_id'])
+                .filterBounds(aoi)
+                .reduceColumns(ee.Reducer.toList(2), ['.geo', table['id_column']])
+                .get('list')
+        )
         scene_areas = [
             {
                 'id': scene_area[1],
@@ -84,7 +87,7 @@ class FusionTable(Aoi):
         self.table_name = spec['id']
         self.key_column = spec['keyColumn']
         table = ee.FeatureCollection('ft:' + self.table_name)
-        number_column = is_number(spec['key']) and table.getInfo()['columns'].get(self.key_column) == 'Number'
+        number_column = is_number(spec['key']) and get_info(table)['columns'].get(self.key_column) == 'Number'
         self.value_column = float(spec['key']) if number_column else spec['key']
 
         aoi = table.filterMetadata(self.key_column, 'equals', self.value_column)

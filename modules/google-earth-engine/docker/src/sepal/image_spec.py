@@ -1,5 +1,6 @@
 import logging
 from abc import abstractmethod
+from gee import get_info
 
 import ee
 
@@ -33,7 +34,7 @@ class ImageSpec(object):
         geometry = self.aoi._geometry
         feature = ee.Feature(geometry)
         bounds_polygon = ee.List(geometry.bounds().coordinates().get(0))
-        bounds = ee.List([bounds_polygon.get(0), bounds_polygon.get(2)]).getInfo()
+        bounds = get_info(ee.List([bounds_polygon.get(0), bounds_polygon.get(2)]))
         mapId = feature.getMapId({
             'color': '#272723'
         })

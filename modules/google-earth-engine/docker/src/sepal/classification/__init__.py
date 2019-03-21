@@ -2,6 +2,7 @@ from random import random
 
 import ee
 
+from ..gee import get_info
 from ..image_operation import ImageOperation
 from ..image_spec import ImageSpec
 from ..sepal_exception import SepalException
@@ -20,15 +21,15 @@ class Classification(ImageSpec):
         self.bands = ['class']
 
     def _viz_params(self):
-        classCount = int(ee.Number(self.trainingData.reduceColumns(
+        classCount = int(get_info(ee.Number(self.trainingData.reduceColumns(
             reducer=ee.Reducer.max(),
             selectors=[self.classProperty]
-        ).get('max')).getInfo()) + 1
+        ).get('max')))) + 1
         return {'bands': 'class', 'min': 0, 'max': (classCount - 1), 'palette': ', '.join(_colors[0:classCount])}
         # return {'bands': 'uncertainty', 'min': 0, 'max': 1, 'palette': 'green, yellow, orange, red'}
 
     def _ee_image(self):
-        has_data_in_aoi = self.trainingData.filterBounds(self.aoi._geometry).size().getInfo() > 0
+        has_data_in_aoi = get_info(self.trainingData.filterBounds(self.aoi._geometry).size()) > 0
         if not has_data_in_aoi:
             raise SepalException(code='gee.classification.error.noTrainingData', message='No training data in AOI.')
         return _Operation(self.source, self.trainingData, self.classProperty).apply()

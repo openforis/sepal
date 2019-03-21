@@ -10,6 +10,7 @@ service_account_credentials = None
 import logging
 
 export_semaphore = Semaphore(5)
+get_info_semaphore = Semaphore(2)
 
 
 def init_service_account_credentials(args):
@@ -67,3 +68,11 @@ def create_asset_folder(asset_id):
         asset_type=ee.data.ASSET_TYPE_FOLDER,
         mk_parents=True
     )
+
+
+def get_info(ee_object):
+    try:
+        get_info_semaphore.acquire()
+        return ee_object.getInfo()
+    finally:
+        get_info_semaphore.release()

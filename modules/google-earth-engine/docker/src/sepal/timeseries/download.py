@@ -9,6 +9,7 @@ from glob import glob
 from os import listdir, pardir
 from os.path import abspath
 from os.path import isdir, join
+from ..gee import get_info
 
 import ee
 from osgeo import gdal
@@ -85,7 +86,7 @@ class DownloadFeatures(ThreadTask):
             aois = [
                 ee.Feature(
                     feature_collection.filterMetadata('system:index', 'equals', feature_index).first()).geometry()
-                for feature_index in feature_collection.aggregate_array('system:index').getInfo()
+                for feature_index in get_info(feature_collection.aggregate_array('system:index'))
             ]
         else:
             aois = [self.spec.aoi]
@@ -277,7 +278,7 @@ class DownloadYear(ThreadTask):
         time_series = TimeSeries(self._spec)
         stack = time_series.stack
         dates = time_series.dates
-        if not dates.size().getInfo():
+        if not get_info(dates.size()):
             return self.resolve()
 
         self._table_export = self.dependent(
