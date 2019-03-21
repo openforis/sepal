@@ -27,12 +27,18 @@
     top: 0;
     bottom: 0;
     width: 100%;
+    /* pointer-events: all; */
+    pointer-events: none;
+}
+
+.portalContainer > * {
     pointer-events: all;
 }
 
 .portalContainer.section {
     top: var(--top-bar-height);
     bottom: var(--footer-height);
+    pointer-events: none;
 }
 
 /* fixed menu */
