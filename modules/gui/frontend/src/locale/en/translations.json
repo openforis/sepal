@@ -78,8 +78,8 @@
             "users": "Users",
             "account": "Account settings",
             "logout": "Logout from Sepal",
-            "expand": "Expand menu (fixed)",
-            "collapse": "Collapse menu (floating)",
+            "expand": "Always show menu",
+            "collapse": "Automatically hide and show menu",
             "user": {
                 "profile": "Manage user profile",
                 "report": {
@@ -144,7 +144,8 @@
             "type": "Type",
             "loading": "Loading recipes",
             "updateTime": "Update time",
-            "remove.success": "Recipe has been removed"
+            "remove.success": "Recipe has been removed",
+            "newRecipe.tooltip": "New recipe"
         },
         "menu": {
             "noSavedRecipies": "No saved recipies",
