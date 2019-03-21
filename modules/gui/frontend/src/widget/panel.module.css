@@ -69,8 +69,6 @@
     top: .5rem;
     bottom: .5rem;
     left: calc(var(--menu-clearance) + .5rem);
-    right: .5rem;
-    margin: auto;
 }
 
 .panel.inline {

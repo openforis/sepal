@@ -1,11 +1,3 @@
-.panel {
-    max-width: 69rem;
-    min-height: 25rem;
-    z-index: 1; /* ensure toolbar panels stay above */
-    top: calc(var(--toolbar-clearance) + .5rem) !important;
-    right: calc(var(--toolbar-clearance) + .5rem) !important;
-}
-
 .loading {
     flex-direction: column;
     justify-content: center;
