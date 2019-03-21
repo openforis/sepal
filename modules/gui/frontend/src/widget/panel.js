@@ -23,16 +23,15 @@ export class Panel extends React.Component {
         )
     }
 
-    renderModal(content) {
+    renderContainer(content) {
         const {type} = this.props
         return type === 'modal'
-            ? (
-                <Modal>{content}</Modal>
-            ) : <Portal containerId='sectionPortalContainer'>{content}</Portal>
+            ? <Modal>{content}</Modal>
+            : <Portal containerId='sectionPortalContainer'>{content}</Portal>
     }
 
     render() {
-        return this.renderModal(
+        return this.renderContainer(
             this.renderContent()
         )
     }
