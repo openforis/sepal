@@ -8,6 +8,7 @@ import actionBuilder from 'action-builder'
 import lookStyles from 'style/look.module.css'
 import moment from 'moment'
 import styles from './createRecipe.module.css'
+import {msg} from 'translate'
 
 const mapStateToProps = state => {
     return {
@@ -75,7 +76,7 @@ class CreateRecipe extends React.Component {
                     icon='plus'
                     shape='circle'
                     onClick={() => showRecipeTypes()}
-                    tooltip={'Create a new recipe'}
+                    tooltip={msg('process.recipe.newRecipe.tooltip')}
                     tooltipPlacement='left'
                     tooltipDisabled={modal}/>
             </div>
