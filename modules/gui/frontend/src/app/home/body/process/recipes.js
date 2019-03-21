@@ -50,13 +50,15 @@ class RecipeList extends React.Component {
         type: 'TIME_SERIES',
         name: msg('process.timeSeries.create'),
         description: msg('process.timeSeries.description')
-    }, {
-        type: 'LAND_COVER',
-        name: msg('process.landCover.create'),
-        description: msg('process.landCover.description'),
-        beta: true,
-        details: <CreateRecipeRLCMS/>
-    }]
+    }
+    // , {
+    //     type: 'LAND_COVER',
+    //     name: msg('process.landCover.create'),
+    //     description: msg('process.landCover.description'),
+    //     beta: true,
+    //     details: <CreateRecipeRLCMS/>
+    // }
+    ]
 
     getRecipeTypeName(type) {
         const recipeType = this.recipeTypes.find(recipeType => recipeType.type === type)
