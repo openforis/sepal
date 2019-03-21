@@ -2,6 +2,7 @@ import ee
 
 from ..image_spec import ImageSpec
 from ..aoi import AssetAoi
+from ..gee import get_info
 
 
 class Asset(ImageSpec):
@@ -16,8 +17,8 @@ class Asset(ImageSpec):
         image = ee.Image(id)
         self.image = image
         self.aoi = AssetAoi(image.geometry(), {'type': 'ASSET', 'id': id})
-        self.scale = image.projection().nominalScale().getInfo()
-        self.bands = image.bandNames().getInfo()
+        self.scale = get_info(image.projection().nominalScale())
+        self.bands = get_info(image.bandNames())
         self.viz_params = spec['recipe'].get('vizParams')
 
     def _ee_image(self):

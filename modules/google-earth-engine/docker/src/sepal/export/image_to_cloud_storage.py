@@ -2,6 +2,7 @@ import logging
 
 import ee
 
+from ..gee import get_info
 import monitor
 from monitor import MonitorEarthEngineExportTask
 from ..gee import export_semaphore
@@ -59,7 +60,7 @@ class ImageToCloudStorage(ThreadTask):
             description=self.description,
             bucket='sepal_dev-daniel_exports',
             fileNamePrefix=self.folder + '/',
-            region=self.region.bounds().getInfo()['coordinates'],
+            region=get_info(self.region.bounds())['coordinates'],
             crs='EPSG:4326',
             scale=self.scale,
             maxPixels=self.maxPixels,

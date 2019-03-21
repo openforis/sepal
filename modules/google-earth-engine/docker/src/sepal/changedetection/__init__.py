@@ -2,6 +2,7 @@ from random import random
 
 import ee
 
+from ..gee import get_info
 from ..image_operation import ImageOperation
 from ..image_spec import ImageSpec
 
@@ -20,10 +21,10 @@ class ChangeDetection(ImageSpec):
         self.bands = ['class']
 
     def _viz_params(self):
-        classCount = int(ee.Number(self.trainingData.reduceColumns(
+        classCount = int(get_info(ee.Number(self.trainingData.reduceColumns(
             reducer=ee.Reducer.max(),
             selectors=[self.classProperty]
-        ).get('max')).getInfo()) + 1
+        ).get('max')))) + 1
         return {'bands': 'class', 'min': 0, 'max': (classCount - 1), 'palette': ', '.join(_colors[0:classCount])}
         # return {'bands': 'uncertainty', 'min': 0, 'max': 1, 'palette': 'green, yellow, orange, red'}
 
