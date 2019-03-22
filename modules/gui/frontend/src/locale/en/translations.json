@@ -33,7 +33,8 @@
                 "invalid": "Invalid username/password"
             },
             "button": "Login",
-            "forgot-password-link": "Forgot your password?"
+            "sign-up": "Sign up",
+            "forgot-password-link": "Forgot password?"
         },
         "forgot-password": {
             "label": "Forgot your password ?",

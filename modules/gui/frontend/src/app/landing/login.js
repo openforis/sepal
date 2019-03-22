@@ -56,16 +56,28 @@ class Login extends React.Component {
                     />
                 </div>
                 <div className={styles.buttons}>
-                    <Button
-                        chromeless
-                        look='transparent'
-                        size='large'
-                        shape='pill'
-                        label={msg('landing.login.forgot-password-link')}
-                        tabIndex={4}
-                        onMouseDown={e => e.preventDefault()}
-                        onClick={() => this.forgotPassword()}
-                    />
+                    <div className={styles.links}>
+                        <Button
+                            chromeless
+                            look='transparent'
+                            size='large'
+                            shape='pill'
+                            label={msg('landing.login.sign-up')}
+                            tabIndex={4}
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => window.location = 'https://tinyurl.com/sepal-access'}
+                        /> |
+                        <Button
+                            chromeless
+                            look='transparent'
+                            size='large'
+                            shape='pill'
+                            label={msg('landing.login.forgot-password-link')}
+                            tabIndex={5}
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => this.forgotPassword()}
+                        />
+                    </div>
                     <Button
                         type='submit'
                         look='apply'
