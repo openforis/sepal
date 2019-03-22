@@ -32,30 +32,24 @@ export default class SafetyButton extends React.Component {
 
     render() {
         const {
-            look,
-            size,
+            chromeless = true,
             shape = 'circle',
             icon = 'trash',
-            tooltip,
-            tooltipPlacement,
-            disabled,
             skip,
-            onConfirm
+            onConfirm,
+            ...otherProps
         } = this.props
         const {askConfirmation} = this.state
         return (
             <React.Fragment>
                 <Button
-                    chromeless
-                    look={look}
-                    size={size}
+                    chromeless={chromeless}
                     shape={shape}
                     icon={icon}
-                    tooltip={tooltip}
-                    tooltipPlacement={tooltipPlacement}
+                    {...otherProps}
                     onClick={() => skip ? onConfirm() : this.askConfirmation(true)}
                     onClickHold={() => onConfirm()}
-                    disabled={disabled}/>
+                />
                 {askConfirmation ? this.renderConfirm() : null}
             </React.Fragment>
         )
@@ -65,14 +59,4 @@ export default class SafetyButton extends React.Component {
 SafetyButton.propTypes = {
     message: PropTypes.string.isRequired,
     onConfirm: PropTypes.func.isRequired,
-    children: PropTypes.any,
-    disabled: PropTypes.any,
-    icon: PropTypes.string,
-    label: PropTypes.string,
-    look: PropTypes.string,
-    size: PropTypes.string,
-    skip: PropTypes.any,
-    title: PropTypes.string,
-    tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string
 }
