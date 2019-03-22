@@ -1,4 +1,5 @@
 .panel {
+    --margin-right: 0.5rem; /* There is no toolbar - make margin-right shorter than the default centered panel */
     max-width: 40rem;
     max-height: fit-content;
 }
