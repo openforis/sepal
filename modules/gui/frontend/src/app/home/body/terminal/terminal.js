@@ -2,6 +2,7 @@ import 'xterm/dist/xterm.css'
 import * as attach from 'xterm/lib/addons/attach/attach'
 import * as fit from 'xterm/lib/addons/fit/fit'
 
+import {ContentPadding} from 'widget/sectionLayout'
 import {Subject, interval} from 'rxjs'
 import {Terminal as Xterm} from 'xterm'
 import {connect} from 'store'
@@ -26,8 +27,6 @@ export default class Terminal extends React.Component {
         return (
             <Tabs
                 label={msg('home.sections.terminal')}
-                menuPadding
-                edgePadding
                 statePath='terminal'>
                 {() => <TerminalSession/>}
             </Tabs>
@@ -95,7 +94,12 @@ class _TerminalSession extends React.Component {
                 refreshRate={RESIZE_DEBOUNCE_MS}
                 onResize={() => this.fit$.next()}
             >
-                <div className={styles.terminal} ref={this.terminalContainer}/>
+                <ContentPadding
+                    menuPadding
+                    edgePadding
+                >
+                    <div className={styles.terminal} ref={this.terminalContainer}/>
+                </ContentPadding>
             </ReactResizeDetector>
         )
     }

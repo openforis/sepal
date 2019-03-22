@@ -32,7 +32,9 @@ TopBar.propTypes = {
 
 export const Content = ({menuPadding = false, appMenuPadding = false, edgePadding = false, className, children}) => {
     return (
-        <div className={[flexy.elastic, styles.content,
+        <div className={[
+            flexy.elastic,
+            styles.content,
             edgePadding ? styles.edgePadding : null,
             menuPadding ? styles.menuPadding : null,
             appMenuPadding ? styles.appMenuPadding : null,
@@ -44,6 +46,28 @@ export const Content = ({menuPadding = false, appMenuPadding = false, edgePaddin
 }
 
 Content.propTypes = {
+    children: PropTypes.any.isRequired,
+    appMenuPadding: PropTypes.any,
+    edgePadding: PropTypes.any,
+    menuPadding: PropTypes.any,
+    padding: PropTypes.any,
+}
+
+export const ContentPadding = ({menuPadding = false, appMenuPadding = false, edgePadding = false, className, children}) => {
+    return (
+        <div className={[
+            styles.content,
+            edgePadding ? styles.edgePadding : null,
+            menuPadding ? styles.menuPadding : null,
+            appMenuPadding ? styles.appMenuPadding : null,
+            className
+        ].join(' ')}>
+            {children}
+        </div>
+    )
+}
+
+ContentPadding.propTypes = {
     children: PropTypes.any.isRequired,
     appMenuPadding: PropTypes.any,
     edgePadding: PropTypes.any,

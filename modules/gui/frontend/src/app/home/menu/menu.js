@@ -4,15 +4,12 @@ import {currentUser} from 'widget/user'
 import {isFloating} from './menuMode'
 import {isPathInLocation} from 'route'
 import {msg} from 'translate'
-import {quitApp, requestedApps} from 'apps'
-import Icon from 'widget/icon'
 import MenuMode from './menuMode'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './menu.module.css'
 
 const mapStateToProps = (state = {}) => ({
-    requestedApps: requestedApps(),
     floating: isFloating(),
     hasActiveTasks: !!(state.tasks && state.tasks.find(task => ['PENDING', 'ACTIVE'].includes(task.status))),
     budgetExceeded: select('user.budgetExceeded'),
@@ -20,12 +17,8 @@ const mapStateToProps = (state = {}) => ({
 })
 
 class Menu extends React.Component {
-    appSection(app) {
-        return <AppLink key={app.path} app={app}/>
-    }
-
     render() {
-        const {className, floating, requestedApps, user, hasActiveTasks, budgetExceeded} = this.props
+        const {className, floating, user, hasActiveTasks, budgetExceeded} = this.props
         return (
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
@@ -34,7 +27,6 @@ class Menu extends React.Component {
                         <SectionLink name='browse' icon='folder-open'/>
                         <SectionLink name='terminal' icon='terminal' disabled={budgetExceeded}/>
                         <SectionLink name='app-launch-pad' icon='wrench' disabled={budgetExceeded}/>
-                        {requestedApps.map(this.appSection)}
                     </div>
                     <div className={styles.section}>
                         <SectionLink name='tasks' icon={hasActiveTasks ? 'spinner' : 'tasks'} disabled={budgetExceeded}/>
@@ -49,7 +41,6 @@ class Menu extends React.Component {
 
 Menu.propTypes = {
     floating: PropTypes.bool.isRequired,
-    requestedApps: PropTypes.arrayOf(PropTypes.object).isRequired,
     className: PropTypes.string,
     user: PropTypes.object
 }
@@ -81,33 +72,3 @@ SectionLink = connect(
         active: isPathInLocation('/' + name)
     })
 )(SectionLink)
-
-let AppLink = ({active, app: {path, label, alt}}) => {
-    const activeClass = active ? styles.active : null
-    return (
-        <div className={styles.app}>
-            <div className={styles.stop} onClick={() => quitApp(path)}>
-                <Icon name='times'/>
-            </div>
-            <Button
-                className={activeClass}
-                icon='cube'
-                link={'/app' + path}
-                tooltip={label || alt}
-                tooltipPlacement='right'/>
-        </div>
-    )
-}
-
-AppLink.propTypes = {
-    alt: PropTypes.string,
-    app: PropTypes.object,
-    label: PropTypes.string,
-    path: PropTypes.string,
-    onRemove: PropTypes.func
-}
-AppLink = connect(
-    (state, {app: {path}}) => ({
-        active: isPathInLocation('/app' + path)
-    })
-)(AppLink)

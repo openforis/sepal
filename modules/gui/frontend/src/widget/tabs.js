@@ -135,7 +135,7 @@ class Tabs extends React.Component {
     }
 
     render() {
-        const {label, menuPadding, edgePadding} = this.props
+        const {label} = this.props
         return (
             <SectionLayout className={styles.container}>
                 <TopBar
@@ -143,9 +143,7 @@ class Tabs extends React.Component {
                     label={label}>
                     {this.renderTabs()}
                 </TopBar>
-                <Content
-                    menuPadding={menuPadding}
-                    edgePadding={edgePadding}>
+                <Content>
                     <div className={styles.tabContents}>
                         {this.props.tabs.map(tab => this.renderTabContent(tab))}
                     </div>
@@ -165,9 +163,7 @@ Tabs.propTypes = {
     label: PropTypes.string.isRequired,
     statePath: PropTypes.string.isRequired,
     children: PropTypes.any,
-    edgePadding: PropTypes.any,
     isDirty: PropTypes.func,
-    menuPadding: PropTypes.any,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
     tabs: PropTypes.array,

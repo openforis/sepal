@@ -1,6 +1,8 @@
 .apps {
     --app-height: 9rem;
     height: 100%;
+    width: 100%;
+    pointer-events: all;
     display: grid;
     grid-template-columns: repeat(auto-fill, 20rem);
     grid-template-rows: repeat(auto-fill, var(--app-height));

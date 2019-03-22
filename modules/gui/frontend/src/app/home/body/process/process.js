@@ -68,11 +68,9 @@ class Process extends React.Component {
                     onTitleChanged={recipe => saveRecipe(recipe)}
                     onClose={(recipe, close) => this.onCloseTab(recipe, close)}>
                     {({id, type}) =>
-                        <React.Fragment>
-                            <RecipeContext recipeId={id} rootStatePath='process.tabs'>
-                                {this.renderRecipe(id, type)}
-                            </RecipeContext>
-                        </React.Fragment>
+                        <RecipeContext recipeId={id} rootStatePath='process.tabs'>
+                            {this.renderRecipe(id, type)}
+                        </RecipeContext>
                     }
                 </Tabs>
                 <CloseRecipe/>
