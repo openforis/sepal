@@ -1,3 +1,7 @@
+.panel {
+    max-width: 69rem;
+}
+
 .loading {
     flex-direction: column;
     justify-content: center;
