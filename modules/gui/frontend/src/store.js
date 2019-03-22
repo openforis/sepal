@@ -168,9 +168,13 @@ export class Enabled extends React.PureComponent {
     render() {
         const {value, children} = this.props
         return (
-            <EnabledContext.Provider value={!!value}>
-                {children}
-            </EnabledContext.Provider>
+            <EnabledContext.Consumer>
+                {parentValue =>
+                    <EnabledContext.Provider value={value !== false && parentValue !== false}>
+                        {children}
+                    </EnabledContext.Provider>
+                }
+            </EnabledContext.Consumer>
         )
     }
 

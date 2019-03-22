@@ -28,6 +28,10 @@
     overflow: hidden;
 }
 
+.panel.disabled {
+    display: none;
+}
+
 .panel.modal {
     left: .5rem;
     right: .5rem;

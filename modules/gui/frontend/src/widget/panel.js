@@ -1,5 +1,6 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {Modal} from 'widget/modal'
+import {connect} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
 import Portal from 'widget/portal'
@@ -9,13 +10,24 @@ import styles from './panel.module.css'
 
 // PANEL ----------------------------------------------------------------------
 
-export class Panel extends React.Component {
+class _Panel extends React.Component {
+    state = {
+        enabled: true
+    }
+
+    constructor(props) {
+        super(props)
+        this.props.onEnable(() => this.setState({enabled: true}))
+        this.props.onDisable(() => this.setState({enabled: false}))
+    }
     renderContent() {
         const {className, type, children} = this.props
+        const {enabled} = this.state
         return (
             <div className={[
                 styles.panel,
                 styles[type],
+                enabled ? null : styles.disabled,
                 className
             ].join(' ')}>
                 {children}
@@ -36,6 +48,8 @@ export class Panel extends React.Component {
         )
     }
 }
+
+export const Panel = connect()(_Panel)
 
 Panel.propTypes = {
     children: PropTypes.any.isRequired,
