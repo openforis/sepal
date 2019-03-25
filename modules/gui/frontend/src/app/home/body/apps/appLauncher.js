@@ -4,7 +4,6 @@ import {connect} from 'store'
 import {selectFrom} from 'collections'
 import AppInstance from './appInstance'
 import Icon from 'widget/icon'
-import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
@@ -34,6 +33,16 @@ class AppLauncher extends React.Component {
             .dispatch()
     }
 
+    renderImage({image, alt, style}, disabled) {
+        return image
+            ? <img
+                src={image}
+                alt={alt}
+                className={disabled ? styles.disabled : null}
+                style={style}/>
+            : null
+    }
+
     renderApp(app) {
         const {running} = this.props
         const disabled = app.single && running.includes(app.path)
@@ -44,7 +53,7 @@ class AppLauncher extends React.Component {
                 additionalClassName={styles.app}
                 onClick={() => this.runApp(app)}
                 disabled={disabled}>
-                <Image style={app.style} src={app.image} disabled={disabled}/>
+                {this.renderImage(app, disabled)}
                 {app.icon && <Icon name={app.icon} alt={app.alt}/>}
                 <div>
                     <div className={styles.title}>{app.label}</div>
@@ -79,14 +88,3 @@ class AppLauncher extends React.Component {
 }
 
 export default connect(mapStateToProps)(AppLauncher)
-
-const Image = ({style, src, alt, disabled}) => {
-    return src
-        ? <img src={src} alt={alt} style={style} className={disabled ? styles.disabled : null}/>
-        : null
-}
-
-Image.propTypes = {
-    alt: PropTypes.string,
-    src: PropTypes.string
-}
