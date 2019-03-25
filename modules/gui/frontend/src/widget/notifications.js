@@ -1,12 +1,12 @@
 import {Subject, merge, timer} from 'rxjs'
 import {connect, select} from 'store'
 import {delay, filter, map, mergeMap} from 'rxjs/operators'
+import {simplehash as hash} from 'hash'
 import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
-import hash from 'object-hash'
 import styles from './notifications.module.css'
 
 const PATH = 'Notifications'
