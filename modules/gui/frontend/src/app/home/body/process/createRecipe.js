@@ -2,13 +2,13 @@ import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
+import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import lookStyles from 'style/look.module.css'
 import moment from 'moment'
 import styles from './createRecipe.module.css'
-import {msg} from 'translate'
 
 const mapStateToProps = state => {
     return {
