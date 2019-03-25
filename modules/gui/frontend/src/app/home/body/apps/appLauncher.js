@@ -1,13 +1,24 @@
 import {Button} from 'widget/button'
 import {ContentPadding} from 'widget/sectionLayout'
+import {connect} from 'store'
+import {selectFrom} from 'collections'
 import AppInstance from './appInstance'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './appLauncher.module.css'
 
-export default class AppLauncher extends React.Component {
+const mapStateToProps = state => ({
+    running: _(selectFrom(state, 'apps.tabs'))
+        .map(app => app.path)
+        .compact()
+        .uniq()
+        .value()
+})
+
+class AppLauncher extends React.Component {
     state = {
         app: null
     }
@@ -17,19 +28,23 @@ export default class AppLauncher extends React.Component {
         this.setState({app})
         actionBuilder('SET_TAB_PLACEHOLDER', {id, app})
             .assignValueByTemplate(['apps.tabs'], {id}, {
-                placeholder: app.label || app.alt
+                placeholder: app.label || app.alt,
+                path: app.path
             })
             .dispatch()
     }
 
     renderApp(app) {
+        const {running} = this.props
+        const disabled = app.single && running.includes(app.path)
         return (
             <Button
                 key={app.path}
                 look='transparent'
                 additionalClassName={styles.app}
-                onClick={() => this.runApp(app)}>
-                <Image style={app.style} src={app.image}/>
+                onClick={() => this.runApp(app)}
+                disabled={disabled}>
+                <Image style={app.style} src={app.image} disabled={disabled}/>
                 {app.icon && <Icon name={app.icon} alt={app.alt}/>}
                 <div>
                     <div className={styles.title}>{app.label}</div>
@@ -63,9 +78,11 @@ export default class AppLauncher extends React.Component {
     }
 }
 
-const Image = ({style, src, alt}) => {
+export default connect(mapStateToProps)(AppLauncher)
+
+const Image = ({style, src, alt, disabled}) => {
     return src
-        ? <img src={src} alt={alt} style={style}/>
+        ? <img src={src} alt={alt} style={style} className={disabled ? styles.disabled : null}/>
         : null
 }
 

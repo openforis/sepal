@@ -48,3 +48,7 @@
     color: #ababab;
     line-height: 1.2;
 }
+
+.app img.disabled {
+    opacity: .25;
+}

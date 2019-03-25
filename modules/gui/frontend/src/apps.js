@@ -16,13 +16,15 @@ export const loadApps$ = () =>
                 path: '/sandbox/rstudio/',
                 image: rstudioIcon,
                 alt: 'RStudio',
-                endpoint: 'rstudio'
+                endpoint: 'rstudio',
+                single: true
             }
             const jupyter = {
                 path: '/sandbox/jupyter/tree',
                 image: jupyterIcon,
                 alt: 'Jupyter notebook',
                 endpoint: 'jupyter',
+                single: true,
                 style: {
                     height: '90%',
                     width: '90%',
