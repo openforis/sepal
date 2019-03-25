@@ -223,32 +223,34 @@ class RecipeList extends React.Component {
     render() {
         const {recipeId, recipes} = this.props
         return (
-            <Pageable
-                items={this.getSortedRecipes()}
-                limit={15}>
-                <SectionLayout>
-                    <Content edgePadding menuPadding className={styles.container}>
-                        <ScrollableContainer>
-                            <Unscrollable>
-                                {this.renderSearchAndSort()}
-                            </Unscrollable>
-                            <Scrollable className={styles.recipes}>
-                                {this.renderRecipies()}
-                                <CreateRecipe
-                                    recipeId={recipeId}
-                                    recipeTypes={this.recipeTypes}
-                                    trigger={recipes && !recipes.length}/>
-                            </Scrollable>
-                        </ScrollableContainer>
-                    </Content>
-                    <BottomBar className={styles.bottomBar}>
-                        {recipes && recipes.length
-                            ? <PageControls/>
-                            : <div>{msg('process.menu.noSavedRecipies')}</div>
-                        }
-                    </BottomBar>
-                </SectionLayout>
-            </Pageable>
+            <React.Fragment>
+                <CreateRecipe
+                    recipeId={recipeId}
+                    recipeTypes={this.recipeTypes}
+                    trigger={recipes && !recipes.length}/>
+                <Pageable
+                    items={this.getSortedRecipes()}
+                    limit={15}>
+                    <SectionLayout>
+                        <Content edgePadding menuPadding className={styles.container}>
+                            <ScrollableContainer>
+                                <Unscrollable>
+                                    {this.renderSearchAndSort()}
+                                </Unscrollable>
+                                <Scrollable className={styles.recipes}>
+                                    {this.renderRecipies()}
+                                </Scrollable>
+                            </ScrollableContainer>
+                        </Content>
+                        <BottomBar className={styles.bottomBar}>
+                            {recipes && recipes.length
+                                ? <PageControls/>
+                                : <div>{msg('process.menu.noSavedRecipies')}</div>
+                            }
+                        </BottomBar>
+                    </SectionLayout>
+                </Pageable>
+            </React.Fragment>
         )
     }
 
