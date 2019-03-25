@@ -36,18 +36,16 @@ export const loadApps$ = () =>
     )
 
 export const runApp$ = path => {
-    const getApp = path => appList().find(app => app.path === path)
-
-    const app = getApp(path)
+    const {endpoint} = appList().find(app => app.path === path)
 
     const isSessionStarted = e => e.response.status === 'STARTED'
 
-    const requestSession$ = api.apps.requestSession$(app.endpoint).pipe(
+    const requestSession$ = api.apps.requestSession$(endpoint).pipe(
         filter(isSessionStarted)
     )
 
     const waitForSession$ = interval(1000).pipe(
-        exhaustMap(() => api.apps.waitForSession$(app.endpoint)),
+        exhaustMap(() => api.apps.waitForSession$(endpoint)),
         filter(isSessionStarted),
         first()
     )
