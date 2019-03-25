@@ -121,7 +121,7 @@ class _TerminalSession extends React.Component {
             sessionId => this.startSession(sessionId),
             error => Notifications.error({
                 message: msg('terminal.server.error'),
-                error
+                error: error.message
             })
         )
     }
