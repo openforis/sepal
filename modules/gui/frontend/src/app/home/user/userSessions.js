@@ -65,7 +65,6 @@ class UserSessions extends React.Component {
                         shape='circle'
                         size='large'
                         icon='trash'
-                        label={msg('user.userSession.stop.label')}
                         tooltip={msg('user.userSession.stop.tooltip')}
                         message={msg('user.userSession.stop.message')}
                         onConfirm={() => this.stopSession(session)}
