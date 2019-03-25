@@ -89,7 +89,7 @@ function execute$(url, method, {retries, query, username, password, headers, val
             if (validStatuses && validStatuses.includes(e.status)) {
                 return of(e)
             } else if (e.status === 401 && isRelative(url)) {
-                Notifications.warning({message: msg('unauthorized.warning')})
+                Notifications.warning({message: msg('unauthorized.warning'), group: true})
                 return logout()
             } else {
                 return throwError(e)
