@@ -49,7 +49,7 @@ const publish = notification => {
         id = uuid(),
         level = 'info',
         title = defaultTitle[level],
-        timeout = 10000,
+        timeout = 3000,
         dismissable = true,
         ...notification
     }) => ({id, level, title, timeout, dismissable, ...notification})
