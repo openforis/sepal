@@ -6,6 +6,7 @@ import {v4 as uuid} from 'uuid'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
+import hash from 'object-hash'
 import styles from './notifications.module.css'
 
 const PATH = 'Notifications'
@@ -25,23 +26,36 @@ const autoDismiss$ = publish$
 const dismiss$ = merge(manualDismiss$, autoDismiss$)
 const remove$ = dismiss$.pipe(delay(DISMISS_DELAY_MS))
 
+const group = ({group = false, id, ...notification}) =>
+    group === false
+        ? id
+        : group === true
+            ? hash(notification) // id is excluded
+            : group
+
 const publish = notification => {
+    const publish = notification =>
+        publish$.next({
+            ...notification,
+            group: group(notification)
+        })
+    
     const defaultTitle = {
         'error': msg('widget.notification.error.title'),
         'warning': msg('widget.notification.warning.title')
     }
+
     const applyDefaults = ({
         id = uuid(),
         level = 'info',
         title = defaultTitle[level],
-        timeout = 3000,
+        timeout = 10000,
         dismissable = true,
         ...notification
     }) => ({id, level, title, timeout, dismissable, ...notification})
 
-    publish$.next(applyDefaults(notification))
+    publish(applyDefaults(notification))
 }
-
 const dismiss = notificationId =>
     manualDismiss$.next(notificationId)
 
@@ -133,7 +147,7 @@ class _Notifications extends React.Component {
         this.subscriptions.push(
             publish$.subscribe(notification =>
                 actionBuilder('PUBLISH_NOTIFICATION')
-                    .push(PATH, notification)
+                    .pushIfMissing(PATH, notification, 'group')
                     .dispatch()
             )
         )
@@ -181,6 +195,7 @@ Notifications.propTypes = {
     content: PropTypes.func,
     dismissable: PropTypes.any,
     error: PropTypes.string,
+    group: PropTypes.oneOf([true, false, PropTypes.string]),
     id: PropTypes.string,
     level: PropTypes.string,
     message: PropTypes.string,
