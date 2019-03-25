@@ -45,10 +45,15 @@ const resize = (req, res) => {
 const terminal = (ws, req) => {
     var term = terminals[parseInt(req.params.pid)]
     console.log('Connected to terminal ' + term.pid)
-    try {
-        ws.send(logs[term.pid])
-    } catch (ex) {}
 
+    const webSocketSend = data => {
+        try {
+            ws.send(data)
+        } catch (ex) {}
+    }
+
+    webSocketSend(logs[term.pid])
+    
     const downStream$ = new Subject()
     subscriptions.push(
         downStream$
@@ -58,17 +63,13 @@ const terminal = (ws, req) => {
                 filter(data => data)
             )
             .subscribe(
-                data => {
-                    try {
-                        ws.send(data)
-                    } catch (ex) {}
-                }
+                data => webSocketSend(data)
             )
     )
 
     subscriptions.push(
         interval(3000)
-            .subscribe(() => ws.send(''))
+            .subscribe(() => webSocketSend(''))
     )
 
     term.on('data', data => downStream$.next(data))
