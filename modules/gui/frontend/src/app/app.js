@@ -9,12 +9,11 @@ import ReactResizeDetector from 'react-resize-detector'
 import User from 'widget/user'
 import actionBuilder from 'action-builder'
 
-import css1 from 'bootstrap/dist/css/bootstrap-reboot.css'
-import css2 from './app.css'
-import css3 from '../style/look.css'
-import css4 from '../style/look.module.css'
+import css1 from './app.css'
+import css2 from '../style/look.css'
+import css3 from '../style/look.module.css'
 
-const _css = [css1, css2, css3, css4] // eslint-disable-line
+const _css = [css1, css2, css3] // eslint-disable-line
 
 const mapStateToProps = state => ({
     initialized: selectFrom(state, 'user.initialized'),
