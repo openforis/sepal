@@ -32,6 +32,7 @@
 }
 
 .fileList li div {
+    position: relative;
     width: 100%;
     cursor: pointer;
     border: none !important;
@@ -81,6 +82,7 @@
 
 .fileName {
     display: inline-block;
+    padding-left: 2rem;
 }
 
 .fileInfo {
@@ -91,8 +93,7 @@
 }
 
 .icon {
-    display: inline-block;
-    height: 100%;
+    position: absolute;
     width: 2rem;
     padding: 0 .5rem;
     text-align: center;
