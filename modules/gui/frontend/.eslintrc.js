@@ -34,10 +34,15 @@ module.exports = {
             "error", 
             "as-needed"
         ],
-        "no-console": [
+        "comma-spacing": [
             "error", {
-                allow: ["info", "warn", "error"]
+                "before": false,
+                "after": true
             }
+        ],
+        "eol-last": [
+            "error",
+            "always"
         ],
         "indent": [
             "error",
@@ -47,18 +52,9 @@ module.exports = {
             "error",
             "unix"
         ],
-        "quotes": [
-            "error",
-            "single"
-        ],
-        "semi": [
-            "error",
-            "never"
-        ],
-        "comma-spacing": [
+        "no-console": [
             "error", {
-                "before": false,
-                "after": true
+                allow: ["info", "warn", "error"]
             }
         ],
         "no-multi-spaces": [
@@ -89,9 +85,9 @@ module.exports = {
             "error",
             "never"
         ],
-        "eol-last": [
+        "quotes": [
             "error",
-            "always"
+            "single"
         ],
         "react/jsx-tag-spacing": [
             "error", {
@@ -111,11 +107,10 @@ module.exports = {
                 "noSortAlphabetically": false
             }
         ],
-        // "import/no-unresolved": 0,
-        // "import/named": 0,
-        // "import/namespace": 0,
-        // "import/default": 0,
-        // "import/export": 0,
+        "semi": [
+            "error",
+            "never"
+        ],
         "sort-imports-es6-autofix/sort-imports-es6": ["error", {
             "ignoreCase": false,
             "ignoreMemberSort": false,
