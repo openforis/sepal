@@ -36,6 +36,8 @@ export const select = (...path) =>
 
 const includeDispatchingProp = (id, mapStateToProps) =>
     (state, ownProps) => {
+        if (ownProps.enabled === false)
+            return {}
         return {
             ...mapStateToProps(state, ownProps),
             actions: state.actions || {},
@@ -199,7 +201,7 @@ const stream = component => {
         failed: status === 'FAILED',
         completed: status === 'COMPLETED'
     })
-    
+
     return (name, stream$, onSuccess, onError, onComplete) => {
         const componentPath = `stream.${component.id}`
         const statePath = `${componentPath}.${name}`
