@@ -30,6 +30,10 @@ module.exports = {
         }
     },
     "rules": {
+        "arrow-parens": [
+            "error", 
+            "as-needed"
+        ],
         "indent": [
             "error",
             4
