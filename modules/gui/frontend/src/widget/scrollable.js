@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types'
-import React from 'react'
+import React, {Component} from 'react'
 import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
+import {disableBodyScroll, enableBodyScroll} from 'body-scroll-lock'
 
 export const ScrollableContainer = ({className, children}) => {
     return (
@@ -29,13 +30,29 @@ Unscrollable.propTypes = {
     className: PropTypes.string
 }
 
-export const Scrollable = ({className, direction = 'y', children}) => {
-    return (
-        <div className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
-            {children}
-        </div>
-    )
+export class Scrollable extends Component {
+    targetRef = React.createRef()
+
+    render() {
+        const {className, direction, children} = this.props
+        return (
+            <div ref={this.targetRef} className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
+                {children}
+            </div>
+        )
+    }
+
+    componentDidMount() {
+        disableBodyScroll(this.targetRef.current)
+    }
+
+    componentWillUnmount() {
+        enableBodyScroll(this.targetRef.current)
+    }
 }
+
+
+Scrollable.defaultProps = {direction: 'y'}
 
 Scrollable.propTypes = {
     children: PropTypes.any,

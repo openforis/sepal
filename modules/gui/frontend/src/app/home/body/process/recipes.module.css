@@ -29,6 +29,11 @@
     margin-bottom: 0;
 }
 
+.recipeInfo {
+    overflow: hidden;
+    margin-right: .5rem;
+}
+
 .updateTime {
     font-size: small;
     margin-right: 2rem;
@@ -55,6 +60,10 @@
     flex-wrap: nowrap;
     display: flex;
     margin-left: .5rem;
+}
+
+.name {
+    word-wrap:break-word;
 }
 
 .nameSort {

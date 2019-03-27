@@ -9,7 +9,7 @@ import ReactResizeDetector from 'react-resize-detector'
 import User from 'widget/user'
 import actionBuilder from 'action-builder'
 
-import css1 from 'bootstrap/dist/css/bootstrap-reboot.css'
+import css1 from './reset.css'
 import css2 from './app.css'
 import css3 from '../style/look.css'
 import css4 from '../style/look.module.css'
