@@ -1,8 +1,8 @@
+import {disableBodyScroll, enableBodyScroll} from 'body-scroll-lock'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
-import {disableBodyScroll, enableBodyScroll} from 'body-scroll-lock'
 
 export const ScrollableContainer = ({className, children}) => {
     return (
@@ -50,7 +50,6 @@ export class Scrollable extends Component {
         enableBodyScroll(this.targetRef.current)
     }
 }
-
 
 Scrollable.defaultProps = {direction: 'y'}
 
