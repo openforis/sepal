@@ -6,7 +6,7 @@ export default {
         query: {path}
     }).pipe(toResponse),
 
-    updateTree$: (tree) => postJson$('/api/files', {
+    updateTree$: tree => postJson$('/api/files', {
         query: {path: '/'},
         body: tree
     }).pipe(toResponse),

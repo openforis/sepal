@@ -1,5 +1,5 @@
 export default {
-    copy: (text) => {
+    copy: text => {
         const element = document.createElement('textarea')
         element.value = text
         document.body.appendChild(element)

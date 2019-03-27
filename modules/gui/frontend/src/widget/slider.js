@@ -426,7 +426,7 @@ export default class Slider extends React.Component {
     }
 
     static getDerivedStateFromProps(props, state) {
-        const mapTicks = (ticks) =>
+        const mapTicks = ticks =>
             ticks.map((tick, index) => {
                 if (_.isObject(tick)) {
                     const value = tick.value || index

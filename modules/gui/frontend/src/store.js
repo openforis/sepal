@@ -12,7 +12,7 @@ import guid from 'guid'
 let storeInstance = null
 const storeInitListeners = []
 
-export const initStore = (store) => {
+export const initStore = store => {
     storeInstance = store
     storeInitListeners.forEach(listener => listener(store))
 }
@@ -28,7 +28,7 @@ export const subscribe = (path, listener) => {
 export const state = () =>
     storeInstance.getState() || {}
 
-export const dispatch = (action) =>
+export const dispatch = action =>
     storeInstance.dispatch(action)
 
 export const select = (...path) =>
@@ -43,7 +43,7 @@ const includeDispatchingProp = (id, mapStateToProps) =>
         }
     }
 
-export const connect = (mapStateToProps) => {
+export const connect = mapStateToProps => {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
 
     return WrappedComponent => {
@@ -157,7 +157,7 @@ export const connect = (mapStateToProps) => {
     }
 }
 
-export const dispatchable = (action) => ({
+export const dispatchable = action => ({
     ...action,
     dispatch: () => dispatch(action)
 })

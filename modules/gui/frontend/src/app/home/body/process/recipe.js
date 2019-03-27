@@ -107,7 +107,7 @@ export const RecipeState = recipeId =>
         ? path => select('process.tabs', {id: recipeId}, path)
         : null
 
-export const setInitialized = (recipeId) => {
+export const setInitialized = recipeId => {
     actionBuilder('SET_RECIPE_INITIALIZED', recipeId)
         .set(recipePath(recipeId, 'ui.initialized'), true)
         .dispatch()
@@ -275,7 +275,7 @@ export const revertToRevision$ = (recipeId, revision) =>
         })
     )
 
-export const recipe = (RecipeState) => {
+export const recipe = RecipeState => {
     return WrappedComponent => {
         class RecipeComponent extends React.Component {
             state = {}

@@ -236,7 +236,7 @@ const tempDecisionTree = {
     }
 }
 
-export const getPrimitiveTypes = (recipe) => {
+export const getPrimitiveTypes = recipe => {
     return [{id: 'other', label: 'Other', color: 'FFFFFF'}].concat(
         _.sortBy(recipe.model.typology.primitiveTypes, 'id')
     )

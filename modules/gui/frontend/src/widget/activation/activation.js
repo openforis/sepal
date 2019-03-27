@@ -9,7 +9,7 @@ export const collectActivatables = (state, pathList) => {
         return selectFrom(state, [pathList, 'activatables'])
     }
 
-    const childrenActivatables = (pathList) => {
+    const childrenActivatables = pathList => {
         const childContexts = selectFrom(state, [pathList, 'contexts'])
         return _(childContexts)
             .mapValues((childContext, id) => ({
@@ -21,7 +21,7 @@ export const collectActivatables = (state, pathList) => {
 
     }
 
-    const parentActivatables = (pathList) => {
+    const parentActivatables = pathList => {
         const parent = parentPathList(pathList)
         return parent.length > 2
             ? {...parentActivatables(parent), ...selectActivatables(parent)}

@@ -47,7 +47,7 @@ export const getLanguage = () => {
     return language
 }
 
-export const setLanguage = (language) => {
+export const setLanguage = language => {
     localStorage.setItem(languageKey, language)
     return language
 }
@@ -60,7 +60,7 @@ export default class TranslationProvider extends React.Component {
     }
 
     static getDerivedStateFromProps(props, state) {
-        const languageState = (language) => {
+        const languageState = language => {
             const localeData = require(`react-intl/locale-data/${language}`)
             addLocaleData(localeData)
             const loadTranslations = language => flat.flatten( // react-intl requires a flat object

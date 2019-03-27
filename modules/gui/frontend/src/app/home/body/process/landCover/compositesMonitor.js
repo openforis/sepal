@@ -36,7 +36,7 @@ class CompositesMonitor extends React.Component {
 
     update() {
         const {status, compositeTask, landCoverTask, trainingData} = this.props
-        const setTaskStatus = (nextStatus) =>
+        const setTaskStatus = nextStatus =>
             status !== nextStatus && this.recipeActions.setStatus(nextStatus).dispatch()
         if (!compositeTask) {
             if (status === Status.CREATING_COMPOSITES)

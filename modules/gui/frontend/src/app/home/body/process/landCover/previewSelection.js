@@ -134,7 +134,7 @@ class Select extends React.Component {
                         options={options}
                         placeholder={placeholder}
                         className={listClassName}
-                        onChange={(option) => {
+                        onChange={option => {
                             onChange(option)
                             this.setListShown(false)
                         }}/>

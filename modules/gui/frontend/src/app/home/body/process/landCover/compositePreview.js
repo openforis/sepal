@@ -72,7 +72,7 @@ class CompositePreview extends React.Component {
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
-            onError: (e) => this.onError(e)
+            onError: e => this.onError(e)
         })
         if (changed && initializing !== !!layer)
             this.setState(prevState => ({...prevState, initializing: !!layer, error: null}))

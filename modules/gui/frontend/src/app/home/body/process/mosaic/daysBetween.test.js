@@ -3,10 +3,10 @@ import daysBetween from './daysBetween'
 
 /* eslint-disable no-undef */
 
-const test = (name) => {
+const test = name => {
     const nameTemplate = _.template(name)
     return ({
-        assert: (assertion) => ({
+        assert: assertion => ({
             where: (...data) =>
                 data.forEach(data =>
                     it(nameTemplate(data), () => assertion(data))

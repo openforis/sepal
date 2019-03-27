@@ -59,7 +59,7 @@ const submitRetrieveRecipeTask = recipe => {
     return api.tasks.submit$(task).subscribe()
 }
 
-const toExpression = (indicator) => {
+const toExpression = indicator => {
     switch (indicator) {
     case 'NDVI':
         return '10000 * (i.nir - i.red) / (i.nir + i.red)'

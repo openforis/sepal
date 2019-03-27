@@ -10,7 +10,7 @@ import clipboard from 'clipboard'
 import look from 'style/look.module.css'
 import styles from './tasks.module.css'
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     tasks: state.tasks,
 })
 
