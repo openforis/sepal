@@ -34,6 +34,11 @@ module.exports = {
             "error", 
             "as-needed"
         ],
+        "no-console": [
+            "error", {
+                allow: ["info", "warn", "error"]
+            }
+        ],
         "indent": [
             "error",
             4
