@@ -41,6 +41,7 @@ class Revisions extends React.Component {
                 className={styles.panel}
                 form={form}
                 isActionForm
+                close={() => deactivate()}
                 modal>
                 <PanelHeader
                     icon='clock'
