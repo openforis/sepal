@@ -50,7 +50,7 @@
 @media only screen and (max-width: 500px) {
     .inviteUser {
         --right: 1rem;
-        --bottom: 3.5rem;
+        --bottom: 4rem;
     }
     .search {
         max-width: 12rem;
@@ -81,7 +81,7 @@
 }
 
 .grid.header {
-    grid-template-areas: 
+    grid-template-areas:
         'info info   info       ib  ib  sb  sb  st  st '
         'name status updateTime ibq ibu sbq sbu stq stu';
     color: var(--look-default-color);
