@@ -1,7 +1,6 @@
 import {msg} from 'translate'
-import {recipePath} from '../recipe'
+import {recipeActionBuilder} from '../recipe'
 import api from 'api'
-import globalActionBuilder from 'action-builder'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -21,10 +20,8 @@ export const defaultModel = {
 }
 
 export const RecipeActions = id => {
-    const actionBuilder = (name, props) => {
-        return globalActionBuilder(name, props)
-            .within(recipePath(id))
-    }
+    const actionBuilder = recipeActionBuilder(id)
+        
     return {
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})

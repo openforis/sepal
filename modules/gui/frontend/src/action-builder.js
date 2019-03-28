@@ -3,10 +3,11 @@ import {resolve} from 'stateUtils'
 import _ from 'lodash'
 import immutable from 'object-path-immutable'
 
-const actionBuilder = (type, props) => {
+const actionBuilder = (type, props, prefix) => {
     const operations = []
     const sideEffects = []
-    let prefix = ''
+
+    const scopedResolve = (state, path) => resolve(state, [prefix, path])
 
     return {
         forEach(paths, callback) {
@@ -14,14 +15,9 @@ const actionBuilder = (type, props) => {
             return this
         },
 
-        within(_prefix) {
-            prefix = _prefix
-            return this
-        },
-
         withState(path, callback) {
             operations.push((immutableState, state) => {
-                const prevValue = resolve(state, path).value
+                const prevValue = scopedResolve(state, path).value
                 return callback(prevValue, immutableState)
             })
             return this
@@ -29,7 +25,7 @@ const actionBuilder = (type, props) => {
 
         set(path, value) {
             operations.push((immutableState, state) => {
-                const resolver = resolve(state, path)
+                const resolver = scopedResolve(state, path)
                 const prevValue = resolver.value
                 if (prevValue !== value)
                     return immutableState.set(resolver.path, value)
@@ -39,7 +35,7 @@ const actionBuilder = (type, props) => {
 
         sort(path, key) {
             operations.push((immutableState, state) => {
-                const resolver = resolve(state, path)
+                const resolver = scopedResolve(state, path)
                 return immutableState.set(resolver.path, _.orderBy(resolver.value, key))
             })
             return this
@@ -47,14 +43,14 @@ const actionBuilder = (type, props) => {
 
         assign(path, value) {
             operations.push((immutableState, state) =>
-                immutableState.assign(resolve(state, path).path, value)
+                immutableState.assign(scopedResolve(state, path).path, value)
             )
             return this
         },
 
         merge(path, value) {
             operations.push((immutableState, state) =>
-                immutableState.merge(resolve(state, path).path, value)
+                immutableState.merge(scopedResolve(state, path).path, value)
             )
             return this
         },
@@ -67,7 +63,7 @@ const actionBuilder = (type, props) => {
 
         map(path, callback) {
             operations.push((immutableState, state) => {
-                const resolver = resolve(state, path)
+                const resolver = scopedResolve(state, path)
                 const collection = resolver.value
                 if (!Array.isArray(collection)) return immutableState
                 return collection
@@ -81,14 +77,14 @@ const actionBuilder = (type, props) => {
 
         push(path, value) {
             operations.push((immutableState, state) => {
-                return immutableState.push(resolve(state, path).path, value)
+                return immutableState.push(scopedResolve(state, path).path, value)
             })
             return this
         },
 
         unshift(path, value) {
             operations.push((immutableState, state) => {
-                return immutableState.insert(resolve(state, path).path, value, 0)
+                return immutableState.insert(scopedResolve(state, path).path, value, 0)
             })
             return this
         },
@@ -100,7 +96,7 @@ const actionBuilder = (type, props) => {
 
         pushIfMissing(path, value, uniqueKeyProp) {
             operations.push((immutableState, state) => {
-                const resolver = resolve(state, path)
+                const resolver = scopedResolve(state, path)
                 const collection = resolver.value
                 const equals = item => uniqueKeyProp
                     ? item[uniqueKeyProp] === value[uniqueKeyProp]
@@ -116,7 +112,7 @@ const actionBuilder = (type, props) => {
 
         del(path) {
             operations.push((immutableState, state) => {
-                const resolver = resolve(state, path)
+                const resolver = scopedResolve(state, path)
                 return resolver.value !== undefined
                     ? immutableState.del(resolver.path)
                     : immutableState
@@ -126,7 +122,7 @@ const actionBuilder = (type, props) => {
 
         delValue(path, value) {
             operations.push((immutableState, state) => {
-                const resolver = resolve(state, path)
+                const resolver = scopedResolve(state, path)
                 const index = resolver.value.indexOf(value)
                 return (index !== -1)
                     ? immutableState.del([...resolver.path, index])
@@ -144,21 +140,12 @@ const actionBuilder = (type, props) => {
                 type,
                 ...props,
                 reduce(state) {
-                    if (!prefix) {
-                        var nextState = operations.reduce(
-                            performOperation,
-                            immutable(state)
-                        ).value()
-                        sideEffects.forEach(sideEffect => sideEffect(nextState))
-                        return nextState
-                    } else {
-                        const subState = operations.reduce(
-                            performOperation,
-                            immutable(resolve(state, prefix).value)
-                        ).value()
-                        sideEffects.forEach(sideEffect => sideEffect(subState))
-                        return immutable(state).set(prefix, subState).value()
-                    }
+                    var nextState = operations.reduce(
+                        performOperation,
+                        immutable(state)
+                    ).value()
+                    sideEffects.forEach(sideEffect => sideEffect(nextState))
+                    return nextState
                 },
                 dispatch() {
                     dispatch(this)
@@ -173,3 +160,6 @@ const actionBuilder = (type, props) => {
 }
 
 export default actionBuilder
+
+export const scopedActionBuilder = prefix =>
+    (type, props) => actionBuilder(type, props, prefix)

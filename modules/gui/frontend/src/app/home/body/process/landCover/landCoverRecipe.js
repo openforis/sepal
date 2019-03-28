@@ -1,8 +1,7 @@
-import {RecipeState as GlobalRecipeState, recipePath} from '../recipe'
+import {RecipeState as GlobalRecipeState, recipeActionBuilder} from '../recipe'
 import {msg} from 'translate'
 import _ from 'lodash'
 import api from 'api'
-import globalActionBuilder from 'action-builder'
 
 export const RecipeState = recipeId => {
     const recipeState = GlobalRecipeState(recipeId)
@@ -11,10 +10,8 @@ export const RecipeState = recipeId => {
 }
 
 export const RecipeActions = id => {
-    const actionBuilder = (name, props) => {
-        return globalActionBuilder(name, props)
-            .within(recipePath(id))
-    }
+    const actionBuilder = recipeActionBuilder(id)
+
     const set = (name, prop, value, otherProps) =>
         actionBuilder(name, otherProps)
             .set(prop, value)
