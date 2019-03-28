@@ -1,4 +1,4 @@
-FROM osixia/openldap:1.1.7
+FROM osixia/openldap:1.2.4
 MAINTAINER OpenForis
 EXPOSE 389 636
 
