@@ -1,5 +1,5 @@
 import {connect} from 'store'
-import {selectFrom} from 'collections'
+import {selectFrom} from 'stateUtils'
 import Home from 'app/home/home'
 import Landing from 'app/landing/landing'
 import Notifications from 'widget/notifications'

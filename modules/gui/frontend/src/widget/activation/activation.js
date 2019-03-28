@@ -1,4 +1,4 @@
-import {selectFrom} from 'collections'
+import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
 
 const parentPathList = pathList =>

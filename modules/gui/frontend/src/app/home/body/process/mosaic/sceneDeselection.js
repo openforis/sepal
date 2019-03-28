@@ -1,5 +1,6 @@
 import {RecipeActions, SceneSelectionType, inDateRange} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {objectEquals, selectFrom} from 'collections'
+import {objectEquals} from 'collections'
+import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 

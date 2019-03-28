@@ -6,7 +6,7 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {currentUser} from 'widget/user'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'
-import {selectFrom} from 'collections'
+import {selectFrom} from 'stateUtils'
 import Buttons from 'widget/buttons'
 import Label from 'widget/label'
 import React from 'react'

@@ -69,9 +69,7 @@ export const updateCurrentUserSession$ = session =>
     api.user.updateCurrentUserSession$(session).pipe(
         map(() =>
             actionBuilder('UPDATE_USER_SESSION_POSTED', {session})
-                .assignValueByTemplate('user.currentUserReport.sessions', {
-                    id: session.id
-                }, {
+                .assign(['user.currentUserReport.sessions', {id: session.id}], {
                     earliestTimeoutHours: session.keepAlive
                 })
                 .dispatch()
@@ -82,9 +80,7 @@ export const stopCurrentUserSession$ = session =>
     api.user.stopCurrentUserSession$(session).pipe(
         map(() =>
             actionBuilder('STOP_USER_SESSION_POSTED', {session})
-                .delValueByTemplate('user.currentUserReport.sessions', {
-                    id: session.id
-                })
+                .del(['user.currentUserReport.sessions', {id: session.id}])
                 .dispatch()
         )
     )

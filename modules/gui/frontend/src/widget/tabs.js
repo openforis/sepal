@@ -54,7 +54,7 @@ export const closeTab = (id, statePath) => {
 
     actionBuilder('CLOSE_TAB')
         .withState(statePath, updateSelectedTab)
-        .delValueByTemplate([statePath, 'tabs'], {id})
+        .del([statePath, 'tabs', {id}])
         .dispatch()
 }
 

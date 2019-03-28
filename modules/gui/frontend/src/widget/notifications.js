@@ -154,14 +154,14 @@ class _Notifications extends React.Component {
         this.subscriptions.push(
             dismiss$.subscribe(notificationId =>
                 actionBuilder('DISMISS_NOTIFICATION')
-                    .assignValueByTemplate(PATH, {id: notificationId}, {dismissing: true})
+                    .assign([PATH, {id: notificationId}], {dismissing: true})
                     .dispatch()
             )
         )
         this.subscriptions.push(
             remove$.subscribe(notificationId =>
                 actionBuilder('REMOVE_NOTIFICATION')
-                    .delValueByTemplate(PATH, {id: notificationId})
+                    .del([PATH, {id: notificationId}])
                     .dispatch()
             )
         )
