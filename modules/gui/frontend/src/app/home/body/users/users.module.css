@@ -14,7 +14,7 @@
 
 .inviteUser {
     --right: 2.5rem;
-    --bottom: 7rem;
+    --bottom: 5rem;
     position: absolute;
     right: var(--right);
     bottom: var(--bottom);
