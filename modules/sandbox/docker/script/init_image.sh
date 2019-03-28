@@ -91,7 +91,7 @@ jupyter notebook --generate-config
 /usr/bin/python3 -m ipykernel install
 
 R -e "pacman::p_load('IRkernel')"
-R -e "IRkernel::installspec()"
+R -e "IRkernel::installspec(user = FALSE)"
 
 
 /usr/bin/python2 -m pip install ipywidgets
