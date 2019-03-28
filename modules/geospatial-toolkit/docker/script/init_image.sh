@@ -90,6 +90,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     shapelib \
     swig \
     tcl-dev \
+    tree \
     tmux \
     unrar-free \
     unzip \
