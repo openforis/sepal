@@ -90,6 +90,10 @@ jupyter notebook --generate-config
 /usr/bin/python3 -m pip install ipykernel
 /usr/bin/python3 -m ipykernel install
 
+R -e "pacman::p_load('IRkernel')"
+R -e "IRkernel::installspec()"
+
+
 /usr/bin/python2 -m pip install ipywidgets
 /usr/bin/python3 -m pip install ipywidgets
 /usr/local/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension
