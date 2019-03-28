@@ -99,7 +99,6 @@ export const recipeActionBuilder = id =>
 export const RecipeState = recipeId =>
     isRecipeOpen(recipeId)
         ? path => select(recipePath(recipeId, path))
-        // ? path => select('process.tabs', {id: recipeId}, path)
         : null
 
 export const setInitialized = recipeId => {
