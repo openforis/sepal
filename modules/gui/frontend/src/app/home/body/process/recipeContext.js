@@ -92,8 +92,7 @@ const getStatePath = (recipeId, rootStatePath) => {
     const recipeTabIndex = select(rootStatePath)
         .findIndex(recipe => recipe.id === recipeId)
     if (recipeTabIndex === -1)
-        return 'foo'
-    // throw new Error(`Recipe not found: ${recipeId}`)
+        return null
     return [rootStatePath, recipeTabIndex]
         .filter(e => e !== undefined)
         .join('.')
