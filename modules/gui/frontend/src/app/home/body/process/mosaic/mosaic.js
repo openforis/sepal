@@ -1,7 +1,7 @@
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {RecipeActions, defaultModel} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {recipe} from 'app/home/body/process/recipeContext'
-import {selectFrom} from 'collections'
+import {selectFrom} from 'stateUtils'
 import AoiLayer from './aoiLayer'
 import AutoSelectScenes from './autoSelectScenes'
 import BandSelection from './bandSelection'

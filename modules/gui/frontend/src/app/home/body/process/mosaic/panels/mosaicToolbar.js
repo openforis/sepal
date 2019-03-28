@@ -1,6 +1,6 @@
 import {SceneSelectionType} from '../mosaicRecipe'
 import {msg} from 'translate'
-import {selectFrom} from 'collections'
+import {selectFrom} from 'stateUtils'
 import {setInitialized} from '../../recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'

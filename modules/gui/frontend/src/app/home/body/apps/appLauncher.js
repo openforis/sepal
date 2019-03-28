@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ContentPadding} from 'widget/sectionLayout'
 import {connect} from 'store'
-import {selectFrom} from 'collections'
+import {selectFrom} from 'stateUtils'
 import AppInstance from './appInstance'
 import Icon from 'widget/icon'
 import React from 'react'
@@ -26,7 +26,7 @@ class AppLauncher extends React.Component {
         const {id} = this.props
         this.setState({app})
         actionBuilder('SET_TAB_PLACEHOLDER', {id, app})
-            .assignValueByTemplate(['apps.tabs'], {id}, {
+            .assign(['apps.tabs', {id}], {
                 placeholder: app.label || app.alt,
                 path: app.path
             })

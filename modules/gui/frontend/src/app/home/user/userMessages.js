@@ -47,7 +47,7 @@ class _UserMessages extends React.Component {
             api.user.updateMessage$({...message, id}),
             message => {
                 actionBuilder('UPDATE_USER_MESSAGE')
-                    .assignOrAddValueByTemplate('user.userMessages', {message: {id}}, {message, state: 'UNREAD'})
+                    .assign(['user.userMessages', {message: {id}}], {message, state: 'UNREAD'})
                     .dispatch()
                 Notifications.success({message: id ? msg('userMessage.update.success') : msg('userMessage.publish.success')})
             },
@@ -62,7 +62,7 @@ class _UserMessages extends React.Component {
             api.user.removeMessage$(message),
             () => {
                 actionBuilder('REMOVE_USER_MESSAGE')
-                    .delValueByTemplate('user.userMessages', {message: {id}})
+                    .del(['user.userMessages', {message: {id}}])
                     .dispatch()
                 Notifications.success({message: msg('userMessage.remove.success')})
             },
@@ -77,7 +77,7 @@ class _UserMessages extends React.Component {
             api.user.updateMessageState$(userMessage),
             () => {
                 actionBuilder('UPDATE_USER_MESSAGE_STATE', {id, state})
-                    .assignValueByTemplate('user.userMessages', {message: {id}}, {state})
+                    .assign(['user.userMessages', {message: {id}}], {state})
                     .dispatch()
                 // Notifications.success({message: msg('userMessage.updateState.success')})
             },

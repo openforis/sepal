@@ -4,7 +4,7 @@ import {connect, select, subscribe} from 'store'
 import {debounceTime, groupBy, map, mergeMap, switchMap} from 'rxjs/operators'
 import {downloadObjectZip$} from 'widget/download'
 import {gzip$, ungzip$} from 'gzip'
-import {selectFrom, toPathList} from 'collections'
+import {selectFrom, toPathList} from 'stateUtils'
 import React from 'react'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
@@ -118,7 +118,7 @@ export const setInitialized = recipeId => {
 
 const updateRecipeList = recipe =>
     actionBuilder('SET_RECIPES')
-        .assignOrAddValueByTemplate('process.recipes', {id: recipe.id}, {
+        .assign(['process.recipes', {id: recipe.id}], {
             id: recipe.id,
             name: recipe.title || recipe.placeholder,
             type: recipe.type
@@ -197,7 +197,7 @@ export const removeRecipe$ = recipeId =>
         map(() => {
             removeAllRevisions(recipeId)
             actionBuilder('REMOVE_RECIPE', {recipeId})
-                .delValueByTemplate('process.recipes', {id: recipeId})
+                .del(['process.recipes', {id: recipeId}])
                 .dispatch()
         })
     )

@@ -1,6 +1,6 @@
 import {msg} from 'translate'
 import {recipePath} from '../recipe'
-import {selectFrom} from 'collections'
+import {selectFrom} from 'stateUtils'
 import Labels from '../../../map/labels'
 import _ from 'lodash'
 import api from 'api'

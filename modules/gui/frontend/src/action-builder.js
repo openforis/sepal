@@ -1,14 +1,7 @@
 import {dispatch} from 'store'
-import {toPathList} from 'collections'
+import {resolve} from 'stateUtils'
 import _ from 'lodash'
 import immutable from 'object-path-immutable'
-
-const select = (path, state) => {
-    const pathList = toPathList(path)
-    return pathList.reduce((state, part) => {
-        return state != null && state[part] != null ? state[part] : undefined
-    }, state)
-}
 
 const actionBuilder = (type, props) => {
     const operations = []
@@ -28,7 +21,7 @@ const actionBuilder = (type, props) => {
 
         withState(path, callback) {
             operations.push((immutableState, state) => {
-                const prevValue = select(path, state)
+                const prevValue = resolve(state, path).value
                 return callback(prevValue, immutableState)
             })
             return this
@@ -36,64 +29,32 @@ const actionBuilder = (type, props) => {
 
         set(path, value) {
             operations.push((immutableState, state) => {
-                const prevValue = select(path, state)
+                const resolver = resolve(state, path)
+                const prevValue = resolver.value
                 if (prevValue !== value)
-                    return immutableState.set(toPathList(path), value)
-            })
-            return this
-        },
-
-        setValueByTemplate(path, template, value) {
-            operations.push((immutableState, state) => {
-                const index = select(path, state)
-                    .findIndex(value => _.isEqual(_.merge({}, value, template), value))
-                return (index !== -1)
-                    ? immutableState.set([...toPathList(path), index], value)
-                    : immutableState
+                    return immutableState.set(resolver.path, value)
             })
             return this
         },
 
         sort(path, key) {
             operations.push((immutableState, state) => {
-                const value = select(path, state)
-                return immutableState.set(toPathList(path), _.orderBy(value, key))
+                const resolver = resolve(state, path)
+                return immutableState.set(resolver.path, _.orderBy(resolver.value, key))
             })
             return this
         },
 
         assign(path, value) {
-            operations.push(immutableState =>
-                immutableState.assign(toPathList(path), value)
+            operations.push((immutableState, state) =>
+                immutableState.assign(resolve(state, path).path, value)
             )
             return this
         },
 
-        assignValueByTemplate(path, template, value) {
-            operations.push((immutableState, state) => {
-                const index = select(path, state)
-                    .findIndex(value => _.isEqual(_.merge({}, value, template), value))
-                return (index !== -1)
-                    ? immutableState.assign([...toPathList(path), index], value)
-                    : immutableState
-            })
-            return this
-        },
-
-        assignOrAddValueByTemplate(path, template, value) {
-            operations.push((immutableState, state) => {
-                const index = select(path, state)
-                    .findIndex(value => _.isEqual(_.merge({}, value, template), value))
-                return (index !== -1)
-                    ? immutableState.assign([...toPathList(path), index], value)
-                    : immutableState.push(toPathList(path), value)
-            })
-            return this
-        },
-
         merge(path, value) {
-            operations.push(immutableState =>
-                immutableState.merge(toPathList(path), value)
+            operations.push((immutableState, state) =>
+                immutableState.merge(resolve(state, path).path, value)
             )
             return this
         },
@@ -106,27 +67,28 @@ const actionBuilder = (type, props) => {
 
         map(path, callback) {
             operations.push((immutableState, state) => {
-                const collection = select(path, state)
+                const resolver = resolve(state, path)
+                const collection = resolver.value
                 if (!Array.isArray(collection)) return immutableState
                 return collection
                     .map(callback)
                     .map((value, index) => ({index, value}))
                     .filter(({index, value}) => value !== collection[index])
-                    .reduce((immutableState, {index, value}) => immutableState.set([toPathList(path), index], value), immutableState)
+                    .reduce((immutableState, {index, value}) => immutableState.set([resolver.path, index], value), immutableState)
             })
             return this
         },
 
         push(path, value) {
-            operations.push(immutableState => {
-                return immutableState.push(toPathList(path), value)
+            operations.push((immutableState, state) => {
+                return immutableState.push(resolve(state, path).path, value)
             })
             return this
         },
 
         unshift(path, value) {
-            operations.push(immutableState => {
-                return immutableState.insert(toPathList(path), value, 0)
+            operations.push((immutableState, state) => {
+                return immutableState.insert(resolve(state, path).path, value, 0)
             })
             return this
         },
@@ -138,7 +100,8 @@ const actionBuilder = (type, props) => {
 
         pushIfMissing(path, value, uniqueKeyProp) {
             operations.push((immutableState, state) => {
-                const collection = select(path, state)
+                const resolver = resolve(state, path)
+                const collection = resolver.value
                 const equals = item => uniqueKeyProp
                     ? item[uniqueKeyProp] === value[uniqueKeyProp]
                     : item === value
@@ -146,36 +109,27 @@ const actionBuilder = (type, props) => {
                 if (collection && collection.find(equals))
                     return immutableState
                 else
-                    return immutableState.push(toPathList(path), value)
+                    return immutableState.push(resolver.path, value)
             })
             return this
         },
 
         del(path) {
-            operations.push((immutableState, state) =>
-                select(path, state) !== undefined
-                    ? immutableState.del(toPathList(path))
-                    : immutableState
-            )
-            return this
-        },
-
-        delValue(path, value) {
             operations.push((immutableState, state) => {
-                const index = select(path, state).indexOf(value)
-                return (index !== -1)
-                    ? immutableState.del([...toPathList(path), index])
+                const resolver = resolve(state, path)
+                return resolver.value !== undefined
+                    ? immutableState.del(resolver.path)
                     : immutableState
             })
             return this
         },
 
-        delValueByTemplate(path, template) {
+        delValue(path, value) {
             operations.push((immutableState, state) => {
-                const index = select(path, state)
-                    .findIndex(value => _.isEqual(_.merge({}, value, template), value))
+                const resolver = resolve(state, path)
+                const index = resolver.value.indexOf(value)
                 return (index !== -1)
-                    ? immutableState.del([...toPathList(path), index])
+                    ? immutableState.del([...resolver.path, index])
                     : immutableState
             })
             return this
@@ -200,7 +154,7 @@ const actionBuilder = (type, props) => {
                     } else {
                         const subState = operations.reduce(
                             performOperation,
-                            immutable(select(prefix, state))
+                            immutable(resolve(state, prefix).value)
                         ).value()
                         sideEffects.forEach(sideEffect => sideEffect(subState))
                         return immutable(state).set(prefix, subState).value()

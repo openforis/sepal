@@ -1,5 +1,5 @@
 import {connect} from 'store'
-import {selectFrom} from 'collections'
+import {selectFrom} from 'stateUtils'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {withRecipe} from 'app/home/body/process/recipeContext'

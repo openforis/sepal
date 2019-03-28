@@ -1,6 +1,6 @@
 import {Source1, Source2} from './source/source'
 import {msg} from 'translate'
-import {selectFrom} from 'collections'
+import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PanelWizard from 'widget/panelWizard'
