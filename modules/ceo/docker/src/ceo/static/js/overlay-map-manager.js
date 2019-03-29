@@ -166,7 +166,7 @@ let overlayMapManager = {
                 if (filters !== '') filters += 'AND';
                 filters += "(productType='" + overlay.dgcsProductType + "')";
             }
-            if (filters !== '') url += '&CQL_Filter=' + filters;
+            if (filters !== '') url += '&COVERAGE_CQL_FILTER=' + filters;
             //
             var dgcsLayer = L.tileLayer.wms(url, {
                 layers: 'DigitalGlobe:Imagery',
