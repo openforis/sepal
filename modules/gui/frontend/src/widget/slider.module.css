@@ -67,7 +67,9 @@
 .info {
     font-size: 0.8rem;
     color: #ccc;
-    /* margin-left: 1.5rem; */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .label {

@@ -162,11 +162,11 @@ class Dates extends React.Component {
                     />
                 </div>
                 <div className={styles.season}>
-                    <Label
+                    {/* <Label
                         className={styles.seasonLabel}
                         msg={msg('process.mosaic.panel.dates.form.season.label')}
                         tooltip={msg('process.mosaic.panel.dates.form.season.tooltip')}
-                    />
+                    /> */}
                     <SeasonSelect
                         startDate={seasonStart}
                         endDate={seasonEnd}

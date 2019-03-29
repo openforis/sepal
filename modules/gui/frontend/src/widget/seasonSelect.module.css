@@ -43,6 +43,12 @@
     bottom: -0.5rem;
 }
 
+@media (max-width: 576px) {
+    .months {
+        display: none;
+    }
+}
+
 .months > * {
     position: absolute;
     top: 1rem;

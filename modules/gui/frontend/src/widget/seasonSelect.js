@@ -1,10 +1,7 @@
-import {Msg} from 'translate'
 import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
 import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
 import {intersect} from 'collections'
-import DatePicker from 'widget/datePicker'
 import Hammer from 'hammerjs'
-import Media from 'react-media'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
@@ -86,9 +83,7 @@ export default class SeasonSelect extends React.Component {
 
     render() {
         return (
-            <Media query='(min-width: 768px)'>
-                {matches => matches ? <Timeline seasonSelect={this}/> : <DatePickers seasonSelect={this}/>}
-            </Media>
+            <Timeline seasonSelect={this}/>
         )
     }
 
@@ -197,42 +192,6 @@ SeasonSelect.propTypes = {
     disabled: PropTypes.any,
     onChange: PropTypes.func
 }
-
-class DatePickers extends React.Component {
-    render() {
-        return this.renderDatePickers.bind(this.props.seasonSelect)()
-    }
-
-    renderDatePickers() {
-        const {centerDate, minDate, maxDate} = this.state
-        const {startDate, endDate} = this.props
-        return (
-            <div className={styles.datePickers}>
-                <div>
-                    <Msg id='widget.seasonSelect.from'/>
-                    <DatePicker
-                        input={startDate}
-                        startDate={minDate}
-                        endDate={centerDate}
-                        onChange={updatedStartDate => this.startDateChanged(moment(updatedStartDate), true)}
-                        errorMessage
-                    />
-                </div>
-                <div>
-                    <Msg id='widget.seasonSelect.to'/>
-                    <DatePicker
-                        input={endDate}
-                        startDate={moment(centerDate).add(1, 'days')}
-                        endDate={maxDate}
-                        onChange={updatedEndDate => this.endDateChanged(moment(updatedEndDate), true)}
-                        errorMessage
-                    />
-                </div>
-            </div>
-        )
-    }
-}
-
 class Timeline extends React.Component {
     render() {
         return this.renderTimeline.bind(this.props.seasonSelect)()
@@ -339,7 +298,6 @@ class Axis extends React.Component {
                 <div className={styles.months}>
                     {months}
                 </div>
-
             </div>
         )
     }
