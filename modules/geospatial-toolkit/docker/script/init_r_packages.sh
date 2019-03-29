@@ -11,7 +11,8 @@ apt-get install -y \
     libudunits2-dev \
     r-cran-rmpi \
     libopenmpi-dev \
-    libgeos++-dev
+    libgeos++-dev \
+    libmagick++-dev
 
 export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
 export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
@@ -126,7 +127,7 @@ R -e "pacman::p_load(\
         'networkD3',\
         'nlme',\
         'outliers',\
-        'permutate',\
+        'permute',\
         'png',\
         'proto',\
         'quantmod',\
