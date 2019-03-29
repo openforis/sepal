@@ -1,0 +1,31 @@
+{
+  "name": "ceo-gateway",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "start_unsecure": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 node src/index.js",
+    "dev": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon src/index.js"
+  },
+  "author": {
+    "name": "Roberto Fontanarosa",
+    "email": "roberto.fontanarosa@fao.org"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.4",
+    "randomcolor": "^0.5.4",
+    "request": "^2.88.0",
+    "url-join": "^4.0.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.1",
+    "cross-env": "^5.2.0",
+    "eslint": "^5.15.3",
+    "eslint-plugin-react": "^7.12.4",
+    "eslint-plugin-sort-imports-es6-autofix": "^0.4.0",
+    "nodemon": "^1.18.10"
+  }
+}

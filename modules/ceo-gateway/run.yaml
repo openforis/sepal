@@ -1,0 +1,21 @@
+---
+- name: "ceo-gateway | Start container"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      tag: "ceo-gateway"
+    networks:
+      - name: 'sepal'
+    env:
+      CEO_URL: '{{ ceo_url }}'
+      CEO_USERNAME: '{{ ceo_username }}'
+      CEO_PASSWORD: '{{ ceo_password }}'
+      CEO_INSTITUTION_ID: '{{ ceo_institution_id }}'
