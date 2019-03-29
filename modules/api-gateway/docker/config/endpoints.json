@@ -15,6 +15,13 @@
   },
   {
     "prefix": "true",
+    "path": "/ceo-gateway/",
+    "target": "http://ceo-gateway:8001/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
     "path": "/peatlands/",
     "target": "http://peatlands:7767/",
     "https": "false",

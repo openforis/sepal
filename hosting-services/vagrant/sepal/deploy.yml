@@ -67,6 +67,7 @@
     - { role: build-module, module: sepal-server }
     - { role: build-module, module: gui }
     - { role: build-module, module: ceo }
+    - { role: build-module, module: ceo-gateway }
     - { role: build-module, module: peatlands }
     - { role: build-module, module: task-executor }
     - { role: build-module, module: google-earth-engine }
@@ -84,6 +85,7 @@
     - { role: run-module, module: gui }
     - { role: run-module, module: peatlands }
     - { role: run-module, module: ceo }
+    - { role: run-module, module: ceo-gateway }
     - { role: run-module, module: ssh-gateway }
     - { role: run-module, module: terminal§ }
     - { role: run-module, module: api-gateway }
