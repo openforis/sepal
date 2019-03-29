@@ -1,10 +1,9 @@
 import {msg} from 'translate'
-import {recipePath} from '../recipe'
+import {recipeActionBuilder, recipePath} from '../recipe'
 import {selectFrom} from 'stateUtils'
 import Labels from '../../../map/labels'
 import _ from 'lodash'
 import api from 'api'
-import globalActionBuilder from 'action-builder'
 import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -36,14 +35,13 @@ export const defaultModel = {
 }
 
 export const RecipeActions = id => {
-    const actionBuilder = (name, props) => {
-        return globalActionBuilder(name, props)
-            .within(recipePath(id))
-    }
+    const actionBuilder = recipeActionBuilder(id)
+
     const set = (name, prop, value, otherProps) =>
         actionBuilder(name, otherProps)
             .set(prop, value)
             .build()
+
     const setAll = (name, values, otherProps) =>
         actionBuilder(name, otherProps)
             .setAll(values)

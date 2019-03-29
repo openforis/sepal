@@ -4,10 +4,10 @@ import {connect, select, subscribe} from 'store'
 import {debounceTime, groupBy, map, mergeMap, switchMap} from 'rxjs/operators'
 import {downloadObjectZip$} from 'widget/download'
 import {gzip$, ungzip$} from 'gzip'
-import {selectFrom, toPathList} from 'stateUtils'
+import {selectFrom} from 'stateUtils'
 import React from 'react'
 import _ from 'lodash'
-import actionBuilder from 'action-builder'
+import actionBuilder, {scopedActionBuilder} from 'action-builder'
 import api from 'api'
 
 const saveToBackend$ = (() => {
@@ -90,21 +90,15 @@ const saveToLocalStorage$ = (() => {
     return save$
 })()
 
-const recipeTabIndex = recipeId => {
-    const index = select('process.tabs').findIndex(recipe => recipe.id === recipeId)
-    if (index === -1) {
-        throw new Error(`Recipe not found: ${recipeId}`)
-    }
-    return index
-}
-
 export const recipePath = (recipeId, path) =>
-    toPathList(['process.tabs', recipeTabIndex(recipeId), path])
+    ['process.tabs', {id: recipeId}, path]
+
+export const recipeActionBuilder = id =>
+    scopedActionBuilder(recipePath(id))
 
 export const RecipeState = recipeId =>
     isRecipeOpen(recipeId)
-        // ? path => select(recipePath(recipeId, path))
-        ? path => select('process.tabs', {id: recipeId}, path)
+        ? path => select(recipePath(recipeId, path))
         : null
 
 export const setInitialized = recipeId => {

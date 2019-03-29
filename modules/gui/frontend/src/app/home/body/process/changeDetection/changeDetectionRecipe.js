@@ -1,15 +1,11 @@
 import {msg} from 'translate'
-import {recipePath} from '../recipe'
+import {recipeActionBuilder} from '../recipe'
 import _ from 'lodash'
 import api from 'api'
-import globalActionBuilder from 'action-builder'
 
 export const RecipeActions = id => {
+    const actionBuilder = recipeActionBuilder(id)
 
-    const actionBuilder = (name, props) => {
-        return globalActionBuilder(name, props)
-            .within(recipePath(id))
-    }
     const set = (name, prop, value, otherProps) =>
         actionBuilder(name, otherProps)
             .set(prop, value)
