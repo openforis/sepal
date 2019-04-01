@@ -36,6 +36,7 @@ class CompositeOptions extends React.Component {
             },
             sources
         } = this.props
+        const includesSentinel2 = Object.keys(sources).includes('SENTINEL_2')
         return (
             <div className={styles.content}>
                 <Buttons
@@ -45,18 +46,18 @@ class CompositeOptions extends React.Component {
                     options={[{
                         value: 'SR',
                         label: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.label'),
-                        tooltip: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.tooltip'),
-                        neverSelected: Object.keys(sources).includes('SENTINEL_2')
+                        tooltip: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.tooltip')
                     }, {
                         value: 'BRDF',
                         label: msg('process.mosaic.panel.composite.form.corrections.brdf.label'),
                         tooltip: msg('process.mosaic.panel.composite.form.corrections.brdf.tooltip'),
-                        neverSelected: Object.keys(sources).includes('SENTINEL_2')
+                        neverSelected: includesSentinel2
                     }, {
                         value: 'CALIBRATE',
                         label: msg('process.mosaic.panel.composite.form.corrections.calibrate.label'),
                         tooltip: msg('process.mosaic.panel.composite.form.corrections.calibrate.tooltip'),
                         neverSelected: _.flatten(Object.values(sources)).length < 2
+                            || corrections.value.includes('SR')
                     }]}
                 />
                 <div className={styles.filters}>

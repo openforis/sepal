@@ -86,7 +86,7 @@ class Home extends React.Component {
                         <div className={styles.google}></div>
                         <Footer className={styles.footer}/>
                     </div>
-                    <div id='fullScreenPortalContainer' className={styles.portalContainer}/>
+                    <div id='fullScreenPortalContainer' className={[styles.portalContainer, styles.fullScreen].join(' ')}/>
                     <div id='sectionPortalContainer' className={[styles.portalContainer, styles.section].join(' ')}/>
                 </div>
             </ActivationContext>

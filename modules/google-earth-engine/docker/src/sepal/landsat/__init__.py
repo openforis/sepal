@@ -1,8 +1,9 @@
 import _strptime
-import ee
 from datetime import datetime
 from datetime import timedelta
 from itertools import groupby
+
+import ee
 
 from analyze import Analyze
 from ..dates import millis_to_date
@@ -19,6 +20,11 @@ class LandsatMosaicSpec(MosaicSpec):
         self._collection_names_by_scene_id_prefix = collections['collection_names_by_scene_id_prefix']
         self._collection_names_by_sensor = collections['collection_names_by_sensor']
         self.set_scale()
+        composite_options = spec['recipe']['model']['compositeOptions']
+        more_than_one_data_set = len(_flatten(spec['recipe']['model']['sources'].values())) > 1
+        print(more_than_one_data_set)
+        self.calibrate = 'CALIBRATE' in composite_options['corrections'] and 'SR' not in composite_options[
+            'corrections'] and more_than_one_data_set
 
     def _data_set(self, collection_name, image_filter):
         return LandsatDataSet(collection_name, image_filter, self)
@@ -55,23 +61,10 @@ class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
         :return: A set of collection names.
         """
         return set(
-            self._flatten(
+            _flatten(
                 map(lambda sensor: self._collection_names_by_sensor[sensor], self.sensors)
             )
         )
-
-    @staticmethod
-    def _flatten(iterable):
-        """Flattens the provided iterable.
-
-        The provided iterable and any nested iterable have their contents added to a list.
-
-        :param iterable: The iterable to flatten.
-        :type iterable: iterable
-
-        :return: A flattened list
-        """
-        return [item for sublist in iterable for item in sublist]
 
     def __str__(self):
         return 'landsat.AutomaticMosaicSpec(' + str(self.spec) + ')'
@@ -135,6 +128,7 @@ def _convert_data_set_names_to_ee_collection_names(data_set_names, sr):
         )
     )
 
+
 def landsat_data_sets(data_set_names, aoi, spec, dateFilter):
     image_filter = ee.Filter.And(
         ee.Filter.geometry(aoi),
@@ -143,7 +137,6 @@ def landsat_data_sets(data_set_names, aoi, spec, dateFilter):
     )
     collection_names = _convert_data_set_names_to_ee_collection_names(data_set_names, spec.surface_reflectance)
     return [LandsatDataSet(name, image_filter, spec) for name in collection_names]
-
 
 
 _toa = {
@@ -202,7 +195,39 @@ class LandsatDataSet(DataSet):
         return ee.ImageCollection(self.collection_name).filter(self.image_filter)
 
     def analyze(self, image):
-        return Analyze(image, self.bands(), self.mosaic_spec).apply()
+        return self.calibrate(
+            Analyze(image, self.bands(), self.mosaic_spec).apply()
+        )
+
+    def calibrate(self, image):
+        if not self.mosaic_spec.calibrate:
+            return image
+        else:
+            prefix = self.collection_name[8:12]
+            coefs = {
+                'LC08': {
+                    'slopes': [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
+                    'intercepts': [-0.0107, 0.0026, -0.0015, 0.0033, 0.0065, 0.0046]
+                },
+                'LE07': {
+                    'slopes': [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
+                    'intercepts': [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
+                },
+                'LT05': {
+                    'slopes': [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
+                    'intercepts': [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
+                },
+                'LT04': {
+                    'slopes': [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
+                    'intercepts': [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
+                }
+            }[prefix]
+            t = image.get("system:time_start")
+            bandNames = ee.List(['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])
+            otherBands = ee.Image(image).bandNames().removeAll(bandNames)
+            others = image.select(otherBands)
+            image = ee.Image(image).select(bandNames).multiply(coefs['slopes']).add(coefs['intercepts']).float()
+            return ee.Image(image.addBands(others).copyProperties(image).set("system:time_start", t))
 
     def bands(self):
         return {
@@ -273,3 +298,6 @@ _scale_by_band = {
     'daysFromTarget': 30,
     'unixTimeDays': 30
 }
+
+def _flatten(iterable):
+    return [item for sublist in iterable for item in sublist]

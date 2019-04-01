@@ -17,7 +17,6 @@ class Sentinel2MosaicSpec(MosaicSpec):
         super(Sentinel2MosaicSpec, self).__init__(spec)
         self.set_scale()
         self.brdf_correct = False
-        self.surface_reflectance = False
 
     def set_scale(self):
         if self.bands:
@@ -31,7 +30,7 @@ class Sentinel2MosaicSpec(MosaicSpec):
             self.scale = 10
 
     def _data_sets(self):
-        return [Sentinel2DataSet(self._create_image_filter())]
+        return [Sentinel2DataSet(self._create_image_filter(), self.surface_reflectance)]
 
     @abstractmethod
     def _create_image_filter(self):
@@ -104,18 +103,20 @@ _scale_by_band = {
 
 
 class Sentinel2DataSet(DataSet):
-    def __init__(self, image_filter):
+    def __init__(self, image_filter, surface_reflectance):
         super(Sentinel2DataSet, self).__init__()
         self.image_filter = image_filter
+        self.surface_reflectance = surface_reflectance
 
     def to_collection(self):
+        collection_name = 'COPERNICUS/S2_SR' if self.surface_reflectance else 'COPERNICUS/S2'
         return ee.ImageCollection('COPERNICUS/S2').filter(self.image_filter)
 
     def analyze(self, image):
         return Analyze(image, self.bands()).apply()
 
     def bands(self):
-        return {
+        bands = {
             'aerosol': 'B1',
             'blue': 'B2',
             'green': 'B3',
@@ -130,3 +131,7 @@ class Sentinel2DataSet(DataSet):
             'swir1': 'B11',
             'swir2': 'B12',
         }
+        if not self.surface_reflectance:
+            bands['cirrus'] = 'B10'
+        return bands
+

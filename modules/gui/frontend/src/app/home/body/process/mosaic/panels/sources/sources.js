@@ -71,8 +71,10 @@ class Sources extends React.Component {
                 className={styles.panel}
                 placement='bottom-right'
                 onApply={(values, model) => {
-                    if (Object.keys(model).length > 1)
+                    if (Object.keys(model).length > 1) {
                         RecipeActions(recipeId).enableBandCalibration().dispatch()
+                        RecipeActions(recipeId).useAllScenes().dispatch()
+                    }
                 }}
                 onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
                 <PanelHeader
