@@ -7,7 +7,6 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import DatePicker from 'widget/datePicker'
-import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SeasonSelect from 'widget/seasonSelect'
