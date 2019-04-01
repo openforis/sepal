@@ -135,7 +135,7 @@ class CompositeOptions extends React.Component {
 CompositeOptions.propTypes = {
     disabled: PropTypes.any,
     recipeId: PropTypes.string,
-    sources: PropTypes.string
+    sources: PropTypes.any
 }
 
 const PercentileField = ({input, disabled = false}) => {

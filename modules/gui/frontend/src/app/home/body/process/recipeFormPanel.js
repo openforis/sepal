@@ -135,7 +135,6 @@ const setModelAndValues = ({id, statePath, model, values}) => {
     const bar = Object.keys(subscriptions).map(id => {
         return {id, values: subscriptions[id](model)}
     })
-    console.log({subscriptions, bar})
     return actionBuilder('SET_MODEL_AND_VALUES', {id, model, values})
         .set([statePath, 'ui', id], values)
         .set([statePath, 'model', id], model)

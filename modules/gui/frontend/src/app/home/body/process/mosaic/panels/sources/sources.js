@@ -19,13 +19,9 @@ const fields = _.transform(sources,
 
 const constraints = {
     dataSetSelected: new Constraint(sources)
-        .predicate(values => {
-            console.log({values})
-            return Object.values(values).find(value => {
-                console.log({value})
-                return _.isArray(value) && value.length
-            })
-        }, 'process.mosaic.panel.sources.form.required')
+        .predicate(values =>
+            Object.values(values).find(value =>
+                _.isArray(value) && value.length), 'process.mosaic.panel.sources.form.required')
 }
 
 const mapRecipeToProps = recipe => ({

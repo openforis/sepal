@@ -125,7 +125,6 @@ export const RecipeActions = id => {
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
-    console.log({recipe})
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
