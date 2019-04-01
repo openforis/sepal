@@ -53,20 +53,6 @@ const actionBuilder = (type, props, prefix) => {
             return this
         },
 
-        map(path, callback) {
-            operations.push((immutableState, state) => {
-                const resolver = scopedResolve(state, path)
-                const collection = resolver.value
-                if (!Array.isArray(collection)) return immutableState
-                return collection
-                    .map(callback)
-                    .map((value, index) => ({index, value}))
-                    .filter(({index, value}) => value !== collection[index])
-                    .reduce((immutableState, {index, value}) => immutableState.set([resolver.path, index], value), immutableState)
-            })
-            return this
-        },
-
         push(path, value) {
             operations.push((immutableState, state) => {
                 return immutableState.push(scopedResolve(state, path).path, value)
