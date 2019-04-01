@@ -153,7 +153,6 @@ const setDirty = ({id, statePath, dirty}) =>
         .dispatch()
 
 const addSubscriptions = (id, subscriptions) => {
-    console.log({addSubscriptions})
     Object.keys(subscriptions).forEach(modelId => {
         modelChangeSubscribers = {
             ...modelChangeSubscribers,

@@ -65,7 +65,6 @@ class BandSelection extends React.Component {
 
     render() {
         const {sources, surfaceReflectance, median, inputs: {selection, panSharpen}} = this.props
-        console.log({sources})
         const canPanSharpen = sources.LANDSAT
             && !surfaceReflectance
             && ['red, green, blue', 'nir, red, green'].includes(selection.value)
