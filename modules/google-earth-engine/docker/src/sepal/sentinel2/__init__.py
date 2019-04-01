@@ -18,7 +18,6 @@ class Sentinel2MosaicSpec(MosaicSpec):
         self.set_scale()
         self.brdf_correct = False
         self.surface_reflectance = False
-        self.masked_on_analysis = False
 
     def set_scale(self):
         if self.bands:
