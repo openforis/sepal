@@ -1,13 +1,13 @@
+import actionBuilder from 'action-builder'
+import moment from 'moment'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {connect} from 'store'
+import lookStyles from 'style/look.module.css'
+import {msg} from 'translate'
 import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {connect} from 'store'
-import {msg} from 'translate'
-import PropTypes from 'prop-types'
-import React from 'react'
-import actionBuilder from 'action-builder'
-import lookStyles from 'style/look.module.css'
-import moment from 'moment'
 import styles from './createRecipe.module.css'
 
 const mapStateToProps = state => {
@@ -36,16 +36,10 @@ const createRecipe = (recipeId, type, title) => {
 
 const setTabType = (recipeId, type, title) =>
     actionBuilder('SET_TAB_TYPE')
-        .withState('process.tabs', (recipes, stateBuilder) => {
-            const recipeIndex = recipes.findIndex(recipe => recipe.id === recipeId)
-            if (recipeIndex === -1)
-                throw new Error('Unable to create recipe')
-            return stateBuilder
-                .merge(['process', 'tabs', recipeIndex], {
-                    type,
-                    placeholder: `${title.replace(/[^\w-.]/g, '_')}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`,
-                    ui: {unsaved: true}
-                })
+        .merge(['process.tabs', {id: recipeId}], {
+            type,
+            placeholder: `${title.replace(/[^\w-.]/g, '_')}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`,
+            ui: {unsaved: true}
         })
         .dispatch()
 

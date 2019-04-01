@@ -1,15 +1,15 @@
-import {Button} from 'widget/button'
-import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {connect, select} from 'store'
-import {isMobile} from 'widget/userAgent'
-import {msg} from 'translate'
-import PropTypes from 'prop-types'
-import React from 'react'
-import TabContent from './tabContent'
-import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
 import guid from 'guid'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import Tooltip from 'widget/tooltip'
+import {isMobile} from 'widget/userAgent'
+import TabContent from './tabContent'
 import styles from './tabs.module.css'
 
 export const addTab = statePath => {
@@ -37,23 +37,22 @@ const renameTab = (id, title, tabPath, onTitleChanged) => {
 }
 
 export const closeTab = (id, statePath) => {
-    const updateSelectedTab = (root, stateBuilder) => {
-        if (root.selectedTabId !== id)
-            return
-        const tabs = root.tabs
+    const nextSelectedTabId = () => {
+        const tabs = select([statePath, 'tabs'])
         const tabIndex = tabs.findIndex(tab => tab.id === id)
         const first = tabIndex === 0
         const last = tabIndex === tabs.length - 1
-        let nextSelectedId = null
+
         if (!last)
-            nextSelectedId = tabs[tabIndex + 1].id
+            return tabs[tabIndex + 1].id
         else if (!first)
-            nextSelectedId = tabs[tabIndex - 1].id
-        return stateBuilder.set([statePath, 'selectedTabId'], nextSelectedId)
+            return tabs[tabIndex - 1].id
+        else
+            return null
     }
 
     actionBuilder('CLOSE_TAB')
-        .withState(statePath, updateSelectedTab)
+        .set([statePath, 'selectedTabId'], nextSelectedTabId())
         .del([statePath, 'tabs', {id}])
         .dispatch()
 }
@@ -89,7 +88,9 @@ class Tabs extends React.Component {
                 selected={tab.id === selectedTabId}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
-                onClose={() => {onClose ? onClose(tab, close) : close()}}
+                onClose={() => {
+                    onClose ? onClose(tab, close) : close()
+                }}
             />
         )
     }

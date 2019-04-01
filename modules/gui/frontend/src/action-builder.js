@@ -15,14 +15,6 @@ const actionBuilder = (type, props, prefix) => {
             return this
         },
 
-        withState(path, callback) {
-            operations.push((immutableState, state) => {
-                const prevValue = scopedResolve(state, path).value
-                return callback(prevValue, immutableState)
-            })
-            return this
-        },
-
         set(path, value) {
             operations.push((immutableState, state) => {
                 const resolver = scopedResolve(state, path)
