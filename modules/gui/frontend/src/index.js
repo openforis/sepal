@@ -2,13 +2,13 @@ import {Provider} from 'react-redux'
 import {Router} from 'react-router-dom'
 import {applyMiddleware, createStore} from 'redux'
 import {composeWithDevTools} from 'redux-devtools-extension'
+import {createBrowserHistory} from 'history'
 import {initStore} from 'store'
 import {syncHistoryAndStore} from 'route'
 import App from 'app/app'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import TranslationProvider from 'translate'
-import createHistory from 'history/createBrowserHistory'
 
 const rootReducer = (state = [], action) => {
     if ('reduce' in action)
@@ -38,7 +38,7 @@ const store = createStore(
 )
 initStore(store)
 
-const history = createHistory()
+const history = createBrowserHistory()
 syncHistoryAndStore(history, store)
 
 ReactDOM.render(
