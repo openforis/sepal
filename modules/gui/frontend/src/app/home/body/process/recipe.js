@@ -340,14 +340,19 @@ export const initValues = ({getModel, getValues, modelToValues, onInitialized}) 
 
             componentDidMount() {
                 const {model, values} = this.state
-                if (model && !values)
-                    this.convertModelToValues(model)
+                if (model)
+                    this.convertModelToValues(model, values)
                 this.setState(prevState => ({...prevState, initialized: true}))
             }
 
-            convertModelToValues(model) {
-                const values = modelToValues(model)
-                onInitialized({model, values, props: this.props})
+            convertModelToValues(model, values = {}) {
+                const valuesFromModel = modelToValues(model)
+                onInitialized({
+                    model,
+                    // values: _.merge(valuesFromModel, values),
+                    values: valuesFromModel,
+                    props: this.props
+                })
             }
         }
 

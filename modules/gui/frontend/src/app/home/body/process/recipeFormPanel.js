@@ -24,10 +24,7 @@ export const recipeFormPanel = ({
     modelToValues = model => ({...model}),
     valuesToModel = values => ({...values}),
     policy = defaultPolicy,
-    modelSubscriptions = {}
 }) => {
-    addSubscriptions(id, modelSubscriptions)
-
     const createMapRecipeToProps = mapRecipeToProps =>
         recipe => {
             const additionalProps = mapRecipeToProps(recipe)
@@ -131,10 +128,6 @@ RecipeFormPanel.propTypes = {
 }
 
 const setModelAndValues = ({id, statePath, model, values}) => {
-    const subscriptions = (modelChangeSubscribers[id] || {})
-    const bar = Object.keys(subscriptions).map(id => {
-        return {id, values: subscriptions[id](model)}
-    })
     return actionBuilder('SET_MODEL_AND_VALUES', {id, model, values})
         .set([statePath, 'ui', id], values)
         .set([statePath, 'model', id], model)
@@ -150,17 +143,3 @@ const setDirty = ({id, statePath, dirty}) =>
     actionBuilder('SET_DIRTY', {id, dirty})
         .set([statePath, 'ui', id, 'dirty'], dirty)
         .dispatch()
-
-const addSubscriptions = (id, subscriptions) => {
-    Object.keys(subscriptions).forEach(modelId => {
-        modelChangeSubscribers = {
-            ...modelChangeSubscribers,
-            [modelId]: {
-                ...(modelChangeSubscribers[modelId] || {}),
-                [id]: subscriptions[modelId]
-            }
-        }
-    })
-}
-
-let modelChangeSubscribers = {}

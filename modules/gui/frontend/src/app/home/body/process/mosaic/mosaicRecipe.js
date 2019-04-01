@@ -15,7 +15,7 @@ export const SceneSelectionType = Object.freeze({
 
 export const defaultModel = {
     dates: {
-        targetDate: moment().format(DATE_FORMAT),
+        targetDate: moment().set('month', 6).set('date', 2).format(DATE_FORMAT),
         seasonStart: moment().startOf('year').format(DATE_FORMAT),
         seasonEnd: moment().add(1, 'years').startOf('year').format(DATE_FORMAT),
         yearsBefore: 0,
