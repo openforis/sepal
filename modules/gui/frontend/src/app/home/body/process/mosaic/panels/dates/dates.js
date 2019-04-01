@@ -245,7 +245,8 @@ const modelToValues = (model = {}) => {
             moment(model.seasonStart).dayOfYear() !== 1
             || moment(model.seasonEnd).dayOfYear() !== 1
             || model.yearsBefore !== 0
-            || model.yearsAfter !== 0,
+            || model.yearsAfter !== 0
+            || moment(model.targetDate).dayOfYear() !== 183, // 2 July
         targetYear: moment(model.targetDate).year(),
         targetDate: model.targetDate,
         seasonStart: model.seasonStart,
