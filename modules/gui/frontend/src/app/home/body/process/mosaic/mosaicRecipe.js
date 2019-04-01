@@ -31,7 +31,8 @@ export const defaultModel = {
         filters: [],
         mask: ['CLOUDS', 'SNOW'],
         compose: 'MEDOID'
-    }
+    },
+    scenes: {}
 }
 
 export const RecipeActions = id => {
@@ -86,6 +87,13 @@ export const RecipeActions = id => {
             return actionBuilder('ENABLE_BAND_CALIBRATION')
                 .pushIfMissing('ui.compositeOptions.corrections', 'CALIBRATE')
                 .pushIfMissing('model.compositeOptions.corrections', 'CALIBRATE')
+                .build()
+        },
+        useAllScenes() {
+            return actionBuilder('USE_ALL_SCENES')
+                .set('ui.sceneSelectionOptions.type', SceneSelectionType.ALL)
+                .set('model.sceneSelectionOptions.type', SceneSelectionType.ALL)
+                .build()
         },
         setSelectedScenes(scenes) {
             return set('SET_SELECTED_SCENES', 'model.scenes', scenes, {scenes})
