@@ -68,15 +68,18 @@ export const resolve = (object, path) =>
                 }
 
             }
-            if (_.isPlainObject(part) && _.isArray(value)) {
+            if (_.isPlainObject(part) && (_.isArray(value) || !value)) {
                 // match array item by template
                 const index = _.findIndex(value, item => _.isEqual(_.merge({}, item, part), item))
-                if (index !== -1) {
-                    return {
+                return index === -1
+                    ? {
+                        path: [...path, value ? value.length : 0],
+                        value: part
+                    }
+                    : {
                         path: [...path, index],
                         value: value[index]
                     }
-                }
             }
             return {
                 path: undefined,

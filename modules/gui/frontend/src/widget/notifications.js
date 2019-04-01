@@ -147,7 +147,7 @@ class _Notifications extends React.Component {
         this.subscriptions.push(
             publish$.subscribe(notification =>
                 actionBuilder('PUBLISH_NOTIFICATION')
-                    .pushIfMissing(PATH, notification, 'group')
+                    .pushUnique(PATH, notification, 'group')
                     .dispatch()
             )
         )

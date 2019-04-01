@@ -84,8 +84,8 @@ export const RecipeActions = id => {
         },
         enableBandCalibration() {
             return actionBuilder('ENABLE_BAND_CALIBRATION')
-                .pushIfMissing('ui.compositeOptions.corrections', 'CALIBRATE')
-                .pushIfMissing('model.compositeOptions.corrections', 'CALIBRATE')
+                .pushUnique('ui.compositeOptions.corrections', 'CALIBRATE')
+                .pushUnique('model.compositeOptions.corrections', 'CALIBRATE')
         },
         setSelectedScenes(scenes) {
             return set('SET_SELECTED_SCENES', 'model.scenes', scenes, {scenes})
