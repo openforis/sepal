@@ -1,7 +1,7 @@
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, getSource} from '../../mosaicRecipe'
+import {RecipeActions} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
@@ -12,6 +12,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import Slider from 'widget/slider'
 import styles from './compositeOptions.module.css'
+import _ from 'lodash'
 
 const fields = {
     corrections: new Field(),
@@ -24,7 +25,7 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    source: getSource(recipe)
+    sources: selectFrom(recipe, 'model.sources')
 })
 
 class CompositeOptions extends React.Component {
@@ -33,7 +34,7 @@ class CompositeOptions extends React.Component {
             inputs: {
                 corrections, shadowPercentile, hazePercentile, ndviPercentile, dayOfYearPercentile, mask, compose
             },
-            source
+            sources
         } = this.props
         return (
             <div className={styles.content}>
@@ -45,12 +46,17 @@ class CompositeOptions extends React.Component {
                         value: 'SR',
                         label: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.label'),
                         tooltip: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.tooltip'),
-                        neverSelected: source !== 'LANDSAT'
+                        neverSelected: Object.keys(sources).includes('SENTINEL_2')
                     }, {
                         value: 'BRDF',
                         label: msg('process.mosaic.panel.composite.form.corrections.brdf.label'),
                         tooltip: msg('process.mosaic.panel.composite.form.corrections.brdf.tooltip'),
-                        neverSelected: source !== 'LANDSAT'
+                        neverSelected: Object.keys(sources).includes('SENTINEL_2')
+                    }, {
+                        value: 'CALIBRATE',
+                        label: msg('process.mosaic.panel.composite.form.corrections.calibrate.label'),
+                        tooltip: msg('process.mosaic.panel.composite.form.corrections.calibrate.tooltip'),
+                        neverSelected: _.flatten(Object.values(sources)).length < 2
                     }]}
                 />
                 <div className={styles.filters}>
@@ -61,7 +67,7 @@ class CompositeOptions extends React.Component {
                     <PercentileField input={shadowPercentile}/>
                     <PercentileField
                         input={hazePercentile}
-                        disabled={source === 'LANDSAT' && corrections.value.includes('SR')}/>
+                        disabled={corrections.value.includes('SR')}/>
                     <PercentileField input={ndviPercentile}/>
                     <PercentileField input={dayOfYearPercentile}/>
                 </div>
@@ -129,7 +135,7 @@ class CompositeOptions extends React.Component {
 CompositeOptions.propTypes = {
     disabled: PropTypes.any,
     recipeId: PropTypes.string,
-    source: PropTypes.string
+    sources: PropTypes.string
 }
 
 const PercentileField = ({input, disabled = false}) => {
@@ -194,6 +200,15 @@ const policy = ({values, wizardContext: {wizard}}) => {
         }
 }
 
-export default recipeFormPanel({id: 'compositeOptions', fields, mapRecipeToProps, modelToValues, valuesToModel, policy})(
+const panelOptions = {
+    id: 'compositeOptions',
+    fields,
+    mapRecipeToProps,
+    modelToValues,
+    valuesToModel,
+    policy
+}
+
+export default recipeFormPanel(panelOptions)(
     CompositeOptions
 )

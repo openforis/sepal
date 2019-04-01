@@ -341,8 +341,8 @@
                                     "tooltip": "Landsat 4-5 Tier 2"
                                 },
                                 "SENTINEL_2": {
-                                    "label": "S2",
-                                    "tooltip": "Sentinel 2"
+                                    "label": "A + B",
+                                    "tooltip": "Sentinel 2A and Sentinel 2B"
                                 }
                             }
                         },
@@ -391,6 +391,10 @@
                             "brdf": {
                                 "label": "BRDF",
                                 "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+                            },
+                            "calibrate": {
+                                "label": "Calibrate",
+                                "tooltip": "Calibrate bands to improve cross-sensor mosaic."
                             }
                         },
                         "filters": {

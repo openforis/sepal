@@ -142,7 +142,14 @@ export const dataSetById = {
                 'redEdge1', 'redEdge2', 'redEdge3', 'redEdge4',
                 'aerosol', 'waterVapor', 'cirrus'
             ]
-        }
+        },
+        SR: {
+            bands: [
+                'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+                'redEdge1', 'redEdge2', 'redEdge3', 'redEdge4',
+                'aerosol', 'waterVapor'
+            ]
+        },
     }
 }
 

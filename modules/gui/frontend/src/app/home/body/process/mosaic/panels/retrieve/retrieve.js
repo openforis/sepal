@@ -70,8 +70,7 @@ class Retrieve extends React.Component {
 
     renderContent() {
         const {user, sources, compositeOptions, inputs: {bands, destination}} = this.props
-        const source = Object.keys(sources)[0]
-        const correction = source === 'LANDSAT' && compositeOptions.corrections.includes('SR') ? 'SR' : 'TOA'
+        const correction = compositeOptions.corrections.includes('SR') ? 'SR' : 'TOA'
         const bandsForEachDataSet = _.flatten(Object.values(sources))
             .map(dataSetId => dataSetById[dataSetId][correction].bands)
         const availableBands = new Set(

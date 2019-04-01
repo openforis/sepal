@@ -1,5 +1,5 @@
 import {Field, form} from 'widget/form'
-import {RecipeActions, getSource} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -20,7 +20,7 @@ const mapRecipeToProps = recipe => {
     const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
     return {
         recipeId: recipe.id,
-        source: getSource(recipe),
+        sources: selectFrom(recipe, 'model.sources'),
         surfaceReflectance: compositeOptions.corrections.includes('SR'),
         median: compositeOptions.compose === 'MEDIAN',
         values
@@ -64,8 +64,9 @@ class BandSelection extends React.Component {
     }
 
     render() {
-        const {source, surfaceReflectance, median, inputs: {selection, panSharpen}} = this.props
-        const canPanSharpen = source === 'LANDSAT'
+        const {sources, surfaceReflectance, median, inputs: {selection, panSharpen}} = this.props
+        console.log({sources})
+        const canPanSharpen = sources.LANDSAT
             && !surfaceReflectance
             && ['red, green, blue', 'nir, red, green'].includes(selection.value)
         const options = median

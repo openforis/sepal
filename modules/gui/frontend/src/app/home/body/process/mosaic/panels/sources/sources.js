@@ -1,24 +1,31 @@
-import {Field} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
-import {Msg, msg} from 'translate'
-import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions, dateRange} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {arrayEquals} from 'collections'
-import {imageSourceById, isDataSetInDateRange, isSourceInDateRange, sources} from 'sources'
-import {selectFrom} from 'stateUtils'
-import Buttons from 'widget/buttons'
-import Label from 'widget/label'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {imageSourceById, isDataSetInDateRange, sources} from 'sources'
+import {msg} from 'translate'
+import Buttons from 'widget/buttons'
+import {selectFrom} from 'stateUtils'
+import {Constraint, Field} from 'widget/form'
+import {FormPanelButtons} from 'widget/formPanel'
+import Label from 'widget/label'
+import {PanelContent, PanelHeader} from 'widget/panel'
+import {dateRange, RecipeActions} from '../../mosaicRecipe'
 import styles from './sources.module.css'
-import updateSource from './updateSource'
 
-const fields = {
-    source: new Field()
-        .notEmpty('process.mosaic.panel.sources.form.required'),
-    dataSets: new Field()
-        .notEmpty('process.mosaic.panel.sources.form.required')
+const fields = _.transform(sources,
+    (fields, source) => fields[source] = new Field(),
+    {})
+
+const constraints = {
+    dataSetSelected: new Constraint(sources)
+        .predicate(values => {
+            console.log({values})
+            return Object.values(values).find(value => {
+                console.log({value})
+                return _.isArray(value) && value.length
+            })
+        }, 'process.mosaic.panel.sources.form.required')
 }
 
 const mapRecipeToProps = recipe => ({
@@ -30,42 +37,16 @@ class Sources extends React.Component {
         return sourceValue ? imageSourceById[sourceValue].dataSets : null
     }
 
-    sourceChanged(sourceValue) {
-        const {inputs: {dataSets}} = this.props
-        const dataSetNames = this.lookupDataSetNames(sourceValue)
-        const dataSetsValue = dataSetNames.length === 1 ? [dataSetNames[0]] : null
-        dataSets.set(dataSetsValue)
-    }
-
     renderSources() {
-        const {dates, inputs: {source}} = this.props
-        const [from, to] = dateRange(dates)
-        const options = sources.map(value =>
-            ({
-                value,
-                label: msg(['process.mosaic.panel.sources.form.source.options', value]),
-                neverSelected: !isSourceInDateRange(value, from, to)
-            })
-        )
-        return (
-            <div>
-                <Label msg={msg('process.mosaic.panel.sources.form.source.label')}/>
-                <Buttons
-                    className={styles.sources}
-                    input={source}
-                    options={options}
-                    onChange={sourceValue => this.sourceChanged(sourceValue)}/>
-            </div>
+        return sources.map(source =>
+            this.renderSource(source, imageSourceById[source].dataSets)
         )
     }
 
-    renderDataSets() {
-        const {dates, inputs: {source, dataSets}} = this.props
-        if (!source.value)
-            return
-        const dataSetNames = this.lookupDataSetNames(source.value)
+    renderSource(source, dataSets) {
+        const {dates, inputs} = this.props
         const [from, to] = dateRange(dates)
-        const options = (dataSetNames || []).map(value =>
+        const options = (dataSets || []).map(value =>
             ({
                 value,
                 label: msg(['process.mosaic.panel.sources.form.dataSets.options', value, 'label']),
@@ -73,15 +54,18 @@ class Sources extends React.Component {
                 disabled: !isDataSetInDateRange(value, from, to)
             })
         )
-        const content = options.length > 1
-            ? <Buttons className={styles.dataSets} input={dataSets} options={options} multiple/>
-            : <div className={styles.oneDataSet}><Msg id='process.mosaic.panel.sources.form.dataSets.oneDataSet'/></div>
         return (
-            <div>
-                <Label msg={msg('process.mosaic.panel.sources.form.dataSets.label')}/>
-                {content}
+            <div key={source}>
+                <Label msg={msg(['process.mosaic.panel.sources.form.source.options', source])}/>
+                <Buttons
+                    className={styles.dataSets}
+                    input={inputs[source]}
+                    options={options}
+                    multiple
+                />
             </div>
         )
+
     }
 
     render() {
@@ -90,9 +74,9 @@ class Sources extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'
-                onApply={(values, model, prevValues) => {
-                    if (values.source !== prevValues.source)
-                        RecipeActions(recipeId).setSelectedScenes().dispatch()
+                onApply={(values, model) => {
+                    if (Object.keys(model).length > 1)
+                        RecipeActions(recipeId).enableBandCalibration().dispatch()
                 }}
                 onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
                 <PanelHeader
@@ -100,10 +84,7 @@ class Sources extends React.Component {
                     title={msg('process.mosaic.panel.sources.title')}/>
 
                 <PanelContent>
-                    <div>
-                        {this.renderSources()}
-                        {this.renderDataSets()}
-                    </div>
+                    {this.renderSources()}
                 </PanelContent>
 
                 <FormPanelButtons/>
@@ -115,16 +96,6 @@ class Sources extends React.Component {
         const {recipeId} = this.props
         RecipeActions(recipeId).hidePreview().dispatch()
     }
-
-    componentDidUpdate() {
-        const {dates, inputs: {source, dataSets}} = this.props
-        const [selectedSource, selectedDataSets] = updateSource(source.value, dataSets.value, ...dateRange(dates))
-        if (selectedSource !== source.value)
-            source.set(selectedSource)
-
-        if (!arrayEquals(selectedDataSets, dataSets.value))
-            dataSets.set(selectedDataSets)
-    }
 }
 
 Sources.propTypes = {
@@ -132,15 +103,13 @@ Sources.propTypes = {
 }
 
 const valuesToModel = values => {
-    return {[values.source]: values.dataSets ? [...values.dataSets] : null}
+    const model = {}
+    Object.keys(values)
+        .filter(source => _.isArray(values[source]) && values[source].length)
+        .forEach(source => model[source] = values[source])
+    return model
 }
 
-const modelToValues = model => {
-    return {
-        source: Object.keys(model)[0],
-        dataSets: [...Object.values(model)[0]]
-    }
-}
 
 const policy = ({values, wizardContext: {wizard}}) => {
     return wizard || selectFrom(values, 'dirty')
@@ -154,4 +123,4 @@ const policy = ({values, wizardContext: {wizard}}) => {
         }
 }
 
-export default recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel, policy})(Sources)
+export default recipeFormPanel({id: 'sources', fields, constraints, mapRecipeToProps, valuesToModel, policy})(Sources)

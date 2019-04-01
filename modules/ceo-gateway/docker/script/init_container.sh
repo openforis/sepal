@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-npm start_unsecure
+npm run start_unsecure
