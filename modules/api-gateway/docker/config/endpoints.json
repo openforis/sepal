@@ -15,7 +15,7 @@
   },
   {
     "prefix": "true",
-    "path": "/ceo-gateway/",
+    "path": "/api/ceo-gateway/",
     "target": "http://ceo-gateway:8001/",
     "https": "true",
     "authenticate": "true"
