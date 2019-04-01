@@ -144,7 +144,7 @@ const actionBuilder = (type, props, prefix) => {
                         performOperation,
                         immutable(state)
                     ).value()
-                    sideEffects.forEach(sideEffect => sideEffect(nextState))
+                    sideEffects.forEach(sideEffect => sideEffect(scopedResolve(nextState).value))
                     return nextState
                 },
                 dispatch() {
