@@ -35,7 +35,6 @@ class MosaicSpec(ImageSpec):
         self.mask_clouds = 'CLOUDS' in model['compositeOptions']['mask']
         self.mask_snow = 'SNOW' in model['compositeOptions']['mask']
         self.brdf_correct = 'BRDF' in model['compositeOptions']['corrections']
-        sources = model['sources']
         self.surface_reflectance = 'SR' in model['compositeOptions']['corrections']
         self.pan_sharpen = bool(bands.get('panSharpen', False))
 
