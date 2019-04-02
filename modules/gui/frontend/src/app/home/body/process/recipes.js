@@ -175,7 +175,6 @@ class RecipeList extends React.Component {
         return !recipes && !action('LOAD_RECIPES').dispatched
             ? this.renderProgress()
             : (
-
                 <PageData>
                     {recipe => this.renderRecipe(recipe)}
                 </PageData>

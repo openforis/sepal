@@ -21,10 +21,6 @@ button.unread i {
     }
 }
 
-.messages {
-    overflow: auto;
-}
-
 .messages ul {
     list-style-type: none;
     padding: 0;

@@ -17,7 +17,6 @@
     grid-template-rows: repeat(auto-fill, 18rem);
     grid-gap: 2rem;
     justify-content: center;
-    overflow: auto;
 }
 
 .task {

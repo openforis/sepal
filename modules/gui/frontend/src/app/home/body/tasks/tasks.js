@@ -3,6 +3,7 @@ import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {HoverDetector, HoverOverlay} from 'widget/hover'
 import {Msg, msg} from 'translate'
 import {Progress} from 'widget/progress'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
 import React from 'react'
 import api from 'api'
@@ -63,9 +64,11 @@ class Tasks extends React.Component {
         const {tasks} = this.state
         return tasks.length
             ? (
-                <div className={styles.tasks}>
-                    {tasks.map(task => this.renderTask(task))}
-                </div>
+                <ScrollableContainer>
+                    <Scrollable className={styles.tasks}>
+                        {tasks.map(task => this.renderTask(task))}
+                    </Scrollable>
+                </ScrollableContainer>
             )
             : (
                 <div className={styles.none}>

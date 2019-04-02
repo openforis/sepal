@@ -1,7 +1,3 @@
-.sessions {
-    overflow: auto;
-}
-
 .sessions ul {
     list-style-type: none;
     padding: 0;

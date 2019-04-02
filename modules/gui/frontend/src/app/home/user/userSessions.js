@@ -1,4 +1,5 @@
 import {Button, ButtonGroup} from 'widget/button'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {stopCurrentUserSession$} from 'widget/user'
@@ -100,11 +101,13 @@ class UserSessions extends React.Component {
 
     renderSessions(sessions) {
         return (
-            <div className={styles.sessions}>
-                <ul>
-                    {sessions.map(session => this.renderSession(session))}
-                </ul>
-            </div>
+            <ScrollableContainer className={styles.sessions}>
+                <Scrollable>
+                    <ul>
+                        {sessions.map(session => this.renderSession(session))}
+                    </ul>
+                </Scrollable>
+            </ScrollableContainer>
         )
     }
 

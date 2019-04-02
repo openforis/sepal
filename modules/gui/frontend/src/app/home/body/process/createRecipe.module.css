@@ -8,10 +8,6 @@
     width: 40rem;
 }
 
-.recipeTypes {
-    overflow: auto;
-}
-
 .recipeTypes ul {
     list-style-type: none;
     padding: 0;

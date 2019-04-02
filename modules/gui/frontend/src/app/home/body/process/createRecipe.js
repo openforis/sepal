@@ -1,13 +1,13 @@
-import actionBuilder from 'action-builder'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {connect} from 'store'
-import lookStyles from 'style/look.module.css'
-import {msg} from 'translate'
 import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {connect} from 'store'
+import {msg} from 'translate'
+import PropTypes from 'prop-types'
+import React from 'react'
+import actionBuilder from 'action-builder'
+import lookStyles from 'style/look.module.css'
+import moment from 'moment'
 import styles from './createRecipe.module.css'
 
 const mapStateToProps = state => {
@@ -126,20 +126,22 @@ class CreateRecipe extends React.Component {
                     icon='book-open'
                     title={'Create recipe'}/>
                 <PanelContent>
-                    <div className={styles.recipeTypes}>
-                        <ul>
-                            {recipeTypes.map(({type, name, description, beta, details}) =>
-                                <RecipeType
-                                    key={type}
-                                    recipeId={recipeId}
-                                    type={type}
-                                    name={name}
-                                    description={description}
-                                    beta={beta}
-                                    onInfo={details ? () => this.showRecipeTypeInfo(type) : null}/>
-                            )}
-                        </ul>
-                    </div>
+                    <ScrollableContainer className={styles.recipeTypes}>
+                        <Scrollable>
+                            <ul>
+                                {recipeTypes.map(({type, name, description, beta, details}) =>
+                                    <RecipeType
+                                        key={type}
+                                        recipeId={recipeId}
+                                        type={type}
+                                        name={name}
+                                        description={description}
+                                        beta={beta}
+                                        onInfo={details ? () => this.showRecipeTypeInfo(type) : null}/>
+                                )}
+                            </ul>
+                        </Scrollable>
+                    </ScrollableContainer>
                 </PanelContent>
                 <PanelButtons shown={!trigger}>
                     <PanelButtons.Main>
