@@ -45,6 +45,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     ed \
     flex \
     gettext \
+    gdal-bin \
     git \
     gsl-bin \
     imagemagick \
@@ -56,6 +57,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     libglade2-dev \
     libgtk2.0-dev \
     libffi-dev \
+    libgdal-dev \
     libgmp3-dev \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
@@ -72,6 +74,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     parallel \
     pkg-config \
     p7zip-full \
+    python-gdal \
     python3-gdal \
     python-dev \
     python-opencv \
