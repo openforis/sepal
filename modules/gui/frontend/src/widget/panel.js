@@ -3,6 +3,7 @@ import {Modal} from 'widget/modal'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
+import Keybinding from 'widget/keybinding'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -223,11 +224,15 @@ export class PanelButtons extends React.Component {
         return PanelButtons.renderButton({template: 'done', ...props})
     }
 
-    static Main({children}) {
+    static Main({onEnter, onEscape, children}) {
         return (
-            <ButtonGroup className={styles.main} type='horizontal-nowrap'>
-                {children}
-            </ButtonGroup>
+            <Keybinding
+                onEnter={onEnter}
+                onEscape={onEscape}>
+                <ButtonGroup className={styles.main} type='horizontal-nowrap'>
+                    {children}
+                </ButtonGroup>
+            </Keybinding>
         )
     }
 
@@ -301,7 +306,9 @@ PanelButtons.propTypes = {
 }
 
 PanelButtons.Main.propTypes = {
-    children: PropTypes.any.isRequired
+    children: PropTypes.any.isRequired,
+    onEnter: PropTypes.func,
+    onEscape: PropTypes.func
 }
 
 PanelButtons.Extra.propTypes = {

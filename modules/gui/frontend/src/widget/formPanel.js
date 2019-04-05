@@ -5,7 +5,6 @@ import {PanelWizardContext} from './panelWizard'
 import {connect} from 'store'
 import {isObservable} from 'rxjs'
 import Icon from 'widget/icon'
-import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './formPanel.module.css'
@@ -123,61 +122,64 @@ FormPanel.propTypes = {
 
 export class FormPanelButtons extends React.Component {
     renderWizardButtons({invalid, first, last, onBack, onNext, onDone}) {
-        const handleEnter = () => {
-            if (!invalid) {
-                return last
-                    ? onDone()
-                    : onNext()
-            }
-        }
+        const onEnter =
+            invalid
+                ? null
+                : last
+                    ?onDone
+                    :onNext
         return (
-            <Keybinding
-                onEnter={() => handleEnter()}
+            <PanelButtons.Main
+                onEnter={onEnter}
             >
-                <PanelButtons.Main>
-                    <PanelButtons.Back
-                        shown={!first}
-                        onClick={onBack}/>
-                    <PanelButtons.Done
-                        shown={last}
-                        disabled={invalid}
-                        onClick={onDone}/>
-                    <PanelButtons.Next
-                        shown={!last}
-                        disabled={invalid}
-                        onClick={onNext}/>
-                </PanelButtons.Main>
-            </Keybinding>
+                <PanelButtons.Back
+                    shown={!first}
+                    onClick={onBack}/>
+                <PanelButtons.Done
+                    shown={last}
+                    disabled={invalid}
+                    onClick={onDone}/>
+                <PanelButtons.Next
+                    shown={!last}
+                    disabled={invalid}
+                    onClick={onNext}/>
+            </PanelButtons.Main>
         )
     }
 
     renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel}) {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
-        const handleEnter = () => canSubmit ? onOk() : null
-        const handleEscape = () => canSubmit ? onCancel() : onOk()
+        const onEnter =
+            invalid
+                ? null
+                : onOk
+        const onEscape =
+            invalid
+                ? null
+                : canSubmit
+                    ? onCancel
+                    : onOk
         return (
-            <Keybinding
-                onEnter={() => handleEnter()}
-                onEscape={() => handleEscape()}
+            <PanelButtons.Main
+                onEnter={onEnter}
+                onEscape={onEscape}
             >
-                <PanelButtons.Main>
-                    <PanelButtons.Cancel
-                        shown={canSubmit}
-                        onClick={onCancel}/>
-                    <PanelButtons.Apply
-                        type={'submit'}
-                        label={applyLabel}
-                        shown={canSubmit}
-                        disabled={invalid}
-                        onClick={onOk}/>
-                    <PanelButtons.Close
-                        type={'submit'}
-                        label={applyLabel}
-                        shown={!canSubmit}
-                        onClick={onOk}/>
-                </PanelButtons.Main>
-            </Keybinding>
+                <PanelButtons.Cancel
+                    shown={canSubmit}
+                    onClick={onCancel}/>
+                <PanelButtons.Apply
+                    type={'submit'}
+                    label={applyLabel}
+                    shown={canSubmit}
+                    disabled={invalid}
+                    onClick={onOk}/>
+                <PanelButtons.Close
+                    type={'submit'}
+                    label={applyLabel}
+                    shown={!canSubmit}
+                    onClick={onOk}/>
+            </PanelButtons.Main>
         )
     }
 
