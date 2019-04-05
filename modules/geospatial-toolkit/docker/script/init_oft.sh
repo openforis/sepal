@@ -10,17 +10,14 @@ echo "************************************************"
 apt-get install -y \
 	 gcc \
 	 g++ \
-	 gdal-bin \
 	 geotiff-bin \
 	 libfftw3-dev \
-	 libgdal-dev \
 	 libgeotiff-dev \
 	 libgsl-dev \
 	 libproj-dev \
 	 libshp-dev \
 	 libtiff5-dev \
 	 make \
-	 python-gdal \
 	 python-h5py \
 	 python-saga \
 	 python-scipy \
