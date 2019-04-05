@@ -34,6 +34,11 @@ module.exports = {
             "error", 
             "as-needed"
         ],
+        "brace-style": [
+            "error", "1tbs", { 
+                "allowSingleLine": true
+            }
+        ],
         "comma-spacing": [
             "error", {
                 "before": false,
@@ -85,6 +90,7 @@ module.exports = {
             "error",
             "never"
         ],
+        "space-before-blocks": "error",
         "quotes": [
             "error",
             "single"

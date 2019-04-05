@@ -1,16 +1,16 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import _ from 'lodash'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {imageSourceById, isDataSetInDateRange, sources} from 'sources'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
-import {selectFrom} from 'stateUtils'
 import {Constraint, Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {dateRange, RecipeActions} from '../../mosaicRecipe'
+import {RecipeActions, dateRange} from '../../mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {imageSourceById, isDataSetInDateRange, sources} from 'sources'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import Buttons from 'widget/buttons'
+import Label from 'widget/label'
+import PropTypes from 'prop-types'
+import React from 'react'
+import _ from 'lodash'
 import styles from './sources.module.css'
 
 const fields = _.transform(sources,
@@ -107,7 +107,6 @@ const valuesToModel = values => {
         .forEach(source => model[source] = values[source])
     return model
 }
-
 
 const policy = ({values, wizardContext: {wizard}}) => {
     return wizard || selectFrom(values, 'dirty')

@@ -5,6 +5,7 @@ import {PanelWizardContext} from './panelWizard'
 import {connect} from 'store'
 import {isObservable} from 'rxjs'
 import Icon from 'widget/icon'
+import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './formPanel.module.css'
@@ -143,22 +144,24 @@ export class FormPanelButtons extends React.Component {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
         return (
-            <PanelButtons.Main>
-                <PanelButtons.Cancel
-                    shown={canSubmit}
-                    onClick={onCancel}/>
-                <PanelButtons.Apply
-                    type={'submit'}
-                    label={applyLabel}
-                    shown={canSubmit}
-                    disabled={invalid}
-                    onClick={onOk}/>
-                <PanelButtons.Close
-                    type={'submit'}
-                    label={applyLabel}
-                    shown={!canSubmit}
-                    onClick={onOk}/>
-            </PanelButtons.Main>
+            <Keybinding onEscape={() => onOk}>
+                <PanelButtons.Main>
+                    <PanelButtons.Cancel
+                        shown={canSubmit}
+                        onClick={onCancel}/>
+                    <PanelButtons.Apply
+                        type={'submit'}
+                        label={applyLabel}
+                        shown={canSubmit}
+                        disabled={invalid}
+                        onClick={onOk}/>
+                    <PanelButtons.Close
+                        type={'submit'}
+                        label={applyLabel}
+                        shown={!canSubmit}
+                        onClick={onOk}/>
+                </PanelButtons.Main>
+            </Keybinding>
         )
     }
 
