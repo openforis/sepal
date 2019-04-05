@@ -224,15 +224,11 @@ export class PanelButtons extends React.Component {
         return PanelButtons.renderButton({template: 'done', ...props})
     }
 
-    static Main({onEnter, onEscape, children}) {
+    static Main({children}) {
         return (
-            <Keybinding
-                onEnter={onEnter}
-                onEscape={onEscape}>
-                <ButtonGroup className={styles.main} type='horizontal-nowrap'>
-                    {children}
-                </ButtonGroup>
-            </Keybinding>
+            <ButtonGroup className={styles.main} type='horizontal-nowrap'>
+                {children}
+            </ButtonGroup>
         )
     }
 
@@ -272,10 +268,14 @@ export class PanelButtons extends React.Component {
     }
 
     render() {
-        const {className, shown = true, children} = this.props
+        const {className, shown = true, onEnter, onEscape, children} = this.props
         return shown ? (
             <div className={[styles.buttons, className].join(' ')}>
-                {children ? children : this.renderButtons()}
+                <Keybinding
+                    onEnter={onEnter}
+                    onEscape={onEscape}>
+                    {children ? children : this.renderButtons()}
+                </Keybinding>
             </div>
         ) : null
     }

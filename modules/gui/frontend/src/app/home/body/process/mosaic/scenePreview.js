@@ -31,6 +31,7 @@ class ScenePreview extends React.Component {
                 : daysFromTarget < 0
                     ? msg('process.mosaic.panel.sceneSelection.preview.beforeTarget', {daysFromTarget: -daysFromTarget})
                     : msg('process.mosaic.panel.sceneSelection.preview.afterTarget', {daysFromTarget})
+            const close = () => this.closePreview()
             return (
                 <Panel
                     className={styles.panel}
@@ -54,9 +55,9 @@ class ScenePreview extends React.Component {
                             <LabelValue name='cloudCover' value={cloudCover + '%'} icon='cloud'/>
                         </div>
                     </PanelContent>
-                    <PanelButtons>
+                    <PanelButtons onEnter={close} onEscape={close}>
                         <PanelButtons.Main>
-                            <PanelButtons.Close onClick={() => this.closePreview()}/>
+                            <PanelButtons.Close onClick={close}/>
                         </PanelButtons.Main>
                     </PanelButtons>
                 </Panel>

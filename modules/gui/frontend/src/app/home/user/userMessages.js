@@ -204,6 +204,8 @@ class _UserMessages extends React.Component {
 
     renderMessagesPanel() {
         const {isAdmin, activatable: {deactivate}} = this.props
+        const close = () => deactivate()
+        const add = () => this.newMessage()
         return (
             <Panel
                 className={styles.panel}
@@ -214,15 +216,14 @@ class _UserMessages extends React.Component {
                 <PanelContent>
                     {this.renderMessages()}
                 </PanelContent>
-                <PanelButtons>
+                <PanelButtons onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
-                        <PanelButtons.Close
-                            onClick={() => deactivate()}/>
+                        <PanelButtons.Close onClick={close}/>
                     </PanelButtons.Main>
                     <PanelButtons.Extra>
                         <PanelButtons.Add
                             label={msg('userMessages.post')}
-                            onClick={() => this.newMessage()}
+                            onClick={add}
                             shown={isAdmin}/>
                     </PanelButtons.Extra>
                 </PanelButtons>

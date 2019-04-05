@@ -91,6 +91,8 @@ class CreateRecipe extends React.Component {
     renderRecipeTypeInfo(type) {
         const {recipeTypes} = this.props
         const recipeType = recipeTypes.find(recipeType => recipeType.type === type)
+        const close = () => this.closePanel()
+        const back = () => this.showRecipeTypeInfo()
         return (
             <React.Fragment>
                 <PanelHeader
@@ -104,14 +106,12 @@ class CreateRecipe extends React.Component {
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
-                <PanelButtons>
+                <PanelButtons onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
-                        <PanelButtons.Close
-                            onClick={() => this.closePanel()}/>
+                        <PanelButtons.Close onClick={close}/>
                     </PanelButtons.Main>
                     <PanelButtons.Extra>
-                        <PanelButtons.Back
-                            onClick={() => this.showRecipeTypeInfo()}/>
+                        <PanelButtons.Back onClick={back}/>
                     </PanelButtons.Extra>
                 </PanelButtons>
             </React.Fragment>
@@ -120,6 +120,7 @@ class CreateRecipe extends React.Component {
 
     renderRecipeTypes() {
         const {recipeId, recipeTypes, trigger} = this.props
+        const close = () => this.closePanel()
         return (
             <React.Fragment>
                 <PanelHeader
@@ -143,10 +144,9 @@ class CreateRecipe extends React.Component {
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
-                <PanelButtons shown={!trigger}>
+                <PanelButtons shown={!trigger} onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
-                        <PanelButtons.Close
-                            onClick={() => this.closePanel()}/>
+                        <PanelButtons.Close onClick={close}/>
                     </PanelButtons.Main>
                 </PanelButtons>
             </React.Fragment>

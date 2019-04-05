@@ -7,6 +7,8 @@ import styles from './confirm.module.css'
 export default class Confirm extends React.Component {
     render() {
         const {title, message, label, onConfirm, onCancel, children} = this.props
+        const confirm = () => onConfirm()
+        const cancel = () => onCancel()
         return (
             <Panel
                 className={styles.panel}
@@ -19,15 +21,14 @@ export default class Confirm extends React.Component {
                         {message || children}
                     </div>
                 </PanelContent>
-                <PanelButtons>
+                <PanelButtons onEnter={confirm} onEscape={cancel}>
                     <PanelButtons.Main>
                         <PanelButtons.Confirm
                             label={label}
-                            onClick={() => onConfirm()}/>
+                            onClick={confirm}/>
                     </PanelButtons.Main>
                     <PanelButtons.Extra>
-                        <PanelButtons.Cancel
-                            onClick={() => onCancel()}/>
+                        <PanelButtons.Cancel onClick={cancel}/>
                     </PanelButtons.Extra>
                 </PanelButtons>
             </Panel>

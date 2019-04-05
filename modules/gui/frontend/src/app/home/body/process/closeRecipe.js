@@ -11,6 +11,15 @@ class CloseRecipe extends React.Component {
         const {activator: {activatables: {saveRecipeDialog}}, activatable} = this.props
         const recipe = activatable.recipe
         const title = recipe.title || recipe.placeholder
+        const cancel = () => activatable.deactivate()
+        const save = () => {
+            activatable.deactivate()
+            saveRecipeDialog.activate({recipe, closeTabOnSave: true})
+        }
+        const discard = () => {
+            activatable.deactivate()
+            closeRecipe(activatable.recipe.id)
+        }
         return (
             <Panel
                 className={styles.panel}
@@ -23,23 +32,13 @@ class CloseRecipe extends React.Component {
                         {msg('process.closeRecipe.message')}
                     </div>
                 </PanelContent>
-                <PanelButtons>
+                <PanelButtons onEnter={save} onEscape={cancel}>
                     <PanelButtons.Main>
-                        <PanelButtons.Cancel
-                            onClick={() => activatable.deactivate()}/>
-                        <PanelButtons.Save
-                            dots
-                            onClick={() => {
-                                activatable.deactivate()
-                                saveRecipeDialog.activate({recipe, closeTabOnSave: true})
-                            }}/>
+                        <PanelButtons.Cancel onClick={cancel}/>
+                        <PanelButtons.Save dots onClick={save}/>
                     </PanelButtons.Main>
                     <PanelButtons.Extra>
-                        <PanelButtons.Discard
-                            onClick={() => {
-                                activatable.deactivate()
-                                closeRecipe(activatable.recipe.id)
-                            }}/>
+                        <PanelButtons.Discard onClick={discard}/>
                     </PanelButtons.Extra>
                 </PanelButtons>
             </Panel>

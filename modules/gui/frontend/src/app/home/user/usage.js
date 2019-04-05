@@ -21,6 +21,7 @@ const mapStateToProps = () => ({
 class _Usage extends React.Component {
     renderOverview() {
         const {activatable: {deactivate}} = this.props
+        const close = () => deactivate()
         return (
             <Panel
                 className={styles.panel}
@@ -42,10 +43,9 @@ class _Usage extends React.Component {
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
-                <PanelButtons>
+                <PanelButtons onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
-                        <PanelButtons.Close
-                            onClick={() => deactivate()}/>
+                        <PanelButtons.Close onClick={close}/>
                     </PanelButtons.Main>
                 </PanelButtons>
             </Panel>

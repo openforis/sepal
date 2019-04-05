@@ -36,6 +36,8 @@ class Revisions extends React.Component {
 
     render() {
         const {form, inputs: {revision}, activatable: {deactivate}} = this.props
+        const confirm = () => this.revertToRevision(revision.value)
+        const cancel = () => deactivate()
         return (
             <FormPanel
                 className={styles.panel}
@@ -53,16 +55,15 @@ class Revisions extends React.Component {
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
-                <PanelButtons>
+                <PanelButtons onEnter={confirm} onEscape={cancel}>
                     <PanelButtons.Main>
                         <PanelButtons.Confirm
                             label={msg('process.revisions.revert')}
                             disabled={form.isInvalid()}
-                            onClick={() => this.revertToRevision(revision.value)}/>
+                            onClick={confirm}/>
                     </PanelButtons.Main>
                     <PanelButtons.Extra>
-                        <PanelButtons.Cancel
-                            onClick={() => deactivate()}/>
+                        <PanelButtons.Cancel onClick={cancel}/>
                     </PanelButtons.Extra>
                 </PanelButtons>
             </FormPanel>

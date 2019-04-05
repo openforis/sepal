@@ -121,33 +121,16 @@ FormPanel.propTypes = {
 }
 
 export class FormPanelButtons extends React.Component {
-    renderWizardButtons({invalid, first, last, onBack, onNext, onDone}) {
-        const onEnter =
-            invalid
-                ? null
-                : last
-                    ?onDone
-                    :onNext
-        return (
-            <PanelButtons.Main
-                onEnter={onEnter}
-            >
-                <PanelButtons.Back
-                    shown={!first}
-                    onClick={onBack}/>
-                <PanelButtons.Done
-                    shown={last}
-                    disabled={invalid}
-                    onClick={onDone}/>
-                <PanelButtons.Next
-                    shown={!last}
-                    disabled={invalid}
-                    onClick={onNext}/>
-            </PanelButtons.Main>
-        )
+    renderExtraButtons() {
+        const {children} = this.props
+        return children ? (
+            <PanelButtons.Extra>
+                {children}
+            </PanelButtons.Extra>
+        ) : null
     }
 
-    renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel}) {
+    renderForm({isActionForm, dirty, invalid, onOk, onCancel}) {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
         const onEnter =
@@ -161,52 +144,62 @@ export class FormPanelButtons extends React.Component {
                     ? onCancel
                     : onOk
         return (
-            <PanelButtons.Main
+            <PanelButtons
                 onEnter={onEnter}
-                onEscape={onEscape}
-            >
-                <PanelButtons.Cancel
-                    shown={canSubmit}
-                    onClick={onCancel}/>
-                <PanelButtons.Apply
-                    type={'submit'}
-                    label={applyLabel}
-                    shown={canSubmit}
-                    disabled={invalid}
-                    onClick={onOk}/>
-                <PanelButtons.Close
-                    type={'submit'}
-                    label={applyLabel}
-                    shown={!canSubmit}
-                    onClick={onOk}/>
-            </PanelButtons.Main>
+                onEscape={onEscape}>
+                <PanelButtons.Main>
+                    <PanelButtons.Cancel
+                        shown={canSubmit}
+                        onClick={onCancel}/>
+                    <PanelButtons.Apply
+                        type={'submit'}
+                        label={applyLabel}
+                        shown={canSubmit}
+                        disabled={invalid}
+                        onClick={onOk}/>
+                    <PanelButtons.Close
+                        type={'submit'}
+                        label={applyLabel}
+                        shown={!canSubmit}
+                        onClick={onOk}/>
+                </PanelButtons.Main>
+                {this.renderExtraButtons()}
+            </PanelButtons>
         )
     }
 
-    renderMainButtons({isActionForm, wizard, first, last, dirty, invalid, onOk, onCancel, onBack, onNext, onDone}) {
-        return wizard
-            ? this.renderWizardButtons({first, last, invalid, onBack, onNext, onDone})
-            : this.renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel})
-    }
-
-    renderExtraButtons() {
-        const {children} = this.props
-        return children ? (
-            <PanelButtons.Extra>
-                {children}
-            </PanelButtons.Extra>
-        ) : null
+    renderWizard({invalid, first, last, onBack, onNext, onDone}) {
+        const onEnter =
+            invalid
+                ? null
+                : last
+                    ?onDone
+                    :onNext
+        return (
+            <PanelButtons
+                onEnter={onEnter}>
+                <PanelButtons.Main>
+                    <PanelButtons.Back
+                        shown={!first}
+                        onClick={onBack}/>
+                    <PanelButtons.Done
+                        shown={last}
+                        disabled={invalid}
+                        onClick={onDone}/>
+                    <PanelButtons.Next
+                        shown={!last}
+                        disabled={invalid}
+                        onClick={onNext}/>
+                </PanelButtons.Main>
+                {this.renderExtraButtons()}
+            </PanelButtons>
+        )
     }
 
     render() {
         return (
             <PanelContext.Consumer>
-                {props => (
-                    <PanelButtons>
-                        {this.renderMainButtons(props)}
-                        {this.renderExtraButtons()}
-                    </PanelButtons>
-                )}
+                {props => props.wizard ? this.renderWizard(props) : this.renderForm(props)}
             </PanelContext.Consumer>
         )
     }

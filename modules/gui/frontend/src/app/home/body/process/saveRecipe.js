@@ -37,6 +37,8 @@ class SaveRecipe extends React.Component {
 
     renderPanel() {
         const {form, inputs: {name}, activatable} = this.props
+        const save = () => this.saveRecipe()
+        const cancel = () => activatable.deactivate()
         return <React.Fragment>
             <PanelContent>
                 <Input
@@ -46,13 +48,12 @@ class SaveRecipe extends React.Component {
                     errorMessage
                 />
             </PanelContent>
-            <PanelButtons>
+            <PanelButtons onEnter={save} onEscape={cancel}>
                 <PanelButtons.Main>
-                    <PanelButtons.Cancel
-                        onClick={() => activatable.deactivate()}/>
+                    <PanelButtons.Cancel onClick={cancel}/>
                     <PanelButtons.Save
                         disabled={form.isInvalid()}
-                        onClick={() => this.saveRecipe()}/>
+                        onClick={save}/>
                 </PanelButtons.Main>
             </PanelButtons>
         </React.Fragment>
