@@ -123,28 +123,44 @@ FormPanel.propTypes = {
 
 export class FormPanelButtons extends React.Component {
     renderWizardButtons({invalid, first, last, onBack, onNext, onDone}) {
+        const handleEnter = () => {
+            if (!invalid) {
+                return last
+                    ? onDone()
+                    : onNext()
+            }
+        }
         return (
-            <PanelButtons.Main>
-                <PanelButtons.Back
-                    shown={!first}
-                    onClick={onBack}/>
-                <PanelButtons.Done
-                    shown={last}
-                    disabled={invalid}
-                    onClick={onDone}/>
-                <PanelButtons.Next
-                    shown={!last}
-                    disabled={invalid}
-                    onClick={onNext}/>
-            </PanelButtons.Main>
+            <Keybinding
+                onEnter={() => handleEnter()}
+            >
+                <PanelButtons.Main>
+                    <PanelButtons.Back
+                        shown={!first}
+                        onClick={onBack}/>
+                    <PanelButtons.Done
+                        shown={last}
+                        disabled={invalid}
+                        onClick={onDone}/>
+                    <PanelButtons.Next
+                        shown={!last}
+                        disabled={invalid}
+                        onClick={onNext}/>
+                </PanelButtons.Main>
+            </Keybinding>
         )
     }
 
     renderFormButtons({isActionForm, dirty, invalid, onOk, onCancel}) {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
+        const handleEnter = () => canSubmit ? onOk() : null
+        const handleEscape = () => canSubmit ? onCancel() : onOk()
         return (
-            <Keybinding onEscape={() => onOk}>
+            <Keybinding
+                onEnter={() => handleEnter()}
+                onEscape={() => handleEscape()}
+            >
                 <PanelButtons.Main>
                     <PanelButtons.Cancel
                         shown={canSubmit}
