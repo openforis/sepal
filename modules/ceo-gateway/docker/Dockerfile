@@ -8,11 +8,9 @@ ENV PORT 8001
 
 WORKDIR ${ROOT}
 
-ADD script /script
 ADD package.json ${ROOT}/package.json
 
-RUN chmod -R 500 /script \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install sudo && \
     adduser node sudo && \
     echo "node ALL = (root) NOPASSWD: /usr/bin/ssh" >> /etc/sudoers && \
@@ -21,4 +19,4 @@ RUN chmod -R 500 /script \
 ADD src ${ROOT}/src
 
 USER node
-CMD [ "/script/init_container.sh" ]
+CMD ['npm', 'run', 'start_unsecure']
