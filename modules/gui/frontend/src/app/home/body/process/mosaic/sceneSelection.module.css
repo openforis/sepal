@@ -45,6 +45,7 @@
     --thumbnail-size: 9rem;
     display: grid;
     grid-template-columns: repeat(auto-fill, var(--thumbnail-size));
+    grid-template-rows: repeat(auto-fill, minmax(max-content, 0));;
     grid-gap: 1rem;
     justify-content: center;
 }

@@ -43,6 +43,12 @@ app.get('/login', (req, res, next) => {
 app.post('/create-project', (req, res, next) => {
     const {url, institutionId} = config.ceo
     const {classes, plotSize, plots, title} = req.body
+    if (!Array.isArray(classes) || classes.length === 0
+        || typeof plotSize !== 'number' || plotSize < 0
+        || !Array.isArray(plots) || plots.length === 0
+        || typeof title !== 'string' || title.trim() === '') {
+        return res.status(400).send('Bad Request')
+    }
     const plotFile = plots.reduce((acc, curr, i) => {
         return `${acc}\n${curr.lon},${curr.lat},${i+1}`
     }, 'LON,LAT,PLOTID')
