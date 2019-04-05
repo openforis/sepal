@@ -11,8 +11,8 @@ import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Slider from 'widget/slider'
-import styles from './compositeOptions.module.css'
 import _ from 'lodash'
+import styles from './compositeOptions.module.css'
 
 const fields = {
     corrections: new Field(),

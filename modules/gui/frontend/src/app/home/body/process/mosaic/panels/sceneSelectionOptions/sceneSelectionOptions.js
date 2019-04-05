@@ -1,14 +1,14 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, SceneSelectionType} from '../../mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import Buttons from 'widget/buttons'
+import Label from 'widget/label'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './sceneSelectionOptions.module.css'
 
 const fields = {
@@ -21,7 +21,6 @@ const fields = {
 const mapRecipeToProps = recipe => ({
     alwaysAll: Object.keys(selectFrom(recipe, 'model.sources') || {}).length > 1
 })
-
 
 class SceneSelectionOptions extends React.Component {
     renderTypes() {
