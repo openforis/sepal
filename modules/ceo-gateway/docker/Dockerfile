@@ -11,7 +11,7 @@ WORKDIR ${ROOT}
 ADD script /script
 ADD package.json ${ROOT}/package.json
 
-RUN chmod -R 500 /script \
+RUN chmod -R 500 /script && \
     apt-get update && \
     apt-get install sudo && \
     adduser node sudo && \

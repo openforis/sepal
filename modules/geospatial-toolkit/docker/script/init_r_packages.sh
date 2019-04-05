@@ -52,6 +52,7 @@ R -e "pacman::p_load(\
         'random',\
         'randomForest',\
         'raster',\
+        'rclipboard',\
         'RColorBrewer',\
         'RCurl',\
         'readxl',\
