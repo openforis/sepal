@@ -32,10 +32,22 @@
 }
 
 /* Flex needed for alignment of button contents */
-.button, .button * {
+/* .button, .button * { */
+.button {
     display: flex;
-    justify-content: center;
     align-items: center;
+}
+
+.button.left {
+    justify-content: flex-start;
+}
+
+.button.center {
+    justify-content: center;
+}
+
+.button.right {
+    justify-content: flex-end;
 }
 
 /* sizes */

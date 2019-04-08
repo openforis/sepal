@@ -45,16 +45,18 @@ export class Button extends React.Component {
             look = 'default',
             size = 'normal',
             shape = 'rectangle',
+            alignment = 'center',
             onClickHold
         } = this.props
         return className ? className : [
             styles.button,
             chromeless ? styles.chromeless : null,
-            styles[size],
-            styles[shape],
             lookStyles.look,
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
+            styles[size],
+            styles[shape],
+            styles[alignment],
             this.nonInteractive() ? lookStyles.nonInteractive : null,
             onClickHold ? styles.hold : null,
             additionalClassName
@@ -252,6 +254,7 @@ export class Button extends React.Component {
 
 Button.propTypes = {
     additionalClassName: PropTypes.string,
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
     children: PropTypes.any,
     chromeless: PropTypes.any,
     className: PropTypes.string,
@@ -297,7 +300,5 @@ ButtonGroup.propTypes = {
         'horizontal-nowrap', 'horizontal-nowrap-fill',
         'horizontal-tight',
         'vertical', 'vertical-tight'
-    ]),
-    vertical: PropTypes.any,
-    wrap: PropTypes.any
+    ])
 }
