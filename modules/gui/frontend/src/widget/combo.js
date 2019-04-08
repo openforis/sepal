@@ -16,14 +16,16 @@ const mapStateToProps = state => ({
 class Combo extends React.Component {
     ref = React.createRef()
     state = {
+        edit: false,
         dimensions: {}
     }
 
     render() {
+        const {edit} = this.state
         return (
             <div className={styles.combo}>
                 {this.renderInput()}
-                {this.renderSelectionList()}
+                {edit ? this.renderSelectionList() : null}
             </div>
         )
     }
@@ -35,6 +37,7 @@ class Combo extends React.Component {
                 ref={this.ref}
                 type='search'
                 value={filter}
+                onFocus={() => this.setState({edit: true})}
                 onChange={e => this.setFilter(e.target.value)}/>
         )
     }
@@ -101,23 +104,33 @@ class Combo extends React.Component {
     }
 
     selectItem(item) {
-        console.log('selected', item)
+        const {input} = this.props
+        this.setFilter(item.label)
+        this.setState({edit: false})
+        input.set(item.value)
     }
 
     componentDidMount() {
-        const {options, input} = this.props
-        const selectedOption = options && input && options.find(option => option.value === input.value)
-        console.log(selectedOption)
-        const filter = selectedOption
-            ? selectedOption.label
-            : ''
+        // const {options, input} = this.props
+        // const selectedOption = options && input && options.find(option => option.value === input.value)
+        // console.log(selectedOption)
+        // const filter = selectedOption
+        //     ? selectedOption.label
+        //     : ''
 
         this.setFilter('')
         this.updateDimensions()
-        this.setState({filter})
+        // this.setState({filter})
     }
 
     componentDidUpdate() {
+        const {options, input} = this.props
+        const selectedOption = options && input && options.find(option => option.value === input.value)
+        const filter = selectedOption
+            ? selectedOption.label
+            : ''
+        console.log({selectedOption, filter})
+        
         this.updateDimensions()
     }
 
