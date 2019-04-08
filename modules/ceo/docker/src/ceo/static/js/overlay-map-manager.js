@@ -135,7 +135,8 @@ let overlayMapManager = {
                 maxZoom: 20,
                 minZoom: 0,
                 continuousWorld: true,
-                version: '1.3.0'
+                version: '1.3.0',
+                isOverlay: true
             });
             this.overlayMapTypes[index] = geonetworkLayer;
             callback();
@@ -177,7 +178,8 @@ let overlayMapManager = {
                 minZoom: 0,
                 continuousWorld: true,
                 crs: L.CRS.EPSG3857,
-                version: '1.1.1'
+                version: '1.1.1',
+                isOverlay: true
             });
             this.overlayMapTypes[index] = dgcsLayer;
             callback();
@@ -233,7 +235,8 @@ let overlayMapManager = {
                 maxZoom: 20,
                 minZoom: 0,
                 continuousWorld: true,
-                version: overlay.geoserverVersion
+                version: overlay.geoserverVersion,
+                isOverlay: true
             });
             this.overlayMapTypes[index] = geoserverLayer;
             callback();
