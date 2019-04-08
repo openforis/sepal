@@ -117,30 +117,35 @@ app.get('/get-collected-data/:id', (req, res, next) => {
     const {id} = req.params
     request.get({
         url: urljoin(url, 'get-project-by-id', id),
-    }).on('data', function(data) {
-        const project = JSON.parse(data)
-        const [sampleValue] = project.sampleValues
-        const question = sampleValue.question
-        const answers = sampleValue.answers.reduce((acc, cur) => {
-            acc[cur.answer] = cur.id
-            return acc
-        }, {})
-        request.get({
-            url: urljoin(url, 'dump-project-raw-data', id),
-        }).on('data', function(data) {
-            const lines = data.toString().split('\n')
-            const header = lines[0].split(',')
-            const qIndex = header.findIndex(ele => ele === question.toUpperCase())
-            const ret = lines.slice(1).reduce((acc, cur) => {
-                const values = cur.split(',')
-                const [id, , yCoord, xCoord] = values
-                const answer = values[qIndex]
-                const answerId = answers[answer] || ''
-                return `${acc}\n${id},${yCoord},${xCoord},${answerId}`
-            }, 'id,YCoordinate,XCoordinate,class')
-            res.send(ret)
-        }).on('error', err => {
-            next(err)
+    }).on('response', response => {
+        const {statusCode} = response
+        if (statusCode !== 200) return res.sendStatus(statusCode)
+        response.on('data', data => {
+            const project = JSON.parse(data.toString())
+            const [sampleValue] = project.sampleValues
+            const {question, answers} = sampleValue
+            if (!question || !answers) return res.sendStatus(500)
+            const answersById = answers.reduce((acc, cur) => {
+                acc[cur.answer] = cur.id
+                return acc
+            }, {})
+            request.get({
+                url: urljoin(url, 'dump-project-raw-data', id),
+            }).on('data', data => {
+                const lines = data.toString().split('\n')
+                const header = lines[0].split(',')
+                const qIndex = header.findIndex(ele => ele === question.toUpperCase())
+                const ret = lines.slice(1).reduce((acc, cur) => {
+                    const values = cur.split(',')
+                    const [id, , yCoord, xCoord] = values
+                    const answer = values[qIndex]
+                    const answerId = answersById[answer] || ''
+                    return `${acc}\n${id},${yCoord},${xCoord},${answerId}`
+                }, 'id,YCoordinate,XCoordinate,class')
+                res.send(ret)
+            }).on('error', err => {
+                next(err)
+            })
         })
     }).on('error', err => {
         next(err)

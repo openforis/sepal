@@ -42,7 +42,7 @@
 
 - name: Add Docker APT Repository
   apt_repository:
-    repo: deb https://download.docker.com/linux/ubuntu trusty stable
+    repo: deb https://download.docker.com/linux/ubuntu bionic stable
     state: present
 
 - name: Install docker package
