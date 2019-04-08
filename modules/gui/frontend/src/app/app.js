@@ -5,9 +5,8 @@ import Landing from 'app/landing/landing'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReactResizeDetector from 'react-resize-detector'
 import User from 'widget/user'
-import actionBuilder from 'action-builder'
+import ViewportResizeSensor from 'widget/viewportResizeSensor'
 
 import css1 from './reset.css'
 import css2 from './app.css'
@@ -28,14 +27,7 @@ class App extends React.Component {
         return (
             <div className='app'>
                 <User/>
-                <ReactResizeDetector
-                    handleWidth
-                    handleHeight
-                    onResize={(width, height) =>
-                        actionBuilder('SET_APP_DIMENSIONS')
-                            .set('dimensions', {width, height})
-                            .dispatch()
-                    }/>
+                <ViewportResizeSensor/>
                 {hasDimensions ? this.renderBody() : null}
                 <Notifications/>
             </div>
