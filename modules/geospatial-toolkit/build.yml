@@ -1,13 +1,13 @@
-- name: "geospatial-toolkit | Create {{workspace}}modules/{{ module }}/docker/.build"
+- name: "geospatial-toolkit | Create {{workspace}}/modules/{{ module }}/docker/.build"
   file:
-    path: "{{workspace}}modules/{{ module }}/docker/.build"
+    path: "{{workspace}}/modules/{{ module }}/docker/.build"
     recurse: yes
 
 
 - name: 'geospatial-toolkit | Copy sepal-ee'
   synchronize:
     src: "{{ module_dir }}/../google-earth-engine/docker/sepal-ee"
-    dest: "{{workspace}}modules/{{ module }}/docker/.build/"
+    dest: "{{workspace}}/modules/{{ module }}/docker/.build/"
     archive: yes
     recursive: yes
     delete: yes
