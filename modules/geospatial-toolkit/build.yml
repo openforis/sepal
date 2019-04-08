@@ -4,9 +4,12 @@
   become: no
 
 - name: 'geospatial-toolkit | Copy sepal-ee'
-  copy:
+  synchronize:
     src: "{{ module_dir }}/../google-earth-engine/docker/sepal-ee"
     dest: "{{ module_dir }}/docker/.build/"
+    archive: yes
+    recursive: yes
+    delete: yes
   delegate_to: 127.0.0.1
   become: no
 
