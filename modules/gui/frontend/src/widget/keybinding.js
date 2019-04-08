@@ -1,10 +1,12 @@
 import {fromEvent} from 'rxjs'
+import {v4 as uuid} from 'uuid'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 
 export default class Keybinding extends React.Component {
+    id = uuid()
     subscriptions = []
-
     static instances = []
 
     render() {
@@ -37,20 +39,20 @@ export default class Keybinding extends React.Component {
         }
     }
 
-    pushActiveInstance() {
-        Keybinding.instances.unshift(this)
+    pushInstance() {
+        Keybinding.instances.push(this.id)
     }
 
-    popActiveInstance() {
-        Keybinding.instances.shift()
+    popInstance() {
+        Keybinding.instances = _.pull(Keybinding.instances, this.id)
     }
 
     isActiveInstance() {
-        return Keybinding.instances[0] === this
+        return _.last(Keybinding.instances) === this.id
     }
 
     componentDidMount() {
-        this.pushActiveInstance()
+        this.pushInstance()
         const keypress$ = fromEvent(document, 'keydown')
         this.subscriptions.push(
             keypress$.subscribe(
@@ -60,7 +62,7 @@ export default class Keybinding extends React.Component {
     }
 
     componentWillUnmount() {
-        this.popActiveInstance()
+        this.popInstance()
         this.subscriptions.forEach(subscription => subscription.unsubscribe())
     }
 }
