@@ -1,0 +1,25 @@
+.combo {
+    position: relative;
+}
+
+.container {
+    --edge-clearance: .5rem;
+    position: absolute;
+    left: calc(var(--left) * 1px);
+    max-height: calc(var(--height) * 1px - var(--edge-clearance)) !important;
+    width: calc(var(--width) * 1px);
+    pointer-events: none;
+}
+
+.container.top {
+    bottom: calc(var(--top) * 1px);
+}
+
+.container.bottom {
+    top: calc(var(--bottom) * 1px);
+}
+
+.items {
+    position: relative;
+    background-color: hsla(0, 0%, 0%, .9);
+}
