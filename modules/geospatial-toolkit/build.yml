@@ -1,3 +1,15 @@
+- set_fact:
+    rsync_dry_run: "--dry-run"
+  when: ansible_check_mode
+
+
+- name: "geospatial-tookit | Copy sepal-ee Python lib"
+  shell: rsync --itemize-changes --archive {{ rsync_dry_run | default('') }} {{ module_dir }}../google-earth-engine/docker/sepal-ee {{ module_dir }}/docker/
+  # always run
+  check_mode: no
+  register: rsync_result
+  changed_when: rsync_result.stdout != ''
+
 - include_tasks: "{{ build_image_task }}"
   vars:
     image_name: "openforis/geospatial-toolkit"
