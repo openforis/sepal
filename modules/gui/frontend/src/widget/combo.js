@@ -1,12 +1,13 @@
-import {Button, ButtonGroup} from 'widget/button'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
+import Keybinding from 'widget/keybinding'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import escapeStringRegexp from 'escape-string-regexp'
+import lookStyles from 'style/look.module.css'
 import styles from './combo.module.css'
 
 const mapStateToProps = state => ({
@@ -14,32 +15,108 @@ const mapStateToProps = state => ({
 })
 
 class Combo extends React.Component {
-    ref = React.createRef()
+    input = React.createRef()
+    selected = React.createRef()
+    highlighted = React.createRef()
     state = {
-        edit: false,
-        dimensions: {}
+        select: false,
+        dimensions: {},
+        filter: '',
+        options: [],
+        highlightedIndex: null,
+        selectedIndex: null,
+        selectedValue: '',
+        mouseOver: null
     }
 
     render() {
-        const {edit} = this.state
+        const {select} = this.state
         return (
             <div className={styles.combo}>
                 {this.renderInput()}
-                {edit ? this.renderSelectionList() : null}
+                {select ? this.renderSelectionList() : null}
             </div>
         )
     }
 
     renderInput() {
-        const {filter} = this.state
+        const {autoFocus} = this.props
+        const {filter, selectedValue} = this.state
         return (
             <input
-                ref={this.ref}
+                className='combo'
+                ref={this.input}
                 type='search'
                 value={filter}
-                onFocus={() => this.setState({edit: true})}
+                placeholder={selectedValue}
+                autoFocus={autoFocus}
+                onClick={() => this.setState(prevState => ({select: !prevState.select}))}
+                onKeyDown={e => this.handleKeypress(e)}
                 onChange={e => this.setFilter(e.target.value)}/>
         )
+    }
+
+    handleKeypress(e) {
+        const {select} = this.state
+        if (e.key === 'ArrowDown' && !select) {
+            this.setState({select: true})
+        }
+    }
+
+    handleEnter(e) {
+        const {options, highlightedIndex} = this.state
+        if (highlightedIndex !== null) {
+            this.select(options[highlightedIndex])
+        } else if (options.length === 1) {
+            this.select(options[0])
+        }
+        e.preventDefault()
+    }
+
+    handleDown() {
+        this.setState(prevState => ({
+            highlightedIndex: Math.min(prevState.highlightedIndex === null ? 0 : prevState.highlightedIndex + 1, prevState.options.length - 1),
+            mouseOver: false
+        }))
+        this.scrollHighlighted()
+    }
+
+    handleUp() {
+        this.setState(prevState => ({
+            highlightedIndex: Math.max(prevState.highlightedIndex - 1, 0),
+            mouseOver: false
+        }))
+        this.scrollHighlighted()
+    }
+
+    handleBottom() {
+        this.setState(prevState => ({
+            highlightedIndex: prevState.options.length - 1,
+            mouseOver: false
+        }))
+        this.scrollHighlighted()
+    }
+
+    handleTop() {
+        this.setState({
+            highlightedIndex: 0,
+            mouseOver: false
+        })
+        this.scrollHighlighted()
+    }
+
+    scrollHighlighted() {
+        this.highlighted.current && this.highlighted.current.scrollIntoView({
+            behavior: 'auto',
+            block: 'nearest'
+        })
+    }
+
+    scrollSelected() {
+        this.selected.current && this.selected.current.scrollIntoView({
+            behavior: 'auto',
+            block: 'nearest'
+        })
     }
 
     renderSelectionList() {
@@ -58,88 +135,149 @@ class Combo extends React.Component {
         }
         return (
             <Portal>
-                <div
-                    className={[styles.container, styles[placement]].join(' ')}
-                    style={style}>
-                    <ScrollableContainer>
-                        <Scrollable>
-                            <ButtonGroup
-                                className={styles.items}
-                                type='vertical-tight'>
-                                {this.renderItems()}
-                            </ButtonGroup>
-                        </Scrollable>
-                    </ScrollableContainer>
-                </div>
+                <Keybinding keymap={{
+                    Enter: e => this.handleEnter(e),
+                    ArrowDown: e => this.handleDown(e),
+                    ArrowUp: e => this.handleUp(e),
+                    Home: e => this.handleTop(e),
+                    End: e => this.handleBottom(e)
+                }}>
+                    <div
+                        className={[styles.container, styles[placement]].join(' ')}
+                        style={style}>
+                        <ScrollableContainer>
+                            <Scrollable>
+                                <ul className={styles.items}>
+                                    {this.renderItems()}
+                                </ul>
+                            </Scrollable>
+                        </ScrollableContainer>
+                    </div>
+                </Keybinding>
             </Portal>
         )
     }
 
-    setFilter(filter) {
+    setFilter(filter = '') {
         this.setState({
+            select: !!filter,
             filter,
-            filterRegexp: RegExp(escapeStringRegexp(filter), 'i')
+            highlightedIndex: null
         })
+        this.updateOptions()
     }
 
     renderItems() {
-        const {options} = this.props
-        const {filterRegexp} = this.state
-        return options
-            .filter(item => filterRegexp.test(item.label))
-            .map(item => this.renderItem(item))
+        const {options} = this.state
+        return options.length
+            ? options.map((item, index) => this.renderItem(item, index))
+            : this.renderItem({label: 'No results'})
     }
 
-    renderItem(item) {
-        return (
-            <Button
-                key={item.value}
-                chromeless
-                className={styles.item}
-                label={item.label}
-                alignment='left'
-                onClick={() => this.selectItem(item)}
-            />
-        )
+    renderItem(item, index) {
+        const {highlightedIndex, selectedValue, mouseOver} = this.state
+        const highlighted = index === highlightedIndex
+        const selected = item.value === selectedValue
+        const disabled = !item.value
+        const ref = selected
+            ? this.selected
+            : highlighted
+                ? this.highlighted
+                : null
+        return disabled
+            ? (
+                <li
+                    key={item.value}
+                    className={[
+                        lookStyles.look,
+                        lookStyles.nonInteractive,
+                        lookStyles.noTransitions,
+                    ].join(' ')}>
+                    {item.label}
+                </li>
+            )
+            : (
+                <li
+                    ref={ref}
+                    key={item.value}
+                    className={[
+                        lookStyles.look,
+                        lookStyles.noTransitions,
+                        mouseOver ? null : lookStyles.noHover,
+                        highlighted || selected ? null : lookStyles.chromeless,
+                        highlighted
+                            ? lookStyles.default
+                            : selected
+                                ? lookStyles.highlight
+                                : lookStyles.default
+                    ].join(' ')}
+                    onMouseOver={() => this.highlight(index)}
+                    onClick={() => this.select(item)}>
+                    {item.label}
+                </li>
+            )
     }
 
-    selectItem(item) {
+    select(item) {
         const {input} = this.props
-        this.setFilter(item.label)
-        this.setState({edit: false})
+        this.setSelected(item.label)
+        this.setFilter()
         input.set(item.value)
     }
 
-    componentDidMount() {
-        // const {options, input} = this.props
-        // const selectedOption = options && input && options.find(option => option.value === input.value)
-        // console.log(selectedOption)
-        // const filter = selectedOption
-        //     ? selectedOption.label
-        //     : ''
+    highlight(highlightedIndex) {
+        this.setState({
+            highlightedIndex,
+            mouseOver: true
+        })
+    }
 
-        this.setFilter('')
+    setSelected(selectedValue) {
+        this.setState(prevState =>
+            prevState.selectedValue !== selectedValue
+                ? ({selectedValue})
+                : null
+        )
+        this.scrollSelected()
+    }
+
+    componentDidMount() {
+        this.setFilter()
         this.updateDimensions()
-        // this.setState({filter})
     }
 
     componentDidUpdate() {
         const {options, input} = this.props
         const selectedOption = options && input && options.find(option => option.value === input.value)
-        const filter = selectedOption
+        const value = selectedOption
             ? selectedOption.label
             : ''
-        console.log({selectedOption, filter})
-        
+        this.setSelected(value)
+        this.updateOptions()
         this.updateDimensions()
     }
 
+    updateOptions() {
+        const {options} = this.props
+        const {filter} = this.state
+        const matcher = RegExp(escapeStringRegexp(filter), 'i')
+
+        const updatedState = (prevState, state) =>
+            _.isEqual(prevState.options, state.options)
+                ? null
+                : state
+
+        this.setState(prevState =>
+            updatedState(prevState, {
+                options: options.filter(item => matcher.test(item.label)),
+                highlightedIndex: null
+            })
+        )
+    }
+
     updateDimensions() {
-        const {dimensions} = this.props
-        const ref = this.ref.current
-        const boundingBox = ref
-            ? ref.getBoundingClientRect()
-            : {}
+        const {dimensions: {height}} = this.props
+        const {top, bottom, left, right} = this.getBoundingBox()
 
         const updatedState = (prevState, state) =>
             _.isEqual(prevState.dimensions, state.dimensions)
@@ -148,15 +286,16 @@ class Combo extends React.Component {
 
         this.setState(prevState =>
             updatedState(prevState, {
-                dimensions: {
-                    height: dimensions.height,
-                    top: boundingBox.top,
-                    bottom: boundingBox.bottom,
-                    left: boundingBox.left,
-                    right: boundingBox.right
-                }
+                dimensions: {height, top, bottom, left, right}
             })
         )
+    }
+
+    getBoundingBox() {
+        const ref = this.input.current
+        return ref
+            ? ref.getBoundingClientRect()
+            : {}
     }
 }
 
@@ -165,5 +304,6 @@ export default connect(mapStateToProps)(Combo)
 Combo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
+    autoFocus: PropTypes.any,
     placement: PropTypes.oneOf(['top', 'bottom'])
 }
