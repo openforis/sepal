@@ -173,8 +173,8 @@ export class FormPanelButtons extends React.Component {
             invalid
                 ? null
                 : last
-                    ?onDone
-                    :onNext
+                    ? onDone
+                    : onNext
         return (
             <PanelButtons
                 onEnter={onEnter}>
