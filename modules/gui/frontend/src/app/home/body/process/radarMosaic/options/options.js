@@ -16,6 +16,7 @@ const fields = {
     mask: new Field(),
     speckleFilter: new Field(),
     orbits: new Field()
+        .notEmpty('process.recipeMosaic.panel.options.form.orbits.required')
 }
 
 class Options extends React.Component {
