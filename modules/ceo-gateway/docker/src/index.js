@@ -102,10 +102,24 @@ app.post('/create-project', (req, res, next) => {
         url: urljoin(url, 'create-project'),
         json: data,
     }).on('response', response => {
+        const {statusCode} = response
+        if (statusCode !== 200) return res.sendStatus(statusCode)
         response.on('data', data => {
             const projectId = data.toString()
-            const collectionUrl = urljoin(url, 'collection', projectId)
-            res.send(collectionUrl)
+            if (isNaN(projectId)) {
+                res.status(400).send({
+                    projectId: 0,
+                    ceoCollectionUrl: '',
+                    errorMessage: projectId
+                })
+            } else {
+                const ceoCollectionUrl = urljoin(url, 'collection', projectId)
+                res.send({
+                    projectId,
+                    ceoCollectionUrl,
+                    errorMessage: ''
+                })
+            }
         })
     }).on('error', err => {
         next(err)
