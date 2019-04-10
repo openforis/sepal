@@ -8,7 +8,6 @@ import {msg} from 'translate'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
 import Combo from 'widget/combo'
-import ComboBox from 'widget/comboBox'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -96,14 +95,9 @@ class CountrySection extends React.Component {
                         input={country}
                         options={(countries || []).map(([value, label]) => ({value, label}))}
                         placement='bottom'
-                    />
-                    
-                    {/* <ComboBox
-                        input={country}
-                        isLoading={stream('LOAD_COUNTRIES').active}
-                        disabled={!countries}
                         placeholder={countryPlaceholder}
-                        options={(countries || []).map(([value, label]) => ({value, label}))}
+                        busy={stream('LOAD_COUNTRIES').active}
+                        disabled={!countries}
                         autoFocus={!isMobile()}
                         onChange={e => {
                             area.set('')
@@ -111,14 +105,14 @@ class CountrySection extends React.Component {
                             if (e)
                                 this.loadCountryAreas(e.value)
                         }}
-                    /> */}
+                    />
                     <ErrorMessage for={country}/>
                 </div>
                 <div>
                     <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}/>
-                    <ComboBox
+                    <Combo
                         input={area}
-                        isLoading={stream('LOAD_COUNTRY_AREAS').active}
+                        busy={stream('LOAD_COUNTRY_AREAS').active}
                         disabled={!countryAreas || countryAreas.length === 0}
                         placeholder={areaPlaceholder}
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}

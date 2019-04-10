@@ -1,5 +1,8 @@
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
+import {filter} from 'rxjs/operators'
+import {fromEvent} from 'rxjs'
+import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import Keybinding from 'widget/keybinding'
 import Portal from 'widget/portal'
@@ -15,73 +18,85 @@ const mapStateToProps = state => ({
 })
 
 class Combo extends React.Component {
+    subscriptions = []
     input = React.createRef()
-    selected = React.createRef()
+    list = React.createRef()
     highlighted = React.createRef()
     state = {
-        select: false,
         dimensions: {},
+        showList: false,
         filter: '',
-        options: [],
-        highlightedIndex: null,
+        filteredOptions: [],
         selectedIndex: null,
-        selectedValue: '',
+        highlightedIndex: null,
+        selectedOption: null,
         mouseOver: null
     }
 
     render() {
-        const {select} = this.state
+        const {showList} = this.state
         return (
             <div className={styles.combo}>
-                {this.renderInput()}
-                {select ? this.renderSelectionList() : null}
+                <div
+                    ref={this.input}
+                    onClick={() => showList ? this.hideList() : this.showList()}>
+                    {this.renderInput()}
+                </div>
+                {showList ? this.renderSelectionList() : null}
             </div>
         )
     }
 
     renderInput() {
-        const {autoFocus} = this.props
-        const {filter, selectedValue} = this.state
+        const {placeholder, autoFocus, disabled, busy} = this.props
+        const {filter, selectedOption} = this.state
         return (
-            <input
-                className='combo'
-                ref={this.input}
-                type='search'
-                value={filter}
-                placeholder={selectedValue}
-                autoFocus={autoFocus}
-                onClick={() => this.setState(prevState => ({select: !prevState.select}))}
-                onKeyDown={e => this.handleKeypress(e)}
-                onChange={e => this.setFilter(e.target.value)}/>
+            <Keybinding
+                disabled={disabled}
+                keymap={{
+                    ArrowUp: () => this.showList(),
+                    ArrowDown: () => this.showList()
+                }}>
+                <input
+                    className={selectedOption ? 'combo' : null}
+                    type='search'
+                    value={filter}
+                    placeholder={selectedOption ? selectedOption.label : placeholder}
+                    autoFocus={autoFocus}
+                    disabled={disabled || busy || isMobile()}
+                    onChange={e => this.setFilter(e.target.value)}/>
+            </Keybinding>
         )
     }
 
-    handleKeypress(e) {
-        const {select} = this.state
-        if (e.key === 'ArrowDown' && !select) {
-            this.setState({select: true})
+    showList() {
+        const {showList, selectedIndex} = this.state
+        if (!showList) {
+            this.setState({
+                showList: true,
+                highlightedIndex: selectedIndex === -1 ? 0 : selectedIndex
+            }, () => this.scrollHighlighted())
         }
     }
 
-    handleEnter(e) {
-        const {options, highlightedIndex} = this.state
+    hideList() {
+        this.setState({
+            showList: false
+        })
+    }
+
+    handleEnter() {
+        const {filteredOptions, highlightedIndex} = this.state
         if (highlightedIndex !== null) {
-            this.select(options[highlightedIndex])
-        } else if (options.length === 1) {
-            this.select(options[0])
+            this.select(filteredOptions[highlightedIndex])
         }
-        e.preventDefault()
     }
 
-    handleDown() {
-        this.setState(prevState => ({
-            highlightedIndex: Math.min(prevState.highlightedIndex === null ? 0 : prevState.highlightedIndex + 1, prevState.options.length - 1),
-            mouseOver: false
-        }))
-        this.scrollHighlighted()
+    handleEscape() {
+        this.setFilter()
     }
 
-    handleUp() {
+    highlightPrevious() {
         this.setState(prevState => ({
             highlightedIndex: Math.max(prevState.highlightedIndex - 1, 0),
             mouseOver: false
@@ -89,15 +104,15 @@ class Combo extends React.Component {
         this.scrollHighlighted()
     }
 
-    handleBottom() {
+    highlightNext() {
         this.setState(prevState => ({
-            highlightedIndex: prevState.options.length - 1,
+            highlightedIndex: Math.min(prevState.highlightedIndex === null ? 0 : prevState.highlightedIndex + 1, prevState.filteredOptions.length - 1),
             mouseOver: false
         }))
         this.scrollHighlighted()
     }
 
-    handleTop() {
+    highlightFirst() {
         this.setState({
             highlightedIndex: 0,
             mouseOver: false
@@ -105,18 +120,22 @@ class Combo extends React.Component {
         this.scrollHighlighted()
     }
 
-    scrollHighlighted() {
-        this.highlighted.current && this.highlighted.current.scrollIntoView({
-            behavior: 'auto',
-            block: 'nearest'
-        })
+    highlightLast() {
+        this.setState(prevState => ({
+            highlightedIndex: prevState.filteredOptions.length - 1,
+            mouseOver: false
+        }))
+        this.scrollHighlighted()
     }
 
-    scrollSelected() {
-        this.selected.current && this.selected.current.scrollIntoView({
-            behavior: 'auto',
-            block: 'nearest'
-        })
+    scrollHighlighted() {
+        const {highlightedIndex} = this.state
+        if (highlightedIndex) {
+            this.highlighted.current && this.highlighted.current.scrollIntoView({
+                behavior: 'auto',
+                block: 'nearest'
+            })
+        }
     }
 
     renderSelectionList() {
@@ -136,14 +155,16 @@ class Combo extends React.Component {
         return (
             <Portal>
                 <Keybinding keymap={{
-                    Enter: e => this.handleEnter(e),
-                    ArrowDown: e => this.handleDown(e),
-                    ArrowUp: e => this.handleUp(e),
-                    Home: e => this.handleTop(e),
-                    End: e => this.handleBottom(e)
+                    Enter: () => this.handleEnter(),
+                    Escape: () => this.handleEscape(),
+                    ArrowUp: () => this.highlightPrevious(),
+                    ArrowDown: () => this.highlightNext(),
+                    Home: () => this.highlightFirst(),
+                    End: () => this.highlightLast()
                 }}>
                     <div
-                        className={[styles.container, styles[placement]].join(' ')}
+                        ref={this.list}
+                        className={[styles.list, styles[placement]].join(' ')}
                         style={style}>
                         <ScrollableContainer>
                             <Scrollable>
@@ -160,30 +181,27 @@ class Combo extends React.Component {
 
     setFilter(filter = '') {
         this.setState({
-            select: !!filter,
+            showList: !!filter,
             filter,
-            highlightedIndex: null
+            highlightedIndex: 0
         })
         this.updateOptions()
     }
 
     renderItems() {
-        const {options} = this.state
-        return options.length
-            ? options.map((item, index) => this.renderItem(item, index))
-            : this.renderItem({label: 'No results'})
+        const {filteredOptions} = this.state
+        return filteredOptions.length
+            ? filteredOptions.map((item, index) => this.renderItem(item, index))
+            : this.renderItem({label: 'No results'}) // [TODO] msg
     }
 
     renderItem(item, index) {
-        const {highlightedIndex, selectedValue, mouseOver} = this.state
-        const highlighted = index === highlightedIndex
-        const selected = item.value === selectedValue
+        const {highlightedIndex, mouseOver} = this.state
+        const highlighted = highlightedIndex === index
         const disabled = !item.value
-        const ref = selected
-            ? this.selected
-            : highlighted
-                ? this.highlighted
-                : null
+        const ref = highlighted
+            ? this.highlighted
+            : null
         return disabled
             ? (
                 <li
@@ -204,12 +222,8 @@ class Combo extends React.Component {
                         lookStyles.look,
                         lookStyles.noTransitions,
                         mouseOver ? null : lookStyles.noHover,
-                        highlighted || selected ? null : lookStyles.chromeless,
-                        highlighted
-                            ? lookStyles.default
-                            : selected
-                                ? lookStyles.highlight
-                                : lookStyles.default
+                        highlighted ? null : lookStyles.chromeless,
+                        lookStyles.default
                     ].join(' ')}
                     onMouseOver={() => this.highlight(index)}
                     onClick={() => this.select(item)}>
@@ -219,10 +233,13 @@ class Combo extends React.Component {
     }
 
     select(item) {
-        const {input} = this.props
-        this.setSelected(item.label)
+        const {input, onChange} = this.props
+        this.setSelectedOption(item)
         this.setFilter()
         input.set(item.value)
+        onChange && onChange({
+            value: item.value
+        })
     }
 
     highlight(highlightedIndex) {
@@ -232,16 +249,26 @@ class Combo extends React.Component {
         })
     }
 
-    setSelected(selectedValue) {
+    setSelectedOption(selectedOption) {
         this.setState(prevState =>
-            prevState.selectedValue !== selectedValue
-                ? ({selectedValue})
+            prevState.selectedOption !== selectedOption
+                ? ({selectedOption})
                 : null
         )
-        this.scrollSelected()
     }
 
     componentDidMount() {
+        const click$ = fromEvent(document, 'click').pipe(
+            filter(() => this.state.showList)
+        )
+        const isInternalClick = e =>
+            this.list.current.contains(e.target) || this.input.current.contains(e.target)
+
+        this.subscriptions.push(
+            click$.subscribe(
+                e => isInternalClick(e) || this.setFilter()
+            )
+        )
         this.setFilter()
         this.updateDimensions()
     }
@@ -249,28 +276,37 @@ class Combo extends React.Component {
     componentDidUpdate() {
         const {options, input} = this.props
         const selectedOption = options && input && options.find(option => option.value === input.value)
-        const value = selectedOption
-            ? selectedOption.label
-            : ''
-        this.setSelected(value)
+        this.setSelectedOption(selectedOption)
         this.updateOptions()
         this.updateDimensions()
     }
 
+    componentWillUnmount() {
+        this.subscriptions.forEach(subscription => subscription.unsubscribe())
+    }
+
     updateOptions() {
         const {options} = this.props
-        const {filter} = this.state
+        const {filter, selectedOption} = this.state
         const matcher = RegExp(escapeStringRegexp(filter), 'i')
+        const filteredOptions = options.filter(item => matcher.test(item.label))
+        const selectedIndex = filteredOptions.findIndex(option => option === selectedOption)
 
         const updatedState = (prevState, state) =>
-            _.isEqual(prevState.options, state.options)
+            _.isEqual([
+                prevState.filteredOptions,
+                prevState.selectedIndex
+            ], [
+                state.filteredOptions,
+                state.selectedIndex
+            ])
                 ? null
                 : state
 
         this.setState(prevState =>
             updatedState(prevState, {
-                options: options.filter(item => matcher.test(item.label)),
-                highlightedIndex: null
+                filteredOptions,
+                selectedIndex
             })
         )
     }
@@ -305,5 +341,9 @@ Combo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
     autoFocus: PropTypes.any,
-    placement: PropTypes.oneOf(['top', 'bottom'])
+    busy: PropTypes.any,
+    disabled: PropTypes.any,
+    placeholder: PropTypes.string,
+    placement: PropTypes.oneOf(['top', 'bottom']),
+    onChange:  PropTypes.func
 }

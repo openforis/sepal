@@ -2,7 +2,7 @@
     position: relative;
 }
 
-.container {
+.list {
     --input-clearance: .5rem;
     --edge-clearance: .5rem;
     --background-color: hsla(0, 0%, 0%, .9);
@@ -10,14 +10,14 @@
     left: calc(var(--left) * 1px);
     max-height: calc(var(--height) * 1px - var(--input-clearance) - var(--edge-clearance));
     width: calc(var(--width) * 1px);
-    pointer-events: none;
+    /* pointer-events: none; */
 }
 
-.container.top {
+.list.top {
     bottom: calc(var(--top) * 1px + var(--input-clearance));
 }
 
-.container.bottom {
+.list.bottom {
     top: calc(var(--bottom) * 1px + var(--input-clearance));
 }
 
