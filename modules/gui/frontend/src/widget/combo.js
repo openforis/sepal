@@ -24,25 +24,24 @@ class Combo extends React.Component {
     highlighted = React.createRef()
     state = {
         dimensions: {},
-        showList: false,
+        showOptions: false,
         filter: '',
         filteredOptions: [],
-        selectedIndex: null,
         highlightedIndex: null,
         selectedOption: null,
         mouseOver: null
     }
 
     render() {
-        const {showList} = this.state
+        const {showOptions} = this.state
         return (
-            <div className={styles.combo}>
+            <div className={styles.container}>
                 <div
                     ref={this.input}
-                    onClick={() => showList ? this.hideList() : this.showList()}>
+                    onClick={() => showOptions ? this.hideOptions() : this.showOptions()}>
                     {this.renderInput()}
                 </div>
-                {showList ? this.renderSelectionList() : null}
+                {showOptions ? this.renderOptions() : null}
             </div>
         )
     }
@@ -54,11 +53,11 @@ class Combo extends React.Component {
             <Keybinding
                 disabled={disabled}
                 keymap={{
-                    ArrowUp: () => this.showList(),
-                    ArrowDown: () => this.showList()
+                    ArrowUp: () => this.showOptions(),
+                    ArrowDown: () => this.showOptions()
                 }}>
                 <input
-                    className={selectedOption ? 'combo' : null}
+                    className={selectedOption ? styles.fakePlaceholder : null}
                     type='search'
                     value={filter}
                     placeholder={selectedOption ? selectedOption.label : placeholder}
@@ -69,19 +68,114 @@ class Combo extends React.Component {
         )
     }
 
-    showList() {
-        const {showList, selectedIndex} = this.state
-        if (!showList) {
+    renderOptions() {
+        const {placement = 'bottom'} = this.props
+        const {dimensions: {height, top, bottom, left, right}} = this.state
+        const heightByPlacement = {
+            top: top,
+            bottom: height - bottom
+        }
+        const style = {
+            '--left': left,
+            '--height': heightByPlacement[placement],
+            '--width': right - left,
+            '--top': top,
+            '--bottom': bottom
+        }
+        return (
+            <Portal>
+                <Keybinding keymap={{
+                    Enter: () => this.handleEnter(),
+                    Escape: () => this.handleEscape(),
+                    ArrowUp: () => this.highlightPrevious(),
+                    ArrowDown: () => this.highlightNext(),
+                    Home: () => this.highlightFirst(),
+                    End: () => this.highlightLast()
+                }}>
+                    <div
+                        ref={this.list}
+                        className={[styles.list, styles[placement]].join(' ')}
+                        style={style}>
+                        <ScrollableContainer>
+                            <Scrollable className={styles.items}>
+                                <ul>
+                                    {this.renderItems()}
+                                </ul>
+                            </Scrollable>
+                        </ScrollableContainer>
+                    </div>
+                </Keybinding>
+            </Portal>
+        )
+    }
+
+    renderItems() {
+        const {filteredOptions} = this.state
+        return filteredOptions.length
+            ? filteredOptions.map((item, index) => this.renderItem(item, index))
+            : this.renderItem({label: 'No results'}) // [TODO] msg
+    }
+
+    renderItem(item, index) {
+        const disabled = !item.value
+        return disabled
+            ? this.renderNonSelectableItem(item)
+            : this.renderSelectableItem(item, index)
+    }
+
+    renderNonSelectableItem(item) {
+        return (
+            <li
+                key={item.value}
+                className={[
+                    lookStyles.look,
+                    lookStyles.nonInteractive,
+                    lookStyles.noTransitions,
+                ].join(' ')}>
+                {item.label}
+            </li>
+        )
+    }
+
+    renderSelectableItem(item, index) {
+        const {highlightedIndex, mouseOver} = this.state
+        const highlighted = highlightedIndex === index
+        const ref = highlighted
+            ? this.highlighted
+            : null
+        return (
+            <li
+                ref={ref}
+                key={item.value}
+                className={[
+                    lookStyles.look,
+                    lookStyles.noTransitions,
+                    mouseOver ? null : lookStyles.noHover,
+                    highlighted ? null : lookStyles.chromeless,
+                    lookStyles.default
+                ].join(' ')}
+                onMouseOver={() => this.highlight(index)}
+                onClick={() => this.select(item)}>
+                {item.label}
+            </li>
+        )
+    }
+
+    showOptions() {
+        const {showOptions, filteredOptions, selectedOption} = this.state
+        if (!showOptions) {
+            const selectedIndex = filteredOptions.findIndex(option => option.value === selectedOption.value)
+            const highlightedIndex = Math.max(selectedIndex, 0)
             this.setState({
-                showList: true,
-                highlightedIndex: selectedIndex === -1 ? 0 : selectedIndex
+                showOptions: true,
+                highlightedIndex
             }, () => this.scrollHighlighted())
         }
     }
 
-    hideList() {
+    hideOptions() {
         this.setState({
-            showList: false
+            showOptions: false
         })
     }
 
@@ -138,98 +232,13 @@ class Combo extends React.Component {
         }
     }
 
-    renderSelectionList() {
-        const {placement = 'bottom'} = this.props
-        const {dimensions: {height, top, bottom, left, right}} = this.state
-        const placementHeight = {
-            top: top,
-            bottom: height - bottom
-        }
-        const style = {
-            '--left': left,
-            '--height': placementHeight[placement],
-            '--width': right - left,
-            '--top': top,
-            '--bottom': bottom
-        }
-        return (
-            <Portal>
-                <Keybinding keymap={{
-                    Enter: () => this.handleEnter(),
-                    Escape: () => this.handleEscape(),
-                    ArrowUp: () => this.highlightPrevious(),
-                    ArrowDown: () => this.highlightNext(),
-                    Home: () => this.highlightFirst(),
-                    End: () => this.highlightLast()
-                }}>
-                    <div
-                        ref={this.list}
-                        className={[styles.list, styles[placement]].join(' ')}
-                        style={style}>
-                        <ScrollableContainer>
-                            <Scrollable>
-                                <ul className={styles.items}>
-                                    {this.renderItems()}
-                                </ul>
-                            </Scrollable>
-                        </ScrollableContainer>
-                    </div>
-                </Keybinding>
-            </Portal>
-        )
-    }
-
     setFilter(filter = '') {
         this.setState({
-            showList: !!filter,
+            showOptions: !!filter,
             filter,
             highlightedIndex: 0
         })
         this.updateOptions()
-    }
-
-    renderItems() {
-        const {filteredOptions} = this.state
-        return filteredOptions.length
-            ? filteredOptions.map((item, index) => this.renderItem(item, index))
-            : this.renderItem({label: 'No results'}) // [TODO] msg
-    }
-
-    renderItem(item, index) {
-        const {highlightedIndex, mouseOver} = this.state
-        const highlighted = highlightedIndex === index
-        const disabled = !item.value
-        const ref = highlighted
-            ? this.highlighted
-            : null
-        return disabled
-            ? (
-                <li
-                    key={item.value}
-                    className={[
-                        lookStyles.look,
-                        lookStyles.nonInteractive,
-                        lookStyles.noTransitions,
-                    ].join(' ')}>
-                    {item.label}
-                </li>
-            )
-            : (
-                <li
-                    ref={ref}
-                    key={item.value}
-                    className={[
-                        lookStyles.look,
-                        lookStyles.noTransitions,
-                        mouseOver ? null : lookStyles.noHover,
-                        highlighted ? null : lookStyles.chromeless,
-                        lookStyles.default
-                    ].join(' ')}
-                    onMouseOver={() => this.highlight(index)}
-                    onClick={() => this.select(item)}>
-                    {item.label}
-                </li>
-            )
     }
 
     select(item) {
@@ -259,7 +268,7 @@ class Combo extends React.Component {
 
     componentDidMount() {
         const click$ = fromEvent(document, 'click').pipe(
-            filter(() => this.state.showList)
+            filter(() => this.state.showOptions)
         )
         const isInternalClick = e =>
             this.list.current.contains(e.target) || this.input.current.contains(e.target)
@@ -292,26 +301,18 @@ class Combo extends React.Component {
 
     updateOptions() {
         const {options} = this.props
-        const {filter, selectedOption} = this.state
+        const {filter} = this.state
         const matcher = this.matcher(filter)
         const filteredOptions = options.filter(item => matcher.test(item.label))
-        const selectedIndex = filteredOptions.findIndex(option => option === selectedOption)
 
         const updatedState = (prevState, state) =>
-            _.isEqual([
-                prevState.filteredOptions,
-                prevState.selectedIndex
-            ], [
-                state.filteredOptions,
-                state.selectedIndex
-            ])
+            _.isEqual(prevState.filteredOptions, state.filteredOptions)
                 ? null
                 : state
 
         this.setState(prevState =>
             updatedState(prevState, {
-                filteredOptions,
-                selectedIndex
+                filteredOptions
             })
         )
     }
