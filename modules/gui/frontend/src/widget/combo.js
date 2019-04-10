@@ -166,7 +166,7 @@ class Combo extends React.Component {
     showOptions() {
         const {showOptions, filteredOptions, selectedOption} = this.state
         if (!showOptions) {
-            const selectedIndex = filteredOptions.findIndex(option => option.value === selectedOption.value)
+            const selectedIndex = filteredOptions.findIndex(option => selectedOption && selectedOption.value === option.value)
             const highlightedIndex = Math.max(selectedIndex, 0)
             this.setState({
                 showOptions: true,
