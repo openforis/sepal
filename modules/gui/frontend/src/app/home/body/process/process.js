@@ -7,6 +7,7 @@ import Classification from './classification/classification'
 import CloseRecipe from './closeRecipe'
 import LandCover from './landCover/landCover'
 import Mosaic from './mosaic/mosaic'
+import RadarMosaic from './radarMosaic/radarMosaic'
 import ProcessMenu from './processMenu'
 import React from 'react'
 import Recipes from './recipes'
@@ -17,6 +18,7 @@ import TimeSeries from './timeSeries/timeSeries'
 
 const recipeByType = id => ({
     MOSAIC: <Mosaic/>,
+    RADAR_MOSAIC: <RadarMosaic/>,
     CLASSIFICATION: <Classification recipeId={id}/>,
     CHANGE_DETECTION: <ChangeDetection recipeId={id}/>,
     TIME_SERIES: <TimeSeries recipeId={id}/>,

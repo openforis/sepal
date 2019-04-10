@@ -1,6 +1,6 @@
 import logging
 
-from sepal.cloudstorage.download import CloudStorageDownload
+from sepalinternal.cloudstorage.download import CloudStorageDownload
 
 logging.basicConfig(level=logging.DEBUG)
 for handler in logging.root.handlers:

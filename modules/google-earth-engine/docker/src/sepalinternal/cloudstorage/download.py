@@ -65,7 +65,6 @@ class CloudStorageDownload(ThreadTask):
 
     def _update_status(self, **kwargs):
         self._status = self._status._replace(**kwargs)
-        print(self._status)
         return self._status
 
 

@@ -7,12 +7,12 @@ import ee
 from ee import EEException
 from flask import Flask, Blueprint, Response, request
 
-from sepal import gee
-from sepal import image_spec_factory
-from sepal.aoi import Aoi
-from sepal.drive.drive_cleanup import DriveCleanup
-from sepal.sepal_api import SepalApi
-from sepal.sepal_exception import SepalException
+from sepalinternal import gee
+from sepalinternal import image_spec_factory
+from sepalinternal.aoi import Aoi
+from sepalinternal.drive.drive_cleanup import DriveCleanup
+from sepalinternal.sepal_api import SepalApi
+from sepalinternal.sepal_exception import SepalException
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)

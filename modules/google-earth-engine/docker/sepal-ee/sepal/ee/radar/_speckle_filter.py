@@ -3,7 +3,7 @@ import math
 import ee
 
 
-def apply(image, bands, ksize=3, enl=7):
+def apply(image, bands=['VV', 'VH'], ksize=3, enl=7):
     def to_natural(db):
         return ee.Image(10.0).pow(db.divide(10.0))
 

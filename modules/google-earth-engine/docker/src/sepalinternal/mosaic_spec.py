@@ -110,7 +110,7 @@ _toa_viz_by_bands = {
     'dayOfYear': lambda params: {
         'bands': 'dayOfYear',
         'min': 0,
-        'max': 183,
+        'max': 366,
         'palette': '00FFFF, 000099'
     },
     'daysFromTarget': lambda params: {

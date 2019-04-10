@@ -1,6 +1,7 @@
 from asset import Asset
 from changedetection import ChangeDetection
 from classification import Classification
+from radar import RadarMosaic
 from image_spec import ImageSpec
 from landsat import LandsatAutomaticMosaicSpec
 from landsat import LandsatManualMosaicSpec
@@ -17,6 +18,8 @@ def create(sepal_api, spec):
     image_type = spec['recipe']['type']
     if image_type == 'MOSAIC':
         return _create_mosaic(spec)
+    if image_type == 'RADAR_MOSAIC':
+        return RadarMosaic(spec)
     if image_type == 'CLASSIFICATION':
         return Classification(sepal_api, spec, create)
     if image_type == 'CHANGE_DETECTION':
