@@ -72,6 +72,5 @@ const submitRetrieveRecipeTask = recipe => {
                 image: {recipe: _.omit(recipe, ['ui']), bands, scale}
             }
     }
-    console.log({task})
     return api.tasks.submit$(task).subscribe()
 }
