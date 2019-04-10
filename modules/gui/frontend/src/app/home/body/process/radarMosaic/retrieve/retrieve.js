@@ -70,7 +70,7 @@ class Retrieve extends React.Component {
 
     constructor(props) {
         super(props)
-        const {inputs: {scale}} = this.props
+        const {timeScan, inputs: {bands, scale}} = this.props
         if (!scale.value)
             scale.set(20)
     }
@@ -148,9 +148,17 @@ class Retrieve extends React.Component {
     }
 
     componentDidUpdate() {
-        const {user, inputs: {destination}} = this.props
+        const {user, timeScan, inputs: {bands, destination}} = this.props
         if (!user.googleTokens && destination.value !== 'SEPAL')
             destination.set('SEPAL')
+
+        const validBands = (timeScan ? this.timeScanBandOptions : this.pointInTimeOptions)
+            .map(group => group.options.map(option => option.value))
+            .flat()
+        const invalidBand = (bands.value || []).find(band => !validBands.includes(band))
+        const selectedInvalid = !!invalidBand
+        if (selectedInvalid)
+            bands.set([])
     }
 }
 

@@ -1,7 +1,11 @@
 import ee
 
 
-def create(collection, region, bands):
+def create(collection, region, bands=(
+        'VV_p20', 'VV_p50', 'VV_p80',
+        'VH_p20', 'VH_p50', 'VH_p80',
+        'VV_p80_VV_p20', 'VH_p80_VH_p20', 'VV_p50_VH_p50'
+)):
     mosaic = collection.reduce(ee.Reducer.percentile([20, 50, 80]))
     return mosaic \
         .addBands([
@@ -10,6 +14,10 @@ def create(collection, region, bands):
         .addBands([
             mosaic.select('VV_p80').subtract(mosaic.select('VV_p20')).rename('VV_p80_p20')
         ]) \
+        .addBands([
+            mosaic.select('VH_p80').subtract(mosaic.select('VH_p20')).rename('VH_p80_p20')
+        ]) \
+        .select(bands) \
         .clip(region)
 
 
