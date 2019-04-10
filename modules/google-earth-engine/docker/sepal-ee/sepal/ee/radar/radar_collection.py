@@ -80,11 +80,13 @@ def create(
     return ee.ImageCollection('COPERNICUS/S1_GRD') \
         .filterBounds(region) \
         .filterDate(start_date, end_date) \
+        .filterMetadata('resolution_meters', 'equals', 10) \
+        .filter(ee.Filter.eq('instrumentMode', 'IW')) \
         .filter(ee.Filter.And(
-        ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'),
-        ee.Filter.listContains('transmitterReceiverPolarisation', 'VH')
-    )) \
+            ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'),
+            ee.Filter.listContains('transmitterReceiverPolarisation', 'VH')
+        )) \
         .filter(ee.Filter.Or(
-        [ee.Filter.eq('orbitProperties_pass', orbit) for orbit in orbits]
-    )) \
+            [ee.Filter.eq('orbitProperties_pass', orbit) for orbit in orbits]
+            )) \
         .map(pre_process)

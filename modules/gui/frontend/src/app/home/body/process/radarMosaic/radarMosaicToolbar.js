@@ -9,6 +9,7 @@ import {setInitialized} from '../recipe'
 import Dates from './dates/dates'
 import Options from './options/options'
 import styles from './radarMosaicToolbar.module.css'
+import Retrieve from './retrieve/retrieve'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
@@ -24,7 +25,7 @@ class RadarMosaicToolbar extends React.Component {
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 
-                {/*<Retrieve/>*/}
+                <Retrieve/>
 
                 <Aoi/>
                 <Dates/>

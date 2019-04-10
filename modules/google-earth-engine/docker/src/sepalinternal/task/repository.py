@@ -4,7 +4,7 @@ _task_by_id = {}
 
 
 def submit(id, module, spec, context):
-    factory = importlib.import_module(name=module)
+    factory = importlib.import_module(name='sepalinternal.' + module)
     task = factory.create(spec, context)
     _task_by_id[id] = task
     task.submit().catch(_re_raise)

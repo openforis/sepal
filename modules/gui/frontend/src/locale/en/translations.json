@@ -575,6 +575,31 @@
                             }
                         }
                     }
+                },
+                "retrieve": {
+                    "title": "Retrieve",
+                    "tooltip": "Retrieve radar mosaic",
+                    "apply": "Retrieve",
+                    "form": {
+                        "bands": {
+                            "label": "Bands to retrieve",
+                            "atLeastOne": "At least one band must be retrieved"
+                        },
+                        "scale": {
+                            "label": "Scale",
+                            "info": "{scale} meters"
+                        },
+                        "destination": {
+                            "label": "Retrieve to",
+                            "required": "A destination must be selected",
+                            "SEPAL": "Sepal workspace",
+                            "GEE": "Google Earth Engine asset"
+                        },
+                        "task": {
+                            "SEPAL": "Retrieve {name} to Sepal workspace",
+                            "GEE": "Export {name} as a Google Earth Engine asset"
+                        }
+                    }
                 }
             }
         },

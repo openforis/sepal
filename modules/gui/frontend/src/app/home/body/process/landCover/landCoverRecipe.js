@@ -141,7 +141,7 @@ export const createComposites = recipe => {
     RecipeActions(recipe.id).setStatus(Status.CREATING_COMPOSITES).dispatch()
     const taskTitle = msg('process.landCover.panel.createComposites.task')
     api.tasks.submit$({
-        operation: 'sepal.landcover.create_composites',
+        operation: 'landcover.create_composites',
         params: {
             title: taskTitle,
             // assetPath: recipe.title || recipe.placeholder,
@@ -161,7 +161,7 @@ export const createLandCoverMap = recipe => {
     RecipeActions(recipe.id).setStatus(Status.CREATING_LAND_COVER_MAP).dispatch()
     const taskTitle = msg('process.landCover.panel.createLandCoverMap.task')
     api.tasks.submit$({
-        operation: 'sepal.landcover.create_land_cover_map',
+        operation: 'landcover.create_land_cover_map',
         params: {
             title: taskTitle,
             assetPath: recipe.title || recipe.placeholder,

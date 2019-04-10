@@ -11,6 +11,7 @@ class RadarMosaic(ImageSpec):
         self.aoi = Aoi.create(spec['recipe']['model']['aoi'])
         self.bands = spec['bands']
         self.time_scan = not self.model['dates'].get('targetDate')
+        self.scale = spec.get('scale', 20)
 
     def _viz_params(self):
         if self.time_scan:

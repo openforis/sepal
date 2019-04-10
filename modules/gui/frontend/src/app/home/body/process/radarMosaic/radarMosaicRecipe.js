@@ -1,5 +1,8 @@
+import api from 'api'
 import {recipeActionBuilder} from 'app/home/body/process/recipe'
+import _ from 'lodash'
 import moment from 'moment'
+import {msg} from 'translate'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -41,6 +44,34 @@ export const RecipeActions = id => {
         },
         showPreview() {
             return set('SHOW_PREVIEW', 'ui.hidePreview', false)
-        }
+        },
+        retrieve(retrieveOptions) {
+            return actionBuilder('REQUEST_RADAR_MOSAIC_RETRIEVAL', {retrieveOptions})
+                .setAll({
+                    'ui.retrieveState': 'SUBMITTED',
+                    'ui.retrieveOptions': retrieveOptions,
+                })
+                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
+                .build()
+        },
     }
+}
+
+const submitRetrieveRecipeTask = recipe => {
+    const name = recipe.title || recipe.placeholder
+    const scale = recipe.ui.retrieveOptions.scale
+    const destination = recipe.ui.retrieveOptions.destination
+    const taskTitle = msg(['process.radarMosaic.panel.retrieve.form.task', destination], {name})
+    const bands = recipe.ui.retrieveOptions.bands
+    const task = {
+        'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
+        'params':
+            {
+                title: taskTitle,
+                description: name,
+                image: {recipe: _.omit(recipe, ['ui']), bands, scale}
+            }
+    }
+    console.log({task})
+    return api.tasks.submit$(task).subscribe()
 }
