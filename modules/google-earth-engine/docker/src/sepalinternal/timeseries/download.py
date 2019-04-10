@@ -23,6 +23,7 @@ from ..export.image_to_drive import ImageToDrive
 from ..export.table_to_drive import TableToDrive
 from ..format import format_bytes
 from ..task.task import ThreadTask, Task
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,8 @@ class DownloadFeatures(ThreadTask):
         self.drive_folder = None
 
     def run(self):
+        print('*** RUN ***')
+        print(datetime.now())
         ee.InitializeThread(self.spec.credentials)
         # Explicitly create folder, to prevent GEE race-condition
         self.drive_folder = drive.create_folder(self.spec.credentials, self.drive_folder_name)
@@ -125,6 +128,8 @@ class DownloadFeatures(ThreadTask):
             task.cancel()
         if self.drive_folder:
             drive.delete(self.spec.credentials, self.drive_folder)
+        print('*** CLOSE ***')
+        print(datetime.now())
 
     def __str__(self):
         return '{0}(download_dir={1}, description={2}, credentials={3}, expression={4}, data_sets={5}, ' \
@@ -306,8 +311,8 @@ class DownloadYear(ThreadTask):
                 folder=self._drive_folder,
                 scale=30,
                 maxPixels=1e12,
-                shardSize=256,
-                fileDimensions=1024
+                shardSize=64,
+                fileDimensions=128
             ))
         self._image_download = self.dependent(
             Download(

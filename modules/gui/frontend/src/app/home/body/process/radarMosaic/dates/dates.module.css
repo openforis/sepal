@@ -1,0 +1,14 @@
+.panel {
+    max-width: 18rem;
+}
+
+.fromToPickers {
+    display: flex;
+    justify-content: space-between;
+}
+
+.yearPicker {
+}
+
+.targetDatePicker {
+}

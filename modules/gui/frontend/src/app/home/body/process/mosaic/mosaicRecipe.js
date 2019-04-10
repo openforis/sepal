@@ -15,6 +15,7 @@ export const SceneSelectionType = Object.freeze({
 
 export const defaultModel = {
     dates: {
+        type: 'YEARLY_TIME_SCAN',
         targetDate: moment().set('month', 6).set('date', 2).format(DATE_FORMAT),
         seasonStart: moment().startOf('year').format(DATE_FORMAT),
         seasonEnd: moment().add(1, 'years').startOf('year').format(DATE_FORMAT),
@@ -137,7 +138,7 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
     const task = {
-        'operation': `sepal.image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
+        'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
             {
                 title: taskTitle,

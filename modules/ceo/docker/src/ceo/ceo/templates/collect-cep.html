@@ -588,6 +588,9 @@
             //gmap.overlayMapTypes.pop();
             //gmap.overlayMapTypes.setAt(0, null);
             gmap.overlayMapTypes.clear();
+            lmap.eachLayer(function(layer) {
+                if (layer.options.isOverlay) lmap.removeLayer(layer);
+            });
             setTimeout(function() {
                 if (typeof index !== 'undefined' && index != '') {
                     var overlay = overlays[index];
@@ -604,7 +607,7 @@
                                 var iframe = $('<iframe>').addClass('dgcs-iframe').attr('src', src);
                                 $('body').append(iframe);
                             }
-                            if (!lmap.hasLayer(overlayMapType)) lmap.addLayer(overlayMapType);
+                            lmap.addLayer(overlayMapType);
                             overlayMapType.bringToFront();
                             mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
                         }

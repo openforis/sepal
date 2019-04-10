@@ -8,7 +8,7 @@ from flask import Flask, render_template
 
 import server
 import task_server
-from sepal import gee
+from sepalinternal import gee
 
 modules = [server, task_server]
 app = Flask(__name__)

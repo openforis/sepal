@@ -11,9 +11,9 @@ from flask import Flask, Blueprint, Response
 from flask import request
 
 import os
-from sepal import gee
-from sepal.sepal_api import SepalApi
-from sepal.task import repository
+from sepalinternal import gee
+from sepalinternal.sepal_api import SepalApi
+from sepalinternal.task import repository
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)

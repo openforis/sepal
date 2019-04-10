@@ -39,6 +39,10 @@ class RecipeList extends React.Component {
         name: msg('process.mosaic.create'),
         description: msg('process.mosaic.description')
     }, {
+        type: 'RADAR_MOSAIC',
+        name: msg('process.radarMosaic.create'),
+        description: msg('process.radarMosaic.description')
+    }, {
         type: 'CLASSIFICATION',
         name: msg('process.classification.create'),
         description: msg('process.classification.description')

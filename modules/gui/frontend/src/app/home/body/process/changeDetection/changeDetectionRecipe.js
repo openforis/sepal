@@ -39,7 +39,7 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
     const task = {
-        'operation': `sepal.image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
+        'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
             {
                 title: taskTitle,

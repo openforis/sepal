@@ -22,7 +22,6 @@ class LandsatMosaicSpec(MosaicSpec):
         self.set_scale()
         composite_options = spec['recipe']['model']['compositeOptions']
         more_than_one_data_set = len(_flatten(spec['recipe']['model']['sources'].values())) > 1
-        print(more_than_one_data_set)
         self.calibrate = 'CALIBRATE' in composite_options['corrections'] and 'SR' not in composite_options[
             'corrections'] and more_than_one_data_set
 

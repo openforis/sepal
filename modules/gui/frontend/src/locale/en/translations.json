@@ -164,7 +164,7 @@
             "revert": "Revert to revision"
         },
         "mosaic": {
-            "create": "Mosaic",
+            "create": "Optical mosaic",
             "description": "Create a mosaic using Landsat or Sentinel 2.",
             "mapToolbar": {
                 "zoom.tooltip": "Zoom to area",
@@ -476,6 +476,131 @@
             },
             "sceneAreas": {
                 "loading": "Loading scene areas..."
+            }
+        },
+
+        "radarMosaic": {
+            "create": "Radar mosaic",
+            "description": "Create a mosaic using Sentinel 1.",
+            "panel": {
+                "dates": {
+                    "title": "Dates",
+                    "button": "DAT",
+                    "tooltip": "Specify dates",
+                    "form": {
+                        "type": {
+                            "label": "Type",
+                            "YEARLY_TIME_SCAN": {
+                                "label": "Year",
+                                "tooltip": "Build a time-scan with data from a specified calendar year."
+                            },
+                            "CUSTOM_TIME_SCAN": {
+                                "label": "Date range",
+                                "tooltip": "Build a time-scan with data from a custom date range."
+                            },
+                            "POINT_IN_TIME_MOSAIC": {
+                                "label": "Date",
+                                "tooltip": "Build a mosaic with data coming as close to a specified date as possible."
+                            }
+                        },
+                        "year": {
+                            "label": "Year",
+                            "malformed": "Not a year"
+                        },
+                        "fromDate": {
+                            "label": "From date",
+                            "malformed": "Invalid date"
+                        },
+                        "toDate": {
+                            "label": "To date",
+                            "malformed": "Invalid date"
+                        },
+                        "targetDate": {
+                            "label": "Target date",
+                            "malformed": "Invalid date"
+                        }
+                    }
+                },
+                "options": {
+                    "title": "Options",
+                    "button": "OPT",
+                    "tooltip": "Configure mosaic options",
+                    "form": {
+                        "corrections": {
+                            "label": "Corrections",
+                            "terrain": {
+                                "label": "Terrain",
+                                "tooltip": "TBD"
+                            },
+                            "gamma0": {
+                                "label": "Gamma0",
+                                "tooltip": "TBD"
+                            }
+                        },
+                        "mask": {
+                            "label": "Mask",
+                            "outliers": {
+                                "label": "Outliers",
+                                "tooltip": "TBD"
+                            },
+                            "layover": {
+                                "label": "Layover/shadow",
+                                "tooltip": "TBD"
+                            }
+                        },
+                        "speckleFilter": {
+                            "label": "Speckle filter",
+                            "none": {
+                                "label": "None",
+                                "tooltip": "TBD"
+                            },
+                            "boxcar": {
+                                "label": "Boxcar",
+                                "tooltip": "TBD"
+                            },
+                            "refinedLee": {
+                                "label": "Refined Lee",
+                                "tooltip": "TBD"
+                            }
+                        },
+                        "orbits": {
+                            "label": "Orbits",
+                            "ascending": {
+                                "label": "Ascending",
+                                "tooltip": "TBD"
+                            },
+                            "descending": {
+                                "label": "Descending",
+                                "tooltip": "TBD"
+                            }
+                        }
+                    }
+                },
+                "retrieve": {
+                    "title": "Retrieve",
+                    "tooltip": "Retrieve radar mosaic",
+                    "apply": "Retrieve",
+                    "form": {
+                        "bands": {
+                            "label": "Bands to retrieve",
+                            "atLeastOne": "At least one band must be retrieved"
+                        },
+                        "scale": {
+                            "label": "Scale",
+                            "info": "{scale} meters"
+                        },
+                        "destination": {
+                            "label": "Retrieve to",
+                            "required": "A destination must be selected",
+                            "SEPAL": "Sepal workspace",
+                            "GEE": "Google Earth Engine asset"
+                        },
+                        "task": {
+                            "SEPAL": "Retrieve {name} to Sepal workspace",
+                            "GEE": "Export {name} as a Google Earth Engine asset"
+                        }
+                    }
+                }
             }
         },
         "classification": {
