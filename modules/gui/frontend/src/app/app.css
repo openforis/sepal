@@ -59,12 +59,7 @@ body, input, textarea, select, button, a, label {
     color: #fff;
 }
 
-input.combo::placeholder {
-    font-style: normal;
-    color: #fff;
-}
-
-input:not(.combo)::placeholder {
+input::placeholder {
     font-style: italic;
     color: #6c757d;
 }

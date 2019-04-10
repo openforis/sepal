@@ -1,5 +1,10 @@
-.combo {
+.container {
     position: relative;
+}
+
+.container input.fakePlaceholder::placeholder {
+    font-style: inherit;
+    color: inherit;
 }
 
 .list {
@@ -10,7 +15,6 @@
     left: calc(var(--left) * 1px);
     max-height: calc(var(--height) * 1px - var(--input-clearance) - var(--edge-clearance));
     width: calc(var(--width) * 1px);
-    /* pointer-events: none; */
 }
 
 .list.top {
@@ -25,13 +29,14 @@
     background-color: var(--background-color);
 }
 
-.items {
-    list-style: none;
+.items ul {
+    margin: 0;
     padding: 0;
+    list-style: none;
 }
 
 .items li {
-    font-size: .9rem;
-    padding: .2rem .5rem;
     border: 0;
+    padding: .2rem .5rem;
+    font-size: .9rem;
 }
