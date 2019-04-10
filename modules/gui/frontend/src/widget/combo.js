@@ -285,10 +285,15 @@ class Combo extends React.Component {
         this.subscriptions.forEach(subscription => subscription.unsubscribe())
     }
 
+    matcher(filter) {
+        // match beginning of multiple words in order (e.g. "u k" matches "United Kingdom")
+        return RegExp(filter.split(/\s/).map(part => '\\b' + escapeStringRegexp(part)).join('.*'), 'i')
+    }
+
     updateOptions() {
         const {options} = this.props
         const {filter, selectedOption} = this.state
-        const matcher = RegExp(escapeStringRegexp(filter), 'i')
+        const matcher = this.matcher(filter)
         const filteredOptions = options.filter(item => matcher.test(item.label))
         const selectedIndex = filteredOptions.findIndex(option => option === selectedOption)
 
