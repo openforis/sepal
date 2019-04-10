@@ -113,11 +113,10 @@ class Retrieve extends React.Component {
                     <Slider
                         label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
                         info={scale => msg('process.radarMosaic.panel.retrieve.form.scale.info', {scale})}
-                        // alignment='left'
                         input={scale}
                         minValue={10}
                         maxValue={50}
-                        ticks={[10, 20, 30, 40, 50]}
+                        ticks={[10, 15, 20, 30, 40, 50]}
                         snap
                         range='none'
                     />
