@@ -369,6 +369,7 @@ Combo.propTypes = {
     autoFocus: PropTypes.any,
     busy: PropTypes.any,
     disabled: PropTypes.any,
+    keepOpen: PropTypes.any,
     placeholder: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     onChange:  PropTypes.func
