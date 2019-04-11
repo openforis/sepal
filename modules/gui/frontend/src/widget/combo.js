@@ -70,12 +70,8 @@ class Combo extends React.Component {
     }
 
     renderOptions() {
-        const {placement = 'bottom'} = this.props
+        const {placement = 'below'} = this.props
         const {dimensions: {height, top, bottom, left, right}} = this.state
-        const heightByPlacement = {
-            top: top,
-            bottom: height - bottom
-        }
         const keymap = {
             Enter: () => this.selectHighlighted(),
             Escape: () => this.setFilter(),
@@ -86,10 +82,11 @@ class Combo extends React.Component {
         }
         const style = {
             '--left': left,
-            '--height': heightByPlacement[placement],
             '--width': right - left,
-            '--top': top,
-            '--bottom': bottom
+            '--above-height': top,
+            '--above-bottom': height - top,
+            '--below-height': height - bottom,
+            '--below-top': bottom
         }
         return (
             <Portal>
@@ -119,16 +116,15 @@ class Combo extends React.Component {
     }
 
     renderItem(item, index) {
-        const disabled = !item.value
-        return disabled
-            ? this.renderNonSelectableItem(item)
-            : this.renderSelectableItem(item, index)
+        return item.value
+            ? this.renderSelectableItem(item, index)
+            : this.renderNonSelectableItem(item, index)
     }
 
-    renderNonSelectableItem(item) {
+    renderNonSelectableItem(item, index) {
         return (
             <li
-                key={item.value}
+                key={item.value || index}
                 className={[
                     lookStyles.look,
                     lookStyles.nonInteractive,
@@ -323,6 +319,6 @@ Combo.propTypes = {
     busy: PropTypes.any,
     disabled: PropTypes.any,
     placeholder: PropTypes.string,
-    placement: PropTypes.oneOf(['top', 'bottom']),
+    placement: PropTypes.oneOf(['above', 'below']),
     onChange:  PropTypes.func
 }

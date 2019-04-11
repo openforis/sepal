@@ -93,8 +93,8 @@ class CountrySection extends React.Component {
                     <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}/>
                     <Combo
                         input={country}
+                        placement='below'
                         options={(countries || []).map(([value, label]) => ({value, label}))}
-                        placement='bottom'
                         placeholder={countryPlaceholder}
                         busy={stream('LOAD_COUNTRIES').active}
                         disabled={!countries}
@@ -112,10 +112,11 @@ class CountrySection extends React.Component {
                     <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}/>
                     <Combo
                         input={area}
+                        placement='below'
+                        options={(countryAreas || []).map(([value, label]) => ({value, label}))}
+                        placeholder={areaPlaceholder}
                         busy={stream('LOAD_COUNTRY_AREAS').active}
                         disabled={!countryAreas || countryAreas.length === 0}
-                        placeholder={areaPlaceholder}
-                        options={(countryAreas || []).map(([value, label]) => ({value, label}))}
                         onChange={() => this.aoiChanged$.next()}
                     />
                     <ErrorMessage for={area}/>
