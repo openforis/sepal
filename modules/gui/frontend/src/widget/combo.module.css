@@ -41,3 +41,8 @@
     padding: .2rem .5rem;
     font-size: .9rem;
 }
+
+.items li.group {
+    font-weight: bold;
+    margin: .5rem 0;
+}

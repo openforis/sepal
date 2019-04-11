@@ -34,6 +34,7 @@ class Combo extends React.Component {
     }
 
     render() {
+        const {keepOpen} = this.props
         const {showOptions} = this.state
         return (
             <div className={styles.container}>
@@ -42,7 +43,7 @@ class Combo extends React.Component {
                     onClick={() => showOptions ? this.hideOptions() : this.showOptions()}>
                     {this.renderInput()}
                 </div>
-                {showOptions ? this.renderOptions() : null}
+                {showOptions || keepOpen ? this.renderOptions() : null}
             </div>
         )
     }
@@ -72,7 +73,7 @@ class Combo extends React.Component {
 
     renderOptions() {
         const {placement = 'below'} = this.props
-        const {dimensions: {height, top, bottom, left, right}} = this.state
+        const {dimensions: {height, top, bottom, left, right}, filteredOptions} = this.state
         const keymap = {
             Enter: () => this.selectHighlighted(),
             Escape: () => this.setFilter(),
@@ -99,7 +100,7 @@ class Combo extends React.Component {
                         <ScrollableContainer>
                             <Scrollable className={styles.items}>
                                 <ul>
-                                    {this.renderItems()}
+                                    {this.renderItems(filteredOptions)}
                                 </ul>
                             </Scrollable>
                         </ScrollableContainer>
@@ -109,10 +110,9 @@ class Combo extends React.Component {
         )
     }
 
-    renderItems() {
-        const {filteredOptions} = this.state
-        return filteredOptions.length
-            ? filteredOptions.map((item, index) => this.renderItem(item, index))
+    renderItems(options) {
+        return options.length
+            ? options.map((item, index) => this.renderItem(item, index))
             : this.renderItem({label: 'No results'}) // [TODO] msg
     }
 
@@ -124,9 +124,20 @@ class Combo extends React.Component {
                 : this.renderNonSelectableItem(item, index)
     }
 
-    renderGroup(item) {
-        return item.options.map((item, index) => this.renderItem(item, index))
+    renderGroup(item, index) {
+        return (
+            <React.Fragment>
+                <li
+                    key={index}
+                    className={styles.group}>
+                    {item.label}
+                </li>
+                {this.renderItems(item.options)}
+            </React.Fragment>
+        )
     }
+
+    render
 
     renderNonSelectableItem(item, index) {
         return (
