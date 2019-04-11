@@ -27,7 +27,8 @@ class Combo extends React.Component {
         showOptions: false,
         filter: '',
         filteredOptions: [],
-        highlightedIndex: null,
+        flattenedOptions: [],
+        highlightedOption: null,
         selectedOption: null,
         mouseOver: null
     }
@@ -117,8 +118,14 @@ class Combo extends React.Component {
 
     renderItem(item, index) {
         return item.value
-            ? this.renderSelectableItem(item, index)
-            : this.renderNonSelectableItem(item, index)
+            ? this.renderSelectableItem(item)
+            : item.options
+                ? this.renderGroup(item, index)
+                : this.renderNonSelectableItem(item, index)
+    }
+
+    renderGroup(item) {
+        return item.options.map((item, index) => this.renderItem(item, index))
     }
 
     renderNonSelectableItem(item, index) {
@@ -135,9 +142,14 @@ class Combo extends React.Component {
         )
     }
 
-    renderSelectableItem(item, index) {
-        const {highlightedIndex, mouseOver} = this.state
-        const highlighted = highlightedIndex === index
+    isHighlighted(option) {
+        const {highlightedOption} = this.state
+        return highlightedOption && option && highlightedOption.value === option.value
+    }
+
+    renderSelectableItem(item) {
+        const {mouseOver} = this.state
+        const highlighted = this.isHighlighted(item)
         const ref = highlighted
             ? this.highlighted
             : null
@@ -152,7 +164,7 @@ class Combo extends React.Component {
                     highlighted ? null : lookStyles.chromeless,
                     lookStyles.default
                 ].join(' ')}
-                onMouseOver={() => this.highlightOption(index)}
+                onMouseOver={() => this.highlightOption(item)}
                 onClick={() => this.selectOption(item)}>
                 {item.label}
             </li>
@@ -160,13 +172,12 @@ class Combo extends React.Component {
     }
 
     showOptions() {
-        const {showOptions, filteredOptions, selectedOption} = this.state
+        const {showOptions, flattenedOptions, selectedOption} = this.state
         if (!showOptions) {
-            const selectedIndex = filteredOptions.findIndex(option => selectedOption && selectedOption.value === option.value)
-            const highlightedIndex = Math.max(selectedIndex, 0)
+            const highlightedOption = selectedOption || flattenedOptions[0]
             this.setState({
                 showOptions: true,
-                highlightedIndex
+                highlightedOption
             }, this.scroll)
         }
     }
@@ -178,36 +189,50 @@ class Combo extends React.Component {
     }
 
     selectHighlighted() {
-        const {filteredOptions, highlightedIndex} = this.state
-        if (filteredOptions.length) {
-            this.selectOption(filteredOptions[highlightedIndex])
+        const {highlightedOption} = this.state
+        if (highlightedOption) {
+            this.selectOption(highlightedOption)
         }
     }
 
     highlightPrevious() {
+        const previousOption = (options, option) => {
+            const index = _.indexOf(options, option)
+            return index === -1
+                ? null
+                : options[Math.max(0, index - 1)]
+        }
         this.setState(prevState => ({
-            highlightedIndex: Math.max(prevState.highlightedIndex - 1, 0),
+            highlightedOption: previousOption(prevState.flattenedOptions, prevState.highlightedOption),
             mouseOver: false
         }), this.scroll)
     }
 
     highlightNext() {
+        const nextOption = (options, option) => {
+            const index = _.indexOf(options, option)
+            return index === -1
+                ? null
+                : options[Math.min(options.length - 1, index + 1)]
+        }
         this.setState(prevState => ({
-            highlightedIndex: Math.min(prevState.highlightedIndex === null ? 0 : prevState.highlightedIndex + 1, prevState.filteredOptions.length - 1),
+            highlightedOption: nextOption(prevState.flattenedOptions, prevState.highlightedOption),
             mouseOver: false
         }), this.scroll)
     }
 
     highlightFirst() {
-        this.setState({
-            highlightedIndex: 0,
+        const firstOption = options => options[0]
+        this.setState(prevState => ({
+            highlightedOption: firstOption(prevState.flattenedOptions),
             mouseOver: false
-        }, this.scroll)
+        }), this.scroll)
     }
 
     highlightLast() {
+        const lastOption = options => options[options.length - 1]
         this.setState(prevState => ({
-            highlightedIndex: prevState.filteredOptions.length - 1,
+            highlightedOption: lastOption(prevState.flattenedOptions),
             mouseOver: false
         }), this.scroll)
     }
@@ -223,9 +248,8 @@ class Combo extends React.Component {
         this.setState({
             showOptions: !!filter,
             filter,
-            highlightedIndex: 0
-        })
-        this.updateOptions()
+            highlightedOption: null
+        }, this.updateOptions)
     }
 
     selectOption(item) {
@@ -238,9 +262,9 @@ class Combo extends React.Component {
         })
     }
 
-    highlightOption(highlightedIndex) {
+    highlightOption(highlightedOption) {
         this.setState({
-            highlightedIndex,
+            highlightedOption,
             mouseOver: true
         })
     }
@@ -252,7 +276,11 @@ class Combo extends React.Component {
     updateState(state, callback) {
         const updatedState = (prevState, state) =>
             _.isEqual(_.pick(prevState, _.keys(state)), state) ? null : state
-        this.setState(prevState => updatedState(prevState, state), callback)
+        this.setState(
+            prevState =>
+                updatedState(prevState, _.isFunction(state) ? state(prevState) : state),
+            callback
+        )
     }
 
     componentDidMount() {
@@ -292,8 +320,31 @@ class Combo extends React.Component {
         const {options} = this.props
         const {filter} = this.state
         const matcher = this.matcher(filter)
-        const filteredOptions = options.filter(item => matcher.test(item.label))
-        this.updateState({filteredOptions})
+        const getFilteredOptions = options =>
+            _.compact(
+                options.map(option =>
+                    option.options
+                        ? {...option, options: getFilteredOptions(option.options)}
+                        : matcher.test(option.label)
+                            ? option
+                            : null
+                )
+            )
+        const getFlattenedOptions = options =>
+            _.flatten(
+                options.map(option =>
+                    option.options
+                        ? option.options
+                        : option
+                )
+            )
+        const filteredOptions = getFilteredOptions(options)
+        const flattenedOptions = getFlattenedOptions(filteredOptions)
+        this.updateState(prevState => ({
+            filteredOptions,
+            flattenedOptions,
+            highlightedOption: prevState.highlightedOption || flattenedOptions[0]
+        }))
     }
 
     updateDimensions() {
