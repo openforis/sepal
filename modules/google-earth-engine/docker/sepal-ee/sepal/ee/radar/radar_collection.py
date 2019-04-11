@@ -53,7 +53,6 @@ def create(
             .addBands(ee.Image(days_from_target.multiply(-1)).uint16().rename('quality')) \
             .addBands(ee.Image(unix_time_days).uint16().rename('unixTimeDays'))
 
-
     def pre_process(image):
         steps = []
 
@@ -76,8 +75,20 @@ def create(
 
         return reduce(lambda acc, process: process(acc), steps, image)
 
+    def mask_outliers(collection, std_devs):
+        percentiles = collection.reduce(ee.Reducer.percentile([10, 90]))
+        p10 = percentiles.select('.*_p10')
+        p90 = percentiles.select('.*_p90')
+        clamped_collection = collection.map(
+            lambda image: image.updateMask(image.gte(p10).And(image.lte(p90)))
+        )
+        std_dev = clamped_collection.reduce(ee.Reducer.stdDev())
+        mean = p10.add(p90).divide(2)
+        return collection.map(
+            lambda image: image.updateMask(image.subtract(mean).abs().lte(std_dev.multiply(std_devs)))
+        )
 
-    return ee.ImageCollection('COPERNICUS/S1_GRD') \
+    collection = ee.ImageCollection('COPERNICUS/S1_GRD') \
         .filterBounds(region) \
         .filterDate(start_date, end_date) \
         .filterMetadata('resolution_meters', 'equals', 10) \
@@ -90,3 +101,8 @@ def create(
             [ee.Filter.eq('orbitProperties_pass', orbit) for orbit in orbits]
             )) \
         .map(pre_process)
+
+    if 'OUTLIERS' in mask:
+        return mask_outliers(collection, 2)
+    else:
+        return collection
