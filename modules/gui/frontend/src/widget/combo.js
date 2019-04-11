@@ -34,7 +34,6 @@ class Combo extends React.Component {
     }
 
     render() {
-        const {keepOpen} = this.props
         const {showOptions} = this.state
         return (
             <div className={styles.container}>
@@ -43,7 +42,7 @@ class Combo extends React.Component {
                     onClick={() => showOptions ? this.hideOptions() : this.showOptions()}>
                     {this.renderInput()}
                 </div>
-                {showOptions || keepOpen ? this.renderOptions() : null}
+                {showOptions ? this.renderOptions() : null}
             </div>
         )
     }
@@ -136,8 +135,6 @@ class Combo extends React.Component {
             </React.Fragment>
         )
     }
-
-    render
 
     renderNonSelectableItem(item, index) {
         return (
@@ -311,9 +308,6 @@ class Combo extends React.Component {
     }
 
     componentDidUpdate() {
-        const {options, input} = this.props
-        const selectedOption = options && input && options.find(option => option.value === input.value)
-        this.setSelectedOption(selectedOption)
         this.updateOptions()
         this.updateDimensions()
     }
@@ -328,7 +322,7 @@ class Combo extends React.Component {
     }
 
     updateOptions() {
-        const {options} = this.props
+        const {input, options} = this.props
         const {filter} = this.state
         const matcher = this.matcher(filter)
         const getFilteredOptions = options =>
@@ -351,10 +345,18 @@ class Combo extends React.Component {
             )
         const filteredOptions = getFilteredOptions(options)
         const flattenedOptions = getFlattenedOptions(filteredOptions)
+
+        const getFirstOption = () =>
+            flattenedOptions && flattenedOptions.find(option => option.value)
+
+        const getSelectedOption = () =>
+            input && flattenedOptions && flattenedOptions.find(option => option.value === input.value)
+
         this.updateState(prevState => ({
             filteredOptions,
             flattenedOptions,
-            highlightedOption: prevState.highlightedOption || flattenedOptions[0]
+            highlightedOption: prevState.highlightedOption || getFirstOption(),
+            selectedOption: prevState.selectedOption || getSelectedOption()
         }))
     }
 
