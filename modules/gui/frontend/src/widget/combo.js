@@ -50,14 +50,13 @@ class Combo extends React.Component {
     renderInput() {
         const {placeholder, autoFocus, disabled, busy} = this.props
         const {filter, selectedOption} = this.state
-        const keymap = {
-            ArrowUp: () => this.showOptions(),
-            ArrowDown: () => this.showOptions()
-        }
         return (
             <Keybinding
                 disabled={disabled}
-                keymap={keymap}>
+                keymap={{
+                    ArrowUp: () => this.showOptions(),
+                    ArrowDown: () => this.showOptions()
+                }}>
                 <input
                     className={selectedOption ? styles.fakePlaceholder : null}
                     type='search'
@@ -91,7 +90,14 @@ class Combo extends React.Component {
         }
         return (
             <Portal>
-                <Keybinding keymap={keymap}>
+                <Keybinding keymap={{
+                    Enter: () => this.handleEnter(),
+                    Escape: () => this.handleEscape(),
+                    ArrowUp: () => this.highlightPrevious(),
+                    ArrowDown: () => this.highlightNext(),
+                    Home: () => this.highlightFirst(),
+                    End: () => this.highlightLast()
+                }}>
                     <div
                         ref={this.list}
                         className={[styles.list, styles[placement]].join(' ')}
@@ -203,6 +209,10 @@ class Combo extends React.Component {
         }
     }
 
+    handleEscape() {
+        this.setFilter()
+    }
+
     highlightPrevious() {
         const previousOption = (options, option) => {
             const index = _.indexOf(options, option)
@@ -213,7 +223,8 @@ class Combo extends React.Component {
         this.setState(prevState => ({
             highlightedOption: previousOption(prevState.flattenedOptions, prevState.highlightedOption),
             mouseOver: false
-        }), this.scroll)
+        }))
+        this.scrollHighlighted()
     }
 
     highlightNext() {
@@ -226,7 +237,8 @@ class Combo extends React.Component {
         this.setState(prevState => ({
             highlightedOption: nextOption(prevState.flattenedOptions, prevState.highlightedOption),
             mouseOver: false
-        }), this.scroll)
+        }))
+        this.scrollHighlighted()
     }
 
     highlightFirst() {
@@ -242,14 +254,18 @@ class Combo extends React.Component {
         this.setState(prevState => ({
             highlightedOption: lastOption(prevState.flattenedOptions),
             mouseOver: false
-        }), this.scroll)
+        }))
+        this.scrollHighlighted()
     }
 
-    scroll() {
-        this.highlighted.current && this.highlighted.current.scrollIntoView({
-            behavior: 'auto',
-            block: 'nearest'
-        })
+    scrollHighlighted() {
+        const {highlightedIndex} = this.state
+        if (highlightedIndex) {
+            this.highlighted.current && this.highlighted.current.scrollIntoView({
+                behavior: 'auto',
+                block: 'nearest'
+            })
+        }
     }
 
     setFilter(filter = '') {
@@ -260,7 +276,7 @@ class Combo extends React.Component {
         }, this.updateOptions)
     }
 
-    selectOption(item) {
+    select(item) {
         const {input, onChange} = this.props
         this.setSelectedOption(item)
         this.setFilter()
@@ -363,7 +379,17 @@ class Combo extends React.Component {
     updateDimensions() {
         const {dimensions: {height}} = this.props
         const {top, bottom, left, right} = this.getBoundingBox()
-        this.updateState({dimensions: {height, top, bottom, left, right}})
+
+        const updatedState = (prevState, state) =>
+            _.isEqual(prevState.dimensions, state.dimensions)
+                ? null
+                : state
+
+        this.setState(prevState =>
+            updatedState(prevState, {
+                dimensions: {height, top, bottom, left, right}
+            })
+        )
     }
 
     getBoundingBox() {
