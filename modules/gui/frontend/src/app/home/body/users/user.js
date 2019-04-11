@@ -58,21 +58,9 @@ class UserDetails extends React.Component {
         this.props.onCancel()
     }
 
-    renderUsername(newUser) {
-        const {inputs: {username}} = this.props
-        return newUser ? (
-            <Input
-                label={msg('user.userDetails.form.username.label')}
-                input={username}
-                spellCheck={false}
-                errorMessage
-            />
-        ) : null
-    }
-
     render() {
         const {form,
-            inputs: {name, email, organization, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota}
+            inputs: {username, name, email, organization, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota}
         } = this.props
         const newUser = !this.props.userDetails.username
         return (
@@ -90,13 +78,19 @@ class UserDetails extends React.Component {
                     <ScrollableContainer>
                         <Scrollable>
                             <Input
+                                label={msg('user.userDetails.form.username.label')}
+                                input={username}
+                                disabled={!newUser}
+                                spellCheck={false}
+                                errorMessage
+                            />
+                            <Input
                                 label={msg('user.userDetails.form.name.label')}
                                 autoFocus={!isMobile()}
                                 input={name}
                                 spellCheck={false}
                                 errorMessage
                             />
-                            {this.renderUsername(newUser)}
                             <Input
                                 label={msg('user.userDetails.form.email.label')}
                                 input={email}
