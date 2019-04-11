@@ -125,9 +125,8 @@ class Combo extends React.Component {
 
     renderGroup(item, index) {
         return (
-            <React.Fragment>
+            <React.Fragment key={index}>
                 <li
-                    key={index}
                     className={styles.group}>
                     {item.label}
                 </li>
@@ -292,15 +291,23 @@ class Combo extends React.Component {
     }
 
     componentDidMount() {
+        const {onBlur} = this.props
         const click$ = fromEvent(document, 'click').pipe(
             filter(() => this.state.showOptions)
         )
-        const isInternalClick = e =>
-            this.list.current.contains(e.target) || this.input.current.contains(e.target)
+        const isInputClick = e =>
+            this.input.current && this.input.current.contains(e.target)
+        const isListClick = e =>
+            this.list.current && this.list.current.contains(e.target)
 
         this.subscriptions.push(
             click$.subscribe(
-                e => isInternalClick(e) || this.setFilter()
+                e => {
+                    if (!isInputClick(e) && !isListClick(e)) {
+                        this.setFilter()
+                        onBlur && onBlur(e)
+                    }
+                }
             )
         )
         this.setFilter()
@@ -385,5 +392,6 @@ Combo.propTypes = {
     keepOpen: PropTypes.any,
     placeholder: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
+    onBlur:  PropTypes.func,
     onChange:  PropTypes.func
 }
