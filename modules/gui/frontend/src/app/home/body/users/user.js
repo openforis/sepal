@@ -82,13 +82,14 @@ class UserDetails extends React.Component {
                                 input={username}
                                 disabled={!newUser}
                                 spellCheck={false}
+                                autoFocus={newUser && !isMobile()}
                                 errorMessage
                             />
                             <Input
                                 label={msg('user.userDetails.form.name.label')}
-                                autoFocus={!isMobile()}
                                 input={name}
                                 spellCheck={false}
+                                autoFocus={!newUser && !isMobile()}
                                 errorMessage
                             />
                             <Input
