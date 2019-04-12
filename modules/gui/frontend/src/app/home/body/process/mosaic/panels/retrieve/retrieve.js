@@ -102,7 +102,7 @@ class Retrieve extends React.Component {
         ].filter(({value}) => user.googleTokens || value !== 'GEE')
 
         return (
-            <div className={styles.form}>
+            <React.Fragment>
                 <div>
                     <Label msg={msg('process.mosaic.panel.retrieve.form.bands.label')}/>
                     <Buttons
@@ -110,7 +110,6 @@ class Retrieve extends React.Component {
                         multiple={true}
                         options={bandOptions}/>
                 </div>
-
                 <div>
                     <Label msg={msg('process.mosaic.panel.retrieve.form.destination.label')}/>
                     <Buttons
@@ -118,7 +117,7 @@ class Retrieve extends React.Component {
                         multiple={false}
                         options={destinationOptions}/>
                 </div>
-            </div>
+            </React.Fragment>
         )
     }
 

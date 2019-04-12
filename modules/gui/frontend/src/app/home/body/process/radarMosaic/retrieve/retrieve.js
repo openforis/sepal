@@ -94,7 +94,7 @@ class Retrieve extends React.Component {
         ].filter(({value}) => user.googleTokens || value !== 'GEE')
 
         return (
-            <div className={styles.form}>
+            <React.Fragment>
                 <div>
                     <Label msg={msg('process.radarMosaic.panel.retrieve.form.bands.label')}/>
                     <Buttons
@@ -123,7 +123,7 @@ class Retrieve extends React.Component {
                         range='none'
                     />
                 </div>
-            </div>
+            </React.Fragment>
         )
     }
 

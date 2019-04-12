@@ -34,7 +34,7 @@ class Retrieve extends React.Component {
         ]
 
         return (
-            <div className={styles.form}>
+            <React.Fragment>
                 <div>
                     <Label msg={msg('process.timeSeries.panel.retrieve.form.indicator.label')}/>
                     <Buttons
@@ -42,7 +42,7 @@ class Retrieve extends React.Component {
                         multiple={false}
                         options={indicatorOptions}/>
                 </div>
-            </div>
+            </React.Fragment>
         )
     }
 
