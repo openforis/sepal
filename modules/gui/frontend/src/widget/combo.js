@@ -1,10 +1,10 @@
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
-import {filter} from 'rxjs/operators'
 import {fromEvent} from 'rxjs'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import Keybinding from 'widget/keybinding'
+import Label from 'widget/label'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -43,6 +43,7 @@ class Combo extends React.Component {
                     : this.showOptions()
         return (
             <div className={styles.container}>
+                {this.renderLabel()}
                 <div
                     ref={this.input}
                     onClick={onClick}>
@@ -51,6 +52,17 @@ class Combo extends React.Component {
                 {showOptions ? this.renderOptions() : null}
             </div>
         )
+    }
+
+    renderLabel() {
+        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        return label ? (
+            <Label
+                msg={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+            />
+        ) : null
     }
 
     renderInput() {
@@ -399,8 +411,11 @@ Combo.propTypes = {
     busy: PropTypes.any,
     disabled: PropTypes.any,
     keepOpen: PropTypes.any,
+    label: PropTypes.string,
     placeholder: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
+    tooltip: PropTypes.string,
+    tooltipPlacement: PropTypes.string,
     onBlur:  PropTypes.func,
     onChange:  PropTypes.func
 }
