@@ -1,5 +1,5 @@
 .wrapper {
-    --scaling-factor: .8 !important;
+    /* --scaling-factor: .8 !important; */
     position: absolute;
     bottom: 0;
     left: 0;
@@ -19,43 +19,11 @@
     margin-left: 1rem;
 }
 
-.selector {
-    width: 17rem;
-    height: 3rem;
-}
-
-.container :global .comboBox__value-container {
-    padding: 8px !important;
-}
-
-.container :global .comboBox__control {
-    background-color: rgba(19, 19, 20, 0.91) !important;
-    border: var(--wireframe) !important;
-    border-top: none !important;
-    border-radius: 0 0 var(--container-border-radius) var(--container-border-radius) !important;
-    height: 3rem !important;
-}
-
-.container :global .comboBox__single-value {
-    width: 100%;
-}
-
-.menu {
-    position: absolute;
-    z-index: 0;
-}
-
-.menu :global .comboBox__menu {
-    border: var(--wireframe) !important;
-    border-radius: var(--container-border-radius) var(--container-border-radius) 0 0 !important;
-}
-
 .selection {
     display: flex;
     flex-wrap: wrap-reverse;
     justify-content: center;
     align-items: center;
-    /* background-color: rgba(0, 0, 0, 0.5); */
     padding: 0 0.5rem;
     border-radius: var(--container-border-radius);
 }

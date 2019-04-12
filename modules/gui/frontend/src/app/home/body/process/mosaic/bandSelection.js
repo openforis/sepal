@@ -5,7 +5,7 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Checkbox from 'widget/checkbox'
-import ComboBox from 'widget/comboBox'
+import Combo from 'widget/combo'
 import React from 'react'
 import _ from 'lodash'
 import styles from './bandSelection.module.css'
@@ -100,27 +100,20 @@ class BandSelection extends React.Component {
 }
 
 const BandSelector = ({recipeActions, selection, options, onChange}) =>
-    <ComboBox
-        input={selection}
-        placeholder={msg('process.mosaic.bands.placeholder')}
-        options={options}
-        autoFocus={!isMobile()}
-        menuIsOpen={true}
-        openMenuOnFocus
-        menuPlacement='top'
-        maxMenuHeight='40rem'
-        isClearable={false}
-        showChevron={false}
-        showCurrentSelection={false}
-        controlClassName={styles.selector}
-        menuClassName={styles.menu}
-        onMenuClose={onChange}
-        onChange={option => {
-            recipeActions.setBands(option ? option.value : null).dispatch()
-            onChange()
-        }}>
-        {() => null}
-    </ComboBox>
+    <form>
+        <Combo
+            input={selection}
+            placeholder={msg('process.mosaic.bands.placeholder')}
+            options={options}
+            autoFocus={!isMobile()}
+            placement='above'
+            keepOpen
+            onBlur={onChange}
+            onChange={option => {
+                recipeActions.setBands(option ? option.value : null).dispatch()
+                onChange()
+            }}/>
+    </form>
 
 const SelectedBands = ({recipeActions, selectedOption, canPanSharpen, panSharpen, onClick}) => {
     const selection = selectedOption.label
