@@ -39,13 +39,14 @@ export default class Buttons extends React.Component {
     }
 
     renderButton({value, label, tooltip, disabled, alwaysSelected, neverSelected}) {
-        const {uppercase = true} = this.props
+        const {uppercase = true, unavailable} = this.props
+        const highlight = !unavailable && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         return (
             <Button
                 key={value}
-                look={alwaysSelected || (!neverSelected && this.isSelected(value)) ? 'highlight' : 'default'}
+                look={highlight ? 'highlight' : 'default'}
                 additionalClassName={uppercase ? styles.uppercase : null}
-                disabled={disabled || alwaysSelected || neverSelected}
+                disabled={disabled || alwaysSelected || neverSelected || unavailable}
                 tooltip={tooltip}
                 tooltipPlacement='bottom'
                 onClick={() => this.select(value)}
@@ -86,14 +87,14 @@ export default class Buttons extends React.Component {
     render() {
         const {options, className} = this.props
         return (
-            <React.Fragment>
+            <div>
                 {this.renderLabel()}
                 <div className={className}>
                     {options.length && options[0].options
                         ? this.renderOptionGroups(options)
                         : this.renderButtons(options)}
                 </div>
-            </React.Fragment>
+            </div>
         )
     }
 }
@@ -108,5 +109,6 @@ Buttons.propTypes = {
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,
+    unavailable: PropTypes.any,
     onChange: PropTypes.any,
 }
