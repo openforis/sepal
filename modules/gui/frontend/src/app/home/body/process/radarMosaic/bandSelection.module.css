@@ -1,5 +1,4 @@
 .wrapper {
-    --scaling-factor: .8 !important;
     position: absolute;
     bottom: 0;
     left: 0;
@@ -15,7 +14,7 @@
 .panSharpen {
     display: flex;
     align-items: center;
-    font-size: calc(1rem * var(--scaling-factor));
+    font-size: 1rem;
     margin-left: 1rem;
 }
 

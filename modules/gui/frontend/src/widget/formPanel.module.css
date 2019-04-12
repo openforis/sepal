@@ -6,7 +6,6 @@
     --header-padding: .5rem .8rem;
     --content-padding: 1.5rem .8rem;
     --padding-panel-buttons: .5rem;
-    --scaling-factor: .8 !important;
     --header-color: #e8e8e8;
     width: calc(100% - var(--margin-left) - var(--margin-right));
     background-color: var(--panel-default-background-color);

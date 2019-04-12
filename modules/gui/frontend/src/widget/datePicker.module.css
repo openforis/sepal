@@ -3,20 +3,20 @@
     /* --column-width: 3.5rem; */
     --line-height: 1.5rem;
     position: relative;
-    width: calc(8.5rem * var(--scaling-factor));
+    width: 8.5rem;
     /*width: calc(var(--column-width) * 3);*/
 }
 
 .input.day {
-    width: calc(8.5rem * var(--scaling-factor));
+    width: 8.5rem;
 }
 
 .input.month {
-    width: calc(6.5rem * var(--scaling-factor));
+    width: 6.5rem;
 }
 
 .input.year {
-    width: calc(5rem * var(--scaling-factor));
+    width: 5rem;
 }
 
 .input input {
