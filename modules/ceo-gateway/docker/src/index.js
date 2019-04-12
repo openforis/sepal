@@ -145,18 +145,23 @@ app.get('/get-collected-data/:id', (req, res, next) => {
             }, {})
             request.get({
                 url: urljoin(url, 'dump-project-raw-data', id),
-            }).on('data', data => {
-                const lines = data.toString().split('\n')
-                const header = lines[0].split(',')
-                const qIndex = header.findIndex(ele => ele === question.toUpperCase())
-                const ret = lines.slice(1).reduce((acc, cur) => {
-                    const values = cur.split(',')
-                    const [id, , yCoord, xCoord] = values
-                    const answer = values[qIndex]
-                    const answerId = answersById[answer] || ''
-                    return `${acc}\n${id},${yCoord},${xCoord},${answerId}`
-                }, 'id,YCoordinate,XCoordinate,class')
-                res.send(ret)
+            }).on('response', response => {
+                let body = ''
+                response.on('data', data => {
+                    body += data
+                }).on('end', () => {
+                    const lines = body.toString().split('\n')
+                    const header = lines[0].split(',')
+                    const qIndex = header.findIndex(ele => ele === question.toUpperCase())
+                    const ret = lines.slice(1).reduce((acc, cur) => {
+                        const values = cur.split(',')
+                        const [id, , yCoord, xCoord] = values
+                        const answer = values[qIndex]
+                        const answerId = answersById[answer] || ''
+                        return `${acc}\n${id},${yCoord},${xCoord},${answerId}`
+                    }, 'id,YCoordinate,XCoordinate,class')
+                    res.send(ret)
+                })
             }).on('error', err => {
                 next(err)
             })

@@ -7,7 +7,7 @@ import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
-import ComboBox from 'widget/comboBox'
+import Combo from 'widget/combo'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -91,12 +91,13 @@ class CountrySection extends React.Component {
             <React.Fragment>
                 <div>
                     <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}/>
-                    <ComboBox
+                    <Combo
                         input={country}
-                        isLoading={stream('LOAD_COUNTRIES').active}
-                        disabled={!countries}
-                        placeholder={countryPlaceholder}
+                        placement='below'
                         options={(countries || []).map(([value, label]) => ({value, label}))}
+                        placeholder={countryPlaceholder}
+                        busy={stream('LOAD_COUNTRIES').active}
+                        disabled={!countries}
                         autoFocus={!isMobile()}
                         onChange={e => {
                             area.set('')
@@ -109,12 +110,13 @@ class CountrySection extends React.Component {
                 </div>
                 <div>
                     <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}/>
-                    <ComboBox
+                    <Combo
                         input={area}
-                        isLoading={stream('LOAD_COUNTRY_AREAS').active}
-                        disabled={!countryAreas || countryAreas.length === 0}
-                        placeholder={areaPlaceholder}
+                        placement='below'
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}
+                        placeholder={areaPlaceholder}
+                        busy={stream('LOAD_COUNTRY_AREAS').active}
+                        disabled={!countryAreas || countryAreas.length === 0}
                         onChange={() => this.aoiChanged$.next()}
                     />
                     <ErrorMessage for={area}/>

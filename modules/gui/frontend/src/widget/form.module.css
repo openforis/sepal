@@ -55,16 +55,21 @@ form input:-webkit-autofill:active {
     -webkit-text-fill-color: #fff;
 }
 
-form input:hover,
-form input:focus:hover,
-form textarea:hover,
-form textarea:focus:hover {
+form input:not(:disabled):hover,
+form input:focus:not(:disabled):hover,
+form textarea:not(:disabled):hover,
+form textarea:focus:not(:disabled):hover {
     border-bottom: 1px solid var(--input-border-hover-color);
 }
 
 form input:focus,
 form textarea:focus {
     border-bottom: 1px solid var(--input-border-focus-color);
+}
+
+form input:disabled,
+form textarea:disabled {
+    color: #777;
 }
 
 form input::placeholder,

@@ -91,6 +91,7 @@ module.exports = {
             "never"
         ],
         "space-before-blocks": "error",
+        "space-infix-ops": "error",
         "quotes": [
             "error",
             "single"

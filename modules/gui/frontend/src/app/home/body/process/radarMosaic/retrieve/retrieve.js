@@ -1,16 +1,16 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {currentUser} from 'widget/user'
 import {RecipeActions} from '../radarMosaicRecipe'
-import styles from './retrieve.module.css'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {currentUser} from 'widget/user'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import Buttons from 'widget/buttons'
+import Label from 'widget/label'
+import React from 'react'
 import Slider from 'widget/slider'
+import styles from './retrieve.module.css'
 
 const fields = {
     bands: new Field()
@@ -25,6 +25,8 @@ const mapRecipeToProps = recipe => ({
     timeScan: !selectFrom(recipe, 'model.dates.targetDate'),
     user: currentUser()
 })
+
+const option = band => ({value: band, label: msg(['bands', band])})
 
 class Retrieve extends React.Component {
     timeScanBandOptions = [
@@ -70,7 +72,7 @@ class Retrieve extends React.Component {
 
     constructor(props) {
         super(props)
-        const {timeScan, inputs: {bands, scale}} = this.props
+        const {inputs: {scale}} = this.props
         if (!scale.value)
             scale.set(20)
     }
@@ -161,8 +163,6 @@ class Retrieve extends React.Component {
             bands.set([])
     }
 }
-
-const option = band => ({value: band, label: msg(['bands', band])})
 
 Retrieve.propTypes = {}
 

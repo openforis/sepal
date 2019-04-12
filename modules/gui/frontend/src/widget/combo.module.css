@@ -1,0 +1,52 @@
+.container {
+    position: relative;
+}
+
+.container input.fakePlaceholder::placeholder {
+    font-style: inherit;
+    color: inherit;
+}
+
+.list {
+    --input-clearance: .5rem;
+    --edge-clearance: .5rem;
+    --background-color: hsla(0, 0%, 0%, .9);
+    position: absolute;
+    left: calc(var(--left) * 1px);
+    width: calc(var(--width) * 1px);
+}
+
+.list.above {
+    bottom: calc(var(--above-bottom) * 1px + var(--input-clearance));
+    max-height: calc(var(--above-height) * 1px - var(--input-clearance) - var(--edge-clearance));
+}
+
+.list.below {
+    top: calc(var(--below-top) * 1px + var(--input-clearance));
+    max-height: calc(var(--below-height) * 1px - var(--input-clearance) - var(--edge-clearance));
+}
+
+.items {
+    background-color: var(--background-color);
+}
+
+.items ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.items li {
+    border: 0;
+    padding: .35rem .75rem;
+    font-size: .9rem;
+}
+
+.items li.group {
+    font-size: .8rem;
+    font-weight: 800;
+    color: gray;
+    text-transform: uppercase;
+    margin: .5rem 0;
+    border-bottom: 1px solid #333;
+}
