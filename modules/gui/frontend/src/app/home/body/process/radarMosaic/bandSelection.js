@@ -1,12 +1,12 @@
-import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import _ from 'lodash'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
-import {msg} from 'translate'
-import ComboBox from 'widget/comboBox'
 import {Field, form} from 'widget/form'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {isMobile} from 'widget/userAgent'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import Combo from 'widget/combo'
+import React from 'react'
+import _ from 'lodash'
 import styles from './bandSelection.module.css'
 
 const fields = {
@@ -37,36 +37,36 @@ class BandSelection extends React.Component {
     }, {
         value: 'VV_p50, VH_p50, VV_p80_p20',
         bandLabels: [
-            <span>VV<sub>50</sub></span>,
-            <span>VH<sub>50</sub></span>,
-            <span>VV<sub>80</sub>/VH<sub>20</sub></span>
+            <span key='VV50'>VV<sub>50</sub></span>,
+            <span key='VH50'>VH<sub>50</sub></span>,
+            <span key='VV80VH20'>VV<sub>80</sub>/VH<sub>20</sub></span>
         ],
         timeScan: true,
         pointInTime: false
     }, {
         value: 'VV_p50, VH_p50, VV_p50_VH_p50',
         bandLabels: [
-            <span>VV<sub>50</sub></span>,
-            <span>VH<sub>50</sub></span>,
-            <span>VV<sub>50</sub>/VH<sub>50</sub></span>
+            <span key='VV50'>VV<sub>50</sub></span>,
+            <span key='VH50'>VH<sub>50</sub></span>,
+            <span key='VV50VH50'>VV<sub>50</sub>/VH<sub>50</sub></span>
         ],
         timeScan: true,
         pointInTime: false
     }, {
         value: 'VV_p80, VV_p20, VV_p80_p20',
         bandLabels: [
-            <span>VV<sub>80</sub></span>,
-            <span>VV<sub>20</sub></span>,
-            <span>VV<sub>80</sub>/VV<sub>20</sub></span>
+            <span key='VV80'>VV<sub>80</sub></span>,
+            <span key='VV20'>VV<sub>20</sub></span>,
+            <span key='VV80VV20'>VV<sub>80</sub>/VV<sub>20</sub></span>
         ],
         timeScan: true,
         pointInTime: false
     }, {
         value: 'VV_p20, VH_p20, VV_p80_p20',
         bandLabels: [
-            <span>VV<sub>20</sub></span>,
-            <span>VH<sub>20</sub></span>,
-            <span>VV<sub>80</sub>/VV<sub>20</sub></span>
+            <span key='VV20'>VV<sub>20</sub></span>,
+            <span key='VH20'>VH<sub>20</sub></span>,
+            <span key='VV80VV20'>VV<sub>80</sub>/VV<sub>20</sub></span>
         ],
         timeScan: true,
         pointInTime: false
@@ -149,27 +149,20 @@ class BandSelection extends React.Component {
 }
 
 const BandSelector = ({recipeActions, selection, options, onChange}) =>
-    <ComboBox
-        input={selection}
-        placeholder={msg('process.mosaic.bands.placeholder')}
-        options={options}
-        autoFocus={!isMobile()}
-        menuIsOpen={true}
-        openMenuOnFocus
-        menuPlacement='top'
-        maxMenuHeight='40rem'
-        isClearable={false}
-        showChevron={false}
-        showCurrentSelection={false}
-        controlClassName={styles.selector}
-        menuClassName={styles.menu}
-        onMenuClose={onChange}
-        onChange={option => {
-            recipeActions.setBands(option ? option.value : null).dispatch()
-            onChange()
-        }}>
-        {() => null}
-    </ComboBox>
+    <form>
+        <Combo
+            input={selection}
+            placeholder={msg('process.mosaic.bands.placeholder')}
+            options={options}
+            autoFocus={!isMobile()}
+            placement='above'
+            keepOpen
+            onBlur={onChange}
+            onChange={option => {
+                recipeActions.setBands(option ? option.value : null).dispatch()
+                onChange()
+            }}/>
+    </form>
 
 const SelectedBands = ({selectedOption, onClick}) => {
     const selection = selectedOption.label

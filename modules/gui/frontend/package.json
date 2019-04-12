@@ -40,7 +40,6 @@
     "react-resize-detector": "4.0.5",
     "react-router-dom": "5.0.0",
     "react-scripts": "^2.1.8",
-    "react-select": "^2.4.2",
     "react-textarea-autosize": "^7.1.0",
     "react-transition-group": "2.8.0",
     "redux": "4.0.1",

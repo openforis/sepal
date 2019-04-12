@@ -1,3 +1,4 @@
+import {ErrorMessage} from 'widget/form'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
 import {fromEvent} from 'rxjs'
@@ -49,6 +50,7 @@ class Combo extends React.Component {
                     onClick={onClick}>
                     {this.renderInput()}
                 </div>
+                {this.renderError()}
                 {showOptions ? this.renderOptions() : null}
             </div>
         )
@@ -63,6 +65,11 @@ class Combo extends React.Component {
                 tooltipPlacement={tooltipPlacement}
             />
         ) : null
+    }
+
+    renderError() {
+        const {input, errorMessage} = this.props
+        return <ErrorMessage for={input.name || errorMessage} tabIndex={-1}/>
     }
 
     renderInput() {

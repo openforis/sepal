@@ -2,7 +2,7 @@ import {ErrorMessage} from 'widget/form'
 import {connect, select} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
-import ComboBox from 'widget/comboBox'
+import Combo from 'widget/combo'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -23,7 +23,7 @@ class RecipeSection extends React.Component {
         return (
             <React.Fragment>
                 <Label msg={msg('process.changeDetection.panel.source.form.recipe.label')}/>
-                <ComboBox
+                <Combo
                     input={recipe}
                     placeholder={msg('process.changeDetection.panel.source.form.recipe.placeholder')}
                     options={options}
