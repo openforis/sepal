@@ -51,15 +51,14 @@ class Sources extends React.Component {
             })
         )
         return (
-            <div key={source}>
-                <Label msg={msg(['process.mosaic.panel.sources.form.source.options', source])}/>
-                <Buttons
-                    className={styles.dataSets}
-                    input={inputs[source]}
-                    options={options}
-                    multiple
-                />
-            </div>
+            <Buttons
+                key={source}
+                label={msg(['process.mosaic.panel.sources.form.source.options', source])}
+                className={styles.dataSets}
+                input={inputs[source]}
+                options={options}
+                multiple
+            />
         )
 
     }

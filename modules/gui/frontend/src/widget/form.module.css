@@ -7,8 +7,6 @@ form {
     --error-color: #e81351;
     --error-border-color: #e81351;
     --error-background-color: rgba(232, 19, 81, 0.1);
-
-    font-size: calc(1rem * var(--scaling-factor));
 }
 
 form label {
@@ -36,10 +34,9 @@ form textarea {
     width: 100%;
     border: none;
     border-bottom: 1px dotted var(--input-border-color);
-    margin-top: calc(.5rem * var(--scaling-factor));
-    padding: calc(.3rem * var(--scaling-factor));
+    margin-top: .5rem;
+    padding: .3rem;
     background-color: transparent;
-    font-size: calc(1.25rem * var(--scaling-factor));
     transition: background-color 800ms ease-out;
 }
 
@@ -74,7 +71,6 @@ form textarea:disabled {
 
 form input::placeholder,
 form textarea::placeholder {
-    font-size: calc(1.25rem * var(--scaling-factor));
     font-style: italic;
 }
 
@@ -85,14 +81,14 @@ form textarea.error {
 }
 
 form .errorMessage {
-    height: calc(3rem * var(--scaling-factor));
+    height: 3rem;
     color: var(--error-color);
-    font-size: calc(.95rem * var(--scaling-factor));
+    font-size: .95rem;
     font-weight: 400;
 }
 
 .label i {
-    font-size: calc(.9rem * var(--scaling-factor));
+    font-size: .9rem;
     margin-left: 0.5rem;
     color: #B5B5B5;
 }

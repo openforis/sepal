@@ -34,15 +34,11 @@ class Retrieve extends React.Component {
         ]
 
         return (
-            <div className={styles.form}>
-                <div>
-                    <Label msg={msg('process.timeSeries.panel.retrieve.form.indicator.label')}/>
-                    <Buttons
-                        input={indicator}
-                        multiple={false}
-                        options={indicatorOptions}/>
-                </div>
-            </div>
+            <Buttons
+                label={msg('process.timeSeries.panel.retrieve.form.indicator.label')}
+                input={indicator}
+                multiple={false}
+                options={indicatorOptions}/>
         )
     }
 

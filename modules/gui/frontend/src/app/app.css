@@ -1,5 +1,4 @@
 html {
-    --scaling-factor: 1;
     --header-font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
 
     --wireframe-color: rgba(100%, 100%, 100%, .15);
@@ -29,8 +28,6 @@ html {
     --warning-color: hsl(39, 80%, 40%);
     --success-color: hsl(90, 80%, 35%);
 
-    --base-font-size: 14px;
-
     --section-process-color-h: 37;
     --section-process-color-s: 27%;
     --section-process-color-l: 39%;
@@ -47,12 +44,14 @@ html {
     --section-terminal-color-s: 19%;
     --section-terminal-color-l: 26%;
 
-    font-size: calc(var(--base-font-size) * var(--scaling-factor));
+    --base-font-size: 14px;
+    font-size: var(--base-font-size);
 }
 
 body, input, textarea, select, button, a, label {
     font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
-    line-height: calc(1.5 * var(--base-font-size) * var(--scaling-factor));
+    font-size: 1rem;
+    line-height: 1.5rem;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: transparent;

@@ -34,12 +34,18 @@ class Combo extends React.Component {
     }
 
     render() {
-        const {showOptions} = this.state
+        const {showOptions, keepOpen} = this.state
+        const onClick = () =>
+            keepOpen
+                ? null
+                : showOptions
+                    ? this.hideOptions()
+                    : this.showOptions()
         return (
             <div className={styles.container}>
                 <div
                     ref={this.input}
-                    onClick={() => showOptions ? this.hideOptions() : this.showOptions()}>
+                    onClick={onClick}>
                     {this.renderInput()}
                 </div>
                 {showOptions ? this.renderOptions() : null}
@@ -252,8 +258,9 @@ class Combo extends React.Component {
     }
 
     setFilter(filter = '') {
+        const {keepOpen} = this.props
         this.setState({
-            showOptions: !!filter,
+            showOptions: !!filter || keepOpen,
             filter,
             highlightedOption: null
         }, this.updateOptions)
@@ -290,11 +297,9 @@ class Combo extends React.Component {
         )
     }
 
-    componentDidMount() {
-        const {onBlur} = this.props
-        const click$ = fromEvent(document, 'click').pipe(
-            filter(() => this.state.showOptions)
-        )
+    handleBlurEvents() {
+        const {onBlur, keepOpen} = this.props
+        const click$ = fromEvent(document, 'click')
         const isInputClick = e =>
             this.input.current && this.input.current.contains(e.target)
         const isListClick = e =>
@@ -303,15 +308,19 @@ class Combo extends React.Component {
         this.subscriptions.push(
             click$.subscribe(
                 e => {
-                    if (!isInputClick(e) && !isListClick(e)) {
+                    if ((keepOpen || !isInputClick(e)) && !isListClick(e)) {
                         this.setFilter()
                         onBlur && onBlur(e)
                     }
                 }
             )
         )
+    }
+
+    componentDidMount() {
         this.setFilter()
         this.updateDimensions()
+        this.handleBlurEvents()
     }
 
     componentDidUpdate() {

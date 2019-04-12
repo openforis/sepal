@@ -3,22 +3,6 @@
     max-height: 100%;
 }
 
-.content > *:not(:last-child) {
-    margin-bottom: 2rem;
-}
-
-@media screen and (max-height: 700px) {
-    .content > *:not(:last-child) {
-        margin-bottom: 1.2rem;
-    }
-}
-
-@media screen and (max-height: 600px) {
-    .content > *:not(:last-child) {
-        margin-bottom: 1rem;
-    }
-}
-
 .inline {
     display: flex;
     flex-direction: row;

@@ -34,18 +34,16 @@ class SceneSelectionOptions extends React.Component {
             neverSelected: alwaysAll
         }]
         return (
-            <div className={styles.types}>
-                <Label msg={msg('process.mosaic.panel.scenes.form.type.label')}/>
-                <Buttons
-                    className={styles.sources}
-                    input={type}
-                    options={options}/>
-            </div>
+            <Buttons
+                label={msg('process.mosaic.panel.scenes.form.type.label')}
+                className={styles.sources}
+                input={type}
+                options={options}/>
         )
     }
 
     renderTargetDateWeight() {
-        const {inputs: {targetDateWeight}} = this.props
+        const {inputs: {type, targetDateWeight}} = this.props
         const options = [{
             value: 0,
             label: msg('process.mosaic.panel.scenes.form.targetDateWeight.cloudFree.label')
@@ -57,17 +55,16 @@ class SceneSelectionOptions extends React.Component {
             label: msg('process.mosaic.panel.scenes.form.targetDateWeight.targetDate.label')
         }]
         return (
-            <div>
-                <Label msg={msg('process.mosaic.panel.scenes.form.targetDateWeight.label')}/>
-                <Buttons
-                    input={targetDateWeight}
-                    options={options}/>
-            </div>
+            <Buttons
+                label={msg('process.mosaic.panel.scenes.form.targetDateWeight.label')}
+                input={targetDateWeight}
+                options={options}
+                unavailable={type.value !== SceneSelectionType.SELECT}/>
         )
     }
 
     render() {
-        const {recipeId, inputs: {type}} = this.props
+        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -78,10 +75,10 @@ class SceneSelectionOptions extends React.Component {
                     title={msg('process.mosaic.panel.scenes.title')}/>
 
                 <PanelContent>
-                    <div>
+                    <React.Fragment>
                         {this.renderTypes()}
-                        {type.value === SceneSelectionType.SELECT ? this.renderTargetDateWeight() : null}
-                    </div>
+                        {this.renderTargetDateWeight()}
+                    </React.Fragment>
                 </PanelContent>
 
                 <FormPanelButtons/>

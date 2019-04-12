@@ -38,7 +38,7 @@ class CompositeOptions extends React.Component {
         } = this.props
         const includesSentinel2 = Object.keys(sources).includes('SENTINEL_2')
         return (
-            <div className={styles.content}>
+            <React.Fragment>
                 <Buttons
                     label={msg('process.mosaic.panel.composite.form.corrections.label')}
                     input={corrections}
@@ -65,12 +65,15 @@ class CompositeOptions extends React.Component {
                         msg={msg('process.mosaic.panel.composite.form.filters.label')}
                         tooltip={msg('process.mosaic.panel.composite.form.filters.tooltip')}
                         tooltipPlacement='topLeft'/>
-                    <PercentileField input={shadowPercentile}/>
+                    <PercentileField
+                        input={shadowPercentile}/>
                     <PercentileField
                         input={hazePercentile}
                         disabled={corrections.value.includes('SR')}/>
-                    <PercentileField input={ndviPercentile}/>
-                    <PercentileField input={dayOfYearPercentile}/>
+                    <PercentileField
+                        input={ndviPercentile}/>
+                    <PercentileField
+                        input={dayOfYearPercentile}/>
                 </div>
                 <Buttons
                     label={msg('process.mosaic.panel.composite.form.mask.label')}
@@ -99,7 +102,7 @@ class CompositeOptions extends React.Component {
                         tooltip: msg('process.mosaic.panel.composite.form.composingMethod.median.tooltip')
                     }]}
                 />
-            </div>
+            </React.Fragment>
         )
     }
 

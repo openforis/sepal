@@ -27,7 +27,7 @@ class PreProcessingOptions extends React.Component {
     renderContent() {
         const {inputs: {corrections, mask}} = this.props
         return (
-            <div className={styles.content}>
+            <React.Fragment>
                 <Buttons
                     label={msg('process.timeSeries.panel.preprocess.form.corrections.label')}
                     input={corrections}
@@ -42,19 +42,17 @@ class PreProcessingOptions extends React.Component {
                         tooltip: msg('process.timeSeries.panel.preprocess.form.corrections.brdf.tooltip')
                     }]}
                 />
-                <div className={styles.inline}>
-                    <Buttons
-                        label={msg('process.timeSeries.panel.preprocess.form.mask.label')}
-                        input={mask}
-                        multiple={true}
-                        options={[{
-                            value: 'SNOW',
-                            label: msg('process.timeSeries.panel.preprocess.form.mask.snow.label'),
-                            tooltip: msg('process.timeSeries.panel.preprocess.form.mask.snow.tooltip')
-                        }]}
-                    />
-                </div>
-            </div>
+                <Buttons
+                    label={msg('process.timeSeries.panel.preprocess.form.mask.label')}
+                    input={mask}
+                    multiple={true}
+                    options={[{
+                        value: 'SNOW',
+                        label: msg('process.timeSeries.panel.preprocess.form.mask.snow.label'),
+                        tooltip: msg('process.timeSeries.panel.preprocess.form.mask.snow.tooltip')
+                    }]}
+                />
+            </React.Fragment>
         )
     }
 

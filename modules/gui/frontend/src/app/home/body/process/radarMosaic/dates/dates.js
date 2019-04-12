@@ -1,15 +1,15 @@
-import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import moment from 'moment'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
-import DatePicker from 'widget/datePicker'
 import {ErrorMessage, Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
 import {PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import Buttons from 'widget/buttons'
+import DatePicker from 'widget/datePicker'
+import Label from 'widget/label'
+import React from 'react'
+import moment from 'moment'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -93,26 +93,23 @@ class Dates extends React.Component {
                 tooltip: msg([`process.radarMosaic.panel.dates.form.type.${value}.tooltip`])
             }))
         return (
-            <div>
-                <Label msg={msg(['process.radarMosaic.panel.dates.form.type.label'])}/>
-                <Buttons
-                    className={styles.types}
-                    input={type}
-                    options={options}/>
-                <ErrorMessage for={type}/>
-            </div>
+            <Buttons
+                label={msg(['process.radarMosaic.panel.dates.form.type.label'])}
+                className={styles.types}
+                input={type}
+                options={options}/>
         )
     }
 
     renderDatePickers() {
         const {inputs: {type}} = this.props
         switch (type.value) {
-            case 'POINT_IN_TIME_MOSAIC':
-                return this.renderPointInTimeMosaic()
-            case 'CUSTOM_TIME_SCAN':
-                return this.renderCustomTimeScan()
-            default:
-                return this.renderYearlyTimeScan()
+        case 'POINT_IN_TIME_MOSAIC':
+            return this.renderPointInTimeMosaic()
+        case 'CUSTOM_TIME_SCAN':
+            return this.renderCustomTimeScan()
+        default:
+            return this.renderYearlyTimeScan()
         }
     }
 

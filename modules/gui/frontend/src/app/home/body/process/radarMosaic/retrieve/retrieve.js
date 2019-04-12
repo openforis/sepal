@@ -94,36 +94,28 @@ class Retrieve extends React.Component {
         ].filter(({value}) => user.googleTokens || value !== 'GEE')
 
         return (
-            <div className={styles.form}>
-                <div>
-                    <Label msg={msg('process.radarMosaic.panel.retrieve.form.bands.label')}/>
-                    <Buttons
-                        input={bands}
-                        multiple={true}
-                        options={bandOptions}/>
-                </div>
-
-                <div>
-                    <Label msg={msg('process.radarMosaic.panel.retrieve.form.destination.label')}/>
-                    <Buttons
-                        input={destination}
-                        multiple={false}
-                        options={destinationOptions}/>
-                </div>
-
-                <div>
-                    <Slider
-                        label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
-                        info={scale => msg('process.radarMosaic.panel.retrieve.form.scale.info', {scale})}
-                        input={scale}
-                        minValue={10}
-                        maxValue={50}
-                        ticks={[10, 15, 20, 30, 40, 50]}
-                        snap
-                        range='none'
-                    />
-                </div>
-            </div>
+            <React.Fragment>
+                <Buttons
+                    label={msg('process.radarMosaic.panel.retrieve.form.bands.label')}
+                    input={bands}
+                    multiple={true}
+                    options={bandOptions}/>
+                <Buttons
+                    label={msg('process.radarMosaic.panel.retrieve.form.destination.label')}
+                    input={destination}
+                    multiple={false}
+                    options={destinationOptions}/>
+                <Slider
+                    label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
+                    info={scale => msg('process.radarMosaic.panel.retrieve.form.scale.info', {scale})}
+                    input={scale}
+                    minValue={10}
+                    maxValue={50}
+                    ticks={[10, 15, 20, 30, 40, 50]}
+                    snap
+                    range='none'
+                />
+            </React.Fragment>
         )
     }
 

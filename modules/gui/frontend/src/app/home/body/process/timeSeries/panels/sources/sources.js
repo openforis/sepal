@@ -61,9 +61,7 @@ class Sources extends React.Component {
                     title={msg('process.timeSeries.panel.sources.title')}/>
 
                 <PanelContent>
-                    <div>
-                        {this.renderDataSets()}
-                    </div>
+                    {this.renderDataSets()}
                 </PanelContent>
 
                 <FormPanelButtons/>

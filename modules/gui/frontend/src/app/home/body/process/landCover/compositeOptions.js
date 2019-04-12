@@ -66,8 +66,7 @@ class CompositeOptions extends React.Component {
                         info={value => {
                             const type = value === 0 ? 'off' : value === 100 ? 'max' : 'value'
                             return msg(['process.landCover.panel.compositeOptions.form.cloudThreshold', type], {value})
-                        }
-                        }/>
+                        }}/>
                 </div>
                 <Buttons
                     label={msg('process.landCover.panel.compositeOptions.form.corrections.label')}

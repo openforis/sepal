@@ -1,14 +1,14 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {RecipeActions} from '../radarMosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import Buttons from 'widget/buttons'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './options.module.css'
 
 const fields = {
@@ -27,75 +27,67 @@ class Options extends React.Component {
             }
         } = this.props
         return (
-            <div className={styles.content}>
-                <div>
-                    <Buttons
-                        label={msg('process.radarMosaic.panel.options.form.corrections.label')}
-                        input={corrections}
-                        multiple={true}
-                        options={[{
-                            value: 'GAMMA0',
-                            label: msg('process.radarMosaic.panel.options.form.corrections.gamma0.label'),
-                            tooltip: msg('process.radarMosaic.panel.options.form.corrections.surfaceRefgamma0lectance.tooltip')
-                        }, {
-                            value: 'TERRAIN',
-                            label: msg('process.radarMosaic.panel.options.form.corrections.terrain.label'),
-                            tooltip: msg('process.radarMosaic.panel.options.form.corrections.terrain.tooltip')
-                        }]}
-                    />
-                </div>
-                <div>
-                    <Buttons
-                        label={msg('process.radarMosaic.panel.options.form.mask.label')}
-                        input={mask}
-                        multiple={true}
-                        options={[{
-                            value: 'LAYOVER',
-                            label: msg('process.radarMosaic.panel.options.form.mask.layover.label'),
-                            tooltip: msg('process.radarMosaic.panel.options.form.mask.layover.tooltip')
-                        }, {
-                            value: 'OUTLIERS',
-                            label: msg('process.radarMosaic.panel.options.form.mask.outliers.label'),
-                            tooltip: msg('process.radarMosaic.panel.options.form.mask.outliers.tooltip')
-                        }]}
-                    />
-                </div>
-                <div>
-                    <Buttons
-                        label={msg('process.radarMosaic.panel.options.form.speckleFilter.label')}
-                        input={speckleFilter}
-                        options={[{
-                            value: 'NONE',
-                            label: msg('process.radarMosaic.panel.options.form.speckleFilter.none.label'),
-                            tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.none.tooltip')
-                        }, {
-                            value: 'BOXCAR',
-                            label: msg('process.radarMosaic.panel.options.form.speckleFilter.boxcar.label'),
-                            tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.boxcar.tooltip')
-                        }, {
-                            value: 'REFINED_LEE',
-                            label: msg('process.radarMosaic.panel.options.form.speckleFilter.refinedLee.label'),
-                            tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.refinedLee.tooltip')
-                        },]}
-                    />
-                </div>
-                <div>
-                    <Buttons
-                        label={msg('process.radarMosaic.panel.options.form.orbits.label')}
-                        input={orbits}
-                        multiple={true}
-                        options={[{
-                            value: 'ASCENDING',
-                            label: msg('process.radarMosaic.panel.options.form.orbits.ascending.label'),
-                            tooltip: msg('process.radarMosaic.panel.options.form.orbits.ascending.tooltip')
-                        }, {
-                            value: 'DESCENDING',
-                            label: msg('process.radarMosaic.panel.options.form.orbits.descending.label'),
-                            tooltip: msg('process.radarMosaic.panel.options.form.orbits.descending.tooltip')
-                        }]}
-                    />
-                </div>
-            </div>
+            <React.Fragment>
+                <Buttons
+                    label={msg('process.radarMosaic.panel.options.form.corrections.label')}
+                    input={corrections}
+                    multiple={true}
+                    options={[{
+                        value: 'GAMMA0',
+                        label: msg('process.radarMosaic.panel.options.form.corrections.gamma0.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.corrections.surfaceRefgamma0lectance.tooltip')
+                    }, {
+                        value: 'TERRAIN',
+                        label: msg('process.radarMosaic.panel.options.form.corrections.terrain.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.corrections.terrain.tooltip')
+                    }]}
+                />
+                <Buttons
+                    label={msg('process.radarMosaic.panel.options.form.mask.label')}
+                    input={mask}
+                    multiple={true}
+                    options={[{
+                        value: 'LAYOVER',
+                        label: msg('process.radarMosaic.panel.options.form.mask.layover.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.mask.layover.tooltip')
+                    }, {
+                        value: 'OUTLIERS',
+                        label: msg('process.radarMosaic.panel.options.form.mask.outliers.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.mask.outliers.tooltip')
+                    }]}
+                />
+                <Buttons
+                    label={msg('process.radarMosaic.panel.options.form.speckleFilter.label')}
+                    input={speckleFilter}
+                    options={[{
+                        value: 'NONE',
+                        label: msg('process.radarMosaic.panel.options.form.speckleFilter.none.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.none.tooltip')
+                    }, {
+                        value: 'BOXCAR',
+                        label: msg('process.radarMosaic.panel.options.form.speckleFilter.boxcar.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.boxcar.tooltip')
+                    }, {
+                        value: 'REFINED_LEE',
+                        label: msg('process.radarMosaic.panel.options.form.speckleFilter.refinedLee.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.refinedLee.tooltip')
+                    }]}
+                />
+                <Buttons
+                    label={msg('process.radarMosaic.panel.options.form.orbits.label')}
+                    input={orbits}
+                    multiple={true}
+                    options={[{
+                        value: 'ASCENDING',
+                        label: msg('process.radarMosaic.panel.options.form.orbits.ascending.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.orbits.ascending.tooltip')
+                    }, {
+                        value: 'DESCENDING',
+                        label: msg('process.radarMosaic.panel.options.form.orbits.descending.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.orbits.descending.tooltip')
+                    }]}
+                />
+            </React.Fragment>
         )
     }
 

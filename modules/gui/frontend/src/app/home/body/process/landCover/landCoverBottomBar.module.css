@@ -26,7 +26,6 @@
 }
 
 .primitiveSelector {
-    --scaling-factor: 0.8;
     flex-grow: 1;
 }
 

@@ -6,7 +6,6 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {currentUser} from 'widget/user'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
-import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './retrieve.module.css'
@@ -33,16 +32,13 @@ class Retrieve extends React.Component {
         ].filter(({value}) => user.googleTokens || value !== 'GEE')
 
         return (
-            <div className={styles.form}>
-                <div>
-                    <Label msg={msg('process.changeDetection.panel.retrieve.form.destination.label')}/>
-                    <Buttons
-                        input={destination}
-                        multiple={false}
-                        options={destinationOptions}/>
-                </div>
-
-            </div>
+            <React.Fragment>
+                <Buttons
+                    label={msg('process.changeDetection.panel.retrieve.form.destination.label')}
+                    input={destination}
+                    multiple={false}
+                    options={destinationOptions}/>
+            </React.Fragment>
         )
     }
 

@@ -7,7 +7,6 @@
 }
 
 .wrapper {
-    --scaling-factor: .9 !important;
     position: absolute;
     display: flex;
     flex-wrap: wrap-reverse;
@@ -37,7 +36,6 @@
 }
 
 .container :global .comboBox__value-container {
-    --scaling-factor: .8;
     padding: 8px;
 }
 
@@ -56,12 +54,6 @@
 .menu :global .comboBox__menu {
     border: var(--wireframe) !important;
     border-radius: var(--container-border-radius) var(--container-border-radius) 0 0 !important;
-}
-
-.selection {
-    /*display: flex;*/
-    /*padding: 0 0.5rem;*/
-    /*border-radius: var(--container-border-radius);*/
 }
 
 .selection > * {
