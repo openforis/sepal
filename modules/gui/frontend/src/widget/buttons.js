@@ -74,12 +74,13 @@ export default class Buttons extends React.Component {
     }
 
     renderLabel() {
-        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        const {label, tooltip, tooltipPlacement, unavailable} = this.props
         return label ? (
             <Label
                 msg={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
+                unavailable={unavailable}
             />
         ) : null
     }
