@@ -34,15 +34,11 @@ class Retrieve extends React.Component {
         ]
 
         return (
-            <React.Fragment>
-                <div>
-                    <Label msg={msg('process.timeSeries.panel.retrieve.form.indicator.label')}/>
-                    <Buttons
-                        input={indicator}
-                        multiple={false}
-                        options={indicatorOptions}/>
-                </div>
-            </React.Fragment>
+            <Buttons
+                label={msg('process.timeSeries.panel.retrieve.form.indicator.label')}
+                input={indicator}
+                multiple={false}
+                options={indicatorOptions}/>
         )
     }
 

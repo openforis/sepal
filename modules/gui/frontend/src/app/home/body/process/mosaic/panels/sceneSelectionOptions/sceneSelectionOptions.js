@@ -34,13 +34,11 @@ class SceneSelectionOptions extends React.Component {
             neverSelected: alwaysAll
         }]
         return (
-            <div className={styles.types}>
-                <Label msg={msg('process.mosaic.panel.scenes.form.type.label')}/>
-                <Buttons
-                    className={styles.sources}
-                    input={type}
-                    options={options}/>
-            </div>
+            <Buttons
+                label={msg('process.mosaic.panel.scenes.form.type.label')}
+                className={styles.sources}
+                input={type}
+                options={options}/>
         )
     }
 
@@ -57,13 +55,11 @@ class SceneSelectionOptions extends React.Component {
             label: msg('process.mosaic.panel.scenes.form.targetDateWeight.targetDate.label')
         }]
         return (
-            <div>
-                <Label msg={msg('process.mosaic.panel.scenes.form.targetDateWeight.label')}/>
-                <Buttons
-                    input={targetDateWeight}
-                    options={options}
-                    unavailable={type.value !== SceneSelectionType.SELECT}/>
-            </div>
+            <Buttons
+                label={msg('process.mosaic.panel.scenes.form.targetDateWeight.label')}
+                input={targetDateWeight}
+                options={options}
+                unavailable={type.value !== SceneSelectionType.SELECT}/>
         )
     }
 

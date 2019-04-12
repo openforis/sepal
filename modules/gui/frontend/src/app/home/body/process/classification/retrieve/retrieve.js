@@ -34,13 +34,11 @@ class Retrieve extends React.Component {
 
         return (
             <React.Fragment>
-                <div>
-                    <Label msg={msg('process.classification.panel.retrieve.form.destination.label')}/>
-                    <Buttons
-                        input={destination}
-                        multiple={false}
-                        options={destinationOptions}/>
-                </div>
+                <Buttons
+                    label={msg('process.classification.panel.retrieve.form.destination.label')}
+                    input={destination}
+                    multiple={false}
+                    options={destinationOptions}/>
             </React.Fragment>
         )
     }

@@ -103,20 +103,16 @@ class Retrieve extends React.Component {
 
         return (
             <React.Fragment>
-                <div>
-                    <Label msg={msg('process.mosaic.panel.retrieve.form.bands.label')}/>
-                    <Buttons
-                        input={bands}
-                        multiple={true}
-                        options={bandOptions}/>
-                </div>
-                <div>
-                    <Label msg={msg('process.mosaic.panel.retrieve.form.destination.label')}/>
-                    <Buttons
-                        input={destination}
-                        multiple={false}
-                        options={destinationOptions}/>
-                </div>
+                <Buttons
+                    label={msg('process.mosaic.panel.retrieve.form.bands.label')}
+                    input={bands}
+                    multiple={true}
+                    options={bandOptions}/>
+                <Buttons
+                    label={msg('process.mosaic.panel.retrieve.form.destination.label')}
+                    input={destination}
+                    multiple={false}
+                    options={destinationOptions}/>
             </React.Fragment>
         )
     }
