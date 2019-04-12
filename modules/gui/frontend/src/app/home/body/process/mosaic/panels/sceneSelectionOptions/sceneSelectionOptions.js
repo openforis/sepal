@@ -45,7 +45,7 @@ class SceneSelectionOptions extends React.Component {
     }
 
     renderTargetDateWeight() {
-        const {inputs: {targetDateWeight}} = this.props
+        const {inputs: {type, targetDateWeight}} = this.props
         const options = [{
             value: 0,
             label: msg('process.mosaic.panel.scenes.form.targetDateWeight.cloudFree.label')
@@ -61,13 +61,14 @@ class SceneSelectionOptions extends React.Component {
                 <Label msg={msg('process.mosaic.panel.scenes.form.targetDateWeight.label')}/>
                 <Buttons
                     input={targetDateWeight}
-                    options={options}/>
+                    options={options}
+                    unavailable={type.value !== SceneSelectionType.SELECT}/>
             </div>
         )
     }
 
     render() {
-        const {recipeId, inputs: {type}} = this.props
+        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -78,10 +79,10 @@ class SceneSelectionOptions extends React.Component {
                     title={msg('process.mosaic.panel.scenes.title')}/>
 
                 <PanelContent>
-                    <div>
+                    <React.Fragment>
                         {this.renderTypes()}
-                        {type.value === SceneSelectionType.SELECT ? this.renderTargetDateWeight() : null}
-                    </div>
+                        {this.renderTargetDateWeight()}
+                    </React.Fragment>
                 </PanelContent>
 
                 <FormPanelButtons/>
