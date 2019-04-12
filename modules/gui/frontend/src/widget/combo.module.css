@@ -38,11 +38,15 @@
 
 .items li {
     border: 0;
-    padding: .2rem .5rem;
+    padding: .35rem .75rem;
     font-size: .9rem;
 }
 
 .items li.group {
-    font-weight: bold;
+    font-size: .8rem;
+    font-weight: 800;
+    color: gray;
+    text-transform: uppercase;
     margin: .5rem 0;
+    border-bottom: 1px solid #333;
 }
