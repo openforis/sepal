@@ -80,10 +80,19 @@ form textarea.error {
     background-color: var(--error-background-color) !important;
 }
 
+form .errorMessageContainer {
+    position: relative;
+    width: 100%;
+}
+
 form .errorMessage {
-    height: 3rem;
+    position: absolute;
+    top: 0;
+    bottom: -2rem;
+    left: 0;
+    right: 0;
     color: var(--error-color);
-    font-size: .95rem;
+    font-size: .8rem;
     font-weight: 400;
 }
 

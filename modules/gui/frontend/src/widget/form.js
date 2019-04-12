@@ -374,8 +374,10 @@ export const ErrorMessage = props => {
                 )
                 .find(error => error)
             return (
-                <div className={[styles.errorMessage, props.className].join(' ')}>
-                    {error}
+                <div className={styles.errorMessageContainer}>
+                    <div className={[styles.errorMessage, props.className].join(' ')}>
+                        {error}
+                    </div>
                 </div>
             )
         }}
