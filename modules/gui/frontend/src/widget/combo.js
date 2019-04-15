@@ -108,8 +108,7 @@ class Combo extends React.Component {
         return (
             <FloatingBox
                 element={this.input.current}
-                placement={placement}
-                className={styles.list}>
+                placement={placement}>
                 <Keybinding keymap={keymap}>
                     <ScrollableContainer>
                         <Scrollable className={styles.items}>

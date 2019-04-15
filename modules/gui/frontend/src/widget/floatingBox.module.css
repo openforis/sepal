@@ -1,18 +1,17 @@
 .box {
-    --input-clearance: .5rem;
+    --element-clearance: .5rem;
     --edge-clearance: .5rem;
-    --background-color: hsla(0, 0%, 0%, .9);
     position: absolute;
     left: calc(var(--left) * 1px);
     width: calc(var(--width) * 1px);
 }
 
 .box.above {
-    bottom: calc(var(--above-bottom) * 1px + var(--input-clearance));
-    max-height: calc(var(--above-height) * 1px - var(--input-clearance) - var(--edge-clearance));
+    bottom: calc(var(--above-bottom) * 1px + var(--element-clearance));
+    max-height: calc(var(--above-height) * 1px - var(--element-clearance) - var(--edge-clearance));
 }
 
 .box.below {
-    top: calc(var(--below-top) * 1px + var(--input-clearance));
-    max-height: calc(var(--below-height) * 1px - var(--input-clearance) - var(--edge-clearance));
+    top: calc(var(--below-top) * 1px + var(--element-clearance));
+    max-height: calc(var(--below-height) * 1px - var(--element-clearance) - var(--edge-clearance));
 }
