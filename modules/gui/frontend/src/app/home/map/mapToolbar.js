@@ -1,5 +1,6 @@
 import {connect, select} from 'store'
 import {msg} from 'translate'
+import Keybinding from 'widget/keybinding'
 import {sepalMap} from './map'
 import Labels from 'app/home/map/labels'
 import PropTypes from 'prop-types'
@@ -63,6 +64,7 @@ class MapToolbar extends React.Component {
                 <div className={styles.metersPerPixel}>
                     {metersPerPixel}m/px
                 </div>
+                <Keybinding keymap={isZooming && {Escape: () => context.cancelZoomArea()}}/>
             </React.Fragment>
         )
     }
