@@ -9,7 +9,7 @@ import {selectFrom} from 'stateUtils'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import ComboBox from 'widget/comboBox'
+import Combo from 'widget/combo'
 import React from 'react'
 
 const mapRecipeToProps = recipe => {
@@ -102,10 +102,10 @@ class FusionTableSection extends React.Component {
                     }}
                     errorMessage
                 />
-                <ComboBox
+                <Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.column.label')}
                     input={fusionTableColumn}
-                    isLoading={stream('LOAD_FUSION_TABLE_COLUMNS').active}
+                    busy={stream('LOAD_FUSION_TABLE_COLUMNS').active}
                     disabled={!columns || columns.length === 0}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.column.placeholder.${columnState}`)}
                     options={(columns || []).map(({name}) => ({value: name, label: name}))}
@@ -119,10 +119,10 @@ class FusionTableSection extends React.Component {
                     }}
                     errorMessage
                 />
-                <ComboBox
+                <Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.row.label')}
                     input={fusionTableRow}
-                    isLoading={stream('LOAD_FUSION_TABLE_ROWS').active}
+                    busy={stream('LOAD_FUSION_TABLE_ROWS').active}
                     disabled={!rows}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.row.placeholder.${rowState}`)}
                     options={(rows || []).map(value => ({value, label: value}))}

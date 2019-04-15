@@ -1,4 +1,3 @@
-import {ErrorMessage} from 'widget/form'
 import {Subject} from 'rxjs'
 import {connect, select} from 'store'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
@@ -8,7 +7,6 @@ import {msg} from 'translate'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
 import Combo from 'widget/combo'
-import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -89,38 +87,32 @@ class CountrySection extends React.Component {
         const areaPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.area.placeholder.${areasState}`)
         return (
             <React.Fragment>
-                <div>
-                    <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}/>
-                    <Combo
-                        input={country}
-                        placement='below'
-                        options={(countries || []).map(([value, label]) => ({value, label}))}
-                        placeholder={countryPlaceholder}
-                        busy={stream('LOAD_COUNTRIES').active}
-                        disabled={!countries}
-                        autoFocus={!isMobile()}
-                        onChange={e => {
-                            area.set('')
-                            this.aoiChanged$.next()
-                            if (e)
-                                this.loadCountryAreas(e.value)
-                        }}
-                    />
-                    <ErrorMessage for={country}/>
-                </div>
-                <div>
-                    <Label msg={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}/>
-                    <Combo
-                        input={area}
-                        placement='below'
-                        options={(countryAreas || []).map(([value, label]) => ({value, label}))}
-                        placeholder={areaPlaceholder}
-                        busy={stream('LOAD_COUNTRY_AREAS').active}
-                        disabled={!countryAreas || countryAreas.length === 0}
-                        onChange={() => this.aoiChanged$.next()}
-                    />
-                    <ErrorMessage for={area}/>
-                </div>
+                <Combo
+                    label={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}
+                    input={country}
+                    placement='below'
+                    options={(countries || []).map(([value, label]) => ({value, label}))}
+                    placeholder={countryPlaceholder}
+                    busy={stream('LOAD_COUNTRIES').active}
+                    disabled={!countries}
+                    autoFocus={!isMobile()}
+                    onChange={e => {
+                        area.set('')
+                        this.aoiChanged$.next()
+                        if (e)
+                            this.loadCountryAreas(e.value)
+                    }}
+                />
+                <Combo
+                    label={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}
+                    input={area}
+                    placement='below'
+                    options={(countryAreas || []).map(([value, label]) => ({value, label}))}
+                    placeholder={areaPlaceholder}
+                    busy={stream('LOAD_COUNTRY_AREAS').active}
+                    disabled={!countryAreas || countryAreas.length === 0}
+                    onChange={() => this.aoiChanged$.next()}
+                />
             </React.Fragment>
         )
     }

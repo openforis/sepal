@@ -18,6 +18,10 @@
     --font-size: var(--large-font-size);
 }
 
+.label.unavailable {
+    opacity: .3;
+}
+
 .label .info {
     cursor: help;
     margin-left: .5rem;

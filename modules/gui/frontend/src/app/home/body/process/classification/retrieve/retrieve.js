@@ -6,7 +6,6 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {currentUser} from 'widget/user'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
-import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './retrieve.module.css'

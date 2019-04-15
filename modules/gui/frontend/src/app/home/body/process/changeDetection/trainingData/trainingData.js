@@ -9,7 +9,7 @@ import {isMobile} from 'widget/userAgent'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
 import {selectFrom} from 'stateUtils'
-import ComboBox from 'widget/comboBox'
+import Combo from 'widget/combo'
 import React from 'react'
 import styles from './trainingData.module.css'
 
@@ -100,14 +100,13 @@ class TrainingData extends React.Component {
                     }}
                     errorMessage
                 />
-                <ComboBox
+                <Combo
                     label={msg('process.changeDetection.panel.trainingData.form.fusionTableColumn.label')}
                     input={fusionTableColumn}
-                    isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
+                    busy={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
                     disabled={!columns || columns.length === 0}
                     placeholder={msg(`process.changeDetection.panel.trainingData.form.fusionTableColumn.placeholder.${columnState}`)}
                     options={columns || []}
-                    errorMessage
                 />
 
                 <p>

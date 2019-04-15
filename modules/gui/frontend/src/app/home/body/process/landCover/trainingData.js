@@ -7,7 +7,7 @@ import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
-import ComboBox from 'widget/comboBox'
+import Combo from 'widget/combo'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -109,19 +109,18 @@ class TrainingData extends React.Component {
                     }}
                     errorMessage
                 />
-                <ComboBox
+                <Combo
                     label={msg('process.landCover.panel.trainingData.form.yearColumn.label')}
                     input={yearColumn}
-                    isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
+                    busy={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
                     disabled={!columns || columns.length === 0}
                     placeholder={yearPlaceholder}
                     options={(columns || []).map(({name}) => ({value: name, label: name}))}
-                    errorMessage
                 />
-                <ComboBox
+                <Combo
                     label={msg('process.landCover.panel.trainingData.form.classColumn.label')}
                     input={classColumn}
-                    isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
+                    busy={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
                     disabled={!columns || columns.length === 0}
                     placeholder={classPlaceholder}
                     options={(columns || []).map(({name}) => ({value: name, label: name}))}
