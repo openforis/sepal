@@ -56,6 +56,7 @@ R -e "pacman::p_load(\
         'RColorBrewer',\
         'RCurl',\
         'readxl',\
+        'reticulate',\
         'rgeos',\
         'rJava',\
         'Rmpi',\
