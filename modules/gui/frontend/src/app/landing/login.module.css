@@ -2,7 +2,10 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    /*justify-content: space-between;*/
+}
+
+.form > *:not(:last-child) {
+    margin-bottom: 3rem;
 }
 
 .form input {
