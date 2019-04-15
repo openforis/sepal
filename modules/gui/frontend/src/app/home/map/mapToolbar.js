@@ -64,7 +64,7 @@ class MapToolbar extends React.Component {
                 <div className={styles.metersPerPixel}>
                     {metersPerPixel}m/px
                 </div>
-                <Keybinding keymap={isZooming && {Escape: () => context.cancelZoomArea()}}/>
+                <Keybinding disabled={!isZooming} keymap={{Escape: () => context.cancelZoomArea()}}/>
             </React.Fragment>
         )
     }
