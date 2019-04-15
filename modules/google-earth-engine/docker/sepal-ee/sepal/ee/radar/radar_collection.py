@@ -1,24 +1,22 @@
 import math
 from functools import reduce
 from sepal.ee import dates
-from datetime import datetime, timedelta
+from . import _terrain_flattening
+from . import _refined_lee
 
 import ee
-
-from . import _speckle_filter
-
 
 def create(
         region,
         start_date=None,
         end_date=None,
         target_date=None,
-        corrections=['GAMMA0'],
-        mask=['LAYOVER'],
+        orbits=('ASCENDING',),
+        geometric_correction='ELLIPSOID',
         speckle_filter='NONE',
-        orbits=['ASCENDING']
+        outlier_removal='NONE'
 ):
-    days = 366 / 2 if 'OUTLIERS' in mask else 20
+    days = 366 / 2 if outlier_removal != 'NONE' else 24
     if target_date and not start_date:
         start_date = dates.subtract_days(target_date, days)
 
@@ -34,12 +32,29 @@ def create(
         return image.addBands(gamma0, None, True)
 
     def mask_borders(image):
+        total_slices = ee.Number(image.get('totalSlices'))
+        slice_number = ee.Number(image.get('sliceNumber'))
+        middle_slice = ee.Image(slice_number.gt(1).And(slice_number.lt(total_slices)))
+        not_border = image.select('VV').mask().reduceNeighborhood(
+            reducer=ee.Reducer.allNonZero(),
+            kernel=ee.Kernel.circle(radius=500, units='meters')
+        )
         angle = image.select('angle')
-        return image \
+        return image\
             .updateMask(
-            angle.gt(31).And(angle.lt(45))
-        ) \
-            .clip(image.geometry().buffer(-50))
+                angle.gt(31).And(angle.lt(45)).And(middle_slice.Or(not_border))
+            )
+
+    def mask_overlay(image):
+        return image.updateMask(
+            image.select('layover').And(image.select('shadow'))
+        )
+
+    def boxcar_filter(image):
+        filtered = image.select(['VV', 'VH']) \
+            .reduceNeighborhood(ee.Reducer.mean(), ee.Kernel.square(30, 'meters')) \
+            .rename(['VV', 'VH'])
+        return image.addBands(filtered, None, True)
 
     def add_date_bands(image):
         date = image.date()
@@ -55,24 +70,18 @@ def create(
 
     def pre_process(image):
         steps = []
-
-        if 'GAMMA0' in corrections:
+        if geometric_correction == 'ELLIPSOID':
             steps.append(to_gamma0)
-        # if 'TERRAIN' in corrections:
-        #     steps.append(_terrain_correction.apply)
-        # if 'LAYOVER' in mask:
-        # steps.append(_overlay.mask)
-        # if 'OUTLIERS' in mask:
-        # steps.append(mask_outliers)
+        elif geometric_correction == 'TERRAIN':
+            steps.append(_terrain_flattening.apply)
+            steps.append(mask_overlay)
         if speckle_filter == 'BOXCAR':
-            steps.append(_speckle_filter.apply)
-        # elif speckle_filter == 'REFINED_LEE':
-        #     steps.append(_speckle_filter.apply)
-
-        steps.append(mask_borders)
+            steps.append(boxcar_filter)
+        elif speckle_filter == 'REFINED_LEE':
+            steps.append(_refined_lee.apply)
         if target_date:
             steps.append(add_date_bands)
-
+        steps.append(mask_borders)
         return reduce(lambda acc, process: process(acc), steps, image)
 
     def mask_outliers(collection, std_devs):
@@ -101,8 +110,9 @@ def create(
             [ee.Filter.eq('orbitProperties_pass', orbit) for orbit in orbits]
             )) \
         .map(pre_process)
-
-    if 'OUTLIERS' in mask:
+    if outlier_removal == 'MODERATE':
+        return mask_outliers(collection, 3)
+    elif outlier_removal == 'AGGRESSIVE':
         return mask_outliers(collection, 2)
     else:
         return collection

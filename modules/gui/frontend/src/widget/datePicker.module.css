@@ -78,7 +78,7 @@
     margin: 0;
     padding: calc(.5 * var(--height)) 0;
     list-style: none;
-    overflow-y: scroll;
+    /*overflow-y: scroll;*/
 }
 
 .picker ul:first-child:nth-last-child(1) {

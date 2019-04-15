@@ -23,38 +23,31 @@
     height: 3rem;
 }
 
-.container :global .comboBox__value-container {
-    padding: 8px !important;
-}
-
-.container :global .comboBox__control {
-    background-color: rgba(19, 19, 20, 0.91) !important;
+.comboInput, .comboInput:focus, .comboInput:hover {
+    width: 17rem;
+    height: 3rem;
+    background-color: rgba(19, 19, 20, 0.91);
     border: var(--wireframe) !important;
     border-top: none !important;
-    border-radius: 0 0 var(--container-border-radius) var(--container-border-radius) !important;
-    height: 3rem !important;
+    border-radius: 0 0 var(--container-border-radius) var(--container-border-radius);
 }
 
-.container :global .comboBox__single-value {
-    width: 100%;
+
+.comboOptions {
+    margin-bottom: -0.7rem;
+    border: var(--wireframe);
 }
 
-.menu {
-    position: absolute;
-    z-index: 0;
+.comboOptions li {
+    margin: .75rem 0;
 }
 
-.menu :global .comboBox__menu {
-    border: var(--wireframe) !important;
-    border-radius: var(--container-border-radius) var(--container-border-radius) 0 0 !important;
-}
 
 .selection {
     display: flex;
     flex-wrap: wrap-reverse;
     justify-content: center;
     align-items: center;
-    /* background-color: rgba(0, 0, 0, 0.5); */
     padding: 0 0.5rem;
     border-radius: var(--container-border-radius);
 }
@@ -121,6 +114,3 @@
     background-color: hsla(0, 0%, 30%, 0.95);
 }
 
-.optionLabel sub {
-    font-size: .75rem;
-}

@@ -1,10 +1,12 @@
-def create(collection, region, bands=('VV', 'VH', 'VV_VH', 'dayOfYear', 'daysFromTarget', 'unixTimeDays')):
+def create(collection, region, bands=(
+        'VV', 'VH', 'VV_VH', 'dayOfYear', 'daysFromTarget', 'unixTimeDays'
+)):
     mosaic = collection.qualityMosaic('quality')
     mosaic = mosaic \
         .addBands([
-            mosaic.select('VV').subtract(mosaic.select('VH')).rename('VV_VH')
-        ])
-    return mosaic.select(bands).clip(region)
+        mosaic.select('VV').subtract(mosaic.select('VH')).rename('VV_VH')
+    ])
+    return mosaic.select(bands).clip(region).float()
 
 
 def viz_params(bands):

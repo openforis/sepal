@@ -80,6 +80,10 @@ a:hover, a:hover:not([href]):not([tabindex]) {
     opacity: 1;
 }
 
+sub {
+    font-size: .75rem;
+}
+
 .app {
     height: 100%;
     overflow: hidden;
@@ -106,3 +110,4 @@ a:hover, a:hover:not([href]):not([tabindex]) {
     color: #fff !important;
     background-color: transparent !important;
 }
+

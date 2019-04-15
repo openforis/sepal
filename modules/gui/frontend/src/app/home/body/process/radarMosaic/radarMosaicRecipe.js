@@ -12,13 +12,12 @@ export const defaultModel = {
         toDate: moment().add(1, 'years').startOf('year').format(DATE_FORMAT)
     },
     options: {
-        corrections: ['GAMMA0'],
-        mask: ['OUTLIERS', 'LAYOVER'],
+        orbits: ['ASCENDING'],
+        geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
-        orbits: ['ASCENDING']
+        outlierRemoval: 'MODERATE',
     }
 }
-
 
 export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
