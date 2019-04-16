@@ -15,7 +15,7 @@ const AUTO_CENTER_DELAY = 1000
 
 const targetScrollOffset = element => {
     const container = element.parentNode.parentNode
-    return Math.round(element.offsetTop - container.offsetTop - container.clientHeight / 2)
+    return Math.round(element.offsetTop - container.offsetTop - (container.clientHeight - element.clientHeight) / 2)
 }
 
 const currentScrollOffset = element =>
