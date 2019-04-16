@@ -1,15 +1,50 @@
 import {disableBodyScroll, enableBodyScroll} from 'body-scroll-lock'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
+import _ from 'lodash'
 import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
 
-export const ScrollableContainer = ({className, children}) => {
-    return (
-        <div className={[flexy.container, className].join(' ')}>
-            {children}
-        </div>
-    )
+const Context = React.createContext()
+
+export class ScrollableContainer extends React.Component {
+    ref = React.createRef()
+    state = {}
+
+    render() {
+        const {className, children} = this.props
+        const {height} = this.state
+        return (
+            <div ref={this.ref} className={[flexy.container, className].join(' ')}>
+                <Context.Provider value={{height}}>
+                    {children}
+                </Context.Provider>
+            </div>
+        )
+    }
+
+    update(height) {
+        this.updateState({height})
+    }
+
+    componentDidMount() {
+        this.update(0)
+    }
+
+    componentDidUpdate() {
+        this.update(this.ref.current.clientHeight)
+    }
+
+    updateState(state, callback) {
+        const updatedState = (prevState, state) =>
+            _.isEqual(_.pick(prevState, _.keys(state)), state) ? null : state
+        this.setState(
+            prevState =>
+                updatedState(prevState, _.isFunction(state) ? state(prevState) : state),
+            callback
+        )
+    }
+
 }
 
 ScrollableContainer.propTypes = {
@@ -34,10 +69,20 @@ export class Scrollable extends Component {
     targetRef = React.createRef()
 
     render() {
+        return (
+            <Context.Consumer>
+                {({height}) => this.renderScrollable(height)}
+            </Context.Consumer>
+        )
+    }
+
+    renderScrollable(scrollableContainerHeight) {
         const {className, direction, children} = this.props
         return (
-            <div ref={this.targetRef} className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
-                {children}
+            <div
+                ref={this.targetRef}
+                className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
+                {_.isFunction(children) ? children(scrollableContainerHeight) : children}
             </div>
         )
     }
