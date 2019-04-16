@@ -17,13 +17,11 @@
     margin-right: 6rem;
 }
 
-@media screen and (max-width: 450px) {
-    .mapToolbar {
-        margin-right: 3rem;
-    }
-}
-@media screen and (max-width: 350px) {
-    .mapToolbar {
-        margin-right: 0;
-    }
+.metersPerPixel {
+    position: absolute;
+    top: 1rem;
+    right: .5rem;
+    height: var(--toolbar-button-size);
+    font-size: .8rem;
+    color: #ccc;
 }

@@ -46,7 +46,7 @@ export default class Keybinding extends React.Component {
 
     render() {
         const {children} = this.props
-        return children
+        return children || null
     }
 
     componentDidMount() {

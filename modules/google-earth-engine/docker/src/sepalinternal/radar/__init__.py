@@ -1,6 +1,7 @@
-from ..image_spec import ImageSpec
 from sepal.ee import radar_collection, radar_mosaic, radar_time_scan
+
 from ..aoi import Aoi
+from ..image_spec import ImageSpec
 
 
 class RadarMosaic(ImageSpec):
@@ -27,12 +28,12 @@ class RadarMosaic(ImageSpec):
             start_date=dates.get('fromDate'),
             end_date=dates.get('toDate'),
             target_date=dates.get('targetDate'),
-            corrections=options['corrections'],
-            mask=options['mask'],
+            orbits=options['orbits'],
+            geometric_correction=options['geometricCorrection'],
             speckle_filter=options['speckleFilter'],
-            orbits=options['orbits']
+            outlier_removal=options['outlierRemoval'],
         )
         if self.time_scan:
-            return radar_time_scan.create(collection, self.aoi.geometry(), self.bands)
+            return radar_time_scan.create(collection, self.aoi.geometry())
         else:
-            return radar_mosaic.create(collection, self.aoi.geometry(), self.bands)
+            return radar_mosaic.create(collection, self.aoi.geometry())

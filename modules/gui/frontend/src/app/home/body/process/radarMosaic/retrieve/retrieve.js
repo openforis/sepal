@@ -31,23 +31,20 @@ class Retrieve extends React.Component {
     timeScanBandOptions = [
         {
             options: [
-                {value: 'VV_p20', label: <span>VV<sub>20</sub></span>},
-                {value: 'VV_p50', label: <span>VV<sub>50</sub></span>},
-                {value: 'VV_p80', label: <span>VV<sub>80</sub></span>}
+                {value: 'VV_min', label: <span>VV<sub>min</sub></span>},
+                {value: 'VV_mean', label: <span>VV<sub>mean</sub></span>},
+                {value: 'VV_median', label: <span>VV<sub>med</sub></span>},
+                {value: 'VV_max', label: <span>VV<sub>max</sub></span>},
+                {value: 'VV_stdDev', label: <span>VV<sub>sd</sub></span>}
             ]
         },
         {
             options: [
-                {value: 'VH_p20', label: <span>VH<sub>20</sub></span>},
-                {value: 'VH_p50', label: <span>VH<sub>50</sub></span>},
-                {value: 'VH_p80', label: <span>VH<sub>80</sub></span>}
-            ]
-        },
-        {
-            options: [
-                {value: 'VV_p80_p20', label: <span>VV<sub>80</sub>/VV<sub>20</sub></span>},
-                {value: 'VH_p80_p20', label: <span>VH<sub>80</sub>/VH<sub>20</sub></span>},
-                {value: 'VV_p50_VH_p50', label: <span>VV<sub>50</sub>/VH<sub>50</sub></span>}
+                {value: 'VH_min', label: <span>VH<sub>min</sub></span>},
+                {value: 'VH_mean', label: <span>VH<sub>mean</sub></span>},
+                {value: 'VH_median', label: <span>VH<sub>med</sub></span>},
+                {value: 'VH_max', label: <span>VH<sub>max</sub></span>},
+                {value: 'VH_stdDev', label: <span>VH<sub>sd</sub></span>}
             ]
         }
     ]

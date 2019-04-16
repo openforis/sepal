@@ -1,16 +1,16 @@
-import './map.module.css'
-import {NEVER, Observable, Subject} from 'rxjs'
-import {connect, select} from 'store'
-import {map, mergeMap, takeUntil} from 'rxjs/operators'
-import {msg} from 'translate'
-import GoogleMapsLoader from 'google-maps'
-import Notifications from 'widget/notifications'
-import Portal from 'widget/portal'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import GoogleMapsLoader from 'google-maps'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {NEVER, Observable, Subject} from 'rxjs'
+import {map, mergeMap, takeUntil} from 'rxjs/operators'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import Notifications from 'widget/notifications'
+import Portal from 'widget/portal'
+import './map.module.css'
 
 export let sepalMap = null
 export let google = null
@@ -117,6 +117,13 @@ const createMap = mapElement => {
         },
         zoomOut() {
             googleMap.setZoom(googleMap.getZoom() - 1)
+        },
+        getMetersPerPixel() {
+            const latitude = googleMap.getCenter().lat()
+            const zoom = googleMap.getZoom()
+            return Math.round(
+                156543.03392 * Math.cos(latitude * Math.PI / 180) / Math.pow(2, zoom)
+            )
         },
         isMaxZoom() {
             return googleMap.getZoom() === googleMap.maxZoom
@@ -434,7 +441,9 @@ class WrappedMapObject extends React.Component {
     }
 }
 
-export const MapObject = connect(state => ({projectionChange: state.map.projectionChange}))(WrappedMapObject)
+export const MapObject = connect(state => ({projectionChange: state.map.projectionChange}))(
+    WrappedMapObject
+)
 
 const ProjectionContext = React.createContext()
 

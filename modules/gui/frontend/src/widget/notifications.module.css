@@ -22,12 +22,14 @@
     border-width: .5rem .1rem .1rem .1rem;
     border-color: var(--color);
     border-radius: var(--container-border-radius);
+    overflow: hidden;
+    word-wrap: break-word;
 }
 
 .notification:not(.dismissing) {
     animation: add 250ms ease-in-out normal forwards;
 }
- 
+
 @keyframes add {
     0% {
         transform: translateX(50%);
@@ -38,7 +40,7 @@
 .notification.dismissing {
     animation: remove 250ms ease-in-out reverse forwards;
 }
- 
+
 @keyframes remove {
     0% {
         transform: translateX(50%);

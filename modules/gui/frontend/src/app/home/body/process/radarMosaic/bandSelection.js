@@ -35,38 +35,38 @@ class BandSelection extends React.Component {
         timeScan: false,
         pointInTime: true
     }, {
-        value: 'VV_p50, VH_p50, VV_p80_p20',
+        value: 'VV_median, VH_median, VV_stdDev',
         bandLabels: [
-            <span key='VV50'>VV<sub>50</sub></span>,
-            <span key='VH50'>VH<sub>50</sub></span>,
-            <span key='VV80VH20'>VV<sub>80</sub>/VH<sub>20</sub></span>
+            <span>VV<sub>med</sub></span>,
+            <span>VH<sub>med</sub></span>,
+            <span>VV<sub>sd</sub></span>
         ],
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'VV_p50, VH_p50, VV_p50_VH_p50',
+        value: 'VV_median, VH_median, VV_median_VH_median',
         bandLabels: [
-            <span key='VV50'>VV<sub>50</sub></span>,
-            <span key='VH50'>VH<sub>50</sub></span>,
-            <span key='VV50VH50'>VV<sub>50</sub>/VH<sub>50</sub></span>
+            <span>VV<sub>med</sub></span>,
+            <span>VH<sub>med</sub></span>,
+            <span>VV<sub>med</sub>/VH<sub>med</sub></span>
         ],
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'VV_p80, VV_p20, VV_p80_p20',
+        value: 'VV_max, VV_min, VV_stdDev',
         bandLabels: [
-            <span key='VV80'>VV<sub>80</sub></span>,
-            <span key='VV20'>VV<sub>20</sub></span>,
-            <span key='VV80VV20'>VV<sub>80</sub>/VV<sub>20</sub></span>
+            <span>VV<sub>max</sub></span>,
+            <span>VV<sub>min</sub></span>,
+            <span>VV<sub>sd</sub></span>
         ],
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'VV_p20, VH_p20, VV_p80_p20',
+        value: 'VV_min, VH_min, VV_stdDev',
         bandLabels: [
-            <span key='VV20'>VV<sub>20</sub></span>,
-            <span key='VH20'>VH<sub>20</sub></span>,
-            <span key='VV80VV20'>VV<sub>80</sub>/VV<sub>20</sub></span>
+            <span>VV<sub>min</sub></span>,
+            <span>VH<sub>min</sub></span>,
+            <span>VV<sub>sd</sub></span>
         ],
         timeScan: true,
         pointInTime: false
@@ -157,6 +157,8 @@ const BandSelector = ({recipeActions, selection, options, onChange}) =>
             autoFocus={!isMobile()}
             placement='above'
             keepOpen
+            inputClassName={styles.comboInput}
+            optionsClassName={styles.comboOptions}
             onBlur={onChange}
             onChange={option => {
                 recipeActions.setBands(option ? option.value : null).dispatch()

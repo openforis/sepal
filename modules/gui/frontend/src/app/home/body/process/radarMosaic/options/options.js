@@ -12,48 +12,51 @@ import React from 'react'
 import styles from './options.module.css'
 
 const fields = {
-    corrections: new Field(),
-    mask: new Field(),
-    speckleFilter: new Field(),
     orbits: new Field()
-        .notEmpty('process.recipeMosaic.panel.options.form.orbits.required')
+        .notEmpty('process.recipeMosaic.panel.options.form.orbits.required'),
+    geometricCorrection: new Field(),
+    speckleFilter: new Field(),
+    outlierRemoval: new Field()
 }
 
 class Options extends React.Component {
     renderContent() {
         const {
             inputs: {
-                corrections, mask, speckleFilter, orbits
+                orbits, geometricCorrection, speckleFilter, outlierRemoval
             }
         } = this.props
         return (
             <React.Fragment>
                 <Buttons
-                    label={msg('process.radarMosaic.panel.options.form.corrections.label')}
-                    input={corrections}
+                    label={msg('process.radarMosaic.panel.options.form.orbits.label')}
+                    input={orbits}
                     multiple={true}
                     options={[{
-                        value: 'GAMMA0',
-                        label: msg('process.radarMosaic.panel.options.form.corrections.gamma0.label'),
-                        tooltip: msg('process.radarMosaic.panel.options.form.corrections.surfaceRefgamma0lectance.tooltip')
+                        value: 'ASCENDING',
+                        label: msg('process.radarMosaic.panel.options.form.orbits.ascending.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.orbits.ascending.tooltip')
                     }, {
-                        value: 'TERRAIN',
-                        label: msg('process.radarMosaic.panel.options.form.corrections.terrain.label'),
-                        tooltip: msg('process.radarMosaic.panel.options.form.corrections.terrain.tooltip')
+                        value: 'DESCENDING',
+                        label: msg('process.radarMosaic.panel.options.form.orbits.descending.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.orbits.descending.tooltip')
                     }]}
                 />
                 <Buttons
-                    label={msg('process.radarMosaic.panel.options.form.mask.label')}
-                    input={mask}
-                    multiple={true}
+                    label={msg('process.radarMosaic.panel.options.form.geometricCorrection.label')}
+                    input={geometricCorrection}
                     options={[{
-                        value: 'LAYOVER',
-                        label: msg('process.radarMosaic.panel.options.form.mask.layover.label'),
-                        tooltip: msg('process.radarMosaic.panel.options.form.mask.layover.tooltip')
+                        value: 'NONE',
+                        label: msg('process.radarMosaic.panel.options.form.geometricCorrection.none.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.geometricCorrection.none.tooltip')
                     }, {
-                        value: 'OUTLIERS',
-                        label: msg('process.radarMosaic.panel.options.form.mask.outliers.label'),
-                        tooltip: msg('process.radarMosaic.panel.options.form.mask.outliers.tooltip')
+                        value: 'ELLIPSOID',
+                        label: msg('process.radarMosaic.panel.options.form.geometricCorrection.ellipsoid.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.geometricCorrection.ellipsoid.tooltip')
+                    }, {
+                        value: 'TERRAIN',
+                        label: msg('process.radarMosaic.panel.options.form.geometricCorrection.terrain.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.geometricCorrection.terrain.tooltip')
                     }]}
                 />
                 <Buttons
@@ -74,17 +77,20 @@ class Options extends React.Component {
                     }]}
                 />
                 <Buttons
-                    label={msg('process.radarMosaic.panel.options.form.orbits.label')}
-                    input={orbits}
-                    multiple={true}
+                    label={msg('process.radarMosaic.panel.options.form.outlierRemoval.label')}
+                    input={outlierRemoval}
                     options={[{
-                        value: 'ASCENDING',
-                        label: msg('process.radarMosaic.panel.options.form.orbits.ascending.label'),
-                        tooltip: msg('process.radarMosaic.panel.options.form.orbits.ascending.tooltip')
+                        value: 'NONE',
+                        label: msg('process.radarMosaic.panel.options.form.outlierRemoval.none.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.none.tooltip'),
                     }, {
-                        value: 'DESCENDING',
-                        label: msg('process.radarMosaic.panel.options.form.orbits.descending.label'),
-                        tooltip: msg('process.radarMosaic.panel.options.form.orbits.descending.tooltip')
+                        value: 'MODERATE',
+                        label: msg('process.radarMosaic.panel.options.form.outlierRemoval.moderate.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.moderate.tooltip')
+                    }, {
+                        value: 'AGGRESSIVE',
+                        label: msg('process.radarMosaic.panel.options.form.outlierRemoval.aggressive.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.aggressive.tooltip')
                     }]}
                 />
             </React.Fragment>
