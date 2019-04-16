@@ -4,9 +4,9 @@ import {connect} from 'store'
 import {fromEvent} from 'rxjs'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
+import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
 import Label from 'widget/label'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -24,7 +24,6 @@ class Combo extends React.Component {
     list = React.createRef()
     highlighted = React.createRef()
     state = {
-        dimensions: {},
         showOptions: false,
         filter: '',
         filteredOptions: [],
@@ -97,7 +96,7 @@ class Combo extends React.Component {
 
     renderOptions() {
         const {placement = 'below'} = this.props
-        const {dimensions: {height, top, bottom, left, right}, filteredOptions} = this.state
+        const {filteredOptions} = this.state
         const keymap = {
             Enter: () => this.selectHighlighted(),
             Escape: () => this.setFilter(),
@@ -106,31 +105,21 @@ class Combo extends React.Component {
             Home: () => this.highlightFirst(),
             End: () => this.highlightLast()
         }
-        const style = {
-            '--left': left,
-            '--width': right - left,
-            '--above-height': top,
-            '--above-bottom': height - top,
-            '--below-height': height - bottom,
-            '--below-top': bottom
-        }
         return (
-            <Portal>
+            <FloatingBox
+                element={this.input.current}
+                placement={placement}
+                className={styles.list}>
                 <Keybinding keymap={keymap}>
-                    <div
-                        ref={this.list}
-                        className={[styles.list, styles[placement]].join(' ')}
-                        style={style}>
-                        <ScrollableContainer>
-                            <Scrollable className={styles.items}>
-                                <ul>
-                                    {this.renderItems(filteredOptions)}
-                                </ul>
-                            </Scrollable>
-                        </ScrollableContainer>
-                    </div>
+                    <ScrollableContainer>
+                        <Scrollable className={styles.items}>
+                            <ul>
+                                {this.renderItems(filteredOptions)}
+                            </ul>
+                        </Scrollable>
+                    </ScrollableContainer>
                 </Keybinding>
-            </Portal>
+            </FloatingBox>
         )
     }
 
@@ -338,13 +327,11 @@ class Combo extends React.Component {
 
     componentDidMount() {
         this.setFilter()
-        this.updateDimensions()
         this.handleBlurEvents()
     }
 
     componentDidUpdate() {
         this.updateOptions()
-        this.updateDimensions()
     }
 
     componentWillUnmount() {
@@ -393,19 +380,6 @@ class Combo extends React.Component {
             highlightedOption: prevState.highlightedOption || getFirstOption(),
             selectedOption: prevState.selectedOption || getSelectedOption()
         }))
-    }
-
-    updateDimensions() {
-        const {dimensions: {height}} = this.props
-        const {top, bottom, left, right} = this.getBoundingBox()
-        this.updateState({dimensions: {height, top, bottom, left, right}})
-    }
-
-    getBoundingBox() {
-        const ref = this.input.current
-        return ref
-            ? ref.getBoundingClientRect()
-            : {}
     }
 }
 
