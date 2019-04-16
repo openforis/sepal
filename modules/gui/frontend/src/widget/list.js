@@ -71,7 +71,7 @@ class List extends React.Component {
     }
 
     renderOption(option, index) {
-        return option.value
+        return option.value !== undefined
             ? this.renderSelectableOption(option)
             : option.options
                 ? this.renderGroup(option, index)
