@@ -150,15 +150,11 @@ class Combo extends React.Component {
     handleBlurEvents() {
         const {onBlur, keepOpen} = this.props
         const click$ = fromEvent(document, 'click')
-        const isInputClick = e =>
-            this.input.current && this.input.current.contains(e.target)
-        const isListClick = e =>
-            this.list.current && this.list.current.contains(e.target)
-
+        const isInputClick = e => this.input.current && this.input.current.contains(e.target)
         this.subscriptions.push(
             click$.subscribe(
                 e => {
-                    if ((keepOpen || !isInputClick(e)) && !isListClick(e)) {
+                    if (keepOpen || !isInputClick(e)) {
                         this.setFilter()
                         onBlur && onBlur(e)
                     }
