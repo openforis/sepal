@@ -90,6 +90,7 @@ class List extends React.Component {
     }
 
     renderSelectableOption(option) {
+        const {selectedOption} = this.props
         const {mouseOver} = this.state
         const highlighted = this.isHighlighted(option)
         const ref = highlighted
@@ -107,6 +108,7 @@ class List extends React.Component {
                     lookStyles.default
                 ].join(' ')}
                 onMouseOver={() => this.highlightOption(option)}
+                onMouseOut={() => this.highlightOption(selectedOption)}
                 onClick={() => this.selectOption(option)}>
                 {option.label}
             </li>
