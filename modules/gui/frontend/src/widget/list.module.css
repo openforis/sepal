@@ -9,6 +9,10 @@
     list-style: none;
 }
 
+.options::-webkit-scrollbar { 
+    display: none !important;
+}
+
 .options li {
     border: 0;
     padding: .35rem .75rem;

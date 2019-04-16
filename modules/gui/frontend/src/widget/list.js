@@ -1,5 +1,7 @@
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Subject, animationFrameScheduler, interval} from 'rxjs'
 import {connect} from 'store'
+import {debounceTime, distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
 import {selectFrom} from 'stateUtils'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -7,6 +9,23 @@ import React from 'react'
 import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './list.module.css'
+
+const ANIMATION_SPEED = .2
+const AUTO_CENTER_DELAY = 1000
+
+const targetScrollOffset = element => {
+    const container = element.parentNode.parentNode
+    return Math.round(element.offsetTop - container.offsetTop - container.clientHeight / 2)
+}
+
+const currentScrollOffset = element =>
+    element.parentNode.parentNode.scrollTop
+
+const setScrollOffset = (element, value) =>
+    element.parentNode.parentNode.scrollTop = value
+
+const lerp = rate =>
+    (value, targetValue) => value + (targetValue - value) * rate
 
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
@@ -16,6 +35,7 @@ class List extends React.Component {
     subscriptions = []
     list = React.createRef()
     highlighted = React.createRef()
+    scrollHighlighted$ = new Subject()
     state = {
         highlightedOption: null,
         mouseOver: null
@@ -84,6 +104,11 @@ class List extends React.Component {
         )
     }
 
+    isSelected(option) {
+        const {selectedOption} = this.props
+        return option === selectedOption
+    }
+
     isHighlighted(option) {
         const {highlightedOption} = this.state
         return highlightedOption && option && highlightedOption.value === option.value
@@ -92,6 +117,7 @@ class List extends React.Component {
     renderSelectableOption(option) {
         const {selectedOption} = this.props
         const {mouseOver} = this.state
+        const selected = this.isSelected(option)
         const highlighted = this.isHighlighted(option)
         const ref = highlighted
             ? this.highlighted
@@ -104,8 +130,8 @@ class List extends React.Component {
                     lookStyles.look,
                     lookStyles.noTransitions,
                     mouseOver ? null : lookStyles.noHover,
-                    highlighted ? null : lookStyles.chromeless,
-                    lookStyles.default
+                    highlighted || selected ? null : lookStyles.chromeless,
+                    selected ? lookStyles.default : lookStyles.transparent
                 ].join(' ')}
                 onMouseOver={() => this.highlightOption(option)}
                 onMouseOut={() => this.highlightOption(selectedOption)}
@@ -125,6 +151,13 @@ class List extends React.Component {
     cancel() {
         const {onCancel} = this.props
         onCancel && onCancel()
+    }
+
+    highlightOption(highlightedOption) {
+        this.setState({
+            highlightedOption,
+            mouseOver: true
+        })
     }
 
     highlightPrevious() {
@@ -183,22 +216,48 @@ class List extends React.Component {
     selectOption(option) {
         const {onSelect} = this.props
         onSelect(option)
+        this.scrollHighlighted$.next()
     }
 
-    highlightOption(highlightedOption) {
-        this.setState({
-            highlightedOption,
-            mouseOver: true
+    autoCenterWhenIdle(scroll$) {
+        return scroll$.pipe(
+            debounceTime(AUTO_CENTER_DELAY)
+        ).subscribe(() => {
+            this.centerSelected()
         })
     }
 
     update() {
         const {options, selectedOption} = this.props
         const highlightedOption = _.find(options, selectedOption) || options[0]
-        this.setState({highlightedOption}, this.scroll)
+        this.setState({highlightedOption}, () => this.scrollHighlighted$.next())
+    }
+
+    initializeAutoScroll() {
+        const animationFrame$ = interval(0, animationFrameScheduler)
+        this.subscriptions.push(
+            this.scrollHighlighted$.pipe(
+                map(() => this.highlighted.current),
+                filter(element => element),
+                switchMap(element => {
+                    const target = targetScrollOffset(element)
+                    return animationFrame$.pipe(
+                        map(() => target),
+                        scan(lerp(ANIMATION_SPEED), currentScrollOffset(element)),
+                        map(value => Math.round(value)),
+                        distinctUntilChanged(),
+                        map(value => ({element, value}))
+                    )
+                })
+            ).subscribe(
+                ({element, value}) =>
+                    setScrollOffset(element, Math.round(value))
+            )
+        )
     }
 
     componentDidMount() {
+        this.initializeAutoScroll()
         this.update()
     }
 
@@ -218,6 +277,7 @@ export default connect(mapStateToProps)(List)
 List.propTypes = {
     options: PropTypes.any.isRequired,
     onSelect:  PropTypes.func.isRequired,
+    autoCenter: PropTypes.any,
     selectedOption: PropTypes.any,
     onCancel:  PropTypes.func
 }
