@@ -12,7 +12,7 @@ RUN chmod -R 500 /script && \
 ADD requirements.txt /requirements.txt
 RUN pip2 install -r /requirements.txt
 ADD sepal-ee /sepal-ee
-RUN pip2 -e /sepal-ee
+RUN pip2 install -e /sepal-ee
 
 ADD src /src
 CMD [ "/script/init_container.sh" ]
