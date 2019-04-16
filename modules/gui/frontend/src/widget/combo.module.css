@@ -6,29 +6,3 @@
     font-style: inherit;
     color: inherit;
 }
-
-.items {
-    --background-color: hsla(0, 0%, 0%, .9);
-    background-color: var(--background-color);
-}
-
-.items ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.items li {
-    border: 0;
-    padding: .35rem .75rem;
-    font-size: .9rem;
-}
-
-.items li.group {
-    font-size: .8rem;
-    font-weight: 800;
-    color: gray;
-    text-transform: uppercase;
-    margin: .5rem 0;
-    border-bottom: 1px solid #333;
-}

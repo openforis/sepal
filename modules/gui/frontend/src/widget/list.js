@@ -32,7 +32,7 @@ class List extends React.Component {
             End: () => this.highlightLast()
         }
         return (
-            <Keybinding keymap={keymap}>s
+            <Keybinding keymap={keymap}>
                 <ScrollableContainer>
                     <Scrollable className={styles.options}>
                         <ul>

@@ -1,5 +1,4 @@
 import {ErrorMessage} from 'widget/form'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
 import {fromEvent} from 'rxjs'
 import {isMobile} from 'widget/userAgent'
@@ -7,11 +6,11 @@ import {selectFrom} from 'stateUtils'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
 import Label from 'widget/label'
+import List from 'widget/list'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import escapeStringRegexp from 'escape-string-regexp'
-import lookStyles from 'style/look.module.css'
 import styles from './combo.module.css'
 
 const mapStateToProps = state => ({
@@ -22,15 +21,12 @@ class Combo extends React.Component {
     subscriptions = []
     input = React.createRef()
     list = React.createRef()
-    highlighted = React.createRef()
     state = {
         showOptions: false,
         filter: '',
         filteredOptions: [],
         flattenedOptions: [],
-        highlightedOption: null,
-        selectedOption: null,
-        mouseOver: null
+        selectedOption: null
     }
 
     render() {
@@ -96,180 +92,34 @@ class Combo extends React.Component {
 
     renderOptions() {
         const {placement = 'below'} = this.props
-        const {filteredOptions} = this.state
-        const keymap = {
-            Enter: () => this.selectHighlighted(),
-            Escape: () => this.setFilter(),
-            ArrowUp: () => this.highlightPrevious(),
-            ArrowDown: () => this.highlightNext(),
-            Home: () => this.highlightFirst(),
-            End: () => this.highlightLast()
-        }
+        const {filteredOptions, selectedOption} = this.state
         return (
             <FloatingBox
                 element={this.input.current}
                 placement={placement}>
-                <Keybinding keymap={keymap}>
-                    <ScrollableContainer>
-                        <Scrollable className={styles.items}>
-                            <ul>
-                                {this.renderItems(filteredOptions)}
-                            </ul>
-                        </Scrollable>
-                    </ScrollableContainer>
-                </Keybinding>
+                <List
+                    options={filteredOptions}
+                    selectedOption={selectedOption}
+                    onSelect={option => this.selectOption(option)}
+                    onCancel={() => this.setFilter()}
+                />
             </FloatingBox>
         )
     }
 
-    renderItems(options) {
-        return options.length
-            ? options.map((item, index) => this.renderItem(item, index))
-            : this.renderItem({label: 'No results'}) // [TODO] msg
-    }
-
-    renderItem(item, index) {
-        return item.value
-            ? this.renderSelectableItem(item)
-            : item.options
-                ? this.renderGroup(item, index)
-                : this.renderNonSelectableItem(item, index)
-    }
-
-    renderGroup(item, index) {
-        return (
-            <React.Fragment key={index}>
-                <li
-                    className={styles.group}>
-                    {item.label}
-                </li>
-                {this.renderItems(item.options)}
-            </React.Fragment>
-        )
-    }
-
-    renderNonSelectableItem(item, index) {
-        return (
-            <li
-                key={item.value || index}
-                className={[
-                    lookStyles.look,
-                    lookStyles.nonInteractive,
-                    lookStyles.noTransitions,
-                ].join(' ')}>
-                {item.label}
-            </li>
-        )
-    }
-
-    isHighlighted(option) {
-        const {highlightedOption} = this.state
-        return highlightedOption && option && highlightedOption.value === option.value
-    }
-
-    renderSelectableItem(item) {
-        const {mouseOver} = this.state
-        const highlighted = this.isHighlighted(item)
-        const ref = highlighted
-            ? this.highlighted
-            : null
-        return (
-            <li
-                ref={ref}
-                key={item.value}
-                className={[
-                    lookStyles.look,
-                    lookStyles.noTransitions,
-                    mouseOver ? null : lookStyles.noHover,
-                    highlighted ? null : lookStyles.chromeless,
-                    lookStyles.default
-                ].join(' ')}
-                onMouseOver={() => this.highlightOption(item)}
-                onClick={() => this.selectOption(item)}>
-                {item.label}
-            </li>
-        )
-    }
-
     showOptions() {
-        const {showOptions, flattenedOptions, selectedOption} = this.state
-        if (!showOptions) {
-            const highlightedOption = selectedOption || flattenedOptions[0]
-            this.setState({
-                showOptions: true,
-                highlightedOption
-            }, this.scroll)
-        }
+        this.setState({showOptions: true})
     }
 
     hideOptions() {
-        this.setState({
-            showOptions: false
-        })
-    }
-
-    selectHighlighted() {
-        const {highlightedOption} = this.state
-        if (highlightedOption) {
-            this.selectOption(highlightedOption)
-        }
-    }
-
-    highlightPrevious() {
-        const previousOption = (options, option) => {
-            const index = _.indexOf(options, option)
-            return index === -1
-                ? null
-                : options[Math.max(0, index - 1)]
-        }
-        this.setState(prevState => ({
-            highlightedOption: previousOption(prevState.flattenedOptions, prevState.highlightedOption),
-            mouseOver: false
-        }), this.scroll)
-    }
-
-    highlightNext() {
-        const nextOption = (options, option) => {
-            const index = _.indexOf(options, option)
-            return index === -1
-                ? null
-                : options[Math.min(options.length - 1, index + 1)]
-        }
-        this.setState(prevState => ({
-            highlightedOption: nextOption(prevState.flattenedOptions, prevState.highlightedOption),
-            mouseOver: false
-        }), this.scroll)
-    }
-
-    highlightFirst() {
-        const firstOption = options => options[0]
-        this.setState(prevState => ({
-            highlightedOption: firstOption(prevState.flattenedOptions),
-            mouseOver: false
-        }), this.scroll)
-    }
-
-    highlightLast() {
-        const lastOption = options => options[options.length - 1]
-        this.setState(prevState => ({
-            highlightedOption: lastOption(prevState.flattenedOptions),
-            mouseOver: false
-        }), this.scroll)
-    }
-
-    scroll() {
-        this.highlighted.current && this.highlighted.current.scrollIntoView({
-            behavior: 'auto',
-            block: 'nearest'
-        })
+        this.setState({showOptions: false})
     }
 
     setFilter(filter = '') {
         const {keepOpen} = this.props
         this.setState({
             showOptions: !!filter || keepOpen,
-            filter,
-            highlightedOption: null
+            filter
         }, this.updateOptions)
     }
 
@@ -280,13 +130,6 @@ class Combo extends React.Component {
         input.set(item.value)
         onChange && onChange({
             value: item.value
-        })
-    }
-
-    highlightOption(highlightedOption) {
-        this.setState({
-            highlightedOption,
-            mouseOver: true
         })
     }
 
@@ -367,16 +210,12 @@ class Combo extends React.Component {
         const filteredOptions = getFilteredOptions(options)
         const flattenedOptions = getFlattenedOptions(filteredOptions)
 
-        const getFirstOption = () =>
-            flattenedOptions && flattenedOptions.find(option => option.value)
-
         const getSelectedOption = () =>
             input && flattenedOptions && flattenedOptions.find(option => option.value === input.value)
 
         this.updateState(prevState => ({
             filteredOptions,
             flattenedOptions,
-            highlightedOption: prevState.highlightedOption || getFirstOption(),
             selectedOption: prevState.selectedOption || getSelectedOption()
         }))
     }
