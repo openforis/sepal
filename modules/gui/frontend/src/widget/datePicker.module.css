@@ -1,43 +1,38 @@
-.input {
-    --height: 10rem;
-    /* --column-width: 3.5rem; */
-    --line-height: 1.5rem;
+.container {
     position: relative;
-    width: 8.5rem;
-    /*width: calc(var(--column-width) * 3);*/
 }
 
-.input.day {
+.container.day {
     width: 8.5rem;
 }
 
-.input.month {
+.container.month {
     width: 6.5rem;
 }
 
-.input.year {
+.container.year {
     width: 5rem;
 }
 
-.input input {
+.container input {
     margin: 0;
     display: inline-block;
 }
 
-.input i {
+.container i {
     margin-left: -1rem;
     cursor: pointer;
 }
 
-.input i:hover {
+.container i:hover {
     color: #c8c8c8;
 }
 
-.input i:active {
+.container i:active {
     color: #a0a0a0;
 }
 
-.inline {
+.input {
     display: flex;
     flex-direction: row;
 }
@@ -47,69 +42,8 @@
     cursor: pointer;
 }
 
-.control {
-    position: absolute;
-    height: var(--height);
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    grid-template-rows: 1fr auto 1fr;
-    z-index: 100;
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 4px;
-    background-color: rgba(19, 19, 20, 0.91);
-    border: 1px solid rgba(32, 32, 33, 0.91);
-
-}
-
 .picker {
-    grid-column: 2;
-    grid-row: 2;
-    height: inherit;
-    background: #202020;
-    color: white;
-    display: flex;
-    flex-direction: row;
-    transition: margin 200ms ease-in-out;
-    line-height: var(--line-height);
-}
-
-.picker ul {
-    width: var(--column-width);
-    margin: 0;
-    padding: calc(.5 * var(--height)) 0;
-    list-style: none;
-    overflow-y: scroll;
-}
-
-.picker ul:first-child:nth-last-child(1) {
-    padding: 0;
-}
-
-.picker ul::-webkit-scrollbar {
-    width: 0 !important;
-    display: none;
-}
-
-.picker ul li {
-    padding: .4rem;
-    color: #a0a0a0;
-    text-align: center;
-    cursor: pointer;
-}
-
-.date,
-.picker ul li.selected {
-    border: 1px solid var(--look-highlight-hover-border-color);
-    background-color: var(--look-highlight-hover-background-color);
-}
-
-.date:hover,
-.picker ul li.highlighted {
-    color: white;
-    border: 1px solid var(--look-highlight-border-color);
-    background-color: var(--look-highlight-background-color);
-}
-
-.picker ul li:hover {
-    color: white;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr;
 }
