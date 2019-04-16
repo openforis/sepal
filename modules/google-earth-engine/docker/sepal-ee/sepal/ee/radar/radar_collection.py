@@ -1,21 +1,69 @@
 import math
 from functools import reduce
-from sepal.ee import dates
-from . import _terrain_flattening
-from . import _refined_lee
 
 import ee
+from sepal.ee import dates
+
+from . import _refined_lee
+from . import _terrain_flattening
+
 
 def create(
         region,
+        orbits=('ASCENDING',),
         start_date=None,
         end_date=None,
         target_date=None,
-        orbits=('ASCENDING',),
         geometric_correction='ELLIPSOID',
         speckle_filter='NONE',
         outlier_removal='NONE'
 ):
+    """Creates an ee.ImageCollection with Sentinel 1 imagery.
+
+    Args:
+        region: The region to include imagery within. (ee.Geometry)
+
+        orbits:  The orbits to include. (string: ASCENDING and/or DESCENDING)
+
+        start_date: (Optional) The earliest date to include images for (inclusive).
+            If unspecified and target date is specified,
+            it will be set to 24 days or 6 months (if outlier_removal is applied) before target date.
+            Can be a string (yyyy-mm-dd), python datetime, or millis timestamp.
+
+        end_date: (Optional) The latest date to include images for (exclusive).
+            If unspecified and target date is specified,
+            it will be set to 24 days or 6 months (if outlier_removal is applied) before target date.
+            Can be a String (yyyy-mm-dd), python datetime, or millis timestamp.
+
+        target_date: (Optional) The ideal acquisition date of imagery.
+
+        geometric_correction: (Optional) The geometric correction to apply. Can be one of the following:
+            NONE - No correction is applied;
+            ELLIPSOID (default) - Ellipsoid correction (gamma0 correction) is applied;
+            TERRAIN - Terrain correction is applied.
+
+        speckle_filter: (Optional) Type of speckle filtering to apply. Can be one of the following:
+            NONE - No speckle filtering is applied;
+            BOXCAR - Simple 30x30m boxcar filtering is applied;
+            REFINED_LEE - Refined Lee filtering is applied. This can be very slow, but gives good results.
+
+        outlier_removal: (Optional) Removes outliers from the image collection. Can be one of the following:
+            NONE - No outlier removal is performed;
+            MODERATE - Remove outliers
+            AGGRESSIVE - Remove more outliers
+
+    Returns:
+        an ee.ImageCollection with Sentinel 1 imagery with the following band:
+            VV;
+            VH;
+            angle.
+
+        If targetDate is specified, the following metadata bands are also included:
+            dayOfYear - day of the year;
+            daysFromTarget - days from the specified target date;
+            quality - closeness to target date;
+            unixTimeDays - days since unix epoch.
+    """
     days = 366 / 2 if outlier_removal != 'NONE' else 24
     if target_date and not start_date:
         start_date = dates.subtract_days(target_date, days)
@@ -40,10 +88,10 @@ def create(
             kernel=ee.Kernel.circle(radius=500, units='meters')
         )
         angle = image.select('angle')
-        return image\
+        return image \
             .updateMask(
-                angle.gt(31).And(angle.lt(45)).And(middle_slice.Or(not_border))
-            )
+            angle.gt(31).And(angle.lt(45)).And(middle_slice.Or(not_border))
+        )
 
     def mask_overlay(image):
         return image.updateMask(
@@ -103,12 +151,12 @@ def create(
         .filterMetadata('resolution_meters', 'equals', 10) \
         .filter(ee.Filter.eq('instrumentMode', 'IW')) \
         .filter(ee.Filter.And(
-            ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'),
-            ee.Filter.listContains('transmitterReceiverPolarisation', 'VH')
-        )) \
+        ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'),
+        ee.Filter.listContains('transmitterReceiverPolarisation', 'VH')
+    )) \
         .filter(ee.Filter.Or(
-            [ee.Filter.eq('orbitProperties_pass', orbit) for orbit in orbits]
-            )) \
+        [ee.Filter.eq('orbitProperties_pass', orbit) for orbit in orbits]
+    )) \
         .map(pre_process)
     if outlier_removal == 'MODERATE':
         return mask_outliers(collection, 3)

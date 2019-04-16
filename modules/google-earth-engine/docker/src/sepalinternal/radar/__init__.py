@@ -34,6 +34,6 @@ class RadarMosaic(ImageSpec):
             outlier_removal=options['outlierRemoval'],
         )
         if self.time_scan:
-            return radar_time_scan.create(collection, self.aoi.geometry(), self.bands)
+            return radar_time_scan.create(collection, self.aoi.geometry())
         else:
-            return radar_mosaic.create(collection, self.aoi.geometry(), self.bands)
+            return radar_mosaic.create(collection, self.aoi.geometry())
