@@ -6,6 +6,7 @@ import {selectFrom} from 'stateUtils'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
+import ReactResizeDetector from 'react-resize-detector'
 import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import styles from './list.module.css'
@@ -13,16 +14,17 @@ import styles from './list.module.css'
 const ANIMATION_SPEED = .2
 const AUTO_CENTER_DELAY = 1000
 
-const targetScrollOffset = element => {
-    const container = element.parentNode.parentNode
-    return Math.round(element.offsetTop - container.offsetTop - (container.clientHeight - element.clientHeight) / 2)
-}
+const container = element =>
+    element.parentNode.parentNode
+
+const targetScrollOffset = element =>
+    Math.round(element.offsetTop - (container(element).clientHeight - element.clientHeight) / 2)
 
 const currentScrollOffset = element =>
-    element.parentNode.parentNode.scrollTop
+    container(element).scrollTop
 
 const setScrollOffset = (element, value) =>
-    element.parentNode.parentNode.scrollTop = value
+    container(element).scrollTop = value
 
 const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
@@ -42,7 +44,6 @@ class List extends React.Component {
     }
 
     render() {
-        const {options} = this.props
         const keymap = {
             Escape: () => this.cancel(),
             Enter: () => this.selectHighlighted(),
@@ -53,14 +54,37 @@ class List extends React.Component {
         }
         return (
             <Keybinding keymap={keymap}>
-                <ScrollableContainer>
-                    <Scrollable className={styles.options}>
-                        <ul>
-                            {this.renderOptions(options)}
-                        </ul>
-                    </Scrollable>
-                </ScrollableContainer>
+                <ReactResizeDetector
+                    handleHeight
+                    onResize={() => this.scrollHighlighted$.next()}>
+                    <ScrollableContainer>
+                        <Scrollable className={styles.options}>
+                            {scrollableContainerHeight => this.renderList(scrollableContainerHeight)}
+                        </Scrollable>
+                    </ScrollableContainer>
+                </ReactResizeDetector>
             </Keybinding>
+        )
+    }
+
+    renderList(scrollableContainerHeight = 0) {
+        const {options, overScroll} = this.props
+        return (
+            <ul style={{
+                '--scrollable-container-height': overScroll ? scrollableContainerHeight : 0
+            }}>
+                {this.renderOptions(options)}
+            </ul>
+        )
+    }
+
+    updateState(state, callback) {
+        const updatedState = (prevState, state) =>
+            _.isEqual(_.pick(prevState, _.keys(state)), state) ? null : state
+        this.setState(
+            prevState =>
+                updatedState(prevState, _.isFunction(state) ? state(prevState) : state),
+            callback
         )
     }
 
@@ -104,16 +128,6 @@ class List extends React.Component {
         )
     }
 
-    isSelected(option) {
-        const {selectedOption} = this.props
-        return option === selectedOption
-    }
-
-    isHighlighted(option) {
-        const {highlightedOption} = this.state
-        return highlightedOption && option && highlightedOption.value === option.value
-    }
-
     renderSelectableOption(option) {
         const {selectedOption} = this.props
         const {mouseOver} = this.state
@@ -139,6 +153,16 @@ class List extends React.Component {
                 {option.label}
             </li>
         )
+    }
+
+    isSelected(option) {
+        const {selectedOption} = this.props
+        return option === selectedOption
+    }
+
+    isHighlighted(option) {
+        const {highlightedOption} = this.state
+        return highlightedOption && option && highlightedOption.value === option.value
     }
 
     selectHighlighted() {
@@ -250,8 +274,7 @@ class List extends React.Component {
                     )
                 })
             ).subscribe(
-                ({element, value}) =>
-                    setScrollOffset(element, Math.round(value))
+                ({element, value}) => setScrollOffset(element, value)
             )
         )
     }
@@ -278,6 +301,7 @@ List.propTypes = {
     options: PropTypes.any.isRequired,
     onSelect:  PropTypes.func.isRequired,
     autoCenter: PropTypes.any,
+    overScroll: PropTypes.any,
     selectedOption: PropTypes.any,
     onCancel:  PropTypes.func
 }

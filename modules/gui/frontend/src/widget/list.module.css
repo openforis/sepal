@@ -3,20 +3,23 @@
     background-color: var(--background-color);
 }
 
+.options::-webkit-scrollbar { 
+    display: none !important;
+}
+
 .options ul {
     margin: 0;
     padding: 0;
     list-style: none;
-}
-
-.options::-webkit-scrollbar { 
-    display: none !important;
+    --scrollable-container-height: 0;
+    margin: calc(var(--scrollable-container-height) / 2 * 1px) 0;
 }
 
 .options li {
     border: 0;
     padding: .35rem .75rem;
     font-size: .9rem;
+    height: 30px;
 }
 
 .options li.group {
