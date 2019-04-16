@@ -1,6 +1,7 @@
 import {Input} from 'widget/form'
 import FloatingBox from 'widget/floatingBox'
 import Icon from 'widget/icon'
+import Keybinding from 'widget/keybinding'
 import Label from 'widget/label'
 import List from 'widget/list'
 import PropTypes from 'prop-types'
@@ -82,6 +83,9 @@ class DatePicker extends React.Component {
                             element={this.inputElement.current}
                             placement='below'
                             className={styles.picker}>
+                            {/* <Keybinding keymap={{
+                                Escape: this.editDate(false)
+                            }}> */}
                             <DatePickerControl
                                 startDate={startDate}
                                 endDate={endDate}
@@ -90,6 +94,7 @@ class DatePicker extends React.Component {
                                 onSelect={() => this.editDate(false)}
                                 portal={portal}
                             />
+                            {/* </Keybinding> */}
                         </FloatingBox>
                     ) : null}
                 </div>
