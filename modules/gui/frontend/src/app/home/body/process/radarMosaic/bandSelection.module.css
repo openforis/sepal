@@ -11,37 +11,17 @@
     width: fit-content;
 }
 
-.panSharpen {
-    display: flex;
-    align-items: center;
-    font-size: 1rem;
-    margin-left: 1rem;
-}
-
-.selector {
-    width: 17rem;
-    height: 3rem;
-}
-
 .comboInput, .comboInput:focus, .comboInput:hover {
     width: 17rem;
     height: 3rem;
     background-color: rgba(19, 19, 20, 0.91);
-    border: var(--wireframe) !important;
-    border-top: none !important;
-    border-radius: 0 0 var(--container-border-radius) var(--container-border-radius);
+    /* border: var(--wireframe) !important; */
+    /* border-top: none !important; */
+    /* border-radius: 0 0 var(--container-border-radius) var(--container-border-radius); */
 }
 
 
-.comboOptions {
-    margin-bottom: -0.7rem;
-    border: var(--wireframe);
-}
-
-.comboOptions li {
-    margin: .75rem 0;
-}
-
+/* selected bands */
 
 .selection {
     display: flex;
