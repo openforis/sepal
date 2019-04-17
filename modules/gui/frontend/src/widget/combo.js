@@ -68,7 +68,7 @@ class Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, disabled, busy} = this.props
+        const {placeholder, autoFocus, disabled, busy, keepOpen, inputClassName} = this.props
         const {filter, selectedOption} = this.state
         const keymap = {
             ArrowUp: () => this.showOptions(),
@@ -79,10 +79,10 @@ class Combo extends React.Component {
                 disabled={disabled}
                 keymap={keymap}>
                 <input
-                    className={selectedOption ? styles.fakePlaceholder : null}
+                    className={[selectedOption && !keepOpen ? styles.fakePlaceholder : null, inputClassName].join(' ')}
                     type='search'
                     value={filter}
-                    placeholder={selectedOption ? selectedOption.label : placeholder}
+                    placeholder={selectedOption && !keepOpen ? selectedOption.label : placeholder}
                     autoFocus={autoFocus}
                     disabled={disabled || busy || isMobile()}
                     onChange={e => this.setFilter(e.target.value)}/>
@@ -91,13 +91,14 @@ class Combo extends React.Component {
     }
 
     renderOptions() {
-        const {placement = 'below'} = this.props
+        const {placement = 'below', optionsClassName} = this.props
         const {filteredOptions, selectedOption} = this.state
         return (
             <FloatingBox
                 element={this.input.current}
                 placement={placement}>
                 <List
+                    className={optionsClassName}
                     options={filteredOptions}
                     selectedOption={selectedOption}
                     onSelect={option => this.selectOption(option)}
@@ -190,7 +191,7 @@ class Combo extends React.Component {
                 options.map(option =>
                     option.options
                         ? {...option, options: getFilteredOptions(option.options)}
-                        : matcher.test(option.label)
+                        : matcher.test(option.searchableText || option.label)
                             ? option
                             : null
                 )
@@ -225,8 +226,10 @@ Combo.propTypes = {
     autoFocus: PropTypes.any,
     busy: PropTypes.any,
     disabled: PropTypes.any,
+    inputClassName: PropTypes.string,
     keepOpen: PropTypes.any,
     label: PropTypes.string,
+    optionsClassName: PropTypes.string,
     placeholder: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     tooltip: PropTypes.string,
