@@ -46,7 +46,7 @@ class List extends React.Component {
     render() {
         const {onCancel, className} = this.props
         const keymap = {
-            Escape: () => onCancel ? onCancel() : null,
+            Escape: onCancel ? onCancel : null,
             Enter: () => this.selectHighlighted(),
             ArrowUp: () => this.highlightPrevious(),
             ArrowDown: () => this.highlightNext(),
