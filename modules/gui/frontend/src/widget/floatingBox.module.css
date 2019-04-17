@@ -1,9 +1,11 @@
 .box {
-    --element-clearance: .5rem;
+    --element-clearance: 0rem;
     --edge-clearance: .5rem;
     position: absolute;
+    box-sizing: content-box;
     left: calc(var(--left) * 1px);
     width: calc(var(--width) * 1px);
+    border: var(--wireframe);
 }
 
 .box.above {
