@@ -110,20 +110,18 @@ class List extends React.Component {
     renderOption(option, index) {
         return option.value !== undefined
             ? this.renderSelectableOption(option)
-            : option.options
+            : option.group
                 ? this.renderGroup(option, index)
                 : this.renderNonSelectableOption(option, index)
     }
 
     renderGroup(option, index) {
         return (
-            <React.Fragment key={index}>
-                <li
-                    className={styles.group}>
-                    {option.label}
-                </li>
-                {this.renderOptions(option.options)}
-            </React.Fragment>
+            <li
+                key={index}
+                className={styles.group}>
+                {option.label}
+            </li>
         )
     }
 

@@ -30,13 +30,16 @@ class Combo extends React.Component {
     }
 
     render() {
-        const {showOptions, keepOpen} = this.state
+        const {showOptions} = this.state
+        const {keepOpen, disabled} = this.props
         const onClick = () =>
             keepOpen
                 ? null
                 : showOptions
                     ? this.hideOptions()
-                    : this.showOptions()
+                    : disabled
+                        ? null
+                        : this.showOptions()
         return (
             <div className={styles.container}>
                 {this.renderLabel()}
@@ -68,11 +71,12 @@ class Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, disabled, busy, keepOpen, inputClassName} = this.props
+        const {placeholder, autoFocus, disabled, busy, keepOpen, inputClassName, onCancel} = this.props
         const {filter, selectedOption} = this.state
         const keymap = {
-            ArrowUp: () => this.showOptions(),
-            ArrowDown: () => this.showOptions()
+            Escape: onCancel ? onCancel : null,
+            ArrowUp: disabled ? null : () => this.showOptions(),
+            ArrowDown: disabled ? null : () => this.showOptions(),
         }
         return (
             <Keybinding
@@ -92,17 +96,17 @@ class Combo extends React.Component {
 
     renderOptions() {
         const {placement = 'below', optionsClassName} = this.props
-        const {filteredOptions, selectedOption} = this.state
+        const {flattenedOptions, selectedOption} = this.state
         return (
             <FloatingBox
                 element={this.input.current}
                 placement={placement}>
                 <List
                     className={optionsClassName}
-                    options={filteredOptions}
+                    options={flattenedOptions}
                     selectedOption={selectedOption}
                     onSelect={option => this.selectOption(option)}
-                    onCancel={() => this.setFilter()}
+                    onCancel={() => this.resetFilter()}
                 />
             </FloatingBox>
         )
@@ -124,14 +128,22 @@ class Combo extends React.Component {
         }, this.updateOptions)
     }
 
-    selectOption(item) {
+    resetFilter() {
+        const {onCancel, keepOpen} = this.props
+        const {filter} = this.state
+        if (keepOpen && onCancel && !filter) {
+            onCancel()
+        } else {
+            this.setFilter()
+        }
+    }
+
+    selectOption(option) {
         const {input, onChange} = this.props
-        this.setSelectedOption(item)
+        this.setSelectedOption(option)
         this.setFilter()
-        input.set(item.value)
-        onChange && onChange({
-            value: item.value
-        })
+        input.set(option.value)
+        onChange && onChange(option)
     }
 
     setSelectedOption(selectedOption) {
@@ -149,7 +161,7 @@ class Combo extends React.Component {
     }
 
     handleBlurEvents() {
-        const {onBlur, keepOpen} = this.props
+        const {onCancel, keepOpen} = this.props
         const click$ = fromEvent(document, 'click')
         const isInputClick = e => this.input.current && this.input.current.contains(e.target)
         this.subscriptions.push(
@@ -157,7 +169,7 @@ class Combo extends React.Component {
                 e => {
                     if (keepOpen || !isInputClick(e)) {
                         this.setFilter()
-                        onBlur && onBlur(e)
+                        onCancel && onCancel(e)
                     }
                 }
             )
@@ -200,20 +212,25 @@ class Combo extends React.Component {
             _.flatten(
                 options.map(option =>
                     option.options
-                        ? option.options
+                        ? [{label: option.label, group: true}, ...option.options]
                         : option
                 )
             )
         const filteredOptions = getFilteredOptions(options)
         const flattenedOptions = getFlattenedOptions(filteredOptions)
 
-        const getSelectedOption = () =>
+        const getInputOption = () =>
             input && flattenedOptions && flattenedOptions.find(option => option.value === input.value)
 
+        const getSelectedOption = selectedOption => {
+            const validatedSelectedOption = selectedOption && flattenedOptions.find(option => option.value === selectedOption.value)
+            return validatedSelectedOption || getInputOption()
+        }
+            
         this.updateState(prevState => ({
             filteredOptions,
             flattenedOptions,
-            selectedOption: prevState.selectedOption || getSelectedOption()
+            selectedOption: getSelectedOption.bind(this)(prevState.selectedOption)
         }))
     }
 }
@@ -234,6 +251,6 @@ Combo.propTypes = {
     placement: PropTypes.oneOf(['above', 'below']),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
-    onBlur:  PropTypes.func,
+    onCancel:  PropTypes.func,
     onChange:  PropTypes.func
 }
