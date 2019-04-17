@@ -4,5 +4,5 @@
 
 .container input.fakePlaceholder::placeholder {
     font-style: inherit;
-    color: inherit;
+    color: #fff;
 }

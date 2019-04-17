@@ -192,17 +192,7 @@ const modelToValues = model => {
     })
 }
 
-const policy = ({values, wizardContext: {wizard}}) => {
-    return wizard || selectFrom(values, 'dirty')
-        ? {
-            _: 'disallow',
-            sceneSelection: 'allow'
-        }
-        : {
-            _: 'allow-then-deactivate',
-            sceneSelection: 'allow'
-        }
-}
+const additionalPolicy = () => ({sceneSelection: 'allow'})
 
 const panelOptions = {
     id: 'compositeOptions',
@@ -210,7 +200,7 @@ const panelOptions = {
     mapRecipeToProps,
     modelToValues,
     valuesToModel,
-    policy
+    additionalPolicy
 }
 
 export default recipeFormPanel(panelOptions)(

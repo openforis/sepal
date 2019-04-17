@@ -36,6 +36,15 @@ class BandSelection extends React.Component {
         timeScan: false,
         pointInTime: true
     }, {
+        value: 'VV_max, VH_min, NDCV',
+        bandLabels: [
+            <span>VV<sub>max</sub></span>,
+            <span>VH<sub>min</sub></span>,
+            <span>NDCV</span>
+        ],
+        timeScan: true,
+        pointInTime: false
+    }, {
         value: 'VV_median, VH_median, VV_stdDev',
         bandLabels: [
             <span>VV<sub>med</sub></span>,
