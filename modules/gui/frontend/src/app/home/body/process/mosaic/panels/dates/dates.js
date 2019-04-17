@@ -255,16 +255,6 @@ const modelToValues = (model = {}) => {
     }
 }
 
-const policy = ({values, wizardContext: {wizard}}) => {
-    return wizard || selectFrom(values, 'dirty')
-        ? {
-            _: 'disallow',
-            sceneSelection: 'allow'
-        }
-        : {
-            _: 'allow-then-deactivate',
-            sceneSelection: 'allow'
-        }
-}
+const additionalPolicy = () => ({sceneSelection: 'allow'})
 
-export default recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel, policy})(Dates)
+export default recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel, additionalPolicy})(Dates)

@@ -95,16 +95,6 @@ SceneSelectionOptions.propTypes = {
     recipeId: PropTypes.string
 }
 
-const policy = ({values, wizardContext: {wizard}}) => {
-    return wizard || selectFrom(values, 'dirty')
-        ? {
-            _: 'disallow',
-            sceneSelection: 'allow'
-        }
-        : {
-            _: 'allow-then-deactivate',
-            sceneSelection: 'allow'
-        }
-}
+const additionalPolicy = () => ({sceneSelection: 'allow'})
 
-export default recipeFormPanel({id: 'sceneSelectionOptions', fields, policy, mapRecipeToProps})(SceneSelectionOptions)
+export default recipeFormPanel({id: 'sceneSelectionOptions', fields, additionalPolicy, mapRecipeToProps})(SceneSelectionOptions)

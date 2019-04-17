@@ -133,22 +133,9 @@ Options.propTypes = {
     sources: PropTypes.any
 }
 
-const policy = ({values, wizardContext: {wizard}}) => {
-    return wizard || selectFrom(values, 'dirty')
-        ? {
-            _: 'disallow',
-            sceneSelection: 'allow'
-        }
-        : {
-            _: 'allow-then-deactivate',
-            sceneSelection: 'allow'
-        }
-}
-
 const panelOptions = {
     id: 'options',
-    fields,
-    policy
+    fields
 }
 
 export default recipeFormPanel(panelOptions)(
