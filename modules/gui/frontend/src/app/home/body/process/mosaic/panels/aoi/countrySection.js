@@ -96,11 +96,10 @@ class CountrySection extends React.Component {
                     busy={stream('LOAD_COUNTRIES').active}
                     disabled={!countries}
                     autoFocus={!isMobile()}
-                    onChange={e => {
+                    onChange={option => {
                         area.set('')
                         this.aoiChanged$.next()
-                        if (e)
-                            this.loadCountryAreas(e.value)
+                        this.loadCountryAreas(option.value)
                     }}
                 />
                 <Combo

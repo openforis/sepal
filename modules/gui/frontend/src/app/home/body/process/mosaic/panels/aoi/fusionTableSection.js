@@ -109,13 +109,12 @@ class FusionTableSection extends React.Component {
                     disabled={!columns || columns.length === 0}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.column.placeholder.${columnState}`)}
                     options={(columns || []).map(({name}) => ({value: name, label: name}))}
-                    onChange={e => {
+                    onChange={option => {
                         fusionTableRow.set('')
                         this.recipe.setFusionTableRows(null).dispatch()
                         this.fusionTableColumnChanged$.next()
                         this.fusionTableRowChanged$.next()
-                        if (e && e.value)
-                            this.loadFusionTableRows(e.value)
+                        this.loadFusionTableRows(option.value)
                     }}
                     errorMessage
                 />
