@@ -14,17 +14,29 @@ import styles from './list.module.css'
 const ANIMATION_SPEED = .2
 const AUTO_CENTER_DELAY = 1000
 
-const container = element =>
-    element.parentNode.parentNode
+const getContainer = element =>
+    element && element.parentNode && element.parentNode.parentNode
 
-const targetScrollOffset = element =>
-    Math.round(element.offsetTop - (container(element).clientHeight - element.clientHeight) / 2)
+const targetScrollOffset = element => {
+    const container = getContainer(element)
+    return container
+        ? Math.round(element.offsetTop - (getContainer(element).clientHeight - element.clientHeight) / 2)
+        : null
+}
 
-const currentScrollOffset = element =>
-    container(element).scrollTop
+const currentScrollOffset = element => {
+    const container = getContainer(element)
+    return container
+        ? container.scrollTop
+        : null
+}
 
-const setScrollOffset = (element, value) =>
-    container(element).scrollTop = value
+const setScrollOffset = (element, value) => {
+    const container = getContainer(element)
+    if (container) {
+        container.scrollTop = value
+    }
+}
 
 const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
