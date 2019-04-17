@@ -44,7 +44,7 @@ class List extends React.Component {
     }
 
     render() {
-        const {onCancel} = this.props
+        const {onCancel, className} = this.props
         const keymap = {
             Escape: () => onCancel ? onCancel() : null,
             Enter: () => this.selectHighlighted(),
@@ -58,7 +58,7 @@ class List extends React.Component {
                 <ReactResizeDetector
                     handleHeight
                     onResize={() => this.scrollHighlighted$.next()}>
-                    <ScrollableContainer>
+                    <ScrollableContainer className={className}>
                         <Scrollable className={styles.options}>
                             {scrollableContainerHeight => this.renderList(scrollableContainerHeight)}
                         </Scrollable>
@@ -302,6 +302,7 @@ List.propTypes = {
     options: PropTypes.any.isRequired,
     onSelect:  PropTypes.func.isRequired,
     autoCenter: PropTypes.any,
+    className: PropTypes.string,
     overScroll: PropTypes.any,
     selectedOption: PropTypes.any,
     onCancel:  PropTypes.func
