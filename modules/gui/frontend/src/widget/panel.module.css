@@ -12,7 +12,7 @@
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
     pointer-events: all;
-    z-index: 3;
+    z-index: 10;
     overflow: hidden;
     display: flex;
     flex-direction: column;

@@ -1,5 +1,6 @@
 .panel {
     max-width: 69rem;
+    z-index: 5;
 }
 
 .loading {
