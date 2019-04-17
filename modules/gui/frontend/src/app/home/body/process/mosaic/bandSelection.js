@@ -79,7 +79,8 @@ class BandSelection extends React.Component {
                             recipeActions={this.recipeActions}
                             selection={selection}
                             options={options}
-                            onChange={() => this.setSelectorShown(false)}/>
+                            onChange={() => this.setSelectorShown(false)}
+                            onCancel={() => this.setSelectorShown(false)}/>
                         : <SelectedBands
                             recipeActions={this.recipeActions}
                             selectedOption={this.optionByValue[selection.value]}
@@ -92,14 +93,12 @@ class BandSelection extends React.Component {
         )
     }
 
-    setSelectorShown(shown) {
-        this.setState(prevState =>
-            ({...prevState, showSelector: shown})
-        )
+    setSelectorShown(showSelector) {
+        this.setState({showSelector})
     }
 }
 
-const BandSelector = ({recipeActions, selection, options, onChange}) =>
+const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =>
     <form>
         <Combo
             input={selection}
@@ -108,11 +107,11 @@ const BandSelector = ({recipeActions, selection, options, onChange}) =>
             autoFocus={!isMobile()}
             placement='above'
             keepOpen
-            onBlur={onChange}
             onChange={option => {
-                recipeActions.setBands(option ? option.value : null).dispatch()
+                recipeActions.setBands(option.value).dispatch()
                 onChange()
-            }}/>
+            }}
+            onCancel={onCancel}/>
     </form>
 
 const SelectedBands = ({recipeActions, selectedOption, canPanSharpen, panSharpen, onClick}) => {

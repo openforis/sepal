@@ -18,13 +18,15 @@
     margin-left: 1rem;
 }
 
+/* selected bands */
+
 .selection {
     display: flex;
     flex-wrap: wrap-reverse;
     justify-content: center;
     align-items: center;
     padding: 0 0.5rem;
-    border-radius: var(--container-border-radius);
+    /* border-radius: var(--container-border-radius); */
 }
 
 .selection > * {
