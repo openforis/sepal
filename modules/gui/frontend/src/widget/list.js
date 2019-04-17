@@ -197,12 +197,8 @@ class List extends React.Component {
 
     highlightPrevious() {
         const {options} = this.props
-        const previousOption = (options, option) => {
-            const index = _.indexOf(options, option)
-            return index === -1
-                ? null
-                : options[Math.max(0, index - 1)]
-        }
+        const previousOption = (options, option) =>
+            _.findLast(options, option => !option.group && option.value, _.lastIndexOf(options, option) - 1) || option
         this.setState(prevState => ({
             highlightedOption: previousOption(options, prevState.highlightedOption),
             mouseOver: false
@@ -211,12 +207,8 @@ class List extends React.Component {
 
     highlightNext() {
         const {options} = this.props
-        const nextOption = (options, option) => {
-            const index = _.indexOf(options, option)
-            return index === -1
-                ? null
-                : options[Math.min(options.length - 1, index + 1)]
-        }
+        const nextOption = (options, option) =>
+            _.find(options, option => !option.group && option.value, _.indexOf(options, option) + 1) || option
         this.setState(prevState => ({
             highlightedOption: nextOption(options, prevState.highlightedOption),
             mouseOver: false
@@ -225,7 +217,8 @@ class List extends React.Component {
 
     highlightFirst() {
         const {options} = this.props
-        const firstOption = options => options[0]
+        const firstOption = options =>
+            _.find(options, option => !option.group && option.value)
         this.setState({
             highlightedOption: firstOption(options),
             mouseOver: false
@@ -234,7 +227,8 @@ class List extends React.Component {
 
     highlightLast() {
         const {options} = this.props
-        const lastOption = options => options[options.length - 1]
+        const lastOption = options =>
+            _.findLast(options, option => !option.group && option.value)
         this.setState({
             highlightedOption: lastOption(options),
             mouseOver: false
