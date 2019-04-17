@@ -463,7 +463,7 @@
         }
       },
       "bands": {
-        "placeholder": "Select bands to preview",
+        "placeholder": "Select preview bands",
         "combinations": "Combinations",
         "metadata": "Metadata",
         "panSharpen": "Pan sharpen"
