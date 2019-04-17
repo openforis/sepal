@@ -32,6 +32,7 @@ class BandSelection extends React.Component {
             'VH',
             'VV/VH'
         ],
+        searchableText: 'VV VH VV_VH VV/VH',
         timeScan: false,
         pointInTime: true
     }, {
@@ -41,6 +42,7 @@ class BandSelection extends React.Component {
             <span>VH<sub>med</sub></span>,
             <span>VV<sub>sd</sub></span>
         ],
+        searchableText: 'VV_median VH_median VV_stdDev median stdDev sd',
         timeScan: true,
         pointInTime: false
     }, {
@@ -50,6 +52,7 @@ class BandSelection extends React.Component {
             <span>VH<sub>med</sub></span>,
             <span>VV<sub>med</sub>/VH<sub>med</sub></span>
         ],
+        searchableText: 'VV_median VH_median VV_median_VH_median median',
         timeScan: true,
         pointInTime: false
     }, {
@@ -59,6 +62,7 @@ class BandSelection extends React.Component {
             <span>VV<sub>min</sub></span>,
             <span>VV<sub>sd</sub></span>
         ],
+        searchableText: 'VV_max VV_min VV_stdDev max min stdDev sd',
         timeScan: true,
         pointInTime: false
     }, {
@@ -68,6 +72,7 @@ class BandSelection extends React.Component {
             <span>VH<sub>min</sub></span>,
             <span>VV<sub>sd</sub></span>
         ],
+        searchableText: 'VV_min VH_min VV_stdDev min stdDev sd',
         timeScan: true,
         pointInTime: false
     }]
@@ -106,7 +111,8 @@ class BandSelection extends React.Component {
                             recipeActions={this.recipeActions}
                             selection={selection}
                             options={options}
-                            onChange={() => this.setSelectorShown(false)}/>
+                            onChange={() => this.setSelectorShown(false)}
+                            onCancel={() => this.setSelectorShown(false)}/>
                         : <SelectedBands
                             selectedOption={this.optionByValue[selection.value]}
                             onClick={() => this.setSelectorShown(true)}/>
@@ -141,14 +147,12 @@ class BandSelection extends React.Component {
         return bandOptions
     }
 
-    setSelectorShown(shown) {
-        this.setState(prevState =>
-            ({...prevState, showSelector: shown})
-        )
+    setSelectorShown(showSelector) {
+        this.setState({showSelector})
     }
 }
 
-const BandSelector = ({recipeActions, selection, options, onChange}) =>
+const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =>
     <form>
         <Combo
             input={selection}
@@ -159,11 +163,11 @@ const BandSelector = ({recipeActions, selection, options, onChange}) =>
             keepOpen
             inputClassName={styles.comboInput}
             optionsClassName={styles.comboOptions}
-            onBlur={onChange}
             onChange={option => {
-                recipeActions.setBands(option ? option.value : null).dispatch()
+                recipeActions.setBands(option.value).dispatch()
                 onChange()
-            }}/>
+            }}
+            onCancel={onCancel}/>
     </form>
 
 const SelectedBands = ({selectedOption, onClick}) => {
