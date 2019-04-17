@@ -91,7 +91,7 @@ def viz_params(bands):
         'VH_median': [-27, 0],
         'VH_max': [-26, 2],
         'VH_stdDev': [0, 6],
-        'VH_CV': [0, 5],
+        'VH_CV': [0, 35],
         'VV_median_VH_median': [2, 16],
         'NDCV': [-1, 1]
     }
