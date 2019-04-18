@@ -6,3 +6,10 @@
     font-style: inherit;
     color: #fff;
 }
+
+.standalone,
+.standalone:focus,
+.standalone:hover {
+    box-sizing: border-box;
+    border: var(--wireframe) !important;
+}

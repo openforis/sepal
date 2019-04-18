@@ -30,10 +30,10 @@ class Combo extends React.Component {
     }
 
     render() {
+        const {standalone, disabled, className} = this.props
         const {showOptions} = this.state
-        const {keepOpen, disabled} = this.props
         const onClick = () =>
-            keepOpen
+            standalone
                 ? null
                 : showOptions
                     ? this.hideOptions()
@@ -41,7 +41,7 @@ class Combo extends React.Component {
                         ? null
                         : this.showOptions()
         return (
-            <div className={styles.container}>
+            <div className={[styles.container, className].join(' ')}>
                 {this.renderLabel()}
                 <div
                     ref={this.input}
@@ -71,7 +71,7 @@ class Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, disabled, busy, keepOpen, inputClassName, onCancel} = this.props
+        const {placeholder, autoFocus, disabled, busy, standalone, inputClassName, onCancel} = this.props
         const {filter, selectedOption} = this.state
         const keymap = {
             Escape: onCancel ? onCancel : null,
@@ -83,10 +83,14 @@ class Combo extends React.Component {
                 disabled={disabled}
                 keymap={keymap}>
                 <input
-                    className={[selectedOption && !keepOpen ? styles.fakePlaceholder : null, inputClassName].join(' ')}
+                    className={[
+                        standalone ? styles.standalone : null,
+                        selectedOption && !standalone ? styles.fakePlaceholder : null,
+                        inputClassName
+                    ].join(' ')}
                     type='search'
                     value={filter}
-                    placeholder={selectedOption && !keepOpen ? selectedOption.label : placeholder}
+                    placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
                     autoFocus={autoFocus}
                     disabled={disabled || busy || isMobile()}
                     onChange={e => this.setFilter(e.target.value)}/>
@@ -121,17 +125,17 @@ class Combo extends React.Component {
     }
 
     setFilter(filter = '') {
-        const {keepOpen} = this.props
+        const {standalone} = this.props
         this.setState({
-            showOptions: !!filter || keepOpen,
+            showOptions: !!filter || standalone,
             filter
         }, this.updateOptions)
     }
 
     resetFilter() {
-        const {onCancel, keepOpen} = this.props
+        const {onCancel, standalone} = this.props
         const {filter} = this.state
-        if (keepOpen && onCancel && !filter) {
+        if (standalone && onCancel && !filter) {
             onCancel()
         } else {
             this.setFilter()
@@ -161,13 +165,13 @@ class Combo extends React.Component {
     }
 
     handleBlurEvents() {
-        const {onCancel, keepOpen} = this.props
+        const {onCancel, standalone} = this.props
         const click$ = fromEvent(document, 'click')
         const isInputClick = e => this.input.current && this.input.current.contains(e.target)
         this.subscriptions.push(
             click$.subscribe(
                 e => {
-                    if (keepOpen || !isInputClick(e)) {
+                    if (standalone || !isInputClick(e)) {
                         this.setFilter()
                         onCancel && onCancel(e)
                     }
@@ -242,13 +246,14 @@ Combo.propTypes = {
     options: PropTypes.any.isRequired,
     autoFocus: PropTypes.any,
     busy: PropTypes.any,
+    className: PropTypes.string,
     disabled: PropTypes.any,
     inputClassName: PropTypes.string,
-    keepOpen: PropTypes.any,
     label: PropTypes.string,
     optionsClassName: PropTypes.string,
     placeholder: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
+    standalone: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     onCancel:  PropTypes.func,

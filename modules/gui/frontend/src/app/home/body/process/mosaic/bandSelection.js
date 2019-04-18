@@ -101,12 +101,13 @@ class BandSelection extends React.Component {
 const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =>
     <form>
         <Combo
+            className={styles.combo}
             input={selection}
             placeholder={msg('process.mosaic.bands.placeholder')}
             options={options}
             autoFocus={!isMobile()}
             placement='above'
-            keepOpen
+            standalone
             onChange={option => {
                 recipeActions.setBands(option.value).dispatch()
                 onChange()

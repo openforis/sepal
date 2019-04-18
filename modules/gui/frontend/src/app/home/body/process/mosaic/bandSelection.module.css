@@ -18,6 +18,12 @@
     margin-left: 1rem;
 }
 
+.combo {
+    --background-color: hsla(0, 0%, 10%, .9);
+    background-color: var(--background-color);
+    box-sizing: content-box;
+}
+
 /* selected bands */
 
 .selection {
