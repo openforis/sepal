@@ -1,8 +1,6 @@
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject, animationFrameScheduler, interval} from 'rxjs'
-import {connect} from 'store'
 import {debounceTime, distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
-import {selectFrom} from 'stateUtils'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -43,11 +41,7 @@ const lerp = rate =>
 
 const isSelectableOption = option => !option.group && option.value
 
-const mapStateToProps = state => ({
-    dimensions: selectFrom(state, 'dimensions') || []
-})
-
-class List extends React.Component {
+export default class List extends React.Component {
     subscriptions = []
     list = React.createRef()
     highlighted = React.createRef()
@@ -317,8 +311,6 @@ class List extends React.Component {
         this.subscriptions.forEach(subscription => subscription.unsubscribe())
     }
 }
-
-export default connect(mapStateToProps)(List)
 
 List.propTypes = {
     options: PropTypes.any.isRequired,
