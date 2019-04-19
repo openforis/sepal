@@ -4,7 +4,6 @@
     position: absolute;
     left: calc(var(--left) * 1px);
     width: calc(var(--width) * 1px);
-    /* border: var(--wireframe); */
 }
 
 .box.above {

@@ -1,7 +1,6 @@
 import {Input} from 'widget/form'
 import FloatingBox from 'widget/floatingBox'
 import Icon from 'widget/icon'
-import Keybinding from 'widget/keybinding'
 import Label from 'widget/label'
 import List from 'widget/list'
 import PropTypes from 'prop-types'
