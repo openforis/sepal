@@ -39,8 +39,6 @@ const setScrollOffset = (element, value) => {
 const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
 
-const isSelectableOption = option => !option.group && option.value
-
 export default class List extends React.Component {
     subscriptions = []
     list = React.createRef()
@@ -167,6 +165,10 @@ export default class List extends React.Component {
         return option === selectedOption
     }
 
+    isSelectable(option) {
+        return !option.group && option.value
+    }
+
     isHighlighted(option) {
         const {highlightedOption} = this.state
         return highlightedOption && option && highlightedOption.value === option.value
@@ -191,26 +193,24 @@ export default class List extends React.Component {
 
     getPreviousSelectableOption(option) {
         const {options} = this.props
-        return _.findLast(options, option =>
-            isSelectableOption(option), Math.max(_.indexOf(options, option) - 1, 0)
-        ) || option
+        const previousIndex = Math.max(_.indexOf(options, option) - 1, 0)
+        return _.findLast(options, option => this.isSelectable(option), previousIndex) || option
     }
 
     getNextSelectableOption(option) {
         const {options} = this.props
-        return _.find(options, option =>
-            isSelectableOption(option), _.indexOf(options, option) + 1
-        ) || option
+        const nextIndex = Math.min(_.indexOf(options, option) + 1, options.length - 1)
+        return _.find(options, option => this.isSelectable(option), nextIndex) || option
     }
 
     getFirstSelectableOption() {
         const {options} = this.props
-        return _.find(options, option => isSelectableOption(option))
+        return _.find(options, option => this.isSelectable(option))
     }
 
     getLastSelectableOption() {
         const {options} = this.props
-        return _.findLast(options, option => isSelectableOption(option))
+        return _.findLast(options, option => this.isSelectable(option))
     }
 
     highlightOption(highlightedOption) {
