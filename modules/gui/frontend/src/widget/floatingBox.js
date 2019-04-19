@@ -24,7 +24,7 @@ class FloatingBox extends React.Component {
             '--left': left,
             '--width': right - left,
             '--above-height': top,
-            '--above-bottom': height - top,
+            '--above-bottom': height - top - 2,
             '--below-height': height - bottom,
             '--below-top': bottom
         }
