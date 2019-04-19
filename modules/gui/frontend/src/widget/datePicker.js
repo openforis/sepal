@@ -1,4 +1,5 @@
 import {Input} from 'widget/form'
+import {fromEvent} from 'rxjs'
 import FloatingBox from 'widget/floatingBox'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
@@ -30,8 +31,10 @@ const toMomentUnit = item => {
 }
 
 class DatePicker extends React.Component {
+    subscriptions = []
+    input = React.createRef()
+    list = React.createRef()
     state = {edit: false}
-    inputElement = React.createRef()
 
     render() {
         const {resolution = DAY, className} = this.props
@@ -42,7 +45,7 @@ class DatePicker extends React.Component {
                 <div className={styles[resolution]}>
                     <div
                         className={styles.input}
-                        ref={this.inputElement}>
+                        ref={this.input}>
                         {this.renderInput()}
                         {this.renderIcon()}
                     </div>
@@ -84,7 +87,7 @@ class DatePicker extends React.Component {
                 onMouseDown={e => e.preventDefault()}
                 onClick={() => {
                     if (!edit) {
-                        this.inputElement.current.focus()
+                        this.input.current.focus()
                     }
                     this.editDate(!edit)
                 }}/>
@@ -95,15 +98,18 @@ class DatePicker extends React.Component {
         const {input, startDate, endDate, resolution = DAY, portal, placement = 'below'} = this.props
         return (
             <FloatingBox
-                element={this.inputElement.current}
+                element={this.input.current}
                 placement={placement}
                 className={styles.picker}>
+
+                {/* needs to be wrapped in an element with ref={this.list} */}
                 <DatePickerControl
                     startDate={startDate}
                     endDate={endDate}
                     input={input}
                     resolution={resolution}
                     onSelect={() => this.editDate(false)}
+                    onCancel={() => this.editDate(false)}
                     portal={portal}
                 />
             </FloatingBox>
@@ -116,6 +122,29 @@ class DatePicker extends React.Component {
             const {onChange, input} = this.props
             onChange && onChange(input.value)
         }
+    }
+
+    handleBlurEvents() {
+        const click$ = fromEvent(document, 'click')
+        const isInputClick = e => this.input.current && this.input.current.contains(e.target)
+        const isListClick = e => this.list.current && this.list.current.contains(e.target)
+        this.subscriptions.push(
+            click$.subscribe(
+                e => {
+                    if (!isInputClick(e) && !isListClick(e)) {
+                        // this.editDate(false)
+                    }
+                }
+            )
+        )
+    }
+
+    componentDidMount() {
+        this.handleBlurEvents()
+    }
+
+    componentWillUnmount() {
+        this.subscriptions.forEach(subscription => subscription.unsubscribe())
     }
 }
 
@@ -229,6 +258,7 @@ export class DatePickerControl extends React.Component {
     }
 
     renderList(item, range) {
+        const {onCancel} = this.props
         const options = this.getOptions(item, range)
         const selectedOption = options.find(option => option.value === this.state[item])
         return (
@@ -238,6 +268,7 @@ export class DatePickerControl extends React.Component {
                 options={options}
                 selectedOption={selectedOption}
                 onSelect={option => this.selectOption(item, option.value)}
+                onCancel={onCancel}
                 overScroll
             />
         )
@@ -322,7 +353,8 @@ DatePickerControl.propTypes = {
     input: PropTypes.object,
     portal: PropTypes.object,
     resolution: PropTypes.string,
-    startDate: PropTypes.any
+    startDate: PropTypes.any,
+    onCancel: PropTypes.func
 }
 
 export default DatePicker
