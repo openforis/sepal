@@ -41,6 +41,8 @@ const setScrollOffset = (element, value) => {
 const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
 
+const isSelectableOption = option => !option.group && option.value
+
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
 })
@@ -188,6 +190,35 @@ class List extends React.Component {
         onCancel && onCancel()
     }
 
+    getSelectedOption() {
+        const {options, selectedOption} = this.props
+        return _.find(options, option => option === selectedOption)
+    }
+
+    getPreviousSelectableOption(option) {
+        const {options} = this.props
+        return _.findLast(options, option =>
+            isSelectableOption(option), Math.max(_.indexOf(options, option) - 1, 0)
+        ) || option
+    }
+
+    getNextSelectableOption(option) {
+        const {options} = this.props
+        return _.find(options, option =>
+            isSelectableOption(option), _.indexOf(options, option) + 1
+        ) || option
+    }
+
+    getFirstSelectableOption() {
+        const {options} = this.props
+        return _.find(options, option => isSelectableOption(option))
+    }
+
+    getLastSelectableOption() {
+        const {options} = this.props
+        return _.findLast(options, option => isSelectableOption(option))
+    }
+
     highlightOption(highlightedOption) {
         this.setState({
             highlightedOption,
@@ -196,41 +227,29 @@ class List extends React.Component {
     }
 
     highlightPrevious() {
-        const {options} = this.props
-        const previousOption = (options, option) =>
-            _.findLast(options, option => !option.group && option.value, _.lastIndexOf(options, option) - 1) || option
         this.setState(prevState => ({
-            highlightedOption: previousOption(options, prevState.highlightedOption),
+            highlightedOption: this.getPreviousSelectableOption(prevState.highlightedOption),
             mouseOver: false
         }), this.scroll)
     }
 
     highlightNext() {
-        const {options} = this.props
-        const nextOption = (options, option) =>
-            _.find(options, option => !option.group && option.value, _.indexOf(options, option) + 1) || option
         this.setState(prevState => ({
-            highlightedOption: nextOption(options, prevState.highlightedOption),
+            highlightedOption: this.getNextSelectableOption(prevState.highlightedOption),
             mouseOver: false
         }), this.scroll)
     }
 
     highlightFirst() {
-        const {options} = this.props
-        const firstOption = options =>
-            _.find(options, option => !option.group && option.value)
         this.setState({
-            highlightedOption: firstOption(options),
+            highlightedOption: this.getFirstSelectableOption(),
             mouseOver: false
         }, this.scroll)
     }
 
     highlightLast() {
-        const {options} = this.props
-        const lastOption = options =>
-            _.findLast(options, option => !option.group && option.value)
         this.setState({
-            highlightedOption: lastOption(options),
+            highlightedOption: this.getLastSelectableOption(),
             mouseOver: false
         }, this.scroll)
     }
@@ -257,8 +276,7 @@ class List extends React.Component {
     }
 
     update() {
-        const {options, selectedOption} = this.props
-        const highlightedOption = _.find(options, selectedOption) || options[0]
+        const highlightedOption = this.getSelectedOption() || this.getFirstSelectableOption()
         this.setState({highlightedOption}, () => this.scrollHighlighted$.next())
     }
 
