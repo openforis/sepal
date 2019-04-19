@@ -33,12 +33,23 @@ class DatePicker extends React.Component {
     state = {edit: false}
     inputElement = React.createRef()
 
-    editDate(edit) {
-        this.setState({edit})
-        if (!edit) {
-            const {onChange, input} = this.props
-            onChange && onChange(input.value)
-        }
+    render() {
+        const {resolution = DAY, className} = this.props
+        const {edit} = this.state
+        return (
+            <div className={[styles.container, className].join(' ')}>
+                {this.renderLabel()}
+                <div className={styles[resolution]}>
+                    <div
+                        className={styles.input}
+                        ref={this.inputElement}>
+                        {this.renderInput()}
+                        {this.renderIcon()}
+                    </div>
+                    {edit ? this.renderOptions() : null}
+                </div>
+            </div>
+        )
     }
 
     renderLabel() {
@@ -52,62 +63,59 @@ class DatePicker extends React.Component {
         ) : null
     }
 
-    renderDatePicker() {
-        const {input, startDate, endDate, resolution = DAY, className, onChange, portal} = this.props
-        const {edit} = this.state
+    renderInput() {
+        const {input, onChange} = this.props
         return (
-            <div className={className}>
-                <div className={[styles.container, styles[resolution]].join(' ')}>
-                    <div className={styles.input}
-                        ref={this.inputElement}>
-                        <Input
-                            input={input}
-                            maxLength={10}
-                            autoComplete='off'
-                            onClick={() => this.editDate(true)}
-                            onFocus={() => this.editDate(true)}
-                            // onBlur={() => !edit && this.editDate(false)}
-                            onChange={onChange}
-                        />
-                        <Icon name='calendar'
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={() => {
-                                if (!edit)
-                                    this.inputElement.current.focus()
-                                this.editDate(!edit)
-                            }}/>
-                    </div>
-                    {edit ? (
-                        <FloatingBox
-                            element={this.inputElement.current}
-                            placement='below'
-                            className={styles.picker}>
-                            {/* <Keybinding keymap={{
-                                Escape: this.editDate(false)
-                            }}> */}
-                            <DatePickerControl
-                                startDate={startDate}
-                                endDate={endDate}
-                                input={input}
-                                resolution={resolution}
-                                onSelect={() => this.editDate(false)}
-                                portal={portal}
-                            />
-                            {/* </Keybinding> */}
-                        </FloatingBox>
-                    ) : null}
-                </div>
-            </div>
+            <Input
+                input={input}
+                maxLength={10}
+                autoComplete='off'
+                onClick={() => this.editDate(true)}
+                onFocus={() => this.editDate(true)}
+                onChange={onChange}
+            />
         )
     }
 
-    render() {
+    renderIcon() {
+        const {edit} = this.state
         return (
-            <React.Fragment>
-                {this.renderLabel()}
-                {this.renderDatePicker()}
-            </React.Fragment>
+            <Icon name='calendar'
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => {
+                    if (!edit) {
+                        this.inputElement.current.focus()
+                    }
+                    this.editDate(!edit)
+                }}/>
         )
+    }
+
+    renderOptions() {
+        const {input, startDate, endDate, resolution = DAY, portal, placement = 'below'} = this.props
+        return (
+            <FloatingBox
+                element={this.inputElement.current}
+                placement={placement}
+                className={styles.picker}>
+                <DatePickerControl
+                    startDate={startDate}
+                    endDate={endDate}
+                    input={input}
+                    resolution={resolution}
+                    onSelect={() => this.editDate(false)}
+                    portal={portal}
+                />
+            </FloatingBox>
+        )
+    }
+
+    editDate(edit) {
+        this.setState({edit})
+        if (!edit) {
+            const {onChange, input} = this.props
+            onChange && onChange(input.value)
+        }
     }
 }
 
@@ -116,6 +124,7 @@ DatePicker.propTypes = {
     date: PropTypes.object,
     endDate: PropTypes.any,
     input: PropTypes.object,
+    placement: PropTypes.string,
     portal: PropTypes.object,
     resolution: PropTypes.string,
     startDate: PropTypes.any,
@@ -224,6 +233,7 @@ export class DatePickerControl extends React.Component {
         const selectedOption = options.find(option => option.value === this.state[item])
         return (
             <List
+                className={styles.list}
                 key={item}
                 options={options}
                 selectedOption={selectedOption}

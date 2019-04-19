@@ -35,6 +35,7 @@ class Dates extends React.Component {
             <div className={styles.yearPicker}>
                 <DatePicker
                     label={msg('process.radarMosaic.panel.dates.form.year.label')}
+                    placement='above'
                     input={year}
                     startDate={moment('2014-06-15', DATE_FORMAT)}
                     endDate={moment()}
@@ -51,6 +52,7 @@ class Dates extends React.Component {
                 <div>
                     <DatePicker
                         label={msg('process.radarMosaic.panel.dates.form.fromDate.label')}
+                        placement='above'
                         input={fromDate}
                         startDate={moment('2014-06-15', DATE_FORMAT)}
                         endDate={moment()}/>
@@ -59,6 +61,7 @@ class Dates extends React.Component {
                 <div>
                     <DatePicker
                         label={msg('process.radarMosaic.panel.dates.form.fromDate.label')}
+                        placement='above'
                         input={toDate}
                         startDate={moment('2014-06-15', DATE_FORMAT)}
                         endDate={moment()}/>
@@ -74,6 +77,7 @@ class Dates extends React.Component {
             <div className={styles.yearPicker}>
                 <DatePicker
                     label={msg('process.radarMosaic.panel.dates.form.targetDate.label')}
+                    placement='above'
                     input={targetDate}
                     startDate={moment('2014-06-15', DATE_FORMAT)}
                     endDate={moment()}/>

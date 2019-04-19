@@ -2,15 +2,15 @@
     position: relative;
 }
 
-.container.day {
+.container .day {
     width: 8.5rem;
 }
 
-.container.month {
+.container .month {
     width: 6.5rem;
 }
 
-.container.year {
+.container .year {
     width: 5rem;
 }
 
@@ -46,4 +46,8 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: 1fr;
+}
+
+.list {
+    max-height: 20rem;
 }
