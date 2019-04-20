@@ -103,6 +103,7 @@ class Combo extends React.Component {
         const {flattenedOptions, selectedOption} = this.state
         return (
             <FloatingBox
+                ref={this.list}
                 element={this.input.current}
                 placement={placement}>
                 <List
@@ -165,18 +166,17 @@ class Combo extends React.Component {
     }
 
     handleBlurEvents() {
-        const {onCancel, standalone} = this.props
+        const {onCancel} = this.props
         const click$ = fromEvent(document, 'click')
         const isInputClick = e => this.input.current && this.input.current.contains(e.target)
+        const isListClick = e => this.list.current && this.list.current.contains(e.target)
         this.subscriptions.push(
-            click$.subscribe(
-                e => {
-                    if (standalone || !isInputClick(e)) {
-                        this.setFilter()
-                        onCancel && onCancel(e)
-                    }
+            click$.subscribe(e => {
+                if (!isInputClick(e) && !isListClick(e)) {
+                    this.setFilter()
+                    onCancel && onCancel(e)
                 }
-            )
+            })
         )
     }
 

@@ -5,20 +5,19 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './floatingBox.module.css'
+import withForwardedRef from 'ref'
 
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
 })
 
 class FloatingBox extends React.Component {
-    subscriptions = []
-    box = React.createRef()
     state = {
         dimensions: {}
     }
 
     render() {
-        const {className, placement = 'below', children} = this.props
+        const {className, placement = 'below', forwardedRef, children} = this.props
         const {dimensions: {height, top, bottom, left, right}} = this.state
         const style = {
             '--left': left,
@@ -31,7 +30,7 @@ class FloatingBox extends React.Component {
         return (
             <Portal>
                 <div
-                    ref={this.box}
+                    ref={forwardedRef}
                     className={[styles.box, styles[placement], className].join(' ')}
                     style={style}>
                     {children}
@@ -50,18 +49,6 @@ class FloatingBox extends React.Component {
         )
     }
 
-    componentDidMount() {
-        this.updateDimensions()
-    }
-
-    componentDidUpdate() {
-        this.updateDimensions()
-    }
-
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
-    }
-
     updateDimensions() {
         const {dimensions: {height}} = this.props
         const {top, bottom, left, right} = this.getBoundingBox()
@@ -74,9 +61,23 @@ class FloatingBox extends React.Component {
             ? element.getBoundingClientRect()
             : {}
     }
+
+    componentDidMount() {
+        this.updateDimensions()
+    }
+
+    componentDidUpdate() {
+        this.updateDimensions()
+    }
 }
 
-export default connect(mapStateToProps)(FloatingBox)
+export default (
+    withForwardedRef(
+        connect(mapStateToProps)(
+            FloatingBox
+        )
+    )
+)
 
 FloatingBox.propTypes = {
     children: PropTypes.object.isRequired,
