@@ -49,5 +49,6 @@
 }
 
 .list {
-    max-height: 20rem;
+    height: 20rem;
+    max-height: inherit;
 }

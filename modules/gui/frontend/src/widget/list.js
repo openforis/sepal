@@ -1,5 +1,5 @@
+import {EMPTY, Subject, animationFrameScheduler, interval} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {Subject, animationFrameScheduler, interval} from 'rxjs'
 import {debounceTime, distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -256,9 +256,7 @@ export default class List extends React.Component {
     }
 
     selectOption(option) {
-        const {onSelect} = this.props
-        onSelect(option)
-        this.scrollHighlighted$.next()
+        this.scrollHighlighted$.next(option)
     }
 
     autoCenterWhenIdle(scroll$) {
@@ -276,22 +274,44 @@ export default class List extends React.Component {
 
     initializeAutoScroll() {
         const animationFrame$ = interval(0, animationFrameScheduler)
-        this.subscriptions.push(
-            this.scrollHighlighted$.pipe(
-                map(() => this.highlighted.current),
-                filter(element => element),
-                switchMap(element => {
-                    const target = targetScrollOffset(element)
-                    return animationFrame$.pipe(
+        const {onSelect} = this.props
+
+        const scroll$ = this.scrollHighlighted$.pipe(
+            map(() => this.highlighted.current),
+            filter(element => element),
+            switchMap(element => {
+                const target = targetScrollOffset(element)
+                return Math.round(currentScrollOffset(element)) === target
+                    ? EMPTY
+                    : animationFrame$.pipe(
                         map(() => target),
                         scan(lerp(ANIMATION_SPEED), currentScrollOffset(element)),
                         map(value => Math.round(value)),
                         distinctUntilChanged(),
                         map(value => ({element, value}))
                     )
-                })
-            ).subscribe(
+            })
+        )
+
+        const select$ = this.scrollHighlighted$.pipe(
+            filter(option => option)
+        )
+
+        // const stop$ = scroll$.pipe(
+        //     withLatestFrom(select$),
+        //     debounceTime(100),
+        //     map(([_, option]) => option)
+        // )
+
+        this.subscriptions.push(
+            scroll$.subscribe(
                 ({element, value}) => setScrollOffset(element, value)
+            ),
+            // stop$.subscribe(
+            select$.subscribe(
+                option => {
+                    onSelect(option)
+                }
             )
         )
     }

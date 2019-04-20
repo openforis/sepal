@@ -98,22 +98,25 @@ class DatePicker extends React.Component {
         const {input, startDate, endDate, resolution = DAY, portal, placement = 'below'} = this.props
         return (
             <FloatingBox
+                ref={this.list}
                 element={this.input.current}
                 placement={placement}
                 className={styles.picker}>
-
-                {/* needs to be wrapped in an element with ref={this.list} */}
                 <DatePickerControl
                     startDate={startDate}
                     endDate={endDate}
                     input={input}
                     resolution={resolution}
-                    onSelect={() => this.editDate(false)}
-                    onCancel={() => this.editDate(false)}
+                    onSelect={() => this.close()}
+                    onCancel={() => this.close()}
                     portal={portal}
                 />
             </FloatingBox>
         )
+    }
+
+    close() {
+        this.editDate(false)
     }
 
     editDate(edit) {
@@ -129,13 +132,7 @@ class DatePicker extends React.Component {
         const isInputClick = e => this.input.current && this.input.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains(e.target)
         this.subscriptions.push(
-            click$.subscribe(
-                e => {
-                    if (!isInputClick(e) && !isListClick(e)) {
-                        // this.editDate(false)
-                    }
-                }
-            )
+            click$.subscribe(e => !isInputClick(e) && !isListClick(e) && this.close())
         )
     }
 
@@ -225,7 +222,7 @@ export class DatePickerControl extends React.Component {
     }
 
     selectOption(item, value) {
-        const {input, resolution, onSelect} = this.props
+        const {input, resolution} = this.props
         const completeDate = !this.items
             .filter(i => i !== item)
             .find(i => {
@@ -240,7 +237,7 @@ export class DatePickerControl extends React.Component {
         }
         this.set(item, value)
         if (resolution === item) {
-            onSelect()
+            // onSelect()
         }
     }
 
@@ -258,7 +255,7 @@ export class DatePickerControl extends React.Component {
     }
 
     renderList(item, range) {
-        const {onCancel} = this.props
+        const {onCancel, resolution} = this.props
         const options = this.getOptions(item, range)
         const selectedOption = options.find(option => option.value === this.state[item])
         return (
@@ -269,7 +266,7 @@ export class DatePickerControl extends React.Component {
                 selectedOption={selectedOption}
                 onSelect={option => this.selectOption(item, option.value)}
                 onCancel={onCancel}
-                overScroll
+                overScroll={resolution !== YEAR}
             />
         )
     }
