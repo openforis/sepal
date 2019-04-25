@@ -9,21 +9,25 @@ import _ from 'lodash'
 import {Scrollable, ScrollableContainer} from './scrollable'
 import Label from './label'
 import * as PropTypes from 'prop-types'
+import {Input} from './form'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 export default class DatePicker extends React.Component {
     render() {
-        const {id, startDate, endDate} = this.props
+        const {id, startDate, endDate, input} = this.props
         return (
             <Activator id={id}>
                 {panel =>
                     <div className={styles.container}>
                         <DatePickerPanel
                             id={id}
-                            startDate={startDate}
-                            endDate={endDate}/>
-                        <input
+                            date={moment(input.value, DATE_FORMAT)}
+                            startDate={moment(startDate)}
+                            endDate={moment(endDate)}
+                            onSelect={date => input.set(date.format(DATE_FORMAT))}/>
+                        <Input
+                            input={input}
                             maxLength={10}
                             className={styles.input}
                         />
@@ -41,9 +45,12 @@ export default class DatePicker extends React.Component {
 
 
 class _DatePickerPanel extends React.Component {
-    state = {date: moment()}
+    state = {}
 
     render() {
+        const {date} = this.state
+        if (!date)
+            return null
         return (
             <Panel
                 className={styles.panel}
@@ -56,9 +63,9 @@ class _DatePickerPanel extends React.Component {
                     {this.renderMonths()}
                     {this.renderDays()}
                 </PanelContent>
-                <PanelButtons onEnter={() => this.close()} onEscape={() => this.close()}>
+                <PanelButtons onEnter={() => this.select()} onEscape={() => this.close()}>
                     <PanelButtons.Main>
-                        <PanelButtons.Close onClick={() => this.close()}/>
+                        {this.renderButtons()}
                     </PanelButtons.Main>
                 </PanelButtons>
             </Panel>
@@ -80,7 +87,7 @@ class _DatePickerPanel extends React.Component {
                             label={year}
                             selected={year === selectedYear}
                             className={styles.year}
-                            onClick={() => this.selectYear(year)}/>
+                            onClick={() => this.updateDate('year', year)}/>
                     )}
                 </Scrollable>
             </ScrollableContainer>
@@ -99,7 +106,7 @@ class _DatePickerPanel extends React.Component {
                         label={month}
                         selected={month === selectedMonth}
                         className={styles.month}
-                        onClick={() => this.selectMonth(month)}/>
+                        onClick={() => this.updateDate('month', month)}/>
                 )}
             </div>
         )
@@ -110,24 +117,23 @@ class _DatePickerPanel extends React.Component {
         const firstOfMonth = moment(date).startOf('month')
         const firstOfWeek = moment(firstOfMonth).startOf('week')
         const lastOfMonth = moment(date).endOf('month')
-        const selectedDate = date.format('DD')
         return (
             <div className={styles.days}>
                 {moment.weekdaysShort().map(weekday =>
                     <Label key={weekday} msg={weekday}/>
                 )}
                 {_.times(35, (i) => {
-                        const current = moment(firstOfWeek).add(i, 'day')
-                        const inMonth = current.isSameOrAfter(firstOfMonth) && current.isSameOrBefore(lastOfMonth)
-                        const label = current.format('DD')
+                        const buttonDate = moment(firstOfWeek).add(i, 'day')
+                        const dayOfMonth = buttonDate.format('DD')
+                        const inMonth = buttonDate.isSameOrAfter(firstOfMonth) && buttonDate.isSameOrBefore(lastOfMonth)
                         return (
                             <CalendarButton
                                 key={i}
-                                label={label}
-                                selected={label === selectedDate}
+                                label={dayOfMonth}
+                                selected={buttonDate.isSame(date, 'day')}
                                 className={styles.date}
                                 disabled={!inMonth}
-                                onClick={() => this.selectDate(label)}/>
+                                onClick={() => this.updateDate('date', dayOfMonth)}/>
                         )
                     }
                 )}
@@ -135,21 +141,41 @@ class _DatePickerPanel extends React.Component {
         )
     }
 
-    selectYear(year) {
-
+    renderButtons() {
+        return this.isDirty()
+            ? <React.Fragment>
+                <PanelButtons.Cancel onClick={() => this.close()}/>
+                <PanelButtons.Save onClick={() => this.select()}/>
+            </React.Fragment>
+            : <PanelButtons.Close onClick={() => this.close()}/>
     }
 
-    selectMonth(month) {
-
+    componentDidMount() {
+        const {date, startDate, endDate} = this.props
+        this.setState({
+            date: (date && date.isValid())
+                ? date
+                : moment.max(moment.min(moment(), endDate), startDate)
+        })
     }
 
-    selectDate(date) {
+    updateDate(unit, value) {
+        this.setState(prevState => ({date: prevState.date.set(unit, value)}))
+    }
 
+    select() {
+        const {onSelect} = this.props
+        this.isDirty() && onSelect && onSelect(this.state.date)
+        this.close()
     }
 
     close() {
         const {activatable} = this.props
         activatable.deactivate()
+    }
+
+    isDirty() {
+        return !this.props.date.isSame(this.state.date, 'day')
     }
 }
 
@@ -160,7 +186,6 @@ class CalendarButton extends Component {
         let {label, selected, disabled, className, onClick} = this.props
         return (
             <Button
-
                 chromeless={!selected}
                 look={selected ? 'highlight' : 'default'}
                 disabled={disabled}
