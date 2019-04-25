@@ -89,8 +89,9 @@ export const activatable = ({id, policy, alwaysAllow}) => {
     return WrappedComponent => {
         class HigherOrderComponent extends React.Component {
             render() {
+                const activatableId = _.isFunction(id) ? id(this.props) : id
                 return (
-                    <Activatable id={id} policy={policy} alwaysAllow={alwaysAllow} otherProps={this.props}>
+                    <Activatable id={activatableId} policy={policy} alwaysAllow={alwaysAllow} otherProps={this.props}>
                         {activatable =>
                             React.createElement(
                                 WrappedComponent,
