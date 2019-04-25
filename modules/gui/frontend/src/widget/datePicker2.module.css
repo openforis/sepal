@@ -22,7 +22,8 @@
 
 .panelContent {
     display: grid;
-    grid-template-rows: 10rem 13rem;
+    grid-template-rows: 6rem 13rem;
+    /*grid-template-rows: 10rem 13rem;*/
     grid-template-columns: auto 1fr;
     grid-template-areas:
         'years months'
@@ -43,7 +44,8 @@
 .months {
     grid-area: months;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(6, 1fr);
+    /*grid-template-columns: repeat(3, 1fr);*/
     grid-template-rows: repeat(auto-fill, 2rem);
     justify-items: center;
 }

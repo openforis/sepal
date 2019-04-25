@@ -10,18 +10,22 @@ import {Scrollable, ScrollableContainer} from './scrollable'
 import Label from './label'
 import * as PropTypes from 'prop-types'
 import {Input} from './form'
+import guid from 'guid'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 export default class DatePicker extends React.Component {
+    id = guid()
+
     render() {
-        const {id, startDate, endDate, input} = this.props
+        const {input, startDate, endDate, title} = this.props
         return (
-            <Activator id={id}>
+            <Activator id={this.id}>
                 {panel =>
                     <div className={styles.container}>
                         <DatePickerPanel
-                            id={id}
+                            id={this.id}
+                            title={title}
                             date={moment(input.value, DATE_FORMAT)}
                             startDate={moment(startDate)}
                             endDate={moment(endDate)}
@@ -43,11 +47,19 @@ export default class DatePicker extends React.Component {
     }
 }
 
+DatePicker.propTypes = {
+    input: PropTypes.object.isRequired,
+    startDate: PropTypes.string.isRequired,
+    endDate: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired
+}
+
 
 class _DatePickerPanel extends React.Component {
     state = {}
 
     render() {
+        const {title} = this.props
         const {date} = this.state
         if (!date)
             return null
@@ -57,7 +69,7 @@ class _DatePickerPanel extends React.Component {
                 type='modal'>
                 <PanelHeader
                     icon='calendar-alt'
-                    title={'Foo'}/>
+                    title={title}/>
                 <PanelContent className={styles.panelContent}>
                     {this.renderYears()}
                     {this.renderMonths()}
