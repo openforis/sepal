@@ -11,9 +11,9 @@ class Sentinel2LandsatMosaicSpec(MosaicSpec):
     def __init__(self, spec):
         super(Sentinel2LandsatMosaicSpec, self).__init__(spec)
         self.brdf_correct = False
-        self.surface_reflectance = False
         self.landsat = LandsatAutomaticMosaicSpec(spec)
         self.sentinel2 = Sentinel2AutomaticMosaicSpec(spec)
+        self.surface_reflectance = self.landsat.surface_reflectance
         self.scale = min(self.landsat.scale, self.sentinel2.scale)
 
     def _data_sets(self):
