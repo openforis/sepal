@@ -83,17 +83,13 @@ class Options extends React.Component {
                         label: msg('process.radarMosaic.panel.options.form.outlierRemoval.none.label'),
                         tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.none.tooltip'),
                     }, {
-                        value: 'LOW',
-                        label: msg('process.radarMosaic.panel.options.form.outlierRemoval.low.label'),
-                        tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.low.tooltip')
+                        value: 'MODERATE',
+                        label: msg('process.radarMosaic.panel.options.form.outlierRemoval.moderate.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.moderate.tooltip')
                     }, {
-                        value: 'MEDIUM',
-                        label: msg('process.radarMosaic.panel.options.form.outlierRemoval.medium.label'),
-                        tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.medium.tooltip')
-                    }, {
-                        value: 'HIGH',
-                        label: msg('process.radarMosaic.panel.options.form.outlierRemoval.high.label'),
-                        tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.high.tooltip')
+                        value: 'AGGRESSIVE',
+                        label: msg('process.radarMosaic.panel.options.form.outlierRemoval.aggressive.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.aggressive.tooltip')
                     }]}
                 />
             </React.Fragment>
