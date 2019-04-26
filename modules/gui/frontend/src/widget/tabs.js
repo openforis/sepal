@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import Keybinding from 'widget/keybinding'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect, select} from 'store'
@@ -105,9 +106,12 @@ class Tabs extends React.Component {
     }
 
     renderTabs() {
-        const {tabs, selectedTabId, tabActions} = this.props
+        const {tabs, selectedTabId, tabActions, statePath} = this.props
         return (
-            <React.Fragment>
+            <Keybinding keymap={{
+                'Ctrl+Shift+W': () => closeTab(selectedTabId, statePath),
+                'Ctrl+Shift+T': () => addTab(statePath),
+            }}>
                 <ScrollableContainer>
                     <Scrollable direction='x' className={styles.tabs}>
                         {tabs.map(tab => this.renderTab(tab))}
@@ -117,7 +121,7 @@ class Tabs extends React.Component {
                     {this.renderAddButton()}
                     {tabActions && tabActions(selectedTabId)}
                 </div>
-            </React.Fragment>
+            </Keybinding>
         )
     }
 
