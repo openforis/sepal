@@ -1,0 +1,35 @@
+.container {
+    position: relative;
+}
+
+.container input {
+    margin: 0;
+    display: inline-block;
+}
+
+.input {
+    position: relative;
+    width: 4.5rem;
+}
+
+.input button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto 0;
+}
+
+.input button:hover {
+    background-color: transparent !important;
+}
+
+.date {
+    padding: .3rem .5rem;
+    cursor: pointer;
+}
+
+.list {
+    height: 15rem;
+    max-height: inherit;
+}
