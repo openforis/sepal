@@ -61,6 +61,6 @@ const deactivateWhen = (id, policy) => {
 export const shouldDeactivate = (id, activatables = {}, nextPolicy) =>
     _(activatables)
         .keys()
-        .filter(activatableId => activatables[activatableId].active)
+        .filter(activatableId => activatables[activatableId].active && !activatables[activatableId].alwaysAllow)
         .filter(activeId => activeId !== id)
         .some(activeId => deactivateWhen(activeId, nextPolicy))
