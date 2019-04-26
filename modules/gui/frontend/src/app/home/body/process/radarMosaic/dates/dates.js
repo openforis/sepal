@@ -4,11 +4,11 @@ import moment from 'moment'
 import React from 'react'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
-import YearPicker from 'widget/yearPicker'
-import DatePicker from 'widget/datePicker'
+import DatePicker, {maxDate, minDate, momentDate} from 'widget/datePicker'
 import {ErrorMessage, Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
+import YearPicker from 'widget/yearPicker'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -18,15 +18,9 @@ const fields = {
     year: new Field()
         .skip((_, {type}) => type !== 'YEARLY_TIME_SCAN')
         .int('process.radarMosaic.panel.dates.form.year.malformed'),
-    fromDate: new Field()
-        .skip((_, {type}) => type !== 'CUSTOM_TIME_SCAN')
-        .date(DATE_FORMAT, 'process.radarMosaic.panel.dates.form.fromDate.malformed'),
-    toDate: new Field()
-        .skip((_, {type}) => type !== 'CUSTOM_TIME_SCAN')
-        .date(DATE_FORMAT, 'process.radarMosaic.panel.dates.form.toDate.malformed'),
+    fromDate: new Field(),
+    toDate: new Field(),
     targetDate: new Field()
-        .skip((_, {type}) => type !== 'POINT_IN_TIME_MOSAIC')
-        .date(DATE_FORMAT, 'process.radarMosaic.panel.dates.form.targetDate.malformed'),
 }
 
 class Dates extends React.Component {
@@ -47,22 +41,24 @@ class Dates extends React.Component {
 
     renderCustomTimeScan() {
         const {inputs: {fromDate, toDate}} = this.props
+        const [fromStart, fromEnd] = fromDateRange(toDate.value)
+        const [toStart, toEnd] = toDateRange(fromDate.value)
         return (
             <div className={styles.fromToPickers}>
                 <div>
                     <DatePicker
                         label={msg('process.radarMosaic.panel.dates.form.fromDate.label')}
                         input={fromDate}
-                        startDate='2014-06-15'
-                        endDate={moment.min(moment(), moment(toDate.value, DATE_FORMAT))}/>
+                        startDate={fromStart}
+                        endDate={fromEnd}/>
                     <ErrorMessage for={fromDate}/>
                 </div>
                 <div>
                     <DatePicker
                         label={msg('process.radarMosaic.panel.dates.form.toDate.label')}
                         input={toDate}
-                        startDate={moment.max(moment('2014-06-15', DATE_FORMAT), moment(fromDate.value, DATE_FORMAT).add(1, 'day'))}
-                        endDate={moment()}/>
+                        startDate={toStart}
+                        endDate={toEnd}/>
                     <ErrorMessage for={toDate}/>
                 </div>
             </div>
@@ -185,6 +181,22 @@ const modelToValues = (model = {}) => {
             toDate: model.toDate
         }
     }
+}
+
+const fromDateRange = toDate => {
+    const dayBeforeToDate = momentDate(toDate).subtract(1, 'day')
+    return [
+        '2014-06-15',
+        minDate(moment(), dayBeforeToDate)
+    ]
+}
+
+const toDateRange = fromDate => {
+    const dayAfterFromDate = momentDate(fromDate).add(1, 'day')
+    return [
+        maxDate('2014-06-15', dayAfterFromDate),
+        moment()
+    ]
 }
 
 export default recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel})(
