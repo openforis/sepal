@@ -11,8 +11,6 @@ import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
 import styles from './period.module.css'
 
-const DATE_FORMAT = 'YYYY-MM-DD'
-
 const fields = {
     startYear: new Field()
         .int('process.landCover.panel.period.startYear.malformed'),
