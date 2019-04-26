@@ -110,7 +110,7 @@ class Sentinel2DataSet(DataSet):
 
     def to_collection(self):
         collection_name = 'COPERNICUS/S2_SR' if self.surface_reflectance else 'COPERNICUS/S2'
-        return ee.ImageCollection('COPERNICUS/S2').filter(self.image_filter)
+        return ee.ImageCollection(collection_name).filter(self.image_filter)
 
     def analyze(self, image):
         return Analyze(image, self.bands()).apply()
@@ -127,7 +127,6 @@ class Sentinel2DataSet(DataSet):
             'nir': 'B8',
             'redEdge4': 'B8A',
             'waterVapor': 'B9',
-            'cirrus': 'B10',
             'swir1': 'B11',
             'swir2': 'B12',
         }
