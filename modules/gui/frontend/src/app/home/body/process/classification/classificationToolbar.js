@@ -6,7 +6,7 @@ import PanelWizard from 'widget/panelWizard'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Retrieve from './retrieve/retrieve'
-import Source from './source/source'
+import Imagery from './imagery/imagery'
 import Toolbar, {ActivationButton} from 'widget/toolbar'
 import TrainingData from './trainingData/trainingData'
 import styles from './classificationToolbar.module.css'
@@ -21,12 +21,12 @@ class ClassificationToolbar extends React.Component {
         const {recipeId, initialized} = this.props
         return (
             <PanelWizard
-                panels={['source', 'trainingData']}
+                panels={['imagery', 'trainingData']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 
                 <Retrieve/>
-                <Source/>
+                <Imagery/>
                 <TrainingData/>
 
                 <Toolbar
@@ -46,9 +46,9 @@ class ClassificationToolbar extends React.Component {
                     panel
                     className={styles.bottom}>
                     <ActivationButton
-                        id='source'
-                        label={msg('process.classification.panel.source.button')}
-                        tooltip={msg('process.classification.panel.source.tooltip')}/>
+                        id='imagery'
+                        label={msg('process.classification.panel.imagery.button')}
+                        tooltip={msg('process.classification.panel.imagery.tooltip')}/>
 
                     <ActivationButton
                         id='trainingData'
