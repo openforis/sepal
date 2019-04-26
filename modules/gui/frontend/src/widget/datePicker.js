@@ -6,19 +6,38 @@ import React, {Component} from 'react'
 import {activatable} from 'widget/activation/activatable'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
+import {isMobile} from 'widget/userAgent'
 import styles from './datePicker.module.css'
-import {Input} from './form'
 import Label from './label'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from './panel'
 import {Scrollable, ScrollableContainer} from './scrollable'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
+export const momentDate = date => _.isString(date) ? moment(date, DATE_FORMAT) : moment(date)
+
+const pickDate = (date1, date2, func) => {
+    date1 = momentDate(date1)
+    date2 = momentDate(date2)
+    if (!date1.isValid())
+        return date2
+    else if (!date2.isValid())
+        return date1
+    else
+        return func(date1, date2)
+}
+
+export const maxDate = (date1, date2) => pickDate(date1, date2, moment.max)
+export const minDate = (date1, date2) => pickDate(date1, date2, moment.min)
+export const constrainDate = (date, min, max) => maxDate(minDate(date, max), min)
+
 export default class DatePicker extends React.Component {
     id = 'DatePicker-' + guid()
+    inputElement = React.createRef()
 
     render() {
         const {input, startDate, endDate, label, autoFocus} = this.props
+        const date = moment(input.value, DATE_FORMAT)
         return (
             <Activator id={this.id}>
                 {panel =>
@@ -26,18 +45,30 @@ export default class DatePicker extends React.Component {
                         <DatePickerPanel
                             id={this.id}
                             title={label}
-                            date={moment(input.value, DATE_FORMAT)}
-                            startDate={_.isString(startDate) ? moment(startDate, DATE_FORMAT) : moment(startDate)}
-                            endDate={_.isString(endDate) ? moment(endDate, DATE_FORMAT) : moment(endDate)}
-                            onSelect={date => input.set(date.format(DATE_FORMAT))}/>
+                            date={date.isValid() ? date : moment(startDate, DATE_FORMAT)}
+                            startDate={momentDate(startDate)}
+                            endDate={momentDate(endDate)}
+                            onSelect={date => {
+                                const dateString = date.format(DATE_FORMAT)
+                                this.inputElement.current.value = dateString
+                                input.set(dateString)
+                            }}/>
                         {this.renderLabel()}
                         <div className={styles.input}>
-                            <Input
-                                autoFocus={autoFocus}
-                                input={input}
+                            <input
+                                ref={this.inputElement}
+                                defaultValue={input.value}
                                 maxLength={10}
+                                autoFocus={autoFocus && !isMobile()}
                                 autoComplete='off'
+                                autoCorrect='off'
+                                autoCapitalize='off'
+                                spellCheck='false'
                                 className={styles.input}
+                                onChange={e => this.setInput(e.target.value)}
+                                onBlur={() => {
+                                    this.inputElement.current.value = input.value
+                                }}
                             />
                             <Button additionalClassName={styles.panelTrigger}
                                     chromeless
@@ -63,21 +94,13 @@ export default class DatePicker extends React.Component {
         ) : null
     }
 
-    componentDidMount() {
-        this.setToValidRange()
-    }
-
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        if (prevProps.input.value !== this.props.input.value)
-            this.setToValidRange()
-    }
-
-    setToValidRange() {
+    setInput(value) {
         const {input, startDate, endDate} = this.props
-        const date = moment(input.value, DATE_FORMAT)
-        const validDate = moment.max(moment.min(moment(date), moment(endDate)), moment(startDate))
-        if (!date.isSame(validDate))
-            input.set(validDate.format(DATE_FORMAT))
+        const date = momentDate(value)
+        const formattedDate = date.isValid()
+            ? constrainDate(date, startDate, endDate).format(DATE_FORMAT)
+            : momentDate(startDate).format(DATE_FORMAT)
+        input.set(formattedDate)
     }
 }
 
@@ -223,7 +246,7 @@ class _DatePickerPanel extends React.Component {
 
     toValidRange(date) {
         const {startDate, endDate} = this.props
-        return moment.max(moment.min(moment(date), moment(endDate)), moment(startDate))
+        return constrainDate(date, startDate, endDate)
     }
 
     select() {
