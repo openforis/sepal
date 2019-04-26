@@ -1,13 +1,13 @@
-import {fromEvent} from 'rxjs'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {fromEvent} from 'rxjs'
 
 const handlers = []
 
 fromEvent(document, 'keydown')
     .subscribe(
-        event =>_.find([...handlers], handler => handler(event))
+        event => _.find([...handlers], handler => handler(event))
     )
 
 export default class Keybinding extends React.Component {
@@ -21,7 +21,15 @@ export default class Keybinding extends React.Component {
     getHandler(event) {
         const {keymap, disabled} = this.props
         if (!disabled) {
-            const {key} = event
+            const key = [
+                {key: 'Ctrl', value: event.ctrlKey},
+                {key: 'Alt', value: event.altKey},
+                {key: 'Shift', value: event.shiftKey},
+                {key: 'Meta', value: event.metaKey}]
+                .filter(({value}) => value)
+                .map(({key}) => key)
+                .concat([event.key])
+                .join('+')
             const handler = keymap[key]
             if (handler) {
                 handler(event)
