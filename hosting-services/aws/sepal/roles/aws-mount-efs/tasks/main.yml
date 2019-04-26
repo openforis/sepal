@@ -19,3 +19,13 @@
     dump: 0
     passno: 0
 
+- name: Mount EFS Sepal Shared Dir
+  mount:
+    name: "/data/sepal/shared"
+    fstype: "efs"
+    state: "mounted"
+    src: "{{ efs_id }}:/data/sepal/shared"
+    opts: "defaults,_netdev"
+    dump: 0
+    passno: 0
+
