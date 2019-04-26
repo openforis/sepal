@@ -1,54 +1,79 @@
 .container {
-    position: relative;
-}
-
-.container .day {
-    width: 8.5rem;
-}
-
-.container .month {
-    width: 6.5rem;
-}
-
-.container .year {
-    width: 5rem;
-}
-
-.container input {
-    margin: 0;
-    display: inline-block;
-}
-
-.container i {
-    margin-left: -1rem;
-    cursor: pointer;
-}
-
-.container i:hover {
-    color: #c8c8c8;
-}
-
-.container i:active {
-    color: #a0a0a0;
+    pointer-events: all;
 }
 
 .input {
-    display: flex;
-    flex-direction: row;
+    position: relative;
+    width: 7.5rem;
+}
+
+.panelTrigger {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto 0;
+}
+
+.panel {
+    width: 26rem;
+}
+
+.panelContent {
+    display: grid;
+    grid-template-rows: 6rem 13rem;
+    /*grid-template-rows: 10rem 13rem;*/
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+        'years months'
+        'years days';
+    padding: .5rem;
+    column-gap: 1rem;
+}
+
+.years, .months, .days {
+    height: 100%;
+}
+
+.years {
+    grid-area: years;
+    width: 4rem;
+}
+
+.months {
+    grid-area: months;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    /*grid-template-columns: repeat(3, 1fr);*/
+    grid-template-rows: repeat(auto-fill, 2rem);
+    justify-items: center;
+}
+
+.days {
+    grid-area: days;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(auto-fill, 2rem);
+    justify-items: center;
+}
+
+.input button:hover {
+    background-color: transparent !important;
+}
+
+.panelContent button {
+    width: 100%;
+}
+
+.weekday {
+    color: pink;
 }
 
 .date {
-    padding: .3rem .5rem;
-    cursor: pointer;
+    /*border: 1px solid red;*/
+    /*text-align: center;*/
 }
 
-.picker {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: 1fr;
-}
-
-.list {
-    height: 20rem;
-    max-height: inherit;
+.selected {
+    /*background-color: orange !important;*/
 }

@@ -1,0 +1,54 @@
+.container {
+    position: relative;
+}
+
+.container .day {
+    width: 8.5rem;
+}
+
+.container .month {
+    width: 6.5rem;
+}
+
+.container .year {
+    width: 5rem;
+}
+
+.container input {
+    margin: 0;
+    display: inline-block;
+}
+
+.container i {
+    margin-left: -1rem;
+    cursor: pointer;
+}
+
+.container i:hover {
+    color: #c8c8c8;
+}
+
+.container i:active {
+    color: #a0a0a0;
+}
+
+.input {
+    display: flex;
+    flex-direction: row;
+}
+
+.date {
+    padding: .3rem .5rem;
+    cursor: pointer;
+}
+
+.picker {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr;
+}
+
+.list {
+    height: 20rem;
+    max-height: inherit;
+}

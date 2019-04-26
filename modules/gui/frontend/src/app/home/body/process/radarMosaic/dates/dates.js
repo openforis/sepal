@@ -1,13 +1,14 @@
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import moment from 'moment'
+import React from 'react'
+import {msg} from 'translate'
+import Buttons from 'widget/buttons'
+import YearPicker from 'widget/yearPicker'
+import DatePicker from 'widget/datePicker'
 import {ErrorMessage, Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
-import DatePicker from 'widget/datePicker'
-import React from 'react'
-import moment from 'moment'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -16,7 +17,7 @@ const fields = {
     type: new Field(),
     year: new Field()
         .skip((_, {type}) => type !== 'YEARLY_TIME_SCAN')
-        .int(DATE_FORMAT, 'process.radarMosaic.panel.dates.form.year.malformed'),
+        .int('process.radarMosaic.panel.dates.form.year.malformed'),
     fromDate: new Field()
         .skip((_, {type}) => type !== 'CUSTOM_TIME_SCAN')
         .date(DATE_FORMAT, 'process.radarMosaic.panel.dates.form.fromDate.malformed'),
@@ -33,13 +34,12 @@ class Dates extends React.Component {
         const {inputs: {year}} = this.props
         return (
             <div className={styles.yearPicker}>
-                <DatePicker
+                <YearPicker
                     label={msg('process.radarMosaic.panel.dates.form.year.label')}
                     placement='above'
                     input={year}
-                    startDate={moment('2014-06-15', DATE_FORMAT)}
-                    endDate={moment()}
-                    resolution='year'/>
+                    startYear='2014'
+                    endYear={moment().year()}/>
                 <ErrorMessage for={year}/>
             </div>
         )
@@ -52,18 +52,16 @@ class Dates extends React.Component {
                 <div>
                     <DatePicker
                         label={msg('process.radarMosaic.panel.dates.form.fromDate.label')}
-                        placement='above'
                         input={fromDate}
-                        startDate={moment('2014-06-15', DATE_FORMAT)}
-                        endDate={moment()}/>
+                        startDate='2014-06-15'
+                        endDate={moment.min(moment(), moment(toDate.value, DATE_FORMAT))}/>
                     <ErrorMessage for={fromDate}/>
                 </div>
                 <div>
                     <DatePicker
-                        label={msg('process.radarMosaic.panel.dates.form.fromDate.label')}
-                        placement='above'
+                        label={msg('process.radarMosaic.panel.dates.form.toDate.label')}
                         input={toDate}
-                        startDate={moment('2014-06-15', DATE_FORMAT)}
+                        startDate={moment.max(moment('2014-06-15', DATE_FORMAT), moment(fromDate.value, DATE_FORMAT).add(1, 'day'))}
                         endDate={moment()}/>
                     <ErrorMessage for={toDate}/>
                 </div>
@@ -77,10 +75,10 @@ class Dates extends React.Component {
             <div className={styles.yearPicker}>
                 <DatePicker
                     label={msg('process.radarMosaic.panel.dates.form.targetDate.label')}
-                    placement='above'
                     input={targetDate}
-                    startDate={moment('2014-06-15', DATE_FORMAT)}
-                    endDate={moment()}/>
+                    startDate={'2014-06-15'}
+                    endDate={moment()}
+                    autoFocus={true}/>
                 <ErrorMessage for={targetDate}/>
             </div>
         )
@@ -106,12 +104,12 @@ class Dates extends React.Component {
     renderDatePickers() {
         const {inputs: {type}} = this.props
         switch (type.value) {
-        case 'POINT_IN_TIME_MOSAIC':
-            return this.renderPointInTimeMosaic()
-        case 'CUSTOM_TIME_SCAN':
-            return this.renderCustomTimeScan()
-        default:
-            return this.renderYearlyTimeScan()
+            case 'POINT_IN_TIME_MOSAIC':
+                return this.renderPointInTimeMosaic()
+            case 'CUSTOM_TIME_SCAN':
+                return this.renderCustomTimeScan()
+            default:
+                return this.renderYearlyTimeScan()
         }
     }
 

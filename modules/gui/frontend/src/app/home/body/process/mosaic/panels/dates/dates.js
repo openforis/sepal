@@ -6,6 +6,7 @@ import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
+import YearPicker from 'widget/yearPicker'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SeasonSelect from 'widget/seasonSelect'
@@ -65,8 +66,6 @@ const fields = {
 }
 
 class Dates extends React.Component {
-    modal = React.createRef()
-
     constructor(props) {
         super(props)
         const {inputs: {targetYear, targetDate}} = props
@@ -100,14 +99,13 @@ class Dates extends React.Component {
         const {inputs: {targetYear}} = this.props
         return (
             <div className={styles.simpleLayout}>
-                <DatePicker
+                <YearPicker
                     label={msg('process.mosaic.panel.dates.form.targetYear.label')}
                     tooltip={msg('process.mosaic.panel.dates.form.targetYear.tooltip')}
                     tooltipPlacement='top'
                     input={targetYear}
-                    startDate={moment('1982-08-22', DATE_FORMAT)}
-                    endDate={moment()}
-                    resolution='year'/>
+                    startYear={1982}
+                    endYear={moment().year()}/>
                 <ErrorMessage for={targetYear}/>
             </div>
         )
@@ -125,7 +123,6 @@ class Dates extends React.Component {
                         startDate={'1982-08-22'}
                         endDate={moment().format(DATE_FORMAT)}
                         errorMessage
-                        modalContainer={this.modal.current}
                     />
                 </div>
                 <div className={styles.pastSeasons}>
@@ -187,7 +184,7 @@ class Dates extends React.Component {
                     title={msg('process.mosaic.panel.dates.title')}/>
 
                 <PanelContent>
-                    <div ref={this.modal}>
+                    <div>
                         {advanced.value ? this.renderAdvanced() : this.renderSimple()}
                     </div>
                 </PanelContent>

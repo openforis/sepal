@@ -1,57 +1,54 @@
-import {Input} from 'widget/form'
-import {fromEvent} from 'rxjs'
-import FloatingBox from 'widget/floatingBox'
-import Icon from 'widget/icon'
-import Label from 'widget/label'
-import List from 'widget/list'
-import PropTypes from 'prop-types'
-import React from 'react'
+import guid from 'guid'
+import _ from 'lodash'
 import moment from 'moment'
+import * as PropTypes from 'prop-types'
+import React, {Component} from 'react'
+import {activatable} from 'widget/activation/activatable'
+import {Activator} from 'widget/activation/activator'
+import {Button} from 'widget/button'
 import styles from './datePicker.module.css'
+import {Input} from './form'
+import Label from './label'
+import {Panel, PanelButtons, PanelContent, PanelHeader} from './panel'
+import {Scrollable, ScrollableContainer} from './scrollable'
 
-const range = (from, to) =>
-    Array.from({length: (to - from + 1)}, (v, k) => k + from)
+const DATE_FORMAT = 'YYYY-MM-DD'
 
-const YEAR = 'year'
-const MONTH = 'month'
-const DAY = 'day'
-
-const items = [YEAR, MONTH, DAY]
-
-const daysInMonth = (year, month) =>
-    moment().year(year).month(month).daysInMonth()
-
-const toMomentUnit = item => {
-    switch (item) {
-    case DAY:
-        return 'date'
-    default:
-        return item
-    }
-}
-
-class DatePicker extends React.Component {
-    subscriptions = []
-    input = React.createRef()
-    list = React.createRef()
-    state = {edit: false}
+export default class DatePicker extends React.Component {
+    id = 'DatePicker-' + guid()
 
     render() {
-        const {resolution = DAY, className} = this.props
-        const {edit} = this.state
+        const {input, startDate, endDate, label, autoFocus} = this.props
         return (
-            <div className={[styles.container, className].join(' ')}>
-                {this.renderLabel()}
-                <div className={styles[resolution]}>
-                    <div
-                        className={styles.input}
-                        ref={this.input}>
-                        {this.renderInput()}
-                        {this.renderIcon()}
+            <Activator id={this.id}>
+                {panel =>
+                    <div className={styles.container}>
+                        <DatePickerPanel
+                            id={this.id}
+                            title={label}
+                            date={moment(input.value, DATE_FORMAT)}
+                            startDate={_.isString(startDate) ? moment(startDate, DATE_FORMAT) : moment(startDate)}
+                            endDate={_.isString(endDate) ? moment(endDate, DATE_FORMAT) : moment(endDate)}
+                            onSelect={date => input.set(date.format(DATE_FORMAT))}/>
+                        {this.renderLabel()}
+                        <div className={styles.input}>
+                            <Input
+                                autoFocus={autoFocus}
+                                input={input}
+                                maxLength={10}
+                                autoComplete='off'
+                                className={styles.input}
+                            />
+                            <Button additionalClassName={styles.panelTrigger}
+                                    chromeless
+                                    icon='calendar-alt'
+                                    size='small'
+                                    onClick={() => panel.activate()}
+                            />
+                        </div>
                     </div>
-                    {edit ? this.renderOptions() : null}
-                </div>
-            </div>
+                }
+            </Activator>
         )
     }
 
@@ -66,292 +63,216 @@ class DatePicker extends React.Component {
         ) : null
     }
 
-    renderInput() {
-        const {input, onChange} = this.props
-        return (
-            <Input
-                input={input}
-                maxLength={10}
-                autoComplete='off'
-                onClick={() => this.editDate(true)}
-                onFocus={() => this.editDate(true)}
-                onChange={onChange}
-            />
-        )
-    }
-
-    renderIcon() {
-        const {edit} = this.state
-        return (
-            <Icon name='calendar'
-                onMouseDown={e => e.preventDefault()}
-                onClick={() => {
-                    if (!edit) {
-                        this.input.current.focus()
-                    }
-                    this.editDate(!edit)
-                }}/>
-        )
-    }
-
-    renderOptions() {
-        const {input, startDate, endDate, resolution = DAY, portal, placement = 'below'} = this.props
-        return (
-            <FloatingBox
-                ref={this.list}
-                element={this.input.current}
-                placement={placement}
-                className={styles.picker}>
-                <DatePickerControl
-                    startDate={startDate}
-                    endDate={endDate}
-                    input={input}
-                    resolution={resolution}
-                    onSelect={() => this.close()}
-                    onCancel={() => this.close()}
-                    portal={portal}
-                />
-            </FloatingBox>
-        )
-    }
-
-    close() {
-        this.editDate(false)
-    }
-
-    editDate(edit) {
-        this.setState({edit})
-        if (!edit) {
-            const {onChange, input} = this.props
-            onChange && onChange(input.value)
-        }
-    }
-
-    handleBlurEvents() {
-        const click$ = fromEvent(document, 'click')
-        const isInputClick = e => this.input.current && this.input.current.contains(e.target)
-        const isListClick = e => this.list.current && this.list.current.contains(e.target)
-        this.subscriptions.push(
-            click$.subscribe(e => !isInputClick(e) && !isListClick(e) && this.close())
-        )
-    }
-
     componentDidMount() {
-        this.handleBlurEvents()
+        this.setToValidRange()
     }
 
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (prevProps.input.value !== this.props.input.value)
+            this.setToValidRange()
+    }
+
+    setToValidRange() {
+        const {input, startDate, endDate} = this.props
+        const date = moment(input.value, DATE_FORMAT)
+        const validDate = moment.max(moment.min(moment(date), moment(endDate)), moment(startDate))
+        if (!date.isSame(validDate))
+            input.set(validDate.format(DATE_FORMAT))
     }
 }
 
 DatePicker.propTypes = {
-    className: PropTypes.string,
-    date: PropTypes.object,
-    endDate: PropTypes.any,
-    input: PropTypes.object,
-    placement: PropTypes.string,
-    portal: PropTypes.object,
-    resolution: PropTypes.string,
-    startDate: PropTypes.any,
-    onChange: PropTypes.func
+    input: PropTypes.object.isRequired,
+    startDate: PropTypes.any.isRequired,
+    endDate: PropTypes.any.isRequired,
+    label: PropTypes.string,
+    autoFocus: PropTypes.any
 }
 
-export class DatePickerControl extends React.Component {
-    constructor(props) {
-        super(props)
-        const {input, resolution} = props
-        const date = this.parseDate(input.value)
-        this.items = items.slice(0, items.indexOf(resolution) + 1)
 
-        this.state = {
-            highlighted: false
-        }
-        this.selected = {}
-
-        if ([YEAR, MONTH, DAY].includes(resolution))
-            this.state.year = this.initializeItem(YEAR, date)
-
-        if ([MONTH, DAY].includes(resolution))
-            this.state.month = this.initializeItem(MONTH, date)
-
-        if ([DAY].includes(resolution))
-            this.state.day = this.initializeItem(DAY, date)
-    }
-
-    initializeItem(item, date) {
-        this.selected[item] = React.createRef()
-        return this.getDateItem(date, item)
-    }
-
-    unsubscribeOnUnmount(subscription) {
-        this.subscriptions.push(subscription)
-    }
-
-    set(item, value) {
-        this.setState(prevState => {
-            const state = {...prevState}
-            const {resolution} = this.props
-            state[item] = value
-            if (resolution === DAY && item !== DAY) {
-                // adjust day of month if not allowed in current month
-                state.day = Math.min(prevState.day, daysInMonth(state.year, state.month))
-            }
-            return state
-        })
-    }
-
-    highlight(value) {
-        this.setState(prevState => {
-            const state = {...prevState}
-            state.highlighted = value
-            return state
-        })
-    }
-
-    parseDate(date) {
-        return moment(date, getDateFormat(this.props.resolution), true)
-    }
-
-    formatDate(date) {
-        return date.format(getDateFormat(this.props.resolution))
-    }
-
-    getDateItem(date, item) {
-        return date.get(item === DAY ? 'date' : item)
-    }
-
-    selectOption(item, value) {
-        const {input, resolution} = this.props
-        const completeDate = !this.items
-            .filter(i => i !== item)
-            .find(i => {
-                return !(this.state[i] >= 0)
-            })
-        if (completeDate) { // If year, month, day specified in state
-            const date = moment().set(toMomentUnit(item), value)
-            this.items
-                .filter(i => i !== item)
-                .forEach(i => date.set(toMomentUnit(i), this.state[i]))
-            input.set(this.formatDate(date))
-        }
-        this.set(item, value)
-        if (resolution === item) {
-            // onSelect()
-        }
-    }
-
-    getOptions(item, range) {
-        return range.map(value => ({
-            label: this.getOptionLabel(value, item),
-            value
-        }))
-    }
-
-    getOptionLabel(value, type) {
-        return type === MONTH
-            ? moment().month(value).format('MMM')
-            : value
-    }
-
-    renderList(item, range) {
-        const {onCancel, resolution} = this.props
-        const options = this.getOptions(item, range)
-        const selectedOption = options.find(option => option.value === this.state[item])
-        return (
-            <List
-                className={styles.list}
-                key={item}
-                options={options}
-                selectedOption={selectedOption}
-                onSelect={option => this.selectOption(item, option.value)}
-                onCancel={onCancel}
-                overScroll={resolution !== YEAR}
-            />
-        )
-    }
-
-    renderYearRange(startDate, endDate) {
-        return this.renderList(YEAR, range(startDate.year(), endDate.year()))
-    }
-
-    renderMonthRange(startDate, endDate) {
-        const {year} = this.state
-        const minMonth = year === startDate.year() ? startDate.month() : 0
-        const maxMonth = year === endDate.year() ? endDate.month() : 11
-        return this.renderList(MONTH, range(minMonth, maxMonth))
-    }
-
-    renderDayRange(startDate, endDate) {
-        const {year, month} = this.state
-        const days = month ? daysInMonth(year, month) : 31
-        const minDay = year === startDate.year() && month === startDate.month() ? startDate.date() : 1
-        const maxDay = year === endDate.year() && month === endDate.month() ? endDate.date() : days
-        return this.renderList(DAY, range(minDay, maxDay))
-    }
-
-    renderPicker(item) {
-        const startDate = this.parseDate(this.props.startDate)
-        const endDate = this.parseDate(this.props.endDate)
-        switch (item) {
-        case YEAR:
-            return this.renderYearRange(startDate, endDate)
-        case MONTH:
-            return this.renderMonthRange(startDate, endDate)
-        case DAY:
-            return this.renderDayRange(startDate, endDate)
-        default:
-        }
-    }
+class _DatePickerPanel extends React.Component {
+    state = {}
 
     render() {
+        const {title} = this.props
+        const {date} = this.state
+        if (!date)
+            return null
         return (
-            this.items.map(item => this.renderPicker(item))
+            <Panel
+                className={styles.panel}
+                type='modal'>
+                <PanelHeader
+                    icon='calendar-alt'
+                    title={title}/>
+                <PanelContent className={styles.panelContent}>
+                    {this.renderYears()}
+                    {this.renderMonths()}
+                    {this.renderDays()}
+                </PanelContent>
+                <PanelButtons onEnter={() => this.select()} onEscape={() => this.close()}>
+                    <PanelButtons.Main>
+                        {this.renderButtons()}
+                    </PanelButtons.Main>
+                </PanelButtons>
+            </Panel>
         )
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        const nextState = {...this.state}
-        const changed = this.items.find(item => {
-            const prevValue = prevState[item]
-            const date = this.parseDate(this.props.input.value)
-            if (!date.isValid())
-                return false
-            const value = date.get(toMomentUnit(item))
-            nextState[item] = value
-            if (prevValue !== value) {
-                this.set(item, value)
-                return true
-            }
-            return false
+    renderYears() {
+        const {startDate, endDate} = this.props
+        const {date} = this.state
+        const startYear = startDate.year()
+        const endYear = endDate.year()
+        const selectedYear = date.year()
+        return (
+            <ScrollableContainer className={styles.years}>
+                <Scrollable>
+                    {_.range(startYear, endYear + 1).map(year =>
+                        <CalendarButton
+                            key={year}
+                            label={year}
+                            selected={year === selectedYear}
+                            className={styles.year}
+                            onClick={() => this.updateDate('year', year)}/>
+                    )}
+                </Scrollable>
+            </ScrollableContainer>
+        )
+    }
+
+    renderMonths() {
+        const {date} = this.state
+        const {startDate, endDate} = this.props
+        const months = moment.monthsShort()
+        const selectedMonth = months[date.month()]
+        const firstMonthIndex = date.year() === startDate.year() ? startDate.month() : 0
+        const lastMonthIndex = date.year() === endDate.year() ? endDate.month() : 11
+        return (
+            <div className={styles.months}>
+                {months.map((month, i) =>
+                    <CalendarButton
+                        key={month}
+                        label={month}
+                        selected={month === selectedMonth}
+                        className={styles.month}
+                        disabled={i < firstMonthIndex || i > lastMonthIndex}
+                        onClick={() => this.updateDate('month', month)}/>
+                )}
+            </div>
+        )
+    }
+
+    renderDays() {
+        const {date} = this.state
+        const {startDate, endDate} = this.props
+        const firstOfMonth = moment(date).startOf('month')
+        const firstOfWeek = moment(firstOfMonth).startOf('week')
+        const lastOfMonth = moment(date).endOf('month')
+        const firstDay = date.isSame(startDate, 'month') ? startDate.date() : 1
+        const lastDay = date.isSame(endDate, 'month') ? endDate.date() : lastOfMonth.date()
+        const indexOffset = firstOfMonth.day() - 1
+        const firstIndex = firstDay + indexOffset
+        const lastIndex = lastDay + indexOffset
+
+        return (
+            <div className={styles.days}>
+                {moment.weekdaysShort().map(weekday =>
+                    <Label key={weekday} msg={weekday}/>
+                )}
+                {_.times(35, (i) => {
+                        const buttonDate = moment(firstOfWeek).add(i, 'day')
+                        const dayOfMonth = buttonDate.format('DD')
+                        return (
+                            <CalendarButton
+                                key={i}
+                                label={dayOfMonth}
+                                selected={buttonDate.isSame(date, 'day')}
+                                className={styles.date}
+                                disabled={i < firstIndex || i > lastIndex}
+                                onClick={() => this.updateDate('date', dayOfMonth)}/>
+                        )
+                    }
+                )}
+            </div>
+        )
+    }
+
+    renderButtons() {
+        return this.isDirty()
+            ? <React.Fragment>
+                <PanelButtons.Cancel onClick={() => this.close()}/>
+                <PanelButtons.Save onClick={() => this.select()}/>
+            </React.Fragment>
+            : <PanelButtons.Close onClick={() => this.close()}/>
+    }
+
+    componentDidMount() {
+        const {date} = this.props
+        this.setState({
+            date: this.toValidRange(date)
         })
-        if (changed)
-            this.center = true
+    }
+
+    updateDate(unit, value) {
+        this.setState(prevState => ({
+            date: this.toValidRange(prevState.date.set(unit, value))
+        }))
+
+    }
+
+    toValidRange(date) {
+        const {startDate, endDate} = this.props
+        return moment.max(moment.min(moment(date), moment(endDate)), moment(startDate))
+    }
+
+    select() {
+        const {onSelect} = this.props
+        this.isDirty() && onSelect && onSelect(this.state.date)
+        this.close()
+    }
+
+    close() {
+        const {activatable} = this.props
+        activatable.deactivate()
+    }
+
+    isDirty() {
+        return !this.props.date.isSame(this.state.date, 'day')
     }
 }
 
-const getDateFormat = resolution => {
-    switch (resolution) {
-    case YEAR:
-        return 'YYYY'
-    case MONTH:
-        return 'YYYY-MM'
-    case DAY:
-        return 'YYYY-MM-DD'
-    default:
-        throw new Error('Invalid resolution: ' + resolution)
+class CalendarButton extends Component {
+    element = React.createRef()
+
+    render() {
+        let {label, selected, disabled, className, onClick} = this.props
+        return (
+            <Button
+                chromeless={!selected}
+                look={selected ? 'highlight' : 'default'}
+                disabled={disabled}
+                additionalClassName={className}
+                onClick={onClick}>
+                <span ref={this.element}>{label}</span>
+            </Button>
+        )
+    }
+
+    componentDidMount() {
+        this.element.current.parentNode.parentNode.scrollTop = this.element.current.parentNode.offsetTop
     }
 }
 
-DatePickerControl.propTypes = {
-    onSelect: PropTypes.func.isRequired,
-    date: PropTypes.object,
-    endDate: PropTypes.any,
-    input: PropTypes.object,
-    portal: PropTypes.object,
-    resolution: PropTypes.string,
-    startDate: PropTypes.any,
-    onCancel: PropTypes.func
+CalendarButton.propTypes = {
+    label: PropTypes.any,
+    selected: PropTypes.any,
+    className: PropTypes.any,
+    onClick: PropTypes.any
 }
 
-export default DatePicker
+const policy = () => ({_: 'allow'})
+const id = ({id}) => id
+const DatePickerPanel = activatable({id, policy, alwaysAllow: true})(
+    _DatePickerPanel
+)

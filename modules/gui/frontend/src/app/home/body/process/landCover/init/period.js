@@ -3,11 +3,10 @@ import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
-// import {activatable} from 'widget/activation'
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../landCoverRecipe'
-import DatePicker from 'widget/datePicker'
+import YearPicker from 'widget/yearPicker'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
 import styles from './period.module.css'
@@ -70,17 +69,17 @@ class Period extends React.Component {
 
     renderContent() {
         const {inputs: {startYear, endYear}} = this.props
+        const thisYear = moment().year()
         return (
             <div className={styles.content}>
                 <div className={styles.startYearLabel}>
                     <Label msg={msg('process.landCover.panel.period.startYear.label')}/>
                 </div>
                 <div className={styles.startYear}>
-                    <DatePicker
+                    <YearPicker
                         input={startYear}
-                        startDate={moment('1982-01-01', DATE_FORMAT)}
-                        endDate={moment()}
-                        resolution='year'
+                        startYear={1983}
+                        endYear={thisYear}
                         errorMessage
                     />
                 </div>
@@ -88,11 +87,10 @@ class Period extends React.Component {
                     <Label msg={msg('process.landCover.panel.period.endYear.label')}/>
                 </div>
                 <div className={styles.endYear}>
-                    <DatePicker
+                    <YearPicker
                         input={endYear}
-                        startDate={moment('1983-01-01', DATE_FORMAT)}
-                        endDate={moment()}
-                        resolution='year'
+                        startYear={1983}
+                        endYear={thisYear}
                         errorMessage
                     />
                 </div>

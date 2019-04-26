@@ -3,7 +3,7 @@ import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
-import DatePicker from 'widget/datePicker'
+import YearPicker from 'widget/yearPicker'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
@@ -67,11 +67,10 @@ class Period extends React.Component {
                     <Label msg={msg('process.landCover.panel.period.startYear.label')}/>
                 </div>
                 <div className={styles.startYear}>
-                    <DatePicker
+                    <YearPicker
                         input={startYear}
-                        startDate={moment('1982-01-01', DATE_FORMAT)}
-                        endDate={moment()}
-                        resolution='year'
+                        startYear={1982}
+                        endYear={moment().year()}
                         errorMessage
                     />
                 </div>
@@ -79,11 +78,10 @@ class Period extends React.Component {
                     <Label msg={msg('process.landCover.panel.period.endYear.label')}/>
                 </div>
                 <div className={styles.endYear}>
-                    <DatePicker
+                    <YearPicker
                         input={endYear}
-                        startDate={moment('1983-01-01', DATE_FORMAT)}
-                        endDate={moment()}
-                        resolution='year'
+                        startYear={1983}
+                        endYear={moment().year()}
                         errorMessage
                     />
                 </div>

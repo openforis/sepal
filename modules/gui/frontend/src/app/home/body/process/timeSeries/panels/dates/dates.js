@@ -39,7 +39,7 @@ class Dates extends React.Component {
                         tooltip={msg('process.timeSeries.panel.dates.form.startDate.tooltip')}
                         tooltipPlacement='top'
                         input={startDate}
-                        startDate={moment('1982-08-22', DATE_FORMAT)}
+                        startDate='1982-08-22'
                         endDate={moment()}/>
                     <ErrorMessage for={[startDate, 'startBeforeEnd']}/>
                 </div>
@@ -50,7 +50,7 @@ class Dates extends React.Component {
                         tooltipPlacement='top'
                         input={endDate}
                         startDate={startDate.isInvalid()
-                            ? moment('1982-08-23', DATE_FORMAT)
+                            ? '1982-08-23'
                             : moment(startDate.value, DATE_FORMAT).add(1, 'days')}
                         endDate={moment()}/>
                     <ErrorMessage for={endDate}/>
