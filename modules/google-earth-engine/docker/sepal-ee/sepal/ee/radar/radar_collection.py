@@ -44,8 +44,9 @@ def create(
 
         speckle_filter: (Optional) Type of speckle filtering to apply. Can be one of the following:
             NONE - No speckle filtering is applied;
-            BOXCAR - Simple 30x30m boxcar filtering is applied;
-            REFINED_LEE - Refined Lee filtering is applied. This can be very slow, but gives good results.
+            BOXCAR - 30x30m boxcar filtering is applied;
+            SNIC - Simple Non-Iterative Clustering is used to filter out speckle;
+            REFINED_LEE - Refined Lee filtering is applied. This can be very slow, but often gives good results.
 
         outlier_removal: (Optional) Removes outliers from the image collection. Can be one of the following:
             NONE - No outlier removal is performed;
@@ -104,6 +105,17 @@ def create(
             .rename(['VV', 'VH'])
         return image.addBands(filtered, None, True)
 
+    def snic_filter(image):
+        bands = ['VV', 'VH']
+        snic = ee.Algorithms.Image.Segmentation.SNIC(
+            image=image.select(bands),
+            size=8,
+            compactness=5,
+            connectivity=8,
+            neighborhoodSize=16,
+        ).select('.*_mean').rename(bands)
+        return image.addBands(snic, None, True)
+
     def add_date_bands(image):
         date = image.date()
         day_of_year = date.getRelative('day', 'year')
@@ -125,6 +137,8 @@ def create(
             steps.append(mask_overlay)
         if speckle_filter == 'BOXCAR':
             steps.append(boxcar_filter)
+        elif speckle_filter == 'SNC':
+            steps.append(snic_filter)
         elif speckle_filter == 'REFINED_LEE':
             steps.append(_refined_lee.apply)
         if target_date:
@@ -133,17 +147,20 @@ def create(
         return reduce(lambda acc, process: process(acc), steps, image)
 
     def mask_outliers(collection, std_devs):
-        percentiles = collection.reduce(ee.Reducer.percentile([10, 90]))
-        p10 = percentiles.select('.*_p10')
-        p90 = percentiles.select('.*_p90')
-        clamped_collection = collection.map(
-            lambda image: image.updateMask(image.gte(p10).And(image.lte(p90)))
+        bands = ['VV', 'VH']
+        reduced = collection.select(bands).reduce(
+            ee.Reducer.median().combine(ee.Reducer.stdDev(), '', True)
         )
-        std_dev = clamped_collection.reduce(ee.Reducer.stdDev())
-        mean = p10.add(p90).divide(2)
-        return collection.map(
-            lambda image: image.updateMask(image.subtract(mean).abs().lte(std_dev.multiply(std_devs)))
+        median = reduced.select('.*_median')
+        std_dev = reduced.select('.*_stdDev')
+        threshold = std_dev.multiply(std_devs)
+        maskedCollection = collection.map(
+            lambda image: image.updateMask(
+                image.select(bands).subtract(median).abs().lte(threshold)
+                    .reduce(ee.Reducer.min())
+            )
         )
+        return maskedCollection
 
     collection = ee.ImageCollection('COPERNICUS/S1_GRD') \
         .filterBounds(region) \
@@ -161,6 +178,6 @@ def create(
     if outlier_removal == 'MODERATE':
         return mask_outliers(collection, 3)
     elif outlier_removal == 'AGGRESSIVE':
-        return mask_outliers(collection, 2)
+        return mask_outliers(collection, 2.6)
     else:
         return collection

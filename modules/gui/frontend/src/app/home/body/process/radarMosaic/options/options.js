@@ -65,10 +65,14 @@ class Options extends React.Component {
                         value: 'NONE',
                         label: msg('process.radarMosaic.panel.options.form.speckleFilter.none.label'),
                         tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.none.tooltip')
+                    // }, {
+                    //     value: 'BOXCAR',
+                    //     label: msg('process.radarMosaic.panel.options.form.speckleFilter.boxcar.label'),
+                    //     tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.boxcar.tooltip')
                     }, {
-                        value: 'BOXCAR',
-                        label: msg('process.radarMosaic.panel.options.form.speckleFilter.boxcar.label'),
-                        tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.boxcar.tooltip')
+                        value: 'SNIC',
+                        label: msg('process.radarMosaic.panel.options.form.speckleFilter.snic.label'),
+                        tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.snic.tooltip')
                     }, {
                         value: 'REFINED_LEE',
                         label: msg('process.radarMosaic.panel.options.form.speckleFilter.refinedLee.label'),

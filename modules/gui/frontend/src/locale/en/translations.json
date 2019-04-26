@@ -529,56 +529,60 @@
               "label": "Orbits",
               "ascending": {
                 "label": "Ascending",
-                "tooltip": "TBD"
+                "tooltip": "Include scenes from ascending orbits"
               },
               "descending": {
                 "label": "Descending",
-                "tooltip": "TBD"
+                "tooltip": "Include scenes from descending orbits"
               }
             },
             "geometricCorrection": {
               "label": "Geometric correction",
               "none": {
                 "label": "None",
-                "tooltip": "TBD"
+                "tooltip": "No geometric correction is applied"
               },
               "ellipsoid": {
                 "label": "Ellipsoid",
-                "tooltip": "TBD"
+                "tooltip": "Ellipsoid correction (gamma0 correction) is applied"
               },
               "terrain": {
                 "label": "Terrain",
-                "tooltip": "TBD"
+                "tooltip": "Terrain correction is applied"
               }
             },
             "outlierRemoval": {
               "label": "Outlier removal",
               "none": {
                 "label": "None",
-                "tooltip": "TBD"
+                "tooltip": "Don't remove outliers"
               },
               "moderate": {
                 "label": "Moderate",
-                "tooltip": "TBD"
+                "tooltip": "Remove outliers"
               },
               "aggressive": {
                 "label": "aggressive",
-                "tooltip": "TBD"
+                "tooltip": "Remove more outliers"
               }
             },
             "speckleFilter": {
               "label": "Speckle filter",
               "none": {
                 "label": "None",
-                "tooltip": "TBD"
+                "tooltip": "Don't apply any speckle filter"
               },
               "boxcar": {
                 "label": "Boxcar",
-                "tooltip": "TBD"
+                "tooltip": "30x30m boxcar filtering is applied"
+              },
+              "snic": {
+                "label": "SNIC",
+                "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle"
               },
               "refinedLee": {
                 "label": "Refined Lee",
-                "tooltip": "TBD"
+                "tooltip": "Refined Lee filtering is applied. This can be very slow, but often gives good results"
               }
             }
           }
