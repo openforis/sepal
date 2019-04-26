@@ -11,8 +11,6 @@ import React from 'react'
 import moment from 'moment'
 import styles from './period.module.css'
 
-const DATE_FORMAT = 'YYYY-MM-DD'
-
 const fields = {
     startYear: new Field()
         .int('process.landCover.panel.period.startYear.malformed'),
