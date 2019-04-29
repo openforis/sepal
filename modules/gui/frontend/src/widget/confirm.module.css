@@ -9,4 +9,6 @@
     align-items: center;
     justify-content: center;
     height: 100%;
+    word-break: break-all;
+    font-size: .9rem;
 }
