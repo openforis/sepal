@@ -190,10 +190,13 @@ class _DatePickerPanel extends React.Component {
         const {date} = this.state
         const {startDate, endDate} = this.props
         const firstOfMonth = moment(date).startOf('month')
-        const firstOfWeek = moment(firstOfMonth).startOf('week')
+        const firstToRender = moment(firstOfMonth).startOf('week')
         const lastOfMonth = moment(date).endOf('month')
         const firstDay = date.isSame(startDate, 'month') ? startDate.date() : 1
-        const lastDay = date.isSame(endDate, 'month') ? endDate.date() : lastOfMonth.date()
+        const lastDate = date.isSame(endDate, 'month') ? endDate : lastOfMonth
+        const lastDay = lastDate.date()
+        const lastToRender = moment(lastDate).endOf('week')
+        const daysToRender = lastToRender.diff(firstToRender, 'days') + 1
         const indexOffset = firstOfMonth.day() - 1
         const firstIndex = firstDay + indexOffset
         const lastIndex = lastDay + indexOffset
@@ -203,8 +206,8 @@ class _DatePickerPanel extends React.Component {
                 {moment.weekdaysShort().map(weekday =>
                     <Label key={weekday} msg={weekday}/>
                 )}
-                {_.times(35, (i) => {
-                        const buttonDate = moment(firstOfWeek).add(i, 'day')
+                {_.times(daysToRender, (i) => {
+                        const buttonDate = moment(firstToRender).add(i, 'day')
                         const dayOfMonth = buttonDate.format('DD')
                         return (
                             <CalendarButton

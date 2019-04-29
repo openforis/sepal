@@ -21,7 +21,7 @@
 
 .panelContent {
     display: grid;
-    grid-template-rows: 6rem 13rem;
+    grid-template-rows: 6rem 14rem;
     /*grid-template-rows: 10rem 13rem;*/
     grid-template-columns: auto 1fr;
     grid-template-areas:
