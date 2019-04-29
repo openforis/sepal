@@ -1,33 +1,32 @@
 import folium
 
-def add_to(map, image, viz_params, name, show=True):
-    """
-    Adds an ee.Image to a Folium map.
 
-    Args:
+class EELayer(object):
+    def __init__(self, image, viz_params, name=None, center=False, show=True):
+        """
+        Creates a map layer to be added to a Folium map.
 
-        map: The map the add the image to.
+        Args:
+            image: The ee.Image to show.
 
-        image: The ee.Image to add to the map.
+            viz_params: The visualization params to use.
 
-        viz_params: The visualization params to use.
+            name: The name of the map layer.
 
-        name: The name of the map layer.
+            center: Determines if the map should center the layer or not
 
-    Returns:
-        The provided map.
+            show: Determines if the layer is shown on the map
 
-    """
-    map_ref = image.getMapId(viz_params)
-    url = "https://earthengine.googleapis.com/map/{mapid}/{{z}}/{{x}}/{{y}}?token={token}"
-    folium.TileLayer(
-        tiles=url.format(**map_ref),
-        name=name,
-        attr='Google Earth Engine',
-        overlay=True,
-        show=show
-    ).add_to(map)
-    return map
+        Returns:
+            The provided map.
+
+        """
+        super(EELayer, self).__init__()
+        self.image = image
+        self.viz_params = viz_params
+        self.name = name
+        self.center = center
+        self.show = show
 
 
 def center(map, object):
@@ -47,4 +46,32 @@ def center(map, object):
     coordinates = object.geometry().bounds().coordinates().getInfo()[0]
     bounds = [[point[1], point[0]] for point in coordinates]
     map.fit_bounds(bounds)
+    return map
+
+
+def map_layers(layers):
+    """
+    Adds an EELayer list to a Folium map.
+
+    Args:
+        layers: The EELayers to add to the map.
+
+    Returns:
+        A folium.Map instance with the layers added.
+
+    """
+    url = "https://earthengine.googleapis.com/map/{mapid}/{{z}}/{{x}}/{{y}}?token={token}"
+    map = folium.Map()
+    for i, layer in enumerate(layers):
+        map_ref = layer.image.getMapId(layer.viz_params)
+        folium.TileLayer(
+            tiles=url.format(**map_ref),
+            name=layer.name if layer.name else 'layer-' + str(i + 1),
+            attr='Google Earth Engine',
+            overlay=True,
+            show=layer.show
+        ).add_to(map)
+        if layer.center:
+            center(map, layer.image)
+    folium.map.LayerControl().add_to(map)
     return map
