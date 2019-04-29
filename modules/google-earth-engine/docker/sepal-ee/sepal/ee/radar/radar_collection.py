@@ -26,13 +26,11 @@ def create(
         orbits:  The orbits to include. (string: ASCENDING and/or DESCENDING)
 
         start_date: (Optional) The earliest date to include images for (inclusive).
-            If unspecified and target date is specified,
-            it will be set to 24 days or 6 months (if outlier_removal is applied) before target date.
+            Defaults to 6 months before target date if target date is specified,
             Can be a string (yyyy-mm-dd), python datetime, or millis timestamp.
 
         end_date: (Optional) The latest date to include images for (exclusive).
-            If unspecified and target date is specified,
-            it will be set to 24 days or 6 months (if outlier_removal is applied) before target date.
+            Defaults to 6 months after target date if target date is specified,
             Can be a String (yyyy-mm-dd), python datetime, or millis timestamp.
 
         target_date: (Optional) The ideal acquisition date of imagery.
@@ -65,7 +63,7 @@ def create(
             quality - closeness to target date;
             unixTimeDays - days since unix epoch.
     """
-    days = 366 / 2 if outlier_removal != 'NONE' else 24
+    days = 366 / 2
     if target_date and not start_date:
         start_date = dates.subtract_days(target_date, days)
 
@@ -125,7 +123,7 @@ def create(
         return image \
             .addBands(ee.Image(day_of_year).uint16().rename('dayOfYear')) \
             .addBands(ee.Image(days_from_target).uint16().rename('daysFromTarget')) \
-            .addBands(ee.Image(days_from_target.multiply(-1)).uint16().rename('quality')) \
+            .addBands(ee.Image(days_from_target.multiply(-1)).int16().rename('quality')) \
             .addBands(ee.Image(unix_time_days).uint16().rename('unixTimeDays'))
 
     def pre_process(image):
