@@ -35,17 +35,22 @@
         path: "/data/sepal"
         state: directory
 
-    - name: Create /data/sepal
+    - name: Create /data/sepal/home
       file:
         path: "/data/sepal/home"
         state: directory
 
-    - name: Create /data/sepal
+    - name: Create /data/sepal/shiny
       file:
         path: "/data/sepal/shiny"
         state: directory
 
-    - name: Create /data/sepal
+    - name: Create /data/sepal/shared
+      file:
+        path: "/data/sepal/shared"
+        state: directory
+
+    - name: Create /data/sepal/certificates
       file:
         path: "/data/sepal/certificates"
         state: directory
@@ -76,7 +81,7 @@
 
     - name: Mount EFS Sepal Shared Dir
       mount:
-        name: "/data/sepal/shiny"
+        name: "/data/sepal/shared"
         fstype: "efs"
         state: "mounted"
         src: "{{ efs_id }}:/data/sepal/shared"
