@@ -1,9 +1,10 @@
 .options {
     --background-color: hsla(0, 0%, 0%, .9);
     background-color: var(--background-color);
+    z-index: 2;
 }
 
-.options::-webkit-scrollbar { 
+.options::-webkit-scrollbar {
     display: none !important;
 }
 
