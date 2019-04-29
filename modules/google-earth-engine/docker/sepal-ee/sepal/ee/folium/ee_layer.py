@@ -1,6 +1,6 @@
 import folium
 
-def add_to(map, image, viz_params, name):
+def add_to(map, image, viz_params, name, show=True):
     """
     Adds an ee.Image to a Folium map.
 
@@ -24,7 +24,8 @@ def add_to(map, image, viz_params, name):
         tiles=url.format(**map_ref),
         name=name,
         attr='Google Earth Engine',
-        overlay=True
+        overlay=True,
+        show=show
     ).add_to(map)
     return map
 
