@@ -74,6 +74,16 @@
         dump: 0
         passno: 0
 
+    - name: Mount EFS Sepal Shared Dir
+      mount:
+        name: "/data/sepal/shiny"
+        fstype: "efs"
+        state: "mounted"
+        src: "{{ efs_id }}:/data/sepal/shared"
+        opts: "defaults,_netdev"
+        dump: 0
+        passno: 0
+
     - name: Copy LDAP Certificate
       copy:
        src: "{{ config_home }}/certificates/ldap-ca.crt.pem"

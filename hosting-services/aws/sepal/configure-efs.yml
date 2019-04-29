@@ -43,6 +43,14 @@
         mode: "u=rwx,g=rwxs"
         state: "directory"
 
+    - name: Create sepal shared dir on EFS
+      file:
+        path: "/efs/data/sepal/shared"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
+
     - name: Unmount EFS Nfs4
       mount:
           name: "/efs"
