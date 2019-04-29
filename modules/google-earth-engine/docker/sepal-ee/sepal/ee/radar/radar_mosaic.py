@@ -25,7 +25,7 @@ def viz_params(bands):
 
     Args:
         bands: The bands to get visualization params for. Must be one of the following:
-            VV, VH, VV_VH, dayOfYear, daysFromTarget.
+            VV, VH, VV_VH (VV/VH ratio), dayOfYear, daysFromTarget.
 
     Returns:
          Dictionary with visualization params.
