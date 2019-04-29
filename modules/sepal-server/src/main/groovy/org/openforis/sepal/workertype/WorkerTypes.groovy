@@ -89,7 +89,7 @@ final class WorkerTypes {
                     publishedPorts: publishedPorts,
                     volumes: [
                         '/data/sepal/shiny': '/shiny',
-                        '/data/sepal/shared': "/home/${username}/shared/notebooks",
+                        '/data/sepal/shared': "/home/${username}/shared",
                         (userHome): "/home/${username}",
                         (userTmp): ["/tmp", "/home/${username}/tmp"],
                         (ldapPem): "/etc/ldap/certificates/ldap-ca.crt.pem"],
