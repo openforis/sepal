@@ -38,7 +38,7 @@ def viz_params(bands):
         'VH': {'range': [-22, 0]},
         'VV_VH': {'range': [3, 14]},
         'dayOfYear': {'range': [0, 366], 'palette': '00FFFF, 000099'},
-        'daysFromTarget': {'range': [0, 30], 'palette': '008000, FFFF00, FF0000'},
+        'daysFromTarget': {'range': [0, 183], 'palette': '008000, FFFF00, FF0000'},
     }
     min = [defaults[band]['range'][0] for band in bands]
     max = [defaults[band]['range'][1] for band in bands]
