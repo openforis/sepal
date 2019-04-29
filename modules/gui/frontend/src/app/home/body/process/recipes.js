@@ -163,8 +163,8 @@ class RecipeList extends React.Component {
                             onClick={() => this.duplicateRecipe(recipe.id)}/>
                         <SafetyButton
                             size='large'
-                            message={'Remove recipe?'}
-                            tooltip={msg('process.menu.removeRecipe')}
+                            message={msg('process.menu.removeRecipe.message', {recipe: recipe.name})}
+                            tooltip={msg('process.menu.removeRecipe.tooltip')}
                             tooltipPlacement='bottom'
                             onConfirm={() => this.removeRecipe(recipe.id)}/>
                     </ButtonGroup>
