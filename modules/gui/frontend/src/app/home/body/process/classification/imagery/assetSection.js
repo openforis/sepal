@@ -10,10 +10,10 @@ export default class AssetSection extends React.Component {
         // TODO: Make sure asset is readable
         return (
             <Input
-                label={msg('process.classification.panel.source.form.asset.label')}
+                label={msg('process.classification.panel.imagery.form.asset.label')}
                 autoFocus={!isMobile()}
                 input={asset}
-                placeholder={msg('process.classification.panel.source.form.asset.placeholder')}
+                placeholder={msg('process.classification.panel.imagery.form.asset.placeholder')}
                 spellCheck={false}
                 errorMessage
             />

@@ -155,7 +155,10 @@
       "duplicateRecipe": "Duplicate recipe",
       "exportRecipe": "Export recipe",
       "saveRecipe": "Save recipe...",
-      "removeRecipe": "Remove recipe",
+      "removeRecipe": {
+        "message": "Do you want to remove '{recipe}'?",
+        "tooltip": "Remove recipe"
+      },
       "revertToOldRevision": "Revert to old revision...",
       "searchRecipes": "Search recipes"
     },
@@ -618,15 +621,26 @@
       "create": "Classification",
       "description": "Classify a mosaic from SEPAL or Google Earth Engine.",
       "panel": {
-        "source": {
+        "imagery": {
           "button": "IMG",
-          "tooltip": "Select mosaic to classify",
-          "title": "Image to classify",
+          "tooltip": "Select images to classify",
+          "title": "Images to classify",
+          "type": {
+            "RECIPE_REF": "Sepal recipe",
+            "ASSET": "Earth Engine asset"
+          },
+          "remove": {
+            "confirmationMessage": "Are you sure you want to remove '{name}' from your classification?",
+            "tooltip":"Remove image from classification"
+          },
+          "sections": {
+            "title": "Add image to classify"
+          },
           "recipe": {
-            "title": "Select saved Sepal recipe"
+            "title": "Add saved Sepal recipe"
           },
           "asset": {
-            "title": "Select Earth Engine asset"
+            "title": "Add Earth Engine asset"
           },
           "form": {
             "section": {

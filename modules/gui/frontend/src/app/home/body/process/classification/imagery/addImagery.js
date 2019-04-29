@@ -1,32 +1,98 @@
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
 import {msg} from 'translate'
 import {activatable} from 'widget/activation/activatable'
-import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Field, form} from 'widget/form'
+import FormPanel from 'widget/formPanel'
+import {PanelButtons} from 'widget/panel'
+import PanelSections from 'widget/panelSections'
 import styles from './addImagery.module.css'
+import AssetSection from './assetSection'
+import RecipeSection from './recipeSection'
+import SectionSelection from './sectionSelection'
+
+const fields = {
+    section: new Field()
+        .notBlank('process.classification.panel.imagery.form.section.required'),
+    recipe: new Field()
+        .skip((value, {section}) => section !== 'RECIPE_REF')
+        .notBlank('process.classification.panel.imagery.form.recipe.required'),
+    asset: new Field()
+        .skip((value, {section}) => section !== 'ASSET')
+        .notBlank('process.classification.panel.imagery.form.asset.required'),
+}
+
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id
+})
 
 class _AddImagery extends React.Component {
-
     render() {
-        const {activatable: {deactivate}} = this.props
+        const {form, inputs, activatable: {deactivate}} = this.props
         const close = () => deactivate()
+
+        const sections = [
+            {
+                icon: 'image',
+                title: msg('process.classification.panel.imagery.sections.title'),
+                component: <SectionSelection section={inputs.section}/>
+            },
+            {
+                value: 'RECIPE_REF',
+                title: msg('process.classification.panel.imagery.recipe.title'),
+                component: <RecipeSection recipe={inputs.recipe}/>
+            },
+            {
+                value: 'ASSET',
+                title: msg('process.classification.panel.imagery.asset.title'),
+                component: <AssetSection asset={inputs.asset}/>
+            }
+        ]
+
         return (
-            <Panel
+            <FormPanel
+                form={form}
+                close={close}
                 className={styles.panel}
                 type='modal'>
-                <PanelHeader
-                    icon='image'
-                    title={msg('process.classification.panel.imagery.add.title')}/>
-                <PanelContent>
-                    <div>Add</div>
-                </PanelContent>
+                <PanelSections sections={sections} selected={inputs.section} inputs={inputs}/>
                 <PanelButtons onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
-                        <PanelButtons.Close onClick={close}/>
+                        <PanelButtons.Cancel
+                            onClick={close}/>
+                        <PanelButtons.Add
+                            disabled={form.isInvalid()}
+                            onClick={() => this.addImage()}/>
                     </PanelButtons.Main>
                 </PanelButtons>
-            </Panel>
+            </FormPanel>
         )
+    }
+
+    addImage() {
+        const {onAdd, activatable: {deactivate}} = this.props
+        onAdd(this.getSelectedImage())
+        deactivate()
+    }
+
+    getSelectedImage() {
+        const {inputs: {section, recipe, asset}} = this.props
+        switch (section.value) {
+            case 'ASSET':
+                return {
+                    type: 'ASSET',
+                    id: asset.value
+                }
+            case 'RECIPE_REF':
+                return {
+                    type: 'RECIPE_REF',
+                    id: recipe.value
+                }
+            default:
+                throw new Error('Unexpected image section: ' + section.value)
+        }
+
     }
 }
 
@@ -34,11 +100,16 @@ const policy = () => ({_: 'allow'})
 
 const AddImagery = (
     activatable({id: 'addImagery', policy})(
-        connect()(
-            _AddImagery
+        withRecipe(mapRecipeToProps)(
+            form({fields})(
+                _AddImagery
+            )
         )
     )
 )
+
 export default AddImagery
 
-AddImagery.propTypes = {}
+AddImagery.propTypes = {
+    onAdd: PropTypes.func.isRequired
+}

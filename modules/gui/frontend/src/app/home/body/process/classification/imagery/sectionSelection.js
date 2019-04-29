@@ -10,11 +10,11 @@ export default class SectionSelection extends React.Component {
         const options = [
             {
                 value: 'RECIPE_REF',
-                label: msg('process.classification.panel.source.recipe.title')
+                label: msg('process.classification.panel.imagery.recipe.title')
             },
             {
                 value: 'ASSET',
-                label: msg('process.classification.panel.source.asset.title')
+                label: msg('process.classification.panel.imagery.asset.title')
             },
         ]
         return (
