@@ -136,7 +136,7 @@ export class PanelButtons extends React.Component {
             },
             add: {
                 look: 'add',
-                icon: 'pencil-alt',
+                icon: 'plus',
                 label: msg('button.add')
             },
             back: {

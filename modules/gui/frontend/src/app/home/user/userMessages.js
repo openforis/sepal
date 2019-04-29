@@ -223,6 +223,7 @@ class _UserMessages extends React.Component {
                     <PanelButtons.Extra>
                         <PanelButtons.Add
                             label={msg('userMessages.post')}
+                            icon='pencil-alt'
                             onClick={add}
                             shown={isAdmin}/>
                     </PanelButtons.Extra>
