@@ -228,7 +228,7 @@ class _DatePickerPanel extends React.Component {
         return this.isDirty()
             ? <React.Fragment>
                 <PanelButtons.Cancel onClick={() => this.close()}/>
-                <PanelButtons.Save onClick={() => this.select()}/>
+                <PanelButtons.Select onClick={() => this.select()}/>
             </React.Fragment>
             : <PanelButtons.Close onClick={() => this.close()}/>
     }

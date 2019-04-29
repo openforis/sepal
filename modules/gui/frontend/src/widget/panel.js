@@ -160,6 +160,12 @@ export class PanelButtons extends React.Component {
                 icon: 'check',
                 label: msg('button.save')
             },
+            select: {
+                type: 'submit',
+                look: 'apply',
+                icon: 'check',
+                label: msg('button.select')
+            },
             discard: {
                 look: 'cancel',
                 icon: 'times',
@@ -194,6 +200,10 @@ export class PanelButtons extends React.Component {
 
     static Save(props) {
         return PanelButtons.renderButton({template: 'save', ...props})
+    }
+
+    static Select(props) {
+        return PanelButtons.renderButton({template: 'select', ...props})
     }
 
     static Discard(props) {
