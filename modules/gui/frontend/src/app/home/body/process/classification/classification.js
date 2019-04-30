@@ -17,7 +17,7 @@ const mapStateToProps = state => ({
 const mapRecipeToProps = recipe => ({
     recipeId: selectFrom(recipe, 'id'),
     initialized: selectFrom(recipe, 'ui.initialized'),
-    source: selectFrom(recipe, 'model.source')
+    images: selectFrom(recipe, 'model.imagery.images')
 })
 
 class Classification extends React.Component {
@@ -47,10 +47,10 @@ class Classification extends React.Component {
     }
 
     setAoiLayer() {
-        const {recipeId, source, componentWillUnmount$} = this.props
+        const {recipeId, images, componentWillUnmount$} = this.props
         setRecipeGeometryLayer({
             contextId: recipeId,
-            layerSpec: {id: 'aoi', layerIndex: 0, recipe: source},
+            layerSpec: {id: 'aoi', layerIndex: 0, recipe: images && images.length > 0 ? images[0] : null},
             destroy$: componentWillUnmount$,
             onInitialized: () => {
                 if (this.props.tabCount === 1) {

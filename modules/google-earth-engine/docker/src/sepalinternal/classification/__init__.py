@@ -3,7 +3,6 @@ from random import random
 import ee
 
 from ..gee import get_info
-from ..image_operation import ImageOperation
 from ..image_spec import ImageSpec
 from ..sepal_exception import SepalException
 
@@ -15,75 +14,93 @@ class Classification(ImageSpec):
         model = spec['recipe']['model']
         self.trainingData = ee.FeatureCollection('ft:' + model['trainingData']['fusionTable'])
         self.classProperty = model['trainingData']['fusionTableColumn']
-        self.source = create_image_spec(sepal_api, {'recipe': model['source']})
-        self.aoi = self.source.aoi
-        self.scale = self.source.scale
+        self.images = [create_image_spec(sepal_api, {'recipe': image}) for image in model['imagery']['images']]
+        self.aoi = self.images[0].aoi
+        self.scale = min([image.scale for image in self.images])
         self.bands = ['class']
 
     def _viz_params(self):
-        classCount = int(get_info(ee.Number(self.trainingData.reduceColumns(
+        class_count = int(get_info(ee.Number(self.trainingData.reduceColumns(
             reducer=ee.Reducer.max(),
             selectors=[self.classProperty]
         ).get('max')))) + 1
-        return {'bands': 'class', 'min': 0, 'max': (classCount - 1), 'palette': ', '.join(_colors[0:classCount])}
-        # return {'bands': 'uncertainty', 'min': 0, 'max': 1, 'palette': 'green, yellow, orange, red'}
+        return {'bands': 'class', 'min': 0, 'max': (class_count - 1), 'palette': ', '.join(_colors[0:class_count])}
 
     def _ee_image(self):
         has_data_in_aoi = get_info(self.trainingData.filterBounds(self.aoi._geometry).size()) > 0
         if not has_data_in_aoi:
             raise SepalException(code='gee.classification.error.noTrainingData', message='No training data in AOI.')
-        return _Operation(self.source, self.trainingData, self.classProperty).apply()
 
-
-class _Operation(ImageOperation):
-    def __init__(self, imageToClassify, trainingData, classProperty):
-        super(_Operation, self).__init__(imageToClassify._ee_image())
-        self.trainingData = trainingData
-        self.classProperty = classProperty
-        self.scale = imageToClassify.scale
-
-    def apply(self):
-        bands = ee.List(['red', 'nir', 'swir1', 'swir2'])
-        missingBands = bands.removeAll(self.image.bandNames())
-        bands = bands.removeAll(missingBands)
-        self.image = self.image.select(bands)
-
-        def ratios_for_band(band):
-            def ratio_for_band(band2):
-                band2 = ee.String(band2)
-                ratioName = band.cat('/').cat(ee.String(band2))
-                ratio = self.image.select(band).divide(self.image.select(band2))
-                return ratio.rename([ratioName])
-
-            band = ee.String(band)
-            return bands.slice(bands.indexOf(band).add(1)).map(ratio_for_band)
-
-        def add_ratio(ratio, image):
-            return ee.Image(image).addBands(ee.Image(ratio))
-
-        ratios = bands.slice(0, -1).map(ratios_for_band).flatten()
-        self.image = ee.Image(ratios.iterate(add_ratio, self.image))
+        image = ee.Image([_add_covariates(image._ee_image()) for image in self.images])
 
         # Force updates to fusion table to be reflected
-        self.trainingData = self.trainingData.map(self._force_cache_flush)
-        training = self.image.sampleRegions(
+        self.trainingData = self.trainingData.map(_force_cache_flush)
+        training = image.sampleRegions(
             collection=self.trainingData,
             properties=[self.classProperty],
             scale=1
         )
         classifier = ee.Classifier.cart().train(training, self.classProperty)
-        classification = self.image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
-        # regression = self.image.classify(classifier.setOutputMode('REGRESSION')).rename(['regression'])
-        # uncertainty = regression.subtract(classification).abs().rename(['uncertainty'])
+        classification = image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
 
         return classification \
-            .uint8() \
-            # .addBands(uncertainty)
+            .uint8()
 
-    def _force_cache_flush(self, feature):
-        return feature \
-            .set('__flush_cache__', random()) \
-            .copyProperties(feature)
+
+def _force_cache_flush(feature):
+    return feature \
+        .set('__flush_cache__', random()) \
+        .copyProperties(feature)
+
+
+def _add_covariates(image):
+    return image \
+        .addBands(_normalized_difference(image, ['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])) \
+        .addBands(
+        _diff(image, ['VV', 'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VH', 'VH_min', 'VH_mean', 'VH_med', 'VH_max'])) \
+        .addBands(_normalized_difference(image, ['VV_CV', 'VH_CV'])) \
+        .addBands(_normalized_difference(image, ['VV_stdDev', 'VH_stdDev']))
+
+
+def _normalized_difference(image, bands):
+    return _combine(image, bands, '(b1 - b2)/(b1 + b2)', 'nd_${b1}_${b2}')
+
+
+def _diff(image, bands):
+    return _combine(image, bands, 'b1 - b2', '${b1}-${b2}')
+
+
+def _combine(image, bands, expression, name_template):
+    existing_bands = image.bandNames().filter(ee.Filter(
+        ee.Filter.inList('item', bands)
+    ))
+    number_of_bands = existing_bands.size()
+
+    def combine_two(b1, b2):
+        name = ee.String(name_template) \
+            .replace('\\$\\{b1}', b1.bandNames().get(0)) \
+            .replace('\\$\\{b2}', b2.bandNames().get(0))
+        return b1.expression(expression, {
+            'b1': b1,
+            'b2': b2
+        }).rename([name])
+
+    # Hack to get 0 when there are no matching bands, -1 otherwise
+    last_index = number_of_bands.divide(number_of_bands).multiply(-1)
+    combinations = ee.Image(
+        existing_bands
+            .slice(0, last_index)
+            .map(lambda band1: existing_bands
+                 .slice(existing_bands.indexOf(ee.String(band1)).add(1))
+                 .map(lambda band2: combine_two(image.select([ee.String(band1)]), image.select([ee.String(band2)])))
+                 )
+            .flatten()
+            .iterate(lambda band, image:
+                     ee.Image(image).addBands(band)
+                     , ee.Image()))
+    return combinations.select(
+        ee.List.sequence(1, combinations.bandNames().size().subtract(1))
+    )
 
 
 _colors = [

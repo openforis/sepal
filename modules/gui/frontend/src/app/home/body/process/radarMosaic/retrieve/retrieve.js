@@ -35,7 +35,8 @@ class Retrieve extends React.Component {
                 {value: 'VV_mean', label: <span>VV<sub>mean</sub></span>},
                 {value: 'VV_median', label: <span>VV<sub>med</sub></span>},
                 {value: 'VV_max', label: <span>VV<sub>max</sub></span>},
-                {value: 'VV_stdDev', label: <span>VV<sub>sd</sub></span>}
+                {value: 'VV_stdDev', label: <span>VV<sub>sd</sub></span>},
+                {value: 'VV_CV', label: <span>VV<sub>cv</sub></span>}
             ]
         },
         {
@@ -44,7 +45,8 @@ class Retrieve extends React.Component {
                 {value: 'VH_mean', label: <span>VH<sub>mean</sub></span>},
                 {value: 'VH_median', label: <span>VH<sub>med</sub></span>},
                 {value: 'VH_max', label: <span>VH<sub>max</sub></span>},
-                {value: 'VH_stdDev', label: <span>VH<sub>sd</sub></span>}
+                {value: 'VH_stdDev', label: <span>VH<sub>sd</sub></span>},
+                {value: 'VH_CV', label: <span>VH<sub>cv</sub></span>}
             ]
         }
     ]
