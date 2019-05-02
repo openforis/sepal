@@ -8,15 +8,23 @@ import React from 'react'
 import Tooltip from 'widget/tooltip'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
+import withForwardedRef from 'ref'
 
 const CLICK_HOLD_DELAY_MS = 750
 const CLICK_CANCEL_DELAY_MS = 250
 
 const windowMouseUp$ = fromEvent(window, 'mouseup').pipe(distinctUntilChanged())
 
-export class Button extends React.Component {
-    button = React.createRef()
+class _Button extends React.Component {
     subscriptions = []
+
+    constructor(props) {
+        super(props)
+        const {forwardedRef, onClickHold} = props
+        this.button = forwardedRef
+            ? forwardedRef
+            : onClickHold && React.createRef()
+    }
 
     stopPropagation() {
         const {link, stopPropagation = !link} = this.props
@@ -252,6 +260,12 @@ export class Button extends React.Component {
     }
 }
 
+export const Button = (
+    withForwardedRef(
+        _Button
+    )
+)
+
 Button.propTypes = {
     additionalClassName: PropTypes.string,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
@@ -261,6 +275,7 @@ Button.propTypes = {
     disabled: PropTypes.any,
     downloadFilename: PropTypes.any,
     downloadUrl: PropTypes.any,
+    forwardedRef: PropTypes.object,
     icon: PropTypes.string,
     iconFlipHorizontal: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
