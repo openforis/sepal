@@ -1,12 +1,12 @@
-import _ from 'lodash'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {fromEvent} from 'rxjs'
 import {Button} from 'widget/button'
-import FloatingBox from 'widget/floatingBox'
 import {Input} from 'widget/form'
+import {fromEvent} from 'rxjs'
+import FloatingBox from 'widget/floatingBox'
 import Label from 'widget/label'
 import List from 'widget/list'
+import PropTypes from 'prop-types'
+import React from 'react'
+import _ from 'lodash'
 import styles from './yearPicker.module.css'
 
 class YearPicker extends React.Component {
@@ -61,15 +61,15 @@ class YearPicker extends React.Component {
         const {edit} = this.state
         return (
             <Button additionalClassName={styles.panelTrigger}
-                    chromeless
-                    icon='calendar-alt'
-                    size='small'
-                    onClick={() => {
-                        if (!edit) {
-                            this.input.current.focus()
-                        }
-                        this.editYear(!edit)
-                    }}/>
+                chromeless
+                icon='calendar-alt'
+                size='small'
+                onClick={() => {
+                    if (!edit) {
+                        this.input.current.focus()
+                    }
+                    this.editYear(!edit)
+                }}/>
         )
     }
 
@@ -121,14 +121,14 @@ class YearPicker extends React.Component {
 }
 
 YearPicker.propTypes = {
+    autoFocus: PropTypes.any,
     className: PropTypes.string,
-    year: PropTypes.object,
     endYear: PropTypes.any,
     input: PropTypes.object,
     placement: PropTypes.string,
     portal: PropTypes.object,
     startYear: PropTypes.any,
-    autoFocus: PropTypes.any,
+    year: PropTypes.object,
     onChange: PropTypes.func
 }
 
@@ -159,13 +159,13 @@ export class YearPickerControl extends React.Component {
 }
 
 YearPickerControl.propTypes = {
+    close: PropTypes.func,
     date: PropTypes.object,
     endYear: PropTypes.any,
     input: PropTypes.object,
     portal: PropTypes.object,
     resolution: PropTypes.string,
-    startYear: PropTypes.any,
-    close: PropTypes.func
+    startYear: PropTypes.any
 }
 
 export default YearPicker

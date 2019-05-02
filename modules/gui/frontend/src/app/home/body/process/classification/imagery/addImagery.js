@@ -1,16 +1,16 @@
+import {Field, form} from 'widget/form'
+import {PanelButtons} from 'widget/panel'
+import {activatable} from 'widget/activation/activatable'
+import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import AssetSection from './assetSection'
+import FormPanel from 'widget/formPanel'
+import PanelSections from 'widget/panelSections'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg} from 'translate'
-import {activatable} from 'widget/activation/activatable'
-import {Field, form} from 'widget/form'
-import FormPanel from 'widget/formPanel'
-import {PanelButtons} from 'widget/panel'
-import PanelSections from 'widget/panelSections'
-import styles from './addImagery.module.css'
-import AssetSection from './assetSection'
 import RecipeSection from './recipeSection'
 import SectionSelection from './sectionSelection'
+import styles from './addImagery.module.css'
 
 const fields = {
     section: new Field()
@@ -79,18 +79,18 @@ class _AddImagery extends React.Component {
     getSelectedImage() {
         const {inputs: {section, recipe, asset}} = this.props
         switch (section.value) {
-            case 'ASSET':
-                return {
-                    type: 'ASSET',
-                    id: asset.value
-                }
-            case 'RECIPE_REF':
-                return {
-                    type: 'RECIPE_REF',
-                    id: recipe.value
-                }
-            default:
-                throw new Error('Unexpected image section: ' + section.value)
+        case 'ASSET':
+            return {
+                type: 'ASSET',
+                id: asset.value
+            }
+        case 'RECIPE_REF':
+            return {
+                type: 'RECIPE_REF',
+                id: recipe.value
+            }
+        default:
+            throw new Error('Unexpected image section: ' + section.value)
         }
 
     }

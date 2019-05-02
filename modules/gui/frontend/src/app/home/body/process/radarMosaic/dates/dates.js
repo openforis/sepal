@@ -1,14 +1,14 @@
-import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import moment from 'moment'
-import React from 'react'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
-import DatePicker, {maxDate, minDate, momentDate} from 'widget/datePicker'
 import {ErrorMessage, Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {msg} from 'translate'
+import Buttons from 'widget/buttons'
+import DatePicker, {maxDate, minDate, momentDate} from 'widget/datePicker'
+import React from 'react'
 import YearPicker from 'widget/yearPicker'
+import moment from 'moment'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -100,12 +100,12 @@ class Dates extends React.Component {
     renderDatePickers() {
         const {inputs: {type}} = this.props
         switch (type.value) {
-            case 'POINT_IN_TIME_MOSAIC':
-                return this.renderPointInTimeMosaic()
-            case 'CUSTOM_TIME_SCAN':
-                return this.renderCustomTimeScan()
-            default:
-                return this.renderYearlyTimeScan()
+        case 'POINT_IN_TIME_MOSAIC':
+            return this.renderPointInTimeMosaic()
+        case 'CUSTOM_TIME_SCAN':
+            return this.renderCustomTimeScan()
+        default:
+            return this.renderYearlyTimeScan()
         }
     }
 

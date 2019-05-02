@@ -1,7 +1,7 @@
 import {connect, select} from 'store'
 import {msg} from 'translate'
-import Keybinding from 'widget/keybinding'
 import {sepalMap} from './map'
+import Keybinding from 'widget/keybinding'
 import Labels from 'app/home/map/labels'
 import PropTypes from 'prop-types'
 import React from 'react'
