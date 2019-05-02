@@ -76,16 +76,16 @@ class Mosaic(object):
         return common_bands
 
     def _to_mosaic(self, bands, collection):
-        collection = collection.select(bands)
-        distance_bands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
         if self.mosaic_def.median_composite:
             mosaic = collection.select(bands).median()
         else:
+            distance_bands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
+
             def add_distance(image):
                 distanceByBand = image.expression(
                     '1 - abs((i - m) / (i + m))', {
                         'i': image.select(distance_bands),
-                        'm': collection.select(distance_bands).median().select(distance_bands)})
+                        'm': collection.select(distance_bands).median()})
                 return image.addBands(
                     distanceByBand.reduce(ee.Reducer.sum()).rename(['distanceToMedian'])
                 )
@@ -102,6 +102,7 @@ class Mosaic(object):
             return self.mosaic_def.bands
         else:
             return bands
+
 
 class DataSet(object):
     @abstractmethod
