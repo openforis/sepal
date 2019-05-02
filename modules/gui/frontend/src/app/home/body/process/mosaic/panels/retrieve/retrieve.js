@@ -59,6 +59,13 @@ class Retrieve extends React.Component {
             },
             {
                 options: [
+                    option('brightness'),
+                    option('greenness'),
+                    option('wetness'),
+                ]
+            },
+            {
+                options: [
                     option('unixTimeDays'),
                     option('dayOfYear'),
                     option('daysFromTarget')

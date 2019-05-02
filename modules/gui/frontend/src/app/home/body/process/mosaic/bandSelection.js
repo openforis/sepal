@@ -39,6 +39,7 @@ class BandSelection extends React.Component {
                 {value: 'swir2, nir, red', label: 'SWIR2, NIR, RED'},
                 {value: 'swir2, swir1, red', label: 'SWIR2, SWIR1, RED'},
                 {value: 'swir2, nir, green', label: 'SWIR2, NIR, GREEN'},
+                {value: 'brightness, greenness, wetness', label: 'Brightness, Greenness, Wetness'}
             ]
         },
         {

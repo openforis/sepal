@@ -293,6 +293,12 @@ _scale_by_band = {
     'cirrus': 30,
     'thermal': 100,
     'thermal2': 100,
+    'brightness': 30,
+    'greenness': 30,
+    'wetness': 30,
+    'fourth': 30,
+    'fifth': 30,
+    'sixth': 30,
     'dayOfYear': 30,
     'daysFromTarget': 30,
     'unixTimeDays': 30

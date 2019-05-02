@@ -101,6 +101,10 @@ _toa_viz_by_bands = {
         'bands': 'swir2,nir,green',
         'min': '0, 500, 400',
         'max': '1800, 6000, 3500'},
+    'brightness, greenness, wetness': lambda params: {
+        'bands': 'brightness,greenness,wetness',
+        'min': '1000, -1000, -1800',
+        'max': '7000, 1800, 3200'},
     'unixTimeDays': lambda params: {
         'bands': 'unixTimeDays',
         'min': params['from_days_since_epoch'],
@@ -148,6 +152,10 @@ _sr_viz_by_bands = {
         'bands': 'swir2,nir,green',
         'min': '100, 500, 400',
         'max': '3300, 7500, 3000'},
+    'brightness, greenness, wetness': lambda params: {
+        'bands': 'brightness,greenness,wetness',
+        'min': '1000, -1000, -1800',
+        'max': '7000, 1800, 3200'},
     'unixTimeDays': lambda params: {
         'bands': 'unixTimeDays',
         'min': params['from_days_since_epoch'],

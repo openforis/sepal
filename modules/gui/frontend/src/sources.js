@@ -29,13 +29,13 @@ export const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'thermal'
+                'aerosol', 'thermal', 'brightness', 'greenness', 'wetness'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2'
+                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
             ]
         }
     },
@@ -47,13 +47,13 @@ export const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal'
+                'thermal', 'brightness', 'greenness', 'wetness'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'pan', 'thermal', 'thermal2'
+                'pan', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
             ]
         }
     },
@@ -66,13 +66,13 @@ export const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal'
+                'thermal', 'brightness', 'greenness', 'wetness'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal'
+                'thermal', 'brightness', 'greenness', 'wetness'
             ]
         }
     },
@@ -84,13 +84,13 @@ export const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'thermal'
+                'aerosol', 'thermal', 'brightness', 'greenness', 'wetness'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2'
+                'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
             ]
         }
     },
@@ -102,13 +102,13 @@ export const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal'
+                'thermal', 'brightness', 'greenness', 'wetness'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'pan', 'thermal', 'thermal2'
+                'pan', 'thermal', 'thermal2', 'brightness', 'greenness', 'wetness'
             ]
         }
     },
@@ -121,13 +121,13 @@ export const dataSetById = {
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal'
+                'thermal', 'brightness', 'greenness', 'wetness'
             ]
         },
         TOA: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
-                'thermal'
+                'thermal', 'brightness', 'greenness', 'wetness'
             ]
         }
     },
@@ -140,14 +140,14 @@ export const dataSetById = {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
                 'redEdge1', 'redEdge2', 'redEdge3', 'redEdge4',
-                'aerosol', 'waterVapor', 'cirrus'
+                'aerosol', 'waterVapor', 'cirrus', 'brightness', 'greenness', 'wetness'
             ]
         },
         SR: {
             bands: [
                 'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
                 'redEdge1', 'redEdge2', 'redEdge3', 'redEdge4',
-                'aerosol', 'waterVapor'
+                'aerosol', 'waterVapor', 'brightness', 'greenness', 'wetness'
             ]
         },
     }

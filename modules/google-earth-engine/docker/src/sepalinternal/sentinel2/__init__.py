@@ -96,6 +96,12 @@ _scale_by_band = {
     'cirrus': 60,
     'swir1': 20,
     'swir2': 20,
+    'brightness': 10,
+    'greenness': 10,
+    'wetness': 10,
+    'fourth': 10,
+    'fifth': 10,
+    'sixth': 10,
     'dayOfYear': 10,
     'daysFromTarget': 10,
     'unixTimeDays': 10
