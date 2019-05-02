@@ -1,7 +1,7 @@
-import _ from 'lodash'
+import {fromEvent} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {fromEvent} from 'rxjs'
+import _ from 'lodash'
 
 const handlers = []
 

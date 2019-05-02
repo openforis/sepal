@@ -1,20 +1,19 @@
-import {recipe} from 'app/home/body/process/recipeContext'
-import MapToolbar from 'app/home/map/mapToolbar'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
 import {Content, SectionLayout} from 'widget/sectionLayout'
+import {defaultModel} from './radarMosaicRecipe'
+import {recipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'stateUtils'
 import AoiLayer from '../mosaic/aoiLayer'
 import BandSelection from './bandSelection'
-import styles from './radarMosaic.module.css'
+import MapToolbar from 'app/home/map/mapToolbar'
 import MosaicPreview from './radarMosaicPreview'
-import {defaultModel} from './radarMosaicRecipe'
 import RadarMosaicToolbar from './radarMosaicToolbar'
+import React from 'react'
+import styles from './radarMosaic.module.css'
 
 const mapRecipeToProps = recipe => ({
     recipeId: selectFrom(recipe, 'id'),
     initialized: selectFrom(recipe, 'ui.initialized'),
 })
-
 
 class RadarMosaic extends React.Component {
     render() {

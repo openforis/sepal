@@ -345,11 +345,10 @@ export const initValues = ({getModel, getValues, modelToValues, onInitialized}) 
                 this.setState(prevState => ({...prevState, initialized: true}))
             }
 
-            convertModelToValues(model, values = {}) {
+            convertModelToValues(model) {
                 const valuesFromModel = modelToValues(model)
                 onInitialized({
                     model,
-                    // values: _.merge(valuesFromModel, values),
                     values: valuesFromModel,
                     props: this.props
                 })

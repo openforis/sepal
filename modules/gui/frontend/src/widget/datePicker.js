@@ -1,16 +1,16 @@
-import guid from 'guid'
-import _ from 'lodash'
-import moment from 'moment'
 import * as PropTypes from 'prop-types'
-import React, {Component} from 'react'
-import {activatable} from 'widget/activation/activatable'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
-import {isMobile} from 'widget/userAgent'
-import styles from './datePicker.module.css'
-import Label from './label'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from './panel'
 import {Scrollable, ScrollableContainer} from './scrollable'
+import {activatable} from 'widget/activation/activatable'
+import {isMobile} from 'widget/userAgent'
+import Label from './label'
+import React, {Component} from 'react'
+import _ from 'lodash'
+import guid from 'guid'
+import moment from 'moment'
+import styles from './datePicker.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -71,10 +71,10 @@ export default class DatePicker extends React.Component {
                                 }}
                             />
                             <Button additionalClassName={styles.panelTrigger}
-                                    chromeless
-                                    icon='calendar-alt'
-                                    size='small'
-                                    onClick={() => panel.activate()}
+                                chromeless
+                                icon='calendar-alt'
+                                size='small'
+                                onClick={() => panel.activate()}
                             />
                         </div>
                     </div>
@@ -105,13 +105,12 @@ export default class DatePicker extends React.Component {
 }
 
 DatePicker.propTypes = {
+    endDate: PropTypes.any.isRequired,
     input: PropTypes.object.isRequired,
     startDate: PropTypes.any.isRequired,
-    endDate: PropTypes.any.isRequired,
-    label: PropTypes.string,
-    autoFocus: PropTypes.any
+    autoFocus: PropTypes.any,
+    label: PropTypes.string
 }
-
 
 class _DatePickerPanel extends React.Component {
     state = {}
@@ -206,19 +205,19 @@ class _DatePickerPanel extends React.Component {
                 {moment.weekdaysShort().map(weekday =>
                     <Label key={weekday} msg={weekday}/>
                 )}
-                {_.times(daysToRender, (i) => {
-                        const buttonDate = moment(firstToRender).add(i, 'day')
-                        const dayOfMonth = buttonDate.format('DD')
-                        return (
-                            <CalendarButton
-                                key={i}
-                                label={dayOfMonth}
-                                selected={buttonDate.isSame(date, 'day')}
-                                className={styles.date}
-                                disabled={i < firstIndex || i > lastIndex}
-                                onClick={() => this.updateDate('date', dayOfMonth)}/>
-                        )
-                    }
+                {_.times(daysToRender, i => {
+                    const buttonDate = moment(firstToRender).add(i, 'day')
+                    const dayOfMonth = buttonDate.format('DD')
+                    return (
+                        <CalendarButton
+                            key={i}
+                            label={dayOfMonth}
+                            selected={buttonDate.isSame(date, 'day')}
+                            className={styles.date}
+                            disabled={i < firstIndex || i > lastIndex}
+                            onClick={() => this.updateDate('date', dayOfMonth)}/>
+                    )
+                }
                 )}
             </div>
         )
@@ -291,9 +290,9 @@ class CalendarButton extends Component {
 }
 
 CalendarButton.propTypes = {
+    className: PropTypes.any,
     label: PropTypes.any,
     selected: PropTypes.any,
-    className: PropTypes.any,
     onClick: PropTypes.any
 }
 
