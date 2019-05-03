@@ -54,21 +54,43 @@ class _Button extends React.Component {
             size = 'normal',
             shape = 'rectangle',
             alignment = 'center',
-            onClickHold
+            width = 'fit',
+            onClickHold,
+            hover,
+            disableTransitions
         } = this.props
         return className ? className : [
             styles.button,
-            chromeless ? styles.chromeless : null,
-            lookStyles.look,
-            lookStyles[look],
-            chromeless ? lookStyles.chromeless : null,
             styles[size],
             styles[shape],
             styles[alignment],
+            styles[width],
+            lookStyles.look,
+            lookStyles[look],
+            chromeless ? lookStyles.chromeless : null,
+            hover === true ? lookStyles.hover : null,
+            hover === false ? lookStyles.noHover : null,
+            disableTransitions ? lookStyles.noTransitions : null,
             this.nonInteractive() ? lookStyles.nonInteractive : null,
             onClickHold ? styles.hold : null,
             additionalClassName
         ].join(' ')
+    }
+
+    handleMouseOver(e) {
+        const {onMouseOver} = this.props
+        onMouseOver && onMouseOver(e)
+        if (this.stopPropagation()) {
+            e.stopPropagation()
+        }
+    }
+
+    handleMouseOut(e) {
+        const {onMouseOut} = this.props
+        onMouseOut && onMouseOut(e)
+        if (this.stopPropagation()) {
+            e.stopPropagation()
+        }
     }
 
     handleMouseDown(e) {
@@ -136,6 +158,8 @@ class _Button extends React.Component {
                 className={this.classNames()}
                 tabIndex={tabIndex}
                 disabled={disabled}
+                onMouseOver={e => this.handleMouseOver(e)}
+                onMouseOut={e => this.handleMouseOut(e)}
                 onMouseDown={e => this.handleMouseDown(e)}
                 onClick={e => onClickHold ? e.stopPropagation() : this.handleClick(e)}
             >
@@ -273,14 +297,16 @@ Button.propTypes = {
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    disableTransitions: PropTypes.any,
     downloadFilename: PropTypes.any,
     downloadUrl: PropTypes.any,
     forwardedRef: PropTypes.object,
+    hover: PropTypes.any,
     icon: PropTypes.string,
     iconFlipHorizontal: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
     iconType: PropTypes.string,
-    label: PropTypes.string,
+    label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     link: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'add', 'apply', 'cancel']),
     shape: PropTypes.oneOf(['rectangle', 'pill', 'circle', 'none']),
@@ -292,9 +318,12 @@ Button.propTypes = {
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
     type: PropTypes.oneOf(['button', 'submit', 'reset']),
+    width: PropTypes.oneOf(['fit', 'fill']),
     onClick: PropTypes.func,
     onClickHold: PropTypes.func,
-    onMouseDown: PropTypes.func
+    onMouseDown: PropTypes.func,
+    onMouseOut: PropTypes.func,
+    onMouseOver: PropTypes.func
 }
 
 export const ButtonGroup = ({children, type = 'horizontal-wrap', className}) =>

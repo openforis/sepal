@@ -10,7 +10,6 @@
     --x-large-font-size: 1.1rem;
     --xx-large-font-size: 1.4rem;
     --ratio: 2.2;
-
     flex-shrink: 0;
     position: relative;
     cursor: pointer;
@@ -20,9 +19,7 @@
     min-height: fit-content;
     height: calc(var(--ratio) * var(--font-size));
     min-width: calc(var(--ratio) * var(--font-size));
-    width: fit-content;
     padding: 0; /* Needed for alignment of button contents */
-
 }
 
 @media only screen and (max-width: 500px) {
@@ -99,6 +96,17 @@
     background: none !important;
 }
 
+/* fill mode */
+
+.button.fit {
+    width: fit-content;
+}
+
+.button.fill {
+    width: 100%;
+}
+
+/* contents */
 .button > * {
     white-space: nowrap;
     position: relative;
@@ -108,6 +116,8 @@
 .button > .contents > * + * {
     margin-left: .5rem;
 }
+
+/* click-hold */
 
 .button.hold {
     outline: none;
@@ -143,6 +153,8 @@
         background-color: hsla(var(--look-cancel-h), 70%, var(--look-cancel-l), 1);
     }
 }
+
+/* button group */
 
 .groupContainer {
     /* prevent unwanted scrolling due to negative margins */
