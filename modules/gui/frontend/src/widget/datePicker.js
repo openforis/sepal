@@ -174,19 +174,43 @@ class _DatePickerPanel extends React.Component {
         return (
             <div className={styles.months}>
                 {months.map((month, i) =>
-                    <CalendarButton
-                        key={month}
-                        label={month}
-                        selected={month === selectedMonth}
-                        className={styles.month}
-                        disabled={i < firstMonthIndex || i > lastMonthIndex}
-                        onClick={() => this.updateDate('month', month)}/>
+                    this.renderMonthButton({
+                        month,
+                        selected: month === selectedMonth,
+                        disabled: i < firstMonthIndex || i > lastMonthIndex
+                    })
                 )}
             </div>
         )
     }
 
+    renderMonthButton({month, selected, disabled}) {
+        return (
+            <CalendarButton
+                key={month}
+                label={month}
+                selected={selected}
+                disabled={disabled}
+                onClick={() => this.updateDate('month', month)}/>
+        )
+    }
+
     renderDays() {
+        return (
+            <div className={styles.days}>
+                {this.renderWeekDaysLabels()}
+                {this.renderDaysOfMonth()}
+            </div>
+        )
+    }
+
+    renderWeekDaysLabels() {
+        return moment.weekdaysShort().map(weekday =>
+            <Label key={weekday} msg={weekday}/>
+        )
+    }
+
+    renderDaysOfMonth() {
         const {date} = this.state
         const {startDate, endDate} = this.props
         const firstOfMonth = moment(date).startOf('month')
@@ -196,31 +220,30 @@ class _DatePickerPanel extends React.Component {
         const lastDate = date.isSame(endDate, 'month') ? endDate : lastOfMonth
         const lastDay = lastDate.date()
         const lastToRender = moment(lastOfMonth).endOf('week')
-        const daysToRender = lastToRender.diff(firstToRender, 'days') + 1
         const indexOffset = firstOfMonth.day() - 1
+        const daysToRender = lastToRender.diff(firstToRender, 'days') + 1
         const firstIndex = firstDay + indexOffset
         const lastIndex = lastDay + indexOffset
+        return _.times(daysToRender,
+            i => this.renderMonthDay({
+                date,
+                i,
+                disabled: i < firstIndex || i > lastIndex,
+                firstToRender
+            })
+        )
+    }
 
+    renderMonthDay({date, i, firstToRender, disabled}) {
+        const buttonDate = moment(firstToRender).add(i, 'day')
+        const dayOfMonth = buttonDate.format('DD')
         return (
-            <div className={styles.days}>
-                {moment.weekdaysShort().map(weekday =>
-                    <Label key={weekday} msg={weekday}/>
-                )}
-                {_.times(daysToRender, i => {
-                    const buttonDate = moment(firstToRender).add(i, 'day')
-                    const dayOfMonth = buttonDate.format('DD')
-                    return (
-                        <CalendarButton
-                            key={i}
-                            label={dayOfMonth}
-                            selected={buttonDate.isSame(date, 'day')}
-                            className={styles.date}
-                            disabled={i < firstIndex || i > lastIndex}
-                            onClick={() => this.updateDate('date', dayOfMonth)}/>
-                    )
-                }
-                )}
-            </div>
+            <CalendarButton
+                key={i}
+                label={dayOfMonth}
+                selected={buttonDate.isSame(date, 'day')}
+                disabled={disabled}
+                onClick={() => this.updateDate('date', dayOfMonth)}/>
         )
     }
 
@@ -269,24 +292,17 @@ class _DatePickerPanel extends React.Component {
 }
 
 class CalendarButton extends Component {
-    element = React.createRef()
-
     render() {
-        let {label, selected, disabled, className, onClick} = this.props
+        const {label, selected, disabled, onClick} = this.props
         return (
             <Button
                 chromeless={!selected}
                 look={selected ? 'highlight' : 'transparent'}
+                label={label}
                 disabled={disabled}
-                additionalClassName={className}
-                onClick={onClick}>
-                <span ref={this.element}>{label}</span>
-            </Button>
+                onClick={onClick}
+            />
         )
-    }
-
-    componentDidMount() {
-        this.element.current.parentNode.parentNode.scrollTop = this.element.current.parentNode.offsetTop
     }
 }
 
