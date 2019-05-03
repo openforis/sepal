@@ -53,6 +53,13 @@ module.exports = {
             "error",
             4
         ],
+        "key-spacing": [
+            "error", {
+                "beforeColon": false,
+                "afterColon": true,
+                "mode": "strict"
+            }
+        ],
         "linebreak-style": [
             "error",
             "unix"
