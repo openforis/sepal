@@ -6,3 +6,8 @@
     font-style: inherit;
     color: #fff;
 }
+
+.options {
+    --background-color: hsla(0, 0%, 0%, .9);
+    background-color: var(--background-color);
+}

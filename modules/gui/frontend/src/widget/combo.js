@@ -107,11 +107,12 @@ class Combo extends React.Component {
                 element={this.input.current}
                 placement={placement}>
                 <List
-                    className={optionsClassName}
+                    className={optionsClassName || styles.options}
                     options={flattenedOptions}
                     selectedOption={selectedOption}
                     onSelect={option => this.selectOption(option)}
                     onCancel={() => this.resetFilter()}
+                    keyboard={true}
                 />
             </FloatingBox>
         )
