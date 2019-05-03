@@ -153,6 +153,7 @@ export class YearPickerControl extends React.Component {
                 selectedOption={selectedOption}
                 onSelect={option => this.selectYear(option.value)}
                 onCancel={close}
+                overScroll
             />
         )
     }
