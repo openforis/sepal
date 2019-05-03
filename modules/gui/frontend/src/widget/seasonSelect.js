@@ -264,42 +264,50 @@ class Axis extends React.Component {
     }
 
     render() {
-        const {dateRange} = this.props
-        const ticks = [...Array(25).keys()]
-            .map(i => [dateRange.monthIndexToPosition(i), i])
-            .filter(([position, _i]) => position >= 0)
-            .map(([position, i]) => {
-                const axisStyle = {left: `${position}px`}
-                return <div
-                    key={i}
-                    style={axisStyle}/>
-            }
-            )
-        const months = [...Array(24).keys()]
-            .filter(i => i % 2)
-            .map(i => {
-                const monthStyle = {
-                    left: `${dateRange.monthIndexToPosition(i)}px`,
-                    width: `${dateRange.monthIndexToPosition(i + 1) - dateRange.monthIndexToPosition(i)}px`,
-                }
-                return <div
-                    key={i}
-                    style={monthStyle}>
-                    {moment(dateRange.state.minDate).add(i, 'months').format('MMM')}
-                </div>
-            }
-            )
         return (
             <div>
                 <div className={styles.axis}/>
                 <div className={styles.ticks}>
-                    {ticks}
+                    {this.renderTicks()}
                 </div>
                 <div className={styles.months}>
-                    {months}
+                    {this.renderMonths()}
                 </div>
             </div>
         )
+    }
+
+    renderTicks() {
+        const {dateRange} = this.props
+        return [...Array(25).keys()]
+            .map(i => dateRange.monthIndexToPosition(i))
+            .filter(position => position >= 0)
+            .map((position, index) =>
+                <div
+                    key={index}
+                    className={styles.tick}
+                    style={{'--left': position}}
+                />
+            )
+    }
+
+    renderMonths() {
+        const {dateRange} = this.props
+        return [...Array(24).keys()]
+            .filter(i => i % 2)
+            .map(i => ({
+                label: moment(dateRange.state.minDate).add(i, 'months').format('MMM'),
+                left: dateRange.monthIndexToPosition(i),
+                width: dateRange.monthIndexToPosition(i + 1) - dateRange.monthIndexToPosition(i)
+            }))
+            .map(({label, left, width}, index) =>
+                <div
+                    key={index}
+                    className={styles.month}
+                    style={{'--left': left, '--width': width}}>
+                    {label}
+                </div>
+            )
     }
 }
 

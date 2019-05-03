@@ -43,7 +43,15 @@
     bottom: -0.5rem;
 }
 
+.tick {
+    --left: 0;
+    left: calc(var(--left) * 1px);
+}
+
 @media (max-width: 500px) {
+    .ticks {
+        display: none;
+    }
     .months {
         display: none;
     }
@@ -54,6 +62,13 @@
     top: 1rem;
     text-align: center;
     user-select: none;
+}
+
+.month {
+    --left: 0;
+    --width: 0;
+    left: calc(var(--left) * 1px);
+    width: calc(var(--width) * 1px);
 }
 
 .centerMarker {
