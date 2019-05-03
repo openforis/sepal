@@ -54,6 +54,8 @@ export default class List extends React.Component {
         const keymap = {
             Escape: onCancel ? onCancel : null,
             Enter: () => this.selectHighlighted(),
+            ArrowLeft: () => this.highlightPrevious(),
+            ArrowRight: () => this.highlightNext(),
             ArrowUp: () => this.highlightPrevious(),
             ArrowDown: () => this.highlightNext(),
             Home: () => this.highlightFirst(),
