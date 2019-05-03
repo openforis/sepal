@@ -38,6 +38,7 @@
 .years {
     grid-area: years;
     width: 4rem;
+    position: relative;
 }
 
 .months {

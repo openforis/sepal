@@ -2,10 +2,10 @@ import * as PropTypes from 'prop-types'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from './panel'
-import {Scrollable, ScrollableContainer} from './scrollable'
 import {activatable} from 'widget/activation/activatable'
 import {isMobile} from 'widget/userAgent'
 import Label from './label'
+import List from 'widget/list'
 import React, {Component} from 'react'
 import _ from 'lodash'
 import guid from 'guid'
@@ -147,19 +147,17 @@ class _DatePickerPanel extends React.Component {
         const startYear = startDate.year()
         const endYear = endDate.year()
         const selectedYear = date.year()
+        const options = _.range(startYear, endYear + 1).map(year => ({label: year, value: year}))
+        const selectedOption = _.find(options, ({value}) => value === selectedYear)
         return (
-            <ScrollableContainer className={styles.years}>
-                <Scrollable>
-                    {_.range(startYear, endYear + 1).map(year =>
-                        <CalendarButton
-                            key={year}
-                            label={year}
-                            selected={year === selectedYear}
-                            className={styles.year}
-                            onClick={() => this.updateDate('year', year)}/>
-                    )}
-                </Scrollable>
-            </ScrollableContainer>
+            <div className={styles.years}>
+                <List
+                    options={options}
+                    selectedOption={selectedOption}
+                    onSelect={option => this.updateDate('year', option.value)}
+                    overScroll={true}
+                />
+            </div>
         )
     }
 
@@ -275,7 +273,7 @@ class CalendarButton extends Component {
         return (
             <Button
                 chromeless={!selected}
-                look={selected ? 'highlight' : 'default'}
+                look={selected ? 'highlight' : 'transparent'}
                 disabled={disabled}
                 additionalClassName={className}
                 onClick={onClick}>
