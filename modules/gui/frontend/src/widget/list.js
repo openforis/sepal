@@ -123,9 +123,12 @@ export default class List extends React.Component {
         return (
             <li key={option.value || index}>
                 <Button
+                    chromeless
+                    look='transparent'
                     label={option.label}
                     width='fill'
                     alignment='left'
+                    disabled
                 />
             </li>
         )
