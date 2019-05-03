@@ -257,6 +257,6 @@ Combo.propTypes = {
     standalone: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
-    onCancel:  PropTypes.func,
-    onChange:  PropTypes.func
+    onCancel: PropTypes.func,
+    onChange: PropTypes.func
 }
