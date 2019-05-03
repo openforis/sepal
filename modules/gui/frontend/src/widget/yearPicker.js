@@ -5,11 +5,6 @@ import _ from 'lodash'
 import styles from './yearPicker.module.css'
 
 export default class YearPicker extends React.Component {
-    subscriptions = []
-    input = React.createRef()
-    list = React.createRef()
-    state = {edit: false}
-
     getOptions() {
         const {startYear, endYear} = this.props
         return _.concat(
