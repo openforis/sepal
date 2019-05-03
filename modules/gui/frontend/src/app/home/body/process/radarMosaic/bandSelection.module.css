@@ -11,12 +11,6 @@
     width: fit-content;
 }
 
-/* .comboInput, .comboInput:focus, .comboInput:hover {
-    width: 17rem;
-    height: 3rem;
-    background-color: rgba(19, 19, 20, 0.91);
-} */
-
 .combo {
     --background-color: hsla(0, 0%, 10%, .9);
     background-color: var(--background-color);

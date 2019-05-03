@@ -171,8 +171,6 @@ const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =
             autoFocus={!isMobile()}
             placement='above'
             standalone
-            inputClassName={styles.comboInput}
-            optionsClassName={styles.comboOptions}
             onChange={option => {
                 recipeActions.setBands(option.value).dispatch()
                 onChange()
