@@ -29,11 +29,11 @@ class Combo extends React.Component {
     }
 
     render() {
-        const {standalone, disabled, className} = this.props
+        const {standalone, disabled, className, onCancel} = this.props
         const {showOptions} = this.state
-        const onClick = () =>
+        const onClick = e =>
             standalone
-                ? null
+                ? onCancel && onCancel(e)
                 : showOptions
                     ? this.hideOptions()
                     : disabled
