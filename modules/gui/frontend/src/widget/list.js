@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {EMPTY, Subject, animationFrameScheduler, interval} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {debounceTime, distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
@@ -6,7 +7,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import _ from 'lodash'
-import lookStyles from 'style/look.module.css'
 import styles from './list.module.css'
 
 const ANIMATION_SPEED = .2
@@ -46,11 +46,11 @@ export default class List extends React.Component {
     scrollHighlighted$ = new Subject()
     state = {
         highlightedOption: null,
-        mouseOver: null
+        overrideHover: false
     }
 
     render() {
-        const {onCancel, className} = this.props
+        const {onCancel, className, keyboard} = this.props
         const keymap = {
             Escape: onCancel ? onCancel : null,
             Enter: () => this.selectHighlighted(),
@@ -60,7 +60,7 @@ export default class List extends React.Component {
             End: () => this.highlightLast()
         }
         return (
-            <Keybinding keymap={keymap}>
+            <Keybinding keymap={keymap} disabled={!keyboard}>
                 <ReactResizeDetector
                     handleHeight
                     onResize={() => this.scrollHighlighted$.next()}>
@@ -121,21 +121,19 @@ export default class List extends React.Component {
 
     renderNonSelectableOption(option, index) {
         return (
-            <li
-                key={option.value || index}
-                className={[
-                    lookStyles.look,
-                    lookStyles.nonInteractive,
-                    lookStyles.noTransitions,
-                ].join(' ')}>
-                {option.label}
+            <li key={option.value || index}>
+                <Button
+                    label={option.label}
+                    width='fill'
+                    alignment='left'
+                />
             </li>
         )
     }
 
     renderSelectableOption(option) {
         const {selectedOption} = this.props
-        const {mouseOver} = this.state
+        const {overrideHover} = this.state
         const selected = this.isSelected(option)
         const highlighted = this.isHighlighted(option)
         const ref = highlighted
@@ -143,19 +141,20 @@ export default class List extends React.Component {
             : null
         return (
             <li
-                ref={ref}
                 key={option.value}
-                className={[
-                    lookStyles.look,
-                    lookStyles.noTransitions,
-                    mouseOver ? null : lookStyles.noHover,
-                    highlighted || selected ? null : lookStyles.chromeless,
-                    selected ? lookStyles.default : lookStyles.transparent
-                ].join(' ')}
-                onMouseOver={() => this.highlightOption(option)}
-                onMouseOut={() => this.highlightOption(selectedOption)}
-                onClick={() => this.selectOption(option)}>
-                {option.label}
+                ref={ref}>
+                <Button
+                    chromeless={!selected}
+                    look={selected ? 'highlight' : 'transparent'}
+                    label={option.label}
+                    hover={overrideHover ? highlighted : null}
+                    width='fill'
+                    alignment='left'
+                    disableTransitions
+                    onMouseOver={() => this.highlightOption(option)}
+                    onMouseOut={() => this.highlightOption(selectedOption)}
+                    onClick={() => this.selectOption(option)}
+                />
             </li>
         )
     }
@@ -216,35 +215,35 @@ export default class List extends React.Component {
     highlightOption(highlightedOption) {
         this.setState({
             highlightedOption,
-            mouseOver: true
+            overrideHover: false
         })
     }
 
     highlightPrevious() {
         this.setState(prevState => ({
             highlightedOption: this.getPreviousSelectableOption(prevState.highlightedOption),
-            mouseOver: false
+            overrideHover: true
         }), this.scroll)
     }
 
     highlightNext() {
         this.setState(prevState => ({
             highlightedOption: this.getNextSelectableOption(prevState.highlightedOption),
-            mouseOver: false
+            overrideHover: true
         }), this.scroll)
     }
 
     highlightFirst() {
         this.setState({
             highlightedOption: this.getFirstSelectableOption(),
-            mouseOver: false
+            overrideHover: true
         }, this.scroll)
     }
 
     highlightLast() {
         this.setState({
             highlightedOption: this.getLastSelectableOption(),
-            mouseOver: false
+            overrideHover: true
         }, this.scroll)
     }
 
@@ -297,17 +296,10 @@ export default class List extends React.Component {
             filter(option => option)
         )
 
-        // const stop$ = scroll$.pipe(
-        //     withLatestFrom(select$),
-        //     debounceTime(100),
-        //     map(([_, option]) => option)
-        // )
-
         this.subscriptions.push(
             scroll$.subscribe(
                 ({element, value}) => setScrollOffset(element, value)
             ),
-            // stop$.subscribe(
             select$.subscribe(
                 option => {
                     onSelect(option)
@@ -319,6 +311,19 @@ export default class List extends React.Component {
     componentDidMount() {
         this.initializeAutoScroll()
         this.update()
+    }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        if (!_.isEqual(nextProps, this.props)) {
+            return true
+        }
+        if (nextState.overrideHover !== this.state.overrideHover) {
+            return true
+        }
+        if (nextState.overrideHover && nextState.highlightedOption !== this.state.highlightedOption) {
+            return true
+        }
+        return false
     }
 
     componentDidUpdate(prevProps) {
@@ -333,11 +338,17 @@ export default class List extends React.Component {
 }
 
 List.propTypes = {
-    options: PropTypes.any.isRequired,
-    onSelect:  PropTypes.func.isRequired,
+    options: PropTypes.arrayOf(
+        PropTypes.shape({
+            label: PropTypes.oneOfType(PropTypes.number, PropTypes.string),
+            value: PropTypes.any
+        })
+    ).isRequired,
+    onSelect: PropTypes.func.isRequired,
     autoCenter: PropTypes.any,
     className: PropTypes.string,
+    keyboard: PropTypes.any,
     overScroll: PropTypes.any,
     selectedOption: PropTypes.any,
-    onCancel:  PropTypes.func
+    onCancel: PropTypes.func
 }
