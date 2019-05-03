@@ -20,7 +20,6 @@ const mapStateToProps = state => ({
 class Combo extends React.Component {
     subscriptions = []
     input = React.createRef()
-    list = React.createRef()
     state = {
         showOptions: false,
         filter: '',
@@ -103,7 +102,6 @@ class Combo extends React.Component {
         const {flattenedOptions, selectedOption} = this.state
         return (
             <FloatingBox
-                ref={this.list}
                 element={this.input.current}
                 placement={placement}>
                 <List
@@ -170,10 +168,9 @@ class Combo extends React.Component {
         const {onCancel} = this.props
         const click$ = fromEvent(document, 'click')
         const isInputClick = e => this.input.current && this.input.current.contains(e.target)
-        const isListClick = e => this.list.current && this.list.current.contains(e.target)
         this.subscriptions.push(
             click$.subscribe(e => {
-                if (!isInputClick(e) && !isListClick(e)) {
+                if (!isInputClick(e)) {
                     this.setFilter()
                     onCancel && onCancel(e)
                 }
