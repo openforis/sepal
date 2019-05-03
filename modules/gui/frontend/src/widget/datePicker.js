@@ -194,7 +194,7 @@ class _DatePickerPanel extends React.Component {
         const firstDay = date.isSame(startDate, 'month') ? startDate.date() : 1
         const lastDate = date.isSame(endDate, 'month') ? endDate : lastOfMonth
         const lastDay = lastDate.date()
-        const lastToRender = moment(lastDate).endOf('week')
+        const lastToRender = moment(lastOfMonth).endOf('week')
         const daysToRender = lastToRender.diff(firstToRender, 'days') + 1
         const indexOffset = firstOfMonth.day() - 1
         const firstIndex = firstDay + indexOffset
