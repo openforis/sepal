@@ -69,7 +69,6 @@ class Period extends React.Component {
                         input={startYear}
                         startYear={1982}
                         endYear={moment().year()}
-                        errorMessage
                     />
                 </div>
                 <div className={styles.endYearLabel}>
@@ -80,7 +79,6 @@ class Period extends React.Component {
                         input={endYear}
                         startYear={1983}
                         endYear={moment().year()}
-                        errorMessage
                     />
                 </div>
                 <div className={styles.error}>
