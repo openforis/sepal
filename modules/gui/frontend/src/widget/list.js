@@ -340,7 +340,7 @@ export default class List extends React.Component {
 List.propTypes = {
     options: PropTypes.arrayOf(
         PropTypes.shape({
-            label: PropTypes.oneOfType(PropTypes.number, PropTypes.string),
+            label: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
             value: PropTypes.any
         })
     ).isRequired,
