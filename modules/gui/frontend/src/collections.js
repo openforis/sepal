@@ -23,6 +23,19 @@ export const equalsIgnoreFunctions = (o1, o2) =>
         _.pickBy(o2, o => !_.isFunction(o))
     )
 
+export const stripFunctions = obj => {
+    if (_.isArray(obj)) {
+        return _.map(obj, item => _.isFunction(item) ? null : stripFunctions(item))
+    }
+    if (_.isObject(obj)) {
+        return _.mapValues(obj, item => _.isFunction(item) ? null : stripFunctions(item))
+    }
+    return _.isFunction(obj) ? null : obj
+}
+
+export const isEqualIgnoreFunctions = (o1, o2) =>
+    _.isEqual(stripFunctions(o1), stripFunctions(o2))
+
 export const intersect = array => Array.from(new Set(array))
 
 export const range = (from, to) =>
