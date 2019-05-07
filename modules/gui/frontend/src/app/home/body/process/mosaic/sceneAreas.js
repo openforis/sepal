@@ -1,10 +1,12 @@
-import {MapLayer, sepalMap} from 'app/home/map/map'
+import {MapLayer, googleMap, sepalMap} from 'app/home/map/map'
 import {RecipeActions, SceneSelectionType, getSource} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Subject, of} from 'rxjs'
+import {activator} from 'widget/activation/activator'
 import {enabled} from 'widget/enableWhen'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
+import {select} from 'store'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import MapStatus from 'widget/mapStatus'
@@ -24,6 +26,9 @@ const mapRecipeToProps = recipe => {
         sceneAreas: selectFrom(recipe, 'ui.sceneAreas'),
         aoi: selectFrom(recipe, 'model.aoi'),
         source: getSource(recipe),
+        selectedScenes: selectFrom(recipe, ['model.scenes']) || [],
+        loading: selectFrom(recipe, 'ui.autoSelectingScenes'),
+        zoom: select('map.zoom') || googleMap.getZoom(),
         manualSelection
     }
 }
@@ -51,18 +56,29 @@ class SceneAreas extends React.Component {
         )
     }
 
+    renderSceneAreaMarker(sceneArea) {
+        const {activator: {activatables: {sceneSelection}}, selectedScenes, zoom, loading} = this.props
+        const selectedSceneCount = (selectedScenes[sceneArea.id] || []).length
+        return (
+            <SceneAreaMarker
+                key={sceneArea.id}
+                sceneAreaId={sceneArea.id}
+                center={sceneArea.center}
+                polygon={sceneArea.polygon}
+                selectedSceneCount={selectedSceneCount}
+                zoom={zoom}
+                loading={loading}
+                sceneSelection={sceneSelection}
+            />
+        )
+    }
+
     renderSceneAreas() {
         const sceneAreas = this.props.sceneAreas
         if (sceneAreas)
             return (
                 <MapLayer className={styles.sceneAreas}>
-                    {sceneAreas.map(sceneArea =>
-                        <SceneAreaMarker
-                            key={sceneArea.id}
-                            sceneAreaId={sceneArea.id}
-                            center={sceneArea.center}
-                            polygon={sceneArea.polygon}/>
-                    )}
+                    {sceneAreas.map(sceneArea => this.renderSceneAreaMarker(sceneArea))}
                 </MapLayer>
             )
         else
@@ -97,8 +113,10 @@ SceneAreas.propTypes = {
 
 export default (
     withRecipe(mapRecipeToProps)(
-        enabled({when: ({manualSelection}) => manualSelection})(
-            SceneAreas
+        activator('sceneSelection')(
+            enabled({when: ({manualSelection}) => manualSelection})(
+                SceneAreas
+            )
         )
     )
 )
