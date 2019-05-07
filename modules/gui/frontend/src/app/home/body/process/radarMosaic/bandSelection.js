@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-key */
 import {Field, form} from 'widget/form'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {isMobile} from 'widget/userAgent'
@@ -23,7 +24,7 @@ const mapRecipeToProps = recipe => {
     }
 }
 
-class BandSelection extends React.Component {
+class BandSelection extends React.PureComponent {
     state = {}
     bandOptions = [{
         value: 'VV, VH, VV_VH',
