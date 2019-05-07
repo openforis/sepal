@@ -65,7 +65,7 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        const {action, recipeId, dates: {targetDate}, form, activatable: {deactivate}} = this.props
+        const {action, recipeId, dates: {targetDate}, form, activatable: {activatables: {sceneSelection: {deactivate}}}} = this.props
         const loading = !action('LOAD_SCENES').dispatched
         return (
             <React.Fragment>
@@ -211,6 +211,26 @@ class SceneSelection extends React.Component {
 
 }
 
+SceneSelection.propTypes = {}
+
+const policy = () => ({
+    _: 'disallow',
+    dates: 'allow',
+    sources: 'allow',
+    sceneSelectionOptions: 'allow',
+    compositeOptions: 'allow'
+})
+
+export default (
+    activatable({id: 'sceneSelection', policy})(
+        withRecipe(mapRecipeToProps)(
+            form({fields})(
+                SceneSelection
+            )
+        )
+    )
+)
+
 class Scene extends React.Component {
     imageThumbnail(url) {
         return url.replace('https://earthexplorer.usgs.gov/browse/', 'https://earthexplorer.usgs.gov/browse/thumbnails/')
@@ -341,23 +361,3 @@ class Scene extends React.Component {
         )
     }
 }
-
-SceneSelection.propTypes = {}
-
-const policy = () => ({
-    _: 'disallow',
-    dates: 'allow',
-    sources: 'allow',
-    sceneSelectionOptions: 'allow',
-    compositeOptions: 'allow'
-})
-
-export default (
-    activatable({id: 'sceneSelection', policy})(
-        withRecipe(mapRecipeToProps)(
-            form({fields})(
-                SceneSelection
-            )
-        )
-    )
-)
