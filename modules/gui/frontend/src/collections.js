@@ -16,13 +16,6 @@ export const objectEquals = (o1, o2, compareProps) => {
     return _.isEqual(extractValues(o1), extractValues(o2))
 }
 
-export const equalsIgnoreFunctions = (o1, o2) =>
-    _.difference(Object.keys(o1), Object.keys(o2)).length === 0 &&
-    _.isEqual(
-        _.pickBy(o1, o => !_.isFunction(o)),
-        _.pickBy(o2, o => !_.isFunction(o))
-    )
-
 export const stripFunctions = obj => {
     if (_.isArray(obj)) {
         return _.map(obj, item => _.isFunction(item) ? null : stripFunctions(item))

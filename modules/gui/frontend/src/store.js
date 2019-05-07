@@ -1,11 +1,11 @@
 import {Subject} from 'rxjs'
 import {connect as connectToRedux} from 'react-redux'
-import {equalsIgnoreFunctions} from 'collections'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import {takeUntil} from 'rxjs/operators'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
@@ -83,7 +83,7 @@ export const connect = mapStateToProps => {
 
         const ReduxConnectedComponent = connectToRedux(
             includeDispatchingProp(id, mapStateToProps), null, null, {
-                areStatePropsEqual: equalsIgnoreFunctions
+                areStatePropsEqual: _.isEqual
             }
         )(PreventUpdateWhenDisabled)
 
