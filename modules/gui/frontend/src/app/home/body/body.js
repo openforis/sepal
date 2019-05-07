@@ -1,5 +1,4 @@
 import {CenteredProgress} from 'widget/progress'
-import {Select} from 'widget/selectable'
 import {connect, select} from 'store'
 import {history, location} from 'route'
 import {initGoogleMapsApi$} from '../map/map'
@@ -22,8 +21,9 @@ const mapStateToProps = () => ({
 })
 
 class Body extends React.Component {
-    UNSAFE_componentWillMount() {
-        this.props.asyncActionBuilder('INIT_GOOGLE_MAPS_API',
+    constructor(props) {
+        super(props)
+        props.asyncActionBuilder('INIT_GOOGLE_MAPS_API',
             initGoogleMapsApi$())
             .dispatch()
     }
@@ -46,7 +46,7 @@ class Body extends React.Component {
         }
         return (
             <div className={className}>
-                <Select className={styles.sections}>
+                <div className={styles.sections}>
                     <Section path='/process' captureMouseEvents={false}>
                         <Process/>
                     </Section>
@@ -68,7 +68,7 @@ class Body extends React.Component {
                     <Section path='/account'>
                         <Account/>
                     </Section>
-                </Select>
+                </div>
             </div>
         )
     }

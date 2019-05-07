@@ -62,11 +62,12 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                 this.props.subscribe(description, stream$, observer)
             }
 
-            UNSAFE_componentWillReceiveProps(nextProps) {
-                if ('errors' in nextProps)
-                    this.setState(prevState =>
-                        ({...prevState, errors: nextProps.errors})
-                    )
+            static getDerivedStateFromProps(props) {
+                if ('errors' in props) {
+                    return {
+                        errors: props.errors
+                    }
+                }
             }
 
             handleChange(e) {
