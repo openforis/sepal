@@ -42,7 +42,6 @@ class Mosaic(object):
             .select(bands_to_select)
 
     def _tasseled_cap(self, image):
-        image = image.divide(10000)
         coefficients = ee.Array([
             [0.3037, 0.2793, 0.4743, 0.5585, 0.5082, 0.1863],
             [-0.2848, -0.2435, -0.5436, 0.7243, 0.0840, -0.1800],
@@ -52,7 +51,7 @@ class Mosaic(object):
             [0.1084, -0.9022, 0.4120, 0.0573, -0.0251, 0.0238]
         ])
 
-        arrayImage1D = image.select(_optical_bands).toArray()
+        arrayImage1D = image.select(_optical_bands).divide(10000).toArray()
         arrayImage2D = arrayImage1D.toArray(1)
 
         return image.addBands(

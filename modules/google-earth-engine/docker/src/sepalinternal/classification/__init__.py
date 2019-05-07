@@ -38,9 +38,9 @@ class Classification(ImageSpec):
         training = image.sampleRegions(
             collection=self.trainingData,
             properties=[self.classProperty],
-            scale=1
+            scale=self.scale
         )
-        classifier = ee.Classifier.randomForest().train(training, self.classProperty)
+        classifier = ee.Classifier.randomForest(20).train(training, self.classProperty)
         classification = image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         return classification \
             .uint8()
