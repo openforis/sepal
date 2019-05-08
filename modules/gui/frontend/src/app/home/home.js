@@ -63,7 +63,7 @@ const updateTasks$ = () =>
     )
 
 class Home extends React.Component {
-    componentDidMount() {
+    UNSAFE_componentWillMount() {
         const {stream} = this.props
         stream('SCHEDULE_UPDATE_USER_REPORT', updateUserReport$())
         stream('SCHEDULE_UPDATE_USER_MESSAGES', updateUserMessages$())
