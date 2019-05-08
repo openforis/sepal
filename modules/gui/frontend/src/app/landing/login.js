@@ -37,7 +37,6 @@ class Login extends React.Component {
         const {form, inputs: {username, password}, action} = this.props
         return (
             <Form className={styles.form} onSubmit={() => this.login(form.values())}>
-                {/*<div className={styles.inputs}>*/}
                 <Input
                     label={msg('landing.login.username.label')}
                     input={username}
@@ -54,7 +53,6 @@ class Login extends React.Component {
                     tabIndex={2}
                     errorMessage
                 />
-                {/*</div>*/}
                 <div className={styles.buttons}>
                     <div className={styles.links}>
                         <Button
