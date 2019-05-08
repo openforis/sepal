@@ -68,6 +68,7 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                         errors: props.errors
                     }
                 }
+                return null
             }
 
             handleChange(e) {
