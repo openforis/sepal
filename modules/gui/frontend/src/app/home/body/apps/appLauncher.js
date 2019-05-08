@@ -50,6 +50,7 @@ class AppLauncher extends React.Component {
             <Button
                 key={app.path}
                 look='transparent'
+                width='fill'
                 additionalClassName={styles.app}
                 onClick={() => this.runApp(app)}
                 disabled={disabled}>
