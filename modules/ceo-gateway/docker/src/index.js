@@ -93,7 +93,7 @@ app.post('/create-project', (req, res, next) => {
         sampleValues: sampleValues,
         surveyRules: [],
         useTemplatePlots: '',
-        plotFileName: 'plots.zip',
+        plotFileName: 'plots.csv',
         plotFileBase64: ',' + Buffer.from(plotFile).toString('base64'),
         sampleFileName: '',
         sampleFileBase64: '',

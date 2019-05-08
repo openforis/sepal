@@ -85,6 +85,14 @@ class BandSelection extends React.PureComponent {
         searchableText: 'VV_min VH_min VV_stdDev min stdDev sd',
         timeScan: true,
         pointInTime: false
+    }, {
+        value: 'phase, amplitude, residuals',
+        bandLabels: [
+            <span>Harmonics</span>
+        ],
+        searchableText: 'Harmonics',
+        timeScan: true,
+        pointInTime: false
     }]
     metaDataOptions = [
         {value: 'dayOfYear', label: msg('bands.dayOfYear'), timeScan: true, pointInTime: true},

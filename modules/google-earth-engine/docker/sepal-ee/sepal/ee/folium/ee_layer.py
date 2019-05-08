@@ -1,4 +1,5 @@
 import folium
+from sepal.ee.image import convert
 
 
 class EELayer(object):
@@ -63,7 +64,13 @@ def map_layers(layers):
     url = "https://earthengine.googleapis.com/map/{mapid}/{{z}}/{{x}}/{{y}}?token={token}"
     map = folium.Map()
     for i, layer in enumerate(layers):
-        map_ref = layer.image.getMapId(layer.viz_params)
+        if layer.viz_params.get('hsv'):
+            image = convert.hsv_to_rgb(layer.image, layer.viz_params)
+            viz_params = {}
+        else:
+            image = layer.image
+            viz_params = layer.viz_params
+        map_ref = image.getMapId(viz_params)
         folium.TileLayer(
             tiles=url.format(**map_ref),
             name=layer.name if layer.name else 'layer-' + str(i + 1),

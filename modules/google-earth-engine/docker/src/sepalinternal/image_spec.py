@@ -1,6 +1,7 @@
 import logging
 from abc import abstractmethod
 from gee import get_info
+from sepal.ee.image import convert
 
 import ee
 
@@ -12,8 +13,12 @@ class ImageSpec(object):
         :return: A dictionary with mapId and token
         :rtype: dict
         """
-        viz_params = self._viz_params()
         ee_image = self._ee_image()
+        viz_params = self._viz_params()
+
+        if viz_params.get('hsv'):
+            ee_image = convert.hsv_to_rgb(ee_image, viz_params)
+            viz_params = {} # viz_params have been used to create a rgb image
         ee_preview = None
         retry = 0
         while not ee_preview:
