@@ -1,4 +1,5 @@
-from sepal.ee import radar_collection, radar_mosaic, radar_time_scan
+import ee
+from sepal.ee import radar_collection, radar_mosaic, radar_time_scan, radar_viz
 
 from ..aoi import Aoi
 from ..image_spec import ImageSpec
@@ -13,12 +14,16 @@ class RadarMosaic(ImageSpec):
         self.bands = spec['bands']
         self.time_scan = not self.model['dates'].get('targetDate')
         self.scale = spec.get('scale', 20)
+        if not self.bands or (set(self.bands) & {'constant', 't', 'phase', 'amplitude', 'residuals'}):
+            self.harmonics = 'VH'
+        else:
+            self.harmonics = None
 
     def _viz_params(self):
-        if self.time_scan:
-            return radar_time_scan.viz_params(self.bands)
+        if self.harmonics:
+            return radar_viz.hsv_params(self.bands)
         else:
-            return radar_mosaic.viz_params(self.bands)
+            return radar_viz.params(self.bands)
 
     def _ee_image(self):
         dates = self.model['dates']
@@ -32,8 +37,12 @@ class RadarMosaic(ImageSpec):
             geometric_correction=options['geometricCorrection'],
             speckle_filter=options['speckleFilter'],
             outlier_removal=options['outlierRemoval'],
+            harmonics=self.harmonics
         )
         if self.time_scan:
-            return radar_time_scan.create(collection, self.aoi.geometry())
+            time_scan = radar_time_scan.create(collection, self.aoi.geometry())
+            if self.harmonics:
+                time_scan = time_scan.addBands(ee.Image(collection.get('harmonics')))
+            return time_scan
         else:
             return radar_mosaic.create(collection, self.aoi.geometry())

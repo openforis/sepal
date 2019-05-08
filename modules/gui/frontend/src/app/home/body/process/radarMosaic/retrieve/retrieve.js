@@ -48,6 +48,15 @@ class Retrieve extends React.Component {
                 {value: 'VH_stdDev', label: <span>VH<sub>sd</sub></span>},
                 {value: 'VH_CV', label: <span>VH<sub>cv</sub></span>}
             ]
+        },
+        {
+            options: [
+                {value: 'constant', label: 'constant'},
+                {value: 't', label: 't'},
+                {value: 'phase', label: 'phase'},
+                {value: 'amplitude', label: 'amplitude'},
+                {value: 'residuals', label: 'residuals'}
+            ]
         }
     ]
 

@@ -62,39 +62,3 @@ def create(collection, region):
         ]) \
         .clip(region) \
         .float()
-
-
-def viz_params(bands):
-    """
-    Returns default EE visualization params for specified bands.
-
-    Args:
-        bands: The bands to get visualization params for. Must be one of the following:
-            VV_min, VV_mean, VV_median, VV_max, VV_stdDev, VH_min, VH_mean, VH_median, VH_max, VH_stdDev,
-            VV_median_VH_median.
-
-    Returns:
-         Dictionary with visualization params.
-    """
-    if isinstance(bands, str):
-        bands = [band.strip() for band in bands.split(',')]
-
-    ranges = {
-        'VV_min': [-25, 4],
-        'VV_mean': [-18, 6],
-        'VV_median': [-18, 6],
-        'VV_max': [-17, 10],
-        'VV_stdDev': [0, 5],
-        'VV_CV': [-6, 28],
-        'VH_min': [-34, 4],
-        'VH_mean': [-27, 0],
-        'VH_median': [-27, 0],
-        'VH_max': [-26, 2],
-        'VH_stdDev': [0, 6],
-        'VH_CV': [0, 35],
-        'VV_median_VH_median': [2, 16],
-        'NDCV': [-1, 1]
-    }
-    min = [ranges[band][0] for band in bands]
-    max = [ranges[band][1] for band in bands]
-    return {'bands': bands, 'min': min, 'max': max}

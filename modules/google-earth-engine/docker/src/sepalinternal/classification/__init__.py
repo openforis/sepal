@@ -40,7 +40,7 @@ class Classification(ImageSpec):
             properties=[self.classProperty],
             scale=self.scale
         )
-        classifier = ee.Classifier.randomForest(20).train(training, self.classProperty)
+        classifier = ee.Classifier.randomForest(25).train(training, self.classProperty)
         classification = image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         return classification \
             .uint8()
