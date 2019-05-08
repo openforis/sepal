@@ -9,6 +9,7 @@ import {resetPassword, tokenUser, validateToken$} from 'widget/user'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import actionBuilder from 'action-builder'
+import styles from './setPassword.module.css'
 
 const fields = {
     username: null,
@@ -48,7 +49,7 @@ class SetPassword extends React.Component {
         )
     }
 
-    UNSAFE_componentWillReceiveProps(nextProps) {
+    componentDidUpdate(nextProps) {
         const {user, inputs: {username}} = nextProps
         username.set(user && user.username)
     }
@@ -75,7 +76,7 @@ class SetPassword extends React.Component {
         const {form, inputs: {username, password, password2}, stream} = this.props
         const resettingPassword = stream('RESET_PASSWORD').active
         return (
-            <Form onSubmit={() => this.resetPassword(form.values())}>
+            <Form className={styles.form} onSubmit={() => this.resetPassword(form.values())}>
                 <Input
                     label={msg('landing.reset-password.username.label')}
                     input={username}
