@@ -110,7 +110,7 @@ class _TerminalSession extends React.Component {
 
     componentWillUnmount() {
         this.terminal.dispose()
-        this.webSocket.close()
+        this.webSocket && this.webSocket.close()
     }
 
     initializeSession() {
