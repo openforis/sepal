@@ -11,6 +11,15 @@ const terminals = {}
 const subscriptions = []
 const logs = {}
 
+const guid = () => {
+    const s4 = () =>
+        Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1)
+
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
+}
+
 const connect = (req, res) => {
     const cols = parseInt(req.query.cols)
     const rows = parseInt(req.query.rows)
@@ -19,7 +28,7 @@ const connect = (req, res) => {
     const keyFile = `${usersHome}/${username}/.ssh/id_rsa`
     const sshGateway = process.env.SSH_GATEWAY_HOST
 
-    const key = `/tmp/${username}.key`
+    const key = `/tmp/${username}-${guid()}.key`
     exec(`sudo cp ${keyFile} ${key}`)
     exec(`sudo chown node:node ${key}`)
     const term = pty.spawn('ssh', ['-q', '-o', 'StrictHostKeyChecking=no', '-i', key, `${username}@${sshGateway}`], {
