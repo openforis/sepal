@@ -1,5 +1,4 @@
 import {CenteredProgress} from 'widget/progress'
-import {Select} from 'widget/selectable'
 import {connect, select} from 'store'
 import {history, location} from 'route'
 import {initGoogleMapsApi$} from '../map/map'
@@ -46,7 +45,7 @@ class Body extends React.Component {
         }
         return (
             <div className={className}>
-                <Select className={styles.sections}>
+                <div className={styles.sections}>
                     <Section path='/process' captureMouseEvents={false}>
                         <Process/>
                     </Section>
@@ -68,7 +67,7 @@ class Body extends React.Component {
                     <Section path='/account'>
                         <Account/>
                     </Section>
-                </Select>
+                </div>
             </div>
         )
     }
