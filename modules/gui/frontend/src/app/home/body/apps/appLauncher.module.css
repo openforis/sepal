@@ -9,6 +9,7 @@
     grid-gap: 2rem;
     justify-content: center;
     overflow: scroll;
+    padding: 2rem 0;
 }
 
 .app {
