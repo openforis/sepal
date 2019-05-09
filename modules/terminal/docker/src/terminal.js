@@ -1,127 +1,140 @@
 const express = require('express')
 const expressWs = require('express-ws')
 const pty = require('node-pty')
-
 const {exec} = require('child_process')
-
-const {interval, Subject} = require('rxjs')
+const {interval, merge, Subject} = require('rxjs')
 const {map, filter, bufferTime} = require('rxjs/operators')
 
-const terminals = {}
-const subscriptions = []
-const logs = {}
+const PORT = process.env.PORT || 3000
+const HOST = process.env.IP || '127.0.0.1'
+const USERS_HOME = process.env.USERS_HOME || '/sepalUsers'
 
-const guid = () => {
-    const s4 = () =>
-        Math.floor((1 + Math.random()) * 0x10000)
-            .toString(16)
-            .substring(1)
+const Session = (() => {
+    const sessions = {}
 
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
-}
-
-const connect = (req, res) => {
-    const cols = parseInt(req.query.cols)
-    const rows = parseInt(req.query.rows)
-    const username = JSON.parse(req.headers['sepal-user']).username
-    const usersHome = process.env.USERS_HOME || '/sepalUsers'
-    const keyFile = `${usersHome}/${username}/.ssh/id_rsa`
-    const sshGateway = process.env.SSH_GATEWAY_HOST
-
-    const key = `/tmp/${username}-${guid()}.key`
-    exec(`sudo cp ${keyFile} ${key}`)
-    exec(`sudo chown node:node ${key}`)
-    const term = pty.spawn('ssh', ['-q', '-o', 'StrictHostKeyChecking=no', '-i', key, `${username}@${sshGateway}`], {
-        uid: process.getuid(),
-        gid: process.getgid(),
-        name: 'xterm-color',
-        cols: cols || 80,
-        rows: rows || 24,
-        cwd: process.env.PWD,
-        env: process.env
-    })
-
-    console.log('Created terminal with PID: ' + term.pid)
-    terminals[term.pid] = {
-        term,
-        key
-    }
-    logs[term.pid] = ''
-    term.on('data', data => logs[term.pid] += data)
-    res.send(term.pid.toString())
-    res.end()
-}
-
-const resize = (req, res) => {
-    const pid = parseInt(req.params.pid)
-    const cols = parseInt(req.query.cols)
-    const rows = parseInt(req.query.rows)
-    const term = terminals[pid].term
-
-    term.resize(cols, rows)
-    console.log('Resized terminal ' + pid + ' to ' + cols + ' cols and ' + rows + ' rows.')
-    res.end()
-}
-
-const terminal = (ws, req) => {
-    var term = terminals[parseInt(req.params.pid)].term
-    console.log('Connected to terminal ' + term.pid)
-
-    const webSocketSend = data => {
-        try {
-            ws.send(data)
-        } catch (ex) {}
-    }
-
-    webSocketSend(logs[term.pid])
+    const create = (id, req) => {
+        const cols = parseInt(req.query.cols)
+        const rows = parseInt(req.query.rows)
+        const username = JSON.parse(req.headers['sepal-user']).username
+        const keyFile = `${USERS_HOME}/${username}/.ssh/id_rsa`
+        const key = `/tmp/${username}-${id}.key`
+        const terminal = pty.spawn('ssh_gateway.sh', [username, keyFile, key], {
+            name: 'xterm-color',
+            cols: cols || 80,
+            rows: rows || 24,
+            cwd: process.env.PWD,
+            env: process.env
+        })
     
-    const downStream$ = new Subject()
-    subscriptions.push(
-        downStream$
-            .pipe(
+        console.log(`Created session: ${id}, terminal PID: ${terminal.pid}`)
+    
+        const session = {
+            id,
+            terminal,
+            key,
+            logs: ''
+        }
+
+        terminal.on('data', data => 
+            session.logs += data
+        )
+    
+        sessions[id] = session
+    }
+    
+    const get = req => {
+        const id = req.params.sessionId
+        if (!sessions[id]) {
+            create(id, req)
+        }
+        return sessions[id]
+    }
+    
+    const remove = id => {
+        delete sessions[id]
+        console.log(`Removed session: ${id}`)
+    }
+
+    return {get, remove}
+})()
+
+const Terminal = (Session => {
+    const start = (websocket, req) => {
+        const session = Session.get(req)
+        const terminal = session.terminal
+        const subscriptions = []
+    
+        console.log(`Started session: ${session.id}, terminal PID: ${terminal.pid}`)
+    
+        websocket.on('close', () => {
+            terminal.kill()
+            exec(`rm -f ${session.key}`)
+            subscriptions.forEach(subscription =>
+                subscription.unsubscribe()
+            )
+            console.log(`Closed session: ${session.id}, terminal PID: ${terminal.pid}`)
+            Session.remove(session.id)
+        })
+    
+        // upstream (websocket to terminal)
+    
+        websocket.on('message', msg => 
+            terminal.write(msg)
+        )
+    
+        // downstream (terminal to websocket)
+        
+        const websocket$ = (() => {
+            const data$ = new Subject()
+    
+            const heartbeat$ = interval(3000).pipe(
+                map(() => '')
+            )
+        
+            const bufferedData$ = data$.pipe(
                 bufferTime(10),
                 map(buffered => buffered.join('')),
                 filter(data => data)
             )
-            .subscribe(
-                data => webSocketSend(data)
-            )
-    )
-
-    subscriptions.push(
-        interval(3000)
-            .subscribe(() => webSocketSend(''))
-    )
-
-    term.on('data', data => downStream$.next(data))
-
-    ws.on('message', msg => term.write(msg))
-
-    ws.on('close', () => {
-        term.kill()
-        exec(`rm -f ${terminals[term.pid].key}`)
         
-        subscriptions.forEach(subscription => subscription.unsubscribe())
-        console.log('Closed terminal ' + term.pid)
-        delete terminals[term.pid]
-        delete logs[term.pid]
-    })
-}
+            subscriptions.push(
+                merge(heartbeat$, bufferedData$).subscribe(
+                    data => {
+                        try {
+                            websocket.send(data)
+                        } catch (e) {}
+                    }
+                )
+            )
+        
+            return data$
+        })()
+    
+        websocket$.next(session.logs)
+        terminal.on('data', data =>
+            websocket$.next(data)
+        )
+    }
+    
+    const resize = (req, res) => {
+        const session = Session.get(req)
+        const cols = parseInt(req.query.cols)
+        const rows = parseInt(req.query.rows)
+        session.terminal.resize(cols, rows)
+        console.log(`Resized session: ${session.id}, cols: ${cols}, rows: ${rows}`)
+        res.end()
+    }
 
-const startServer = () => {
+    return {start, resize}
+})(Session)
 
+const Server = (Terminal => {
     const app = express()
     expressWs(app)
 
-    app.post('/', connect)
-    app.post('/:pid/size', resize)
-    app.ws('/:pid', terminal)
+    app.ws('/:sessionId', Terminal.start)
+    app.post('/:sessionId/size', Terminal.resize)
 
-    const port = process.env.PORT || 3000
-    const host = process.env.IP || '127.0.0.1'
-
-    console.log('App listening to http://' + host + ':' + port)
-    app.listen(port, host)
-}
-
-startServer()
+    app.listen(PORT, HOST)
+    console.log(`Terminal server listening to http://${HOST}:${PORT}`)
+})(Terminal)

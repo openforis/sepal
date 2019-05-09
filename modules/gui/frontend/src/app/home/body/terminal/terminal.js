@@ -9,8 +9,8 @@ import {connect} from 'store'
 import {distinctUntilChanged, filter, map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {post$} from 'http-client'
+import {v4 as uuid} from 'uuid'
 import {withLatestFrom} from 'rxjs/operators'
-import Notifications from 'widget/notifications'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import Tabs from 'widget/tabs'
@@ -98,32 +98,19 @@ class _TerminalSession extends React.Component {
                     menuPadding
                     edgePadding
                 >
-                    <div className={styles.terminal} ref={this.terminalContainer}/>
+                    <div className={styles.terminal} ref={this.terminalContainer}></div>
                 </ContentPadding>
             </ReactResizeDetector>
         )
     }
 
     componentDidMount() {
-        this.initializeSession()
+        this.startSession(uuid())
     }
 
     componentWillUnmount() {
         this.terminal.dispose()
         this.webSocket && this.webSocket.close()
-    }
-
-    initializeSession() {
-        this.props.stream('INITIALIZE_TERMINAL',
-            post$('/api/terminal').pipe(
-                map(e => e.response)
-            ),
-            sessionId => this.startSession(sessionId),
-            error => Notifications.error({
-                message: msg('terminal.server.error'),
-                error: error.message
-            })
-        )
     }
 
     createWebSocket(sessionId) {
@@ -143,31 +130,32 @@ class _TerminalSession extends React.Component {
         const {terminal, terminalContainer, resize$} = this
         const {onEnable, onDisable} = this.props
 
-        terminal.open(terminalContainer.current)
-        terminal.attach(this.createWebSocket(sessionId))
-        terminal.setOption('allowTransparency', true)
-        terminal.setOption('fontSize', 13)
-        terminal.setOption('bellStyle', 'both')
-        terminal.setOption('theme', {
-            background: 'transparent',
-            foreground: '#ccc'
-        })
-        terminal.on('resize',
-            dimensions => resize$.next({sessionId, dimensions})
-        )
-        this.enabled$.next(true)
-        this.fit$.next()
-        this.focus$.next()
-        onEnable(() => {
+        setTimeout(() => {
+            terminal.attach(this.createWebSocket(sessionId))
+            terminal.open(terminalContainer.current)
+            terminal.setOption('allowTransparency', true)
+            terminal.setOption('fontSize', 13)
+            terminal.setOption('bellStyle', 'both')
+            terminal.setOption('theme', {
+                background: 'transparent',
+                foreground: '#ccc'
+            })
+            terminal.on('resize',
+                dimensions => resize$.next({sessionId, dimensions})
+            )
             this.enabled$.next(true)
             this.fit$.next()
             this.focus$.next()
-        })
-        onDisable(() => {
-            this.enabled$.next(false)
+            onEnable(() => {
+                this.enabled$.next(true)
+                this.fit$.next()
+                this.focus$.next()
+            })
+            onDisable(() => {
+                this.enabled$.next(false)
+            })
         })
     }
 }
 
 const TerminalSession = connect()(_TerminalSession)
-

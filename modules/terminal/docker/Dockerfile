@@ -7,8 +7,8 @@ ENV IP 0.0.0.0
 ENV PORT 8000
 
 
-ADD script/ssh.sh /usr/local/bin/ssh.sh
-RUN chmod +x /usr/local/bin/ssh.sh
+ADD script/ssh_gateway.sh /usr/local/bin/ssh_gateway.sh
+RUN chmod +x /usr/local/bin/ssh_gateway.sh
 
 WORKDIR ${ROOT}
 ADD package.json ${ROOT}/package.json
