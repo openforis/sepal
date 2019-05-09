@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/terminal.js",
+    "start": "node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -13,6 +13,6 @@
     "express": "^4.16.4",
     "express-ws": "^4.0.0",
     "node-pty": "^0.8.1",
-    "rxjs": "^6.4.0"
+    "rxjs": "^6.5.1"
   }
 }
