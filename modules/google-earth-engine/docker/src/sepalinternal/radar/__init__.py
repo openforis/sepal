@@ -40,9 +40,13 @@ class RadarMosaic(ImageSpec):
             harmonics=self.harmonics
         )
         if self.time_scan:
-            time_scan = radar_time_scan.create(collection, self.aoi.geometry())
+            ee_image = radar_time_scan.create(collection, self.aoi.geometry())
             if self.harmonics:
-                time_scan = time_scan.addBands(ee.Image(collection.get('harmonics')))
-            return time_scan
+                ee_image = ee_image.addBands(ee.Image(collection.get('harmonics')))
         else:
-            return radar_mosaic.create(collection, self.aoi.geometry())
+            ee_image = radar_mosaic.create(collection, self.aoi.geometry())
+
+        if len(self.bands):
+            ee_image = ee_image.select(self.bands)
+
+        return ee_image
