@@ -60,5 +60,5 @@ def create(collection, region):
             'VH_min', 'VH_mean', 'VH_median', 'VH_max', 'VH_stdDev', 'VH_CV',
             'VV_median_VH_median', 'NDCV'
         ]) \
-        .clip(region) \
-        .float()
+        .float() \
+        .clip(region)
