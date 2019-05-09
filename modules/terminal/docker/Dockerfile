@@ -6,6 +6,10 @@ ENV ROOT /usr/local/src/terminal
 ENV IP 0.0.0.0
 ENV PORT 8000
 
+
+ADD script/ssh.sh /usr/local/bin/ssh.sh
+RUN chmod +x /usr/local/bin/ssh.sh
+
 WORKDIR ${ROOT}
 ADD package.json ${ROOT}/package.json
 RUN apt-get update && \
