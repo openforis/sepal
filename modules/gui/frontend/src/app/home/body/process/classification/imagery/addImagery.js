@@ -57,7 +57,7 @@ class _AddImagery extends React.Component {
                 className={styles.panel}
                 type='modal'>
                 <PanelSections sections={sections} selected={inputs.section} inputs={inputs}/>
-                <PanelButtons onEnter={close} onEscape={close}>
+                <PanelButtons onEnter={() => this.addImage()} onEscape={close}>
                     <PanelButtons.Main>
                         <PanelButtons.Cancel
                             onClick={close}/>
