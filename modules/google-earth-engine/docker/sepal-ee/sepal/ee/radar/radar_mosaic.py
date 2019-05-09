@@ -16,4 +16,6 @@ def create(collection, region):
         .addBands([
         mosaic.select('VV').subtract(mosaic.select('VH')).rename('VV_VH')
     ])
-    return mosaic.clip(region).float()
+    return mosaic \
+        .float() \
+        .clip(region)
