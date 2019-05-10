@@ -37,7 +37,6 @@ class Classification(ImageSpec):
             raise SepalException(code='gee.classification.error.noTrainingData', message='No training data in AOI.')
 
         image = ee.Image([self._add_covariates(image._ee_image()) for image in self.images])
-        print(image.bandNames().getInfo())
         # Force updates to fusion table to be reflected
         self.trainingData = self.trainingData.map(_force_cache_flush)
         training = image.sampleRegions(
@@ -48,7 +47,8 @@ class Classification(ImageSpec):
         classifier = ee.Classifier.randomForest(25).train(training, self.classProperty)
         classification = image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         return classification \
-            .uint8()
+            .uint8() \
+            .clip(self.aoi.geometry())
 
     def _add_covariates(self, image):
         image = image \
