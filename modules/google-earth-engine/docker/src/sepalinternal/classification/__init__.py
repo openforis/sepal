@@ -5,7 +5,7 @@ import ee
 from ..gee import get_info
 from ..image_spec import ImageSpec
 from ..sepal_exception import SepalException
-
+import math
 
 class Classification(ImageSpec):
     def __init__(self, sepal_api, spec, create_image_spec):
@@ -55,6 +55,10 @@ def _force_cache_flush(feature):
 def _add_covariates(image):
     return image \
         .addBands(_normalized_difference(image, ['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])) \
+        .addBands(_ratio(image, ['swir1', 'nir'])) \
+        .addBands(_ratio(image, ['red', 'swir1'])) \
+        .addBands(_angle(image, ['brightness', 'greenness', 'wetness'])) \
+        .addBands(_distance(image, ['brightness', 'greenness', 'wetness'])) \
         .addBands(
         _diff(image, ['VV', 'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VH', 'VH_min', 'VH_mean', 'VH_med', 'VH_max'])) \
         .addBands(_normalized_difference(image, ['VV_CV', 'VH_CV'])) \
@@ -65,8 +69,20 @@ def _normalized_difference(image, bands):
     return _combine(image, bands, '(b1 - b2)/(b1 + b2)', 'nd_${b1}_${b2}')
 
 
+def _ratio(image, bands):
+    return _combine(image, bands, 'b1 / b2', 'ratio_${b1}_${b2}')
+
+
 def _diff(image, bands):
-    return _combine(image, bands, 'b1 - b2', '${b1}-${b2}')
+    return _combine(image, bands, 'b1 - b2', 'diff_${b1}_${b2}')
+
+
+def _angle(image, bands):
+    return _combine(image, bands, 'atan2(b1, b2) / pi', 'angle_${b1}_${b2}')
+
+
+def _distance(image, bands):
+    return _combine(image, bands, 'hypot(b1, b2)', 'distance_${b1}_${b2}')
 
 
 def _combine(image, bands, expression, name_template):
@@ -81,7 +97,8 @@ def _combine(image, bands, expression, name_template):
             .replace('\\$\\{b2}', b2.bandNames().get(0))
         return b1.expression(expression, {
             'b1': b1,
-            'b2': b2
+            'b2': b2,
+            'pi': math.pi
         }).rename([name])
 
     # Hack to get 0 when there are no matching bands, -1 otherwise
