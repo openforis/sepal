@@ -361,7 +361,7 @@
             "type": {
               "label": "Scene selection",
               "all.label": "Use all scenes",
-              "select.label": "Select individual scenes"
+              "select.label": "Select scenes"
             },
             "targetDateWeight": {
               "label": "Priority",
