@@ -5,7 +5,11 @@ import ee
 from ..gee import get_info
 from ..image_spec import ImageSpec
 from ..sepal_exception import SepalException
-import math
+from sepal.ee.image import combine
+from sepal.ee.optical import optical_indexes
+from sepal.ee.water import create_surface_water_image
+from sepal.ee.terrain import create_terrain_image
+
 
 class Classification(ImageSpec):
     def __init__(self, sepal_api, spec, create_image_spec):
@@ -32,7 +36,7 @@ class Classification(ImageSpec):
             raise SepalException(code='gee.classification.error.noTrainingData', message='No training data in AOI.')
 
         image = ee.Image([_add_covariates(image._ee_image()) for image in self.images])
-
+        print(image.bandNames().getInfo())
         # Force updates to fusion table to be reflected
         self.trainingData = self.trainingData.map(_force_cache_flush)
         training = image.sampleRegions(
@@ -57,66 +61,37 @@ def _add_covariates(image):
         .addBands(_normalized_difference(image, ['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])) \
         .addBands(_ratio(image, ['swir1', 'nir'])) \
         .addBands(_ratio(image, ['red', 'swir1'])) \
+        .addBands(optical_indexes.to_evi(image)) \
+        .addBands(optical_indexes.to_savi(image)) \
+        .addBands(optical_indexes.to_ibi(image)) \
         .addBands(_angle(image, ['brightness', 'greenness', 'wetness'])) \
         .addBands(_distance(image, ['brightness', 'greenness', 'wetness'])) \
         .addBands(
         _diff(image, ['VV', 'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VH', 'VH_min', 'VH_mean', 'VH_med', 'VH_max'])) \
         .addBands(_normalized_difference(image, ['VV_CV', 'VH_CV'])) \
-        .addBands(_normalized_difference(image, ['VV_stdDev', 'VH_stdDev']))
+        .addBands(_normalized_difference(image, ['VV_stdDev', 'VH_stdDev'])) \
+        .addBands(create_terrain_image().mask(image.select(0).mask())) \
+        .addBands(create_surface_water_image().mask(image.select(0).mask()))
 
 
 def _normalized_difference(image, bands):
-    return _combine(image, bands, '(b1 - b2)/(b1 + b2)', 'nd_${b1}_${b2}')
+    return combine(image, bands, '(b1 - b2) / (b1 + b2)', 'nd_${b1}_${b2}')
 
 
 def _ratio(image, bands):
-    return _combine(image, bands, 'b1 / b2', 'ratio_${b1}_${b2}')
+    return combine(image, bands, 'b1 / b2', 'ratio_${b1}_${b2}')
 
 
 def _diff(image, bands):
-    return _combine(image, bands, 'b1 - b2', 'diff_${b1}_${b2}')
+    return combine(image, bands, 'b1 - b2', 'diff_${b1}_${b2}')
 
 
 def _angle(image, bands):
-    return _combine(image, bands, 'atan2(b1, b2) / pi', 'angle_${b1}_${b2}')
+    return combine(image, bands, 'atan2(b1, b2) / pi', 'angle_${b1}_${b2}')
 
 
 def _distance(image, bands):
-    return _combine(image, bands, 'hypot(b1, b2)', 'distance_${b1}_${b2}')
-
-
-def _combine(image, bands, expression, name_template):
-    existing_bands = image.bandNames().filter(ee.Filter(
-        ee.Filter.inList('item', bands)
-    ))
-    number_of_bands = existing_bands.size()
-
-    def combine_two(b1, b2):
-        name = ee.String(name_template) \
-            .replace('\\$\\{b1}', b1.bandNames().get(0)) \
-            .replace('\\$\\{b2}', b2.bandNames().get(0))
-        return b1.expression(expression, {
-            'b1': b1,
-            'b2': b2,
-            'pi': math.pi
-        }).rename([name])
-
-    # Hack to get 0 when there are no matching bands, -1 otherwise
-    last_index = number_of_bands.divide(number_of_bands).multiply(-1)
-    combinations = ee.Image(
-        existing_bands
-            .slice(0, last_index)
-            .map(lambda band1: existing_bands
-                 .slice(existing_bands.indexOf(ee.String(band1)).add(1))
-                 .map(lambda band2: combine_two(image.select([ee.String(band1)]), image.select([ee.String(band2)])))
-                 )
-            .flatten()
-            .iterate(lambda band, image:
-                     ee.Image(image).addBands(band)
-                     , ee.Image()))
-    return combinations.select(
-        ee.List.sequence(1, combinations.bandNames().size().subtract(1))
-    )
+    return combine(image, bands, 'hypot(b1, b2)', 'distance_${b1}_${b2}')
 
 
 _colors = [
