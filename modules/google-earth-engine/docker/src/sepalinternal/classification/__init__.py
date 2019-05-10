@@ -64,12 +64,15 @@ class Classification(ImageSpec):
             _diff(image, ['VV', 'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VH', 'VH_min', 'VH_mean', 'VH_med', 'VH_max'])) \
             .addBands(_normalized_difference(image, ['VV_CV', 'VH_CV'])) \
             .addBands(_normalized_difference(image, ['VV_stdDev', 'VH_stdDev']))
+        # To make sure we don't rely on only auxiliary data,
+        # the auxiliary data will be masked where all bands of the image is masked
+        has_data = image.mask().reduce(ee.Reducer.max())
         if 'LATITUDE' in self.auxiliary_imagery:
-            image = image.addBands(ee.Image.pixelLonLat().select('latitude').float().mask(image.select(0).mask()))
+            image = image.addBands(ee.Image.pixelLonLat().select('latitude').float().mask(has_data))
         if 'TERRAIN' in self.auxiliary_imagery:
-            image = image.addBands(create_terrain_image().mask(image.select(0).mask()))
+            image = image.addBands(create_terrain_image().mask(has_data))
         if 'WATER' in self.auxiliary_imagery:
-            image = image.addBands(create_surface_water_image().mask(image.select(0).mask()))
+            image = image.addBands(create_surface_water_image().mask(has_data))
         return image
 
 
