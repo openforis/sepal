@@ -65,7 +65,7 @@ class Classification(ImageSpec):
             .addBands(_normalized_difference(image, ['VV_CV', 'VH_CV'])) \
             .addBands(_normalized_difference(image, ['VV_stdDev', 'VH_stdDev']))
         if 'LATITUDE' in self.auxiliary_imagery:
-            image = image.addBands(ee.Image.pixelLonLat().select('latitude').float())
+            image = image.addBands(ee.Image.pixelLonLat().select('latitude').float().mask(image.select(0).mask()))
         if 'TERRAIN' in self.auxiliary_imagery:
             image = image.addBands(create_terrain_image().mask(image.select(0).mask()))
         if 'WATER' in self.auxiliary_imagery:
