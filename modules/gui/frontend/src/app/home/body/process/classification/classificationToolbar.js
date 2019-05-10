@@ -1,3 +1,4 @@
+import AuxiliaryImagery from './auxiliaryImagery/auxiliaryImagery'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
@@ -28,6 +29,7 @@ class ClassificationToolbar extends React.Component {
                 <Retrieve/>
                 <Imagery/>
                 <TrainingData/>
+                <AuxiliaryImagery/>
 
                 <Toolbar
                     vertical
@@ -54,6 +56,11 @@ class ClassificationToolbar extends React.Component {
                         id='trainingData'
                         label={msg('process.classification.panel.trainingData.button')}
                         tooltip={msg('process.classification.panel.trainingData.tooltip')}/>
+
+                    <ActivationButton
+                        id='auxiliaryImagery'
+                        label={msg('process.classification.panel.auxiliaryImagery.button')}
+                        tooltip={msg('process.classification.panel.auxiliaryImagery.tooltip')}/>
                 </Toolbar>
             </PanelWizard>
         )

@@ -19,6 +19,7 @@ class Classification(ImageSpec):
         self.trainingData = ee.FeatureCollection('ft:' + model['trainingData']['fusionTable'])
         self.classProperty = model['trainingData']['fusionTableColumn']
         self.images = [create_image_spec(sepal_api, {'recipe': image}) for image in model['imagery']['images']]
+        self.auxiliary_imagery = model['auxiliaryImagery']
         self.aoi = self.images[0].aoi
         self.scale = min([image.scale for image in self.images])
         self.bands = ['class']
@@ -35,7 +36,7 @@ class Classification(ImageSpec):
         if not has_data_in_aoi:
             raise SepalException(code='gee.classification.error.noTrainingData', message='No training data in AOI.')
 
-        image = ee.Image([_add_covariates(image._ee_image()) for image in self.images])
+        image = ee.Image([self._add_covariates(image._ee_image()) for image in self.images])
         print(image.bandNames().getInfo())
         # Force updates to fusion table to be reflected
         self.trainingData = self.trainingData.map(_force_cache_flush)
@@ -49,29 +50,34 @@ class Classification(ImageSpec):
         return classification \
             .uint8()
 
+    def _add_covariates(self, image):
+        image = image \
+            .addBands(_normalized_difference(image, ['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])) \
+            .addBands(_ratio(image, ['swir1', 'nir'])) \
+            .addBands(_ratio(image, ['red', 'swir1'])) \
+            .addBands(optical_indexes.to_evi(image)) \
+            .addBands(optical_indexes.to_savi(image)) \
+            .addBands(optical_indexes.to_ibi(image)) \
+            .addBands(_angle(image, ['brightness', 'greenness', 'wetness'])) \
+            .addBands(_distance(image, ['brightness', 'greenness', 'wetness'])) \
+            .addBands(
+            _diff(image, ['VV', 'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VH', 'VH_min', 'VH_mean', 'VH_med', 'VH_max'])) \
+            .addBands(_normalized_difference(image, ['VV_CV', 'VH_CV'])) \
+            .addBands(_normalized_difference(image, ['VV_stdDev', 'VH_stdDev']))
+        if 'LATITUDE' in self.auxiliary_imagery:
+            image = image.addBands(ee.Image.pixelLonLat().select('latitude').float())
+        if 'TERRAIN' in self.auxiliary_imagery:
+            image = image.addBands(create_terrain_image().mask(image.select(0).mask()))
+        if 'WATER' in self.auxiliary_imagery:
+            image = image.addBands(create_surface_water_image().mask(image.select(0).mask()))
+        return image
+
 
 def _force_cache_flush(feature):
     return feature \
         .set('__flush_cache__', random()) \
         .copyProperties(feature)
 
-
-def _add_covariates(image):
-    return image \
-        .addBands(_normalized_difference(image, ['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])) \
-        .addBands(_ratio(image, ['swir1', 'nir'])) \
-        .addBands(_ratio(image, ['red', 'swir1'])) \
-        .addBands(optical_indexes.to_evi(image)) \
-        .addBands(optical_indexes.to_savi(image)) \
-        .addBands(optical_indexes.to_ibi(image)) \
-        .addBands(_angle(image, ['brightness', 'greenness', 'wetness'])) \
-        .addBands(_distance(image, ['brightness', 'greenness', 'wetness'])) \
-        .addBands(
-        _diff(image, ['VV', 'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VH', 'VH_min', 'VH_mean', 'VH_med', 'VH_max'])) \
-        .addBands(_normalized_difference(image, ['VV_CV', 'VH_CV'])) \
-        .addBands(_normalized_difference(image, ['VV_stdDev', 'VH_stdDev'])) \
-        .addBands(create_terrain_image().mask(image.select(0).mask())) \
-        .addBands(create_surface_water_image().mask(image.select(0).mask()))
 
 
 def _normalized_difference(image, bands):
