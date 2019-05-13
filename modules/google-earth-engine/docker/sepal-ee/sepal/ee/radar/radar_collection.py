@@ -260,7 +260,7 @@ def create(
 
     bands = ['VV', 'VH', 'angle']
     if target_date:
-        bands = bands + ['dayOfYear', 'unixTimeDays', 'quality']
+        bands = bands + ['dayOfYear', 'daysFromTarget', 'unixTimeDays', 'quality']
     if harmonics:
         bands = bands + ['fitted', 'residuals']
 
