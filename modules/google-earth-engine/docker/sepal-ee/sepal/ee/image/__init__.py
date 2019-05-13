@@ -2,13 +2,12 @@ import ee
 import math
 
 
-def combine(image, bands, expression, name_template):
+def evaluate_pairwise(image, bands, expression, name_template):
     """
     Evaluates the expression for all pair-wise combination of provided pairs.
 
     If a band doesn't exist in the image, it is ignored. If less than two of the provided bands are present in the
     image, an empty image is returned.
-
 
     Args:
         image: The ee.Image to combine bands on.
@@ -29,9 +28,9 @@ def combine(image, bands, expression, name_template):
         This returns an ee.Image with the following bands:
             ratio_blue_green, ratio_blue_red, ratio_green_red
     """
-    existing_bands = find_existing_bands(image, bands)
+    image_bands = band_intersection(image, bands)
 
-    def combine_two(b1, b2):
+    def evaluate_pair(b1, b2):
         name = ee.String(name_template) \
             .replace('\\$\\{b1}', b1.bandNames().get(0)) \
             .replace('\\$\\{b2}', b2.bandNames().get(0))
@@ -41,15 +40,15 @@ def combine(image, bands, expression, name_template):
             'pi': math.pi
         }).rename(name)
 
-    def combine_bands():
+    def evaluate_image_bands_pairwise():
         return list_to_image(
-            existing_bands \
-            .slice(0, existing_bands.size().divide(existing_bands.size()).multiply(-1))
+            image_bands \
+            .slice(0, image_bands.size().divide(image_bands.size()).multiply(-1))
             .map(lambda band1:
-                existing_bands \
-                    .slice(existing_bands.indexOf(ee.String(band1)).add(1))
+                image_bands \
+                    .slice(image_bands.indexOf(ee.String(band1)).add(1))
                     .map(lambda band2:
-                        combine_two(
+                        evaluate_pair(
                             image.select([ee.String(band1)]),
                             image.select([ee.String(band2)])
                         )
@@ -59,8 +58,8 @@ def combine(image, bands, expression, name_template):
         )
 
     return when(
-        existing_bands.size().gte(2),
-        combine_bands
+        image_bands.size().gte(2),
+        evaluate_image_bands_pairwise
     )
 
 
@@ -81,12 +80,18 @@ def evaluate(image, required_bands, expression, name):
             .expression(expression, expression_map) \
             .rename(name)
 
-    existing_bands = find_existing_bands(image, required_bands)
-    has_required_bands = existing_bands.length().eq(len(required_bands))
+    image_bands = band_intersection(image, required_bands)
+    has_required_bands = image_bands.length().eq(len(required_bands))
     return ee.Image(when(has_required_bands, evaluate_image))
 
 
 def list_to_image(image_list):
+    """
+    Creates a single ee.Image from provided list of ee.Images.
+
+    Arg
+    :return:
+    """
     return ee.List(image_list).iterate(
         lambda image, acc: ee.Image(acc).addBands(ee.Image(image)),
         ee.Image().select([])
@@ -114,9 +119,9 @@ def select_and_add_missing(image, bands):
         .addBands(image, None, True).select(bands)
 
 
-def find_existing_bands(image, bands):
+def band_intersection(image, bands):
     """
-    Selects the bands that image actually has of the provided list of bands.
+    Returns the band names both in the image and in the list of provided band names.
     """
     return image.bandNames().filter(ee.Filter(
         ee.Filter.inList('item', bands)

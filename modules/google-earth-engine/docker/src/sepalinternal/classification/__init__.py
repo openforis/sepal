@@ -5,7 +5,7 @@ import ee
 from ..gee import get_info
 from ..image_spec import ImageSpec
 from ..sepal_exception import SepalException
-from sepal.ee.image import combine
+from sepal.ee.image import evaluate_pairwise
 from sepal.ee.optical import optical_indexes
 from sepal.ee.water import create_surface_water_image
 from sepal.ee.terrain import create_terrain_image
@@ -84,23 +84,23 @@ def _force_cache_flush(feature):
 
 
 def _normalized_difference(image, bands):
-    return combine(image, bands, '(b1 - b2) / (b1 + b2)', 'nd_${b1}_${b2}')
+    return evaluate_pairwise(image, bands, '(b1 - b2) / (b1 + b2)', 'nd_${b1}_${b2}')
 
 
 def _ratio(image, bands):
-    return combine(image, bands, 'b1 / b2', 'ratio_${b1}_${b2}')
+    return evaluate_pairwise(image, bands, 'b1 / b2', 'ratio_${b1}_${b2}')
 
 
 def _diff(image, bands):
-    return combine(image, bands, 'b1 - b2', 'diff_${b1}_${b2}')
+    return evaluate_pairwise(image, bands, 'b1 - b2', 'diff_${b1}_${b2}')
 
 
 def _angle(image, bands):
-    return combine(image, bands, 'atan2(b1, b2) / pi', 'angle_${b1}_${b2}')
+    return evaluate_pairwise(image, bands, 'atan2(b1, b2) / pi', 'angle_${b1}_${b2}')
 
 
 def _distance(image, bands):
-    return combine(image, bands, 'hypot(b1, b2)', 'distance_${b1}_${b2}')
+    return evaluate_pairwise(image, bands, 'hypot(b1, b2)', 'distance_${b1}_${b2}')
 
 
 _colors = [
