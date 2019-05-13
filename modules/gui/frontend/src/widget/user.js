@@ -1,7 +1,7 @@
 import {EMPTY, Subject, timer} from 'rxjs'
 import {connect, select} from 'store'
+import {filter, map, switchMap} from 'rxjs/operators'
 import {history} from 'route'
-import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -125,6 +125,7 @@ class User extends React.Component {
             loadUser$.pipe(
                 switchMap(() =>
                     api.user.loadCurrentUser$().pipe(
+                        // filter(user => user),
                         map(user => {
                             actionBuilder('SET_CURRENT_USER', {user})
                                 .set('user', {
@@ -133,7 +134,7 @@ class User extends React.Component {
                                     loggedOn: !!user
                                 })
                                 .dispatch()
-                            if (user.googleTokens) {
+                            if (user && user.googleTokens) {
                                 const expiryDate = user.googleTokens.accessTokenExpiryDate
                                 const fiveMinutes = 5 * 60 * 1000
                                 return Math.max(fiveMinutes, expiryDate - fiveMinutes - Date.now())
