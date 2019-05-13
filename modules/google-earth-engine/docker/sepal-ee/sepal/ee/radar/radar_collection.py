@@ -160,7 +160,7 @@ def create(
             steps.append(mask_overlay)
         if speckle_filter == 'BOXCAR':
             steps.append(boxcar_filter)
-        elif speckle_filter == 'SNC':
+        elif speckle_filter == 'SNIC':
             steps.append(snic_filter)
         elif speckle_filter == 'REFINED_LEE':
             steps.append(_refined_lee.apply)
