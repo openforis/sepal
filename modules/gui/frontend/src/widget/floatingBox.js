@@ -17,11 +17,11 @@ class FloatingBox extends React.Component {
     }
 
     render() {
-        const {className, placement = 'below', forwardedRef, children} = this.props
+        const {className, placement, width, forwardedRef, children} = this.props
         const {dimensions: {height, top, bottom, left, right}} = this.state
         const style = {
             '--left': left,
-            '--width': right - left,
+            '--width': width === 'element' ? right - left : null,
             '--above-height': top,
             '--above-bottom': height - top - 2,
             '--below-height': height - bottom,
@@ -83,5 +83,11 @@ FloatingBox.propTypes = {
     children: PropTypes.object.isRequired,
     className: PropTypes.string,
     element: PropTypes.object,
-    placement: PropTypes.oneOf(['above', 'below'])
+    placement: PropTypes.oneOf(['above', 'below']),
+    width: PropTypes.oneOf(['element', 'auto'])
+}
+
+FloatingBox.defaultProps = {
+    placement: 'below',
+    width: 'element'
 }
