@@ -20,10 +20,12 @@ class _Button extends React.Component {
 
     constructor(props) {
         super(props)
-        const {forwardedRef, onClickHold} = props
-        this.button = forwardedRef
-            ? forwardedRef
-            : onClickHold && React.createRef()
+        const {onClickHold} = props
+        // const {forwardedRef, onClickHold} = props
+        // this.button = forwardedRef
+        //     ? forwardedRef
+        //     : onClickHold && React.createRef()
+        this.button = onClickHold && React.createRef()
     }
 
     stopPropagation() {
@@ -151,9 +153,10 @@ class _Button extends React.Component {
     }
 
     renderButton(contents) {
-        const {type = 'button', tabIndex, disabled, onClickHold} = this.props
+        const {type = 'button', tabIndex, disabled, onClickHold, forwardedRef} = this.props
         return (
             <button
+                ref={forwardedRef}
                 type={type}
                 className={this.classNames()}
                 tabIndex={tabIndex}
@@ -300,7 +303,6 @@ Button.propTypes = {
     disableTransitions: PropTypes.any,
     downloadFilename: PropTypes.any,
     downloadUrl: PropTypes.any,
-    forwardedRef: PropTypes.object,
     hover: PropTypes.any,
     icon: PropTypes.string,
     iconFlipHorizontal: PropTypes.any,
@@ -309,6 +311,7 @@ Button.propTypes = {
     label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     link: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'add', 'apply', 'cancel']),
+    ref: PropTypes.object,
     shape: PropTypes.oneOf(['rectangle', 'pill', 'circle', 'none']),
     shown: PropTypes.any,
     size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large', 'xx-large']),
