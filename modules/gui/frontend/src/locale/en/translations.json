@@ -361,7 +361,7 @@
             "type": {
               "label": "Scene selection",
               "all.label": "Use all scenes",
-              "select.label": "Select individual scenes"
+              "select.label": "Select scenes"
             },
             "targetDateWeight": {
               "label": "Priority",
@@ -682,6 +682,28 @@
               "required": "A column must be selected"
             },
             "openCeo": "Open training data collection tool"
+          }
+        },
+        "auxiliaryImagery": {
+          "button": "AUX",
+          "tooltip": "Include Auxiliary image sources in classification",
+          "title": "Auxiliary sources",
+          "form": {
+            "options": {
+              "label": "Sources",
+              "latitude": {
+                "label": "Latitude",
+                "tooltip": "Include the latitude of each pixel."
+              },
+              "terrain": {
+                "label": "Terrain",
+                "tooltip": "Include SRTM data."
+              },
+              "water": {
+                "label": "Water",
+                "tooltip": "Include JRC Global Surface Water Mapping Layers."
+              }
+            }
           }
         },
         "retrieve": {

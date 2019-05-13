@@ -74,7 +74,7 @@ class List extends React.Component {
                     handleHeight
                     onResize={() => this.scrollHighlighted$.next()}>
                     <ScrollableContainer className={className}>
-                        <Scrollable className={styles.options}>
+                        <Scrollable className={styles.options} direction='xy'>
                             {scrollableContainerHeight => this.renderList(scrollableContainerHeight)}
                         </Scrollable>
                     </ScrollableContainer>

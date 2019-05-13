@@ -3,7 +3,9 @@ import {recipeActionBuilder} from '../recipe'
 import _ from 'lodash'
 import api from 'api'
 
-export const defaultModel = {}
+export const defaultModel = {
+    auxiliaryImagery: []
+}
 
 export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)

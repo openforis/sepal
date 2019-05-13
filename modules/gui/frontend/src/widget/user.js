@@ -1,12 +1,12 @@
-import {Subject, timer} from 'rxjs'
-import {connect, select} from 'store'
-import {filter, map, switchMap} from 'rxjs/operators'
-import {history} from 'route'
-import {msg} from 'translate'
-import Notifications from 'widget/notifications'
-import React from 'react'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import React from 'react'
+import {history} from 'route'
+import {Subject, timer} from 'rxjs'
+import {map, switchMap} from 'rxjs/operators'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import Notifications from 'widget/notifications'
 
 const login$ = new Subject()
 const logout$ = new Subject()
@@ -36,7 +36,7 @@ export const revokeGoogleAccess$ = () =>
     api.user.revokeGoogleAccess$().pipe(
         map(() => loadUser$.next())
     )
-    
+
 export const requestPasswordReset$ = email =>
     api.user.requestPasswordReset$(email)
 
@@ -61,10 +61,10 @@ export const updateCurrentUserDetails$ = ({name, email, organization}) =>
                 .dispatch()
         )
     )
-    
+
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
     api.user.changePassword$({oldPassword, newPassword})
-    
+
 export const updateCurrentUserSession$ = session =>
     api.user.updateCurrentUserSession$(session).pipe(
         map(() =>
@@ -75,7 +75,7 @@ export const updateCurrentUserSession$ = session =>
                 .dispatch()
         )
     )
-    
+
 export const stopCurrentUserSession$ = session =>
     api.user.stopCurrentUserSession$(session).pipe(
         map(() =>
@@ -84,7 +84,7 @@ export const stopCurrentUserSession$ = session =>
                 .dispatch()
         )
     )
-    
+
 class User extends React.Component {
     login$(username, password) {
         resetInvalidCredentials()
@@ -125,34 +125,24 @@ class User extends React.Component {
             loadUser$.pipe(
                 switchMap(() =>
                     api.user.loadCurrentUser$().pipe(
-                        map(user =>
-                            actionBuilder('SET_CURRENT_USER', {user})
-                                .set('user', {
-                                    currentUser: user,
-                                    initialized: true,
-                                    loggedOn: !!user
-                                })
-                                .dispatch()
+                        map(user => {
+                                actionBuilder('SET_CURRENT_USER', {user})
+                                    .set('user', {
+                                        currentUser: user,
+                                        initialized: true,
+                                        loggedOn: !!user
+                                    })
+                                    .dispatch()
+                                const expiryDate = user.googleTokens.accessTokenExpiryDate
+                                const fiveMinutes = 5 * 60 * 1000
+                                return Math.max(fiveMinutes, expiryDate - fiveMinutes - Date.now())
+                            }
                         ),
-                    )
-                )
-            )
-        )
-    }
-
-    handleReloadUser() {
-        this.props.stream('SCHEDULE_RELOAD_USER',
-            loadUser$.pipe(
-                filter(user => user && user.googleTokens),
-                map(user => {
-                    const expiryDate = user.googleTokens.accessTokenExpiryDate
-                    const fiveMinutes = 5 * 60 * 1000
-                    const delay = Math.max(fiveMinutes, expiryDate - fiveMinutes - Date.now())
-                    return delay
-                }),
-                switchMap(reloadInterval =>
-                    timer(reloadInterval).pipe(
-                        map(() => loadUser$.next())
+                        switchMap(reloadDelay =>
+                            timer(reloadDelay).pipe(
+                                map(() => loadUser$.next())
+                            )
+                        )
                     )
                 )
             )
@@ -179,7 +169,6 @@ class User extends React.Component {
         this.handleLogin()
         this.handleLogout()
         this.handleLoadUser()
-        this.handleReloadUser()
         this.handleResetPassword()
         loadUser$.next()
     }

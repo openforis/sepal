@@ -5,6 +5,10 @@ import ee
 from ..gee import get_info
 from ..image_spec import ImageSpec
 from ..sepal_exception import SepalException
+from sepal.ee.image import evaluate_pairwise
+from sepal.ee.optical import optical_indexes
+from sepal.ee.water import create_surface_water_image
+from sepal.ee.terrain import create_terrain_image
 
 
 class Classification(ImageSpec):
@@ -15,6 +19,7 @@ class Classification(ImageSpec):
         self.trainingData = ee.FeatureCollection('ft:' + model['trainingData']['fusionTable'])
         self.classProperty = model['trainingData']['fusionTableColumn']
         self.images = [create_image_spec(sepal_api, {'recipe': image}) for image in model['imagery']['images']]
+        self.auxiliary_imagery = model['auxiliaryImagery']
         self.aoi = self.images[0].aoi
         self.scale = min([image.scale for image in self.images])
         self.bands = ['class']
@@ -31,8 +36,7 @@ class Classification(ImageSpec):
         if not has_data_in_aoi:
             raise SepalException(code='gee.classification.error.noTrainingData', message='No training data in AOI.')
 
-        image = ee.Image([_add_covariates(image._ee_image()) for image in self.images])
-
+        image = ee.Image([self._add_covariates(image._ee_image()) for image in self.images])
         # Force updates to fusion table to be reflected
         self.trainingData = self.trainingData.map(_force_cache_flush)
         training = image.sampleRegions(
@@ -43,7 +47,33 @@ class Classification(ImageSpec):
         classifier = ee.Classifier.randomForest(25).train(training, self.classProperty)
         classification = image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         return classification \
-            .uint8()
+            .uint8() \
+            .clip(self.aoi.geometry())
+
+    def _add_covariates(self, image):
+        image = image \
+            .addBands(_normalized_difference(image, ['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])) \
+            .addBands(_ratio(image, ['swir1', 'nir'])) \
+            .addBands(_ratio(image, ['red', 'swir1'])) \
+            .addBands(optical_indexes.to_evi(image)) \
+            .addBands(optical_indexes.to_savi(image)) \
+            .addBands(optical_indexes.to_ibi(image)) \
+            .addBands(_angle(image, ['brightness', 'greenness', 'wetness'])) \
+            .addBands(_distance(image, ['brightness', 'greenness', 'wetness'])) \
+            .addBands(
+            _diff(image, ['VV', 'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VH', 'VH_min', 'VH_mean', 'VH_med', 'VH_max'])) \
+            .addBands(_normalized_difference(image, ['VV_CV', 'VH_CV'])) \
+            .addBands(_normalized_difference(image, ['VV_stdDev', 'VH_stdDev']))
+        # To make sure we don't rely on only auxiliary data,
+        # the auxiliary data will be masked where all bands of the image is masked
+        has_data = image.mask().reduce(ee.Reducer.max())
+        if 'LATITUDE' in self.auxiliary_imagery:
+            image = image.addBands(ee.Image.pixelLonLat().select('latitude').float().mask(has_data))
+        if 'TERRAIN' in self.auxiliary_imagery:
+            image = image.addBands(create_terrain_image().mask(has_data))
+        if 'WATER' in self.auxiliary_imagery:
+            image = image.addBands(create_surface_water_image().mask(has_data))
+        return image
 
 
 def _force_cache_flush(feature):
@@ -52,54 +82,25 @@ def _force_cache_flush(feature):
         .copyProperties(feature)
 
 
-def _add_covariates(image):
-    return image \
-        .addBands(_normalized_difference(image, ['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])) \
-        .addBands(
-        _diff(image, ['VV', 'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VH', 'VH_min', 'VH_mean', 'VH_med', 'VH_max'])) \
-        .addBands(_normalized_difference(image, ['VV_CV', 'VH_CV'])) \
-        .addBands(_normalized_difference(image, ['VV_stdDev', 'VH_stdDev']))
-
 
 def _normalized_difference(image, bands):
-    return _combine(image, bands, '(b1 - b2)/(b1 + b2)', 'nd_${b1}_${b2}')
+    return evaluate_pairwise(image, bands, '(b1 - b2) / (b1 + b2)', 'nd_${b1}_${b2}')
+
+
+def _ratio(image, bands):
+    return evaluate_pairwise(image, bands, 'b1 / b2', 'ratio_${b1}_${b2}')
 
 
 def _diff(image, bands):
-    return _combine(image, bands, 'b1 - b2', '${b1}-${b2}')
+    return evaluate_pairwise(image, bands, 'b1 - b2', 'diff_${b1}_${b2}')
 
 
-def _combine(image, bands, expression, name_template):
-    existing_bands = image.bandNames().filter(ee.Filter(
-        ee.Filter.inList('item', bands)
-    ))
-    number_of_bands = existing_bands.size()
+def _angle(image, bands):
+    return evaluate_pairwise(image, bands, 'atan2(b1, b2) / pi', 'angle_${b1}_${b2}')
 
-    def combine_two(b1, b2):
-        name = ee.String(name_template) \
-            .replace('\\$\\{b1}', b1.bandNames().get(0)) \
-            .replace('\\$\\{b2}', b2.bandNames().get(0))
-        return b1.expression(expression, {
-            'b1': b1,
-            'b2': b2
-        }).rename([name])
 
-    # Hack to get 0 when there are no matching bands, -1 otherwise
-    last_index = number_of_bands.divide(number_of_bands).multiply(-1)
-    combinations = ee.Image(
-        existing_bands
-            .slice(0, last_index)
-            .map(lambda band1: existing_bands
-                 .slice(existing_bands.indexOf(ee.String(band1)).add(1))
-                 .map(lambda band2: combine_two(image.select([ee.String(band1)]), image.select([ee.String(band2)])))
-                 )
-            .flatten()
-            .iterate(lambda band, image:
-                     ee.Image(image).addBands(band)
-                     , ee.Image()))
-    return combinations.select(
-        ee.List.sequence(1, combinations.bandNames().size().subtract(1))
-    )
+def _distance(image, bands):
+    return evaluate_pairwise(image, bands, 'hypot(b1, b2)', 'distance_${b1}_${b2}')
 
 
 _colors = [
