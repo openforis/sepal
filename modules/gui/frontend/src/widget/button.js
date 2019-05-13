@@ -21,10 +21,6 @@ class _Button extends React.Component {
     constructor(props) {
         super(props)
         const {onClickHold} = props
-        // const {forwardedRef, onClickHold} = props
-        // this.button = forwardedRef
-        //     ? forwardedRef
-        //     : onClickHold && React.createRef()
         this.button = onClickHold && React.createRef()
     }
 
@@ -48,19 +44,8 @@ class _Button extends React.Component {
     }
 
     classNames() {
-        const {
-            chromeless,
-            className,
-            additionalClassName,
-            look = 'default',
-            size = 'normal',
-            shape = 'rectangle',
-            alignment = 'center',
-            width = 'fit',
-            onClickHold,
-            hover,
-            disableTransitions
-        } = this.props
+        const {chromeless, className, additionalClassName, look, size, shape,
+            alignment, width, onClickHold, hover, disableTransitions} = this.props
         return className ? className : [
             styles.button,
             styles[size],
@@ -135,7 +120,7 @@ class _Button extends React.Component {
     }
 
     renderLink(contents) {
-        const {link, shown = true, disabled} = this.props
+        const {link, shown, disabled} = this.props
         return link && shown && !disabled ? (
             <Link to={link} onMouseDown={e => e.preventDefault()}>
                 {contents}
@@ -153,7 +138,7 @@ class _Button extends React.Component {
     }
 
     renderButton(contents) {
-        const {type = 'button', tabIndex, disabled, onClickHold, forwardedRef} = this.props
+        const {type, tabIndex, disabled, onClickHold, forwardedRef} = this.props
         return (
             <button
                 ref={forwardedRef}
@@ -190,7 +175,7 @@ class _Button extends React.Component {
     }
 
     renderContents() {
-        const {icon, iconPlacement = 'left', label, children} = this.props
+        const {icon, iconPlacement, label, children} = this.props
         return children ? children : (
             <div className={styles.contents}>
                 {icon && iconPlacement === 'left' ? this.renderIcon() : null}
@@ -329,7 +314,18 @@ Button.propTypes = {
     onMouseOver: PropTypes.func
 }
 
-export const ButtonGroup = ({children, type = 'horizontal-wrap', className}) =>
+Button.defaultProps = {
+    alignment: 'center',
+    iconPlacement: 'left',
+    look: 'default',
+    shape: 'rectangle',
+    shown: true,
+    size: 'normal',
+    type: 'button',
+    width: 'fit'
+}
+
+export const ButtonGroup = ({children, type, className}) =>
     <div className={[styles.groupContainer, className].join(' ')}>
         <div className={[
             styles.group,
@@ -348,4 +344,8 @@ ButtonGroup.propTypes = {
         'horizontal-tight',
         'vertical', 'vertical-tight'
     ])
+}
+
+ButtonGroup.defaultProps = {
+    type: 'horizontal-wrap'
 }
