@@ -1,16 +1,16 @@
 import {Button} from 'widget/button'
 import {EMPTY, Subject, animationFrameScheduler, interval} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {debounceTime, distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
+import {distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import _ from 'lodash'
 import styles from './list.module.css'
+import withForwardedRef from 'ref'
 
 const ANIMATION_SPEED = .2
-const AUTO_CENTER_DELAY = 1000
 
 const getContainer = element =>
     element && element.parentNode && element.parentNode.parentNode
@@ -39,14 +39,21 @@ const setScrollOffset = (element, value) => {
 const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
 
-export default class List extends React.Component {
+class List extends React.Component {
     subscriptions = []
-    list = React.createRef()
     highlighted = React.createRef()
     scrollHighlighted$ = new Subject()
     state = {
         highlightedOption: null,
         overrideHover: false
+    }
+
+    constructor(props) {
+        super(props)
+        const {forwardedRef} = props
+        this.list = forwardedRef
+            ? forwardedRef
+            : React.createRef()
     }
 
     render() {
@@ -79,7 +86,7 @@ export default class List extends React.Component {
     renderList(scrollableContainerHeight = 0) {
         const {options, overScroll} = this.props
         return (
-            <ul style={{
+            <ul ref={this.list} style={{
                 '--scrollable-container-height': overScroll ? scrollableContainerHeight : 0
             }}>
                 {this.renderOptions(options)}
@@ -263,14 +270,6 @@ export default class List extends React.Component {
         this.scrollHighlighted$.next(option)
     }
 
-    autoCenterWhenIdle(scroll$) {
-        return scroll$.pipe(
-            debounceTime(AUTO_CENTER_DELAY)
-        ).subscribe(() => {
-            this.centerSelected()
-        })
-    }
-
     update() {
         const highlightedOption = this.getSelectedOption() || this.getFirstSelectableOption()
         this.setState({highlightedOption}, () => this.scrollHighlighted$.next())
@@ -278,7 +277,7 @@ export default class List extends React.Component {
 
     initializeAutoScroll() {
         const animationFrame$ = interval(0, animationFrameScheduler)
-        const {onSelect} = this.props
+        const {onSelect, autoCenter} = this.props
 
         const scroll$ = this.scrollHighlighted$.pipe(
             map(() => this.highlighted.current),
@@ -303,7 +302,7 @@ export default class List extends React.Component {
 
         this.subscriptions.push(
             scroll$.subscribe(
-                ({element, value}) => setScrollOffset(element, value)
+                ({element, value}) => this.props.autoCenter && setScrollOffset(element, value)
             ),
             select$.subscribe(
                 option => {
@@ -342,6 +341,12 @@ export default class List extends React.Component {
     }
 }
 
+export default (
+    withForwardedRef(
+        List
+    )
+)
+
 List.propTypes = {
     options: PropTypes.arrayOf(
         PropTypes.shape({
@@ -354,6 +359,7 @@ List.propTypes = {
     className: PropTypes.string,
     keyboard: PropTypes.any,
     overScroll: PropTypes.any,
+    ref: PropTypes.object,
     selectedOption: PropTypes.any,
     onCancel: PropTypes.func
 }
