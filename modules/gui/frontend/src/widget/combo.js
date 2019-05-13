@@ -1,6 +1,7 @@
 import {ErrorMessage} from 'widget/form'
+import {Subject, fromEvent} from 'rxjs'
 import {connect} from 'store'
-import {fromEvent} from 'rxjs'
+import {delay} from 'rxjs/operators'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
 import FloatingBox from 'widget/floatingBox'
@@ -13,6 +14,8 @@ import _ from 'lodash'
 import escapeStringRegexp from 'escape-string-regexp'
 import styles from './combo.module.css'
 
+const SELECTION_DELAY_MS = 350
+
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
 })
@@ -20,12 +23,15 @@ const mapStateToProps = state => ({
 class Combo extends React.Component {
     subscriptions = []
     input = React.createRef()
+    list = React.createRef()
+    select$ = new Subject()
     state = {
         showOptions: false,
         filter: '',
         filteredOptions: [],
         flattenedOptions: [],
-        selectedOption: null
+        selectedOption: null,
+        selected: false
     }
 
     render() {
@@ -99,18 +105,20 @@ class Combo extends React.Component {
 
     renderOptions() {
         const {placement = 'below', optionsClassName} = this.props
-        const {flattenedOptions, selectedOption} = this.state
+        const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
                 element={this.input.current}
                 placement={placement}>
                 <List
+                    ref={this.list}
                     className={optionsClassName || styles.options}
                     options={flattenedOptions}
                     selectedOption={selectedOption}
-                    onSelect={option => this.selectOption(option)}
+                    onSelect={option => this.select$.next(option)}
                     onCancel={() => this.resetFilter()}
-                    keyboard={true}
+                    autoCenter={!selected}
+                    keyboard
                 />
             </FloatingBox>
         )
@@ -142,16 +150,11 @@ class Combo extends React.Component {
         }
     }
 
-    selectOption(option) {
-        const {input, onChange} = this.props
-        this.setSelectedOption(option)
-        this.setFilter()
-        input.set(option.value)
-        onChange && onChange(option)
-    }
-
     setSelectedOption(selectedOption) {
-        this.updateState({selectedOption})
+        this.updateState({
+            selectedOption,
+            selected: true
+        })
     }
 
     updateState(state, callback) {
@@ -164,13 +167,32 @@ class Combo extends React.Component {
         )
     }
 
-    handleBlurEvents() {
+    handleSelect() {
+        const {input, onChange} = this.props
+        this.subscriptions.push(
+            this.select$.subscribe(
+                option => {
+                    this.setSelectedOption(option)
+                    input.set(option.value)
+                    onChange && onChange(option)
+                }
+            ),
+            this.select$.pipe(
+                delay(SELECTION_DELAY_MS)
+            ).subscribe(
+                () => this.setState({selected: false}, this.setFilter)
+            )
+        )
+    }
+
+    handleBlur() {
         const {onCancel} = this.props
         const click$ = fromEvent(document, 'click')
         const isInputClick = e => this.input.current && this.input.current.contains(e.target)
+        const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
         this.subscriptions.push(
             click$.subscribe(e => {
-                if (!isInputClick(e)) {
+                if (!isInputClick(e) && !isListClick(e)) {
                     this.setFilter()
                     onCancel && onCancel(e)
                 }
@@ -180,7 +202,12 @@ class Combo extends React.Component {
 
     componentDidMount() {
         this.setFilter()
-        this.handleBlurEvents()
+        this.handleSelect()
+        this.handleBlur()
+    }
+
+    shouldComponentUpdate() {
+        return !this.state.selected
     }
 
     componentDidUpdate() {

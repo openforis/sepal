@@ -1,12 +1,12 @@
-import actionBuilder from 'action-builder'
-import api from 'api'
-import React from 'react'
-import {history} from 'route'
-import {Subject, timer} from 'rxjs'
-import {map, switchMap} from 'rxjs/operators'
+import {EMPTY, Subject, timer} from 'rxjs'
 import {connect, select} from 'store'
+import {history} from 'route'
+import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
+import React from 'react'
+import actionBuilder from 'action-builder'
+import api from 'api'
 
 const login$ = new Subject()
 const logout$ = new Subject()
@@ -126,22 +126,24 @@ class User extends React.Component {
                 switchMap(() =>
                     api.user.loadCurrentUser$().pipe(
                         map(user => {
-                                actionBuilder('SET_CURRENT_USER', {user})
-                                    .set('user', {
-                                        currentUser: user,
-                                        initialized: true,
-                                        loggedOn: !!user
-                                    })
-                                    .dispatch()
+                            actionBuilder('SET_CURRENT_USER', {user})
+                                .set('user', {
+                                    currentUser: user,
+                                    initialized: true,
+                                    loggedOn: !!user
+                                })
+                                .dispatch()
+                            if (user.googleTokens) {
                                 const expiryDate = user.googleTokens.accessTokenExpiryDate
                                 const fiveMinutes = 5 * 60 * 1000
                                 return Math.max(fiveMinutes, expiryDate - fiveMinutes - Date.now())
                             }
-                        ),
-                        switchMap(reloadDelay =>
-                            timer(reloadDelay).pipe(
+                        }),
+                        switchMap(reloadDelay => reloadDelay
+                            ? timer(reloadDelay).pipe(
                                 map(() => loadUser$.next())
                             )
+                            : EMPTY
                         )
                     )
                 )
