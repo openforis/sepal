@@ -97,10 +97,13 @@ def create(
         total_slices = ee.Number(image.get('totalSlices'))
         slice_number = ee.Number(image.get('sliceNumber'))
         middle_slice = ee.Image(slice_number.gt(1).And(slice_number.lt(total_slices)))
-        not_border = image.select('VV').mask().reduceNeighborhood(
-            reducer=ee.Reducer.allNonZero(),
-            kernel=ee.Kernel.circle(radius=500, units='meters')
-        )
+        mask = image.select(['VV', 'VH']).mask().reduce(ee.Reducer.min()).floor()
+        pixels_to_mask = mask.Not() \
+            .fastDistanceTransform(128, 'pixels').sqrt()
+        meters_to_mask = pixels_to_mask \
+            .multiply(ee.Image.pixelArea().sqrt()) \
+            .rename('metersToMask')
+        not_border = meters_to_mask.gte(500).And(pixels_to_mask.gt(2))
         angle = image.select('angle')
         return image \
             .updateMask(
