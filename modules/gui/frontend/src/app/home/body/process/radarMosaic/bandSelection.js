@@ -27,13 +27,13 @@ const mapRecipeToProps = recipe => {
 class BandSelection extends React.PureComponent {
     state = {}
     bandOptions = [{
-        value: 'VV, VH, VV_VH',
+        value: 'VV, VH, ratio_VV_VH',
         bandLabels: [
             'VV',
             'VH',
             'VV/VH'
         ],
-        searchableText: 'VV VH VV_VH VV/VH',
+        searchableText: 'VV VH ratio_VV_VH VV/VH',
         timeScan: false,
         pointInTime: true
     }, {
@@ -56,13 +56,13 @@ class BandSelection extends React.PureComponent {
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'VV_median, VH_median, VV_median_VH_median',
+        value: 'VV_median, VH_median, ratio_VV_median_VH_median',
         bandLabels: [
             <span>VV<sub>med</sub></span>,
             <span>VH<sub>med</sub></span>,
             <span>VV<sub>med</sub>/VH<sub>med</sub></span>
         ],
-        searchableText: 'VV_median VH_median VV_median_VH_median median',
+        searchableText: 'VV_median VH_median ratio_VV_median_VH_median median',
         timeScan: true,
         pointInTime: false
     }, {
@@ -86,11 +86,19 @@ class BandSelection extends React.PureComponent {
         timeScan: true,
         pointInTime: false
     }, {
-        value: 'phase, amplitude, residuals',
+        value: 'VV_phase, VV_amplitude, VV_residuals',
         bandLabels: [
-            <span>Harmonics</span>
+            <span>VV<sub>phase, amp, residuals</sub> (HSV)</span>
         ],
-        searchableText: 'Harmonics',
+        searchableText: 'VV Harmonics',
+        timeScan: true,
+        pointInTime: false
+    }, {
+        value: 'VH_phase, VH_amplitude, VH_residuals',
+        bandLabels: [
+            <span>VH<sub>phase, amp, residuals</sub> (HSV)</span>
+        ],
+        searchableText: 'VH Harmonics',
         timeScan: true,
         pointInTime: false
     }]
