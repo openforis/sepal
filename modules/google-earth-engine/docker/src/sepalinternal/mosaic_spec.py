@@ -46,7 +46,6 @@ class MosaicSpec(ImageSpec):
         })
 
     def _ee_image(self):
-        logging.info('Creating mosaic of ' + str(self))
         return Mosaic(self).create(self._data_sets())
 
     def _date_filter(self):
