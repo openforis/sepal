@@ -156,10 +156,10 @@ app.get('/get-collected-data/:id', (req, res, next) => {
                     const ret = lines.slice(1).reduce((acc, cur) => {
                         const values = cur.split(',')
                         const [id, , yCoord, xCoord] = values
-                        const answer = values[qIndex]
+                        const answer = values[qIndex] || ''
                         const answerId = answersById[answer] || ''
-                        return `${acc}\n${id},${yCoord},${xCoord},${answerId}`
-                    }, 'id,YCoordinate,XCoordinate,class')
+                        return `${acc}\n${id},${yCoord},${xCoord},${answerId},${answer}`
+                    }, 'id,YCoordinate,XCoordinate,class,editedClass')
                     res.send(ret)
                 })
             }).on('error', err => {
