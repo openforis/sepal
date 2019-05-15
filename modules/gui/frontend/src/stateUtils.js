@@ -230,41 +230,42 @@ export class Foo {
 }
 
 export const isEqual = (a, b) => {
-    if (a === b) {
-        // console.log('identity')
-        return true
-    }
-    if (_.isPlainObject(a) && _.isPlainObject(b)) {
-        const keysA = _.keys(a)
-        const keysB = _.keys(b)
-        // different number of keys -> false
-        if (keysA.length !== keysB.length) {
-            // console.log('different number of keys')
-            return false
-        }
-        // any key is different -> false
-        if (_.some(keysA, key => !isEqual(a[key], b[key]))) {
-            // console.log('different key values')
-            return false
-        }
-        // console.log('equal objects')
-        return true
-    }
-    if (_.isArray(a) && _.isArray(b)) {
-        // different number of items -> false
-        if (a.length !== b.length) {
-            // console.log('different number of items')
-            return false
-        }
-        // any item is different -> false
-        if (_.some(a, (_, index) => !isEqual(a[index], b[index]))) {
-            // console.log('different item values')
-            return false
-        }
-        // console.log('equal arrays')
-        return true
-    }
-    const equal = _.isEqual(a, b)
-    // console.log(equal ? 'equal' : 'not equal')
-    return equal
+    return _.isEqualWith(a, b, (a, b) => a === b ? true : undefined)
+
+    // if (a === b) {
+    //     return true
+    // }
+    // if (_.isPlainObject(a) && _.isPlainObject(b)) {
+    //     const keysA = _.keys(a)
+    //     const keysB = _.keys(b)
+    //     // different number of keys -> false
+    //     if (keysA.length !== keysB.length) {
+    //         // console.log('different number of keys')
+    //         return false
+    //     }
+    //     // any key is different -> false
+    //     if (_.some(keysA, key => !isEqual(a[key], b[key]))) {
+    //         // console.log('different key values')
+    //         return false
+    //     }
+    //     // console.log('equal objects')
+    //     return true
+    // }
+    // if (_.isArray(a) && _.isArray(b)) {
+    //     // different number of items -> false
+    //     if (a.length !== b.length) {
+    //         // console.log('different number of items')
+    //         return false
+    //     }
+    //     // any item is different -> false
+    //     if (_.some(a, (_, index) => !isEqual(a[index], b[index]))) {
+    //         // console.log('different item values')
+    //         return false
+    //     }
+    //     // console.log('equal arrays')
+    //     return true
+    // }
+    // const equal = _.isEqual(a, b)
+    // // console.log(equal ? 'equal' : 'not equal')
+    // return equal
 }
