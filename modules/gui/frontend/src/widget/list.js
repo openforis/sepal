@@ -277,7 +277,7 @@ class List extends React.Component {
 
     initializeAutoScroll() {
         const animationFrame$ = interval(0, animationFrameScheduler)
-        const {onSelect, autoCenter} = this.props
+        const {onSelect} = this.props
 
         const scroll$ = this.scrollHighlighted$.pipe(
             map(() => this.highlighted.current),

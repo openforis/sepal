@@ -1,7 +1,7 @@
 import {EMPTY, Subject, timer} from 'rxjs'
 import {connect, select} from 'store'
-import {filter, map, switchMap} from 'rxjs/operators'
 import {history} from 'route'
+import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'

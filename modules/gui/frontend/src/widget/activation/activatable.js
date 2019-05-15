@@ -10,6 +10,7 @@ import actionBuilder from 'action-builder'
 
 const mapStateToProps = (state, ownProps) => {
     const {activationContext: {pathList}} = ownProps
+    // return {activatables: collectActivatables(state, pathList)}
     return {activatables: collectActivatables(state, pathList)}
 }
 

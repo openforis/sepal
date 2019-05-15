@@ -1,7 +1,7 @@
 import {Subject} from 'rxjs'
 import {connect as connectToRedux} from 'react-redux'
+import {isEqual, selectFrom} from 'stateUtils'
 import {isMobile} from 'widget/userAgent'
-import {selectFrom} from 'stateUtils'
 import {takeUntil} from 'rxjs/operators'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
@@ -34,6 +34,7 @@ export const dispatch = action =>
 
 export const select = (...path) =>
     selectFrom(state(), path)
+    // _.cloneDeep(selectFrom(state(), path))
 
 const includeDispatchingProp = (id, mapStateToProps) =>
     (state, ownProps) => {
@@ -59,6 +60,7 @@ export const connect = mapStateToProps => {
             }
 
             render() {
+                // console.log('PreventUpdateWhenDisabled.props', this.props)
                 return (
                     <WrappedComponent {...this.props}>
                         {this.props.children}
@@ -69,6 +71,7 @@ export const connect = mapStateToProps => {
 
         class AddEnabledProp extends Component {
             render() {
+                // console.log('AddEnabledProp: render')
                 return (
                     <EnabledContext.Consumer>
                         {enabled =>
@@ -83,7 +86,7 @@ export const connect = mapStateToProps => {
 
         const ReduxConnectedComponent = connectToRedux(
             includeDispatchingProp(id, mapStateToProps), null, null, {
-                areStatePropsEqual: _.isEqual
+                areStatePropsEqual: isEqual
             }
         )(PreventUpdateWhenDisabled)
 

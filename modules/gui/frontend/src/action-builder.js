@@ -1,88 +1,60 @@
+import {Foo} from 'stateUtils'
 import {dispatch} from 'store'
-import {resolve} from 'stateUtils'
 import _ from 'lodash'
-import immutable from 'object-path-immutable'
 
 const actionBuilder = (type, props, prefix) => {
     const operations = []
     const sideEffects = []
 
     const scopedResolve = (state, path) =>
-        resolve(state, [prefix, path])
+        new Foo(state, [prefix, path])
     
     const operation = (path, func) =>
-        operations.push((immutableState, state) => {
-            const resolver = scopedResolve(state, path)
-            const updatedValue = func(immutableState, resolver) || immutableState
-            return _.isEqual(resolver.value, updatedValue) || updatedValue
+        operations.push(state => {
+            const foo = scopedResolve(state, path)
+            const updatedValue = func(foo)
+            return updatedValue
+            // return _.isEqual(foo.value, updatedValue) || updatedValue
         })
 
     return {
         set(path, value) {
-            operation(path, (immutableState, resolver) =>
-                immutableState.set(resolver.path, value)
-            )
+            operation(path, foo => foo.set(value))
             return this
         },
 
         sort(path, key) {
-            operation(path, (immutableState, resolver) =>
-                immutableState.set(resolver.path, _.orderBy(resolver.value, key))
-            )
+            operation(path, foo => foo.sort(key))
             return this
         },
 
         unique(path) {
-            operation(path, (immutableState, resolver) =>
-                immutableState.set(resolver.path, _.uniq(resolver.value))
-            )
+            operation(path, foo => foo.unique())
             return this
         },
 
         assign(path, value) {
-            operation(path, (immutableState, resolver) =>
-                immutableState.assign(resolver.path, value)
-            )
+            operation(path, foo => foo.assign(value))
             return this
         },
 
         merge(path, value) {
-            operation(path, (immutableState, resolver) =>
-                immutableState.merge(resolver.path, value)
-            )
+            operation(path, foo => foo.merge(value))
             return this
         },
 
         push(path, value) {
-            operation(path, (immutableState, resolver) =>
-                immutableState.push(resolver.path, value)
-            )
+            operation(path, foo => foo.push(value))
             return this
         },
 
         pushUnique(path, value, key) {
-            operation(path, (immutableState, resolver) => {
-                const finder = key
-                    ? item => resolve(item, key).value === resolve(value, key).value
-                    : item => item === value
-                if (!resolver.value || !_.find(resolver.value, finder)) {
-                    return immutableState.push(resolver.path, value)
-                }
-            })
+            operation(path, foo => foo.pushUnique(value, key))
             return this
         },
 
         del(path) {
-            operation(path, (immutableState, resolver) =>
-                immutableState.del(resolver.path)
-            )
-            return this
-        },
-
-        unshift(path, value) {
-            operation(path, (immutableState, resolver) =>
-                immutableState.insert(resolver.path, value, 0)
-            )
+            operation(path, foo => foo.del())
             return this
         },
 
@@ -102,18 +74,15 @@ const actionBuilder = (type, props, prefix) => {
         },
 
         build() {
-            const performOperation = (immutableState, operation) => {
-                const state = immutableState.value()
-                return operation(immutable(state), state) || immutableState
-            }
+            const performOperation = (state, operation) => operation(state)
             return {
                 type,
                 ...props,
                 reduce(state) {
                     const nextState = operations.reduce(
                         performOperation,
-                        immutable(state)
-                    ).value()
+                        state || {}
+                    )
                     sideEffects.forEach(
                         sideEffect => sideEffect(scopedResolve(nextState).value)
                     )
