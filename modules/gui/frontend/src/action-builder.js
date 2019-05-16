@@ -1,4 +1,4 @@
-import {Foo} from 'stateUtils'
+import {Mutator} from 'stateUtils'
 import {dispatch} from 'store'
 import _ from 'lodash'
 
@@ -6,55 +6,60 @@ const actionBuilder = (type, props, prefix) => {
     const operations = []
     const sideEffects = []
 
-    const scopedResolve = (state, path) =>
-        new Foo(state, [prefix, path])
-    
-    const operation = (path, func) =>
-        operations.push(state => {
-            const foo = scopedResolve(state, path)
-            const updatedValue = func(foo)
-            return updatedValue
-            // return _.isEqual(foo.value, updatedValue) || updatedValue
-        })
+    const addOperation = (path, func) =>
+        operations.push(
+            state => func(new Mutator(state, [prefix, path]))
+        )
+
+    const applyOperations = state =>
+        operations.reduce(
+            (state, operation) => operation(state),
+            state || {}
+        )
+
+    const applySideEffects = state =>
+        sideEffects.forEach(
+            sideEffect => sideEffect(state)
+        )
 
     return {
         set(path, value) {
-            operation(path, foo => foo.set(value))
-            return this
-        },
-
-        sort(path, key) {
-            operation(path, foo => foo.sort(key))
-            return this
-        },
-
-        unique(path) {
-            operation(path, foo => foo.unique())
+            addOperation(path, mutator => mutator.set(value))
             return this
         },
 
         assign(path, value) {
-            operation(path, foo => foo.assign(value))
+            addOperation(path, mutator => mutator.assign(value))
             return this
         },
 
         merge(path, value) {
-            operation(path, foo => foo.merge(value))
+            addOperation(path, mutator => mutator.merge(value))
             return this
         },
 
         push(path, value) {
-            operation(path, foo => foo.push(value))
+            addOperation(path, mutator => mutator.push(value))
             return this
         },
 
         pushUnique(path, value, key) {
-            operation(path, foo => foo.pushUnique(value, key))
+            addOperation(path, mutator => mutator.pushUnique(value, key))
             return this
         },
 
         del(path) {
-            operation(path, foo => foo.del())
+            addOperation(path, mutator => mutator.del())
+            return this
+        },
+
+        sort(path, key) {
+            addOperation(path, mutator => mutator.sort(key))
+            return this
+        },
+
+        unique(path) {
+            addOperation(path, mutator => mutator.unique())
             return this
         },
 
@@ -74,19 +79,13 @@ const actionBuilder = (type, props, prefix) => {
         },
 
         build() {
-            const performOperation = (state, operation) => operation(state)
             return {
                 type,
                 ...props,
-                reduce(state) {
-                    const nextState = operations.reduce(
-                        performOperation,
-                        state || {}
-                    )
-                    sideEffects.forEach(
-                        sideEffect => sideEffect(scopedResolve(nextState).value)
-                    )
-                    return nextState
+                reduce(state = {}) {
+                    const updatedState = applyOperations(state)
+                    applySideEffects(updatedState)
+                    return updatedState
                 },
                 dispatch() {
                     dispatch(this)

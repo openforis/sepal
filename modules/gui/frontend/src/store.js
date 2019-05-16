@@ -1,7 +1,7 @@
 import {Subject} from 'rxjs'
 import {connect as connectToRedux} from 'react-redux'
-import {selectFrom} from 'stateUtils'
 import {isMobile} from 'widget/userAgent'
+import {selectFrom} from 'stateUtils'
 import {takeUntil} from 'rxjs/operators'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'

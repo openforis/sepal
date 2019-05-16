@@ -90,7 +90,7 @@ export const resolve = (object, pathToResolve) =>
 
 export const selectFrom = (object, path) => resolve(object, path).value
 
-export class Foo {
+export class Mutator {
     constructor(state, path) {
         this.state = {
             root: state
