@@ -90,28 +90,24 @@ class InputImage extends React.Component {
 }
 
 const modelToValues = model => {
-    const values = {id: model.id, section: model.type || 'SELECTION'}
+    const values = {imageId: model.imageId, section: model.type || 'SELECTION'}
     switch (model.type) {
         case  'RECIPE_REF':
-            return {
-                ...values, recipe: model.recipeId
-            }
+            return {...values, recipe: model.id}
         case 'ASSET':
-            return {...values, asset: model.assetId}
+            return {...values, asset: model.id}
         default:
             return values
     }
 }
 
 const valuesToModel = values => {
-    const model = {id: values.id, type: values.section}
+    const model = {imageId: values.imageId, type: values.section}
     switch (values.section) {
         case  'RECIPE_REF':
-            return {
-                ...model, recipeId: values.recipe
-            }
+            return {...model, id: values.recipe}
         case 'ASSET':
-            return {...model, assetId: values.asset}
+            return {...model, id: values.asset}
         default:
             return null
     }
@@ -121,8 +117,8 @@ const policy = () => ({_: 'allow'})
 const panelOptions = {
     id: 'inputImage',
     path: props => {
-        const id = selectFrom(props, 'activatable.imageId')
-        return id ? ['inputImagery.images', {id}] : null
+        const imageId = selectFrom(props, 'activatable.imageId')
+        return imageId ? ['inputImagery.images', {imageId}] : null
     },
     fields,
     valuesToModel,

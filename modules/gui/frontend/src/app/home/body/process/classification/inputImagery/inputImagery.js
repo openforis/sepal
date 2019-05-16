@@ -59,12 +59,14 @@ class InputImagery extends React.Component {
     }
 
     renderList() {
-        const {images} = this.props
+        const {images = []} = this.props
         return (
             <ScrollableContainer className={styles.list}>
                 <Scrollable>
                     <ul>
-                        {(images || []).map(image => this.renderImage(image))}
+                        {images.length ?
+                            images.map(image => this.renderImage(image))
+                            : this.renderNoImageryMessage()}
                     </ul>
                 </Scrollable>
             </ScrollableContainer>
@@ -99,6 +101,14 @@ class InputImagery extends React.Component {
         )
     }
 
+    renderNoImageryMessage() {
+        return (
+            <div className={styles.noImagery}>
+                {msg('process.classification.panel.inputImagery.noImagery')}
+            </div>
+        )
+    }
+
     addImage() {
         const {activator: {activatables: {inputImage}}} = this.props
         inputImage.activate({imageId: guid()})
@@ -106,7 +116,7 @@ class InputImagery extends React.Component {
 
     editImage(image) {
         const {activator: {activatables: {inputImage}}} = this.props
-        inputImage.activate({imageId: image.id})
+        inputImage.activate({imageId: image.imageId})
     }
 
     componentDidMount() {
