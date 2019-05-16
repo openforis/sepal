@@ -350,7 +350,7 @@ export default (
 List.propTypes = {
     options: PropTypes.arrayOf(
         PropTypes.shape({
-            label: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+            label: PropTypes.oneOfType([PropTypes.number, PropTypes.string, PropTypes.array]),
             value: PropTypes.any
         })
     ).isRequired,

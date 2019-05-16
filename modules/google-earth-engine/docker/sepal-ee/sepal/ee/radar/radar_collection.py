@@ -17,7 +17,7 @@ def create(
         geometric_correction='ELLIPSOID',
         speckle_filter='NONE',
         outlier_removal='NONE',
-        harmonics=None
+        harmonics_dependents=()
 ):
     """Creates an ee.ImageCollection with Sentinel 1 imagery.
 
@@ -52,10 +52,13 @@ def create(
             MODERATE - Remove outliers
             AGGRESSIVE - Remove more outliers
 
-        harmonics: (Optional) Calculates harmonics coefficients for the specified dependent band (VV or VH).
-            If specified,
-            'constant', 't', 'phase', 'amplitude', and 'residuals' bands. Each image in the collection will also get a
-            'fitted' and 'residuals' band, with the fitted dependent value.
+        harmonics_dependents: (Optional) Calculates harmonics coefficients for the specified list of dependent bands
+            (VV and/or VH), and fit each image in the collection. The resulting collection will get a property named
+            'harmonics', containing an ee.Image with the coefficients.
+
+            If VV is included, 'VV_constant', 'VV_t', 'VV_phase', 'VV_amplitude', and 'VV_residuals' bands are added
+            to the harmonics image, and 'VV_fitted', and 'VV_residuals' bands are added to each image in the collection
+            If VH is included, the same bands are added with a 'VH_' prefix.
 
     Returns:
         an ee.ImageCollection with Sentinel 1 imagery with the following band:
@@ -69,10 +72,12 @@ def create(
             quality - closeness to target date;
             unixTimeDays - days since unix epoch.
 
-        If harmonics is specified, the following bands are also included:
-            fitted - the fitted value for the time of the image
-            residuals - the difference between the dependent and the fitted value.
+        If harmonics_dependents is a non-empty list, the following bands are also included:
+            VV_fitted, VH_fitted - the fitted value for the time of the image.
+            VV_residuals, VH_residuals - the difference between the dependent and the fitted value.
     """
+    if harmonics_dependents is None:
+        harmonics_dependents = []
     days = 366 / 2
     if target_date and not start_date:
         start_date = dates.subtract_days(target_date, days)
@@ -92,10 +97,13 @@ def create(
         total_slices = ee.Number(image.get('totalSlices'))
         slice_number = ee.Number(image.get('sliceNumber'))
         middle_slice = ee.Image(slice_number.gt(1).And(slice_number.lt(total_slices)))
-        not_border = image.select('VV').mask().reduceNeighborhood(
-            reducer=ee.Reducer.allNonZero(),
-            kernel=ee.Kernel.circle(radius=500, units='meters')
-        )
+        mask = image.select(['VV', 'VH']).mask().reduce(ee.Reducer.min()).floor()
+        pixels_to_mask = mask.Not() \
+            .fastDistanceTransform(128, 'pixels').sqrt()
+        meters_to_mask = pixels_to_mask \
+            .multiply(ee.Image.pixelArea().sqrt()) \
+            .rename('metersToMask')
+        not_border = meters_to_mask.gte(500).And(pixels_to_mask.gt(2))
         angle = image.select('angle')
         return image \
             .updateMask(
@@ -137,19 +145,20 @@ def create(
             .addBands(ee.Image(unix_time_days).uint16().rename('unixTimeDays'))
 
     def add_harmonic_bands(image):
-        t = ee.Image(
-            image.date().difference(ee.Date('1970-01-01'), 'year')
-        ).float().rename(['t'])
-        time_radians = t.multiply(2 * math.pi)
-        cos = time_radians.cos().rename('cos')
-        sin = time_radians.sin().rename('sin')
-        dependent = image.select(harmonics).rename('harmonicDependent')
-        return image \
-            .addBands(t) \
-            .addBands(ee.Image.constant(1)) \
-            .addBands(cos) \
-            .addBands(sin) \
-            .addBands(dependent)
+        def add_for_dependent(dependent):
+            t = ee.Image(
+                image.date().difference(ee.Date('1970-01-01'), 'year')
+            ).float().rename([dependent + '_t'])
+            time_radians = t.multiply(2 * math.pi)
+            cos = time_radians.cos().rename(dependent + '_cos')
+            sin = time_radians.sin().rename(dependent + '_sin')
+            return image \
+                .addBands(t) \
+                .addBands(ee.Image.constant(1).rename(dependent + '_constant')) \
+                .addBands(cos) \
+                .addBands(sin)
+
+        return ee.Image([add_for_dependent(dependent) for dependent in harmonics_dependents])
 
     def pre_process(image):
         steps = []
@@ -160,20 +169,19 @@ def create(
             steps.append(mask_overlay)
         if speckle_filter == 'BOXCAR':
             steps.append(boxcar_filter)
-        elif speckle_filter == 'SNC':
+        elif speckle_filter == 'SNIC':
             steps.append(snic_filter)
         elif speckle_filter == 'REFINED_LEE':
             steps.append(_refined_lee.apply)
         if target_date:
             steps.append(add_date_bands)
-        if harmonics:
+        if harmonics_dependents:
             steps.append(add_harmonic_bands)
         steps.append(mask_borders)
         return reduce(lambda acc, process: process(acc), steps, image)
 
-    def calculate_harmonics(collection):
-        dependent = 'harmonicDependent'
-        independents = ee.List(['constant', 't', 'cos', 'sin'])
+    def calculate_harmonics(collection, dependent):
+        independents = ee.List([dependent + '_constant', dependent + '_t', dependent + '_cos', dependent + '_sin'])
         trend = collection \
             .select(independents.add(dependent)) \
             .reduce(ee.Reducer.linearRegression(numX=independents.length(), numY=1))
@@ -185,40 +193,39 @@ def create(
         residuals = trend.select('residuals') \
             .arrayProject([0]) \
             .arrayFlatten([['residuals']]) \
-            .rename('residuals')
+            .rename(dependent + '_residuals')
 
         phase = trend_coefficients \
-            .select('cos') \
-            .atan2(trend_coefficients.select('sin')) \
-            .rename('phase')
+            .select(dependent + '_cos') \
+            .atan2(trend_coefficients.select(dependent + '_sin')) \
+            .rename(dependent + '_phase')
 
         amplitude = trend_coefficients \
-            .select('cos') \
-            .hypot(trend_coefficients.select('sin')) \
-            .rename('amplitude')
+            .select(dependent + '_cos') \
+            .hypot(trend_coefficients.select(dependent + '_sin')) \
+            .rename(dependent + '_amplitude')
 
-        def fit(image):
-            fitted = image.select(independents) \
-                .multiply(trend_coefficients) \
-                .reduce('sum') \
-                .rename('fitted')
-            residuals = image.select(dependent) \
-                .subtract(fitted) \
-                .rename('residuals')
-            return image \
-                .addBands(fitted) \
-                .addBands(residuals) \
-                .float()
-
-        fitted = collection.map(fit)
-        harmonics = trend_coefficients.select(['constant', 't']) \
+        harmonics = trend_coefficients.select([dependent + '_constant', dependent + '_t']) \
             .addBands(phase) \
             .addBands(amplitude) \
             .addBands(residuals) \
             .float() \
             .clip(region)
 
-        return fitted.set('harmonics', harmonics)
+        def fit_function(image):
+            fitted = image.select(independents) \
+                .multiply(trend_coefficients) \
+                .reduce('sum') \
+                .rename(dependent + '_fitted')
+            residuals = image.select(dependent) \
+                .subtract(fitted) \
+                .rename(dependent + '_residuals')
+            return image \
+                .addBands(fitted) \
+                .addBands(residuals) \
+                .float()
+
+        return {'image': harmonics, 'fit_function': fit_function}
 
     def mask_outliers(collection, std_devs):
         bands = ['VV', 'VH']
@@ -255,13 +262,22 @@ def create(
     elif outlier_removal == 'AGGRESSIVE':
         collection = mask_outliers(collection, 2.6)
 
-    if harmonics:
-        collection = calculate_harmonics(collection)
+    if harmonics_dependents:
+        harmonics_dict_list = [calculate_harmonics(collection, dependent) for dependent in harmonics_dependents]
+        harmonics = ee.Image([harmonics_dict['image'] for harmonics_dict in harmonics_dict_list])
+        fit_functions = [harmonics_dict['fit_function'] for harmonics_dict in harmonics_dict_list]
+
+        def fit_harmonics(image):
+            return image.addBands([fit(image) for fit in fit_functions])
+
+        collection = collection.map(fit_harmonics)
+        collection = collection.set('harmonics', harmonics)
 
     bands = ['VV', 'VH', 'angle']
     if target_date:
-        bands = bands + ['dayOfYear', 'unixTimeDays', 'quality']
-    if harmonics:
-        bands = bands + ['fitted', 'residuals']
+        bands = bands + ['dayOfYear', 'daysFromTarget', 'unixTimeDays', 'quality']
+    if harmonics_dependents:
+        for dependent in harmonics_dependents:
+            bands = bands + [dependent + '_fitted', dependent + '_residuals']
 
     return collection.select(bands)

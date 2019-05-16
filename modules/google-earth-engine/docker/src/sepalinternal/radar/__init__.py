@@ -14,13 +14,14 @@ class RadarMosaic(ImageSpec):
         self.bands = spec['bands']
         self.time_scan = not self.model['dates'].get('targetDate')
         self.scale = spec.get('scale', 20)
-        if not self.bands or (set(self.bands) & {'constant', 't', 'phase', 'amplitude', 'residuals'}):
-            self.harmonics = 'VH'
-        else:
-            self.harmonics = None
+        self.harmonics_dependents = [
+            dependent
+            for dependent in ['VV', 'VH']
+            if self._contains_harmonics_band(dependent)
+        ]
 
     def _viz_params(self):
-        if self.harmonics:
+        if self.harmonics_dependents:
             return radar_viz.hsv_params(self.bands)
         else:
             return radar_viz.params(self.bands)
@@ -37,16 +38,23 @@ class RadarMosaic(ImageSpec):
             geometric_correction=options['geometricCorrection'],
             speckle_filter=options['speckleFilter'],
             outlier_removal=options['outlierRemoval'],
-            harmonics=self.harmonics
+            harmonics_dependents=self.harmonics_dependents
         )
         if self.time_scan:
             ee_image = radar_time_scan.create(collection, self.aoi.geometry())
-            if self.harmonics:
-                ee_image = ee_image.addBands(ee.Image(collection.get('harmonics')))
         else:
             ee_image = radar_mosaic.create(collection, self.aoi.geometry())
+
+        if self.harmonics_dependents:
+            ee_image = ee_image.addBands(ee.Image(collection.get('harmonics')))
 
         if len(self.bands):
             ee_image = ee_image.select(self.bands)
 
         return ee_image
+
+    def _contains_harmonics_band(self, dependent):
+        harmonics_bands = ['constant', 't', 'phase', 'amplitude', 'residuals']
+        return \
+            not self.bands \
+            or set(self.bands) & set(['{0}_{1}'.format(dependent, band) for band in harmonics_bands])

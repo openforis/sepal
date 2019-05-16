@@ -24,7 +24,7 @@ def create(collection, region):
             VH_max - Maximum VH;
             VH_stdDev - Standard deviation in VH;
             VH_CV - Coefficient of variation in VH;
-            VV_median_VH_median - Ratio between VV_median and VH_median;
+            ratio_VV_median_VH_median - Ratio between VV_median and VH_median;
             NDCV - Normalized difference between VV_CV and VH_CV.
 
     """
@@ -43,7 +43,7 @@ def create(collection, region):
     )
     mosaic = reduced\
         .addBands([
-            reduced.select('VV_median').subtract(reduced.select('VH_median')).rename(['VV_median_VH_median'])
+            reduced.select('VV_median').subtract(reduced.select('VH_median')).rename(['ratio_VV_median_VH_median'])
         ])\
         .addBands([
             reduced.select('VV_stdDev').divide(reduced.select('VV_nat_mean')).log10().multiply(10).rename(['VV_CV'])
@@ -58,7 +58,7 @@ def create(collection, region):
         .select([
             'VV_min', 'VV_mean', 'VV_median', 'VV_max', 'VV_stdDev', 'VV_CV',
             'VH_min', 'VH_mean', 'VH_median', 'VH_max', 'VH_stdDev', 'VH_CV',
-            'VV_median_VH_median', 'NDCV'
+            'ratio_VV_median_VH_median', 'NDCV'
         ]) \
         .float() \
         .clip(region)

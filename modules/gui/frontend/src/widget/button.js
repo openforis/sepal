@@ -211,7 +211,7 @@ class _Button extends React.Component {
             const cancel$ = windowMouseUp$
             const mouseTrigger$ = combineLatest(mouseDown$, mouseEnter$)
             const mouseActivate$ = mouseUp$
-    
+
             // Click-hold is triggered if button pressed more than CLICK_HOLD_DELAY_MS.
             const clickHold$ =
                 mouseTrigger$.pipe(
@@ -293,7 +293,7 @@ Button.propTypes = {
     iconFlipHorizontal: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
     iconType: PropTypes.string,
-    label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    label: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.array]),
     link: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'add', 'apply', 'cancel']),
     ref: PropTypes.object,

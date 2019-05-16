@@ -51,11 +51,20 @@ class Retrieve extends React.Component {
         },
         {
             options: [
-                {value: 'constant', label: 'constant'},
-                {value: 't', label: 't'},
-                {value: 'phase', label: 'phase'},
-                {value: 'amplitude', label: 'amplitude'},
-                {value: 'residuals', label: 'residuals'}
+                {value: 'VV_constant', label: <span>VV<sub>const</sub></span>},
+                {value: 'VV_t', label: <span>VV<sub>t</sub></span>},
+                {value: 'VV_phase', label: <span>VV<sub>phase</sub></span>},
+                {value: 'VV_amplitude', label: <span>VV<sub>amp</sub></span>},
+                {value: 'VV_residuals', label: <span>VV<sub>residuals</sub></span>}
+            ]
+        },
+        {
+            options: [
+                {value: 'VH_constant', label: <span>VH<sub>const</sub></span>},
+                {value: 'VH_t', label: <span>VH<sub>t</sub></span>},
+                {value: 'VH_phase', label: <span>VH<sub>phase</sub></span>},
+                {value: 'VH_amplitude', label: <span>VH<sub>amp</sub></span>},
+                {value: 'VH_residuals', label: <span>VH<sub>residuals</sub></span>}
             ]
         }
     ]
@@ -65,7 +74,7 @@ class Retrieve extends React.Component {
             options: [
                 {value: 'VV', label: 'VV'},
                 {value: 'VH', label: 'VH'},
-                {value: 'VV_VH', label: 'VV/VH'},
+                {value: 'ratio_VV_VH', label: 'VV/VH'},
             ]
         },
         {
