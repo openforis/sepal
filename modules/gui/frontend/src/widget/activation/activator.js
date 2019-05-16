@@ -24,7 +24,7 @@ class _Activator extends React.Component {
         if (id && ids) {
             throw Error('Cannot provide both id and ids props.')
         }
-        
+
         const activatablePath = id => activatables[id].path
 
         const activate = (id, activationProps) =>
@@ -48,20 +48,41 @@ class _Activator extends React.Component {
 
         const canActivate = id => activationAllowed(id, activatables)
 
-        const updateActivatables = updates =>
-            _.reduce(updates,
-                (actionBuilder, {id, active}) => {
-                    const activatable = activatables[id]
-                    if (!activatable || activatable.active !== active) {
-                        const updatedActive = active && activationAllowed(id, activatables)
-                        return actionBuilder.assign([pathList, 'activatables', {id}], {
-                            active: updatedActive,
-                            justActivated: updatedActive,
-                        })
-                    }
-                    return actionBuilder
-                }, actionBuilder('UPDATE_ACTIVATABLES', {pathList})
-            ).dispatch()
+        const updateActivatables = updates => {
+            const updatedActivatables = _.transform(updates, (activatables, {id, active}) => {
+                const activatable = activatables[id]
+                if (!activatable || activatable.active !== active) {
+                    const updatedActive = active && activationAllowed(id, activatables)
+                    activatable.active = updatedActive
+                    activatable.justActivated = updatedActive
+                }
+            }, _.cloneDeep(activatables))
+            if (!_.isEqual(updatedActivatables, activatables)) {
+                actionBuilder('UPDATE_ACTIVATABLES', {pathList})
+                    .set([pathList, 'activatables'], updatedActivatables)
+                    .dispatch()
+            }
+        }
+
+
+        // const updateActivatables = updates => {
+        //     console.log('updateActivatables', {updates})
+        //     return _.reduce(updates,
+        //         (actionBuilder, {id, active}) => {
+        //             const activatable = activatables[id]
+        //             if (!activatable || activatable.active !== active) {
+        //                 const updatedActive = active && activationAllowed(id, activatables)
+        //                 const update = {
+        //                     active: updatedActive,
+        //                     justActivated: updatedActive,
+        //                 }
+        //                 console.log({id, update})
+        //                 return actionBuilder.assign([pathList, 'activatables', {id}], update)
+        //             }
+        //             return actionBuilder
+        //         }, actionBuilder('UPDATE_ACTIVATABLES', {pathList})
+        //     ).dispatch()
+        // }
 
         const props = id => ({
             active: isActive(id),

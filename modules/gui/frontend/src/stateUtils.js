@@ -35,8 +35,8 @@ export const toPathList = (path, safe = false) => {
     throw new Error(`Unsupported path element type: '${path}'`)
 }
 
-export const resolve = (object, path) =>
-    toPathList(path)
+export const resolve = (object, pathToResolve) =>
+    toPathList(pathToResolve)
         .reduce(({path, value}, part) => {
             if (_.isString(part)) {
                 if (_.isArray(value)) {
@@ -60,13 +60,14 @@ export const resolve = (object, path) =>
                     }
                 }
                 const index = parseInt(part)
+                if (!path) {
+                    console.error('Invalid path', {pathToResolve, object})
+                    throw new Error('Invalid path')
+                }
                 return {
-                    path: path
-                        ? [...path, isNaN(index) ? part : index]
-                        : undefined,
+                    path: [...path, isNaN(index) ? part : index],
                     value: undefined
                 }
-
             }
             if (_.isPlainObject(part) && (_.isArray(value) || !value)) {
                 // match array item by template
@@ -86,7 +87,7 @@ export const resolve = (object, path) =>
                 value: undefined
             }
         }, {path: [], value: object})
-    
+
 export const selectFrom = (object, path) => resolve(object, path).value
 
 export class Foo {
@@ -181,13 +182,13 @@ export class Foo {
 
     assign(value) {
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = _.assign(pathState[pathKey], _.cloneDeep(value))
+            pathState[pathKey] = _.cloneDeep(_.assign({}, pathState[pathKey], value))
         })
     }
 
     merge(value) {
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = _.merge(pathState[pathKey], _.cloneDeep(value))
+            pathState[pathKey] = _.cloneDeep(_.merge({}, pathState[pathKey], value))
         })
     }
 
@@ -210,7 +211,7 @@ export class Foo {
                 if (!array) {
                     pathState[pathKey] = []
                 }
-                pathState[pathKey].push(_.cloneDeep(value))
+                pathState[pathKey].push(_.cloneDeep(_.cloneDeep(value)))
             }
         })
     }
@@ -228,45 +229,3 @@ export class Foo {
         })
     }
 }
-
-export const isEqual = (a, b) => _.isEqualWith(a, b, a === b ? true : undefined)
-
-// export const isEqual = (a, b) => {
-// return _.isEqualWith(a, b, (a, b) => a === b ? true : undefined)
-// if (a === b) {
-//     return true
-// }
-// if (_.isPlainObject(a) && _.isPlainObject(b)) {
-//     const keysA = _.keys(a)
-//     const keysB = _.keys(b)
-//     // different number of keys -> false
-//     if (keysA.length !== keysB.length) {
-//         // console.log('different number of keys')
-//         return false
-//     }
-//     // any key is different -> false
-//     if (_.some(keysA, key => !isEqual(a[key], b[key]))) {
-//         // console.log('different key values')
-//         return false
-//     }
-//     // console.log('equal objects')
-//     return true
-// }
-// if (_.isArray(a) && _.isArray(b)) {
-//     // different number of items -> false
-//     if (a.length !== b.length) {
-//         // console.log('different number of items')
-//         return false
-//     }
-//     // any item is different -> false
-//     if (_.some(a, (_, index) => !isEqual(a[index], b[index]))) {
-//         // console.log('different item values')
-//         return false
-//     }
-//     // console.log('equal arrays')
-//     return true
-// }
-// const equal = _.isEqual(a, b)
-// // console.log(equal ? 'equal' : 'not equal')
-// return equal
-// }

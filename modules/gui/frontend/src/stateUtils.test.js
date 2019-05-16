@@ -118,7 +118,9 @@ test('resolve((${object}, ${path})) === ${result}')
         {object, path: ['c', {x: 2}, 'k', {w: 1}, 'x.y.z'], result: {path: ['c', 1, 'k', 0, 'x', 'y', 'z'], value: undefined}},
         {object, path: ['c', {x: 4}], result: {path: ['c', 3], value: {x: 4}}},
         {object, path: ['c', {x: 4}, 'a.b.c.d'], result: {path: ['c', 3, 'a', 'b', 'c', 'd'], value: undefined}},
-        {object, path: ['d', {x: {y: 2}}, 'v.k', {z: 3}, 'm'], result: {path: ['d', 1, 'v', 'k', 2, 'm'], value: 'C'}}
+        {object, path: ['d', {x: {y: 2}}, 'v.k', {z: 3}, 'm'], result: {path: ['d', 1, 'v', 'k', 2, 'm'], value: 'C'}},
+        {object: {}, path: ['a', {b: 1}], result: {path: ['a', 0], value: {b: 1}}},
+        {object: {a: {}}, path: ['a', {b: 1}], result: {path: ['a', 0], value: {b: 1}}},
     )
 
 it('create', () => {
@@ -308,30 +310,3 @@ it('delete from array by template (non-existing element)', () => {
     const nextState = new Foo(state, ['a', {id: 2}]).del()
     expect(nextState).toEqual({a: [{id: 1}]})
 })
-
-test('isEqual((${o1}, ${o2})) === ${result}')
-    .assert(({o1, o2, result}) => expect(isEqual(o1, o2)).toEqual(result))
-    .where(
-        {o1: null, o2: null, result: true},
-        {o1: {}, o2: null, result: false},
-        {o1: {}, o2: {}, result: true},
-        {o1: {a: 1}, o2: {}, result: false},
-        {o1: {a: 1}, o2: {a: 1}, result: true},
-        {o1: {a: 1}, o2: {a: 2}, result: false},
-        {o1: {a: 1}, o2: {a: 1, b: 2}, result: false},
-        {o1: {a: 1}, o2: {b: 1}, result: false},
-        {o1: {a: {b: {c: 2}}}, o2: {a: {b: {c: 2}}}, result: true},
-        {o1: {a: {b: {c: 2}}}, o2: {a: {b: {d: 1}}}, result: false},
-        {o1: {a: {b: {c: 2}}}, o2: {a: {b: null}}, result: false},
-        {o1: {a: {b: {c: 2}}}, o2: {a: {b: null}}, result: false},
-        {o1: [], o2: null, result: false},
-        {o1: [], o2: {}, result: false},
-        {o1: [], o2: [], result: true},
-        {o1: [1], o2: [1], result: true},
-        {o1: [1, 2], o2: [1], result: false},
-        {o1: [{a: 1}, {b: 2}], o2: [{a: 1}, {b: 2}], result: true},
-        {o1: [{a: 1}, {b: 2}], o2: [{a: 1}, {b: 2}], result: true},
-        {o1: {a: [1]}, o2: {a: [1]}, result: true},
-        {o1: {a: [1]}, o2: {a: [2]}, result: false},
-        {o1: {a: [1]}, o2: {b: [1]}, result: false},
-    )

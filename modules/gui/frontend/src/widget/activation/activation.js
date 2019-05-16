@@ -6,7 +6,7 @@ const parentPathList = pathList =>
 
 export const collectActivatables = (state, pathList) => {
     const selectActivatables = pathList =>
-        _.cloneDeep(selectFrom(state, [pathList, 'activatables']))
+        selectFrom(state, [pathList, 'activatables'])
 
     const childrenActivatables = pathList => {
         const childContexts = selectFrom(state, [pathList, 'contexts'])
