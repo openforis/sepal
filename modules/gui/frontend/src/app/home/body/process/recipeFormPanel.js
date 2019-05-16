@@ -148,6 +148,7 @@ const setModelAndValues = ({evaluatedPath, statePath, model, values}) => {
     return actionBuilder('SET_MODEL_AND_VALUES', {evaluatedPath, model, values})
         .set([statePath, 'ui', evaluatedPath], values)
         .set([statePath, 'model', evaluatedPath], model)
+        .dispatch()
 }
 
 const setValues = ({evaluatedPath, statePath, values}) => {
