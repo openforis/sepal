@@ -65,7 +65,7 @@ class FormPanel extends React.Component {
     }
 
     render() {
-        const {form = false, isActionForm, onApply, type = 'modal', className, children, placement} = this.props
+        const {id, form = false, isActionForm, onApply, type = 'modal', className, children, placement} = this.props
         return (
             <PanelWizardContext>
                 {({wizard, back, next, done}) => {
@@ -73,6 +73,7 @@ class FormPanel extends React.Component {
                         <PanelButtonContext.Consumer>
                             {placementFromContext => (
                                 <PanelContext.Provider value={{
+                                    id: id,
                                     wizard,
                                     first: !back,
                                     last: !next,
@@ -199,7 +200,11 @@ export class FormPanelButtons extends React.Component {
     render() {
         return (
             <PanelContext.Consumer>
-                {props => props.wizard ? this.renderWizard(props) : this.renderForm(props)}
+                {props => {
+                    const inWizard = props.wizard && props.wizard.includes(props.id)
+                    const renderProps = {...props, ...this.props}
+                    return inWizard ? this.renderWizard(renderProps) : this.renderForm(renderProps)
+                }}
             </PanelContext.Consumer>
         )
     }
