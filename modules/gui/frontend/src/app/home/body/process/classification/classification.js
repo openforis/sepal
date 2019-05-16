@@ -17,7 +17,7 @@ const mapStateToProps = state => ({
 const mapRecipeToProps = recipe => ({
     recipeId: selectFrom(recipe, 'id'),
     initialized: selectFrom(recipe, 'ui.initialized'),
-    images: selectFrom(recipe, 'model.imagery.images')
+    images: selectFrom(recipe, 'model.imagery')
 })
 
 class Classification extends React.Component {

@@ -22,10 +22,10 @@ class RecipeSection extends React.Component {
         }))
         return (
             <React.Fragment>
-                <Label msg={msg('process.classification.panel.imagery.form.recipe.label')}/>
+                <Label msg={msg('process.classification.panel.inputImagery.form.recipe.label')}/>
                 <Combo
                     input={recipe}
-                    placeholder={msg('process.classification.panel.imagery.form.recipe.placeholder')}
+                    placeholder={msg('process.classification.panel.inputImagery.form.recipe.placeholder')}
                     options={options}
                     autoFocus={!isMobile()}/>
                 <ErrorMessage for={recipe}/>
