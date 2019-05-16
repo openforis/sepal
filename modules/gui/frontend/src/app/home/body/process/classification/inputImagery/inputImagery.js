@@ -78,7 +78,6 @@ class InputImagery extends React.Component {
         const name = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
-        console.log({name, image, recipeNameById})
         return (
             <li
                 key={`${image.type}-${image.id}`}
