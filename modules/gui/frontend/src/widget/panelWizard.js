@@ -1,7 +1,7 @@
-import {activator} from 'widget/activation/activator'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
+import {activator} from 'widget/activation/activator'
 
 class PanelWizard extends React.Component {
 
@@ -13,6 +13,8 @@ class PanelWizard extends React.Component {
     render() {
         const {panels = [], activator: {activatables, updateActivatables}, onDone, children} = this.props
         const {initialized} = this.state
+
+
         const currentId = !initialized && _(activatables)
             .pickBy(({active}) => active)
             .keys()
@@ -23,8 +25,9 @@ class PanelWizard extends React.Component {
         const inRange = index => index >= 0 && index < panels.length
 
         const navigate = index => {
-            if (!inRange(index))
+            if (!inRange(index)) {
                 return false
+            }
             const id = panels[index]
             return activatables[id]
                 ? () => updateActivatables([
@@ -35,13 +38,14 @@ class PanelWizard extends React.Component {
         }
         const back = navigate(currentIndex - 1)
         const next = navigate(currentIndex + 1)
+
         const done = () => {
             this.setState(prevState => ({...prevState, initialized: true}))
             currentActivatable.deactivate()
             onDone && onDone()
         }
         return (
-            <Context.Provider value={{wizard: !initialized, back, next, done}}>
+            <Context.Provider value={{wizard: !initialized && panels, back, next, done}}>
                 {children}
             </Context.Provider>
         )
