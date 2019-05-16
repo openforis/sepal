@@ -33,6 +33,13 @@ export const RecipeActions = id => {
         showPreview() {
             return set('SHOW_PREVIEW', 'ui.hidePreview', false)
         },
+        removeInputImage(imageToRemove) {
+            actionBuilder('REMOVE_INPUT_IMAGE', {imageToRemove})
+                .del(['model.inputImagery.images', {id: imageToRemove.id}])
+                .del(['ui.inputImagery.images', {id: imageToRemove.id}])
+                .dispatch()
+
+        }
     }
 }
 

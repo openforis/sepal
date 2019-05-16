@@ -3,7 +3,7 @@ import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Imagery from './imagery/imagery'
+import InputImagery from './inputImagery/inputImagery'
 import PanelWizard from 'widget/panelWizard'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -22,12 +22,12 @@ class ClassificationToolbar extends React.Component {
         const {recipeId, initialized} = this.props
         return (
             <PanelWizard
-                panels={['imagery', 'trainingData']}
+                panels={['inputImagery', 'trainingData']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 
                 <Retrieve/>
-                <Imagery/>
+                <InputImagery/>
                 <TrainingData/>
                 <AuxiliaryImagery/>
 
@@ -48,9 +48,9 @@ class ClassificationToolbar extends React.Component {
                     panel
                     className={styles.bottom}>
                     <ActivationButton
-                        id='imagery'
-                        label={msg('process.classification.panel.imagery.button')}
-                        tooltip={msg('process.classification.panel.imagery.tooltip')}/>
+                        id='inputImagery'
+                        label={msg('process.classification.panel.inputImagery.button')}
+                        tooltip={msg('process.classification.panel.inputImagery.tooltip')}/>
 
                     <ActivationButton
                         id='trainingData'

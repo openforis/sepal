@@ -18,7 +18,7 @@ class Classification(ImageSpec):
         model = spec['recipe']['model']
         self.trainingData = ee.FeatureCollection('ft:' + model['trainingData']['fusionTable'])
         self.classProperty = model['trainingData']['fusionTableColumn']
-        self.images = [create_image_spec(sepal_api, {'recipe': image}) for image in model['imagery']['images']]
+        self.images = [create_image_spec(sepal_api, {'recipe': image}) for image in model['inputImagery']['images']]
         self.auxiliary_imagery = model['auxiliaryImagery']
         self.aoi = self.images[0].aoi
         self.scale = min([image.scale for image in self.images])

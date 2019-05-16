@@ -621,10 +621,11 @@
       "create": "Classification",
       "description": "Classify a mosaic from SEPAL or Google Earth Engine.",
       "panel": {
-        "imagery": {
+        "inputImagery": {
           "button": "IMG",
           "tooltip": "Select images to classify",
           "title": "Images to classify",
+          "noImagery": "Please add at least one image to classify.",
           "type": {
             "RECIPE_REF": "Sepal recipe",
             "ASSET": "Earth Engine asset"
