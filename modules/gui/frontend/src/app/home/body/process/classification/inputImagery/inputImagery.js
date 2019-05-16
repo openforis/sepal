@@ -24,7 +24,7 @@ const mapStateToProps = (state, ownProps) => {
     const recipeNameById = {}
     images
         .filter(image => image.type === 'RECIPE_REF')
-        .map(image => selectFrom(state, ['process.recipes', {id: image.recipeId}]))
+        .map(image => selectFrom(state, ['process.recipes', {id: image.id}]))
         .forEach(recipe => recipeNameById[recipe.id] = recipe.name)
     return {recipeNameById}
 }
@@ -76,8 +76,9 @@ class InputImagery extends React.Component {
     renderImage(image) {
         const {recipeNameById} = this.props
         const name = image.type === 'RECIPE_REF'
-            ? recipeNameById[image.recipeId]
-            : image.assetId
+            ? recipeNameById[image.id]
+            : image.id
+        console.log({name, image, recipeNameById})
         return (
             <li
                 key={`${image.type}-${image.id}`}
