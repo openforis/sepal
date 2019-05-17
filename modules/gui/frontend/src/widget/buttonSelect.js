@@ -88,7 +88,7 @@ class ButtonSelect extends React.Component {
     }
 
     hideOptions() {
-        this.setState({showOptions: false})
+        this.setState({showOptions: false, selectedOption: null})
     }
 
     setSelectedOption(selectedOption) {
