@@ -40,12 +40,14 @@ class ButtonSelect extends React.Component {
     }
 
     renderButton() {
-        const {disabled, label, tooltip, tooltipPlacement} = this.props
+        const {disabled, label, look, icon, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
         return (
             <Button
                 ref={this.input}
                 label={label}
+                look={look}
+                icon={icon}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 onClick={() => showOptions
@@ -171,6 +173,8 @@ ButtonSelect.propTypes = {
     className: PropTypes.string,
     disabled: PropTypes.any,
     label: PropTypes.string,
+    look: PropTypes.string,
+    icon: PropTypes.string,
     optionsClassName: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     tooltip: PropTypes.string,
