@@ -47,7 +47,7 @@ export const resolve = (object, path, createTemplates = false) =>
                     }
                     return value[index]
                 }
-                if (_.isPlainObject(value)) {
+                if (_.isObjectLike(value)) {
                     // match object property
                     if (value[pathElement] !== undefined) {
                         return value[pathElement]
