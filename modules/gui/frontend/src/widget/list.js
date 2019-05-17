@@ -144,7 +144,7 @@ class List extends React.Component {
     }
 
     renderSelectableOption(option) {
-        const {selectedOption} = this.props
+        const {selectedOption, tooltipPlacement} = this.props
         const {overrideHover} = this.state
         const selected = this.isSelected(option)
         const highlighted = this.isHighlighted(option)
@@ -159,6 +159,8 @@ class List extends React.Component {
                     chromeless={!selected}
                     look={selected ? 'selected' : 'highlight'}
                     label={option.label}
+                    tooltip={option.tooltip}
+                    tooltipPlacement={tooltipPlacement}
                     hover={overrideHover ? highlighted : null}
                     width='fill'
                     alignment='left'
@@ -361,5 +363,11 @@ List.propTypes = {
     overScroll: PropTypes.any,
     ref: PropTypes.object,
     selectedOption: PropTypes.any,
+    tooltip: PropTypes.string,
+    tooltipPlacement: PropTypes.oneOf(['left', 'right']),
     onCancel: PropTypes.func
+}
+
+List.defaultProps = {
+    tooltipPlacement: 'right'
 }

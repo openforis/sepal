@@ -60,7 +60,7 @@ class ButtonSelect extends React.Component {
     }
 
     renderOptions() {
-        const {placement, optionsClassName} = this.props
+        const {placement, optionsClassName, optionTooltipPlacement} = this.props
         const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
@@ -76,6 +76,7 @@ class ButtonSelect extends React.Component {
                     onSelect={option => this.select$.next(option)}
                     onCancel={() => this.hideOptions()}
                     autoCenter={!selected}
+                    tooltipPlacement={optionTooltipPlacement}
                     keyboard
                 />
             </FloatingBox>
@@ -179,7 +180,8 @@ ButtonSelect.propTypes = {
     optionsClassName: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string
+    tooltipPlacement: PropTypes.string,
+    optionTooltipPlacement: PropTypes.string
 }
 
 ButtonSelect.defaultProps = {
