@@ -77,7 +77,7 @@ class Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, disabled, busy, standalone, inputClassName, onCancel} = this.props
+        const {placeholder, autoFocus, disabled, busy, standalone, inputClassName} = this.props
         const {focused, filter, selectedOption} = this.state
         const keymap = {
             ArrowUp: disabled ? null : () => this.showOptions(),
