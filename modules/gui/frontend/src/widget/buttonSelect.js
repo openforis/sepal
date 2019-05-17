@@ -74,6 +74,7 @@ class ButtonSelect extends React.Component {
                     options={flattenedOptions}
                     selectedOption={selectedOption}
                     onSelect={option => this.select$.next(option)}
+                    onCancel={() => this.hideOptions()}
                     autoCenter={!selected}
                     keyboard
                 />
