@@ -1,17 +1,17 @@
-import {ErrorMessage} from 'widget/form'
-import {Subject, fromEvent} from 'rxjs'
-import {connect} from 'store'
+import escapeStringRegexp from 'escape-string-regexp'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {fromEvent, Subject} from 'rxjs'
 import {delay} from 'rxjs/operators'
-import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
+import {connect} from 'store'
 import FloatingBox from 'widget/floatingBox'
+import {ErrorMessage} from 'widget/form'
 import Keybinding from 'widget/keybinding'
 import Label from 'widget/label'
 import List from 'widget/list'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
-import escapeStringRegexp from 'escape-string-regexp'
+import {isMobile} from 'widget/userAgent'
 import styles from './combo.module.css'
 
 const SELECTION_DELAY_MS = 350
@@ -22,7 +22,7 @@ const mapStateToProps = state => ({
 
 class Combo extends React.Component {
     subscriptions = []
-    input = React.createRef()
+    inputContainer = React.createRef()
     list = React.createRef()
     select$ = new Subject()
     state = {
@@ -31,7 +31,8 @@ class Combo extends React.Component {
         filteredOptions: [],
         flattenedOptions: [],
         selectedOption: null,
-        selected: false
+        selected: false,
+        focused: false
     }
 
     render() {
@@ -41,15 +42,15 @@ class Combo extends React.Component {
             standalone
                 ? onCancel && onCancel(e)
                 : showOptions
-                    ? this.hideOptions()
-                    : disabled
-                        ? null
-                        : this.showOptions()
+                ? this.hideOptions()
+                : disabled
+                    ? null
+                    : this.showOptions()
         return (
             <div className={[styles.container, className].join(' ')}>
                 {this.renderLabel()}
                 <div
-                    ref={this.input}
+                    ref={this.inputContainer}
                     onClick={onClick}>
                     {this.renderInput()}
                 </div>
@@ -77,7 +78,7 @@ class Combo extends React.Component {
 
     renderInput() {
         const {placeholder, autoFocus, disabled, busy, standalone, inputClassName, onCancel} = this.props
-        const {filter, selectedOption} = this.state
+        const {focused, filter, selectedOption} = this.state
         const keymap = {
             Escape: onCancel ? onCancel : null,
             ArrowUp: disabled ? null : () => this.showOptions(),
@@ -85,7 +86,7 @@ class Combo extends React.Component {
         }
         return (
             <Keybinding
-                disabled={disabled}
+                disabled={disabled || !focused}
                 keymap={keymap}>
                 <input
                     className={[
@@ -98,7 +99,10 @@ class Combo extends React.Component {
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
                     autoFocus={autoFocus}
                     disabled={disabled || busy || isMobile()}
-                    onChange={e => this.setFilter(e.target.value)}/>
+                    onChange={e => this.setFilter(e.target.value)}
+                    onFocus={() => this.setState({focused: true})}
+                    onBlur={() => this.setState({focused: false})}
+                />
             </Keybinding>
         )
     }
@@ -108,7 +112,7 @@ class Combo extends React.Component {
         const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
-                element={this.input.current}
+                element={this.inputContainer.current}
                 placement={placement}>
                 <List
                     ref={this.list}
@@ -188,7 +192,7 @@ class Combo extends React.Component {
     handleBlur() {
         const {onCancel} = this.props
         const click$ = fromEvent(document, 'click')
-        const isInputClick = e => this.input.current && this.input.current.contains(e.target)
+        const isInputClick = e => this.inputContainer.current && this.inputContainer.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
         this.subscriptions.push(
             click$.subscribe(e => {
@@ -233,8 +237,8 @@ class Combo extends React.Component {
                     option.options
                         ? {...option, options: getFilteredOptions(option.options)}
                         : matcher.test(option.searchableText || option.label)
-                            ? option
-                            : null
+                        ? option
+                        : null
                 )
             )
         const getFlattenedOptions = options =>
@@ -255,7 +259,7 @@ class Combo extends React.Component {
             const validatedSelectedOption = selectedOption && flattenedOptions.find(option => option.value === selectedOption.value)
             return validatedSelectedOption || getInputOption()
         }
-            
+
         this.updateState(prevState => ({
             filteredOptions,
             flattenedOptions,
