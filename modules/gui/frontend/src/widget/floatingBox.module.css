@@ -1,5 +1,5 @@
 .box {
-    --element-clearance: .5rem;
+    --element-clearance: .3rem;
     --edge-clearance: .5rem;
     position: absolute;
     left: calc(var(--left) * 1px);
@@ -8,7 +8,6 @@
 }
 
 .box.above {
-    --element-clearance: 0rem;
     bottom: calc(var(--above-bottom) * 1px + var(--element-clearance));
     max-height: calc(var(--above-height) * 1px - var(--element-clearance) - var(--edge-clearance));
 }
