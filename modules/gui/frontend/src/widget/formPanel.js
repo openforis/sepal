@@ -139,7 +139,6 @@ export class FormPanelButtons extends React.Component {
                 ? null
                 : onOk
         const onEscape = invalid || canSubmit ? onCancel : onOk
-        console.log({invalid, canSubmit, onEscape})
         return (
             <PanelButtons
                 onEnter={onEnter}
