@@ -11,7 +11,7 @@ import RecipeSection from './recipeSection'
 import SectionSelection from './sectionSelection'
 
 const fields = {
-    id: new Field(),
+    imageId: new Field(),
     section: new Field()
         .notBlank('process.classification.panel.inputImagery.form.section.required'),
     recipe: new Field()
@@ -59,8 +59,8 @@ class InputImage extends React.Component {
     }
 
     componentDidUpdate() {
-        const {inputs: {id}, activatable: {imageId}} = this.props
-        id.set(imageId)
+        const {inputs, activatable: {imageId}} = this.props
+        inputs.imageId.set(imageId)
     }
 
     addImage() {
