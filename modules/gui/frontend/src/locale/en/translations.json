@@ -635,13 +635,13 @@
             "tooltip":"Remove image from classification"
           },
           "sections": {
-            "title": "Add image to classify"
+            "title": "Image to classify"
           },
           "recipe": {
-            "title": "Add saved Sepal recipe"
+            "title": "Saved Sepal recipe"
           },
           "asset": {
-            "title": "Add Earth Engine asset"
+            "title": "Earth Engine asset"
           },
           "form": {
             "section": {

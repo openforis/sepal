@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import Keybinding from 'widget/keybinding'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
@@ -64,6 +65,7 @@ class CreateRecipe extends React.Component {
         const {modal} = this.props
         return (
             <div className={styles.createButton}>
+                <Keybinding keymap={{'Ctrl+n': () => showRecipeTypes()}}>
                 <Button
                     look='add'
                     size='xx-large'
@@ -73,6 +75,7 @@ class CreateRecipe extends React.Component {
                     tooltip={msg('process.recipe.newRecipe.tooltip')}
                     tooltipPlacement='left'
                     tooltipDisabled={modal}/>
+                </Keybinding>
             </div>
         )
     }

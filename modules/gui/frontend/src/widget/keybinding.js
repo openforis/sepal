@@ -2,6 +2,7 @@ import {fromEvent} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import {connect} from 'store'
 
 const handlers = []
 
@@ -10,12 +11,15 @@ fromEvent(document, 'keydown')
         event => _.find([...handlers], handler => handler(event))
     )
 
-export default class Keybinding extends React.Component {
+class Keybinding extends React.Component {
     handler = null
 
     constructor(props) {
         super(props)
+        const {onEnable, onDisable} = props
         this.handler = this.getHandler.bind(this)
+        onEnable(() => this.addHandler())
+        onDisable(() => this.removeHandler())
     }
 
     getHandler(event) {
@@ -65,6 +69,10 @@ export default class Keybinding extends React.Component {
         this.removeHandler()
     }
 }
+
+export default connect()(
+    Keybinding
+)
 
 Keybinding.propTypes = {
     disabled: PropTypes.any,
