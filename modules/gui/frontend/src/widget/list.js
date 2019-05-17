@@ -157,7 +157,7 @@ class List extends React.Component {
                 ref={ref}>
                 <Button
                     chromeless={!selected}
-                    look={selected ? 'highlight' : 'transparent'}
+                    look={selected ? 'selected' : 'highlight'}
                     label={option.label}
                     hover={overrideHover ? highlighted : null}
                     width='fill'
