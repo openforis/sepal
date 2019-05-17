@@ -35,8 +35,8 @@ export const toPathList = (path, safe = false) => {
     throw new Error(`Unsupported path element type: '${path}'`)
 }
 
-export const resolve = (object, pathToResolve) =>
-    toPathList(pathToResolve)
+export const resolve = (object, path, createTemplates = false) =>
+    toPathList(path)
         .reduce((value, pathElement, _index, pathElements) => {
             if (_.isString(pathElement)) {
                 if (_.isArray(value)) {
@@ -54,16 +54,19 @@ export const resolve = (object, pathToResolve) =>
                     }
                 }
             }
-            if (_.isPlainObject(pathElement) && (_.isArray(value))) {
+            if (_.isPlainObject(pathElement) && _.isArray(value)) {
                 // match array item by template
-                const index = _.findIndex(value,
+                const item = _.find(value,
                     item => _.isEqual(_.merge({}, item, pathElement), item)
                 )
-                if (index !== -1) {
-                    return value[index]
+                if (item) {
+                    return item
+                }
+                if (createTemplates) {
+                    return pathElement
                 }
             }
-            pathElements.splice(1) // early break out of reduce
+            pathElements.splice(1) // break out of reduce
             return undefined
         }, object)
 
@@ -118,7 +121,7 @@ export const resolve = (object, pathToResolve) =>
 //                 path: undefined,
 //                 value: undefined
 //             }
-//         }, {path: [], value: object})
+//         }, {path: [], value: object}).value
 
 export const selectFrom = (object, path) => resolve(object, path)
 
@@ -230,14 +233,14 @@ export class Mutator {
     pushUnique(value, key) {
         return this.mutate((pathState, pathKey) => {
             const finder = key
-                ? item => resolve(item, key).value === resolve(value, key).value
+                ? item => resolve(item, key, true) === resolve(value, key, true)
                 : item => item === value
             const array = pathState[pathKey]
             if (!array || !_.find(array, finder)) {
                 if (!array) {
                     pathState[pathKey] = []
                 }
-                pathState[pathKey].push(_.cloneDeep(_.cloneDeep(value)))
+                pathState[pathKey].push(_.cloneDeep(value))
             }
         })
     }
