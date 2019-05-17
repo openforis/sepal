@@ -44,6 +44,28 @@
     --look-highlight-disabled-background-color: hsla(var(--look-highlight-h), calc(var(--look-highlight-s) * .3), calc(var(--look-highlight-l) * .8), var(--look-highlight-a));
     --look-highlight-disabled-border-color: hsla(var(--look-highlight-h), calc(var(--look-highlight-s) * .3), calc(var(--look-highlight-l) * .8), var(--look-highlight-a));
 
+    /* selected */
+
+    --look-selected-color: hsla(0, 0%, 100%, 1);
+    --look-selected-background-color: hsla(var(--look-selected-h), var(--look-selected-s), var(--look-selected-l), var(--look-selected-a));
+    --look-selected-border-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) + 2%), var(--look-selected-a));
+
+    --look-selected-focus-color: hsla(0, 0%, 100%, 1);
+    --look-selected-focus-background-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) - 2%), var(--look-selected-a));
+    --look-selected-focus-border-color: hsla(var(--look-selected-h), var(--look-selected-s), var(--look-selected-l), var(--look-selected-a));
+
+    --look-selected-hover-color: hsla(0, 0%, 100%, 1);
+    --look-selected-hover-background-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) + 3%), var(--look-selected-a));
+    --look-selected-hover-border-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) + 5%), var(--look-selected-a));
+
+    --look-selected-active-color: hsla(0, 0%, 100%, 1);
+    --look-selected-active-background-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) + 0%), var(--look-selected-a));
+    --look-selected-active-border-color: hsla(var(--look-selected-h), var(--look-selected-s), calc(var(--look-selected-l) - 2%), var(--look-selected-a));
+
+    --look-selected-disabled-color: hsla(0, 0%, 60%, 1);
+    --look-selected-disabled-background-color: hsla(var(--look-selected-h), calc(var(--look-selected-s) * .3), calc(var(--look-selected-l) * .8), var(--look-selected-a));
+    --look-selected-disabled-border-color: hsla(var(--look-selected-h), calc(var(--look-selected-s) * .3), calc(var(--look-selected-l) * .8), var(--look-selected-a));
+
     /* transparent */
 
     --look-transparent-color: hsla(0, 0%, 70%, 1);
@@ -254,6 +276,36 @@
 .look.highlight:not(.chromeless):disabled {
     background-color: var(--look-highlight-disabled-background-color);
     border-color: var(--look-highlight-disabled-border-color);
+}
+
+/* selected */
+
+.look.selected:not(.chromeless) {
+    color: var(--look-selected-color);
+    background-color: var(--look-selected-background-color);
+    border-color: var(--look-selected-border-color);
+}
+
+.look.selected:not(:disabled):not(.nonInteractive).hover,
+.look.selected:not(:disabled):not(.nonInteractive):not(.noHover):hover {
+    color: var(--look-selected-hover-color);
+    background-color: var(--look-selected-hover-background-color);
+    border-color: var(--look-selected-hover-border-color);
+}
+
+.look.selected:not(:disabled):not(.nonInteractive):not(.chromeless):active {
+    color: var(--look-selected-active-color);
+    background-color: var(--look-selected-active-background-color);
+    border-color: var(--look-selected-active-border-color);
+}
+
+.look.selected:disabled {
+    color: var(--look-selected-disabled-color);
+}
+
+.look.selected:not(.chromeless):disabled {
+    background-color: var(--look-selected-disabled-background-color);
+    border-color: var(--look-selected-disabled-border-color);
 }
 
 /* add */

@@ -13,6 +13,13 @@ html {
     --look-highlight-l: 26%;
     --look-highlight-a: 1;
 
+    /* selected */
+
+    --look-selected-h: 40;
+    --look-selected-s: 60%;
+    --look-selected-l: 20%;
+    --look-selected-a: 1;
+
     /* transparent */
 
     --look-transparent-h: 40;
