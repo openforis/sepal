@@ -15,25 +15,39 @@ import api from 'api'
 const mapRecipeToProps = recipe => ({recipe})
 
 class MosaicPreview extends React.Component {
-    state = {}
+    state = {
+        initializing: false,
+        failed: false
+    }
+
+    renderInitializing() {
+        return (
+            <MapStatus message={msg('process.mosaic.preview.initializing')}/>
+        )
+    }
+
+    renderLoading() {
+        const {tiles, error} = this.state
+        return (
+            <MapStatus
+                loading={!tiles.complete}
+                message={msg('process.mosaic.preview.loading', {loaded: tiles.loaded, count: tiles.count})}
+                error={tiles.failed ? msg('process.mosaic.preview.tilesFailed', {failed: tiles.failed}) : error}/>
+        )
+    }
 
     render() {
-        const {initializing, tiles, error} = this.state
-        if (this.isHidden())
+        const {initializing, tiles, failed} = this.state
+        if (this.isHidden() || failed) {
             return null
-        else if (initializing)
-            return (
-                <MapStatus message={msg('process.mosaic.preview.initializing')}/>
-            )
-        else if (tiles && (!tiles.complete || tiles.failed))
-            return (
-                <MapStatus
-                    loading={!tiles.complete}
-                    message={msg('process.mosaic.preview.loading', {loaded: tiles.loaded, count: tiles.count})}
-                    error={tiles.failed ? msg('process.mosaic.preview.tilesFailed', {failed: tiles.failed}) : error}/>
-            )
-        else
-            return null
+        }
+        if (initializing) {
+            this.renderInitializing()
+        }
+        if (tiles && !tiles.complete) {
+            this.renderLoading()
+        }
+        return null
     }
 
     onProgress(tiles) {
@@ -41,6 +55,7 @@ class MosaicPreview extends React.Component {
     }
 
     onError(e) {
+        this.setState({failed: true})
         Notifications.error({
             title: msg('gee.error.title'),
             message: msg('process.mosaic.preview.error'),
@@ -91,6 +106,7 @@ class MosaicPreview extends React.Component {
             props: previewRequest,
             onProgress: tiles => this.onProgress(tiles)
         })
+        this.setState({failed: false})
         const context = sepalMap.getContext(recipe.id)
         const changed = context.setLayer({
             id: 'preview',

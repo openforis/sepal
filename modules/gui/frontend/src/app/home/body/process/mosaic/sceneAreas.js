@@ -1,15 +1,17 @@
+import {Button} from 'widget/button'
 import {MapLayer, googleMap, sepalMap} from 'app/home/map/map'
 import {RecipeActions, SceneSelectionType, getSource} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Subject, of} from 'rxjs'
 import {activator} from 'widget/activation/activator'
 import {enabled} from 'widget/enableWhen'
-import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import {select} from 'store'
 import {selectFrom} from 'stateUtils'
+import {takeUntil} from 'rxjs/operators'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import MapStatus from 'widget/mapStatus'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SceneAreaMarker from './sceneAreaMarker'
@@ -49,9 +51,8 @@ class SceneAreas extends React.Component {
         const {sceneAreasShown, stream} = this.props
         return (
             <React.Fragment>
-                {stream('LOAD_SCENE_AREAS').completed
-                    ? sceneAreasShown && this.state.show ? this.renderSceneAreas() : null
-                    : <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
+                {stream('LOAD_SCENE_AREAS').completed && sceneAreasShown && this.state.show ? this.renderSceneAreas() : null}
+                {stream('LOAD_SCENE_AREAS').dispatching && <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
             </React.Fragment>
         )
     }
@@ -98,12 +99,28 @@ class SceneAreas extends React.Component {
         this.recipeActions.setSceneAreas(null).dispatch()
         this.props.stream('LOAD_SCENE_AREAS',
             api.gee.sceneAreas$({aoi, source}).pipe(
-                map(sceneAreas => {
-                    this.recipeActions.setSceneAreas(sceneAreas).dispatch()
-                }
-                ),
                 takeUntil(this.loadSceneArea$)
-            ))
+            ),
+            sceneAreas => this.recipeActions.setSceneAreas(sceneAreas).dispatch(),
+            e => Notifications.error({
+                title: msg('gee.error.title'),
+                message: msg('process.mosaic.sceneAreas.error'),
+                error: e.response ? msg(e.response.code, e.response.data) : null,
+                timeout: 0,
+                content: dismiss =>
+                    <Button
+                        look='transparent'
+                        shape='pill'
+                        icon='sync'
+                        label={msg('button.retry')}
+                        onClick={() => {
+                            dismiss()
+                            this.reload()
+                        }}
+                    />
+            })
+    
+        )
     }
 }
 

@@ -478,7 +478,8 @@
         "error": "Failed to create preview"
       },
       "sceneAreas": {
-        "loading": "Loading scene areas..."
+        "loading": "Loading scene areas...",
+        "error": "Failed to load scene areas"
       }
     },
     "radarMosaic": {
