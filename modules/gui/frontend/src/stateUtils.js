@@ -70,59 +70,6 @@ export const resolve = (object, path, createTemplates = false) =>
             return undefined
         }, object)
 
-// export const resolve = (object, pathToResolve, createTemplates = false) =>
-//     toPathList(pathToResolve)
-//         .reduce(({path, value}, part) => {
-//             if (_.isString(part)) {
-//                 if (_.isArray(value)) {
-//                     // match array item by index
-//                     const index = parseInt(part)
-//                     if (isNaN(index)) {
-//                         throw new Error('Cannot match array item with non-numeric index.')
-//                     }
-//                     return {
-//                         path: [...path, index],
-//                         value: value[index]
-//                     }
-//                 }
-//                 if (_.isPlainObject(value)) {
-//                     // match object property
-//                     if (value[part] !== undefined) {
-//                         return {
-//                             path: [...path, part],
-//                             value: value[part]
-//                         }
-//                     }
-//                 }
-//                 const index = parseInt(part)
-//                 if (!path) {
-//                     console.error('Invalid path', {pathToResolve, object})
-//                     throw new Error('Invalid path')
-//                 }
-//                 return {
-//                     path: [...path, isNaN(index) ? part : index],
-//                     value: undefined
-//                 }
-//             }
-//             if (_.isPlainObject(part) && (_.isArray(value) || !value)) {
-//                 // match array item by template
-//                 const index = _.findIndex(value, item => _.isEqual(_.merge({}, item, part), item))
-//                 return index === -1
-//                     ? {
-//                         path: [...path, value ? value.length : 0],
-//                         value: createTemplates ? part : undefined
-//                     }
-//                     : {
-//                         path: [...path, index],
-//                         value: value[index]
-//                     }
-//             }
-//             return {
-//                 path: undefined,
-//                 value: undefined
-//             }
-//         }, {path: [], value: object}).value
-
 export const selectFrom = (object, path) => resolve(object, path)
 
 export class Mutator {
