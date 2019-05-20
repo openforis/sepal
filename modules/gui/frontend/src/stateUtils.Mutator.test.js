@@ -9,7 +9,7 @@ it('create', () => {
     expect(nextState).toEqual({a: 1})
 })
 
-it('assign prop ensuring correct equality', () => {
+it('set prop ensuring correct equality', () => {
     const state = {a: {b: 2}, c: 3}
     const nextState = new Mutator(state, 'a.b').set(3)
     expect(nextState).toEqual({a: {b: 3}, c: 3})
@@ -17,7 +17,7 @@ it('assign prop ensuring correct equality', () => {
     expect(state.c === nextState.c).toEqual(true)
 })
 
-it('assign array item by index (sparse)', () => {
+it('set array item by index (sparse)', () => {
     const state = {a: ['b', 'c']}
     const nextState = new Mutator(state, 'a.3').set('d')
     expect(nextState).toEqual({a: ['b', 'c', undefined, 'd']})
@@ -60,27 +60,42 @@ it('create by template', () => {
 })
 
 it('create by template', () => {
-    const state = {Mutator: 'bar'}
+    const state = {foo: 'bar'}
     const nextState = new Mutator(state, 'a.b').set(1)
-    expect(nextState).toEqual({a: {b: 1}, Mutator: 'bar'})
+    expect(nextState).toEqual({a: {b: 1}, foo: 'bar'})
 })
 
 it('create by template', () => {
-    const state = {Mutator: 'bar'}
+    const state = {foo: 'bar'}
     const nextState = new Mutator(state, 'a.0').set(1)
-    expect(nextState).toEqual({a: [1], Mutator: 'bar'})
+    expect(nextState).toEqual({a: [1], foo: 'bar'})
 })
 
 it('assign non-existing', () => {
     const state = {}
-    const nextState = new Mutator(state, 'Mutator').assign({a: 1})
-    expect(nextState).toEqual({Mutator: {a: 1}})
+    const nextState = new Mutator(state, 'foo').assign({a: 1})
+    expect(nextState).toEqual({foo: {a: 1}})
 })
 
 it('assign', () => {
-    const state = {Mutator: {bar: 'baz'}}
-    const nextState = new Mutator(state, 'Mutator').assign({a: 1})
-    expect(nextState).toEqual({Mutator: {bar: 'baz', a: 1}})
+    const state = {foo: {bar: 'baz'}}
+    const nextState = new Mutator(state, 'foo').assign({a: 1})
+    expect(nextState).toEqual({foo: {bar: 'baz', a: 1}})
+    expect(state.foo === nextState.foo).toEqual(false)
+})
+
+it('merge non-existing', () => {
+    const state = {}
+    const nextState = new Mutator(state, 'foo').merge({a: 1})
+    expect(nextState).toEqual({foo: {a: 1}})
+})
+
+it('merge', () => {
+    const state = {a: {b: {c: 1}}}
+    const nextState = new Mutator(state, 'a').merge({b: {d: 2}})
+    expect(nextState).toEqual({a: {b: {c: 1, d: 2}}})
+    expect(state.a === nextState.a).toEqual(false)
+    expect(state.a.b === nextState.a.b).toEqual(false)
 })
 
 it('push non-existing', () => {
@@ -93,6 +108,7 @@ it('push', () => {
     const state = {a: [1, 2]}
     const nextState = new Mutator(state, 'a').push(3)
     expect(nextState).toEqual({a: [1, 2, 3]})
+    expect(nextState.a === state.a).toEqual(false)
 })
 
 it('push unique non-existing', () => {
@@ -105,6 +121,7 @@ it('push unique does push non-existing value', () => {
     const state = {a: [1, 2]}
     const nextState = new Mutator(state, 'a').pushUnique(3)
     expect(nextState).toEqual({a: [1, 2, 3]})
+    expect(nextState.a === state.a).toEqual(false)
 })
 
 it('push unique does push non-existing object by simple key', () => {
@@ -114,9 +131,9 @@ it('push unique does push non-existing object by simple key', () => {
 })
 
 it('push unique does push non-existing object by nested key', () => {
-    const state = {a: [{Mutator: {id: 1}}, {Mutator: {id: 2}}]}
-    const nextState = new Mutator(state, 'a').pushUnique({Mutator: {id: 3}}, 'Mutator.id')
-    expect(nextState).toEqual({a: [{Mutator: {id: 1}}, {Mutator: {id: 2}}, {Mutator: {id: 3}}]})
+    const state = {a: [{foo: {id: 1}}, {foo: {id: 2}}]}
+    const nextState = new Mutator(state, 'a').pushUnique({foo: {id: 3}}, 'foo.id')
+    expect(nextState).toEqual({a: [{foo: {id: 1}}, {foo: {id: 2}}, {foo: {id: 3}}]})
 })
 
 it('push unique does not push existing value', () => {
@@ -132,9 +149,9 @@ it('push unique does not push existing object by simple key', () => {
 })
 
 it('push unique does not push existing object by nested key', () => {
-    const state = {a: [{Mutator: {id: 1}}, {Mutator: {id: 2}}]}
-    const nextState = new Mutator(state, 'a').pushUnique({Mutator: {id: 2}}, 'Mutator.id')
-    expect(nextState).toEqual({a: [{Mutator: {id: 1}}, {Mutator: {id: 2}}]})
+    const state = {a: [{foo: {id: 1}}, {foo: {id: 2}}]}
+    const nextState = new Mutator(state, 'a').pushUnique({foo: {id: 2}}, 'foo.id')
+    expect(nextState).toEqual({a: [{foo: {id: 1}}, {foo: {id: 2}}]})
 })
 
 it('delete from object (non-existing path)', () => {
@@ -153,6 +170,7 @@ it('delete from object', () => {
     const state = {a: {b: 1, c: 2}}
     const nextState = new Mutator(state, 'a.b').del()
     expect(nextState).toEqual({a: {c: 2}})
+    expect(state.a === nextState.a).toEqual(false)
 })
 
 it('delete from array (non-existing array)', () => {
@@ -171,6 +189,7 @@ it('delete from array', () => {
     const state = {a: ['b', 'c', 'd']}
     const nextState = new Mutator(state, 'a.1').del()
     expect(nextState).toEqual({a: ['b', 'd']})
+    expect(state.a === nextState.a).toEqual(false)
 })
 
 it('delete from array by template', () => {

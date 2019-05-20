@@ -211,13 +211,13 @@ export class Mutator {
 
     assign(value) {
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = _.cloneDeep(_.assign({}, pathState[pathKey], value))
+            pathState[pathKey] = _.assign({}, pathState[pathKey], _.cloneDeep(value))
         })
     }
 
     merge(value) {
         return this.mutate((pathState, pathKey) => {
-            pathState[pathKey] = _.cloneDeep(_.merge({}, pathState[pathKey], value))
+            pathState[pathKey] = _.merge({}, pathState[pathKey], _.cloneDeep(value))
         })
     }
 
@@ -226,7 +226,7 @@ export class Mutator {
             if (!pathState[pathKey]) {
                 pathState[pathKey] = []
             }
-            pathState[pathKey].push(_.cloneDeep(value))
+            pathState[pathKey] = [...pathState[pathKey], _.cloneDeep(value)]
         })
     }
 
@@ -240,7 +240,7 @@ export class Mutator {
                 if (!array) {
                     pathState[pathKey] = []
                 }
-                pathState[pathKey].push(_.cloneDeep(value))
+                pathState[pathKey] = [...pathState[pathKey], _.cloneDeep(value)]
             }
         })
     }
