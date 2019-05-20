@@ -134,7 +134,7 @@ export default class SeasonSelect extends React.Component {
     }
 
     widthUpdated(width) {
-        this.setState(prevState => ({...prevState, width}))
+        this.setState({width})
     }
 
     notifyChange(startDate, endDate) {

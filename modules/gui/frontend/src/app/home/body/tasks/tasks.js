@@ -109,7 +109,7 @@ class Tasks extends React.Component {
 
     componentDidUpdate(prevProps) {
         if (prevProps.tasks !== this.props.tasks)
-            this.setState(prevState => ({...prevState, tasks: this.props.tasks}))
+            this.setState({tasks: this.props.tasks})
     }
 
     copyToClipboard(task) {

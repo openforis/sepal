@@ -23,7 +23,7 @@ class Workflow extends React.Component {
     }
 
     switchStep(stepName) {
-        this.setState(prevState => ({...prevState, stepName}))
+        this.setState({stepName})
     }
 
     static Step = ({children}) =>

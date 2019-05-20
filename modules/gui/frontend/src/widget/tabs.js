@@ -191,7 +191,7 @@ class Tab extends React.Component {
     onTitleChange(e) {
         const value = e.target.value.replace(/[^\w-.]/g, '_')
         e.target.value = value
-        this.setState(prevState => ({...prevState, title: value}))
+        this.setState({title: value})
     }
 
     saveTitle() {

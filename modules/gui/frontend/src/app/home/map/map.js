@@ -364,7 +364,7 @@ class Map extends React.Component {
     componentDidUpdate() {
         const apiKey = this.props.apiKey
         if (apiKey && !this.state.initialized) { // Create map once there is an API key
-            this.setState(prevState => ({...prevState, initialized: true}))
+            this.setState({initialized: true})
             createMap(this.mapElement.current)
             this.initialized = true
         }
@@ -467,7 +467,7 @@ onInit(google =>
             const xyz = [point.x, point.y, sepalMap.getZoom()]
             if (!_.isEqual(this.xyz, xyz)) {
                 this.xyz = xyz
-                this.component.setState(prevState => ({...prevState, projection}))
+                this.component.setState({projection})
                 actionBuilder('PROJECTION_CHANGED', {xyz})
                     .set('map.projectionChange', xyz)
                     .dispatch()
@@ -480,6 +480,6 @@ onInit(google =>
         }
 
         show(shown) {
-            this.component.setState(prevState => ({...prevState, shown: shown}))
+            this.component.setState({shown: shown})
         }
     })

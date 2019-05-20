@@ -40,7 +40,7 @@ class PanelWizard extends React.Component {
         const next = navigate(currentIndex + 1)
 
         const done = () => {
-            this.setState(prevState => ({...prevState, initialized: true}))
+            this.setState({initialized: true})
             currentActivatable.deactivate()
             onDone && onDone()
         }

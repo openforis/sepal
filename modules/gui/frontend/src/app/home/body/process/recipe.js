@@ -342,7 +342,7 @@ export const initValues = ({getModel, getValues, modelToValues, onInitialized}) 
                 const {model, values} = this.state
                 if (model)
                     this.convertModelToValues(model, values)
-                this.setState(prevState => ({...prevState, initialized: true}))
+                this.setState({initialized: true})
             }
 
             convertModelToValues(model) {

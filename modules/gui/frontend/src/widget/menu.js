@@ -32,7 +32,7 @@ class Menu extends React.Component {
     }
 
     toggleOpen() {
-        this.setState(prevState => ({...prevState, open: !this.state.open}))
+        this.setState(({open}) => ({open: !open}))
     }
 
     render() {

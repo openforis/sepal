@@ -141,12 +141,12 @@ class SceneAreaLayer {
 
     addToMap() {
         if (!this.component.state.show && !this.component.props.componentWillUnmount$.isStopped)
-            this.component.setState(prevState => ({...prevState, show: true}))
+            this.component.setState({show: true})
     }
 
     removeFromMap() {
         if (this.component.state.show && !this.component.props.componentWillUnmount$.isStopped)
-            this.component.setState(prevState => ({...prevState, show: false}))
+            this.component.setState({show: false})
     }
 
     hide() {

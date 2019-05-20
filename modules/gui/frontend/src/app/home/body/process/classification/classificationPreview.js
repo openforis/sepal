@@ -34,7 +34,7 @@ class ClassificationPreview extends React.Component {
     }
 
     onProgress(tiles) {
-        this.setState(prevState => ({...prevState, tiles, initializing: false}))
+        this.setState({tiles, initializing: false})
     }
 
     onError(e) {
@@ -95,9 +95,9 @@ class ClassificationPreview extends React.Component {
             onError: e => this.onError(e)
         })
         if (changed && initializing !== !!layer)
-            this.setState(prevState => ({...prevState, initializing: !!layer, error: null}))
+            this.setState({initializing: !!layer, error: null})
         else if (changed && error)
-            this.setState(prevState => ({...prevState, error: null}))
+            this.setState({error: null})
     }
 
     isHidden() {
