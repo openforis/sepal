@@ -296,7 +296,6 @@ Button.propTypes = {
     label: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.array]),
     link: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'selected', 'transparent', 'add', 'apply', 'cancel']),
-    ref: PropTypes.object,
     shape: PropTypes.oneOf(['rectangle', 'pill', 'circle', 'none']),
     shown: PropTypes.any,
     size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large', 'xx-large']),
