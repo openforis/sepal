@@ -155,5 +155,5 @@ SuperButton.propTypes = {
 }
 
 SuperButton.defaultProps = {
-    tooltipPlacement: 'bottom'
+    tooltipPlacement: 'top'
 }
