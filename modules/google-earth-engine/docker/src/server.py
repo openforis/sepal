@@ -43,6 +43,13 @@ def preview():
     return Response(json.dumps(image_preview), mimetype='application/json')
 
 
+@http.route('/bands', methods=['POST'])
+def bands():
+    image_spec = image_spec_factory.create(sepal_api, request.get_json())
+    bands = image_spec._ee_image().bandNames().getInfo()
+    return Response(json.dumps(bands), mimetype='application/json')
+
+
 @http.route('/recipe/geometry', methods=['POST'])
 def recipe_geometry():
     image_spec = image_spec_factory.create(sepal_api, request.get_json())
