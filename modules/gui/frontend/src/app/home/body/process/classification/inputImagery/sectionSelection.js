@@ -1,5 +1,5 @@
 import {msg} from 'translate'
-import Buttons from 'widget/buttons'
+import {FormButtons as Buttons} from 'widget/buttons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './sectionSelection.module.css'

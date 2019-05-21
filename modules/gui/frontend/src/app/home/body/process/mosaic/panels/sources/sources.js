@@ -6,7 +6,7 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {imageSourceById, isDataSetInDateRange, sources} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import Buttons from 'widget/buttons'
+import {FormButtons as Buttons} from 'widget/buttons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'

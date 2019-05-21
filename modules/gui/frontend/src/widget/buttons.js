@@ -1,37 +1,37 @@
-import {Button, ButtonGroup} from 'widget/button'
-import Label from 'widget/label'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {Button, ButtonGroup} from 'widget/button'
+import Label from 'widget/label'
 import styles from './buttons.module.css'
 
-export default class Buttons extends React.Component {
-
+export class Buttons extends React.Component {
     isSelected(value) {
-        const {multiple, input} = this.props
+        const {multiple, selected} = this.props
         return multiple
-            ? Array.isArray(input.value) && input.value.includes(value)
-            : input.value === value
+            ? Array.isArray(selected) && selected.includes(value)
+            : selected === value
     }
 
     selectSingle(value) {
-        const {input} = this.props
-        input.set(value)
+        const {onChange} = this.props
+        onChange(value)
         return value
     }
 
     toggleMultiple(value) {
-        const {input} = this.props
-        const prevValue = Array.isArray(input.value) ? input.value : []
+        const {selected, onChange} = this.props
+        const prevValue = Array.isArray(selected) ? selected : []
         const nextValue = this.isSelected(value)
             ? prevValue.filter(v => v !== value)
             : [...prevValue, value]
-        input.set(nextValue)
+        onChange(nextValue)
         return nextValue
     }
 
     select(value) {
-        const {input, multiple, onChange} = this.props
-        const prevValue = input.value
+        const {selected, multiple, onChange} = this.props
+        const prevValue = selected
         const nextValue = multiple ? this.toggleMultiple(value) : this.selectSingle(value)
         if (prevValue !== nextValue)
             onChange && onChange(nextValue)
@@ -49,8 +49,7 @@ export default class Buttons extends React.Component {
                 disabled={disabled || alwaysSelected || neverSelected || unavailable}
                 tooltip={tooltip}
                 tooltipPlacement='bottom'
-                onClick={() => this.select(value)}
-            >
+                onClick={() => this.select(value)}>
                 {label}
             </Button>
         )
@@ -60,7 +59,11 @@ export default class Buttons extends React.Component {
         const {type} = this.props
         return (
             <ButtonGroup key={key} className={styles.buttons} type={type}>
-                {options.map(option => this.renderButton(option))}
+                {options.map(option => this.renderButton(
+                    _.isObjectLike(option)
+                        ? option
+                        : {value: option, label: option}
+                ))}
             </ButtonGroup>
         )
     }
@@ -101,6 +104,40 @@ export default class Buttons extends React.Component {
 }
 
 Buttons.propTypes = {
+    capitalized: PropTypes.any,
+    className: PropTypes.string,
+    label: PropTypes.string,
+    multiple: PropTypes.any,
+    selected: PropTypes.any,
+    options: PropTypes.array,
+    tooltip: PropTypes.string,
+    tooltipPlacement: PropTypes.string,
+    type: PropTypes.string,
+    unavailable: PropTypes.any,
+    onChange: PropTypes.any,
+}
+
+export const FormButtons = (
+    {
+        capitalized, className, input, label, multiple, options, tooltip, tooltipPlacement, type, unavailable, onChange
+    }) =>
+    <Buttons
+        capitalized={capitalized}
+        className={className}
+        selected={input.value}
+        onChange={value => {
+            input.set(value)
+            onChange && onChange(value)
+        }}
+        label={label}
+        multiple={multiple}
+        options={options}
+        tooltip={tooltip}
+        tooltipPlacement={tooltipPlacement}
+        type={type}
+        unavailable={unavailable}/>
+
+FormButtons.propTypes = {
     capitalized: PropTypes.any,
     className: PropTypes.string,
     input: PropTypes.object,

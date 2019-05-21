@@ -4,7 +4,7 @@ import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../timeSeriesRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {msg} from 'translate'
-import Buttons from 'widget/buttons'
+import {FormButtons as Buttons} from 'widget/buttons'
 import React from 'react'
 import styles from './preProcessingOptions.module.css'
 
