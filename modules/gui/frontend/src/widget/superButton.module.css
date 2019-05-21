@@ -40,5 +40,6 @@ to prevent click-through from click-hold buttons */
 .extra {
     margin-top: .5rem;
     border-top: var(--wireframe);
-    padding-top: .5rem;
+    padding-top: .75rem;
+    padding-bottom: .25rem;
 }

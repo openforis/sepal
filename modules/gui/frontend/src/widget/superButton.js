@@ -7,20 +7,55 @@ import moment from 'moment'
 import styles from './superButton.module.css'
 
 export default class SuperButton extends React.Component {
+    state = {
+        selected: false
+    }
+
+    handleClick() {
+        const {onClick, clickToSelect} = this.props
+        if (onClick) {
+            onClick && onClick()
+            return
+        }
+        if (clickToSelect) {
+            this.setState(({selected}) => ({selected: !selected}))
+            return
+        }
+    }
+
+    isInteractive() {
+        const {onClick, clickToSelect, selected} = this.props
+        return onClick || (clickToSelect && !selected)
+    }
+
+    isInternallySelected() {
+        const {clickToSelect} = this.props
+        const {selected} = this.state
+        return clickToSelect
+            ? selected
+            : undefined
+    }
+
+    isSelected() {
+        const {selected} = this.props
+        return selected !== undefined
+            ? selected
+            : this.isInternallySelected()
+    }
+
     render() {
-        const {className, title, description, onClick} = this.props
+        const {className, title, description} = this.props
         const classNames = [
             styles.container,
             lookStyles.look,
-            lookStyles.transparent,
-            onClick ? null : lookStyles.nonInteractive,
-
+            this.isSelected() === true ? lookStyles.default : lookStyles.transparent,
+            this.isInteractive() ? null : lookStyles.nonInteractive,
             className].join(' ')
         return (
             <div className={classNames}>
                 <div
                     className={styles.clickTarget}
-                    onClick={() => onClick && onClick()}
+                    onClick={() => this.handleClick()}
                 />
                 <div className={styles.main}>
                     <div className={styles.info}>
@@ -125,7 +160,7 @@ export default class SuperButton extends React.Component {
 
     renderContent() {
         const {children} = this.props
-        return children
+        return children && this.isSelected() !== false
             ? (
                 <div className={styles.extra}>
                     {children}
@@ -138,6 +173,7 @@ export default class SuperButton extends React.Component {
 SuperButton.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
+    clickToSelect: PropTypes.any,
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     duplicateTooltip: PropTypes.string,
     editTooltip: PropTypes.string,
@@ -145,6 +181,7 @@ SuperButton.propTypes = {
     infoTooltip: PropTypes.string,
     removeMessage: PropTypes.string,
     removeTooltip: PropTypes.string,
+    selected: PropTypes.any,
     timestamp: PropTypes.any,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     tooltipPlacement: PropTypes.string,
