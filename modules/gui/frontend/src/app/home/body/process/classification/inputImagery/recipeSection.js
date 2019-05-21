@@ -3,7 +3,6 @@ import {connect, select} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Combo from 'widget/combo'
-import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -22,9 +21,9 @@ class RecipeSection extends React.Component {
         }))
         return (
             <React.Fragment>
-                <Label msg={msg('process.classification.panel.inputImagery.form.recipe.label')}/>
                 <Combo
                     input={recipe}
+                    label={msg('process.classification.panel.inputImagery.form.recipe.label')}
                     placeholder={msg('process.classification.panel.inputImagery.form.recipe.placeholder')}
                     options={options}
                     autoFocus={!isMobile()}/>
