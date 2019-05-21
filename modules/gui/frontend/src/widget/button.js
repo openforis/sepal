@@ -1,4 +1,4 @@
-import {EMPTY, combineLatest, fromEvent, merge, timer} from 'rxjs'
+import {EMPTY, combineLatest, fromEvent, timer} from 'rxjs'
 import {Link} from 'route'
 import {distinctUntilChanged, switchMap, take, takeUntil} from 'rxjs/operators'
 import {download} from 'widget/download'
@@ -245,12 +245,8 @@ class _Button extends React.Component {
                 mouseTrigger$.pipe(
                     switchMap(() =>
                         mouseActivate$.pipe(
-                            takeUntil(
-                                merge(
-                                    cancel$,
-                                    onClickHold ? timer(CLICK_CANCEL_DELAY_MS) : EMPTY
-                                )
-                            ),
+                            takeUntil(cancel$),
+                            takeUntil(onClickHold ? timer(CLICK_CANCEL_DELAY_MS) : EMPTY),
                             take(1)
                         )
                     )
