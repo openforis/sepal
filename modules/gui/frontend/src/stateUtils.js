@@ -72,6 +72,8 @@ export const resolve = (object, path, createTemplates = false) =>
 
 export const selectFrom = (object, path) => resolve(object, path)
 
+export const mutate = (state, path) => new Mutator(state, path)
+
 export class Mutator {
     constructor(state, path) {
         this.state = {
