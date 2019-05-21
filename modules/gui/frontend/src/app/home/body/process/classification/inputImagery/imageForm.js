@@ -1,13 +1,13 @@
-import api from 'api'
 import * as PropTypes from 'prop-types'
-import React, {Component} from 'react'
-import {mutate, selectFrom} from 'stateUtils'
+import {CenteredProgress} from 'widget/progress'
+import {filterBandSetSpec, isBandSetSpecEmpty, renderBandSetSpec, renderBandSetSpecEditor} from './bandSetSpec'
 import {msg} from 'translate'
+import {mutate, selectFrom} from 'stateUtils'
 import BlurDetector from 'widget/blurDetector'
 import Label from 'widget/label'
-import {CenteredProgress} from 'widget/progress'
+import React, {Component} from 'react'
 import SuperButton from 'widget/superButton'
-import {filterBandSetSpec, isBandSetSpecEmpty, renderBandSetSpec, renderBandSetSpecEditor} from './bandSetSpec'
+import api from 'api'
 import styles from './inputImage.module.css'
 
 class ImageForm extends Component {
@@ -70,27 +70,30 @@ class ImageForm extends Component {
 
     renderBandSetSpecs() {
         const {inputs: {bandSetSpecs}} = this.props
-        const {edit} = this.state
         return (
             <React.Fragment>
                 <Label msg={'Included bands'}/>
-                {(bandSetSpecs.value || []).map(bandSetSpec => {
-                        const editing = edit === bandSetSpec.id
-
-                        return <SuperButton
-                            key={bandSetSpec.id}
-                            title={bandSetSpec.type}
-                            description={renderBandSetSpec(bandSetSpec)}
-                            className={editing ? styles.edit : null}
-                            unsafeRemove
-                            onClick={() => this.editBandSetSpec(bandSetSpec)}
-                            onRemove={() => this.removeBandSetSpec(bandSetSpec)}
-                        >
-                            {editing ? this.renderBandSetSpecEditor(bandSetSpec) : null}
-                        </SuperButton>
-                    }
-                )}
+                {(bandSetSpecs.value || []).map(bandSetSpec => this.renderBandSetSpec(bandSetSpec))}
             </React.Fragment>
+        )
+    }
+
+    renderBandSetSpec(bandSetSpec) {
+        const {edit} = this.state
+        const editing = edit === bandSetSpec.id
+        return (
+            <SuperButton
+                key={bandSetSpec.id}
+                title={bandSetSpec.type}
+                description={renderBandSetSpec(bandSetSpec)}
+                className={editing ? styles.edit : null}
+                unsafeRemove
+                onClick={() => this.editBandSetSpec(bandSetSpec)}
+                onRemove={() => this.removeBandSetSpec(bandSetSpec)}
+                selected={editing}
+            >
+                {this.renderBandSetSpecEditor(bandSetSpec)}
+            </SuperButton>
         )
     }
 
@@ -174,11 +177,10 @@ class ImageForm extends Component {
 }
 
 ImageForm.propTypes = {
-    inputs: PropTypes.any,
+    children: PropTypes.any,
     inputComponent: PropTypes.any,
-    children: PropTypes.any
+    inputs: PropTypes.any
 }
 
 export default ImageForm
-
 
