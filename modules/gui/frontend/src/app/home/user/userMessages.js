@@ -138,16 +138,14 @@ class _UserMessages extends React.Component {
         }
     }
 
-    renderSubject(userMessage) {
+    renderStatusButton(userMessage) {
         const {state} = userMessage
         return (
             <Button
                 chromeless
-                look='transparent'
+                shape='circle'
                 size='large'
-                shape='none'
                 icon={state === 'UNREAD' ? 'bell' : 'check'}
-                label={userMessage.message.subject}
                 additionalClassName={[styles.subject, styles[state]].join(' ')}
                 onClick={() => this.toggleMessageState(userMessage)}
                 tooltip={msg(`userMessages.state.${state}`)}
@@ -165,13 +163,16 @@ class _UserMessages extends React.Component {
             <SuperButton
                 key={index}
                 title={<Msg id='userMessages.author' author={author}/>}
-                description={this.renderSubject(userMessage)}
+                description={userMessage.message.subject}
                 timestamp={creationTime}
                 editTooltip={msg('userMessages.edit')}
                 removeMessage={msg('userMessages.removeConfirmation', {subject: message.subject})}
                 removeTooltip={msg('userMessages.remove')}
                 onEdit={isAdmin ? () => this.editMessage(message) : null}
                 onRemove={isAdmin ? () => this.removeMessage(message) : null}
+                extraButtons={[
+                    this.renderStatusButton(userMessage)
+                ]}
             >
                 <Markdown className={styles.contents} source={userMessage.message.contents}/>
             </SuperButton>
