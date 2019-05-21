@@ -1,14 +1,12 @@
 import api from 'api'
-import _ from 'lodash'
 import * as PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import {mutate, selectFrom} from 'stateUtils'
-import lookStyles from 'style/look.module.css'
 import {msg} from 'translate'
 import BlurDetector from 'widget/blurDetector'
-import {Button} from 'widget/button'
 import Label from 'widget/label'
 import {CenteredProgress} from 'widget/progress'
+import SuperButton from 'widget/superButton'
 import {filterBandSetSpec, isBandSetSpecEmpty, renderBandSetSpec, renderBandSetSpecEditor} from './bandSetSpec'
 import styles from './inputImage.module.css'
 
@@ -18,26 +16,26 @@ class ImageForm extends Component {
         prevBandSetSpecs: []
     }
 
-    static getDerivedStateFromProps(props, state) {
-        const {inputs: {bandSetSpecs}} = props
-        const {prevBandSetSpecs = []} = state
-        const nextBandSetSpecs = bandSetSpecs.value || []
-        const nextState = {...state}
-        if (!_.isEqual(nextBandSetSpecs, prevBandSetSpecs)) {
-            const addedSpec = nextBandSetSpecs.length > prevBandSetSpecs.length
-            if (addedSpec) {
-                const lastSpec = _.last(nextBandSetSpecs)
-                if (isBandSetSpecEmpty(lastSpec)) {
-                    console.log('Added')
-                    nextState.edit = lastSpec.id
-                }
-            } else if(!nextBandSetSpecs.find(spec => !isBandSetSpecEmpty(spec))) {
-                console.log('All empty')
-                nextState.edit = nextBandSetSpecs[0].id
-            }
-        }
-        return nextState
-    }
+    // static getDerivedStateFromProps(props, state) {
+    //     const {inputs: {bandSetSpecs}} = props
+    //     const {prevBandSetSpecs = []} = state
+    //     const nextBandSetSpecs = bandSetSpecs.value || []
+    //     const nextState = {...state}
+    //     if (!_.isEqual(nextBandSetSpecs, prevBandSetSpecs)) {
+    //         const addedSpec = nextBandSetSpecs.length > prevBandSetSpecs.length
+    //         if (addedSpec) {
+    //             const lastSpec = _.last(nextBandSetSpecs)
+    //             if (isBandSetSpecEmpty(lastSpec)) {
+    //                 console.log('Added')
+    //                 nextState.edit = lastSpec.id
+    //             }
+    //         } else if (!nextBandSetSpecs.find(spec => !isBandSetSpecEmpty(spec))) {
+    //             console.log('All empty')
+    //             nextState.edit = nextBandSetSpecs[0].id
+    //         }
+    //     }
+    //     return nextState
+    // }
 
     render() {
         const {stream, input, inputComponent, inputs: {bands}} = this.props
@@ -76,14 +74,21 @@ class ImageForm extends Component {
         return (
             <React.Fragment>
                 <Label msg={'Included bands'}/>
-                {(bandSetSpecs.value || []).map(bandSetSpec =>
-                    <div
-                        key={bandSetSpec.id}
-                        onClick={() => this.editBandSetSpec(bandSetSpec)}>
-                        {edit === bandSetSpec.id
-                            ? this.renderBandSetSpecEditor(bandSetSpec)
-                            : this.renderBandSetSpec(bandSetSpec)}
-                    </div>
+                {(bandSetSpecs.value || []).map(bandSetSpec => {
+                        const editing = edit === bandSetSpec.id
+
+                        return <SuperButton
+                            key={bandSetSpec.id}
+                            title={bandSetSpec.type}
+                            description={renderBandSetSpec(bandSetSpec)}
+                            className={editing ? styles.edit : null}
+                            unsafeRemove
+                            onClick={() => this.editBandSetSpec(bandSetSpec)}
+                            onRemove={() => this.removeBandSetSpec(bandSetSpec)}
+                        >
+                            {editing ? this.renderBandSetSpecEditor(bandSetSpec) : null}
+                        </SuperButton>
+                    }
                 )}
             </React.Fragment>
         )
@@ -95,7 +100,6 @@ class ImageForm extends Component {
             <BlurDetector
                 className={styles.bandSetSpecEditor}
                 onBlur={() => this.setState({edit: null})}>
-                <div className='itemType'>{bandSetSpec.type}</div>
                 <div className={styles.widget}>
                     {
                         renderBandSetSpecEditor({
@@ -110,24 +114,25 @@ class ImageForm extends Component {
 
     }
 
-    renderBandSetSpec(bandSetSpec) {
-        return (
-            <div
-                className={[styles.item, lookStyles.look, lookStyles.transparent].join(' ')}>
-                <div className={styles.itemInfo}>
-                    <div className='itemType'>{bandSetSpec.type}</div>
-                    {renderBandSetSpec(bandSetSpec)}
-                </div>
-                <Button
-                    chromeless
-                    shape='circle'
-                    size='large'
-                    icon='trash'
-                    disabled={bandSetSpec.type === 'IMAGE_BANDS'}
-                    onClick={() => this.removeBandSetSpec(bandSetSpec)}/>
-            </div>
-        )
-    }
+    //
+    // renderBandSetSpec(bandSetSpec) {
+    //     return (
+    //         <div
+    //             className={[styles.item, lookStyles.look, lookStyles.transparent].join(' ')}>
+    //             <div className={styles.itemInfo}>
+    //                 <div className='itemType'>{bandSetSpec.type}</div>
+    //                 {renderBandSetSpec(bandSetSpec)}
+    //             </div>
+    //             <Button
+    //                 chromeless
+    //                 shape='circle'
+    //                 size='large'
+    //                 icon='trash'
+    //                 disabled={bandSetSpec.type === 'IMAGE_BANDS'}
+    //                 onClick={() => this.removeBandSetSpec(bandSetSpec)}/>
+    //         </div>
+    //     )
+    // }
 
     editBandSetSpec(bandSetSpec) {
         this.setState({edit: bandSetSpec.id})

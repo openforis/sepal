@@ -14,6 +14,7 @@ export default class SuperButton extends React.Component {
             lookStyles.look,
             lookStyles.transparent,
             onClick ? null : lookStyles.nonInteractive,
+
             className].join(' ')
         return (
             <div className={classNames}>
@@ -136,6 +137,7 @@ export default class SuperButton extends React.Component {
 
 SuperButton.propTypes = {
     children: PropTypes.any,
+    className: PropTypes.string,
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     duplicateTooltip: PropTypes.string,
     editTooltip: PropTypes.string,
