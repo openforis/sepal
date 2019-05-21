@@ -31,14 +31,7 @@ export default class SafetyButton extends React.Component {
     }
 
     render() {
-        const {
-            chromeless = true,
-            shape = 'circle',
-            icon = 'trash',
-            skip,
-            onConfirm,
-            ...otherProps
-        } = this.props
+        const {chromeless, shape, icon, skip, onConfirm, ...otherProps} = this.props
         const {askConfirmation} = this.state
         return (
             <React.Fragment>
@@ -59,4 +52,10 @@ export default class SafetyButton extends React.Component {
 SafetyButton.propTypes = {
     message: PropTypes.string.isRequired,
     onConfirm: PropTypes.func.isRequired,
+}
+
+SafetyButton.defaultProps = {
+    chromeless: true,
+    shape: 'circle',
+    icon: 'trash',
 }
