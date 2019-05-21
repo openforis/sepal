@@ -1,17 +1,17 @@
-import escapeStringRegexp from 'escape-string-regexp'
-import _ from 'lodash'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {fromEvent, Subject} from 'rxjs'
-import {delay} from 'rxjs/operators'
-import {selectFrom} from 'stateUtils'
-import {connect} from 'store'
-import FloatingBox from 'widget/floatingBox'
 import {ErrorMessage} from 'widget/form'
+import {Subject, fromEvent} from 'rxjs'
+import {connect} from 'store'
+import {delay} from 'rxjs/operators'
+import {isMobile} from 'widget/userAgent'
+import {selectFrom} from 'stateUtils'
+import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
 import Label from 'widget/label'
 import List from 'widget/list'
-import {isMobile} from 'widget/userAgent'
+import PropTypes from 'prop-types'
+import React from 'react'
+import _ from 'lodash'
+import escapeStringRegexp from 'escape-string-regexp'
 import styles from './combo.module.css'
 
 const SELECTION_DELAY_MS = 350
@@ -42,10 +42,10 @@ class Combo extends React.Component {
             standalone
                 ? onCancel && onCancel(e)
                 : showOptions
-                ? this.hideOptions()
-                : disabled
-                    ? null
-                    : this.showOptions()
+                    ? this.hideOptions()
+                    : disabled
+                        ? null
+                        : this.showOptions()
         return (
             <div className={[styles.container, className].join(' ')}>
                 {this.renderLabel()}
@@ -237,8 +237,8 @@ class Combo extends React.Component {
                     option.options
                         ? {...option, options: getFilteredOptions(option.options)}
                         : matcher.test(option.searchableText || option.label)
-                        ? option
-                        : null
+                            ? option
+                            : null
                 )
             )
         const getFlattenedOptions = options =>
@@ -280,12 +280,12 @@ Combo.propTypes = {
     inputClassName: PropTypes.string,
     label: PropTypes.string,
     optionsClassName: PropTypes.string,
+    optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     standalone: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
-    optionTooltipPlacement: PropTypes.string,
     onCancel: PropTypes.func,
     onChange: PropTypes.func
 }

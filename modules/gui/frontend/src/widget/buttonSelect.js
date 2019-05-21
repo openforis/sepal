@@ -174,14 +174,14 @@ ButtonSelect.propTypes = {
     onSelect: PropTypes.func.isRequired,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    icon: PropTypes.string,
     label: PropTypes.string,
     look: PropTypes.string,
-    icon: PropTypes.string,
     optionsClassName: PropTypes.string,
+    optionTooltipPlacement: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
     tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string,
-    optionTooltipPlacement: PropTypes.string
+    tooltipPlacement: PropTypes.string
 }
 
 ButtonSelect.defaultProps = {

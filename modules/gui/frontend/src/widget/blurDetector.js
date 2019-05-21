@@ -1,7 +1,6 @@
+import {fromEvent, merge} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {fromEvent, merge} from 'rxjs'
-
 
 export default class BlurDetector extends React.Component {
     subscriptions = []
@@ -40,7 +39,7 @@ export default class BlurDetector extends React.Component {
 }
 
 BlurDetector.propTypes = {
-    onBlur: PropTypes.func.isRequired,
     children: PropTypes.any.isRequired,
+    onBlur: PropTypes.func.isRequired,
     className: PropTypes.string
 }

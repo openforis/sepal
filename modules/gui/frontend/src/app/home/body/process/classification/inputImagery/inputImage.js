@@ -1,14 +1,14 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
-import {msg} from 'translate'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import PanelSections from 'widget/panelSections'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import AssetSection from './assetSection'
-import styles from './inputImage.module.css'
+import PanelSections from 'widget/panelSections'
+import React from 'react'
 import RecipeSection from './recipeSection'
 import SectionSelection from './sectionSelection'
+import styles from './inputImage.module.css'
 
 const fields = {
     imageId: new Field(),
@@ -72,18 +72,18 @@ class InputImage extends React.Component {
     getSelectedImage() {
         const {inputs: {section, recipe, asset}} = this.props
         switch (section.value) {
-            case 'ASSET':
-                return {
-                    type: 'ASSET',
-                    id: asset.value
-                }
-            case 'RECIPE_REF':
-                return {
-                    type: 'RECIPE_REF',
-                    id: recipe.value
-                }
-            default:
-                throw new Error('Unexpected image section: ' + section.value)
+        case 'ASSET':
+            return {
+                type: 'ASSET',
+                id: asset.value
+            }
+        case 'RECIPE_REF':
+            return {
+                type: 'RECIPE_REF',
+                id: recipe.value
+            }
+        default:
+            throw new Error('Unexpected image section: ' + section.value)
         }
 
     }
@@ -92,24 +92,24 @@ class InputImage extends React.Component {
 const modelToValues = model => {
     const values = {imageId: model.imageId, section: model.type || 'SELECTION'}
     switch (model.type) {
-        case  'RECIPE_REF':
-            return {...values, recipe: model.id}
-        case 'ASSET':
-            return {...values, asset: model.id}
-        default:
-            return values
+    case 'RECIPE_REF':
+        return {...values, recipe: model.id}
+    case 'ASSET':
+        return {...values, asset: model.id}
+    default:
+        return values
     }
 }
 
 const valuesToModel = values => {
     const model = {imageId: values.imageId, type: values.section}
     switch (values.section) {
-        case  'RECIPE_REF':
-            return {...model, id: values.recipe}
-        case 'ASSET':
-            return {...model, id: values.asset}
-        default:
-            return null
+    case 'RECIPE_REF':
+        return {...model, id: values.recipe}
+    case 'ASSET':
+        return {...model, id: values.asset}
+    default:
+        return null
     }
 }
 

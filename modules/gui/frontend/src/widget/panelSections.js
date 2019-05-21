@@ -1,10 +1,10 @@
 import * as PropTypes from 'prop-types'
-import React from 'react'
 import {AnimateReplacement} from 'widget/animate'
 import {Button} from 'widget/button'
-import Icon from 'widget/icon'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import Icon from 'widget/icon'
+import React from 'react'
 import styles from './panelSections.module.css'
 
 export default class PanelSections extends React.Component {

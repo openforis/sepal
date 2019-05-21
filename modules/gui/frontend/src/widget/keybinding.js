@@ -1,8 +1,8 @@
+import {connect} from 'store'
 import {fromEvent} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import {connect} from 'store'
 
 const handlers = []
 

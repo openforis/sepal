@@ -64,7 +64,6 @@ class _Activator extends React.Component {
             }
         }
 
-
         // const updateActivatables = updates => {
         //     console.log('updateActivatables', {updates})
         //     return _.reduce(updates,

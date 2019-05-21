@@ -1,7 +1,7 @@
-import _ from 'lodash'
+import {activator} from 'widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {activator} from 'widget/activation/activator'
+import _ from 'lodash'
 
 class PanelWizard extends React.Component {
 
@@ -13,7 +13,6 @@ class PanelWizard extends React.Component {
     render() {
         const {panels = [], activator: {activatables, updateActivatables}, onDone, children} = this.props
         const {initialized} = this.state
-
 
         const currentId = !initialized && _(activatables)
             .pickBy(({active}) => active)

@@ -1,13 +1,13 @@
-import actionBuilder from 'action-builder'
-import {initValues} from 'app/home/body/process/recipe'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
 import {activatable} from 'widget/activation/activatable'
 import {form} from 'widget/form'
-import FormPanel from 'widget/formPanel'
+import {initValues} from 'app/home/body/process/recipe'
+import {selectFrom} from 'stateUtils'
 import {withPanelWizardContext} from 'widget/panelWizard'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import FormPanel from 'widget/formPanel'
+import PropTypes from 'prop-types'
+import React from 'react'
+import actionBuilder from 'action-builder'
 
 const Context = React.createContext()
 
@@ -17,16 +17,16 @@ const defaultPolicy = ({values, wizardContext: {wizard}}) =>
         : {_: 'allow-then-deactivate'}
 
 export const recipeFormPanel = ({
-                                    id,
-                                    fields,
-                                    constraints,
-                                    path,
-                                    mapRecipeToProps = () => ({}),
-                                    modelToValues = model => ({...model}),
-                                    valuesToModel = values => ({...values}),
-                                    policy = defaultPolicy,
-                                    additionalPolicy = () => ({})
-                                }) => {
+    id,
+    fields,
+    constraints,
+    path,
+    mapRecipeToProps = () => ({}),
+    modelToValues = model => ({...model}),
+    valuesToModel = values => ({...values}),
+    policy = defaultPolicy,
+    additionalPolicy = () => ({})
+}) => {
     path = path || (() => id)
     const createMapRecipeToProps = mapRecipeToProps =>
         (recipe, props) => {
