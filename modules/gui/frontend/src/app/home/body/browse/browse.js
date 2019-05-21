@@ -11,7 +11,7 @@ import Notifications from 'widget/notifications'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SafetyButton from 'widget/safetyButton'
+import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
@@ -353,12 +353,11 @@ class Browse extends React.Component {
                         downloadFilename={downloadFilename}
                         disabled={!oneFileSelected}
                     />
-                    <SafetyButton
-                        size='large'
+                    <RemoveButton
                         message={this.removeInfo()}
                         tooltip={msg('browse.controls.remove.tooltip')}
                         tooltipPlacement='bottom'
-                        onConfirm={() => this.removeSelected()}
+                        onRemove={() => this.removeSelected()}
                         disabled={nothingSelected}/>
                     <Button
                         chromeless

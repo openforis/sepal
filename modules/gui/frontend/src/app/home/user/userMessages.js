@@ -10,12 +10,12 @@ import Markdown from 'react-markdown'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SafetyButton from 'widget/safetyButton'
+import RemoveButton from 'widget/removeButton'
+import SuperButton from 'widget/superButton'
 import UserMessage from './userMessage'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
-import lookStyles from 'style/look.module.css'
 import moment from 'moment'
 import styles from './userMessages.module.css'
 
@@ -126,9 +126,9 @@ class _UserMessages extends React.Component {
             return (
                 <ScrollableContainer className={styles.messages}>
                     <Scrollable>
-                        <ul>
-                            {sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
-                        </ul>
+                        {/* <ul> */}
+                        {sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
+                        {/* </ul> */}
                     </Scrollable>
                 </ScrollableContainer>
             )
@@ -139,30 +139,6 @@ class _UserMessages extends React.Component {
                 </div>
             )
         }
-    }
-
-    renderAdminControls(message) {
-        return (
-            <ButtonGroup>
-                <Button
-                    chromeless
-                    shape='circle'
-                    size='large'
-                    icon='edit'
-                    tooltip={msg('userMessages.edit')}
-                    onClick={() => this.editMessage(message)}
-                />
-                <SafetyButton
-                    chromeless
-                    shape='circle'
-                    size='large'
-                    icon='trash'
-                    tooltip={msg('userMessages.remove')}
-                    message={msg('userMessages.removeConfirmation', {subject: message.subject})}
-                    onConfirm={() => this.removeMessage(message)}
-                />
-            </ButtonGroup>
-        )
     }
 
     renderSubject(userMessage) {
@@ -185,20 +161,43 @@ class _UserMessages extends React.Component {
 
     renderMessage(userMessage, index) {
         const {isAdmin} = this.props
+        const message = userMessage.message
         const author = userMessage.message.username
         const creationTime = userMessage.message.creationTime
         return (
-            <li key={index} className={[lookStyles.look, lookStyles.transparent, lookStyles.nonInteractive].join(' ')}>
-                <div className={styles.header}>
-                    {this.renderSubject(userMessage)}
-                    {isAdmin ? this.renderAdminControls(userMessage.message) : null}
-                </div>
-                <div className={styles.info}>
-                    <Msg id='userMessages.author' author={author}/>
-                    {creationTime ? moment(creationTime).fromNow() : ''}
-                </div>
+            <SuperButton
+                key={index}
+                title={this.renderSubject(userMessage)}
+                description={<Msg id='userMessages.author' author={author}/>}
+                timestamp={creationTime}
+                editTooltip={msg('userMessages.remove')}
+                removeMessage={msg('userMessages.removeConfirmation', {subject: message.subject})}
+                removeTooltip={msg('userMessages.remove')}
+                onEdit={isAdmin ? () => this.editMessage(message) : null}
+                onRemove={isAdmin ? () => this.removeMessage(message) : null}
+            >
                 <Markdown className={styles.contents} source={userMessage.message.contents}/>
-            </li>
+            </SuperButton>
+        )
+    }
+
+    renderAdminControls(message) {
+        return (
+            <ButtonGroup>
+                <Button
+                    chromeless
+                    shape='circle'
+                    size='large'
+                    icon='edit'
+                    tooltip={msg('userMessages.edit')}
+                    onClick={() => this.editMessage(message)}
+                />
+                <RemoveButton
+                    tooltip={msg('userMessages.remove')}
+                    message={msg('userMessages.removeConfirmation', {subject: message.subject})}
+                    onRemove={() => this.removeMessage(message)}
+                />
+            </ButtonGroup>
         )
     }
 

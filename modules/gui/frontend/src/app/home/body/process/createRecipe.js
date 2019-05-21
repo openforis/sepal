@@ -1,13 +1,13 @@
 import {Button} from 'widget/button'
-import Keybinding from 'widget/keybinding'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
 import {msg} from 'translate'
+import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
+import SuperButton from 'widget/superButton'
 import actionBuilder from 'action-builder'
-import lookStyles from 'style/look.module.css'
 import moment from 'moment'
 import styles from './createRecipe.module.css'
 
@@ -66,15 +66,15 @@ class CreateRecipe extends React.Component {
         return (
             <div className={styles.createButton}>
                 <Keybinding keymap={{'Ctrl+n': () => showRecipeTypes()}}>
-                <Button
-                    look='add'
-                    size='xx-large'
-                    icon='plus'
-                    shape='circle'
-                    onClick={() => showRecipeTypes()}
-                    tooltip={msg('process.recipe.newRecipe.tooltip')}
-                    tooltipPlacement='left'
-                    tooltipDisabled={modal}/>
+                    <Button
+                        look='add'
+                        size='xx-large'
+                        icon='plus'
+                        shape='circle'
+                        onClick={() => showRecipeTypes()}
+                        tooltip={msg('process.recipe.newRecipe.tooltip')}
+                        tooltipPlacement='left'
+                        tooltipDisabled={modal}/>
                 </Keybinding>
             </div>
         )
@@ -132,18 +132,18 @@ class CreateRecipe extends React.Component {
                 <PanelContent>
                     <ScrollableContainer className={styles.recipeTypes}>
                         <Scrollable>
-                            <ul>
-                                {recipeTypes.map(({type, name, description, beta, details}) =>
-                                    <RecipeType
-                                        key={type}
-                                        recipeId={recipeId}
-                                        type={type}
-                                        name={name}
-                                        description={description}
-                                        beta={beta}
-                                        onInfo={details ? () => this.showRecipeTypeInfo(type) : null}/>
-                                )}
-                            </ul>
+                            {/* <ul> */}
+                            {recipeTypes.map(({type, name, description, beta, details}) =>
+                                <RecipeType
+                                    key={type}
+                                    recipeId={recipeId}
+                                    type={type}
+                                    name={name}
+                                    description={description}
+                                    beta={beta}
+                                    onInfo={details ? () => this.showRecipeTypeInfo(type) : null}/>
+                            )}
+                            {/* </ul> */}
                         </Scrollable>
                     </ScrollableContainer>
                 </PanelContent>
@@ -191,37 +191,20 @@ CreateRecipe.propTypes = {
 export default connect(mapStateToProps)(CreateRecipe)
 
 class RecipeType extends React.Component {
-    renderInfoButton() {
-        const {type, onInfo} = this.props
-        return (
-            <Button
-                chromeless
-                shape='circle'
-                size='large'
-                icon='info-circle'
-                onClick={() => onInfo && onInfo(type)}
-            />
-        )
-    }
-
     render() {
         const {recipeId, type, name, description, beta, onInfo} = this.props
+        const title = beta
+            ? <span>{name}<sup className={styles.beta}>Beta</sup></span>
+            : name
         return (
-            <li
+            <SuperButton
                 key={type}
-                className={[styles.recipe, lookStyles.look, lookStyles.transparent].join(' ')}
-                onClick={() => createRecipe(recipeId, type, name)}>
-                <div className={styles.header}>
-                    <div>
-                        <div className='itemType'>
-                            {name}
-                            {beta ? <sup className={styles.beta}>Beta</sup> : null}
-                        </div>
-                        <div>{description}</div>
-                    </div>
-                    {onInfo ? this.renderInfoButton() : null}
-                </div>
-            </li>
+                className={styles.recipe}
+                title={title}
+                description={description}
+                onClick={() => createRecipe(recipeId, type, name)}
+                onInfo={() => onInfo && onInfo(type)}
+            />
         )
     }
 }

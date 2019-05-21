@@ -8,14 +8,14 @@
     padding: 0;
 }
 
-.image {
+/* .image {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: .5rem;
     border-radius: var(--button-border-radius);
     padding: .25rem .5rem;
-}
+} */
 
 .list li:last-child {
     margin-bottom: 0;

@@ -1,19 +1,17 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import guid from 'guid'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
-import {connect} from 'store'
-import lookStyles from 'style/look.module.css'
-import {msg} from 'translate'
-import {activator} from 'widget/activation/activator'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
-import SafetyButton from 'widget/safetyButton'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {RecipeActions} from '../classificationRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {activator} from 'widget/activation/activator'
+import {connect} from 'store'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import InputImage from './inputImage'
+import React from 'react'
+import SuperButton from 'widget/superButton'
+import guid from 'guid'
 import styles from './inputImagery.module.css'
-
 
 const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images') || []
@@ -63,11 +61,11 @@ class InputImagery extends React.Component {
         return (
             <ScrollableContainer className={styles.list}>
                 <Scrollable>
-                    <ul>
-                        {images.length ?
-                            images.map(image => this.renderImage(image))
-                            : this.renderNoImageryMessage()}
-                    </ul>
+                    {/* <ul> */}
+                    {images.length ?
+                        images.map(image => this.renderImage(image))
+                        : this.renderNoImageryMessage()}
+                    {/* </ul> */}
                 </Scrollable>
             </ScrollableContainer>
         )
@@ -79,25 +77,16 @@ class InputImagery extends React.Component {
             ? recipeNameById[image.id]
             : image.id
         return (
-            <li
+            <SuperButton
                 key={`${image.type}-${image.id}`}
-                className={[styles.image, lookStyles.look, lookStyles.transparent].join(' ')}
-                onClick={() => this.editImage(image)}>
-                <div className={styles.imageInfo}>
-                    <div
-                        className='itemType'>{msg(`process.classification.panel.inputImagery.type.${image.type}`)}</div>
-                    <div>{name}</div>
-                </div>
-
-                <div className={styles.imageButtons}>
-                    <SafetyButton
-                        size='large'
-                        message={msg('process.classification.panel.inputImagery.remove.confirmationMessage', {name})}
-                        tooltip={msg('process.classification.panel.inputImagery.remove.tooltip')}
-                        tooltipPlacement='bottom'
-                        onConfirm={() => this.removeImage(image)}/>
-                </div>
-            </li>
+                title={msg(`process.classification.panel.inputImagery.type.${image.type}`)}
+                description={name}
+                removeMessage={msg('process.classification.panel.inputImagery.remove.confirmationMessage', {name})}
+                removeTooltip={msg('process.classification.panel.inputImagery.remove.tooltip')}
+                onClick={() => this.editImage(image)}
+                onRemove={() => this.removeImage(image)}
+                unsafeRemove
+            />
         )
     }
 

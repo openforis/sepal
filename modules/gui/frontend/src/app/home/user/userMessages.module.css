@@ -21,26 +21,6 @@ button.unread i {
     }
 }
 
-.messages ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.messages li {
-    padding: .5rem 1rem;
-    border-radius: var(--container-border-radius);
-}
-
-.messages li .header {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-}
-
-.messages li + li {
-    margin-top: 1rem;
-}
-
 .messages .subject {
     font-size: 1.0rem;
     font-weight: bold;
@@ -53,15 +33,6 @@ button.unread i {
 
 .messages .subject.READ i {
     color: var(--read-color);
-}
-
-.messages .info {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    font-size: .8rem;
-    padding-bottom: .5rem;
-    border-bottom: 1px solid var(--wireframe-color);
 }
 
 /* markdown */

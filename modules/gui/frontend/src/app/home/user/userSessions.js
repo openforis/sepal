@@ -5,7 +5,7 @@ import {msg} from 'translate'
 import {stopCurrentUserSession$} from 'widget/user'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import SafetyButton from 'widget/safetyButton'
+import RemoveButton from 'widget/removeButton'
 import actionBuilder from 'action-builder'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
@@ -61,14 +61,10 @@ class UserSessions extends React.Component {
                         tooltip={msg('user.userSession.update.tooltip')}
                         onClick={() => this.selectSession(session)}
                     />
-                    <SafetyButton
-                        chromeless
-                        shape='circle'
-                        size='large'
-                        icon='trash'
+                    <RemoveButton
                         tooltip={msg('user.userSession.stop.tooltip')}
                         message={msg('user.userSession.stop.message')}
-                        onConfirm={() => this.stopSession(session)}
+                        onRemove={() => this.stopSession(session)}
                     />
                 </ButtonGroup>
             </React.Fragment>

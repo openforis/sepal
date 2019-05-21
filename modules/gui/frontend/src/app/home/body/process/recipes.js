@@ -1,5 +1,5 @@
 import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {PageControls, PageData, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
@@ -12,11 +12,9 @@ import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SafetyButton from 'widget/safetyButton'
+import SuperButton from 'widget/superButton'
 import _ from 'lodash'
 import escapeStringRegexp from 'escape-string-regexp'
-import lookStyles from 'style/look.module.css'
-import moment from 'moment'
 import styles from './recipes.module.css'
 
 const mapStateToProps = () => {
@@ -142,34 +140,18 @@ class RecipeList extends React.Component {
 
     renderRecipe(recipe) {
         return (
-            <div
+            <SuperButton
                 key={recipe.id}
-                className={[styles.recipe, lookStyles.look, lookStyles.transparent].join(' ')}
-                onClick={() => this.openRecipe(recipe.id)}>
-                <div className={styles.recipeInfo}>
-                    <div className='itemType'>{this.getRecipeTypeName(recipe.type)}</div>
-                    <div className={styles.name}>{recipe.name}</div>
-                </div>
-                <div className={styles.recipeButtons}>
-                    <ButtonGroup type='horizontal-nowrap'>
-                        <div className={styles.updateTime}>{moment(recipe.updateTime).fromNow()}</div>
-                        <Button
-                            chromeless
-                            shape='circle'
-                            size='large'
-                            icon='clone'
-                            tooltip={msg('process.menu.duplicateRecipe')}
-                            tooltipPlacement='bottom'
-                            onClick={() => this.duplicateRecipe(recipe.id)}/>
-                        <SafetyButton
-                            size='large'
-                            message={msg('process.menu.removeRecipe.message', {recipe: recipe.name})}
-                            tooltip={msg('process.menu.removeRecipe.tooltip')}
-                            tooltipPlacement='bottom'
-                            onConfirm={() => this.removeRecipe(recipe.id)}/>
-                    </ButtonGroup>
-                </div>
-            </div>
+                description={recipe.name}
+                duplicateTooltip={msg('process.menu.duplicateRecipe')}
+                removeMessage={msg('process.menu.removeRecipe.message', {recipe: recipe.name})}
+                removeTooltip={msg('process.menu.removeRecipe.tooltip')}
+                title={this.getRecipeTypeName(recipe.type)}
+                timestamp={recipe.updateTime}
+                onClick={() => this.openRecipe(recipe.id)}
+                onDuplicate={() => this.duplicateRecipe(recipe.id)}
+                onRemove={() => this.removeRecipe(recipe.id)}
+            />
         )
     }
 

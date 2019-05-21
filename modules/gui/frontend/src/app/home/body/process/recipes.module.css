@@ -15,31 +15,6 @@
     padding-bottom: 5rem;
 }
 
-.recipe {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: .5rem;
-    border-radius: var(--button-border-radius);
-    padding: .25rem .5rem;
-    cursor: pointer;
-}
-
-.recipe:last-child {
-    margin-bottom: 0;
-}
-
-.recipeInfo {
-    overflow: hidden;
-    margin-right: .5rem;
-}
-
-.updateTime {
-    font-size: small;
-    margin-right: 2rem;
-    color: gray;
-}
-
 .bottomBar {
     justify-content: center;
 }
@@ -63,7 +38,7 @@
 }
 
 .name {
-    word-wrap:break-word;
+    word-wrap: break-word;
 }
 
 .nameSort {
