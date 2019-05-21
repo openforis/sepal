@@ -142,6 +142,7 @@ class _UserMessages extends React.Component {
         const {state} = userMessage
         return (
             <Button
+                key='status'
                 chromeless
                 shape='circle'
                 size='large'
@@ -173,6 +174,8 @@ class _UserMessages extends React.Component {
                 extraButtons={[
                     this.renderStatusButton(userMessage)
                 ]}
+                // selected={userMessage.state === 'UNREAD' ? true : undefined}
+                clickToSelect
             >
                 <Markdown className={styles.contents} source={userMessage.message.contents}/>
             </SuperButton>
