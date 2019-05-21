@@ -49,8 +49,8 @@ const indexNames = [
     'ndvi', 'ndmi', 'ndwi', 'mndwi', 'evi', 'evi2', 'savi', 'nbr', 'ui', 'ndbi', 'ibi', 'nbi', 'ebbi', 'bui'
 ]
 
-export const getAvailableIndexes = (availableBands) =>
+export const getAvailableIndexes = availableBands =>
     indexNames.filter(name => _.every(
         indexByName[name].requiredBands,
-            requiredBand => availableBands.includes(requiredBand)
+        requiredBand => availableBands.includes(requiredBand)
     ))

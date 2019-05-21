@@ -1,10 +1,10 @@
-import PropTypes from 'prop-types'
-import React from 'react'
+import {ErrorMessage} from 'widget/form'
 import {connect, select} from 'store'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Combo from 'widget/combo'
-import {ErrorMessage} from 'widget/form'
-import {isMobile} from 'widget/userAgent'
+import PropTypes from 'prop-types'
+import React from 'react'
 
 const mapStateToProps = () => {
     return {

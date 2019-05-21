@@ -1,6 +1,6 @@
+import {FormButtons as Buttons} from 'widget/buttons'
 import {msg} from 'translate'
 import {removeAoiLayer} from 'app/home/map/aoiLayer'
-import {FormButtons as Buttons} from 'widget/buttons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './aoi.module.css'

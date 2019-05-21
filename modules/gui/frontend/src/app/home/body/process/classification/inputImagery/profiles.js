@@ -1,5 +1,5 @@
-import guid from 'guid'
 import {filterBandSetSpec, isBandSetSpecEmpty} from './bandSetSpec'
+import guid from 'guid'
 
 const profilesByName = {
     SIMPLE: bands => ({

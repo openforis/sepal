@@ -1,3 +1,4 @@
+import {FormButtons as Buttons} from 'widget/buttons'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
@@ -6,7 +7,6 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {FormButtons as Buttons} from 'widget/buttons'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'

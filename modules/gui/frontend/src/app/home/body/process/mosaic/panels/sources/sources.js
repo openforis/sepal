@@ -1,3 +1,4 @@
+import {FormButtons as Buttons} from 'widget/buttons'
 import {Constraint, Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
@@ -6,7 +7,6 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {imageSourceById, isDataSetInDateRange, sources} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {FormButtons as Buttons} from 'widget/buttons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'

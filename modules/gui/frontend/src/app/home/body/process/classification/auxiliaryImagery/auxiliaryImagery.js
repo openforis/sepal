@@ -1,12 +1,12 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {msg} from 'translate'
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {msg} from 'translate'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './auxiliaryImagery.module.css'
 
 const fields = {

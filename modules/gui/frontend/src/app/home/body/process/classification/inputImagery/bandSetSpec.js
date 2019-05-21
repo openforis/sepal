@@ -1,8 +1,8 @@
-import _ from 'lodash'
-import React from 'react'
-import {mutate} from 'stateUtils'
 import {Buttons} from 'widget/buttons'
 import {getAvailableIndexes} from './opticalIndexes'
+import {mutate} from 'stateUtils'
+import React from 'react'
+import _ from 'lodash'
 
 export const filterBandSetSpec = (bandSetSpec, availableBands = []) =>
     specClass(bandSetSpec).filter(bandSetSpec, availableBands)
@@ -18,14 +18,14 @@ export const renderBandSetSpecEditor = ({bandSetSpec, availableBands = [], onCha
 
 const specClass = spec => {
     switch (spec.class) {
-        case 'IMAGE_BANDS':
-            return ImageBands
-        case 'PAIR_WISE_EXPRESSION':
-            return PairWiseExpression
-        case 'INDEXES':
-            return Indexes
-        default :
-            throw new Error('Unsupported band set spec class: ' + JSON.stringify(spec))
+    case 'IMAGE_BANDS':
+        return ImageBands
+    case 'PAIR_WISE_EXPRESSION':
+        return PairWiseExpression
+    case 'INDEXES':
+        return Indexes
+    default :
+        throw new Error('Unsupported band set spec class: ' + JSON.stringify(spec))
     }
 }
 
