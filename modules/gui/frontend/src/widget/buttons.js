@@ -1,8 +1,8 @@
-import _ from 'lodash'
-import PropTypes from 'prop-types'
-import React from 'react'
 import {Button, ButtonGroup} from 'widget/button'
 import Label from 'widget/label'
+import PropTypes from 'prop-types'
+import React from 'react'
+import _ from 'lodash'
 import styles from './buttons.module.css'
 
 export class Buttons extends React.Component {
@@ -15,7 +15,7 @@ export class Buttons extends React.Component {
 
     selectSingle(value) {
         const {onChange} = this.props
-        onChange(value)
+        onChange && onChange(value)
         return value
     }
 
@@ -25,7 +25,7 @@ export class Buttons extends React.Component {
         const nextValue = this.isSelected(value)
             ? prevValue.filter(v => v !== value)
             : [...prevValue, value]
-        onChange(nextValue)
+        onChange && onChange(nextValue)
         return nextValue
     }
 
@@ -108,8 +108,8 @@ Buttons.propTypes = {
     className: PropTypes.string,
     label: PropTypes.string,
     multiple: PropTypes.any,
-    selected: PropTypes.any,
     options: PropTypes.array,
+    selected: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,

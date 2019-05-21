@@ -10,12 +10,4 @@
     align-items: center;
     justify-content: center;
     background-color: var(--modal-background);
-    opacity: 0;
-    animation: fadeIn 150ms ease-in-out forwards;
-}
-
-@keyframes fadeIn {
-    100% {
-        opacity: 1;
-    }
 }
