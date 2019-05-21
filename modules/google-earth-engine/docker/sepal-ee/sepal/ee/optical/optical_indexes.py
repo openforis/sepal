@@ -158,10 +158,10 @@ def to_nbr(image):
     Required bands: ['nir', 'swir2']
 
     Args:
-        image: Image to calculate BUI for
+        image: Image to calculate NBR for
 
     Returns:
-        If image contains required bands, single band image named 'bui', otherwise an image without bands.
+        If image contains required bands, single band image named 'NBR', otherwise an image without bands.
     """
     return evaluate(
         image=image,
