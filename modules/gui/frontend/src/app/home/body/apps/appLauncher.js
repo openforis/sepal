@@ -45,7 +45,7 @@ class AppLauncher extends React.Component {
     }
 
     renderApp(app) {
-        const {running} = this.props
+        const {running = []} = this.props
         const disabled = app.single && running.includes(app.path)
         return (
             <Button
