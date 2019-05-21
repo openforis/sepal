@@ -9,28 +9,44 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 
+const LABEL = 'classification'
+
 const mapRecipeToProps = recipe => ({recipe})
 
 class ClassificationPreview extends React.Component {
-    state = {}
+    state = {
+        initializing: false,
+        failed: false
+    }
+
+    renderInitializing() {
+        return (
+            <MapStatus message={msg(`process.${LABEL}.preview.initializing`)}/>
+        )
+    }
+
+    renderLoading() {
+        const {tiles, error} = this.state
+        return (
+            <MapStatus
+                loading={!tiles.complete}
+                message={msg(`process.${LABEL}.preview.loading`, {loaded: tiles.loaded, count: tiles.count})}
+                error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
+        )
+    }
 
     render() {
-        const {initializing, tiles, error} = this.state
-        if (this.isHidden())
+        const {initializing, tiles, failed} = this.state
+        if (this.isHidden() || failed) {
             return null
-        else if (initializing)
-            return (
-                <MapStatus message={msg('process.classification.preview.initializing')}/>
-            )
-        else if (tiles && (!tiles.complete || tiles.failed))
-            return (
-                <MapStatus
-                    loading={!tiles.complete}
-                    message={msg('process.classification.preview.loading', {loaded: tiles.loaded, count: tiles.count})}
-                    error={tiles.failed ? msg('process.classification.preview.tilesFailed', {failed: tiles.failed}) : error}/>
-            )
-        else
-            return null
+        }
+        if (initializing) {
+            this.renderInitializing()
+        }
+        if (tiles && !tiles.complete) {
+            this.renderLoading()
+        }
+        return null
     }
 
     onProgress(tiles) {
@@ -38,9 +54,10 @@ class ClassificationPreview extends React.Component {
     }
 
     onError(e) {
+        this.setState({failed: true})
         Notifications.error({
             title: msg('gee.error.title'),
-            message: msg('process.classification.preview.error'),
+            message: msg(`process.${LABEL}.preview.error`),
             error: e.response ? msg(e.response.code, e.response.data) : null,
             timeout: 0,
             content: dismiss =>
@@ -74,9 +91,10 @@ class ClassificationPreview extends React.Component {
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
         if (layerChanged)
             this.updateLayer(previewRequest)
-        const context = sepalMap.getContext(recipe.id)
-        context.hideLayer('preview', this.isHidden(recipe))
+        sepalMap.getContext(recipe.id).hideLayer('preview', this.isHidden(recipe))
     }
+
+    // common code above
 
     updateLayer(previewRequest) {
         const {recipe, componentWillUnmount$} = this.props
@@ -94,15 +112,15 @@ class ClassificationPreview extends React.Component {
             destroy$: componentWillUnmount$,
             onError: e => this.onError(e)
         })
+        this.setState({failed: false})
         if (changed && initializing !== !!layer)
             this.setState({initializing: !!layer, error: null})
         else if (changed && error)
             this.setState({error: null})
     }
-
+    
     isHidden() {
-        const {recipe} = this.props
-        return recipe.ui.hidePreview
+        return false
     }
 
     toPreviewRequest(recipe) {
@@ -114,4 +132,8 @@ class ClassificationPreview extends React.Component {
 
 ClassificationPreview.propTypes = {}
 
-export default withRecipe(mapRecipeToProps)(ClassificationPreview)
+export default (
+    withRecipe(mapRecipeToProps)(
+        ClassificationPreview
+    )
+)

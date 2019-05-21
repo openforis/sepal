@@ -12,6 +12,8 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 
+const LABEL = 'mosaic'
+
 const mapRecipeToProps = recipe => ({recipe})
 
 class MosaicPreview extends React.Component {
@@ -22,7 +24,7 @@ class MosaicPreview extends React.Component {
 
     renderInitializing() {
         return (
-            <MapStatus message={msg('process.mosaic.preview.initializing')}/>
+            <MapStatus message={msg(`process.${LABEL}.preview.initializing`)}/>
         )
     }
 
@@ -31,8 +33,8 @@ class MosaicPreview extends React.Component {
         return (
             <MapStatus
                 loading={!tiles.complete}
-                message={msg('process.mosaic.preview.loading', {loaded: tiles.loaded, count: tiles.count})}
-                error={tiles.failed ? msg('process.mosaic.preview.tilesFailed', {failed: tiles.failed}) : error}/>
+                message={msg(`process.${LABEL}.preview.loading`, {loaded: tiles.loaded, count: tiles.count})}
+                error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
         )
     }
 
@@ -58,7 +60,7 @@ class MosaicPreview extends React.Component {
         this.setState({failed: true})
         Notifications.error({
             title: msg('gee.error.title'),
-            message: msg('process.mosaic.preview.error'),
+            message: msg(`process.${LABEL}.preview.error`),
             error: e.response ? msg(e.response.code, e.response.data) : null,
             timeout: 0,
             content: dismiss =>
@@ -88,13 +90,14 @@ class MosaicPreview extends React.Component {
 
     componentDidUpdate(prevProps) {
         const {recipe} = this.props
-        const context = sepalMap.getContext(recipe.id)
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
         if (layerChanged)
             this.updateLayer(previewRequest)
-        context.hideLayer('preview', this.isHidden(recipe))
+        sepalMap.getContext(recipe.id).hideLayer('preview', this.isHidden(recipe))
     }
+
+    // common code above
 
     updateLayer(previewRequest) {
         const {recipe, componentWillUnmount$} = this.props
@@ -106,7 +109,6 @@ class MosaicPreview extends React.Component {
             props: previewRequest,
             onProgress: tiles => this.onProgress(tiles)
         })
-        this.setState({failed: false})
         const context = sepalMap.getContext(recipe.id)
         const changed = context.setLayer({
             id: 'preview',
@@ -114,6 +116,7 @@ class MosaicPreview extends React.Component {
             destroy$: componentWillUnmount$,
             onError: e => this.onError(e)
         })
+        this.setState({failed: false})
         if (changed && initializing !== !!layer)
             this.setState({initializing: !!layer, error: null})
         else if (changed && error)
@@ -121,8 +124,7 @@ class MosaicPreview extends React.Component {
     }
 
     isHidden() {
-        const {recipe} = this.props
-        return recipe.ui.hidePreview
+        return false
     }
 
     toPreviewRequest(recipe) {
@@ -144,8 +146,7 @@ const hasScenes = ({recipe}) => {
 }
 
 const removeLayer = ({recipe}) => {
-    const context = sepalMap.getContext(recipe.id)
-    context.removeLayer('preview')
+    sepalMap.getContext(recipe.id).removeLayer('preview')
 }
 
 MosaicPreview.propTypes = {}
