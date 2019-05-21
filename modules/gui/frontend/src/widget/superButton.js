@@ -18,15 +18,18 @@ export default class SuperButton extends React.Component {
         return (
             <div className={classNames}>
                 <div
-                    className={styles.main}
-                    onClick={() => onClick && onClick()}>
+                    className={styles.clickTarget}
+                    onClick={() => onClick && onClick()}
+                />
+                <div className={styles.main}>
                     <div className={styles.info}>
                         <div className='itemType'>{title}</div>
                         <div className={styles.name}>{description}</div>
                     </div>
                     <div>
                         <ButtonGroup type='horizontal-nowrap'>
-                            {this.renderUpdateTime()}
+                            {this.renderTimestamp()}
+                            {this.renderExtraButtons()}
                             {this.renderEditButton()}
                             {this.renderDuplicateButton()}
                             {this.renderRemoveButton()}
@@ -38,7 +41,7 @@ export default class SuperButton extends React.Component {
         )
     }
 
-    renderUpdateTime() {
+    renderTimestamp() {
         const {timestamp} = this.props
         return timestamp
             ? (
@@ -46,6 +49,13 @@ export default class SuperButton extends React.Component {
                     {moment(timestamp).fromNow()}
                 </div>
             )
+            : null
+    }
+
+    renderExtraButtons() {
+        const {extraButtons} = this.props
+        return extraButtons
+            ? extraButtons
             : null
     }
 
@@ -129,6 +139,7 @@ SuperButton.propTypes = {
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     duplicateTooltip: PropTypes.string,
     editTooltip: PropTypes.string,
+    extraButtons: PropTypes.arrayOf(PropTypes.object),
     infoTooltip: PropTypes.string,
     removeMessage: PropTypes.string,
     removeTooltip: PropTypes.string,

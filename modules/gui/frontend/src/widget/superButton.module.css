@@ -1,8 +1,20 @@
 .container {
+    position: relative;
     margin-bottom: .5rem;
     border-radius: var(--button-border-radius);
     padding: .25rem .5rem;
     cursor: pointer;
+}
+
+/* absolutely positioned click target is needed 
+to prevent click-through from click-hold buttons */
+.clickTarget {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: var(--button-border-radius);
 }
 
 .container:last-child {
