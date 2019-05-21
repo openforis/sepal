@@ -188,7 +188,6 @@ export class Enabled extends React.PureComponent {
         if (!value && value !== prevValue && document.activeElement && isMobile()) {
             document.activeElement && document.activeElement.blur()
         }
-
     }
 }
 
