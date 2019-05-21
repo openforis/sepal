@@ -1,9 +1,12 @@
-.sectionSelection ul {
+.sectionSelection {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    max-width: 20rem;
+    margin: auto;
+    margin-top: 5rem;
 }
 
 .sectionSelection li {
     margin-top: 1.5rem;
 }
+

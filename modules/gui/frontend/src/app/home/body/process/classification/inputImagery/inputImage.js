@@ -1,14 +1,19 @@
+import {getAvailableIndexes} from 'app/home/body/process/classification/inputImagery/opticalIndexes'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import guid from 'guid'
+import React from 'react'
+import {selectFrom} from 'stateUtils'
+import {msg} from 'translate'
+import ButtonSelect from 'widget/buttonSelect'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
-import AssetSection from './assetSection'
 import PanelSections from 'widget/panelSections'
-import React from 'react'
+import AssetSection from './assetSection'
+import ImageForm from './imageForm'
+import styles from './inputImage.module.css'
+import {getProfileBandSetSpecs, isProfileDisabled} from './profiles'
 import RecipeSection from './recipeSection'
 import SectionSelection from './sectionSelection'
-import styles from './inputImage.module.css'
 
 const fields = {
     imageId: new Field(),
@@ -20,6 +25,9 @@ const fields = {
     asset: new Field()
         .skip((value, {section}) => section !== 'ASSET')
         .notBlank('process.classification.panel.inputImagery.form.asset.required'),
+    bands: new Field()
+        .notEmpty('process.classification.panel.inputImagery.form.bands.required'),
+    bandSetSpecs: new Field(),
 }
 
 const mapRecipeToProps = recipe => ({
@@ -39,12 +47,12 @@ class InputImage extends React.Component {
             {
                 value: 'RECIPE_REF',
                 title: msg('process.classification.panel.inputImagery.recipe.title'),
-                component: <RecipeSection recipe={inputs.recipe}/>
+                component: <ImageForm ${...this.props} inputComponent={RecipeSection} input={inputs.recipe}/>
             },
             {
                 value: 'ASSET',
                 title: msg('process.classification.panel.inputImagery.asset.title'),
-                component: <AssetSection asset={inputs.asset}/>
+                component: <ImageForm ${...this.props} inputComponent={AssetSection} input={inputs.asset}/>
             }
         ]
 
@@ -53,9 +61,27 @@ class InputImage extends React.Component {
                 className={styles.panel}
                 placement='modal'>
                 <PanelSections sections={sections} selected={inputs.section} inputs={inputs}/>
-                <FormPanelButtons/>
+                <FormPanelButtons>
+                    <ButtonSelect
+                        label={msg('process.classification.panel.inputImagery.derivedBands.label')}
+                        tooltip={msg('process.classification.panel.inputImagery.derivedBands.tooltip')}
+                        look='add'
+                        icon='plus'
+                        placement='above'
+                        tooltipPlacement='bottom'
+                        disabled={!inputs.section.value || !inputs.bands.value || !inputs.bands.value.length}
+                        options={this.derivedBandsOptions()}
+                        onSelect={option => this.updateBandSetSpecs(option)}
+                    />
+                </FormPanelButtons>
             </RecipeFormPanel>
         )
+    }
+
+    componentDidMount() {
+        const {inputs: {bandSetSpecs}} = this.props
+        if (!bandSetSpecs.value)
+            bandSetSpecs.set([{id: guid(), type: 'IMAGE_BANDS', class: 'IMAGE_BANDS'}])
     }
 
     componentDidUpdate() {
@@ -72,44 +98,126 @@ class InputImage extends React.Component {
     getSelectedImage() {
         const {inputs: {section, recipe, asset}} = this.props
         switch (section.value) {
-        case 'ASSET':
-            return {
-                type: 'ASSET',
-                id: asset.value
-            }
-        case 'RECIPE_REF':
-            return {
-                type: 'RECIPE_REF',
-                id: recipe.value
-            }
-        default:
-            throw new Error('Unexpected image section: ' + section.value)
+            case 'ASSET':
+                return {
+                    type: 'ASSET',
+                    id: asset.value
+                }
+            case 'RECIPE_REF':
+                return {
+                    type: 'RECIPE_REF',
+                    id: recipe.value
+                }
+            default:
+                throw new Error('Unexpected image section: ' + section.value)
+        }
+    }
+
+    updateBandSetSpecs(option) {
+        const {inputs: {bandSetSpecs, bands}} = this.props
+        if (option.type === 'PROFILE') {
+            bandSetSpecs.set(
+                getProfileBandSetSpecs(option.value, bands.value)
+            )
+        } else {
+            const bandSetSpec = {id: guid(), type: option.value, class: option.type, included: []}
+            bandSetSpecs.set(
+                bandSetSpecs.value.concat(bandSetSpec)
+            )
+        }
+    }
+
+    derivedBandsOptions() {
+        const {inputs: {bands, bandSetSpecs}} = this.props
+        const indexAlreadyAdded = (bandSetSpecs.value || []).find(spec => spec.type === 'INDEXES')
+        return [{
+            label: 'Band combinations',
+            options: [{
+                value: 'RATIO',
+                label: 'Ratio',
+                tooltip: 'a tooltip',
+                type: 'PAIR_WISE_EXPRESSION'
+            }, {
+                value: 'NORMALIZED_DIFFERENCE',
+                label: 'Normalized difference',
+                tooltip: 'a tooltip',
+                type: 'PAIR_WISE_EXPRESSION'
+            }, {
+                value: 'DIFFERENCE',
+                label: 'Difference',
+                tooltip: 'a tooltip',
+                type: 'PAIR_WISE_EXPRESSION'
+            }, {
+                value: 'DISTANCE',
+                label: 'Distance',
+                tooltip: 'a tooltip',
+                type: 'PAIR_WISE_EXPRESSION'
+            }, {
+                value: 'ANGLE',
+                label: 'Angle',
+                tooltip: 'a tooltip',
+                type: 'PAIR_WISE_EXPRESSION'
+            }, {
+                value: 'INDEXES',
+                label: 'Indexes',
+                tooltip: 'select calculated indexes to include',
+                type: 'INDEXES',
+                disabled: !getAvailableIndexes(bands.value).length || !!indexAlreadyAdded
+            }]
         }
 
+            , {
+                label: 'Profiles'
+                ,
+                options:
+                    [{
+                        value: 'SIMPLE',
+                        label: 'Simple',
+                        type: 'PROFILE',
+                        disabled: isProfileDisabled('SIMPLE', bands.value)
+                    }, {
+                        value: 'RLCMS',
+                        label: 'RLCMS',
+                        type: 'PROFILE',
+                        disabled: isProfileDisabled('RLCMS', bands.value)
+                    }]
+            }
+
+        ]
     }
 }
 
 const modelToValues = model => {
-    const values = {imageId: model.imageId, section: model.type || 'SELECTION'}
+    const values = {
+        imageId: model.imageId,
+        section: model.type || 'SELECTION',
+        bands: model.bands,
+        bandSetSpecs: model.bandSetSpecs
+    }
     switch (model.type) {
-    case 'RECIPE_REF':
-        return {...values, recipe: model.id}
-    case 'ASSET':
-        return {...values, asset: model.id}
-    default:
-        return values
+        case 'RECIPE_REF':
+            return {...values, recipe: model.id}
+        case 'ASSET':
+            return {...values, asset: model.id}
+        default:
+            return values
     }
 }
 
 const valuesToModel = values => {
-    const model = {imageId: values.imageId, type: values.section}
+    const model = {
+        imageId: values.imageId,
+        type: values.section,
+        bands: values.bands,
+        bandSetSpecs: values.bandSetSpecs
+    }
     switch (values.section) {
-    case 'RECIPE_REF':
-        return {...model, id: values.recipe}
-    case 'ASSET':
-        return {...model, id: values.asset}
-    default:
-        return null
+        case 'RECIPE_REF':
+            return {...model, id: values.recipe}
+        case 'ASSET':
+            return {...model, id: values.asset}
+        default:
+            return null
     }
 }
 

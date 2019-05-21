@@ -644,6 +644,11 @@
           "asset": {
             "title": "Earth Engine asset"
           },
+          "derivedBands": {
+            "label": "Derived bands",
+            "tooltip": "Add additional derived bands to use in the classification."
+          },
+          "loadingBands": "Loading available bands",
           "form": {
             "section": {
               "required": "An image must be selected"
@@ -657,6 +662,9 @@
               "label": "Earth Engine asset ID",
               "placeholder": "Enter an asset ID...",
               "required": "You must enter an asset ID"
+            },
+            "includedBands": {
+              "label": "Included bands"
             }
           },
           "retrieve": {

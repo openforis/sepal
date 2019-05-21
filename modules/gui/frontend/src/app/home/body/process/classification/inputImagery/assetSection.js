@@ -6,21 +6,21 @@ import React from 'react'
 
 export default class AssetSection extends React.Component {
     render() {
-        const {asset} = this.props
-        // TODO: Make sure asset is readable
+        const {input, onChange} = this.props
         return (
             <Input
                 label={msg('process.classification.panel.inputImagery.form.asset.label')}
                 autoFocus={!isMobile()}
-                input={asset}
+                input={input}
                 placeholder={msg('process.classification.panel.inputImagery.form.asset.placeholder')}
                 spellCheck={false}
                 errorMessage
+                onBlur={e => onChange(e.target.value)}
             />
         )
     }
 }
 
 AssetSection.propTypes = {
-    asset: PropTypes.object.isRequired
+    input: PropTypes.object.isRequired
 }
