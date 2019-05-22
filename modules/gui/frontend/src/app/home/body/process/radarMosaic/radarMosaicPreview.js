@@ -44,10 +44,10 @@ class MosaicPreview extends React.Component {
             return null
         }
         if (initializing) {
-            this.renderInitializing()
+            return this.renderInitializing()
         }
         if (tiles && !tiles.complete) {
-            this.renderLoading()
+            return this.renderLoading()
         }
         return null
     }

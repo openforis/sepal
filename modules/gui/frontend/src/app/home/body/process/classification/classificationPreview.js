@@ -1,13 +1,13 @@
-import {Button} from 'widget/button'
-import {msg} from 'translate'
-import {sepalMap} from 'app/home/map/map'
+import api from 'api'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
+import {sepalMap} from 'app/home/map/map'
+import _ from 'lodash'
+import React from 'react'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
 import MapStatus from 'widget/mapStatus'
 import Notifications from 'widget/notifications'
-import React from 'react'
-import _ from 'lodash'
-import api from 'api'
 
 const LABEL = 'classification'
 
@@ -41,10 +41,10 @@ class ClassificationPreview extends React.Component {
             return null
         }
         if (initializing) {
-            this.renderInitializing()
+            return this.renderInitializing()
         }
         if (tiles && !tiles.complete) {
-            this.renderLoading()
+            return this.renderLoading()
         }
         return null
     }
@@ -118,7 +118,7 @@ class ClassificationPreview extends React.Component {
         else if (changed && error)
             this.setState({error: null})
     }
-    
+
     isHidden() {
         return false
     }
