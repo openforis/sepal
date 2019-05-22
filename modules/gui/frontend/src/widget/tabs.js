@@ -224,9 +224,8 @@ class Tab extends React.Component {
     }
 
     render() {
-        // [TODO] fix let
-        let {id, title, placeholder, selected, statePath} = this.props
-        title = this.state.title || title
+        const {id, placeholder, selected, statePath} = this.props
+        const {title = this.props.title} = this.state
         return (
             <Tooltip
                 msg={title || placeholder}

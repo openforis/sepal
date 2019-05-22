@@ -16,9 +16,6 @@ html {
     --selected-panel-border-width: 1px;
     --selected-panel-border-color: var(--wireframe-color);
 
-    --tab-default-border-color: hsla(0, 0%, 100%, .15);
-    --tab-selected-border-color: hsl(var(--selected-hue), var(--selected-sat), 40%);
-
     --link-default-color: #b0b0b0;
     --link-hover-color: #ccc;
     --link-selected-color: #fff;
