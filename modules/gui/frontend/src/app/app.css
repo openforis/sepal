@@ -96,7 +96,7 @@ sub {
 .itemType {
     font-size: .8rem;
     font-weight: 800;
-    color: gray;
+    opacity: .6;
     text-transform: uppercase;
 }
 
