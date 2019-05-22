@@ -1,5 +1,4 @@
 .container {
-    position: relative;
     margin-bottom: .5rem;
     border-radius: var(--button-border-radius);
 }
@@ -33,18 +32,24 @@ to prevent click-through from click-hold buttons */
 .info {
     padding: .25rem .5rem;
     pointer-events: none; /* avoid interfering with click target */
-    white-space: nowrap;
     overflow: hidden;
-    word-wrap: normal;
-    text-overflow: ellipsis;
+}
+
+.info > * {
+    white-space: normal;
+    word-break: break-word;
+    overflow: hidden;
+}
+
+.selected .info > * {
+    white-space: nowrap;
+    word-break: normal;
 }
 
 .description {
     font-size: .9rem;
-}
-
-.selected .info {
     white-space: normal;
+    word-wrap: break-word;
 }
 
 .timestamp {
