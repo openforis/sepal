@@ -1,9 +1,9 @@
-import {isBandSetSpecEmpty} from 'app/home/body/process/classification/inputImagery/bandSetSpec'
-import {Constraint, Field} from 'widget/form'
+import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {getAvailableIndexes} from 'app/home/body/process/classification/inputImagery/opticalIndexes'
 import {getProfileBandSetSpecs, isProfileDisabled} from './profiles'
+import {isBandSetSpecEmpty} from 'app/home/body/process/classification/inputImagery/bandSetSpec'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import AssetSection from './assetSection'
@@ -31,7 +31,7 @@ const fields = {
     bandSetSpecs: new Field()
         .predicate((bandSetSpecs, {bands}) =>
             bandSetSpecs.find(spec => !isBandSetSpecEmpty(spec, bands)),
-            'process.classification.panel.inputImagery.form.bandSetSpecs.required'),
+        'process.classification.panel.inputImagery.form.bandSetSpecs.required'),
 }
 
 const mapRecipeToProps = recipe => ({
