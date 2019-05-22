@@ -81,7 +81,7 @@ export class Scrollable extends Component {
         return (
             <div
                 ref={this.targetRef}
-                className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
+                className={['scrollable', flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
                 {_.isFunction(children) ? children(scrollableContainerHeight) : children}
             </div>
         )
