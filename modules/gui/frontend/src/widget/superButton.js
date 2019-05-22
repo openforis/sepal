@@ -1,9 +1,10 @@
-import moment from 'moment'
+import {Button, ButtonGroup} from 'widget/button'
 import PropTypes from 'prop-types'
 import React from 'react'
-import lookStyles from 'style/look.module.css'
-import {Button, ButtonGroup} from 'widget/button'
 import RemoveButton from 'widget/removeButton'
+import _ from 'lodash'
+import lookStyles from 'style/look.module.css'
+import moment from 'moment'
 import styles from './superButton.module.css'
 
 export default class SuperButton extends React.Component {
@@ -45,34 +46,34 @@ export default class SuperButton extends React.Component {
 
     render() {
         const {className, title, description} = this.props
-        const classNames = [
+        const classNames = _.flatten([
             styles.container,
             lookStyles.look,
-            this.isSelected() === true ? lookStyles.default : lookStyles.transparent,
+            lookStyles.transparent,
+            lookStyles.noTransitions,
+            this.isSelected() === true ? [lookStyles.noHover, styles.selected] : null,
             this.isInteractive() ? null : lookStyles.nonInteractive,
-            className].join(' ')
+            className]).join(' ')
         return (
             <div className={classNames}>
-                <div
-                    className={styles.clickTarget}
-                    onClick={() => this.handleClick()}
-                />
                 <div className={styles.main}>
+                    <div
+                        className={styles.clickTarget}
+                        onClick={() => this.handleClick()}
+                    />
                     <div className={styles.info}>
                         <div className='itemType'>{title}</div>
                         <div className={styles.name}>{description}</div>
                     </div>
-                    <div>
-                        <ButtonGroup type='horizontal-nowrap'>
-                            {this.renderTimestamp()}
-                            {this.renderExtraButtons()}
-                            {this.renderEditButton()}
-                            {this.renderDuplicateButton()}
-                            {this.renderRemoveButton()}
-                        </ButtonGroup>
-                    </div>
+                    <ButtonGroup type='horizontal-nowrap' className={styles.buttons}>
+                        {this.renderTimestamp()}
+                        {this.renderExtraButtons()}
+                        {this.renderEditButton()}
+                        {this.renderDuplicateButton()}
+                        {this.renderRemoveButton()}
+                    </ButtonGroup>
                 </div>
-                {this.renderContent()}
+                {this.renderChildren()}
             </div>
         )
     }
@@ -159,7 +160,7 @@ export default class SuperButton extends React.Component {
             : null
     }
 
-    renderContent() {
+    renderChildren() {
         const {children} = this.props
         return children && this.isSelected() !== false
             ? (
@@ -180,9 +181,9 @@ SuperButton.propTypes = {
     editTooltip: PropTypes.string,
     extraButtons: PropTypes.arrayOf(PropTypes.object),
     infoTooltip: PropTypes.string,
+    removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
     removeTooltip: PropTypes.string,
-    removeDisabled: PropTypes.any,
     selected: PropTypes.any,
     timestamp: PropTypes.any,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),

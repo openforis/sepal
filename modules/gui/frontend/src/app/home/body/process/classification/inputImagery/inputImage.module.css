@@ -11,10 +11,6 @@
     margin-top: 5rem;
 }
 
-.selectedBandSetSpec {
-    background-color: hsl(40, 8%, 15%) !important;
-}
-
 .selectedBandSetSpec .widget {
     margin: .5rem 0;
 }
