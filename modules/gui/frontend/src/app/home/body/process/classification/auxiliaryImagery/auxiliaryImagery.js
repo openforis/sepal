@@ -67,6 +67,11 @@ class AuxiliaryImagery extends React.Component {
                 multiple/>
         )
     }
+
+    componentDidMount() {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).hidePreview().dispatch()
+    }
 }
 
 AuxiliaryImagery.propTypes = {
