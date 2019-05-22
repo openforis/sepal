@@ -29,12 +29,13 @@ const mapStateToProps = (state, ownProps) => {
 
 class InputImagery extends React.Component {
     render() {
-        const {images} = this.props
+        const {recipeId, images} = this.props
         return (
             <React.Fragment>
                 <RecipeFormPanel
                     className={styles.panel}
-                    placement='bottom-right'>
+                    placement='bottom-right'
+                    onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
 
                     <PanelHeader
                         icon='image'
