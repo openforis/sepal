@@ -1,9 +1,9 @@
-import {Button, ButtonGroup} from 'widget/button'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
-import RemoveButton from 'widget/removeButton'
 import lookStyles from 'style/look.module.css'
-import moment from 'moment'
+import {Button, ButtonGroup} from 'widget/button'
+import RemoveButton from 'widget/removeButton'
 import styles from './superButton.module.css'
 
 export default class SuperButton extends React.Component {
@@ -129,15 +129,16 @@ export default class SuperButton extends React.Component {
     }
 
     renderRemoveButton() {
-        const {onRemove, removeTooltip, removeMessage, tooltipPlacement, unsafeRemove} = this.props
+        const {onRemove, removeTooltip, removeMessage, removeDisabled, tooltipPlacement, unsafeRemove} = this.props
         return onRemove
             ? (
                 <RemoveButton
                     message={removeMessage}
                     tooltip={removeTooltip}
                     tooltipPlacement={tooltipPlacement}
-                    onRemove={() => onRemove()}
-                    unsafe={unsafeRemove}/>
+                    unsafe={unsafeRemove}
+                    disabled={removeDisabled}
+                    onRemove={() => onRemove()}/>
             )
             : null
     }
@@ -181,6 +182,7 @@ SuperButton.propTypes = {
     infoTooltip: PropTypes.string,
     removeMessage: PropTypes.string,
     removeTooltip: PropTypes.string,
+    removeDisabled: PropTypes.any,
     selected: PropTypes.any,
     timestamp: PropTypes.any,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
