@@ -1,15 +1,15 @@
-import api from 'api'
-import _ from 'lodash'
 import * as PropTypes from 'prop-types'
-import React, {Component} from 'react'
-import {mutate, selectFrom} from 'stateUtils'
+import {CenteredProgress} from 'widget/progress'
+import {filterBandSetSpec, isBandSetSpecEmpty, renderBandSetSpec, renderBandSetSpecEditor} from './bandSetSpec'
 import {msg} from 'translate'
+import {mutate, selectFrom} from 'stateUtils'
+import {withScrollable} from 'widget/scrollable'
 import BlurDetector from 'widget/blurDetector'
 import Label from 'widget/label'
-import {CenteredProgress} from 'widget/progress'
-import {withScrollable} from 'widget/scrollable'
+import React, {Component} from 'react'
 import SuperButton from 'widget/superButton'
-import {filterBandSetSpec, isBandSetSpecEmpty, renderBandSetSpec, renderBandSetSpecEditor} from './bandSetSpec'
+import _ from 'lodash'
+import api from 'api'
 import styles from './inputImage.module.css'
 
 class ImageForm extends Component {
@@ -179,5 +179,4 @@ export default (
         ImageForm
     )
 )
-
 

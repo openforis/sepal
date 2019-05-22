@@ -1,7 +1,7 @@
 import {disableBodyScroll, enableBodyScroll} from 'body-scroll-lock'
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
+import _ from 'lodash'
 import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
 
@@ -64,7 +64,6 @@ Unscrollable.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string
 }
-
 
 const ScrollableContext = React.createContext()
 
@@ -134,7 +133,6 @@ export const withScrollable = () =>
 
         return HigherOrderComponent
     }
-
 
 const ScrollableRef = children =>
     <ScrollableContext.Consumer>
