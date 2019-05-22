@@ -649,6 +649,7 @@
             "tooltip": "Add additional derived bands to use in the classification."
           },
           "loadingBands": "Loading available bands",
+          "loadingBandsError": "Failed to load from Google Earth Engine",
           "form": {
             "section": {
               "required": "An image must be selected"

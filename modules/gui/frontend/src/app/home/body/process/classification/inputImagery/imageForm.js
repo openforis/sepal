@@ -9,39 +9,44 @@ import React, {Component} from 'react'
 import SuperButton from 'widget/superButton'
 import api from 'api'
 import styles from './inputImage.module.css'
+import _ from 'lodash'
 
 class ImageForm extends Component {
     state = {
-        edit: null,
-        prevBandSetSpecs: []
+        selectedSpecId: null,
+        prevBandSetSpecs: [],
     }
+    element = React.createRef()
 
-    // static getDerivedStateFromProps(props, state) {
-    //     const {inputs: {bandSetSpecs}} = props
-    //     const {prevBandSetSpecs = []} = state
-    //     const nextBandSetSpecs = bandSetSpecs.value || []
-    //     const nextState = {...state}
-    //     if (!_.isEqual(nextBandSetSpecs, prevBandSetSpecs)) {
-    //         const addedSpec = nextBandSetSpecs.length > prevBandSetSpecs.length
-    //         if (addedSpec) {
-    //             const lastSpec = _.last(nextBandSetSpecs)
-    //             if (isBandSetSpecEmpty(lastSpec)) {
-    //                 console.log('Added')
-    //                 nextState.edit = lastSpec.id
-    //             }
-    //         } else if (!nextBandSetSpecs.find(spec => !isBandSetSpecEmpty(spec))) {
-    //             console.log('All empty')
-    //             nextState.edit = nextBandSetSpecs[0].id
-    //         }
-    //     }
-    //     return nextState
-    // }
+    static getDerivedStateFromProps(props, state) {
+        const {inputs: {bandSetSpecs, bands}} = props
+        if (!bands.value)
+            return state
+        const {prevBandSetSpecs = [], selectedSpecId} = state
+        const nextBandSetSpecs = bandSetSpecs.value || []
+        const nextState = {...state}
+        if (!_.isEqual(nextBandSetSpecs, prevBandSetSpecs)) {
+            const addedSpec = nextBandSetSpecs.length - prevBandSetSpecs.length === 1
+            if (addedSpec) {
+                const lastSpec = _.last(nextBandSetSpecs)
+                if (isBandSetSpecEmpty(lastSpec, bands.value)) {
+                    nextState.selectedSpecId = lastSpec.id
+                }
+            } else {
+                const emptySpec = !nextBandSetSpecs.find(spec => !isBandSetSpecEmpty(spec, bands.value))
+                if (emptySpec && !selectedSpecId)
+                    nextState.selectedSpecId = nextBandSetSpecs[0].id
+            }
+            nextState.addedBandSetSpec = addedSpec
+        }
+        return nextState
+    }
 
     render() {
         const {stream, input, inputComponent, inputs: {bands}} = this.props
         return (
             <React.Fragment>
-                <div className={styles.inputComponent}>
+                <div ref={this.element} className={styles.inputComponent}>
                     {React.createElement(inputComponent, {
                         input,
                         onChange: id => this.onImageSelection(id)
@@ -63,9 +68,15 @@ class ImageForm extends Component {
 
     componentDidUpdate() {
         const {inputs: {bandSetSpecs}} = this.props
-        const {prevBandSetSpecs} = this.state
+        const {prevBandSetSpecs, addedBandSetSpec} = this.state
         if (bandSetSpecs.value !== prevBandSetSpecs)
             this.setState({prevBandSetSpecs: bandSetSpecs.value})
+
+        if (addedBandSetSpec) {
+            const scrollable = this.element.current.closest('.scrollable')
+            scrollable.scrollTop = scrollable.scrollHeight
+        }
+
     }
 
     renderBandSetSpecs() {
@@ -79,30 +90,29 @@ class ImageForm extends Component {
     }
 
     renderBandSetSpec(bandSetSpec) {
-        const {edit} = this.state
-        const editing = edit === bandSetSpec.id
+        const {selectedSpecId} = this.state
+        const selected = selectedSpecId === bandSetSpec.id
         return (
             <SuperButton
                 key={bandSetSpec.id}
                 title={bandSetSpec.type}
                 description={renderBandSetSpec(bandSetSpec)}
-                className={editing ? styles.edit : null}
+                className={selected ? styles.selectedBandSetSpec : null}
                 unsafeRemove
+                removeDisabled={bandSetSpec.type === 'IMAGE_BANDS'}
                 onClick={() => this.editBandSetSpec(bandSetSpec)}
                 onRemove={() => this.removeBandSetSpec(bandSetSpec)}
-                selected={editing}
+                selected={selected}
             >
                 {this.renderBandSetSpecEditor(bandSetSpec)}
             </SuperButton>
         )
     }
-
     renderBandSetSpecEditor(bandSetSpec) {
         const {inputs: {bands}} = this.props
         return (
             <BlurDetector
-                className={styles.bandSetSpecEditor}
-                onBlur={() => this.setState({edit: null})}>
+                onBlur={() => this.setState({selectedSpecId: null})}>
                 <div className={styles.widget}>
                     {
                         renderBandSetSpecEditor({
@@ -117,28 +127,8 @@ class ImageForm extends Component {
 
     }
 
-    //
-    // renderBandSetSpec(bandSetSpec) {
-    //     return (
-    //         <div
-    //             className={[styles.item, lookStyles.look, lookStyles.transparent].join(' ')}>
-    //             <div className={styles.itemInfo}>
-    //                 <div className='itemType'>{bandSetSpec.type}</div>
-    //                 {renderBandSetSpec(bandSetSpec)}
-    //             </div>
-    //             <Button
-    //                 chromeless
-    //                 shape='circle'
-    //                 size='large'
-    //                 icon='trash'
-    //                 disabled={bandSetSpec.type === 'IMAGE_BANDS'}
-    //                 onClick={() => this.removeBandSetSpec(bandSetSpec)}/>
-    //         </div>
-    //     )
-    // }
-
     editBandSetSpec(bandSetSpec) {
-        this.setState({edit: bandSetSpec.id})
+        this.setState({selectedSpecId: bandSetSpec.id})
     }
 
     updateBandSetSpec(bandSetSpec) {
@@ -169,7 +159,8 @@ class ImageForm extends Component {
                 bands.set(loadedBands)
             },
             error => {
-                const errorMessage = selectFrom(error, 'response.message') || msg('some error') // TODO: Fix error message
+                const errorMessage = selectFrom(error, 'response.message')
+                    || msg('process.classification.panel.inputImagery.loadingBandsError')
                 input.setInvalid(errorMessage)
             }
         )
@@ -183,4 +174,5 @@ ImageForm.propTypes = {
 }
 
 export default ImageForm
+
 

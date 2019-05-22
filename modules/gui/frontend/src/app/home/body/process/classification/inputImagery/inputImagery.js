@@ -85,7 +85,6 @@ class InputImagery extends React.Component {
                 removeTooltip={msg('process.classification.panel.inputImagery.remove.tooltip')}
                 onClick={() => this.editImage(image)}
                 onRemove={() => this.removeImage(image)}
-                unsafeRemove
             />
         )
     }

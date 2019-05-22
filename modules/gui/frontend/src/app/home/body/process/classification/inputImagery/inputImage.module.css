@@ -11,21 +11,10 @@
     margin-top: 5rem;
 }
 
-
-.bandSetSpecEditor {
-    /*background-color: hsl(40, 8%, 16%);*/
-    /*padding: .25rem .5rem;*/
-    /*margin-bottom: .5rem;*/
-}
-
-.edit {
+.selectedBandSetSpec {
     background-color: hsl(40, 8%, 15%) !important;
 }
 
-.bandSetSpecEditor .widget {
-    /*margin: .5rem 0;*/
-}
-
-.bandSetSpecValue {
-
+.selectedBandSetSpec .widget {
+    margin: .5rem 0;
 }

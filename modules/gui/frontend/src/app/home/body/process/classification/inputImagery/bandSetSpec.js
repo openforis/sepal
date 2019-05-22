@@ -67,7 +67,7 @@ const PairWiseExpression = {
     },
 
     isEmpty(spec, bands) {
-        return !this.filter(spec, bands).included.length
+        return this.filter(spec, bands).included.length < 2 // Need at least two to evaluate anything
     },
 
     render(spec) {

@@ -1,4 +1,5 @@
-import {Field} from 'widget/form'
+import {isBandSetSpecEmpty} from 'app/home/body/process/classification/inputImagery/bandSetSpec'
+import {Constraint, Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {getAvailableIndexes} from 'app/home/body/process/classification/inputImagery/opticalIndexes'
@@ -27,7 +28,10 @@ const fields = {
         .notBlank('process.classification.panel.inputImagery.form.asset.required'),
     bands: new Field()
         .notEmpty('process.classification.panel.inputImagery.form.bands.required'),
-    bandSetSpecs: new Field(),
+    bandSetSpecs: new Field()
+        .predicate((bandSetSpecs, {bands}) =>
+            bandSetSpecs.find(spec => !isBandSetSpecEmpty(spec, bands)),
+            'process.classification.panel.inputImagery.form.bandSetSpecs.required'),
 }
 
 const mapRecipeToProps = recipe => ({
@@ -164,9 +168,7 @@ class InputImage extends React.Component {
                 type: 'INDEXES',
                 disabled: !getAvailableIndexes(bands.value).length || !!indexAlreadyAdded
             }]
-        }
-
-        , {
+        }, {
             label: 'Profiles'
             ,
             options:
