@@ -57,15 +57,14 @@ export default class SuperButton extends React.Component {
         return (
             <div className={classNames}>
                 <div className={styles.main}>
-                    <div
-                        className={styles.clickTarget}
-                        onClick={() => this.handleClick()}
-                    />
+                    <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     <div className={styles.info}>
                         <div className='itemType'>{title}</div>
-                        <div className={styles.name}>{description}</div>
+                        <div className={styles.description}>{description}</div>
                     </div>
-                    <ButtonGroup type='horizontal-nowrap' className={styles.buttons}>
+                    <ButtonGroup
+                        type='horizontal-nowrap'
+                        className={styles.buttons}>
                         {this.renderTimestamp()}
                         {this.renderExtraButtons()}
                         {this.renderEditButton()}

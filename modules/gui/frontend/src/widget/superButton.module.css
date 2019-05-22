@@ -21,7 +21,7 @@
 
 /* absolutely positioned click target is needed 
 to prevent click-through from click-hold buttons */
-.clickTarget {
+.main .clickTarget {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -32,11 +32,19 @@ to prevent click-through from click-hold buttons */
 
 .info {
     padding: .25rem .5rem;
+    pointer-events: none; /* avoid interfering with click target */
+    white-space: nowrap;
+    overflow: hidden;
+    word-wrap: normal;
+    text-overflow: ellipsis;
 }
 
-.name {
+.description {
     font-size: .9rem;
-    word-wrap: break-word;
+}
+
+.selected .info {
+    white-space: normal;
 }
 
 .timestamp {
