@@ -1,11 +1,11 @@
 import {disableBodyScroll, enableBodyScroll} from 'body-scroll-lock'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
-import _ from 'lodash'
 import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
 
-const Context = React.createContext()
+const ScrollableContainerContext = React.createContext()
 
 export class ScrollableContainer extends React.Component {
     ref = React.createRef()
@@ -16,9 +16,9 @@ export class ScrollableContainer extends React.Component {
         const {height} = this.state
         return (
             <div ref={this.ref} className={[flexy.container, className].join(' ')}>
-                <Context.Provider value={{height}}>
+                <ScrollableContainerContext.Provider value={{height}}>
                     {children}
-                </Context.Provider>
+                </ScrollableContainerContext.Provider>
             </div>
         )
     }
@@ -65,14 +65,17 @@ Unscrollable.propTypes = {
     className: PropTypes.string
 }
 
+
+const ScrollableContext = React.createContext()
+
 export class Scrollable extends Component {
     targetRef = React.createRef()
 
     render() {
         return (
-            <Context.Consumer>
+            <ScrollableContainerContext.Consumer>
                 {({height}) => this.renderScrollable(height)}
-            </Context.Consumer>
+            </ScrollableContainerContext.Consumer>
         )
     }
 
@@ -81,8 +84,10 @@ export class Scrollable extends Component {
         return (
             <div
                 ref={this.targetRef}
-                className={['scrollable', flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
-                {_.isFunction(children) ? children(scrollableContainerHeight) : children}
+                className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
+                <ScrollableContext.Provider value={this.createScrollable()}>
+                    {_.isFunction(children) ? children(scrollableContainerHeight) : children}
+                </ScrollableContext.Provider>
             </div>
         )
     }
@@ -94,6 +99,15 @@ export class Scrollable extends Component {
     componentWillUnmount() {
         enableBodyScroll(this.targetRef.current)
     }
+
+    createScrollable() {
+        return {
+            scrollToBottom: () => {
+                const element = this.targetRef.current
+                element.scrollTop = element.scrollHeight
+            }
+        }
+    }
 }
 
 Scrollable.defaultProps = {direction: 'y'}
@@ -102,4 +116,33 @@ Scrollable.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     direction: PropTypes.oneOf(['x', 'y', 'xy'])
+}
+
+export const withScrollable = () =>
+    WrappedComponent => {
+        class HigherOrderComponent extends React.Component {
+            render() {
+                return (
+                    <ScrollableContext.Consumer>
+                        {scrollable =>
+                            <WrappedComponent {...this.props} scrollable={scrollable}/>
+                        }
+                    </ScrollableContext.Consumer>
+                )
+            }
+        }
+
+        return HigherOrderComponent
+    }
+
+
+const ScrollableRef = children =>
+    <ScrollableContext.Consumer>
+        {scrollable =>
+            children(scrollable)
+        }
+    </ScrollableContext.Consumer>
+
+ScrollableRef.propTypes = {
+    children: PropTypes.func.isRequired
 }

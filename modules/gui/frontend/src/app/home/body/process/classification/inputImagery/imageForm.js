@@ -1,15 +1,16 @@
+import api from 'api'
+import _ from 'lodash'
 import * as PropTypes from 'prop-types'
-import {CenteredProgress} from 'widget/progress'
-import {filterBandSetSpec, isBandSetSpecEmpty, renderBandSetSpec, renderBandSetSpecEditor} from './bandSetSpec'
-import {msg} from 'translate'
+import React, {Component} from 'react'
 import {mutate, selectFrom} from 'stateUtils'
+import {msg} from 'translate'
 import BlurDetector from 'widget/blurDetector'
 import Label from 'widget/label'
-import React, {Component} from 'react'
+import {CenteredProgress} from 'widget/progress'
+import {withScrollable} from 'widget/scrollable'
 import SuperButton from 'widget/superButton'
-import api from 'api'
+import {filterBandSetSpec, isBandSetSpecEmpty, renderBandSetSpec, renderBandSetSpecEditor} from './bandSetSpec'
 import styles from './inputImage.module.css'
-import _ from 'lodash'
 
 class ImageForm extends Component {
     state = {
@@ -67,14 +68,13 @@ class ImageForm extends Component {
     }
 
     componentDidUpdate() {
-        const {inputs: {bandSetSpecs}} = this.props
+        const {scrollable, inputs: {bandSetSpecs}} = this.props
         const {prevBandSetSpecs, addedBandSetSpec} = this.state
         if (bandSetSpecs.value !== prevBandSetSpecs)
             this.setState({prevBandSetSpecs: bandSetSpecs.value})
 
         if (addedBandSetSpec) {
-            const scrollable = this.element.current.closest('.scrollable')
-            scrollable.scrollTop = scrollable.scrollHeight
+            scrollable.scrollToBottom()
         }
 
     }
@@ -108,6 +108,7 @@ class ImageForm extends Component {
             </SuperButton>
         )
     }
+
     renderBandSetSpecEditor(bandSetSpec) {
         const {inputs: {bands}} = this.props
         return (
@@ -173,6 +174,10 @@ ImageForm.propTypes = {
     inputs: PropTypes.any
 }
 
-export default ImageForm
+export default (
+    withScrollable()(
+        ImageForm
+    )
+)
 
 
