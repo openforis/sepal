@@ -124,7 +124,8 @@ class MosaicPreview extends React.Component {
     }
 
     isHidden() {
-        return false
+        const {recipe} = this.props
+        return recipe.ui.hidePreview
     }
 
     toPreviewRequest(recipe) {
