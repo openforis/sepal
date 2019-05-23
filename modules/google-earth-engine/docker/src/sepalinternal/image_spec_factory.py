@@ -1,5 +1,4 @@
 from asset import Asset
-from changedetection import ChangeDetection
 from classification import Classification
 from radar import RadarMosaic
 from image_spec import ImageSpec
@@ -22,8 +21,6 @@ def create(sepal_api, spec):
         return RadarMosaic(spec)
     if image_type == 'CLASSIFICATION':
         return Classification(sepal_api, spec, create)
-    if image_type == 'CHANGE_DETECTION':
-        return ChangeDetection(sepal_api, spec, create)
     if image_type == 'ASSET':
         return Asset(spec)
     if image_type == 'RECIPE_REF':

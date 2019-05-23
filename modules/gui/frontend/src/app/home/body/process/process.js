@@ -2,7 +2,6 @@ import {RecipeContext} from 'app/home/body/process/recipeContext'
 import {activator} from 'widget/activation/activator'
 import {msg} from 'translate'
 import {saveRecipe} from './recipe'
-import ChangeDetection from './changeDetection/changeDetection'
 import Classification from './classification/classification'
 import CloseRecipe from './closeRecipe'
 import LandCover from './landCover/landCover'
@@ -20,7 +19,6 @@ const recipeByType = id => ({
     MOSAIC: <Mosaic/>,
     RADAR_MOSAIC: <RadarMosaic/>,
     CLASSIFICATION: <Classification recipeId={id}/>,
-    CHANGE_DETECTION: <ChangeDetection recipeId={id}/>,
     TIME_SERIES: <TimeSeries recipeId={id}/>,
     LAND_COVER: <LandCover/>
 })
