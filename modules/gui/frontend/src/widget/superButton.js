@@ -51,7 +51,7 @@ export default class SuperButton extends React.Component {
             lookStyles.look,
             lookStyles.transparent,
             lookStyles.noTransitions,
-            this.isSelected() === true ? [lookStyles.noHover, styles.selected] : null,
+            this.isSelected() === true ? [lookStyles.hover, styles.selected] : null,
             this.isInteractive() ? null : lookStyles.nonInteractive,
             className]).join(' ')
         return (
