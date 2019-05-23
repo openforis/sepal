@@ -1,20 +1,20 @@
+import {BandSetSpec} from './bandSetSpec'
+import {getAvailableIndexes} from './opticalIndexes'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import guid from 'guid'
+import React from 'react'
+import {selectFrom} from 'stateUtils'
+import {msg} from 'translate'
+import ButtonSelect from 'widget/buttonSelect'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {getAvailableIndexes} from 'app/home/body/process/classification/inputImagery/opticalIndexes'
-import {getProfileBandSetSpecs, isProfileDisabled} from './profiles'
-import {isBandSetSpecEmpty} from 'app/home/body/process/classification/inputImagery/bandSetSpec'
-import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
-import AssetSection from './assetSection'
-import ButtonSelect from 'widget/buttonSelect'
-import ImageForm from './imageForm'
 import PanelSections from 'widget/panelSections'
-import React from 'react'
+import AssetSection from './assetSection'
+import ImageForm from './imageForm'
+import styles from './inputImage.module.css'
+import {getProfileBandSetSpecs, isProfileDisabled} from './profiles'
 import RecipeSection from './recipeSection'
 import SectionSelection from './sectionSelection'
-import guid from 'guid'
-import styles from './inputImage.module.css'
 
 const fields = {
     imageId: new Field(),
@@ -30,8 +30,8 @@ const fields = {
         .notEmpty('process.classification.panel.inputImagery.form.bands.required'),
     bandSetSpecs: new Field()
         .predicate((bandSetSpecs, {bands}) =>
-            bandSetSpecs.find(spec => !isBandSetSpecEmpty(spec, bands)),
-        'process.classification.panel.inputImagery.form.bandSetSpecs.required'),
+                bandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands)),
+            'process.classification.panel.inputImagery.form.bandSetSpecs.required')
 }
 
 const mapRecipeToProps = recipe => ({
@@ -102,33 +102,42 @@ class InputImage extends React.Component {
     getSelectedImage() {
         const {inputs: {section, recipe, asset}} = this.props
         switch (section.value) {
-        case 'ASSET':
-            return {
-                type: 'ASSET',
-                id: asset.value
-            }
-        case 'RECIPE_REF':
-            return {
-                type: 'RECIPE_REF',
-                id: recipe.value
-            }
-        default:
-            throw new Error('Unexpected image section: ' + section.value)
+            case 'ASSET':
+                return {
+                    type: 'ASSET',
+                    id: asset.value
+                }
+            case 'RECIPE_REF':
+                return {
+                    type: 'RECIPE_REF',
+                    id: recipe.value
+                }
+            default:
+                throw new Error('Unexpected image section: ' + section.value)
         }
     }
 
     updateBandSetSpecs(option) {
         const {inputs: {bandSetSpecs, bands}} = this.props
-        if (option.type === 'PROFILE') {
-            bandSetSpecs.set(
-                getProfileBandSetSpecs(option.value, bands.value)
-            )
-        } else {
-            const bandSetSpec = {id: guid(), type: option.value, class: option.type, included: []}
-            bandSetSpecs.set(
-                bandSetSpecs.value.concat(bandSetSpec)
-            )
+
+        const getSpecs = () => {
+            switch (option.type) {
+                case 'PROFILE':
+                    return getProfileBandSetSpecs(option.value, bands.value)
+                case 'PAIR_WISE_EXPRESSION':
+                    return bandSetSpecs.value.concat(
+                        {id: guid(), type: 'PAIR_WISE_EXPRESSION', operation: option.value, included: []}
+                    )
+                case 'INDEXES':
+                    return bandSetSpecs.value.concat(
+                        {id: guid(), type: 'INDEXES', included: []}
+                    )
+                default:
+                    throw new Error('Unsupported type: ' + JSON.stringify(option))
+            }
         }
+
+        return bandSetSpecs.set(getSpecs())
     }
 
     derivedBandsOptions() {
@@ -140,7 +149,7 @@ class InputImage extends React.Component {
                 value: 'RATIO',
                 label: 'Ratio',
                 tooltip: 'a tooltip',
-                type: 'PAIR_WISE_EXPRESSION'
+                type: 'PAIR_WISE_EXPRESSION',
             }, {
                 value: 'NORMALIZED_DIFFERENCE',
                 label: 'Normalized difference',
@@ -172,17 +181,17 @@ class InputImage extends React.Component {
             label: 'Profiles'
             ,
             options:
-                    [{
-                        value: 'SIMPLE',
-                        label: 'Simple',
-                        type: 'PROFILE',
-                        disabled: isProfileDisabled('SIMPLE', bands.value)
-                    }, {
-                        value: 'RLCMS',
-                        label: 'RLCMS',
-                        type: 'PROFILE',
-                        disabled: isProfileDisabled('RLCMS', bands.value)
-                    }]
+                [{
+                    value: 'SIMPLE',
+                    label: 'Simple',
+                    type: 'PROFILE',
+                    disabled: isProfileDisabled('SIMPLE', bands.value)
+                }, {
+                    value: 'RLCMS',
+                    label: 'RLCMS',
+                    type: 'PROFILE',
+                    disabled: isProfileDisabled('RLCMS', bands.value)
+                }]
         }
 
         ]
@@ -197,12 +206,12 @@ const modelToValues = model => {
         bandSetSpecs: model.bandSetSpecs
     }
     switch (model.type) {
-    case 'RECIPE_REF':
-        return {...values, recipe: model.id}
-    case 'ASSET':
-        return {...values, asset: model.id}
-    default:
-        return values
+        case 'RECIPE_REF':
+            return {...values, recipe: model.id}
+        case 'ASSET':
+            return {...values, asset: model.id}
+        default:
+            return values
     }
 }
 
@@ -214,12 +223,12 @@ const valuesToModel = values => {
         bandSetSpecs: values.bandSetSpecs
     }
     switch (values.section) {
-    case 'RECIPE_REF':
-        return {...model, id: values.recipe}
-    case 'ASSET':
-        return {...model, id: values.asset}
-    default:
-        return null
+        case 'RECIPE_REF':
+            return {...model, id: values.recipe}
+        case 'ASSET':
+            return {...model, id: values.asset}
+        default:
+            return null
     }
 }
 
