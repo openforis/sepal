@@ -169,6 +169,7 @@ export const dispatchable = action => ({
 const EnabledContext = React.createContext()
 
 export class Enabled extends React.PureComponent {
+    ref = React.createRef()
     render() {
         const {value} = this.props
         return (
@@ -182,24 +183,14 @@ export class Enabled extends React.PureComponent {
         const {children} = this.props
         return (
             <EnabledContext.Provider value={enabled}>
-                <React.Fragment>
+                <div style={{
+                    width: '100%',
+                    height: '100%',
+                    display: enabled ? 'block' : 'none'
+                }}>
                     {children}
-                    {enabled ? null : this.renderPointerEventsShield()}
-                </React.Fragment>
+                </div>
             </EnabledContext.Provider>
-        )
-    }
-
-    renderPointerEventsShield() {
-        return (
-            <div style={{
-                position: 'absolute',
-                top: '0',
-                bottom: '0',
-                left: '0',
-                right: '0',
-                pointerEvents: 'all'
-            }}/>
         )
     }
 
