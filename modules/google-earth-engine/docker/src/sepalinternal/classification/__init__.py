@@ -1,14 +1,14 @@
 from random import random
 
 import ee
+from sepal.ee.image import evaluate_pairwise, select_existing
+from sepal.ee.optical import optical_indexes
+from sepal.ee.terrain import create_terrain_image
+from sepal.ee.water import create_surface_water_image
 
 from ..gee import get_info
 from ..image_spec import ImageSpec
 from ..sepal_exception import SepalException
-from sepal.ee.image import evaluate_pairwise
-from sepal.ee.optical import optical_indexes
-from sepal.ee.water import create_surface_water_image
-from sepal.ee.terrain import create_terrain_image
 
 
 class Classification(ImageSpec):
@@ -18,7 +18,13 @@ class Classification(ImageSpec):
         model = spec['recipe']['model']
         self.trainingData = ee.FeatureCollection('ft:' + model['trainingData']['fusionTable'])
         self.classProperty = model['trainingData']['fusionTableColumn']
-        self.images = [create_image_spec(sepal_api, {'recipe': image}) for image in model['inputImagery']['images']]
+
+        def to_image_spec(image):
+            image_spec = create_image_spec(sepal_api, {'recipe': image})
+            image_spec.band_set_specs = image['bandSetSpecs']
+            return image_spec
+
+        self.images = [to_image_spec(image) for image in model['inputImagery']['images']]
         self.auxiliary_imagery = model['auxiliaryImagery']
         self.aoi = self.images[0].aoi
         self.scale = min([image.scale for image in self.images])
@@ -36,7 +42,7 @@ class Classification(ImageSpec):
         if not has_data_in_aoi:
             raise SepalException(code='gee.classification.error.noTrainingData', message='No training data in AOI.')
 
-        image = ee.Image([self._add_covariates(image._ee_image()) for image in self.images])
+        image = ee.Image([self._with_covariates(image) for image in self.images])
         # Force updates to fusion table to be reflected
         self.trainingData = self.trainingData.map(_force_cache_flush)
         training = image.sampleRegions(
@@ -50,30 +56,35 @@ class Classification(ImageSpec):
             .uint8() \
             .clip(self.aoi.geometry())
 
-    def _add_covariates(self, image):
-        image = image \
-            .addBands(_normalized_difference(image, ['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])) \
-            .addBands(_ratio(image, ['swir1', 'nir'])) \
-            .addBands(_ratio(image, ['red', 'swir1'])) \
-            .addBands(optical_indexes.to_evi(image)) \
-            .addBands(optical_indexes.to_savi(image)) \
-            .addBands(optical_indexes.to_ibi(image)) \
-            .addBands(_angle(image, ['brightness', 'greenness', 'wetness'])) \
-            .addBands(_distance(image, ['brightness', 'greenness', 'wetness'])) \
-            .addBands(
-            _diff(image, ['VV', 'VV_min', 'VV_mean', 'VV_med', 'VV_max', 'VH', 'VH_min', 'VH_mean', 'VH_med', 'VH_max'])) \
-            .addBands(_normalized_difference(image, ['VV_CV', 'VH_CV'])) \
-            .addBands(_normalized_difference(image, ['VV_stdDev', 'VH_stdDev']))
-        # To make sure we don't rely on only auxiliary data,
-        # the auxiliary data will be masked where all bands of the image is masked
-        has_data = image.mask().reduce(ee.Reducer.max())
+    def _with_covariates(self, image):
+        ee_image = image._ee_image()
+        for band_set_spec in image.band_set_specs:
+            type = band_set_spec['type']
+            included = band_set_spec.get('included')
+            operation = band_set_spec.get('operation')
+            if type == 'IMAGE_BANDS':
+                ee_image = select_existing(ee_image, included)
+            elif type == 'PAIR_WISE_EXPRESSION' and operation == 'RATIO':
+                ee_image = ee_image.addBands(_ratio(ee_image, included))
+            elif type == 'PAIR_WISE_EXPRESSION' and operation == 'NORMALIZED_DIFFERENCE':
+                ee_image = ee_image.addBands(_normalized_difference(ee_image, included))
+            elif type == 'PAIR_WISE_EXPRESSION' and operation == 'DIFFERENCE':
+                ee_image = ee_image.addBands(_diff(ee_image, included))
+            elif type == 'PAIR_WISE_EXPRESSION' and operation == 'DISTANCE':
+                ee_image = ee_image.addBands(_distance(ee_image, included))
+            elif type == 'PAIR_WISE_EXPRESSION' and operation == 'ANGLE':
+                ee_image = ee_image.addBands(_angle(ee_image, included))
+            elif type == 'INDEXES':
+                ee_image = _with_indexes(ee_image, included)
+
+        has_data = ee_image.mask().reduce(ee.Reducer.max())
         if 'LATITUDE' in self.auxiliary_imagery:
-            image = image.addBands(ee.Image.pixelLonLat().select('latitude').float().mask(has_data))
+            ee_image = ee_image.addBands(ee.Image.pixelLonLat().select('latitude').float().mask(has_data))
         if 'TERRAIN' in self.auxiliary_imagery:
-            image = image.addBands(create_terrain_image().mask(has_data))
+            ee_image = ee_image.addBands(create_terrain_image().mask(has_data))
         if 'WATER' in self.auxiliary_imagery:
-            image = image.addBands(create_surface_water_image().mask(has_data))
-        return image
+            ee_image = ee_image.addBands(create_surface_water_image().mask(has_data))
+        return ee_image
 
 
 def _force_cache_flush(feature):
@@ -101,6 +112,41 @@ def _angle(image, bands):
 
 def _distance(image, bands):
     return evaluate_pairwise(image, bands, 'hypot(b1, b2)', 'distance_${b1}_${b2}')
+
+def _with_indexes(image, indexes):
+
+    if 'ndvi' in indexes:
+        image = image.addBands(optical_indexes.to_ndvi(image))
+    if 'ndmi' in indexes:
+        image = image.addBands(optical_indexes.to_ndmi(image))
+    if 'ndwi' in indexes:
+        image = image.addBands(optical_indexes.to_ndwi(image))
+    if 'mndwi' in indexes:
+        image = image.addBands(optical_indexes.to_mndwi(image))
+    if 'mndwi' in indexes:
+        image = image.addBands(optical_indexes.to_mndwi(image))
+    if 'evi' in indexes:
+        image = image.addBands(optical_indexes.to_evi(image))
+    if 'evi2' in indexes:
+        image = image.addBands(optical_indexes.to_evi2(image))
+    if 'savi' in indexes:
+        image = image.addBands(optical_indexes.to_savi(image))
+    if 'nbr' in indexes:
+        image = image.addBands(optical_indexes.to_nbr(image))
+    if 'ui' in indexes:
+        image = image.addBands(optical_indexes.to_ui(image))
+    if 'ndbi' in indexes:
+        image = image.addBands(optical_indexes.to_ndbi(image))
+    if 'ibi' in indexes:
+        image = image.addBands(optical_indexes.to_ibi(image))
+    if 'nbi' in indexes:
+        image = image.addBands(optical_indexes.to_nbi(image))
+    if 'ebbi' in indexes:
+        image = image.addBands(optical_indexes.to_ebbi(image))
+    if 'bui' in indexes:
+        image = image.addBands(optical_indexes.to_bui(image))
+
+    return image
 
 
 _colors = [

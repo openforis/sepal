@@ -119,6 +119,13 @@ def select_and_add_missing(image, bands):
         .addBands(image, None, True).select(bands)
 
 
+def select_existing(image, bands):
+    """
+    Returns an image with the specified list of bands that the image contains.
+    """
+    return image.select(band_intersection(image, bands))
+
+
 def band_intersection(image, bands):
     """
     Returns the band names both in the image and in the list of provided band names.

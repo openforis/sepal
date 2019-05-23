@@ -249,7 +249,7 @@ def to_ibi(image, high_plant_cover=False, L=0.5):
         )
 
 
-def to_ndi(image):
+def to_nbi(image):
     """
     Calculates the New Built-up Index (NBI) for the provided image.
 
