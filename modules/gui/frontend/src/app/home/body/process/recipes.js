@@ -44,10 +44,6 @@ class RecipeList extends React.Component {
         name: msg('process.classification.create'),
         description: msg('process.classification.description')
     }, {
-        type: 'CHANGE_DETECTION',
-        name: msg('process.changeDetection.create'),
-        description: msg('process.changeDetection.description')
-    }, {
         type: 'TIME_SERIES',
         name: msg('process.timeSeries.create'),
         description: msg('process.timeSeries.description')

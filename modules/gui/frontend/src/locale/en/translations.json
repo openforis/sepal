@@ -620,7 +620,7 @@
     },
     "classification": {
       "create": "Classification",
-      "description": "Classify a mosaic from SEPAL or Google Earth Engine.",
+      "description": "Classify imagery from SEPAL or Google Earth Engine. Include imagery from multiple points in time to do change detection.",
       "panel": {
         "inputImagery": {
           "button": "IMG",
@@ -740,94 +740,6 @@
                 "tooltip": "Include JRC Global Surface Water Mapping Layers."
               }
             }
-          }
-        },
-        "retrieve": {
-          "title": "Retrieve",
-          "tooltip": "Retrieve classification",
-          "apply": "Retrieve",
-          "form": {
-            "destination": {
-              "label": "Retrieve to",
-              "required": "A destination must be selected",
-              "SEPAL": "Sepal workspace",
-              "GEE": "Google Earth Engine asset"
-            },
-            "task": {
-              "SEPAL": "Retrieve {name} to Sepal workspace",
-              "GEE": "Export {name} as a Google Earth Engine asset"
-            }
-          }
-        }
-      },
-      "preview": {
-        "initializing": "Loading preview...",
-        "loading": "Loaded {loaded} of {count} tiles",
-        "tilesFailed": "{failed} failed",
-        "error": "Failed to create preview"
-      }
-    },
-    "changeDetection": {
-      "create": "Change detection",
-      "description": "Detect changes in mosaics from SEPAL or Google Earth Engine.",
-      "panel": {
-        "source": {
-          "recipe": {
-            "title": "Select saved Sepal recipe"
-          },
-          "asset": {
-            "title": "Select Earth Engine asset"
-          },
-          "form": {
-            "section": {
-              "required": "An image must be selected"
-            },
-            "recipe": {
-              "label": "Recipe",
-              "placeholder": "Select a recipe...",
-              "required": "You must select a recipe"
-            },
-            "asset": {
-              "label": "Earth Engine asset ID",
-              "placeholder": "Enter an asset ID...",
-              "required": "You must enter an asset ID"
-            }
-          },
-          "retrieve": {
-            "form": {
-              "destination.label": "Destination"
-            }
-          }
-        },
-        "source1": {
-          "button": "IM1",
-          "tooltip": "Select first mosaic",
-          "title": "First image"
-        },
-        "source2": {
-          "button": "IM2",
-          "tooltip": "Select second mosaic",
-          "title": "Second image"
-        },
-        "trainingData": {
-          "button": "TRN",
-          "tooltip": "Configure training data source",
-          "title": "Training data",
-          "form": {
-            "fusionTable": {
-              "label": "Fusion table",
-              "placeholder": "Enter a Fusion Table ID",
-              "required": "Fusion Table must be specified",
-              "invalid": "Invalid Fution Table ID"
-            },
-            "fusionTableColumn": {
-              "label": "Class column",
-              "placeholder.loading": "Loading columns...",
-              "placeholder.noFusionTable": "Enter a Fusion Table ID first",
-              "placeholder.loaded": "Select a column...",
-              "required": "A column must be selected"
-            },
-            "openCeo": "Open training data collection tool"
           }
         },
         "retrieve": {
