@@ -62,11 +62,9 @@ class InputImagery extends React.Component {
         return (
             <ScrollableContainer className={styles.list}>
                 <Scrollable>
-                    {/* <ul> */}
                     {images.length ?
                         images.map(image => this.renderImage(image))
                         : this.renderNoImageryMessage()}
-                    {/* </ul> */}
                 </Scrollable>
             </ScrollableContainer>
         )
@@ -115,6 +113,7 @@ class InputImagery extends React.Component {
 
     removeImage(imageToRemove) {
         const {recipeId} = this.props
+
         RecipeActions(recipeId).removeInputImage(imageToRemove)
     }
 }

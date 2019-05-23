@@ -650,6 +650,31 @@
           },
           "loadingBands": "Loading available bands",
           "loadingBandsError": "Failed to load from Google Earth Engine",
+          "bandSetSpec": {
+            "imageBands": {
+              "label": "Image bands"
+            },
+            "indexes": {
+              "label": "Indexes"
+            },
+            "pairWiseExpression": {
+              "NORMALIZED_DIFFERENCE": {
+                "label": "Normalized difference"
+              },
+              "RATIO": {
+                "label": "Ratio"
+              },
+              "DIFFERENCE": {
+                "label": "Difference"
+              },
+              "DISTANCE": {
+                "label": "Distance"
+              },
+              "ANGLE": {
+                "label": "Angle"
+              }
+            }
+          },
           "form": {
             "section": {
               "required": "An image must be selected"

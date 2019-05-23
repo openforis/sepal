@@ -1,15 +1,15 @@
+import api from 'api'
+import _ from 'lodash'
 import * as PropTypes from 'prop-types'
-import {CenteredProgress} from 'widget/progress'
-import {filterBandSetSpec, isBandSetSpecEmpty, renderBandSetSpec, renderBandSetSpecEditor} from './bandSetSpec'
-import {msg} from 'translate'
+import React, {Component} from 'react'
 import {mutate, selectFrom} from 'stateUtils'
-import {withScrollable} from 'widget/scrollable'
+import {msg} from 'translate'
 import BlurDetector from 'widget/blurDetector'
 import Label from 'widget/label'
-import React, {Component} from 'react'
+import {CenteredProgress} from 'widget/progress'
+import {withScrollable} from 'widget/scrollable'
 import SuperButton from 'widget/superButton'
-import _ from 'lodash'
-import api from 'api'
+import {BandSetSpec} from './bandSetSpec'
 import styles from './inputImage.module.css'
 
 class ImageForm extends Component {
@@ -21,20 +21,20 @@ class ImageForm extends Component {
 
     static getDerivedStateFromProps(props, state) {
         const {inputs: {bandSetSpecs, bands}} = props
-        if (!bands.value)
-            return state
         const {prevBandSetSpecs = [], selectedSpecId} = state
-        const nextBandSetSpecs = bandSetSpecs.value || []
+        const nextBandSetSpecs = bandSetSpecs.value
+        if (!bands.value || !nextBandSetSpecs || !nextBandSetSpecs.length)
+            return state
         const nextState = {...state}
         if (!_.isEqual(nextBandSetSpecs, prevBandSetSpecs)) {
             const addedSpec = nextBandSetSpecs.length - prevBandSetSpecs.length === 1
             if (addedSpec) {
                 const lastSpec = _.last(nextBandSetSpecs)
-                if (isBandSetSpecEmpty(lastSpec, bands.value)) {
+                if (BandSetSpec.isEmpty(lastSpec, bands.value)) {
                     nextState.selectedSpecId = lastSpec.id
                 }
             } else {
-                const emptySpec = !nextBandSetSpecs.find(spec => !isBandSetSpecEmpty(spec, bands.value))
+                const emptySpec = !nextBandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands.value))
                 if (emptySpec && !selectedSpecId)
                     nextState.selectedSpecId = nextBandSetSpecs[0].id
             }
@@ -95,8 +95,8 @@ class ImageForm extends Component {
         return (
             <SuperButton
                 key={bandSetSpec.id}
-                title={bandSetSpec.type}
-                description={renderBandSetSpec(bandSetSpec)}
+                title={BandSetSpec.renderTitle(bandSetSpec)}
+                description={BandSetSpec.renderDescription(bandSetSpec)}
                 className={selected ? styles.selectedBandSetSpec : null}
                 unsafeRemove
                 removeDisabled={bandSetSpec.type === 'IMAGE_BANDS'}
@@ -116,7 +116,7 @@ class ImageForm extends Component {
                 onBlur={() => this.setState({selectedSpecId: null})}>
                 <div className={styles.widget}>
                     {
-                        renderBandSetSpecEditor({
+                        BandSetSpec.renderEditor({
                             bandSetSpec,
                             availableBands: bands.value,
                             onChange: bandSetSpec => this.updateBandSetSpec(bandSetSpec)
@@ -154,8 +154,8 @@ class ImageForm extends Component {
         stream('LOAD_IMAGE_BANDS', api.gee.bands$(image),
             loadedBands => {
                 const filteredSpecs = bandSetSpecs.value
-                    .map(spec => filterBandSetSpec(spec, loadedBands))
-                    .filter((spec, i) => !isBandSetSpecEmpty(spec, loadedBands) || i === 0)
+                    .map(spec => BandSetSpec.filter(spec, loadedBands))
+                    .filter((spec, i) => !BandSetSpec.isEmpty(spec, loadedBands) || i === 0)
                 bandSetSpecs.set(filteredSpecs)
                 bands.set(loadedBands)
             },

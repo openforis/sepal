@@ -1,31 +1,43 @@
+import _ from 'lodash'
+import React from 'react'
+import {mutate} from 'stateUtils'
+import {msg} from 'translate'
 import {Buttons} from 'widget/buttons'
 import {getAvailableIndexes} from './opticalIndexes'
-import {mutate} from 'stateUtils'
-import React from 'react'
-import _ from 'lodash'
 
-export const filterBandSetSpec = (bandSetSpec, availableBands = []) =>
-    specClass(bandSetSpec).filter(bandSetSpec, availableBands)
 
-export const isBandSetSpecEmpty = (bandSetSpec, availableBands = []) =>
-    specClass(bandSetSpec).isEmpty(bandSetSpec, availableBands)
+export const BandSetSpec = {
+    filter(bandSetSpec, availableBands = []) {
+        return specClass(bandSetSpec).filter(bandSetSpec, availableBands)
+    },
 
-export const renderBandSetSpec = (bandSetSpec, availableBands = []) =>
-    specClass(bandSetSpec).render(bandSetSpec, availableBands)
+    isEmpty(bandSetSpec, availableBands = []) {
+        return specClass(bandSetSpec).isEmpty(bandSetSpec, availableBands)
+    },
 
-export const renderBandSetSpecEditor = ({bandSetSpec, availableBands = [], onChange}) =>
-    specClass(bandSetSpec).renderEditor(bandSetSpec, availableBands, onChange)
+    renderTitle(bandSetSpec) {
+        return specClass(bandSetSpec).renderTitle(bandSetSpec)
+    },
+
+    renderDescription(bandSetSpec, availableBands = []) {
+        return specClass(bandSetSpec).renderDescription(bandSetSpec, availableBands)
+    },
+
+    renderEditor({bandSetSpec, availableBands = [], onChange}) {
+        return specClass(bandSetSpec).renderEditor(bandSetSpec, availableBands, onChange)
+    }
+}
 
 const specClass = spec => {
-    switch (spec.class) {
-    case 'IMAGE_BANDS':
-        return ImageBands
-    case 'PAIR_WISE_EXPRESSION':
-        return PairWiseExpression
-    case 'INDEXES':
-        return Indexes
-    default :
-        throw new Error('Unsupported band set spec class: ' + JSON.stringify(spec))
+    switch (spec.type) {
+        case 'IMAGE_BANDS':
+            return ImageBands
+        case 'PAIR_WISE_EXPRESSION':
+            return PairWiseExpression
+        case 'INDEXES':
+            return Indexes
+        default :
+            throw new Error('Unsupported band set spec class: ' + JSON.stringify(spec))
     }
 }
 
@@ -39,7 +51,11 @@ const ImageBands = {
         return !this.filter(spec, bands).included.length
     },
 
-    render(spec) {
+    renderTitle(spec) {
+        return msg(['process.classification.panel.inputImagery.bandSetSpec.imageBands.label'])
+    },
+
+    renderDescription(spec) {
         const value = (spec.included || []).length
             ? spec.included.join(', ')
             : <i>None</i>
@@ -70,7 +86,11 @@ const PairWiseExpression = {
         return this.filter(spec, bands).included.length < 2 // Need at least two to evaluate anything
     },
 
-    render(spec) {
+    renderTitle(spec) {
+        return msg(['process.classification.panel.inputImagery.bandSetSpec.pairWiseExpression', spec.operation, 'label'])
+    },
+
+    renderDescription(spec) {
         const value = (spec.included || []).length
             ? spec.included.join(', ')
             : <i>None</i>
@@ -102,7 +122,11 @@ const Indexes = {
         return !this.filter(spec, bands).included.length
     },
 
-    render(spec) {
+    renderTitle(spec) {
+        return msg(['process.classification.panel.inputImagery.bandSetSpec.indexes.label'])
+    },
+
+    renderDescription(spec) {
         const value = (spec.included || []).length
             ? spec.included.join(', ')
             : <i>None</i>

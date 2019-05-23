@@ -1,4 +1,4 @@
-import {filterBandSetSpec, isBandSetSpecEmpty} from './bandSetSpec'
+import {BandSetSpec} from './bandSetSpec'
 import guid from 'guid'
 
 const profilesByName = {
@@ -7,12 +7,11 @@ const profilesByName = {
         bandSetSpecs: [{
             id: guid(),
             type: 'IMAGE_BANDS',
-            class: 'IMAGE_BANDS',
             included: ['red', 'nir', 'swir1', 'swir2']
         }, {
             id: guid(),
-            type: 'RATIO',
-            class: 'PAIR_WISE_EXPRESSION',
+            type: 'PAIR_WISE_EXPRESSION',
+            operation: 'RATIO',
             included: ['red', 'nir', 'swir1', 'swir2']
         }]
     }),
@@ -23,37 +22,35 @@ const profilesByName = {
         bandSetSpecs: [{
             id: guid(),
             type: 'IMAGE_BANDS',
-            class: 'IMAGE_BANDS',
             included: bands
         }, {
             id: guid(),
-            type: 'NORMALIZED_DIFFERENCE',
-            class: 'PAIR_WISE_EXPRESSION',
+            type: 'PAIR_WISE_EXPRESSION',
+            operation: 'NORMALIZED_DIFFERENCE',
             included: ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
         }, {
             id: guid(),
-            type: 'RATIO',
-            class: 'PAIR_WISE_EXPRESSION',
+            type: 'PAIR_WISE_EXPRESSION',
+            operation: 'RATIO',
             included: ['swir1', 'nir']
         }, {
             id: guid(),
-            type: 'RATIO',
-            class: 'PAIR_WISE_EXPRESSION',
+            type: 'PAIR_WISE_EXPRESSION',
+            operation: 'RATIO',
             included: ['red', 'swir1']
         }, {
             id: guid(),
             type: 'INDEXES',
-            class: 'INDEXES',
             included: ['evi', 'savi', 'ibi']
         }, {
             id: guid(),
-            type: 'ANGLE',
-            class: 'PAIR_WISE_EXPRESSION',
+            type: 'PAIR_WISE_EXPRESSION',
+            operation: 'ANGLE',
             included: ['brightness', 'greenness', 'wetness']
         }, {
             id: guid(),
-            type: 'DISTANCE',
-            class: 'PAIR_WISE_EXPRESSION',
+            type: 'PAIR_WISE_EXPRESSION',
+            operation: 'DISTANCE',
             included: ['brightness', 'greenness', 'wetness']
         }]
     })
@@ -65,6 +62,6 @@ export const isProfileDisabled = (profile, availableBands) =>
 export const getProfileBandSetSpecs = (profile, availableBands) =>
     availableBands
         ? profilesByName[profile](availableBands).bandSetSpecs
-            .map(spec => filterBandSetSpec(spec, availableBands))
-            .filter(spec => !isBandSetSpecEmpty(spec, availableBands))
+            .map(spec => BandSetSpec.filter(spec, availableBands))
+            .filter(spec => !BandSetSpec.isEmpty(spec, availableBands))
         : []
