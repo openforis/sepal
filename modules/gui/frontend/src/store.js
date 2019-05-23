@@ -170,15 +170,36 @@ const EnabledContext = React.createContext()
 
 export class Enabled extends React.PureComponent {
     render() {
-        const {value, children} = this.props
+        const {value} = this.props
         return (
             <EnabledContext.Consumer>
-                {parentValue =>
-                    <EnabledContext.Provider value={value !== false && parentValue !== false}>
-                        {children}
-                    </EnabledContext.Provider>
-                }
+                {parentValue => this.renderChildren(value !== false && parentValue !== false)}
             </EnabledContext.Consumer>
+        )
+    }
+
+    renderChildren(enabled) {
+        const {children} = this.props
+        return (
+            <EnabledContext.Provider value={enabled}>
+                <React.Fragment>
+                    {children}
+                    {enabled ? null : this.renderPointerEventsShield()}
+                </React.Fragment>
+            </EnabledContext.Provider>
+        )
+    }
+
+    renderPointerEventsShield() {
+        return (
+            <div style={{
+                'position': 'absolute',
+                'top': '0',
+                'bottom': '0',
+                'left': '0',
+                'right': '0',
+                'pointer-events': 'all'
+            }}/>
         )
     }
 
