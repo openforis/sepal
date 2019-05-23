@@ -1,10 +1,9 @@
-import _ from 'lodash'
-import React from 'react'
-import {mutate} from 'stateUtils'
-import {msg} from 'translate'
 import {Buttons} from 'widget/buttons'
 import {getAvailableIndexes} from './opticalIndexes'
-
+import {msg} from 'translate'
+import {mutate} from 'stateUtils'
+import React from 'react'
+import _ from 'lodash'
 
 export const BandSetSpec = {
     filter(bandSetSpec, availableBands = []) {
@@ -30,14 +29,14 @@ export const BandSetSpec = {
 
 const specClass = spec => {
     switch (spec.type) {
-        case 'IMAGE_BANDS':
-            return ImageBands
-        case 'PAIR_WISE_EXPRESSION':
-            return PairWiseExpression
-        case 'INDEXES':
-            return Indexes
-        default :
-            throw new Error('Unsupported band set spec class: ' + JSON.stringify(spec))
+    case 'IMAGE_BANDS':
+        return ImageBands
+    case 'PAIR_WISE_EXPRESSION':
+        return PairWiseExpression
+    case 'INDEXES':
+        return Indexes
+    default :
+        throw new Error('Unsupported band set spec class: ' + JSON.stringify(spec))
     }
 }
 
@@ -51,7 +50,7 @@ const ImageBands = {
         return !this.filter(spec, bands).included.length
     },
 
-    renderTitle(spec) {
+    renderTitle() {
         return msg(['process.classification.panel.inputImagery.bandSetSpec.imageBands.label'])
     },
 
@@ -122,7 +121,7 @@ const Indexes = {
         return !this.filter(spec, bands).included.length
     },
 
-    renderTitle(spec) {
+    renderTitle() {
         return msg(['process.classification.panel.inputImagery.bandSetSpec.indexes.label'])
     },
 
