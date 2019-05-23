@@ -14,8 +14,14 @@
 .tab {
     --tab-default-background-color: hsl(0, 0%, 11%);
     --tab-selected-background-color: hsl(60, 2%, 16%);
+    --tab-default-background-color-transparent: hsla(0, 0%, 11%, 0);
+    --tab-selected-background-color-transparent: hsla(60, 2%, 16%, 0);
     --tab-default-border-color: hsla(0, 0%, 100%, .15);
     --tab-selected-border-color: hsl(var(--selected-hue), var(--selected-sat), 40%);
+    
+    /* [HACK] transparent colors are needed and cannot be replaced with 'transparent' because of iOS */
+    --default-gradient: linear-gradient(to right, var(--tab-default-background-color-transparent), var(--tab-default-background-color) 100%);
+    --selected-gradient: linear-gradient(to right, var(--tab-selected-background-color-transparent), var(--tab-selected-background-color) 100%);
 
     position: relative;
     display: flex;
@@ -133,12 +139,12 @@ span.title.placeholder {
     position: absolute;
     right: 1.7rem;
     top: 0;
-    background: linear-gradient(to right, transparent, var(--tab-default-background-color) 100%);
+    background: var(--default-gradient);
     z-index: 1;
 }
 
 .tab.selected .title:before {
-    background: linear-gradient(to right, transparent, var(--tab-selected-background-color) 100%);
+    background: var(--selected-gradient);
 }
 
 .title > span {
