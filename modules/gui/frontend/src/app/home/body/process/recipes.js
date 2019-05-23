@@ -131,7 +131,7 @@ class RecipeList extends React.Component {
                 )
             )
         } else
-            return recipes || [] // TODO: Implement filter
+            return recipes || []
     }
 
     renderProgress() {
