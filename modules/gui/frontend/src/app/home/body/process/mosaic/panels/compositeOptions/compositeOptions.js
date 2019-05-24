@@ -117,13 +117,9 @@ class CompositeOptions extends React.Component {
                     icon='layer-group'
                     title={msg('process.mosaic.panel.composite.title')}/>
 
-                <ScrollableContainer>
-                    <Scrollable>
-                        <PanelContent>
-                            {this.renderContent()}
-                        </PanelContent>
-                    </Scrollable>
-                </ScrollableContainer>
+                    <PanelContent scrollable>
+                        {this.renderContent()}
+                    </PanelContent>
 
                 <FormPanelButtons/>
             </RecipeFormPanel>
