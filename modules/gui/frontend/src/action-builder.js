@@ -1,4 +1,4 @@
-import {Mutator} from 'stateUtils'
+import {Mutator, resolve} from 'stateUtils'
 import {dispatch} from 'store'
 import _ from 'lodash'
 
@@ -17,10 +17,11 @@ const actionBuilder = (type, props, prefix) => {
             state || {}
         )
 
-    const applySideEffects = state =>
-        sideEffects.forEach(
-            sideEffect => sideEffect(state)
+    const applySideEffects = state => {
+        return sideEffects.forEach(
+            sideEffect => sideEffect(resolve(state, prefix))
         )
+    }
 
     return {
         set(path, value) {
