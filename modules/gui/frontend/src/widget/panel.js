@@ -1,13 +1,13 @@
-import PropTypes from 'prop-types'
-import React from 'react'
+import {Button, ButtonGroup} from 'widget/button'
+import {Modal} from 'widget/modal'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {connect} from 'store'
 import {msg} from 'translate'
-import {Button, ButtonGroup} from 'widget/button'
 import Icon from 'widget/icon'
 import Keybinding from 'widget/keybinding'
-import {Modal} from 'widget/modal'
 import Portal from 'widget/portal'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './panel.module.css'
 
 // PANEL ----------------------------------------------------------------------
@@ -98,29 +98,20 @@ PanelHeader.propTypes = {
 
 export class PanelContent extends React.Component {
     render() {
-        const {className, scrollable, children} = this.props
-        // if (scrollable)
-        const content =
-            <div className={[styles.content, className].join(' ')}>
-                {children}
-            </div>
-
-        return scrollable
-            ? (
-                <ScrollableContainer>
-                    <Scrollable>
-                        {content}
-                    </Scrollable>
-                </ScrollableContainer>
-            )
-            : content
+        const {className, children} = this.props
+        return (
+            <ScrollableContainer className={styles.scrollableContainer}>
+                <Scrollable className={[styles.content, className].join(' ')}>
+                    {children}
+                </Scrollable>
+            </ScrollableContainer>
+        )
     }
 }
 
 PanelContent.propTypes = {
     children: PropTypes.any.isRequired,
-    className: PropTypes.string,
-    scrollable: PropTypes.any
+    className: PropTypes.string
 }
 
 // BUTTONS --------------------------------------------------------------------

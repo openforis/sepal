@@ -99,10 +99,13 @@
     margin-right: .5rem;
 }
 
-.content {
+.scrollableContainer {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+}
+
+.content {
     padding: var(--content-padding);
     overflow: hidden;
 }
