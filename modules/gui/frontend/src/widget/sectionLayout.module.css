@@ -45,6 +45,7 @@
     --edgePadding-bottom: 0rem;
     --edgePadding-left: 0rem;
     --menuPadding-left: 0rem;
+    height: 100%;
     width: 100%;
     overflow: hidden;
     transition: padding-left var(--transition-time) ease-in-out var(--transition-delay);
