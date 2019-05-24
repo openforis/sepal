@@ -6,19 +6,26 @@ import _ from 'lodash'
 
 const keybindings = []
 
-const getHandler = key => {
-    const candidateKeybindings = _.filter(keybindings,
+const getCandidateKeybindings = key =>
+    _.filter(keybindings,
         keybinding => !keybinding.disabled && keybinding.enabled && keybinding.handles(key)
     )
-    if (candidateKeybindings.length) {
-        const priorityKeybinding = _.find(candidateKeybindings, keybinding => keybinding.priority)
-        if (priorityKeybinding) {
-            return priorityKeybinding.handler
-        }
-        return _.first(candidateKeybindings).handler
-    }
-}
 
+const getPriorityKeybinding = keybindings =>
+    _.find(keybindings, keybinding => keybinding.priority)
+    
+const getDefaultKeybinding = keybindings =>
+    _.first(keybindings)
+
+const getKeybinding = keybindings =>
+    getPriorityKeybinding(keybindings) || getDefaultKeybinding(keybindings)
+
+const getHandler = key => {
+    const candidateKeybindings = getCandidateKeybindings(key)
+    const keybinding = getKeybinding(candidateKeybindings)
+    return keybinding && keybinding.handler
+}
+    
 const handleEvent = event => {
     const key = [
         {key: 'Ctrl', value: event.ctrlKey},
@@ -41,11 +48,16 @@ fromEvent(document, 'keydown')
     )
 
 class Keybinding extends React.Component {
-    keybinding = null
-
     constructor(props) {
         super(props)
-        const {disabled, priority, onEnable, onDisable} = props
+        this.createKeybinding()
+        const {onEnable, onDisable} = props
+        onEnable(() => this.keybinding.enabled = true)
+        onDisable(() => this.keybinding.enabled = false)
+    }
+
+    createKeybinding() {
+        const {disabled, priority} = this.props
         this.keybinding = {
             disabled,
             priority,
@@ -53,8 +65,6 @@ class Keybinding extends React.Component {
             handler: this.handle.bind(this),
             handles: key => _.keys(this.props.keymap).includes(key)
         }
-        onEnable(() => this.keybinding.enabled = true)
-        onDisable(() => this.keybinding.enabled = false)
     }
 
     getDefaultHandler() {
@@ -62,10 +72,13 @@ class Keybinding extends React.Component {
         return keymap.default
     }
 
-    getHandler(key) {
+    getCustomHandler(key) {
         const {keymap} = this.props
-        const handler = keymap[key]
-        return handler || this.getDefaultHandler()
+        return keymap[key]
+    }
+
+    getHandler(key) {
+        return this.getCustomHandler(key) || this.getDefaultHandler()
     }
 
     handle(event, key) {
