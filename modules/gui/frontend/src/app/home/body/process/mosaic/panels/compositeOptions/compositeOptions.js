@@ -4,7 +4,6 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import Label from 'widget/label'
@@ -116,11 +115,9 @@ class CompositeOptions extends React.Component {
                 <PanelHeader
                     icon='layer-group'
                     title={msg('process.mosaic.panel.composite.title')}/>
-
-                    <PanelContent scrollable>
-                        {this.renderContent()}
-                    </PanelContent>
-
+                <PanelContent>
+                    {this.renderContent()}
+                </PanelContent>
                 <FormPanelButtons/>
             </RecipeFormPanel>
         )

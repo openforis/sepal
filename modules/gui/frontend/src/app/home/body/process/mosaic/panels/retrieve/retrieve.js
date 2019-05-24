@@ -1,17 +1,16 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import _ from 'lodash'
-import React from 'react'
-import {dataSetById} from 'sources'
-import {selectFrom} from 'stateUtils'
-import {msg} from 'translate'
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import Slider from 'widget/slider'
-import {currentUser} from 'widget/user'
 import {RecipeActions} from '../../mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {currentUser} from 'widget/user'
+import {dataSetById} from 'sources'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import React from 'react'
+import Slider from 'widget/slider'
+import _ from 'lodash'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -99,9 +98,9 @@ class Retrieve extends React.Component {
 
         const bandOptions = this.allBandOptions
             .map(group => ({
-                    ...group,
-                    options: group.options.filter(option => availableBands.has(option.value))
-                })
+                ...group,
+                options: group.options.filter(option => availableBands.has(option.value))
+            })
             )
             .filter(group =>
                 group.options.length
@@ -156,11 +155,9 @@ class Retrieve extends React.Component {
                 <PanelHeader
                     icon='cloud-download-alt'
                     title={msg('process.mosaic.panel.retrieve.title')}/>
-
-                <PanelContent scrollable>
+                <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-
                 <FormPanelButtons
                     applyLabel={msg('process.mosaic.panel.retrieve.apply')}/>
             </RecipeFormPanel>
