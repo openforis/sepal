@@ -1,29 +1,39 @@
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import _ from 'lodash'
+import React from 'react'
+import {dataSetById} from 'sources'
+import {selectFrom} from 'stateUtils'
+import {msg} from 'translate'
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {RecipeActions} from '../../mosaicRecipe'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import Slider from 'widget/slider'
 import {currentUser} from 'widget/user'
-import {dataSetById} from 'sources'
-import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
-import React from 'react'
-import _ from 'lodash'
+import {RecipeActions} from '../../mosaicRecipe'
 import styles from './retrieve.module.css'
 
 const fields = {
     bands: new Field()
         .predicate(bands => bands && bands.length, 'process.mosaic.panel.retrieve.form.bands.atLeastOne'),
+    scale: new Field(),
     destination: new Field()
         .notEmpty('process.mosaic.panel.retrieve.form.destination.required')
 }
 
-const mapRecipeToProps = recipe => ({
-    sources: selectFrom(recipe, 'model.sources'),
-    compositeOptions: selectFrom(recipe, 'model.compositeOptions'),
-    user: currentUser()
-})
+const mapRecipeToProps = recipe => {
+    const sources = selectFrom(recipe, 'model.sources')
+    const props = {
+        sources,
+        compositeOptions: selectFrom(recipe, 'model.compositeOptions'),
+        user: currentUser(),
+    }
+    if (!selectFrom(recipe, 'ui.retrieve')) {
+        const sentinel2 = Object.keys(sources).includes('SENTINEL_2')
+        props.values = {scale: sentinel2 ? 10 : 30}
+    }
+    return props
+}
 
 class Retrieve extends React.Component {
     constructor(props) {
@@ -75,7 +85,7 @@ class Retrieve extends React.Component {
     }
 
     renderContent() {
-        const {user, sources, compositeOptions, inputs: {bands, destination}} = this.props
+        const {user, sources, compositeOptions, inputs: {bands, scale, destination}} = this.props
         const correction = compositeOptions.corrections.includes('SR') ? 'SR' : 'TOA'
         const bandsForEachDataSet = _.flatten(Object.values(sources))
             .map(dataSetId => dataSetById[dataSetId][correction].bands)
@@ -88,9 +98,9 @@ class Retrieve extends React.Component {
 
         const bandOptions = this.allBandOptions
             .map(group => ({
-                ...group,
-                options: group.options.filter(option => availableBands.has(option.value))
-            })
+                    ...group,
+                    options: group.options.filter(option => availableBands.has(option.value))
+                })
             )
             .filter(group =>
                 group.options.length
@@ -114,6 +124,17 @@ class Retrieve extends React.Component {
                     input={bands}
                     multiple={true}
                     options={bandOptions}/>
+                <Slider
+                    label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
+                    info={scale => msg('process.radarMosaic.panel.retrieve.form.scale.info', {scale})}
+                    input={scale}
+                    minValue={10}
+                    maxValue={100}
+                    scale={'log'}
+                    ticks={[10, 15, 20, 30, 60, 100]}
+                    snap
+                    range='none'
+                />
                 <Buttons
                     label={msg('process.mosaic.panel.retrieve.form.destination.label')}
                     input={destination}
