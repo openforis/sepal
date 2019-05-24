@@ -116,21 +116,22 @@ class Retrieve extends React.Component {
                     input={bands}
                     multiple={true}
                     options={bandOptions}/>
-                <Buttons
-                    label={msg('process.radarMosaic.panel.retrieve.form.destination.label')}
-                    input={destination}
-                    multiple={false}
-                    options={destinationOptions}/>
                 <Slider
                     label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
                     info={scale => msg('process.radarMosaic.panel.retrieve.form.scale.info', {scale})}
                     input={scale}
                     minValue={10}
-                    maxValue={50}
-                    ticks={[10, 15, 20, 30, 40, 50]}
+                    maxValue={100}
+                    scale={'log'}
+                    ticks={[10, 15, 20, 30, 60, 100]}
                     snap
                     range='none'
                 />
+                <Buttons
+                    label={msg('process.radarMosaic.panel.retrieve.form.destination.label')}
+                    input={destination}
+                    multiple={false}
+                    options={destinationOptions}/>
             </React.Fragment>
         )
     }
