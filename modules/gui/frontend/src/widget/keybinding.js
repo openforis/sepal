@@ -1,61 +1,8 @@
+import {add, remove} from './keybindings'
 import {connect} from 'store'
-import {fromEvent} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-
-const keybindings = (() => {
-    const keybindings = []
-
-    const getCandidateKeybindings = key =>
-        _.filter(keybindings,
-            keybinding => !keybinding.disabled && keybinding.enabled && keybinding.handles(key)
-        )
-
-    const getPriorityKeybinding = keybindings =>
-        _.find(keybindings, keybinding => keybinding.priority)
-    
-    const getDefaultKeybinding = keybindings =>
-        _.first(keybindings)
-
-    const getKeybinding = keybindings =>
-        getPriorityKeybinding(keybindings) || getDefaultKeybinding(keybindings)
-
-    const getHandler = key => {
-        const candidateKeybindings = getCandidateKeybindings(key)
-        const keybinding = getKeybinding(candidateKeybindings)
-        return keybinding && keybinding.handler
-    }
-    
-    const handleEvent = event => {
-        const key = [
-            {key: 'Ctrl', value: event.ctrlKey},
-            {key: 'Alt', value: event.altKey},
-            {key: 'Shift', value: event.shiftKey},
-            {key: 'Meta', value: event.metaKey}]
-            .filter(({value}) => value)
-            .map(({key}) => key)
-            .concat([event.key])
-            .join('+')
-        const handler = getHandler(key)
-        if (handler) {
-            handler(event, key)
-        }
-    }
-
-    const add = keybinding =>
-        keybindings.unshift(keybinding)
-
-    const remove = keybinding =>
-        _.pull(keybindings, keybinding)
-
-    fromEvent(document, 'keydown')
-        .subscribe(
-            event => handleEvent(event)
-        )
-    
-    return {add, remove}
-})()
 
 class Keybinding extends React.Component {
     constructor(props) {
@@ -105,7 +52,7 @@ class Keybinding extends React.Component {
     }
 
     componentDidMount() {
-        keybindings.add(this.keybinding)
+        add(this.keybinding)
     }
 
     componentDidUpdate() {
@@ -116,7 +63,7 @@ class Keybinding extends React.Component {
     }
 
     componentWillUnmount() {
-        keybindings.remove(this.keybinding)
+        remove(this.keybinding)
     }
 }
 
