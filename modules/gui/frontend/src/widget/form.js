@@ -1,6 +1,7 @@
 import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
+import Keybinding from 'widget/keybinding'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -415,6 +416,9 @@ Form.propTypes = {
 
 export class Input extends React.Component {
     element = React.createRef()
+    state = {
+        textareaFocused: false
+    }
 
     renderLabel() {
         const {label, tooltip, tooltipPlacement = 'top'} = this.props
@@ -466,29 +470,34 @@ export class Input extends React.Component {
 
     renderTextArea() {
         const {input, minRows, maxRows, validate = 'onBlur', tabIndex, onChange, className, onBlur} = this.props
+        const {textareaFocused} = this.state
         return (
-            <Textarea
-                ref={this.element}
-                name={input.name}
-                value={input.value || ''}
-                tabIndex={tabIndex}
-                minRows={minRows}
-                maxRows={maxRows}
-                onChange={e => {
-                    input.handleChange(e)
-                    if (onChange)
-                        onChange(e)
-                    if (validate === 'onChange')
-                        input.validate()
-                }}
-                onBlur={e => {
-                    if (onBlur)
-                        onBlur(e)
-                    if (validate === 'onBlur')
-                        input.validate()
-                }}
-                className={[input.validationFailed ? styles.error : null, className].join(' ')}
-            />
+            <Keybinding keymap={{Enter: null}} disabled={!textareaFocused} priority>
+                <Textarea
+                    ref={this.element}
+                    name={input.name}
+                    value={input.value || ''}
+                    tabIndex={tabIndex}
+                    minRows={minRows}
+                    maxRows={maxRows}
+                    onChange={e => {
+                        input.handleChange(e)
+                        if (onChange)
+                            onChange(e)
+                        if (validate === 'onChange')
+                            input.validate()
+                    }}
+                    onFocus={() => this.setState({textareaFocused: true})}
+                    onBlur={e => {
+                        this.setState({textareaFocused: false})
+                        if (onBlur)
+                            onBlur(e)
+                        if (validate === 'onBlur')
+                            input.validate()
+                    }}
+                    className={[input.validationFailed ? styles.error : null, className].join(' ')}
+                />
+            </Keybinding>
         )
     }
 
