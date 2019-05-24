@@ -8,6 +8,7 @@ import {FormButtons as Buttons} from 'widget/buttons'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import Slider from 'widget/slider'
 import {currentUser} from 'widget/user'
 import {RecipeActions} from '../../mosaicRecipe'
@@ -156,7 +157,7 @@ class Retrieve extends React.Component {
                     icon='cloud-download-alt'
                     title={msg('process.mosaic.panel.retrieve.title')}/>
 
-                <PanelContent>
+                <PanelContent scrollable>
                     {this.renderContent()}
                 </PanelContent>
 
