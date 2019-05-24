@@ -58,11 +58,12 @@ class SceneAreas extends React.Component {
     }
 
     renderSceneAreaMarker(sceneArea) {
-        const {activator: {activatables: {sceneSelection}}, selectedScenes, zoom, loading} = this.props
+        const {recipeId, activator: {activatables: {sceneSelection}}, selectedScenes, zoom, loading} = this.props
         const selectedSceneCount = (selectedScenes[sceneArea.id] || []).length
         return (
             <SceneAreaMarker
                 key={sceneArea.id}
+                recipeId={recipeId}
                 sceneAreaId={sceneArea.id}
                 center={sceneArea.center}
                 polygon={sceneArea.polygon}
@@ -119,7 +120,7 @@ class SceneAreas extends React.Component {
                         }}
                     />
             })
-    
+
         )
     }
 }
