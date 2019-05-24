@@ -4,56 +4,84 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
-const handlers = []
+const keybindings = []
+
+const getHandler = key => {
+    const candidateKeybindings = _.filter(keybindings,
+        keybinding => !keybinding.disabled && keybinding.enabled && keybinding.handles(key)
+    )
+    if (candidateKeybindings.length) {
+        const priorityKeybinding = _.find(candidateKeybindings, keybinding => keybinding.priority)
+        if (priorityKeybinding) {
+            return priorityKeybinding.handler
+        }
+        return _.first(candidateKeybindings).handler
+    }
+}
+
+const handleEvent = event => {
+    const key = [
+        {key: 'Ctrl', value: event.ctrlKey},
+        {key: 'Alt', value: event.altKey},
+        {key: 'Shift', value: event.shiftKey},
+        {key: 'Meta', value: event.metaKey}]
+        .filter(({value}) => value)
+        .map(({key}) => key)
+        .concat([event.key])
+        .join('+')
+    const handler = getHandler(key)
+    if (handler) {
+        handler(event, key)
+    }
+}
 
 fromEvent(document, 'keydown')
     .subscribe(
-        event => _.find([...handlers], handler => handler(event))
+        event => handleEvent(event)
     )
 
 class Keybinding extends React.Component {
-    handler = null
+    keybinding = null
 
     constructor(props) {
         super(props)
-        const {onEnable, onDisable} = props
-        this.handler = this.getHandler.bind(this)
-        onEnable(() => this.addHandler())
-        onDisable(() => this.removeHandler())
+        const {disabled, priority, onEnable, onDisable} = props
+        this.keybinding = {
+            disabled,
+            priority,
+            enabled: true,
+            handler: this.handle.bind(this),
+            handles: key => _.keys(this.props.keymap).includes(key)
+        }
+        onEnable(() => this.keybinding.enabled = true)
+        onDisable(() => this.keybinding.enabled = false)
     }
 
-    getHandler(event) {
-        const {keymap, disabled} = this.props
-        if (!disabled) {
-            const key = [
-                {key: 'Ctrl', value: event.ctrlKey},
-                {key: 'Alt', value: event.altKey},
-                {key: 'Shift', value: event.shiftKey},
-                {key: 'Meta', value: event.metaKey}]
-                .filter(({value}) => value)
-                .map(({key}) => key)
-                .concat([event.key])
-                .join('+')
-            const handler = keymap[key]
-            if (handler) {
-                handler(event)
-                event.preventDefault()
-                return true
-            } else if (keymap.default) {
-                keymap.default(event)
-                event.preventDefault()
-                return true
-            }
+    getDefaultHandler() {
+        const {keymap} = this.props
+        return keymap.default
+    }
+
+    getHandler(key) {
+        const {keymap} = this.props
+        const handler = keymap[key]
+        return handler || this.getDefaultHandler()
+    }
+
+    handle(event, key) {
+        const handler = this.getHandler(key)
+        if (handler) {
+            handler(event)
+            event.preventDefault()
         }
-        return false
     }
 
     addHandler() {
-        handlers.unshift(this.handler)
+        keybindings.unshift(this.keybinding)
     }
 
     removeHandler() {
-        _.pull(handlers, this.handler)
+        _.pull(keybindings, this.keybinding)
     }
 
     render() {
@@ -63,6 +91,13 @@ class Keybinding extends React.Component {
 
     componentDidMount() {
         this.addHandler()
+    }
+
+    componentDidUpdate() {
+        const {disabled, priority} = this.props
+        this.keybinding.disabled = disabled
+        this.keybinding.priority = priority
+
     }
 
     componentWillUnmount() {
@@ -76,5 +111,6 @@ export default connect()(
 
 Keybinding.propTypes = {
     disabled: PropTypes.any,
-    keymap: PropTypes.object
+    keymap: PropTypes.object,
+    priority: PropTypes.any
 }
