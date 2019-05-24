@@ -1,4 +1,5 @@
 import {ActivationContext} from 'widget/activation/activationContext'
+import {PortalContainer} from 'widget/portal'
 import {connect} from 'store'
 import {exhaustMap, map} from 'rxjs/operators'
 import {isFloating} from './menu/menuMode'
@@ -86,8 +87,7 @@ class Home extends React.Component {
                         <div className={styles.google}></div>
                         <Footer className={styles.footer}/>
                     </div>
-                    <div id='fullScreenPortalContainer' className={[styles.portalContainer, styles.fullScreen].join(' ')}/>
-                    <div id='sectionPortalContainer' className={[styles.portalContainer, styles.section].join(' ')}/>
+                    <PortalContainer/>
                 </div>
             </ActivationContext>
         )

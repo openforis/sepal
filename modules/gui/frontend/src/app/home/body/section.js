@@ -4,8 +4,9 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './section.module.css'
 
-const Section = ({path, captureMouseEvents = true, children}) =>
+const Section = ({path, captureMouseEvents = true, children}) => (
     <Selectable
+        id={path}
         active={isPathInLocation(path)}
         captureMouseEvents={captureMouseEvents}
         classNames={{
@@ -15,6 +16,7 @@ const Section = ({path, captureMouseEvents = true, children}) =>
         }}>
         {children}
     </Selectable>
+)
 
 Section.propTypes = {
     captureMouseEvents: PropTypes.any,

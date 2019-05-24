@@ -1,4 +1,5 @@
 import {Enabled} from 'store'
+import {PortalContainer} from './portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './selectable.module.css'
@@ -30,6 +31,8 @@ Select.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string
 }
+
+const Context = React.createContext()
 
 export class Selectable extends React.Component {
     constructor(props) {
@@ -65,22 +68,25 @@ export class Selectable extends React.Component {
     }
 
     render() {
-        const {active, classNames, captureMouseEvents} = this.props
+        const {id, active, classNames, captureMouseEvents} = this.props
         if (!this.hasBeenActive)
             return null
         else
         // A selectable is not unmounted when deactivated to allow for animated transitions.
         // <Enabled/> is used to disconnect deactivated selectable from the Redux store.
             return (
-                <div className={[
-                    active && captureMouseEvents ? styles.captureMouseEvents : null,
-                    classNames.default,
-                    this.className
-                ].join(' ')}>
-                    <Enabled value={this.props.active}>
-                        {this.props.children}
-                    </Enabled>
-                </div>
+                <Context.Provider value={{id}}>
+                    <div className={[
+                        active && captureMouseEvents ? styles.captureMouseEvents : null,
+                        classNames.default,
+                        this.className
+                    ].join(' ')}>
+                        <Enabled value={this.props.active}>
+                            {this.props.children}
+                        </Enabled>
+                        <PortalContainer id={id}/>
+                    </div>
+                </Context.Provider>
             )
     }
 }
@@ -97,5 +103,26 @@ Selectable.propTypes = {
     active: PropTypes.bool,
     captureMouseEvents: PropTypes.any,
     children: PropTypes.any,
-    classNames: PropTypes.objectOf(PropTypes.string)
+    classNames: PropTypes.objectOf(PropTypes.string),
+    id: PropTypes.string
 }
+
+export const withSelectableContext = () =>
+    WrappedComponent => {
+        class HigherOrderComponent extends React.Component {
+            render() {
+                return (
+                    <Context.Consumer>
+                        {selectableContext =>
+                            React.createElement(WrappedComponent, {
+                                ...this.props,
+                                selectableContext
+                            })
+                        }
+                    </Context.Consumer>
+                )
+            }
+        }
+
+        return HigherOrderComponent
+    }
