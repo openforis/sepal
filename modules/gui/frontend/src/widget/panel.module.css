@@ -7,6 +7,7 @@
     --content-padding: 1rem .8rem;
     --padding-panel-buttons: .5rem;
     --header-color: #e8e8e8;
+    max-height: calc(100% - 1rem);
     width: calc(100% - var(--margin-left) - var(--margin-right));
     background-color: var(--panel-default-background-color);
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
@@ -36,7 +37,6 @@
     right: .5rem;
     top: .5rem;
     bottom: .5rem;
-    max-height: calc(100% - 1rem);
     max-width: calc(100% - 1rem);
 }
 
