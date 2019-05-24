@@ -28,7 +28,7 @@ const mapRecipeToProps = recipe => {
         compositeOptions: selectFrom(recipe, 'model.compositeOptions'),
         user: currentUser(),
     }
-    if (!selectFrom(recipe, 'ui.retrieve')) {
+    if (!selectFrom(recipe, 'ui.retrieve.scale')) {
         const sentinel2 = Object.keys(sources).includes('SENTINEL_2')
         props.values = {scale: sentinel2 ? 10 : 30}
     }

@@ -19,7 +19,6 @@ class LandsatMosaicSpec(MosaicSpec):
         collections = _sr if self.surface_reflectance else _toa
         self._collection_names_by_scene_id_prefix = collections['collection_names_by_scene_id_prefix']
         self._collection_names_by_sensor = collections['collection_names_by_sensor']
-        self.set_scale()
         composite_options = spec['recipe']['model']['compositeOptions']
         more_than_one_data_set = len(_flatten(spec['recipe']['model']['sources'].values())) > 1
         self.calibrate = 'CALIBRATE' in composite_options['corrections'] and 'SR' not in composite_options[
@@ -27,18 +26,6 @@ class LandsatMosaicSpec(MosaicSpec):
 
     def _data_set(self, collection_name, image_filter):
         return LandsatDataSet(collection_name, image_filter, self)
-
-    def set_scale(self):
-        if self.bands:
-            self.scale = min([
-                resolution
-                for band, resolution
-                in _scale_by_band.iteritems()
-                if band in self.bands
-            ])
-        else:
-            self.scale = 30
-
 
 class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
     def __init__(self, spec):
@@ -279,30 +266,6 @@ class LandsatDataSet(DataSet):
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
                 'pixel_qa': 'pixel_qa'},
         }[self.collection_name]
-
-
-_scale_by_band = {
-    'aerosol': 30,
-    'blue': 30,
-    'green': 30,
-    'red': 30,
-    'nir': 30,
-    'swir1': 30,
-    'swir2': 30,
-    'pan': 15,
-    'cirrus': 30,
-    'thermal': 100,
-    'thermal2': 100,
-    'brightness': 30,
-    'greenness': 30,
-    'wetness': 30,
-    'fourth': 30,
-    'fifth': 30,
-    'sixth': 30,
-    'dayOfYear': 30,
-    'daysFromTarget': 30,
-    'unixTimeDays': 30
-}
 
 def _flatten(iterable):
     return [item for sublist in iterable for item in sublist]

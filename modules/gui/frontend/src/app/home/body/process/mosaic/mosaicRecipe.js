@@ -135,6 +135,7 @@ export const RecipeActions = id => {
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const destination = recipe.ui.retrieveOptions.destination
+    const scale = recipe.ui.retrieveOptions.scale
     const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', destination], {name})
     const bands = recipe.ui.retrieveOptions.bands
     const task = {
@@ -143,7 +144,11 @@ const submitRetrieveRecipeTask = recipe => {
             {
                 title: taskTitle,
                 description: name,
-                image: {recipe: _.omit(recipe, ['ui']), bands: {selection: bands}}
+                image: {
+                    recipe: _.omit(recipe, ['ui']),
+                    bands: {selection: bands},
+                    scale
+                }
             }
     }
     return api.tasks.submit$(task).subscribe()

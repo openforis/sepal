@@ -37,6 +37,7 @@ class MosaicSpec(ImageSpec):
         self.brdf_correct = 'BRDF' in model['compositeOptions']['corrections']
         self.surface_reflectance = 'SR' in model['compositeOptions']['corrections']
         self.pan_sharpen = bool(bands.get('panSharpen', False))
+        self.scale = spec.get('scale')
 
     def _viz_params(self):
         viz_by_band = _sr_viz_by_bands if self.surface_reflectance else _toa_viz_by_bands
