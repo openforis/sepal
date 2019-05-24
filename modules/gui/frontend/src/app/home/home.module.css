@@ -22,29 +22,6 @@
     pointer-events: none;
 }
 
-.portalContainer {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 100%;
-    pointer-events: none;
-}
-
-.portalContainer > * {
-    pointer-events: all;
-}
-
-.portalContainer.fullScreen {
-    z-index: 2;
-}
-
-.portalContainer.section {
-    top: var(--top-bar-height);
-    bottom: var(--footer-height);
-    pointer-events: none;
-    z-index: 1;
-}
-
 /* fixed menu */
 .container:not(.floatingMenu) {
     --menu-position: 0;

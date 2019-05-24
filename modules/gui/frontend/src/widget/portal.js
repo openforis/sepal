@@ -6,8 +6,14 @@ import styles from './portal.module.css'
 
 const DEFAULT_PORTAL_CONTAINER_ID = 'defaultPortalContainer'
 
-export const PortalContainer = ({id = DEFAULT_PORTAL_CONTAINER_ID}) => (
-    <div id={id} className={[styles.portalContainer, styles.fullScreen].join(' ')}/>
+export const PortalContainer = ({id}) => (
+    <div
+        id={id || DEFAULT_PORTAL_CONTAINER_ID}
+        className={[
+            styles.portalContainer,
+            id ? styles.section : styles.fullScreen
+        ].join(' ')}
+    />
 )
 
 const Portal = ({container, containerId, content, children, selectableContext}) => {

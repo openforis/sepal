@@ -8,18 +8,6 @@
     z-index: -1;
 }
 
-/* .section.app {
-    padding: 0;
-}
-
-.section.transparent {
-    pointer-events: none;
-} */
-
-.section > * {
-    height: 100%;
-}
-
 .in {
     z-index: 1;
     animation-name: show;

@@ -401,7 +401,10 @@ class Users extends React.Component {
     render() {
         return (
             <React.Fragment>
-                <div tabIndex='0' onKeyDown={e => this.onKeyDown(e)}>
+                <div
+                    className={styles.container}
+                    tabIndex='0'
+                    onKeyDown={e => this.onKeyDown(e)}>
                     <Pageable
                         items={this.getFilteredUsers()}
                         limit={15}>

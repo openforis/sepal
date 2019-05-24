@@ -1,3 +1,7 @@
+.container {
+    height: 100%;
+}
+
 .content {
     min-width: fit-content;
 }
