@@ -23,6 +23,7 @@ const mapStateToProps = (state, ownProps) => {
     images
         .filter(image => image.type === 'RECIPE_REF')
         .map(image => selectFrom(state, ['process.recipes', {id: image.id}]))
+        .filter(recipe => recipe)
         .forEach(recipe => recipeNameById[recipe.id] = recipe.name)
     return {recipeNameById}
 }
@@ -63,7 +64,8 @@ class InputImagery extends React.Component {
             <ScrollableContainer className={styles.list}>
                 <Scrollable>
                     {images.length ?
-                        images.map(image => this.renderImage(image))
+                        images
+                            .map(image => this.renderImage(image))
                         : this.renderNoImageryMessage()}
                 </Scrollable>
             </ScrollableContainer>
@@ -75,6 +77,8 @@ class InputImagery extends React.Component {
         const name = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
+        if (!name)
+            return null
         return (
             <SuperButton
                 key={`${image.type}-${image.id}`}
