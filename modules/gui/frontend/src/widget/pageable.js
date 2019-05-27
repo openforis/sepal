@@ -18,7 +18,7 @@ export class Pageable extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (!_.isEqual(prevProps, this.props)) {
+        if (!_.isEqual(prevProps.items, this.props.items) || !_.isEqual(prevProps.limit, this.props.limit)) {
             this.update()
         }
     }
