@@ -25,7 +25,7 @@ class Classification(ImageSpec):
             return image_spec
 
         self.images = [to_image_spec(image) for image in model['inputImagery']['images']]
-        self.auxiliary_imagery = model['auxiliaryImagery']
+        self.auxiliary_imagery = model.get('auxiliaryImagery', [])
         self.aoi = self.images[0].aoi
         self.scale = min([image.scale for image in self.images])
         self.bands = ['class']
