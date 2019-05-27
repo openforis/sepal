@@ -8,21 +8,19 @@ class ChangeDetectionMigrations extends AbstractMigrations {
                 id: r.id,
                 title: r.name?.trim(),
                 placeholder: 'Migrated_Change_detection',
-                type: 'CHANGE_DETECTION',
-                model: [:]
+                type: 'CLASSIFICATION',
+                model: [inputImagery: [images: []]]
             ]
-            def source1 = [
-                type: r.inputRecipe1 ? 'RECIPE_REF' : 'ASSET',
-                id: r.inputRecipe1 ?: r.geeAssetId1
-            ]
-            if (source1.id)
-                result.model.source1 = source1
-            def source2 = [
-                type: r.inputRecipe2 ? 'RECIPE_REF' : 'ASSET',
-                id: r.inputRecipe2 ?: r.geeAssetId2
-            ]
-            if (source2.id)
-                result.model.source2 = source2
+            ClassificationMigrations.addImage(
+                r.inputRecipe1 ? 'RECIPE_REF' : 'ASSET',
+                r.inputRecipe1 ?: r.geeAssetId1,
+                result
+            )
+            ClassificationMigrations.addImage(
+                r.inputRecipe2 ? 'RECIPE_REF' : 'ASSET',
+                r.inputRecipe2 ?: r.geeAssetId2,
+                result
+            )
             def trainingData = [
                 fusionTable: r.fusionTableId,
                 fusionTableColumn: r.fusionTableClassColumn

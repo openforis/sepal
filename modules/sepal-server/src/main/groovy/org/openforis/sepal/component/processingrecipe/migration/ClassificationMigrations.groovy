@@ -9,14 +9,13 @@ class ClassificationMigrations extends AbstractMigrations {
                 title: r.name?.trim(),
                 placeholder: 'Migrated_Classification',
                 type: 'CLASSIFICATION',
-                model: [:]
+                model: [inputImagery: [images: []]]
             ]
-            def source = [
-                type: r.inputRecipe ? 'RECIPE_REF' : 'ASSET',
-                id: r.inputRecipe ?: r.geeAssetId
-            ]
-            if (source.id)
-                result.model.source = source
+            ClassificationMigrations.addImage(
+                r.inputRecipe ? 'RECIPE_REF' : 'ASSET',
+                r.inputRecipe ?: r.geeAssetId,
+                result
+            )
             def trainingData = [
                 fusionTable: r.fusionTableId,
                 fusionTableColumn: r.fusionTableClassColumn
@@ -25,5 +24,30 @@ class ClassificationMigrations extends AbstractMigrations {
                 result.model.trainingData = trainingData
             return result
         })
+    }
+
+    static void addImage(type, id, Map result) {
+        def image = [
+            type: type,
+            id: id,
+            imageId: UUID.randomUUID().toString(),
+            bands: ['red', 'nir', 'swir1', 'swir2'],
+            bandSetSpecs: [
+                [
+                    id: UUID.randomUUID().toString(),
+                    type: 'IMAGE_BANDS',
+                    included: ['red', 'nir', 'swir1', 'swir2']
+                ],
+                [
+                    id: UUID.randomUUID().toString(),
+                    type: 'PAIR_WISE_EXPRESSION',
+                    operation: 'RATIO',
+                    included: ['red', 'nir', 'swir1', 'swir2']
+                ],
+            ]
+        ]
+        if (image.id) {
+            result.model.inputImagery.images = [image]
+        }
     }
 }
