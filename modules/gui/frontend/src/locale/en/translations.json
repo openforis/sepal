@@ -1311,7 +1311,8 @@
     },
     "error": {
       "title": "Google Earth Engine error",
-      "earthEngineException": "{earthEngineMessage}"
+      "earthEngineException": "{earthEngineMessage}",
+      "failedToLoadRecipe": "Failed to load recipe"
     }
   }
 }
