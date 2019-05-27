@@ -5,6 +5,7 @@ import {PageControls, PageData, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {closeTab} from 'widget/tabs'
 import {connect, select} from 'store'
+import {isMobile} from 'widget/userAgent'
 import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
 import {msg} from 'translate'
 import CreateRecipe from './createRecipe'
@@ -175,6 +176,7 @@ class RecipeList extends React.Component {
                     ref={this.search}
                     value={this.state.filter}
                     placeholder={msg('process.menu.searchRecipes')}
+                    autoFocus={!isMobile()}
                     onChange={e => this.setFilter(e.target.value)}
                 />
             </Button>
