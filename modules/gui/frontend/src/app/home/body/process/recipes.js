@@ -214,7 +214,7 @@ class RecipeList extends React.Component {
                     items={this.getSortedRecipes()}
                     limit={15}>
                     <SectionLayout>
-                        <Content edgePadding menuPadding className={styles.container}>
+                        <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
                             <ScrollableContainer>
                                 <Unscrollable>
                                     {this.renderSearchAndSort()}

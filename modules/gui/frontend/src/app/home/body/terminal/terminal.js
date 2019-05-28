@@ -94,10 +94,7 @@ class _TerminalSession extends React.Component {
                 refreshRate={RESIZE_DEBOUNCE_MS}
                 onResize={() => this.fit$.next()}
             >
-                <ContentPadding
-                    menuPadding
-                    edgePadding
-                >
+                <ContentPadding menuPadding horizontalPadding verticalPadding>
                     <div className={styles.terminal} ref={this.terminalContainer}></div>
                 </ContentPadding>
             </ReactResizeDetector>

@@ -49,8 +49,8 @@
     width: 100%;
     overflow: hidden;
     transition: padding-left var(--transition-time) ease-in-out var(--transition-delay);
-    margin-top: var(--edgePadding-top);
-    margin-bottom: var(--edgePadding-bottom);
+    padding-top: var(--edgePadding-top);
+    padding-bottom: var(--edgePadding-bottom);
     padding-left: calc(var(--edgePadding-left) + var(--menuPadding-left));
     padding-right: var(--edgePadding-right);
 }
@@ -64,11 +64,9 @@
     --edgePadding-right: 1.5rem;
 }
 
-.content.edgePadding {
-    --edgePadding-top: 2.5rem;
-    --edgePadding-right: 1.5rem;
+.content.verticalPadding {
+    --edgePadding-top: 2rem;
     --edgePadding-bottom: .5rem;
-    --edgePadding-left: 1.5rem;
 }
 
 .content.menuPadding {

@@ -410,7 +410,7 @@ class Users extends React.Component {
                         limit={15}>
                         <SectionLayout>
                             <TopBar label={msg('home.sections.users')}/>
-                            <Content edgePadding menuPadding>
+                            <Content horizontalPadding verticalPadding menuPadding>
                                 <ScrollableContainer>
                                     <Unscrollable className={styles.filters}>
                                         {this.renderTextFilter()}

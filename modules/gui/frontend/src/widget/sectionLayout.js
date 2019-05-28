@@ -30,13 +30,13 @@ TopBar.propTypes = {
     padding: PropTypes.any
 }
 
-export const Content = ({menuPadding, appMenuPadding, horizontalPadding, edgePadding, className, children}) => {
+export const Content = ({menuPadding, appMenuPadding, horizontalPadding, verticalPadding, className, children}) => {
     return (
         <div className={[
             flexy.elastic,
             styles.content,
             horizontalPadding ? styles.horizontalPadding : null,
-            edgePadding ? styles.edgePadding : null,
+            verticalPadding ? styles.verticalPadding : null,
             menuPadding ? styles.menuPadding : null,
             appMenuPadding ? styles.appMenuPadding : null,
             className
@@ -49,18 +49,18 @@ export const Content = ({menuPadding, appMenuPadding, horizontalPadding, edgePad
 Content.propTypes = {
     children: PropTypes.any.isRequired,
     appMenuPadding: PropTypes.any,
-    edgePadding: PropTypes.any,
     horizontalPadding: PropTypes.any,
     menuPadding: PropTypes.any,
     padding: PropTypes.any,
+    verticalPadding: PropTypes.any,
 }
 
-export const ContentPadding = ({menuPadding, appMenuPadding, horizontalPadding, edgePadding, className, children}) => {
+export const ContentPadding = ({menuPadding, appMenuPadding, horizontalPadding, verticalPadding, className, children}) => {
     return (
         <div className={[
             styles.content,
             horizontalPadding ? styles.horizontalPadding : null,
-            edgePadding ? styles.edgePadding : null,
+            verticalPadding ? styles.verticalPadding : null,
             menuPadding ? styles.menuPadding : null,
             appMenuPadding ? styles.appMenuPadding : null,
             className
@@ -73,10 +73,10 @@ export const ContentPadding = ({menuPadding, appMenuPadding, horizontalPadding, 
 ContentPadding.propTypes = {
     children: PropTypes.any.isRequired,
     appMenuPadding: PropTypes.any,
-    edgePadding: PropTypes.any,
     horizontalPadding: PropTypes.any,
     menuPadding: PropTypes.any,
     padding: PropTypes.any,
+    verticalPadding: PropTypes.any,
 }
 
 export const BottomBar = ({padding = true, className, children}) => {
