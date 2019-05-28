@@ -59,6 +59,11 @@
     --margin-top: 0rem;
 }
 
+.content.horizontalPadding {
+    --edgePadding-left: 1.5rem;
+    --edgePadding-right: 1.5rem;
+}
+
 .content.edgePadding {
     --edgePadding-top: 2.5rem;
     --edgePadding-right: 1.5rem;

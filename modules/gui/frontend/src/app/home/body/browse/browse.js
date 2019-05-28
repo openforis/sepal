@@ -495,7 +495,7 @@ class Browse extends React.Component {
                 <TopBar label={msg('home.sections.browse')}>
                     {this.renderToolbar(selected, nothingSelected)}
                 </TopBar>
-                <Content menuPadding>
+                <Content menuPadding horizontalPadding>
                     <ScrollableContainer>
                         <Scrollable direction='xy'>
                             <div className={styles.fileList}>

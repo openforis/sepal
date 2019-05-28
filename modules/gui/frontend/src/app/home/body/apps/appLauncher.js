@@ -72,7 +72,7 @@ class AppLauncher extends React.Component {
 
     renderAppLauncher() {
         return (
-            <ContentPadding menuPadding>
+            <ContentPadding menuPadding horizontalPadding>
                 <ScrollableContainer>
                     <Scrollable direction='y' className={styles.apps}>
                         {this.renderApps()}
