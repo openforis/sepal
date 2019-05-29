@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {EMPTY, Subject, animationFrameScheduler, interval} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
+import {delay, distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -42,7 +42,7 @@ const lerp = rate =>
 class List extends React.Component {
     subscriptions = []
     highlighted = React.createRef()
-    scrollHighlighted$ = new Subject()
+    update$ = new Subject()
     state = {
         highlightedOption: null,
         overrideHover: false
@@ -72,7 +72,7 @@ class List extends React.Component {
             <Keybinding keymap={keymap} disabled={!keyboard}>
                 <ReactResizeDetector
                     handleHeight
-                    onResize={() => this.scrollHighlighted$.next()}>
+                    onResize={() => this.update$.next()}>
                     <ScrollableContainer className={className}>
                         <Scrollable className={styles.options} direction='xy'>
                             {scrollableContainerHeight => this.renderList(scrollableContainerHeight)}
@@ -269,19 +269,13 @@ class List extends React.Component {
     }
 
     selectOption(option) {
-        this.scrollHighlighted$.next(option)
-    }
-
-    update() {
-        const highlightedOption = this.getSelectedOption() || this.getFirstSelectableOption()
-        this.setState({highlightedOption}, () => this.scrollHighlighted$.next())
-    }
-
-    initializeAutoScroll() {
-        const animationFrame$ = interval(0, animationFrameScheduler)
         const {onSelect} = this.props
+        onSelect && onSelect(option)
+    }
 
-        const scroll$ = this.scrollHighlighted$.pipe(
+    initializeCenterHighlighted() {
+        const animationFrame$ = interval(0, animationFrameScheduler)
+        const scroll$ = this.update$.pipe(
             map(() => this.highlighted.current),
             filter(element => element),
             switchMap(element => {
@@ -298,25 +292,23 @@ class List extends React.Component {
             })
         )
 
-        const select$ = this.scrollHighlighted$.pipe(
-            filter(option => option)
-        )
-
         this.subscriptions.push(
             scroll$.subscribe(
-                ({element, value}) => this.props.autoCenter && setScrollOffset(element, value)
-            ),
-            select$.subscribe(
-                option => {
-                    onSelect(option)
+                ({element, value}) => {
+                    this.props.autoCenter && setScrollOffset(element, value)
                 }
             )
         )
     }
 
+    highlightSelectedOption() {
+        const highlightedOption = this.getSelectedOption() || this.getFirstSelectableOption()
+        this.setState({highlightedOption}, () => this.update$.next())
+    }
+
     componentDidMount() {
-        this.initializeAutoScroll()
-        this.update()
+        this.initializeCenterHighlighted()
+        this.highlightSelectedOption()
     }
 
     shouldComponentUpdate(nextProps, nextState) {
@@ -330,12 +322,6 @@ class List extends React.Component {
             return true
         }
         return false
-    }
-
-    componentDidUpdate(prevProps) {
-        if (!_.isEqual(prevProps, this.props)) {
-            this.update()
-        }
     }
 
     componentWillUnmount() {
