@@ -6,20 +6,16 @@
     z-index: 1;
 }
 
-.inactive {
-    z-index: 0;
-}
-
 .enabled {
     animation-name: show;
-    animation-duration: 200ms;
+    animation-duration: 300ms;
     animation-fill-mode: forwards;
     animation-timing-function: ease-in-out;
 }
 
 .disabled {
     animation-name: hide;
-    animation-duration: 200ms;
+    animation-duration: 300ms;
     animation-fill-mode: forwards;
     animation-timing-function: ease-in-out;
 }
@@ -27,7 +23,7 @@
 @keyframes show {
     0% {
         opacity: 0;
-        transform: translateX(25%);
+        transform: translateX(15%);
     }
     100% {
         opacity: 1;
@@ -42,6 +38,6 @@
     }
     100% {
         opacity: 0;
-        transform: translateX(25%);
+        transform: translateX(15%);
     }
 }
