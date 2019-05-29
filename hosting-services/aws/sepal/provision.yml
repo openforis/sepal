@@ -9,7 +9,7 @@
   tasks:
     - name: Create Sepal security group
       ec2_group:
-        name: Sepal
+        name: "Sepal"
         description: The Sepal Security Group
         region: "{{ region }}"
         rules:
@@ -54,8 +54,8 @@
     - name: Provision Sepal instance
       ec2:
         key_name: "{{ region }}"
-        group: Sepal
-        instance_type: m4.large
+        group: "Sepal"
+        instance_type: m5.xlarge
         image: "{{ ami }}"
         region: "{{ region }}"
         zone: "{{ availability_zone }}"
@@ -71,11 +71,11 @@
         ebs_optimized: true
         volumes:
           - device_name: /dev/xvda
-            delete_on_termination: true
+            delete_on_termination: false
             volume_type: gp2
             volume_size: 100
           - device_name: /dev/sdb
-            delete_on_termination: true
+            delete_on_termination: false
             volume_type: gp2
             volume_size: 100
       register: ec2
