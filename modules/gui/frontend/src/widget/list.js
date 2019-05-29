@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {EMPTY, Subject, animationFrameScheduler, interval} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {delay, distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
+import {distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
