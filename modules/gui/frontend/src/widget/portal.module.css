@@ -11,11 +11,11 @@
 }
 
 .portalContainer.fullScreen {
-    z-index: 2;
+    /* z-index: 2; */
 }
 
 .portalContainer.section {
     top: var(--top-bar-height);
     pointer-events: none;
-    z-index: 1;
+    /* z-index: 1; */
 }
