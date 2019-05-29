@@ -16,21 +16,46 @@ export const PortalContainer = ({id}) => (
     />
 )
 
-const Portal = ({container, containerId, content, children, selectableContext}) => {
-    const selectableContainerId = selectableContext ? selectableContext.id : null
-    if (container && containerId) {
-        throw new Error('Portal can be passed either a container or a containerId, not both.')
+class Portal extends React.Component {
+    getPortalContainer() {
+        const {type, container, selectableContext} = this.props
+        if (type === 'container' && container) {
+            return container
+        }
+        if (type === 'section') {
+            const selectableContainerId = selectableContext ? selectableContext.id : null
+            if (selectableContainerId) {
+                return document.getElementById(selectableContainerId)
+            } else {
+                throw new Error('Cannot render section Portal out of a section.')
+            }
+        }
+        if (type === 'global') {
+            return document.getElementById(DEFAULT_PORTAL_CONTAINER_ID)
+        }
+        throw new Error('Undefined Portal target.')
     }
-    return ReactDOM.createPortal(
-        content || children,
-        container || document.getElementById(containerId || selectableContainerId || DEFAULT_PORTAL_CONTAINER_ID)
-    )
+    
+    renderContent() {
+        const {content, children} = this.props
+        return content || children
+    }
+
+    render() {
+        const {type, container, selectableContext} = this.props
+        return (
+            ReactDOM.createPortal(
+                this.renderContent(),
+                this.getPortalContainer(type, container, selectableContext)
+            )
+        )
+    }
 }
 
 Portal.propTypes = {
+    type: PropTypes.oneOf(['global', 'section', 'container']).isRequired,
     children: PropTypes.any,
     container: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-    containerId: PropTypes.string,
     content: PropTypes.any
 }
 

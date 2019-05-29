@@ -401,7 +401,7 @@ export class MapLayer extends React.Component {
             </div>
         )
         return shown && mapPanes
-            ? <Portal content={content} container={mapPanes.overlayMouseTarget}/>
+            ? <Portal type='container' content={content} container={mapPanes.overlayMouseTarget}/>
             : null
     }
 

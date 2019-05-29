@@ -50,7 +50,7 @@ class Menu extends React.Component {
                     onClick={() => this.toggleOpen()}/>
             </span>
             {open
-                ? <Portal>
+                ? <Portal type='global'>
                     <MenuContext.Provider value={this}>
                         <div className={styles.captureClicks} onClick={() => this.toggleOpen()}/>
                         <ul className={styles.list} style={this.menuStyle()}>

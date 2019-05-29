@@ -28,7 +28,7 @@ class FloatingBox extends React.Component {
             '--below-top': bottom
         }
         return (
-            <Portal>
+            <Portal type='global'>
                 <div
                     ref={forwardedRef}
                     className={[styles.box, styles[placement], className].join(' ')}

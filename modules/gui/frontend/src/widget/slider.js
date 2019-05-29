@@ -183,7 +183,7 @@ class SliderDynamics extends React.Component {
         const {dragging} = this.state
         return dragging
             ? (
-                <Portal>
+                <Portal type='global'>
                     <div className={styles.cursorOverlay}/>
                 </Portal>
             ) : null

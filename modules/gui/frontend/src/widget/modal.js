@@ -4,7 +4,7 @@ import React from 'react'
 import styles from './modal.module.css'
 
 export const Modal = ({onClick, children}) =>
-    <Portal>
+    <Portal type='global' center>
         <div className={styles.modal} onClick={e => {
             e.stopPropagation()
             onClick && onClick()

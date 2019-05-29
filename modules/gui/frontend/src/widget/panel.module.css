@@ -1,3 +1,12 @@
+.centerWrapper {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
 .panel {
     --margin-left: calc(var(--menu-clearance) + .5rem);
     --margin-right: 3.5rem;
@@ -69,11 +78,10 @@
 
 .panel.center {
     position: absolute;
-    top: .5rem;
-    bottom: .5rem;
-    left: calc(var(--menu-clearance) + .5rem);
+    left: var(--margin-left);
     right: var(--margin-right);
     margin: auto;
+    width: auto;
 }
 
 .panel.inline {

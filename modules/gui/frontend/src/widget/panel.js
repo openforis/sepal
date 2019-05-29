@@ -42,8 +42,11 @@ class _Panel extends React.Component {
         const {type} = this.props
         return type === 'modal'
             ? <Modal>{content}</Modal>
-            // : <Portal containerId='sectionPortalContainer'>{content}</Portal>
-            : <Portal>{content}</Portal>
+            : <Portal type='section'>
+                <div className={type === 'center' ? styles.centerWrapper : null}>
+                    {content}
+                </div>
+            </Portal>
     }
 
     render() {
