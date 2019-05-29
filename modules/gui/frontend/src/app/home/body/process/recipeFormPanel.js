@@ -80,13 +80,18 @@ export const recipeFormPanel = ({
         }
 
         const policyToApply = props => ({...policy(props), ...additionalPolicy(props)})
+        // [HACK] Using withRecipe() twice.
+        // activatable() is dependent on recipe for its policy -> withRecipe() before activatable()
+        // withRecipe() is dependent on activatable props -> activatable() before withRecipe()
         return (
             withPanelWizardContext()(
-                activatable({id, policy: policyToApply})(
-                    withRecipe(createMapRecipeToProps(mapRecipeToProps))(
-                        initValues(valuesSpec)(
-                            form({fields, constraints})(
-                                HigherOrderComponent
+                withRecipe(createMapRecipeToProps(mapRecipeToProps))(
+                    activatable({id, policy: policyToApply})(
+                        withRecipe(createMapRecipeToProps(mapRecipeToProps))(
+                            initValues(valuesSpec)(
+                                form({fields, constraints})(
+                                    HigherOrderComponent
+                                )
                             )
                         )
                     )
