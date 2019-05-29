@@ -70,7 +70,6 @@
   },
   "home": {
     "sections": {
-      "dashboard": "TBD",
       "process": "Process",
       "browse": "Files",
       "terminal": "Terminal",
@@ -367,15 +366,15 @@
               "label": "Priority",
               "cloudFree": {
                 "label": "Cloud free",
-                "tooltip": "[TODO] Some tooltip"
+                "tooltip": "Prefer imagery as cloud-free as possible, ignoring the date"
               },
               "balanced": {
                 "label": "Balanced",
-                "tooltip": "[TODO] Some tooltip"
+                "tooltip": "Try to take images no too cloudy and not too far from the target date"
               },
               "targetDate": {
                 "label": "Target date",
-                "tooltip": "[TODO] Some tooltip"
+                "tooltip": "Prefer imagery as close as possible to the target day"
               }
             }
           }
