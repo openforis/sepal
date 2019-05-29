@@ -132,8 +132,7 @@ class AssemblyPreview extends React.Component {
         const message = e.response && e.response.code
             ? msg(e.response.code, e.response.data)
             : msg('process.classification.preview.error')
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             error:
                 <div>
                     {message}
@@ -148,7 +147,7 @@ class AssemblyPreview extends React.Component {
                         />
                     </div>
                 </div>
-        }))
+        })
     }
 
     toPreviewRequest(recipe) {

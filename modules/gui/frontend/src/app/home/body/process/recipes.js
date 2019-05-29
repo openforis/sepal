@@ -111,10 +111,9 @@ class RecipeList extends React.Component {
     }
 
     setFilter(filter) {
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             filter
-        }))
+        })
     }
 
     getFilteredRecipes() {

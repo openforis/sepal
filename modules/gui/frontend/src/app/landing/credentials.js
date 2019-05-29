@@ -12,17 +12,15 @@ export default class Credentials extends React.Component {
     }
 
     switchToLogin() {
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             forgotPassword: false
-        }))
+        })
     }
 
     switchToForgotPassword() {
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             forgotPassword: true
-        }))
+        })
     }
 
     renderForgotPassword() {

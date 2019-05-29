@@ -119,10 +119,9 @@ class Tasks extends React.Component {
     removeTask(task) {
         const {asyncActionBuilder} = this.props
         const {tasks} = this.state
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             tasks: tasks.filter(t => t.id !== task.id)
-        }))
+        })
         asyncActionBuilder('REMOVE_TASK',
             api.tasks.remove$(task.id)
         ).dispatch()

@@ -285,10 +285,9 @@ export const recipe = RecipeState => {
             }
 
             componentDidMount() {
-                this.setState(prevState => ({
-                    ...prevState,
+                this.setState({
                     recipeState: RecipeState(this.props.recipeId)
-                }))
+                })
             }
         }
 

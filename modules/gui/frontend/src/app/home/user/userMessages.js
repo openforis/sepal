@@ -112,10 +112,9 @@ class _UserMessages extends React.Component {
     }
 
     editMessage(userMessage) {
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             selectedMessage: userMessage
-        }))
+        })
     }
 
     renderMessages() {

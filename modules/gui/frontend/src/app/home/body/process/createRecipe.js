@@ -50,10 +50,9 @@ class CreateRecipe extends React.Component {
     }
 
     showRecipeTypeInfo(type) {
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             selectedRecipeType: type
-        }))
+        })
     }
 
     closePanel() {

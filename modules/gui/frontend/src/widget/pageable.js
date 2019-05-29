@@ -27,19 +27,17 @@ export class Pageable extends React.Component {
         const {items, limit} = this.props
         const itemCount = items.length
         const pageCount = Math.max(Math.ceil(itemCount / limit), 1)
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             pageCount,
             itemCount,
             pageNumber: 1
-        }))
+        })
     }
 
     firstPage() {
-        this.setState(prevState => ({
-            ...prevState,
+        this.setState({
             pageNumber: 1
-        }))
+        })
     }
 
     lastPage() {

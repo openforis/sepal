@@ -234,15 +234,15 @@ class List extends React.Component {
     }
 
     highlightPrevious() {
-        this.setState(prevState => ({
-            highlightedOption: this.getPreviousSelectableOption(prevState.highlightedOption),
+        this.setState(({highlightedOption}) => ({
+            highlightedOption: this.getPreviousSelectableOption(highlightedOption),
             overrideHover: true
         }), this.scroll)
     }
 
     highlightNext() {
-        this.setState(prevState => ({
-            highlightedOption: this.getNextSelectableOption(prevState.highlightedOption),
+        this.setState(({highlightedOption}) => ({
+            highlightedOption: this.getNextSelectableOption(highlightedOption),
             overrideHover: true
         }), this.scroll)
     }
