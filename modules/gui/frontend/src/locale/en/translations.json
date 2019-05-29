@@ -70,7 +70,6 @@
   },
   "home": {
     "sections": {
-      "dashboard": "TBD",
       "process": "Process",
       "browse": "Files",
       "terminal": "Terminal",
@@ -367,15 +366,15 @@
               "label": "Priority",
               "cloudFree": {
                 "label": "Cloud free",
-                "tooltip": "[TODO] Some tooltip"
+                "tooltip": "Prefer imagery as cloud-free as possible, ignoring the date"
               },
               "balanced": {
                 "label": "Balanced",
-                "tooltip": "[TODO] Some tooltip"
+                "tooltip": "Try to take images no too cloudy and not too far from the target date"
               },
               "targetDate": {
                 "label": "Target date",
-                "tooltip": "[TODO] Some tooltip"
+                "tooltip": "Prefer imagery as close as possible to the target day"
               }
             }
           }
@@ -646,7 +645,49 @@
           },
           "derivedBands": {
             "label": "Derived bands",
-            "tooltip": "Add additional derived bands to use in the classification."
+            "tooltip": "Add additional derived bands to use in the classification.",
+            "bandCombinations": {
+              "label": "Band combinations",
+              "options": {
+                "RATIO": {
+                  "label": "Ratio",
+                  "tooltip": "Include bands with the ratio evaluated pair-wise between all selected bands"
+                },
+                "NORMALIZED_DIFFERENCE": {
+                  "label": "Normalized difference",
+                  "tooltip": "Include bands with the normalized difference evaluated pair-wise between all selected bands"
+                },
+                "DIFFERENCE": {
+                  "label": "Difference",
+                  "tooltip": "Include bands with the difference evaluated pair-wise between all selected bands"
+                },
+                "DISTANCE": {
+                  "label": "Distance",
+                  "tooltip": "Include bands with the distance evaluated pair-wise between all selected bands"
+                },
+                "ANGLE": {
+                  "label": "Angle",
+                  "tooltip": "Include bands with the angle evaluated pair-wise between all selected bands"
+                },
+                "INDEXES": {
+                  "label": "Indexes",
+                  "tooltip": "Include selected indexes"
+                }
+              }
+            },
+            "profiles": {
+              "label": "Profiles",
+              "options": {
+                "SIMPLE": {
+                  "label": "Simple",
+                  "tooltip": "Include red, nir, swir1, swir2 and ratios between them."
+                },
+                "RLCMS": {
+                  "label": "RLCMS",
+                  "tooltip": "Include bands used by the Regional Land Cover Monitoring System"
+                }
+              }
+            }
           },
           "loadingBands": "Loading available bands",
           "loadingBandsError": "Failed to load from Google Earth Engine",

@@ -17,11 +17,10 @@ const actionBuilder = (type, props, prefix) => {
             state || {}
         )
 
-    const applySideEffects = state => {
-        return sideEffects.forEach(
-            sideEffect => sideEffect(resolve(state, prefix))
+    const applySideEffects = state =>
+        sideEffects.forEach(
+            sideEffect => sideEffect(resolve(state, prefix || ''))
         )
-    }
 
     return {
         set(path, value) {
