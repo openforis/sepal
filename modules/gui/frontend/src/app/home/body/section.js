@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './section.module.css'
 
-const Section = ({path, captureMouseEvents = true, children}) => (
+const Section = ({path, captureMouseEvents, children}) => (
     <Selectable
         id={path}
         className={styles.section}
@@ -18,6 +18,10 @@ Section.propTypes = {
     captureMouseEvents: PropTypes.any,
     children: PropTypes.any,
     path: PropTypes.string,
+}
+
+Section.defaultProps = {
+    captureMouseEvents: true
 }
 
 export default Section
