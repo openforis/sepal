@@ -1,4 +1,5 @@
 .panel {
+    height: 100%;
     max-width: 69rem;
     z-index: 5;
 }
