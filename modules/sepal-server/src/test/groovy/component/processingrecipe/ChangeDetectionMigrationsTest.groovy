@@ -3,8 +3,10 @@ package component.processingrecipe
 import groovy.json.JsonOutput
 import org.openforis.sepal.component.processingrecipe.command.MigrateRecipes
 import org.openforis.sepal.component.processingrecipe.migration.ChangeDetectionMigrations
+import spock.lang.Ignore
 import spock.lang.Unroll
 
+@Ignore
 class ChangeDetectionMigrationsTest extends RecipeTest {
 
     def 'Test with mosaic references'() {
