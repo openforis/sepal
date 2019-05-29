@@ -9,7 +9,10 @@ class TabContent extends React.PureComponent {
         const {id, type, selected, children} = this.props
         return (
             <div className={[styles.tabContent, selected && styles.selected].join(' ')}>
-                <Enabled value={selected}>
+                <Enabled
+                    value={selected}
+                    enabledClassName={styles.enabled}
+                    disabledClassName={styles.disabled}>
                     {children({id, type})}
                 </Enabled>
             </div>

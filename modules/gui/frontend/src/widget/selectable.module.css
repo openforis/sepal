@@ -1,3 +1,47 @@
 .captureMouseEvents {
     pointer-events: all;
 }
+
+.active {
+    z-index: 1;
+}
+
+.inactive {
+    z-index: 0;
+}
+
+.enabled {
+    animation-name: show;
+    animation-duration: 200ms;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+}
+
+.disabled {
+    animation-name: hide;
+    animation-duration: 200ms;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+}
+
+@keyframes show {
+    0% {
+        opacity: 0;
+        transform: translateX(25%);
+    }
+    100% {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes hide {
+    0% {
+        opacity: 1;
+        transform: none;
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(25%);
+    }
+}

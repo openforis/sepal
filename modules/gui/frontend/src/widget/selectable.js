@@ -4,111 +4,56 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './selectable.module.css'
 
-export class Select extends React.Component {
-    getChildContext() {
-        const focus = element => this.elementToFocus = element
-        return {focus: focus.bind(this)}
-    }
-
-    render() {
-        return (
-            <div className={this.props.className}>
-                {this.props.children}
-            </div>
-        )
-    }
-
-    componentDidUpdate() {
-        this.elementToFocus && this.elementToFocus.blur()
-    }
-}
-
-Select.childContextTypes = {
-    focus: PropTypes.func
-}
-
-Select.propTypes = {
-    children: PropTypes.any,
-    className: PropTypes.string
-}
-
 const Context = React.createContext()
 
 export class Selectable extends React.Component {
-    constructor(props) {
-        super(props)
-        this.active = false
-        if (this.props.active) {
-            this.hasBeenActive = true
-            this.active = true
-            this.className = props.classNames.in
-        }
+    state = {
+        hasBeenActive: false
     }
 
-    getChildContext() {
-        return {active: this.active}
-    }
-
-    UNSAFE_componentWillReceiveProps(nextProps) {
-        if (this.props.active && !nextProps.active) {
-            this.className = this.props.classNames.out
-            this.active = false
-
-            // this.activeElement = document.activeElement.tagName === 'IFRAME'
-            //     ? document.activeElement.contentWindow.document.activeElement
-            //     : document.activeElement
-        } else if (!this.props.active && nextProps.active) {
-            this.className = this.props.classNames.in
-            this.hasBeenActive = true
-            this.active = true
-            // this.activeElement && this.context.focus(this.activeElement)
-        } else {
-            this.active = false
+    static getDerivedStateFromProps(props, state) {
+        return {
+            ...state,
+            hasBeenActive: state.hasBeenActive || props.active
         }
     }
 
     render() {
-        const {id, active, classNames, captureMouseEvents} = this.props
-        if (!this.hasBeenActive)
-            return null
-        else
-        // A selectable is not unmounted when deactivated to allow for animated transitions.
-        // <Enabled/> is used to disconnect deactivated selectable from the Redux store.
-            return (
-                <Context.Provider value={{id}}>
+        const {id, active, className, captureMouseEvents} = this.props
+        const {hasBeenActive} = this.state
+        const portalContainerId = `portal_${id}`
+        return hasBeenActive
+            ? (
+                <Context.Provider value={{portalContainerId}}>
                     <div className={[
+                        active ? styles.active : styles.inactive,
                         active && captureMouseEvents ? styles.captureMouseEvents : null,
-                        classNames.default,
-                        this.className
+                        className
                     ].join(' ')}>
-                        <Enabled value={this.props.active}>
+                        <Enabled
+                            value={active}
+                            enabledClassName={styles.enabled}
+                            disabledClassName={styles.disabled}>
                             {this.props.children}
+                            <PortalContainer id={portalContainerId}/>
                         </Enabled>
-                        <PortalContainer id={id}/>
                     </div>
                 </Context.Provider>
             )
+            : null
     }
 }
 
-Selectable.contextTypes = {
-    focus: PropTypes.func
-}
-
-Selectable.childContextTypes = {
-    active: PropTypes.bool
-}
-
 Selectable.propTypes = {
-    active: PropTypes.bool,
+    active: PropTypes.bool.isRequired,
     captureMouseEvents: PropTypes.any,
     children: PropTypes.any,
-    classNames: PropTypes.objectOf(PropTypes.string),
+    className: PropTypes.string,
     id: PropTypes.string
 }
 
 export const withSelectableContext = () =>
-    WrappedComponent => {
+    WrappedComponent =>
         class HigherOrderComponent extends React.Component {
             render() {
                 return (
@@ -123,6 +68,3 @@ export const withSelectableContext = () =>
                 )
             }
         }
-
-        return HigherOrderComponent
-    }

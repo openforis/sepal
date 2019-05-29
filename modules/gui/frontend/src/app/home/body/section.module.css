@@ -5,24 +5,4 @@
     left: 0;
     right: 0;
     overflow-y: hidden;
-    z-index: -1;
-}
-
-.in {
-    z-index: 1;
-    animation-name: show;
-    animation-duration: 200ms;
-    animation-fill-mode: forwards;
-    animation-timing-function: ease-in-out;
-}
-
-@keyframes show {
-    0% {
-        opacity: 0;
-        transform: translateX(25%);
-    }
-    100% {
-        opacity: 1;
-        transform: none;
-    }
 }

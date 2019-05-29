@@ -197,3 +197,11 @@ span.title.placeholder {
     opacity: 1;
     z-index: 1;
 }
+
+.enabled {
+    display: block;
+}
+
+.disabled {
+    display: none;
+}

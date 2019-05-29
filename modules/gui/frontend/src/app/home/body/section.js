@@ -7,13 +7,9 @@ import styles from './section.module.css'
 const Section = ({path, captureMouseEvents = true, children}) => (
     <Selectable
         id={path}
+        className={styles.section}
         active={isPathInLocation(path)}
-        captureMouseEvents={captureMouseEvents}
-        classNames={{
-            default: styles.section,
-            in: styles.in,
-            out: styles.out
-        }}>
+        captureMouseEvents={captureMouseEvents}>
         {children}
     </Selectable>
 )

@@ -180,14 +180,18 @@ export class Enabled extends React.PureComponent {
     }
 
     renderChildren(enabled) {
-        const {children} = this.props
+        const {className, enabledClassName, disabledClassName, children} = this.props
         return (
             <EnabledContext.Provider value={enabled}>
-                <div style={{
-                    width: '100%',
-                    height: '100%',
-                    display: enabled ? 'block' : 'none'
-                }}>
+                <div
+                    style={{
+                        height: '100%',
+                        width: '100%'
+                    }}
+                    className={[
+                        className,
+                        enabled ? enabledClassName : disabledClassName,
+                    ].join(' ')}>
                     {children}
                 </div>
             </EnabledContext.Provider>
@@ -205,7 +209,10 @@ export class Enabled extends React.PureComponent {
 
 Enabled.propTypes = {
     children: PropTypes.any.isRequired,
-    value: PropTypes.any.isRequired
+    value: PropTypes.any.isRequired,
+    className: PropTypes.string,
+    disabledClassName: PropTypes.string,
+    enabledClassName: PropTypes.string
 }
 
 const stream = component => {

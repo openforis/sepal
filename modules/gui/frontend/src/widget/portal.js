@@ -23,9 +23,9 @@ class Portal extends React.Component {
             return container
         }
         if (type === 'section') {
-            const selectableContainerId = selectableContext ? selectableContext.id : null
-            if (selectableContainerId) {
-                return document.getElementById(selectableContainerId)
+            const portalContainerId = selectableContext ? selectableContext.portalContainerId : null
+            if (portalContainerId) {
+                return document.getElementById(portalContainerId)
             } else {
                 throw new Error('Cannot render section Portal out of a section.')
             }
@@ -42,11 +42,10 @@ class Portal extends React.Component {
     }
 
     render() {
-        const {type, container, selectableContext} = this.props
         return (
             ReactDOM.createPortal(
                 this.renderContent(),
-                this.getPortalContainer(type, container, selectableContext)
+                this.getPortalContainer()
             )
         )
     }
