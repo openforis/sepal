@@ -1,20 +1,20 @@
-import {BandSetSpec} from './bandSetSpec'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import guid from 'guid'
+import React from 'react'
+import {selectFrom} from 'stateUtils'
+import {msg} from 'translate'
+import ButtonSelect from 'widget/buttonSelect'
 import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import PanelSections from 'widget/panelSections'
+import AssetSection from './assetSection'
+import {BandSetSpec} from './bandSetSpec'
+import ImageForm from './imageForm'
+import styles from './inputImage.module.css'
 import {getAvailableIndexes} from './opticalIndexes'
 import {getProfileBandSetSpecs, isProfileDisabled} from './profiles'
-import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
-import AssetSection from './assetSection'
-import ButtonSelect from 'widget/buttonSelect'
-import ImageForm from './imageForm'
-import PanelSections from 'widget/panelSections'
-import React from 'react'
 import RecipeSection from './recipeSection'
 import SectionSelection from './sectionSelection'
-import guid from 'guid'
-import styles from './inputImage.module.css'
 
 const fields = {
     imageId: new Field(),
@@ -30,8 +30,8 @@ const fields = {
         .notEmpty('process.classification.panel.inputImagery.form.bands.required'),
     bandSetSpecs: new Field()
         .predicate((bandSetSpecs, {bands}) =>
-            bandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands)),
-        'process.classification.panel.inputImagery.form.bandSetSpecs.required')
+                bandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands)),
+            'process.classification.panel.inputImagery.form.bandSetSpecs.required')
 }
 
 const mapRecipeToProps = recipe => ({
@@ -102,18 +102,18 @@ class InputImage extends React.Component {
     getSelectedImage() {
         const {inputs: {section, recipe, asset}} = this.props
         switch (section.value) {
-        case 'ASSET':
-            return {
-                type: 'ASSET',
-                id: asset.value
-            }
-        case 'RECIPE_REF':
-            return {
-                type: 'RECIPE_REF',
-                id: recipe.value
-            }
-        default:
-            throw new Error('Unexpected image section: ' + section.value)
+            case 'ASSET':
+                return {
+                    type: 'ASSET',
+                    id: asset.value
+                }
+            case 'RECIPE_REF':
+                return {
+                    type: 'RECIPE_REF',
+                    id: recipe.value
+                }
+            default:
+                throw new Error('Unexpected image section: ' + section.value)
         }
     }
 
@@ -122,18 +122,18 @@ class InputImage extends React.Component {
 
         const getSpecs = () => {
             switch (option.type) {
-            case 'PROFILE':
-                return getProfileBandSetSpecs(option.value, bands.value)
-            case 'PAIR_WISE_EXPRESSION':
-                return bandSetSpecs.value.concat(
-                    {id: guid(), type: 'PAIR_WISE_EXPRESSION', operation: option.value, included: []}
-                )
-            case 'INDEXES':
-                return bandSetSpecs.value.concat(
-                    {id: guid(), type: 'INDEXES', included: []}
-                )
-            default:
-                throw new Error('Unsupported type: ' + JSON.stringify(option))
+                case 'PROFILE':
+                    return getProfileBandSetSpecs(option.value, bands.value)
+                case 'PAIR_WISE_EXPRESSION':
+                    return bandSetSpecs.value.concat(
+                        {id: guid(), type: 'PAIR_WISE_EXPRESSION', operation: option.value, included: []}
+                    )
+                case 'INDEXES':
+                    return bandSetSpecs.value.concat(
+                        {id: guid(), type: 'INDEXES', included: []}
+                    )
+                default:
+                    throw new Error('Unsupported type: ' + JSON.stringify(option))
             }
         }
 
@@ -143,55 +143,40 @@ class InputImage extends React.Component {
     derivedBandsOptions() {
         const {inputs: {bands, bandSetSpecs}} = this.props
         const indexAlreadyAdded = (bandSetSpecs.value || []).find(spec => spec.type === 'INDEXES')
+        const bandCombination = ({value, type, disabled}) => ({
+            value,
+            type,
+            label: msg(`process.classification.panel.inputImagery.derivedBands.bandCombinations.options.${value}.label`),
+            tooltip: msg(`process.classification.panel.inputImagery.derivedBands.bandCombinations.options.${value}.tooltip`),
+            disabled
+        })
+        const profile = value => ({
+            value,
+            type: 'PROFILE',
+            label: msg(`process.classification.panel.inputImagery.derivedBands.profiles.options.${value}.label`),
+            tooltip: msg(`process.classification.panel.inputImagery.derivedBands.profiles.options.${value}.tooltip`),
+            disabled: isProfileDisabled(value, bands.value)
+        })
         return [{
-            label: 'Band combinations',
-            options: [{
-                value: 'RATIO',
-                label: 'Ratio',
-                tooltip: 'a tooltip',
-                type: 'PAIR_WISE_EXPRESSION',
-            }, {
-                value: 'NORMALIZED_DIFFERENCE',
-                label: 'Normalized difference',
-                tooltip: 'a tooltip',
-                type: 'PAIR_WISE_EXPRESSION'
-            }, {
-                value: 'DIFFERENCE',
-                label: 'Difference',
-                tooltip: 'a tooltip',
-                type: 'PAIR_WISE_EXPRESSION'
-            }, {
-                value: 'DISTANCE',
-                label: 'Distance',
-                tooltip: 'a tooltip',
-                type: 'PAIR_WISE_EXPRESSION'
-            }, {
-                value: 'ANGLE',
-                label: 'Angle',
-                tooltip: 'a tooltip',
-                type: 'PAIR_WISE_EXPRESSION'
-            }, {
-                value: 'INDEXES',
-                label: 'Indexes',
-                tooltip: 'select calculated indexes to include',
-                type: 'INDEXES',
-                disabled: !getAvailableIndexes(bands.value).length || !!indexAlreadyAdded
-            }]
+            label: msg('process.classification.panel.inputImagery.derivedBands.bandCombinations.label'),
+            options: [
+                bandCombination({value: 'RATIO', type: 'PAIR_WISE_EXPRESSION'}),
+                bandCombination({value: 'NORMALIZED_DIFFERENCE', type: 'PAIR_WISE_EXPRESSION'}),
+                bandCombination({value: 'DIFFERENCE', type: 'PAIR_WISE_EXPRESSION'}),
+                bandCombination({value: 'DISTANCE', type: 'PAIR_WISE_EXPRESSION'}),
+                bandCombination({value: 'ANGLE', type: 'PAIR_WISE_EXPRESSION'}),
+                bandCombination({
+                    value: 'INDEXES',
+                    type: 'INDEXES',
+                    disabled: !getAvailableIndexes(bands.value).length || !!indexAlreadyAdded
+                })
+            ]
         }, {
-            label: 'Profiles'
-            ,
-            options:
-                [{
-                    value: 'SIMPLE',
-                    label: 'Simple',
-                    type: 'PROFILE',
-                    disabled: isProfileDisabled('SIMPLE', bands.value)
-                }, {
-                    value: 'RLCMS',
-                    label: 'RLCMS',
-                    type: 'PROFILE',
-                    disabled: isProfileDisabled('RLCMS', bands.value)
-                }]
+            label: msg('process.classification.panel.inputImagery.derivedBands.profiles.label'),
+            options: [
+                profile('SIMPLE'),
+                profile('RLCMS')
+            ]
         }
 
         ]
@@ -206,12 +191,12 @@ const modelToValues = model => {
         bandSetSpecs: model.bandSetSpecs
     }
     switch (model.type) {
-    case 'RECIPE_REF':
-        return {...values, recipe: model.id}
-    case 'ASSET':
-        return {...values, asset: model.id}
-    default:
-        return values
+        case 'RECIPE_REF':
+            return {...values, recipe: model.id}
+        case 'ASSET':
+            return {...values, asset: model.id}
+        default:
+            return values
     }
 }
 
@@ -223,12 +208,12 @@ const valuesToModel = values => {
         bandSetSpecs: values.bandSetSpecs
     }
     switch (values.section) {
-    case 'RECIPE_REF':
-        return {...model, id: values.recipe}
-    case 'ASSET':
-        return {...model, id: values.asset}
-    default:
-        return null
+        case 'RECIPE_REF':
+            return {...model, id: values.recipe}
+        case 'ASSET':
+            return {...model, id: values.asset}
+        default:
+            return null
     }
 }
 
