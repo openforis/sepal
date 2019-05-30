@@ -118,12 +118,12 @@
     overflow: hidden;
 }
 
-.content > *:not(:last-child) {
+.content.default > *:not(:last-child) {
     margin-bottom: 2rem;
 }
 
 @media screen and (max-width: 500px) {
-    .content > *:not(:last-child) {
+    .content.default > *:not(:last-child) {
         margin-bottom: 1.5rem;
     }
 }
