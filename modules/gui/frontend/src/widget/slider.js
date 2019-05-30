@@ -9,6 +9,7 @@ import ReactResizeDetector from 'react-resize-detector'
 import ViewportResizeDetector from 'widget/viewportResizeDetector'
 import _ from 'lodash'
 import styles from './slider.module.css'
+import withSubscriptions from 'subscription'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 
@@ -130,7 +131,7 @@ SliderContainer.propTypes = {
     width: PropTypes.number
 }
 
-class SliderDynamics extends React.Component {
+class _SliderDynamics extends React.Component {
     state = {
         position: null,
         previewPosition: null,
@@ -139,7 +140,6 @@ class SliderDynamics extends React.Component {
         inhibitInput: null
     }
     handle = React.createRef()
-    subscriptions = []
 
     renderLeftRange() {
         const {position} = this.state
@@ -215,6 +215,7 @@ class SliderDynamics extends React.Component {
     }
 
     initialize({handleRef, clickableAreaRef}) {
+        const {addSubscription} = this.props
         this.setHandlePositionByValue()
 
         const handle = new Hammer(handleRef, {threshold: 1})
@@ -297,7 +298,7 @@ class SliderDynamics extends React.Component {
 
         const updateInput$ = merge(clickPosition$, panEnd$)
 
-        this.subscriptions = [
+        addSubscription(
             handlePosition$.subscribe(position =>
                 this.setHandlePosition(position)
             ),
@@ -313,11 +314,7 @@ class SliderDynamics extends React.Component {
             updateInput$.subscribe(() =>
                 this.updateInputValue()
             )
-        ]
-    }
-
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
+        )
     }
 
     componentDidUpdate(prevProps) {
@@ -403,6 +400,12 @@ class SliderDynamics extends React.Component {
         }
     }
 }
+
+const SliderDynamics = (
+    withSubscriptions(
+        _SliderDynamics
+    )
+)
 
 SliderDynamics.propTypes = {
     denormalize: PropTypes.func.isRequired,

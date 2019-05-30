@@ -1,9 +1,9 @@
 import {fromEvent, merge} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
+import withSubscriptions from 'subscription'
 
-export default class BlurDetector extends React.Component {
-    subscriptions = []
+class BlurDetector extends React.Component {
     element = React.createRef()
 
     render() {
@@ -16,7 +16,8 @@ export default class BlurDetector extends React.Component {
     }
 
     componentDidMount() {
-        this.subscriptions.push(
+        const {addSubscription} = this.props
+        addSubscription(
             merge(
                 fromEvent(document, 'click'),
                 fromEvent(document, 'focus'),
@@ -32,11 +33,11 @@ export default class BlurDetector extends React.Component {
         if (!inside)
             onBlur()
     }
-
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
-    }
 }
+
+export default withSubscriptions(
+    BlurDetector
+)
 
 BlurDetector.propTypes = {
     children: PropTypes.any.isRequired,

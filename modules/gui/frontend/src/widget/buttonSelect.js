@@ -9,6 +9,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './combo.module.css'
+import withSubscriptions from 'subscription'
 
 const SELECTION_DELAY_MS = 350
 
@@ -17,7 +18,6 @@ const mapStateToProps = state => ({
 })
 
 class ButtonSelect extends React.Component {
-    subscriptions = []
     input = React.createRef()
     list = React.createRef()
     select$ = new Subject()
@@ -109,8 +109,8 @@ class ButtonSelect extends React.Component {
     }
 
     handleSelect() {
-        const {onSelect} = this.props
-        this.subscriptions.push(
+        const {onSelect, addSubscription} = this.props
+        addSubscription(
             this.select$.subscribe(
                 option => {
                     this.setSelectedOption(option)
@@ -126,10 +126,11 @@ class ButtonSelect extends React.Component {
     }
 
     handleBlur() {
+        const {addSubscription} = this.props
         const click$ = fromEvent(document, 'click')
         const isInputClick = e => this.input.current && this.input.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
-        this.subscriptions.push(
+        addSubscription(
             click$.subscribe(e => {
                 if (!isInputClick(e) && !isListClick(e)) {
                     this.hideOptions()
@@ -145,10 +146,6 @@ class ButtonSelect extends React.Component {
 
     componentDidUpdate() {
         this.updateOptions()
-    }
-
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
     }
 
     updateOptions() {
@@ -167,7 +164,13 @@ class ButtonSelect extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(ButtonSelect)
+export default (
+    connect(mapStateToProps)(
+        withSubscriptions(
+            ButtonSelect
+        )
+    )
+)
 
 ButtonSelect.propTypes = {
     options: PropTypes.any.isRequired,

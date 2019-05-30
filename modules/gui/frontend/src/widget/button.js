@@ -9,6 +9,7 @@ import Tooltip from 'widget/tooltip'
 import lookStyles from 'style/look.module.css'
 import styles from './button.module.css'
 import withForwardedRef from 'ref'
+import withSubscriptions from 'subscription'
 
 const CLICK_HOLD_DELAY_MS = 750
 const CLICK_CANCEL_DELAY_MS = 250
@@ -16,8 +17,6 @@ const CLICK_CANCEL_DELAY_MS = 250
 const windowMouseUp$ = fromEvent(window, 'mouseup').pipe(distinctUntilChanged())
 
 class _Button extends React.Component {
-    subscriptions = []
-
     constructor(props) {
         super(props)
         const {onClickHold} = props
@@ -201,7 +200,7 @@ class _Button extends React.Component {
     }
 
     componentDidMount() {
-        const {onClickHold} = this.props
+        const {onClickHold, addSubscription} = this.props
 
         if (onClickHold && this.button.current) {
             const button = this.button.current
@@ -228,7 +227,7 @@ class _Button extends React.Component {
                     )
                 )
 
-            this.subscriptions.push(
+            addSubscription(
                 clickHold$.subscribe(e => {
                     const {onClickHold, disabled} = this.props
                     if (onClickHold && !disabled) {
@@ -252,7 +251,7 @@ class _Button extends React.Component {
                     )
                 )
 
-            this.subscriptions.push(
+            addSubscription(
                 click$.subscribe(e => {
                     const {onClick, disabled} = this.props
                     if (onClick && !disabled) {
@@ -262,15 +261,13 @@ class _Button extends React.Component {
             )
         }
     }
-
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
-    }
 }
 
 export const Button = (
     withForwardedRef(
-        _Button
+        withSubscriptions(
+            _Button
+        )
     )
 )
 
