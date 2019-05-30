@@ -130,7 +130,7 @@ class FusionTableLayer {
             map(e => {
                 const googleBounds = new google.maps.LatLngBounds()
                 if (!e.response.rows[0])
-                    throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.tableId}`)
+                    throw Error(`No ${this.keyColumn} = ${this.key} in ${this.tableId}`)
                 try {
                     e.response.rows[0].forEach(o =>
                         eachLatLng(o, latLng => googleBounds.extend(latLng))

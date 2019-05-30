@@ -339,7 +339,7 @@ const getDateFormat = resolution => {
     case DAY:
         return 'YYYY-MM-DD'
     default:
-        throw new Error('Invalid resolution: ' + resolution)
+        throw Error('Invalid resolution: ' + resolution)
     }
 }
 

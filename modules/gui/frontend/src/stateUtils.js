@@ -32,7 +32,7 @@ export const toPathList = (path, safe = false) => {
     if (_.isNull(path)) {
         return null
     }
-    throw new Error(`Unsupported path element type: '${path}'`)
+    throw Error(`Unsupported path element type: '${path}'`)
 }
 
 export const resolve = (object, path, createTemplates = false) =>
@@ -43,7 +43,7 @@ export const resolve = (object, path, createTemplates = false) =>
                     // match array item by index
                     const index = parseInt(pathElement)
                     if (isNaN(index)) {
-                        throw new Error('Cannot match array item with non-numeric index.')
+                        throw Error('Cannot match array item with non-numeric index.')
                     }
                     return value[index]
                 }
@@ -202,7 +202,7 @@ export class Mutator {
                 pathState.splice(pathKey, 1)
             } else {
                 console.error('Unsupported type to delete from', {pathState, pathKey})
-                throw new Error('Unsupported type to delete from')
+                throw Error('Unsupported type to delete from')
             }
         })
     }

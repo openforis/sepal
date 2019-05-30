@@ -6,7 +6,7 @@ const withContext = (Context, prop) =>
             class HigherOrderComponent extends React.Component {
                 wrap(context) {
                     if (!context) {
-                        throw new Error(`Component has no ${prop}: ${WrappedComponent}`)
+                        throw Error(`Component has no ${prop}: ${WrappedComponent}`)
                     }
                     return React.createElement(WrappedComponent, {
                         ...this.props,

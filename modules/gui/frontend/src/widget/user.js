@@ -46,7 +46,7 @@ export const validateToken$ = token =>
             if (user) {
                 return user
             } else {
-                throw new Error('Invalid token')
+                throw Error('Invalid token')
             }
         })
     )

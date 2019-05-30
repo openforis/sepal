@@ -73,7 +73,7 @@ const toExpression = indicator => {
     case 'SAVI':
         return '10000 * 1.5 * (i.nir - i.red) / (i.nir + i.red + 0.5)'
     default:
-        throw new Error('Unexpected indicator: ' + indicator)
+        throw Error('Unexpected indicator: ' + indicator)
     }
 }
 

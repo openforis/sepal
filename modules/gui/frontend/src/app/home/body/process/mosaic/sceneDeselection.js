@@ -57,4 +57,6 @@ class SceneDeselection extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(SceneDeselection)
+export default withRecipe(mapRecipeToProps)(
+    SceneDeselection
+)

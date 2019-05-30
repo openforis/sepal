@@ -102,4 +102,6 @@ class MosaicToolbar extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(MosaicToolbar)
+export default withRecipe(mapRecipeToProps)(
+    MosaicToolbar
+)

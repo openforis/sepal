@@ -98,7 +98,7 @@ class _UserMessages extends React.Component {
             case 'UNREAD':
                 return 'READ'
             default:
-                throw new Error(`Unsupported message state "${state}"`)
+                throw Error(`Unsupported message state "${state}"`)
             }
         }
         this.updateUserMessageState({

@@ -63,4 +63,6 @@ class AutoSelectScenes extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(AutoSelectScenes)
+export default withRecipe(mapRecipeToProps)(
+    AutoSelectScenes
+)

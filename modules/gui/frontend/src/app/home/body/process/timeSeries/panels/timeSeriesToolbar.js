@@ -71,4 +71,6 @@ class TimeSeriesToolbar extends React.Component {
 
 TimeSeriesToolbar.propTypes = {}
 
-export default withRecipe(mapRecipeToProps)(TimeSeriesToolbar)
+export default withRecipe(mapRecipeToProps)(
+    TimeSeriesToolbar
+)
