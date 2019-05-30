@@ -65,13 +65,13 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     }
     // handle unsupported precision
     if (precisionDigits < 3) {
-        throw new Error('Unsupported number of precision digits (less than 3).')
+        throw Error('Unsupported number of precision digits (less than 3).')
     }
 
     const scaleMagnitude = magnitudes.indexOf(scale)
     // handle unsupported scale
     if (scaleMagnitude === -1) {
-        throw new Error('Unsupported scale.')
+        throw Error('Unsupported scale.')
     }
     const valueDigits = Math.floor(Math.log10(value))
     const shiftLeft = precisionDigits - valueDigits - 1
@@ -81,7 +81,7 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     const magnitude = scaleMagnitude + valueMagnitude
     const minMagnitude = magnitudes.indexOf(minScale)
     if (magnitude > magnitudes.length - 1) {
-        throw new Error('Out of range.')
+        throw Error('Out of range.')
     } else if (magnitude < minMagnitude) {
         return formattedValue(normalizedValue / Math.pow(10, 3 * (minMagnitude - magnitude)), minMagnitude, precisionDigits - 1)
     } else {

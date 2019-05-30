@@ -326,11 +326,11 @@ class FormProperty {
     }
 
     _checkPredicate(_name, _values, _predicate) {
-        throw new Error('Expected to be implemented by subclass')
+        throw Error('Expected to be implemented by subclass')
     }
 
     _isSkipped(_name, _values) {
-        throw new Error('Expected to be implemented by subclass')
+        throw Error('Expected to be implemented by subclass')
     }
 }
 
@@ -339,7 +339,7 @@ export class Constraint extends FormProperty {
         super()
         this.fieldNames = fieldNames
         if (!Array.isArray(fieldNames) || fieldNames.length < 2)
-            throw new Error('Constructor of Constraint requires an array of at least 2 field names')
+            throw Error('Constructor of Constraint requires an array of at least 2 field names')
     }
 
     _checkPredicate(name, values, predicate) {

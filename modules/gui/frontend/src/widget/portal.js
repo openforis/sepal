@@ -27,13 +27,13 @@ class Portal extends React.Component {
             if (portalContainerId) {
                 return document.getElementById(portalContainerId)
             } else {
-                throw new Error('Cannot render section Portal out of a section.')
+                throw Error('Cannot render section Portal out of a section.')
             }
         }
         if (type === 'global') {
             return document.getElementById(DEFAULT_PORTAL_CONTAINER_ID)
         }
-        throw new Error('Undefined Portal target.')
+        throw Error('Undefined Portal target.')
     }
     
     renderContent() {

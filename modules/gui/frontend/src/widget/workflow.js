@@ -14,7 +14,7 @@ class Workflow extends React.Component {
         const {stepName} = this.state
         const step = steps[stepName || start]
         if (!step)
-            throw new Error(`Unknown step: '${stepName || start}'. Available steps: ${Object.keys(steps)}`)
+            throw Error(`Unknown step: '${stepName || start}'. Available steps: ${Object.keys(steps)}`)
         return (
             <WorkflowContext.Provider value={{switchStep: this.switchStep.bind(this)}}>
                 {step}

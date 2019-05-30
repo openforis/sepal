@@ -5,7 +5,7 @@ import {takeUntil} from 'rxjs/operators'
 import actionBuilder from 'action-builder'
 
 export default function asyncActionBuilder(type, action$, component) {
-    if (!type) throw new Error('Action type is required')
+    if (!type) throw Error('Action type is required')
 
     // Force warning for non-existing translations. Otherwise this would only be noticed on error.
     msg('action.type.' + type)

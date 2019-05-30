@@ -111,7 +111,7 @@
 //                 .value()
 //
 //             if (incompleteKeys.length)
-//                 throw new Error(`Missing translations: \n\t${incompleteKeys.join('\n\t')}\n\n`)
+//                 throw Error(`Missing translations: \n\t${incompleteKeys.join('\n\t')}\n\n`)
 //         }
 //     }
 // }
