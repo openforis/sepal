@@ -118,7 +118,7 @@ Scrollable.propTypes = {
 }
 
 export const withScrollable = () =>
-    WrappedComponent => {
+    WrappedComponent =>
         class HigherOrderComponent extends React.Component {
             render() {
                 return (
@@ -130,9 +130,6 @@ export const withScrollable = () =>
                 )
             }
         }
-
-        return HigherOrderComponent
-    }
 
 const ScrollableRef = children =>
     <ScrollableContext.Consumer>

@@ -269,8 +269,8 @@ export const revertToRevision$ = (recipeId, revision) =>
         })
     )
 
-export const recipe = RecipeState => {
-    return WrappedComponent => {
+export const recipe = RecipeState =>
+    WrappedComponent => {
         class RecipeComponent extends React.Component {
             state = {}
 
@@ -296,10 +296,9 @@ export const recipe = RecipeState => {
         })
         return connect(mapStateToProps)(RecipeComponent)
     }
-}
 
-export const withRecipePath = () => {
-    return WrappedComponent => {
+export const withRecipePath = () =>
+    WrappedComponent => {
         class RecipeComponent extends React.Component {
             render() {
                 return React.createElement(WrappedComponent, {...this.props})
@@ -311,10 +310,9 @@ export const withRecipePath = () => {
         })
         return connect(mapStateToProps)(RecipeComponent)
     }
-}
 
-export const initValues = ({getModel, getValues, modelToValues, onInitialized}) => {
-    return WrappedComponent => {
+export const initValues = ({getModel, getValues, modelToValues, onInitialized}) =>
+    WrappedComponent =>
         class RecipeComponent extends React.Component {
             state = {
                 initialized: false
@@ -353,7 +351,3 @@ export const initValues = ({getModel, getValues, modelToValues, onInitialized}) 
                 })
             }
         }
-
-        return RecipeComponent
-    }
-}

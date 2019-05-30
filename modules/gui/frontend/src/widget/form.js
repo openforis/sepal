@@ -10,8 +10,8 @@ import _ from 'lodash'
 import moment from 'moment'
 import styles from './form.module.css'
 
-export function form({fields = {}, constraints = {}, mapStateToProps}) {
-    return WrappedComponent => {
+export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
+    WrappedComponent => {
         class Form extends React.Component {
             dirtyListeners = []
             cleanListeners = []
@@ -258,11 +258,9 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
         Form.displayName = `Form(${getDisplayName(WrappedComponent)})`
         return connect(mapStateToProps ? mapStateToProps : null)(Form)
     }
-}
 
-function getDisplayName(Component) {
-    return Component.displayName || Component.name || 'Component'
-}
+const getDisplayName = Component =>
+    Component.displayName || Component.name || 'Component'
 
 class FormProperty {
     static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape

@@ -86,8 +86,8 @@ Activatable.propTypes = {
     policy: PropTypes.func
 }
 
-export const activatable = ({id, policy, alwaysAllow}) => {
-    return WrappedComponent => {
+export const activatable = ({id, policy, alwaysAllow}) =>
+    WrappedComponent =>
         class HigherOrderComponent extends React.Component {
             render() {
                 const activatableId = _.isFunction(id) ? id(this.props) : id
@@ -103,7 +103,3 @@ export const activatable = ({id, policy, alwaysAllow}) => {
                 )
             }
         }
-
-        return HigherOrderComponent
-    }
-}

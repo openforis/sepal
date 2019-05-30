@@ -103,8 +103,8 @@ class _Activator extends React.Component {
     }
 }
 
-export const activator = (...ids) => {
-    return WrappedComponent => {
+export const activator = (...ids) =>
+    WrappedComponent =>
         class HigherOrderComponent extends React.Component {
             render() {
                 return (
@@ -115,10 +115,6 @@ export const activator = (...ids) => {
                 )
             }
         }
-
-        return HigherOrderComponent
-    }
-}
 
 export const Activator = (
     withActivationContext()(
