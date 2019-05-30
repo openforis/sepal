@@ -149,16 +149,12 @@ class _Notifications extends React.Component {
                 actionBuilder('PUBLISH_NOTIFICATION')
                     .pushUnique(PATH, notification, 'group')
                     .dispatch()
-            )
-        )
-        addSubscription(
+            ),
             dismiss$.subscribe(notificationId =>
                 actionBuilder('DISMISS_NOTIFICATION')
                     .assign([PATH, {id: notificationId}], {dismissing: true})
                     .dispatch()
-            )
-        )
-        addSubscription(
+            ),
             remove$.subscribe(notificationId =>
                 actionBuilder('REMOVE_NOTIFICATION')
                     .del([PATH, {id: notificationId}])
