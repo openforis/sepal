@@ -1,22 +1,42 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {connect, select} from 'store'
+import {toPathList} from 'stateUtils'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import withContext from 'context'
 
-export const RecipeContext = ({recipeId, rootStatePath, children}) => {
-    const statePath = getStatePath(recipeId, rootStatePath)
-    return recipeId
+const Context = React.createContext()
+
+export const RecipeContext = ({rootStatePath = 'process.tabs', recipeId, children}) =>
+    recipeId
         ? (
-            <Context.Provider value={toContextValue(recipeId, statePath)}>
+            <Context.Provider value={{
+                statePath: toPathList([rootStatePath, {id: recipeId}])
+            }}>
                 <ActivationContext id={'recipe-' + recipeId}>
                     {children}
                 </ActivationContext>
             </Context.Provider>
         )
         : null
-}
-
+    
+export const withRecipe = mapRecipeToProps =>
+    WrappedComponent => {
+        const withRecipeContext = withContext(Context, 'recipeContext')
+        const mapStateToProps = (state, ownProps) => {
+            const {recipeContext: {statePath}} = ownProps
+            const recipe = {...select(statePath)}
+            return mapRecipeToProps(recipe, ownProps)
+        }
+        return (
+            withRecipeContext()(
+                connect(mapStateToProps)(
+                    WrappedComponent
+                )
+            )
+        )
+    }
+    
 export const recipe = ({defaultModel, mapRecipeToProps}) =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {
@@ -43,40 +63,11 @@ export const recipe = ({defaultModel, mapRecipeToProps}) =>
             }
         }
 
-        return withRecipe(mapRecipeToProps)(
-            connect(mapStateToProps)(
-                HigherOrderComponent
+        return (
+            withRecipe(mapRecipeToProps)(
+                connect(mapStateToProps)(
+                    HigherOrderComponent
+                )
             )
         )
     }
-
-export const withRecipe = mapRecipeToProps =>
-    WrappedComponent => {
-        const mapStateToProps = (state, ownProps) => {
-            const {recipeContext: {statePath}} = ownProps
-            const recipe = {...select(statePath)}
-            return mapRecipeToProps(recipe, ownProps)
-        }
-
-        const ConnectedComponent = connect(mapStateToProps)(WrappedComponent)
-        return withRecipeContext()(ConnectedComponent)
-    }
-
-const Context = React.createContext()
-
-const toContextValue = (recipeId, statePath) => ({
-    recipeId,
-    statePath
-})
-
-const getStatePath = (recipeId, rootStatePath) => {
-    const recipeTabIndex = select(rootStatePath)
-        .findIndex(recipe => recipe.id === recipeId)
-    if (recipeTabIndex === -1)
-        return null
-    return [rootStatePath, recipeTabIndex]
-        .filter(e => e !== undefined)
-        .join('.')
-}
-
-export const withRecipeContext = withContext(Context, 'recipeContext')

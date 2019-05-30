@@ -41,7 +41,7 @@ class Process extends React.Component {
 
     renderMenu(recipeId) {
         return (
-            <RecipeContext recipeId={recipeId} rootStatePath='process.tabs'>
+            <RecipeContext recipeId={recipeId}>
                 <ProcessMenu recipeId={recipeId}/>
                 <Revisions recipeId={recipeId}/>
             </RecipeContext>
@@ -68,7 +68,7 @@ class Process extends React.Component {
                     onTitleChanged={recipe => saveRecipe(recipe)}
                     onClose={(recipe, close) => this.onCloseTab(recipe, close)}>
                     {({id, type}) =>
-                        <RecipeContext recipeId={id} rootStatePath='process.tabs'>
+                        <RecipeContext recipeId={id}>
                             {this.renderRecipe(id, type)}
                         </RecipeContext>
                     }
