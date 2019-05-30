@@ -9,12 +9,6 @@ const assertFallbackPolicy = activatable => {
     }
 }
 
-const assertBehavior = behavior => {
-    if (!VALID_BEHAVIORS.includes(behavior)) {
-        throw Error(`Invalid policy behavior: ${behavior}`)
-    }
-}
-
 export const activationAllowed = (id, activatables = {}) => {
     _(activatables)
         .values()
@@ -46,17 +40,21 @@ const policiesCompatible = (thisActivatable, otherActivatable) => {
         && (otherShouldDeactivate || (otherCompatibleWithThis && !thisShouldDeactivate))
 }
 
-const compatibleWith = (id, policy) => {
-    const behavior = policy[id] || policy._
-    assertBehavior(behavior)
-    return behavior !== 'disallow'
+const validateBehavior = behavior => {
+    if (!VALID_BEHAVIORS.includes(behavior)) {
+        throw Error(`Invalid policy behavior: ${behavior}`)
+    }
+    return behavior
 }
 
-const deactivateWhen = (id, policy) => {
-    const behavior = policy[id] || policy._
-    assertBehavior(behavior)
-    return behavior === 'allow-then-deactivate'
-}
+const behavior = (id, policy) =>
+    validateBehavior(policy[id] || policy._)
+
+const compatibleWith = (id, policy) =>
+    behavior(id, policy) !== 'disallow'
+
+const deactivateWhen = (id, policy) =>
+    behavior(id, policy) === 'allow-then-deactivate'
 
 export const shouldDeactivate = (id, activatables = {}, nextPolicy) =>
     _(activatables)
