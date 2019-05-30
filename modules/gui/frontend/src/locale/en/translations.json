@@ -145,7 +145,10 @@
       "loading": "Loading recipes",
       "updateTime": "Update time",
       "remove.success": "Recipe has been removed",
-      "newRecipe.tooltip": "New recipe"
+      "newRecipe": {
+        "tooltip": "Create a new Sepal recipe",
+        "title": "Create recipe"
+      }
     },
     "menu": {
       "noSavedRecipies": "No saved recipies",
