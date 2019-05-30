@@ -168,7 +168,8 @@ export default compose(
             RecipeActions(props.recipeId)
                 .setTrainingData({values, model})
                 .dispatch()
-    })
+    }),
+    withRecipePath()
 )
 
 // export default withRecipePath()(

@@ -74,7 +74,8 @@ export default compose(
             RecipeActions(props.recipeId)
                 .setTypology({values, model})
                 .dispatch()
-    })
+    }),
+    withRecipePath()
 )
 
 // export default withRecipePath()(

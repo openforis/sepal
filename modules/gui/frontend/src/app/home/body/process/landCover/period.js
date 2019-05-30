@@ -115,7 +115,8 @@ export default compose(
             RecipeActions(props.recipeId)
                 .setPeriod({values, model})
                 .dispatch()
-    })
+    }),
+    withRecipePath()
 )
 
 // export default withRecipePath()(
