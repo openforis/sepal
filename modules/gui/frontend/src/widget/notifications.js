@@ -8,6 +8,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import styles from './notifications.module.css'
+import withSubscriptions from 'subscription'
 
 const PATH = 'Notifications'
 const DISMISS_DELAY_MS = 500
@@ -64,8 +65,6 @@ const mapStateToProps = () => ({
 })
 
 class _Notifications extends React.Component {
-    subscriptions = []
-
     renderTitle(title) {
         return (
             <div className={styles.title}>
@@ -144,21 +143,18 @@ class _Notifications extends React.Component {
     }
 
     componentDidMount() {
-        this.subscriptions.push(
+        const {addSubscription} = this.props
+        addSubscription(
             publish$.subscribe(notification =>
                 actionBuilder('PUBLISH_NOTIFICATION')
                     .pushUnique(PATH, notification, 'group')
                     .dispatch()
-            )
-        )
-        this.subscriptions.push(
+            ),
             dismiss$.subscribe(notificationId =>
                 actionBuilder('DISMISS_NOTIFICATION')
                     .assign([PATH, {id: notificationId}], {dismissing: true})
                     .dispatch()
-            )
-        )
-        this.subscriptions.push(
+            ),
             remove$.subscribe(notificationId =>
                 actionBuilder('REMOVE_NOTIFICATION')
                     .del([PATH, {id: notificationId}])
@@ -166,13 +162,15 @@ class _Notifications extends React.Component {
             )
         )
     }
-
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
-    }
 }
 
-const Notifications = connect(mapStateToProps)(_Notifications)
+const Notifications = (
+    connect(mapStateToProps)(
+        withSubscriptions(
+            _Notifications
+        )
+    )
+)
 
 Notifications.success = notification =>
     publish({...notification, level: 'success'})

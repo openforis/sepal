@@ -3,21 +3,22 @@ import {fromEvent, merge, of} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './hover.module.css'
+import withSubscriptions from 'subscription'
 
 const {Provider, Consumer} = React.createContext()
 
 const windowTouchStart$ = fromEvent(window, 'touchstart')
 const windowTouchEnd$ = fromEvent(window, 'touchend')
 
-export class HoverDetector extends React.Component {
+class _HoverDetector extends React.Component {
     state = {
         hover: false
     }
 
     ref = React.createRef()
-    subscriptions = []
 
     componentDidMount() {
+        const {addSubscription} = this.props
         const element = this.ref.current
         const mouseOver$ = fromEvent(element, 'mouseover')
         const mouseLeave$ = fromEvent(element, 'mouseleave')
@@ -47,13 +48,9 @@ export class HoverDetector extends React.Component {
             delay(100)
         )
 
-        this.subscriptions.push(
+        addSubscription(
             mouseStatus$.subscribe(hover => this.setState({hover}))
         )
-    }
-
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
     }
 
     render() {
@@ -68,6 +65,12 @@ export class HoverDetector extends React.Component {
         )
     }
 }
+
+export const HoverDetector = (
+    withSubscriptions(
+        _HoverDetector
+    )
+)
 
 HoverDetector.propTypes = {
     children: PropTypes.any.isRequired,

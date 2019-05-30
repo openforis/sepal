@@ -13,6 +13,7 @@ import React from 'react'
 import _ from 'lodash'
 import escapeStringRegexp from 'escape-string-regexp'
 import styles from './combo.module.css'
+import withSubscriptions from 'subscription'
 
 const SELECTION_DELAY_MS = 350
 
@@ -21,7 +22,6 @@ const mapStateToProps = state => ({
 })
 
 class Combo extends React.Component {
-    subscriptions = []
     inputContainer = React.createRef()
     list = React.createRef()
     select$ = new Subject()
@@ -172,8 +172,8 @@ class Combo extends React.Component {
     }
 
     handleSelect() {
-        const {input, onChange} = this.props
-        this.subscriptions.push(
+        const {input, onChange, addSubscription} = this.props
+        addSubscription(
             this.select$.subscribe(
                 option => {
                     this.setSelectedOption(option)
@@ -190,11 +190,11 @@ class Combo extends React.Component {
     }
 
     handleBlur() {
-        const {onCancel} = this.props
+        const {onCancel, addSubscription} = this.props
         const click$ = fromEvent(document, 'click')
         const isInputClick = e => this.inputContainer.current && this.inputContainer.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains && this.list.current.contains(e.target)
-        this.subscriptions.push(
+        addSubscription(
             click$.subscribe(e => {
                 if (!isInputClick(e) && !isListClick(e)) {
                     this.setFilter()
@@ -216,10 +216,6 @@ class Combo extends React.Component {
 
     componentDidUpdate() {
         this.updateOptions()
-    }
-
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
     }
 
     matcher(filter) {
@@ -268,7 +264,11 @@ class Combo extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(Combo)
+export default connect(mapStateToProps)(
+    withSubscriptions(
+        Combo
+    )
+)
 
 Combo.propTypes = {
     input: PropTypes.any.isRequired,

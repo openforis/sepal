@@ -9,6 +9,7 @@ import ReactResizeDetector from 'react-resize-detector'
 import _ from 'lodash'
 import styles from './list.module.css'
 import withForwardedRef from 'ref'
+import withSubscriptions from 'subscription'
 
 const ANIMATION_SPEED = .2
 
@@ -40,7 +41,6 @@ const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
 
 class List extends React.Component {
-    subscriptions = []
     highlighted = React.createRef()
     update$ = new Subject()
     state = {
@@ -274,6 +274,7 @@ class List extends React.Component {
     }
 
     initializeCenterHighlighted() {
+        const {addSubscription} = this.props
         const animationFrame$ = interval(0, animationFrameScheduler)
         const scroll$ = this.update$.pipe(
             map(() => this.highlighted.current),
@@ -292,7 +293,7 @@ class List extends React.Component {
             })
         )
 
-        this.subscriptions.push(
+        addSubscription(
             scroll$.subscribe(
                 ({element, value}) => {
                     this.props.autoCenter && setScrollOffset(element, value)
@@ -323,15 +324,13 @@ class List extends React.Component {
         }
         return false
     }
-
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
-    }
 }
 
 export default (
     withForwardedRef(
-        List
+        withSubscriptions(
+            List
+        )
     )
 )
 

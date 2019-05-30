@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 import ee
 
-from analyze import analyze
+from analyze import analyze, additional_bands
 from clouds import mask_clouds
 from days_from_target import mask_days_from_target
 from greenness import mask_less_green
@@ -17,8 +17,11 @@ class Mosaic(object):
 
     def create(self, data_sets):
         collection = ee.ImageCollection([])
+        common_bands = self._common_bands(data_sets)
         for data_set in data_sets:
-            data_set_collection = analyze(self.mosaic_def, data_set, data_set.to_collection())
+            data_set_collection = analyze(self.mosaic_def, data_set, data_set.to_collection()).select(
+                common_bands + additional_bands()
+            )
             collection = ee.ImageCollection(collection.merge(data_set_collection))
 
         collection = mask_clouds(self.mosaic_def, collection)
@@ -29,8 +32,7 @@ class Mosaic(object):
         collection = mask_days_from_target(self.mosaic_def, collection)
 
         do_tasseled_cap = set(_tasseled_cap_bands) & set(self.mosaic_def.bands)
-        bands = self._common_bands(data_sets)
-        bands = list(set(bands + _optical_bands))
+        bands = list(set(common_bands + _optical_bands))
         bands_to_select = self.mosaic_def.bands if self.mosaic_def.bands and len(self.mosaic_def.bands) > 0 else bands
         mosaic_bands = bands_to_select
         if do_tasseled_cap:

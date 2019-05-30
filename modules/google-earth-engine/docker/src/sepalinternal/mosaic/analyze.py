@@ -5,6 +5,10 @@ from cloud_score import cloud_score
 from ..image_operation import ImageOperation, combine_probability
 
 
+def additional_bands():
+    return ['toMask', 'water', 'snow', 'cloud', 'ndvi', 'shadowThreshold', 'shadowScore', 'hazeScore']
+
+
 def analyze(mosaic_def, data_set, collection):
     def apply(image):
         return _Analyze(image, mosaic_def, data_set).apply()

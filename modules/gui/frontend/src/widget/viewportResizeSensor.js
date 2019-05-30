@@ -3,13 +3,12 @@ import {debounceTime, distinctUntilChanged} from 'rxjs/operators'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import actionBuilder from 'action-builder'
+import withSubscriptions from 'subscription'
 
 const resize$ = new Subject()
 const UPDATE_DEBOUNCE_MS = 100
 
-export default class ViewportResizeSensor extends React.Component {
-    subscriptions = []
-
+class ViewportResizeSensor extends React.Component {
     render() {
         return (
             <ReactResizeDetector
@@ -21,7 +20,8 @@ export default class ViewportResizeSensor extends React.Component {
     }
 
     componentDidMount() {
-        this.subscriptions.push(
+        const {addSubscription} = this.props
+        addSubscription(
             resize$.pipe(
                 debounceTime(UPDATE_DEBOUNCE_MS),
                 distinctUntilChanged()
@@ -31,15 +31,17 @@ export default class ViewportResizeSensor extends React.Component {
         )
     }
 
-    componentWillUnmount() {
-        this.subscriptions.map(subscription => subscription.unsubscribe())
-    }
-
     updateDimensions({width, height}) {
         actionBuilder('SET_APP_DIMENSIONS')
             .set('dimensions', {width, height})
             .dispatch()
     }
 }
+
+export default (
+    withSubscriptions(
+        ViewportResizeSensor
+    )
+)
 
 ViewportResizeSensor.propTypes = {}

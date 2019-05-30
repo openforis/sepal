@@ -8,6 +8,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
 import styles from './scrollingDatePicker.module.css'
+import withSubscriptions from '../subscription'
 
 const range = (from, to) =>
     Array.from({length: (to - from + 1)}, (v, k) => k + from)
@@ -30,8 +31,7 @@ const toMomentUnit = item => {
     }
 }
 
-class ScrollingDatePicker extends React.Component {
-    subscriptions = []
+class _ScrollingDatePicker extends React.Component {
     input = React.createRef()
     list = React.createRef()
     state = {edit: false}
@@ -128,10 +128,11 @@ class ScrollingDatePicker extends React.Component {
     }
 
     handleBlurEvents() {
+        const {addSubscription} = this.props
         const click$ = fromEvent(document, 'click')
         const isInputClick = e => this.input.current && this.input.current.contains(e.target)
         const isListClick = e => this.list.current && this.list.current.contains(e.target)
-        this.subscriptions.push(
+        addSubscription(
             click$.subscribe(e => !isInputClick(e) && !isListClick(e) && this.close())
         )
     }
@@ -139,11 +140,13 @@ class ScrollingDatePicker extends React.Component {
     componentDidMount() {
         this.handleBlurEvents()
     }
-
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
-    }
 }
+
+const ScrollingDatePicker = (
+    withSubscriptions(
+        _ScrollingDatePicker
+    )
+)
 
 ScrollingDatePicker.propTypes = {
     className: PropTypes.string,
@@ -182,10 +185,6 @@ export class DatePickerControl extends React.Component {
     initializeItem(item, date) {
         this.selected[item] = React.createRef()
         return this.getDateItem(date, item)
-    }
-
-    unsubscribeOnUnmount(subscription) {
-        this.subscriptions.push(subscription)
     }
 
     set(item, value) {

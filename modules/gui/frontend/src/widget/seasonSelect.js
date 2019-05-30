@@ -7,6 +7,7 @@ import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import moment from 'moment'
 import styles from './seasonSelect.module.css'
+import withSubscriptions from '../subscription'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -192,6 +193,7 @@ SeasonSelect.propTypes = {
     disabled: PropTypes.any,
     onChange: PropTypes.func
 }
+
 class Timeline extends React.Component {
     render() {
         return this.renderTimeline.bind(this.props.seasonSelect)()
@@ -311,12 +313,14 @@ class Axis extends React.Component {
     }
 }
 
-class Handle extends React.Component {
+class _Handle extends React.Component {
     element = React.createRef()
 
     componentDidMount() {
-        this.subscription = this.drag$()
-            .subscribe(this.setPosition.bind(this))
+        const {addSubscription} = this.props
+        addSubscription(
+            this.drag$().subscribe(this.setPosition.bind(this))
+        )
     }
 
     setPosition(position) {
@@ -338,10 +342,6 @@ class Handle extends React.Component {
                 {children}
             </div>
         )
-    }
-
-    componentWillUnmount() {
-        this.subscription && this.subscription.unsubscribe()
     }
 
     clampPosition(position) {
@@ -388,3 +388,9 @@ class Handle extends React.Component {
         )
     }
 }
+
+const Handle = (
+    withSubscriptions(
+        _Handle
+    )
+)

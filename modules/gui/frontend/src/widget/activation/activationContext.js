@@ -45,4 +45,4 @@ ActivationContext.propTypes = {
     children: PropTypes.any
 }
 
-export const withActivationContext = withContext(Context, 'activationContext')
+export const withActivationContext = withContext(Context, 'activationContext', true)
