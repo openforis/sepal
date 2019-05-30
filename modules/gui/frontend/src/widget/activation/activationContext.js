@@ -1,6 +1,7 @@
 import * as PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import actionBuilder from 'action-builder'
+import withContext from 'context'
 
 const Context = React.createContext()
 
@@ -44,25 +45,4 @@ ActivationContext.propTypes = {
     children: PropTypes.any
 }
 
-export const withActivationContext = () => {
-    return WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
-            render() {
-                return (
-                    <Context.Consumer>
-                        {activationContext => {
-                            if (!activationContext)
-                                throw new Error(`Component has no ActivationContext: ${WrappedComponent}`)
-                            return React.createElement(WrappedComponent, {
-                                ...this.props,
-                                activationContext
-                            })
-                        }}
-                    </Context.Consumer>
-                )
-            }
-        }
-
-        return HigherOrderComponent
-    }
-}
+export const withActivationContext = withContext(Context, 'activationContext')

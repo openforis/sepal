@@ -3,6 +3,7 @@ import {PortalContainer} from './portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './selectable.module.css'
+import withContext from 'context'
 
 const Context = React.createContext()
 
@@ -52,19 +53,4 @@ Selectable.propTypes = {
     id: PropTypes.string
 }
 
-export const withSelectableContext = () =>
-    WrappedComponent =>
-        class HigherOrderComponent extends React.Component {
-            render() {
-                return (
-                    <Context.Consumer>
-                        {selectableContext =>
-                            React.createElement(WrappedComponent, {
-                                ...this.props,
-                                selectableContext
-                            })
-                        }
-                    </Context.Consumer>
-                )
-            }
-        }
+export const withSelectableContext = withContext(Context, 'selectableContext')

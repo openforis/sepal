@@ -2,6 +2,7 @@ import {activator} from 'widget/activation/activator'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import withContext from 'context'
 
 class PanelWizard extends React.Component {
 
@@ -98,17 +99,4 @@ export const PanelWizardContext = ({children}) =>
         {(value = {}) => children(value)}
     </Context.Consumer>
 
-export const withPanelWizardContext = () =>
-    WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
-            render() {
-                return (
-                    <PanelWizardContext>
-                        {wizardContext => React.createElement(WrappedComponent, {...this.props, wizardContext})}
-                    </PanelWizardContext>
-                )
-            }
-        }
-
-        return HigherOrderComponent
-    }
+export const withPanelWizardContext = withContext(Context, 'wizardContext')

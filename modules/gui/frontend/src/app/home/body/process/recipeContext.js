@@ -2,6 +2,7 @@ import {ActivationContext} from 'widget/activation/activationContext'
 import {connect, select} from 'store'
 import React from 'react'
 import actionBuilder from 'action-builder'
+import withContext from 'context'
 
 export const RecipeContext = ({recipeId, rootStatePath, children}) => {
     const statePath = getStatePath(recipeId, rootStatePath)
@@ -15,26 +16,6 @@ export const RecipeContext = ({recipeId, rootStatePath, children}) => {
         )
         : null
 }
-
-export const withRecipeContext = () =>
-    WrappedComponent => {
-        class HigherOrderComponent extends React.Component {
-            render() {
-                return (
-                    <Context.Consumer>
-                        {recipeContext =>
-                            React.createElement(WrappedComponent, {
-                                ...this.props,
-                                recipeContext
-                            })
-                        }
-                    </Context.Consumer>
-                )
-            }
-        }
-
-        return HigherOrderComponent
-    }
 
 export const recipe = ({defaultModel, mapRecipeToProps}) =>
     WrappedComponent => {
@@ -97,3 +78,5 @@ const getStatePath = (recipeId, rootStatePath) => {
         .filter(e => e !== undefined)
         .join('.')
 }
+
+export const withRecipeContext = withContext(Context, 'recipeContext')
