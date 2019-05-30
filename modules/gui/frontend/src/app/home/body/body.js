@@ -21,7 +21,8 @@ const mapStateToProps = () => ({
 })
 
 class Body extends React.Component {
-    UNSAFE_componentWillMount() {
+    constructor(props) {
+        super(props)
         this.props.asyncActionBuilder('INIT_GOOGLE_MAPS_API',
             initGoogleMapsApi$())
             .dispatch()
