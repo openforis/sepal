@@ -127,7 +127,7 @@ class CreateRecipe extends React.Component {
             <React.Fragment>
                 <PanelHeader
                     icon='book-open'
-                    title={'Create recipe'}/>
+                    title={msg('process.recipe.newRecipe.title')}/>
                 <PanelContent>
                     <ScrollableContainer className={styles.recipeTypes}>
                         <Scrollable>
