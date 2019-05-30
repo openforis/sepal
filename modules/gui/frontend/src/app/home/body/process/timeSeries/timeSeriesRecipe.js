@@ -21,7 +21,7 @@ export const defaultModel = {
 
 export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
-        
+
     return {
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
@@ -38,7 +38,7 @@ export const RecipeActions = id => {
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const task = {
-        'operation': 'sepal.timeseries.download',
+        'operation': 'timeseries.download',
         'params':
             {
                 title: msg(['process.timeSeries.panel.retrieve.task'], {name}),

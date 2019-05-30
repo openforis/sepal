@@ -79,8 +79,6 @@ class DownloadFeatures(ThreadTask):
         self.drive_folder = None
 
     def run(self):
-        print('*** RUN ***')
-        print(datetime.now())
         ee.InitializeThread(self.spec.credentials)
         # Explicitly create folder, to prevent GEE race-condition
         self.drive_folder = drive.create_folder(self.spec.credentials, self.drive_folder_name)
@@ -128,8 +126,6 @@ class DownloadFeatures(ThreadTask):
             task.cancel()
         if self.drive_folder:
             drive.delete(self.spec.credentials, self.drive_folder)
-        print('*** CLOSE ***')
-        print(datetime.now())
 
     def __str__(self):
         return '{0}(download_dir={1}, description={2}, credentials={3}, expression={4}, data_sets={5}, ' \
