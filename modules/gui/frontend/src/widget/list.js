@@ -3,6 +3,7 @@ import {EMPTY, Subject, animationFrameScheduler, interval} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
+import BlurDetector from './blurDetector'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -71,9 +72,7 @@ class List extends React.Component {
         }
         return (
             <Keybinding keymap={keymap} disabled={!keyboard}>
-                <ReactResizeDetector
-                    handleHeight
-                    onResize={() => this.update$.next()}>
+                <ReactResizeDetector handleHeight onResize={() => this.update$.next()}>
                     <ScrollableContainer className={className}>
                         <Scrollable className={styles.options} direction='xy'>
                             {scrollableContainerHeight => this.renderList(scrollableContainerHeight)}
@@ -87,9 +86,13 @@ class List extends React.Component {
     renderList(scrollableContainerHeight = 0) {
         const {options, overScroll} = this.props
         return (
-            <ul ref={this.list} style={{
-                '--scrollable-container-height': overScroll ? scrollableContainerHeight : 0
-            }}>
+            <ul
+                ref={this.list}
+                style={{
+                    '--scrollable-container-height': overScroll ? scrollableContainerHeight : 0
+                }}
+                onMouseLeave={() => this.update$.next()}
+            >
                 {this.renderOptions(options)}
             </ul>
         )
