@@ -16,7 +16,6 @@ const recipeToProps = recipe => {
 class InitToolbar extends React.Component {
     render() {
         const {recipeContext: {statePath}} = this.props
-        // const {initialized, recipeContext: {recipeId, statePath}} = this.props
         const uiStatePath = statePath + '.ui'
 
         return (
@@ -40,31 +39,6 @@ class InitToolbar extends React.Component {
                     tooltip={msg('process.landCover.panel.typology.tooltip')}/>
             </Toolbar>
         )
-        // return (
-        //     <PanelWizard
-        //         initialized={initialized}
-        //         panels={['areaOfInterest', 'period', 'typology']}
-        //         statePath={uiStatePath}>
-        //         <Toolbar
-        //             statePath={uiStatePath}
-        //             vertical
-        //             placement='bottom-right'
-        //             className={styles.bottom}>
-        //             <ActivationButton
-        //                 id='areaOfInterest'
-        //                 label={msg('process.mosaic.panel.areaOfInterest.button')}
-        //                 tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}/>
-        //             <ActivationButton
-        //                 id='period'
-        //                 label={msg('process.landCover.panel.period.button')}
-        //                 tooltip={msg('process.landCover.panel.period.tooltip')}/>
-        //             <ActivationButton
-        //                 id='typology'
-        //                 label={msg('process.landCover.panel.typology.button')}
-        //                 tooltip={msg('process.landCover.panel.typology.tooltip')}/>
-        //         </Toolbar>
-        //     </PanelWizard>
-        // )
     }
 }
 
