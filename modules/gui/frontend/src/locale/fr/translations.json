@@ -5,7 +5,7 @@
     },
     "type": {
       "AUTO_SELECT_SCENES": "Sélectionner les scènes",
-      "DUPLICATE_RECIPE": "Dupliquer la recette",
+      "DUPLICATE_RECIPE": "Dupliquer la formule",
       "INIT_GOOGLE_MAPS_API": "Initialiser Google Maps",
       "LOAD_APPS": "Charger les applications",
       "LOAD_COUNTRIES": "Charger les pays",
@@ -14,8 +14,8 @@
       "LOAD_DIRECTORY": "Charger le répertoire utilisateur",
       "LOAD_FUSION_TABLE_COLUMNS": "Charger noms (tables de fusion)",
       "LOAD_FUSION_TABLE_ROWS": "Charger lignes (tables de fusion)",
-      "LOAD_RECIPE": "Charger la recette",
-      "LOAD_RECIPES": "Charger les recettes",
+      "LOAD_RECIPE": "Charger la formule",
+      "LOAD_RECIPES": "Charger les formules",
       "LOAD_SCENES": "Charger les scènes",
       "LOAD_SCENE_AREAS": "Charger les superficies des scènes",
       "LOGIN": "S'identifier",
@@ -50,19 +50,21 @@
   "bands": {
     "aerosol": "Aerosol",
     "blue": "Bleu",
+    "brightness": "Luminosité",
     "cirrus": "Cirrus",
     "dayOfYear": "Jour Julien",
     "daysFromTarget": "Jours de la date-cible",
     "green": "Vert",
-    "nir": "PIR",
-    "pan": "Pan",
+    "greenness": "Verdeur",
+    "nir": "NIR",
+    "pan": "PAN",
     "red": "Rouge",
     "redEdge1": "Rouge - bord 1",
     "redEdge2": "Rouge - bord 2",
     "redEdge3": "Rouge - bord 3",
     "redEdge4": "Rouge - bord 4",
-    "swir1": "IR court 1",
-    "swir2": "IR court 2",
+    "swir1": "SWIR1",
+    "swir2": "SWIR2",
     "thermal": "Thermique",
     "thermal2": "Thermique 2",
     "unixTimeDays": "Date",
@@ -99,9 +101,13 @@
   },
   "button": {
     "add": "Ajouter",
+    "apply": "Appliquer",
     "back": "Retour",
     "cancel": "Annuler",
     "close": "Fermer",
+    "confirm": "Confirmer",
+    "copyToClipboard": "Copier sur presse-papier",
+    "discard": "Ne pas sauver",
     "done": "Fini",
     "less": "Moins",
     "more": "Plus",
@@ -110,6 +116,8 @@
     "remove": "Supprimer",
     "restart": "Redémarrer",
     "retry": "Réessayer",
+    "save": "Sauver",
+    "select": "Sélectionner",
     "stop": "Arrêter"
   },
   "format": {
@@ -132,7 +140,7 @@
     },
     "error": {
       "earthEngineException": "Erreur de Google Earth Engine : {earthEngineMessage}",
-      "failedToLoadRecipe": "Echec du chargement de la recette"
+      "failedToLoadRecipe": "Echec du chargement de la formule"
     }
   },
   "home": {
@@ -255,7 +263,7 @@
   "process": {
     "changeDetection": {
       "create": "Détection de changement",
-      "description": "Détecte les changements entre les mosaïques créées dans SEPAL ou Google Earth Engine.",
+      "description": "Détecte les changements entre les mosaiques créées dans SEPAL ou Google Earth Engine.",
       "panel": {
         "retrieve": {
           "apply": "Télécharger",
@@ -285,16 +293,16 @@
               "required": "Vous devez entrer une ID pour l'asset"
             },
             "recipe": {
-              "label": "Recette",
-              "placeholder": "Sélectionner une recette...",
-              "required": "Vous devez sélectionner une recette"
+              "label": "formule",
+              "placeholder": "Sélectionner une formule...",
+              "required": "Vous devez sélectionner une formule"
             },
             "section": {
               "required": "Il faut sélectionner une image"
             }
           },
           "recipe": {
-            "title": "Sélectionner une recette SEPAL"
+            "title": "Sélectionner une formule SEPAL"
           },
           "retrieve": {
             "form": {
@@ -307,12 +315,12 @@
         "source1": {
           "button": "IM1",
           "title": "Première image",
-          "tooltip": "Sélectionner la première mosaïque"
+          "tooltip": "Sélectionner la première mosaique"
         },
         "source2": {
           "button": "IM2",
           "title": "Deuxième image",
-          "tooltip": "Sélectionner la seconde mosaïque"
+          "tooltip": "Sélectionner la seconde mosaique"
         },
         "trainingData": {
           "button": "ETR",
@@ -347,7 +355,7 @@
     },
     "classification": {
       "create": "Classification",
-      "description": "Classifier une mosaïque de SEPAL ou Google Earth Engine",
+      "description": "Classifier une mosaique de SEPAL ou Google Earth Engine (inclus processus multi-date pour la détection de changement)",
       "panel": {
         "retrieve": {
           "apply": "Récupérer",
@@ -378,16 +386,16 @@
               "required": "Vous devez entrer une ID pour l'asset"
             },
             "recipe": {
-              "label": "Recette",
-              "placeholder": "Sélectionner une recette...",
-              "required": "Vous devez sélectionner une recette"
+              "label": "formule",
+              "placeholder": "Sélectionner une formule...",
+              "required": "Vous devez sélectionner une formule"
             },
             "section": {
               "required": "Il faut choisir une image"
             }
           },
           "recipe": {
-            "title": "Sélectionner une recette SEPAL sauvegardée"
+            "title": "Sélectionner une formule SEPAL sauvegardée"
           },
           "retrieve": {
             "form": {
@@ -397,7 +405,7 @@
             }
           },
           "title": "Image à classifier",
-          "tooltip": "Sélectionner une mosaïque à classifier"
+          "tooltip": "Sélectionner une mosaique à classifier"
         },
         "trainingData": {
           "button": "ETR",
@@ -429,6 +437,9 @@
         "loading": "{loaded} tuile(s) chargée(s) parmi {count}",
         "tilesFailed": "Echec de {failed}"
       }
+    },
+    "closeRecipe": {
+      "message": "Voulez-vous sauvez cette formule ?"
     },
     "landCover": {
       "create": "RLCMS",
@@ -501,15 +512,15 @@
       }
     },
     "menu": {
-      "removeRecipe": "Supprimer une recette",
-      "duplicateRecipe": "Dupliquer une recette",
-      "exportRecipe": "Exporter une recette",
-      "noSavedRecipies": "Pas de recettes sauvées",
-      "recipeNotSaved": "Recette non sauvegardée",
+      "duplicateRecipe": "Dupliquer une formule",
+      "exportRecipe": "Exporter une formule",
+      "noSavedRecipies": "Pas de formules sauvées",
+      "recipeNotSaved": "formule non sauvegardée",
+      "removeRecipe": "Supprimer une formule",
       "revertToOldRevision": "Retour à la révision précédente",
-      "saveRecipe": "Sauver une recette...",
-      "savedRecipies": "Recettes sauvegardées",
-      "searchRecipes": "Chercher une recette"
+      "saveRecipe": "Sauver une formule...",
+      "savedRecipies": "formules sauvegardées",
+      "searchRecipes": "Chercher une formule"
     },
     "mosaic": {
       "bands": {
@@ -518,8 +529,8 @@
         "panSharpen": "Pan sharpen",
         "placeholder": "Sélectionner les bandes à visualiser"
       },
-      "create": "Mosaïque",
-      "description": "Créer une mosaïque avec Landsat ou Sentinel 2",
+      "create": "Mosaique",
+      "description": "Créer une mosaique avec Landsat ou Sentinel 2",
       "mapToolbar": {
         "centerMap": {
           "tooltip": "Zoomer sur la zone d'intérêt"
@@ -544,10 +555,10 @@
           "tooltip": "Zoomer sur la zone"
         },
         "zoomIn": {
-          "tooltip": "Zoom in"
+          "tooltip": "Zoom avant"
         },
         "zoomOut": {
-          "tooltip": "Zoom out"
+          "tooltip": "Zoom arrière"
         }
       },
       "panel": {
@@ -644,17 +655,21 @@
               "label": "Méthode de composition",
               "median": {
                 "label": "Médiane",
-                "tooltip": "Utiliser la médiane des pixels restant. La valeur du pixel sera artificielle et les métadonnées associées non-disponibles"
+                "tooltip": "Utiliser la médiane des pixels restants. La valeur du pixel sera artificielle et les métadonnées associées non-disponibles"
               },
               "medoid": {
-                "label": "Medoid",
-                "tooltip": "Utiliser le medoid des pixels restants"
+                "label": "Médoide",
+                "tooltip": "Utiliser le médoide des pixels restants"
               }
             },
             "corrections": {
               "brdf": {
                 "label": "BRDF",
                 "tooltip": "Corriger les effets de réflectance bi-directionnelle sur la distribution (BRDF)"
+              },
+              "calibrate": {
+                "label": "Calibrer",
+                "tooltip": "Calibrer les bandes pour améliorer la mosaique multi-capteur"
               },
               "label": "Corrections",
               "surfaceReflectance": {
@@ -839,7 +854,7 @@
                   "tooltip": "Landsat 4-5 Tier 2"
                 },
                 "SENTINEL_2": {
-                  "label": "S2",
+                  "label": "A+B",
                   "tooltip": "Sentinel 2"
                 }
               }
@@ -864,18 +879,170 @@
         "tilesFailed": "Echec de {failed}"
       },
       "sceneAreas": {
+        "error": "Erreur de chargement des scènes",
         "loading": "Chargement des scènes..."
       }
     },
+    "radarMosaic": {
+      "create": "Mosaique radar",
+      "description": "Créer une mosaique avec Sentinel 1.",
+      "panel": {
+        "dates": {
+          "button": "DAT",
+          "form": {
+            "fromDate": {
+              "label": "Date départ",
+              "malformed": "Date invalide"
+            },
+            "targetDate": {
+              "label": "Date cible",
+              "malformed": "Date invalide"
+            },
+            "toDate": {
+              "label": "Jusqu'à date",
+              "malformed": "Date invalide"
+            },
+            "type": {
+              "CUSTOM_TIME_SCAN": {
+                "label": "Intervalle temporel",
+                "tooltip": "Construire un time-scan avec intervalle temporel personnalisé"
+              },
+              "POINT_IN_TIME_MOSAIC": {
+                "label": "Date",
+                "tooltip": "Construire une mosaique avec des dates les plus proches possibles de la cible."
+              },
+              "YEARLY_TIME_SCAN": {
+                "label": "Année",
+                "tooltip": "Construire un time-scan pour une année"
+              }
+            },
+            "year": {
+              "label": "Année",
+              "malformed": "Pas une année"
+            }
+          },
+          "title": "Dates",
+          "tooltip": "Spécifier les dates"
+        },
+        "options": {
+          "button": "OPT",
+          "form": {
+            "geometricCorrection": {
+              "ellipsoid": {
+                "label": "Ellipsoide",
+                "tooltip": "La correction ellipsoide (gamma0) est appliquée"
+              },
+              "label": "Correction géométrique",
+              "none": {
+                "label": "Aucune",
+                "tooltip": "Aucune correction géométrique appliquée"
+              },
+              "terrain": {
+                "label": "Terrain",
+                "tooltip": "Correction terrain appliquée"
+              }
+            },
+            "orbits": {
+              "ascending": {
+                "label": "Ascendante",
+                "tooltip": "Inclure les scènes des orbites ascendantes"
+              },
+              "descending": {
+                "label": "Descendante",
+                "tooltip": "Inclure les scènes des orbites descendantes"
+              },
+              "label": "Orbites"
+            },
+            "outlierRemoval": {
+              "aggressive": {
+                "label": "Aggressif",
+                "tooltip": "Enlever plus d'outliers"
+              },
+              "label": "Supprimer les outliers",
+              "moderate": {
+                "label": "Modéré",
+                "tooltip": "Enlever les outliers"
+              },
+              "none": {
+                "label": "Aucun",
+                "tooltip": "Ne pas supprimer"
+              }
+            },
+            "speckleFilter": {
+              "boxcar": {
+                "label": "Boxcar",
+                "tooltip": "Filtre boxcar de 30m x 30m"
+              },
+              "label": "Filtre speckle",
+              "none": {
+                "label": "Aucun",
+                "tooltip": "Ne pas appliquer de filtre speckle"
+              },
+              "refinedLee": {
+                "label": "Refined Lee",
+                "tooltip": "Refine Lee appliqué (peut prendre du temps)"
+              },
+              "snic": {
+                "label": "SNIC",
+                "tooltip": "Groupement simple non-iteratif (SNIC)"
+              }
+            }
+          },
+          "title": "Options",
+          "tooltip": "Configurer les options de mosaique"
+        },
+        "retrieve": {
+          "apply": "Récupérer",
+          "form": {
+            "bands": {
+              "atLeastOne": "Au moins une bande doit être récupérée",
+              "label": "Bandes à récupérer"
+            },
+            "destination": {
+              "GEE": "Google Earth Engine asset",
+              "SEPAL": "Espace SEPAL",
+              "label": "Récupérer vers",
+              "required": "Une destination doit être choisie"
+            },
+            "scale": {
+              "info": "{scale} mètres",
+              "label": "Échelle"
+            },
+            "task": {
+              "GEE": "Exporter {name} comme Google Earth Engine asset",
+              "SEPAL": "Récupérer {name} vers l'espace de travail Sepal"
+            }
+          },
+          "title": "Récupérer",
+          "tooltip": "Récupérer la mosaique radar"
+        }
+      }
+    },
     "recipe": {
-      "loading": "Chargement des recettes",
+      "loading": "Chargement des formules",
       "name": "Nom",
+      "newRecipe": {
+        "title": "Créer une formule",
+        "tooltip": "Créer une formule SEPAL"
+      },
+      "remove": {
+        "success": "La formule a été supprimée"
+      },
       "type": "Type",
       "updateTime": "Update time"
     },
     "revisions": {
       "revert": "Retourner aux révisions",
       "title": "Révisions"
+    },
+    "saveRecipe": {
+      "form": {
+        "name": {
+          "label": "Nom",
+          "required": "Un nom est requis pour la formule"
+        }
+      },
+      "title": "Sauver"
     },
     "timeSeries": {
       "create": "Séries temporelles",
@@ -886,10 +1053,10 @@
         },
         "labels": {
           "hide": {
-            "tooltip": "Cacher les labels"
+            "tooltip": "Cacher les étiquettes"
           },
           "show": {
-            "tooltip": "Afficher les labels"
+            "tooltip": "Afficher les étiquettes"
           }
         },
         "zoom": {
