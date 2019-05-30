@@ -145,7 +145,7 @@ class _ScrollingDatePicker extends React.Component {
 
 const ScrollingDatePicker = compose(
     _ScrollingDatePicker,
-    withSubscriptions
+    withSubscriptions()
 )
 
 ScrollingDatePicker.propTypes = {

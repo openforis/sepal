@@ -38,7 +38,7 @@ class BlurDetector extends React.Component {
 
 export default compose(
     BlurDetector,
-    withSubscriptions
+    withSubscriptions()
 )
 
 BlurDetector.propTypes = {

@@ -69,7 +69,7 @@ class _HoverDetector extends React.Component {
 
 export const HoverDetector = compose(
     _HoverDetector,
-    withSubscriptions
+    withSubscriptions()
 )
 
 HoverDetector.propTypes = {

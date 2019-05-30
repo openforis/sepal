@@ -392,5 +392,5 @@ class _Handle extends React.Component {
 
 const Handle = compose(
     _Handle,
-    withSubscriptions
+    withSubscriptions()
 )

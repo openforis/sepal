@@ -75,7 +75,7 @@ class FloatingBox extends React.Component {
 export default compose(
     FloatingBox,
     connect(mapStateToProps),
-    withForwardedRef
+    withForwardedRef()
 )
 
 FloatingBox.propTypes = {

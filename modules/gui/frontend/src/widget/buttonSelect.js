@@ -167,7 +167,7 @@ class ButtonSelect extends React.Component {
 
 export default compose(
     ButtonSelect,
-    withSubscriptions,
+    withSubscriptions(),
     connect(mapStateToProps)
 )
 

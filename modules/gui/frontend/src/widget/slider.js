@@ -404,7 +404,7 @@ class _SliderDynamics extends React.Component {
 
 const SliderDynamics = compose(
     _SliderDynamics,
-    withSubscriptions
+    withSubscriptions()
 )
 
 SliderDynamics.propTypes = {

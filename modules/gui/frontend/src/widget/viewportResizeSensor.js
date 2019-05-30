@@ -41,7 +41,7 @@ class ViewportResizeSensor extends React.Component {
 
 export default compose(
     ViewportResizeSensor,
-    withSubscriptions
+    withSubscriptions()
 )
 
 ViewportResizeSensor.propTypes = {}

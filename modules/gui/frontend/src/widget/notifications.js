@@ -169,7 +169,7 @@ class _Notifications extends React.Component {
 
 const Notifications = compose(
     _Notifications,
-    withSubscriptions,
+    withSubscriptions(),
     connect(mapStateToProps)
 )
 

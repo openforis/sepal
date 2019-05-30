@@ -329,8 +329,8 @@ class List extends React.Component {
 
 export default compose(
     List,
-    withSubscriptions,
-    withForwardedRef
+    withSubscriptions(),
+    withForwardedRef()
 )
 
 List.propTypes = {

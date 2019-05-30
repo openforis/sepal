@@ -267,7 +267,7 @@ class Combo extends React.Component {
 
 export default compose(
     Combo,
-    withSubscriptions,
+    withSubscriptions(),
     connect(mapStateToProps)
 )
 
