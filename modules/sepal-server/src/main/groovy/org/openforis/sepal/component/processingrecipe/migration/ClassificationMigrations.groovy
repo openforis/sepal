@@ -47,7 +47,10 @@ class ClassificationMigrations extends AbstractMigrations {
             ]
         ]
         if (image.id) {
-            result.model.inputImagery.images = [image]
+            if (result.model.inputImagery.images)
+                result.model.inputImagery.images << image
+            else
+                result.model.inputImagery.images = [image]
         }
     }
 }
