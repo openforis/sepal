@@ -163,4 +163,6 @@ class FusionTableSection extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(FusionTableSection)
+export default withRecipe(mapRecipeToProps)(
+    FusionTableSection
+)

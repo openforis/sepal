@@ -71,4 +71,6 @@ ClassificationToolbar.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default withRecipe(mapRecipeToProps)(ClassificationToolbar)
+export default withRecipe(mapRecipeToProps)(
+    ClassificationToolbar
+)

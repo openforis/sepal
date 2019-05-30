@@ -71,7 +71,9 @@ class ScenePreview extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(ScenePreview)
+export default withRecipe(mapRecipeToProps)(
+    ScenePreview
+)
 
 const LabelValue = ({name, value, icon}) =>
     <div className={styles[name]}>

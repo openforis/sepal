@@ -67,4 +67,6 @@ class RadarMosaicToolbar extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(RadarMosaicToolbar)
+export default withRecipe(mapRecipeToProps)(
+    RadarMosaicToolbar
+)

@@ -38,4 +38,6 @@ ShowSceneAreaToggle.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default withRecipe(mapRecipeToProps)(ShowSceneAreaToggle)
+export default withRecipe(mapRecipeToProps)(
+    ShowSceneAreaToggle
+)

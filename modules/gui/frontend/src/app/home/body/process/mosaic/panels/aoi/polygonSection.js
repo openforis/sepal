@@ -78,4 +78,6 @@ PolygonSection.propTypes = {
     labelsShown: PropTypes.any
 }
 
-export default withRecipe(mapRecipeToProps)(PolygonSection)
+export default withRecipe(mapRecipeToProps)(
+    PolygonSection
+)
