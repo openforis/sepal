@@ -5,6 +5,7 @@ import {Msg, msg} from 'translate'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {arrayEquals} from 'collections'
+import {compose} from 'compose'
 import {dateRange} from '../../timeSeriesRecipe'
 import {imageSourceById, isDataSetInDateRange} from 'sources'
 import {selectFrom} from 'stateUtils'
@@ -89,4 +90,7 @@ const modelToValues = model => {
     }
 }
 
-export default recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})(Sources)
+export default compose(
+    Sources,
+    recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})
+)

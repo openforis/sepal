@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
@@ -71,6 +72,7 @@ ClassificationToolbar.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default withRecipe(mapRecipeToProps)(
-    ClassificationToolbar
+export default compose(
+    ClassificationToolbar,
+    withRecipe(mapRecipeToProps)
 )

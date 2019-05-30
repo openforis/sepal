@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './toggleSwitch.module.css'
 
-class ToggleSwitch extends React.Component {
+export default class ToggleSwitch extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
@@ -49,5 +49,3 @@ ToggleSwitch.propTypes = {
     onChange: PropTypes.func,
     onIcon: PropTypes.string
 }
-
-export default ToggleSwitch

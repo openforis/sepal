@@ -6,7 +6,7 @@ import styles from './workflow.module.css'
 
 const WorkflowContext = React.createContext()
 
-class Workflow extends React.Component {
+export default class Workflow extends React.Component {
     state = {stepName: null}
 
     render() {
@@ -79,6 +79,3 @@ Workflow.NextButton.propTypes = {
     disabled: PropTypes.any,
     label: PropTypes.string
 }
-
-export default Workflow
-

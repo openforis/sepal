@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {fromEvent, merge} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -35,8 +36,9 @@ class BlurDetector extends React.Component {
     }
 }
 
-export default withSubscriptions(
-    BlurDetector
+export default compose(
+    BlurDetector,
+    withSubscriptions
 )
 
 BlurDetector.propTypes = {

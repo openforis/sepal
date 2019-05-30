@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {ContentPadding} from 'widget/sectionLayout'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
 import AppInstance from './appInstance'
@@ -90,4 +91,7 @@ class AppLauncher extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(AppLauncher)
+export default compose(
+    AppLauncher,
+    connect(mapStateToProps)
+)

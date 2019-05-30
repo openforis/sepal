@@ -4,6 +4,7 @@ import {CenteredProgress} from 'widget/progress'
 import {Field, Input, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser} from 'widget/user'
 import {isMobile} from 'widget/userAgent'
@@ -145,12 +146,10 @@ const policy = () => ({
     changePassword: 'allow-then-deactivate'
 })
 
-const UserDetails = (
-    activatable({id: 'userDetails', policy, alwaysAllow: true})(
-        form({fields, mapStateToProps})(
-            _UserDetails
-        )
-    )
+const UserDetails = compose(
+    _UserDetails,
+    form({fields, mapStateToProps}),
+    activatable({id: 'userDetails', policy, alwaysAllow: true})
 )
 
 UserDetails.propTypes = {}
@@ -176,8 +175,11 @@ const _UserDetailsButton = ({className, username}) =>
         <ChangePassword/>
     </React.Fragment>
 
-export const UserDetailsButton = connect(state => ({
-    username: state.user.currentUser.username
-}))(_UserDetailsButton)
+export const UserDetailsButton = compose(
+    _UserDetailsButton,
+    connect(state => ({
+        username: state.user.currentUser.username
+    }))
+)
 
 UserDetailsButton.propTypes = {}

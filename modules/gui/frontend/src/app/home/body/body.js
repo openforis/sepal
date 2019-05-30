@@ -1,4 +1,5 @@
 import {CenteredProgress} from 'widget/progress'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {history, location} from 'route'
 import {initGoogleMapsApi$} from '../map/map'
@@ -79,4 +80,7 @@ Body.propTypes = {
     location: PropTypes.object
 }
 
-export default connect(mapStateToProps)(Body)
+export default compose(
+    Body,
+    connect(mapStateToProps)
+)

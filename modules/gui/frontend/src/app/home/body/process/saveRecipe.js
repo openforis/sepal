@@ -2,6 +2,7 @@ import {Field, Input, form} from 'widget/form'
 import {PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {closeRecipe} from './recipe'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {saveRecipe} from './recipe'
 import FormPanel from 'widget/formPanel'
@@ -83,10 +84,8 @@ const policy = () => ({
     _: 'allow'
 })
 
-export default (
-    activatable({id: 'saveRecipeDialog', policy})(
-        form({fields, mapStateToProps})(
-            SaveRecipe
-        )
-    )
+export default compose(
+    SaveRecipe,
+    form({fields, mapStateToProps}),
+    activatable({id: 'saveRecipeDialog', policy})
 )

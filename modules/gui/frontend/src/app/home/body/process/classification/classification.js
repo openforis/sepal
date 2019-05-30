@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {connect} from 'store'
 import {defaultModel} from './classificationRecipe'
 import {recipe} from 'app/home/body/process/recipeContext'
@@ -66,10 +67,8 @@ Classification.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default (
-    recipe({defaultModel, mapRecipeToProps})(
-        connect(mapStateToProps)(
-            Classification
-        )
-    )
+export default compose(
+    Classification,
+    connect(mapStateToProps),
+    recipe({defaultModel, mapRecipeToProps})
 )

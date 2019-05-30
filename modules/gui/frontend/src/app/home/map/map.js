@@ -1,5 +1,6 @@
 import './map.module.css'
 import {NEVER, Observable, Subject} from 'rxjs'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {map, mergeMap, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
@@ -375,7 +376,10 @@ Map.propTypes = {
     className: PropTypes.string
 }
 
-export default connect(mapStateToProps)(Map)
+export default compose(
+    Map,
+    connect(mapStateToProps)
+)
 
 export class MapLayer extends React.Component {
     state = {
@@ -434,10 +438,6 @@ class WrappedMapObject extends React.Component {
                 }
             </ProjectionContext.Consumer>
         )
-    }
-
-    componentWillUnmount() {
-
     }
 }
 

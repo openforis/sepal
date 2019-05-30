@@ -1,4 +1,5 @@
 import {appList, loadApps$} from 'apps'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import AppLauncher from './appLauncher'
@@ -42,4 +43,7 @@ class _Apps extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(_Apps)
+export default compose(
+    _Apps,
+    connect(mapStateToProps)
+)

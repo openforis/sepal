@@ -2,6 +2,7 @@ import {Constraint, ErrorMessage, Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
 import React from 'react'
@@ -82,4 +83,7 @@ class Dates extends React.Component {
 
 Dates.propTypes = {}
 
-export default recipeFormPanel({id: 'dates', fields, constraints})(Dates)
+export default compose(
+    Dates,
+    recipeFormPanel({id: 'dates', fields, constraints})
+)

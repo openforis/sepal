@@ -2,6 +2,7 @@ import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Constraint, Field, Form, Input, form} from 'widget/form'
 import {PropTypes} from 'prop-types'
+import {compose} from 'compose'
 import {history, query} from 'route'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -121,4 +122,7 @@ SetPassword.propTypes = {
     user: PropTypes.object
 }
 
-export default form({fields, constraints, mapStateToProps})(SetPassword)
+export default compose(
+    SetPassword,
+    form({fields, constraints, mapStateToProps})
+)

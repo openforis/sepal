@@ -4,6 +4,7 @@ import {HoverDetector, HoverOverlay} from 'widget/hover'
 import {Msg, msg} from 'translate'
 import {Progress} from 'widget/progress'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {compose} from 'compose'
 import {connect} from 'store'
 import React from 'react'
 import api from 'api'
@@ -161,4 +162,7 @@ class Tasks extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(Tasks)
+export default compose(
+    Tasks,
+    connect(mapStateToProps)
+)

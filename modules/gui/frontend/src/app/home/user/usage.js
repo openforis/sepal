@@ -3,6 +3,7 @@ import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {activatable} from 'widget/activation/activatable'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Label from 'widget/label'
@@ -70,12 +71,10 @@ const policy = () => ({
     _: 'disallow'
 })
 
-const Usage = (
-    activatable({id: 'userReport', policy, alwaysAllow: true})(
-        connect(mapStateToProps)(
-            _Usage
-        )
-    )
+const Usage = compose(
+    _Usage,
+    connect(mapStateToProps),
+    activatable({id: 'userReport', policy, alwaysAllow: true})
 )
 
 Usage.propTypes = {}
@@ -110,7 +109,10 @@ const _UsageButton = ({userReport, budgetExceeded}) => {
     )
 }
 
-export const UsageButton = connect(state => ({
-    userReport: (state.user && state.user.currentUserReport) || {},
-    budgetExceeded: select('user.budgetExceeded')
-}))(_UsageButton)
+export const UsageButton = compose(
+    _UsageButton,
+    connect(state => ({
+        userReport: (state.user && state.user.currentUserReport) || {},
+        budgetExceeded: select('user.budgetExceeded')
+    }))
+)

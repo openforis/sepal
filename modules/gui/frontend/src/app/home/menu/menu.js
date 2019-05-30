@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {currentUser} from 'widget/user'
 import {isFloating} from './menuMode'
@@ -45,9 +46,12 @@ Menu.propTypes = {
     user: PropTypes.object
 }
 
-export default connect(mapStateToProps)(Menu)
+export default compose(
+    Menu,
+    connect(mapStateToProps)
+)
 
-let SectionLink = ({active, name, icon, disabled}) => {
+const _SectionLink = ({active, name, icon, disabled}) => {
     const link = '/' + name
     const activeClass = active ? styles.active : null
     return (
@@ -62,13 +66,17 @@ let SectionLink = ({active, name, icon, disabled}) => {
     )
 }
 
+const SectionLink = compose(
+    _SectionLink,
+    connect(
+        (state, {name}) => ({
+            active: isPathInLocation('/' + name)
+        })
+    )
+)
+
 SectionLink.propTypes = {
     disabled: PropTypes.any,
     icon: PropTypes.string,
     name: PropTypes.string
 }
-SectionLink = connect(
-    (state, {name}) => ({
-        active: isPathInLocation('/' + name)
-    })
-)(SectionLink)

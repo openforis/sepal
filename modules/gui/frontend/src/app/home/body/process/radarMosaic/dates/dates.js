@@ -4,6 +4,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import DatePicker, {maxDate, minDate, momentDate} from 'widget/datePicker'
 import React from 'react'
@@ -199,6 +200,7 @@ const toDateRange = fromDate => {
     ]
 }
 
-export default recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel})(
-    Dates
+export default compose(
+    Dates,
+    recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel})
 )

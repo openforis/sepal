@@ -1,4 +1,5 @@
 import {ActivationContext} from 'widget/activation/activationContext'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {toPathList} from 'stateUtils'
 import React from 'react'
@@ -28,12 +29,10 @@ export const withRecipe = mapRecipeToProps =>
             const recipe = {...select(statePath)}
             return mapRecipeToProps(recipe, ownProps)
         }
-        return (
-            withRecipeContext()(
-                connect(mapStateToProps)(
-                    WrappedComponent
-                )
-            )
+        return compose(
+            WrappedComponent,
+            connect(mapStateToProps),
+            withRecipeContext()
         )
     }
     
@@ -63,11 +62,9 @@ export const recipe = ({defaultModel, mapRecipeToProps}) =>
             }
         }
 
-        return (
-            withRecipe(mapRecipeToProps)(
-                connect(mapStateToProps)(
-                    HigherOrderComponent
-                )
-            )
+        return compose(
+            HigherOrderComponent,
+            connect(mapStateToProps),
+            withRecipe(mapRecipeToProps)
         )
     }

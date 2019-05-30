@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {connect} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -256,7 +257,10 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
         }
 
         Form.displayName = `Form(${getDisplayName(WrappedComponent)})`
-        return connect(mapStateToProps ? mapStateToProps : null)(Form)
+        return compose(
+            Form,
+            connect(mapStateToProps ? mapStateToProps : null)
+        )
     }
 
 const getDisplayName = Component =>

@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {withSelectableContext} from './selectable'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -58,4 +59,7 @@ Portal.propTypes = {
     content: PropTypes.any
 }
 
-export default withSelectableContext()(Portal)
+export default compose(
+    Portal,
+    withSelectableContext()
+)

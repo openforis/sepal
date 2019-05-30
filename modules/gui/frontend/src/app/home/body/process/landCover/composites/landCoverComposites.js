@@ -1,5 +1,6 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {RecipeState} from '../landCoverRecipe'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {withRecipePath} from 'app/home/body/process/recipe'
 import CompositesToolbar from './compositesToolbar'
@@ -50,6 +51,8 @@ class LandCoverComposites extends React.Component {
     }
 }
 
-export default withRecipePath()(
-    connect(mapStateToProps)(LandCoverComposites)
+export default compose(
+    LandCoverComposites,
+    connect(mapStateToProps),
+    withRecipePath()
 )

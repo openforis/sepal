@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './flipSwitch.module.css'
 
-class FlipSwitch extends React.Component {
+export default class FlipSwitch extends React.Component {
     toggle() {
         this.props.onChange(!this.props.on)
     }
@@ -27,5 +27,3 @@ FlipSwitch.propTypes = {
     onChange: PropTypes.func,
     onIcon: PropTypes.string
 }
-
-export default FlipSwitch

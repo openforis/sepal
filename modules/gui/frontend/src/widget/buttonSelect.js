@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {Subject, fromEvent} from 'rxjs'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {delay} from 'rxjs/operators'
 import {selectFrom} from 'stateUtils'
@@ -164,12 +165,10 @@ class ButtonSelect extends React.Component {
     }
 }
 
-export default (
-    connect(mapStateToProps)(
-        withSubscriptions(
-            ButtonSelect
-        )
-    )
+export default compose(
+    ButtonSelect,
+    withSubscriptions,
+    connect(mapStateToProps)
 )
 
 ButtonSelect.propTypes = {

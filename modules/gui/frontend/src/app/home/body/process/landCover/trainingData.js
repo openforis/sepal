@@ -3,6 +3,7 @@ import {Field, Input, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {Subject} from 'rxjs'
+import {compose} from 'compose'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
@@ -156,7 +157,9 @@ const modelToValues = (model = {}) => ({
     classColumn: model.classColumn
 })
 
-export default withRecipePath()(
+export default compose(
+    TrainingData,
+    form({fields, constraints}),
     initValues({
         getModel: props => RecipeState(props.recipeId)('model.trainingData'),
         getValues: props => RecipeState(props.recipeId)('ui.trainingData'),
@@ -165,7 +168,19 @@ export default withRecipePath()(
             RecipeActions(props.recipeId)
                 .setTrainingData({values, model})
                 .dispatch()
-    })(
-        form({fields, constraints})(TrainingData)
-    )
+    })
 )
+
+// export default withRecipePath()(
+//     initValues({
+//         getModel: props => RecipeState(props.recipeId)('model.trainingData'),
+//         getValues: props => RecipeState(props.recipeId)('ui.trainingData'),
+//         modelToValues,
+//         onInitialized: ({model, values, props}) =>
+//             RecipeActions(props.recipeId)
+//                 .setTrainingData({values, model})
+//                 .dispatch()
+//     })(
+//         form({fields, constraints})(TrainingData)
+//     )
+// )

@@ -1,5 +1,6 @@
 import {RecipeContext} from 'app/home/body/process/recipeContext'
 import {activator} from 'widget/activation/activator'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {saveRecipe} from './recipe'
 import Classification from './classification/classification'
@@ -80,8 +81,7 @@ class Process extends React.Component {
     }
 }
 
-export default (
-    activator('closeRecipeDialog')(
-        Process
-    )
+export default compose(
+    Process,
+    activator('closeRecipeDialog')
 )

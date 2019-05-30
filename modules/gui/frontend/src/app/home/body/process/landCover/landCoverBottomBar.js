@@ -1,6 +1,7 @@
 import {BottomBar} from 'widget/sectionLayout'
 import {Button, ButtonGroup} from 'widget/button'
 import {Field, form} from 'widget/form'
+import {compose} from 'compose'
 import Combo from 'widget/combo'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
@@ -117,4 +118,7 @@ LandCoverBottomBar.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default form({fields})(LandCoverBottomBar)
+export default compose(
+    LandCoverBottomBar,
+    form({fields})
+)

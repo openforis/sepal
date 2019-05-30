@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {connect} from 'store'
 import {defaultModel} from './timeSeriesRecipe'
 import {recipe} from 'app/home/body/process/recipeContext'
@@ -53,10 +54,8 @@ TimeSeries.propTypes = {
     aoi: PropTypes.object
 }
 
-export default (
-    recipe({defaultModel, mapRecipeToProps})(
-        connect(mapStateToProps)(
-            TimeSeries
-        )
-    )
+export default compose(
+    TimeSeries,
+    connect(mapStateToProps),
+    recipe({defaultModel, mapRecipeToProps})
 )

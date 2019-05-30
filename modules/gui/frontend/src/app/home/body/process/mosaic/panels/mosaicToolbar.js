@@ -1,4 +1,5 @@
 import {SceneSelectionType} from '../mosaicRecipe'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from '../../recipe'
@@ -102,6 +103,7 @@ class MosaicToolbar extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(
-    MosaicToolbar
+export default compose(
+    MosaicToolbar,
+    withRecipe(mapRecipeToProps)
 )

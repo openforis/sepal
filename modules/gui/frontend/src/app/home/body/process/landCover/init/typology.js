@@ -1,6 +1,7 @@
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../landCoverRecipe'
 import {activatable} from 'widget/activation/activatable'
+import {compose} from 'compose'
 import {form} from 'widget/form'
 import {initValues} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
@@ -65,7 +66,9 @@ const modelToValues = (model = {}) => ({
 
 const policy = () => ({_: 'allow-then-deactivate'})
 
-export default activatable('typology', policy)(
+export default compose(
+    Typology,
+    form({fields}),
     initValues({
         getModel: props => RecipeState(props.recipeId)('model.typology'),
         getValues: props => RecipeState(props.recipeId)('ui.typology'),
@@ -74,7 +77,20 @@ export default activatable('typology', policy)(
             RecipeActions(props.recipeId)
                 .setTypology({values, model})
                 .dispatch()
-    })(
-        form({fields})(Typology)
-    )
+    }),
+    activatable('typology', policy)
 )
+
+// export default activatable('typology', policy)(
+//     initValues({
+//         getModel: props => RecipeState(props.recipeId)('model.typology'),
+//         getValues: props => RecipeState(props.recipeId)('ui.typology'),
+//         modelToValues,
+//         onInitialized: ({model, values, props}) =>
+//             RecipeActions(props.recipeId)
+//                 .setTypology({values, model})
+//                 .dispatch()
+//     })(
+//         form({fields})(Typology)
+//     )
+// )

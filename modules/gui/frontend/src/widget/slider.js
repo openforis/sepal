@@ -1,4 +1,5 @@
 import {animationFrameScheduler, combineLatest, fromEvent, interval, merge} from 'rxjs'
+import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, scan, switchMap, withLatestFrom} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Label from 'widget/label'
@@ -401,10 +402,9 @@ class _SliderDynamics extends React.Component {
     }
 }
 
-const SliderDynamics = (
-    withSubscriptions(
-        _SliderDynamics
-    )
+const SliderDynamics = compose(
+    _SliderDynamics,
+    withSubscriptions
 )
 
 SliderDynamics.propTypes = {

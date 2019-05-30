@@ -3,6 +3,7 @@ import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from './panel'
 import {activatable} from 'widget/activation/activatable'
+import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import Label from './label'
 import List from 'widget/list'
@@ -291,6 +292,15 @@ class _DatePickerPanel extends React.Component {
     }
 }
 
+const DatePickerPanel = compose(
+    _DatePickerPanel,
+    activatable({
+        id: ({id}) => id,
+        policy: () => ({_: 'allow'}),
+        alwaysAllow: true
+    })
+)
+
 class CalendarButton extends Component {
     render() {
         const {label, selected, disabled, onClick} = this.props
@@ -312,9 +322,3 @@ CalendarButton.propTypes = {
     selected: PropTypes.any,
     onClick: PropTypes.any
 }
-
-const policy = () => ({_: 'allow'})
-const id = ({id}) => id
-const DatePickerPanel = activatable({id, policy, alwaysAllow: true})(
-    _DatePickerPanel
-)

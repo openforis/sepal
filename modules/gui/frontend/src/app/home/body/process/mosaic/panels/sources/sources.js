@@ -4,6 +4,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, dateRange} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {imageSourceById, isDataSetInDateRange, sources} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -108,4 +109,7 @@ const valuesToModel = values => {
 
 const additionalPolicy = () => ({sceneSelection: 'allow'})
 
-export default recipeFormPanel({id: 'sources', fields, constraints, mapRecipeToProps, valuesToModel, additionalPolicy})(Sources)
+export default compose(
+    Sources,
+    recipeFormPanel({id: 'sources', fields, constraints, mapRecipeToProps, valuesToModel, additionalPolicy})
+)

@@ -4,6 +4,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import DatePicker from 'widget/datePicker'
 import PropTypes from 'prop-types'
@@ -246,4 +247,7 @@ const modelToValues = (model = {}) => {
 
 const additionalPolicy = () => ({sceneSelection: 'allow'})
 
-export default recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel, additionalPolicy})(Dates)
+export default compose(
+    Dates,
+    recipeFormPanel({id: 'dates', fields, modelToValues, valuesToModel, additionalPolicy})
+)

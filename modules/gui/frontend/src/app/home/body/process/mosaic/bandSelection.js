@@ -1,5 +1,6 @@
 import {Field, form} from 'widget/form'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -151,8 +152,8 @@ const SelectedBands = ({recipeActions, selectedOption, canPanSharpen, panSharpen
 
 }
 
-export default withRecipe(mapRecipeToProps)(
-    form({fields})(
-        BandSelection
-    )
+export default compose(
+    BandSelection,
+    form({fields}),
+    withRecipe(mapRecipeToProps)
 )

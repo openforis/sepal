@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {sepalMap} from './map'
@@ -77,4 +78,7 @@ MapToolbar.propTypes = {
     children: PropTypes.any
 }
 
-export default connect(mapStateToProps)(MapToolbar)
+export default compose(
+    MapToolbar,
+    connect(mapStateToProps)
+)

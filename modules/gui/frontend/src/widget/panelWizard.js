@@ -1,11 +1,11 @@
 import {activator} from 'widget/activation/activator'
+import {compose} from 'compose'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import withContext from 'context'
 
 class PanelWizard extends React.Component {
-
     constructor(props) {
         super(props)
         this.state = {initialized: props.initialized}
@@ -82,7 +82,10 @@ class PanelWizard extends React.Component {
     }
 }
 
-export default activator()(PanelWizard)
+export default compose(
+    PanelWizard,
+    activator()
+)
 
 PanelWizard.propTypes = {
     panels: PropTypes.array.isRequired,

@@ -1,5 +1,6 @@
 import {EMPTY, combineLatest, fromEvent, timer} from 'rxjs'
 import {Link} from 'route'
+import {compose} from 'compose'
 import {distinctUntilChanged, switchMap, take, takeUntil} from 'rxjs/operators'
 import {download} from 'widget/download'
 import Icon from 'widget/icon'
@@ -263,12 +264,10 @@ class _Button extends React.Component {
     }
 }
 
-export const Button = (
-    withForwardedRef(
-        withSubscriptions(
-            _Button
-        )
-    )
+export const Button = compose(
+    _Button,
+    withSubscriptions,
+    withForwardedRef
 )
 
 Button.propTypes = {

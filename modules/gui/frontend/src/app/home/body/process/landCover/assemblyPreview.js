@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {RecipeState, getPrimitiveTypes} from './landCoverRecipe'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
@@ -189,4 +190,7 @@ AssemblyPreview.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default connect(mapStateToProps)(AssemblyPreview)
+export default compose(
+    AssemblyPreview,
+    connect(mapStateToProps)
+)

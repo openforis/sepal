@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {Field, Form, Input, form} from 'widget/form'
+import {compose} from 'compose'
 import {invalidCredentials, login, resetInvalidCredentials} from 'widget/user'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -97,5 +98,7 @@ Login.propTypes = {
     inputs: PropTypes.object
 }
 
-export default form({fields, mapStateToProps})(Login)
-
+export default compose(
+    Login,
+    form({fields, mapStateToProps})
+)

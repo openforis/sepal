@@ -1,5 +1,6 @@
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
+import {compose} from 'compose'
 import {form} from 'widget/form'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
@@ -62,7 +63,9 @@ const modelToValues = (model = {}) => ({
     ...model
 })
 
-export default withRecipePath()(
+export default compose(
+    Typology,
+    form({fields}),
     initValues({
         getModel: props => RecipeState(props.recipeId)('model.typology'),
         getValues: props => RecipeState(props.recipeId)('ui.typology'),
@@ -71,7 +74,19 @@ export default withRecipePath()(
             RecipeActions(props.recipeId)
                 .setTypology({values, model})
                 .dispatch()
-    })(
-        form({fields})(Typology)
-    )
+    })
 )
+
+// export default withRecipePath()(
+//     initValues({
+//         getModel: props => RecipeState(props.recipeId)('model.typology'),
+//         getValues: props => RecipeState(props.recipeId)('ui.typology'),
+//         modelToValues,
+//         onInitialized: ({model, values, props}) =>
+//             RecipeActions(props.recipeId)
+//                 .setTypology({values, model})
+//                 .dispatch()
+//     })(
+//         form({fields})(Typology)
+//     )
+// )

@@ -1,6 +1,7 @@
 import {Field, Input, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
@@ -96,4 +97,7 @@ UserMessage.propTypes = {
     onCancel: PropTypes.func.isRequired
 }
 
-export default form({fields, mapStateToProps})(UserMessage)
+export default compose(
+    UserMessage,
+    form({fields, mapStateToProps})
+)

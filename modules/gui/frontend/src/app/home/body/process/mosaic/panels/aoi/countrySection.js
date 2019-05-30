@@ -1,4 +1,5 @@
 import {Subject} from 'rxjs'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {isMobile} from 'widget/userAgent'
@@ -161,5 +162,7 @@ CountrySection.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default connect(mapStateToProps)(CountrySection)
-
+export default compose(
+    CountrySection,
+    connect(mapStateToProps)
+)

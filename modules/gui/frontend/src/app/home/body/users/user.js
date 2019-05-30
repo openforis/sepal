@@ -1,5 +1,6 @@
 import {Field, Input, InputGroup, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
+import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
@@ -138,4 +139,7 @@ UserDetails.propTypes = {
     onSave: PropTypes.func.isRequired,
 }
 
-export default form({fields, mapStateToProps})(UserDetails)
+export default compose(
+    UserDetails,
+    form({fields, mapStateToProps})
+)

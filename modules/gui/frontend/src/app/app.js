@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
 import Home from 'app/home/home'
@@ -54,4 +55,7 @@ const Loader = () =>
         <p>S E P A L</p>
     </div>
 
-export default connect(mapStateToProps)(App)
+export default compose(
+    App,
+    connect(mapStateToProps)
+)

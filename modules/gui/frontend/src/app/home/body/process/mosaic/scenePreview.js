@@ -1,5 +1,6 @@
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {compose} from 'compose'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -71,8 +72,9 @@ class ScenePreview extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(
-    ScenePreview
+export default compose(
+    ScenePreview,
+    withRecipe(mapRecipeToProps)
 )
 
 const LabelValue = ({name, value, icon}) =>

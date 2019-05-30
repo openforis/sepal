@@ -1,6 +1,7 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {Modal} from 'widget/modal'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
@@ -56,7 +57,10 @@ class _Panel extends React.Component {
     }
 }
 
-export const Panel = connect()(_Panel)
+export const Panel = compose(
+    _Panel,
+    connect()
+)
 
 Panel.propTypes = {
     children: PropTypes.any.isRequired,

@@ -1,4 +1,5 @@
 import {Subject} from 'rxjs'
+import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged} from 'rxjs/operators'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
@@ -38,10 +39,9 @@ class ViewportResizeSensor extends React.Component {
     }
 }
 
-export default (
-    withSubscriptions(
-        ViewportResizeSensor
-    )
+export default compose(
+    ViewportResizeSensor,
+    withSubscriptions
 )
 
 ViewportResizeSensor.propTypes = {}

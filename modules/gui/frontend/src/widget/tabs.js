@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -176,7 +177,10 @@ Tabs.propTypes = {
     onTitleChanged: PropTypes.func
 }
 
-export default connect(mapStateToProps)(Tabs)
+export default compose(
+    Tabs,
+    connect(mapStateToProps)
+)
 
 class Tab extends React.Component {
     constructor(props) {

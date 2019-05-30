@@ -4,6 +4,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {currentUser} from 'widget/user'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -77,4 +78,7 @@ Retrieve.propTypes = {
     user: PropTypes.object
 }
 
-export default recipeFormPanel({id: 'retrieve', fields})(Retrieve)
+export default compose(
+    Retrieve,
+    recipeFormPanel({id: 'retrieve', fields})
+)

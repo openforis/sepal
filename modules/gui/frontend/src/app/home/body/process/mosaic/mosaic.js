@@ -1,5 +1,6 @@
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {RecipeActions, defaultModel} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {compose} from 'compose'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import AoiLayer from './aoiLayer'
@@ -60,8 +61,7 @@ class Mosaic extends React.Component {
 
 Mosaic.propTypes = {}
 
-export default (
-    recipe({defaultModel, mapRecipeToProps})(
-        Mosaic
-    )
+export default compose(
+    Mosaic,
+    recipe({defaultModel, mapRecipeToProps})
 )

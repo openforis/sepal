@@ -2,6 +2,7 @@ import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {closeRecipe} from './recipe'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import React from 'react'
 import styles from './closeRecipe.module.css'
@@ -52,10 +53,8 @@ const policy = () => ({
     _: 'allow'
 })
 
-export default (
-    activatable({id: 'closeRecipeDialog', policy})(
-        activator('saveRecipeDialog')(
-            CloseRecipe
-        )
-    )
+export default compose(
+    CloseRecipe,
+    activator('saveRecipeDialog'),
+    activatable({id: 'closeRecipeDialog', policy})
 )

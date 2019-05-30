@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {compose} from 'compose'
 import {enabled} from 'widget/enableWhen'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -152,10 +153,8 @@ const removeLayer = ({recipe}) => {
 
 MosaicPreview.propTypes = {}
 
-export default (
-    withRecipe(mapRecipeToProps)(
-        enabled({when: hasScenes, onDisable: removeLayer})(
-            MosaicPreview
-        )
-    )
+export default compose(
+    MosaicPreview,
+    enabled({when: hasScenes, onDisable: removeLayer}),
+    withRecipe(mapRecipeToProps)
 )

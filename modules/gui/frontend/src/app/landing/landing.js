@@ -1,4 +1,5 @@
 import {Msg} from 'translate'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {location} from 'route'
 import Credentials from './credentials'
@@ -45,7 +46,10 @@ const Landing =
             </div>
         </div>
         
-export default connect(mapStateToProps)(Landing)
+export default compose(
+    Landing,
+    connect(mapStateToProps)
+)
 
 Landing.propTypes = {
     location: PropTypes.object

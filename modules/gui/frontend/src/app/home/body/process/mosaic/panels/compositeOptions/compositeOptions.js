@@ -4,6 +4,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import Label from 'widget/label'
@@ -196,6 +197,7 @@ const panelOptions = {
     additionalPolicy
 }
 
-export default recipeFormPanel(panelOptions)(
-    CompositeOptions
+export default compose(
+    CompositeOptions,
+    recipeFormPanel(panelOptions)
 )

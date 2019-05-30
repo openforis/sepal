@@ -1,5 +1,6 @@
 import {CenteredProgress} from 'widget/progress'
 import {ContentPadding} from 'widget/sectionLayout'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {forkJoin, timer} from 'rxjs'
 import {msg} from 'translate'
@@ -89,4 +90,7 @@ AppInstance.contextTypes = {
     focus: PropTypes.func
 }
 
-export default connect()(AppInstance)
+export default compose(
+    AppInstance,
+    connect()
+)

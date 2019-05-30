@@ -1,4 +1,5 @@
 import {add, remove} from './keybindings'
+import {compose} from 'compose'
 import {connect} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -67,8 +68,9 @@ class Keybinding extends React.Component {
     }
 }
 
-export default connect()(
-    Keybinding
+export default compose(
+    Keybinding,
+    connect()
 )
 
 Keybinding.propTypes = {

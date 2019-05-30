@@ -1,5 +1,6 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {stopCurrentUserSession$} from 'widget/user'
@@ -117,4 +118,7 @@ class UserSessions extends React.Component {
 
 UserSessions.propTypes = {}
 
-export default connect(mapStateToProps)(UserSessions)
+export default compose(
+    UserSessions,
+    connect(mapStateToProps)
+)

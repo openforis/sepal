@@ -4,6 +4,7 @@ import {Msg, msg} from 'translate'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {activatable} from 'widget/activation/activatable'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {v4 as uuid} from 'uuid'
 import Markdown from 'react-markdown'
@@ -230,10 +231,10 @@ class _UserMessages extends React.Component {
 
 const policy = () => ({_: 'disallow'})
 
-const UserMessages = (
-    activatable({id: 'userMessages', policy, alwaysAllow: true})(
-        connect(mapStateToProps)(_UserMessages)
-    )
+const UserMessages = compose(
+    _UserMessages,
+    connect(mapStateToProps),
+    activatable({id: 'userMessages', policy, alwaysAllow: true})
 )
 
 UserMessages.propTypes = {
@@ -264,6 +265,9 @@ const _UserMessagesButton = ({className, userMessages}) => {
     )
 }
 
-export const UserMessagesButton = connect(state => ({
-    userMessages: state.user.userMessages
-}))(_UserMessagesButton)
+export const UserMessagesButton = compose(
+    _UserMessagesButton,
+    connect(state => ({
+        userMessages: state.user.userMessages
+    }))
+)

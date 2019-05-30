@@ -3,6 +3,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import Label from 'widget/label'
 import React from 'react'
@@ -70,4 +71,7 @@ class AutoSelectScenes extends React.Component {
 
 AutoSelectScenes.propTypes = {}
 
-export default recipeFormPanel({id: 'autoSelectScenes', fields})(AutoSelectScenes)
+export default compose(
+    AutoSelectScenes,
+    recipeFormPanel({id: 'autoSelectScenes', fields})
+)

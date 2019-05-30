@@ -2,6 +2,7 @@ import {FormButtons as Buttons} from 'widget/buttons'
 import {Field, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
+import {compose} from 'compose'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
@@ -129,7 +130,9 @@ const modelToValues = (model = {}) => ({
     ...model
 })
 
-export default withRecipePath()(
+export default compose(
+    CompositeOptions,
+    form({fields}),
     initValues({
         getModel: props => RecipeState(props.recipeId)('model.compositeOptions'),
         getValues: props => RecipeState(props.recipeId)('ui.compositeOptions'),
@@ -138,7 +141,20 @@ export default withRecipePath()(
             RecipeActions(props.recipeId)
                 .setCompositeOptions({values, model})
                 .dispatch()
-    })(
-        form({fields})(CompositeOptions)
-    )
+    }),
+    withRecipePath()
 )
+
+// export default withRecipePath()(
+//     initValues({
+//         getModel: props => RecipeState(props.recipeId)('model.compositeOptions'),
+//         getValues: props => RecipeState(props.recipeId)('ui.compositeOptions'),
+//         modelToValues,
+//         onInitialized: ({model, values, props}) =>
+//             RecipeActions(props.recipeId)
+//                 .setCompositeOptions({values, model})
+//                 .dispatch()
+//     })(
+//         form({fields})(CompositeOptions)
+//     )
+// )

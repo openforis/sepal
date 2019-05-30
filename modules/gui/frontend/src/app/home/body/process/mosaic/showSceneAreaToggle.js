@@ -1,5 +1,6 @@
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {ToolbarButton} from 'widget/toolbar'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -38,6 +39,7 @@ ShowSceneAreaToggle.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default withRecipe(mapRecipeToProps)(
-    ShowSceneAreaToggle
+export default compose(
+    ShowSceneAreaToggle,
+    withRecipe(mapRecipeToProps)
 )

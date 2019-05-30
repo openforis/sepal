@@ -4,6 +4,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../radarMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {currentUser} from 'widget/user'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -175,4 +176,7 @@ class Retrieve extends React.Component {
 
 Retrieve.propTypes = {}
 
-export default recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})(Retrieve)
+export default compose(
+    Retrieve,
+    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
+)

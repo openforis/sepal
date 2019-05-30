@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
@@ -187,7 +188,10 @@ CreateRecipe.propTypes = {
     trigger: PropTypes.any
 }
 
-export default connect(mapStateToProps)(CreateRecipe)
+export default compose(
+    CreateRecipe,
+    connect(mapStateToProps)
+)
 
 class RecipeType extends React.Component {
     render() {

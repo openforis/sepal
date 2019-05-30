@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {withRecipePath} from 'app/home/body/process/recipe'
 import CompositeOptions from 'app/home/body/process/landCover/compositeOptions'
@@ -37,6 +38,7 @@ CompositesToolbar.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default withRecipePath()(
-    CompositesToolbar
+export default compose(
+    CompositesToolbar,
+    withRecipePath()
 )

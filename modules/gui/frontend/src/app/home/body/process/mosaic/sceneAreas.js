@@ -3,6 +3,7 @@ import {MapLayer, googleMap, sepalMap} from 'app/home/map/map'
 import {RecipeActions, SceneSelectionType, getSource} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Subject, of} from 'rxjs'
 import {activator} from 'widget/activation/activator'
+import {compose} from 'compose'
 import {enabled} from 'widget/enableWhen'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
@@ -129,14 +130,11 @@ SceneAreas.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default (
-    withRecipe(mapRecipeToProps)(
-        activator('sceneSelection')(
-            enabled({when: ({manualSelection}) => manualSelection})(
-                SceneAreas
-            )
-        )
-    )
+export default compose(
+    SceneAreas,
+    enabled({when: ({manualSelection}) => manualSelection}),
+    activator('sceneSelection'),
+    withRecipe(mapRecipeToProps)
 )
 
 const setSceneAreaLayer = ({recipeId, component}) => {

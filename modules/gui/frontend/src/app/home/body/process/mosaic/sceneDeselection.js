@@ -1,4 +1,5 @@
 import {RecipeActions, SceneSelectionType, inDateRange} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {compose} from 'compose'
 import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -57,6 +58,7 @@ class SceneDeselection extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(
-    SceneDeselection
+export default compose(
+    SceneDeselection,
+    withRecipe(mapRecipeToProps)
 )

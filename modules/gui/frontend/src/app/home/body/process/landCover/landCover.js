@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {defaultModel} from './landCoverRecipe2'
 import {recipe} from 'app/home/body/process/recipeContext'
 import LandCoverComposites from 'app/home/body/process/landCover/composites/landCoverComposites'
@@ -19,8 +20,9 @@ class LandCover extends React.Component {
     }
 }
 
-export default recipe(defaultModel)(
-    LandCover
+export default compose(
+    LandCover,
+    recipe(defaultModel)
 )
 
 // import LandCoverComposites from 'app/home/body/process/landCover/composites/landCoverComposites'

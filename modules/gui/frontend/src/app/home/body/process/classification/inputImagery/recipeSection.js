@@ -1,4 +1,5 @@
 import {ErrorMessage} from 'widget/form'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -40,4 +41,7 @@ RecipeSection.propTypes = {
     recipes: PropTypes.array
 }
 
-export default connect(mapStateToProps)(RecipeSection)
+export default compose(
+    RecipeSection,
+    connect(mapStateToProps)
+)

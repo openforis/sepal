@@ -1,4 +1,5 @@
 import {Content, SectionLayout} from 'widget/sectionLayout'
+import {compose} from 'compose'
 import {defaultModel} from './radarMosaicRecipe'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
@@ -40,8 +41,7 @@ class RadarMosaic extends React.Component {
 
 RadarMosaic.propTypes = {}
 
-export default (
-    recipe({defaultModel, mapRecipeToProps})(
-        RadarMosaic
-    )
+export default compose(
+    RadarMosaic,
+    recipe({defaultModel, mapRecipeToProps})
 )

@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {RecipeState} from 'app/home/body/process/classification/classificationRecipe'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
@@ -151,4 +152,7 @@ CompositePreview.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default connect(mapStateToProps)(CompositePreview)
+export default compose(
+    CompositePreview,
+    connect(mapStateToProps)
+)

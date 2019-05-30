@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from '../recipe'
@@ -67,6 +68,7 @@ class RadarMosaicToolbar extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(
-    RadarMosaicToolbar
+export default compose(
+    RadarMosaicToolbar,
+    withRecipe(mapRecipeToProps)
 )

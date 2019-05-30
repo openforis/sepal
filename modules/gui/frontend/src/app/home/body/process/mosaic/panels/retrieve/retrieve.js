@@ -4,6 +4,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {currentUser} from 'widget/user'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'
@@ -175,4 +176,7 @@ const option = band => ({value: band, label: msg(['bands', band])})
 
 Retrieve.propTypes = {}
 
-export default recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})(Retrieve)
+export default compose(
+    Retrieve,
+    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
+)

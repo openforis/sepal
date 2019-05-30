@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import React from 'react'
@@ -45,7 +46,10 @@ class UserResources extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(UserResources)
+export default compose(
+    UserResources,
+    connect(mapStateToProps)
+)
 
 const PercentCell = ({used, budget}) => {
     const ratio = used / budget

@@ -5,6 +5,7 @@ import * as fit from 'xterm/lib/addons/fit/fit'
 import {ContentPadding} from 'widget/sectionLayout'
 import {Subject, interval} from 'rxjs'
 import {Terminal as Xterm} from 'xterm'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {distinctUntilChanged, filter, map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
@@ -155,4 +156,7 @@ class _TerminalSession extends React.Component {
     }
 }
 
-const TerminalSession = connect()(_TerminalSession)
+const TerminalSession = compose(
+    _TerminalSession,
+    connect()
+)

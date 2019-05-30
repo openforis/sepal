@@ -1,5 +1,6 @@
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Subject} from 'rxjs'
+import {compose} from 'compose'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -63,6 +64,7 @@ class AutoSelectScenes extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(
-    AutoSelectScenes
+export default compose(
+    AutoSelectScenes,
+    withRecipe(mapRecipeToProps)
 )

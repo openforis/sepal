@@ -1,4 +1,5 @@
 import {RecipeState, getPrimitiveTypes} from './landCoverRecipe'
+import {compose} from 'compose'
 import {connect} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -35,4 +36,7 @@ Legend.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default connect(mapStateToProps)(Legend)
+export default compose(
+    Legend,
+    connect(mapStateToProps)
+)

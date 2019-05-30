@@ -1,4 +1,5 @@
 import {activatable} from 'widget/activation/activatable'
+import {compose} from 'compose'
 import {form} from 'widget/form'
 import {initValues} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
@@ -83,20 +84,14 @@ export const recipeFormPanel = ({
         // [HACK] Using withRecipe() twice.
         // activatable() is dependent on recipe for its policy -> withRecipe() before activatable()
         // withRecipe() is dependent on activatable props -> activatable() before withRecipe()
-        return (
-            withPanelWizardContext()(
-                withRecipe(createMapRecipeToProps(mapRecipeToProps))(
-                    activatable({id, policy: policyToApply})(
-                        withRecipe(createMapRecipeToProps(mapRecipeToProps))(
-                            initValues(valuesSpec)(
-                                form({fields, constraints})(
-                                    HigherOrderComponent
-                                )
-                            )
-                        )
-                    )
-                )
-            )
+        return compose(
+            HigherOrderComponent,
+            form({fields, constraints}),
+            initValues(valuesSpec),
+            withRecipe(createMapRecipeToProps(mapRecipeToProps)),
+            activatable({id, policy: policyToApply}),
+            withRecipe(createMapRecipeToProps(mapRecipeToProps)),
+            withPanelWizardContext()
         )
     }
 }

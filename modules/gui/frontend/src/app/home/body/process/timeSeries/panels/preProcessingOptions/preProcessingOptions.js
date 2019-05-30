@@ -4,6 +4,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../timeSeriesRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import React from 'react'
 import styles from './preProcessingOptions.module.css'
@@ -89,4 +90,7 @@ const modelToValues = model => {
     })
 }
 
-export default recipeFormPanel({id: 'preProcessingOptions', fields, modelToValues, valuesToModel})(PreProcessingOptions)
+export default compose(
+    PreProcessingOptions,
+    recipeFormPanel({id: 'preProcessingOptions', fields, modelToValues, valuesToModel})
+)

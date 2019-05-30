@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
 import Portal from 'widget/portal'
@@ -71,12 +72,10 @@ class FloatingBox extends React.Component {
     }
 }
 
-export default (
-    withForwardedRef(
-        connect(mapStateToProps)(
-            FloatingBox
-        )
-    )
+export default compose(
+    FloatingBox,
+    connect(mapStateToProps),
+    withForwardedRef
 )
 
 FloatingBox.propTypes = {

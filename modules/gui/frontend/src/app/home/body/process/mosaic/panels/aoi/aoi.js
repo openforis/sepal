@@ -2,6 +2,7 @@ import {Field} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
@@ -177,4 +178,7 @@ const modelToValues = (model = {}) => {
         return {}
 }
 
-export default recipeFormPanel({id: 'aoi', fields, modelToValues, valuesToModel})(Aoi)
+export default compose(
+    Aoi,
+    recipeFormPanel({id: 'aoi', fields, modelToValues, valuesToModel})
+)

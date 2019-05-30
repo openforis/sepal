@@ -1,5 +1,6 @@
 import {ErrorMessage} from 'widget/form'
 import {Subject, fromEvent} from 'rxjs'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {delay} from 'rxjs/operators'
 import {isMobile} from 'widget/userAgent'
@@ -264,10 +265,10 @@ class Combo extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(
-    withSubscriptions(
-        Combo
-    )
+export default compose(
+    Combo,
+    withSubscriptions,
+    connect(mapStateToProps)
 )
 
 Combo.propTypes = {

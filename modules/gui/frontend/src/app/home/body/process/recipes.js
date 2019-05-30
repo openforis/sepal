@@ -4,6 +4,7 @@ import {CenteredProgress} from 'widget/progress'
 import {PageControls, PageData, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {closeTab} from 'widget/tabs'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
 import {isMobile} from 'widget/userAgent'
@@ -266,7 +267,10 @@ class RecipeList extends React.Component {
 
 }
 
-export default connect(mapStateToProps)(RecipeList)
+export default compose(
+    RecipeList,
+    connect(mapStateToProps)
+)
 
 RecipeList.propTypes = {
     recipeId: PropTypes.string.isRequired,

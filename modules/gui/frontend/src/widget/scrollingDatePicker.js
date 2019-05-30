@@ -1,4 +1,5 @@
 import {Input} from 'widget/form'
+import {compose} from 'compose'
 import {fromEvent} from 'rxjs'
 import FloatingBox from 'widget/floatingBox'
 import Icon from 'widget/icon'
@@ -142,10 +143,9 @@ class _ScrollingDatePicker extends React.Component {
     }
 }
 
-const ScrollingDatePicker = (
-    withSubscriptions(
-        _ScrollingDatePicker
-    )
+const ScrollingDatePicker = compose(
+    _ScrollingDatePicker,
+    withSubscriptions
 )
 
 ScrollingDatePicker.propTypes = {

@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -22,4 +23,7 @@ ViewportResizeDetector.propTypes = {
     onChange: PropTypes.func
 }
 
-export default connect(mapStateToProps)(ViewportResizeDetector)
+export default compose(
+    ViewportResizeDetector,
+    connect(mapStateToProps)
+)

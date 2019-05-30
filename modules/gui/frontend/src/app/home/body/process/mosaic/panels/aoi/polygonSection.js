@@ -1,5 +1,6 @@
 import {Msg} from 'translate'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {compose} from 'compose'
 import {isRecipeOpen} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {sepalMap} from '../../../../../map/map'
@@ -78,6 +79,7 @@ PolygonSection.propTypes = {
     labelsShown: PropTypes.any
 }
 
-export default withRecipe(mapRecipeToProps)(
-    PolygonSection
+export default compose(
+    PolygonSection,
+    withRecipe(mapRecipeToProps)
 )

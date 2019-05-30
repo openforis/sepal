@@ -2,6 +2,7 @@ import {Form} from 'widget/form'
 import {Panel, PanelButtons} from 'widget/panel'
 import {PanelButtonContext} from './toolbar'
 import {PanelWizardContext} from './panelWizard'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {isObservable} from 'rxjs'
 import Icon from 'widget/icon'
@@ -105,7 +106,10 @@ class FormPanel extends React.Component {
     }
 }
 
-export default connect()(FormPanel)
+export default compose(
+    FormPanel,
+    connect()
+)
 
 FormPanel.propTypes = {
     children: PropTypes.any.isRequired,

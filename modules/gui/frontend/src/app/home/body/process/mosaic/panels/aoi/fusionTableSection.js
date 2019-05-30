@@ -1,6 +1,7 @@
 import {Input} from 'widget/form'
 import {RecipeActions} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
+import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
@@ -163,6 +164,7 @@ class FusionTableSection extends React.Component {
     }
 }
 
-export default withRecipe(mapRecipeToProps)(
-    FusionTableSection
+export default compose(
+    FusionTableSection,
+    withRecipe(mapRecipeToProps)
 )

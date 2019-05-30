@@ -1,4 +1,5 @@
 import {RecipeActions, RecipeState, Status, createComposites, createLandCoverMap} from './landCoverRecipe'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {withRecipePath} from 'app/home/body/process/recipe'
@@ -120,6 +121,8 @@ LandCoverToolbar.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default withRecipePath()(
-    connect(mapStateToProps)(LandCoverToolbar)
+export default compose(
+    LandCoverToolbar,
+    connect(mapStateToProps),
+    withRecipePath()
 )

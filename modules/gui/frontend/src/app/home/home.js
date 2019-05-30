@@ -1,5 +1,6 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {PortalContainer} from 'widget/portal'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {exhaustMap, map} from 'rxjs/operators'
 import {isFloating} from './menu/menuMode'
@@ -100,4 +101,7 @@ Home.propTypes = {
     floatingMenu: PropTypes.bool.isRequired
 }
 
-export default connect(mapStateToProps)(Home)
+export default compose(
+    Home,
+    connect(mapStateToProps)
+)

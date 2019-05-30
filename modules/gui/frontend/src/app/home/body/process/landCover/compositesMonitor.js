@@ -1,4 +1,5 @@
 import {RecipeActions, RecipeState, Status} from './landCoverRecipe'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import React from 'react'
 
@@ -70,4 +71,7 @@ class CompositesMonitor extends React.Component {
 
 }
 
-export default connect(mapStateToProps)(CompositesMonitor)
+export default compose(
+    CompositesMonitor,
+    connect(mapStateToProps)
+)

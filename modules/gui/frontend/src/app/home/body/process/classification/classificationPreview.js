@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -133,8 +134,7 @@ class ClassificationPreview extends React.Component {
 
 ClassificationPreview.propTypes = {}
 
-export default (
-    withRecipe(mapRecipeToProps)(
-        ClassificationPreview
-    )
+export default compose(
+    ClassificationPreview,
+    withRecipe(mapRecipeToProps)
 )

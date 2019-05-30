@@ -1,4 +1,5 @@
 import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
+import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
 import {intersect} from 'collections'
 import Hammer from 'hammerjs'
@@ -389,8 +390,7 @@ class _Handle extends React.Component {
     }
 }
 
-const Handle = (
-    withSubscriptions(
-        _Handle
-    )
+const Handle = compose(
+    _Handle,
+    withSubscriptions
 )

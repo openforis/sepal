@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -41,4 +42,7 @@ MenuMode.propTypes = {
     floating: PropTypes.bool
 }
 
-export default connect(mapStateToProps)(MenuMode)
+export default compose(
+    MenuMode,
+    connect(mapStateToProps)
+)

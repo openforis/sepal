@@ -4,6 +4,7 @@ import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {changeCurrentUserPassword$} from 'widget/user'
+import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {switchMap} from 'rxjs/operators'
@@ -107,12 +108,9 @@ const policy = () => ({
     userDetails: 'allow-then-deactivate'
 })
 
-export default (
-    activatable({id: 'changePassword', policy, alwaysAllow: true})(
-        activator('userDetails')(
-            form({fields, constraints, mapStateToProps})(
-                ChangePassword
-            )
-        )
-    )
+export default compose(
+    ChangePassword,
+    form({fields, constraints, mapStateToProps}),
+    activator('userDetails'),
+    activatable({id: 'changePassword', policy, alwaysAllow: true})
 )

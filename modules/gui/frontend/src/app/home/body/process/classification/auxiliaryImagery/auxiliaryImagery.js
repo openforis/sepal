@@ -4,6 +4,7 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -87,6 +88,7 @@ const modelToValues = model => {
         included: [...model]
     }
 }
-export default recipeFormPanel({id: 'auxiliaryImagery', fields, modelToValues, valuesToModel})(
-    AuxiliaryImagery
+export default compose(
+    AuxiliaryImagery,
+    recipeFormPanel({id: 'auxiliaryImagery', fields, modelToValues, valuesToModel})
 )

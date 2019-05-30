@@ -4,6 +4,7 @@ import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {activator} from 'widget/activation/activator'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -128,12 +129,9 @@ const additionalPolicy = () => ({_: 'allow'})
 // being overridden.
 const valuesToModel = null
 
-export default (
-    activator('inputImage')(
-        recipeFormPanel({id: 'inputImagery', mapRecipeToProps, valuesToModel, additionalPolicy})(
-            connect(mapStateToProps)(
-                InputImagery
-            )
-        )
-    )
+export default compose(
+    InputImagery,
+    connect(mapStateToProps),
+    recipeFormPanel({id: 'inputImagery', mapRecipeToProps, valuesToModel, additionalPolicy}),
+    activator('inputImage')
 )

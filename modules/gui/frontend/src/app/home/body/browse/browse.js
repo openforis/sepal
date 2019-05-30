@@ -3,6 +3,7 @@ import {Button, ButtonGroup} from 'widget/button'
 import {Observable, Subject, forkJoin, timer} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {dotSafe} from 'stateUtils'
 import {msg} from 'translate'
@@ -521,4 +522,7 @@ Browse.propTypes = {
     tree: PropTypes.object
 }
 
-export default connect(mapStateToProps)(Browse)
+export default compose(
+    Browse,
+    connect(mapStateToProps)
+)

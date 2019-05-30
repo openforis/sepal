@@ -4,6 +4,7 @@ import {PanelButtons} from 'widget/panel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {activatable} from 'widget/activation/activatable'
+import {compose} from 'compose'
 import {getRevisions, revertToRevision$} from 'app/home/body/process/recipe'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
@@ -86,8 +87,8 @@ Revisions.propTypes = {
 
 const policy = () => ({_: 'allow'})
 
-export default (
-    activatable({id: 'revisions', policy})(
-        form({fields})(Revisions)
-    )
+export default compose(
+    Revisions,
+    form({fields}),
+    activatable({id: 'revisions', policy})
 )

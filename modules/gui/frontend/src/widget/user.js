@@ -1,4 +1,5 @@
 import {EMPTY, Subject, timer} from 'rxjs'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {history} from 'route'
 import {map, switchMap} from 'rxjs/operators'
@@ -181,6 +182,9 @@ class User extends React.Component {
     }
 }
 
-export default connect()(User)
+export default compose(
+    User,
+    connect()
+)
 
 User.propTypes = {}

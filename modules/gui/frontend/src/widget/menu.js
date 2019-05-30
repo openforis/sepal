@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import Icon from 'widget/icon'
 import Portal from 'widget/portal'
@@ -78,7 +79,10 @@ Menu.propTypes = {
     onClick: PropTypes.func
 }
 
-export default connect(mapStateToProps)(Menu)
+export default compose(
+    Menu,
+    connect(mapStateToProps)
+)
 
 const MenuContext = React.createContext()
 

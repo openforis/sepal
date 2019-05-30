@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {EMPTY, Subject, animationFrameScheduler, interval} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -326,12 +327,10 @@ class List extends React.Component {
     }
 }
 
-export default (
-    withForwardedRef(
-        withSubscriptions(
-            List
-        )
-    )
+export default compose(
+    List,
+    withSubscriptions,
+    withForwardedRef
 )
 
 List.propTypes = {

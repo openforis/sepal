@@ -4,7 +4,7 @@ import {isEqualIgnoreFunctions} from 'collections'
 import React from 'react'
 import styles from './sceneAreas.module.css'
 
-class SceneAreaMarker extends React.Component {
+export default class SceneAreaMarker extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId, polygon} = props
@@ -69,5 +69,3 @@ class SceneAreaMarker extends React.Component {
     }
 
 }
-
-export default SceneAreaMarker

@@ -6,6 +6,7 @@ import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {activatable} from 'widget/activation/activatable'
+import {compose} from 'compose'
 import {dataSetById} from 'sources'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
@@ -221,14 +222,11 @@ const policy = () => ({
     compositeOptions: 'allow'
 })
 
-export default (
-    activatable({id: 'sceneSelection', policy})(
-        withRecipe(mapRecipeToProps)(
-            form({fields})(
-                SceneSelection
-            )
-        )
-    )
+export default compose(
+    SceneSelection,
+    form({fields}),
+    withRecipe(mapRecipeToProps),
+    activatable({id: 'sceneSelection', policy})
 )
 
 class Scene extends React.Component {

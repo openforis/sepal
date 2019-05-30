@@ -2,6 +2,7 @@ import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button, ButtonGroup} from 'widget/button'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {map, share, zip} from 'rxjs/operators'
 import {msg} from 'translate'
@@ -441,7 +442,10 @@ class Users extends React.Component {
     }
 }
 
-export default connect()(Users)
+export default compose(
+    Users,
+    connect()
+)
 
 class User extends React.Component {
     render() {

@@ -1,5 +1,6 @@
 import {activationAllowed} from './activationPolicy'
 import {collectActivatables} from './activation'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {withActivationContext} from './activationContext'
 import PropTypes from 'prop-types'
@@ -64,25 +65,6 @@ class _Activator extends React.Component {
             }
         }
 
-        // const updateActivatables = updates => {
-        //     console.log('updateActivatables', {updates})
-        //     return _.reduce(updates,
-        //         (actionBuilder, {id, active}) => {
-        //             const activatable = activatables[id]
-        //             if (!activatable || activatable.active !== active) {
-        //                 const updatedActive = active && activationAllowed(id, activatables)
-        //                 const update = {
-        //                     active: updatedActive,
-        //                     justActivated: updatedActive,
-        //                 }
-        //                 console.log({id, update})
-        //                 return actionBuilder.assign([pathList, 'activatables', {id}], update)
-        //             }
-        //             return actionBuilder
-        //         }, actionBuilder('UPDATE_ACTIVATABLES', {pathList})
-        //     ).dispatch()
-        // }
-
         const props = id => ({
             active: isActive(id),
             canActivate: canActivate(id),
@@ -116,12 +98,10 @@ export const activator = (...ids) =>
             }
         }
 
-export const Activator = (
-    withActivationContext()(
-        connect(mapStateToProps)(
-            _Activator
-        )
-    )
+export const Activator = compose(
+    _Activator,
+    connect(mapStateToProps),
+    withActivationContext()
 )
 
 Activator.propTypes = {

@@ -1,4 +1,5 @@
 import {Enabled, connect} from 'store'
+import {compose} from 'compose'
 import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -56,4 +57,7 @@ TabContent.propTypes = {
     onEnable: PropTypes.func
 }
 
-export default connect()(TabContent)
+export default compose(
+    TabContent,
+    connect()
+)

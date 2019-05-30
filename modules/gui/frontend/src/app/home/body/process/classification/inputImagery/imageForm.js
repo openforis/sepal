@@ -1,6 +1,7 @@
 import * as PropTypes from 'prop-types'
 import {BandSetSpec} from './bandSetSpec'
 import {CenteredProgress} from 'widget/progress'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {mutate, selectFrom} from 'stateUtils'
 import {withScrollable} from 'widget/scrollable'
@@ -174,9 +175,7 @@ ImageForm.propTypes = {
     inputs: PropTypes.any
 }
 
-export default (
-    withScrollable()(
-        ImageForm
-    )
+export default compose(
+    ImageForm,
+    withScrollable()
 )
-

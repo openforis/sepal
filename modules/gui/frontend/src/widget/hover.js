@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {delay, distinctUntilChanged, map, switchMap, takeUntil, zip} from 'rxjs/operators'
 import {fromEvent, merge, of} from 'rxjs'
 import PropTypes from 'prop-types'
@@ -66,10 +67,9 @@ class _HoverDetector extends React.Component {
     }
 }
 
-export const HoverDetector = (
-    withSubscriptions(
-        _HoverDetector
-    )
+export const HoverDetector = compose(
+    _HoverDetector,
+    withSubscriptions
 )
 
 HoverDetector.propTypes = {

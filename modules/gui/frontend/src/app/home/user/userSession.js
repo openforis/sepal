@@ -1,5 +1,6 @@
 import {Field, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {select} from 'store'
 import {updateCurrentUserSession$} from 'widget/user'
@@ -94,4 +95,7 @@ class UserSession extends React.Component {
 
 UserSession.propTypes = {}
 
-export default form({fields, mapStateToProps})(UserSession)
+export default compose(
+    UserSession,
+    form({fields, mapStateToProps})
+)

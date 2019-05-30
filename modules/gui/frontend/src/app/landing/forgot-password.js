@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {Field, Form, Input, form} from 'widget/form'
+import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'widget/user'
@@ -86,4 +87,7 @@ ForgotPassword.propTypes = {
     inputs: PropTypes.object
 }
 
-export default form({fields})(ForgotPassword)
+export default compose(
+    ForgotPassword,
+    form({fields})
+)

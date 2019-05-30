@@ -5,6 +5,7 @@ import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../radarMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -141,6 +142,7 @@ const panelOptions = {
     fields
 }
 
-export default recipeFormPanel(panelOptions)(
-    Options
+export default compose(
+    Options,
+    recipeFormPanel(panelOptions)
 )

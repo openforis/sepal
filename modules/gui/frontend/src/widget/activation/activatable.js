@@ -1,5 +1,6 @@
 import {Activator} from './activator'
 import {collectActivatables} from 'widget/activation/activation'
+import {compose} from 'compose'
 import {connect} from 'store'
 import {shouldDeactivate} from 'widget/activation/activationPolicy'
 import {withActivationContext} from 'widget/activation/activationContext'
@@ -72,12 +73,10 @@ class _Activatable extends React.Component {
     }
 }
 
-export const Activatable = (
-    withActivationContext()(
-        connect(mapStateToProps)(
-            _Activatable
-        )
-    )
+export const Activatable = compose(
+    _Activatable,
+    connect(mapStateToProps),
+    withActivationContext()
 )
 
 Activatable.propTypes = {

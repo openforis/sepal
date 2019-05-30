@@ -3,6 +3,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 // import PanelWizard from 'widget/panelWizard'
+import {compose} from 'compose'
 import Toolbar, {ActivationButton} from 'widget/toolbar'
 import styles from './initToolbar.module.css'
 
@@ -46,6 +47,7 @@ InitToolbar.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default withRecipe(recipeToProps)(
-    InitToolbar
+export default compose(
+    InitToolbar,
+    withRecipe(recipeToProps)
 )

@@ -5,6 +5,7 @@ import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
+import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
@@ -130,6 +131,7 @@ TrainingData.propTypes = {
     recipeId: PropTypes.string
 }
 
-export default recipeFormPanel({id: 'trainingData', fields, mapRecipeToProps})(
-    TrainingData
+export default compose(
+    TrainingData,
+    recipeFormPanel({id: 'trainingData', fields, mapRecipeToProps})
 )

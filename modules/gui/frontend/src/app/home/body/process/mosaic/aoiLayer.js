@@ -1,3 +1,4 @@
+import {compose} from 'compose'
 import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
 import {sepalMap} from 'app/home/map/map'
@@ -35,10 +36,8 @@ class AoiLayer extends React.Component {
     }
 }
 
-export default (
-    withRecipe(mapRecipeToProps)(
-        connect(mapStateToProps)(
-            AoiLayer
-        )
-    )
+export default compose(
+    AoiLayer,
+    connect(mapStateToProps),
+    withRecipe(mapRecipeToProps)
 )

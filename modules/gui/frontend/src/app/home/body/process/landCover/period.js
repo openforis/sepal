@@ -1,6 +1,7 @@
 import {Constraint, ErrorMessage, Field, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
+import {compose} from 'compose'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
@@ -103,7 +104,9 @@ const modelToValues = (model = {}) => ({
     endYear: String(model.endYear || ''),
 })
 
-export default withRecipePath()(
+export default compose(
+    Period,
+    form({fields, constraints}),
     initValues({
         getModel: props => RecipeState(props.recipeId)('model.period'),
         getValues: props => RecipeState(props.recipeId)('ui.period'),
@@ -112,7 +115,19 @@ export default withRecipePath()(
             RecipeActions(props.recipeId)
                 .setPeriod({values, model})
                 .dispatch()
-    })(
-        form({fields, constraints})(Period)
-    )
+    })
 )
+
+// export default withRecipePath()(
+//     initValues({
+//         getModel: props => RecipeState(props.recipeId)('model.period'),
+//         getValues: props => RecipeState(props.recipeId)('ui.period'),
+//         modelToValues,
+//         onInitialized: ({model, values, props}) =>
+//             RecipeActions(props.recipeId)
+//                 .setPeriod({values, model})
+//                 .dispatch()
+//     })(
+//         form({fields, constraints})(Period)
+//     )
+// )

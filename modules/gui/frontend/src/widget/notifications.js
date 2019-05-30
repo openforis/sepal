@@ -1,4 +1,5 @@
 import {Subject, merge, timer} from 'rxjs'
+import {compose} from 'compose'
 import {connect, select} from 'store'
 import {delay, filter, map, mergeMap} from 'rxjs/operators'
 import {simplehash as hash} from 'hash'
@@ -108,25 +109,27 @@ class _Notifications extends React.Component {
 
     renderNotification({id, level, title, message, error, content, timeout, dismissable, dismissing}) {
         const dismiss = () => manualDismiss$.next(id)
-        return (
-            <div
-                key={id}
-                className={[
-                    styles.notification,
-                    styles[level],
-                    dismissable ? styles.dismissable : null,
-                    dismissing ? styles.dismissing : null
-                ].join(' ')}
-                style={{'--dismiss-time-ms': `${DISMISS_DELAY_MS}ms`}}
-                onClick={() => dismissable && dismiss()}
-            >
-                {title ? this.renderTitle(title) : null}
-                {message ? this.renderMessage(message) : null}
-                {error ? this.renderError(error) : null}
-                {content ? this.renderContent(content, dismiss) : null}
-                {timeout === 0 ? this.renderDismissMessage() : null}
-            </div>
-        )
+        return id
+            ? (
+                <div
+                    key={id}
+                    className={[
+                        styles.notification,
+                        styles[level],
+                        dismissable ? styles.dismissable : null,
+                        dismissing ? styles.dismissing : null
+                    ].join(' ')}
+                    style={{'--dismiss-time-ms': `${DISMISS_DELAY_MS}ms`}}
+                    onClick={() => dismissable && dismiss()}
+                >
+                    {title ? this.renderTitle(title) : null}
+                    {message ? this.renderMessage(message) : null}
+                    {error ? this.renderError(error) : null}
+                    {content ? this.renderContent(content, dismiss) : null}
+                    {timeout === 0 ? this.renderDismissMessage() : null}
+                </div>
+            )
+            : null
     }
 
     renderNotifications() {
@@ -164,12 +167,10 @@ class _Notifications extends React.Component {
     }
 }
 
-const Notifications = (
-    connect(mapStateToProps)(
-        withSubscriptions(
-            _Notifications
-        )
-    )
+const Notifications = compose(
+    _Notifications,
+    withSubscriptions,
+    connect(mapStateToProps)
 )
 
 Notifications.success = notification =>
