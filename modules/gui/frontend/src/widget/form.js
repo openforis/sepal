@@ -1,14 +1,14 @@
 import {compose} from 'compose'
-import {connect} from 'store'
-import {isMobile} from 'widget/userAgent'
-import {msg} from 'translate'
-import Keybinding from 'widget/keybinding'
-import Label from 'widget/label'
+import _ from 'lodash'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Textarea from 'react-textarea-autosize'
-import _ from 'lodash'
-import moment from 'moment'
+import {connect} from 'store'
+import {msg} from 'translate'
+import Keybinding from 'widget/keybinding'
+import Label from 'widget/label'
+import {isMobile} from 'widget/userAgent'
 import styles from './form.module.css'
 
 export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
@@ -87,29 +87,39 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                 const prevValue = this.state.values[name]
                 if (value !== prevValue && !_.isEqual(value, prevValue))
                     this.setState(prevState => {
-                        const state = Object.assign({}, prevState)
+                        const state = _.cloneDeep(prevState)
                         state.values[name] = value
                         this.clearErrorsForField(name, state.errors)
                         state.invalidValue[name] = ''
-                        state.dirty = !!Object.keys(state.initialValues).find(name =>
-                            state.initialValues[name] !== state.values[name]
-                        )
-                        state.gotDirty[name] = state.dirty && !prevState.dirty
-                        state.gotClean[name] = !state.dirty && prevState.dirty
+                        state.dirty = !!Object.keys(state.initialValues)
+                            .find(name =>
+                                !_.isEqual(state.initialValues[name], state.values[name])
+                            )
+                        state.gotDirty[name] = state.gotDirty[name] || (state.dirty && !prevState.dirty)
+                        state.gotClean[name] = state.gotClean[name] || (!state.dirty && prevState.dirty)
                         return state
-                    }, () => {
-                        return this.notifyOnChange(name, value)
-                    })
+                    }, () => this.notifyOnChange(name, value))
                 return this
             }
 
             notifyOnChange(name, value) {
                 const listeners = this.changeListenersByInputName[name] || []
                 listeners.forEach(listener => listener(value))
-                if (this.state.gotDirty[name])
+                if (this.state.gotDirty[name]) {
                     this.onDirty()
-                else if (this.state.gotClean[name])
+                    this.setState(prevState => {
+                        const state = _.cloneDeep(prevState)
+                        state.gotDirty[name] = false
+                        return state
+                    })
+                } else if (this.state.gotClean[name]) {
                     this.onClean()
+                    this.setState(prevState => {
+                        const state = _.cloneDeep(prevState)
+                        state.gotClean[name] = false
+                        return state
+                    })
+                }
             }
 
             value(name) {
@@ -288,15 +298,15 @@ class FormProperty {
 
     notEmpty(messageId, messageArgs) {
         return this.predicate(value => {
-            if (Array.isArray(value))
-                return value.length > 0
-            else if (value === Object(value))
-                return Object.keys(value).length > 0
-            else
-                return !!value
-        },
-        messageId,
-        messageArgs
+                if (Array.isArray(value))
+                    return value.length > 0
+                else if (value === Object(value))
+                    return Object.keys(value).length > 0
+                else
+                    return !!value
+            },
+            messageId,
+            messageArgs
         )
     }
 
@@ -435,9 +445,11 @@ export class Input extends React.Component {
     }
 
     renderInput() {
-        const {className, input, type = 'text', validate = 'onBlur', tabIndex,
+        const {
+            className, input, type = 'text', validate = 'onBlur', tabIndex,
             autoFocus = false, autoComplete = false, autoCorrect = false, autoCapitalize = false, spellCheck = false,
-            onChange, onBlur, ...props} = this.props
+            onChange, onBlur, ...props
+        } = this.props
         const extraProps = _.omit(props, ['errorMessage'])
         return (
             <input
