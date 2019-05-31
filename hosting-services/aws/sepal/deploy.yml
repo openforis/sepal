@@ -10,12 +10,28 @@
   pre_tasks:
     - set_fact:
         ldap_host: "{{ ec2_private_ip_address }}"
+        sepal_http_ip: "{{ ec2_private_ip_address }}"
+        sepal_ssh_ip: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
         syslog_host: "{{ ec2_private_ip_address }}"
         elk_host: "{{ elk_host }}"
         syslog_address: "unixgram:///dev/log"
 
     - file: path="/data/sepal/etc" state=directory
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
+
+    # sshd
+    - name: Bind sshd to primary private IP
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        line: "ListenAddress {{ ec2_private_ip_address }}"
+        insertafter: "#ListenAddress"
+      register: sshd_config
+
+    - name: Restart sshd
+      service:
+        name: sshd
+        state: restarted
+      when: sshd_config.changed
 
     # rsyslog
     - name: Copy rsyslog.conf
