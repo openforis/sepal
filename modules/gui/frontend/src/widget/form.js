@@ -200,7 +200,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
 
             isValueDirty(name) {
                 const state = this.state
-                return state.values[name] !== state.initialValues[name]
+                return !_.isEqual(state.values[name], state.initialValues[name])
             }
 
             isDirty() {
