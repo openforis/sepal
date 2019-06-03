@@ -5,7 +5,8 @@ import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import AoiLayer from './aoiLayer'
 import AutoSelectScenes from './autoSelectScenes'
-import BandSelection from './testBandSelection'
+// import BandSelection from './bandSelection'
+import LayerManagement from './layerManagement'
 import MapToolbar from 'app/home/map/mapToolbar'
 import MosaicPreview from './mosaicPreview'
 import MosaicToolbar from './panels/mosaicToolbar'
@@ -49,7 +50,8 @@ class Mosaic extends React.Component {
                                 <AutoSelectScenes/>
                                 <SceneSelection/>
                                 <SceneDeselection/>
-                                <BandSelection/>
+                                {/*<BandSelection/>*/}
+                                <LayerManagement/>
                             </React.Fragment>
                             : null}
                     </div>
