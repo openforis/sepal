@@ -1,0 +1,45 @@
+.panel {
+    max-width: fit-content;
+}
+
+.layoutButtons {
+    display: flex;
+    justify-content: center;
+}
+
+.layersListHeader {
+    display: flex;
+    justify-content: space-between;
+}
+
+.layerTitle {
+    max-width: 15rem;
+}
+
+.rgbBands {
+    display: flex;
+}
+
+.rgbBands > * {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: center;
+}
+
+.red {
+    background-color: hsla(0, 50%, 20%, 0.95);
+}
+
+.green {
+    background-color: hsla(120, 50%, 15%, 0.95);
+}
+
+.blue {
+    background-color: hsla(240, 50%, 35%, 0.95);
+}
+
+.rotate90 {
+    transform: rotate(90deg)
+}

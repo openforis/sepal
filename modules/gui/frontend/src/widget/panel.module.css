@@ -84,6 +84,14 @@
     width: auto;
 }
 
+.panel.bottom-center {
+    position: absolute;
+    left: var(--margin-left);
+    right: var(--margin-right);
+    bottom: var(--margin-bottom);
+    margin: 0 auto;
+}
+
 .panel.inline {
     --margin-left: 0;
     --margin-right: 0;

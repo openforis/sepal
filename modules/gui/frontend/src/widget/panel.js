@@ -65,7 +65,7 @@ export const Panel = compose(
 Panel.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    type: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'center', 'inline'])
+    type: PropTypes.oneOf(['modal', 'top', 'top-right', 'right', 'bottom-right', 'bottom', 'bottom-center', 'center', 'inline'])
 }
 
 // HEADER ---------------------------------------------------------------------

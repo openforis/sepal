@@ -41,7 +41,7 @@ export default class Label extends React.Component {
 }
 
 Label.propTypes = {
-    children: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+    children: PropTypes.any,
     className: PropTypes.string,
     msg: PropTypes.string,
     size: PropTypes.oneOf(['normal', 'large']),

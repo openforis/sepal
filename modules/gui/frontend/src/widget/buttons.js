@@ -39,11 +39,12 @@ export class Buttons extends React.Component {
     }
 
     renderButton({value, label, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
-        const {uppercase = true, disabled: allDisabled} = this.props
+        const {uppercase = true, disabled: allDisabled, size} = this.props
         const highlight = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         return (
             <Button
                 key={value}
+                size={size}
                 look={highlight ? 'highlight' : 'default'}
                 additionalClassName={uppercase ? styles.uppercase : null}
                 disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
@@ -110,6 +111,7 @@ Buttons.propTypes = {
     multiple: PropTypes.any,
     options: PropTypes.array,
     selected: PropTypes.any,
+    size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large', 'xx-large']),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,
