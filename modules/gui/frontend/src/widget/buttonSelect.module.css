@@ -13,12 +13,10 @@
 }
 
 .content {
-    /* width: 100%; */
     display: flex;
     flex-direction: row;
-
 }
 
-.content > * {
+.content > *:not(:first-child) {
     margin-left: .5rem;
 }

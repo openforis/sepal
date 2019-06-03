@@ -66,7 +66,9 @@ class ButtonSelect extends React.Component {
         return (
             <div className={styles.content}>
                 {icon && <Icon name={icon}/>}
-                {(selectedOption && selectedOption.buttonLabel) || label}
+                <div>
+                    {(selectedOption && selectedOption.buttonLabel) || label}
+                </div>
                 {this.renderChevron()}
             </div>
         )
@@ -176,11 +178,11 @@ class ButtonSelect extends React.Component {
     static getDerivedStateFromProps(props, state) {
         const {input} = props
         const {flattenedOptions} = state
-        if (input) {
-            return {
+        return input
+            ? {
                 selectedOption: _.find(flattenedOptions, option => option.value === input.value)
             }
-        }
+            : null
     }
 
     componentDidUpdate() {
