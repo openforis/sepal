@@ -57,6 +57,7 @@ class FusionTableSection extends React.Component {
                         this.recipe.setFusionTableRows(
                             (e.response.rows || [])
                                 .map(row => row[0])
+                                .filter(distinct)
                                 .filter(value => value))
                             .dispatch()
                     }
@@ -207,6 +208,8 @@ class FusionTableSection extends React.Component {
         })
     }
 }
+
+const distinct = (value, index, self) => self.indexOf(value) === index
 
 export default compose(
     FusionTableSection,
