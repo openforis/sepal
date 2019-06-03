@@ -145,8 +145,8 @@ const valuesToModel = values => {
         return {
             type: 'FUSION_TABLE',
             id: values.fusionTable,
-            keyColumn: values.fusionTableRowSelection === 'FILTERED'? values.fusionTableColumn : null,
-            key: values.fusionTableRowSelection === 'FILTERED'? values.fusionTableRow : null,
+            keyColumn: values.fusionTableRowSelection === 'FILTER'? values.fusionTableColumn : null,
+            key: values.fusionTableRowSelection === 'FILTER'? values.fusionTableRow : null,
             bounds: values.bounds
         }
     case 'POLYGON':
