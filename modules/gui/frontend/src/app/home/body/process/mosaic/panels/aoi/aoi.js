@@ -53,7 +53,7 @@ class Aoi extends React.Component {
         const {recipeId, allowWholeFusionTable, inputs} = this.props
         const sections = [
             {
-                icon: 'cog',
+                icon: 'globe',
                 title: msg('process.mosaic.panel.areaOfInterest.title'),
                 component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
             },
