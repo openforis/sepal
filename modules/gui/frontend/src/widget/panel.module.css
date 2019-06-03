@@ -103,6 +103,10 @@
     justify-content: space-between;
 }
 
+.header * {
+    text-transform: uppercase;
+}
+
 .header > div > *:first-child {
     margin-right: .5rem;
 }
@@ -119,6 +123,10 @@
 }
 
 .content.default > *:not(:last-child) {
+    margin-bottom: 2rem;
+}
+
+.fieldSet > *:not(:last-child) {
     margin-bottom: 2rem;
 }
 
