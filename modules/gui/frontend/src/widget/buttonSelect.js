@@ -41,11 +41,12 @@ class ButtonSelect extends React.Component {
     }
 
     renderButton() {
-        const {disabled, label, look, icon, tooltip, tooltipPlacement} = this.props
+        const {disabled, chromeless, label, look, icon, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
         return (
             <Button
                 ref={this.input}
+                chromeless={chromeless}
                 label={label}
                 look={look}
                 icon={icon}
@@ -61,11 +62,12 @@ class ButtonSelect extends React.Component {
     }
 
     renderOptions() {
-        const {placement, optionsClassName, optionTooltipPlacement} = this.props
+        const {alignment, placement, optionsClassName, optionTooltipPlacement} = this.props
         const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
                 element={this.input.current}
+                alignment={alignment}
                 placement={placement}
                 autoWidth
             >
@@ -174,6 +176,8 @@ export default compose(
 ButtonSelect.propTypes = {
     options: PropTypes.any.isRequired,
     onSelect: PropTypes.func.isRequired,
+    alignment: PropTypes.oneOf(['left', 'right']),
+    chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     icon: PropTypes.string,
@@ -187,5 +191,6 @@ ButtonSelect.propTypes = {
 }
 
 ButtonSelect.defaultProps = {
+    alignment: 'left',
     placement: 'below'
 }
