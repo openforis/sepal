@@ -67,7 +67,7 @@ class ButtonSelect extends React.Component {
             <FloatingBox
                 element={this.input.current}
                 placement={placement}
-                width='auto'
+                autoWidth
             >
                 <List
                     ref={this.list}

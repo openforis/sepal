@@ -18,11 +18,12 @@ class FloatingBox extends React.Component {
     }
 
     render() {
-        const {className, placement, width, forwardedRef, children} = this.props
-        const {dimensions: {height, top, bottom, left, right}} = this.state
+        const {className, placement, alignment, width: autoWidth, forwardedRef, children} = this.props
+        const {dimensions: {height, width, top, bottom, left, right}} = this.state
         const style = {
-            '--left': left,
-            '--width': width === 'element' ? right - left : null,
+            '--left': alignment === 'left' ? left : 'auto',
+            '--right': alignment === 'right' ? width - right : 'auto',
+            '--width': autoWidth === 'element' ? right - left : null,
             '--above-height': top,
             '--above-bottom': height - top - 2,
             '--below-height': height - bottom,
@@ -32,7 +33,7 @@ class FloatingBox extends React.Component {
             <Portal type='global'>
                 <div
                     ref={forwardedRef}
-                    className={[styles.box, styles[placement], className].join(' ')}
+                    className={[styles.box, styles[placement], styles[alignment], className].join(' ')}
                     style={style}>
                     {children}
                 </div>
@@ -51,9 +52,9 @@ class FloatingBox extends React.Component {
     }
 
     updateDimensions() {
-        const {dimensions: {height}} = this.props
+        const {dimensions: {height, width}} = this.props
         const {top, bottom, left, right} = this.getBoundingBox()
-        this.updateState({dimensions: {height, top, bottom, left, right}})
+        this.updateState({dimensions: {height, width, top, bottom, left, right}})
     }
 
     getBoundingBox() {
@@ -80,13 +81,14 @@ export default compose(
 
 FloatingBox.propTypes = {
     children: PropTypes.object.isRequired,
+    alignment: PropTypes.oneOf(['left', 'right']),
+    autoWidth: PropTypes.any,
     className: PropTypes.string,
     element: PropTypes.object,
-    placement: PropTypes.oneOf(['above', 'below']),
-    width: PropTypes.oneOf(['element', 'auto'])
+    placement: PropTypes.oneOf(['above', 'below'])
 }
 
 FloatingBox.defaultProps = {
-    placement: 'below',
-    width: 'element'
+    alignment: 'left',
+    placement: 'below'
 }

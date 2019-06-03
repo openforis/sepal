@@ -3,6 +3,7 @@
     --edge-clearance: .5rem;
     position: absolute;
     left: calc(var(--left) * 1px);
+    right: calc(var(--right) * 1px);
     width: calc(var(--width) * 1px);
     z-index: 2;
 }
