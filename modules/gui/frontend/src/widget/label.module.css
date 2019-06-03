@@ -18,7 +18,7 @@
     --font-size: var(--large-font-size);
 }
 
-.label.unavailable {
+.label.disabled {
     opacity: .3;
 }
 

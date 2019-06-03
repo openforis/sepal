@@ -59,7 +59,7 @@ class SceneSelectionOptions extends React.Component {
                 label={msg('process.mosaic.panel.scenes.form.targetDateWeight.label')}
                 input={targetDateWeight}
                 options={options}
-                unavailable={type.value !== SceneSelectionType.SELECT}/>
+                disabled={type.value !== SceneSelectionType.SELECT}/>
         )
     }
 

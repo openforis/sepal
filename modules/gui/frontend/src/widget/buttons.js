@@ -38,15 +38,15 @@ export class Buttons extends React.Component {
 
     }
 
-    renderButton({value, label, tooltip, disabled, alwaysSelected, neverSelected}) {
-        const {uppercase = true, unavailable} = this.props
-        const highlight = !unavailable && (alwaysSelected || (!neverSelected && this.isSelected(value)))
+    renderButton({value, label, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
+        const {uppercase = true, disabled: allDisabled} = this.props
+        const highlight = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         return (
             <Button
                 key={value}
                 look={highlight ? 'highlight' : 'default'}
                 additionalClassName={uppercase ? styles.uppercase : null}
-                disabled={disabled || alwaysSelected || neverSelected || unavailable}
+                disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
                 tooltip={tooltip}
                 tooltipPlacement='bottom'
                 onClick={() => this.select(value)}>
@@ -77,13 +77,13 @@ export class Buttons extends React.Component {
     }
 
     renderLabel() {
-        const {label, tooltip, tooltipPlacement, unavailable} = this.props
+        const {label, tooltip, tooltipPlacement, disabled} = this.props
         return label ? (
             <Label
                 msg={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                unavailable={unavailable}
+                disabled={disabled}
             />
         ) : null
     }
@@ -113,13 +113,13 @@ Buttons.propTypes = {
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,
-    unavailable: PropTypes.any,
+    disabled: PropTypes.any,
     onChange: PropTypes.any,
 }
 
 export const FormButtons = (
     {
-        capitalized, className, input, label, multiple, options, tooltip, tooltipPlacement, type, unavailable, onChange
+        capitalized, className, input, label, multiple, options, tooltip, tooltipPlacement, type, disabled, onChange
     }) =>
     <Buttons
         capitalized={capitalized}
@@ -135,7 +135,7 @@ export const FormButtons = (
         tooltip={tooltip}
         tooltipPlacement={tooltipPlacement}
         type={type}
-        unavailable={unavailable}/>
+        disabled={disabled}/>
 
 FormButtons.propTypes = {
     capitalized: PropTypes.any,
@@ -147,6 +147,6 @@ FormButtons.propTypes = {
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,
-    unavailable: PropTypes.any,
+    disabled: PropTypes.any,
     onChange: PropTypes.any,
 }

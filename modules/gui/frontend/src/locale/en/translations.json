@@ -648,6 +648,11 @@
               "title": "Select country/province"
             },
             "fusionTable": {
+              "fusionTableRowSelection": {
+                "label": "Rows",
+                "FILTER": "Filter",
+                "INCLUDE_ALL": "Include all"
+              },
               "column": {
                 "label": "Column",
                 "placeholder": {
@@ -663,9 +668,9 @@
                 "required": "Fusion Table must be specified"
               },
               "row": {
-                "label": "Row",
+                "label": "Value",
                 "placeholder": {
-                  "loaded": "Select a row...",
+                  "loaded": "Select a value...",
                   "loading": "Loading rows...",
                   "noColumn": "Select a column first",
                   "noFusionTable": "Enter a Fusion Table ID first",

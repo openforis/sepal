@@ -62,12 +62,13 @@ class Combo extends React.Component {
     }
 
     renderLabel() {
-        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        const {label, tooltip, tooltipPlacement = 'top', disabled} = this.props
         return label ? (
             <Label
                 msg={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
+                disabled={disabled}
             />
         ) : null
     }

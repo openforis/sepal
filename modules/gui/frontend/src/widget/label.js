@@ -11,16 +11,16 @@ export default class Label extends React.Component {
     }
 
     renderLabel(contents) {
-        const {className, size = 'normal', unavailable} = this.props
+        const {className, size = 'normal', disabled} = this.props
         return (
             <label className={[
                 styles.label,
                 styles[size],
-                unavailable ? styles.unavailable : null,
+                disabled ? styles.disabled : null,
                 className
             ].join(' ')}>
                 {contents}
-                {unavailable ? null : this.renderTooltip()}
+                {disabled ? null : this.renderTooltip()}
             </label>
         )
     }
@@ -47,5 +47,5 @@ Label.propTypes = {
     size: PropTypes.oneOf(['normal', 'large']),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
-    unavailable: PropTypes.any
+    disabled: PropTypes.any
 }

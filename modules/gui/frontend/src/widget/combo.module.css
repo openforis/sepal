@@ -7,6 +7,10 @@
     color: #fff;
 }
 
+.container input:disabled::placeholder {
+    opacity: .3;
+}
+
 .options {
     --background-color: hsla(0, 0%, 0%, .9);
     background-color: var(--background-color);
