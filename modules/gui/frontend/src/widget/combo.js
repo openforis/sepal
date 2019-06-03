@@ -123,6 +123,7 @@ class Combo extends React.Component {
                     onCancel={() => this.resetFilter()}
                     autoCenter={!selected}
                     tooltipPlacement={optionTooltipPlacement}
+                    autoHighlight
                     keyboard
                 />
             </FloatingBox>
