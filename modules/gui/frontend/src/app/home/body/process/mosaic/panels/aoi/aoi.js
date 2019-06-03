@@ -29,12 +29,12 @@ const fields = {
     fusionTableRowSelection: new Field(),
     fusionTableColumn: new Field()
         .skip((value, {section}) => section !== 'FUSION_TABLE')
-        .skip((_, {allowWholeFusionTable}) => allowWholeFusionTable)
+        .skip((_, {fusionTableRowSelection}) => fusionTableRowSelection === 'INCLUDE_ALL')
         .skip((value, {fusionTable}) => !fusionTable)
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.column.required'),
     fusionTableRow: new Field()
         .skip((value, {section}) => section !== 'FUSION_TABLE')
-        .skip((_, {allowWholeFusionTable}) => allowWholeFusionTable)
+        .skip((_, {fusionTableRowSelection}) => fusionTableRowSelection === 'INCLUDE_ALL')
         .skip((value, {fusionTableColumn}) => !fusionTableColumn)
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.row.required'),
     polygon: new Field()
