@@ -1,9 +1,13 @@
+import {compose} from 'compose'
+import {debounceTime, distinctUntilChanged, map, withLatestFrom} from 'rxjs/operators'
 import {disableBodyScroll, enableBodyScroll} from 'body-scroll-lock'
+import {fromEvent} from 'rxjs'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
 import flexy from './flexy.module.css'
 import styles from './scrollable.module.css'
+import withSubscriptions from 'subscription'
 
 const ScrollableContainerContext = React.createContext()
 
@@ -67,7 +71,7 @@ Unscrollable.propTypes = {
 
 const ScrollableContext = React.createContext()
 
-export class Scrollable extends Component {
+class _Scrollable extends Component {
     targetRef = React.createRef()
 
     render() {
@@ -91,8 +95,31 @@ export class Scrollable extends Component {
         )
     }
 
+    handleHover() {
+        const {onHover, addSubscription} = this.props
+        if (onHover) {
+            const mouseCoords$ = fromEvent(document, 'mousemove').pipe(
+                map(e => ([e.clientX, e.clientY]))
+            )
+            const debouncedScroll$ = fromEvent(this.targetRef.current, 'scroll').pipe(
+                debounceTime(50)
+            )
+            const highlight$ = debouncedScroll$.pipe(
+                withLatestFrom(mouseCoords$),
+                map(([, [x, y]]) => document.elementFromPoint(x, y)),
+                distinctUntilChanged()
+            )
+            addSubscription(
+                highlight$.subscribe(
+                    element => onHover(element)
+                )
+            )
+        }
+    }
+
     componentDidMount() {
         disableBodyScroll(this.targetRef.current)
+        this.handleHover()
     }
 
     componentWillUnmount() {
@@ -109,12 +136,18 @@ export class Scrollable extends Component {
     }
 }
 
+export const Scrollable = compose(
+    _Scrollable,
+    withSubscriptions()
+)
+
 Scrollable.defaultProps = {direction: 'y'}
 
 Scrollable.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
-    direction: PropTypes.oneOf(['x', 'y', 'xy'])
+    direction: PropTypes.oneOf(['x', 'y', 'xy']),
+    onScroll: PropTypes.func
 }
 
 export const withScrollable = () =>

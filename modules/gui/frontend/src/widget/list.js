@@ -73,7 +73,10 @@ class List extends React.Component {
             <Keybinding keymap={keymap} disabled={!keyboard}>
                 <ReactResizeDetector handleHeight onResize={() => this.update$.next()}>
                     <ScrollableContainer className={className}>
-                        <Scrollable className={styles.options} direction='xy'>
+                        <Scrollable
+                            className={styles.options}
+                            direction='xy'
+                            onHover={element => this.onHover(element)}>
                             {scrollableContainerHeight => this.renderList(scrollableContainerHeight)}
                         </Scrollable>
                     </ScrollableContainer>
@@ -157,6 +160,7 @@ class List extends React.Component {
         return (
             <li
                 key={option.value}
+                data-option-value={option.value}
                 ref={ref}>
                 <Button
                     chromeless={!selected}
@@ -264,6 +268,24 @@ class List extends React.Component {
         }, this.scroll)
     }
 
+    onHover(element) {
+        if (element.parentElement.parentElement === this.list.current) {
+            const optionValue = element.parentElement.getAttribute('data-option-value')
+            this.highlightOptionByValue(optionValue)
+        }
+    }
+
+    highlightOptionByValue(value) {
+        const {options} = this.props
+        const highlightedOption = _.find(options, option => option.value === value)
+        if (highlightedOption) {
+            this.setState({
+                highlightedOption,
+                overrideHover: true
+            })
+        }
+    }
+
     scroll() {
         this.highlighted.current && this.highlighted.current.scrollIntoView({
             behavior: 'auto',
@@ -307,7 +329,10 @@ class List extends React.Component {
 
     highlightSelectedOption() {
         const highlightedOption = this.getSelectedOption() || this.getFirstSelectableOption()
-        this.setState({highlightedOption}, () => this.update$.next())
+        this.setState({
+            highlightedOption,
+            overrideHover: true
+        }, () => this.update$.next())
     }
 
     componentDidMount() {
@@ -326,6 +351,14 @@ class List extends React.Component {
             return true
         }
         return false
+    }
+
+    componentDidUpdate() {
+        const {options} = this.props
+        const {highlightedOption} = this.state
+        if (!_.find(options, highlightedOption)) {
+            this.highlightSelectedOption()
+        }
     }
 }
 
