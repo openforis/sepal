@@ -5,11 +5,12 @@ import {connect} from 'store'
 import {delay} from 'rxjs/operators'
 import {selectFrom} from 'stateUtils'
 import FloatingBox from 'widget/floatingBox'
+import Icon from 'widget/icon'
 import List from 'widget/list'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './combo.module.css'
+import styles from './buttonSelect.module.css'
 import withSubscriptions from 'subscription'
 
 const SELECTION_DELAY_MS = 350
@@ -41,23 +42,40 @@ class ButtonSelect extends React.Component {
     }
 
     renderButton() {
-        const {disabled, chromeless, label, look, icon, tooltip, tooltipPlacement} = this.props
-        const {showOptions} = this.state
+        const {disabled, chromeless, shape, look, icon, tooltip, tooltipPlacement} = this.props
         return (
             <Button
                 ref={this.input}
                 chromeless={chromeless}
-                label={label}
+                shape={shape}
                 look={look}
                 icon={icon}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                onClick={() => showOptions
-                    ? this.hideOptions()
-                    : this.showOptions()
-                }
+                onClick={() => this.toggleOptions()}
                 disabled={disabled}
-            />
+            >
+                {this.renderContent()}
+            </Button>
+        )
+    }
+
+    renderContent() {
+        const {label, icon} = this.props
+        const {selectedOption} = this.state
+        return (
+            <div className={styles.content}>
+                {icon && <Icon name={icon}/>}
+                {(selectedOption && selectedOption.buttonLabel) || label}
+                {this.renderChevron()}
+            </div>
+        )
+    }
+
+    renderChevron() {
+        const {placement} = this.props
+        return (
+            <Icon name={placement === 'above' ? 'chevron-up' : 'chevron-down'}/>
         )
     }
 
@@ -86,6 +104,13 @@ class ButtonSelect extends React.Component {
         )
     }
 
+    toggleOptions() {
+        const {showOptions} = this.state
+        showOptions
+            ? this.hideOptions()
+            : this.showOptions()
+    }
+
     showOptions() {
         this.setState({showOptions: true})
     }
@@ -112,11 +137,12 @@ class ButtonSelect extends React.Component {
     }
 
     handleSelect() {
-        const {onSelect, addSubscription} = this.props
+        const {input, onSelect, addSubscription} = this.props
         addSubscription(
             this.select$.subscribe(
                 option => {
                     this.setSelectedOption(option)
+                    input && input.set(option.value)
                     onSelect && onSelect(option)
                 }
             ),
@@ -147,6 +173,16 @@ class ButtonSelect extends React.Component {
         this.handleBlur()
     }
 
+    static getDerivedStateFromProps(props, state) {
+        const {input} = props
+        const {flattenedOptions} = state
+        if (input) {
+            return {
+                selectedOption: _.find(flattenedOptions, option => option.value === input.value)
+            }
+        }
+    }
+
     componentDidUpdate() {
         this.updateOptions()
     }
@@ -175,19 +211,21 @@ export default compose(
 
 ButtonSelect.propTypes = {
     options: PropTypes.any.isRequired,
-    onSelect: PropTypes.func.isRequired,
     alignment: PropTypes.oneOf(['left', 'right']),
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     icon: PropTypes.string,
+    input: PropTypes.any,
     label: PropTypes.string,
     look: PropTypes.string,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
+    shape: PropTypes.string,
     tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string
+    tooltipPlacement: PropTypes.string,
+    onSelect: PropTypes.func
 }
 
 ButtonSelect.defaultProps = {
