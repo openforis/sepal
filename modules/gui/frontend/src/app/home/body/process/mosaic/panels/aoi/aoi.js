@@ -26,6 +26,7 @@ const fields = {
         .skip((value, {section}) => section !== 'FUSION_TABLE')
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.required'),
     allowWholeFusionTable: new Field(),
+    fusionTableRowSelection: new Field(),
     fusionTableColumn: new Field()
         .skip((value, {section}) => section !== 'FUSION_TABLE')
         .skip((_, {allowWholeFusionTable}) => allowWholeFusionTable)
@@ -49,7 +50,7 @@ class Aoi extends React.Component {
     }
 
     render() {
-        const {recipeId, inputs} = this.props
+        const {recipeId, allowWholeFusionTable, inputs} = this.props
         const sections = [
             {
                 icon: 'cog',
@@ -64,7 +65,10 @@ class Aoi extends React.Component {
             {
                 value: 'FUSION_TABLE',
                 title: msg('process.mosaic.panel.areaOfInterest.form.fusionTable.title'),
-                component: <FusionTableSection recipeId={recipeId} inputs={inputs}/>
+                component: <FusionTableSection
+                    recipeId={recipeId}
+                    inputs={inputs}
+                    allowWholeFusionTable={allowWholeFusionTable}/>
             },
             {
                 value: 'POLYGON',
@@ -74,7 +78,7 @@ class Aoi extends React.Component {
         ]
         return (
             <RecipeFormPanel
-                className={styles.panel}
+                className={[styles.panel, allowWholeFusionTable ? styles.allowWholeFusionTable : null].join(' ')}
                 placement='bottom-right'
                 onApply={(values, model) => this.onApply(values, model)}
                 onCancel={() => this.onCancel()}>
@@ -137,12 +141,12 @@ const valuesToModel = values => {
             key: values.area || values.country,
             level: values.area ? 'AREA' : 'COUNTRY'
         }
-    case 'FUSION_TABLE':
+        case 'FUSION_TABLE':
         return {
             type: 'FUSION_TABLE',
             id: values.fusionTable,
-            keyColumn: values.fusionTableColumn,
-            key: values.fusionTableRow,
+            keyColumn: values.fusionTableRowSelection === 'FILTERED'? values.fusionTableColumn : null,
+            key: values.fusionTableRowSelection === 'FILTERED'? values.fusionTableRow : null,
             bounds: values.bounds
         }
     case 'POLYGON':
@@ -167,7 +171,8 @@ const modelToValues = (model = {}) => {
                 section: 'FUSION_TABLE',
                 fusionTable: model.id,
                 fusionTableColumn: model.keyColumn,
-                fusionTableRow: model.key
+                fusionTableRow: model.key,
+                fusionTableRowSelection:  model.keyColumn ? 'FILTER' : 'INCLUDE_ALL'
             }
     else if (model.type === 'POLYGON')
         return {
