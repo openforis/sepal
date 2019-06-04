@@ -18,12 +18,12 @@ class FloatingBox extends React.Component {
     }
 
     render() {
-        const {className, placement, alignment, width: autoWidth, forwardedRef, children} = this.props
+        const {className, placement, alignment, autoWidth, forwardedRef, children} = this.props
         const {dimensions: {height, width, top, bottom, left, right}} = this.state
         const style = {
             '--left': alignment === 'left' ? left : 'auto',
             '--right': alignment === 'right' ? width - right : 'auto',
-            '--width': autoWidth === 'element' ? right - left : null,
+            '--width': autoWidth ? null : right - left,
             '--above-height': top,
             '--above-bottom': height - top - 2,
             '--below-height': height - bottom,
