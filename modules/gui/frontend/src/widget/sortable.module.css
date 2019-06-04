@@ -1,0 +1,21 @@
+.row {
+    display: flex;
+}
+
+.row:not(:last-child) {
+    margin-bottom: .5rem;
+}
+
+.grip {
+    cursor: move;
+    max-width: .75rem;
+    min-width: .75rem;
+    background-image: linear-gradient(0deg, transparent 100%, var(--look-default-background-color)),
+    linear-gradient(90deg, var(--look-default-hover-background-color), var(--look-default-background-color));
+    background-size: .2rem .2rem, .2rem .2rem;
+    background-position: 0 0, 0 .1rem;
+}
+
+.item {
+    width: 100%;
+}

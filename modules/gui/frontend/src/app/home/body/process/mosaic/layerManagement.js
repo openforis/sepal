@@ -9,6 +9,7 @@ import Icon from 'widget/icon'
 import Label from 'widget/label'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import Slider from 'widget/slider'
+import Sortable from 'widget/sortable'
 import SuperButton from 'widget/superButton'
 import styles from './layerManagement.module.css'
 
@@ -17,9 +18,15 @@ const mapRecipeToProps = recipe => {
 }
 
 const dummyMapLayers = [
-    {id: guid(), type: 'GEE', title: 'My Mosaic', bands: ['RED', 'GREEN', 'BLUE']},
-    {id: guid(), type: 'GEE', title: 'Another Mosaic with a bit longer name', bands: ['NIR', 'SWIR1', 'RED']},
-    {id: guid(), type: 'Planet', title: 'Planet tiles'}
+    {id: guid(), type: 'GEE', title: 'This recipe', description: 'My Mosaic', bands: ['RED', 'GREEN', 'BLUE']},
+    {
+        id: guid(),
+        type: 'GEE',
+        title: 'Sepal recipe',
+        description: 'Another Mosaic with a bit longer name',
+        bands: ['NIR', 'SWIR1', 'RED']
+    },
+    {id: guid(), type: 'PLANET', title: 'Planet', description: 'Analytic mosaic'}
 ]
 
 class LayerManagement extends React.Component {
@@ -107,14 +114,9 @@ class LayerManagement extends React.Component {
                         onClick={() => this.addMapLayer()}
                     />
                 </div>
-                <div>
-                    {dummyMapLayers.map(mapLayer =>
-                        <div className={styles.layerRow}>
-                            <div className={styles.layerGrip}/>
-                            <Layer layer={mapLayer}/>
-                        </div>
-                    )}
-                </div>
+                <Sortable items={dummyMapLayers}>
+                    {mapLayer => <Layer layer={mapLayer}/>}
+                </Sortable>
             </div>
         )
     }
@@ -140,10 +142,11 @@ class Layer extends React.Component {
     }
 
     render() {
-        const {layer: {id, title}} = this.props
+        const {layer: {id, title, description}} = this.props
         const {showOpacityControls} = this.state
         const showButton =
             <Button
+                key='show'
                 chromeless
                 shape='circle'
                 size='large'
@@ -152,6 +155,7 @@ class Layer extends React.Component {
             />
         const opacityButton =
             <Button
+                key='opacity'
                 chromeless={!showOpacityControls}
                 look={showOpacityControls ? 'highlight' : 'default'}
                 shape='circle'
@@ -163,9 +167,11 @@ class Layer extends React.Component {
             <SuperButton
                 key={id}
                 title={<div className={styles.layerTitle}>{title}</div>}
+                description={description}
                 extraButtons={[showButton, opacityButton]}
                 onClick={() => console.log('click')}
                 onRemove={() => console.log('remove')}
+                removeMessage={'Are you sure you want to remove this layer?'}
                 className={styles.layer}>
                 <div className={styles.layerContent}>
                     {showOpacityControls ? this.renderOpacityControls() : this.renderLayerContent()}
@@ -186,7 +192,7 @@ class Layer extends React.Component {
         switch (type) {
             case 'GEE':
                 return this.renderGEELayer()
-            case 'Planet':
+            case 'PLANET':
                 return this.renderPlanetLayer()
             default:
                 throw Error('Unknown layer type: ' + JSON.stringify(this.props.layer))
