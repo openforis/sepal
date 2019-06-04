@@ -122,6 +122,24 @@ PanelContent.propTypes = {
     className: PropTypes.string
 }
 
+// FIELDSET --------------------------------------------------------------------
+
+export class FieldSet extends React.Component {
+    render() {
+        const {children} = this.props
+        return (
+            <div className={styles.fieldSet}>
+                {children}
+                <div/>
+            </div>
+        )
+    }
+}
+
+FieldSet.propTypes = {
+    children: PropTypes.any.isRequired
+}
+
 // BUTTONS --------------------------------------------------------------------
 
 export class PanelButtons extends React.Component {

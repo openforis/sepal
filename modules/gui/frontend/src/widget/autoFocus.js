@@ -56,7 +56,7 @@ export default compose(
 )
 
 AutoFocus.propTypes = {
-    forwardedRef: PropTypes.object,
-    enabled: PropTypes.any
+    enabled: PropTypes.any,
+    forwardedRef: PropTypes.object
 }
 

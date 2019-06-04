@@ -106,6 +106,7 @@ export class Buttons extends React.Component {
 Buttons.propTypes = {
     capitalized: PropTypes.any,
     className: PropTypes.string,
+    disabled: PropTypes.any,
     label: PropTypes.string,
     multiple: PropTypes.any,
     options: PropTypes.array,
@@ -113,7 +114,6 @@ Buttons.propTypes = {
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,
-    disabled: PropTypes.any,
     onChange: PropTypes.any,
 }
 
@@ -140,6 +140,7 @@ export const FormButtons = (
 FormButtons.propTypes = {
     capitalized: PropTypes.any,
     className: PropTypes.string,
+    disabled: PropTypes.any,
     input: PropTypes.object,
     label: PropTypes.string,
     multiple: PropTypes.any,
@@ -147,6 +148,5 @@ FormButtons.propTypes = {
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,
-    disabled: PropTypes.any,
     onChange: PropTypes.any,
 }
