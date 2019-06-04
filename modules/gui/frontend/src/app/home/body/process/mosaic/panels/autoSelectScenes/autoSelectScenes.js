@@ -1,11 +1,10 @@
 import {Field} from 'widget/form'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {FormPanelButtons} from 'widget/formPanel'
-import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import Label from 'widget/label'
 import React from 'react'
 import Slider from 'widget/slider'
 import styles from './autoSelectScenes.module.css'
@@ -41,30 +40,26 @@ class AutoSelectScenes extends React.Component {
     renderContent() {
         const {inputs: {min, max}} = this.props
         return (
-            <React.Fragment>
-                <div>
-                    <Label msg={msg('process.mosaic.panel.autoSelectScenes.form.min.label')}/>
-                    <Slider
-                        input={min}
-                        minValue={1}
-                        maxValue={max.value}
-                        ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
-                        snap
-                        scale='log'
-                        range='low'/>
-                </div>
-                <div>
-                    <Label msg={msg('process.mosaic.panel.autoSelectScenes.form.max.label')}/>
-                    <Slider
-                        input={max}
-                        minValue={min.value}
-                        maxValue={999}
-                        ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
-                        snap
-                        scale='log'
-                        range='low'/>
-                </div>
-            </React.Fragment>
+            <FieldSet>
+                <Slider
+                    label={msg('process.mosaic.panel.autoSelectScenes.form.min.label')}
+                    input={min}
+                    minValue={1}
+                    maxValue={max.value}
+                    ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
+                    snap
+                    scale='log'
+                    range='low'/>
+                <Slider
+                    label={msg('process.mosaic.panel.autoSelectScenes.form.max.label')}
+                    input={max}
+                    minValue={min.value}
+                    maxValue={999}
+                    ticks={[1, 2, 5, 10, 20, 50, 100, 200, 500, {value: 999, label: 'max'}]}
+                    snap
+                    scale='log'
+                    range='low'/>
+            </FieldSet>
         )
     }
 }

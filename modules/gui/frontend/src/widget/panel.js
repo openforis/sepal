@@ -109,7 +109,7 @@ export class PanelContent extends React.Component {
         const {className, children} = this.props
         return (
             <ScrollableContainer className={styles.scrollableContainer}>
-                <Scrollable className={[styles.content, className || styles.default].join(' ')}>
+                <Scrollable className={[styles.content, className].join(' ')}>
                     {children}
                 </Scrollable>
             </ScrollableContainer>
@@ -126,18 +126,21 @@ PanelContent.propTypes = {
 
 export class FieldSet extends React.Component {
     render() {
-        const {children} = this.props
+        const {compact, children} = this.props
         return (
-            <div className={styles.fieldSet}>
-                {children}
+            <React.Fragment>
+                <div className={[styles.fieldSet, compact ? styles.compact : null].join(' ')}>
+                    {children}
+                </div>
                 <div/>
-            </div>
+            </React.Fragment>
         )
     }
 }
 
 FieldSet.propTypes = {
-    children: PropTypes.any.isRequired
+    children: PropTypes.any.isRequired,
+    compact: PropTypes.any
 }
 
 // BUTTONS --------------------------------------------------------------------

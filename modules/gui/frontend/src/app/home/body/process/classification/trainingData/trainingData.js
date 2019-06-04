@@ -1,7 +1,7 @@
 import {Field, Input} from 'widget/form'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {FormPanelButtons} from 'widget/formPanel'
 import {Msg, msg} from 'translate'
-import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
@@ -85,7 +85,7 @@ class TrainingData extends React.Component {
                 ? 'loaded'
                 : 'noFusionTable'
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Input
                     label={msg('process.classification.panel.trainingData.form.fusionTable.label')}
                     autoFocus={!isMobile()}
@@ -115,7 +115,7 @@ class TrainingData extends React.Component {
                     <a href='/ceo' target='_blank'><Msg
                         id='process.classification.panel.trainingData.form.openCeo'/></a>
                 </p>
-            </React.Fragment>
+            </FieldSet>
         )
     }
 

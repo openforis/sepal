@@ -96,6 +96,28 @@ class Dates extends React.Component {
         advanced.set(enabled)
     }
 
+    render() {
+        const {recipeId, inputs: {advanced}} = this.props
+        return (
+            <RecipeFormPanel
+                className={advanced.value ? styles.advanced : styles.simple}
+                placement='bottom-right'
+                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                <PanelHeader
+                    icon='calendar-alt'
+                    title={msg('process.mosaic.panel.dates.title')}/>
+                <PanelContent>
+                    {advanced.value ? this.renderAdvanced() : this.renderSimple()}
+                </PanelContent>
+                <FormPanelButtons>
+                    <Button
+                        label={advanced.value ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setAdvanced(!advanced.value)}/>
+                </FormPanelButtons>
+            </RecipeFormPanel>
+        )
+    }
+
     renderSimple() {
         const {inputs: {targetYear}} = this.props
         return (
@@ -163,32 +185,6 @@ class Dates extends React.Component {
                         disabled={targetDate.isInvalid()}/>
                 </div>
             </div>
-        )
-    }
-
-    render() {
-        const {recipeId, inputs: {advanced}} = this.props
-        return (
-            <RecipeFormPanel
-                className={advanced.value ? styles.advanced : styles.simple}
-                placement='bottom-right'
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <PanelHeader
-                    icon='calendar-alt'
-                    title={msg('process.mosaic.panel.dates.title')}/>
-
-                <PanelContent>
-                    <div>
-                        {advanced.value ? this.renderAdvanced() : this.renderSimple()}
-                    </div>
-                </PanelContent>
-
-                <FormPanelButtons>
-                    <Button
-                        label={advanced.value ? msg('button.less') : msg('button.more')}
-                        onClick={() => this.setAdvanced(!advanced.value)}/>
-                </FormPanelButtons>
-            </RecipeFormPanel>
         )
     }
 

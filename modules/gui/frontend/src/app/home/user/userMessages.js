@@ -2,7 +2,6 @@ import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Msg, msg} from 'translate'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -123,11 +122,7 @@ class _UserMessages extends React.Component {
         if (userMessages.length) {
             const sortedUserMessages = _.orderBy(userMessages, userMessage => moment(userMessage.message.creationTime) || moment(), 'desc')
             return (
-                <ScrollableContainer className={styles.messages}>
-                    <Scrollable>
-                        {sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))}
-                    </Scrollable>
-                </ScrollableContainer>
+                sortedUserMessages.map((userMessage, index) => this.renderMessage(userMessage, index))
             )
         } else {
             return (

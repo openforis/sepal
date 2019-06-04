@@ -33,11 +33,9 @@ class Typology extends React.Component {
                 <PanelHeader
                     icon='cog'
                     title={msg('process.landCover.panel.typology.title')}/>
-
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-
                 <FormPanelButtons/>
             </FormPanel>
         )

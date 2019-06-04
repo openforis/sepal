@@ -1,6 +1,6 @@
 import {Constraint, Field, Input, form} from 'widget/form'
 import {EMPTY, throwError} from 'rxjs'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {changeCurrentUserPassword$} from 'widget/user'
@@ -58,25 +58,27 @@ class ChangePassword extends React.Component {
         const {inputs: {oldPassword, newPassword, confirmPassword}} = this.props
         return <React.Fragment>
             <PanelContent>
-                <Input
-                    label={msg('user.changePassword.form.oldPassword.label')}
-                    type='password'
-                    autoFocus={!isMobile()}
-                    input={oldPassword}
-                    errorMessage
-                />
-                <Input
-                    label={msg('user.changePassword.form.newPassword.label')}
-                    type='password'
-                    input={newPassword}
-                    errorMessage
-                />
-                <Input
-                    label={msg('user.changePassword.form.confirmPassword.label')}
-                    type='password'
-                    input={confirmPassword}
-                    errorMessage={[confirmPassword, 'passwordsMatch']}
-                />
+                <FieldSet>
+                    <Input
+                        label={msg('user.changePassword.form.oldPassword.label')}
+                        type='password'
+                        autoFocus={!isMobile()}
+                        input={oldPassword}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('user.changePassword.form.newPassword.label')}
+                        type='password'
+                        input={newPassword}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('user.changePassword.form.confirmPassword.label')}
+                        type='password'
+                        input={confirmPassword}
+                        errorMessage={[confirmPassword, 'passwordsMatch']}
+                    />
+                </FieldSet>
             </PanelContent>
             <FormPanelButtons/>
         </React.Fragment>

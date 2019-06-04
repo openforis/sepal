@@ -12,7 +12,7 @@ class AutoFocus extends React.Component {
         return completed ? null : <div ref={this.focusHolderRef} tabIndex={-1}/>
     }
 
-    shouldComponentUpdate(nextProps, nextState, nextContext) {
+    shouldComponentUpdate(nextProps) {
         const {enabled} = nextProps
         return !!enabled
     }

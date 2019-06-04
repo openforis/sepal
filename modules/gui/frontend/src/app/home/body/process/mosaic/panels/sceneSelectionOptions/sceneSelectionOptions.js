@@ -1,7 +1,7 @@
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field} from 'widget/form'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {FormPanelButtons} from 'widget/formPanel'
-import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, SceneSelectionType} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -23,6 +23,27 @@ const mapRecipeToProps = recipe => ({
 })
 
 class SceneSelectionOptions extends React.Component {
+    render() {
+        const {recipeId} = this.props
+        return (
+            <RecipeFormPanel
+                className={styles.panel}
+                placement='bottom-right'
+                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                <PanelHeader
+                    icon='images'
+                    title={msg('process.mosaic.panel.scenes.title')}/>
+                <PanelContent>
+                    <FieldSet>
+                        {this.renderTypes()}
+                        {this.renderTargetDateWeight()}
+                    </FieldSet>
+                </PanelContent>
+                <FormPanelButtons/>
+            </RecipeFormPanel>
+        )
+    }
+
     renderTypes() {
         const {alwaysAll, inputs: {type}} = this.props
         const options = [{
@@ -60,29 +81,6 @@ class SceneSelectionOptions extends React.Component {
                 input={targetDateWeight}
                 options={options}
                 disabled={type.value !== SceneSelectionType.SELECT}/>
-        )
-    }
-
-    render() {
-        const {recipeId} = this.props
-        return (
-            <RecipeFormPanel
-                className={styles.panel}
-                placement='bottom-right'
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <PanelHeader
-                    icon='images'
-                    title={msg('process.mosaic.panel.scenes.title')}/>
-
-                <PanelContent>
-                    <React.Fragment>
-                        {this.renderTypes()}
-                        {this.renderTargetDateWeight()}
-                    </React.Fragment>
-                </PanelContent>
-
-                <FormPanelButtons/>
-            </RecipeFormPanel>
         )
     }
 

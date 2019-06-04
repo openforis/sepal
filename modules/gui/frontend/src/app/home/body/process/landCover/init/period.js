@@ -56,11 +56,9 @@ class Period extends React.Component {
                 <PanelHeader
                     icon='cog'
                     title={msg('process.landCover.panel.period.title')}/>
-
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-
                 <FormPanelButtons/>
             </FormPanel>
         )

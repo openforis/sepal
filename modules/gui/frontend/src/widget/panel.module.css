@@ -126,8 +126,16 @@
     margin-bottom: 2rem;
 }
 
-.fieldSet > *:not(:last-child) {
+.fieldSet > * {
     margin-bottom: 2rem;
+}
+
+.fieldSet.compact > * {
+    margin-bottom: .75rem;
+}
+
+.fieldSet > *:last-child {
+    margin-bottom: 0;
 }
 
 @media screen and (max-width: 500px) {

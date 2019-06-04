@@ -1,6 +1,6 @@
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {compose} from 'compose'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
@@ -39,11 +39,9 @@ class CompositeOptions extends React.Component {
                 <PanelHeader
                     icon='cog'
                     title={msg('process.landCover.panel.compositeOptions.title')}/>
-
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-
                 <FormPanelButtons/>
             </FormPanel>
         )
@@ -52,7 +50,7 @@ class CompositeOptions extends React.Component {
     renderContent() {
         const {inputs: {cloudThreshold, corrections, mask}} = this.props
         return (
-            <div className={styles.content}>
+            <FieldSet>
                 <div>
                     <Label
                         msg={msg('process.landCover.panel.compositeOptions.form.cloudThreshold.label')}
@@ -113,7 +111,7 @@ class CompositeOptions extends React.Component {
                         // }
                     ]}
                 />
-            </div>
+            </FieldSet>
         )
     }
 }

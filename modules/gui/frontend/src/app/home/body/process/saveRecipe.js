@@ -1,5 +1,5 @@
 import {Field, Input, form} from 'widget/form'
-import {PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {FieldSet, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {closeRecipe} from './recipe'
 import {compose} from 'compose'
@@ -42,12 +42,14 @@ class SaveRecipe extends React.Component {
         const cancel = () => activatable.deactivate()
         return <React.Fragment>
             <PanelContent>
-                <Input
-                    label={msg('process.saveRecipe.form.name.label')}
-                    autoFocus
-                    input={name}
-                    errorMessage
-                />
+                <FieldSet>
+                    <Input
+                        label={msg('process.saveRecipe.form.name.label')}
+                        autoFocus
+                        input={name}
+                        errorMessage
+                    />
+                </FieldSet>
             </PanelContent>
             <PanelButtons onEnter={save} onEscape={cancel}>
                 <PanelButtons.Main>

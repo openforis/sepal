@@ -1,7 +1,6 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -31,18 +30,10 @@ class _Usage extends React.Component {
                     icon='user'
                     title={msg('user.report.title')}/>
                 <PanelContent>
-                    <ScrollableContainer>
-                        <Scrollable>
-                            <div className={styles.section}>
-                                <Label msg={msg('user.report.resources.title')} size='large'/>
-                                <UserResources/>
-                            </div>
-                            <div className={styles.section}>
-                                <Label msg={msg('user.report.sessions.title')} size='large'/>
-                                <UserSessions/>
-                            </div>
-                        </Scrollable>
-                    </ScrollableContainer>
+                    <React.Fragment>
+                        {this.renderResosurces()}
+                        {this.renderSessions()}
+                    </React.Fragment>
                 </PanelContent>
                 <PanelButtons onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
@@ -50,6 +41,24 @@ class _Usage extends React.Component {
                     </PanelButtons.Main>
                 </PanelButtons>
             </Panel>
+        )
+    }
+
+    renderResosurces() {
+        return (
+            <div className={styles.section}>
+                <Label msg={msg('user.report.resources.title')} size='large'/>
+                <UserResources/>
+            </div>
+        )
+    }
+
+    renderSessions() {
+        return (
+            <div className={styles.section}>
+                <Label msg={msg('user.report.sessions.title')} size='large'/>
+                <UserSessions/>
+            </div>
         )
     }
 

@@ -68,13 +68,11 @@ class Dates extends React.Component {
                 <PanelHeader
                     icon='cog'
                     title={msg('process.timeSeries.panel.dates.title')}/>
-
                 <PanelContent>
                     <div className={styles.form}>
                         {this.renderContent()}
                     </div>
                 </PanelContent>
-
                 <FormPanelButtons/>
             </RecipeFormPanel>
         )

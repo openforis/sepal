@@ -1,5 +1,5 @@
 import {Field, Input, InputGroup, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -75,57 +75,59 @@ class UserDetails extends React.Component {
                     icon='user'
                     title={msg('user.userDetails.title')}/>
                 <PanelContent>
-                    <Input
-                        label={msg('user.userDetails.form.username.label')}
-                        input={username}
-                        disabled={!newUser}
-                        spellCheck={false}
-                        autoFocus={newUser && !isMobile()}
-                        errorMessage
-                    />
-                    <Input
-                        label={msg('user.userDetails.form.name.label')}
-                        input={name}
-                        spellCheck={false}
-                        autoFocus={!newUser && !isMobile()}
-                        errorMessage
-                    />
-                    <Input
-                        label={msg('user.userDetails.form.email.label')}
-                        input={email}
-                        spellCheck={false}
-                        errorMessage
-                    />
-                    <Input
-                        label={msg('user.userDetails.form.organization.label')}
-                        input={organization}
-                        spellCheck={false}
-                        errorMessage
-                    />
-                    <InputGroup
-                        label={msg('user.userDetails.form.monthlyLimits.label')}
-                        errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
-                        <div className={styles.monthlyLimits}>
-                            <Input
-                                label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
-                                type='number'
-                                input={monthlyBudgetInstanceSpending}
-                                spellCheck={false}
-                            />
-                            <Input
-                                label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
-                                type='number'
-                                input={monthlyBudgetStorageSpending}
-                                spellCheck={false}
-                            />
-                            <Input
-                                label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
-                                type='number'
-                                input={monthlyBudgetStorageQuota}
-                                spellCheck={false}
-                            />
-                        </div>
-                    </InputGroup>
+                    <FieldSet>
+                        <Input
+                            label={msg('user.userDetails.form.username.label')}
+                            input={username}
+                            disabled={!newUser}
+                            spellCheck={false}
+                            autoFocus={newUser && !isMobile()}
+                            errorMessage
+                        />
+                        <Input
+                            label={msg('user.userDetails.form.name.label')}
+                            input={name}
+                            spellCheck={false}
+                            autoFocus={!newUser && !isMobile()}
+                            errorMessage
+                        />
+                        <Input
+                            label={msg('user.userDetails.form.email.label')}
+                            input={email}
+                            spellCheck={false}
+                            errorMessage
+                        />
+                        <Input
+                            label={msg('user.userDetails.form.organization.label')}
+                            input={organization}
+                            spellCheck={false}
+                            errorMessage
+                        />
+                        <InputGroup
+                            label={msg('user.userDetails.form.monthlyLimits.label')}
+                            errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
+                            <div className={styles.monthlyLimits}>
+                                <Input
+                                    label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
+                                    type='number'
+                                    input={monthlyBudgetInstanceSpending}
+                                    spellCheck={false}
+                                />
+                                <Input
+                                    label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
+                                    type='number'
+                                    input={monthlyBudgetStorageSpending}
+                                    spellCheck={false}
+                                />
+                                <Input
+                                    label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
+                                    type='number'
+                                    input={monthlyBudgetStorageQuota}
+                                    spellCheck={false}
+                                />
+                            </div>
+                        </InputGroup>
+                    </FieldSet>
                 </PanelContent>
                 <FormPanelButtons/>
             </FormPanel>

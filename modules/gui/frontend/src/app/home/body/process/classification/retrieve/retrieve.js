@@ -1,7 +1,7 @@
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field} from 'widget/form'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {FormPanelButtons} from 'widget/formPanel'
-import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -33,13 +33,13 @@ class Retrieve extends React.Component {
         ].filter(({value}) => user.googleTokens || value !== 'GEE')
 
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Buttons
                     label={msg('process.classification.panel.retrieve.form.destination.label')}
                     input={destination}
                     multiple={false}
                     options={destinationOptions}/>
-            </React.Fragment>
+            </FieldSet>
         )
     }
 

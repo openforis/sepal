@@ -1,7 +1,7 @@
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field} from 'widget/form'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {FormPanelButtons} from 'widget/formPanel'
-import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -29,6 +29,24 @@ const mapRecipeToProps = recipe => ({
 })
 
 class CompositeOptions extends React.Component {
+    render() {
+        const {recipeId} = this.props
+        return (
+            <RecipeFormPanel
+                className={styles.panel}
+                placement='bottom-right'
+                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                <PanelHeader
+                    icon='layer-group'
+                    title={msg('process.mosaic.panel.composite.title')}/>
+                <PanelContent>
+                    {this.renderContent()}
+                </PanelContent>
+                <FormPanelButtons/>
+            </RecipeFormPanel>
+        )
+    }
+
     renderContent() {
         const {
             inputs: {
@@ -38,7 +56,7 @@ class CompositeOptions extends React.Component {
         } = this.props
         const includesSentinel2 = Object.keys(sources).includes('SENTINEL_2')
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Buttons
                     label={msg('process.mosaic.panel.composite.form.corrections.label')}
                     input={corrections}
@@ -60,7 +78,7 @@ class CompositeOptions extends React.Component {
                             || corrections.value.includes('SR')
                     }]}
                 />
-                <div className={styles.filters}>
+                <FieldSet compact>
                     <Label
                         msg={msg('process.mosaic.panel.composite.form.filters.label')}
                         tooltip={msg('process.mosaic.panel.composite.form.filters.tooltip')}
@@ -74,7 +92,7 @@ class CompositeOptions extends React.Component {
                         input={ndviPercentile}/>
                     <PercentileField
                         input={dayOfYearPercentile}/>
-                </div>
+                </FieldSet>
                 <Buttons
                     label={msg('process.mosaic.panel.composite.form.mask.label')}
                     input={mask}
@@ -102,25 +120,7 @@ class CompositeOptions extends React.Component {
                         tooltip: msg('process.mosaic.panel.composite.form.composingMethod.median.tooltip')
                     }]}
                 />
-            </React.Fragment>
-        )
-    }
-
-    render() {
-        const {recipeId} = this.props
-        return (
-            <RecipeFormPanel
-                className={styles.panel}
-                placement='bottom-right'
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <PanelHeader
-                    icon='layer-group'
-                    title={msg('process.mosaic.panel.composite.title')}/>
-                <PanelContent>
-                    {this.renderContent()}
-                </PanelContent>
-                <FormPanelButtons/>
-            </RecipeFormPanel>
+            </FieldSet>
         )
     }
 

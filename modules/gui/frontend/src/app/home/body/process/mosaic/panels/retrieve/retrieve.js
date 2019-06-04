@@ -1,7 +1,7 @@
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field} from 'widget/form'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {FormPanelButtons} from 'widget/formPanel'
-import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -85,6 +85,26 @@ class Retrieve extends React.Component {
         ]
     }
 
+    render() {
+        const {recipeId} = this.props
+        return (
+            <RecipeFormPanel
+                className={styles.panel}
+                isActionForm
+                placement='top-right'
+                onApply={values => RecipeActions(recipeId).retrieve(values).dispatch()}>
+                <PanelHeader
+                    icon='cloud-download-alt'
+                    title={msg('process.mosaic.panel.retrieve.title')}/>
+                <PanelContent>
+                    {this.renderContent()}
+                </PanelContent>
+                <FormPanelButtons
+                    applyLabel={msg('process.mosaic.panel.retrieve.apply')}/>
+            </RecipeFormPanel>
+        )
+    }
+
     renderContent() {
         const {user, sources, compositeOptions, inputs: {bands, scale, destination}} = this.props
         const correction = compositeOptions.corrections.includes('SR') ? 'SR' : 'TOA'
@@ -119,7 +139,7 @@ class Retrieve extends React.Component {
         ].filter(({value}) => user.googleTokens || value !== 'GEE')
 
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Buttons
                     label={msg('process.mosaic.panel.retrieve.form.bands.label')}
                     input={bands}
@@ -141,27 +161,7 @@ class Retrieve extends React.Component {
                     input={destination}
                     multiple={false}
                     options={destinationOptions}/>
-            </React.Fragment>
-        )
-    }
-
-    render() {
-        const {recipeId} = this.props
-        return (
-            <RecipeFormPanel
-                className={styles.panel}
-                isActionForm
-                placement='top-right'
-                onApply={values => RecipeActions(recipeId).retrieve(values).dispatch()}>
-                <PanelHeader
-                    icon='cloud-download-alt'
-                    title={msg('process.mosaic.panel.retrieve.title')}/>
-                <PanelContent>
-                    {this.renderContent()}
-                </PanelContent>
-                <FormPanelButtons
-                    applyLabel={msg('process.mosaic.panel.retrieve.apply')}/>
-            </RecipeFormPanel>
+            </FieldSet>
         )
     }
 

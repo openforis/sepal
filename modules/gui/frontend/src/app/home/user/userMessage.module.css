@@ -3,15 +3,6 @@
     min-height: 30rem;
 }
 
-.panelContent {
-    display: flex;
-    flex-direction: column;
-}
-
-.panelContent > * + * {
-    margin-top: 2rem;
-}
-
 .contents {
     background-color: var(--look-default-background-color);
     padding: 1rem;

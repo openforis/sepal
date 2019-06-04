@@ -1,7 +1,7 @@
 import {FormButtons as Buttons} from 'widget/buttons'
 import {ErrorMessage, Field} from 'widget/form'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {FormPanelButtons} from 'widget/formPanel'
-import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -120,12 +120,12 @@ class Dates extends React.Component {
                 <PanelHeader
                     icon='calendar-alt'
                     title={msg('process.radarMosaic.panel.dates.title')}/>
-
                 <PanelContent>
-                    {this.renderTypeSelector()}
-                    {this.renderDatePickers()}
+                    <FieldSet>
+                        {this.renderTypeSelector()}
+                        {this.renderDatePickers()}
+                    </FieldSet>
                 </PanelContent>
-
                 <FormPanelButtons/>
             </RecipeFormPanel>
         )

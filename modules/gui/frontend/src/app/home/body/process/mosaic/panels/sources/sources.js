@@ -1,7 +1,7 @@
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Constraint, Field} from 'widget/form'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {FormPanelButtons} from 'widget/formPanel'
-import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, dateRange} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -33,9 +33,35 @@ class Sources extends React.Component {
         return sourceValue ? imageSourceById[sourceValue].dataSets : null
     }
 
+    render() {
+        const {recipeId} = this.props
+        return (
+            <RecipeFormPanel
+                className={styles.panel}
+                placement='bottom-right'
+                onApply={(values, model) => {
+                    if (Object.keys(model).length > 1) {
+                        RecipeActions(recipeId).enableBandCalibration().dispatch()
+                        RecipeActions(recipeId).useAllScenes().dispatch()
+                    }
+                }}
+                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                <PanelHeader
+                    icon='satellite-dish'
+                    title={msg('process.mosaic.panel.sources.title')}/>
+                <PanelContent>
+                    {this.renderSources()}
+                </PanelContent>
+                <FormPanelButtons/>
+            </RecipeFormPanel>
+        )
+    }
+
     renderSources() {
-        return sources.map(source =>
-            this.renderSource(source, imageSourceById[source].dataSets)
+        return (
+            <FieldSet>
+                {sources.map(source => this.renderSource(source, imageSourceById[source].dataSets))}
+            </FieldSet>
         )
     }
 
@@ -61,32 +87,6 @@ class Sources extends React.Component {
             />
         )
 
-    }
-
-    render() {
-        const {recipeId} = this.props
-        return (
-            <RecipeFormPanel
-                className={styles.panel}
-                placement='bottom-right'
-                onApply={(values, model) => {
-                    if (Object.keys(model).length > 1) {
-                        RecipeActions(recipeId).enableBandCalibration().dispatch()
-                        RecipeActions(recipeId).useAllScenes().dispatch()
-                    }
-                }}
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <PanelHeader
-                    icon='satellite-dish'
-                    title={msg('process.mosaic.panel.sources.title')}/>
-
-                <PanelContent>
-                    {this.renderSources()}
-                </PanelContent>
-
-                <FormPanelButtons/>
-            </RecipeFormPanel>
-        )
     }
 
     componentDidMount() {

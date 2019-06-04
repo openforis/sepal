@@ -1,7 +1,7 @@
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field} from 'widget/form'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {FormPanelButtons} from 'widget/formPanel'
-import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../radarMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
@@ -27,7 +27,7 @@ class Options extends React.Component {
             }
         } = this.props
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Buttons
                     label={msg('process.radarMosaic.panel.options.form.orbits.label')}
                     input={orbits}
@@ -97,7 +97,7 @@ class Options extends React.Component {
                         tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.aggressive.tooltip')
                     }]}
                 />
-            </React.Fragment>
+            </FieldSet>
         )
     }
 

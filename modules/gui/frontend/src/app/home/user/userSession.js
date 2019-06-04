@@ -1,5 +1,5 @@
 import {Field, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {select} from 'store'
@@ -76,8 +76,8 @@ class UserSession extends React.Component {
                     title={`${session.instanceType.name} (${session.instanceType.description})`}
                     label={`${format.dollars(session.costSinceCreation)} (${format.dollarsPerHour(session.instanceType.hourlyCost)})`}
                 />
-                <PanelContent className={styles.panelContent}>
-                    <div>
+                <PanelContent>
+                    <FieldSet>
                         <Slider
                             input={keepAlive}
                             decimals={2}
@@ -85,7 +85,7 @@ class UserSession extends React.Component {
                             scale='log'
                             info={sliderMessage}
                         />
-                    </div>
+                    </FieldSet>
                 </PanelContent>
                 <FormPanelButtons/>
             </FormPanel>
