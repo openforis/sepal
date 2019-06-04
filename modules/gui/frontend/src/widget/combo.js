@@ -1,3 +1,4 @@
+import AutoFocus from 'widget/autoFocus'
 import {ErrorMessage} from 'widget/form'
 import {Subject, fromEvent} from 'rxjs'
 import {compose} from 'compose'
@@ -24,6 +25,7 @@ const mapStateToProps = state => ({
 
 class Combo extends React.Component {
     inputContainer = React.createRef()
+    input = React.createRef()
     list = React.createRef()
     select$ = new Subject()
     state = {
@@ -90,6 +92,7 @@ class Combo extends React.Component {
                 disabled={disabled || !focused}
                 keymap={keymap}>
                 <input
+                    ref={this.input}
                     className={[
                         standalone ? styles.standalone : null,
                         selectedOption && !standalone ? styles.fakePlaceholder : null,
@@ -98,12 +101,12 @@ class Combo extends React.Component {
                     type='search'
                     value={filter}
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
-                    autoFocus={autoFocus}
                     disabled={disabled || busy || isMobile()}
                     onChange={e => this.setFilter(e.target.value)}
                     onFocus={() => this.setState({focused: true})}
                     onBlur={() => this.setState({focused: false})}
                 />
+                <AutoFocus ref={this.input} enabled={autoFocus}/>
             </Keybinding>
         )
     }
