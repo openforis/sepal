@@ -94,6 +94,7 @@
     padding: 0;
     border: none !important;
     background: none !important;
+    line-height: inherit;
 }
 
 /* fill mode */

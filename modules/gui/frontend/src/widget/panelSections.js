@@ -1,66 +1,50 @@
 import * as PropTypes from 'prop-types'
-import {AnimateReplacement} from 'widget/animate'
-import {Button} from 'widget/button'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import ButtonSelect from 'widget/buttonSelect'
 import Icon from 'widget/icon'
 import React from 'react'
+import _ from 'lodash'
 import styles from './panelSections.module.css'
 
 export default class PanelSections extends React.Component {
     render() {
-        const {inputs, selected, sections} = this.props
-        return <div className={styles.sections}>
-            <AnimateReplacement
-                currentKey={selected.value}
-                timeout={250}
-                classNames={{enter: styles.enter, exit: styles.exit}}>
-                <Section
-                    inputs={inputs}
-                    selected={selected}
-                    sections={sections}/>
-            </AnimateReplacement>
-        </div>
-    }
-}
-
-PanelSections.propTypes = {
-    inputs: PropTypes.object.isRequired,
-    sections: PropTypes.any.isRequired,
-    selected: PropTypes.any.isRequired
-}
-
-class Section extends React.Component {
-    renderSectionIcon(section) {
-        const {selected} = this.props
-        return section.value
-            ? <Button
-                chromeless
-                shape='none'
-                icon='arrow-left'
-                additionalClassName={styles.backButton}
-                onClick={() => selected.set('')}/>
-            : <Icon name={section.icon}/>
-    }
-
-    render() {
+        const {icon} = this.props
         const section = this.findSection()
         return (
-            <div className={section.value ? styles.right : styles.left}>
+            <div className={styles.sections}>
                 <PanelHeader>
-                    <span className={styles.header}>
-                        {this.renderSectionIcon(section)}
-                        <span className={styles.title}>{section.title}</span>
-                    </span>
+                    <div className={styles.header}>
+                        <Icon name={icon}/>
+                        {this.renderSelect()}
+                    </div>
                 </PanelHeader>
-                <ScrollableContainer>
-                    <Scrollable>
-                        <PanelContent>
-                            {section.component}
-                        </PanelContent>
-                    </Scrollable>
-                </ScrollableContainer>
+                <PanelContent>
+                    {section && section.component}
+                </PanelContent>
             </div>
+        )
+    }
+
+    renderSelect() {
+        const {sections, selected, label} = this.props
+        const options = _.chain(sections)
+            .filter(section => section.value)
+            .map(section => ({
+                ...section,
+                buttonLabel: section.title,
+            }))
+            .value()
+        return (
+            <ButtonSelect
+                chromeless
+                shape='none'
+                placement='below'
+                alignment='left'
+                input={selected}
+                tooltipPlacement='bottom'
+                options={options}
+                label={label}
+            />
         )
     }
 
@@ -84,13 +68,14 @@ class Section extends React.Component {
 
     findSection() {
         const {sections, selected} = this.props
-        return sections.find(({value}) => selected.value === value)
-            || sections.find(({value}) => !value)
+        return sections.find(({value}) => selected.value === value) || sections.find(({value}) => !value)
     }
 }
 
-Section.propTypes = {
+PanelSections.propTypes = {
+    selected: PropTypes.any.isRequired,
+    icon: PropTypes.string,
     inputs: PropTypes.any,
-    section: PropTypes.any,
-    onBack: PropTypes.any
+    label: PropTypes.string,
+    section: PropTypes.any
 }

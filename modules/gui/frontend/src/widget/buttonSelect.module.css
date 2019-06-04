@@ -11,3 +11,12 @@
     --background-color: hsla(0, 0%, 0%, .9);
     background-color: var(--background-color);
 }
+
+.content {
+    display: flex;
+    flex-direction: row;
+}
+
+.content > *:not(:first-child) {
+    margin-left: .5rem;
+}

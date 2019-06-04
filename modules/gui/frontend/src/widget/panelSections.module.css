@@ -1,16 +1,11 @@
 .sections {
-    position: relative;
+    display: flex;
+    flex-direction: column;
     flex-grow: 1;
 }
 
 .sections > * > * {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    display: flex;
-    flex-direction: column;
+    /* height: 100%; */
 }
 
 .header {
@@ -20,94 +15,4 @@
 
 .title {
     margin-left: .3rem;
-}
-
-.backButton {
-    animation: pulse 2000ms 0ms 1 ease-out forwards;
-}
-
-@keyframes pulse {
-    0% {
-        color: orange;
-    }
-    50% {
-        color: orange;
-    }
-    100% {
-        color: inherit;
-    }
-}
-
-.enter {
-    opacity: 1;
-    z-index: 1;
-}
-
-.enter.left {
-    animation: fadeInLeft 250ms 0ms ease-in-out;
-}
-
-.enter.right {
-    animation: fadeInRight 250ms 0ms ease-in-out;
-}
-
-.exit {
-    opacity: 0;
-    z-index: 0;
-}
-
-.exit.left {
-    animation: fadeOutLeft 250ms 0ms ease-in-out;
-}
-
-.exit.right {
-    animation: fadeOutRight 250ms 0ms ease-in-out;
-}
-
-@keyframes fadeOutLeft {
-    from {
-        opacity: 1;
-        transform: none;
-    }
-
-    to {
-        opacity: 0;
-        transform: translateX(-100%);
-    }
-}
-
-@keyframes fadeOutRight {
-    from {
-        opacity: 1;
-        transform: none;
-    }
-
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
-
-@keyframes fadeInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-100%);
-    }
-
-    to {
-        opacity: 1;
-        transform: none;
-    }
-}
-
-@keyframes fadeInRight {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-
-    to {
-        opacity: 1;
-        transform: none;
-    }
 }

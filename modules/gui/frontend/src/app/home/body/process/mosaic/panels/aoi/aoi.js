@@ -51,39 +51,40 @@ class Aoi extends React.Component {
 
     render() {
         const {recipeId, allowWholeFusionTable, inputs} = this.props
-        const sections = [
-            {
-                icon: 'globe',
-                title: msg('process.mosaic.panel.areaOfInterest.title'),
-                component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
-            },
-            {
-                value: 'COUNTRY',
-                title: msg('process.mosaic.panel.areaOfInterest.form.country.title'),
-                component: <CountrySection recipeId={recipeId} inputs={inputs}/>
-            },
-            {
-                value: 'FUSION_TABLE',
-                title: msg('process.mosaic.panel.areaOfInterest.form.fusionTable.title'),
-                component: <FusionTableSection
-                    recipeId={recipeId}
-                    inputs={inputs}
-                    allowWholeFusionTable={allowWholeFusionTable}/>
-            },
-            {
-                value: 'POLYGON',
-                title: msg('process.mosaic.panel.areaOfInterest.form.polygon.title'),
-                component: <PolygonSection recipeId={recipeId} inputs={inputs}/>
-            },
-        ]
+        const sections = [{
+            component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
+        }, {
+            value: 'COUNTRY',
+            label: msg('process.mosaic.panel.areaOfInterest.form.country.title'),
+            title: 'COUNTRY/PROVINCE',
+            component: <CountrySection recipeId={recipeId} inputs={inputs}/>
+        }, {
+            value: 'FUSION_TABLE',
+            label: msg('process.mosaic.panel.areaOfInterest.form.fusionTable.title'),
+            title: 'FUSION TABLE',
+            component: <FusionTableSection
+                recipeId={recipeId}
+                inputs={inputs}
+                allowWholeFusionTable={allowWholeFusionTable}/>
+        }, {
+            value: 'POLYGON',
+            label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title'),
+            title: 'POLYGON',
+            component: <PolygonSection recipeId={recipeId} inputs={inputs}/>
+        }]
         return (
             <RecipeFormPanel
                 className={[styles.panel, allowWholeFusionTable ? styles.allowWholeFusionTable : null].join(' ')}
                 placement='bottom-right'
                 onApply={(values, model) => this.onApply(values, model)}
                 onCancel={() => this.onCancel()}>
-                <PanelSections inputs={inputs} selected={inputs.section} sections={sections}/>
-
+                <PanelSections
+                    inputs={inputs}
+                    sections={sections}
+                    selected={inputs.section}
+                    icon='globe'
+                    label={msg('process.mosaic.panel.areaOfInterest.title')}
+                />
                 <FormPanelButtons/>
             </RecipeFormPanel>
         )
@@ -141,12 +142,12 @@ const valuesToModel = values => {
             key: values.area || values.country,
             level: values.area ? 'AREA' : 'COUNTRY'
         }
-        case 'FUSION_TABLE':
+    case 'FUSION_TABLE':
         return {
             type: 'FUSION_TABLE',
             id: values.fusionTable,
-            keyColumn: values.fusionTableRowSelection === 'FILTER'? values.fusionTableColumn : null,
-            key: values.fusionTableRowSelection === 'FILTER'? values.fusionTableRow : null,
+            keyColumn: values.fusionTableRowSelection === 'FILTER' ? values.fusionTableColumn : null,
+            key: values.fusionTableRowSelection === 'FILTER' ? values.fusionTableRow : null,
             bounds: values.bounds
         }
     case 'POLYGON':
@@ -172,7 +173,7 @@ const modelToValues = (model = {}) => {
                 fusionTable: model.id,
                 fusionTableColumn: model.keyColumn,
                 fusionTableRow: model.key,
-                fusionTableRowSelection:  model.keyColumn ? 'FILTER' : 'INCLUDE_ALL'
+                fusionTableRowSelection: model.keyColumn ? 'FILTER' : 'INCLUDE_ALL'
             }
     else if (model.type === 'POLYGON')
         return {

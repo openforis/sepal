@@ -1,14 +1,14 @@
 import {compose} from 'compose'
-import _ from 'lodash'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
-import Textarea from 'react-textarea-autosize'
 import {connect} from 'store'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
 import Label from 'widget/label'
-import {isMobile} from 'widget/userAgent'
+import PropTypes from 'prop-types'
+import React from 'react'
+import Textarea from 'react-textarea-autosize'
+import _ from 'lodash'
+import moment from 'moment'
 import styles from './form.module.css'
 
 export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
@@ -298,15 +298,15 @@ class FormProperty {
 
     notEmpty(messageId, messageArgs) {
         return this.predicate(value => {
-                if (Array.isArray(value))
-                    return value.length > 0
-                else if (value === Object(value))
-                    return Object.keys(value).length > 0
-                else
-                    return !!value
-            },
-            messageId,
-            messageArgs
+            if (Array.isArray(value))
+                return value.length > 0
+            else if (value === Object(value))
+                return Object.keys(value).length > 0
+            else
+                return !!value
+        },
+        messageId,
+        messageArgs
         )
     }
 

@@ -213,7 +213,11 @@ class List extends React.Component {
 
     getPreviousSelectableOption(option) {
         const {options} = this.props
-        const previousIndex = Math.max(_.indexOf(options, option) - 1, 0)
+        const index = _.indexOf(options, option)
+        const previousIndex =
+            index === -1
+                ? options.length - 1
+                : Math.max(index - 1, 0)
         return _.findLast(options, option => this.isSelectable(option), previousIndex) || option
     }
 
@@ -328,7 +332,8 @@ class List extends React.Component {
     }
 
     highlightSelectedOption() {
-        const highlightedOption = this.getSelectedOption() || this.getFirstSelectableOption()
+        const {autoHighlight} = this.props
+        const highlightedOption = this.getSelectedOption() || (autoHighlight && this.getFirstSelectableOption())
         this.setState({
             highlightedOption,
             overrideHover: true
@@ -377,6 +382,7 @@ List.propTypes = {
     ).isRequired,
     onSelect: PropTypes.func.isRequired,
     autoCenter: PropTypes.any,
+    autoHighlight: PropTypes.any,
     className: PropTypes.string,
     keyboard: PropTypes.any,
     overScroll: PropTypes.any,

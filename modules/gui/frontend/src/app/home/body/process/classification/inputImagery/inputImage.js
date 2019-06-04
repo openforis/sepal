@@ -43,29 +43,31 @@ class InputImage extends React.Component {
     render() {
         const {inputs} = this.props
 
-        const sections = [
-            {
-                icon: 'image',
-                title: msg('process.classification.panel.inputImagery.sections.title'),
-                component: <SectionSelection section={inputs.section}/>
-            },
-            {
-                value: 'RECIPE_REF',
-                title: msg('process.classification.panel.inputImagery.recipe.title'),
-                component: <ImageForm ${...this.props} inputComponent={RecipeSection} input={inputs.recipe}/>
-            },
-            {
-                value: 'ASSET',
-                title: msg('process.classification.panel.inputImagery.asset.title'),
-                component: <ImageForm ${...this.props} inputComponent={AssetSection} input={inputs.asset}/>
-            }
-        ]
+        const sections = [{
+            component: <SectionSelection section={inputs.section}/>
+        }, {
+            value: 'RECIPE_REF',
+            label: msg('process.classification.panel.inputImagery.recipe.title'),
+            title: msg('SEPAL RECIPE'),
+            component: <ImageForm ${...this.props} inputComponent={RecipeSection} input={inputs.recipe}/>
+        }, {
+            value: 'ASSET',
+            label: msg('process.classification.panel.inputImagery.asset.title'),
+            title: msg('EARTH ENGINE ASSET'),
+            component: <ImageForm ${...this.props} inputComponent={AssetSection} input={inputs.asset}/>
+        }]
 
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='modal'>
-                <PanelSections sections={sections} selected={inputs.section} inputs={inputs}/>
+                <PanelSections
+                    inputs={inputs}
+                    sections={sections}
+                    selected={inputs.section}
+                    icon='image'
+                    label={msg('IMAGE TO CLASSIFY')}
+                />
                 <FormPanelButtons>
                     <ButtonSelect
                         label={msg('process.classification.panel.inputImagery.derivedBands.label')}
