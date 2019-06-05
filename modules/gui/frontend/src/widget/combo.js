@@ -69,7 +69,7 @@ class Combo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, disabled, busy, standalone, inputClassName} = this.props
+        const {placeholder, autoFocus, disabled, busy, standalone, inputClassName, input} = this.props
         const {focused, filter, selectedOption} = this.state
         const keymap = {
             ArrowUp: disabled ? null : () => this.showOptions(),
@@ -92,7 +92,10 @@ class Combo extends React.Component {
                     disabled={disabled || busy || isMobile()}
                     onChange={e => this.setFilter(e.target.value)}
                     onFocus={() => this.setState({focused: true})}
-                    onBlur={() => this.setState({focused: false})}
+                    onBlur={() => {
+                        input.validate()
+                        this.setState({focused: false})
+                    }}
                 />
                 <AutoFocus ref={this.input} enabled={autoFocus}/>
             </Keybinding>
