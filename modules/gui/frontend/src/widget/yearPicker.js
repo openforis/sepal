@@ -28,7 +28,7 @@ export default class YearPicker extends React.Component {
                 autoFocus={autoFocus}
                 onChange={onChange}
                 errorMessage={errorMessage}
-                keyboard={false}
+                alignment='center'
             />
         )
     }

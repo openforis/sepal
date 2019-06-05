@@ -93,24 +93,6 @@ export default class DatePicker extends React.Component {
         )
     }
 
-    // renderLabel() {
-    //     const {label, tooltip, tooltipPlacement = 'top'} = this.props
-    //     return label ? (
-    //         <Label
-    //             msg={label}
-    //             tooltip={tooltip}
-    //             tooltipPlacement={tooltipPlacement}
-    //         />
-    //     ) : null
-    // }
-
-    // renderError() {
-    //     const {input, errorMessage} = this.props
-    //     return errorMessage
-    //         ? <ErrorMessage for={input.name || errorMessage} tabIndex={-1}/>
-    //         : null
-    // }
-
     setInput(value) {
         const {input, startDate, endDate} = this.props
         const date = momentDate(value)
@@ -177,7 +159,9 @@ class _DatePickerPanel extends React.Component {
                     options={options}
                     selectedOption={selectedOption}
                     onSelect={option => this.updateDate('year', option.value)}
+                    alignment='center'
                     autoCenter
+                    keyboard={false}
                 />
             </div>
         )

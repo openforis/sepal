@@ -126,16 +126,24 @@ class List extends React.Component {
     }
 
     renderGroup(option, index) {
+        const {alignment} = this.props
         return (
-            <li
-                key={index}
-                className={styles.group}>
-                {option.label}
+            <li key={index}>
+                <Button
+                    chromeless
+                    look='transparent'
+                    additionalClassName={styles.group}
+                    label={option.label}
+                    width='fill'
+                    alignment={alignment}
+                    disabled
+                />
             </li>
         )
     }
 
     renderNonSelectableOption(option, index) {
+        const {alignment} = this.props
         return (
             <li key={option.value || index}>
                 <Button
@@ -143,7 +151,7 @@ class List extends React.Component {
                     look='transparent'
                     label={option.label}
                     width='fill'
-                    alignment='left'
+                    alignment={alignment}
                     disabled
                 />
             </li>
@@ -151,7 +159,7 @@ class List extends React.Component {
     }
 
     renderSelectableOption(option) {
-        const {selectedOption, tooltipPlacement} = this.props
+        const {selectedOption, tooltipPlacement, alignment} = this.props
         const {overrideHover} = this.state
         const selected = this.isSelected(option)
         const highlighted = this.isHighlighted(option)
@@ -173,7 +181,7 @@ class List extends React.Component {
                     tooltipPlacement={tooltipPlacement}
                     hover={overrideHover ? highlighted : null}
                     width='fill'
-                    alignment='left'
+                    alignment={alignment}
                     disableTransitions
                     onMouseOver={() => this.highlightOption(option)}
                     onMouseOut={() => this.highlightOption(selectedOption)}
@@ -384,6 +392,7 @@ List.propTypes = {
         })
     ).isRequired,
     onSelect: PropTypes.func.isRequired,
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
     autoCenter: PropTypes.any,
     autoHighlight: PropTypes.any,
     className: PropTypes.string,
@@ -397,5 +406,6 @@ List.propTypes = {
 }
 
 List.defaultProps = {
+    alignment: 'left',
     tooltipPlacement: 'right'
 }

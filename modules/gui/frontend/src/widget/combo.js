@@ -103,7 +103,7 @@ class Combo extends React.Component {
     }
 
     renderOptions() {
-        const {placement = 'below', optionsClassName, optionTooltipPlacement, keyboard} = this.props
+        const {placement = 'below', optionsClassName, optionTooltipPlacement, alignment} = this.props
         const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
@@ -119,7 +119,7 @@ class Combo extends React.Component {
                     autoCenter={!selected}
                     tooltipPlacement={optionTooltipPlacement}
                     autoHighlight
-                    keyboard={keyboard}
+                    alignment={alignment}
                 />
             </FloatingBox>
         )
@@ -270,6 +270,7 @@ export default compose(
 Combo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
     autoFocus: PropTypes.any,
     busy: PropTypes.any,
     className: PropTypes.string,
