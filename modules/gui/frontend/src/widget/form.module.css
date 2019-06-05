@@ -111,7 +111,7 @@ form .errorMessage {
 }
 
 .fieldSet.vertical.compact > * {
-    margin-bottom: .75rem;
+    margin-bottom: 1rem;
 }
 
 .fieldSet.vertical.tight > * {
