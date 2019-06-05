@@ -33,7 +33,7 @@
     }
   },
   "apps": {
-    "initializing": "Demmarer une session pour {label}...",
+    "initializing": "Demarrer une session pour {label}...",
     "loading": {
       "error": {
         "message": "Recharger la page",

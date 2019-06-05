@@ -2,6 +2,7 @@ import {compose} from 'compose'
 import PropTypes from 'prop-types'
 import React from 'react'
 import withForwardedRef from 'ref'
+import Portal from 'widget/portal'
 
 class AutoFocus extends React.Component {
     focusHolderRef = React.createRef()
@@ -9,7 +10,11 @@ class AutoFocus extends React.Component {
 
     render() {
         const {completed} = this.state
-        return completed ? null : <div ref={this.focusHolderRef} tabIndex={-1}/>
+        return completed
+            ? null
+            : <Portal type='global'>
+                <div ref={this.focusHolderRef} tabIndex={-1}/>
+            </Portal>
     }
 
     shouldComponentUpdate(nextProps) {
