@@ -629,7 +629,7 @@ export class FormComponent extends React.Component {
     renderErrorMessage() {
         const {errorMessage, input} = this.props
         return errorMessage
-            ? <ErrorMessage for={errorMessage === true ? input.name : errorMessage}/>
+            ? <ErrorMessage for={errorMessage === true ? input : errorMessage}/>
             : null
     }
 
