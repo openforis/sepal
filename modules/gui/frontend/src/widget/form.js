@@ -389,14 +389,11 @@ export const ErrorMessage = props => {
                 )
                 .find(error => error)
             return (
-                <React.Fragment>
-                    <div className={styles.errorMessageContainer}>
-                        <div className={[styles.errorMessage, props.className].join(' ')}>
-                            {error}
-                        </div>
+                <div className={styles.errorMessageContainer}>
+                    <div className={[styles.errorMessage, props.className].join(' ')}>
+                        {error}
                     </div>
-                    <div/>
-                </React.Fragment>
+                </div>
             )
         }}
     </FormContext.Consumer>
