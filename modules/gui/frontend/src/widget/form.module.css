@@ -104,6 +104,7 @@ form .errorMessage {
 
 .formComponent {
     --horizontal-spacing: 1rem;
+    overflow: hidden; /* required for preventing margin bottom on last element */
 }
 
 .formComponent.cozy {

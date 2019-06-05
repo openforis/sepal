@@ -12,7 +12,7 @@ export const PortalContainer = ({id}) => (
         id={id || DEFAULT_PORTAL_CONTAINER_ID}
         className={[
             styles.portalContainer,
-            id ? styles.section : styles.fullScreen
+            id ? styles.section : null
         ].join(' ')}
     />
 )

@@ -10,12 +10,7 @@
     pointer-events: all;
 }
 
-.portalContainer.fullScreen {
-    /* z-index: 2; */
-}
-
 .portalContainer.section {
     top: var(--top-bar-height);
     pointer-events: none;
-    /* z-index: 1; */
 }

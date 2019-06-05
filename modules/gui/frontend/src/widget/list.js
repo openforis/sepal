@@ -43,6 +43,7 @@ const lerp = rate =>
 
 class List extends React.Component {
     highlighted = React.createRef()
+    selected = React.createRef()
     update$ = new Subject()
     state = {
         highlightedOption: null,
@@ -154,9 +155,11 @@ class List extends React.Component {
         const {overrideHover} = this.state
         const selected = this.isSelected(option)
         const highlighted = this.isHighlighted(option)
-        const ref = highlighted
-            ? this.highlighted
-            : null
+        const ref = selected
+            ? this.selected
+            : highlighted
+                ? this.highlighted
+                : null
         return (
             <li
                 key={option.value}
@@ -306,7 +309,7 @@ class List extends React.Component {
         const {addSubscription} = this.props
         const animationFrame$ = interval(0, animationFrameScheduler)
         const scroll$ = this.update$.pipe(
-            map(() => this.highlighted.current),
+            map(() => this.selected.current),
             filter(element => element),
             switchMap(element => {
                 const target = targetScrollOffset(element)
