@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {delay, distinctUntilChanged, map, switchMap, takeUntil, zip} from 'rxjs/operators'
+import {delay, distinctUntilChanged, map, mapTo, switchMap, takeUntil, zip} from 'rxjs/operators'
 import {fromEvent, merge, of} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -27,10 +27,10 @@ class _HoverDetector extends React.Component {
 
         const mouseStatus$ = merge(
             mouseOver$.pipe(
-                map(() => true)
+                mapTo(true)
             ),
             mouseLeave$.pipe(
-                map(() => false)
+                mapTo(false)
             ),
             windowTouchStart$.pipe( // Cancel hover when touching outside of element
                 switchMap(e =>
