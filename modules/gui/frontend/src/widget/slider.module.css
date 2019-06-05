@@ -30,7 +30,6 @@
 .container {
     width: 100%;
     height: var(--container-height);
-    margin-top: .3rem;
     padding: 1px calc(var(--handle-width) / 2) 0;
     overflow: hidden;
 }
