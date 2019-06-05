@@ -6,10 +6,6 @@
     justify-content: space-between;
 }
 
-.panel.allowWholeFusionTable {
-    min-height: 33rem;
-}
-
 .sources {
     display: flex;
     flex-direction: column;

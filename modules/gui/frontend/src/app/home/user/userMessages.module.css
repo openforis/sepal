@@ -2,6 +2,7 @@
     --unread-color: var(--warning-color);
     --read-color: var(--success-color);
     width: 40rem;
+    min-height: 30rem;
 }
 
 button.unread i {
@@ -21,17 +22,17 @@ button.unread i {
     }
 }
 
-.messages .subject {
+.subject {
     font-size: 1.0rem;
     font-weight: bold;
     margin-top: .5rem;
 }
 
-.messages .subject.UNREAD i {
+.subject.UNREAD i {
     color: var(--unread-color);
 }
 
-.messages .subject.READ i {
+.subject.READ i {
     color: var(--read-color);
 }
 

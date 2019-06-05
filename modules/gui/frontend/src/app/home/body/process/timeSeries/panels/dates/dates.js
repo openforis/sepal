@@ -1,4 +1,4 @@
-import {Constraint, ErrorMessage, Field} from 'widget/form'
+import {Constraint, Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -33,30 +33,28 @@ class Dates extends React.Component {
     renderContent() {
         const {inputs: {startDate, endDate}} = this.props
         return (
-            <React.Fragment>
-                <div>
-                    <DatePicker
-                        label={msg('process.timeSeries.panel.dates.form.startDate.label')}
-                        tooltip={msg('process.timeSeries.panel.dates.form.startDate.tooltip')}
-                        tooltipPlacement='top'
-                        input={startDate}
-                        startDate='1982-08-22'
-                        endDate={moment()}/>
-                    <ErrorMessage for={[startDate, 'startBeforeEnd']}/>
-                </div>
-                <div>
-                    <DatePicker
-                        label={msg('process.timeSeries.panel.dates.form.endDate.label')}
-                        tooltip={msg('process.timeSeries.panel.dates.form.endDate.tooltip')}
-                        tooltipPlacement='top'
-                        input={endDate}
-                        startDate={startDate.isInvalid()
-                            ? '1982-08-23'
-                            : moment(startDate.value, DATE_FORMAT).add(1, 'days')}
-                        endDate={moment()}/>
-                    <ErrorMessage for={endDate}/>
-                </div>
-            </React.Fragment>
+            <FieldSet
+                horizontal
+                errorMessage={[startDate, endDate, 'startBeforeEnd']}>
+                <DatePicker
+                    label={msg('process.timeSeries.panel.dates.form.startDate.label')}
+                    tooltip={msg('process.timeSeries.panel.dates.form.startDate.tooltip')}
+                    tooltipPlacement='top'
+                    input={startDate}
+                    startDate='1982-08-22'
+                    endDate={moment()}
+                />
+                <DatePicker
+                    label={msg('process.timeSeries.panel.dates.form.endDate.label')}
+                    tooltip={msg('process.timeSeries.panel.dates.form.endDate.tooltip')}
+                    tooltipPlacement='top'
+                    input={endDate}
+                    startDate={startDate.isInvalid()
+                        ? '1982-08-23'
+                        : moment(startDate.value, DATE_FORMAT).add(1, 'days')}
+                    endDate={moment()}
+                />
+            </FieldSet>
         )
     }
 
@@ -69,9 +67,9 @@ class Dates extends React.Component {
                     icon='cog'
                     title={msg('process.timeSeries.panel.dates.title')}/>
                 <PanelContent>
-                    <div className={styles.form}>
+                    <FieldSet>
                         {this.renderContent()}
-                    </div>
+                    </FieldSet>
                 </PanelContent>
                 <FormPanelButtons/>
             </RecipeFormPanel>

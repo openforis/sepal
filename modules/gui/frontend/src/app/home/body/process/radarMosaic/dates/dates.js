@@ -1,5 +1,5 @@
 import {FormButtons as Buttons} from 'widget/buttons'
-import {ErrorMessage, Field, FieldSet} from 'widget/form'
+import {Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
@@ -28,15 +28,12 @@ class Dates extends React.Component {
     renderYearlyTimeScan() {
         const {inputs: {year}} = this.props
         return (
-            <div className={styles.yearPicker}>
-                <YearPicker
-                    label={msg('process.radarMosaic.panel.dates.form.year.label')}
-                    placement='above'
-                    input={year}
-                    startYear='2014'
-                    endYear={moment().year()}/>
-                <ErrorMessage for={year}/>
-            </div>
+            <YearPicker
+                label={msg('process.radarMosaic.panel.dates.form.year.label')}
+                placement='above'
+                input={year}
+                startYear='2014'
+                endYear={moment().year()}/>
         )
     }
 

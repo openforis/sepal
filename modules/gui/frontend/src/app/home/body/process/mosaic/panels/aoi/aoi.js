@@ -74,7 +74,7 @@ class Aoi extends React.Component {
         }]
         return (
             <RecipeFormPanel
-                className={[styles.panel, allowWholeFusionTable ? styles.allowWholeFusionTable : null].join(' ')}
+                className={styles.panel}
                 placement='bottom-right'
                 onApply={(values, model) => this.onApply(values, model)}
                 onCancel={() => this.onCancel()}>
