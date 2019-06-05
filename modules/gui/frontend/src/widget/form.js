@@ -545,48 +545,6 @@ Input.propTypes = {
     onChange: PropTypes.func
 }
 
-// FIELDSET --------------------------------------------------------------------
-
-export class FieldSet extends React.Component {
-    render() {
-        const {className, horizontal, compact,
-            disabled, label, tooltip, tooltipPlacement,
-            input, errorMessage, children} = this.props
-        return (
-            <FormComponent
-                className={className}
-                layout={horizontal ? 'horizontal' : 'vertical'}
-                spacing={compact ? 'compact' : 'cozy'}
-                disabled={disabled}
-                label={label}
-                tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-                input={input}
-                errorMessage={errorMessage}
-            >
-                {children}
-            </FormComponent>
-        )
-    }
-}
-
-FieldSet.propTypes = {
-    children: PropTypes.any.isRequired,
-    className: PropTypes.string,
-    compact: PropTypes.any,
-    disabled: PropTypes.any,
-    errorMessage: PropTypes.any,
-    horizontal: PropTypes.any,
-    input: PropTypes.object,
-    label: PropTypes.string,
-    tight: PropTypes.any,
-    tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string
-}
-
-FieldSet.defaultProps = {
-}
-
 export class FormComponent extends React.Component {
     render() {
         const {layout, spacing, className, children} = this.props
@@ -595,7 +553,7 @@ export class FormComponent extends React.Component {
                 <div>
                     {this.renderLabel()}
                     <div className={[
-                        styles.fieldSet,
+                        styles.formComponent,
                         styles[layout],
                         styles[spacing],
                         className
@@ -657,4 +615,46 @@ FormComponent.defaultProps = {
     layout: 'vertical',
     spacing: 'tight',
     tooltipPlacement: 'top'
+}
+
+export class FieldSet extends React.Component {
+    render() {
+        const {className, horizontal, compact,
+            disabled, label, tooltip, tooltipPlacement,
+            input, errorMessage, children} = this.props
+        return (
+            <FormComponent
+                className={className}
+                layout={horizontal ? 'horizontal' : 'vertical'}
+                spacing={compact ? 'compact' : 'cozy'}
+                disabled={disabled}
+                label={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+                input={input}
+                errorMessage={errorMessage}
+            >
+                {children}
+            </FormComponent>
+        )
+    }
+}
+
+FieldSet.propTypes = {
+    children: PropTypes.any.isRequired,
+    className: PropTypes.string,
+    compact: PropTypes.any,
+    disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
+    horizontal: PropTypes.any,
+    input: PropTypes.object,
+    label: PropTypes.string,
+    tight: PropTypes.any,
+    tooltip: PropTypes.string,
+    tooltipPlacement: PropTypes.string
+}
+
+FieldSet.defaultProps = {
+    compact: false,
+    horizontal: false
 }

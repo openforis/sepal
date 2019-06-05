@@ -102,31 +102,31 @@ form .errorMessage {
     color: #B5B5B5;
 }
 
-.fieldSet {
+.formComponent {
     --horizontal-spacing: 1rem;
 }
 
-.fieldSet.cozy {
+.formComponent.cozy {
     --vertical-spacing: 2rem;
 }
 
-.fieldSet.compact {
+.formComponent.compact {
     --vertical-spacing: 1rem;
 }
 
-.fieldSet.tight {
+.formComponent.tight {
     --vertical-spacing: 0rem;
 }
 
-.fieldSet > * {
+.formComponent > * {
     margin-bottom: var(--vertical-spacing);
 }
 
-.fieldSet.vertical > *:last-child {
+.formComponent.vertical > *:last-child {
     margin-bottom: 0;
 }
 
-.fieldSet.horizontal {
+.formComponent.horizontal {
     width: 100%;
     display: flex;
     flex-direction: row;
@@ -135,11 +135,11 @@ form .errorMessage {
     margin-bottom: calc(-1 * var(--vertical-spacing));
 }
 
-.fieldSet.horizontal > * {
+.formComponent.horizontal > * {
     margin-right: var(--horizontal-spacing);
 }
 
-.fieldSet.horizontal > *:last-child {
+.formComponent.horizontal > *:last-child {
     margin-right: 0;
 }
 
