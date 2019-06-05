@@ -1,11 +1,12 @@
 import * as PropTypes from 'prop-types'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
-import {Panel, PanelButtons, PanelContent, PanelHeader} from './panel'
+import {FormComponent} from 'widget/form'
+import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
-import Label from './label'
+import Label from 'widget/label'
 import List from 'widget/list'
 import React, {Component} from 'react'
 import _ from 'lodash'
@@ -37,12 +38,18 @@ export default class DatePicker extends React.Component {
     inputElement = React.createRef()
 
     render() {
-        const {input, startDate, endDate, label, autoFocus} = this.props
+        const {input, startDate, endDate, label, autoFocus, tooltip, tooltipPlacement = 'top', errorMessage} = this.props
         const date = moment(input.value, DATE_FORMAT)
         return (
             <Activator id={this.id}>
                 {panel =>
-                    <div className={styles.container}>
+                    // <div className={styles.container}>
+                    <FormComponent
+                        label={label}
+                        tooltip={tooltip}
+                        tooltipPlacement={tooltipPlacement}
+                        input={input}
+                        errorMessage={errorMessage}>
                         <DatePickerPanel
                             id={this.id}
                             title={label}
@@ -54,7 +61,7 @@ export default class DatePicker extends React.Component {
                                 this.inputElement.current.value = dateString
                                 input.set(dateString)
                             }}/>
-                        {this.renderLabel()}
+                        {/* {this.renderLabel()} */}
                         <div className={styles.input}>
                             <input
                                 ref={this.inputElement}
@@ -78,22 +85,31 @@ export default class DatePicker extends React.Component {
                                 onClick={() => panel.activate()}
                             />
                         </div>
-                    </div>
+                        {/* {this.renderError()} */}
+                        {/* </div> */}
+                    </FormComponent>
                 }
             </Activator>
         )
     }
 
-    renderLabel() {
-        const {label, tooltip, tooltipPlacement = 'top'} = this.props
-        return label ? (
-            <Label
-                msg={label}
-                tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-            />
-        ) : null
-    }
+    // renderLabel() {
+    //     const {label, tooltip, tooltipPlacement = 'top'} = this.props
+    //     return label ? (
+    //         <Label
+    //             msg={label}
+    //             tooltip={tooltip}
+    //             tooltipPlacement={tooltipPlacement}
+    //         />
+    //     ) : null
+    // }
+
+    // renderError() {
+    //     const {input, errorMessage} = this.props
+    //     return errorMessage
+    //         ? <ErrorMessage for={input.name || errorMessage} tabIndex={-1}/>
+    //         : null
+    // }
 
     setInput(value) {
         const {input, startDate, endDate} = this.props
@@ -110,6 +126,7 @@ DatePicker.propTypes = {
     input: PropTypes.object.isRequired,
     startDate: PropTypes.any.isRequired,
     autoFocus: PropTypes.any,
+    errorMessage: PropTypes.any,
     label: PropTypes.string
 }
 

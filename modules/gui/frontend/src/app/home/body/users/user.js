@@ -1,5 +1,5 @@
-import {Field, Input, InputGroup, form} from 'widget/form'
-import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
+import {Field, FieldSet, Input, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -103,30 +103,29 @@ class UserDetails extends React.Component {
                             spellCheck={false}
                             errorMessage
                         />
-                        <InputGroup
+                        <FieldSet
+                            horizontal
                             label={msg('user.userDetails.form.monthlyLimits.label')}
                             errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
-                            <div className={styles.monthlyLimits}>
-                                <Input
-                                    label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
-                                    type='number'
-                                    input={monthlyBudgetInstanceSpending}
-                                    spellCheck={false}
-                                />
-                                <Input
-                                    label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
-                                    type='number'
-                                    input={monthlyBudgetStorageSpending}
-                                    spellCheck={false}
-                                />
-                                <Input
-                                    label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
-                                    type='number'
-                                    input={monthlyBudgetStorageQuota}
-                                    spellCheck={false}
-                                />
-                            </div>
-                        </InputGroup>
+                            <Input
+                                label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
+                                type='number'
+                                input={monthlyBudgetInstanceSpending}
+                                spellCheck={false}
+                            />
+                            <Input
+                                label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
+                                type='number'
+                                input={monthlyBudgetStorageSpending}
+                                spellCheck={false}
+                            />
+                            <Input
+                                label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
+                                type='number'
+                                input={monthlyBudgetStorageQuota}
+                                spellCheck={false}
+                            />
+                        </FieldSet>
                     </FieldSet>
                 </PanelContent>
                 <FormPanelButtons/>

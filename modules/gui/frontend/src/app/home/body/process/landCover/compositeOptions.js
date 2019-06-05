@@ -1,12 +1,11 @@
 import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, form} from 'widget/form'
-import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
+import {Field, FieldSet, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {compose} from 'compose'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Slider from 'widget/slider'
@@ -51,22 +50,19 @@ class CompositeOptions extends React.Component {
         const {inputs: {cloudThreshold, corrections, mask}} = this.props
         return (
             <FieldSet>
-                <div>
-                    <Label
-                        msg={msg('process.landCover.panel.compositeOptions.form.cloudThreshold.label')}
-                        tooltip={msg('process.landCover.panel.compositeOptions.form.cloudThreshold.tooltip')}
-                        tooltipPlacement='topLeft'/>
-                    <Slider
-                        input={cloudThreshold}
-                        minValue={0}
-                        maxValue={100}
-                        ticks={[0, 10, 25, 50, 75, 90, 100]}
-                        snap
-                        info={value => {
-                            const type = value === 0 ? 'off' : value === 100 ? 'max' : 'value'
-                            return msg(['process.landCover.panel.compositeOptions.form.cloudThreshold', type], {value})
-                        }}/>
-                </div>
+                <Slider
+                    label={msg('process.landCover.panel.compositeOptions.form.cloudThreshold.label')}
+                    tooltip={msg('process.landCover.panel.compositeOptions.form.cloudThreshold.tooltip')}
+                    tooltipPlacement='topLeft'
+                    input={cloudThreshold}
+                    minValue={0}
+                    maxValue={100}
+                    ticks={[0, 10, 25, 50, 75, 90, 100]}
+                    snap
+                    info={value => {
+                        const type = value === 0 ? 'off' : value === 100 ? 'max' : 'value'
+                        return msg(['process.landCover.panel.compositeOptions.form.cloudThreshold', type], {value})
+                    }}/>
                 <Buttons
                     label={msg('process.landCover.panel.compositeOptions.form.corrections.label')}
                     input={corrections}

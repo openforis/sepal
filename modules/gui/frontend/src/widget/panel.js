@@ -122,27 +122,6 @@ PanelContent.propTypes = {
     className: PropTypes.string
 }
 
-// FIELDSET --------------------------------------------------------------------
-
-export class FieldSet extends React.Component {
-    render() {
-        const {compact, children} = this.props
-        return (
-            <React.Fragment>
-                <div className={[styles.fieldSet, compact ? styles.compact : null].join(' ')}>
-                    {children}
-                </div>
-                <div/>
-            </React.Fragment>
-        )
-    }
-}
-
-FieldSet.propTypes = {
-    children: PropTypes.any.isRequired,
-    compact: PropTypes.any
-}
-
 // BUTTONS --------------------------------------------------------------------
 
 export class PanelButtons extends React.Component {

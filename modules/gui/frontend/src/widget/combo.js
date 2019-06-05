@@ -1,4 +1,4 @@
-import {ErrorMessage} from 'widget/form'
+import {FormComponent} from 'widget/form'
 import {Subject, fromEvent} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -8,7 +8,6 @@ import {selectFrom} from 'stateUtils'
 import AutoFocus from 'widget/autoFocus'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
-import Label from 'widget/label'
 import List from 'widget/list'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -39,7 +38,8 @@ class Combo extends React.Component {
     }
 
     render() {
-        const {standalone, disabled, className, onCancel} = this.props
+        const {input, errorMessage, standalone, disabled, className, onCancel} = this.props
+        const {label, tooltip, tooltipPlacement = 'top'} = this.props
         const {showOptions} = this.state
         const onClick = e =>
             standalone
@@ -50,34 +50,22 @@ class Combo extends React.Component {
                         ? null
                         : this.showOptions()
         return (
-            <div className={[styles.container, className].join(' ')}>
-                {this.renderLabel()}
+            <FormComponent
+                className={[styles.container, className].join(' ')}
+                input={input}
+                label={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+                disabled={disabled}
+                errorMessage={errorMessage}>
                 <div
                     ref={this.inputContainer}
                     onClick={onClick}>
                     {this.renderInput()}
                 </div>
-                {this.renderError()}
                 {showOptions ? this.renderOptions() : null}
-            </div>
+            </FormComponent>
         )
-    }
-
-    renderLabel() {
-        const {label, tooltip, tooltipPlacement = 'top', disabled} = this.props
-        return label ? (
-            <Label
-                msg={label}
-                tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-                disabled={disabled}
-            />
-        ) : null
-    }
-
-    renderError() {
-        const {input, errorMessage} = this.props
-        return <ErrorMessage for={input.name || errorMessage} tabIndex={-1}/>
     }
 
     renderInput() {
@@ -283,6 +271,7 @@ Combo.propTypes = {
     busy: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
     inputClassName: PropTypes.string,
     label: PropTypes.string,
     optionsClassName: PropTypes.string,

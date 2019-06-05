@@ -1,7 +1,7 @@
-import {Field, Input} from 'widget/form'
-import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
+import {Field, FieldSet, Input} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {Msg, msg} from 'translate'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
@@ -110,7 +110,6 @@ class TrainingData extends React.Component {
                     placeholder={msg(`process.classification.panel.trainingData.form.fusionTableColumn.placeholder.${columnState}`)}
                     options={columns || []}
                 />
-
                 <p>
                     <a href='/ceo' target='_blank'><Msg
                         id='process.classification.panel.trainingData.form.openCeo'/></a>

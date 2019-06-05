@@ -1,8 +1,8 @@
+import {FormComponent} from 'widget/form'
 import {animationFrameScheduler, combineLatest, fromEvent, interval, merge} from 'rxjs'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, scan, switchMap, withLatestFrom} from 'rxjs/operators'
 import Hammer from 'hammerjs'
-import Label from 'widget/label'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -508,31 +508,24 @@ export default class Slider extends React.Component {
 
     renderDisabledOverlay() {
         const {disabled} = this.props
-        return disabled ? (
-            <div className={styles.disabled}/>
-        ) : null
-    }
-
-    renderLabel() {
-        const {label, tooltip, tooltipPlacement = 'top', alignment} = this.props
-        return label ? (
-            <Label
-                className={[styles.alignment, styles[alignment]].join(' ')}
-                msg={label}
-                tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-            />
-        ) : null
+        return disabled
+            ? <div className={styles.disabled}/>
+            : null
     }
 
     render() {
+        const {label, tooltip, tooltipPlacement, alignment} = this.props
         return (
-            <div className={styles.wrapper}>
-                {this.renderLabel()}
+            <FormComponent
+                className={styles.wrapper}
+                label={label}
+                alignment={alignment}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}>
                 {this.renderInfo()}
                 {this.renderSlider()}
                 {this.renderDisabledOverlay()}
-            </div>
+            </FormComponent>
         )
     }
 }

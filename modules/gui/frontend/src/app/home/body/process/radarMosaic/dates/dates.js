@@ -1,7 +1,7 @@
 import {FormButtons as Buttons} from 'widget/buttons'
-import {ErrorMessage, Field} from 'widget/form'
-import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
+import {ErrorMessage, Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -45,39 +45,30 @@ class Dates extends React.Component {
         const [fromStart, fromEnd] = fromDateRange(toDate.value)
         const [toStart, toEnd] = toDateRange(fromDate.value)
         return (
-            <div className={styles.fromToPickers}>
-                <div>
-                    <DatePicker
-                        label={msg('process.radarMosaic.panel.dates.form.fromDate.label')}
-                        input={fromDate}
-                        startDate={fromStart}
-                        endDate={fromEnd}/>
-                    <ErrorMessage for={fromDate}/>
-                </div>
-                <div>
-                    <DatePicker
-                        label={msg('process.radarMosaic.panel.dates.form.toDate.label')}
-                        input={toDate}
-                        startDate={toStart}
-                        endDate={toEnd}/>
-                    <ErrorMessage for={toDate}/>
-                </div>
-            </div>
+            <FieldSet horizontal>
+                <DatePicker
+                    label={msg('process.radarMosaic.panel.dates.form.fromDate.label')}
+                    input={fromDate}
+                    startDate={fromStart}
+                    endDate={fromEnd}/>
+                <DatePicker
+                    label={msg('process.radarMosaic.panel.dates.form.toDate.label')}
+                    input={toDate}
+                    startDate={toStart}
+                    endDate={toEnd}/>
+            </FieldSet>
         )
     }
 
     renderPointInTimeMosaic() {
         const {inputs: {targetDate}} = this.props
         return (
-            <div className={styles.yearPicker}>
-                <DatePicker
-                    label={msg('process.radarMosaic.panel.dates.form.targetDate.label')}
-                    input={targetDate}
-                    startDate={'2014-06-15'}
-                    endDate={moment()}
-                    autoFocus={true}/>
-                <ErrorMessage for={targetDate}/>
-            </div>
+            <DatePicker
+                label={msg('process.radarMosaic.panel.dates.form.targetDate.label')}
+                input={targetDate}
+                startDate={'2014-06-15'}
+                endDate={moment()}
+                autoFocus={true}/>
         )
     }
 

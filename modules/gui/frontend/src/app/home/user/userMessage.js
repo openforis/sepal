@@ -1,5 +1,5 @@
-import {Field, Input, form} from 'widget/form'
-import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
+import {Field, FieldSet, Input, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'

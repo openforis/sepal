@@ -1,3 +1,4 @@
+import {FieldSet} from 'widget/form'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -87,7 +88,7 @@ class CountrySection extends React.Component {
         const countryPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.country.placeholder.${countriesState}`)
         const areaPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.area.placeholder.${areasState}`)
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}
                     input={country}
@@ -113,7 +114,7 @@ class CountrySection extends React.Component {
                     disabled={!countryAreas || countryAreas.length === 0}
                     onChange={() => this.aoiChanged$.next()}
                 />
-            </React.Fragment>
+            </FieldSet>
         )
     }
 

@@ -1,5 +1,5 @@
-import {Field, Input, form} from 'widget/form'
-import {FieldSet, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Field, FieldSet, Input, form} from 'widget/form'
+import {PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {closeRecipe} from './recipe'
 import {compose} from 'compose'

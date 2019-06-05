@@ -1,3 +1,4 @@
+import {FieldSet} from 'widget/form'
 import {FormButtons} from 'widget/buttons'
 import {Input} from 'widget/form'
 import {RecipeActions} from '../../mosaicRecipe'
@@ -71,7 +72,7 @@ class FusionTableSection extends React.Component {
     render() {
         const {allowWholeFusionTable, inputs: {fusionTable}} = this.props
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Input
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.label')}
                     autoFocus={!isMobile()}
@@ -83,7 +84,7 @@ class FusionTableSection extends React.Component {
                 />
                 {allowWholeFusionTable ? this.renderFilterOptions() : null}
                 {this.renderColumnValueRowInputs()}
-            </React.Fragment>
+            </FieldSet>
         )
     }
 

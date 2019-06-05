@@ -1,5 +1,5 @@
-import {Field, form} from 'widget/form'
-import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
+import {Field, FieldSet, form} from 'widget/form'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {select} from 'store'

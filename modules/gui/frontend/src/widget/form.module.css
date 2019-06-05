@@ -101,3 +101,46 @@ form .errorMessage {
     margin-left: 0.5rem;
     color: #B5B5B5;
 }
+
+.fieldSet.vertical > * {
+    margin-bottom: 2rem;
+}
+
+.fieldSet.vertical > *:last-child {
+    margin-bottom: 0;
+}
+
+.fieldSet.vertical.compact > * {
+    margin-bottom: .75rem;
+}
+
+.fieldSet.vertical.tight > * {
+    margin-bottom: 0;
+}
+
+.fieldSet.horizontal {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.fieldSet.horizontal > * {
+    margin-right: 1rem;
+}
+
+.fieldSet.horizontal > *:last-child {
+    margin-right: 0;
+}
+
+.alignment.left {
+    text-align: left;
+}
+
+.alignment.center {
+    text-align: center;
+}
+
+.alignment.right {
+    text-align: right;
+}
