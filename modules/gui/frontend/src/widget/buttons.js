@@ -1,5 +1,5 @@
 import {Button, ButtonGroup} from 'widget/button'
-import Label from 'widget/label'
+import {FormComponent} from 'widget/form'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -76,29 +76,20 @@ export class Buttons extends React.Component {
         )
     }
 
-    renderLabel() {
-        const {label, tooltip, tooltipPlacement, disabled} = this.props
-        return label ? (
-            <Label
-                msg={label}
+    render() {
+        const {label, tooltip, tooltipPlacement, disabled, options, className} = this.props
+        return (
+            <FormComponent
+                className={className}
+                label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
-            />
-        ) : null
-    }
-
-    render() {
-        const {options, className} = this.props
-        return (
-            <div>
-                {this.renderLabel()}
-                <div className={className}>
-                    {options.length && options[0].options
-                        ? this.renderOptionGroups(options)
-                        : this.renderButtons(options)}
-                </div>
-            </div>
+            >
+                {options.length && options[0].options
+                    ? this.renderOptionGroups(options)
+                    : this.renderButtons(options)}
+            </FormComponent>
         )
     }
 }
