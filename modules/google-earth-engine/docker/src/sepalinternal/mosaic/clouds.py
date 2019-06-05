@@ -10,25 +10,25 @@ def mask_clouds(mosaic_def, collection):
                     .combine(ee.Reducer.count(), "", True)
                     .combine(ee.Reducer.min(), "", True))
         # Proportion of pixels that are cloudy
-        cloudProportion = reduced.select('cloud_sum') \
+        cloud_proportion = reduced.select('cloud_sum') \
             .divide(reduced.select('cloud_count'))
         # A representative proportion of pixels that are cloudy cloudy for the neighborhood
-        normalCloudProportion = cloudProportion.reproject(crs='EPSG:4326', scale=10000) \
-            .max(cloudProportion.reproject(crs='EPSG:4326', scale=20000))
+        normal_cloud_proportion = cloud_proportion.reproject(crs='EPSG:4326', scale=10000) \
+            .max(cloud_proportion.reproject(crs='EPSG:4326', scale=20000))
         # Measure of how a locations cloud proportion differs from the general area
-        cloudProportionDiff = cloudProportion.subtract(normalCloudProportion)
-        onlyClouds = reduced.select('cloud_min')
+        cloud_proportion_diff = cloud_proportion.subtract(normal_cloud_proportion)
+        only_clouds = reduced.select('cloud_min')
 
         # When there is higher proportion of clouds than the normaly, keep the clouds.
         # It's probably something (typically buildings) misclassified as clouds.
         # Also, don't trust the cloud classification enough to completely mask area with only clouds
         # Desert sand can be classified as cloud.
-        keepClouds = cloudProportionDiff.gt(0.4).And(normalCloudProportion.lt(0.3))
-        keepClouds = keepClouds.Or(onlyClouds)
+        keep_clouds = cloud_proportion_diff.gt(0.4).And(normal_cloud_proportion.lt(0.3))
+        keep_clouds = keep_clouds.Or(only_clouds)
     else:
-        keepClouds = False
+        keep_clouds = False
 
-    return collection.map(lambda image: _MaskClouds(image, mosaic_def).apply(keepClouds))
+    return collection.map(lambda image: _MaskClouds(image, mosaic_def).apply(keep_clouds))
 
 
 class _MaskClouds(ImageOperation):
@@ -36,11 +36,34 @@ class _MaskClouds(ImageOperation):
         super(_MaskClouds, self).__init__(image)
         self.mosaic_def = mosaic_def
 
-    def apply(self, keepClouds):
-        cloud_free = self.toImage('!i.cloud')
+    def apply(self, keep_clouds):
+        cloud_free = buffer_mask(self.toImage('!i.cloud'), 300)
+        # cloud_free = self.toImage('!i.cloud')
         to_mask = self.image.select('toMask')
-        if keepClouds:
-            mask = to_mask.Not().And(cloud_free.Or(keepClouds))
+        if keep_clouds:
+            mask = to_mask.Not().And(cloud_free.Or(keep_clouds))
         else:
             mask = to_mask.Not().And(cloud_free)
         return self.image.updateMask(mask)
+
+
+def buffer_mask(mask, meters):
+    inner_pixels = mask \
+        .fastDistanceTransform(256, 'pixels').sqrt() \
+        .multiply(ee.Image.pixelArea().sqrt()) \
+        .gt(mask.projection().nominalScale().multiply(5)).And(mask.Not())
+
+    distance_to_inner_pixels = inner_pixels \
+        .fastDistanceTransform(256, 'pixels').sqrt() \
+        .multiply(ee.Image.pixelArea().sqrt())
+
+    # Mask with tiny patches of 0s removed
+    filtered_mask = distance_to_inner_pixels \
+        .lt(100).And(mask.Not()).Not()
+
+    pixels = ee.Number(256).min(ee.Number(meters).multiply(2))
+    distance = filtered_mask.Not() \
+        .fastDistanceTransform(pixels, 'pixels').sqrt() \
+        .multiply(ee.Image.pixelArea().sqrt())
+    return distance.gt(meters)
+
