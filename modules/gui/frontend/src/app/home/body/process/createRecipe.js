@@ -30,16 +30,16 @@ export const closePanel = () =>
         .del('ui.modal')
         .dispatch()
 
-const createRecipe = (recipeId, type, title) => {
-    setTabType(recipeId, type, title)
+const createRecipe = (recipeId, type, tabPlaceholder) => {
+    setTabType(recipeId, type, tabPlaceholder)
     closePanel()
 }
 
-const setTabType = (recipeId, type, title) =>
+const setTabType = (recipeId, type, tabPlaceholder) =>
     actionBuilder('SET_TAB_TYPE')
         .merge(['process.tabs', {id: recipeId}], {
             type,
-            placeholder: `${title.replace(/[^\w-.]/g, '_')}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`,
+            placeholder: `${tabPlaceholder}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`,
             ui: {unsaved: true}
         })
         .dispatch()
@@ -136,7 +136,7 @@ class CreateRecipe extends React.Component {
         )
     }
 
-    renderRecipeType({type, name, description, beta, details}) {
+    renderRecipeType({type, name, tabPlaceholder, description, beta, details}) {
         const {recipeId} = this.props
         return (
             <RecipeType
@@ -144,6 +144,7 @@ class CreateRecipe extends React.Component {
                 recipeId={recipeId}
                 type={type}
                 name={name}
+                tabPlaceholder={tabPlaceholder}
                 description={description}
                 beta={beta}
                 onInfo={details ? () => this.showRecipeTypeInfo(type) : null}/>
@@ -189,7 +190,7 @@ export default compose(
 
 class RecipeType extends React.Component {
     render() {
-        const {recipeId, type, name, description, beta, onInfo} = this.props
+        const {recipeId, type, name, tabPlaceholder, description, beta, onInfo} = this.props
         const title = beta
             ? <span>{name}<sup className={styles.beta}>Beta</sup></span>
             : name
@@ -199,7 +200,7 @@ class RecipeType extends React.Component {
                 className={styles.recipe}
                 title={title}
                 description={description}
-                onClick={() => createRecipe(recipeId, type, name)}
+                onClick={() => createRecipe(recipeId, type, tabPlaceholder)}
                 onInfo={() => onInfo && onInfo(type)}
             />
         )

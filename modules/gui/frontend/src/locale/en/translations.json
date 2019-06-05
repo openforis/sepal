@@ -257,6 +257,7 @@
   "process": {
     "classification": {
       "create": "Classification",
+      "tabPlaceholder": "Classification",
       "description": "Classify imagery from SEPAL or Google Earth Engine. Include imagery from multiple points in time to do change detection.",
       "panel": {
         "auxiliaryImagery": {
@@ -455,6 +456,7 @@
     },
     "landCover": {
       "create": "RLCMS",
+      "tabPlaceholder": "RLCMS",
       "description": "Regional Land Cover Monitoring System. Create land cover map along with confidence levels from Landsat or Sentinel 2.",
       "panel": {
         "compositeOptions": {
@@ -588,6 +590,7 @@
         "placeholder": "Select preview bands"
       },
       "create": "Optical mosaic",
+      "tabPlaceholder": "Optical_mosaic",
       "description": "Create a mosaic using Landsat or Sentinel 2.",
       "mapToolbar": {
         "centerMap": {
@@ -949,6 +952,7 @@
     },
     "radarMosaic": {
       "create": "Radar mosaic",
+      "tabPlaceholder": "Radar_mosaic",
       "description": "Create a mosaic using Sentinel 1.",
       "panel": {
         "dates": {
@@ -1111,6 +1115,7 @@
     },
     "timeSeries": {
       "create": "Time series",
+      "tabPlaceholder": "Time_series",
       "description": "Download Landsat time series to SEPAL.",
       "mapToolbar": {
         "centerMap": {
