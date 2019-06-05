@@ -107,6 +107,7 @@ class CompositeOptions extends React.Component {
                             label: msg('process.mosaic.panel.composite.form.mask.snow.label'),
                             tooltip: msg('process.mosaic.panel.composite.form.mask.snow.tooltip')
                         }]}
+                        type='horizontal-nowrap'
                     />
                     <Buttons
                         label={msg('process.mosaic.panel.composite.form.composingMethod.label')}
@@ -120,6 +121,7 @@ class CompositeOptions extends React.Component {
                             label: msg('process.mosaic.panel.composite.form.composingMethod.median.label'),
                             tooltip: msg('process.mosaic.panel.composite.form.composingMethod.median.tooltip')
                         }]}
+                        type='horizontal-nowrap'
                     />
                 </FieldSet>
             </FieldSet>

@@ -102,19 +102,27 @@ form .errorMessage {
     color: #B5B5B5;
 }
 
-.fieldSet.vertical > * {
-    margin-bottom: 2rem;
+.fieldSet {
+    --horizontal-spacing: 1rem;
+}
+
+.fieldSet.cozy {
+    --vertical-spacing: 2rem;
+}
+
+.fieldSet.compact {
+    --vertical-spacing: 1rem;
+}
+
+.fieldSet.tight {
+    --vertical-spacing: 0rem;
+}
+
+.fieldSet > * {
+    margin-bottom: var(--vertical-spacing);
 }
 
 .fieldSet.vertical > *:last-child {
-    margin-bottom: 0;
-}
-
-.fieldSet.vertical.compact > * {
-    margin-bottom: 1rem;
-}
-
-.fieldSet.vertical.tight > * {
     margin-bottom: 0;
 }
 
@@ -122,11 +130,13 @@ form .errorMessage {
     width: 100%;
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: space-between;
+    margin-bottom: calc(-1 * var(--vertical-spacing));
 }
 
 .fieldSet.horizontal > * {
-    margin-right: 1rem;
+    margin-right: var(--horizontal-spacing);
 }
 
 .fieldSet.horizontal > *:last-child {
