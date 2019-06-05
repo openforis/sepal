@@ -335,9 +335,7 @@ class List extends React.Component {
 
         addSubscription(
             scroll$.subscribe(
-                ({element, value}) => {
-                    this.props.autoCenter && setScrollOffset(element, value)
-                }
+                ({element, value}) => this.props.autoCenter && setScrollOffset(element, value)
             )
         )
     }
