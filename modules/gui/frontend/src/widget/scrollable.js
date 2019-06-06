@@ -66,7 +66,7 @@ const lerp = rate =>
 
 class _Scrollable extends Component {
     ref = React.createRef()
-    center$ = new Subject()
+    scroll$ = new Subject()
 
     state = {
         key: null
@@ -88,6 +88,7 @@ class _Scrollable extends Component {
             getContainerHeight: this.getContainerHeight.bind(this),
             getClientHeight: this.getClientHeight.bind(this),
             getScrollableHeight: this.getScrollableHeight.bind(this),
+            setOffset: this.setOffset.bind(this),
             scrollTo: this.scrollTo.bind(this),
             scrollToTop: this.scrollToTop.bind(this),
             scrollToBottom: this.scrollToBottom.bind(this),
@@ -111,6 +112,10 @@ class _Scrollable extends Component {
         return this.ref.current
     }
 
+    setOffset(offset) {
+        this.getScrollableElement().scrollTop = offset
+    }
+ 
     getOffset() {
         return this.getScrollableElement().scrollTop
     }
@@ -126,9 +131,9 @@ class _Scrollable extends Component {
     getScrollableHeight() {
         return this.getScrollableElement().scrollHeight
     }
- 
+
     scrollTo(offset) {
-        this.getScrollableElement().scrollTop = offset
+        this.scroll$.next(offset)
     }
 
     scrollToTop() {
@@ -139,18 +144,20 @@ class _Scrollable extends Component {
         this.scrollTo(this.getScrollableHeight() - this.getClientHeight())
     }
     
+    centerElement(element) {
+        if (element) {
+            this.scrollTo(element.offsetTop - (this.getClientHeight() - element.clientHeight) / 2)
+        }
+    }
+
     reset(callback) {
         const offset = this.getOffset()
         this.setState({key: uuid()},
             () => {
-                this.scrollTo(offset)
+                this.setOffset(offset)
                 callback()
             }
         )
-    }
-
-    centerElement(element) {
-        element && this.center$.next(element)
     }
 
     handleHover() {
@@ -175,41 +182,28 @@ class _Scrollable extends Component {
         }
     }
 
-    handleCentering() {
+    handleScroll() {
         const {addSubscription} = this.props
         const animationFrame$ = interval(0, animationFrameScheduler)
 
-        const scroll$ = this.center$.pipe(
-            switchMap(element => {
-                const target = Math.round(element.offsetTop - (this.getClientHeight() - element.clientHeight) / 2)
-                return Math.round(this.getOffset()) === target
+        const scroll$ = this.scroll$.pipe(
+            map(target => Math.round(target)),
+            switchMap(target =>
+                Math.round(this.getOffset()) === target
                     ? EMPTY
                     : animationFrame$.pipe(
                         mapTo(target),
                         scan(lerp(ANIMATION_SPEED), this.getOffset()),
                         map(value => Math.round(value)),
                         distinctUntilChanged(),
-                        map(value => ({value, scrolling: value !== target})),
-                        takeWhile(({scrolling}) => scrolling, true)
+                        takeWhile(value => value !== target)
                     )
-            })
-        )
-
-        const autoCenter$ = scroll$.pipe(
-            map(({value}) => value)
-        )
-
-        const scrolling$ = scroll$.pipe(
-            map(({scrolling}) => scrolling),
-            distinctUntilChanged()
+            )
         )
 
         addSubscription(
-            autoCenter$.subscribe(
-                value => this.scrollTo(value)
-            ),
-            scrolling$.subscribe(
-                autoScrolling => this.setState({autoScrolling})
+            scroll$.subscribe(
+                offset => this.setOffset(offset)
             )
         )
     }
@@ -217,7 +211,7 @@ class _Scrollable extends Component {
     componentDidMount() {
         disableBodyScroll(this.ref.current)
         this.handleHover()
-        this.handleCentering()
+        this.handleScroll()
     }
 
     componentWillUnmount() {
