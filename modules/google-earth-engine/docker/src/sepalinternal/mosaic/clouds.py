@@ -37,8 +37,8 @@ class _MaskClouds(ImageOperation):
         self.mosaic_def = mosaic_def
 
     def apply(self, keep_clouds):
-        cloud_free = buffer_mask(self.toImage('!i.cloud'), 300)
-        # cloud_free = self.toImage('!i.cloud')
+        cloud_free = self.toImage('!i.cloud')
+        cloud_free = buffer_mask(self.toImage('!i.cloud'), 300).And(cloud_free)
         to_mask = self.image.select('toMask')
         if keep_clouds:
             mask = to_mask.Not().And(cloud_free.Or(keep_clouds))
