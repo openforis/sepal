@@ -1,6 +1,6 @@
 import {EMPTY, Subject, animationFrameScheduler, fromEvent, interval} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, distinctUntilChanged, filter, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs/operators'
 import {disableBodyScroll, enableBodyScroll} from 'body-scroll-lock'
 import {v4 as uuid} from 'uuid'
 import PropTypes from 'prop-types'

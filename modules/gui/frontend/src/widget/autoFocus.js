@@ -1,8 +1,8 @@
 import {compose} from 'compose'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import withForwardedRef from 'ref'
-import Portal from 'widget/portal'
 
 class AutoFocus extends React.Component {
     focusHolderRef = React.createRef()
