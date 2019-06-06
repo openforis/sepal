@@ -187,16 +187,16 @@ class _Scrollable extends Component {
         const animationFrame$ = interval(0, animationFrameScheduler)
 
         const scroll$ = this.scroll$.pipe(
-            map(target => Math.round(target)),
-            switchMap(target =>
-                Math.round(this.getOffset()) === target
+            map(targetOffset => Math.round(targetOffset)),
+            switchMap(targetOffset =>
+                Math.round(this.getOffset()) === targetOffset
                     ? EMPTY
                     : animationFrame$.pipe(
-                        mapTo(target),
+                        mapTo(targetOffset),
                         scan(lerp(ANIMATION_SPEED), this.getOffset()),
-                        map(value => Math.round(value)),
+                        map(offset => Math.round(offset)),
                         distinctUntilChanged(),
-                        takeWhile(value => value !== target)
+                        takeWhile(offset => offset !== targetOffset)
                     )
             )
         )
