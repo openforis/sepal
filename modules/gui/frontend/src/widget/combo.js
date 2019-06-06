@@ -70,10 +70,16 @@ class Combo extends React.Component {
 
     renderInput() {
         const {placeholder, autoFocus, disabled, busy, standalone, inputClassName, input} = this.props
-        const {focused, filter, selectedOption} = this.state
+        const {focused, filter, selectedOption, showOptions} = this.state
+        const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
-            ArrowUp: disabled ? null : () => this.showOptions(),
-            ArrowDown: disabled ? null : () => this.showOptions(),
+            ArrowUp: showOptionsKeyBinding,
+            ArrowDown: showOptionsKeyBinding,
+            ArrowLeft: showOptionsKeyBinding,
+            ArrowRight: showOptionsKeyBinding,
+            Home: showOptionsKeyBinding,
+            End: showOptionsKeyBinding,
+            Escape: !showOptions ? undefined : () => this.hideOptions(),
         }
         return (
             <Keybinding
@@ -119,6 +125,7 @@ class Combo extends React.Component {
                     autoCenter={!selected}
                     tooltipPlacement={optionTooltipPlacement}
                     autoHighlight
+                    keyboard
                     alignment={alignment}
                 />
             </FloatingBox>
