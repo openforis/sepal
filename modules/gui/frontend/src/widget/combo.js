@@ -95,9 +95,12 @@ class Combo extends React.Component {
                     type='search'
                     value={filter}
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
-                    disabled={disabled || busy || isMobile()}
+                    disabled={disabled || busy}
+                    readOnly={isMobile()}
                     onChange={e => this.setFilter(e.target.value)}
-                    onFocus={() => this.setState({focused: true})}
+                    onFocus={e => {
+                        this.setState({focused: true})
+                    }}
                     onBlur={() => {
                         input.validate()
                         this.setState({focused: false})
