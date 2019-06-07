@@ -66,7 +66,7 @@ form textarea:focus {
 
 form input:disabled,
 form textarea:disabled {
-    color: #777;
+    color: #888;
 }
 
 form input::placeholder,
