@@ -15,7 +15,7 @@ const autoCenter$ = new Subject()
 
 class List extends React.Component {
     render() {
-        const {className} = this.props
+        const {className, ...props} = this.props
         return (
             <ReactResizeDetector
                 handleHeight
@@ -28,9 +28,9 @@ class List extends React.Component {
                     >
                         {(scrollableContainerHeight, scrollable) =>
                             <ScrollableList
+                                {...props}
                                 scrollableContainerHeight={scrollableContainerHeight}
                                 scrollable={scrollable}
-                                {...this.props}
                             />}
                     </Scrollable>
                 </ScrollableContainer>
@@ -76,16 +76,14 @@ class ScrollableList extends React.Component {
     }
 
     renderList(scrollableContainerHeight = 0) {
-        const {options, overScroll, scrollable} = this.props
+        const {options, overScroll} = this.props
         return (
             <ul
                 ref={this.list}
                 style={{
                     '--scrollable-container-height': overScroll ? scrollableContainerHeight : 0
                 }}
-                onMouseLeave={() => scrollable.reset(
-                    () => autoCenter$.next()
-                )}>
+                onMouseLeave={() => autoCenter$.next(true)}>
                 {this.renderOptions(options)}
             </ul>
         )
@@ -321,10 +319,12 @@ class ScrollableList extends React.Component {
     }
 
     initializeAutoCenter() {
-        const {addSubscription} = this.props
+        const {addSubscription, scrollable} = this.props
         addSubscription(
             autoCenter$.subscribe(
-                () => this.centerSelectedOption()
+                reset => reset
+                    ? scrollable.reset(() => this.centerSelectedOption())
+                    : this.centerSelectedOption()
             )
         )
         this.highlightSelectedOption()
