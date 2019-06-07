@@ -41,6 +41,14 @@ html {
     --section-terminal-color-s: 19%;
     --section-terminal-color-l: 26%;
 
+    --section-tasks-color-h: 3;
+    --section-tasks-color-s: 20%;
+    --section-tasks-color-l: 23%;
+
+    --section-users-color-h: 124;
+    --section-users-color-s: 10%;
+    --section-users-color-l: 20%;
+
     --base-font-size: 14px;
     font-size: var(--base-font-size);
 }
