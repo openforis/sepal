@@ -44,8 +44,7 @@ class ScrollableList extends React.Component {
     selected = React.createRef()
     state = {
         highlightedOption: null,
-        overrideHover: false,
-        // autoScrolling: false
+        overrideHover: false
     }
 
     constructor(props) {

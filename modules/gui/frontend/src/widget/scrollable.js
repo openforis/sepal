@@ -246,14 +246,3 @@ export const withScrollable = () =>
                 )
             }
         }
-
-const ScrollableRef = children =>
-    <ScrollableContext.Consumer>
-        {scrollable =>
-            children(scrollable)
-        }
-    </ScrollableContext.Consumer>
-
-ScrollableRef.propTypes = {
-    children: PropTypes.func.isRequired
-}
