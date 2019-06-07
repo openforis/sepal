@@ -36,7 +36,10 @@
 
 
 .layerTitle {
-    max-width: 15rem;
+    /*max-width: 15rem;*/
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .layerContent {
@@ -51,25 +54,21 @@
     display: flex;
 }
 
-.rgbBands > * {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 100%;
-    text-align: center;
-    padding: .25rem 0;
+.rgbBands > *:not(:last-child) {
+    display: flex;
+    margin-right: .5rem
 }
 
 .red {
-    background-color: hsla(0, 50%, 20%, 0.95);
+    color: hsl(0, 70%, 35%);
 }
 
 .green {
-    background-color: hsla(120, 50%, 15%, 0.95);
+    color: hsl(120, 70%, 30%);
 }
 
 .blue {
-    background-color: hsla(240, 50%, 35%, 0.95);
+    color: hsl(240, 80%, 63%);
 }
 
 .rotate90 {

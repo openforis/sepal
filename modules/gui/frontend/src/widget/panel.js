@@ -98,7 +98,7 @@ PanelHeader.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     icon: PropTypes.string,
-    label: PropTypes.string,
+    label: PropTypes.any,
     title: PropTypes.string
 }
 

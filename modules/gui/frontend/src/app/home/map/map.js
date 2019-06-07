@@ -184,7 +184,7 @@ const createMap = mapElement => {
                                         if (onError)
                                             onError(error)
                                         else
-                                            Notifications.error({message: msg('map.layer.error'), error})
+                                            Notifications.error({message: msg('app.home.body.process.layer.error'), error})
                                     }
                                 )
                         }
