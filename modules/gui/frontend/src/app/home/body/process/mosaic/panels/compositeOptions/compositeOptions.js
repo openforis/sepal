@@ -147,11 +147,11 @@ class CompositeOptions extends React.Component {
                     label: msg('process.mosaic.panel.composite.form.cloudBuffer.none.label'),
                     tooltip: msg('process.mosaic.panel.composite.form.cloudBuffer.none.tooltip')
                 }, {
-                    value: 90,
+                    value: 120,
                     label: msg('process.mosaic.panel.composite.form.cloudBuffer.moderate.label'),
                     tooltip: msg('process.mosaic.panel.composite.form.cloudBuffer.moderate.tooltip')
                 }, {
-                    value: 300,
+                    value: 600,
                     label: msg('process.mosaic.panel.composite.form.cloudBuffer.aggressive.label'),
                     tooltip: msg('process.mosaic.panel.composite.form.cloudBuffer.aggressive.tooltip')
                 }]}

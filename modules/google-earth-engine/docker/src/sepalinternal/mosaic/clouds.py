@@ -50,22 +50,21 @@ class _MaskClouds(ImageOperation):
 
 
 def buffer_mask(mask, meters):
-    inner_pixels = mask \
+    cloud = mask.Not()
+    min_cloud_radius = 50
+
+    # Clouds with radius < min_cloud_radius will not have any inner pixels, and will not get buffered
+    inner_pixel = mask \
         .fastDistanceTransform(256, 'pixels').sqrt() \
         .multiply(ee.Image.pixelArea().sqrt()) \
-        .gt(mask.projection().nominalScale().multiply(5)).And(mask.Not())
+        .gt(min_cloud_radius) \
+        .And(cloud)
 
-    distance_to_inner_pixels = inner_pixels \
+    distance_to_inner_pixel = inner_pixel \
         .fastDistanceTransform(256, 'pixels').sqrt() \
         .multiply(ee.Image.pixelArea().sqrt())
 
-    # Mask with tiny patches of 0s removed
-    filtered_mask = distance_to_inner_pixels \
-        .lt(100).And(mask.Not()).Not()
-
-    pixels = ee.Number(256).min(ee.Number(meters).multiply(2))
-    distance = filtered_mask.Not() \
-        .fastDistanceTransform(pixels, 'pixels').sqrt() \
-        .multiply(ee.Image.pixelArea().sqrt())
-    return distance.gt(meters)
-
+    return distance_to_inner_pixel \
+        .lt(ee.Number(meters).add(min_cloud_radius)) \
+        .Or(cloud) \
+        .Not()

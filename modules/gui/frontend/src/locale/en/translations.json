@@ -786,11 +786,11 @@
               },
               "moderate": {
                 "label": "Moderate",
-                "tooltip": "Mask an additional 90m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
+                "tooltip": "Mask an additional 120m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
               },
               "aggressive": {
                 "label": "Aggressive",
-                "tooltip": "Mask an additional 300m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
+                "tooltip": "Mask an additional 600m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
               }
             }
           },
