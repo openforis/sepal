@@ -56,8 +56,8 @@ class CompositeOptions extends React.Component {
                     {this.renderFilterOptions()}
                 </FieldSet>
                 <FieldSet horizontal>
-                    {this.renderMaskOptions()}
                     {this.renderCloudBufferOptions()}
+                    {this.renderMaskOptions()}
                     {this.renderComposeOptions()}
                 </FieldSet>
             </FieldSet>
