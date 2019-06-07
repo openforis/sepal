@@ -1,14 +1,14 @@
-.sessions ul {
+.sessions {
     list-style-type: none;
     padding: 0;
 }
 
-.sessions li {
+.sessions > * {
     padding: .5rem 1rem;
     border-radius: var(--container-border-radius);
 }
 
-.sessions li + li {
+.sessions > * + * {
     margin-top: .5rem;
 }
 

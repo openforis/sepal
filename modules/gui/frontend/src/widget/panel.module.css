@@ -111,6 +111,10 @@
     margin-right: .5rem;
 }
 
+.header .label {
+    margin-left: 1rem;
+}
+
 .scrollableContainer {
     flex-grow: 1;
     display: flex;

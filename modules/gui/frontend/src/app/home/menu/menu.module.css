@@ -97,13 +97,17 @@
 }
 
 .menu button.tasks {
-    background-color: hsla(197, 30%, 25%, var(--opacity));
-    border-color: hsla(197, 60%, 45%, var(--border-opacity));
+    /* background-color: hsla(197, 30%, 25%, var(--opacity));
+    border-color: hsla(197, 60%, 45%, var(--border-opacity)); */
+    background-color: hsla(var(--section-tasks-color-h), var(--section-tasks-color-s), var(--section-tasks-color-l), var(--opacity));
+    border-color: hsla(var(--section-tasks-color-h), var(--section-tasks-color-s), calc(var(--section-tasks-color-l) + 20%), var(--border-opacity));
 }
 
 .menu button.users {
-    background-color: hsla(0, 24%, 27%, var(--opacity));
-    border-color: hsla(0, 24%, 47%, var(--border-opacity));
+    /* background-color: hsla(0, 24%, 27%, var(--opacity));
+    border-color: hsla(0, 24%, 47%, var(--border-opacity)); */
+    background-color: hsla(var(--section-users-color-h), var(--section-users-color-s), var(--section-users-color-l), var(--opacity));
+    border-color: hsla(var(--section-users-color-h), var(--section-users-color-s), calc(var(--section-users-color-l) + 20%), var(--border-opacity));
 }
 
 @keyframes blink {
