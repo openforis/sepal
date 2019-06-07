@@ -79,7 +79,7 @@ export class PanelHeader extends React.Component {
                     {icon ? <Icon name={icon}/> : null}
                     {title}
                 </div>
-                {label ? <div>{label}</div> : null}
+                {label ? <div className={styles.label}>{label}</div> : null}
             </React.Fragment>
         )
     }
