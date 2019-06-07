@@ -13,7 +13,7 @@ class AutoFocus extends React.Component {
         return completed
             ? null
             : <Portal type='global'>
-                <div ref={this.focusHolderRef} tabIndex={-1}/>
+                <div ref={this.focusHolderRef} tabIndex={-1} style={{position: 'fixed'}}/>
             </Portal>
     }
 
