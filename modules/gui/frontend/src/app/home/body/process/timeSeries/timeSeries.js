@@ -11,7 +11,7 @@ import React from 'react'
 import TimeSeriesToolbar from './panels/timeSeriesToolbar'
 import styles from './timeSeries.module.css'
 
-const mapStateToProps = state=> {
+const mapStateToProps = state => {
     return {
         tabCount: selectFrom(state, 'process.tabs').length
     }

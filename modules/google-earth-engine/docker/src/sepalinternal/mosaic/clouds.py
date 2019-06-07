@@ -19,7 +19,7 @@ def mask_clouds(mosaic_def, collection):
         cloud_proportion_diff = cloud_proportion.subtract(normal_cloud_proportion)
         only_clouds = reduced.select('cloud_min')
 
-        # When there is higher proportion of clouds than the normaly, keep the clouds.
+        # When there is higher proportion of clouds than the normally, keep the clouds.
         # It's probably something (typically buildings) misclassified as clouds.
         # Also, don't trust the cloud classification enough to completely mask area with only clouds
         # Desert sand can be classified as cloud.

@@ -1,7 +1,7 @@
 import {FormComponent} from 'widget/form'
 import {animationFrameScheduler, combineLatest, fromEvent, interval, merge} from 'rxjs'
 import {compose} from 'compose'
-import {distinctUntilChanged, filter, map, scan, switchMap, withLatestFrom} from 'rxjs/operators'
+import {distinctUntilChanged, filter, map, mapTo, scan, switchMap, withLatestFrom} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
@@ -238,7 +238,7 @@ class _SliderDynamics extends React.Component {
                 map(e => e.clientX - this.state.clickTargetOffset)
             ),
             mouseLeave$.pipe(
-                map(() => null)
+                mapTo(null)
             )
         )
 
@@ -283,8 +283,8 @@ class _SliderDynamics extends React.Component {
         )
 
         const handleDragging$ = merge(
-            panStart$.pipe(map(() => true)),
-            panEnd$.pipe(map(() => false)),
+            panStart$.pipe(mapTo(true)),
+            panEnd$.pipe(mapTo(false)),
         )
 
         const previewPosition$ = merge(targetPosition$, hoverPosition$).pipe(
