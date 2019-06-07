@@ -777,6 +777,21 @@
                 "label": "Snow",
                 "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
               }
+            },
+            "cloudBuffer": {
+              "label": "Cloud buffering",
+              "none": {
+                "label": "None",
+                "tooltip": "Only mask the clouds. It might leave hazy pixels around masked clouds, but will minimize the amount of maxed pixels in the mosaic."
+              },
+              "moderate": {
+                "label": "Moderate",
+                "tooltip": "Mask an additional 90m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
+              },
+              "aggressive": {
+                "label": "Aggressive",
+                "tooltip": "Mask an additional 300m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
+              }
             }
           },
           "title": "Composite",
