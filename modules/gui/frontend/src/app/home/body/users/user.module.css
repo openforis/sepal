@@ -2,12 +2,6 @@
     width: 25rem;
 }
 
-.monthlyLimits {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-}
-
 .monthlyLimits input {
     width: 6rem;
 }

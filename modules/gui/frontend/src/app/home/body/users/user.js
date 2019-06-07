@@ -104,6 +104,7 @@ class UserDetails extends React.Component {
                             errorMessage
                         />
                         <FieldSet
+                            className={styles.monthlyLimits}
                             horizontal
                             label={msg('user.userDetails.form.monthlyLimits.label')}
                             errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
