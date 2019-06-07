@@ -107,7 +107,7 @@ form .errorMessage {
     overflow: hidden; /* required for preventing margin bottom on last element */
 }
 
-.formComponent.cozy {
+.formComponent.normal {
     --vertical-spacing: 2rem;
 }
 
@@ -115,7 +115,7 @@ form .errorMessage {
     --vertical-spacing: 1rem;
 }
 
-.formComponent.tight {
+.formComponent.none {
     --vertical-spacing: 0rem;
 }
 

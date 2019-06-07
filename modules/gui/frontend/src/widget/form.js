@@ -605,7 +605,7 @@ FormComponent.propTypes = {
     input: PropTypes.object,
     label: PropTypes.string,
     layout: PropTypes.oneOf(['vertical', 'horizontal']),
-    spacing: PropTypes.oneOf(['cozy', 'compact', 'tight']),
+    spacing: PropTypes.oneOf(['normal', 'compact', 'none']),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
 }
@@ -613,7 +613,7 @@ FormComponent.propTypes = {
 FormComponent.defaultProps = {
     alignment: 'left',
     layout: 'vertical',
-    spacing: 'tight',
+    spacing: 'none',
     tooltipPlacement: 'top'
 }
 
@@ -626,7 +626,7 @@ export class FieldSet extends React.Component {
             <FormComponent
                 className={className}
                 layout={horizontal ? 'horizontal' : 'vertical'}
-                spacing={compact ? 'compact' : 'cozy'}
+                spacing={compact ? 'compact' : 'normal'}
                 disabled={disabled}
                 label={label}
                 tooltip={tooltip}
@@ -649,7 +649,6 @@ FieldSet.propTypes = {
     horizontal: PropTypes.any,
     input: PropTypes.object,
     label: PropTypes.string,
-    tight: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
 }
