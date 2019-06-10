@@ -11,12 +11,13 @@ import org.openforis.sepal.component.user.internal.TokenManager
 import org.openforis.sepal.component.user.internal.UserChangeListener
 import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageQueue
+import org.openforis.sepal.user.User
 
 import static org.openforis.sepal.user.User.Status.ACTIVE
 
 @EqualsAndHashCode(callSuper = true)
 @Canonical
-class ResetPassword extends AbstractCommand<Void> {
+class ResetPassword extends AbstractCommand<User> {
     String token
     String password
 
@@ -26,7 +27,7 @@ class ResetPassword extends AbstractCommand<Void> {
     }
 }
 
-class ResetPasswordHandler implements CommandHandler<Void, ResetPassword> {
+class ResetPasswordHandler implements CommandHandler<User, ResetPassword> {
     private final TokenManager tokenManager
     private final ExternalUserDataGateway externalUserDataGateway
     private final UserRepository userRepository
@@ -50,13 +51,13 @@ class ResetPasswordHandler implements CommandHandler<Void, ResetPassword> {
         }
     }
 
-    Void execute(ResetPassword command) {
+    User execute(ResetPassword command) {
         def tokenStatus = tokenManager.validate(command.token, true)
         if (!tokenStatus || tokenStatus.expired)
             throw new UsingInvalidToken(command.token, tokenStatus)
         def user = tokenStatus.user.active()
         messageQueue.publish(user: user, password: command.password, token: command.token)
-        return null
+        return user
     }
 }
 
