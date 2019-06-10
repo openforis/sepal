@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {Constraint, Field, Form, Input, form} from 'widget/form'
+import {Constraint, Field, Form, Input, form, FieldSet} from 'widget/form'
 import {PropTypes} from 'prop-types'
 import {compose} from 'compose'
 import {history, query} from 'route'
@@ -78,29 +78,31 @@ class SetPassword extends React.Component {
         const resettingPassword = stream('RESET_PASSWORD').active
         return (
             <Form className={styles.form} onSubmit={() => this.resetPassword(form.values())}>
-                <Input
-                    label={msg('landing.reset-password.username.label')}
-                    input={username}
-                    disabled={true}
-                    errorMessage
-                />
-                <Input
-                    label={msg('landing.reset-password.password.label')}
-                    input={password}
-                    type='password'
-                    placeholder={msg('landing.reset-password.password.placeholder')}
-                    autoFocus={!isMobile()}
-                    tabIndex={1}
-                    errorMessage
-                />
-                <Input
-                    label={msg('landing.reset-password.password2.label')}
-                    input={password2}
-                    type='password'
-                    placeholder={msg('landing.reset-password.password2.placeholder')}
-                    tabIndex={2}
-                    errorMessage={[password2, 'passwordsMatch']}
-                />
+                <FieldSet>
+                    <Input
+                        label={msg('landing.reset-password.username.label')}
+                        input={username}
+                        disabled={true}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('landing.reset-password.password.label')}
+                        input={password}
+                        type='password'
+                        placeholder={msg('landing.reset-password.password.placeholder')}
+                        autoFocus={!isMobile()}
+                        tabIndex={1}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('landing.reset-password.password2.label')}
+                        input={password2}
+                        type='password'
+                        placeholder={msg('landing.reset-password.password2.placeholder')}
+                        tabIndex={2}
+                        errorMessage={[password2, 'passwordsMatch']}
+                    />
+                </FieldSet>
 
                 <Button
                     type='submit'

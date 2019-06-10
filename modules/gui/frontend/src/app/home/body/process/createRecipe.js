@@ -1,6 +1,5 @@
 import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -31,16 +30,16 @@ export const closePanel = () =>
         .del('ui.modal')
         .dispatch()
 
-const createRecipe = (recipeId, type, title) => {
-    setTabType(recipeId, type, title)
+const createRecipe = (recipeId, type, tabPlaceholder) => {
+    setTabType(recipeId, type, tabPlaceholder)
     closePanel()
 }
 
-const setTabType = (recipeId, type, title) =>
+const setTabType = (recipeId, type, tabPlaceholder) =>
     actionBuilder('SET_TAB_TYPE')
         .merge(['process.tabs', {id: recipeId}], {
             type,
-            placeholder: `${title.replace(/[^\w-.]/g, '_')}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`,
+            placeholder: `${tabPlaceholder}_${moment().format('YYYY-MM-DD_HH-mm-ss')}`,
             ui: {unsaved: true}
         })
         .dispatch()
@@ -103,11 +102,7 @@ class CreateRecipe extends React.Component {
                     title={recipeType.name}>
                 </PanelHeader>
                 <PanelContent>
-                    <ScrollableContainer>
-                        <Scrollable>
-                            {recipeType ? recipeType.details : null}
-                        </Scrollable>
-                    </ScrollableContainer>
+                    {recipeType ? recipeType.details : null}
                 </PanelContent>
                 <PanelButtons onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
@@ -122,7 +117,7 @@ class CreateRecipe extends React.Component {
     }
 
     renderRecipeTypes() {
-        const {recipeId, recipeTypes, trigger} = this.props
+        const {recipeTypes, trigger} = this.props
         const close = () => this.closePanel()
         return (
             <React.Fragment>
@@ -130,22 +125,7 @@ class CreateRecipe extends React.Component {
                     icon='book-open'
                     title={msg('process.recipe.newRecipe.title')}/>
                 <PanelContent>
-                    <ScrollableContainer className={styles.recipeTypes}>
-                        <Scrollable>
-                            {/* <ul> */}
-                            {recipeTypes.map(({type, name, description, beta, details}) =>
-                                <RecipeType
-                                    key={type}
-                                    recipeId={recipeId}
-                                    type={type}
-                                    name={name}
-                                    description={description}
-                                    beta={beta}
-                                    onInfo={details ? () => this.showRecipeTypeInfo(type) : null}/>
-                            )}
-                            {/* </ul> */}
-                        </Scrollable>
-                    </ScrollableContainer>
+                    {recipeTypes.map(recipeType => this.renderRecipeType(recipeType))}
                 </PanelContent>
                 <PanelButtons shown={!trigger} onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
@@ -153,6 +133,21 @@ class CreateRecipe extends React.Component {
                     </PanelButtons.Main>
                 </PanelButtons>
             </React.Fragment>
+        )
+    }
+
+    renderRecipeType({type, name, tabPlaceholder, description, beta, details}) {
+        const {recipeId} = this.props
+        return (
+            <RecipeType
+                key={type}
+                recipeId={recipeId}
+                type={type}
+                name={name}
+                tabPlaceholder={tabPlaceholder}
+                description={description}
+                beta={beta}
+                onInfo={details ? () => this.showRecipeTypeInfo(type) : null}/>
         )
     }
 
@@ -195,7 +190,7 @@ export default compose(
 
 class RecipeType extends React.Component {
     render() {
-        const {recipeId, type, name, description, beta, onInfo} = this.props
+        const {recipeId, type, name, tabPlaceholder, description, beta, onInfo} = this.props
         const title = beta
             ? <span>{name}<sup className={styles.beta}>Beta</sup></span>
             : name
@@ -205,7 +200,7 @@ class RecipeType extends React.Component {
                 className={styles.recipe}
                 title={title}
                 description={description}
-                onClick={() => createRecipe(recipeId, type, name)}
+                onClick={() => createRecipe(recipeId, type, tabPlaceholder)}
                 onInfo={() => onInfo && onInfo(type)}
             />
         )

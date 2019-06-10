@@ -1,7 +1,7 @@
 import {Activator} from 'widget/activation/activator'
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {Field, Input, form} from 'widget/form'
+import {Field, FieldSet, Input, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -85,37 +85,40 @@ class _UserDetails extends React.Component {
             ? <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>
             : <React.Fragment>
                 <PanelContent>
-                    <Input
-                        label={msg('user.userDetails.form.name.label')}
-                        autoFocus={!isMobile()}
-                        input={name}
-                        spellCheck={false}
-                        errorMessage
-                    />
-                    <Input
-                        label={msg('user.userDetails.form.email.label')}
-                        input={email}
-                        spellCheck={false}
-                        errorMessage
-                    />
-                    <Input
-                        label={msg('user.userDetails.form.organization.label')}
-                        input={organization}
-                        spellCheck={false}
-                    />
-                    <div className={styles.googleAccount}>
-                        <ButtonGroup>
-                            {this.renderGoogleAccountButton()}
-                        </ButtonGroup>
-                    </div>
+                    <FieldSet>
+                        <Input
+                            label={msg('user.userDetails.form.name.label')}
+                            autoFocus={!isMobile()}
+                            input={name}
+                            spellCheck={false}
+                            errorMessage
+                        />
+                        <Input
+                            label={msg('user.userDetails.form.email.label')}
+                            input={email}
+                            spellCheck={false}
+                            errorMessage
+                        />
+                        <Input
+                            label={msg('user.userDetails.form.organization.label')}
+                            input={organization}
+                            spellCheck={false}
+                        />
+                        <div className={styles.googleAccount}>
+                            <ButtonGroup>
+                                {this.renderGoogleAccountButton()}
+                            </ButtonGroup>
+                        </div>
+                    </FieldSet>
                 </PanelContent>
                 <FormPanelButtons>
                     <Activator id='changePassword'>
-                        {({canActivate, activate}) => <Button
-                            icon={'key'}
-                            label={msg('user.changePassword.title')}
-                            disabled={!canActivate || form.isDirty()}
-                            onClick={() => activate()}/>
+                        {({canActivate, activate}) =>
+                            <Button
+                                icon={'key'}
+                                label={msg('user.changePassword.title')}
+                                disabled={!canActivate || form.isDirty()}
+                                onClick={() => activate()}/>
                         }
                     </Activator>
                 </FormPanelButtons>

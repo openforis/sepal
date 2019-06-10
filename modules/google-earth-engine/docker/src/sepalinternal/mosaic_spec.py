@@ -31,11 +31,13 @@ class MosaicSpec(ImageSpec):
         self.haze_tolerance = 1 - self._filter('HAZE')
         self.greenness_weight = self._filter('NDVI')
         self.bands = bands.get('selection', [])
-        self.median_composite = model['compositeOptions']['compose'] == 'MEDIAN'
-        self.mask_clouds = 'CLOUDS' in model['compositeOptions']['mask']
-        self.mask_snow = 'SNOW' in model['compositeOptions']['mask']
-        self.brdf_correct = 'BRDF' in model['compositeOptions']['corrections']
-        self.surface_reflectance = 'SR' in model['compositeOptions']['corrections']
+        composite_options = model['compositeOptions']
+        self.median_composite = composite_options['compose'] == 'MEDIAN'
+        self.mask_clouds = 'CLOUDS' in composite_options['mask']
+        self.mask_snow = 'SNOW' in composite_options['mask']
+        self.cloud_buffer = composite_options.get('cloudBuffer', 0)
+        self.brdf_correct = 'BRDF' in composite_options['corrections']
+        self.surface_reflectance = 'SR' in composite_options['corrections']
         self.pan_sharpen = bool(bands.get('panSharpen', False))
         self.scale = spec.get('scale')
 

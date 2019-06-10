@@ -74,7 +74,7 @@ class UserSessions extends React.Component {
 
     renderSession(session) {
         return (
-            <li
+            <div
                 key={session.id}
                 className={[lookStyles.look, lookStyles.transparent].join(' ')}
                 onClick={() => this.selectSession(session)}>
@@ -92,7 +92,7 @@ class UserSessions extends React.Component {
                         {moment.utc(session.creationTime).fromNow()}
                     </span>
                 </div>
-            </li>
+            </div>
         )
     }
 
@@ -100,9 +100,7 @@ class UserSessions extends React.Component {
         return (
             <ScrollableContainer className={styles.sessions}>
                 <Scrollable>
-                    <ul>
-                        {sessions.map(session => this.renderSession(session))}
-                    </ul>
+                    {sessions.map(session => this.renderSession(session))}
                 </Scrollable>
             </ScrollableContainer>
         )

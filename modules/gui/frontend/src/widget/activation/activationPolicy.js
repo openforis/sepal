@@ -56,9 +56,16 @@ const compatibleWith = (id, policy) =>
 const deactivateWhen = (id, policy) =>
     behavior(id, policy) === 'allow-then-deactivate'
 
-export const shouldDeactivate = (id, activatables = {}, nextPolicy) =>
-    _(activatables)
+export const shouldDeactivate = (id, activatables = {}, nextPolicy) => {
+    const alwaysAllow = id => activatables[id].alwaysAllow
+    const isDeactivatable = activatableId => {
+        const active = activatables[activatableId].active
+        const preventedDeactivation = alwaysAllow(activatableId) && !alwaysAllow(id)
+        return active && !preventedDeactivation
+    }
+    return _(activatables)
         .keys()
-        .filter(activatableId => activatables[activatableId].active && !activatables[activatableId].alwaysAllow)
         .filter(activeId => activeId !== id)
+        .filter(activatableId => isDeactivatable(activatableId))
         .some(activeId => deactivateWhen(activeId, nextPolicy))
+}

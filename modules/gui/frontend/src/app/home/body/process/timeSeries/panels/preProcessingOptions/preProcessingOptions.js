@@ -1,5 +1,5 @@
 import {FormButtons as Buttons} from 'widget/buttons'
-import {Field} from 'widget/form'
+import {Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../timeSeriesRecipe'
@@ -28,7 +28,7 @@ class PreProcessingOptions extends React.Component {
     renderContent() {
         const {inputs: {corrections, mask}} = this.props
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Buttons
                     label={msg('process.timeSeries.panel.preprocess.form.corrections.label')}
                     input={corrections}
@@ -53,7 +53,7 @@ class PreProcessingOptions extends React.Component {
                         tooltip: msg('process.timeSeries.panel.preprocess.form.mask.snow.tooltip')
                     }]}
                 />
-            </React.Fragment>
+            </FieldSet>
         )
     }
 
@@ -65,11 +65,9 @@ class PreProcessingOptions extends React.Component {
                 <PanelHeader
                     icon='cog'
                     title={msg('process.timeSeries.panel.preprocess.title')}/>
-
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-
                 <FormPanelButtons/>
             </RecipeFormPanel>
         )

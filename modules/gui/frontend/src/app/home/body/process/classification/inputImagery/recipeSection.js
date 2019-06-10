@@ -1,4 +1,3 @@
-import {ErrorMessage} from 'widget/form'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {isMobile} from 'widget/userAgent'
@@ -21,17 +20,15 @@ class RecipeSection extends React.Component {
             label: recipe.name
         }))
         return (
-            <React.Fragment>
-                <Combo
-                    label={msg('process.classification.panel.inputImagery.form.recipe.label')}
-                    input={input}
-                    placeholder={msg('process.classification.panel.inputImagery.form.recipe.placeholder')}
-                    options={options}
-                    autoFocus={!isMobile()}
-                    onChange={option => onChange(option.value)}
-                />
-                <ErrorMessage for={input}/>
-            </React.Fragment>
+            <Combo
+                label={msg('process.classification.panel.inputImagery.form.recipe.label')}
+                input={input}
+                placeholder={msg('process.classification.panel.inputImagery.form.recipe.placeholder')}
+                options={options}
+                autoFocus={!isMobile()}
+                onChange={option => onChange(option.value)}
+                errorMessage
+            />
         )
     }
 }

@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {Field, Form, Input, form} from 'widget/form'
+import {Field, Form, Input, form, FieldSet} from 'widget/form'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -43,15 +43,17 @@ export class ForgotPassword extends React.Component {
                     <div className={styles.instructions}>
                         {msg('landing.forgot-password.instructions')}
                     </div>
-                    <Input
-                        input={email}
-                        placeholder={msg('landing.forgot-password.placeholder')}
-                        autoFocus={!isMobile()}
-                        autoComplete='off'
-                        tabIndex={1}
-                        validate='onBlur'
-                        errorMessage
-                    />
+                    <FieldSet>
+                        <Input
+                            input={email}
+                            placeholder={msg('landing.forgot-password.placeholder')}
+                            autoFocus={!isMobile()}
+                            autoComplete='off'
+                            tabIndex={1}
+                            validate='onBlur'
+                            errorMessage
+                        />
+                    </FieldSet>
                 </div>
                 <div className={styles.buttons}>
                     <Button

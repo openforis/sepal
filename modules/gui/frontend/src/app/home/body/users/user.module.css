@@ -1,12 +1,5 @@
 .panel {
     width: 25rem;
-    height: 45rem;
-}
-
-.monthlyLimits {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
 }
 
 .monthlyLimits input {

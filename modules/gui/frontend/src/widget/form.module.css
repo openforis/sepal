@@ -66,7 +66,7 @@ form textarea:focus {
 
 form input:disabled,
 form textarea:disabled {
-    color: #777;
+    color: #888;
 }
 
 form input::placeholder,
@@ -100,4 +100,58 @@ form .errorMessage {
     font-size: .9rem;
     margin-left: 0.5rem;
     color: #B5B5B5;
+}
+
+.formComponent {
+    --horizontal-spacing: 1rem;
+    overflow: hidden; /* required for preventing margin bottom on last element */
+}
+
+.formComponent.normal {
+    --vertical-spacing: 2rem;
+}
+
+.formComponent.compact {
+    --vertical-spacing: 1rem;
+}
+
+.formComponent.none {
+    --vertical-spacing: 0rem;
+}
+
+.formComponent > * {
+    margin-bottom: var(--vertical-spacing);
+}
+
+.formComponent.vertical > *:last-child {
+    margin-bottom: 0;
+}
+
+.formComponent.horizontal {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: calc(-1 * var(--vertical-spacing));
+}
+
+.formComponent.horizontal > * {
+    margin-right: var(--horizontal-spacing);
+}
+
+.formComponent.horizontal > *:last-child {
+    margin-right: 0;
+}
+
+.alignment.left {
+    text-align: left;
+}
+
+.alignment.center {
+    text-align: center;
+}
+
+.alignment.right {
+    text-align: right;
 }

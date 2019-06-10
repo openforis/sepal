@@ -1,4 +1,4 @@
-import {Field, Input, InputGroup, form} from 'widget/form'
+import {Field, FieldSet, Input, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
@@ -75,37 +75,39 @@ class UserDetails extends React.Component {
                     icon='user'
                     title={msg('user.userDetails.title')}/>
                 <PanelContent>
-                    <Input
-                        label={msg('user.userDetails.form.username.label')}
-                        input={username}
-                        disabled={!newUser}
-                        spellCheck={false}
-                        autoFocus={newUser && !isMobile()}
-                        errorMessage
-                    />
-                    <Input
-                        label={msg('user.userDetails.form.name.label')}
-                        input={name}
-                        spellCheck={false}
-                        autoFocus={!newUser && !isMobile()}
-                        errorMessage
-                    />
-                    <Input
-                        label={msg('user.userDetails.form.email.label')}
-                        input={email}
-                        spellCheck={false}
-                        errorMessage
-                    />
-                    <Input
-                        label={msg('user.userDetails.form.organization.label')}
-                        input={organization}
-                        spellCheck={false}
-                        errorMessage
-                    />
-                    <InputGroup
-                        label={msg('user.userDetails.form.monthlyLimits.label')}
-                        errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
-                        <div className={styles.monthlyLimits}>
+                    <FieldSet>
+                        <Input
+                            label={msg('user.userDetails.form.username.label')}
+                            input={username}
+                            disabled={!newUser}
+                            spellCheck={false}
+                            autoFocus={newUser && !isMobile()}
+                            errorMessage
+                        />
+                        <Input
+                            label={msg('user.userDetails.form.name.label')}
+                            input={name}
+                            spellCheck={false}
+                            autoFocus={!newUser && !isMobile()}
+                            errorMessage
+                        />
+                        <Input
+                            label={msg('user.userDetails.form.email.label')}
+                            input={email}
+                            spellCheck={false}
+                            errorMessage
+                        />
+                        <Input
+                            label={msg('user.userDetails.form.organization.label')}
+                            input={organization}
+                            spellCheck={false}
+                            errorMessage
+                        />
+                        <FieldSet
+                            className={styles.monthlyLimits}
+                            horizontal
+                            label={msg('user.userDetails.form.monthlyLimits.label')}
+                            errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
                             <Input
                                 label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
                                 type='number'
@@ -124,8 +126,8 @@ class UserDetails extends React.Component {
                                 input={monthlyBudgetStorageQuota}
                                 spellCheck={false}
                             />
-                        </div>
-                    </InputGroup>
+                        </FieldSet>
+                    </FieldSet>
                 </PanelContent>
                 <FormPanelButtons/>
             </FormPanel>

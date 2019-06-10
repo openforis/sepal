@@ -1,5 +1,5 @@
 import {FormButtons as Buttons} from 'widget/buttons'
-import {Field} from 'widget/form'
+import {Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../timeSeriesRecipe'
@@ -34,11 +34,13 @@ class Retrieve extends React.Component {
         ]
 
         return (
-            <Buttons
-                label={msg('process.timeSeries.panel.retrieve.form.indicator.label')}
-                input={indicator}
-                multiple={false}
-                options={indicatorOptions}/>
+            <FieldSet>
+                <Buttons
+                    label={msg('process.timeSeries.panel.retrieve.form.indicator.label')}
+                    input={indicator}
+                    multiple={false}
+                    options={indicatorOptions}/>
+            </FieldSet>
         )
     }
 
@@ -52,11 +54,9 @@ class Retrieve extends React.Component {
                 <PanelHeader
                     icon='cloud-download-alt'
                     title={msg('process.timeSeries.panel.retrieve.title')}/>
-
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-
                 <FormPanelButtons
                     applyLabel={msg('process.timeSeries.panel.retrieve.apply')}/>
             </RecipeFormPanel>

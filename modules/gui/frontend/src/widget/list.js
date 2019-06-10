@@ -1,8 +1,7 @@
 import {Button} from 'widget/button'
-import {EMPTY, Subject, animationFrameScheduler, interval} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {distinctUntilChanged, filter, map, scan, switchMap} from 'rxjs/operators'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -12,38 +11,37 @@ import styles from './list.module.css'
 import withForwardedRef from 'ref'
 import withSubscriptions from 'subscription'
 
-const ANIMATION_SPEED = .2
+const autoCenter$ = new Subject()
 
-const getContainer = element =>
-    element && element.parentNode && element.parentNode.parentNode
-
-const targetScrollOffset = element => {
-    const container = getContainer(element)
-    return container
-        ? Math.round(element.offsetTop - (getContainer(element).clientHeight - element.clientHeight) / 2)
-        : null
-}
-
-const currentScrollOffset = element => {
-    const container = getContainer(element)
-    return container
-        ? container.scrollTop
-        : null
-}
-
-const setScrollOffset = (element, value) => {
-    const container = getContainer(element)
-    if (container) {
-        container.scrollTop = value
+class List extends React.Component {
+    render() {
+        const {className, ...props} = this.props
+        return (
+            <ReactResizeDetector
+                handleHeight
+                onResize={() => autoCenter$.next()}>
+                <ScrollableContainer className={className}>
+                    <Scrollable
+                        className={styles.options}
+                        direction='xy'
+                        // onHover={element => this.onHover(element)}
+                    >
+                        {(scrollableContainerHeight, scrollable) =>
+                            <ScrollableList
+                                {...props}
+                                scrollableContainerHeight={scrollableContainerHeight}
+                                scrollable={scrollable}
+                            />}
+                    </Scrollable>
+                </ScrollableContainer>
+            </ReactResizeDetector>
+        )
     }
 }
 
-const lerp = rate =>
-    (value, targetValue) => value + (targetValue - value) * rate
-
-class List extends React.Component {
+class ScrollableList extends React.Component {
     highlighted = React.createRef()
-    update$ = new Subject()
+    selected = React.createRef()
     state = {
         highlightedOption: null,
         overrideHover: false
@@ -58,7 +56,7 @@ class List extends React.Component {
     }
 
     render() {
-        const {onCancel, className, keyboard} = this.props
+        const {scrollableContainerHeight, onCancel, keyboard} = this.props
         const keymap = {
             Escape: onCancel ? onCancel : null,
             Enter: () => this.selectHighlighted(),
@@ -70,17 +68,8 @@ class List extends React.Component {
             End: () => this.highlightLast()
         }
         return (
-            <Keybinding keymap={keymap} disabled={!keyboard}>
-                <ReactResizeDetector handleHeight onResize={() => this.update$.next()}>
-                    <ScrollableContainer className={className}>
-                        <Scrollable
-                            className={styles.options}
-                            direction='xy'
-                            onHover={element => this.onHover(element)}>
-                            {scrollableContainerHeight => this.renderList(scrollableContainerHeight)}
-                        </Scrollable>
-                    </ScrollableContainer>
-                </ReactResizeDetector>
+            <Keybinding keymap={keymap} disabled={keyboard === false}>
+                {this.renderList(scrollableContainerHeight)}
             </Keybinding>
         )
     }
@@ -93,8 +82,7 @@ class List extends React.Component {
                 style={{
                     '--scrollable-container-height': overScroll ? scrollableContainerHeight : 0
                 }}
-                onMouseLeave={() => this.update$.next()}
-            >
+                onMouseLeave={() => autoCenter$.next(true)}>
                 {this.renderOptions(options)}
             </ul>
         )
@@ -125,16 +113,24 @@ class List extends React.Component {
     }
 
     renderGroup(option, index) {
+        const {alignment} = this.props
         return (
-            <li
-                key={index}
-                className={styles.group}>
-                {option.label}
+            <li key={index}>
+                <Button
+                    chromeless
+                    look='transparent'
+                    additionalClassName={styles.group}
+                    label={option.label}
+                    width='fill'
+                    alignment={alignment}
+                    disabled
+                />
             </li>
         )
     }
 
     renderNonSelectableOption(option, index) {
+        const {alignment} = this.props
         return (
             <li key={option.value || index}>
                 <Button
@@ -142,7 +138,7 @@ class List extends React.Component {
                     look='transparent'
                     label={option.label}
                     width='fill'
-                    alignment='left'
+                    alignment={alignment}
                     disabled
                 />
             </li>
@@ -150,13 +146,18 @@ class List extends React.Component {
     }
 
     renderSelectableOption(option) {
-        const {selectedOption, tooltipPlacement} = this.props
+        const {selectedOption, tooltipPlacement, alignment} = this.props
         const {overrideHover} = this.state
         const selected = this.isSelected(option)
         const highlighted = this.isHighlighted(option)
-        const ref = highlighted
-            ? this.highlighted
+        const hover = overrideHover
+            ? highlighted
             : null
+        const ref = selected
+            ? this.selected
+            : highlighted
+                ? this.highlighted
+                : null
         return (
             <li
                 key={option.value}
@@ -168,9 +169,9 @@ class List extends React.Component {
                     label={option.label}
                     tooltip={option.tooltip}
                     tooltipPlacement={tooltipPlacement}
-                    hover={overrideHover ? highlighted : null}
+                    hover={hover}
                     width='fill'
-                    alignment='left'
+                    alignment={alignment}
                     disableTransitions
                     onMouseOver={() => this.highlightOption(option)}
                     onMouseOut={() => this.highlightOption(selectedOption)}
@@ -302,47 +303,34 @@ class List extends React.Component {
         onSelect && onSelect(option)
     }
 
-    initializeCenterHighlighted() {
-        const {addSubscription} = this.props
-        const animationFrame$ = interval(0, animationFrameScheduler)
-        const scroll$ = this.update$.pipe(
-            map(() => this.highlighted.current),
-            filter(element => element),
-            switchMap(element => {
-                const target = targetScrollOffset(element)
-                return Math.round(currentScrollOffset(element)) === target
-                    ? EMPTY
-                    : animationFrame$.pipe(
-                        map(() => target),
-                        scan(lerp(ANIMATION_SPEED), currentScrollOffset(element)),
-                        map(value => Math.round(value)),
-                        distinctUntilChanged(),
-                        map(value => ({element, value}))
-                    )
-            })
-        )
-
-        addSubscription(
-            scroll$.subscribe(
-                ({element, value}) => {
-                    this.props.autoCenter && setScrollOffset(element, value)
-                }
-            )
-        )
-    }
-
     highlightSelectedOption() {
         const {autoHighlight} = this.props
         const highlightedOption = this.getSelectedOption() || (autoHighlight && this.getFirstSelectableOption())
         this.setState({
             highlightedOption,
             overrideHover: true
-        }, () => this.update$.next())
+        }, () => autoCenter$.next())
+    }
+
+    centerSelectedOption() {
+        const {scrollable} = this.props
+        scrollable.centerElement(this.selected.current)
+    }
+
+    initializeAutoCenter() {
+        const {addSubscription, scrollable} = this.props
+        addSubscription(
+            autoCenter$.subscribe(
+                reset => reset
+                    ? scrollable.reset(() => this.centerSelectedOption())
+                    : this.centerSelectedOption()
+            )
+        )
+        this.highlightSelectedOption()
     }
 
     componentDidMount() {
-        this.initializeCenterHighlighted()
-        this.highlightSelectedOption()
+        this.initializeAutoCenter()
     }
 
     shouldComponentUpdate(nextProps, nextState) {
@@ -381,6 +369,7 @@ List.propTypes = {
         })
     ).isRequired,
     onSelect: PropTypes.func.isRequired,
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
     autoCenter: PropTypes.any,
     autoHighlight: PropTypes.any,
     className: PropTypes.string,
@@ -394,5 +383,6 @@ List.propTypes = {
 }
 
 List.defaultProps = {
+    alignment: 'left',
     tooltipPlacement: 'right'
 }

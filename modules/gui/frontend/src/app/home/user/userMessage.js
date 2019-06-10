@@ -1,6 +1,5 @@
-import {Field, Input, form} from 'widget/form'
+import {Field, FieldSet, Input, form} from 'widget/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
@@ -48,23 +47,21 @@ class UserMessage extends React.Component {
         return (
             <React.Fragment>
                 <PanelContent>
-                    <ScrollableContainer>
-                        <Scrollable className={styles.panelContent}>
-                            <Input
-                                label={msg('userMessage.form.subject.label')}
-                                autoFocus={!isMobile()}
-                                input={subject}
-                                spellCheck={false}
-                            />
-                            <Input
-                                label={msg('userMessage.form.contents.label')}
-                                input={contents}
-                                textArea={true}
-                                spellCheck={false}
-                            />
-                            {contents.value ? this.renderPreview() : null}
-                        </Scrollable>
-                    </ScrollableContainer>
+                    <FieldSet>
+                        <Input
+                            label={msg('userMessage.form.subject.label')}
+                            autoFocus={!isMobile()}
+                            input={subject}
+                            spellCheck={false}
+                        />
+                        <Input
+                            label={msg('userMessage.form.contents.label')}
+                            input={contents}
+                            textArea={true}
+                            spellCheck={false}
+                        />
+                        {contents.value ? this.renderPreview() : null}
+                    </FieldSet>
                 </PanelContent>
                 <FormPanelButtons/>
             </React.Fragment>

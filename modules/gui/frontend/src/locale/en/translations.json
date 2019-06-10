@@ -257,6 +257,7 @@
   "process": {
     "classification": {
       "create": "Classification",
+      "tabPlaceholder": "Classification",
       "description": "Classify imagery from SEPAL or Google Earth Engine. Include imagery from multiple points in time to do change detection.",
       "panel": {
         "auxiliaryImagery": {
@@ -455,6 +456,7 @@
     },
     "landCover": {
       "create": "RLCMS",
+      "tabPlaceholder": "RLCMS",
       "description": "Regional Land Cover Monitoring System. Create land cover map along with confidence levels from Landsat or Sentinel 2.",
       "panel": {
         "compositeOptions": {
@@ -588,6 +590,7 @@
         "placeholder": "Select preview bands"
       },
       "create": "Optical mosaic",
+      "tabPlaceholder": "Optical_mosaic",
       "description": "Create a mosaic using Landsat or Sentinel 2.",
       "mapToolbar": {
         "centerMap": {
@@ -774,6 +777,21 @@
                 "label": "Snow",
                 "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
               }
+            },
+            "cloudBuffer": {
+              "label": "Cloud buffering",
+              "none": {
+                "label": "None",
+                "tooltip": "Only mask the clouds. It might leave hazy pixels around masked clouds, but will minimize the amount of maxed pixels in the mosaic."
+              },
+              "moderate": {
+                "label": "Moderate",
+                "tooltip": "Mask an additional 120m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
+              },
+              "aggressive": {
+                "label": "Aggressive",
+                "tooltip": "Mask an additional 600m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
+              }
             }
           },
           "title": "Composite",
@@ -949,6 +967,7 @@
     },
     "radarMosaic": {
       "create": "Radar mosaic",
+      "tabPlaceholder": "Radar_mosaic",
       "description": "Create a mosaic using Sentinel 1.",
       "panel": {
         "dates": {
@@ -1111,6 +1130,7 @@
     },
     "timeSeries": {
       "create": "Time series",
+      "tabPlaceholder": "Time_series",
       "description": "Download Landsat time series to SEPAL.",
       "mapToolbar": {
         "centerMap": {

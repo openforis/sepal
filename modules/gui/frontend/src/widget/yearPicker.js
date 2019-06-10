@@ -15,7 +15,7 @@ export default class YearPicker extends React.Component {
     }
 
     render() {
-        const {input, label, placement, tooltip, tooltipPlacement, autoFocus, onChange} = this.props
+        const {input, label, placement, tooltip, tooltipPlacement, autoFocus, errorMessage, onChange} = this.props
         return (
             <Combo
                 className={styles.yearPicker}
@@ -27,6 +27,8 @@ export default class YearPicker extends React.Component {
                 tooltipPlacement={tooltipPlacement}
                 autoFocus={autoFocus}
                 onChange={onChange}
+                errorMessage={errorMessage}
+                alignment='center'
             />
         )
     }

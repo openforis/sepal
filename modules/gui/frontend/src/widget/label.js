@@ -43,9 +43,9 @@ export default class Label extends React.Component {
 Label.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
+    disabled: PropTypes.any,
     msg: PropTypes.string,
     size: PropTypes.oneOf(['normal', 'large']),
     tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string,
-    disabled: PropTypes.any
+    tooltipPlacement: PropTypes.string
 }

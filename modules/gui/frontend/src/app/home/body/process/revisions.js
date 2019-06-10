@@ -2,7 +2,6 @@ import {FormButtons as Buttons} from 'widget/buttons'
 import {Field, form} from 'widget/form'
 import {PanelButtons} from 'widget/panel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {getRevisions, revertToRevision$} from 'app/home/body/process/recipe'
@@ -50,11 +49,7 @@ class Revisions extends React.Component {
                     icon='clock'
                     title={msg('process.revisions.title')}/>
                 <PanelContent className={styles.content}>
-                    <ScrollableContainer>
-                        <Scrollable>
-                            {this.renderRevisions()}
-                        </Scrollable>
-                    </ScrollableContainer>
+                    {this.renderRevisions()}
                 </PanelContent>
                 <PanelButtons onEnter={confirm} onEscape={cancel}>
                     <PanelButtons.Main>

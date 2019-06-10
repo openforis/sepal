@@ -181,6 +181,7 @@
 .look:disabled,
 .look.nonInteractive {
     cursor: default;
+    pointer-events: none;
 }
 
 /* default */

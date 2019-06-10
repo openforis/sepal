@@ -119,6 +119,10 @@
     margin-right: .5rem;
 }
 
+.header .label {
+    margin-left: 1rem;
+}
+
 .scrollableContainer {
     flex-grow: 1;
     display: flex;
@@ -128,14 +132,6 @@
 .content {
     padding: var(--content-padding);
     overflow: hidden;
-}
-
-.content.default > *:not(:last-child) {
-    margin-bottom: 2rem;
-}
-
-.fieldSet > *:not(:last-child) {
-    margin-bottom: 2rem;
 }
 
 @media screen and (max-width: 500px) {

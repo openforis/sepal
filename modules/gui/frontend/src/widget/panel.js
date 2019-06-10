@@ -79,7 +79,7 @@ export class PanelHeader extends React.Component {
                     {icon ? <Icon name={icon}/> : null}
                     {title}
                 </div>
-                {label ? <div>{label}</div> : null}
+                {label ? <div className={styles.label}>{label}</div> : null}
             </React.Fragment>
         )
     }
@@ -109,7 +109,7 @@ export class PanelContent extends React.Component {
         const {className, children} = this.props
         return (
             <ScrollableContainer className={styles.scrollableContainer}>
-                <Scrollable className={[styles.content, className || styles.default].join(' ')}>
+                <Scrollable className={[styles.content, className].join(' ')}>
                     {children}
                 </Scrollable>
             </ScrollableContainer>

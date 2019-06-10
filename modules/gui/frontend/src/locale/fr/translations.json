@@ -33,7 +33,7 @@
     }
   },
   "apps": {
-    "initializing": "Demmarer une session pour {label}...",
+    "initializing": "Demarrer une session pour {label}...",
     "loading": {
       "error": {
         "message": "Recharger la page",
@@ -261,100 +261,9 @@
     "info": "Page {pageNumber} de {pageCount}. Résultats totaux : {itemCount}"
   },
   "process": {
-    "changeDetection": {
-      "create": "Détection de changement",
-      "description": "Détecte les changements entre les mosaiques créées dans SEPAL ou Google Earth Engine.",
-      "panel": {
-        "retrieve": {
-          "apply": "Télécharger",
-          "form": {
-            "destination": {
-              "GEE": "Asset de Google Earth Engine",
-              "SEPAL": "Espace de travail SEPAL",
-              "label": "Télécharger vers",
-              "required": "Une destination doit être sélectionnée"
-            },
-            "task": {
-              "GEE": "Exporter {name} comme asset Google Earth Engine",
-              "SEPAL": "Télécharger {name} vers l'espace de travail Sepal"
-            }
-          },
-          "title": "Télécharger",
-          "tooltip": "Télécharger la classification"
-        },
-        "source": {
-          "asset": {
-            "title": "Sélectionner un asset  Google Earth Engine"
-          },
-          "form": {
-            "asset": {
-              "label": "ID de l' asset",
-              "placeholder": "Entrer une ID pour l'asset...",
-              "required": "Vous devez entrer une ID pour l'asset"
-            },
-            "recipe": {
-              "label": "formule",
-              "placeholder": "Sélectionner une formule...",
-              "required": "Vous devez sélectionner une formule"
-            },
-            "section": {
-              "required": "Il faut sélectionner une image"
-            }
-          },
-          "recipe": {
-            "title": "Sélectionner une formule SEPAL"
-          },
-          "retrieve": {
-            "form": {
-              "destination": {
-                "label": "Destination"
-              }
-            }
-          }
-        },
-        "source1": {
-          "button": "IM1",
-          "title": "Première image",
-          "tooltip": "Sélectionner la première mosaique"
-        },
-        "source2": {
-          "button": "IM2",
-          "title": "Deuxième image",
-          "tooltip": "Sélectionner la seconde mosaique"
-        },
-        "trainingData": {
-          "button": "ETR",
-          "form": {
-            "fusionTable": {
-              "invalid": "ID de la table de fusion non valide",
-              "label": "Table de fusion",
-              "placeholder": "Entrer une ID de table de fusion",
-              "required": "La table de fusion doit être spécifiée"
-            },
-            "fusionTableColumn": {
-              "label": "Attribut",
-              "placeholder": {
-                "loaded": "Choisir un attribut...",
-                "loading": "Chargement des attributs",
-                "noFusionTable": "Entrer d'abord une ID de table de fusion"
-              },
-              "required": "Un attribut doit être sélectionné"
-            },
-            "openCeo": "Ouvrir l'outil de collecte de données d'entrainement"
-          },
-          "title": "Données d'entrainement",
-          "tooltip": "Configurer la source des données d'entrainement"
-        }
-      },
-      "preview": {
-        "error": "Erreur de prévisualisation",
-        "initializing": "Chargement de la prévisualisation...",
-        "loading": "{loaded} tuile(s) chargée(s) parmi {count}",
-        "tilesFailed": "Echec de {failed}"
-      }
-    },
     "classification": {
       "create": "Classification",
+      "tabPlaceholder": "Classification",
       "description": "Classifier une mosaique de SEPAL ou Google Earth Engine (inclus processus multi-date pour la détection de changement)",
       "panel": {
         "retrieve": {
@@ -443,6 +352,7 @@
     },
     "landCover": {
       "create": "RLCMS",
+      "tabPlaceholder": "RLCMS",
       "description": "Regional Land Cover Monitoring System. Créer une carte d'occupation des sols avec des niveaux de confiance à partir de Landsat ou Sentinel 2.",
       "panel": {
         "compositeOptions": {
@@ -530,6 +440,7 @@
         "placeholder": "Sélectionner les bandes à visualiser"
       },
       "create": "Mosaique",
+      "tabPlaceholder": "Mosaique",
       "description": "Créer une mosaique avec Landsat ou Sentinel 2",
       "mapToolbar": {
         "centerMap": {
@@ -885,6 +796,7 @@
     },
     "radarMosaic": {
       "create": "Mosaique radar",
+      "tabPlaceholder": "Mosaique_radar",
       "description": "Créer une mosaique avec Sentinel 1.",
       "panel": {
         "dates": {
@@ -1046,6 +958,7 @@
     },
     "timeSeries": {
       "create": "Séries temporelles",
+      "tabPlaceholder": "Series_temporelles",
       "description": "Télécharger une série temporelle  LANDSAT vers SEPAL",
       "mapToolbar": {
         "centerMap": {

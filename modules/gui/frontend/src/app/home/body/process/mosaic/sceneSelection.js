@@ -85,14 +85,39 @@ class SceneSelection extends React.Component {
 
                     <PanelContent className={loading ? styles.loading : null}>
                         {loading
-                            ?
-                            <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
+                            ? this.renderProgress()
                             : this.renderScenes()}
                     </PanelContent>
 
                     <FormPanelButtons/>
                 </FormPanel>
             </React.Fragment>
+        )
+    }
+
+    renderProgress() {
+        return (
+            <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
+        )
+    }
+
+    renderScenes() {
+        const availableScenes = this.getAvailableScenes()
+        const selectedScenes = this.getSelectedScenes()
+        const haveScenes = availableScenes.length || selectedScenes.length
+        return haveScenes ? (
+            <div className={styles.scenes}>
+                <div className={styles.availableScenes}>
+                    {this.renderAvailableScenes(availableScenes)}
+                </div>
+                <div className={styles.selectedScenes}>
+                    {this.renderSelectedScenes(selectedScenes)}
+                </div>
+            </div>
+        ) : (
+            <div className={styles.noScenes}>
+                {msg('process.mosaic.panel.sceneSelection.noScenes')}
+            </div>
         )
     }
 
@@ -133,26 +158,6 @@ class SceneSelection extends React.Component {
                     {scenes.map(scene => this.renderScene(scene, true))}
                 </Scrollable>
             </ScrollableContainer>
-        )
-    }
-
-    renderScenes() {
-        const availableScenes = this.getAvailableScenes()
-        const selectedScenes = this.getSelectedScenes()
-        const haveScenes = availableScenes.length || selectedScenes.length
-        return haveScenes ? (
-            <div className={styles.scenes}>
-                <div className={styles.availableScenes}>
-                    {this.renderAvailableScenes(availableScenes)}
-                </div>
-                <div className={styles.selectedScenes}>
-                    {this.renderSelectedScenes(selectedScenes)}
-                </div>
-            </div>
-        ) : (
-            <div className={styles.noScenes}>
-                {msg('process.mosaic.panel.sceneSelection.noScenes')}
-            </div>
         )
     }
 

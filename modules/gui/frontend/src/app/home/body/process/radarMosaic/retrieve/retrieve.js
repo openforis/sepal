@@ -1,5 +1,5 @@
 import {FormButtons as Buttons} from 'widget/buttons'
-import {Field} from 'widget/form'
+import {Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../radarMosaicRecipe'
@@ -111,7 +111,7 @@ class Retrieve extends React.Component {
         ].filter(({value}) => user.googleTokens || value !== 'GEE')
 
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Buttons
                     label={msg('process.radarMosaic.panel.retrieve.form.bands.label')}
                     input={bands}
@@ -133,7 +133,7 @@ class Retrieve extends React.Component {
                     input={destination}
                     multiple={false}
                     options={destinationOptions}/>
-            </React.Fragment>
+            </FieldSet>
         )
     }
 
@@ -148,11 +148,9 @@ class Retrieve extends React.Component {
                 <PanelHeader
                     icon='cloud-download-alt'
                     title={msg('process.radarMosaic.panel.retrieve.title')}/>
-
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-
                 <FormPanelButtons
                     applyLabel={msg('process.radarMosaic.panel.retrieve.apply')}/>
             </RecipeFormPanel>

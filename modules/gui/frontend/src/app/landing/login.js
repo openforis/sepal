@@ -1,11 +1,11 @@
-import {Button} from 'widget/button'
-import {Field, Form, Input, form} from 'widget/form'
 import {compose} from 'compose'
-import {invalidCredentials, login, resetInvalidCredentials} from 'widget/user'
-import {isMobile} from 'widget/userAgent'
-import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import {Field, FieldSet, form, Form, Input} from 'widget/form'
+import {invalidCredentials, login, resetInvalidCredentials} from 'widget/user'
+import {isMobile} from 'widget/userAgent'
 import styles from './login.module.css'
 
 const fields = {
@@ -38,22 +38,24 @@ class Login extends React.Component {
         const {form, inputs: {username, password}, action} = this.props
         return (
             <Form className={styles.form} onSubmit={() => this.login(form.values())}>
-                <Input
-                    label={msg('landing.login.username.label')}
-                    input={username}
-                    placeholder={msg('landing.login.username.placeholder')}
-                    autoFocus={!isMobile()}
-                    tabIndex={1}
-                    errorMessage
-                />
-                <Input
-                    label={msg('landing.login.password.label')}
-                    input={password}
-                    type='password'
-                    placeholder={msg('landing.login.password.placeholder')}
-                    tabIndex={2}
-                    errorMessage
-                />
+                <FieldSet>
+                    <Input
+                        label={msg('landing.login.username.label')}
+                        input={username}
+                        placeholder={msg('landing.login.username.placeholder')}
+                        autoFocus={!isMobile()}
+                        tabIndex={1}
+                        errorMessage
+                    />
+                    <Input
+                        label={msg('landing.login.password.label')}
+                        input={password}
+                        type='password'
+                        placeholder={msg('landing.login.password.placeholder')}
+                        tabIndex={2}
+                        errorMessage
+                    />
+                </FieldSet>
                 <div className={styles.buttons}>
                     <div className={styles.links}>
                         <Button

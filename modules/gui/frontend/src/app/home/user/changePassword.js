@@ -1,4 +1,4 @@
-import {Constraint, Field, Input, form} from 'widget/form'
+import {Constraint, Field, FieldSet, Input, form} from 'widget/form'
 import {EMPTY, throwError} from 'rxjs'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
@@ -54,10 +54,10 @@ class ChangePassword extends React.Component {
         )
     }
 
-    renderPanel() {
+    renderForm() {
         const {inputs: {oldPassword, newPassword, confirmPassword}} = this.props
-        return <React.Fragment>
-            <PanelContent>
+        return (
+            <FieldSet>
                 <Input
                     label={msg('user.changePassword.form.oldPassword.label')}
                     type='password'
@@ -77,9 +77,8 @@ class ChangePassword extends React.Component {
                     input={confirmPassword}
                     errorMessage={[confirmPassword, 'passwordsMatch']}
                 />
-            </PanelContent>
-            <FormPanelButtons/>
-        </React.Fragment>
+            </FieldSet>
+        )
     }
 
     render() {
@@ -95,7 +94,10 @@ class ChangePassword extends React.Component {
                 <PanelHeader
                     iscon='key'
                     title={msg('user.changePassword.title')}/>
-                {this.renderPanel()}
+                <PanelContent>
+                    {this.renderForm()}
+                </PanelContent>
+                <FormPanelButtons/>
             </FormPanel>
         )
     }

@@ -1,5 +1,5 @@
 import {FormButtons as Buttons} from 'widget/buttons'
-import {Field} from 'widget/form'
+import {Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {Msg, msg} from 'translate'
 import {PanelContent, PanelHeader} from 'widget/panel'
@@ -42,8 +42,11 @@ class Sources extends React.Component {
         )
         const content = options.length > 1
             ? <Buttons className={styles.dataSets} input={dataSets} options={options} multiple/>
-            : <div className={styles.oneDataSet}><Msg id='process.timeSeries.panel.sources.form.dataSets.oneDataSet'/>
-            </div>
+            : (
+                <div className={styles.oneDataSet}>
+                    <Msg id='process.timeSeries.panel.sources.form.dataSets.oneDataSet'/>
+                </div>
+            )
         return (
             <div>
                 <Label msg={msg('process.timeSeries.panel.sources.form.dataSets.label')}/>
@@ -60,11 +63,11 @@ class Sources extends React.Component {
                 <PanelHeader
                     icon='cog'
                     title={msg('process.timeSeries.panel.sources.title')}/>
-
                 <PanelContent>
-                    {this.renderDataSets()}
+                    <FieldSet>
+                        {this.renderDataSets()}
+                    </FieldSet>
                 </PanelContent>
-
                 <FormPanelButtons/>
             </RecipeFormPanel>
         )

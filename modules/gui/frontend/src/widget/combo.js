@@ -1,13 +1,13 @@
-import {ErrorMessage} from 'widget/form'
+import {FormComponent} from 'widget/form'
 import {Subject, fromEvent} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {delay} from 'rxjs/operators'
 import {isMobile} from 'widget/userAgent'
 import {selectFrom} from 'stateUtils'
+import AutoFocus from 'widget/autoFocus'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
-import Label from 'widget/label'
 import List from 'widget/list'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -24,6 +24,7 @@ const mapStateToProps = state => ({
 
 class Combo extends React.Component {
     inputContainer = React.createRef()
+    input = React.createRef()
     list = React.createRef()
     select$ = new Subject()
     state = {
@@ -37,7 +38,8 @@ class Combo extends React.Component {
     }
 
     render() {
-        const {standalone, disabled, className, onCancel} = this.props
+        const {input, errorMessage, standalone, disabled, className, onCancel} = this.props
+        const {label, tooltip, tooltipPlacement = 'top'} = this.props
         const {showOptions} = this.state
         const onClick = e =>
             standalone
@@ -48,48 +50,43 @@ class Combo extends React.Component {
                         ? null
                         : this.showOptions()
         return (
-            <div className={[styles.container, className].join(' ')}>
-                {this.renderLabel()}
+            <FormComponent
+                className={[styles.container, className].join(' ')}
+                input={input}
+                label={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+                disabled={disabled}
+                errorMessage={errorMessage}>
                 <div
                     ref={this.inputContainer}
                     onClick={onClick}>
                     {this.renderInput()}
                 </div>
-                {this.renderError()}
                 {showOptions ? this.renderOptions() : null}
-            </div>
+            </FormComponent>
         )
     }
 
-    renderLabel() {
-        const {label, tooltip, tooltipPlacement = 'top', disabled} = this.props
-        return label ? (
-            <Label
-                msg={label}
-                tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-                disabled={disabled}
-            />
-        ) : null
-    }
-
-    renderError() {
-        const {input, errorMessage} = this.props
-        return <ErrorMessage for={input.name || errorMessage} tabIndex={-1}/>
-    }
-
     renderInput() {
-        const {placeholder, autoFocus, disabled, busy, standalone, inputClassName} = this.props
-        const {focused, filter, selectedOption} = this.state
+        const {placeholder, autoFocus, disabled, busy, standalone, inputClassName, input} = this.props
+        const {focused, filter, selectedOption, showOptions} = this.state
+        const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
-            ArrowUp: disabled ? null : () => this.showOptions(),
-            ArrowDown: disabled ? null : () => this.showOptions(),
+            ArrowUp: showOptionsKeyBinding,
+            ArrowDown: showOptionsKeyBinding,
+            ArrowLeft: showOptionsKeyBinding,
+            ArrowRight: showOptionsKeyBinding,
+            Home: showOptionsKeyBinding,
+            End: showOptionsKeyBinding,
+            Escape: !showOptions ? undefined : () => this.hideOptions(),
         }
         return (
             <Keybinding
                 disabled={disabled || !focused}
                 keymap={keymap}>
                 <input
+                    ref={this.input}
                     className={[
                         standalone ? styles.standalone : null,
                         selectedOption && !standalone ? styles.fakePlaceholder : null,
@@ -98,18 +95,24 @@ class Combo extends React.Component {
                     type='search'
                     value={filter}
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
-                    autoFocus={autoFocus}
-                    disabled={disabled || busy || isMobile()}
+                    disabled={disabled || busy}
+                    readOnly={isMobile()}
                     onChange={e => this.setFilter(e.target.value)}
-                    onFocus={() => this.setState({focused: true})}
-                    onBlur={() => this.setState({focused: false})}
+                    onFocus={e => {
+                        this.setState({focused: true})
+                    }}
+                    onBlur={() => {
+                        input.validate()
+                        this.setState({focused: false})
+                    }}
                 />
+                <AutoFocus ref={this.input} enabled={autoFocus}/>
             </Keybinding>
         )
     }
 
     renderOptions() {
-        const {placement = 'below', optionsClassName, optionTooltipPlacement} = this.props
+        const {placement = 'below', optionsClassName, optionTooltipPlacement, alignment} = this.props
         const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
@@ -126,6 +129,7 @@ class Combo extends React.Component {
                     tooltipPlacement={optionTooltipPlacement}
                     autoHighlight
                     keyboard
+                    alignment={alignment}
                 />
             </FloatingBox>
         )
@@ -276,11 +280,14 @@ export default compose(
 Combo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
     autoFocus: PropTypes.any,
     busy: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
     inputClassName: PropTypes.string,
+    keyboard: PropTypes.any,
     label: PropTypes.string,
     optionsClassName: PropTypes.string,
     optionTooltipPlacement: PropTypes.string,

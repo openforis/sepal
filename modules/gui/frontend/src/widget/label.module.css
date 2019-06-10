@@ -3,7 +3,7 @@
     --normal-font-size: .8rem;
     --large-font-size: .9rem;
     margin: 0;
-    margin-bottom: .7rem;
+    margin-bottom: .5rem;
     font-size: var(--font-size);
     font-weight: 500;
     text-transform: uppercase;

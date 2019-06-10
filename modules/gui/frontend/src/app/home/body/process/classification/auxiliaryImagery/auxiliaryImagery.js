@@ -1,5 +1,5 @@
 import {FormButtons as Buttons} from 'widget/buttons'
-import {Field} from 'widget/form'
+import {Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
@@ -61,11 +61,13 @@ class AuxiliaryImagery extends React.Component {
             }
         ]
         return (
-            <Buttons
-                label={msg(['process.classification.panel.auxiliaryImagery.form.options.label'])}
-                input={included}
-                options={options}
-                multiple/>
+            <FieldSet>
+                <Buttons
+                    label={msg(['process.classification.panel.auxiliaryImagery.form.options.label'])}
+                    input={included}
+                    options={options}
+                    multiple/>
+            </FieldSet>
         )
     }
 

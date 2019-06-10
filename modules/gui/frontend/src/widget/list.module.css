@@ -14,7 +14,7 @@
     list-style: none;
 }
 
-.options li.group {
+.options .group {
     border: 0;
     padding: .35rem .75rem;
     height: 30px;

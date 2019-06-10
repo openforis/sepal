@@ -432,16 +432,19 @@ export class Input extends React.Component {
         textareaFocused: false
     }
 
-    renderLabel() {
-        const {label, tooltip, tooltipPlacement = 'top'} = this.props
-        return label ? (
-            <Label
-                msg={label}
+    render() {
+        const {textArea, disabled, label, tooltip, tooltipPlacement = 'top', input, errorMessage} = this.props
+        return (
+            <FormComponent
+                disabled={disabled}
+                label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                tabIndex={-1}
-            />
-        ) : null
+                input={input}
+                errorMessage={errorMessage}>
+                {textArea ? this.renderTextArea() : this.renderInput()}
+            </FormComponent>
+        )
     }
 
     renderInput() {
@@ -515,24 +518,6 @@ export class Input extends React.Component {
         )
     }
 
-    renderErrorMessage() {
-        const {errorMessage, input} = this.props
-        return errorMessage ? (
-            <ErrorMessage for={errorMessage === true ? input.name : errorMessage} tabIndex={-1}/>
-        ) : null
-    }
-
-    render() {
-        const {textArea} = this.props
-        return (
-            <div>
-                {this.renderLabel()}
-                {textArea ? this.renderTextArea() : this.renderInput()}
-                {this.renderErrorMessage()}
-            </div>
-        )
-    }
-
     focus() {
         this.element.current.focus()
     }
@@ -560,42 +545,115 @@ Input.propTypes = {
     onChange: PropTypes.func
 }
 
-export class InputGroup extends React.Component {
+export class FormComponent extends React.Component {
+    render() {
+        const {layout, spacing, className, children} = this.props
+        return (
+            <React.Fragment>
+                <div>
+                    {this.renderLabel()}
+                    <div className={[
+                        styles.formComponent,
+                        styles[layout],
+                        styles[spacing],
+                        className
+                    ].join(' ')}>
+                        {children}
+                    </div>
+                    {this.renderErrorMessage()}
+                </div>
+                {this.renderErrorMessageSpacer()}
+            </React.Fragment>
+        )
+    }
+
     renderLabel() {
-        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        const {label, tooltip, tooltipPlacement, alignment, disabled} = this.props
         return label ? (
             <Label
+                className={[styles.alignment, styles[alignment]].join(' ')}
                 msg={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
+                disabled={disabled}
+                tabIndex={-1}
             />
         ) : null
     }
 
     renderErrorMessage() {
         const {errorMessage, input} = this.props
-        return errorMessage ? (
-            <ErrorMessage for={errorMessage === true ? input.name : errorMessage}/>
-        ) : null
+        return errorMessage
+            ? <ErrorMessage for={errorMessage === true ? input : errorMessage}/>
+            : null
     }
 
+    renderErrorMessageSpacer() {
+        const {errorMessage} = this.props
+        return errorMessage
+            ? <div/>
+            : null
+    }
+}
+
+FormComponent.propTypes = {
+    children: PropTypes.any.isRequired,
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    className: PropTypes.string,
+    disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
+    input: PropTypes.object,
+    label: PropTypes.string,
+    layout: PropTypes.oneOf(['vertical', 'horizontal']),
+    spacing: PropTypes.oneOf(['normal', 'compact', 'none']),
+    tooltip: PropTypes.string,
+    tooltipPlacement: PropTypes.string
+}
+
+FormComponent.defaultProps = {
+    alignment: 'left',
+    layout: 'vertical',
+    spacing: 'none',
+    tooltipPlacement: 'top'
+}
+
+export class FieldSet extends React.Component {
     render() {
-        const {children} = this.props
+        const {className, horizontal, compact,
+            disabled, label, tooltip, tooltipPlacement,
+            input, errorMessage, children} = this.props
         return (
-            <React.Fragment>
-                {this.renderLabel()}
-                <fieldset>
-                    {children}
-                </fieldset>
-                {this.renderErrorMessage()}
-            </React.Fragment>
+            <FormComponent
+                className={className}
+                layout={horizontal ? 'horizontal' : 'vertical'}
+                spacing={compact ? 'compact' : 'normal'}
+                disabled={disabled}
+                label={label}
+                tooltip={tooltip}
+                tooltipPlacement={tooltipPlacement}
+                input={input}
+                errorMessage={errorMessage}
+            >
+                {children}
+            </FormComponent>
         )
     }
 }
 
-InputGroup.propTypes = {
-    children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
+FieldSet.propTypes = {
+    children: PropTypes.any.isRequired,
+    className: PropTypes.string,
+    compact: PropTypes.any,
+    disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
+    horizontal: PropTypes.any,
+    input: PropTypes.object,
     label: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
+}
+
+FieldSet.defaultProps = {
+    compact: false,
+    horizontal: false
 }

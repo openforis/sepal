@@ -36,23 +36,28 @@ class RecipeList extends React.Component {
     recipeTypes = [{
         type: 'MOSAIC',
         name: msg('process.mosaic.create'),
+        tabPlaceholder: msg('process.mosaic.tabPlaceholder'),
         description: msg('process.mosaic.description')
     }, {
         type: 'RADAR_MOSAIC',
         name: msg('process.radarMosaic.create'),
+        tabPlaceholder: msg('process.radarMosaic.tabPlaceholder'),
         description: msg('process.radarMosaic.description')
     }, {
         type: 'CLASSIFICATION',
         name: msg('process.classification.create'),
+        tabPlaceholder: msg('process.classification.tabPlaceholder'),
         description: msg('process.classification.description')
     }, {
         type: 'TIME_SERIES',
         name: msg('process.timeSeries.create'),
+        tabPlaceholder: msg('process.timeSeries.tabPlaceholder'),
         description: msg('process.timeSeries.description')
     }
     // , {
     //     type: 'LAND_COVER',
     //     name: msg('process.landCover.create'),
+    //     tabPlaceholder: msg('process.landCover.tabPlaceholder'),
     //     description: msg('process.landCover.description'),
     //     beta: true,
     //     details: <CreateRecipeRLCMS/>

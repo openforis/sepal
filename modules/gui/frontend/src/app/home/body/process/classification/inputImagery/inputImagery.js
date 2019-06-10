@@ -2,7 +2,6 @@ import {FormPanelButtons} from 'widget/formPanel'
 import {PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -38,39 +37,30 @@ class InputImagery extends React.Component {
                     className={styles.panel}
                     placement='bottom-right'
                     onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-
                     <PanelHeader
                         icon='image'
                         title={msg('process.classification.panel.inputImagery.title')}/>
-
                     <PanelContent>
-                        <div>
-                            {this.renderList()}
-                        </div>
+                        {this.renderContent()}
                     </PanelContent>
-
                     <FormPanelButtons invalid={!images.length}>
                         <PanelButtons.Add onClick={() => this.addImage()}/>
                     </FormPanelButtons>
                 </RecipeFormPanel>
-
                 <InputImage/>
             </React.Fragment>
         )
     }
 
-    renderList() {
+    renderContent() {
         const {images = []} = this.props
-        return (
-            <ScrollableContainer className={styles.list}>
-                <Scrollable>
-                    {images.length ?
-                        images
-                            .map(image => this.renderImage(image))
-                        : this.renderNoImageryMessage()}
-                </Scrollable>
-            </ScrollableContainer>
-        )
+        return images.length
+            ? this.renderImages(images)
+            : this.renderNoImageryMessage()
+    }
+
+    renderImages(images) {
+        return images.map(image => this.renderImage(image))
     }
 
     renderImage(image) {

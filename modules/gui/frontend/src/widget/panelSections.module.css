@@ -4,10 +4,6 @@
     flex-grow: 1;
 }
 
-.sections > * > * {
-    /* height: 100%; */
-}
-
 .header {
     display: flex;
     align-items: center;

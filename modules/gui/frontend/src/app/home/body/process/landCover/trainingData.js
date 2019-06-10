@@ -1,6 +1,6 @@
 import {Constraint} from 'widget/form'
 import {Field, Input, form} from 'widget/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {FieldSet, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
@@ -71,11 +71,9 @@ class TrainingData extends React.Component {
                 <PanelHeader
                     icon='cog'
                     title={msg('process.landCover.panel.trainingData.title')}/>
-
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-
                 <FormPanelButtons/>
             </FormPanel>
         )
@@ -92,7 +90,7 @@ class TrainingData extends React.Component {
         const yearPlaceholder = msg(`process.landCover.panel.trainingData.form.yearColumn.placeholder.${columnState}`)
         const classPlaceholder = msg(`process.landCover.panel.trainingData.form.classColumn.placeholder.${columnState}`)
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Input
                     label={msg('process.landCover.panel.trainingData.form.fusionTable.label')}
                     autoFocus
@@ -127,7 +125,7 @@ class TrainingData extends React.Component {
                     options={(columns || []).map(({name}) => ({value: name, label: name}))}
                     errorMessage={[classColumn, 'yearAndClassColumnsSame']}
                 />
-            </React.Fragment>
+            </FieldSet>
         )
     }
 }

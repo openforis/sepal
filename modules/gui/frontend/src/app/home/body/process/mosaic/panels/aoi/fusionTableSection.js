@@ -1,18 +1,19 @@
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
-import {sepalMap} from 'app/home/map/map'
-import {compose} from 'compose'
-import React from 'react'
-import {Subject} from 'rxjs'
-import {map, takeUntil} from 'rxjs/operators'
-import {selectFrom} from 'stateUtils'
-import {msg} from 'translate'
+import {FieldSet} from 'widget/form'
 import {FormButtons} from 'widget/buttons'
-import Combo from 'widget/combo'
 import {Input} from 'widget/form'
-import {isMobile} from 'widget/userAgent'
 import {RecipeActions} from '../../mosaicRecipe'
+import {Subject} from 'rxjs'
+import {compose} from 'compose'
+import {isMobile} from 'widget/userAgent'
+import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
+import {map, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import {sepalMap} from 'app/home/map/map'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import Combo from 'widget/combo'
+import React from 'react'
 
 const mapRecipeToProps = recipe => {
     return {
@@ -54,13 +55,13 @@ class FusionTableSection extends React.Component {
                     ORDER BY '${column}' ASC
             `).pipe(
                 map(e => {
-                        this.recipe.setFusionTableRows(
-                            (e.response.rows || [])
-                                .map(row => row[0])
-                                .filter(distinct)
-                                .filter(value => value))
-                            .dispatch()
-                    }
+                    this.recipe.setFusionTableRows(
+                        (e.response.rows || [])
+                            .map(row => row[0])
+                            .filter(distinct)
+                            .filter(value => value))
+                        .dispatch()
+                }
                 ),
                 takeUntil(this.fusionTableColumnChanged$),
                 takeUntil(this.fusionTableChanged$)
@@ -71,7 +72,7 @@ class FusionTableSection extends React.Component {
     render() {
         const {allowWholeFusionTable, inputs: {fusionTable}} = this.props
         return (
-            <React.Fragment>
+            <FieldSet>
                 <Input
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.label')}
                     autoFocus={!isMobile()}
@@ -83,7 +84,7 @@ class FusionTableSection extends React.Component {
                 />
                 {allowWholeFusionTable ? this.renderFilterOptions() : null}
                 {this.renderColumnValueRowInputs()}
-            </React.Fragment>
+            </FieldSet>
         )
     }
 
@@ -96,7 +97,7 @@ class FusionTableSection extends React.Component {
         return (
             <FormButtons
                 input={fusionTableRowSelection}
-                label={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTableRowSelection.label`)}
+                label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTableRowSelection.label')}
                 options={options}
                 disabled={!this.hasColumns()}
             />
