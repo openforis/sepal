@@ -1,9 +1,5 @@
 .build/
 
-#IntelliJ
-*.iml
-.idea/
-
 #Maven
 target
 
@@ -55,3 +51,28 @@ node_modules/
 modules/peatlands/docker/build/
 
 modules/peatlands/docker/env/
+
+#IntelliJ
+*.iml
+.idea/
+/common/out/
+/common/out/production/classes/
+/common-test/out/
+/common-test/out/production/classes/
+/modules/api-gateway/out/
+/modules/api-gateway/out/production/classes/
+/modules/api-gateway/out/test/classes/
+/modules/gui/out/
+/modules/gui/out/production/classes/
+/modules/gui/out/test/classes/
+/modules/sepal-server/out/
+/modules/sepal-server/out/production/classes/
+/modules/sepal-server/out/test/classes/
+/modules/ssh-gateway/out/
+/modules/ssh-gateway/out/production/classes/
+/modules/task-executor/out/
+/modules/task-executor/out/production/classes/
+/modules/task-executor/out/test/classes/
+/modules/user/out/
+/modules/user/out/production/classes/
+/modules/user/out/test/classes/
