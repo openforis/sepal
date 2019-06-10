@@ -1,13 +1,14 @@
+import LayerDrop from 'app/home/body/process/layer/layerDrop'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {compose} from 'compose'
 import guid from 'guid'
 import React from 'react'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
+import Draggable from 'widget/draggable'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import Sortable from 'widget/sortable'
 import SuperButton from 'widget/superButton'
 import {recipeActionBuilder} from '../recipe'
 import styles from './layerManagement.module.css'
@@ -21,25 +22,34 @@ const mapRecipeToProps = recipe => {
 
 class LayerManagement extends React.Component {
     state = {
-        hover: false
+        hovering: false,
+        dragging: null
     }
 
     render() {
-        const {hover} = this.state
-        return hover ? this.renderOpenedPanel() : this.renderCollapsedPanel()
-        // return this.renderOpenedPanel()
+        const {hovering, dragging} = this.state
+        return (
+            <React.Fragment>
+                {hovering || dragging ? this.renderOpenedPanel() : this.renderCollapsedPanel()}
+                {dragging ? this.renderLayerDrop() : null}
+            </React.Fragment>
+        )
+    }
+
+    renderLayerDrop() {
+        return <LayerDrop
+            layer={{id: guid(), type: 'GEE', title: 'This recipe', bands: ['RED', 'GREEN', 'BLUE']}}
+        />
     }
 
     renderCollapsedPanel() {
         const {images} = this.props
         return (
             <Panel
-                id={'bandSelection'}
+                id='layers'
                 className={styles.panel}
                 type='bottom-center'>
-                <div
-                    onMouseEnter={() => this.setState({hover: true})}
-                    onMouseLeave={() => this.setState({hover: false})}>
+                <div onMouseOver={() => this.setState({hovering: true})}>
                     <PanelHeader
                         icon='layer-group'
                         title={`${images.length} layers`}/>
@@ -50,13 +60,18 @@ class LayerManagement extends React.Component {
 
     renderOpenedPanel() {
         const {images} = this.props
+        const {dragging, hovering} = this.state
         return (
             <div
-                onMouseEnter={() => this.setState({hover: true})}
-                onMouseLeave={() => this.setState({hover: false})}>
+                onMouseOver={() => this.setState({hovering: true})}
+                onMouseLeave={() => this.setState({hovering: false})}>
                 <Panel
-                    id={'bandSelection'}
-                    className={styles.panel}
+                    id='layers'
+                    className={[
+                        styles.panel,
+                        hovering ? styles.hovering : null,
+                        dragging ? styles.dragging : null
+                    ].join(' ')}
                     type='bottom-center'>
                     <PanelHeader
                         icon='layer-group'
@@ -103,16 +118,29 @@ class LayerManagement extends React.Component {
                         onClick={() => this.addImage()}
                     />
                 </div>
-                <Sortable items={images}>
-                    {image =>
-                        <Layer
-                            layer={image}
-                            show={image.shown}
-                            onToggleShow={() => this.toggleShown(image)}/>
-                    }
-                </Sortable>
+                {images.map(image =>
+                    <Draggable
+                        key={image.id}
+                        element={<Icon name={'image'} className={styles.draggableElement}/>}
+                        onStart={() => {
+                            console.log('onStart')
+                            this.setDragging(image)
+                        }}
+                        onDrag={({x, y}) => {
+                        }}
+                        onEnd={() => {
+                            console.log('onEnd')
+                            this.setDragging()
+                        }}>
+                        <Layer layer={image}/>
+                    </Draggable>
+                )}
             </div>
         )
+    }
+
+    setDragging(image) {
+        this.setState({dragging: image})
     }
 
     setLayout(layout) {
@@ -123,19 +151,6 @@ class LayerManagement extends React.Component {
 
     addImage() {
         console.log('addImage')
-    }
-
-    toggleShown(image) {
-        const {layout, images} = this.props
-        const shown = image.shown
-        const actionBuilder = this.actionBuilder('TOGGLE_SHOWN', {image})
-
-        if (!shown && layout === 'single') {
-
-        }
-        actionBuilder
-            .set(['layers', 'images', {id: image.id}, 'shown'], !shown)
-            .dispatch()
     }
 
     actionBuilder(type, props) {
@@ -149,7 +164,7 @@ class LayerManagement extends React.Component {
             .set('layers', {
                 layout: 'single',
                 images: [
-                    {id: guid(), type: 'GEE', title: 'This recipe', bands: ['RED', 'GREEN', 'BLUE'], shown: true},
+                    {id: guid(), type: 'GEE', title: 'This recipe', bands: ['RED', 'GREEN', 'BLUE']},
                     {
                         id: guid(),
                         type: 'GEE',
@@ -172,24 +187,15 @@ export default compose(
 
 class Layer extends React.Component {
     render() {
-        const {layer: {id, title, description}, show, onToggleShow} = this.props
-        const showButton =
-            <Button
-                key='show'
-                chromeless
-                shape='circle'
-                size='large'
-                icon={show ? 'eye' : 'eye-slash'}
-                onClick={onToggleShow}
-            />
+        const {layer: {id, title, description}} = this.props
         return (
             <SuperButton
                 key={id}
                 title={<div className={styles.layerTitle}>{title}</div>}
                 description={description || this.renderBands()}
-                extraButtons={[showButton]}
-                onClick={() => console.log('click')}
                 onRemove={() => console.log('remove')}
+                onEdit={() => console.log('edit')}
+                onClick={() => console.log('click')}
                 removeMessage={'Are you sure you want to remove this layer?'}
                 className={styles.layer}/>
         )

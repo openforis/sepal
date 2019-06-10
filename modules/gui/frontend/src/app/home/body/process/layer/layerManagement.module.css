@@ -2,6 +2,22 @@
     max-width: fit-content;
 }
 
+.draggableElement {
+    font-size: 4rem;
+}
+
+.panel.dragging {
+    background: red;
+    transform: translateY(calc(100% - 2.5rem));
+    transition: transform 150ms ease-in-out 200ms;
+}
+
+.panel.dragging:hover {
+        background: blue;
+        transform: translateY(0);
+        transition: transform 150ms ease-in-out 200ms;
+}
+
 .layoutButtons {
     display: flex;
     justify-content: center;
@@ -20,23 +36,12 @@
     margin-bottom: .5rem;
 }
 
-.layerGrip {
-    cursor: move;
-    max-width: .75rem;
-    min-width: .75rem;
-    background-image: linear-gradient(0deg, transparent 100%, var(--look-default-background-color)),
-    linear-gradient(90deg, var(--look-default-hover-background-color), var(--look-default-background-color));
-    background-size: .2rem .2rem, .2rem .2rem;
-    background-position: 0 0, 0 .1rem;
-}
-
 .layer {
     flex-grow: 1;
 }
 
 
 .layerTitle {
-    /*max-width: 15rem;*/
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

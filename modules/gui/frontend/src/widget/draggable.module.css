@@ -1,0 +1,21 @@
+.draggable > * {
+    cursor: move;
+}
+
+.elementWrapper {
+    position: absolute;
+    display: flex;
+}
+
+.element {
+    pointer-events: all;
+    margin-left: -50%;
+    margin-top: -50%;
+    opacity: .5;
+    cursor: none;
+    z-index: 2;
+}
+
+.element > * {
+    pointer-events: none;
+}
