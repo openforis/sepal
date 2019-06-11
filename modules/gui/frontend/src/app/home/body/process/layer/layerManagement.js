@@ -29,9 +29,12 @@ class LayerManagement extends React.Component {
 
     render() {
         const {hovering, draggedImage} = this.state
-        return hovering || draggedImage
-            ? this.renderOpenedPanel()
-            : this.renderCollapsedPanel()
+        return <React.Fragment>
+            {hovering || draggedImage
+                ? this.renderOpenedPanel()
+                : this.renderCollapsedPanel()}
+            {this.renderLayerDrop()}
+        </React.Fragment>
     }
 
     renderLayerDrop() {
@@ -40,6 +43,7 @@ class LayerManagement extends React.Component {
             layer={draggedImage}
             highlight={hoveredImage}
             disabled={hovering}
+            hide={!hovering && !draggedImage}
             cursor={this.state.cursor}
             onUpdate={areas => this.setState({areas})}
         />
@@ -89,7 +93,6 @@ class LayerManagement extends React.Component {
                         </PanelContent>
                     </Panel>
                 </div>
-                {this.renderLayerDrop()}
             </React.Fragment>
 
         )
@@ -127,15 +130,15 @@ class LayerManagement extends React.Component {
                 </div>
                 {images.map(image =>
                     <div
-                    onMouseOver={() => this.setState({hoveredImage: image})}
-                    onMouseLeave={() => this.setState({hoveredImage: null})}>
-                    <Draggable
-                        key={image.id}
-                        onStart={() => this.setDragging(image)}
-                        onDrag={cursor => this.setState({cursor})}
-                        onEnd={() => this.onDragEnd()}>
-                        <Layer layer={image}/>
-                    </Draggable>
+                        onMouseOver={() => this.setState({hoveredImage: image})}
+                        onMouseLeave={() => this.setState({hoveredImage: null})}>
+                        <Draggable
+                            key={image.id}
+                            onStart={() => this.setDragging(image)}
+                            onDrag={cursor => this.setState({cursor})}
+                            onEnd={() => this.onDragEnd()}>
+                            <Layer layer={image}/>
+                        </Draggable>
                     </div>
                 )}
             </div>

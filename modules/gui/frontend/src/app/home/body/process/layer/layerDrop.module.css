@@ -5,6 +5,12 @@
     bottom: 0;
     left: 0;
     right: 0;
+    opacity: 1;
+    transition: opacity 150ms ease-in-out;
+}
+
+.container.hide {
+    opacity: 0 !important;
 }
 
 .container.dragging {

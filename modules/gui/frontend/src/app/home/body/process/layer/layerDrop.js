@@ -28,11 +28,17 @@ class LayerDrop extends React.Component {
     }
 
     render() {
-        const {layer, layers: {areas}} = this.props
+        const {layer, hide, layers: {areas}} = this.props
+        if (!areas)
+            return null
         const includeCorners = Object.keys(areas).length > 1
         return (
             <Portal type='section'>
-                <div className={[styles.container, layer ? styles.dragging : null].join(' ')}>
+                <div className={[
+                    styles.container,
+                    layer ? styles.dragging : null,
+                    hide ? styles.hide : null
+                ].join(' ')}>
                     {this.renderCenter()}
                     {this.renderTopBottom()}
                     {this.renderLeftRight()}
