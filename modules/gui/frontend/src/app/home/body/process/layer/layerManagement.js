@@ -37,8 +37,10 @@ class LayerManagement extends React.Component {
     }
 
     renderLayerDrop() {
+        const {dragging} = this.state
         return <LayerDrop
-            layer={{id: guid(), type: 'GEE', title: 'This recipe', bands: ['RED', 'GREEN', 'BLUE']}}
+            layer={dragging}
+            cursor={this.state.cursor}
         />
     }
 
@@ -126,8 +128,7 @@ class LayerManagement extends React.Component {
                             console.log('onStart')
                             this.setDragging(image)
                         }}
-                        onDrag={({x, y}) => {
-                        }}
+                        onDrag={cursor => this.setState({cursor})}
                         onEnd={() => {
                             console.log('onEnd')
                             this.setDragging()
@@ -160,19 +161,16 @@ class LayerManagement extends React.Component {
 
     componentDidMount() {
         // TODO: Dummy setup
+        const thisRecipe = {id: guid(), type: 'GEE', title: 'This recipe', bands: ['RED', 'GREEN', 'BLUE']}
+        const anotherRecipe = {
+            id: guid(), type: 'GEE', title: 'Another Mosaic with a bit longer name', bands: ['NIR', 'SWIR1', 'RED']
+        }
+        const planet = {id: guid(), type: 'PLANET', title: 'Planet', description: 'Analytic mosaic'}
         this.actionBuilder('SETUP_DUMMY_LAYERS')
             .set('layers', {
                 layout: 'single',
-                images: [
-                    {id: guid(), type: 'GEE', title: 'This recipe', bands: ['RED', 'GREEN', 'BLUE']},
-                    {
-                        id: guid(),
-                        type: 'GEE',
-                        title: 'Another Mosaic with a bit longer name',
-                        bands: ['NIR', 'SWIR1', 'RED']
-                    },
-                    {id: guid(), type: 'PLANET', title: 'Planet', description: 'Analytic mosaic'}
-                ]
+                images: [thisRecipe, anotherRecipe, planet],
+                areas: {left: thisRecipe.id, right: anotherRecipe.id}
 
             })
             .dispatch()
@@ -183,7 +181,6 @@ export default compose(
     LayerManagement,
     withRecipe(mapRecipeToProps)
 )
-
 
 class Layer extends React.Component {
     render() {

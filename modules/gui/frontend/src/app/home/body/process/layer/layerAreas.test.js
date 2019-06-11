@@ -31,8 +31,8 @@ test('validAreas(${JSON.stringify(areas)}) => ${result}')
         // {areas: {left, bottom}, result: []},
     )
 
-test('nextState(${JSON.stringify(areas)}, area, id) => ${result}')
-    .assert(({areas, id, area, result}) => expect(nextAreas({areas, area, id})).toEqual(result))
+test('assignAreas(${JSON.stringify(areas)}, area, id) => ${result}')
+    .assert(({areas, id, area, result}) => expect(assignAreas({areas, area, id})).toEqual(result))
     .where(
         {areas: {center}, id: 'the id', area: 'center', result: {center: 'the id'}},
         {areas: {center}, id: 'the id', area: 'left', result: {left: 'the id', right: center}},

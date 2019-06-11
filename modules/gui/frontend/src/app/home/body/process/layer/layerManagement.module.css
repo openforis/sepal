@@ -7,13 +7,13 @@
 }
 
 .panel.dragging {
-    background: red;
+    /*background: red;*/
     transform: translateY(calc(100% - 2.5rem));
     transition: transform 150ms ease-in-out 200ms;
 }
 
 .panel.dragging:hover {
-        background: blue;
+        /*background: blue;*/
         transform: translateY(0);
         transition: transform 150ms ease-in-out 200ms;
 }

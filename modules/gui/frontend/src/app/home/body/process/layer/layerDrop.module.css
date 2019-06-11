@@ -5,5 +5,48 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: green;
+    cursor: copy;
+}
+
+.layout {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    gap: .25rem;
+}
+
+.center {
+}
+
+.topBottom {
+    grid-template-rows: 1fr 1fr;
+}
+
+.leftRight {
+    grid-template-columns: 1fr 1fr;
+}
+
+
+.corners {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.area {
+}
+
+.layer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, .1);
+    padding: 4rem;
+    font-size: .9rem;
+}
+
+.layer.selected {
+    background-color: rgba(255, 255, 255, .2);
 }

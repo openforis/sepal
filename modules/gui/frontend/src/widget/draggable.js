@@ -28,16 +28,16 @@ class _Draggable extends React.Component {
                     dragging ? styles.dragging : null
                 ].join(' ')}>
                 {children}
-                {dragging && position
-                    ? <Portal type='global'>
-                        <div className={styles.elementWrapper} style={{left: position.x, top: position.y}}>
-                            <div className={styles.element}>
-                                {element}
-                            </div>
-                        </div>
-                    </Portal>
-                    : null
-                }
+                {/*{dragging && position*/}
+                {/*    ? <Portal type='global'>*/}
+                {/*        <div className={styles.elementWrapper} style={{left: position.x, top: position.y}}>*/}
+                {/*            <div className={styles.element}>*/}
+                {/*                {element}*/}
+                {/*            </div>*/}
+                {/*        </div>*/}
+                {/*    </Portal>*/}
+                {/*    : null*/}
+                {/*}*/}
             </div>
         )
     }
