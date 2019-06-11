@@ -14,6 +14,7 @@ class LayerDrop extends React.Component {
     state = {
         areaCenters: null,
         nextAreas: undefined,
+        closestArea: undefined
     }
     areaRefs = {
         center: React.createRef(),
@@ -106,8 +107,12 @@ class LayerDrop extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const {cursor, layer, layers: {areas}, onUpdate} = this.props
-        if (!layer) {
+        const {disabled, cursor, layer, layers: {areas}, onUpdate} = this.props
+        const {nextAreas} = this.state
+        if (!layer || disabled) {
+            if (nextAreas !== undefined) {
+                this.setState({nextAreas: undefined, closestArea: undefined})
+            }
             return
         }
         const id = layer.id

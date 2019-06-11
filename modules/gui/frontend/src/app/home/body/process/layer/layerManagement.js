@@ -45,7 +45,9 @@ class LayerManagement extends React.Component {
             disabled={hovering}
             hide={!hovering && !draggedImage}
             cursor={this.state.cursor}
-            onUpdate={areas => this.setState({areas})}
+            onUpdate={areas => {
+                this.setState({areas})
+            }}
         />
     }
 
@@ -130,6 +132,7 @@ class LayerManagement extends React.Component {
                 </div>
                 {images.map(image =>
                     <div
+                        key={image.id}
                         onMouseOver={() => this.setState({hoveredImage: image})}
                         onMouseLeave={() => this.setState({hoveredImage: null})}>
                         <Draggable
@@ -146,9 +149,10 @@ class LayerManagement extends React.Component {
     }
 
     onDragEnd() {
-        const {areas} = this.state
+        const {areas, hovering} = this.state
         this.setDragging()
-        this.setAreas(areas)
+        if (!hovering) // Hovering is canceling
+            this.setAreas(areas)
     }
 
     setDragging(image) {
@@ -192,7 +196,10 @@ class LayerManagement extends React.Component {
         this.actionBuilder('SETUP_DUMMY_LAYERS')
             .set('layers', {
                 layout: 'single',
-                images: [thisRecipe, anotherRecipe, planet, googleSatellite],
+                images: [
+                    thisRecipe,
+                    anotherRecipe, planet, googleSatellite
+                ],
                 areas: {left: thisRecipe.id, right: anotherRecipe.id}
 
             })
