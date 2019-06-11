@@ -28,7 +28,7 @@ class LayerDrop extends React.Component {
     }
 
     render() {
-        const {disabled, layer, layers: {areas}} = this.props
+        const {layer, layers: {areas}} = this.props
         const includeCorners = Object.keys(areas).length > 1
         return (
             <Portal type='section'>
@@ -80,17 +80,18 @@ class LayerDrop extends React.Component {
     }
 
     renderArea(area) {
-        const {disabled, layers: {images, areas}} = this.props
+        const {disabled, highlight, layers: {images, areas}} = this.props
         const {closestArea, nextAreas = areas} = this.state
         const layerId = nextAreas[area]
         const layer = images.find(({id}) => id === layerId)
+        const highlighted = (closestArea === area && !disabled) || (highlight && highlight.id === layerId)
         return (
             <div
                 ref={this.areaRefs[area]}
                 key={area}
                 className={[
                     styles.area,
-                    closestArea === area && !disabled ? styles.selected : null,
+                    highlighted ? styles.selected : null,
                     layerId ? styles.layer : null
                 ].join(' ')}>
                 {layer && layer.title}

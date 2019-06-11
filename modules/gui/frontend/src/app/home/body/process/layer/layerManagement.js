@@ -35,9 +35,10 @@ class LayerManagement extends React.Component {
     }
 
     renderLayerDrop() {
-        const {draggedImage, hovering} = this.state
+        const {draggedImage, hoveredImage, hovering} = this.state
         return <LayerDrop
             layer={draggedImage}
+            highlight={hoveredImage}
             disabled={hovering}
             cursor={this.state.cursor}
             onUpdate={areas => this.setState({areas})}
@@ -125,6 +126,9 @@ class LayerManagement extends React.Component {
                     />
                 </div>
                 {images.map(image =>
+                    <div
+                    onMouseOver={() => this.setState({hoveredImage: image})}
+                    onMouseLeave={() => this.setState({hoveredImage: null})}>
                     <Draggable
                         key={image.id}
                         onStart={() => this.setDragging(image)}
@@ -132,6 +136,7 @@ class LayerManagement extends React.Component {
                         onEnd={() => this.onDragEnd()}>
                         <Layer layer={image}/>
                     </Draggable>
+                    </div>
                 )}
             </div>
         )

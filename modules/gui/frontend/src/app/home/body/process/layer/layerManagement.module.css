@@ -15,11 +15,6 @@
     cursor: copy !important;
 }
 
-.panel.dragging:hover {
-    /*transform: translateY(0);*/
-    /*transition: transform 150ms ease-in-out 200ms;*/
-}
-
 .panel.dragging:hover * {
     cursor: no-drop !important;
 }
