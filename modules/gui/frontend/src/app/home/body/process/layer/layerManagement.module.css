@@ -7,15 +7,21 @@
 }
 
 .panel.dragging {
-    /*background: red;*/
     transform: translateY(calc(100% - 2.5rem));
     transition: transform 150ms ease-in-out 200ms;
 }
 
+.panel.dragging * {
+    cursor: copy !important;
+}
+
 .panel.dragging:hover {
-        /*background: blue;*/
-        transform: translateY(0);
-        transition: transform 150ms ease-in-out 200ms;
+    /*transform: translateY(0);*/
+    /*transition: transform 150ms ease-in-out 200ms;*/
+}
+
+.panel.dragging:hover * {
+    cursor: no-drop !important;
 }
 
 .layoutButtons {

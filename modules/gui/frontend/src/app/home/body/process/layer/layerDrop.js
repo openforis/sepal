@@ -3,7 +3,7 @@ import {compose} from 'compose'
 import _ from 'lodash'
 import React from 'react'
 import Portal from 'widget/portal'
-import {assignAreas} from './layerAreas'
+import {assignAreas, validAreas} from './layerAreas'
 import styles from './layerDrop.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -13,7 +13,7 @@ const mapRecipeToProps = recipe => ({
 class LayerDrop extends React.Component {
     state = {
         areaCenters: null,
-        nextAreas: {},
+        nextAreas: undefined,
     }
     areaRefs = {
         center: React.createRef(),
@@ -28,11 +28,11 @@ class LayerDrop extends React.Component {
     }
 
     render() {
-        const {layers: {areas}} = this.props
+        const {disabled, layer, layers: {areas}} = this.props
         const includeCorners = Object.keys(areas).length > 1
         return (
             <Portal type='section'>
-                <div className={styles.container}>
+                <div className={[styles.container, layer ? styles.dragging : null].join(' ')}>
                     {this.renderCenter()}
                     {this.renderTopBottom()}
                     {this.renderLeftRight()}
@@ -80,24 +80,30 @@ class LayerDrop extends React.Component {
     }
 
     renderArea(area) {
-        const {layers: {images}} = this.props
-        const {closestArea, nextAreas} = this.state
+        const {disabled, layers: {images, areas}} = this.props
+        const {closestArea, nextAreas = areas} = this.state
         const layerId = nextAreas[area]
         const layer = images.find(({id}) => id === layerId)
-        return <div
-            ref={this.areaRefs[area]}
-            key={area}
-            className={[
-                styles.area,
-                closestArea === area ? styles.selected : null,
-                layerId ? styles.layer : null
-            ].join(' ')}>
-            {layer && layer.title}
-        </div>
+        return (
+            <div
+                ref={this.areaRefs[area]}
+                key={area}
+                className={[
+                    styles.area,
+                    closestArea === area && !disabled ? styles.selected : null,
+                    layerId ? styles.layer : null
+                ].join(' ')}>
+                {layer && layer.title}
+            </div>
+        )
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const {cursor, layer: {id}, layers: {areas}} = this.props
+        const {cursor, layer, layers: {areas}, onUpdate} = this.props
+        if (!layer) {
+            return
+        }
+        const id = layer.id
         const {areaCenters} = this.state
         if (areas && !areaCenters) {
             this.setState({areaCenters: this.calculateDropTargetCenters()})
@@ -106,7 +112,8 @@ class LayerDrop extends React.Component {
             const closestArea = this.calculateClosestArea(areaCenters, cursor)
             if (closestArea !== prevState.closestArea) {
                 const nextAreas = assignAreas({areas, area: closestArea, id})
-                this.setState({nextAreas})
+                this.setState({nextAreas, areaCenters: this.calculateDropTargetCenters()})
+                onUpdate && onUpdate(nextAreas)
             }
             this.setState({closestArea})
         }
@@ -122,8 +129,9 @@ class LayerDrop extends React.Component {
     }
 
     calculateDropTargetCenters() {
+        const {layers: {areas}} = this.props
         const centers = {}
-        Object.keys(this.areaRefs).forEach(area => {
+        validAreas(areas).forEach(area => {
                 const areaElement = this.areaRefs[area].current
                 const {top, right, bottom, left} = areaElement.getBoundingClientRect()
                 const center = {y: Math.round((top + bottom) / 2), x: Math.round((left + right) / 2)}

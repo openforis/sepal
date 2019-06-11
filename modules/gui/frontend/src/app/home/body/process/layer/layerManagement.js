@@ -23,24 +23,24 @@ const mapRecipeToProps = recipe => {
 class LayerManagement extends React.Component {
     state = {
         hovering: false,
-        dragging: null
+        draggedImage: null,
+        areas: null
     }
 
     render() {
-        const {hovering, dragging} = this.state
-        return (
-            <React.Fragment>
-                {hovering || dragging ? this.renderOpenedPanel() : this.renderCollapsedPanel()}
-                {dragging ? this.renderLayerDrop() : null}
-            </React.Fragment>
-        )
+        const {hovering, draggedImage} = this.state
+        return hovering || draggedImage
+            ? this.renderOpenedPanel()
+            : this.renderCollapsedPanel()
     }
 
     renderLayerDrop() {
-        const {dragging} = this.state
+        const {draggedImage, hovering} = this.state
         return <LayerDrop
-            layer={dragging}
+            layer={draggedImage}
+            disabled={hovering}
             cursor={this.state.cursor}
+            onUpdate={areas => this.setState({areas})}
         />
     }
 
@@ -62,31 +62,35 @@ class LayerManagement extends React.Component {
 
     renderOpenedPanel() {
         const {images} = this.props
-        const {dragging, hovering} = this.state
+        const {draggedImage, hovering} = this.state
         return (
-            <div
-                onMouseOver={() => this.setState({hovering: true})}
-                onMouseLeave={() => this.setState({hovering: false})}>
-                <Panel
-                    id='layers'
-                    className={[
-                        styles.panel,
-                        hovering ? styles.hovering : null,
-                        dragging ? styles.dragging : null
-                    ].join(' ')}
-                    type='bottom-center'>
-                    <PanelHeader
-                        icon='layer-group'
-                        title={`${images.length} layers`}
-                        label={this.renderLayoutButtons()}/>
-                    <PanelContent>
-                        {this.renderImages()}
-                        <Label>
-                            Features
-                        </Label>
-                    </PanelContent>
-                </Panel>
-            </div>
+            <React.Fragment>
+                <div
+                    onMouseOver={() => this.setState({hovering: true})}
+                    onMouseLeave={() => this.setState({hovering: false})}>
+                    <Panel
+                        id='layers'
+                        className={[
+                            styles.panel,
+                            hovering ? styles.hovering : null,
+                            draggedImage ? styles.dragging : null
+                        ].join(' ')}
+                        type='bottom-center'>
+                        <PanelHeader
+                            icon='layer-group'
+                            title={`${images.length} layers`}
+                            label={this.renderLayoutButtons()}/>
+                        <PanelContent>
+                            {this.renderImages()}
+                            <Label>
+                                Features
+                            </Label>
+                        </PanelContent>
+                    </Panel>
+                </div>
+                {this.renderLayerDrop()}
+            </React.Fragment>
+
         )
     }
 
@@ -123,16 +127,9 @@ class LayerManagement extends React.Component {
                 {images.map(image =>
                     <Draggable
                         key={image.id}
-                        element={<Icon name={'image'} className={styles.draggableElement}/>}
-                        onStart={() => {
-                            console.log('onStart')
-                            this.setDragging(image)
-                        }}
+                        onStart={() => this.setDragging(image)}
                         onDrag={cursor => this.setState({cursor})}
-                        onEnd={() => {
-                            console.log('onEnd')
-                            this.setDragging()
-                        }}>
+                        onEnd={() => this.onDragEnd()}>
                         <Layer layer={image}/>
                     </Draggable>
                 )}
@@ -140,8 +137,20 @@ class LayerManagement extends React.Component {
         )
     }
 
+    onDragEnd() {
+        const {areas} = this.state
+        this.setDragging()
+        this.setAreas(areas)
+    }
+
     setDragging(image) {
-        this.setState({dragging: image})
+        this.setState({draggedImage: image})
+    }
+
+    setAreas(areas) {
+        this.actionBuilder('SET_AREAS', areas)
+            .set('layers.areas', areas)
+            .dispatch()
     }
 
     setLayout(layout) {
@@ -166,10 +175,16 @@ class LayerManagement extends React.Component {
             id: guid(), type: 'GEE', title: 'Another Mosaic with a bit longer name', bands: ['NIR', 'SWIR1', 'RED']
         }
         const planet = {id: guid(), type: 'PLANET', title: 'Planet', description: 'Analytic mosaic'}
+        const googleSatellite = {
+            id: guid(),
+            type: 'GOOGLE_SATELLITE',
+            title: 'Google Satellite',
+            description: 'Latest Google Satellite imagery'
+        }
         this.actionBuilder('SETUP_DUMMY_LAYERS')
             .set('layers', {
                 layout: 'single',
-                images: [thisRecipe, anotherRecipe, planet],
+                images: [thisRecipe, anotherRecipe, planet, googleSatellite],
                 areas: {left: thisRecipe.id, right: anotherRecipe.id}
 
             })

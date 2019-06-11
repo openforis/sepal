@@ -5,8 +5,6 @@ import React from 'react'
 import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
 import {distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
 import withSubscriptions from 'subscription'
-import Portal from 'widget/portal'
-import styles from './draggable.module.css'
 
 class _Draggable extends React.Component {
     state = {
@@ -18,26 +16,10 @@ class _Draggable extends React.Component {
     draggableRef = React.createRef()
 
     render() {
-        const {element, children} = this.props
-        const {dragging, position} = this.state
+        const {children} = this.props
         return (
-            <div
-                ref={this.draggableRef}
-                className={[
-                    styles.draggable,
-                    dragging ? styles.dragging : null
-                ].join(' ')}>
+            <div ref={this.draggableRef}>
                 {children}
-                {/*{dragging && position*/}
-                {/*    ? <Portal type='global'>*/}
-                {/*        <div className={styles.elementWrapper} style={{left: position.x, top: position.y}}>*/}
-                {/*            <div className={styles.element}>*/}
-                {/*                {element}*/}
-                {/*            </div>*/}
-                {/*        </div>*/}
-                {/*    </Portal>*/}
-                {/*    : null*/}
-                {/*}*/}
             </div>
         )
     }
