@@ -10,6 +10,7 @@ import SuperButton from 'widget/superButton'
 import actionBuilder from 'action-builder'
 import moment from 'moment'
 import styles from './createRecipe.module.css'
+import {listRecipeTypes, getRecipeType} from './recipeTypes'
 
 const mapStateToProps = state => {
     return {
@@ -91,8 +92,7 @@ class CreateRecipe extends React.Component {
     }
 
     renderRecipeTypeInfo(type) {
-        const {recipeTypes} = this.props
-        const recipeType = recipeTypes.find(recipeType => recipeType.type === type)
+        const recipeType = getRecipeType(type)
         const close = () => this.closePanel()
         const back = () => this.showRecipeTypeInfo()
         return (
@@ -117,7 +117,7 @@ class CreateRecipe extends React.Component {
     }
 
     renderRecipeTypes() {
-        const {recipeTypes, trigger} = this.props
+        const {trigger} = this.props
         const close = () => this.closePanel()
         return (
             <React.Fragment>
@@ -125,7 +125,7 @@ class CreateRecipe extends React.Component {
                     icon='book-open'
                     title={msg('process.recipe.newRecipe.title')}/>
                 <PanelContent>
-                    {recipeTypes.map(recipeType => this.renderRecipeType(recipeType))}
+                    {listRecipeTypes().map(recipeType => this.renderRecipeType(recipeType))}
                 </PanelContent>
                 <PanelButtons shown={!trigger} onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
@@ -136,18 +136,14 @@ class CreateRecipe extends React.Component {
         )
     }
 
-    renderRecipeType({type, name, tabPlaceholder, description, beta, details}) {
+    renderRecipeType(recipeType) {
         const {recipeId} = this.props
         return (
             <RecipeType
-                key={type}
+                key={recipeType.id}
                 recipeId={recipeId}
-                type={type}
-                name={name}
-                tabPlaceholder={tabPlaceholder}
-                description={description}
-                beta={beta}
-                onInfo={details ? () => this.showRecipeTypeInfo(type) : null}/>
+                type={recipeType}
+                onInfo={() => this.showRecipeTypeInfo(recipeType.id)}/>
         )
     }
 
@@ -179,7 +175,6 @@ class CreateRecipe extends React.Component {
 
 CreateRecipe.propTypes = {
     recipeId: PropTypes.string.isRequired,
-    recipeTypes: PropTypes.array.isRequired,
     trigger: PropTypes.any
 }
 
@@ -190,18 +185,18 @@ export default compose(
 
 class RecipeType extends React.Component {
     render() {
-        const {recipeId, type, name, tabPlaceholder, description, beta, onInfo} = this.props
+        const {recipeId, type: {id, labels: {name, tabPlaceholder, creationDescription}, beta, details}, onInfo} = this.props
         const title = beta
             ? <span>{name}<sup className={styles.beta}>Beta</sup></span>
             : name
         return (
             <SuperButton
-                key={type}
+                key={id}
                 className={styles.recipe}
                 title={title}
-                description={description}
-                onClick={() => createRecipe(recipeId, type, tabPlaceholder)}
-                onInfo={() => onInfo && onInfo(type)}
+                description={creationDescription}
+                onClick={() => createRecipe(recipeId, id, tabPlaceholder)}
+                onInfo={() => details && onInfo && onInfo(id)}
             />
         )
     }

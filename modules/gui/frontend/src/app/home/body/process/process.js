@@ -1,41 +1,31 @@
 import {RecipeContext} from 'app/home/body/process/recipeContext'
-import {activator} from 'widget/activation/activator'
-import {compose} from 'compose'
-import {msg} from 'translate'
-import {saveRecipe} from './recipe'
-import Classification from './classification/classification'
-import CloseRecipe from './closeRecipe'
-import LandCover from './landCover/landCover'
-import Mosaic from './mosaic/mosaic'
-import ProcessMenu from './processMenu'
-import RadarMosaic from './radarMosaic/radarMosaic'
-import React from 'react'
-import Recipes from './recipes'
 import Revisions from 'app/home/body/process/revisions'
-import SaveRecipe from './saveRecipe'
+import {compose} from 'compose'
+import React from 'react'
+import {msg} from 'translate'
+import {activator} from 'widget/activation/activator'
 import Tabs from 'widget/tabs'
-import TimeSeries from './timeSeries/timeSeries'
-
-const recipeByType = id => ({
-    MOSAIC: <Mosaic/>,
-    RADAR_MOSAIC: <RadarMosaic/>,
-    CLASSIFICATION: <Classification recipeId={id}/>,
-    TIME_SERIES: <TimeSeries recipeId={id}/>,
-    LAND_COVER: <LandCover/>
-})
+import CloseRecipe from './closeRecipe'
+import ProcessMenu from './processMenu'
+import {saveRecipe} from './recipe'
+import Recipes from './recipes'
+import {getRecipeType} from './recipeTypes'
+import SaveRecipe from './saveRecipe'
 
 class Process extends React.Component {
     renderRecipeList(id) {
         return <Recipes recipeId={id}/>
     }
 
-    renderRecipeByType(id, type) {
-        return recipeByType(id)[type]
+    renderRecipeByType(type) {
+        return React.createElement(
+            getRecipeType(type).components.recipe
+        )
     }
 
     renderRecipe(id, type) {
         return type
-            ? this.renderRecipeByType(id, type)
+            ? this.renderRecipeByType(type)
             : this.renderRecipeList(id)
 
     }

@@ -1,3 +1,4 @@
+import {msg} from 'translate'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {RecipeActions, defaultModel} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {compose} from 'compose'
@@ -22,7 +23,7 @@ const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
 })
 
-class Mosaic extends React.Component {
+class _Mosaic extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
@@ -61,9 +62,19 @@ class Mosaic extends React.Component {
     }
 }
 
-Mosaic.propTypes = {}
-
-export default compose(
-    Mosaic,
+const Mosaic = compose(
+    _Mosaic,
     recipe({defaultModel, mapRecipeToProps})
 )
+
+export default () => ({
+    id: 'MOSAIC',
+    labels: {
+        name: msg('process.mosaic.create'),
+        creationDescription: msg('process.mosaic.description'),
+        tabPlaceholder: msg('process.mosaic.tabPlaceholder'),
+    },
+    components: {
+        recipe: Mosaic
+    }
+})
