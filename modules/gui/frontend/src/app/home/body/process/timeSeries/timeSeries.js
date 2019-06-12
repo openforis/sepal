@@ -1,15 +1,15 @@
-import {compose} from 'compose'
-import {connect} from 'store'
-import {defaultModel} from './timeSeriesRecipe'
 import {recipe} from 'app/home/body/process/recipeContext'
-import {selectFrom} from 'stateUtils'
-import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {sepalMap} from 'app/home/map/map'
 import MapToolbar from 'app/home/map/mapToolbar'
-import PropTypes from 'prop-types'
+import {compose} from 'compose'
 import React from 'react'
+import {selectFrom} from 'stateUtils'
+import {connect} from 'store'
+import {msg} from 'translate'
 import TimeSeriesToolbar from './panels/timeSeriesToolbar'
 import styles from './timeSeries.module.css'
+import {defaultModel} from './timeSeriesRecipe'
 
 const mapStateToProps = state => {
     return {
@@ -22,7 +22,7 @@ const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
 })
 
-class TimeSeries extends React.Component {
+class _TimeSeries extends React.Component {
     render() {
         const {recipeId, recipePath} = this.props
         return (
@@ -49,13 +49,20 @@ class TimeSeries extends React.Component {
     }
 }
 
-TimeSeries.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    aoi: PropTypes.object
-}
-
-export default compose(
-    TimeSeries,
+const TimeSeries = compose(
+    _TimeSeries,
     connect(mapStateToProps),
     recipe({defaultModel, mapRecipeToProps})
 )
+
+export default () => ({
+    id: 'TIME_SERIES',
+    labels: {
+        name: msg('process.timeSeries.create'),
+        creationDescription: msg('process.timeSeries.description'),
+        tabPlaceholder: msg('process.timeSeries.tabPlaceholder'),
+    },
+    components: {
+        recipe: TimeSeries
+    }
+})

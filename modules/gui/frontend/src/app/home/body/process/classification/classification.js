@@ -1,15 +1,15 @@
-import {compose} from 'compose'
-import {connect} from 'store'
-import {defaultModel} from './classificationRecipe'
 import {recipe} from 'app/home/body/process/recipeContext'
-import {selectFrom} from 'stateUtils'
 import {sepalMap} from 'app/home/map/map'
-import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
-import ClassificationPreview from './classificationPreview'
-import ClassificationToolbar from './classificationToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
-import PropTypes from 'prop-types'
+import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
+import {compose} from 'compose'
 import React from 'react'
+import {selectFrom} from 'stateUtils'
+import {connect} from 'store'
+import {msg} from 'translate'
+import ClassificationPreview from './classificationPreview'
+import {defaultModel} from './classificationRecipe'
+import ClassificationToolbar from './classificationToolbar'
 
 const mapStateToProps = state => ({
     tabCount: state.process.tabs.length
@@ -21,7 +21,7 @@ const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images')
 })
 
-class Classification extends React.Component {
+class _Classification extends React.Component {
     render() {
         const {recipeId, recipePath, initialized} = this.props
         return (
@@ -63,12 +63,20 @@ class Classification extends React.Component {
     }
 }
 
-Classification.propTypes = {
-    recipeId: PropTypes.string
-}
-
-export default compose(
-    Classification,
+const Classification = compose(
+    _Classification,
     connect(mapStateToProps),
     recipe({defaultModel, mapRecipeToProps})
 )
+
+export default () => ({
+    id: 'CLASSIFICATION',
+    labels: {
+        name: msg('process.classification.create'),
+        creationDescription: msg('process.classification.description'),
+        tabPlaceholder: msg('process.classification.tabPlaceholder'),
+    },
+    components: {
+        recipe: Classification
+    }
+})

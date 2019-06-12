@@ -1,3 +1,4 @@
+import {msg} from 'translate'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {compose} from 'compose'
 import {defaultModel} from './radarMosaicRecipe'
@@ -16,7 +17,7 @@ const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
 })
 
-class RadarMosaic extends React.Component {
+class _RadarMosaic extends React.Component {
     render() {
         const {recipeId, recipeContext: {statePath}, initialized} = this.props
         return (
@@ -39,9 +40,19 @@ class RadarMosaic extends React.Component {
     }
 }
 
-RadarMosaic.propTypes = {}
-
-export default compose(
-    RadarMosaic,
+const RadarMosaic = compose(
+    _RadarMosaic,
     recipe({defaultModel, mapRecipeToProps})
 )
+
+export default () => ({
+    id: 'RADAR_MOSAIC',
+    labels: {
+        name: msg('process.radarMosaic.create'),
+        creationDescription: msg('process.radarMosaic.description'),
+        tabPlaceholder: msg('process.radarMosaic.tabPlaceholder'),
+    },
+    components: {
+        recipe: RadarMosaic
+    }
+})
