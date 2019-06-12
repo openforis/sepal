@@ -1,8 +1,10 @@
+import AddLayer from 'app/home/body/process/layer/add/addLayer'
 import LayerDrop from 'app/home/body/process/layer/layerDrop'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import {compose} from 'compose'
 import guid from 'guid'
 import React from 'react'
+import {activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import Draggable from 'widget/draggable'
@@ -34,6 +36,7 @@ class LayerManagement extends React.Component {
                 ? this.renderOpenedPanel()
                 : this.renderCollapsedPanel()}
             {this.renderLayerDrop()}
+            <AddLayer/>
         </React.Fragment>
     }
 
@@ -133,6 +136,7 @@ class LayerManagement extends React.Component {
                 {images.map(image =>
                     <div
                         key={image.id}
+                        className={styles.image}
                         onMouseOver={() => this.setState({hoveredImage: image})}
                         onMouseLeave={() => this.setState({hoveredImage: null})}>
                         <Draggable
@@ -172,7 +176,8 @@ class LayerManagement extends React.Component {
     }
 
     addImage() {
-        console.log('addImage')
+        const {activator: {activatables: {addLayer}}} = this.props
+        addLayer.activate()
     }
 
     actionBuilder(type, props) {
@@ -209,7 +214,8 @@ class LayerManagement extends React.Component {
 
 export default compose(
     LayerManagement,
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    activator('addLayer')
 )
 
 class Layer extends React.Component {

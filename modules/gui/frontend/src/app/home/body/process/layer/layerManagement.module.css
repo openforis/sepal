@@ -2,9 +2,10 @@
     max-width: fit-content;
 }
 
-.draggableElement {
-    font-size: 4rem;
+.image:not(:last-child) {
+    margin-bottom: .5rem;
 }
+
 
 .panel.dragging {
     transform: translateY(calc(100% - 2.5rem));
