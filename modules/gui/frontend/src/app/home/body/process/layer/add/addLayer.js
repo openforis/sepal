@@ -1,3 +1,4 @@
+import FooRecipe from 'app/home/body/process/layer/add/fooRecipe'
 import SelectRecipe from 'app/home/body/process/layer/add/selectRecipe'
 import {compose} from 'compose'
 import React from 'react'
@@ -13,6 +14,7 @@ export default class AddLayer extends React.Component {
             <React.Fragment>
                 <AddLayerPanel/>
                 <SelectRecipe/>
+                <FooRecipe/>
             </React.Fragment>
         )
     }

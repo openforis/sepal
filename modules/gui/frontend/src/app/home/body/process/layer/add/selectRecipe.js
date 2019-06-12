@@ -3,6 +3,7 @@ import React from 'react'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {activatable} from 'widget/activation/activatable'
+import {activator} from 'widget/activation/activator'
 import Combo from 'widget/combo'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {isMobile} from 'widget/userAgent'
@@ -46,11 +47,16 @@ class SelectRecipe extends React.Component {
                     placeholder={msg('process.classification.panel.inputImagery.form.recipe.placeholder')}
                     options={options}
                     autoFocus={!isMobile()}
-                    onChange={option => console.log('selected recipe')}
+                    onChange={({value}) => this.selectRecipe(value)}
                     errorMessage
                 />
             </form>
         )
+    }
+
+    selectRecipe(recipeId) {
+        const {activator: {activatables: {fooRecipe}}} = this.props
+        fooRecipe.activate({recipeId: recipeId})
     }
 }
 
@@ -61,5 +67,6 @@ const policy = () => ({
 export default compose(
     SelectRecipe,
     activatable({id: 'selectRecipe', policy, alwaysAllow: true}),
+    activator('fooRecipe'),
     connect(mapStateToProps)
 )
