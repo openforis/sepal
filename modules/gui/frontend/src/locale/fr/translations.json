@@ -258,7 +258,7 @@
     }
   },
   "pagination": {
-    "info": "Page {pageNumber} de {pageCount}. Résultats totaux : {itemCount}"
+    "info": "{start} - {stop - 1} / {count}"
   },
   "process": {
     "classification": {

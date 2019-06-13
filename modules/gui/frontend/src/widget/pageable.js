@@ -1,91 +1,140 @@
 import {Button, ButtonGroup} from 'widget/button'
+import {compose} from 'compose'
+import {connect} from 'store'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import OverflowDetector from 'widget/overflowDetector'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 
 const {Provider, Consumer} = React.createContext()
 
-export class Pageable extends React.Component {
+const mapStateToProps = state => ({
+    dimensions: selectFrom(state, 'dimensions') || []
+})
+
+class _Pageable extends React.Component {
     state = {
-        itemCount: null,
-        pageCount: null,
-        pageNumber: 1
+        count: undefined,
+        start: 0,
+        stop: undefined,
+        direction: 1
     }
 
     componentDidMount() {
-        this.update()
+        this.updateItemCount()
     }
 
     componentDidUpdate(prevProps) {
-        if (!_.isEqual(prevProps.items, this.props.items) || !_.isEqual(prevProps.limit, this.props.limit)) {
-            this.update()
+        if (!_.isEqual(prevProps.items, this.props.items)) {
+            this.updateItemCount()
+        }
+        if (!_.isEqual(prevProps.dimensions, this.props.dimensions)) {
+            this.refreshOnResize()
         }
     }
 
-    update() {
-        const {items, limit} = this.props
-        const itemCount = items.length
-        const pageCount = Math.max(Math.ceil(itemCount / limit), 1)
+    updateItemCount() {
+        const {items} = this.props
+        const count = items.length
         this.setState({
-            pageCount,
-            itemCount,
-            pageNumber: 1
+            count
+        })
+    }
+
+    refreshOnResize() {
+        this.setState({
+            stop: undefined,
+            direction: 1
         })
     }
 
     firstPage() {
         this.setState({
-            pageNumber: 1
+            start: 0,
+            stop: undefined,
+            direction: 1
         })
     }
 
-    lastPage() {
-        this.setState(prevState => ({
-            ...prevState,
-            pageNumber: prevState.pageCount
-        }))
-    }
-
     previousPage() {
-        this.setState(prevState => ({
-            ...prevState,
-            pageNumber: Math.max(prevState.pageNumber - 1, 1)
+        this.setState(({count, start}) => ({
+            start: undefined,
+            stop: Math.min(start, count),
+            direction: -1
         }))
     }
 
     nextPage() {
-        this.setState(prevState => ({
-            ...prevState,
-            pageNumber: Math.min(prevState.pageNumber + 1, prevState.pageCount)
+        this.setState(({stop}) => ({
+            start: Math.max(stop, 0),
+            stop: undefined,
+            direction: 1
         }))
     }
 
-    getPageItems() {
-        const {items, limit} = this.props
-        const {pageNumber} = this.state
-        return items.slice((pageNumber - 1) * limit, pageNumber * limit)
+    next(overflow) {
+        const {direction} = this.state
+        if (overflow === null || direction === 0) {
+            return
+        }
+
+        this.setState(({count, start, stop, direction}) => {
+            const offset = overflow ? - 1 : 1
+        
+            const isEdge = ({start, stop}) => (direction === -1 && start < 0) || (direction === 1 && stop > count)
+        
+            const nextState = ({start, stop}) => ({
+                start: Math.max(start, 0),
+                stop: Math.min(stop, count),
+                direction: overflow
+                    ? 0
+                    : isEdge({start, stop})
+                        ? direction === -1
+                            ? direction = 1
+                            : 0
+                        : direction
+            })
+
+            const nextValue = (thisValue, otherValue) =>
+                thisValue === undefined
+                    ? otherValue
+                    : thisValue + offset * direction
+    
+            return direction === 1
+                ? nextState({
+                    start,
+                    stop: nextValue(stop, start)
+                })
+                : nextState({
+                    start: nextValue(start, stop),
+                    stop
+                })
+        })
     }
 
     render() {
-        const {itemCount, pageCount, pageNumber} = this.state
-        const {children} = this.props
-        const isFirstPage = !itemCount || pageNumber === 1
-        const isLastPage = !itemCount || pageNumber === pageCount
+        const {count, start, stop, direction} = this.state
+        const {items, children} = this.props
+        const isFirstPage = !count || start === 0
+        const isLastPage = !count || stop === count
         const isSinglePage = isFirstPage && isLastPage
         return (
             <Provider value={{
-                itemCount,
-                pageCount,
-                pageNumber,
+                count,
                 isFirstPage,
                 isLastPage,
                 isSinglePage,
-                pageItems: this.getPageItems(),
+                items,
+                start,
+                stop,
+                direction,
                 firstPage: () => this.firstPage(),
                 lastPage: () => this.lastPage(),
                 previousPage: () => this.previousPage(),
-                nextPage: () => this.nextPage()
+                nextPage: () => this.nextPage(),
+                next: overflow => this.next(overflow)
             }}>
                 {children}
             </Provider>
@@ -93,23 +142,64 @@ export class Pageable extends React.Component {
     }
 }
 
+export const Pageable = compose(
+    _Pageable,
+    connect(mapStateToProps)
+)
+
 Pageable.propTypes = {
     children: PropTypes.any.isRequired,
-    items: PropTypes.array.isRequired,
-    limit: PropTypes.number.isRequired
+    items: PropTypes.array.isRequired
 }
 
-export const PageData = props =>
-    <Consumer>
-        {({pageItems}) =>
-            <React.Fragment>
-                {pageItems.map((item, index) => props.children(item, index))}
-            </React.Fragment>
-        }
-    </Consumer>
+export class PageData extends React.Component {
+    ref = React.createRef()
+    render() {
+        const {children} = this.props
+        return (
+            <OverflowDetector>
+                {isOverflown =>
+                    <Consumer>
+                        {({items, start, stop, direction, next}) =>
+                            <PageItems
+                                items={items}
+                                start={start}
+                                stop={stop}
+                                direction={direction}
+                                next={next}
+                                isOverflown={isOverflown}
+                            >
+                                {children}
+                            </PageItems>
+                        }
+                    </Consumer>
+                }
+            </OverflowDetector>
+        )
+    }
+}
 
 PageData.propTypes = {
     children: PropTypes.func.isRequired
+}
+
+class PageItems extends React.Component {
+    render() {
+        const {start, stop} = this.props
+        return start !== undefined && stop !== undefined
+            ? this.renderPage()
+            : null
+    }
+
+    renderPage() {
+        const {items, start, stop, children} = this.props
+        return items.slice(start, stop).map((item, index) => children(item, index))
+    }
+
+    componentDidUpdate() {
+        const {next, isOverflown} = this.props
+        next(isOverflown())
+    }
 }
 
 export const PageControls = props => {
@@ -129,22 +219,12 @@ export const PageControls = props => {
                 icon='backward'
                 onClick={() => pageable.previousPage()}
                 disabled={pageable.isFirstPage}/>
-            <Button chromeless size='large'>
-                <span>{pageable.pageNumber}</span>
-            </Button>
             <Button
                 chromeless
                 size='large'
                 shape='circle'
                 icon='forward'
                 onClick={() => pageable.nextPage()}
-                disabled={pageable.isLastPage}/>
-            <Button
-                chromeless
-                size='large'
-                shape='circle'
-                icon='fast-forward'
-                onClick={() => pageable.lastPage()}
                 disabled={pageable.isLastPage}/>
         </ButtonGroup>
 
@@ -168,14 +248,14 @@ PageControls.propTypes = {
 }
 
 export const PageInfo = props => {
-    const renderDefaultInfo = ({pageNumber, pageCount, itemCount}) =>
+    const renderDefaultInfo = ({count, start, stop}) =>
         <div>
-            {msg('pagination.info', {pageNumber, pageCount, itemCount})}
+            {msg('pagination.info2', {count, start, stop})}
         </div>
     
-    const renderCustomInfo = ({pageNumber, pageCount, itemCount}) =>
+    const renderCustomInfo = ({pageNumber, pageCount, count}) =>
         <React.Fragment>
-            {props.children({pageNumber, pageCount, itemCount})}
+            {props.children({pageNumber, pageCount, count})}
         </React.Fragment>
 
     return (

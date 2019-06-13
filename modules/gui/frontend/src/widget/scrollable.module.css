@@ -1,3 +1,7 @@
+.unscrollable {
+    overflow: hidden;
+}
+
 .scrollable {
     /* Enable momentum scrolling on iDevices */
     -webkit-overflow-scrolling: touch;

@@ -46,7 +46,7 @@ ScrollableContainer.propTypes = {
 
 export const Unscrollable = ({className, children}) => {
     return (
-        <div className={[flexy.rigid, className].join(' ')}>
+        <div className={[flexy.rigid, styles.unscrollable, className].join(' ')}>
             {children}
         </div>
     )

@@ -252,7 +252,7 @@
     }
   },
   "pagination": {
-    "info": "Page {pageNumber} of {pageCount}. Total results: {itemCount}"
+    "info": "{start} - {stop - 1} / {count}"
   },
   "process": {
     "classification": {

@@ -406,9 +406,7 @@ class Users extends React.Component {
                     className={styles.container}
                     tabIndex='0'
                     onKeyDown={e => this.onKeyDown(e)}>
-                    <Pageable
-                        items={this.getFilteredUsers()}
-                        limit={15}>
+                    <Pageable items={this.getFilteredUsers()}>
                         <SectionLayout>
                             <TopBar label={msg('home.sections.users')}/>
                             <Content horizontalPadding verticalPadding menuPadding>

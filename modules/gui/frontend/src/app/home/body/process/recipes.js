@@ -2,7 +2,7 @@ import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {PageControls, PageData, Pageable} from 'widget/pageable'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {closeTab} from 'widget/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -162,9 +162,16 @@ class RecipeList extends React.Component {
         return !recipes && !action('LOAD_RECIPES').dispatched
             ? this.renderProgress()
             : (
-                <PageData>
-                    {recipe => this.renderRecipe(recipe)}
-                </PageData>
+                <ScrollableContainer>
+                    <Unscrollable>
+                        {this.renderSearchAndSort()}
+                    </Unscrollable>
+                    <Unscrollable className={styles.recipes}>
+                        <PageData>
+                            {recipe => this.renderRecipe(recipe)}
+                        </PageData>
+                    </Unscrollable>trans
+                </ScrollableContainer>
             )
     }
 
@@ -215,19 +222,10 @@ class RecipeList extends React.Component {
                     recipeId={recipeId}
                     recipeTypes={this.recipeTypes}
                     trigger={recipes && !recipes.length}/>
-                <Pageable
-                    items={this.getSortedRecipes()}
-                    limit={15}>
+                <Pageable items={this.getSortedRecipes()}>
                     <SectionLayout>
                         <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
-                            <ScrollableContainer>
-                                <Unscrollable>
-                                    {this.renderSearchAndSort()}
-                                </Unscrollable>
-                                <Scrollable className={styles.recipes}>
-                                    {this.renderRecipies()}
-                                </Scrollable>
-                            </ScrollableContainer>
+                            {this.renderRecipies()}
                         </Content>
                         <BottomBar className={styles.bottomBar}>
                             {recipes && recipes.length

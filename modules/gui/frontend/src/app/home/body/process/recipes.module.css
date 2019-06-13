@@ -12,7 +12,7 @@
 }
 
 .recipes {
-    padding-bottom: 5rem;
+    flex-shrink: 1;
 }
 
 .bottomBar {
