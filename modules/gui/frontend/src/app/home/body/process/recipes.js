@@ -18,6 +18,7 @@ import SuperButton from 'widget/superButton'
 import _ from 'lodash'
 import escapeStringRegexp from 'escape-string-regexp'
 import styles from './recipes.module.css'
+import {getRecipeType} from './recipeTypes'
 
 const mapStateToProps = () => {
     const recipes = select('process.recipes')
@@ -33,40 +34,9 @@ class RecipeList extends React.Component {
         filter: ''
     }
 
-    recipeTypes = [{
-        type: 'MOSAIC',
-        name: msg('process.mosaic.create'),
-        tabPlaceholder: msg('process.mosaic.tabPlaceholder'),
-        description: msg('process.mosaic.description')
-    }, {
-        type: 'RADAR_MOSAIC',
-        name: msg('process.radarMosaic.create'),
-        tabPlaceholder: msg('process.radarMosaic.tabPlaceholder'),
-        description: msg('process.radarMosaic.description')
-    }, {
-        type: 'CLASSIFICATION',
-        name: msg('process.classification.create'),
-        tabPlaceholder: msg('process.classification.tabPlaceholder'),
-        description: msg('process.classification.description')
-    }, {
-        type: 'TIME_SERIES',
-        name: msg('process.timeSeries.create'),
-        tabPlaceholder: msg('process.timeSeries.tabPlaceholder'),
-        description: msg('process.timeSeries.description')
-    }
-    // , {
-    //     type: 'LAND_COVER',
-    //     name: msg('process.landCover.create'),
-    //     tabPlaceholder: msg('process.landCover.tabPlaceholder'),
-    //     description: msg('process.landCover.description'),
-    //     beta: true,
-    //     details: <CreateRecipeRLCMS/>
-    // }
-    ]
-
     getRecipeTypeName(type) {
-        const recipeType = this.recipeTypes.find(recipeType => recipeType.type === type)
-        return recipeType && recipeType.name
+        const recipeType = getRecipeType(type)
+        return recipeType && recipeType.labels.name
     }
 
     componentDidMount() {
@@ -220,7 +190,6 @@ class RecipeList extends React.Component {
             <React.Fragment>
                 <CreateRecipe
                     recipeId={recipeId}
-                    recipeTypes={this.recipeTypes}
                     trigger={recipes && !recipes.length}/>
                 <Pageable items={this.getSortedRecipes()}>
                     <SectionLayout>
