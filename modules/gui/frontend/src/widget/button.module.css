@@ -78,6 +78,7 @@
 
 .button.pill {
     border-radius: 500px;
+    min-width: 3.5rem;
     padding: 0 calc(var(--font-size) * .8);
 }
 
