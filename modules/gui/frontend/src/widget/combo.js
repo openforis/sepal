@@ -98,9 +98,7 @@ class Combo extends React.Component {
                     disabled={disabled || busy}
                     readOnly={isMobile()}
                     onChange={e => this.setFilter(e.target.value)}
-                    onFocus={e => {
-                        this.setState({focused: true})
-                    }}
+                    onFocus={() => this.setState({focused: true})}
                     onBlur={() => {
                         input.validate()
                         this.setState({focused: false})

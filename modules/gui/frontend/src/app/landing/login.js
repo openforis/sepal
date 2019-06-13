@@ -1,11 +1,11 @@
-import {compose} from 'compose'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {msg} from 'translate'
 import {Button} from 'widget/button'
-import {Field, FieldSet, form, Form, Input} from 'widget/form'
+import {Field, FieldSet, Form, Input, form} from 'widget/form'
+import {compose} from 'compose'
 import {invalidCredentials, login, resetInvalidCredentials} from 'widget/user'
 import {isMobile} from 'widget/userAgent'
+import {msg} from 'translate'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './login.module.css'
 
 const fields = {

@@ -1,7 +1,7 @@
-import {msg} from 'translate'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {compose} from 'compose'
 import {defaultModel} from './radarMosaicRecipe'
+import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import AoiLayer from '../mosaic/aoiLayer'

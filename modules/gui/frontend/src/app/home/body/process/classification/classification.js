@@ -1,15 +1,15 @@
-import {recipe} from 'app/home/body/process/recipeContext'
-import {sepalMap} from 'app/home/map/map'
-import MapToolbar from 'app/home/map/mapToolbar'
-import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import {compose} from 'compose'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
 import {connect} from 'store'
-import {msg} from 'translate'
-import ClassificationPreview from './classificationPreview'
 import {defaultModel} from './classificationRecipe'
+import {msg} from 'translate'
+import {recipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'stateUtils'
+import {sepalMap} from 'app/home/map/map'
+import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
+import ClassificationPreview from './classificationPreview'
 import ClassificationToolbar from './classificationToolbar'
+import MapToolbar from 'app/home/map/mapToolbar'
+import React from 'react'
 
 const mapStateToProps = state => ({
     tabCount: state.process.tabs.length

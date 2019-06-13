@@ -1,16 +1,16 @@
 import {RecipeContext} from 'app/home/body/process/recipeContext'
-import Revisions from 'app/home/body/process/revisions'
-import {compose} from 'compose'
-import React from 'react'
-import {msg} from 'translate'
 import {activator} from 'widget/activation/activator'
-import Tabs from 'widget/tabs'
+import {compose} from 'compose'
+import {getRecipeType} from './recipeTypes'
+import {msg} from 'translate'
+import {saveRecipe} from './recipe'
 import CloseRecipe from './closeRecipe'
 import ProcessMenu from './processMenu'
-import {saveRecipe} from './recipe'
+import React from 'react'
 import Recipes from './recipes'
-import {getRecipeType} from './recipeTypes'
+import Revisions from 'app/home/body/process/revisions'
 import SaveRecipe from './saveRecipe'
+import Tabs from 'widget/tabs'
 
 class Process extends React.Component {
     renderRecipeList(id) {

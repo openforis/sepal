@@ -1,7 +1,7 @@
-import {msg} from 'translate'
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {RecipeActions, defaultModel} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {compose} from 'compose'
+import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import AoiLayer from './aoiLayer'
