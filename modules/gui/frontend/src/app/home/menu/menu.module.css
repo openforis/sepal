@@ -39,6 +39,7 @@
 }
 
 .menu .mode {
+    width: var(--button-size);
     opacity: 0;
 }
 
