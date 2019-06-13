@@ -230,25 +230,25 @@ class PageItems extends React.Component {
 
 export const PageControls = props => {
     const renderDefaultControls = pageable =>
-        <ButtonGroup type='horizontal-tight'>
+        <ButtonGroup type='horizontal-nowrap'>
             <Button
                 chromeless
                 size='large'
-                shape='circle'
+                shape='pill'
                 icon='fast-backward'
                 onClick={() => pageable.firstPage()}
                 disabled={pageable.isFirstPage}/>
             <Button
                 chromeless
                 size='large'
-                shape='circle'
+                shape='pill'
                 icon='backward'
                 onClick={() => pageable.previousPage()}
                 disabled={pageable.isFirstPage}/>
             <Button
                 chromeless
                 size='large'
-                shape='circle'
+                shape='pill'
                 icon='forward'
                 onClick={() => pageable.nextPage()}
                 disabled={pageable.isLastPage}/>
