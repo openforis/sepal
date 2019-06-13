@@ -39,7 +39,10 @@ class _Pageable extends React.Component {
         const {items} = this.props
         const count = items.length
         this.setState({
-            count
+            count,
+            start: 0,
+            stop: undefined,
+            direction: 1
         })
     }
 
