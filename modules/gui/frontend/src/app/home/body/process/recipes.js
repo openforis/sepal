@@ -7,6 +7,7 @@ import {closeTab} from 'widget/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
+import {getRecipeType} from './recipeTypes'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import CreateRecipe from './createRecipe'
@@ -18,7 +19,6 @@ import SuperButton from 'widget/superButton'
 import _ from 'lodash'
 import escapeStringRegexp from 'escape-string-regexp'
 import styles from './recipes.module.css'
-import {getRecipeType} from './recipeTypes'
 
 const mapStateToProps = () => {
     const recipes = select('process.recipes')
@@ -140,7 +140,7 @@ class RecipeList extends React.Component {
                         <PageData>
                             {recipe => this.renderRecipe(recipe)}
                         </PageData>
-                    </Unscrollable>trans
+                    </Unscrollable>
                 </ScrollableContainer>
             )
     }
