@@ -3,6 +3,7 @@ import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import Keybinding from 'widget/keybinding'
 import OverflowDetector from 'widget/overflowDetector'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -53,28 +54,44 @@ class _Pageable extends React.Component {
         })
     }
 
+    isFirstPage() {
+        const {count, start} = this.state
+        return !count || start === 0
+    }
+
+    isLastPage() {
+        const {count, stop} = this.state
+        return !count || stop === count
+    }
+
     firstPage() {
-        this.setState({
-            start: 0,
-            stop: undefined,
-            direction: 1
-        })
+        if (!this.isFirstPage()) {
+            this.setState({
+                start: 0,
+                stop: undefined,
+                direction: 1
+            })
+        }
     }
 
     previousPage() {
-        this.setState(({count, start}) => ({
-            start: undefined,
-            stop: Math.min(start, count),
-            direction: -1
-        }))
+        if (!this.isFirstPage()) {
+            this.setState(({count, start}) => ({
+                start: undefined,
+                stop: Math.min(start, count),
+                direction: -1
+            }))
+        }
     }
 
     nextPage() {
-        this.setState(({stop}) => ({
-            start: Math.max(stop, 0),
-            stop: undefined,
-            direction: 1
-        }))
+        if (!this.isLastPage()) {
+            this.setState(({stop}) => ({
+                start: Math.max(stop, 0),
+                stop: undefined,
+                direction: 1
+            }))
+        }
     }
 
     next(overflow) {
@@ -120,8 +137,8 @@ class _Pageable extends React.Component {
     render() {
         const {count, start, stop, direction} = this.state
         const {items, children} = this.props
-        const isFirstPage = !count || start === 0
-        const isLastPage = !count || stop === count
+        const isFirstPage = this.isFirstPage()
+        const isLastPage = this.isLastPage()
         const isSinglePage = isFirstPage && isLastPage
         return (
             <Provider value={{
@@ -207,30 +224,35 @@ class PageItems extends React.Component {
 
 export const PageControls = props => {
     const renderDefaultControls = pageable =>
-        <ButtonGroup type='horizontal-tight'>
-            <Button
-                chromeless
-                size='large'
-                shape='circle'
-                icon='fast-backward'
-                onClick={() => pageable.firstPage()}
-                disabled={pageable.isFirstPage}/>
-            <Button
-                chromeless
-                size='large'
-                shape='circle'
-                icon='backward'
-                onClick={() => pageable.previousPage()}
-                disabled={pageable.isFirstPage}/>
-            <Button
-                chromeless
-                size='large'
-                shape='circle'
-                icon='forward'
-                onClick={() => pageable.nextPage()}
-                disabled={pageable.isLastPage}/>
-        </ButtonGroup>
-
+        <Keybinding keymap={{
+            'Shift+ArrowLeft': pageable.firstPage,
+            'ArrowLeft': pageable.previousPage,
+            'ArrowRight': pageable.nextPage
+        }}>
+            <ButtonGroup type='horizontal-tight'>
+                <Button
+                    chromeless
+                    size='large'
+                    shape='circle'
+                    icon='fast-backward'
+                    onClick={() => pageable.firstPage()}
+                    disabled={pageable.isFirstPage}/>
+                <Button
+                    chromeless
+                    size='large'
+                    shape='circle'
+                    icon='backward'
+                    onClick={() => pageable.previousPage()}
+                    disabled={pageable.isFirstPage}/>
+                <Button
+                    chromeless
+                    size='large'
+                    shape='circle'
+                    icon='forward'
+                    onClick={() => pageable.nextPage()}
+                    disabled={pageable.isLastPage}/>
+            </ButtonGroup>
+        </Keybinding>
     const renderCustomControls = pageable =>
         <React.Fragment>
             {props.children({...pageable, renderDefaultControls: () => renderDefaultControls(pageable)})}
