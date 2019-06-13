@@ -141,23 +141,29 @@ class _Pageable extends React.Component {
         const isLastPage = this.isLastPage()
         const isSinglePage = isFirstPage && isLastPage
         return (
-            <Provider value={{
-                count,
-                isFirstPage,
-                isLastPage,
-                isSinglePage,
-                items,
-                start,
-                stop,
-                direction,
-                firstPage: () => this.firstPage(),
-                lastPage: () => this.lastPage(),
-                previousPage: () => this.previousPage(),
-                nextPage: () => this.nextPage(),
-                next: overflow => this.next(overflow)
+            <Keybinding keymap={{
+                'Shift+ArrowLeft': () => this.firstPage(),
+                'ArrowLeft': () => this.previousPage(),
+                'ArrowRight': () => this.nextPage()
             }}>
-                {children}
-            </Provider>
+                <Provider value={{
+                    count,
+                    isFirstPage,
+                    isLastPage,
+                    isSinglePage,
+                    items,
+                    start,
+                    stop,
+                    direction,
+                    firstPage: () => this.firstPage(),
+                    lastPage: () => this.lastPage(),
+                    previousPage: () => this.previousPage(),
+                    nextPage: () => this.nextPage(),
+                    next: overflow => this.next(overflow)
+                }}>
+                    {children}
+                </Provider>
+            </Keybinding>
         )
     }
 }
@@ -224,35 +230,29 @@ class PageItems extends React.Component {
 
 export const PageControls = props => {
     const renderDefaultControls = pageable =>
-        <Keybinding keymap={{
-            'Shift+ArrowLeft': pageable.firstPage,
-            'ArrowLeft': pageable.previousPage,
-            'ArrowRight': pageable.nextPage
-        }}>
-            <ButtonGroup type='horizontal-tight'>
-                <Button
-                    chromeless
-                    size='large'
-                    shape='circle'
-                    icon='fast-backward'
-                    onClick={() => pageable.firstPage()}
-                    disabled={pageable.isFirstPage}/>
-                <Button
-                    chromeless
-                    size='large'
-                    shape='circle'
-                    icon='backward'
-                    onClick={() => pageable.previousPage()}
-                    disabled={pageable.isFirstPage}/>
-                <Button
-                    chromeless
-                    size='large'
-                    shape='circle'
-                    icon='forward'
-                    onClick={() => pageable.nextPage()}
-                    disabled={pageable.isLastPage}/>
-            </ButtonGroup>
-        </Keybinding>
+        <ButtonGroup type='horizontal-tight'>
+            <Button
+                chromeless
+                size='large'
+                shape='circle'
+                icon='fast-backward'
+                onClick={() => pageable.firstPage()}
+                disabled={pageable.isFirstPage}/>
+            <Button
+                chromeless
+                size='large'
+                shape='circle'
+                icon='backward'
+                onClick={() => pageable.previousPage()}
+                disabled={pageable.isFirstPage}/>
+            <Button
+                chromeless
+                size='large'
+                shape='circle'
+                icon='forward'
+                onClick={() => pageable.nextPage()}
+                disabled={pageable.isLastPage}/>
+        </ButtonGroup>
     const renderCustomControls = pageable =>
         <React.Fragment>
             {props.children({...pageable, renderDefaultControls: () => renderDefaultControls(pageable)})}
