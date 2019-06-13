@@ -250,7 +250,7 @@ PageControls.propTypes = {
 export const PageInfo = props => {
     const renderDefaultInfo = ({count, start, stop}) =>
         <div>
-            {msg('pagination.info2', {count, start, stop})}
+            {msg('pagination.info', {count, start, stop})}
         </div>
     
     const renderCustomInfo = ({pageNumber, pageCount, count}) =>
