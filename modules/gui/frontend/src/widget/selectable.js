@@ -27,6 +27,7 @@ export class Selectable extends React.Component {
             ? (
                 <Context.Provider value={{portalContainerId}}>
                     <div className={[
+                        styles.container,
                         active ? styles.active : styles.inactive,
                         active && captureMouseEvents ? styles.captureMouseEvents : null,
                         className
