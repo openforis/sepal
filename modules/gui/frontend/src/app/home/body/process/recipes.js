@@ -137,7 +137,7 @@ class RecipeList extends React.Component {
                         {this.renderSearchAndSort()}
                     </Unscrollable>
                     <Unscrollable className={styles.recipes}>
-                        <PageData>
+                        <PageData itemKey={recipe => recipe.id}>
                             {recipe => this.renderRecipe(recipe)}
                         </PageData>
                     </Unscrollable>

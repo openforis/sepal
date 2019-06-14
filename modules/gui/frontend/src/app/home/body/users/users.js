@@ -377,10 +377,9 @@ class Users extends React.Component {
     renderUsers() {
         const {textFilter} = this.state
         return (
-            <PageData>
-                {(user, index) =>
+            <PageData itemKey={user => user.username || user.id}>
+                {user =>
                     <User
-                        key={user.username || user.id || index}
                         user={user}
                         highlight={textFilter}
                         onClick={() => this.editUser(user)}/>

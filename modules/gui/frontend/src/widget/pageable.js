@@ -181,7 +181,7 @@ Pageable.propTypes = {
 export class PageData extends React.Component {
     ref = React.createRef()
     render() {
-        const {children} = this.props
+        const {itemKey, children} = this.props
         return (
             <Consumer>
                 {({items, start, stop, direction, next}) =>
@@ -194,6 +194,7 @@ export class PageData extends React.Component {
                                 direction={direction}
                                 next={next}
                                 isOverflown={isOverflown}
+                                itemKey={itemKey}
                             >
                                 {children}
                             </PageItems>
@@ -206,7 +207,8 @@ export class PageData extends React.Component {
 }
 
 PageData.propTypes = {
-    children: PropTypes.func.isRequired
+    children: PropTypes.func.isRequired,
+    itemKey: PropTypes.func.isRequired
 }
 
 class PageItems extends React.Component {
@@ -218,13 +220,37 @@ class PageItems extends React.Component {
     }
 
     renderPage() {
-        const {items, start, stop, children} = this.props
-        return items.slice(start, stop).map((item, index) => children(item, index))
+        const {items, start, stop} = this.props
+        return items.slice(start, stop).map(
+            (item, index) => this.renderItem(item, index)
+        )
+    }
+
+    renderItem(item, index) {
+        const {itemKey, children} = this.props
+        return (
+            <PageItem
+                key={itemKey(item) || index}
+                item={item}>
+                {children}
+            </PageItem>
+        )
     }
 
     componentDidUpdate() {
         const {next, isOverflown} = this.props
         next(isOverflown())
+    }
+}
+
+class PageItem extends React.Component {
+    render() {
+        const {item, children} = this.props
+        return children(item)
+    }
+
+    shouldComponentUpdate(nextProps) {
+        return nextProps.item !== this.props.item
     }
 }
 
