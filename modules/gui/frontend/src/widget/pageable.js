@@ -91,7 +91,8 @@ class _Pageable extends React.Component {
 
     next(overflow) {
         const {direction} = this.state
-        if (overflow === null || direction === 0) {
+
+        if (direction === 0) {
             return
         }
 
