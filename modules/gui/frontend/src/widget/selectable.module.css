@@ -2,7 +2,11 @@
     pointer-events: all;
 }
 
-.active {
+.container {
+    overflow: hidden;
+}
+
+.active {;
     z-index: 1;
 }
 
