@@ -39,7 +39,7 @@ def create(spec, context):
         download_dir=context.download_dir,
         description=spec['description'],
         credentials=context.credentials,
-        expression=spec['expression'],
+        indicator=spec['indicator'],
         data_sets=spec['dataSets'],
         aoi=aoi,
         from_date=spec['fromDate'],
@@ -52,18 +52,19 @@ def create(spec, context):
 
 class DownloadFeatures(ThreadTask):
     def __init__(
-            self, username, download_dir, description, credentials, expression,
+            self, username, download_dir, description, credentials, indicator,
             data_sets, aoi, from_date, to_date, mask_snow, brdf_correct, surface_reflectance):
         super(DownloadFeatures, self).__init__('download_features')
         self.spec = TimeSeriesSpec(
             credentials=credentials,
-            expression=expression,
+            indicator=indicator,
             data_sets=data_sets,
             aoi=aoi,
             from_date=from_date,
             to_date=to_date,
             shadow_tolerance=1,
             mask_clouds=True,
+            cloud_buffer=0,
             mask_snow=mask_snow,
             brdf_correct=brdf_correct,
             surface_reflectance=surface_reflectance,
@@ -128,9 +129,9 @@ class DownloadFeatures(ThreadTask):
             drive.delete(self.spec.credentials, self.drive_folder)
 
     def __str__(self):
-        return '{0}(download_dir={1}, description={2}, credentials={3}, expression={4}, data_sets={5}, ' \
+        return '{0}(download_dir={1}, description={2}, credentials={3}, indicator={4}, data_sets={5}, ' \
                'from_date={6}, to_date={7}, mask_snow={8}, brdf_correct={9})'.format(
-            type(self).__name__, self.download_dir, self.description, self.spec.credentials, self.spec.expression,
+            type(self).__name__, self.download_dir, self.description, self.spec.credentials, self.spec.indicator,
             self.spec.data_sets, self.spec.from_date, self.spec.to_date, self.spec.mask_snow,
             self.spec.brdf_correct)
 
@@ -417,8 +418,8 @@ class Status(object):
 
 TimeSeriesSpec = namedtuple(
     'TimeSeriesSpec',
-    'credentials, expression, data_sets, aoi, from_date, to_date, surface_reflectance, shadow_tolerance, mask_clouds, '
-    'mask_snow, brdf_correct, target_day, masked_on_analysis, bands, calibrate')
+    'credentials, indicator, data_sets, aoi, from_date, to_date, surface_reflectance, shadow_tolerance, mask_clouds, '
+    'mask_snow, brdf_correct, target_day, masked_on_analysis, bands, calibrate, cloud_buffer')
 
 
 def _active(task):

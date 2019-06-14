@@ -13,6 +13,9 @@ const indexByName = {
     mndwi: {
         requiredBands: ['green', 'swir1']
     },
+    ndfi: {
+        requiredBands: ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
+    },
     evi: {
         requiredBands: ['blue', 'red', 'nir']
     },
@@ -46,7 +49,7 @@ const indexByName = {
 }
 
 const indexNames = [
-    'ndvi', 'ndmi', 'ndwi', 'mndwi', 'evi', 'evi2', 'savi', 'nbr', 'ui', 'ndbi', 'ibi', 'nbi', 'ebbi', 'bui'
+    'ndvi', 'ndmi', 'ndwi', 'mndwi', 'ndfi', 'evi', 'evi2', 'savi', 'nbr', 'ui', 'ndbi', 'ibi', 'nbi', 'ebbi', 'bui'
 ]
 
 export const getAvailableIndexes = availableBands =>

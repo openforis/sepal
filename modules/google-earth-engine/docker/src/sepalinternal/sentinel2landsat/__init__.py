@@ -14,6 +14,11 @@ class Sentinel2LandsatMosaicSpec(MosaicSpec):
         self.landsat = LandsatAutomaticMosaicSpec(spec)
         self.sentinel2 = Sentinel2AutomaticMosaicSpec(spec)
         self.surface_reflectance = self.landsat.surface_reflectance
+        if not self.scale:
+            self.set_scale()
+
+    def set_scale(self):
+        self.scale = min(self.landsat.scale, self.sentinel2.scale)
 
     def _data_sets(self):
         return _flatten([self.landsat._data_sets(), self.sentinel2._data_sets()])

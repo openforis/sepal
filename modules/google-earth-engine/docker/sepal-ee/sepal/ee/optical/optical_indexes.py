@@ -1,4 +1,24 @@
-from sepal.ee.image import evaluate
+from sepal.ee.image import band_intersection, evaluate, select_and_add_missing, when
+
+
+def to_index(image, index_name):
+    return {
+        'ndvi': to_ndvi(image),
+        'ndmi': to_ndmi(image),
+        'ndwi': to_ndwi(image),
+        'mndwi': to_mndwi(image),
+        'evi': to_evi(image),
+        'evi2': to_evi2(image),
+        'savi': to_savi(image),
+        'nbr': to_nbr(image),
+        'ui': to_ui(image),
+        'ndbi': to_ndbi(image),
+        'ibi': to_ibi(image),
+        'nbi': to_nbi(image),
+        'ebbi': to_ebbi(image),
+        'bui': to_bui(image),
+        'ndfi': to_ndfi(image),
+    }[index_name]
 
 
 def to_ndvi(image):
@@ -79,6 +99,44 @@ def to_mndwi(image):
         expression='(green - swir1) / (green + swir1)',
         name='mndwi'
     )
+
+
+def to_ndfi(image):
+    """
+    Calculates the Normalized Difference Fraction Index (NDFI) for the provided image.
+
+    Required bands: ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
+
+    Args:
+        image: Image to calculate NDFI for
+
+    Returns:
+        If image contains required bands, single band image named 'ndfi', otherwise an image without bands.
+    """
+    required_bands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
+    valid_image = band_intersection(image, required_bands).length().eq(6)
+
+    def calculate_ndfi():
+        gv = [500, 900, 400, 6100, 3000, 1000]
+        shade = [0, 0, 0, 0, 0, 0]
+        npv = [1400, 1700, 2200, 3000, 5500, 3000]
+        soil = [2000, 3000, 3400, 5800, 6000, 5800]
+        cloud = [9000, 9600, 8000, 7800, 7200, 6500]
+        unmixed = select_and_add_missing(image, required_bands) \
+            .unmix(
+            endmembers=[gv, shade, npv, soil, cloud],
+            sumToOne=True,
+            nonNegative=True
+        ).rename(['gv', 'shade', 'npv', 'soil', 'cloud'])
+        return unmixed \
+            .expression(
+            '((i.gv / (1 - i.shade)) - (i.npv + i.soil)) / ((i.gv / (1 - i.shade)) + i.npv + i.soil)',
+            {'i': unmixed}
+        ) \
+            .rename('ndfi') \
+            .float()
+
+    return when(valid_image, calculate_ndfi)
 
 
 def to_evi(image, L=1, C1=6, C2=7.5, G=2.5):

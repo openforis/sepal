@@ -39,7 +39,8 @@ class AssetExport(ThreadTask):
                 image=image_spec._ee_image(),
                 region=image_spec.aoi.geometry(),
                 description=self.description,
-                scale=image_spec.scale
+                scale=image_spec.scale,
+                pyramidingPolicy=image_spec.pyramiding_policy
             ))
 
         return self._export.submit() \

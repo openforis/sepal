@@ -43,7 +43,7 @@ const submitRetrieveRecipeTask = recipe => {
             {
                 title: msg(['process.timeSeries.panel.retrieve.task'], {name}),
                 description: name,
-                expression: toExpression(recipe.ui.retrieveOptions.indicator),
+                indicator: recipe.ui.retrieveOptions.indicator,
                 dataSets: recipe.model.sources[Object.keys(recipe.model.sources)[0]],
                 aoi: recipe.model.aoi,
                 fromDate: recipe.model.dates.startDate,
@@ -54,27 +54,6 @@ const submitRetrieveRecipeTask = recipe => {
             }
     }
     return api.tasks.submit$(task).subscribe()
-}
-
-const toExpression = indicator => {
-    switch (indicator) {
-    case 'NDVI':
-        return '10000 * (i.nir - i.red) / (i.nir + i.red)'
-    case 'NDMI':
-        return '10000 * (i.nir - i.swir1) / (i.nir + i.swir1)'
-    case 'NDWI':
-        return '10000 * (i.green - i.nir) / (i.green + i.nir)'
-    case 'NBR':
-        return '10000 * (i.nir - i.swir2) / (i.nir + i.swir2)'
-    case 'EVI':
-        return '10000 * 2.5 * (i.nir - i.red) / (i.nir + 6 * i.red - 7.5 * i.blue + 1)'
-    case 'EVI2':
-        return '10000 * 2.5 * (i.nir - i.red) / (i.nir + 2.4 * i.red + 1)'
-    case 'SAVI':
-        return '10000 * 1.5 * (i.nir - i.red) / (i.nir + i.red + 0.5)'
-    default:
-        throw Error('Unexpected indicator: ' + indicator)
-    }
 }
 
 export const dateRange = dates => ([moment(dates.startDate, DATE_FORMAT), moment(dates.endDate, DATE_FORMAT)])
