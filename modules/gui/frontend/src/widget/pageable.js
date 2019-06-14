@@ -142,9 +142,9 @@ class _Pageable extends React.Component {
         const isSinglePage = isFirstPage && isLastPage
         return (
             <Keybinding keymap={{
-                'Shift+ArrowLeft': () => this.firstPage(),
-                'ArrowLeft': () => this.previousPage(),
-                'ArrowRight': () => this.nextPage()
+                'Ctrl+Shift+ArrowLeft': () => this.firstPage(),
+                'Ctrl+ArrowLeft': () => this.previousPage(),
+                'Ctrl+ArrowRight': () => this.nextPage()
             }}>
                 <Provider value={{
                     count,
