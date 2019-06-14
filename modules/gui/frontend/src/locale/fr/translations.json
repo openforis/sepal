@@ -310,6 +310,10 @@
             "form": {
               "destination": {
                 "label": "Destination"
+              },
+              "scale": {
+                "info": "{scale} mètres",
+                "label": "Échelle"
               }
             }
           },

@@ -412,6 +412,10 @@
               "label": "Retrieve to",
               "required": "A destination must be selected"
             },
+            "scale": {
+              "info": "{scale} meters",
+              "label": "Scale"
+            },
             "task": {
               "GEE": "Export {name} as a Google Earth Engine asset",
               "SEPAL": "Retrieve {name} to Sepal workspace"

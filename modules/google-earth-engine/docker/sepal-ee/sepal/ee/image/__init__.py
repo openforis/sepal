@@ -144,4 +144,4 @@ def when(condition, true_callback):
         0,
         condition.Not().Not().subtract(1)  # -1 if false, 0 if true
     )
-    return true_list.iterate(lambda ignore1, ignore2: true_callback(), ee.Image().select([]))
+    return ee.Image(true_list.iterate(lambda ignore1, ignore2: true_callback(), ee.Image().select([])))

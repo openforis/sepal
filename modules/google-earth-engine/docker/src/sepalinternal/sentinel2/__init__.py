@@ -16,6 +16,19 @@ class Sentinel2MosaicSpec(MosaicSpec):
     def __init__(self, spec):
         super(Sentinel2MosaicSpec, self).__init__(spec)
         self.brdf_correct = False
+        if not self.scale:
+            self.set_scale()
+
+    def set_scale(self):
+        if self.bands:
+            self.scale = min([
+                resolution
+                for band, resolution
+                in _scale_by_band.iteritems()
+                if band in self.bands
+            ])
+        else:
+            self.scale = 10
 
     def _data_sets(self):
         return [Sentinel2DataSet(self._create_image_filter(), self.surface_reflectance)]
@@ -101,3 +114,28 @@ class Sentinel2DataSet(DataSet):
             bands['cirrus'] = 'B10'
         return bands
 
+
+_scale_by_band = {
+    'aerosol': 60,
+    'blue': 10,
+    'green': 10,
+    'red': 10,
+    'redEdge1': 20,
+    'redEdge2': 20,
+    'redEdge3': 20,
+    'nir': 10,
+    'redEdge4': 20,
+    'waterVapor': 60,
+    'cirrus': 60,
+    'swir1': 20,
+    'swir2': 20,
+    'brightness': 10,
+    'greenness': 10,
+    'wetness': 10,
+    'fourth': 10,
+    'fifth': 10,
+    'sixth': 10,
+    'dayOfYear': 10,
+    'daysFromTarget': 10,
+    'unixTimeDays': 10
+}

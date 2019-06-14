@@ -13,12 +13,16 @@ class RadarMosaic(ImageSpec):
         self.aoi = Aoi.create(spec['recipe']['model']['aoi'])
         self.bands = spec['bands']
         self.time_scan = not self.model['dates'].get('targetDate')
-        self.scale = spec.get('scale', 20)
         self.harmonics_dependents = [
             dependent
             for dependent in ['VV', 'VH']
             if self._contains_harmonics_band(dependent)
         ]
+        if not self.scale:
+            self.set_scale()
+
+    def set_scale(self):
+        self.scale = 20
 
     def _viz_params(self):
         if self.harmonics_dependents:
