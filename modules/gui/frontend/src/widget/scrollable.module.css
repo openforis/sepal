@@ -1,4 +1,6 @@
 .unscrollable {
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
 
