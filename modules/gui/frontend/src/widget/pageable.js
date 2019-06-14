@@ -147,14 +147,14 @@ class _Pageable extends React.Component {
                 'Ctrl+ArrowRight': () => this.nextPage()
             }}>
                 <Provider value={{
-                    count,
-                    isFirstPage,
-                    isLastPage,
-                    isSinglePage,
                     items,
+                    count,
                     start,
                     stop,
                     direction,
+                    isFirstPage,
+                    isLastPage,
+                    isSinglePage,
                     firstPage: () => this.firstPage(),
                     lastPage: () => this.lastPage(),
                     previousPage: () => this.previousPage(),
@@ -183,10 +183,10 @@ export class PageData extends React.Component {
     render() {
         const {children} = this.props
         return (
-            <OverflowDetector>
-                {isOverflown =>
-                    <Consumer>
-                        {({items, start, stop, direction, next}) =>
+            <Consumer>
+                {({items, start, stop, direction, next}) =>
+                    <OverflowDetector>
+                        {isOverflown =>
                             <PageItems
                                 items={items}
                                 start={start}
@@ -198,9 +198,9 @@ export class PageData extends React.Component {
                                 {children}
                             </PageItems>
                         }
-                    </Consumer>
+                    </OverflowDetector>
                 }
-            </OverflowDetector>
+            </Consumer>
         )
     }
 }
