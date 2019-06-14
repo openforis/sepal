@@ -16,12 +16,7 @@ const mapStateToProps = state => ({
 })
 
 class _Pageable extends React.Component {
-    state = {
-        count: undefined,
-        start: 0,
-        stop: undefined,
-        direction: 1
-    }
+    state = {}
 
     componentDidMount() {
         this.updateItemCount()
@@ -100,37 +95,33 @@ class _Pageable extends React.Component {
             return
         }
 
-        this.setState(({count, start, stop, direction}) => {
-            const offset = overflow ? - 1 : 1
+        const isEdge = (count, start, stop, direction) =>
+            (direction === -1 && start < 0) || (direction === 1 && stop > count)
         
-            const isEdge = ({start, stop}) => (direction === -1 && start < 0) || (direction === 1 && stop > count)
-        
-            const nextState = ({start, stop}) => ({
-                start: Math.max(start, 0),
-                stop: Math.min(stop, count),
-                direction: overflow
-                    ? 0
-                    : isEdge({start, stop})
-                        ? direction === -1
-                            ? direction = 1
-                            : 0
-                        : direction
-            })
+        const nextDirection = (count, start, stop, direction) =>
+            overflow
+                ? 0
+                : isEdge(count, start, stop, direction)
+                    ? direction === -1
+                        ? direction = 1
+                        : 0
+                    : direction
 
-            const nextValue = (thisValue, otherValue) =>
-                thisValue === undefined
-                    ? otherValue
-                    : thisValue + offset * direction
-    
-            return direction === 1
-                ? nextState({
-                    start,
-                    stop: nextValue(stop, start)
-                })
-                : nextState({
-                    start: nextValue(start, stop),
-                    stop
-                })
+        const nextValue = (thisValue, otherValue, direction) =>
+            thisValue === undefined
+                ? otherValue
+                : thisValue + direction * (overflow ? -1 : 1)
+
+        this.setState(({count, start, stop, direction}) => {
+            const next = {
+                start: direction === 1 ? start : nextValue(start, stop, direction),
+                stop: direction === -1 ? stop : nextValue(stop, start, direction)
+            }
+            return {
+                start: Math.max(next.start, 0),
+                stop: Math.min(next.stop, count),
+                direction: nextDirection(count, next.start, next.stop, direction)
+            }
         })
     }
 
