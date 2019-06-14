@@ -1,0 +1,114 @@
+.shape {
+    --small-font-size: .8rem;
+    --normal-font-size: .9rem;
+    --large-font-size: 1.0rem;
+    --x-large-font-size: 1.1rem;
+    --xx-large-font-size: 1.4rem;
+    --ratio: 2.2;
+    flex-shrink: 0;
+    position: relative;
+    cursor: pointer;
+    transition: all 100ms ease-in-out;
+    font-size: var(--font-size);
+    line-height: var(--font-size);
+    min-height: fit-content;
+    height: calc(var(--ratio) * var(--font-size));
+    min-width: calc(var(--ratio) * var(--font-size));
+    padding: 0; /* Needed for alignment of shape contents */
+}
+
+@media only screen and (max-width: 500px) {
+    .shape {
+        --ratio: 1.9;
+    }
+}
+
+/* Flex needed for alignment of shape contents */
+.shape {
+    display: flex;
+    align-items: center;
+}
+
+.shape.left {
+    justify-content: flex-start;
+}
+
+.shape.center {
+    justify-content: center;
+}
+
+.shape.right {
+    justify-content: flex-end;
+}
+
+/* sizes */
+
+.shape.small {
+    --font-size: var(--small-font-size);
+}
+
+.shape.normal {
+    --font-size: var(--normal-font-size);
+}
+
+.shape.large {
+    --font-size: var(--large-font-size);
+}
+
+.shape.x-large {
+    --font-size: var(--x-large-font-size);
+}
+
+.shape.xx-large {
+    --font-size: var(--xx-large-font-size);
+}
+
+/* shapes */
+
+.shape.rectangle {
+    border-radius: var(--shape-border-radius);
+    padding: 0 calc(var(--font-size) * .8);
+}
+
+.shape.pill {
+    border-radius: 500px;
+    min-width: 3.5rem;
+    padding: 0 calc(var(--font-size) * .8);
+}
+
+.shape.circle {
+    border-radius: 50%;
+}
+
+.shape.xx-large.circle{
+    --ratio: 2.3;
+}
+
+.shape.none {
+    --ratio: 1;
+    padding: 0;
+    border: none !important;
+    background: none !important;
+    line-height: inherit;
+}
+
+/* fill mode */
+
+.shape.fit {
+    width: fit-content;
+}
+
+.shape.fill {
+    width: 100%;
+}
+
+/* contents */
+.shape > * {
+    white-space: nowrap;
+    position: relative;
+}
+
+/* spacing between icon and label */
+.shape > .contents > * + * {
+    margin-left: .5rem;
+}
