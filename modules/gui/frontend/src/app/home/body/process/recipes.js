@@ -3,6 +3,7 @@ import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {PageControls, PageData, Pageable} from 'widget/pageable'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {Shape} from 'widget/shape'
 import {closeTab} from 'widget/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -147,13 +148,13 @@ class RecipeList extends React.Component {
 
     renderSearch() {
         return (
-            <Button
-                additionalClassName={styles.search}
+            <Shape
                 look='transparent'
                 size='large'
                 shape='pill'
-                disabled={true}>
+                icon='search'>
                 <input
+                    className={styles.search}
                     type='search'
                     ref={this.search}
                     value={this.state.filter}
@@ -161,7 +162,7 @@ class RecipeList extends React.Component {
                     autoFocus={!isMobile()}
                     onChange={e => this.setFilter(e.target.value)}
                 />
-            </Button>
+            </Shape>
         )
     }
 

@@ -35,14 +35,7 @@
 }
 
 .search {
-    flex-grow: 1;
-    flex-shrink: 1;
-    max-width: 20rem;
-    margin-right: 1rem;
-}
-
-.search input {
-    width: 100%;
+    width: 15rem;
     border: none;
 }
 
