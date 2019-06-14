@@ -167,11 +167,6 @@
     color: var(--success-color);
 }
 
-.budgetFilter {
-    color: var(--success-color);
-    border-bottom: 1px dotted var(--success-color);
-}
-
 .users {
     background-color: var(--look-transparent-background-color);
     color: var(--look-transparent-color);
