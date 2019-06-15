@@ -16,7 +16,7 @@
       "secret_key": "{{user `aws_secret_access_key`}}",
       "region": "{{user `region`}}",
       "source_ami": "{{user `worker_instance_ami`}}",
-      "instance_type": "m4.large",
+      "instance_type": "m5.large",
       "ssh_username": "ec2-user",
       "ami_name": "Sandbox({{user  `availability_zone`}}) - {{user `version`}}",
       "tags": {
