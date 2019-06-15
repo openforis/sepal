@@ -39,20 +39,42 @@ export class Buttons extends React.Component {
     }
 
     renderButton({value, label, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
-        const {uppercase = true, disabled: allDisabled} = this.props
-        const highlight = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
-        return (
-            <Button
-                key={value}
-                look={highlight ? 'highlight' : 'default'}
-                additionalClassName={uppercase ? styles.uppercase : null}
-                disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
-                tooltip={tooltip}
-                tooltipPlacement='bottom'
-                onClick={() => this.select(value)}>
-                {label}
-            </Button>
-        )
+        const {chromeless, uppercase = true, disabled: allDisabled} = this.props
+        const selected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
+        return chromeless
+            ? (
+                <Button
+                    key={value}
+                    chromeless
+                    look='transparent'
+                    shape='pill'
+                    disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
+                    tooltip={tooltip}
+                    tooltipPlacement='bottom'
+                    onClick={() => this.select(value)}>
+                    <div className={[
+                        'itemType',
+                        styles.chromeless,
+                        selected ? styles.selected : null,
+                        uppercase ? styles.uppercase : null
+                    ].join(' ')}>
+                        {label}
+                    </div>
+                </Button>
+            )
+            : (
+                <Button
+                    key={value}
+                    look={selected ? 'highlight' : 'default'}
+                    additionalClassName={uppercase ? styles.uppercase : null}
+                    disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
+                    tooltip={tooltip}
+                    tooltipPlacement='bottom'
+                    onClick={() => this.select(value)}>
+                    {label}
+                </Button>
+            )
+        
     }
 
     renderButtons(options, key) {
@@ -96,6 +118,7 @@ export class Buttons extends React.Component {
 
 Buttons.propTypes = {
     capitalized: PropTypes.any,
+    chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     label: PropTypes.string,

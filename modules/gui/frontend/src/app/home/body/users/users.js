@@ -1,7 +1,9 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button, ButtonGroup} from 'widget/button'
+import {Buttons} from 'widget/buttons'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {map, share, zip} from 'rxjs/operators'
@@ -301,46 +303,39 @@ class Users extends React.Component {
     renderTextFilter() {
         const {textFilter} = this.state
         return (
-            <Button
-                additionalClassName={styles.search}
+            <Shape
                 look='transparent'
                 size='large'
                 shape='pill'
-                disabled={true}>
+                icon='search'>
                 <input
+                    className={styles.search}
                     type='search'
                     ref={this.search}
                     value={textFilter}
                     placeholder={msg('users.filter.search.placeholder')}
                     onChange={e => this.setTextFilter(e.target.value)}/>
-            </Button>
+            </Shape>
         )
     }
 
     renderBudgetFilter() {
         const {budgetFilter} = this.state
+        const options = [{
+            label: msg('users.filter.budget.ignore.label'),
+            value: false
+        }, {
+            label: msg('users.filter.budget.over.label'),
+            value: true
+        }]
         return (
-            <ButtonGroup>
-                <Button
-                    chromeless
-                    shape='none'
-                    additionalClassName='itemType'
-                    onClick={() => this.setBudgetFilter(false)}>
-                    <span className={!budgetFilter ? styles.budgetFilter : null}>
-                        {msg('users.filter.budget.ignore.label')}
-                    </span>
-                </Button>
-                <span style={{color: '#888'}}> | </span>
-                <Button
-                    chromeless
-                    shape='none'
-                    additionalClassName='itemType'
-                    onClick={() => this.setBudgetFilter(true)}>
-                    <span className={budgetFilter ? styles.budgetFilter : null}>
-                        {msg('users.filter.budget.over.label')}
-                    </span>
-                </Button>
-            </ButtonGroup>
+            <Buttons
+                chromeless
+                type='horizontal-tight'
+                options={options}
+                selected={budgetFilter}
+                onChange={budgetFilter => this.setState({budgetFilter})}
+            />
         )
     }
 

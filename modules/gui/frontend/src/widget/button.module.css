@@ -22,14 +22,7 @@
     padding: 0; /* Needed for alignment of button contents */
 }
 
-@media only screen and (max-width: 500px) {
-    .button {
-        --ratio: 1.9;
-    }
-}
-
 /* Flex needed for alignment of button contents */
-/* .button, .button * { */
 .button {
     display: flex;
     align-items: center;
