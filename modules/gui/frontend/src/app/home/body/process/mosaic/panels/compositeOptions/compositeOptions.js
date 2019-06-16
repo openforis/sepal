@@ -52,10 +52,10 @@ class CompositeOptions extends React.Component {
         return (
             <FieldSet>
                 {this.renderCorrectionOptions()}
-                <FieldSet compact>
+                <FieldSet spacing='compact'>
                     {this.renderFilterOptions()}
                 </FieldSet>
-                <FieldSet horizontal>
+                <FieldSet layout='horizontal'>
                     {this.renderCloudBufferOptions()}
                     {this.renderMaskOptions()}
                     {this.renderComposeOptions()}

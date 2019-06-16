@@ -42,7 +42,7 @@ class Dates extends React.Component {
         const [fromStart, fromEnd] = fromDateRange(toDate.value)
         const [toStart, toEnd] = toDateRange(fromDate.value)
         return (
-            <FieldSet horizontal>
+            <FieldSet layout='horizontal'>
                 <DatePicker
                     label={msg('process.radarMosaic.panel.dates.form.fromDate.label')}
                     input={fromDate}
