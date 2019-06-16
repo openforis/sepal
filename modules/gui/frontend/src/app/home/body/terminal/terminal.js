@@ -130,7 +130,6 @@ class _TerminalSession extends React.Component {
 
         setTimeout(() => {
             terminal.attach(this.createWebSocket(sessionId))
-            terminal.open(terminalContainer.current)
             terminal.setOption('allowTransparency', true)
             terminal.setOption('fontSize', 13)
             terminal.setOption('bellStyle', 'both')
@@ -138,6 +137,7 @@ class _TerminalSession extends React.Component {
                 background: 'transparent',
                 foreground: '#ccc'
             })
+            terminal.open(terminalContainer.current)
             terminal.on('resize',
                 dimensions => resize$.next({sessionId, dimensions})
             )
