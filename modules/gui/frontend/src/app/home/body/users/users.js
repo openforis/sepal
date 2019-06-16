@@ -1,5 +1,5 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
