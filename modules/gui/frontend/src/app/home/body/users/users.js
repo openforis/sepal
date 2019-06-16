@@ -367,15 +367,15 @@ class Users extends React.Component {
     }
 
     renderInfo() {
-        const {textFilter, budgetFilter, users} = this.state
-        const isFiltered = textFilter || budgetFilter
+        const {textFilter, statusFilter, users} = this.state
+        const isFiltered = textFilter || statusFilter
         const results = (count, total) =>
             msg(isFiltered ? 'users.countWithFilter' : 'users.countNoFilter', {count, total})
         return (
             <PageInfo>
-                {({itemCount}) =>
+                {({count}) =>
                     <div className={styles.pageInfo}>
-                        {results(itemCount, users.length)}
+                        {results(count, users.length)}
                     </div>
                 }
             </PageInfo>
