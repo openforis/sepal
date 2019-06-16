@@ -184,6 +184,10 @@
     pointer-events: none;
 }
 
+.look.nonInteractive > * {
+    pointer-events: all;
+}
+
 /* default */
 
 .look.default:not(.chromeless) {
