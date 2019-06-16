@@ -1,4 +1,3 @@
-import {Button, ButtonGroup} from 'widget/button'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -6,12 +5,9 @@ import {msg} from 'translate'
 import {stopCurrentUserSession$} from 'widget/user'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import RemoveButton from 'widget/removeButton'
+import SuperButton from 'widget/superButton'
 import actionBuilder from 'action-builder'
 import format from 'format'
-import lookStyles from 'style/look.module.css'
-import moment from 'moment'
-import styles from './userSessions.module.css'
 
 const mapStateToProps = () => ({
     sessions: select('user.currentUserReport.sessions')
@@ -50,55 +46,27 @@ class UserSessions extends React.Component {
         return format.dollarsPerHour(session.instanceType.hourlyCost)
     }
 
-    renderControls(session) {
-        return (
-            <React.Fragment>
-                <ButtonGroup>
-                    <Button
-                        chromeless
-                        shape='circle'
-                        size='large'
-                        icon='edit'
-                        tooltip={msg('user.userSession.update.tooltip')}
-                        onClick={() => this.selectSession(session)}
-                    />
-                    <RemoveButton
-                        tooltip={msg('user.userSession.stop.tooltip')}
-                        message={msg('user.userSession.stop.message')}
-                        onRemove={() => this.stopSession(session)}
-                    />
-                </ButtonGroup>
-            </React.Fragment>
-        )
-    }
-
     renderSession(session) {
+        const title = `${session.instanceType.name} (${session.instanceType.description})`
+        const description = `${this.renderCost(session)} (${this.renderHourlyCost(session)})`
         return (
-            <div
+            <SuperButton
                 key={session.id}
-                className={[lookStyles.look, lookStyles.transparent].join(' ')}
-                onClick={() => this.selectSession(session)}>
-                <div className={styles.header}>
-                    <span className={'itemType'}>
-                        {session.instanceType.name} ({session.instanceType.description})
-                    </span>
-                    {this.renderControls(session)}
-                </div>
-                <div className={styles.info}>
-                    <span className={styles.cost}>
-                        {this.renderCost(session)} ({this.renderHourlyCost(session)})
-                    </span>
-                    <span>
-                        {moment.utc(session.creationTime).fromNow()}
-                    </span>
-                </div>
-            </div>
+                title={title}
+                description={description}
+                timestamp={session.creationTime}
+                editTooltip={msg('user.userSession.update.tooltip')}
+                removeMessage={msg('user.userSession.stop.message')}
+                removeTooltip={msg('user.userSession.stop.tooltip')}
+                onEdit={() => this.selectSession(session)}
+                onRemove={() => this.stopSession(session)}
+            />
         )
     }
 
     renderSessions(sessions) {
         return (
-            <ScrollableContainer className={styles.sessions}>
+            <ScrollableContainer>
                 <Scrollable>
                     {sessions.map(session => this.renderSession(session))}
                 </Scrollable>
