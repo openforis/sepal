@@ -81,7 +81,7 @@ class UserSession extends React.Component {
                         <Slider
                             input={keepAlive}
                             decimals={2}
-                            ticks={[0, 1, 3, 6, 12, 24, 36, 48, 60, 72]}
+                            ticks={[0, 1, 3, 6, 12, 24, 36, 48, 72]}
                             scale='log'
                             info={sliderMessage}
                         />
