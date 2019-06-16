@@ -26,14 +26,6 @@
     z-index: 1;
 }
 
-.filters {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-}
-
 .search {
     width: 15rem;
     border: none;

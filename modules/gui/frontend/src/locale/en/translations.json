@@ -1455,6 +1455,17 @@
     "countNoFilter": "{count} {count, plural, one {user} other {users}}",
     "countWithFilter": "{count} {count, plural, one {user} other {users}} out of {total}",
     "filter": {
+      "status": {
+        "ignore": {
+          "label": "All"
+        },
+        "pending": {
+          "label": "Pending"
+        },
+        "active": {
+          "label": "Active"
+        }
+      },
       "budget": {
         "ignore": {
           "label": "All"
