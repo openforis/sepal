@@ -72,7 +72,9 @@ class ProcessMenu extends React.Component {
         const {recipe} = this.props
         const duplicate = ({
             ...recipe,
-            title: (recipe.title || recipe.placeholder) + '_copy'
+            placeholder: (recipe.title || recipe.placeholder) + '_copy',
+            title: null,
+            ui: {...recipe.ui, unsaved: true}
         })
         return addRecipe(duplicate)
     }
