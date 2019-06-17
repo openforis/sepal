@@ -18,7 +18,7 @@
     justify-content: space-between;
 }
 
-/* absolutely positioned click target is needed 
+/* absolutely positioned click target is needed
 to prevent click-through from click-hold buttons */
 .main .clickTarget {
     position: absolute;
@@ -56,6 +56,14 @@ to prevent click-through from click-hold buttons */
     font-size: small;
     margin-right: 2rem;
     color: gray;
+}
+
+@media screen and (max-width: 600px) {
+    .timestamp {
+        font-size: small;
+        margin-right: .5rem;
+        color: gray;
+    }
 }
 
 .buttons {

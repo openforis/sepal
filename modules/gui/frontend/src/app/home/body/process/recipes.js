@@ -1,25 +1,26 @@
-import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
-import {Button} from 'widget/button'
-import {CenteredProgress} from 'widget/progress'
-import {PageControls, PageData, Pageable} from 'widget/pageable'
-import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {Shape} from 'widget/shape'
-import {closeTab} from 'widget/tabs'
 import {compose} from 'compose'
-import {connect, select} from 'store'
-import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
-import {getRecipeType} from './recipeTypes'
-import {isMobile} from 'widget/userAgent'
-import {msg} from 'translate'
-import CreateRecipe from './createRecipe'
-import Icon from 'widget/icon'
-import Notifications from 'widget/notifications'
+import escapeStringRegexp from 'escape-string-regexp'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import {FieldSet} from 'widget/form'
+import Icon from 'widget/icon'
+import Notifications from 'widget/notifications'
+import {Pageable, PageControls, PageData} from 'widget/pageable'
+import {CenteredProgress} from 'widget/progress'
+import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
+import {Shape} from 'widget/shape'
 import SuperButton from 'widget/superButton'
-import _ from 'lodash'
-import escapeStringRegexp from 'escape-string-regexp'
+import {closeTab} from 'widget/tabs'
+import {isMobile} from 'widget/userAgent'
+import CreateRecipe from './createRecipe'
+import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
 import styles from './recipes.module.css'
+import {getRecipeType} from './recipeTypes'
 
 const mapStateToProps = () => {
     const recipes = select('process.recipes')
@@ -173,14 +174,10 @@ class RecipeList extends React.Component {
         else
             return (
                 <div className={styles.header}>
-                    {this.renderSearch()}
-
-                    <div>
-                        <div className={styles.orderBy}>
-                            {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
-                            {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
-                        </div>
-                    </div>
+                    <FieldSet layout='horizontal' spacing='compact'>
+                        {this.renderSearch()}
+                        {this.renderSortButtons()}
+                    </FieldSet>
                 </div>
             )
     }
@@ -206,6 +203,15 @@ class RecipeList extends React.Component {
                     </SectionLayout>
                 </Pageable>
             </React.Fragment>
+        )
+    }
+
+    renderSortButtons() {
+        return (
+            <div className={styles.orderBy}>
+                {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
+                {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
+            </div>
         )
     }
 

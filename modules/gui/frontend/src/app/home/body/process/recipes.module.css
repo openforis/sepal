@@ -4,11 +4,7 @@
 }
 
 .header {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1rem !important;
 }
 
 .recipes {
@@ -27,6 +23,7 @@
 .orderBy {
     flex-wrap: nowrap;
     display: flex;
+    align-items: center;
     margin-left: .5rem;
 }
 
