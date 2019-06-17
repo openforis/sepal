@@ -43,6 +43,7 @@
     left: 0;
     right: 0;
     pointer-events: all;
+    z-index: 0;
 }
 
 .menu {
@@ -70,6 +71,7 @@
         'body'
         'google'
         'footer';
+    z-index: 1;
 }
 
 .menuContainer {

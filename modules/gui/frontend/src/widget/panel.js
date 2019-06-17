@@ -1,14 +1,14 @@
-import {Button, ButtonGroup} from 'widget/button'
-import {Modal} from 'widget/modal'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {compose} from 'compose'
-import {connect} from 'store'
-import {msg} from 'translate'
-import Icon from 'widget/icon'
-import Keybinding from 'widget/keybinding'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {connect} from 'store'
+import {msg} from 'translate'
+import {Button, ButtonGroup} from 'widget/button'
+import Icon from 'widget/icon'
+import Keybinding from 'widget/keybinding'
+import {Modal} from 'widget/modal'
+import Portal from 'widget/portal'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import styles from './panel.module.css'
 
 // PANEL ----------------------------------------------------------------------
@@ -106,20 +106,31 @@ PanelHeader.propTypes = {
 
 export class PanelContent extends React.Component {
     render() {
-        const {className, children} = this.props
-        return (
-            <ScrollableContainer className={styles.scrollableContainer}>
-                <Scrollable className={[styles.content, className].join(' ')}>
+        const {className, scrollable, children} = this.props
+        return scrollable
+            ? (
+                <ScrollableContainer className={styles.scrollableContainer}>
+                    <Scrollable className={[styles.content, className].join(' ')}>
+                        {children}
+                    </Scrollable>
+                </ScrollableContainer>
+            )
+            : (
+                <div className={styles.panelContent}>
                     {children}
-                </Scrollable>
-            </ScrollableContainer>
-        )
+                </div>
+            )
     }
+}
+
+PanelContent.defaultProps = {
+    scrollable: true
 }
 
 PanelContent.propTypes = {
     children: PropTypes.any.isRequired,
-    className: PropTypes.string
+    className: PropTypes.string,
+    scrollable: PropTypes.any
 }
 
 // BUTTONS --------------------------------------------------------------------

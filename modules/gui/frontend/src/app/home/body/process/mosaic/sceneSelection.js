@@ -83,7 +83,7 @@ class SceneSelection extends React.Component {
                         icon='images'
                         title={msg('process.mosaic.panel.autoSelectScenes.form.selectScenes')}/>
 
-                    <PanelContent className={loading ? styles.loading : null}>
+                    <PanelContent className={loading ? styles.loading : null} scrollable={false}>
                         {loading
                             ? this.renderProgress()
                             : this.renderScenes()}
