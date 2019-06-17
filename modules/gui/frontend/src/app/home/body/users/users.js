@@ -39,7 +39,6 @@ class Users extends React.Component {
         sortingDirection: -1,
         textFilter: '',
         statusFilter: null,
-        budgetFilter: false,
         userDetails: null
     }
 
@@ -97,10 +96,6 @@ class Users extends React.Component {
 
     setActiveFilter(activeFilter) {
         this.setState({activeFilter})
-    }
-
-    setBudgetFilter(budgetFilter) {
-        this.setState({budgetFilter})
     }
 
     getFilteredUsers() {
