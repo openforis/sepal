@@ -220,9 +220,10 @@ class PageItems extends React.Component {
 
     renderItem(item, index) {
         const {itemKey, children} = this.props
+        const key = itemKey(item) || index
         return (
             <PageItem
-                key={itemKey(item) || index}
+                key={key}
                 item={item}>
                 {children}
             </PageItem>
