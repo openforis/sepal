@@ -38,6 +38,7 @@ class Users extends React.Component {
         sortingOrder: 'updateTime',
         sortingDirection: -1,
         textFilter: '',
+        textFilterElements: [],
         statusFilter: null,
         userDetails: null
     }
@@ -88,9 +89,13 @@ class Users extends React.Component {
     }
 
     setTextFilter(textFilter) {
+        const textFilterElements = _.chain(textFilter.split(/\s+/))
+            .map(filter => escapeStringRegexp(filter.trim()))
+            .compact()
+            .value()
         this.setState({
             textFilter,
-            textFilterRegexp: RegExp(escapeStringRegexp(textFilter), 'i')
+            textFilterElements
         })
     }
 
@@ -106,11 +111,14 @@ class Users extends React.Component {
     }
 
     userMatchesTextFilter(user) {
-        const {textFilter, textFilterRegexp} = this.state
+        const {textFilterElements} = this.state
+        const searchMatchers = textFilterElements.map(filter => RegExp(filter, 'i'))
         const searchProperties = ['name', 'username', 'email', 'organization']
-        return textFilter
-            ? _.find(searchProperties, searchProperty =>
-                textFilterRegexp.test(user[searchProperty])
+        return textFilterElements
+            ? _.every(searchMatchers, matcher =>
+                _.find(searchProperties, property =>
+                    matcher.test(user[property])
+                )
             )
             : true
     }
@@ -378,13 +386,15 @@ class Users extends React.Component {
     }
 
     renderUsers() {
-        const {textFilter} = this.state
+        const {textFilterElements} = this.state
+        const highlightMatcher = textFilterElements.length ? new RegExp(`(?:${textFilterElements.join('|')})`, 'i') : ''
         return (
-            <PageData itemKey={user => user.username || user.id}>
+            // [HACK] adding filter to key to force re-rendering
+            <PageData itemKey={user => `${user.username || user.id}|${highlightMatcher}`}>
                 {user =>
                     <User
                         user={user}
-                        highlight={textFilter}
+                        highlight={highlightMatcher}
                         onClick={() => this.editUser(user)}/>
                 }
             </PageData>
@@ -475,7 +485,7 @@ class User extends React.Component {
                     status ? styles.clickable : null
                 ].join(' ')}
                 onClick={() => status ? onClick() : null}>
-                <div><Highlight search={highlight} matchClass={styles.highlight}>{name}</Highlight></div>
+                <div><Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{name}</Highlight></div>
                 <div>{status ? msg(`user.userDetails.form.status.${status}`) : <Icon name='spinner'/>}</div>
                 <div>{moment(updateTime).fromNow()}</div>
                 <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
