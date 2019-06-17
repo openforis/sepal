@@ -1,11 +1,8 @@
 import {Enabled} from 'store'
-import {PortalContainer} from './portal'
+import {PortalContainer, PortalContext} from './portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './selectable.module.css'
-import withContext from 'context'
-
-const Context = React.createContext()
 
 export class Selectable extends React.Component {
     state = {
@@ -22,10 +19,10 @@ export class Selectable extends React.Component {
     render() {
         const {id, active, className, captureMouseEvents} = this.props
         const {hasBeenActive} = this.state
-        const portalContainerId = `portal_${id}`
+        const portalContainerId = `portal_selectable_${id}`
         return hasBeenActive
             ? (
-                <Context.Provider value={{portalContainerId}}>
+                <PortalContext id={portalContainerId}>
                     <div className={[
                         styles.container,
                         active ? styles.active : styles.inactive,
@@ -36,11 +33,11 @@ export class Selectable extends React.Component {
                             value={active}
                             enabledClassName={styles.enabled}
                             disabledClassName={styles.disabled}>
+                            <PortalContainer id={portalContainerId} className={styles.portalContainer}/>
                             {this.props.children}
-                            <PortalContainer id={portalContainerId}/>
                         </Enabled>
                     </div>
-                </Context.Provider>
+                </PortalContext>
             )
             : null
     }
@@ -53,5 +50,3 @@ Selectable.propTypes = {
     className: PropTypes.string,
     id: PropTypes.string
 }
-
-export const withSelectableContext = withContext(Context, 'selectableContext')
