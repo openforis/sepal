@@ -197,7 +197,7 @@
             'features credentials credentials'
             'features privacy     privacy';
         grid-gap: 3rem;
-        padding: 3rem 4rem;
+        padding: 3rem 4rem 2rem;
     }
 
     .credentials {
@@ -219,7 +219,7 @@
             'credentials credentials'
             'privacy     privacy';
         grid-gap: 2rem;
-        padding: 1.5rem 2rem;
+        padding: 1.5em 2rem 1rem;
     }
 
     .title {
