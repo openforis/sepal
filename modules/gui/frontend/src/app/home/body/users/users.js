@@ -387,7 +387,9 @@ class Users extends React.Component {
 
     renderUsers() {
         const {textFilterElements} = this.state
-        const highlightMatcher = textFilterElements.length ? new RegExp(`(?:${textFilterElements.join('|')})`, 'i') : ''
+        const highlightMatcher = textFilterElements.length
+            ? new RegExp(`(?:${textFilterElements.join('|')})`, 'i')
+            : ''
         return (
             // [HACK] adding filter to key to force re-rendering
             <PageData itemKey={user => `${user.username || user.id}|${highlightMatcher}`}>
