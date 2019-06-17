@@ -80,17 +80,6 @@ class CreateRecipe extends React.Component {
         )
     }
 
-    renderBackButton() {
-        return (
-            <Button
-                chromeless
-                icon='arrow-left'
-                shape='none'
-                additionalClassName={styles.backButton}
-                onClick={() => this.showRecipeTypeInfo()}/>
-        )
-    }
-
     renderRecipeTypeInfo(type) {
         const recipeType = getRecipeType(type)
         const close = () => this.closePanel()
