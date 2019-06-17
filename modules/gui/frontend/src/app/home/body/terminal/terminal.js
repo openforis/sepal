@@ -111,17 +111,20 @@ class _TerminalSession extends React.Component {
         this.webSocket && this.webSocket.close()
     }
 
-    createWebSocket(sessionId) {
+    startWebSocket(sessionId, onOpen) {
         const webSocket = new WebSocket(`wss://${window.location.hostname}:${window.location.port}/api/terminal/${sessionId}`)
-        this.props.stream('SEND_TERMINAL_HEARTBEAT',
-            interval(HEARTBEAT_INTERVAL_MS).pipe(
-                takeUntil(this.closed$)
-            ),
-            () => webSocket.send('')
-        )
+        webSocket.onopen = () => {
+            this.props.stream('SEND_TERMINAL_HEARTBEAT',
+                interval(HEARTBEAT_INTERVAL_MS).pipe(
+                    takeUntil(this.closed$)
+                ),
+                () => webSocket.send('')
+            )
+            onOpen()
+        }
         webSocket.onclose = () => this.closed$.next()
+        webSocket.onerror = error => console.error(error)
         this.webSocket = webSocket
-        return webSocket
     }
 
     startSession(sessionId) {
@@ -129,28 +132,32 @@ class _TerminalSession extends React.Component {
         const {onEnable, onDisable} = this.props
 
         setTimeout(() => {
-            terminal.attach(this.createWebSocket(sessionId))
-            terminal.open(terminalContainer.current)
-            terminal.setOption('allowTransparency', true)
-            terminal.setOption('fontSize', 13)
-            terminal.setOption('bellStyle', 'both')
-            terminal.setOption('theme', {
-                background: 'transparent',
-                foreground: '#ccc'
-            })
-            terminal.on('resize',
-                dimensions => resize$.next({sessionId, dimensions})
-            )
-            this.enabled$.next(true)
-            this.fit$.next()
-            this.focus$.next()
-            onEnable(() => {
+            const bidirectional = true
+            const buffered = true
+            this.startWebSocket(sessionId, webSocket => {
+                terminal.attach(webSocket, bidirectional, buffered)
+                terminal.setOption('allowTransparency', true)
+                terminal.setOption('fontSize', 13)
+                terminal.setOption('bellStyle', 'both')
+                terminal.setOption('theme', {
+                    background: 'transparent',
+                    foreground: '#ccc'
+                })
+                terminal.open(terminalContainer.current)
+                terminal.on('resize',
+                    dimensions => resize$.next({sessionId, dimensions})
+                )
                 this.enabled$.next(true)
                 this.fit$.next()
                 this.focus$.next()
-            })
-            onDisable(() => {
-                this.enabled$.next(false)
+                onEnable(() => {
+                    this.enabled$.next(true)
+                    this.fit$.next()
+                    this.focus$.next()
+                })
+                onDisable(() => {
+                    this.enabled$.next(false)
+                })
             })
         })
     }

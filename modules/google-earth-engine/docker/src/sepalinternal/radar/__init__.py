@@ -18,8 +18,7 @@ class RadarMosaic(ImageSpec):
             for dependent in ['VV', 'VH']
             if self._contains_harmonics_band(dependent)
         ]
-        if not self.scale:
-            self.set_scale()
+        self.set_scale()
 
     def set_scale(self):
         self.scale = 20

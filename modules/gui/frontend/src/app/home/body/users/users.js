@@ -1,6 +1,7 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
+import {FieldSet} from 'widget/form'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {Shape} from 'widget/shape'
@@ -37,8 +38,8 @@ class Users extends React.Component {
         sortingOrder: 'updateTime',
         sortingDirection: -1,
         textFilter: '',
+        statusFilter: null,
         budgetFilter: false,
-        budgetFilterRegexp: null,
         userDetails: null
     }
 
@@ -94,6 +95,10 @@ class Users extends React.Component {
         })
     }
 
+    setActiveFilter(activeFilter) {
+        this.setState({activeFilter})
+    }
+
     setBudgetFilter(budgetFilter) {
         this.setState({budgetFilter})
     }
@@ -102,7 +107,7 @@ class Users extends React.Component {
         const {users} = this.state
         return users
             .filter(user => this.userMatchesTextFilter(user))
-            .filter(user => this.userMatchesBudgetFilter(user))
+            .filter(user => this.userMatchesStatusFilter(user))
     }
 
     userMatchesTextFilter(user) {
@@ -115,10 +120,12 @@ class Users extends React.Component {
             : true
     }
 
-    userMatchesBudgetFilter(user) {
-        const {budgetFilter} = this.state
-        return budgetFilter
-            ? this.isUserOverBudget(user)
+    userMatchesStatusFilter(user) {
+        const {statusFilter} = this.state
+        return statusFilter
+            ? statusFilter === 'OVERBUDGET'
+                ? this.isUserOverBudget(user)
+                : user.status === statusFilter
             : true
     }
 
@@ -319,22 +326,28 @@ class Users extends React.Component {
         )
     }
 
-    renderBudgetFilter() {
-        const {budgetFilter} = this.state
+    renderStatusFilter() {
+        const {statusFilter} = this.state
         const options = [{
-            label: msg('users.filter.budget.ignore.label'),
-            value: false
+            label: msg('users.filter.status.ignore.label'),
+            value: null
+        }, {
+            label: msg('users.filter.status.pending.label'),
+            value: 'PENDING'
+        }, {
+            label: msg('users.filter.status.active.label'),
+            value: 'ACTIVE'
         }, {
             label: msg('users.filter.budget.over.label'),
-            value: true
+            value: 'OVERBUDGET'
         }]
         return (
             <Buttons
                 chromeless
                 type='horizontal-tight'
                 options={options}
-                selected={budgetFilter}
-                onChange={budgetFilter => this.setState({budgetFilter})}
+                selected={statusFilter}
+                onChange={statusFilter => this.setState({statusFilter})}
             />
         )
     }
@@ -354,15 +367,15 @@ class Users extends React.Component {
     }
 
     renderInfo() {
-        const {textFilter, budgetFilter, users} = this.state
-        const isFiltered = textFilter || budgetFilter
+        const {textFilter, statusFilter, users} = this.state
+        const isFiltered = textFilter || statusFilter
         const results = (count, total) =>
             msg(isFiltered ? 'users.countWithFilter' : 'users.countNoFilter', {count, total})
         return (
             <PageInfo>
-                {({itemCount}) =>
+                {({count}) =>
                     <div className={styles.pageInfo}>
-                        {results(itemCount, users.length)}
+                        {results(count, users.length)}
                     </div>
                 }
             </PageInfo>
@@ -405,9 +418,11 @@ class Users extends React.Component {
                             <TopBar label={msg('home.sections.users')}/>
                             <Content horizontalPadding verticalPadding menuPadding>
                                 <ScrollableContainer>
-                                    <Unscrollable className={styles.filters}>
-                                        {this.renderTextFilter()}
-                                        {this.renderBudgetFilter()}
+                                    <Unscrollable>
+                                        <FieldSet layout='horizontal' spacing='compact'>
+                                            {this.renderTextFilter()}
+                                            {this.renderStatusFilter()}
+                                        </FieldSet>
                                     </Unscrollable>
                                     <Scrollable direction='x'>
                                         <ScrollableContainer className={styles.content}>
