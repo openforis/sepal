@@ -115,7 +115,7 @@
     margin-left: 1rem;
 }
 
-.scrollableContainer {
+.panelContent {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
