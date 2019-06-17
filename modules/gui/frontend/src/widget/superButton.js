@@ -1,4 +1,5 @@
 import {Button, ButtonGroup} from 'widget/button'
+import Highlight from 'react-highlighter'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
@@ -59,8 +60,8 @@ export default class SuperButton extends React.Component {
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     <div className={styles.info}>
-                        <div className='itemType'>{title}</div>
-                        <div className={styles.description}>{description}</div>
+                        <div className='itemType'>{this.renderHighlight(title)}</div>
+                        <div className={styles.description}>{this.renderHighlight(description)}</div>
                     </div>
                     <ButtonGroup
                         type='horizontal-nowrap'
@@ -75,6 +76,20 @@ export default class SuperButton extends React.Component {
                 {this.renderChildren()}
             </div>
         )
+    }
+
+    renderHighlight(content) {
+        const {highlight, highlightClassName} = this.props
+        return highlight
+            ? (
+                <Highlight
+                    search={highlight}
+                    ignoreDiacritics={true}
+                    matchClass={highlightClassName}>
+                    {content}
+                </Highlight>
+            )
+            : content
     }
 
     renderTimestamp() {
@@ -179,6 +194,8 @@ SuperButton.propTypes = {
     duplicateTooltip: PropTypes.string,
     editTooltip: PropTypes.string,
     extraButtons: PropTypes.arrayOf(PropTypes.object),
+    highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    highlightClassName: PropTypes.string,
     infoTooltip: PropTypes.string,
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
