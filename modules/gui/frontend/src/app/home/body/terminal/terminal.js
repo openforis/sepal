@@ -12,6 +12,7 @@ import {msg} from 'translate'
 import {post$} from 'http-client'
 import {v4 as uuid} from 'uuid'
 import {withLatestFrom} from 'rxjs/operators'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import Tabs from 'widget/tabs'
@@ -120,10 +121,16 @@ class _TerminalSession extends React.Component {
                 ),
                 () => webSocket.send('')
             )
-            onOpen()
+            onOpen(webSocket)
         }
-        webSocket.onclose = () => this.closed$.next()
-        webSocket.onerror = error => console.error(error)
+        webSocket.onclose = () => {
+            console.log('closed')
+            this.closed$.next()
+        }
+        webSocket.onerror = () =>
+            Notifications.error({
+                message: msg('terminal.server.error')
+            })
         this.webSocket = webSocket
     }
 
@@ -139,11 +146,12 @@ class _TerminalSession extends React.Component {
                 terminal.setOption('allowTransparency', true)
                 terminal.setOption('fontSize', 13)
                 terminal.setOption('bellStyle', 'both')
+                terminal.open(terminalContainer.current)
+                // for some reason theme must be defined after open...
                 terminal.setOption('theme', {
                     background: 'transparent',
                     foreground: '#ccc'
                 })
-                terminal.open(terminalContainer.current)
                 terminal.on('resize',
                     dimensions => resize$.next({sessionId, dimensions})
                 )
