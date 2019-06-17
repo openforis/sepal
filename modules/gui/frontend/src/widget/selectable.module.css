@@ -10,6 +10,11 @@
     z-index: 1;
 }
 
+.portalContainer {
+    top: var(--top-bar-height);
+    pointer-events: none;
+}
+
 .enabled {
     animation-name: show;
     animation-duration: 300ms;

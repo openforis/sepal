@@ -3,20 +3,25 @@ import {compose} from 'compose'
 import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {PortalContainer, PortalContext} from 'widget/portal'
 import styles from './tabs.module.css'
 
 class TabContent extends React.PureComponent {
     render() {
         const {id, type, selected, children} = this.props
+        const portalContainerId = `portal_tab_${id}`
         return (
+            <PortalContext id={portalContainerId}>
             <div className={[styles.tabContent, selected && styles.selected].join(' ')}>
                 <Enabled
                     value={selected}
                     enabledClassName={styles.enabled}
                     disabledClassName={styles.disabled}>
+                    <PortalContainer id={portalContainerId}/>
                     {children({id, type})}
                 </Enabled>
             </div>
+            </PortalContext>
         )
     }
 
