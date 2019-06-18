@@ -11,64 +11,69 @@ import _ from 'lodash'
 
 const {Provider, Consumer} = React.createContext()
 
-export class Pageable extends React.Component {
+const mapStateToProps = state => ({
+    dimensions: selectFrom(state, 'dimensions') || []
+})
+
+class _Pageable extends React.Component {
+    state = {}
+
     render() {
-        const {items, matcher, fillFirstPage, fillLastPage, children} = this.props
+        const {pageItems, count, start, stop, direction} = this.state
+        const {children} = this.props
+        const isFirstPage = this.isFirstPage()
+        const isLastPage = this.isLastPage()
+        const isSinglePage = isFirstPage && isLastPage
         return (
             <Keybinding keymap={{
                 'Ctrl+Shift+ArrowLeft': () => this.firstPage(),
                 'Ctrl+ArrowLeft': () => this.previousPage(),
                 'Ctrl+ArrowRight': () => this.nextPage()
             }}>
-                <PageContext
-                    items={items || []}
-                    matcher={matcher}
-                    fillFirstPage={fillFirstPage}
-                    fillLastPage={fillLastPage}>
+                <Provider value={{
+                    items: pageItems,
+                    count,
+                    start,
+                    stop,
+                    direction,
+                    isFirstPage,
+                    isLastPage,
+                    isSinglePage,
+                    firstPage: () => this.firstPage(),
+                    lastPage: () => this.lastPage(),
+                    previousPage: () => this.previousPage(),
+                    nextPage: () => this.nextPage(),
+                    next: overflow => this.next(overflow)
+                }}>
                     {children}
-                </PageContext>
+                </Provider>
             </Keybinding>
         )
     }
-}
-
-Pageable.propTypes = {
-    children: PropTypes.any.isRequired,
-    items: PropTypes.array.isRequired,
-    fillFirstPage: PropTypes.bool,
-    fillLastPage: PropTypes.bool,
-    matcher: PropTypes.func
-}
-
-Pageable.defaultProps = {
-    fillFirstPage: true,
-    fillLastPage: false,
-}
-
-const mapStateToProps = state => ({
-    dimensions: selectFrom(state, 'dimensions') || []
-})
-
-class _PageContext extends React.Component {
-    state = {}
 
     componentDidMount() {
-        this.updateItemCount()
+        this.reset()
     }
 
     componentDidUpdate(prevProps) {
-        if (!_.isEqual(prevProps.items, this.props.items)) {
-            this.updateItemCount()
+        if (this.needsReset(prevProps)) {
+            this.reset()
         }
-        if (!_.isEqual(prevProps.matcher, this.props.matcher)) {
-            this.updateItemCount()
-        }
-        if (!_.isEqual(prevProps.dimensions, this.props.dimensions)) {
-            this.refreshOnResize()
+        if (this.needsRefresh(prevProps)) {
+            this.refresh()
         }
     }
 
-    updateItemCount() {
+    needsReset(prevProps) {
+        return !_.isEqual(prevProps.items, this.props.items)
+            || !_.isEqual(prevProps.matcher, this.props.matcher)
+    }
+
+    needsRefresh(prevProps) {
+        return !_.isEqual(prevProps.dimensions, this.props.dimensions)
+    }
+
+    reset() {
         const {items} = this.props
         const count = items.length
         this.setState({
@@ -80,7 +85,7 @@ class _PageContext extends React.Component {
         })
     }
 
-    refreshOnResize() {
+    refresh() {
         this.setState({
             pageItems: [],
             stop: undefined,
@@ -144,7 +149,7 @@ class _PageContext extends React.Component {
             return
         }
 
-        const forwards = ({start, stop, count, pageItems}) => {
+        const nextAfter = ({start, stop, count, pageItems}) => {
             for (;;) {
                 stop = stop === undefined
                     ? start
@@ -170,7 +175,7 @@ class _PageContext extends React.Component {
             }
         }
 
-        const backwards = ({start, stop, pageItems}) => {
+        const nextBefore = ({start, stop, pageItems}) => {
             for (;;) {
                 start = start === undefined
                     ? stop
@@ -213,44 +218,30 @@ class _PageContext extends React.Component {
                 }
             } else {
                 return direction === 1
-                    ? forwards({pageItems, start, stop, count})
-                    : backwards({pageItems, start, stop})
+                    ? nextAfter({pageItems, start, stop, count})
+                    : nextBefore({pageItems, start, stop})
             }
         })
     }
-
-    render() {
-        const {pageItems, count, start, stop, direction} = this.state
-        const {children} = this.props
-        const isFirstPage = this.isFirstPage()
-        const isLastPage = this.isLastPage()
-        const isSinglePage = isFirstPage && isLastPage
-        return (
-            <Provider value={{
-                items: pageItems,
-                count,
-                start,
-                stop,
-                direction,
-                isFirstPage,
-                isLastPage,
-                isSinglePage,
-                firstPage: () => this.firstPage(),
-                lastPage: () => this.lastPage(),
-                previousPage: () => this.previousPage(),
-                nextPage: () => this.nextPage(),
-                next: overflow => this.next(overflow)
-            }}>
-                {children}
-            </Provider>
-        )
-    }
 }
 
-export const PageContext = compose(
-    _PageContext,
+export const Pageable = compose(
+    _Pageable,
     connect(mapStateToProps)
 )
+
+Pageable.propTypes = {
+    children: PropTypes.any.isRequired,
+    items: PropTypes.array.isRequired,
+    fillFirstPage: PropTypes.bool,
+    fillLastPage: PropTypes.bool,
+    matcher: PropTypes.func
+}
+
+Pageable.defaultProps = {
+    fillFirstPage: true,
+    fillLastPage: false,
+}
 
 export class PageData extends React.Component {
     ref = React.createRef()
