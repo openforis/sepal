@@ -1,7 +1,7 @@
 import {Shape} from 'widget/shape'
-import {Subject} from 'rxjs'
+import {Subject, merge} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime} from 'rxjs/operators'
+import {debounceTime, filter} from 'rxjs/operators'
 import {isMobile} from 'widget/userAgent'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -52,10 +52,18 @@ class _SearchBox extends React.Component {
 
     componentDidMount() {
         const {onSearchValue, onSearchValues, debounce, addSubscription} = this.props
-        addSubscription(
-            this.search$.pipe(
+        const search$ = this.search$
+        const debouncedSearch$ = merge(
+            search$.pipe(
+                filter(value => !value)
+            ),
+            search$.pipe(
+                filter(value => value),
                 debounceTime(debounce)
-            ).subscribe(
+            )
+        )
+        addSubscription(
+            debouncedSearch$.subscribe(
                 value => {
                     onSearchValue && onSearchValue(value)
                     onSearchValues && onSearchValues(
