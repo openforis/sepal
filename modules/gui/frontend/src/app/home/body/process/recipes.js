@@ -1,26 +1,26 @@
-import {compose} from 'compose'
-import escapeStringRegexp from 'escape-string-regexp'
-import _ from 'lodash'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {connect, select} from 'store'
-import {msg} from 'translate'
+import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
+import {CenteredProgress} from 'widget/progress'
 import {FieldSet} from 'widget/form'
+import {PageControls, PageData, Pageable} from 'widget/pageable'
+import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {Shape} from 'widget/shape'
+import {closeTab} from 'widget/tabs'
+import {compose} from 'compose'
+import {connect, select} from 'store'
+import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
+import {getRecipeType} from './recipeTypes'
+import {isMobile} from 'widget/userAgent'
+import {msg} from 'translate'
+import CreateRecipe from './createRecipe'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
-import {Pageable, PageControls, PageData} from 'widget/pageable'
-import {CenteredProgress} from 'widget/progress'
-import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
-import {Shape} from 'widget/shape'
+import PropTypes from 'prop-types'
+import React from 'react'
 import SuperButton from 'widget/superButton'
-import {closeTab} from 'widget/tabs'
-import {isMobile} from 'widget/userAgent'
-import CreateRecipe from './createRecipe'
-import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
+import _ from 'lodash'
+import escapeStringRegexp from 'escape-string-regexp'
 import styles from './recipes.module.css'
-import {getRecipeType} from './recipeTypes'
 
 const mapStateToProps = () => {
     const recipes = select('process.recipes')
@@ -33,7 +33,8 @@ class RecipeList extends React.Component {
     state = {
         sortingOrder: 'updateTime',
         sortingDirection: -1,
-        filter: ''
+        filter: '',
+        filterElements: []
     }
 
     getRecipeTypeName(type) {
@@ -89,39 +90,52 @@ class RecipeList extends React.Component {
     }
 
     setFilter(filter) {
+        const filterElements = _.chain(filter.split(/\s+/))
+            .map(filter => escapeStringRegexp(filter.trim()))
+            .compact()
+            .value()
         this.setState({
-            filter
+            filter,
+            filterElements
         })
     }
 
     getFilteredRecipes() {
         const {recipes} = this.props
+        return recipes
+            // ? recipes.filter(recipe => this.recipeMatchesFilter(recipe))
+            ? recipes
+            : []
+    }
+
+    recipeMatchesFilter(recipe) {
+        const {filterElements} = this.state
+        const searchMatchers = filterElements.map(filter => RegExp(filter, 'i'))
         const searchProperties = ['name']
-        if (this.state.filter) {
-            const filter = RegExp(escapeStringRegexp(this.state.filter), 'i')
-            return recipes.filter(recipe =>
-                _.find(searchProperties, searchProperty =>
-                    filter.test(recipe[searchProperty])
+        return filterElements
+            ? _.every(searchMatchers, matcher =>
+                _.find(searchProperties, property =>
+                    matcher.test(recipe[property])
                 )
             )
-        } else
-            return recipes || []
+            : true
     }
 
     renderProgress() {
         return <CenteredProgress title={msg('process.recipe.loading')}/>
     }
 
-    renderRecipe(recipe) {
+    renderRecipe(recipe, highlightMatcher) {
         return (
             <SuperButton
                 key={recipe.id}
+                title={this.getRecipeTypeName(recipe.type)}
                 description={recipe.name}
+                timestamp={recipe.updateTime}
+                highlight={highlightMatcher}
                 duplicateTooltip={msg('process.menu.duplicateRecipe')}
                 removeMessage={msg('process.menu.removeRecipe.message', {recipe: recipe.name})}
                 removeTooltip={msg('process.menu.removeRecipe.tooltip')}
-                title={this.getRecipeTypeName(recipe.type)}
-                timestamp={recipe.updateTime}
                 onClick={() => this.openRecipe(recipe.id)}
                 onDuplicate={() => this.duplicateRecipe(recipe.id)}
                 onRemove={() => this.removeRecipe(recipe.id)}
@@ -129,8 +143,12 @@ class RecipeList extends React.Component {
         )
     }
 
-    renderRecipies() {
+    renderRecipes() {
         const {recipes, action} = this.props
+        const {filterElements} = this.state
+        const highlightMatcher = filterElements.length
+            ? new RegExp(`(?:${filterElements.join('|')})`, 'i')
+            : null
         return !recipes && !action('LOAD_RECIPES').dispatched
             ? this.renderProgress()
             : (
@@ -139,8 +157,9 @@ class RecipeList extends React.Component {
                         {this.renderSearchAndSort()}
                     </Unscrollable>
                     <Unscrollable className={styles.recipes}>
-                        <PageData itemKey={recipe => recipe.id}>
-                            {recipe => this.renderRecipe(recipe)}
+                        <PageData
+                            itemKey={recipe => `${recipe.id}|${highlightMatcher}`}>
+                            {recipe => this.renderRecipe(recipe, highlightMatcher)}
                         </PageData>
                     </Unscrollable>
                 </ScrollableContainer>
@@ -189,10 +208,12 @@ class RecipeList extends React.Component {
                 <CreateRecipe
                     recipeId={recipeId}
                     trigger={recipes && !recipes.length}/>
-                <Pageable items={this.getSortedRecipes()}>
+                <Pageable
+                    items={this.getSortedRecipes()}
+                    matcher={recipe => this.recipeMatchesFilter(recipe)}>
                     <SectionLayout>
                         <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
-                            {this.renderRecipies()}
+                            {this.renderRecipes()}
                         </Content>
                         <BottomBar className={styles.bottomBar}>
                             {recipes && recipes.length
@@ -253,5 +274,5 @@ export default compose(
 
 RecipeList.propTypes = {
     recipeId: PropTypes.string.isRequired,
-    recipies: PropTypes.array
+    recipes: PropTypes.array
 }
