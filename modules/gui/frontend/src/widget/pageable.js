@@ -149,7 +149,7 @@ class _Pageable extends React.Component {
             return
         }
 
-        const nextAfter = ({start, stop, count, pageItems}) => {
+        const nextForwards = ({start, stop, count, pageItems}) => {
             for (;;) {
                 stop = stop === undefined
                     ? start
@@ -175,7 +175,7 @@ class _Pageable extends React.Component {
             }
         }
 
-        const nextBefore = ({start, stop, pageItems}) => {
+        const nextBackwards = ({start, stop, pageItems}) => {
             for (;;) {
                 start = start === undefined
                     ? stop
@@ -218,8 +218,8 @@ class _Pageable extends React.Component {
                 }
             } else {
                 return direction === 1
-                    ? nextAfter({pageItems, start, stop, count})
-                    : nextBefore({pageItems, start, stop})
+                    ? nextForwards({pageItems, start, stop, count})
+                    : nextBackwards({pageItems, start, stop})
             }
         })
     }
