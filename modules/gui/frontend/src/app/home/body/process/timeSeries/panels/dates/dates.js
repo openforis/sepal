@@ -34,7 +34,7 @@ class Dates extends React.Component {
         const {inputs: {startDate, endDate}} = this.props
         return (
             <FieldSet
-                horizontal
+                layout='horizontal'
                 errorMessage={[startDate, endDate, 'startBeforeEnd']}>
                 <DatePicker
                     label={msg('process.timeSeries.panel.dates.form.startDate.label')}
