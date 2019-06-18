@@ -15,11 +15,6 @@
     justify-content: center;
 }
 
-.search {
-    width: 15rem;
-    border: none;
-}
-
 .orderBy {
     flex-wrap: nowrap;
     display: flex;

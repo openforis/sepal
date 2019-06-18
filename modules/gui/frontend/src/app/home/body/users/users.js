@@ -4,10 +4,8 @@ import {Buttons} from 'widget/buttons'
 import {FieldSet} from 'widget/form'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {isThisExpression} from '@babel/types'
 import {map, share, zip} from 'rxjs/operators'
 import {msg} from 'translate'
 import Highlight from 'react-highlighter'
@@ -15,10 +13,10 @@ import Icon from 'widget/icon'
 import Label from 'widget/label'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import SearchBox from 'widget/searchBox'
 import UserDetails from './user'
 import _ from 'lodash'
 import api from 'api'
-import escapeStringRegexp from 'escape-string-regexp'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
 import moment from 'moment'
@@ -38,8 +36,7 @@ class Users extends React.Component {
         users: [],
         sortingOrder: 'updateTime',
         sortingDirection: -1,
-        textFilter: '',
-        textFilterElements: [],
+        textFilterValues: [],
         statusFilter: null,
         userDetails: null
     }
@@ -89,14 +86,9 @@ class Users extends React.Component {
         }, sortingDirection === 1 ? 'asc' : 'desc')
     }
 
-    setTextFilter(textFilter) {
-        const textFilterElements = _.chain(textFilter.split(/\s+/))
-            .map(filter => escapeStringRegexp(filter.trim()))
-            .compact()
-            .value()
+    setTextFilter(textFilterValues) {
         this.setState({
-            textFilter,
-            textFilterElements
+            textFilterValues
         })
     }
 
@@ -109,10 +101,10 @@ class Users extends React.Component {
     }
 
     userMatchesTextFilter(user) {
-        const {textFilterElements} = this.state
-        const searchMatchers = textFilterElements.map(filter => RegExp(filter, 'i'))
+        const {textFilterValues} = this.state
+        const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
         const searchProperties = ['name', 'username', 'email', 'organization']
-        return textFilterElements
+        return textFilterValues
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
                     matcher.test(user[property])
@@ -139,7 +131,7 @@ class Users extends React.Component {
     onKeyDown({key}) {
         const keyMap = {
             Escape: () => {
-                this.setTextFilter('')
+                this.setTextFilter([])
             }
         }
         const keyAction = keyMap[key]
@@ -308,21 +300,10 @@ class Users extends React.Component {
     }
 
     renderTextFilter() {
-        const {textFilter} = this.state
         return (
-            <Shape
-                look='transparent'
-                size='large'
-                shape='pill'
-                icon='search'>
-                <input
-                    className={styles.search}
-                    type='search'
-                    ref={this.search}
-                    value={textFilter}
-                    placeholder={msg('users.filter.search.placeholder')}
-                    onChange={e => this.setTextFilter(e.target.value)}/>
-            </Shape>
+            <SearchBox
+                placeholder={msg('users.filter.search.placeholder')}
+                onSearchValues={searchValues => this.setTextFilter(searchValues)}/>
         )
     }
 
@@ -383,9 +364,9 @@ class Users extends React.Component {
     }
 
     renderUsers() {
-        const {textFilterElements} = this.state
-        const highlightMatcher = textFilterElements.length
-            ? new RegExp(`(?:${textFilterElements.join('|')})`, 'i')
+        const {textFilterValues} = this.state
+        const highlightMatcher = textFilterValues.length
+            ? new RegExp(`(?:${textFilterValues.join('|')})`, 'i')
             : ''
         return (
             // [HACK] adding filter to key to force re-rendering
@@ -413,45 +394,40 @@ class Users extends React.Component {
     render() {
         const {users} = this.state
         return (
-            <React.Fragment>
-                <div
-                    className={styles.container}
-                    tabIndex='0'
-                    onKeyDown={e => this.onKeyDown(e)}>
-                    <Pageable
-                        items={users}
-                        matcher={user => this.userMatchesFilters(user)}>
-                        <SectionLayout>
-                            <TopBar label={msg('home.sections.users')}/>
-                            <Content horizontalPadding verticalPadding menuPadding>
-                                <ScrollableContainer>
-                                    <Unscrollable>
-                                        <FieldSet layout='horizontal' spacing='compact'>
-                                            {this.renderTextFilter()}
-                                            {this.renderStatusFilter()}
-                                        </FieldSet>
-                                    </Unscrollable>
-                                    <Scrollable direction='x'>
-                                        <ScrollableContainer className={styles.content}>
-                                            <Unscrollable>
-                                                {this.renderHeader()}
-                                            </Unscrollable>
-                                            <Scrollable direction='y' className={styles.users}>
-                                                {this.renderUsers()}
-                                            </Scrollable>
-                                        </ScrollableContainer>
-                                    </Scrollable>
-                                </ScrollableContainer>
-                                {this.renderInviteUser()}
-                            </Content>
-                            <BottomBar className={styles.bottomBar}>
-                                <PageControls/>
-                            </BottomBar>
-                        </SectionLayout>
-                    </Pageable>
-                </div>
+            <div className={styles.container}>
+                <Pageable
+                    items={users}
+                    matcher={user => this.userMatchesFilters(user)}>
+                    <SectionLayout>
+                        <TopBar label={msg('home.sections.users')}/>
+                        <Content horizontalPadding verticalPadding menuPadding>
+                            <ScrollableContainer>
+                                <Unscrollable>
+                                    <FieldSet layout='horizontal' spacing='compact'>
+                                        {this.renderTextFilter()}
+                                        {this.renderStatusFilter()}
+                                    </FieldSet>
+                                </Unscrollable>
+                                <Scrollable direction='x'>
+                                    <ScrollableContainer className={styles.content}>
+                                        <Unscrollable>
+                                            {this.renderHeader()}
+                                        </Unscrollable>
+                                        <Scrollable direction='y' className={styles.users}>
+                                            {this.renderUsers()}
+                                        </Scrollable>
+                                    </ScrollableContainer>
+                                </Scrollable>
+                            </ScrollableContainer>
+                            {this.renderInviteUser()}
+                        </Content>
+                        <BottomBar className={styles.bottomBar}>
+                            <PageControls/>
+                        </BottomBar>
+                    </SectionLayout>
+                </Pageable>
                 {this.renderUserDetails()}
-            </React.Fragment>
+            </div>
         )
     }
 }

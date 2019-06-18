@@ -26,11 +26,6 @@
     z-index: 1;
 }
 
-.search {
-    width: 15rem;
-    border: none;
-}
-
 @media only screen and (max-width: 500px) {
     .inviteUser {
         --right: 1rem;

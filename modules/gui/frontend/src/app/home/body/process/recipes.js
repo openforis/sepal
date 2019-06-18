@@ -4,22 +4,20 @@ import {CenteredProgress} from 'widget/progress'
 import {FieldSet} from 'widget/form'
 import {PageControls, PageData, Pageable} from 'widget/pageable'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {Shape} from 'widget/shape'
 import {closeTab} from 'widget/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
 import {getRecipeType} from './recipeTypes'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import CreateRecipe from './createRecipe'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
+import SearchBox from 'widget/searchBox'
 import SuperButton from 'widget/superButton'
 import _ from 'lodash'
-import escapeStringRegexp from 'escape-string-regexp'
 import styles from './recipes.module.css'
 
 const mapStateToProps = () => {
@@ -33,8 +31,7 @@ class RecipeList extends React.Component {
     state = {
         sortingOrder: 'updateTime',
         sortingDirection: -1,
-        filter: '',
-        filterElements: []
+        filterValues: []
     }
 
     getRecipeTypeName(type) {
@@ -82,37 +79,25 @@ class RecipeList extends React.Component {
     }
 
     getSortedRecipes() {
+        const {recipes} = this.props
         const {sortingOrder, sortingDirection} = this.state
-        return _.orderBy(this.getFilteredRecipes(), recipe => {
+        return _.orderBy(recipes, recipe => {
             const item = _.get(recipe, sortingOrder)
             return _.isString(item) ? item.toUpperCase() : item
         }, sortingDirection === 1 ? 'asc' : 'desc')
     }
 
-    setFilter(filter) {
-        const filterElements = _.chain(filter.split(/\s+/))
-            .map(filter => escapeStringRegexp(filter.trim()))
-            .compact()
-            .value()
+    setFilter(filterValues) {
         this.setState({
-            filter,
-            filterElements
+            filterValues
         })
     }
 
-    getFilteredRecipes() {
-        const {recipes} = this.props
-        return recipes
-            // ? recipes.filter(recipe => this.recipeMatchesFilter(recipe))
-            ? recipes
-            : []
-    }
-
     recipeMatchesFilter(recipe) {
-        const {filterElements} = this.state
-        const searchMatchers = filterElements.map(filter => RegExp(filter, 'i'))
+        const {filterValues} = this.state
+        const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
         const searchProperties = ['name']
-        return filterElements
+        return filterValues
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
                     matcher.test(recipe[property])
@@ -145,9 +130,9 @@ class RecipeList extends React.Component {
 
     renderRecipes() {
         const {recipes, action} = this.props
-        const {filterElements} = this.state
-        const highlightMatcher = filterElements.length
-            ? new RegExp(`(?:${filterElements.join('|')})`, 'i')
+        const {filterValues} = this.state
+        const highlightMatcher = filterValues.length
+            ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
             : null
         return !recipes && !action('LOAD_RECIPES').dispatched
             ? this.renderProgress()
@@ -168,21 +153,9 @@ class RecipeList extends React.Component {
 
     renderSearch() {
         return (
-            <Shape
-                look='transparent'
-                size='large'
-                shape='pill'
-                icon='search'>
-                <input
-                    className={styles.search}
-                    type='search'
-                    ref={this.search}
-                    value={this.state.filter}
-                    placeholder={msg('process.menu.searchRecipes')}
-                    autoFocus={!isMobile()}
-                    onChange={e => this.setFilter(e.target.value)}
-                />
-            </Shape>
+            <SearchBox
+                placeholder={msg('process.menu.searchRecipes')}
+                onSearchValues={searchValues => this.setFilter(searchValues)}/>
         )
     }
 
