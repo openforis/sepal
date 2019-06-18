@@ -13,7 +13,7 @@ const {Provider, Consumer} = React.createContext()
 
 export class Pageable extends React.Component {
     render() {
-        const {items, matcher, children} = this.props
+        const {items, matcher, fillFirstPage, fillLastPage, children} = this.props
         return (
             <Keybinding keymap={{
                 'Ctrl+Shift+ArrowLeft': () => this.firstPage(),
@@ -22,7 +22,9 @@ export class Pageable extends React.Component {
             }}>
                 <PageContext
                     items={items || []}
-                    matcher={matcher}>
+                    matcher={matcher}
+                    fillFirstPage={fillFirstPage}
+                    fillLastPage={fillLastPage}>
                     {children}
                 </PageContext>
             </Keybinding>
@@ -33,7 +35,14 @@ export class Pageable extends React.Component {
 Pageable.propTypes = {
     children: PropTypes.any.isRequired,
     items: PropTypes.array.isRequired,
+    fillFirstPage: PropTypes.bool,
+    fillLastPage: PropTypes.bool,
     matcher: PropTypes.func
+}
+
+Pageable.defaultProps = {
+    fillFirstPage: true,
+    fillLastPage: false,
 }
 
 const mapStateToProps = state => ({
@@ -128,11 +137,8 @@ class _PageContext extends React.Component {
     }
 
     next(overflow) {
-        const {items} = this.props
+        const {items, fillFirstPage, fillLastPage} = this.props
         const {direction} = this.state
-
-        const FILL_FIRST_PAGE = true
-        const FILL_LAST_PAGE = false
 
         if (direction === 0) {
             return
@@ -146,7 +152,7 @@ class _PageContext extends React.Component {
                 if (stop > count) {
                     return {
                         stop: count,
-                        direction: FILL_LAST_PAGE ? - 1 : 0
+                        direction: fillLastPage ? - 1 : 0
                     }
                 } else if (stop === start) {
                     return {
@@ -172,7 +178,7 @@ class _PageContext extends React.Component {
                 if (start < 0) {
                     return {
                         start: 0,
-                        direction: FILL_FIRST_PAGE ? 1 : 0
+                        direction: fillFirstPage ? 1 : 0
                     }
                 } else if (start === stop) {
                     return {
