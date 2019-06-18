@@ -7,6 +7,7 @@ import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {isThisExpression} from '@babel/types'
 import {map, share, zip} from 'rxjs/operators'
 import {msg} from 'translate'
 import Highlight from 'react-highlighter'
@@ -103,11 +104,8 @@ class Users extends React.Component {
         this.setState({activeFilter})
     }
 
-    getFilteredUsers() {
-        const {users} = this.state
-        return users
-            .filter(user => this.userMatchesTextFilter(user))
-            .filter(user => this.userMatchesStatusFilter(user))
+    userMatchesFilters(user) {
+        return this.userMatchesTextFilter(user) && this.userMatchesStatusFilter(user)
     }
 
     userMatchesTextFilter(user) {
@@ -181,7 +179,6 @@ class Users extends React.Component {
     }
 
     updateUser(userDetails) {
-
         const update$ = userDetails =>
             updateUserDetails$(userDetails).pipe(
                 zip(updateUserBudget$(userDetails)),
@@ -414,13 +411,16 @@ class Users extends React.Component {
     }
 
     render() {
+        const {users} = this.state
         return (
             <React.Fragment>
                 <div
                     className={styles.container}
                     tabIndex='0'
                     onKeyDown={e => this.onKeyDown(e)}>
-                    <Pageable items={this.getFilteredUsers()}>
+                    <Pageable
+                        items={users}
+                        matcher={user => this.userMatchesFilters(user)}>
                         <SectionLayout>
                             <TopBar label={msg('home.sections.users')}/>
                             <Content horizontalPadding verticalPadding menuPadding>
