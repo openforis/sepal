@@ -348,15 +348,12 @@ class Users extends React.Component {
     }
 
     renderInfo() {
-        const {textFilter, statusFilter, users} = this.state
-        const isFiltered = textFilter || statusFilter
-        const results = (count, total) =>
-            msg(isFiltered ? 'users.countWithFilter' : 'users.countNoFilter', {count, total})
+        const results = (count, start, stop) => msg('users.count', {count, start, stop})
         return (
             <PageInfo>
-                {({count}) =>
+                {({count, start, stop}) =>
                     <div className={styles.pageInfo}>
-                        {results(count, users.length)}
+                        {results(count, start, stop)}
                     </div>
                 }
             </PageInfo>

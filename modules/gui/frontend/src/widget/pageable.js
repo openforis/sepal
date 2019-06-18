@@ -191,7 +191,6 @@ class _PageContext extends React.Component {
         }
 
         this.setState(({pageItems, count, start, stop, direction}) => {
-            // console.log('previous state', {count, start, stop, direction})
             if (overflow) {
                 if (direction === 1) {
                     return {
@@ -216,7 +215,6 @@ class _PageContext extends React.Component {
 
     render() {
         const {pageItems, count, start, stop, direction} = this.state
-        // console.log('render', {pageItems, count, start, stop, direction})
         const {children} = this.props
         const isFirstPage = this.isFirstPage()
         const isLastPage = this.isLastPage()
@@ -369,17 +367,23 @@ export const PageInfo = props => {
         <div>
             {msg('pagination.info', {count, start, stop})}
         </div>
-    
-    const renderCustomInfo = ({pageNumber, pageCount, count}) =>
+        
+    const renderCustomInfo = ({count, start, stop}) =>
         <React.Fragment>
-            {props.children({pageNumber, pageCount, count})}
+            {props.children({count, start, stop})}
         </React.Fragment>
+
+    const pageinfo = ({count, start, stop}) => ({
+        count,
+        start: start + 1,
+        stop
+    })
 
     return (
         <Consumer>
             {pageable => props.children
-                ? renderCustomInfo(pageable)
-                : renderDefaultInfo(pageable)
+                ? renderCustomInfo(pageinfo(pageable))
+                : renderDefaultInfo(pageinfo(pageable))
             }
         </Consumer>
     )

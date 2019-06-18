@@ -1452,6 +1452,7 @@
     "title": "User messages"
   },
   "users": {
+    "count": "users {start}-{stop} of {count}",
     "countNoFilter": "{count} {count, plural, one {user} other {users}}",
     "countWithFilter": "{count} {count, plural, one {user} other {users}} out of {total}",
     "filter": {
