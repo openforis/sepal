@@ -1,9 +1,9 @@
 import {compose} from 'compose'
-import withContext from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import styles from './portal.module.css'
+import withContext from 'context'
 
 const DEFAULT_PORTAL_CONTAINER_ID = 'defaultPortalContainer'
 
@@ -30,8 +30,8 @@ export const PortalContainer = ({id, className}) => (
 )
 
 PortalContainer.propTypes = {
-    id: PropTypes.string,
     className: PropTypes.string,
+    id: PropTypes.string,
 }
 
 class Portal extends React.Component {

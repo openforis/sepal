@@ -215,11 +215,11 @@ class _Scrollable extends Component {
                 Math.round(this.getOffset(direction)) === targetOffset
                     ? EMPTY
                     : animationFrame$.pipe(
-                    mapTo(targetOffset),
-                    scan(lerp(ANIMATION_SPEED), this.getOffset(direction)),
-                    map(offset => Math.round(offset)),
-                    distinctUntilChanged(),
-                    takeWhile(offset => offset !== targetOffset)
+                        mapTo(targetOffset),
+                        scan(lerp(ANIMATION_SPEED), this.getOffset(direction)),
+                        map(offset => Math.round(offset)),
+                        distinctUntilChanged(),
+                        takeWhile(offset => offset !== targetOffset)
                     )
             )
         )

@@ -1,16 +1,16 @@
-import {selectFrom} from 'stateUtils'
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import Slider from 'widget/slider'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {currentUser} from 'widget/user'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Slider from 'widget/slider'
 import styles from './retrieve.module.css'
 
 const fields = {

@@ -123,10 +123,8 @@ class _TerminalSession extends React.Component {
             )
             onOpen(webSocket)
         }
-        webSocket.onclose = () => {
-            console.log('closed')
+        webSocket.onclose = () =>
             this.closed$.next()
-        }
         webSocket.onerror = () =>
             Notifications.error({
                 message: msg('terminal.server.error')

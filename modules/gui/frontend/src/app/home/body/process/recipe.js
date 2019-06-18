@@ -182,7 +182,6 @@ export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
     api.recipe.load$(sourceRecipeId).pipe(
         map(sourceRecipe => {
             const duplicate = duplicateRecipe(sourceRecipe, destinationRecipeId)
-            console.log({sourceRecipe, duplicate})
             return duplicate
         }),
         map(recipe =>
