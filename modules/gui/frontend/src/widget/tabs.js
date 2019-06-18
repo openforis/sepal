@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Scrollable, ScrollableContainer, withScrollable} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {isMobile} from 'widget/userAgent'
@@ -182,7 +182,7 @@ export default compose(
     connect(mapStateToProps)
 )
 
-class Tab extends React.Component {
+class _Tab extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
@@ -274,21 +274,45 @@ class Tab extends React.Component {
     }
 
     scrollSelectedTabIntoView() {
-        const element = this.titleInput.current
-        element && element.scrollIntoView({inline: 'nearest'})
+        const {scrollable} = this.props
+        const inputElement = this.titleInput.current
+        const scrollableElement = scrollable && scrollable.getElement()
+        if (!inputElement || !scrollableElement)
+            return
+        const tabElement = inputElement.parentNode.parentNode
+        const tabLeft = tabElement.offsetLeft
+        const tabWidth = tabElement.clientWidth
+        const tabRight = tabLeft + tabWidth
+        const scrollableWidth = scrollableElement.clientWidth
+        const min = Math.max(tabRight + tabWidth / 2 - scrollableWidth, 0)
+        const max = Math.max(tabLeft - tabWidth / 2, 0)
+        const offset = scrollable.getOffset('x')
+        if (offset < min) {
+            scrollable.scrollTo(min, 'x')
+        } else if (offset > max) {
+            scrollable.scrollTo(max, 'x')
+        }
+
     }
 
     componentDidMount() {
+        const {scrollable} = this.props
         this.scrollSelectedTabIntoView()
+
     }
 
     componentDidUpdate(prevProps, prevState) {
         const {selected} = this.props
-        selected && prevProps.selected !== selected && this.scrollSelectedTabIntoView()
         if (!prevState.editing && this.state.editing)
             this.titleInput.current.select()
+        selected && prevProps.selected !== selected && this.scrollSelectedTabIntoView()
     }
 }
+
+const Tab = compose(
+    _Tab,
+    withScrollable()
+)
 
 Tab.propTypes = {
     id: PropTypes.string,

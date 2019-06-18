@@ -11,6 +11,10 @@
     margin-right: .5rem;
 }
 
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
 .tab {
     --tab-default-background-color: hsl(0, 0%, 11%);
     --tab-selected-background-color: hsl(60, 2%, 16%);
@@ -77,14 +81,14 @@
 }
 
 .tab {
-    animation: added 250ms ease-in-out forwards;
+    animation: added 500ms ease-in-out forwards;
     overflow: hidden;
 }
 
 @keyframes added {
     0% {
         opacity: 0;
-        transform: scale(.5);
+        transform: translateY(-50%);
     }
 }
 
