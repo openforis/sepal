@@ -31,7 +31,6 @@
     border-bottom: 3px solid var(--tab-default-border-color);
     border-top-right-radius: var(--border-top-right-radius);
     border-top-left-radius: 0.5rem;
-    height: 2.5rem;
     white-space: nowrap;
     margin-top: .5rem;
     line-height: 2.5rem;
