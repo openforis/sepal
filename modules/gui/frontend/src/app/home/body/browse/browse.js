@@ -202,7 +202,10 @@ class Browse extends React.Component {
     }
 
     collapseDirectory(path) {
-        this.removeAddedFlag(actionBuilder('COLLAPSE_DIRECTORY'), path)
+        const ab = actionBuilder('COLLAPSE_DIRECTORY', {path})
+        this.deselectDescendants(ab, path)
+        this.removeAddedFlag(ab, path)
+        ab
             .del([TREE, dotSafe(treePath(path)), 'opened'])
             .dispatch()
     }
