@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject} from 'rxjs'
+import {delay} from 'rxjs/operators'
 import {compose} from 'compose'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -82,7 +83,8 @@ class ScrollableList extends React.Component {
                 style={{
                     '--scrollable-container-height': overScroll ? scrollableContainerHeight : 0
                 }}
-                onMouseLeave={() => autoCenter$.next(true)}>
+                onMouseLeave={() => autoCenter$.next(true)}
+            >
                 {this.renderOptions(options)}
             </ul>
         )
@@ -320,7 +322,8 @@ class ScrollableList extends React.Component {
     initializeAutoCenter() {
         const {addSubscription, scrollable} = this.props
         addSubscription(
-            autoCenter$.subscribe(
+            // [HACK] Add delay to fix bug where iOS doesn't capture next tap event
+            autoCenter$.pipe(delay(250)).subscribe(
                 reset => reset
                     ? scrollable.reset(() => this.centerSelectedOption())
                     : this.centerSelectedOption()
