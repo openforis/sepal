@@ -117,12 +117,12 @@
 
 .panelContentContainer {
     flex-grow: 1;
-    display: flex;
-    flex-direction: column;
 }
 
 .panelContent {
     padding: var(--content-padding);
+    display: flex;
+    flex-direction: column;
 }
 
 @media screen and (max-width: 500px) {
