@@ -1,4 +1,4 @@
-import {FormComponent} from 'widget/form'
+import {FieldSet} from 'widget/form'
 import {Subject, fromEvent} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -50,7 +50,7 @@ class Combo extends React.Component {
                         ? null
                         : this.showOptions()
         return (
-            <FormComponent
+            <FieldSet
                 className={[styles.container, className].join(' ')}
                 input={input}
                 label={label}
@@ -64,7 +64,7 @@ class Combo extends React.Component {
                     {this.renderInput()}
                 </div>
                 {showOptions ? this.renderOptions() : null}
-            </FormComponent>
+            </FieldSet>
         )
     }
 
@@ -88,11 +88,12 @@ class Combo extends React.Component {
                 <input
                     ref={this.input}
                     className={[
+                        styles.input,
                         standalone ? styles.standalone : null,
                         selectedOption && !standalone ? styles.fakePlaceholder : null,
                         inputClassName
                     ].join(' ')}
-                    type='search'
+                    // type='search'
                     value={filter}
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
                     disabled={disabled || busy}

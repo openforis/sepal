@@ -1,5 +1,6 @@
-import {Field, FieldSet, Input} from 'widget/form'
+import {Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
+import {Input} from 'widget/input'
 import {Msg, msg} from 'translate'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'

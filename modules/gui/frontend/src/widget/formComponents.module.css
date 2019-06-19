@@ -74,8 +74,8 @@ form textarea::placeholder {
     font-style: italic;
 }
 
-form input.error,
-form textarea.error {
+form .error input,
+form .error textarea {
     border-bottom-color: var(--error-border-color) !important;
     background-color: var(--error-background-color) !important;
 }
@@ -154,4 +154,18 @@ form .errorMessage {
 
 .alignment.right {
     text-align: right;
+}
+
+
+
+
+.inputContainer {
+    position: relative;
+    padding-right: 2.5rem;
+}
+
+.clearButton {
+    position: absolute;
+    top: 0;
+    right: 0;
 }

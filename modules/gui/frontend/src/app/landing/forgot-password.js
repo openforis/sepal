@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
-import {Field, FieldSet, Form, Input, form} from 'widget/form'
+import {Field, FieldSet, Form, form} from 'widget/form'
+import {Input} from 'widget/input'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'

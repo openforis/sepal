@@ -1,4 +1,5 @@
-import {Field, FieldSet, Input, form} from 'widget/form'
+import {Field, FieldSet, form} from 'widget/form'
+import {Input} from 'widget/input'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
@@ -107,7 +108,8 @@ class UserDetails extends React.Component {
                             className={styles.monthlyLimits}
                             layout='horizontal'
                             label={msg('user.userDetails.form.monthlyLimits.label')}
-                            errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}>
+                            errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}
+                        >
                             <Input
                                 label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
                                 type='number'

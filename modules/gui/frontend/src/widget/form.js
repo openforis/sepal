@@ -1,15 +1,16 @@
+import {FormComponent} from 'widget/formComponents'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
-import Keybinding from 'widget/keybinding'
-import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Textarea from 'react-textarea-autosize'
 import _ from 'lodash'
 import moment from 'moment'
-import styles from './form.module.css'
+import withContext from 'context'
+
+const FormContext = React.createContext()
+
+export const withFormContext = withContext(FormContext, 'form')
 
 export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
     WrappedComponent => {
@@ -375,35 +376,6 @@ export class Field extends FormProperty {
     }
 }
 
-const FormContext = React.createContext()
-
-export const ErrorMessage = props => {
-    return <FormContext.Consumer>
-        {form => {
-            let sources = props['for'] || []
-            if (!Array.isArray(sources))
-                sources = [sources]
-            const error = sources
-                .map(source =>
-                    (typeof source) === 'string' ? form.errors[source] : source.error
-                )
-                .find(error => error)
-            return (
-                <div className={styles.errorMessageContainer}>
-                    <div className={[styles.errorMessage, props.className].join(' ')}>
-                        {error}
-                    </div>
-                </div>
-            )
-        }}
-    </FormContext.Consumer>
-}
-
-ErrorMessage.propTypes = {
-    'for': PropTypes.any.isRequired,
-    className: PropTypes.string
-}
-
 export class Form extends React.Component {
     render() {
         const {className, onSubmit, children} = this.props
@@ -426,202 +398,35 @@ Form.propTypes = {
     className: PropTypes.string
 }
 
-export class Input extends React.Component {
-    element = React.createRef()
-    state = {
-        textareaFocused: false
-    }
+export const getErrorMessage = (form, input) =>
+    _.chain([input])
+        .flatten()
+        .compact()
+        .map(source =>
+            _.isString(source)
+                ? form.errors[source]
+                : source.error
+        )
+        .find(error => error)
+        .value() || ''
 
+export const ErrorMessage = props => {
+    return (
+        <FormContext.Consumer>
+            {form => getErrorMessage(form, props['for'])}
+        </FormContext.Consumer>
+    )
+}
+
+ErrorMessage.propTypes = {
+    'for': PropTypes.any.isRequired,
+    className: PropTypes.string
+}
+
+class _FieldSet extends React.Component {
     render() {
-        const {textArea, disabled, label, tooltip, tooltipPlacement = 'top', input, errorMessage} = this.props
-        return (
-            <FormComponent
-                disabled={disabled}
-                label={label}
-                tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-                input={input}
-                errorMessage={errorMessage}>
-                {textArea ? this.renderTextArea() : this.renderInput()}
-            </FormComponent>
-        )
-    }
-
-    renderInput() {
-        const {
-            className, input, type = 'text', validate = 'onBlur', tabIndex,
-            autoFocus = false, autoComplete = false, autoCorrect = false, autoCapitalize = false, spellCheck = false,
-            onChange, onBlur, ...props
-        } = this.props
-        const extraProps = _.omit(props, ['errorMessage'])
-        return (
-            <input
-                ref={this.element}
-                className={[input.validationFailed ? styles.error : null, className].join(' ')}
-                type={type}
-                name={input.name}
-                value={typeof input.value === 'number' || typeof input.value === 'boolean' || input.value ? input.value : ''}
-                tabIndex={tabIndex}
-                autoFocus={autoFocus && !isMobile()}
-                autoComplete={autoComplete ? 'on' : 'off'}
-                autoCorrect={autoCorrect ? 'on' : 'off'}
-                autoCapitalize={autoCapitalize ? 'on' : 'off'}
-                spellCheck={spellCheck ? 'true' : 'false'}
-                onChange={e => {
-                    input.handleChange(e)
-                    if (onChange)
-                        onChange(e)
-                    if (validate === 'onChange')
-                        input.validate()
-                }}
-                onBlur={e => {
-                    if (onBlur)
-                        onBlur(e)
-                    if (validate === 'onBlur')
-                        input.validate()
-                }}
-                {...extraProps}
-            />
-        )
-    }
-
-    renderTextArea() {
-        const {input, minRows, maxRows, validate = 'onBlur', tabIndex, onChange, className, onBlur} = this.props
-        const {textareaFocused} = this.state
-        return (
-            <Keybinding keymap={{Enter: null}} disabled={!textareaFocused} priority>
-                <Textarea
-                    ref={this.element}
-                    name={input.name}
-                    value={input.value || ''}
-                    tabIndex={tabIndex}
-                    minRows={minRows}
-                    maxRows={maxRows}
-                    onChange={e => {
-                        input.handleChange(e)
-                        if (onChange)
-                            onChange(e)
-                        if (validate === 'onChange')
-                            input.validate()
-                    }}
-                    onFocus={() => this.setState({textareaFocused: true})}
-                    onBlur={e => {
-                        this.setState({textareaFocused: false})
-                        if (onBlur)
-                            onBlur(e)
-                        if (validate === 'onBlur')
-                            input.validate()
-                    }}
-                    className={[input.validationFailed ? styles.error : null, className].join(' ')}
-                />
-            </Keybinding>
-        )
-    }
-
-    focus() {
-        this.element.current.focus()
-    }
-}
-
-Input.propTypes = {
-    input: PropTypes.object.isRequired,
-    autoCapitalize: PropTypes.any,
-    autoComplete: PropTypes.any,
-    autoCorrect: PropTypes.any,
-    autoFocus: PropTypes.any,
-    className: PropTypes.string,
-    label: PropTypes.string,
-    maxRows: PropTypes.number,
-    minRows: PropTypes.number,
-    placeholder: PropTypes.string,
-    spellCheck: PropTypes.any,
-    tabIndex: PropTypes.number,
-    textArea: PropTypes.any,
-    tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string,
-    type: PropTypes.string,
-    validate: PropTypes.oneOf(['onChange', 'onBlur']),
-    onBlur: PropTypes.func,
-    onChange: PropTypes.func
-}
-
-export class FormComponent extends React.Component {
-    render() {
-        const {layout, spacing, className, children} = this.props
-        return (
-            <React.Fragment>
-                <div>
-                    {this.renderLabel()}
-                    <div className={[
-                        styles.formComponent,
-                        styles[layout],
-                        styles[spacing],
-                        className
-                    ].join(' ')}>
-                        {children}
-                    </div>
-                    {this.renderErrorMessage()}
-                </div>
-                {this.renderErrorMessageSpacer()}
-            </React.Fragment>
-        )
-    }
-
-    renderLabel() {
-        const {label, tooltip, tooltipPlacement, alignment, disabled} = this.props
-        return label ? (
-            <Label
-                className={[styles.alignment, styles[alignment]].join(' ')}
-                msg={label}
-                tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-                disabled={disabled}
-                tabIndex={-1}
-            />
-        ) : null
-    }
-
-    renderErrorMessage() {
-        const {errorMessage, input} = this.props
-        return errorMessage
-            ? <ErrorMessage for={errorMessage === true ? input : errorMessage}/>
-            : null
-    }
-
-    renderErrorMessageSpacer() {
-        const {errorMessage} = this.props
-        return errorMessage
-            ? <div/>
-            : null
-    }
-}
-
-FormComponent.propTypes = {
-    children: PropTypes.any.isRequired,
-    alignment: PropTypes.oneOf(['left', 'center', 'right']),
-    className: PropTypes.string,
-    disabled: PropTypes.any,
-    errorMessage: PropTypes.any,
-    input: PropTypes.object,
-    label: PropTypes.string,
-    layout: PropTypes.oneOf(['vertical', 'horizontal']),
-    spacing: PropTypes.oneOf(['normal', 'compact', 'none']),
-    tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string
-}
-
-FormComponent.defaultProps = {
-    alignment: 'left',
-    layout: 'vertical',
-    spacing: 'none',
-    tooltipPlacement: 'top'
-}
-
-export class FieldSet extends React.Component {
-    render() {
-        const {className, layout, spacing,
-            disabled, label, tooltip, tooltipPlacement,
-            input, errorMessage, children} = this.props
+        const {form, className, layout, spacing, disabled, label,
+            tooltip, tooltipPlacement, errorMessage, children} = this.props
         return (
             <FormComponent
                 className={className}
@@ -631,8 +436,7 @@ export class FieldSet extends React.Component {
                 label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                input={input}
-                errorMessage={errorMessage}
+                errorMessage={errorMessage && getErrorMessage(form, errorMessage)}
             >
                 {children}
             </FormComponent>
@@ -640,11 +444,16 @@ export class FieldSet extends React.Component {
     }
 }
 
+export const FieldSet = compose(
+    _FieldSet,
+    withFormContext()
+)
+
 FieldSet.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
     disabled: PropTypes.any,
-    errorMessage: PropTypes.any,
+    errorMessage: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
     input: PropTypes.object,
     label: PropTypes.string,
     layout: PropTypes.oneOf(['vertical', 'horizontal']),

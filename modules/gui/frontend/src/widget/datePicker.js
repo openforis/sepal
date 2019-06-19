@@ -1,7 +1,7 @@
 import * as PropTypes from 'prop-types'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
-import {FormComponent} from 'widget/form'
+import {FormComponent} from 'widget/formComponents'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
