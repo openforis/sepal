@@ -1,8 +1,8 @@
+import {EarthEngineTileProvider, GoogleMapsLayer} from './googleMapsLayer'
 import {map} from 'rxjs/operators'
 import {of} from 'rxjs'
 import {sepalMap} from './map'
 import _ from 'lodash'
-import ee from 'earthengine-api'
 import guid from 'guid'
 
 export default class EarthEngineLayer {
@@ -19,11 +19,13 @@ export default class EarthEngineLayer {
     }
 
     addToMap(googleMap) {
-        const layer = new ee.layers.ImageOverlay(
-            new ee.layers.EarthEngineTileSource(
-                toMapId(this.mapId, this.token)
-            )
-        )
+        // const layer = new ee.layers.ImageOverlay(
+        //     new ee.layers.EarthEngineTileSource(
+        //         toMapId(this.mapId, this.token)
+        //     )
+        // )
+
+        const layer = new GoogleMapsLayer(new EarthEngineTileProvider())
 
         // [HACK] When fitting bounds with no change to bounds, after Google Maps v3.33,
         // tiles were loaded then removed. GEE used same id for tiles at the same position.
@@ -34,36 +36,36 @@ export default class EarthEngineLayer {
         googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
 
         const notifyOnProgress = () => {
-            // Manually calculate stats, since GEE returns stats from multiple zoom-levels
-            const tileStatuses = layer.tilesById.getValues()
-                .filter(tile => tile.zoom === googleMap.getZoom())
-                .map(tile => tile.getStatus())
-            const Status = ee.layers.AbstractTile.Status
-
-            const loading = tileStatuses.filter(status => status === Status.LOADING).length
-                + tileStatuses.filter(status => status === Status.NEW).length
-                + tileStatuses.filter(status => status === Status.THROTTLED).length
-            const loaded = tileStatuses.filter(status => status === Status.LOADED).length
-            const failed = tileStatuses.filter(status => status === Status.FAILED).length
-                + tileStatuses.filter(status => status === Status.ABORTED).length
-
-            const tileStats = {
-                count: loading + loaded + failed,
-                loading,
-                failed,
-                loaded
-            }
-            tileStats.complete = tileStats.count === tileStats.loaded + tileStats.failed
-
-            if (this.onProgress && tileStats.count > 0)
-                this.onProgress(tileStats)
-            else
-                setTimeout(notifyOnProgress, 100)
+            // // Manually calculate stats, since GEE returns stats from multiple zoom-levels
+            // const tileStatuses = layer.tilesById.getValues()
+            //     .filter(tile => tile.zoom === googleMap.getZoom())
+            //     .map(tile => tile.getStatus())
+            // const Status = ee.layers.AbstractTile.Status
+            //
+            // const loading = tileStatuses.filter(status => status === Status.LOADING).length
+            //     + tileStatuses.filter(status => status === Status.NEW).length
+            //     + tileStatuses.filter(status => status === Status.THROTTLED).length
+            // const loaded = tileStatuses.filter(status => status === Status.LOADED).length
+            // const failed = tileStatuses.filter(status => status === Status.FAILED).length
+            //     + tileStatuses.filter(status => status === Status.ABORTED).length
+            //
+            // const tileStats = {
+            //     count: loading + loaded + failed,
+            //     loading,
+            //     failed,
+            //     loaded
+            // }
+            // tileStats.complete = tileStats.count === tileStats.loaded + tileStats.failed
+            //
+            // if (this.onProgress && tileStats.count > 0)
+            //     this.onProgress(tileStats)
+            // else
+            //     setTimeout(notifyOnProgress, 100)
         }
         this.boundsChangedListener = sepalMap.onBoundsChanged(notifyOnProgress)
         notifyOnProgress()
-        layer.addEventListener('tile-load', notifyOnProgress)
-        layer.addEventListener('tile-fail', notifyOnProgress)
+        // layer.addEventListener('tile-load', notifyOnProgress)
+        // layer.addEventListener('tile-fail', notifyOnProgress)
     }
 
     removeFromMap(googleMap) {
