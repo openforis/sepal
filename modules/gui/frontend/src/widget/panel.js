@@ -109,14 +109,14 @@ export class PanelContent extends React.Component {
         const {className, scrollable, children} = this.props
         return scrollable
             ? (
-                <ScrollableContainer className={styles.scrollableContainer}>
-                    <Scrollable className={[styles.content, className].join(' ')}>
+                <ScrollableContainer className={styles.panelContentContainer}>
+                    <Scrollable className={[styles.panelContent, className].join(' ')}>
                         {children}
                     </Scrollable>
                 </ScrollableContainer>
             )
             : (
-                <div className={styles.panelContent}>
+                <div className={[styles.panelContentContainer, styles.panelContent, className].join(' ')}>
                     {children}
                 </div>
             )
