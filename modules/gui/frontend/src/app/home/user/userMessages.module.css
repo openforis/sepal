@@ -72,3 +72,13 @@ button.unread i {
 .contents li + li {
     margin-top: 0rem;
 }
+
+.noMessages {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-style: italic;
+    font-size: .9rem;
+    color: #ccc;
+}
