@@ -116,10 +116,10 @@ class _Pageable extends React.Component {
 
     previousPage() {
         if (!this.isFirstPage()) {
-            this.setState(({count, start}) => ({
+            this.setState(({start}) => ({
                 pageItems: [],
                 start: undefined,
-                stop: Math.min(start, count),
+                stop: start,
                 direction: -1
             }))
         }
@@ -129,7 +129,7 @@ class _Pageable extends React.Component {
         if (!this.isLastPage()) {
             this.setState(({stop}) => ({
                 pageItems: [],
-                start: Math.max(stop, 0),
+                start: stop,
                 stop: undefined,
                 direction: 1
             }))
@@ -148,8 +148,21 @@ class _Pageable extends React.Component {
         if (direction === 0) {
             return
         }
+        
+        this.setState(({pageItems, count, start, stop, direction}) => {
+            return direction === 1
+                ? nextForwards({pageItems, overflow, start, stop, count})
+                : nextBackwards({pageItems, overflow, start, stop})
+        })
 
-        const nextForwards = ({start, stop, count, pageItems}) => {
+        const nextForwards = ({pageItems, overflow, start, stop, count}) => {
+            if (overflow) {
+                return {
+                    stop: stop - 1,
+                    direction: 0,
+                    pageItems: pageItems.slice(0, -1)
+                }
+            }
             for (;;) {
                 stop = stop === undefined
                     ? start
@@ -175,7 +188,14 @@ class _Pageable extends React.Component {
             }
         }
 
-        const nextBackwards = ({start, stop, pageItems}) => {
+        const nextBackwards = ({pageItems, overflow, start, stop}) => {
+            if (overflow) {
+                return {
+                    start: start + 1,
+                    direction: 0,
+                    pageItems: pageItems.slice(1)
+                }
+            }
             for (;;) {
                 start = start === undefined
                     ? stop
@@ -200,28 +220,6 @@ class _Pageable extends React.Component {
                 }
             }
         }
-
-        this.setState(({pageItems, count, start, stop, direction}) => {
-            if (overflow) {
-                if (direction === 1) {
-                    return {
-                        stop: stop - 1,
-                        direction: 0,
-                        pageItems: pageItems.slice(0, -1)
-                    }
-                } else {
-                    return {
-                        start: start + 1,
-                        direction: 0,
-                        pageItems: pageItems.slice(1)
-                    }
-                }
-            } else {
-                return direction === 1
-                    ? nextForwards({pageItems, start, stop, count})
-                    : nextBackwards({pageItems, start, stop})
-            }
-        })
     }
 }
 
