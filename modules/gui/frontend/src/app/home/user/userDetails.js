@@ -21,7 +21,7 @@ const fields = {
     name: new Field()
         .notBlank('user.userDetails.form.name.required'),
     email: new Field()
-        .notBlank('user.udpateDetails.form.email.required'),
+        .notBlank('user.userDetails.form.email.required'),
     organization: new Field()
 }
 const mapStateToProps = () => {
