@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 import styles from './overflowDetector.module.css'
 
 export default class OverflowDetector extends React.Component {
@@ -12,13 +11,13 @@ export default class OverflowDetector extends React.Component {
         const isOverflown = () => element && element.clientHeight < element.scrollHeight
         return (
             <div ref={this.ref} className={[styles.overflow, className].join(' ')}>
-                {_.isFunction(children) ? children(isOverflown) : children}
+                {children(isOverflown)}
             </div>
         )
     }
 }
 
 OverflowDetector.propTypes = {
-    children: PropTypes.any,
+    children: PropTypes.func.isRequired,
     className: PropTypes.string
 }
