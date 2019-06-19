@@ -1,8 +1,9 @@
 import {Button} from 'widget/button'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject} from 'rxjs'
-import {delay} from 'rxjs/operators'
 import {compose} from 'compose'
+import {delay} from 'rxjs/operators'
+import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -101,9 +102,10 @@ class ScrollableList extends React.Component {
     }
 
     renderOptions(options) {
+        const {noResults} = this.props
         return options.length
             ? options.map((option, index) => this.renderOption(option, index))
-            : this.renderOption({label: 'No results'}) // [TODO] msg
+            : this.renderOption({label: noResults || msg('widget.list.noResults')})
     }
 
     renderOption(option, index) {
@@ -377,6 +379,7 @@ List.propTypes = {
     autoHighlight: PropTypes.any,
     className: PropTypes.string,
     keyboard: PropTypes.any,
+    noResults: PropTypes.string,
     overScroll: PropTypes.any,
     ref: PropTypes.object,
     selectedOption: PropTypes.any,
