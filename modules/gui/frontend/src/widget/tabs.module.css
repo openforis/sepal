@@ -23,40 +23,44 @@
     --tab-default-border-color: hsla(0, 0%, 100%, .15);
     --tab-selected-border-color: hsl(var(--selected-hue), var(--selected-sat), 40%);
     --border-top-right-radius: .5rem;
-
+    --tab-spacing: .3rem;
+    --tab-min-width: 8.5rem;
+    --tab-max-width: 17rem;
     /* [HACK] transparent colors are needed and cannot be replaced with 'transparent' because of iOS */
     --default-gradient: linear-gradient(to right, var(--tab-default-background-color-transparent), var(--tab-default-background-color) 100%);
     --selected-gradient: linear-gradient(to right, var(--tab-selected-background-color-transparent), var(--tab-selected-background-color) 100%);
-
-    position: relative;
     display: flex;
+    justify-content: center;
     flex-grow: 1;
     background-color: var(--tab-default-background-color);
     border-bottom: 3px solid var(--tab-default-border-color);
     border-top-right-radius: var(--border-top-right-radius);
-    border-top-left-radius: 0.5rem;
-    white-space: nowrap;
+    border-top-left-radius: .5rem;
     margin-top: .5rem;
-    line-height: 2.5rem;
+    padding: 0 .5rem 0 .25rem;
     overflow: hidden;
-    cursor: pointer;
+    animation: added 500ms ease-in-out forwards;
+}
+
+@keyframes added {
+    0% {
+        opacity: 0;
+        transform: translateY(-50%);
+    }
 }
 
 .tab:first-child {
-    margin-left: auto;
+    /* align tabs to the right */
+    margin-left: auto; 
 }
 
 .tab:not(:last-child) {
-    margin-right: .3rem;
+    margin-right: var(--tab-spacing);
 }
 
 .tab.regular {
-    max-width: 17rem;
-    min-width: 8.5rem;
-}
-
-.tab * {
-    width: 100%;
+    max-width: var(--tab-max-width);
+    min-width: var(--tab-min-width);
 }
 
 .tab.regular.selected {
@@ -68,109 +72,36 @@
     background-color: var(--tab-default-background-color);
 }
 
-/* Prevent overflowing title from covering close button */
-.tab.regular:after {
-    content: '';
-    width: 1.7rem;
-    height: 100%;
-    position: absolute;
-    right: 0;
-    background: inherit;
-    z-index: 1;
-    border-top-right-radius: var(--border-top-right-radius);
+.tab .title {
+    position: relative;
+    flex-grow: 1;
 }
 
-.tab {
-    animation: added 500ms ease-in-out forwards;
-    overflow: hidden;
-}
-
-@keyframes added {
-    0% {
-        opacity: 0;
-        transform: translateY(-50%);
-    }
-}
-
-.close {
-    position: absolute;
-    width: fit-content;
-    align-self: center;
-    right: .2rem;
-    z-index: 2;
-    cursor: pointer;
-}
-
-.title {
-    flex: 1;
+.tab .title input {
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-weight: 600;
-    font-size: 1rem;
     color: #8a949c;
-    padding-right: 2.1rem;
-    padding-left: 1rem;
-    overflow: hidden;
 }
 
-.title.selected {
-    position: relative;
-}
-
-.title.selected > span {
-    opacity: 0;
-}
-
-.title.selected input {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+.tab.selected .title input {
     color: #e8e8e8;
 }
 
-span.title.placeholder {
-    font-style: italic;
-}
-
-.title.selected input::placeholder {
-    color: #8a949c;
-}
-
 /*Fade-out overflow */
-.title:before {
+.tab:not(.editing) .title:before {
     content: '';
     width: 2rem;
     height: 100%;
     position: absolute;
-    right: 1.7rem;
+    right: 0;
     top: 0;
     background: var(--default-gradient);
     z-index: 1;
+    pointer-events: none;
 }
 
-.tab.selected .title:before {
+.tab.selected:not(.editing) .title:before {
     background: var(--selected-gradient);
-}
-
-.title > span {
-    margin-right: 1rem;
-}
-
-.tab input {
-    width: 100%;
-}
-
-.tab input:focus {
-    z-index: 2;
-}
-
-.tab.selected input.title {
-    border: none !important;
-    margin-right: 2rem;
-    letter-spacing: 0.75px;
-    height: 2.5rem;
-    line-height: 2.5rem;
 }
 
 .tabActions {

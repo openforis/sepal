@@ -1,15 +1,14 @@
 import {Button} from 'widget/button'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import {FormComponent, Input} from 'widget/formComponents'
 import {Scrollable, ScrollableContainer, withScrollable} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import TabContent from './tabContent'
-import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
 import guid from 'guid'
 import styles from './tabs.module.css'
@@ -185,11 +184,20 @@ export default compose(
 class _Tab extends React.Component {
     constructor(props) {
         super(props)
+        const {title = ''} = props
         this.state = {
             editing: false,
-            title: null
+            title: title,
+            prevTitle: title
         }
         this.titleInput = React.createRef()
+    }
+
+    static getDerivedStateFromProps(props, state) {
+        const title = state.title || props.title || ''
+        return {
+            title
+        }
     }
 
     onTitleChange(e) {
@@ -200,15 +208,87 @@ class _Tab extends React.Component {
 
     saveTitle() {
         const {id, statePath, onTitleChanged} = this.props
+        const {title} = this.state
         const tabPath = toTabPath(id, statePath)
         const selectTab = () => select(tabPath)
         const prevTitle = selectTab().title
-        const title = this.titleInput.current.value
-        if (prevTitle === title || (!prevTitle && !title))
-            return
-        renameTab(id, title, tabPath, onTitleChanged)
-        this.setState(
-            state => ({...state, editing: false})
+        if (prevTitle !== title) {
+            renameTab(id, title, tabPath, onTitleChanged)
+        }
+        this.setState({
+            editing: false,
+            prevTitle: title
+        })
+    }
+
+    restoreTitle() {
+        const {prevTitle} = this.state
+        this.setState({
+            editing: false,
+            title: prevTitle
+        })
+    }
+
+    exitEditing(save) {
+        const {editing} = this.state
+        if (editing) {
+            if (save) {
+                this.saveTitle()
+            } else {
+                this.restoreTitle()
+            }
+            this.titleInput.current.blur()
+        }
+    }
+
+    render() {
+        const {placeholder, selected} = this.props
+        const {title, editing} = this.state
+        return (
+            <FormComponent
+                className={[
+                    styles.tab,
+                    styles.regular,
+                    selected ? styles.selected : null,
+                    editing ? styles.editing : null
+                ].join(' ')}
+                layout='horizontal-nowrap'
+                spacing='none'
+                tooltip={title || placeholder}
+                tooltipPlacement='bottom'
+            >
+                {this.renderInput()}
+                {this.renderCloseButton()}
+            </FormComponent>
+        )
+    }
+
+    renderInput() {
+        const {id, placeholder, selected, statePath} = this.props
+        const {title, editing} = this.state
+        const keymap = {
+            Enter: () => this.exitEditing(true),
+            Escape: () => this.exitEditing(false),
+        }
+        return (
+            <Keybinding keymap={keymap}>
+                <Input
+                    ref={this.titleInput}
+                    className={styles.title}
+                    value={title}
+                    placeholder={placeholder}
+                    autoFocus={!title}
+                    border={false}
+                    readOnly={editing !== true}
+                    onClick={e => {
+                        e.target.blur()
+                        selected
+                            ? this.setState({editing: true})
+                            : selectTab(id, statePath)
+                    }}
+                    onChange={e => this.onTitleChange(e)}
+                    onBlur={() => this.exitEditing(true)}/>
+            </Keybinding>
         )
     }
 
@@ -219,57 +299,11 @@ class _Tab extends React.Component {
                 chromeless
                 look='cancel'
                 size='small'
-                shape='circle'
+                shape='none'
                 icon='times'
                 message='message'
                 onClick={() => onClose()}
             />
-        )
-    }
-
-    render() {
-        const {id, placeholder, selected, statePath} = this.props
-        const title = this.state.title || this.props.title
-
-        return (
-            <Tooltip
-                msg={title || placeholder}
-                placement='bottom'
-                delay={1}>
-                <div
-                    className={[styles.tab, styles.regular, selected && styles.selected].join(' ')}
-                    onClick={() => selectTab(id, statePath)}>
-                    <span className={[
-                        styles.title,
-                        title ? null : styles.placeholder,
-                        selected ? styles.selected : null
-                    ].join(' ')}>
-                        <span>{title || placeholder}</span>
-                        {selected
-                            ? (
-                                <input
-                                    ref={this.titleInput}
-                                    className={styles.title}
-                                    defaultValue={title}
-                                    placeholder={placeholder}
-                                    autoFocus={!title && !isMobile()}
-                                    spellCheck={false}
-                                    autoComplete='off'
-                                    onKeyDown={e => {
-                                        if (['Enter', 'Escape'].includes(e.key)) {
-                                            e.target.blur()
-                                        }
-                                    }}
-                                    onChange={e => this.onTitleChange(e)}
-                                    onBlur={() => this.saveTitle()}/>
-                            ) : null
-                        }
-                    </span>
-                    <span className={styles.close}>
-                        {this.renderCloseButton()}
-                    </span>
-                </div>
-            </Tooltip>
         )
     }
 
@@ -279,7 +313,7 @@ class _Tab extends React.Component {
         const scrollableElement = scrollable && scrollable.getElement()
         if (!inputElement || !scrollableElement)
             return
-        const tabElement = inputElement.parentNode.parentNode
+        const tabElement = inputElement.closest(`.${styles.tab}`)
         const tabLeft = tabElement.offsetLeft
         const tabWidth = tabElement.clientWidth
         const tabRight = tabLeft + tabWidth
@@ -296,7 +330,7 @@ class _Tab extends React.Component {
     }
 
     componentDidMount() {
-        const {scrollable} = this.props
+        // const {scrollable} = this.props
         this.scrollSelectedTabIntoView()
 
     }

@@ -1,15 +1,6 @@
-form {
+label {
     --label-color: #b0b0b0;
     --label-background-color: transparent;
-    --input-border-color: #606060;
-    --input-border-hover-color: #b0b0b0;
-    --input-border-focus-color: #a0a0a0;
-    --error-color: #e81351;
-    --error-border-color: #e81351;
-    --error-background-color: rgba(232, 19, 81, 0.1);
-}
-
-form label {
     display: block;
     margin: 0;
     margin-bottom: 0.75rem;
@@ -19,73 +10,101 @@ form label {
     background-color: var(--label-background-color);
 }
 
-form label .info {
+label .info {
     cursor: help;
 }
 
-form fieldset label {
+fieldset label {
     font-size: .7rem;
     font-weight: normal;
 }
 
-form input,
-form textarea {
+input,
+textarea {
     display: block;
     width: 100%;
     border: none;
-    border-bottom: 1px dotted var(--input-border-color);
-    margin-top: .5rem;
     padding: .3rem;
     background-color: transparent;
     transition: background-color 800ms ease-out;
 }
 
-form input[type=number] {
+input[type=number] {
     text-align: right;
 }
 
-form input:-webkit-autofill,
-form input:-webkit-autofill:hover,
-form input:-webkit-autofill:focus,
-form input:-webkit-autofill:active {
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
     transition: background-color 9999999999s ease-in-out 0s;
     -webkit-text-fill-color: #fff;
 }
 
-form input:not(:disabled):hover,
-form input:focus:not(:disabled):hover,
-form textarea:not(:disabled):hover,
-form textarea:focus:not(:disabled):hover {
+.input {
+    position: relative;
+}
+
+.input.border {
+    --input-border-color: #606060;
+    --input-border-hover-color: #b0b0b0;
+    --input-border-focus-color: #a0a0a0;
+    border-bottom: 1px dotted var(--input-border-color);
+}
+
+.input.border:not(:disabled):hover,
+.input.border:focus:not(:disabled):hover {
     border-bottom: 1px solid var(--input-border-hover-color);
 }
 
-form input:focus,
-form textarea:focus {
+.input.border:focus-within {
     border-bottom: 1px solid var(--input-border-focus-color);
 }
 
-form input:disabled,
-form textarea:disabled {
+.input .extraComponent {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: .5;
+}
+
+.input .extraComponent.left {
+    padding-left: .3rem;
+}
+
+.input .extraComponent.right {
+    padding-right: .3rem;
+}
+
+.input:hover .extraComponent {
+    opacity: 1;
+}
+
+input:disabled,
+textarea:disabled {
     color: #888;
 }
 
-form input::placeholder,
-form textarea::placeholder {
+input::placeholder,
+textarea::placeholder {
     font-style: italic;
 }
 
-form .error input,
-form .error textarea {
+.error input,
+.error textarea {
+    --error-border-color: #e81351;
+    --error-background-color: rgba(232, 19, 81, 0.1);
     border-bottom-color: var(--error-border-color) !important;
     background-color: var(--error-background-color) !important;
 }
 
-form .errorMessageContainer {
+.errorMessageContainer {
     position: relative;
     width: 100%;
 }
 
-form .errorMessage {
+.errorMessage {
+    --error-color: #e81351;
     position: absolute;
     top: 0;
     bottom: -2rem;
@@ -102,21 +121,30 @@ form .errorMessage {
     color: #B5B5B5;
 }
 
+.formComponentContainer {
+    display: flex;
+    flex-direction: column;
+}
+
 .formComponent {
-    --horizontal-spacing: 1rem;
+    /* --horizontal-spacing: 1rem; */
     overflow: hidden; /* required for preventing margin bottom on last element */
+    /* background-color: rgba(255,0,0,.2); */
 }
 
 .formComponent.normal {
     --vertical-spacing: 2rem;
+    --horizontal-spacing: 1rem;
 }
 
 .formComponent.compact {
     --vertical-spacing: 1rem;
+    --horizontal-spacing: .5rem;
 }
 
 .formComponent.none {
     --vertical-spacing: 0rem;
+    --horizontal-spacing: 0rem;
 }
 
 .formComponent > * {
@@ -133,7 +161,12 @@ form .errorMessage {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: calc(-1 * var(--vertical-spacing));
+}
+
+.formComponent.horizontal.nowrap {
+    flex-wrap: nowrap;
 }
 
 .formComponent.horizontal > * {
@@ -154,18 +187,4 @@ form .errorMessage {
 
 .alignment.right {
     text-align: right;
-}
-
-
-
-
-.inputContainer {
-    position: relative;
-    padding-right: 2.5rem;
-}
-
-.clearButton {
-    position: absolute;
-    top: 0;
-    right: 0;
 }

@@ -1,4 +1,6 @@
+import {Button} from 'widget/button'
 import {FieldSet} from 'widget/form'
+import {Input} from 'widget/formComponents'
 import {Subject, fromEvent} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -85,7 +87,7 @@ class Combo extends React.Component {
             <Keybinding
                 disabled={disabled || !focused}
                 keymap={keymap}>
-                <input
+                <Input
                     ref={this.input}
                     className={[
                         styles.input,
@@ -93,11 +95,12 @@ class Combo extends React.Component {
                         selectedOption && !standalone ? styles.fakePlaceholder : null,
                         inputClassName
                     ].join(' ')}
-                    // type='search'
+                    type='search'
                     value={filter}
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
                     disabled={disabled || busy}
                     readOnly={isMobile()}
+                    rightComponent={this.renderToggleOptionsButton()}
                     onChange={e => this.setFilter(e.target.value)}
                     onFocus={() => this.setState({focused: true})}
                     onBlur={() => {
@@ -107,6 +110,27 @@ class Combo extends React.Component {
                 />
                 <AutoFocus ref={this.input} enabled={autoFocus}/>
             </Keybinding>
+        )
+    }
+
+    renderToggleOptionsButton() {
+        const {placement} = this.props
+        const {showOptions} = this.state
+        const icon = {
+            below: 'chevron-down',
+            above: 'chevron-up'
+        }
+        return (
+            <Button
+                chromeless
+                shape='none'
+                icon={icon[placement]}
+                iconFlipVertical={showOptions}
+                onClick={() => showOptions
+                    ? this.hideOptions()
+                    : this.showOptions()
+                }
+            />
         )
     }
 
@@ -183,7 +207,7 @@ class Combo extends React.Component {
             this.select$.subscribe(
                 option => {
                     this.setSelectedOption(option)
-                    input.set(option.value)
+                    input.set(option ? option.value : null)
                     onChange && onChange(option)
                 }
             ),

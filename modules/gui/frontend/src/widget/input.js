@@ -3,7 +3,6 @@ import {getErrorMessage, withFormContext} from 'widget/form'
 import FormComponents from 'widget/formComponents'
 import PropTypes from 'prop-types'
 import React from 'react'
-import _ from 'lodash'
 
 class _Input extends React.Component {
     render() {
@@ -12,18 +11,18 @@ class _Input extends React.Component {
     }
 
     renderInput() {
-        const {form, className, input, errorMessage, type, validate = 'onBlur', tabIndex, onChange, onBlur, ...props} = this.props
+        const {form, className, input, errorMessage, type, validate, tabIndex, onChange, onBlur, ...props} = this.props
         return (
             <FormComponents.Input
                 {...props}
                 className={className}
                 type={type}
                 name={input && input.name}
-                errorMessage={errorMessage && getErrorMessage(form, input)}
                 value={typeof input.value === 'number' || typeof input.value === 'boolean' || input.value
                     ? input.value
                     : ''
                 }
+                errorMessage={errorMessage && getErrorMessage(form, input)}
                 tabIndex={tabIndex}
                 onChange={e => {
                     input.handleChange(e)
@@ -39,14 +38,14 @@ class _Input extends React.Component {
     }
 
     renderTextArea() {
-        const {form, className, input, errorMessage, minRows, maxRows, validate = 'onBlur', tabIndex, onChange, onBlur, ...props} = this.props
+        const {form, className, input, errorMessage, minRows, maxRows, validate, tabIndex, onChange, onBlur, ...props} = this.props
         return (
             <FormComponents.Textarea
                 {...props}
                 className={className}
                 name={input.name}
-                errorMessage={errorMessage && getErrorMessage(form, input)}
                 value={input.value || ''}
+                errorMessage={errorMessage && getErrorMessage(form, input)}
                 tabIndex={tabIndex}
                 minRows={minRows}
                 maxRows={maxRows}
@@ -80,7 +79,7 @@ Input.propTypes = {
     label: PropTypes.string,
     maxRows: PropTypes.number,
     minRows: PropTypes.number,
-    placeholder: PropTypes.string,
+    placeholder: PropTypes.any,
     spellCheck: PropTypes.any,
     tabIndex: PropTypes.number,
     textArea: PropTypes.any,
@@ -90,4 +89,8 @@ Input.propTypes = {
     validate: PropTypes.oneOf(['onChange', 'onBlur']),
     onBlur: PropTypes.func,
     onChange: PropTypes.func
+}
+
+Input.defaultProps = {
+    validate: 'onBlur'
 }
