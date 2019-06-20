@@ -131,7 +131,7 @@ export const saveRecipe = recipe => {
     if (isInitialized(recipe)) {
         actionBuilder('SET_RECIPE_SAVED', recipe.id)
             .del(recipePath(recipe.id, 'ui.unsaved'))
-            .set(recipePath(recipe.id, 'title'), recipe.title)
+            .set(recipePath(recipe.id, 'title'), recipe.title || recipe.placeholder)
             .dispatch()
         updateRecipeList(recipe)
         saveToBackend$.next(recipe)
@@ -173,12 +173,17 @@ export const selectRecipe = recipeId =>
 const duplicateRecipe = (sourceRecipe, destinationRecipeId) => ({
     ...sourceRecipe,
     id: destinationRecipeId,
-    title: (sourceRecipe.title || sourceRecipe.placeholder) + '_copy'
+    placeholder: (sourceRecipe.title || sourceRecipe.placeholder) + '_copy',
+    title: null,
+    ui: {...sourceRecipe.ui, unsaved: true}
 })
 
 export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
     api.recipe.load$(sourceRecipeId).pipe(
-        map(sourceRecipe => duplicateRecipe(sourceRecipe, destinationRecipeId)),
+        map(sourceRecipe => {
+            const duplicate = duplicateRecipe(sourceRecipe, destinationRecipeId)
+            return duplicate
+        }),
         map(recipe =>
             actionBuilder('DUPLICATE_RECIPE', {duplicate: recipe})
                 .set(recipePath(destinationRecipeId), initializedRecipe(recipe))

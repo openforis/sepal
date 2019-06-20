@@ -10,7 +10,7 @@ dependencies {
     compile group: 'commons-io', name: 'commons-io', version: '2.4'
     compile group: 'com.mchange', name: 'c3p0', version: '0.9.5.2'
     compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.38'
-    compile group: 'io.undertow', name: 'undertow-servlet', version: '2.0.15.Final'
+    compile group: 'io.undertow', name: 'undertow-servlet', version: '2.0.21.Final'
     compile group: 'org.mortbay.jetty.alpn', name: 'alpn-boot', version: '8.1.7.v20160121'
     compile group: 'org.fao.foris.groovy.mvc', name: 'groovy-mvc', version: '0.6.2'
     compile group: 'org.apache.commons', name: 'commons-csv', version: '1.4'

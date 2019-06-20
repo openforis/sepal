@@ -58,6 +58,14 @@ to prevent click-through from click-hold buttons */
     color: gray;
 }
 
+@media screen and (max-width: 600px) {
+    .timestamp {
+        font-size: small;
+        margin-right: .5rem;
+        color: gray;
+    }
+}
+
 .buttons {
     flex-shrink: 0;
     padding: .25rem .5rem;

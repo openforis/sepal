@@ -123,14 +123,14 @@
     margin-left: 1rem;
 }
 
-.scrollableContainer {
+.panelContentContainer {
     flex-grow: 1;
-    display: flex;
-    flex-direction: column;
 }
 
-.content {
+.panelContent {
     padding: var(--content-padding);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
 

@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {Constraint, Field, Form, Input, form, FieldSet} from 'widget/form'
+import {Constraint, Field, FieldSet, Form, Input, form} from 'widget/form'
 import {PropTypes} from 'prop-types'
 import {compose} from 'compose'
 import {history, query} from 'route'

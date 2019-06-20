@@ -4,6 +4,7 @@ from ..landsat import landsat_data_sets
 from ..mosaic.analyze import analyze
 from ..mosaic.clouds import mask_clouds
 from ..mosaic.shadows import mask_shadows
+from sepal.ee.optical import optical_indexes
 
 
 class TimeSeries(object):
@@ -49,9 +50,7 @@ class TimeSeries(object):
     def _to_daily_mosaics(self, collection):
         def evaluate_expression(image):
             date = image.date()
-            image = image.expression(self.spec.expression, {
-                'i': image
-            })
+            image = optical_indexes.to_index(image, self.spec.indicator).multiply(10000).int16()
             return image.set('date', ee.Date.fromYMD(
                 date.get('year'),
                 date.get('month'),

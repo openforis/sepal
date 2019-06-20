@@ -1,24 +1,24 @@
 import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
+import {FieldSet} from 'widget/form'
 import {PageControls, PageData, Pageable} from 'widget/pageable'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {closeTab} from 'widget/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
-import {isMobile} from 'widget/userAgent'
+import {getRecipeType} from './recipeTypes'
 import {msg} from 'translate'
 import CreateRecipe from './createRecipe'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
+import SearchBox from 'widget/searchBox'
 import SuperButton from 'widget/superButton'
 import _ from 'lodash'
-import escapeStringRegexp from 'escape-string-regexp'
 import styles from './recipes.module.css'
-import {getRecipeType} from './recipeTypes'
 
 const mapStateToProps = () => {
     const recipes = select('process.recipes')
@@ -31,7 +31,7 @@ class RecipeList extends React.Component {
     state = {
         sortingOrder: 'updateTime',
         sortingDirection: -1,
-        filter: ''
+        filterValues: []
     }
 
     getRecipeTypeName(type) {
@@ -79,47 +79,48 @@ class RecipeList extends React.Component {
     }
 
     getSortedRecipes() {
+        const {recipes} = this.props
         const {sortingOrder, sortingDirection} = this.state
-        return _.orderBy(this.getFilteredRecipes(), recipe => {
+        return _.orderBy(recipes, recipe => {
             const item = _.get(recipe, sortingOrder)
             return _.isString(item) ? item.toUpperCase() : item
         }, sortingDirection === 1 ? 'asc' : 'desc')
     }
 
-    setFilter(filter) {
+    setFilter(filterValues) {
         this.setState({
-            filter
+            filterValues
         })
     }
 
-    getFilteredRecipes() {
-        const {recipes} = this.props
+    recipeMatchesFilter(recipe) {
+        const {filterValues} = this.state
+        const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
         const searchProperties = ['name']
-        if (this.state.filter) {
-            const filter = RegExp(escapeStringRegexp(this.state.filter), 'i')
-            return recipes.filter(recipe =>
-                _.find(searchProperties, searchProperty =>
-                    filter.test(recipe[searchProperty])
+        return filterValues
+            ? _.every(searchMatchers, matcher =>
+                _.find(searchProperties, property =>
+                    matcher.test(recipe[property])
                 )
             )
-        } else
-            return recipes || []
+            : true
     }
 
     renderProgress() {
         return <CenteredProgress title={msg('process.recipe.loading')}/>
     }
 
-    renderRecipe(recipe) {
+    renderRecipe(recipe, highlightMatcher) {
         return (
             <SuperButton
                 key={recipe.id}
+                title={this.getRecipeTypeName(recipe.type)}
                 description={recipe.name}
+                timestamp={recipe.updateTime}
+                highlight={highlightMatcher}
                 duplicateTooltip={msg('process.menu.duplicateRecipe')}
                 removeMessage={msg('process.menu.removeRecipe.message', {recipe: recipe.name})}
                 removeTooltip={msg('process.menu.removeRecipe.tooltip')}
-                title={this.getRecipeTypeName(recipe.type)}
-                timestamp={recipe.updateTime}
                 onClick={() => this.openRecipe(recipe.id)}
                 onDuplicate={() => this.duplicateRecipe(recipe.id)}
                 onRemove={() => this.removeRecipe(recipe.id)}
@@ -127,34 +128,34 @@ class RecipeList extends React.Component {
         )
     }
 
-    renderRecipies() {
+    renderRecipes() {
         const {recipes, action} = this.props
+        const {filterValues} = this.state
+        const highlightMatcher = filterValues.length
+            ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
+            : null
         return !recipes && !action('LOAD_RECIPES').dispatched
             ? this.renderProgress()
             : (
-                <PageData>
-                    {recipe => this.renderRecipe(recipe)}
-                </PageData>
+                <ScrollableContainer>
+                    <Unscrollable>
+                        {this.renderSearchAndSort()}
+                    </Unscrollable>
+                    <Unscrollable className={styles.recipes}>
+                        <PageData
+                            itemKey={recipe => `${recipe.id}|${highlightMatcher}`}>
+                            {recipe => this.renderRecipe(recipe, highlightMatcher)}
+                        </PageData>
+                    </Unscrollable>
+                </ScrollableContainer>
             )
     }
 
     renderSearch() {
         return (
-            <Button
-                additionalClassName={styles.search}
-                look='transparent'
-                size='large'
-                shape='pill'
-                disabled={true}>
-                <input
-                    type='search'
-                    ref={this.search}
-                    value={this.state.filter}
-                    placeholder={msg('process.menu.searchRecipes')}
-                    autoFocus={!isMobile()}
-                    onChange={e => this.setFilter(e.target.value)}
-                />
-            </Button>
+            <SearchBox
+                placeholder={msg('process.menu.searchRecipes')}
+                onSearchValues={searchValues => this.setFilter(searchValues)}/>
         )
     }
 
@@ -165,14 +166,10 @@ class RecipeList extends React.Component {
         else
             return (
                 <div className={styles.header}>
-                    {this.renderSearch()}
-
-                    <div>
-                        <div className={styles.orderBy}>
-                            {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
-                            {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
-                        </div>
-                    </div>
+                    <FieldSet layout='horizontal' spacing='compact'>
+                        {this.renderSearch()}
+                        {this.renderSortButtons()}
+                    </FieldSet>
                 </div>
             )
     }
@@ -186,17 +183,10 @@ class RecipeList extends React.Component {
                     trigger={recipes && !recipes.length}/>
                 <Pageable
                     items={this.getSortedRecipes()}
-                    limit={15}>
+                    matcher={recipe => this.recipeMatchesFilter(recipe)}>
                     <SectionLayout>
                         <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
-                            <ScrollableContainer>
-                                <Unscrollable>
-                                    {this.renderSearchAndSort()}
-                                </Unscrollable>
-                                <Scrollable className={styles.recipes}>
-                                    {this.renderRecipies()}
-                                </Scrollable>
-                            </ScrollableContainer>
+                            {this.renderRecipes()}
                         </Content>
                         <BottomBar className={styles.bottomBar}>
                             {recipes && recipes.length
@@ -207,6 +197,15 @@ class RecipeList extends React.Component {
                     </SectionLayout>
                 </Pageable>
             </React.Fragment>
+        )
+    }
+
+    renderSortButtons() {
+        return (
+            <div className={styles.orderBy}>
+                {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
+                {this.renderSortButton('name', msg('process.recipe.name'), [styles.nameSort])}
+            </div>
         )
     }
 
@@ -248,5 +247,5 @@ export default compose(
 
 RecipeList.propTypes = {
     recipeId: PropTypes.string.isRequired,
-    recipies: PropTypes.array
+    recipes: PropTypes.array
 }

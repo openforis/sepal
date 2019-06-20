@@ -4,36 +4,21 @@
 }
 
 .header {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1rem !important;
 }
 
 .recipes {
-    padding-bottom: 5rem;
+    flex-shrink: 1;
 }
 
 .bottomBar {
     justify-content: center;
 }
 
-.search {
-    flex-grow: 1;
-    flex-shrink: 1;
-    max-width: 17rem;
-    margin-right: .5rem;
-}
-
-.search input {
-    width: 100%;
-    border: none;
-}
-
 .orderBy {
     flex-wrap: nowrap;
     display: flex;
+    align-items: center;
     margin-left: .5rem;
 }
 

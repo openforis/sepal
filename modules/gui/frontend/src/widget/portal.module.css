@@ -9,8 +9,3 @@
 .portalContainer > * {
     pointer-events: all;
 }
-
-.portalContainer.section {
-    top: var(--top-bar-height);
-    pointer-events: none;
-}

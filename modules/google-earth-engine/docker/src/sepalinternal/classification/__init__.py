@@ -14,6 +14,7 @@ from ..sepal_exception import SepalException
 class Classification(ImageSpec):
     def __init__(self, sepal_api, spec, create_image_spec):
         super(Classification, self).__init__()
+        self.pyramiding_policy = '{"class": "mode"}'
         self.spec = spec
         model = spec['recipe']['model']
         self.trainingData = ee.FeatureCollection('ft:' + model['trainingData']['fusionTable'])
@@ -27,7 +28,8 @@ class Classification(ImageSpec):
         self.images = [to_image_spec(image) for image in model['inputImagery']['images']]
         self.auxiliary_imagery = model.get('auxiliaryImagery', [])
         self.aoi = self.images[0].aoi
-        self.scale = min([image.scale for image in self.images])
+
+        self.scale = spec.get('scale') if spec.get('scale') else min([image.scale for image in self.images])
         self.bands = ['class']
 
     def _viz_params(self):
@@ -57,7 +59,8 @@ class Classification(ImageSpec):
             .clip(self.aoi.geometry())
 
     def _with_covariates(self, image):
-        ee_image = image._ee_image()
+        original_ee_image = image._ee_image()
+        ee_image = original_ee_image
         for band_set_spec in image.band_set_specs:
             type = band_set_spec['type']
             included = band_set_spec.get('included')
@@ -75,7 +78,7 @@ class Classification(ImageSpec):
             elif type == 'PAIR_WISE_EXPRESSION' and operation == 'ANGLE':
                 ee_image = ee_image.addBands(_angle(ee_image, included))
             elif type == 'INDEXES':
-                ee_image = _with_indexes(ee_image, included)
+                ee_image = _with_indexes(ee_image, original_ee_image, included)
 
         has_data = ee_image.mask().reduce(ee.Reducer.max())
         if 'LATITUDE' in self.auxiliary_imagery:
@@ -91,7 +94,6 @@ def _force_cache_flush(feature):
     return feature \
         .set('__flush_cache__', random()) \
         .copyProperties(feature)
-
 
 
 def _normalized_difference(image, bands):
@@ -113,39 +115,10 @@ def _angle(image, bands):
 def _distance(image, bands):
     return evaluate_pairwise(image, bands, 'hypot(b1, b2)', 'distance_${b1}_${b2}')
 
-def _with_indexes(image, indexes):
 
-    if 'ndvi' in indexes:
-        image = image.addBands(optical_indexes.to_ndvi(image))
-    if 'ndmi' in indexes:
-        image = image.addBands(optical_indexes.to_ndmi(image))
-    if 'ndwi' in indexes:
-        image = image.addBands(optical_indexes.to_ndwi(image))
-    if 'mndwi' in indexes:
-        image = image.addBands(optical_indexes.to_mndwi(image))
-    if 'mndwi' in indexes:
-        image = image.addBands(optical_indexes.to_mndwi(image))
-    if 'evi' in indexes:
-        image = image.addBands(optical_indexes.to_evi(image))
-    if 'evi2' in indexes:
-        image = image.addBands(optical_indexes.to_evi2(image))
-    if 'savi' in indexes:
-        image = image.addBands(optical_indexes.to_savi(image))
-    if 'nbr' in indexes:
-        image = image.addBands(optical_indexes.to_nbr(image))
-    if 'ui' in indexes:
-        image = image.addBands(optical_indexes.to_ui(image))
-    if 'ndbi' in indexes:
-        image = image.addBands(optical_indexes.to_ndbi(image))
-    if 'ibi' in indexes:
-        image = image.addBands(optical_indexes.to_ibi(image))
-    if 'nbi' in indexes:
-        image = image.addBands(optical_indexes.to_nbi(image))
-    if 'ebbi' in indexes:
-        image = image.addBands(optical_indexes.to_ebbi(image))
-    if 'bui' in indexes:
-        image = image.addBands(optical_indexes.to_bui(image))
-
+def _with_indexes(image, original_image, indexes):
+    for index_name in indexes:
+        image = image.addBands(optical_indexes.to_index(original_image, index_name))
     return image
 
 

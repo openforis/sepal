@@ -1,17 +1,17 @@
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {compose} from 'compose'
-import _ from 'lodash'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
-import {msg} from 'translate'
 import {FormButtons as Buttons} from 'widget/buttons'
 import {Field, FieldSet} from 'widget/form'
 import {FormPanelButtons} from 'widget/formPanel'
-import Label from 'widget/label'
 import {PanelContent, PanelHeader} from 'widget/panel'
-import Slider from 'widget/slider'
 import {RecipeActions} from '../../mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import Label from 'widget/label'
+import PropTypes from 'prop-types'
+import React from 'react'
+import Slider from 'widget/slider'
+import _ from 'lodash'
 import styles from './compositeOptions.module.css'
 
 const fields = {
@@ -52,10 +52,10 @@ class CompositeOptions extends React.Component {
         return (
             <FieldSet>
                 {this.renderCorrectionOptions()}
-                <FieldSet compact>
+                <FieldSet spacing='compact'>
                     {this.renderFilterOptions()}
                 </FieldSet>
-                <FieldSet horizontal>
+                <FieldSet layout='horizontal'>
                     {this.renderCloudBufferOptions()}
                     {this.renderMaskOptions()}
                     {this.renderComposeOptions()}

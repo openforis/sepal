@@ -619,14 +619,14 @@ FormComponent.defaultProps = {
 
 export class FieldSet extends React.Component {
     render() {
-        const {className, horizontal, compact,
+        const {className, layout, spacing,
             disabled, label, tooltip, tooltipPlacement,
             input, errorMessage, children} = this.props
         return (
             <FormComponent
                 className={className}
-                layout={horizontal ? 'horizontal' : 'vertical'}
-                spacing={compact ? 'compact' : 'normal'}
+                layout={layout}
+                spacing={spacing}
                 disabled={disabled}
                 label={label}
                 tooltip={tooltip}
@@ -643,17 +643,17 @@ export class FieldSet extends React.Component {
 FieldSet.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    compact: PropTypes.any,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
-    horizontal: PropTypes.any,
     input: PropTypes.object,
     label: PropTypes.string,
+    layout: PropTypes.oneOf(['vertical', 'horizontal']),
+    spacing: PropTypes.oneOf(['normal', 'compact', 'none']),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
 }
 
 FieldSet.defaultProps = {
-    compact: false,
-    horizontal: false
+    spacing: 'normal',
+    layout: 'vertical'
 }

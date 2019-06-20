@@ -5,3 +5,12 @@
 .uppercase {
     text-transform: uppercase;
 }
+
+.chromeless {
+    border-bottom: 1px solid transparent;
+}
+
+.chromeless.selected {
+    color: var(--success-color);
+    border-color: var(--success-color);
+}

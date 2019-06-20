@@ -7,6 +7,10 @@ import ee
 
 
 class ImageSpec(object):
+    def __init__(self):
+        super(ImageSpec, self).__init__()
+        self.pyramiding_policy = None
+
     def preview(self):
         """Creates Google Earth Engine mapId/token pair for rendering the image.
 

@@ -2,8 +2,17 @@
     pointer-events: all;
 }
 
-.active {
+.container {
+    overflow: hidden;
+}
+
+.active {;
     z-index: 1;
+}
+
+.portalContainer {
+    top: var(--top-bar-height);
+    pointer-events: none;
 }
 
 .enabled {

@@ -7,18 +7,29 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {compose} from 'compose'
 import {currentUser} from 'widget/user'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Slider from 'widget/slider'
 import styles from './retrieve.module.css'
 
 const fields = {
+    scale: new Field(),
     destination: new Field()
         .notEmpty('process.classification.panel.retrieve.form.destination.required')
 }
 
+const mapRecipeToProps = recipe => {
+    const props = {}
+    if (!selectFrom(recipe, 'ui.retrieve.scale')) {
+        props.values = {scale: 30}
+    }
+    return props
+}
+
 class Retrieve extends React.Component {
     renderContent() {
-        const {inputs: {destination}} = this.props
+        const {inputs: {scale, destination}} = this.props
         const user = currentUser()
         const destinationOptions = [
             {
@@ -34,6 +45,17 @@ class Retrieve extends React.Component {
 
         return (
             <FieldSet>
+                <Slider
+                    label={msg('process.classification.panel.retrieve.form.scale.label')}
+                    info={scale => msg('process.classification.panel.retrieve.form.scale.info', {scale})}
+                    input={scale}
+                    minValue={10}
+                    maxValue={100}
+                    scale={'log'}
+                    ticks={[10, 15, 20, 30, 60, 100]}
+                    snap
+                    range='none'
+                />
                 <Buttons
                     label={msg('process.classification.panel.retrieve.form.destination.label')}
                     input={destination}
@@ -80,5 +102,5 @@ Retrieve.propTypes = {
 
 export default compose(
     Retrieve,
-    recipeFormPanel({id: 'retrieve', fields})
+    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
 )

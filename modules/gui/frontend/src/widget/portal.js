@@ -1,59 +1,81 @@
 import {compose} from 'compose'
-import {withSelectableContext} from './selectable'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import styles from './portal.module.css'
+import withContext from 'context'
 
 const DEFAULT_PORTAL_CONTAINER_ID = 'defaultPortalContainer'
 
-export const PortalContainer = ({id}) => (
+const Context = React.createContext()
+
+export class PortalContext extends React.Component {
+    render() {
+        const {id, children} = this.props
+        return (
+            <Context.Provider value={{id}}>
+                {children}
+            </Context.Provider>
+        )
+    }
+}
+
+export const withPortalContext = withContext(Context, 'portalContext')
+
+export const PortalContainer = ({id, className}) => (
     <div
         id={id || DEFAULT_PORTAL_CONTAINER_ID}
-        className={[
-            styles.portalContainer,
-            id ? styles.section : null
-        ].join(' ')}
+        className={[styles.portalContainer, className].join(' ')}
     />
 )
 
+PortalContainer.propTypes = {
+    className: PropTypes.string,
+    id: PropTypes.string,
+}
+
 class Portal extends React.Component {
     getPortalContainer() {
-        const {type, container, selectableContext} = this.props
-        if (type === 'container' && container) {
-            return container
-        }
-        if (type === 'section') {
-            const portalContainerId = selectableContext ? selectableContext.portalContainerId : null
+        const {type, container, portalContext} = this.props
+        if (type === 'context') {
+            const portalContainerId = portalContext ? portalContext.id : null
             if (portalContainerId) {
                 return document.getElementById(portalContainerId)
             } else {
                 throw Error('Cannot render section Portal out of a section.')
             }
         }
+        if (type === 'container' && container) {
+            return container
+        }
         if (type === 'global') {
             return document.getElementById(DEFAULT_PORTAL_CONTAINER_ID)
         }
         throw Error('Undefined Portal target.')
     }
-    
+
     renderContent() {
         const {content, children} = this.props
         return content || children
     }
 
     render() {
-        return (
-            ReactDOM.createPortal(
+        const portalContainer = this.getPortalContainer()
+        return portalContainer
+            ? ReactDOM.createPortal(
                 this.renderContent(),
-                this.getPortalContainer()
+                portalContainer
             )
-        )
+            : null
     }
 }
 
+Portal.defaultProps = {
+    type: 'context'
+}
+
 Portal.propTypes = {
-    type: PropTypes.oneOf(['global', 'section', 'container']).isRequired,
+    type: PropTypes.oneOf(['global', 'context', 'container']).isRequired,
     children: PropTypes.any,
     container: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
     content: PropTypes.any
@@ -61,5 +83,5 @@ Portal.propTypes = {
 
 export default compose(
     Portal,
-    withSelectableContext()
+    withPortalContext()
 )

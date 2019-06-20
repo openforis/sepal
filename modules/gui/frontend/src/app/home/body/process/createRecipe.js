@@ -2,6 +2,7 @@ import {Button} from 'widget/button'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {getRecipeType, listRecipeTypes} from './recipeTypes'
 import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -10,7 +11,6 @@ import SuperButton from 'widget/superButton'
 import actionBuilder from 'action-builder'
 import moment from 'moment'
 import styles from './createRecipe.module.css'
-import {listRecipeTypes, getRecipeType} from './recipeTypes'
 
 const mapStateToProps = state => {
     return {
@@ -77,17 +77,6 @@ class CreateRecipe extends React.Component {
                         tooltipDisabled={modal}/>
                 </Keybinding>
             </div>
-        )
-    }
-
-    renderBackButton() {
-        return (
-            <Button
-                chromeless
-                icon='arrow-left'
-                shape='none'
-                additionalClassName={styles.backButton}
-                onClick={() => this.showRecipeTypeInfo()}/>
         )
     }
 

@@ -1,5 +1,7 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
+import {Buttons} from 'widget/buttons'
+import {FieldSet} from 'widget/form'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {compose} from 'compose'
@@ -11,10 +13,10 @@ import Icon from 'widget/icon'
 import Label from 'widget/label'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import SearchBox from 'widget/searchBox'
 import UserDetails from './user'
 import _ from 'lodash'
 import api from 'api'
-import escapeStringRegexp from 'escape-string-regexp'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
 import moment from 'moment'
@@ -34,9 +36,8 @@ class Users extends React.Component {
         users: [],
         sortingOrder: 'updateTime',
         sortingDirection: -1,
-        textFilter: '',
-        budgetFilter: false,
-        budgetFilterRegexp: null,
+        textFilterValues: [],
+        statusFilter: null,
         userDetails: null
     }
 
@@ -85,38 +86,39 @@ class Users extends React.Component {
         }, sortingDirection === 1 ? 'asc' : 'desc')
     }
 
-    setTextFilter(textFilter) {
+    setTextFilter(textFilterValues) {
         this.setState({
-            textFilter,
-            textFilterRegexp: RegExp(escapeStringRegexp(textFilter), 'i')
+            textFilterValues
         })
     }
 
-    setBudgetFilter(budgetFilter) {
-        this.setState({budgetFilter})
+    setActiveFilter(activeFilter) {
+        this.setState({activeFilter})
     }
 
-    getFilteredUsers() {
-        const {users} = this.state
-        return users
-            .filter(user => this.userMatchesTextFilter(user))
-            .filter(user => this.userMatchesBudgetFilter(user))
+    userMatchesFilters(user) {
+        return this.userMatchesTextFilter(user) && this.userMatchesStatusFilter(user)
     }
 
     userMatchesTextFilter(user) {
-        const {textFilter, textFilterRegexp} = this.state
+        const {textFilterValues} = this.state
+        const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
         const searchProperties = ['name', 'username', 'email', 'organization']
-        return textFilter
-            ? _.find(searchProperties, searchProperty =>
-                textFilterRegexp.test(user[searchProperty])
+        return textFilterValues
+            ? _.every(searchMatchers, matcher =>
+                _.find(searchProperties, property =>
+                    matcher.test(user[property])
+                )
             )
             : true
     }
 
-    userMatchesBudgetFilter(user) {
-        const {budgetFilter} = this.state
-        return budgetFilter
-            ? this.isUserOverBudget(user)
+    userMatchesStatusFilter(user) {
+        const {statusFilter} = this.state
+        return statusFilter
+            ? statusFilter === 'OVERBUDGET'
+                ? this.isUserOverBudget(user)
+                : user.status === statusFilter
             : true
     }
 
@@ -129,7 +131,7 @@ class Users extends React.Component {
     onKeyDown({key}) {
         const keyMap = {
             Escape: () => {
-                this.setTextFilter('')
+                this.setTextFilter([])
             }
         }
         const keyAction = keyMap[key]
@@ -169,7 +171,6 @@ class Users extends React.Component {
     }
 
     updateUser(userDetails) {
-
         const update$ = userDetails =>
             updateUserDetails$(userDetails).pipe(
                 zip(updateUserBudget$(userDetails)),
@@ -299,48 +300,36 @@ class Users extends React.Component {
     }
 
     renderTextFilter() {
-        const {textFilter} = this.state
         return (
-            <Button
-                additionalClassName={styles.search}
-                look='transparent'
-                size='large'
-                shape='pill'
-                disabled={true}>
-                <input
-                    type='search'
-                    ref={this.search}
-                    value={textFilter}
-                    placeholder={msg('users.filter.search.placeholder')}
-                    onChange={e => this.setTextFilter(e.target.value)}/>
-            </Button>
+            <SearchBox
+                placeholder={msg('users.filter.search.placeholder')}
+                onSearchValues={searchValues => this.setTextFilter(searchValues)}/>
         )
     }
 
-    renderBudgetFilter() {
-        const {budgetFilter} = this.state
+    renderStatusFilter() {
+        const {statusFilter} = this.state
+        const options = [{
+            label: msg('users.filter.status.ignore.label'),
+            value: null
+        }, {
+            label: msg('users.filter.status.pending.label'),
+            value: 'PENDING'
+        }, {
+            label: msg('users.filter.status.active.label'),
+            value: 'ACTIVE'
+        }, {
+            label: msg('users.filter.budget.over.label'),
+            value: 'OVERBUDGET'
+        }]
         return (
-            <ButtonGroup>
-                <Button
-                    chromeless
-                    shape='none'
-                    additionalClassName='itemType'
-                    onClick={() => this.setBudgetFilter(false)}>
-                    <span className={!budgetFilter ? styles.budgetFilter : null}>
-                        {msg('users.filter.budget.ignore.label')}
-                    </span>
-                </Button>
-                <span style={{color: '#888'}}> | </span>
-                <Button
-                    chromeless
-                    shape='none'
-                    additionalClassName='itemType'
-                    onClick={() => this.setBudgetFilter(true)}>
-                    <span className={budgetFilter ? styles.budgetFilter : null}>
-                        {msg('users.filter.budget.over.label')}
-                    </span>
-                </Button>
-            </ButtonGroup>
+            <Buttons
+                chromeless
+                type='horizontal-tight'
+                options={options}
+                selected={statusFilter}
+                onChange={statusFilter => this.setState({statusFilter})}
+            />
         )
     }
 
@@ -359,15 +348,12 @@ class Users extends React.Component {
     }
 
     renderInfo() {
-        const {textFilter, budgetFilter, users} = this.state
-        const isFiltered = textFilter || budgetFilter
-        const results = (count, total) =>
-            msg(isFiltered ? 'users.countWithFilter' : 'users.countNoFilter', {count, total})
+        const results = (count, start, stop) => msg('users.count', {count, start, stop})
         return (
             <PageInfo>
-                {({itemCount}) =>
+                {({count, start, stop}) =>
                     <div className={styles.pageInfo}>
-                        {results(itemCount, users.length)}
+                        {results(count, start, stop)}
                     </div>
                 }
             </PageInfo>
@@ -375,14 +361,17 @@ class Users extends React.Component {
     }
 
     renderUsers() {
-        const {textFilter} = this.state
+        const {textFilterValues} = this.state
+        const highlightMatcher = textFilterValues.length
+            ? new RegExp(`(?:${textFilterValues.join('|')})`, 'i')
+            : ''
         return (
-            <PageData>
-                {(user, index) =>
+            // [HACK] adding filter to key to force re-rendering
+            <PageData itemKey={user => `${user.username || user.id}|${highlightMatcher}`}>
+                {user =>
                     <User
-                        key={user.username || user.id || index}
                         user={user}
-                        highlight={textFilter}
+                        highlight={highlightMatcher}
                         onClick={() => this.editUser(user)}/>
                 }
             </PageData>
@@ -400,44 +389,42 @@ class Users extends React.Component {
     }
 
     render() {
+        const {users} = this.state
         return (
-            <React.Fragment>
-                <div
-                    className={styles.container}
-                    tabIndex='0'
-                    onKeyDown={e => this.onKeyDown(e)}>
-                    <Pageable
-                        items={this.getFilteredUsers()}
-                        limit={15}>
-                        <SectionLayout>
-                            <TopBar label={msg('home.sections.users')}/>
-                            <Content horizontalPadding verticalPadding menuPadding>
-                                <ScrollableContainer>
-                                    <Unscrollable className={styles.filters}>
+            <div className={styles.container}>
+                <Pageable
+                    items={users}
+                    matcher={user => this.userMatchesFilters(user)}>
+                    <SectionLayout>
+                        <TopBar label={msg('home.sections.users')}/>
+                        <Content horizontalPadding verticalPadding menuPadding>
+                            <ScrollableContainer>
+                                <Unscrollable>
+                                    <FieldSet layout='horizontal' spacing='compact'>
                                         {this.renderTextFilter()}
-                                        {this.renderBudgetFilter()}
-                                    </Unscrollable>
-                                    <Scrollable direction='x'>
-                                        <ScrollableContainer className={styles.content}>
-                                            <Unscrollable>
-                                                {this.renderHeader()}
-                                            </Unscrollable>
-                                            <Scrollable direction='y' className={styles.users}>
-                                                {this.renderUsers()}
-                                            </Scrollable>
-                                        </ScrollableContainer>
-                                    </Scrollable>
-                                </ScrollableContainer>
-                                {this.renderInviteUser()}
-                            </Content>
-                            <BottomBar className={styles.bottomBar}>
-                                <PageControls/>
-                            </BottomBar>
-                        </SectionLayout>
-                    </Pageable>
-                </div>
+                                        {this.renderStatusFilter()}
+                                    </FieldSet>
+                                </Unscrollable>
+                                <Scrollable direction='x'>
+                                    <ScrollableContainer className={styles.content}>
+                                        <Unscrollable>
+                                            {this.renderHeader()}
+                                        </Unscrollable>
+                                        <Scrollable direction='y' className={styles.users}>
+                                            {this.renderUsers()}
+                                        </Scrollable>
+                                    </ScrollableContainer>
+                                </Scrollable>
+                            </ScrollableContainer>
+                            {this.renderInviteUser()}
+                        </Content>
+                        <BottomBar className={styles.bottomBar}>
+                            <PageControls/>
+                        </BottomBar>
+                    </SectionLayout>
+                </Pageable>
                 {this.renderUserDetails()}
-            </React.Fragment>
+            </div>
         )
     }
 }
@@ -473,7 +460,7 @@ class User extends React.Component {
                     status ? styles.clickable : null
                 ].join(' ')}
                 onClick={() => status ? onClick() : null}>
-                <div><Highlight search={highlight} matchClass={styles.highlight}>{name}</Highlight></div>
+                <div><Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{name}</Highlight></div>
                 <div>{status ? msg(`user.userDetails.form.status.${status}`) : <Icon name='spinner'/>}</div>
                 <div>{moment(updateTime).fromNow()}</div>
                 <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>

@@ -1,7 +1,6 @@
 import {EMPTY, Subject, animationFrameScheduler, fromEvent, interval} from 'rxjs'
 import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs/operators'
-import {disableBodyScroll, enableBodyScroll} from 'body-scroll-lock'
 import {v4 as uuid} from 'uuid'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
@@ -46,7 +45,7 @@ ScrollableContainer.propTypes = {
 
 export const Unscrollable = ({className, children}) => {
     return (
-        <div className={[flexy.rigid, className].join(' ')}>
+        <div className={[flexy.rigid, styles.unscrollable, className].join(' ')}>
             {children}
         </div>
     )
@@ -66,7 +65,8 @@ const lerp = rate =>
 
 class _Scrollable extends Component {
     ref = React.createRef()
-    scroll$ = new Subject()
+    verticalScroll$ = new Subject()
+    horizontalScroll$ = new Subject()
 
     state = {
         key: null
@@ -84,7 +84,7 @@ class _Scrollable extends Component {
         const {className, direction, children} = this.props
         const {key} = this.state
         const scrollable = {
-            getOffset: this.getOffset.bind(this),
+            getOffset: (direction = 'y') => this.getOffset(direction),
             getContainerHeight: this.getContainerHeight.bind(this),
             getClientHeight: this.getClientHeight.bind(this),
             getScrollableHeight: this.getScrollableHeight.bind(this),
@@ -93,13 +93,13 @@ class _Scrollable extends Component {
             scrollToTop: this.scrollToTop.bind(this),
             scrollToBottom: this.scrollToBottom.bind(this),
             reset: this.reset.bind(this),
-            centerElement: this.centerElement.bind(this)
+            centerElement: this.centerElement.bind(this),
+            getElement: this.getScrollableElement.bind(this)
         }
         return (
             <div
                 key={key}
                 ref={this.ref}
-                // onScroll={e => e.stopPropagation()}
                 className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
                 <ScrollableContext.Provider value={scrollable}>
                     {_.isFunction(children) ? children(scrollableContainerHeight, scrollable) : children}
@@ -112,12 +112,20 @@ class _Scrollable extends Component {
         return this.ref.current
     }
 
-    setOffset(offset) {
-        this.getScrollableElement().scrollTop = offset
+    setOffset(offset, direction = 'y') {
+        if (direction === 'y') {
+            this.getScrollableElement().scrollTop = offset
+        } else {
+            this.getScrollableElement().scrollLeft = offset
+        }
     }
- 
-    getOffset() {
-        return this.getScrollableElement().scrollTop
+
+    getOffset(direction) {
+        if (direction === 'y') {
+            return this.getScrollableElement().scrollTop
+        } else {
+            return this.getScrollableElement().scrollLeft
+        }
     }
 
     getContainerHeight() {
@@ -128,22 +136,34 @@ class _Scrollable extends Component {
         return this.getScrollableElement().clientHeight
     }
 
+    getClientWidth() {
+        return this.getScrollableElement().clientWidth
+    }
+
     getScrollableHeight() {
         return this.getScrollableElement().scrollHeight
     }
 
-    scrollTo(offset) {
-        this.scroll$.next(offset)
+    getScrollableWidth() {
+        return this.getScrollableElement().scrollWidth
+    }
+
+    scrollTo(offset, direction = 'y') {
+        if (direction === 'y') {
+            this.verticalScroll$.next(offset)
+        } else {
+            this.horizontalScroll$.next(offset)
+        }
     }
 
     scrollToTop() {
         this.scrollTo(0)
     }
-    
+
     scrollToBottom() {
         this.scrollTo(this.getScrollableHeight() - this.getClientHeight())
     }
-    
+
     centerElement(element) {
         if (element) {
             this.scrollTo(element.offsetTop - (this.getClientHeight() - element.clientHeight) / 2)
@@ -151,10 +171,12 @@ class _Scrollable extends Component {
     }
 
     reset(callback) {
-        const offset = this.getOffset()
+        const verticalOffset = this.getOffset('y')
+        const horizontalOffset = this.getOffset('x')
         this.setState({key: uuid()},
             () => {
-                this.setOffset(offset)
+                this.setOffset(verticalOffset, 'y')
+                this.setOffset(horizontalOffset, 'x')
                 callback()
             }
         )
@@ -186,14 +208,14 @@ class _Scrollable extends Component {
         const {addSubscription} = this.props
         const animationFrame$ = interval(0, animationFrameScheduler)
 
-        const scroll$ = this.scroll$.pipe(
+        const scroll$ = (scroll$, direction) => scroll$.pipe(
             map(targetOffset => Math.round(targetOffset)),
             switchMap(targetOffset =>
-                Math.round(this.getOffset()) === targetOffset
+                Math.round(this.getOffset(direction)) === targetOffset
                     ? EMPTY
                     : animationFrame$.pipe(
                         mapTo(targetOffset),
-                        scan(lerp(ANIMATION_SPEED), this.getOffset()),
+                        scan(lerp(ANIMATION_SPEED), this.getOffset(direction)),
                         map(offset => Math.round(offset)),
                         distinctUntilChanged(),
                         takeWhile(offset => offset !== targetOffset)
@@ -202,20 +224,18 @@ class _Scrollable extends Component {
         )
 
         addSubscription(
-            scroll$.subscribe(
-                offset => this.setOffset(offset)
-            )
+            scroll$(this.verticalScroll$, 'y').subscribe(
+                offset => this.setOffset(offset, 'y')
+            ),
+            scroll$(this.horizontalScroll$, 'x').subscribe(
+                offset => this.setOffset(offset, 'x')
+            ),
         )
     }
 
     componentDidMount() {
-        disableBodyScroll(this.ref.current)
         this.handleHover()
         this.handleScroll()
-    }
-
-    componentWillUnmount() {
-        enableBodyScroll(this.ref.current)
     }
 }
 

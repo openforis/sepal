@@ -126,7 +126,7 @@ class _UserMessages extends React.Component {
             )
         } else {
             return (
-                <div>
+                <div className={styles.noMessages}>
                     {msg('userMessages.noMessages')}
                 </div>
             )

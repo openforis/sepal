@@ -11,6 +11,10 @@
     margin-right: .5rem;
 }
 
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
 .tab {
     --tab-default-background-color: hsl(0, 0%, 11%);
     --tab-selected-background-color: hsl(60, 2%, 16%);
@@ -18,7 +22,8 @@
     --tab-selected-background-color-transparent: hsla(60, 2%, 16%, 0);
     --tab-default-border-color: hsla(0, 0%, 100%, .15);
     --tab-selected-border-color: hsl(var(--selected-hue), var(--selected-sat), 40%);
-    
+    --border-top-right-radius: .5rem;
+
     /* [HACK] transparent colors are needed and cannot be replaced with 'transparent' because of iOS */
     --default-gradient: linear-gradient(to right, var(--tab-default-background-color-transparent), var(--tab-default-background-color) 100%);
     --selected-gradient: linear-gradient(to right, var(--tab-selected-background-color-transparent), var(--tab-selected-background-color) 100%);
@@ -28,9 +33,8 @@
     flex-grow: 1;
     background-color: var(--tab-default-background-color);
     border-bottom: 3px solid var(--tab-default-border-color);
-    border-top-right-radius: 0.5rem;
+    border-top-right-radius: var(--border-top-right-radius);
     border-top-left-radius: 0.5rem;
-    height: 2.5rem;
     white-space: nowrap;
     margin-top: .5rem;
     line-height: 2.5rem;
@@ -73,17 +77,18 @@
     right: 0;
     background: inherit;
     z-index: 1;
+    border-top-right-radius: var(--border-top-right-radius);
 }
 
 .tab {
-    animation: added 250ms ease-in-out forwards;
+    animation: added 500ms ease-in-out forwards;
     overflow: hidden;
 }
 
 @keyframes added {
     0% {
         opacity: 0;
-        transform: scale(.5);
+        transform: translateY(-50%);
     }
 }
 
@@ -104,6 +109,7 @@
     color: #8a949c;
     padding-right: 2.1rem;
     padding-left: 1rem;
+    overflow: hidden;
 }
 
 .title.selected {

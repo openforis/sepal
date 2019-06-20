@@ -1,15 +1,15 @@
-import {recipe} from 'app/home/body/process/recipeContext'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {sepalMap} from 'app/home/map/map'
-import MapToolbar from 'app/home/map/mapToolbar'
 import {compose} from 'compose'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
 import {connect} from 'store'
+import {defaultModel} from './timeSeriesRecipe'
 import {msg} from 'translate'
+import {recipe} from 'app/home/body/process/recipeContext'
+import {selectFrom} from 'stateUtils'
+import {sepalMap} from 'app/home/map/map'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
+import MapToolbar from 'app/home/map/mapToolbar'
+import React from 'react'
 import TimeSeriesToolbar from './panels/timeSeriesToolbar'
 import styles from './timeSeries.module.css'
-import {defaultModel} from './timeSeriesRecipe'
 
 const mapStateToProps = state => {
     return {

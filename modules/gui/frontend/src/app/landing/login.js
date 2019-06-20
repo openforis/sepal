@@ -1,11 +1,11 @@
+import {Button, ButtonGroup} from 'widget/button'
+import {Field, FieldSet, Form, Input, form} from 'widget/form'
 import {compose} from 'compose'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {msg} from 'translate'
-import {Button} from 'widget/button'
-import {Field, FieldSet, form, Form, Input} from 'widget/form'
 import {invalidCredentials, login, resetInvalidCredentials} from 'widget/user'
 import {isMobile} from 'widget/userAgent'
+import {msg} from 'translate'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './login.module.css'
 
 const fields = {
@@ -57,33 +57,38 @@ class Login extends React.Component {
                     />
                 </FieldSet>
                 <div className={styles.buttons}>
-                    <div className={styles.links}>
+                    <ButtonGroup
+                        type='horizontal-wrap'
+                        className={styles.extraButtons}>
                         <Button
                             chromeless
                             look='transparent'
                             size='large'
                             shape='pill'
+                            alignment='left'
                             label={msg('landing.login.sign-up')}
                             tabIndex={4}
                             onMouseDown={e => e.preventDefault()}
                             onClick={() => window.location = 'https://tinyurl.com/sepal-access'}
-                        /> |
+                        />
                         <Button
                             chromeless
                             look='transparent'
                             size='large'
                             shape='pill'
+                            alignment='left'
                             label={msg('landing.login.forgot-password-link')}
                             tabIndex={5}
                             onMouseDown={e => e.preventDefault()}
                             onClick={() => this.forgotPassword()}
                         />
-                    </div>
+                    </ButtonGroup>
                     <Button
                         type='submit'
                         look='apply'
                         size='x-large'
                         shape='pill'
+                        additionalClassName={styles.loginButton}
                         icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
                         label={msg('landing.login.button')}
                         disabled={form.isInvalid() || action('LOGIN').dispatching}

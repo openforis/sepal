@@ -18,7 +18,7 @@
 
 .inviteUser {
     --right: 2.5rem;
-    --bottom: 5rem;
+    --bottom: 1.5rem;
     position: absolute;
     right: var(--right);
     bottom: var(--bottom);
@@ -26,30 +26,10 @@
     z-index: 1;
 }
 
-.filters {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.search {
-    flex-grow: 1;
-    flex-shrink: 1;
-    max-width: 20rem;
-    margin-right: 1rem;
-}
-
-.search input {
-    width: 100%;
-    border: none;
-}
-
 @media only screen and (max-width: 500px) {
     .inviteUser {
-        --right: 1rem;
-        --bottom: 4rem;
+        --right: 1.5rem;
+        --bottom: 1.5rem;
     }
     .search {
         max-width: 12rem;
@@ -172,11 +152,6 @@
 
 .sorted {
     color: var(--success-color);
-}
-
-.budgetFilter {
-    color: var(--success-color);
-    border-bottom: 1px dotted var(--success-color);
 }
 
 .users {

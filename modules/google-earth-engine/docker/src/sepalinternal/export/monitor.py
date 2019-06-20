@@ -89,7 +89,7 @@ class MonitorEarthEngineExportTask(ThreadTask):
         except ee.EEException as e:
             logger.warn('Failed to cancel task {0}: {1}'.format(self, e))
             if retry < 3:
-                throttle_seconds = max(2 ^ retry * random.uniform(0.1, 0.2), 30)
+                throttle_seconds = max(2 ^ int(retry * random.uniform(0.1, 0.2)), 30)
                 time.sleep(throttle_seconds)
                 self.close(retry + 1)
 
