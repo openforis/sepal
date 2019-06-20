@@ -4,7 +4,7 @@ import {connect, select} from 'store'
 import {history, location} from 'route'
 import {initGoogleMapsApi$} from '../map/map'
 import {msg} from 'translate'
-import Account from './account/account'
+// import Account from './account/account'
 import Apps from './apps/apps'
 import Browse from './browse/browse'
 import Process from './process/process'
@@ -66,9 +66,9 @@ class Body extends React.Component {
                     <Section path='/users'>
                         <Users/>
                     </Section>
-                    <Section path='/account'>
+                    {/* <Section path='/account'>
                         <Account/>
-                    </Section>
+                    </Section> */}
                 </div>
             </div>
         )
