@@ -30,8 +30,11 @@ logger = logging.getLogger(__name__)
 
 def create(spec, context):
     aoi_spec = spec['aoi']
-    if aoi_spec['type'] == 'FUSION_TABLE' and not aoi_spec.get('keyColumn'):
-        aoi = ee.FeatureCollection('ft:' + aoi_spec['id'])
+    if aoi_spec['type'] == 'FUSION_TABLE' :
+        if aoi_spec.get('keyColumn'):
+            aoi = Aoi.create(aoi_spec).feature_collection
+        else:
+            aoi = ee.FeatureCollection('ft:' + aoi_spec['id'])
     else:
         aoi = Aoi.create(aoi_spec).geometry()
     return DownloadFeatures(

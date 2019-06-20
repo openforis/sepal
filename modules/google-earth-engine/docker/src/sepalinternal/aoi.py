@@ -90,8 +90,8 @@ class FusionTable(Aoi):
         number_column = is_number(spec['key']) and get_info(table)['columns'].get(self.key_column) == 'Number'
         self.value_column = float(spec['key']) if number_column else spec['key']
 
-        aoi = table.filterMetadata(self.key_column, 'equals', self.value_column)
-        geometry = aoi.geometry()
+        self.feature_collection = table.filterMetadata(self.key_column, 'equals', self.value_column)
+        geometry = self.feature_collection.geometry()
         Aoi.__init__(self, geometry, spec)
 
     def __str__(self):

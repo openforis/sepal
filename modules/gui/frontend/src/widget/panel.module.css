@@ -123,6 +123,7 @@
     padding: var(--content-padding);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 @media screen and (max-width: 500px) {
