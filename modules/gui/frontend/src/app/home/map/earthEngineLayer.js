@@ -25,7 +25,7 @@ export default class EarthEngineLayer {
         //     )
         // )
 
-        const layer = new GoogleMapsLayer(new EarthEngineTileProvider())
+        const layer = new GoogleMapsLayer(new EarthEngineTileProvider(this.mapId, this.token))
 
         // [HACK] When fitting bounds with no change to bounds, after Google Maps v3.33,
         // tiles were loaded then removed. GEE used same id for tiles at the same position.
@@ -76,8 +76,8 @@ export default class EarthEngineLayer {
     }
 
     hide(googleMap, hidden) {
-        const layer = googleMap.overlayMapTypes.getAt(this.layerIndex)
-        layer && layer.setOpacity(hidden ? 0 : 1)
+        // const layer = googleMap.overlayMapTypes.getAt(this.layerIndex)
+        // layer && layer.setOpacity(hidden ? 0 : 1)
     }
 
     initialize$() {

@@ -52,7 +52,7 @@ class _Mosaic extends React.Component {
                                 <SceneSelection/>
                                 <SceneDeselection/>
                                 {/*<BandSelection/>*/}
-                                <LayerManagement/>
+                                {/*<LayerManagement/>*/}
                             </React.Fragment>
                             : null}
                     </div>
