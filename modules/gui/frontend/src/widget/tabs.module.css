@@ -37,7 +37,7 @@
     border-top-right-radius: var(--border-top-right-radius);
     border-top-left-radius: .5rem;
     margin-top: .5rem;
-    padding: 0 .5rem;
+    padding: 0 .75rem 0 .5rem;
     overflow: hidden;
     animation: added 500ms ease-in-out forwards;
 }
@@ -51,7 +51,7 @@
 
 .tab:first-child {
     /* align tabs to the right */
-    margin-left: auto;
+    margin-left: auto; 
 }
 
 .tab:not(:last-child) {
