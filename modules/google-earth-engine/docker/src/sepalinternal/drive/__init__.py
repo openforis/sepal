@@ -61,6 +61,14 @@ def retry(action, times=1):
         e.message = e._get_reason()
         re_raisable()
         raise e
+    except Exception as e:
+        if times < 20:
+            throttle_seconds = max(2 ^ int(times * random.uniform(0.1, 0.2)), 30)
+            logger.warn('Retrying drive operation in {0} seconds: {1}'.format(throttle_seconds, str(e)))
+            time.sleep(throttle_seconds)
+            return retry(action, times + 1)
+        re_raisable()
+        raise e
 
 
 class Download(ThreadTask):
