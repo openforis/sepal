@@ -36,16 +36,18 @@ export class FormComponent extends React.Component {
 
     renderLabel() {
         const {label, tooltip, tooltipPlacement, alignment, disabled} = this.props
-        return label ? (
-            <Label
-                className={[styles.alignment, styles[alignment]].join(' ')}
-                msg={label}
-                tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-                disabled={disabled}
-                tabIndex={-1}
-            />
-        ) : null
+        return label
+            ? (
+                <Label
+                    className={[styles.alignment, styles[alignment]].join(' ')}
+                    msg={label}
+                    tooltip={tooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    disabled={disabled}
+                    tabIndex={-1}
+                />
+            )
+            : null
     }
 
     renderErrorMessage() {
