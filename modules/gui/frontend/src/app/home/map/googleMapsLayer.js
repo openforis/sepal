@@ -7,15 +7,17 @@ import {delay, filter, first, flatMap, map, mergeAll, switchMap, takeUntil, tap}
 import {google} from './map'
 
 class TileRequestQueue extends JobQueue {
-    pendingRequests = []
+    pending = []
 
-    push(tile$, tileRequest) {
-        this.pendingRequests.push({tile$, tileRequest})
+    push(tileRequest, job) {
+        console.log('push', tileRequest.id)
+        this.pending.push({tileRequest, job})
     }
 
-    nextJob$() {
-        const [tile$] = this.pendingRequests.splice(-1, 1)
-        return tile$ ? tile$ : EMPTY
+    pop() {
+        const [item] = this.pending.splice(-1, 1)
+        console.log('pop', item && item.tileRequest.id, this.pending)
+        return item ? item.job : null
     }
 }
 
@@ -33,9 +35,9 @@ export class GoogleMapsLayer {
     } = {}) {
         this.tileProvider =
             new ThrottlingTileProvider(
-                // new CancellingTileProvider(
+                new CancellingTileProvider(
                     tileProvider
-                // )
+                )
             )
         this.name = name
         this.minZoom = minZoom
@@ -55,12 +57,16 @@ export class GoogleMapsLayer {
             return tileRequest.element
 
         const tile$ = this.tileProvider.loadTile$(tileRequest)
+        tile$.subscribe(blob => {
+            console.log('render', tileRequest.id)
+            renderImageBlob(tileRequest.element, blob)
+        })
         // tile$.subscribe(blob => renderImageBlob(tileRequest.element, blob))
-        tile$.subscribe(
-            next => console.log('next', {next}),
-            error => console.log('error', {error}),
-            () => console.log('complete'),
-        )
+        // tile$.subscribe(
+        //     next => console.log('next', {next}),
+        //     error => console.log('error', {error}),
+        //     () => console.log('complete'),
+        // )
         return tileRequest.element
     }
 
@@ -162,7 +168,7 @@ class CancellingTileProvider extends TileProvider {
 }
 
 class ThrottlingTileProvider extends TileProvider {
-    jobScheduler = new JobScheduler(tileRequestQueue, 2)
+    jobScheduler = new JobScheduler(tileRequestQueue, 1)
 
     constructor(nextTileProvider) {
         super()
@@ -171,7 +177,7 @@ class ThrottlingTileProvider extends TileProvider {
 
     loadTile$(tileRequest) {
         const tile$ = this.nextTileProvider.loadTile$(tileRequest)
-        return this.jobScheduler.schedule$(tile$)
+        return this.jobScheduler.schedule$(tileRequest, tile$)
     }
 
     releaseTile(requestId) {

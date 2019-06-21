@@ -1,51 +1,50 @@
 import guid from 'guid'
-import {Subject} from 'rxjs'
-import {exhaustMap, filter, map, mergeAll, mergeMap} from 'rxjs/operators'
+import {of, Subject} from 'rxjs'
+import {exhaustMap, expand, filter, map, mergeAll, share} from 'rxjs/operators'
 
 export class JobScheduler {
     request$ = new Subject()
 
-    // constructor(jobQueue, concurrent) {
-    //     this.jobQueue = jobQueue
-    //     this.job$ = this.request$.pipe(
-    //         exhaustMap(data =>
-    //             this.jobQueue.nextJob$().pipe(
-    //                 mergeAll(concurrent),
-    //                 map(result => ({result, data}))
-    //             )
-    //         )
-    //     )
-    // }
-
-    schedule$(job$) {
-        job$.id = guid()
-        this.jobQueue.push(job$)
+    schedule$(data, job$) {
+        const id = guid()
+        this.jobQueue.push(data, {id, job$})
         this.request$.next()
         return this.job$.pipe(
-            // filter(value => job$.id === d),
-            map(({result}) => result)
+            filter(({id: completedId}) => completedId === id),
+            map(({value}) => value)
         )
     }
 
     constructor(jobQueue, concurrent) {
         this.jobQueue = jobQueue
         this.job$ = this.request$.pipe(
-            map(() => this.jobQueue.nextJob$()),
+            exhaustMap(
+                () =>
+                    of(this.jobQueue.pop()).pipe(
+                        filter(job => job),
+                        map(({id, job$}) => job$.pipe(
+                            map(value => ({id, value}))
+                        ))
+                    ),
+            ),
             mergeAll(concurrent),
-            map(value => {
-                console.log('value', value)
-                return value
-            })
+            share()
         )
     }
     //
-    // schedule$(job$, data) {
-    //     this.jobQueue.push(job$, data)
-    //     this.request$.next(data)
-    //     return this.job$.pipe(
-    //         // filter(({result, data: d}) => data === d)
+    // constructor(jobQueue, concurrent) {
+    //     this.jobQueue = jobQueue
+    //     this.job$ = this.request$.pipe(
+    //         map(() => this.jobQueue.pop()),
+    //         filter(job => job),
+    //         map(({id, job$}) => job$.pipe(
+    //             map(value => ({id, value}))
+    //         )),
+    //         mergeAll(concurrent),
+    //         share()
     //     )
     // }
+
 }
 
 
