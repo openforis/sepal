@@ -22,6 +22,18 @@
     opacity: .3;
 }
 
+.label.left {
+    text-align: left;
+}
+
+.label.center {
+    text-align: center;
+}
+
+.label.right {
+    text-align: right;
+}
+
 .label .info {
     cursor: help;
     margin-left: .5rem;

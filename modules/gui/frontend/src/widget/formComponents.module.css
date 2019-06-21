@@ -174,15 +174,3 @@ textarea::placeholder {
 .formComponent.horizontal > *:last-child {
     margin-right: 0;
 }
-
-.alignment.left {
-    text-align: left;
-}
-
-.alignment.center {
-    text-align: center;
-}
-
-.alignment.right {
-    text-align: right;
-}

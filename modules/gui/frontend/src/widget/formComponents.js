@@ -39,7 +39,7 @@ export class FormComponent extends React.Component {
         return label
             ? (
                 <Label
-                    className={[styles.alignment, styles[alignment]].join(' ')}
+                    alignment={alignment}
                     msg={label}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}

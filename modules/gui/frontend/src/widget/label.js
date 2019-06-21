@@ -11,11 +11,12 @@ export default class Label extends React.Component {
     }
 
     renderLabel(contents) {
-        const {className, size = 'normal', disabled} = this.props
+        const {className, size, alignment, disabled} = this.props
         return (
             <label className={[
                 styles.label,
                 styles[size],
+                styles[alignment],
                 disabled ? styles.disabled : null,
                 className
             ].join(' ')}>
@@ -41,6 +42,7 @@ export default class Label extends React.Component {
 }
 
 Label.propTypes = {
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
     children: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
     className: PropTypes.string,
     disabled: PropTypes.any,
@@ -48,4 +50,9 @@ Label.propTypes = {
     size: PropTypes.oneOf(['normal', 'large']),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
+}
+
+Label.defaultProps = {
+    alignment: 'left',
+    size: 'normal'
 }
