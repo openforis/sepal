@@ -183,7 +183,6 @@ export default compose(
 
 class _Tab extends React.Component {
     constructor(props) {
-        console.log('constructor')
         super(props)
         const {title = ''} = props
         this.state = {
@@ -199,50 +198,6 @@ class _Tab extends React.Component {
         return {
             title
         }
-    }
-
-    onTitleChange(e) {
-        const value = e.target.value.replace(/[^\w-.]/g, '_')
-        e.target.value = value
-        this.setState({title: value})
-    }
-
-    exitEditing(save) {
-        const {editing} = this.state
-        if (editing) {
-            if (save) {
-                this.saveTitle()
-            } else {
-                this.restoreTitle()
-            }
-        }
-    }
-
-    saveTitle() {
-        const {id, statePath, onTitleChanged} = this.props
-        const {title} = this.state
-        const tabPath = toTabPath(id, statePath)
-        const selectTab = () => select(tabPath)
-        const prevTitle = selectTab().title
-        if (prevTitle !== title) {
-            renameTab(id, title, tabPath, onTitleChanged)
-        }
-        this.setState({
-            editing: false,
-            prevTitle: title
-        }, this.blur)
-    }
-
-    restoreTitle() {
-        const {prevTitle} = this.state
-        this.setState({
-            editing: false,
-            title: prevTitle
-        }, this.blur)
-    }
-
-    blur() {
-        this.titleInput.current.blur()
     }
 
     render() {
@@ -285,7 +240,7 @@ class _Tab extends React.Component {
                     border={false}
                     readOnly={!editing}
                     onClick={() => selected
-                        ? this.editTab()
+                        ? this.editTitle()
                         : this.selectTab()
                     }
                     onChange={e => this.onTitleChange(e)}
@@ -309,13 +264,57 @@ class _Tab extends React.Component {
         )
     }
 
-    editTab() {
-        this.setState({editing: true})
-    }
-
     selectTab() {
         const {id, statePath} = this.props
         selectTab(id, statePath)
+    }
+
+    editTitle() {
+        this.setState({editing: true})
+    }
+
+    onTitleChange(e) {
+        const value = e.target.value.replace(/[^\w-.]/g, '_')
+        e.target.value = value
+        this.setState({title: value})
+    }
+
+    exitEditing(save) {
+        const {editing} = this.state
+        if (editing) {
+            if (save) {
+                this.saveTitle()
+            } else {
+                this.restoreTitle()
+            }
+        }
+    }
+
+    saveTitle() {
+        const {id, statePath, onTitleChanged} = this.props
+        const {title} = this.state
+        const tabPath = toTabPath(id, statePath)
+        const selectTab = () => select(tabPath)
+        const prevTitle = selectTab().title
+        if (prevTitle !== title) {
+            renameTab(id, title, tabPath, onTitleChanged)
+        }
+        this.setState({
+            prevTitle: title,
+            editing: false
+        }, this.blur)
+    }
+
+    restoreTitle() {
+        const {prevTitle} = this.state
+        this.setState({
+            title: prevTitle,
+            editing: false
+        }, this.blur)
+    }
+
+    blur() {
+        this.titleInput.current.blur()
     }
 
     scrollSelectedTabIntoView() {
