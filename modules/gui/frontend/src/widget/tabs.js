@@ -190,8 +190,9 @@ class _Tab extends React.Component {
             title: title,
             prevTitle: title
         }
-        this.titleInput = React.createRef()
     }
+
+    titleInput = React.createRef()
 
     static getDerivedStateFromProps(props, state) {
         const {editing} = state
@@ -284,7 +285,6 @@ class _Tab extends React.Component {
 
     exitEditing(save) {
         const {editing} = this.state
-        console.log('exit')
         if (editing) {
             if (save) {
                 this.saveTitle()
@@ -310,7 +310,6 @@ class _Tab extends React.Component {
     }
 
     restoreTitle() {
-        console.log('restore')
         const {prevTitle} = this.state
         this.setState({
             title: prevTitle,
