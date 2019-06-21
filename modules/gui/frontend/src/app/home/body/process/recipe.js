@@ -131,7 +131,7 @@ export const saveRecipe = recipe => {
     if (isInitialized(recipe)) {
         actionBuilder('SET_RECIPE_SAVED', recipe.id)
             .del(recipePath(recipe.id, 'ui.unsaved'))
-            .set(recipePath(recipe.id, 'title'), recipe.title || recipe.placeholder)
+            .set(recipePath(recipe.id, 'title'), recipe.title)
             .dispatch()
         updateRecipeList(recipe)
         saveToBackend$.next(recipe)
