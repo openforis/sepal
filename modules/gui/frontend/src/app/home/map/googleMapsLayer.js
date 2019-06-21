@@ -95,11 +95,8 @@ export class GoogleMapsLayer {
         const outOfBounds = zoom < minZoom || y < 0 || y >= maxCoord
         return {id, x, y, zoom, element, outOfBounds}
     }
+
 }
-
-// https://developers.google.com/maps/documentation/javascript/reference/image-overlay#MapType
-// https://developers.google.com/maps/documentation/javascript/maptypes
-
 
 export class TileProvider {
     id = guid()
@@ -125,11 +122,6 @@ export class EarthEngineTileProvider extends TileProvider {
 
     loadTile$(tileRequest) {
         const url = `https://earthengine.googleapis.com/map/${this.mapId}/${tileRequest.zoom}/${tileRequest.x}/${tileRequest.y}?token=${this.token}`
-        // return of(tileRequest).pipe(
-        //     tap(() => console.log('executing', tileRequest)),
-        //     delay(2000),
-        //     tap(() => console.log('executed', tileRequest)),
-        // )
         return get$(url, {retries: 0, noAuthChallenge: false, responseType: 'blob'}).pipe(
             map(e => e.response)
         )
