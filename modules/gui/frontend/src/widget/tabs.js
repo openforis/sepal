@@ -30,7 +30,7 @@ const getTabIndex = (id, statePath) =>
 const toTabPath = (id, statePath) =>
     [statePath, 'tabs', getTabIndex(id, statePath)].join('.')
 
-const renameTab = (id, title, tabPath, onTitleChanged) => {
+const renameTab = (title, tabPath, onTitleChanged) => {
     actionBuilder('RENAME_TAB')
         .set([tabPath, 'title'], title)
         .dispatch()
@@ -196,8 +196,8 @@ class _Tab extends React.Component {
     static getDerivedStateFromProps(props, state) {
         const {editing} = state
         const title = editing
-            ? state.title
-            : props.title
+            ? state.title || ''
+            : props.title || ''
         return {
             title
         }
@@ -278,12 +278,13 @@ class _Tab extends React.Component {
 
     onTitleChange(e) {
         const value = e.target.value.replace(/[^\w-.]/g, '_')
-        e.target.value = value
+        // e.target.value = value
         this.setState({title: value})
     }
 
     exitEditing(save) {
         const {editing} = this.state
+        console.log('exit')
         if (editing) {
             if (save) {
                 this.saveTitle()
@@ -300,7 +301,7 @@ class _Tab extends React.Component {
         const selectTab = () => select(tabPath)
         const prevTitle = selectTab().title
         if (prevTitle !== title) {
-            renameTab(id, title, tabPath, onTitleChanged)
+            renameTab(title, tabPath, onTitleChanged)
         }
         this.setState({
             prevTitle: title,
@@ -309,6 +310,7 @@ class _Tab extends React.Component {
     }
 
     restoreTitle() {
+        console.log('restore')
         const {prevTitle} = this.state
         this.setState({
             title: prevTitle,
