@@ -183,6 +183,7 @@ export default compose(
 
 class _Tab extends React.Component {
     constructor(props) {
+        console.log('constructor')
         super(props)
         const {title = ''} = props
         this.state = {
@@ -206,6 +207,17 @@ class _Tab extends React.Component {
         this.setState({title: value})
     }
 
+    exitEditing(save) {
+        const {editing} = this.state
+        if (editing) {
+            if (save) {
+                this.saveTitle()
+            } else {
+                this.restoreTitle()
+            }
+        }
+    }
+
     saveTitle() {
         const {id, statePath, onTitleChanged} = this.props
         const {title} = this.state
@@ -218,7 +230,7 @@ class _Tab extends React.Component {
         this.setState({
             editing: false,
             prevTitle: title
-        })
+        }, this.blur)
     }
 
     restoreTitle() {
@@ -226,19 +238,11 @@ class _Tab extends React.Component {
         this.setState({
             editing: false,
             title: prevTitle
-        })
+        }, this.blur)
     }
 
-    exitEditing(save) {
-        const {editing} = this.state
-        if (editing) {
-            if (save) {
-                this.saveTitle()
-            } else {
-                this.restoreTitle()
-            }
-            this.titleInput.current.blur()
-        }
+    blur() {
+        this.titleInput.current.blur()
     }
 
     render() {
@@ -264,14 +268,14 @@ class _Tab extends React.Component {
     }
 
     renderInput() {
-        const {id, placeholder, selected, statePath} = this.props
+        const {placeholder, selected} = this.props
         const {title, editing} = this.state
         const keymap = {
             Enter: () => this.exitEditing(true),
             Escape: () => this.exitEditing(false),
         }
         return (
-            <Keybinding keymap={keymap}>
+            <Keybinding keymap={keymap} disabled={!editing}>
                 <Input
                     ref={this.titleInput}
                     className={styles.title}
@@ -279,13 +283,11 @@ class _Tab extends React.Component {
                     placeholder={placeholder}
                     autoFocus={!title}
                     border={false}
-                    readOnly={editing !== true}
-                    onClick={e => {
-                        e.target.blur()
-                        selected
-                            ? this.setState({editing: true})
-                            : selectTab(id, statePath)
-                    }}
+                    readOnly={!editing}
+                    onClick={() => selected
+                        ? this.editTab()
+                        : this.selectTab()
+                    }
                     onChange={e => this.onTitleChange(e)}
                     onBlur={() => this.exitEditing(true)}/>
             </Keybinding>
@@ -305,6 +307,15 @@ class _Tab extends React.Component {
                 onClick={() => onClose()}
             />
         )
+    }
+
+    editTab() {
+        this.setState({editing: true})
+    }
+
+    selectTab() {
+        const {id, statePath} = this.props
+        selectTab(id, statePath)
     }
 
     scrollSelectedTabIntoView() {
@@ -330,16 +341,15 @@ class _Tab extends React.Component {
     }
 
     componentDidMount() {
-        // const {scrollable} = this.props
         this.scrollSelectedTabIntoView()
 
     }
 
-    componentDidUpdate(prevProps, prevState) {
+    componentDidUpdate(prevProps) {
         const {selected} = this.props
-        if (!prevState.editing && this.state.editing)
-            this.titleInput.current.select()
-        selected && prevProps.selected !== selected && this.scrollSelectedTabIntoView()
+        if (prevProps.selected !== selected) {
+            this.scrollSelectedTabIntoView()
+        }
     }
 }
 
