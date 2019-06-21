@@ -24,7 +24,7 @@ class _SearchBox extends React.Component {
         const {placeholder} = this.props
         const {value} = this.state
         return (
-            <Keybinding keyMap={{
+            <Keybinding keymap={{
                 Escape: () => this.setValue('')
             }}>
                 <Shape
