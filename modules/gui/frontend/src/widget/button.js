@@ -157,12 +157,13 @@ class _Button extends React.Component {
     }
 
     renderIcon() {
-        const {icon, iconType, iconFlipHorizontal} = this.props
+        const {icon, iconType, iconFlipHorizontal, iconFlipVertical} = this.props
         return (
             <Icon
                 name={icon}
                 type={iconType}
-                flip={iconFlipHorizontal ? 'horizontal' : null}
+                flipHorizontal={iconFlipHorizontal}
+                flipVertical={iconFlipVertical}
             />
         )
     }
@@ -283,6 +284,7 @@ Button.propTypes = {
     hover: PropTypes.any,
     icon: PropTypes.string,
     iconFlipHorizontal: PropTypes.any,
+    iconFlipVertical: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
     iconType: PropTypes.string,
     label: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.array]),

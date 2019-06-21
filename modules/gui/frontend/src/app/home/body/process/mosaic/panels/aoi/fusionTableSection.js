@@ -1,6 +1,6 @@
 import {FieldSet} from 'widget/form'
 import {FormButtons} from 'widget/buttons'
-import {Input} from 'widget/form'
+import {Input} from 'widget/input'
 import {RecipeActions} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'

@@ -1,8 +1,9 @@
+import {Input} from 'widget/formComponents'
 import {Shape} from 'widget/shape'
 import {Subject, merge} from 'rxjs'
 import {compose} from 'compose'
 import {debounceTime, filter} from 'rxjs/operators'
-import {isMobile} from 'widget/userAgent'
+import Icon from 'widget/icon'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -30,14 +31,17 @@ class _SearchBox extends React.Component {
                     look='transparent'
                     size='large'
                     shape='pill'
-                    icon='search'>
-                    <input
+                    disabled
+                >
+                    <Input
                         className={styles.search}
                         type='search'
                         ref={this.ref}
                         value={value}
                         placeholder={placeholder}
-                        autoFocus={!isMobile()}
+                        autoFocus
+                        border={false}
+                        leftComponent={<Icon name='search'/>}
                         onChange={e => this.setValue(e.target.value)}
                     />
                 </Shape>

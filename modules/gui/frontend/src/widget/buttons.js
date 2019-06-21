@@ -1,5 +1,5 @@
 import {Button, ButtonGroup} from 'widget/button'
-import {FormComponent} from 'widget/form'
+import {FormComponent} from 'widget/formComponents'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'

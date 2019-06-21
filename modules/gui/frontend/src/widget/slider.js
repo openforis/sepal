@@ -1,4 +1,4 @@
-import {FormComponent} from 'widget/form'
+import {FormComponent} from 'widget/formComponents'
 import {animationFrameScheduler, combineLatest, fromEvent, interval, merge} from 'rxjs'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo, scan, switchMap, withLatestFrom} from 'rxjs/operators'

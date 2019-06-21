@@ -1,7 +1,8 @@
 import {Activator} from 'widget/activation/activator'
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {Field, FieldSet, Input, form} from 'widget/form'
+import {Field, FieldSet, form} from 'widget/form'
+import {Input} from 'widget/input'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -21,7 +22,7 @@ const fields = {
     name: new Field()
         .notBlank('user.userDetails.form.name.required'),
     email: new Field()
-        .notBlank('user.udpateDetails.form.email.required'),
+        .notBlank('user.userDetails.form.email.required'),
     organization: new Field()
 }
 const mapStateToProps = () => {

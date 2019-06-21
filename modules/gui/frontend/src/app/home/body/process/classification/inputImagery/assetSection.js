@@ -1,4 +1,4 @@
-import {Input} from 'widget/form'
+import {Input} from 'widget/input'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'

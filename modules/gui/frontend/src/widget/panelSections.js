@@ -1,5 +1,5 @@
 import * as PropTypes from 'prop-types'
-import {FieldSet} from 'widget/form'
+import {FormComponent} from 'widget/formComponents'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import ButtonSelect from 'widget/buttonSelect'
 import Icon from 'widget/icon'
@@ -20,9 +20,9 @@ export default class PanelSections extends React.Component {
                     </div>
                 </PanelHeader>
                 <PanelContent>
-                    <FieldSet>
+                    <FormComponent>
                         {section && section.component}
-                    </FieldSet>
+                    </FormComponent>
                 </PanelContent>
             </div>
         )

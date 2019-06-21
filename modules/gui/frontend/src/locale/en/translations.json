@@ -1491,6 +1491,9 @@
     "confirm": {
       "title": "Confirmation required"
     },
+    "list": {
+      "noResults": "No results"
+    },
     "notification": {
       "dismiss": "Click notification to dismiss",
       "error": {

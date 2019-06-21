@@ -1,5 +1,6 @@
-import {Constraint, Field, FieldSet, Input, form} from 'widget/form'
+import {Constraint, Field, FieldSet, form} from 'widget/form'
 import {EMPTY, throwError} from 'rxjs'
+import {Input} from 'widget/input'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'

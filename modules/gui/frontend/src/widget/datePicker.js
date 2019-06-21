@@ -1,11 +1,10 @@
 import * as PropTypes from 'prop-types'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
-import {FormComponent} from 'widget/form'
+import {FormComponent, Input} from 'widget/formComponents'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
-import {isMobile} from 'widget/userAgent'
 import Label from 'widget/label'
 import List from 'widget/list'
 import React, {Component} from 'react'
@@ -43,7 +42,6 @@ export default class DatePicker extends React.Component {
         return (
             <Activator id={this.id}>
                 {panel =>
-                    // <div className={styles.container}>
                     <FormComponent
                         label={label}
                         tooltip={tooltip}
@@ -61,22 +59,15 @@ export default class DatePicker extends React.Component {
                                 this.inputElement.current.value = dateString
                                 input.set(dateString)
                             }}/>
-                        {/* {this.renderLabel()} */}
                         <div className={styles.input}>
-                            <input
+                            <Input
                                 ref={this.inputElement}
                                 defaultValue={input.value}
                                 maxLength={10}
-                                autoFocus={autoFocus && !isMobile()}
-                                autoComplete='off'
-                                autoCorrect='off'
-                                autoCapitalize='off'
-                                spellCheck='false'
+                                autoFocus={autoFocus}
                                 className={styles.input}
                                 onChange={e => this.setInput(e.target.value)}
-                                onBlur={() => {
-                                    this.inputElement.current.value = input.value
-                                }}
+                                onBlur={() => this.inputElement.current.value = input.value}
                             />
                             <Button additionalClassName={styles.panelTrigger}
                                 chromeless
@@ -85,8 +76,6 @@ export default class DatePicker extends React.Component {
                                 onClick={() => panel.activate()}
                             />
                         </div>
-                        {/* {this.renderError()} */}
-                        {/* </div> */}
                     </FormComponent>
                 }
             </Activator>
