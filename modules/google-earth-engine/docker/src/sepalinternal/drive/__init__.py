@@ -242,23 +242,25 @@ class Download(ThreadTask):
 
 
 class Touch(ThreadTask):
-    def __init__(self, drive_items):
+    def __init__(self, drive_items, credentials):
         super(Touch, self).__init__(retries=3)
         self.drive_items = drive_items
+        self.credentials = credentials
 
     def run(self):
         time.sleep(15 * 60)  # Don't touch very often
         while self.running():
-            for item in self.drive_items:
-                try:
-                    retry(lambda: self.drive.files().update(
-                        fileId=item['id'],
-                        body={'modifiedTime': datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S" + 'Z')}
-                    ).execute())
-                    logger.debug('Touched {0}'.format(item))
-                except:
-                    pass
-                time.sleep(1)
+            with Drive(self.credentials) as drive:
+                for item in self.drive_items:
+                    try:
+                        retry(lambda: drive.files().update(
+                            fileId=item['id'],
+                            body={'modifiedTime': datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S" + 'Z')}
+                        ).execute())
+                        logger.debug('Touched {0}'.format(item))
+                    except:
+                        pass
+                    time.sleep(1)
 
     def __str__(self):
         return '{0}(drive_files={1})'.format(type(self).__name__, self.drive_items)
