@@ -127,9 +127,7 @@ textarea::placeholder {
 }
 
 .formComponent {
-    /* --horizontal-spacing: 1rem; */
     overflow: hidden; /* required for preventing margin bottom on last element */
-    /* background-color: rgba(255,0,0,.2); */
 }
 
 .formComponent.normal {
