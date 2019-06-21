@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
+import {read} from 'fs'
 import Keybinding from 'widget/keybinding'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
@@ -11,13 +12,15 @@ import withForwardedRef from 'ref'
 
 export class FormComponent extends React.Component {
     render() {
-        const {layout, spacing, errorMessage, className, children} = this.props
+        const {layout, spacing, errorMessage, className, onClick, children} = this.props
         return (
             <React.Fragment>
-                <div className={[
-                    styles.formComponentContainer,
-                    className
-                ].join(' ')}>
+                <div
+                    className={[
+                        styles.formComponentContainer,
+                        className
+                    ].join(' ')}
+                    onClick={e => onClick && onClick(e)}>
                     {this.renderLabel()}
                     <div className={[
                         styles.formComponent,
@@ -81,7 +84,8 @@ FormComponent.propTypes = {
     layout: PropTypes.oneOf(['vertical', 'horizontal', 'horizontal-nowrap']),
     spacing: PropTypes.oneOf(['normal', 'compact', 'none']),
     tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string
+    tooltipPlacement: PropTypes.string,
+    onClick: PropTypes.func
 }
 
 FormComponent.defaultProps = {
@@ -109,7 +113,7 @@ class _Input extends React.Component {
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, border} = this.props
+        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, border, onClick} = this.props
         return (
             <FormComponent
                 className={className}
@@ -117,7 +121,9 @@ class _Input extends React.Component {
                 label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                errorMessage={errorMessage}>
+                errorMessage={errorMessage}
+                onClick={e => onClick && onClick(e)}
+            >
                 <FormComponent
                     className={[
                         styles.input,
@@ -137,11 +143,12 @@ class _Input extends React.Component {
         const {
             type, name, value, defaultValue, placeholder, maxLength, tabIndex,
             autoFocus, autoComplete, autoCorrect, autoCapitalize, spellCheck, disabled, readOnly,
-            onBlur, onClick, onChange, onFocus
+            onBlur, onChange, onFocus
         } = this.props
         return (
             <input
                 ref={this.ref}
+                className={readOnly ? styles.readOnly : null}
                 type={this.isSearchInput() ? 'text' : type}
                 name={name}
                 value={value}
@@ -155,9 +162,9 @@ class _Input extends React.Component {
                 autoCapitalize={autoCapitalize ? 'on' : 'off'}
                 spellCheck={spellCheck ? 'true' : 'false'}
                 disabled={disabled}
-                readOnly={readOnly ? 'readonly' : ''}
+                // readOnly={readOnly ? 'readonly' : ''}
                 onBlur={e => onBlur && onBlur(e)}
-                onClick={e => onClick && onClick(e)}
+                // onClick={e => onClick && onClick(e)}
                 onChange={e => onChange && onChange(e)}
                 onFocus={e => onFocus && onFocus(e)}
             />

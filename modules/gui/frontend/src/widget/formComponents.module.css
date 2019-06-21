@@ -90,6 +90,11 @@ textarea::placeholder {
     font-style: italic;
 }
 
+input.readOnly,
+textarea.readOnly {
+    pointer-events: none;
+}
+
 .error input,
 .error textarea {
     --error-border-color: #e81351;

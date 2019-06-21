@@ -270,7 +270,7 @@ class _Tab extends React.Component {
     }
 
     editTitle() {
-        this.setState({editing: true})
+        this.setState({editing: true}, () => this.focus())
     }
 
     onTitleChange(e) {
@@ -313,6 +313,10 @@ class _Tab extends React.Component {
         }, this.blur)
     }
 
+    focus() {
+        this.titleInput.current.focus()
+    }
+
     blur() {
         this.titleInput.current.blur()
     }
@@ -336,17 +340,15 @@ class _Tab extends React.Component {
         } else if (offset > max) {
             scrollable.scrollTo(max, 'x')
         }
-
     }
 
     componentDidMount() {
         this.scrollSelectedTabIntoView()
-
     }
 
     componentDidUpdate(prevProps) {
         const {selected} = this.props
-        if (prevProps.selected !== selected) {
+        if (selected && prevProps.selected !== selected) {
             this.scrollSelectedTabIntoView()
         }
     }
