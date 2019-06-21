@@ -86,7 +86,7 @@ class DownloadFeatures(ThreadTask):
         ee.InitializeThread(self.spec.credentials)
         # Explicitly create folder, to prevent GEE race-condition
         self.drive_folder = drive.create_folder(self.spec.credentials, self.drive_folder_name)
-        self.dependent(drive.Touch([self.drive_folder_name])).submit()
+        self.dependent(drive.Touch([self.drive_folder_name], self.spec.credentials)).submit()
         if isinstance(self.spec.aoi, ee.FeatureCollection):
             feature_collection = self.spec.aoi
             aois = [
