@@ -1,7 +1,6 @@
 import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {isMobile} from 'widget/userAgent'
-import {read} from 'fs'
 import Keybinding from 'widget/keybinding'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
@@ -18,6 +17,7 @@ export class FormComponent extends React.Component {
                 <div
                     className={[
                         styles.formComponentContainer,
+                        onClick ? styles.clickable : null,
                         className
                     ].join(' ')}
                     onClick={e => onClick && onClick(e)}>
@@ -162,9 +162,8 @@ class _Input extends React.Component {
                 autoCapitalize={autoCapitalize ? 'on' : 'off'}
                 spellCheck={spellCheck ? 'true' : 'false'}
                 disabled={disabled}
-                // readOnly={readOnly ? 'readonly' : ''}
+                readOnly={readOnly ? 'readonly' : ''}
                 onBlur={e => onBlur && onBlur(e)}
-                // onClick={e => onClick && onClick(e)}
                 onChange={e => onChange && onChange(e)}
                 onFocus={e => onFocus && onFocus(e)}
             />

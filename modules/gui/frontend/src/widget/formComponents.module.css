@@ -131,6 +131,10 @@ textarea.readOnly {
     flex-direction: column;
 }
 
+.formComponentContainer.clickable {
+    cursor: pointer;
+}
+
 .formComponent {
     overflow: hidden; /* required for preventing margin bottom on last element */
 }
