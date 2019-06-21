@@ -3,8 +3,23 @@ import guid from 'guid'
 import {get$} from 'http-client'
 import {JobQueue, JobScheduler} from 'jobScheduler'
 import {EMPTY, of, Subject} from 'rxjs'
-import {delay, filter, first, map, switchMap, takeUntil, tap} from 'rxjs/operators'
+import {delay, filter, first, flatMap, map, mergeAll, switchMap, takeUntil, tap} from 'rxjs/operators'
 import {google} from './map'
+
+class TileRequestQueue extends JobQueue {
+    pendingRequests = []
+
+    push(tile$, tileRequest) {
+        this.pendingRequests.push({tile$, tileRequest})
+    }
+
+    nextJob$() {
+        const [tile$] = this.pendingRequests.splice(-1, 1)
+        return tile$ ? tile$ : EMPTY
+    }
+}
+
+const tileRequestQueue = new TileRequestQueue()
 
 export class GoogleMapsLayer {
     subscriptions = []
@@ -18,9 +33,9 @@ export class GoogleMapsLayer {
     } = {}) {
         this.tileProvider =
             new ThrottlingTileProvider(
-                new CancellingTileProvider(
+                // new CancellingTileProvider(
                     tileProvider
-                )
+                // )
             )
         this.name = name
         this.minZoom = minZoom
@@ -39,13 +54,17 @@ export class GoogleMapsLayer {
         if (tileRequest.outOfBounds)
             return tileRequest.element
 
-        this.tileProvider.loadTile$(tileRequest)
-            .subscribe(blob => renderImageBlob(tileRequest.element, blob))
+        const tile$ = this.tileProvider.loadTile$(tileRequest)
+        // tile$.subscribe(blob => renderImageBlob(tileRequest.element, blob))
+        tile$.subscribe(
+            next => console.log('next', {next}),
+            error => console.log('error', {error}),
+            () => console.log('complete'),
+        )
         return tileRequest.element
     }
 
     releaseTile(tileElement) {
-        // console.log('releaseTile', {tileElement})
         this.tileProvider.releaseTile(tileElement.id)
     }
 
@@ -100,13 +119,14 @@ export class EarthEngineTileProvider extends TileProvider {
 
     loadTile$(tileRequest) {
         const url = `https://earthengine.googleapis.com/map/${this.mapId}/${tileRequest.zoom}/${tileRequest.x}/${tileRequest.y}?token=${this.token}`
-        return of(tileRequest).pipe(
-            tap(() => console.log('executing', tileRequest)),
-            delay(2000),
-        )
-        // return get$(url, {retries: 0, noAuthChallenge: false, responseType: 'blob'}).pipe(
-        //     map(e => e.response)
+        // return of(tileRequest).pipe(
+        //     tap(() => console.log('executing', tileRequest)),
+        //     delay(2000),
+        //     tap(() => console.log('executed', tileRequest)),
         // )
+        return get$(url, {retries: 0, noAuthChallenge: false, responseType: 'blob'}).pipe(
+            map(e => e.response)
+        )
     }
 }
 
@@ -142,7 +162,7 @@ class CancellingTileProvider extends TileProvider {
 }
 
 class ThrottlingTileProvider extends TileProvider {
-    jobScheduler = new JobScheduler(tileRequestQueue, 1)
+    jobScheduler = new JobScheduler(tileRequestQueue, 2)
 
     constructor(nextTileProvider) {
         super()
@@ -150,18 +170,8 @@ class ThrottlingTileProvider extends TileProvider {
     }
 
     loadTile$(tileRequest) {
-        const tile$ = this.jobScheduler.job$().pipe(
-            filter(({tileRequest}) => tileRequest.id === requestId),
-            tap(foo => console.log({foo})),
-            switchMap(({tile$}) => tile$),
-            first()
-        )
-        this.jobScheduler.schedule({
-            tile$: this.nextTileProvider.loadTile$(tileRequest),
-            tileRequest
-        })
-        const requestId = tileRequest.id
-        return tile$
+        const tile$ = this.nextTileProvider.loadTile$(tileRequest)
+        return this.jobScheduler.schedule$(tile$)
     }
 
     releaseTile(requestId) {
@@ -174,21 +184,6 @@ class ThrottlingTileProvider extends TileProvider {
 }
 
 
-class TileRequestQueue extends JobQueue {
-    pendingRequests = []
-
-    push(tileRequest) {
-        this.pendingRequests.push(tileRequest)
-    }
-
-    nextJob() {
-        const [tileRequest] = this.pendingRequests.splice(-1, 1)
-        return tileRequest
-    }
-}
-
-
 const renderImageBlob = (element, blob) =>
     element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
 
-const tileRequestQueue = new TileRequestQueue()

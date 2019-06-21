@@ -1,25 +1,53 @@
+import guid from 'guid'
 import {Subject} from 'rxjs'
-import {mergeMap} from 'rxjs/operators'
+import {exhaustMap, filter, map, mergeAll, mergeMap} from 'rxjs/operators'
 
 export class JobScheduler {
-    schedule$ = new Subject()
+    request$ = new Subject()
+
+    // constructor(jobQueue, concurrent) {
+    //     this.jobQueue = jobQueue
+    //     this.job$ = this.request$.pipe(
+    //         exhaustMap(data =>
+    //             this.jobQueue.nextJob$().pipe(
+    //                 mergeAll(concurrent),
+    //                 map(result => ({result, data}))
+    //             )
+    //         )
+    //     )
+    // }
+
+    schedule$(job$) {
+        job$.id = guid()
+        this.jobQueue.push(job$)
+        this.request$.next()
+        return this.job$.pipe(
+            // filter(value => job$.id === d),
+            map(({result}) => result)
+        )
+    }
 
     constructor(jobQueue, concurrent) {
         this.jobQueue = jobQueue
-        this.concurrent = concurrent
-    }
-
-    schedule(job) {
-        this.jobQueue.push(job)
-        this.schedule$.next()
-    }
-
-    job$() {
-        return this.schedule$.pipe(
-            mergeMap(() => this.jobQueue.nextJob(), this.concurrent)
+        this.job$ = this.request$.pipe(
+            map(() => this.jobQueue.nextJob$()),
+            mergeAll(concurrent),
+            map(value => {
+                console.log('value', value)
+                return value
+            })
         )
     }
+    //
+    // schedule$(job$, data) {
+    //     this.jobQueue.push(job$, data)
+    //     this.request$.next(data)
+    //     return this.job$.pipe(
+    //         // filter(({result, data: d}) => data === d)
+    //     )
+    // }
 }
+
 
 export class JobQueue {
     push(job) {
@@ -30,44 +58,3 @@ export class JobQueue {
         throw Error('nextJob$ is expected to be overridden by subclass.')
     }
 }
-
-//
-// class TileRequestQueue extends JobQueue {
-//     pendingRequests = []
-//
-//     push(tileRequest) {
-//         this.pendingRequests.push(tileRequest)
-//     }
-//
-//     nextJob$() {
-//         const [tileRequest] = this.pendingRequests.splice(-1, 1)
-//         return tileRequest.tile$
-//     }
-// }
-//
-// const toTileRequest = i => ({
-//     tile$: of(i).pipe(
-//         tap(work => console.log('starting', i)),
-//         delay(Math.random() * 1000),
-//         map(i => {
-//             return i
-//         })
-//     )
-// })
-//
-// const scheduler = new JobScheduler(new TileRequestQueue(), 3)
-// scheduler.job$().subscribe(
-//     value => console.log('next', value),
-//     error => console.log('error', error),
-//     () => console.log('complete'),
-// )
-//
-// let i = 0
-// for (; i < 10; i++) {
-//     scheduler.schedule(toTileRequest(i))
-// }
-
-
-// console.log('POP', scheduler.nextJob$())
-// console.log('POP 2', scheduler.nextJob$())
-// console.log('POP 3', scheduler.nextJob$())
