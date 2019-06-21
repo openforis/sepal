@@ -194,7 +194,10 @@ class _Tab extends React.Component {
     }
 
     static getDerivedStateFromProps(props, state) {
-        const title = state.title || props.title || ''
+        const {editing} = state
+        const title = editing
+            ? state.title
+            : props.title
         return {
             title
         }
