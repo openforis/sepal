@@ -10,7 +10,7 @@ export default class AssetSection extends React.Component {
         return (
             <Input
                 label={msg('process.classification.panel.inputImagery.form.asset.label')}
-                autoFocus={!isMobile()}
+                autoFocus
                 input={input}
                 placeholder={msg('process.classification.panel.inputImagery.form.asset.placeholder')}
                 spellCheck={false}

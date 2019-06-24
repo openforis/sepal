@@ -2,7 +2,6 @@ import {Button} from 'widget/button'
 import {Field, FieldSet, Form, form} from 'widget/form'
 import {Input} from 'widget/input'
 import {compose} from 'compose'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'widget/user'
 import Label from 'widget/label'
@@ -48,7 +47,7 @@ export class ForgotPassword extends React.Component {
                         <Input
                             input={email}
                             placeholder={msg('landing.forgot-password.placeholder')}
-                            autoFocus={!isMobile()}
+                            autoFocus
                             autoComplete='off'
                             tabIndex={1}
                             validate='onBlur'

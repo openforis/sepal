@@ -62,7 +62,7 @@ class ChangePassword extends React.Component {
                 <Input
                     label={msg('user.changePassword.form.oldPassword.label')}
                     type='password'
-                    autoFocus={!isMobile()}
+                    autoFocus
                     input={oldPassword}
                     errorMessage
                 />

@@ -2,7 +2,6 @@ import {Field, FieldSet, form} from 'widget/form'
 import {Input} from 'widget/input'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import PropTypes from 'prop-types'
@@ -82,14 +81,14 @@ class UserDetails extends React.Component {
                             input={username}
                             disabled={!newUser}
                             spellCheck={false}
-                            autoFocus={newUser && !isMobile()}
+                            autoFocus={newUser}
                             errorMessage
                         />
                         <Input
                             label={msg('user.userDetails.form.name.label')}
                             input={name}
                             spellCheck={false}
-                            autoFocus={!newUser && !isMobile()}
+                            autoFocus={!newUser}
                             errorMessage
                         />
                         <Input

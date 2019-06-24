@@ -7,7 +7,6 @@ import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {isMobile} from 'widget/userAgent'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
 import {selectFrom} from 'stateUtils'
@@ -89,7 +88,7 @@ class TrainingData extends React.Component {
             <FieldSet>
                 <Input
                     label={msg('process.classification.panel.trainingData.form.fusionTable.label')}
-                    autoFocus={!isMobile()}
+                    autoFocus
                     input={fusionTable}
                     placeholder={msg('process.classification.panel.trainingData.form.fusionTable.placeholder')}
                     spellCheck={false}

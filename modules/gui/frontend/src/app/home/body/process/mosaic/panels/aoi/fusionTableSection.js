@@ -75,7 +75,7 @@ class FusionTableSection extends React.Component {
             <FieldSet>
                 <Input
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.label')}
-                    autoFocus={!isMobile()}
+                    autoFocus
                     input={fusionTable}
                     placeholder={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.placeholder')}
                     spellCheck={false}

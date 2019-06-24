@@ -91,7 +91,7 @@ class SetPassword extends React.Component {
                         input={password}
                         type='password'
                         placeholder={msg('landing.reset-password.password.placeholder')}
-                        autoFocus={!isMobile()}
+                        autoFocus
                         tabIndex={1}
                         errorMessage
                     />

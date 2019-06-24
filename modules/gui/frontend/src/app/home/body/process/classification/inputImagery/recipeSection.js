@@ -25,7 +25,7 @@ class RecipeSection extends React.Component {
                 input={input}
                 placeholder={msg('process.classification.panel.inputImagery.form.recipe.placeholder')}
                 options={options}
-                autoFocus={!isMobile()}
+                autoFocus
                 onChange={option => onChange(option.value)}
                 errorMessage
             />

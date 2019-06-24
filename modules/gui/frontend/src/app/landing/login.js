@@ -3,7 +3,6 @@ import {Field, FieldSet, Form, form} from 'widget/form'
 import {Input} from 'widget/input'
 import {compose} from 'compose'
 import {invalidCredentials, login, resetInvalidCredentials} from 'widget/user'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -44,7 +43,7 @@ class Login extends React.Component {
                         label={msg('landing.login.username.label')}
                         input={username}
                         placeholder={msg('landing.login.username.placeholder')}
-                        autoFocus={!isMobile()}
+                        autoFocus
                         tabIndex={1}
                         errorMessage
                     />

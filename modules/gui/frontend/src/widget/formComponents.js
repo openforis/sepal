@@ -298,7 +298,10 @@ export class _Textarea extends React.Component {
         const {textareaFocused} = this.state
         return (
             <Keybinding keymap={{Enter: null}} disabled={!textareaFocused} priority>
-                <div className={styles.input}>
+                <div className={[
+                    styles.input,
+                    styles.border
+                ].join(' ')}>
                     <TextareaAutosize
                         ref={this.element}
                         className={className}

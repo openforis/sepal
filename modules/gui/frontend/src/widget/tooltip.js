@@ -8,10 +8,9 @@ import React from 'react'
 export default class Tooltip extends React.Component {
     render() {
         const {msg, placement = 'top', disabled = false, delay = .75, children, ...otherProps} = this.props
-        if (isMobile())
-            return children
-        return (
-            msg && !disabled
+        return isMobile()
+            ? children
+            : msg && !disabled
                 ? (
                     <RcTooltip
                         overlay={msg}
@@ -22,7 +21,9 @@ export default class Tooltip extends React.Component {
                         {children}
                     </RcTooltip>
                 )
-                : <React.Fragment>{children}</React.Fragment>)
+                : (
+                    <React.Fragment>{children}</React.Fragment>
+                )
     }
 }
 
