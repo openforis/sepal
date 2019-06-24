@@ -19,28 +19,6 @@ fieldset label {
     font-weight: normal;
 }
 
-input,
-textarea {
-    display: block;
-    width: 100%;
-    border: none;
-    padding: .3rem;
-    background-color: transparent;
-    transition: background-color 800ms ease-out;
-}
-
-input[type=number] {
-    text-align: right;
-}
-
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-    transition: background-color 9999999999s ease-in-out 0s;
-    -webkit-text-fill-color: #fff;
-}
-
 .input {
     position: relative;
 }
@@ -70,6 +48,7 @@ input:-webkit-autofill:active {
 
 .input .extraComponent.left {
     padding-left: .3rem;
+    padding-right: .5rem;
 }
 
 .input .extraComponent.right {
@@ -80,18 +59,41 @@ input:-webkit-autofill:active {
     opacity: 1;
 }
 
-input:disabled,
-textarea:disabled {
+.input input,
+.input textarea {
+    display: block;
+    width: 100%;
+    border: none;
+    padding: .3rem;
+    color: #fff;
+    background-color: transparent;
+    transition: background-color 800ms ease-out;
+}
+
+.input input[type=number] {
+    text-align: right;
+}
+
+.input input:-webkit-autofill,
+.input input:-webkit-autofill:hover,
+.input input:-webkit-autofill:focus,
+.input input:-webkit-autofill:active {
+    transition: background-color 9999999999s ease-in-out 0s;
+    -webkit-text-fill-color: #fff;
+}
+
+.input input:disabled,
+.input textarea:disabled {
     color: #888;
 }
 
-input::placeholder,
-textarea::placeholder {
-    font-style: italic;
+.input input::placeholder,
+.input textarea::placeholder {
+    color: #6c757d;
 }
 
-input.readOnly,
-textarea.readOnly {
+.input input.readOnly,
+.input textarea.readOnly {
     pointer-events: none;
 }
 

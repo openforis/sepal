@@ -116,7 +116,11 @@ class _Input extends React.Component {
         const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, border, onClick} = this.props
         return (
             <FormComponent
-                className={className}
+                className={[
+                    styles.input,
+                    border ? styles.border : null,
+                    className
+                ].join(' ')}
                 disabled={disabled}
                 label={label}
                 tooltip={tooltip}
@@ -124,19 +128,24 @@ class _Input extends React.Component {
                 errorMessage={errorMessage}
                 onClick={e => onClick && onClick(e)}
             >
+                {this.renderContent()}
+            </FormComponent>
+        )
+    }
+
+    renderContent() {
+        const {leftComponent, rightComponent} = this.props
+        return leftComponent || rightComponent
+            ? (
                 <FormComponent
-                    className={[
-                        styles.input,
-                        border ? styles.border : null
-                    ].join(' ')}
                     layout='horizontal-nowrap'
-                    spacing='compact'>
+                    spacing='none'>
                     {this.renderLeftComponent()}
                     {this.renderInput()}
                     {this.renderRightComponent()}
                 </FormComponent>
-            </FormComponent>
-        )
+            )
+            : this.renderInput()
     }
 
     renderInput() {
