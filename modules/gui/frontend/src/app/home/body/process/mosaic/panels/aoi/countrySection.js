@@ -97,7 +97,7 @@ class CountrySection extends React.Component {
                     placeholder={countryPlaceholder}
                     busy={stream('LOAD_COUNTRIES').active}
                     disabled={!countries}
-                    autoFocus={!isMobile()}
+                    autoFocus
                     onChange={option => {
                         area.set('')
                         this.aoiChanged$.next()

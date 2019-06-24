@@ -1,7 +1,6 @@
 import {Field, form} from 'widget/form'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {compose} from 'compose'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -107,7 +106,7 @@ const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =
             input={selection}
             placeholder={msg('process.mosaic.bands.placeholder')}
             options={options}
-            autoFocus={!isMobile()}
+            autoFocus
             placement='above'
             standalone
             onChange={option => {

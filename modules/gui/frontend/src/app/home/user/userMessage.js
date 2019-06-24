@@ -2,7 +2,6 @@ import {Field, FieldSet, form} from 'widget/form'
 import {Input} from 'widget/input'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
@@ -51,7 +50,7 @@ class UserMessage extends React.Component {
                     <FieldSet>
                         <Input
                             label={msg('userMessage.form.subject.label')}
-                            autoFocus={!isMobile()}
+                            autoFocus
                             input={subject}
                             spellCheck={false}
                         />

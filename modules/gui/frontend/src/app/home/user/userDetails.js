@@ -8,7 +8,6 @@ import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {currentUser} from 'widget/user'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import {revokeGoogleAccess$, updateCurrentUserDetails$} from 'widget/user'
 import ChangePassword from './changePassword'
@@ -89,7 +88,7 @@ class _UserDetails extends React.Component {
                     <FieldSet>
                         <Input
                             label={msg('user.userDetails.form.name.label')}
-                            autoFocus={!isMobile()}
+                            autoFocus
                             input={name}
                             spellCheck={false}
                             errorMessage
