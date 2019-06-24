@@ -92,7 +92,7 @@ class Combo extends React.Component {
                     className={[
                         styles.input,
                         standalone ? styles.standalone : null,
-                        selectedOption && !standalone ? styles.fakePlaceholder : null,
+                        selectedOption && !showOptions ? styles.fakePlaceholder : null,
                         inputClassName
                     ].join(' ')}
                     type='search'

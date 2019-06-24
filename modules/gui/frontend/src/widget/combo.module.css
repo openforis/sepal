@@ -2,9 +2,9 @@
     position: relative;
 }
 
-.container input.fakePlaceholder::placeholder {
+.container .fakePlaceholder input::placeholder {
     font-style: inherit;
-    color: #fff;
+    color: inherit;
 }
 
 .container input:disabled::placeholder {
