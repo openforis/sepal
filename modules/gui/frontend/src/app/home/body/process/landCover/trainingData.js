@@ -1,6 +1,7 @@
 import {Constraint} from 'widget/form'
 import {Field, FieldSet, form} from 'widget/form'
 import {Input} from 'widget/input'
+import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
