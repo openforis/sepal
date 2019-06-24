@@ -1,3 +1,92 @@
+.formComponentContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+.formComponentContainer.clickable {
+    cursor: pointer;
+}
+
+.formComponent {
+    overflow: hidden; /* required for preventing margin bottom on last element */
+}
+
+.formComponent.normal {
+    --vertical-spacing: 2rem;
+    --horizontal-spacing: 1rem;
+}
+
+.formComponent.compact {
+    --vertical-spacing: 1rem;
+    --horizontal-spacing: .5rem;
+}
+
+.formComponent.none {
+    --vertical-spacing: 0rem;
+    --horizontal-spacing: 0rem;
+}
+
+.formComponent > * {
+    margin-bottom: var(--vertical-spacing);
+}
+
+.formComponent.vertical > *:last-child {
+    margin-bottom: 0;
+}
+
+.formComponent.horizontal {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: calc(-1 * var(--vertical-spacing));
+}
+
+.formComponent.horizontal.nowrap {
+    flex-wrap: nowrap;
+}
+
+.formComponent.horizontal > * {
+    margin-right: var(--horizontal-spacing);
+}
+
+.formComponent.horizontal > *:last-child {
+    margin-right: 0;
+}
+
+.formComponent.border {
+    --input-border-color: #606060;
+    --input-border-hover-color: #b0b0b0;
+    --input-border-focus-color: #a0a0a0;
+    border-bottom: 1px dotted var(--input-border-color);
+}
+
+.formComponent.border:focus-within,
+.formComponent.border:not(:disabled):hover,
+.formComponent.border:focus:not(:disabled):hover {
+    border-bottom-style: solid;
+}
+
+.formComponent.border:not(.error):not(:disabled):hover,
+.formComponent.border:not(.error):focus:not(:disabled):hover {
+    --input-border-color: var(--input-border-hover-color);
+}
+
+.formComponent.border:not(.error):focus-within {
+    --input-border-color: var(--input-border-focus-color);
+}
+
+.formComponent.border.error {
+    --input-border-color: #e81351;
+}
+
+.formComponent.error {
+    --error-background-color: rgba(232, 19, 81, 0.1);
+    background-color: var(--error-background-color);
+}
+
 label {
     --label-color: #b0b0b0;
     --label-background-color: transparent;
@@ -21,22 +110,6 @@ fieldset label {
 
 .input {
     position: relative;
-}
-
-.input.border {
-    --input-border-color: #606060;
-    --input-border-hover-color: #b0b0b0;
-    --input-border-focus-color: #a0a0a0;
-    border-bottom: 1px dotted var(--input-border-color);
-}
-
-.input.border:not(:disabled):hover,
-.input.border:focus:not(:disabled):hover {
-    border-bottom: 1px solid var(--input-border-hover-color);
-}
-
-.input.border:focus-within {
-    border-bottom: 1px solid var(--input-border-focus-color);
 }
 
 .input .extraComponent {
@@ -97,14 +170,6 @@ fieldset label {
     pointer-events: none;
 }
 
-.error input,
-.error textarea {
-    --error-border-color: #e81351;
-    --error-background-color: rgba(232, 19, 81, 0.1);
-    border-bottom-color: var(--error-border-color) !important;
-    background-color: var(--error-background-color) !important;
-}
-
 .errorMessageContainer {
     position: relative;
     width: 100%;
@@ -126,62 +191,4 @@ fieldset label {
     font-size: .9rem;
     margin-left: 0.5rem;
     color: #B5B5B5;
-}
-
-.formComponentContainer {
-    display: flex;
-    flex-direction: column;
-}
-
-.formComponentContainer.clickable {
-    cursor: pointer;
-}
-
-.formComponent {
-    overflow: hidden; /* required for preventing margin bottom on last element */
-}
-
-.formComponent.normal {
-    --vertical-spacing: 2rem;
-    --horizontal-spacing: 1rem;
-}
-
-.formComponent.compact {
-    --vertical-spacing: 1rem;
-    --horizontal-spacing: .5rem;
-}
-
-.formComponent.none {
-    --vertical-spacing: 0rem;
-    --horizontal-spacing: 0rem;
-}
-
-.formComponent > * {
-    margin-bottom: var(--vertical-spacing);
-}
-
-.formComponent.vertical > *:last-child {
-    margin-bottom: 0;
-}
-
-.formComponent.horizontal {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: calc(-1 * var(--vertical-spacing));
-}
-
-.formComponent.horizontal.nowrap {
-    flex-wrap: nowrap;
-}
-
-.formComponent.horizontal > * {
-    margin-right: var(--horizontal-spacing);
-}
-
-.formComponent.horizontal > *:last-child {
-    margin-right: 0;
 }

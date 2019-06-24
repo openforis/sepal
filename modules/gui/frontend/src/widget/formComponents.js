@@ -11,7 +11,7 @@ import withForwardedRef from 'ref'
 
 export class FormComponent extends React.Component {
     render() {
-        const {layout, spacing, errorMessage, className, onClick, children} = this.props
+        const {layout, spacing, errorMessage, border, className, onClick, children} = this.props
         return (
             <React.Fragment>
                 <div
@@ -26,6 +26,7 @@ export class FormComponent extends React.Component {
                         styles.formComponent,
                         layout.split('-').map(className => styles[className]).join(' '),
                         styles[spacing],
+                        border ? styles.border : null,
                         errorMessage ? styles.error : null
                     ].join(' ')}>
                         {children}
@@ -77,11 +78,13 @@ export class FormComponent extends React.Component {
 FormComponent.propTypes = {
     children: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    border: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
     label: PropTypes.string,
     layout: PropTypes.oneOf(['vertical', 'horizontal', 'horizontal-nowrap']),
+    size: PropTypes.oneOf(['normal', 'large', 'none']),
     spacing: PropTypes.oneOf(['normal', 'compact', 'none']),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
@@ -118,7 +121,6 @@ class _Input extends React.Component {
             <FormComponent
                 className={[
                     styles.input,
-                    border ? styles.border : null,
                     className
                 ].join(' ')}
                 disabled={disabled}
@@ -126,6 +128,7 @@ class _Input extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 errorMessage={errorMessage}
+                border={border}
                 onClick={e => onClick && onClick(e)}
             >
                 {this.renderContent()}
@@ -280,14 +283,16 @@ export class _Textarea extends React.Component {
     }
 
     render() {
-        const {disabled, label, tooltip, tooltipPlacement, errorMessage} = this.props
+        const {disabled, label, tooltip, tooltipPlacement, errorMessage, border} = this.props
         return (
             <FormComponent
+                className={styles.input}
                 disabled={disabled}
                 label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                errorMessage={errorMessage}>
+                errorMessage={errorMessage}
+                border={border}>
                 {this.renderTextArea()}
             </FormComponent>
         )
@@ -298,27 +303,22 @@ export class _Textarea extends React.Component {
         const {textareaFocused} = this.state
         return (
             <Keybinding keymap={{Enter: null}} disabled={!textareaFocused} priority>
-                <div className={[
-                    styles.input,
-                    styles.border
-                ].join(' ')}>
-                    <TextareaAutosize
-                        ref={this.element}
-                        className={className}
-                        name={name}
-                        value={value || ''}
-                        tabIndex={tabIndex}
-                        autoFocus={autoFocus && !isMobile()}
-                        minRows={minRows}
-                        maxRows={maxRows}
-                        onChange={e => onChange && onChange(e)}
-                        onFocus={() => this.setState({textareaFocused: true})}
-                        onBlur={e => {
-                            this.setState({textareaFocused: false})
-                            onBlur && onBlur(e)
-                        }}
-                    />
-                </div>
+                <TextareaAutosize
+                    ref={this.element}
+                    className={className}
+                    name={name}
+                    value={value || ''}
+                    tabIndex={tabIndex}
+                    autoFocus={autoFocus && !isMobile()}
+                    minRows={minRows}
+                    maxRows={maxRows}
+                    onChange={e => onChange && onChange(e)}
+                    onFocus={() => this.setState({textareaFocused: true})}
+                    onBlur={e => {
+                        this.setState({textareaFocused: false})
+                        onBlur && onBlur(e)
+                    }}
+                />
             </Keybinding>
         )
     }
