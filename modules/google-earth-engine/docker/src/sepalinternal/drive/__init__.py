@@ -42,31 +42,31 @@ def delete(credentials, item):
     try:
         with Drive(credentials) as drive:
             logger.debug('Deleting {0}'.format(item))
-            retry(lambda: drive.files().delete(fileId=item['id']).execute())
+            retry(lambda: drive.files().delete(fileId=item['id']).execute(), 20)
     except Exception:
         pass  # Ignore failure to delete file
 
 
-def retry(action, times=1):
+def retry(action, retries=20, times=1):
     try:
         return action()
     except HttpError as e:
-        content = json.loads(e.content)
-        reason = content.get('reason', None)
-        if times < 20:
-            throttle_seconds = max(2 ^ int(times * random.uniform(0.1, 0.2)), 30)
+        reason = e._get_reason()
+        if times <= retries:
+            print(pow(2, times * random.uniform(0.1, 0.2)))
+            throttle_seconds = min(pow(2, times * random.uniform(0.1, 0.2)), 30)
             logger.warn('Retrying drive operation in {0} seconds after try #{1}: {2}'.format(throttle_seconds, times, reason))
             time.sleep(throttle_seconds)
-            return retry(action, times + 1)
-        e.message = e._get_reason()
+            return retry(action, retries, times + 1)
+        e.message = reason
         re_raisable()
         raise e
     except Exception as e:
-        if times < 20:
-            throttle_seconds = max(2 ^ int(times * random.uniform(0.1, 0.2)), 30)
+        if times <= retries:
+            throttle_seconds = min(2 ^ int(times * random.uniform(0.1, 0.2)), 30)
             logger.warn('Retrying drive operation in {0} seconds after try #{1}: {2}'.format(throttle_seconds, times, str(e)))
             time.sleep(throttle_seconds)
-            return retry(action, times + 1)
+            return retry(action, retries, times + 1)
         re_raisable()
         raise e
 
