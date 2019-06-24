@@ -7,7 +7,7 @@ pyCrypto>=2.6.1
 python-dateutil>=2.7.2
 oauth2client>=4.1.2
 requests>=2.20.0
-futures==3.2.0
 gunicorn==19.7.1
 google-cloud-storage==1.14.0
 google-resumable-media==0.3.2
+rx==3.0.0b4

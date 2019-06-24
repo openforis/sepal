@@ -1,6 +1,6 @@
 import ee
 
-from gee import get_info
+from .gee import get_info
 
 
 class Aoi:
@@ -57,7 +57,7 @@ class Aoi:
         scene_areas = [
             {
                 'id': scene_area[1],
-                'polygon': map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](scene_area)),
+                'polygon': list(map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](scene_area))),
             }
             for scene_area in scene_area_table
         ]

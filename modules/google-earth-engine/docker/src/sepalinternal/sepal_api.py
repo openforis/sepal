@@ -1,6 +1,6 @@
 import requests
 import urllib3
-from sepal_exception import SepalException
+from .sepal_exception import SepalException
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

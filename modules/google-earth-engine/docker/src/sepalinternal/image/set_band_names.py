@@ -13,7 +13,7 @@ class SetBandNames(ThreadTask):
         self.files = files
 
     def run(self):
-        if isinstance(self.files, basestring):
+        if isinstance(self.files, str):
             files = [self.files]
         else:
             files = self.files

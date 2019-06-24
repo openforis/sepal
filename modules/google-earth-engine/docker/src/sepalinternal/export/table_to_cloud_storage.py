@@ -2,7 +2,7 @@ import logging
 
 import ee
 
-from monitor import MonitorEarthEngineExportTask
+from .monitor import MonitorEarthEngineExportTask
 from ..gee import export_semaphore
 from ..task.task import ThreadTask
 

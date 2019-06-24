@@ -1,10 +1,10 @@
-import raster
-import render
-import shape
+from . import raster
+from . import render
+from . import shape
 
 
 def list_layers(state):
-    ids = [id for id, index in sorted(_index_by_id(state).items(), key=lambda (id, index): index)]
+    ids = [id for id, index in sorted(_index_by_id(state).items(), key=lambda id, index: index)]
     return [_layer_by_id(state)[id].to_dict() for id in ids]
 
 

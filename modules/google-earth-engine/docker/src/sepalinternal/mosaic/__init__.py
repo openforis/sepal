@@ -1,13 +1,14 @@
 from abc import abstractmethod
+from functools import reduce
 
 import ee
 
-from analyze import analyze, additional_bands
-from clouds import mask_clouds
-from days_from_target import mask_days_from_target
-from greenness import mask_less_green
-from haze import mask_haze
-from shadows import mask_shadows
+from .analyze import analyze, additional_bands
+from .clouds import mask_clouds
+from .days_from_target import mask_days_from_target
+from .greenness import mask_less_green
+from .haze import mask_haze
+from .shadows import mask_shadows
 
 
 class Mosaic(object):

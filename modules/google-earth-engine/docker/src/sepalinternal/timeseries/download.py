@@ -15,7 +15,7 @@ import ee
 from osgeo import gdal
 from dateutil.parser import parse
 
-from timeseries import TimeSeries
+from .timeseries import TimeSeries
 from .. import drive
 from ..aoi import Aoi
 from ..drive import Download

@@ -1,7 +1,7 @@
 import ee
 
-import brdf_correction
-from cloud_score import cloud_score
+from . import brdf_correction
+from .cloud_score import cloud_score
 from ..image_operation import ImageOperation, combine_probability
 
 
@@ -124,9 +124,9 @@ class _Analyze(ImageOperation):
             multiplier_by_band[band] = 10000
 
         self.image = ee.Image(
-            self.image \
-                .select(multiplier_by_band.keys()) \
-                .multiply(multiplier_by_band.values()) \
+            self.image
+                .select(list(multiplier_by_band.keys()))
+                .multiply(list(multiplier_by_band.values()))
                 .copyProperties(self.image)
                 .set('system:time_start', self.image.get('system:time_start'))
         ).uint16()

@@ -1,13 +1,13 @@
-from asset import Asset
-from classification import Classification
-from radar import RadarMosaic
-from image_spec import ImageSpec
-from landsat import LandsatAutomaticMosaicSpec
-from landsat import LandsatManualMosaicSpec
-from reciperef import RecipeRef
-from sentinel2 import Sentinel2AutomaticMosaicSpec
-from sentinel2 import Sentinel2ManualMosaicSpec
-from sentinel2landsat import Sentinel2LandsatMosaicSpec
+from .asset import Asset
+from .classification import Classification
+from .radar import RadarMosaic
+from .image_spec import ImageSpec
+from .landsat import LandsatAutomaticMosaicSpec
+from .landsat import LandsatManualMosaicSpec
+from .reciperef import RecipeRef
+from .sentinel2 import Sentinel2AutomaticMosaicSpec
+from .sentinel2 import Sentinel2ManualMosaicSpec
+from .sentinel2landsat import Sentinel2LandsatMosaicSpec
 
 
 def create(sepal_api, spec):
@@ -35,7 +35,7 @@ def _create_mosaic(spec):
     if len(sources) == 2:
         return Sentinel2LandsatMosaicSpec(spec)
 
-    source = sources.keys()[0]
+    source = list(sources.keys())[0]
     scene_selection_type = model['sceneSelectionOptions']['type']
     if source == 'SENTINEL_2':
         type = {
