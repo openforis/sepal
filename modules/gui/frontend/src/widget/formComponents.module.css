@@ -11,6 +11,11 @@
     overflow: hidden; /* required for preventing margin bottom on last element */
 }
 
+.formComponent.loose {
+    --vertical-spacing: 3rem;
+    --horizontal-spacing: 1.5rem;
+}
+
 .formComponent.normal {
     --vertical-spacing: 2rem;
     --horizontal-spacing: 1rem;

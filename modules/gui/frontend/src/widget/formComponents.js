@@ -85,7 +85,7 @@ FormComponent.propTypes = {
     label: PropTypes.string,
     layout: PropTypes.oneOf(['vertical', 'horizontal', 'horizontal-nowrap']),
     size: PropTypes.oneOf(['normal', 'large', 'none']),
-    spacing: PropTypes.oneOf(['normal', 'compact', 'none']),
+    spacing: PropTypes.oneOf(['loose', 'normal', 'compact', 'none']),
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     onClick: PropTypes.func
