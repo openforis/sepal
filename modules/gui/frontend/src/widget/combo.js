@@ -41,7 +41,7 @@ class Combo extends React.Component {
 
     render() {
         const {input, errorMessage, standalone, disabled, className, onCancel} = this.props
-        const {label, tooltip, tooltipPlacement = 'top'} = this.props
+        const {label, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
         const onClick = e =>
             standalone
@@ -135,7 +135,7 @@ class Combo extends React.Component {
     }
 
     renderOptions() {
-        const {placement = 'below', optionsClassName, optionTooltipPlacement, alignment} = this.props
+        const {placement, optionsClassName, optionTooltipPlacement, alignment} = this.props
         const {flattenedOptions, selectedOption, selected} = this.state
         return (
             <FloatingBox
@@ -321,4 +321,10 @@ Combo.propTypes = {
     tooltipPlacement: PropTypes.string,
     onCancel: PropTypes.func,
     onChange: PropTypes.func
+}
+
+Combo.defaultProps = {
+    alignment: 'left',
+    placement: 'below',
+    tooltipPlacement: 'top'
 }
