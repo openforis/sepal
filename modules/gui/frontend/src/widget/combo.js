@@ -80,8 +80,7 @@ class Combo extends React.Component {
             ArrowLeft: showOptionsKeyBinding,
             ArrowRight: showOptionsKeyBinding,
             Home: showOptionsKeyBinding,
-            End: showOptionsKeyBinding,
-            Escape: !showOptions ? undefined : () => this.hideOptions(),
+            End: showOptionsKeyBinding
         }
         return (
             <Keybinding
