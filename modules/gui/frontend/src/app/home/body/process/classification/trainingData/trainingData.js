@@ -1,6 +1,5 @@
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
-import {Input} from 'widget/input'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {Msg, msg} from 'translate'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
@@ -10,15 +9,14 @@ import {compose} from 'compose'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
 import {selectFrom} from 'stateUtils'
-import Combo from 'widget/combo'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './trainingData.module.css'
 
 const fields = {
-    fusionTable: new Field()
+    fusionTable: new Form.Field()
         .notBlank('process.classification.panel.trainingData.form.fusionTable.required'),
-    fusionTableColumn: new Field()
+    fusionTableColumn: new Form.Field()
         .notBlank('process.classification.panel.trainingData.form.fusionTableColumn.required')
 }
 
@@ -72,7 +70,7 @@ class TrainingData extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
@@ -85,8 +83,8 @@ class TrainingData extends React.Component {
                 ? 'loaded'
                 : 'noFusionTable'
         return (
-            <FieldSet>
-                <Input
+            <Layout>
+                <Form.Input
                     label={msg('process.classification.panel.trainingData.form.fusionTable.label')}
                     autoFocus
                     input={fusionTable}
@@ -102,7 +100,7 @@ class TrainingData extends React.Component {
                     }}
                     errorMessage
                 />
-                <Combo
+                <Form.Combo
                     label={msg('process.classification.panel.trainingData.form.fusionTableColumn.label')}
                     input={fusionTableColumn}
                     busy={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
@@ -114,7 +112,7 @@ class TrainingData extends React.Component {
                     <a href='/ceo' target='_blank'><Msg
                         id='process.classification.panel.trainingData.form.openCeo'/></a>
                 </p>
-            </FieldSet>
+            </Layout>
         )
     }
 

@@ -1,9 +1,8 @@
-import {Field, FieldSet, form} from 'widget/form'
-import {Input} from 'widget/input'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
 import Markdown from 'react-markdown'
 import PropTypes from 'prop-types'
@@ -11,9 +10,9 @@ import React from 'react'
 import styles from './userMessage.module.css'
 
 const fields = {
-    subject: new Field()
+    subject: new Form.Field()
         .notBlank('userMessage.form.subject.required'),
-    contents: new Field()
+    contents: new Form.Field()
         .notBlank('userMessage.form.contents.required')
 }
 const mapStateToProps = (state, ownProps) => {
@@ -47,23 +46,23 @@ class UserMessage extends React.Component {
         return (
             <React.Fragment>
                 <PanelContent>
-                    <FieldSet>
-                        <Input
+                    <Layout>
+                        <Form.Input
                             label={msg('userMessage.form.subject.label')}
                             autoFocus
                             input={subject}
                             spellCheck={false}
                         />
-                        <Input
+                        <Form.Input
                             label={msg('userMessage.form.contents.label')}
                             input={contents}
                             textArea={true}
                             spellCheck={false}
                         />
                         {contents.value ? this.renderPreview() : null}
-                    </FieldSet>
+                    </Layout>
                 </PanelContent>
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </React.Fragment>
         )
     }
@@ -71,7 +70,7 @@ class UserMessage extends React.Component {
     render() {
         const {form, onApply, onCancel} = this.props
         return (
-            <FormPanel
+            <Form.Panel
                 className={styles.panel}
                 form={form}
                 isActionForm={true}
@@ -83,7 +82,7 @@ class UserMessage extends React.Component {
                     icon='bell'
                     title={msg('userMessage.title')}/>
                 {this.renderPanel()}
-            </FormPanel>
+            </Form.Panel>
         )
     }
 }

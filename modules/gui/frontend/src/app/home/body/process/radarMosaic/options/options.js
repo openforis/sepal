@@ -1,6 +1,5 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../radarMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -11,11 +10,11 @@ import React from 'react'
 import styles from './options.module.css'
 
 const fields = {
-    orbits: new Field()
+    orbits: new Form.Field()
         .notEmpty('process.recipeMosaic.panel.options.form.orbits.required'),
-    geometricCorrection: new Field(),
-    speckleFilter: new Field(),
-    outlierRemoval: new Field()
+    geometricCorrection: new Form.Field(),
+    speckleFilter: new Form.Field(),
+    outlierRemoval: new Form.Field()
 }
 
 class Options extends React.Component {
@@ -26,8 +25,8 @@ class Options extends React.Component {
             }
         } = this.props
         return (
-            <FieldSet>
-                <Buttons
+            <Layout>
+                <Form.Buttons
                     label={msg('process.radarMosaic.panel.options.form.orbits.label')}
                     input={orbits}
                     multiple={true}
@@ -41,7 +40,7 @@ class Options extends React.Component {
                         tooltip: msg('process.radarMosaic.panel.options.form.orbits.descending.tooltip')
                     }]}
                 />
-                <Buttons
+                <Form.Buttons
                     label={msg('process.radarMosaic.panel.options.form.geometricCorrection.label')}
                     input={geometricCorrection}
                     options={[{
@@ -58,7 +57,7 @@ class Options extends React.Component {
                         tooltip: msg('process.radarMosaic.panel.options.form.geometricCorrection.terrain.tooltip')
                     }]}
                 />
-                <Buttons
+                <Form.Buttons
                     label={msg('process.radarMosaic.panel.options.form.speckleFilter.label')}
                     input={speckleFilter}
                     options={[{
@@ -79,7 +78,7 @@ class Options extends React.Component {
                         tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.refinedLee.tooltip')
                     }]}
                 />
-                <Buttons
+                <Form.Buttons
                     label={msg('process.radarMosaic.panel.options.form.outlierRemoval.label')}
                     input={outlierRemoval}
                     options={[{
@@ -96,7 +95,7 @@ class Options extends React.Component {
                         tooltip: msg('process.radarMosaic.panel.options.form.outlierRemoval.aggressive.tooltip')
                     }]}
                 />
-            </FieldSet>
+            </Layout>
         )
     }
 
@@ -113,7 +112,7 @@ class Options extends React.Component {
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }

@@ -1,10 +1,9 @@
+import {Form, form} from 'widget/form/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {compose} from 'compose'
-import {form} from 'widget/form'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './typology.module.css'
@@ -21,7 +20,7 @@ class Typology extends React.Component {
     render() {
         const {recipePath, form} = this.props
         return (
-            <FormPanel
+            <Form.Panel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -37,8 +36,8 @@ class Typology extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <FormPanelButtons/>
-            </FormPanel>
+                <Form.PanelButtons/>
+            </Form.Panel>
         )
     }
 

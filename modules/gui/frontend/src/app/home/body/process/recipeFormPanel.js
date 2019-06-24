@@ -1,11 +1,10 @@
+import {Form, form} from 'widget/form/form'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
-import {form} from 'widget/form'
 import {initValues} from 'app/home/body/process/recipe'
 import {selectFrom} from 'stateUtils'
 import {withPanelWizardContext} from 'widget/panelWizard'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import FormPanel from 'widget/formPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -102,7 +101,7 @@ export class RecipeFormPanel extends React.Component {
         return (
             <Context.Consumer>
                 {({id, evaluatedPath, form, statePath, valuesToModel, deactivate, prevValues}) =>
-                    <FormPanel
+                    <Form.Panel
                         id={id}
                         className={className}
                         form={form}
@@ -113,7 +112,7 @@ export class RecipeFormPanel extends React.Component {
                         onCancel={onCancel}
                         onClose={onClose}>
                         {children}
-                    </FormPanel>
+                    </Form.Panel>
                 }
             </Context.Consumer>
         )

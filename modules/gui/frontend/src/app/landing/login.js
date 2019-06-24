@@ -1,6 +1,6 @@
 import {Button, ButtonGroup} from 'widget/button'
-import {Field, FieldSet, Form, form} from 'widget/form'
-import {Input} from 'widget/input'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {invalidCredentials, login, resetInvalidCredentials} from 'widget/user'
 import {msg} from 'translate'
@@ -9,9 +9,9 @@ import React from 'react'
 import styles from './login.module.css'
 
 const fields = {
-    username: new Field()
+    username: new Form.Field()
         .notBlank('landing.login.username.required'),
-    password: new Field()
+    password: new Form.Field()
         .notBlank('landing.login.password.required')
 }
 
@@ -38,8 +38,8 @@ class Login extends React.Component {
         const {form, inputs: {username, password}, action} = this.props
         return (
             <Form className={styles.form} onSubmit={() => this.login(form.values())}>
-                <FieldSet spacing='loose'>
-                    <Input
+                <Layout spacing='loose'>
+                    <Form.Input
                         label={msg('landing.login.username.label')}
                         input={username}
                         placeholder={msg('landing.login.username.placeholder')}
@@ -47,7 +47,7 @@ class Login extends React.Component {
                         tabIndex={1}
                         errorMessage
                     />
-                    <Input
+                    <Form.Input
                         label={msg('landing.login.password.label')}
                         input={password}
                         type='password'
@@ -55,7 +55,7 @@ class Login extends React.Component {
                         tabIndex={2}
                         errorMessage
                     />
-                </FieldSet>
+                </Layout>
                 <div className={styles.buttons}>
                     <ButtonGroup
                         type='horizontal-wrap'

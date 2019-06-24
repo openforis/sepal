@@ -1,8 +1,9 @@
 import * as PropTypes from 'prop-types'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
-import {FormComponent, Input} from 'widget/formComponents'
+import {Input} from 'widget/input'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import Label from 'widget/label'
@@ -32,22 +33,20 @@ export const maxDate = (date1, date2) => pickDate(date1, date2, moment.max)
 export const minDate = (date1, date2) => pickDate(date1, date2, moment.min)
 export const constrainDate = (date, min, max) => maxDate(minDate(date, max), min)
 
-export default class DatePicker extends React.Component {
+export class FormDatePicker extends React.Component {
     id = 'DatePicker-' + guid()
     inputElement = React.createRef()
 
     render() {
-        const {input, startDate, endDate, label, autoFocus, tooltip, tooltipPlacement = 'top', errorMessage} = this.props
+        const {input, startDate, endDate, label, autoFocus, tooltip, tooltipPlacement} = this.props
         const date = moment(input.value, DATE_FORMAT)
         return (
             <Activator id={this.id}>
                 {panel =>
-                    <FormComponent
+                    <Widget
                         label={label}
                         tooltip={tooltip}
-                        tooltipPlacement={tooltipPlacement}
-                        input={input}
-                        errorMessage={errorMessage}>
+                        tooltipPlacement={tooltipPlacement}>
                         <DatePickerPanel
                             id={this.id}
                             title={label}
@@ -69,14 +68,16 @@ export default class DatePicker extends React.Component {
                                 onChange={e => this.setInput(e.target.value)}
                                 onBlur={() => this.inputElement.current.value = input.value}
                             />
-                            <Button additionalClassName={styles.panelTrigger}
+                            <Button
+                                additionalClassName={styles.panelTrigger}
                                 chromeless
+                                shape='none'
                                 icon='calendar-alt'
                                 size='small'
                                 onClick={() => panel.activate()}
                             />
                         </div>
-                    </FormComponent>
+                    </Widget>
                 }
             </Activator>
         )
@@ -92,13 +93,15 @@ export default class DatePicker extends React.Component {
     }
 }
 
-DatePicker.propTypes = {
+FormDatePicker.propTypes = {
     endDate: PropTypes.any.isRequired,
     input: PropTypes.object.isRequired,
     startDate: PropTypes.any.isRequired,
     autoFocus: PropTypes.any,
     errorMessage: PropTypes.any,
-    label: PropTypes.string
+    label: Label.propTypes.msg,
+    tooltip: Label.propTypes.tooltip,
+    tooltipPlacement: Label.propTypes.tooltipPlacement
 }
 
 class _DatePickerPanel extends React.Component {

@@ -1,18 +1,18 @@
-import {Form} from 'widget/form'
-import {Panel, PanelButtons} from 'widget/panel'
-import {PanelButtonContext} from './toolbar'
-import {PanelWizardContext} from './panelWizard'
+import {Form} from 'widget/form/form'
+import {Panel} from 'widget/panel'
+import {PanelButtonContext} from '../toolbar'
+import {PanelWizardContext} from '../panelWizard'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {isObservable} from 'rxjs'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './formPanel.module.css'
+import styles from './panel.module.css'
 
-const PanelContext = React.createContext()
+export const FormPanelContext = React.createContext()
 
-class FormPanel extends React.Component {
+class _FormPanel extends React.Component {
     apply(onSuccess) {
         const {form, onApply} = this.props
         const result = onApply(form && form.values())
@@ -73,7 +73,7 @@ class FormPanel extends React.Component {
                     return (
                         <PanelButtonContext.Consumer>
                             {placementFromContext => (
-                                <PanelContext.Provider value={{
+                                <FormPanelContext.Provider value={{
                                     id: id,
                                     wizard,
                                     first: !back,
@@ -96,7 +96,7 @@ class FormPanel extends React.Component {
                                         </Form>
                                         {this.renderSpinner()}
                                     </Panel>
-                                </PanelContext.Provider>
+                                </FormPanelContext.Provider>
                             )}
                         </PanelButtonContext.Consumer>
                     )
@@ -106,8 +106,8 @@ class FormPanel extends React.Component {
     }
 }
 
-export default compose(
-    FormPanel,
+export const FormPanel = compose(
+    _FormPanel,
     connect()
 )
 
@@ -123,93 +123,4 @@ FormPanel.propTypes = {
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
     onClose: PropTypes.func
-}
-
-export class FormPanelButtons extends React.Component {
-    renderExtraButtons() {
-        const {children} = this.props
-        return children ? (
-            <PanelButtons.Extra>
-                {children}
-            </PanelButtons.Extra>
-        ) : null
-    }
-
-    renderForm({isActionForm, dirty, invalid, onOk, onCancel}) {
-        const {applyLabel} = this.props
-        const canSubmit = isActionForm || dirty
-        const onEnter =
-            invalid
-                ? null
-                : onOk
-        const onEscape = invalid || canSubmit ? onCancel : onOk
-        return (
-            <PanelButtons
-                onEnter={onEnter}
-                onEscape={onEscape}>
-                <PanelButtons.Main>
-                    <PanelButtons.Cancel
-                        shown={canSubmit}
-                        onClick={onCancel}/>
-                    <PanelButtons.Apply
-                        type={'submit'}
-                        label={applyLabel}
-                        shown={canSubmit}
-                        disabled={invalid}
-                        onClick={onOk}/>
-                    <PanelButtons.Close
-                        type={'submit'}
-                        label={applyLabel}
-                        shown={!canSubmit}
-                        onClick={onOk}/>
-                </PanelButtons.Main>
-                {this.renderExtraButtons()}
-            </PanelButtons>
-        )
-    }
-
-    renderWizard({invalid, first, last, onBack, onNext, onDone}) {
-        const onEnter =
-            invalid
-                ? null
-                : last
-                    ? onDone
-                    : onNext
-        return (
-            <PanelButtons
-                onEnter={onEnter}>
-                <PanelButtons.Main>
-                    <PanelButtons.Back
-                        shown={!first}
-                        onClick={onBack}/>
-                    <PanelButtons.Done
-                        shown={last}
-                        disabled={invalid}
-                        onClick={onDone}/>
-                    <PanelButtons.Next
-                        shown={!last}
-                        disabled={invalid}
-                        onClick={onNext}/>
-                </PanelButtons.Main>
-                {this.renderExtraButtons()}
-            </PanelButtons>
-        )
-    }
-
-    render() {
-        return (
-            <PanelContext.Consumer>
-                {props => {
-                    const inWizard = props.wizard && props.wizard.includes(props.id)
-                    const renderProps = {...props, ...this.props}
-                    return inWizard ? this.renderWizard(renderProps) : this.renderForm(renderProps)
-                }}
-            </PanelContext.Consumer>
-        )
-    }
-}
-
-FormPanelButtons.propTypes = {
-    applyLabel: PropTypes.string,
-    children: PropTypes.any
 }

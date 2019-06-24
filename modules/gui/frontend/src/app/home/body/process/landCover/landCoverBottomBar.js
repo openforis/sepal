@@ -1,15 +1,14 @@
 import {BottomBar} from 'widget/sectionLayout'
 import {Button, ButtonGroup} from 'widget/button'
-import {Field, form} from 'widget/form'
+import {Form, form} from 'widget/form/form'
 import {compose} from 'compose'
-import Combo from 'widget/combo'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import styles from './landCoverBottomBar.module.css'
 
 const fields = {
-    primitive: new Field()
+    primitive: new Form.Field()
 }
 
 class LandCoverBottomBar extends Component {
@@ -61,7 +60,7 @@ class LandCoverBottomBar extends Component {
         ]
         return (
             <div className={styles.primitiveSelector}>
-                <Combo
+                <Form.Combo
                     input={primitive}
                     options={primitives}
                     placement='above'/>

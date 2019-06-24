@@ -7,7 +7,7 @@ import React from 'react'
 
 export default class Tooltip extends React.Component {
     render() {
-        const {msg, placement = 'top', disabled = false, delay = .75, children, ...otherProps} = this.props
+        const {msg, placement, disabled, delay, children, ...otherProps} = this.props
         return isMobile()
             ? children
             : msg && !disabled
@@ -41,4 +41,10 @@ Tooltip.propTypes = {
     top: PropTypes.bool,
     topLeft: PropTypes.bool,
     topRight: PropTypes.bool
+}
+
+Tooltip.defaultProps = {
+    placement: 'top',
+    disabled: false,
+    delay: .75
 }

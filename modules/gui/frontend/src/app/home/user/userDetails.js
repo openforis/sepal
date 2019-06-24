@@ -1,8 +1,8 @@
 import {Activator} from 'widget/activation/activator'
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {Field, FieldSet, form} from 'widget/form'
-import {Input} from 'widget/input'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -11,18 +11,17 @@ import {currentUser} from 'widget/user'
 import {msg} from 'translate'
 import {revokeGoogleAccess$, updateCurrentUserDetails$} from 'widget/user'
 import ChangePassword from './changePassword'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import api from 'api'
 import styles from './userDetails.module.css'
 
 const fields = {
-    name: new Field()
+    name: new Form.Field()
         .notBlank('user.userDetails.form.name.required'),
-    email: new Field()
+    email: new Form.Field()
         .notBlank('user.userDetails.form.email.required'),
-    organization: new Field()
+    organization: new Form.Field()
 }
 const mapStateToProps = () => {
     const user = currentUser()
@@ -85,21 +84,21 @@ class _UserDetails extends React.Component {
             ? <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>
             : <React.Fragment>
                 <PanelContent>
-                    <FieldSet>
-                        <Input
+                    <Layout>
+                        <Form.Input
                             label={msg('user.userDetails.form.name.label')}
                             autoFocus
                             input={name}
                             spellCheck={false}
                             errorMessage
                         />
-                        <Input
+                        <Form.Input
                             label={msg('user.userDetails.form.email.label')}
                             input={email}
                             spellCheck={false}
                             errorMessage
                         />
-                        <Input
+                        <Form.Input
                             label={msg('user.userDetails.form.organization.label')}
                             input={organization}
                             spellCheck={false}
@@ -109,9 +108,9 @@ class _UserDetails extends React.Component {
                                 {this.renderGoogleAccountButton()}
                             </ButtonGroup>
                         </div>
-                    </FieldSet>
+                    </Layout>
                 </PanelContent>
-                <FormPanelButtons>
+                <Form.PanelButtons>
                     <Activator id='changePassword'>
                         {({canActivate, activate}) =>
                             <Button
@@ -121,14 +120,14 @@ class _UserDetails extends React.Component {
                                 onClick={() => activate()}/>
                         }
                     </Activator>
-                </FormPanelButtons>
+                </Form.PanelButtons>
             </React.Fragment>
     }
 
     render() {
         const {form, activatable: {deactivate}} = this.props
         return (
-            <FormPanel
+            <Form.Panel
                 className={styles.panel}
                 form={form}
                 statePath='userDetails'
@@ -139,7 +138,7 @@ class _UserDetails extends React.Component {
                     icon='user'
                     title={msg('user.userDetails.title')}/>
                 {this.renderPanel()}
-            </FormPanel>
+            </Form.Panel>
         )
     }
 }

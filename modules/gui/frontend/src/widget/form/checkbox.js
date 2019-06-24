@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './checkbox.module.css'
 
-const Checkbox = ({label, input, tabIndex, className, onChange}) =>
+export const FormCheckbox = ({label, input, tabIndex, className, onChange}) =>
     <label className={[styles.container, className].join(' ')}>
         <input
             type='checkbox'
@@ -19,12 +19,10 @@ const Checkbox = ({label, input, tabIndex, className, onChange}) =>
         {label}
     </label>
 
-Checkbox.propTypes = {
+FormCheckbox.propTypes = {
     input: PropTypes.object.isRequired,
     label: PropTypes.string.isRequired,
     className: PropTypes.string,
     tabIndex: PropTypes.number,
     onChange: PropTypes.func
 }
-
-export default Checkbox

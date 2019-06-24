@@ -1,4 +1,4 @@
-import {FormComponent} from 'widget/formComponents'
+import {Widget} from 'widget/widget'
 import {animationFrameScheduler, combineLatest, fromEvent, interval, merge} from 'rxjs'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo, scan, switchMap, withLatestFrom} from 'rxjs/operators'
@@ -420,7 +420,7 @@ SliderDynamics.propTypes = {
     width: PropTypes.number
 }
 
-export default class Slider extends React.Component {
+export class FormSlider extends React.Component {
     state = {
         width: null,
         ticks: [],
@@ -516,7 +516,7 @@ export default class Slider extends React.Component {
     render() {
         const {label, tooltip, tooltipPlacement, alignment} = this.props
         return (
-            <FormComponent
+            <Widget
                 className={styles.wrapper}
                 label={label}
                 alignment={alignment}
@@ -525,12 +525,12 @@ export default class Slider extends React.Component {
                 {this.renderInfo()}
                 {this.renderSlider()}
                 {this.renderDisabledOverlay()}
-            </FormComponent>
+            </Widget>
         )
     }
 }
 
-Slider.propTypes = {
+FormSlider.propTypes = {
     input: PropTypes.object.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     decimals: PropTypes.number,

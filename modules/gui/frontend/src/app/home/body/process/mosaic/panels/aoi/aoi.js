@@ -1,5 +1,4 @@
-import {Field} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -16,28 +15,28 @@ import SectionSelection from './sectionSelection'
 import styles from './aoi.module.css'
 
 const fields = {
-    section: new Field()
+    section: new Form.Field()
         .notBlank('process.mosaic.panel.areaOfInterest.form.section.required'),
-    country: new Field()
+    country: new Form.Field()
         .skip((value, {section}) => section !== 'COUNTRY')
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
-    area: new Field(),
-    fusionTable: new Field()
+    area: new Form.Field(),
+    fusionTable: new Form.Field()
         .skip((value, {section}) => section !== 'FUSION_TABLE')
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.required'),
-    allowWholeFusionTable: new Field(),
-    fusionTableRowSelection: new Field(),
-    fusionTableColumn: new Field()
+    allowWholeFusionTable: new Form.Field(),
+    fusionTableRowSelection: new Form.Field(),
+    fusionTableColumn: new Form.Field()
         .skip((value, {section}) => section !== 'FUSION_TABLE')
         .skip((_, {fusionTableRowSelection}) => fusionTableRowSelection === 'INCLUDE_ALL')
         .skip((value, {fusionTable}) => !fusionTable)
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.column.required'),
-    fusionTableRow: new Field()
+    fusionTableRow: new Form.Field()
         .skip((value, {section}) => section !== 'FUSION_TABLE')
         .skip((_, {fusionTableRowSelection}) => fusionTableRowSelection === 'INCLUDE_ALL')
         .skip((value, {fusionTableColumn}) => !fusionTableColumn)
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.row.required'),
-    polygon: new Field()
+    polygon: new Form.Field()
         .skip((value, {section}) => section !== 'POLYGON')
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
 }
@@ -85,7 +84,7 @@ class Aoi extends React.Component {
                     icon='globe'
                     label={msg('process.mosaic.panel.areaOfInterest.title')}
                 />
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }

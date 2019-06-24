@@ -1,6 +1,5 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../timeSeriesRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -10,13 +9,13 @@ import React from 'react'
 import styles from './preProcessingOptions.module.css'
 
 const fields = {
-    corrections: new Field(),
-    shadowPercentile: new Field(),
-    hazePercentile: new Field(),
-    ndviPercentile: new Field(),
-    dayOfYearPercentile: new Field(),
-    mask: new Field(),
-    compose: new Field()
+    corrections: new Form.Field(),
+    shadowPercentile: new Form.Field(),
+    hazePercentile: new Form.Field(),
+    ndviPercentile: new Form.Field(),
+    dayOfYearPercentile: new Form.Field(),
+    mask: new Form.Field(),
+    compose: new Form.Field()
 }
 
 class PreProcessingOptions extends React.Component {
@@ -28,8 +27,8 @@ class PreProcessingOptions extends React.Component {
     renderContent() {
         const {inputs: {corrections, mask}} = this.props
         return (
-            <FieldSet>
-                <Buttons
+            <Layout>
+                <Form.Buttons
                     label={msg('process.timeSeries.panel.preprocess.form.corrections.label')}
                     input={corrections}
                     multiple={true}
@@ -43,7 +42,7 @@ class PreProcessingOptions extends React.Component {
                         tooltip: msg('process.timeSeries.panel.preprocess.form.corrections.brdf.tooltip')
                     }]}
                 />
-                <Buttons
+                <Form.Buttons
                     label={msg('process.timeSeries.panel.preprocess.form.mask.label')}
                     input={mask}
                     multiple={true}
@@ -53,7 +52,7 @@ class PreProcessingOptions extends React.Component {
                         tooltip: msg('process.timeSeries.panel.preprocess.form.mask.snow.tooltip')
                     }]}
                 />
-            </FieldSet>
+            </Layout>
         )
     }
 
@@ -68,7 +67,7 @@ class PreProcessingOptions extends React.Component {
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }

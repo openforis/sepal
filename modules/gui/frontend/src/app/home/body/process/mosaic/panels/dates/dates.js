@@ -1,17 +1,13 @@
 import {Button} from 'widget/button'
-import {Field} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import DatePicker from 'widget/datePicker'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SeasonSelect from 'widget/seasonSelect'
-import Slider from 'widget/slider'
-import YearPicker from 'widget/yearPicker'
 import moment from 'moment'
 import styles from './dates.module.css'
 
@@ -24,17 +20,17 @@ const minEndDate = targetDate => parseDate(targetDate).add(1, 'days')
 const maxEndDate = targetDate => parseDate(targetDate).add(1, 'years')
 
 const fields = {
-    advanced: new Field(),
+    advanced: new Form.Field(),
 
-    targetYear: new Field()
+    targetYear: new Form.Field()
         .skip((_, {advanced}) => advanced)
         .int('process.mosaic.panel.dates.form.targetDate.malformed'),
 
-    targetDate: new Field()
+    targetDate: new Form.Field()
         .skip((_, {advanced}) => !advanced)
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.targetDate.malformed'),
 
-    seasonStart: new Field()
+    seasonStart: new Form.Field()
         .skip((_, {advanced}) => !advanced)
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
         .predicate((date, {targetDate}) => parseDate(date).isSameOrAfter(minStartDate(targetDate)),
@@ -48,7 +44,7 @@ const fields = {
                 max: maxStartDate(targetDate).format(DATE_FORMAT)
             })),
 
-    seasonEnd: new Field()
+    seasonEnd: new Form.Field()
         .skip((_, {advanced}) => !advanced)
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
         .predicate((date, {targetDate}) => parseDate(date).isSameOrAfter(minEndDate(targetDate)),
@@ -62,8 +58,8 @@ const fields = {
                 max: maxEndDate(targetDate).format(DATE_FORMAT)
             })),
 
-    yearsBefore: new Field(),
-    yearsAfter: new Field()
+    yearsBefore: new Form.Field(),
+    yearsAfter: new Form.Field()
 }
 
 class Dates extends React.Component {
@@ -109,11 +105,11 @@ class Dates extends React.Component {
                 <PanelContent>
                     {advanced.value ? this.renderAdvanced() : this.renderSimple()}
                 </PanelContent>
-                <FormPanelButtons>
+                <Form.PanelButtons>
                     <Button
                         label={advanced.value ? msg('button.less') : msg('button.more')}
                         onClick={() => this.setAdvanced(!advanced.value)}/>
-                </FormPanelButtons>
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
@@ -122,7 +118,7 @@ class Dates extends React.Component {
         const {inputs: {targetYear}} = this.props
         return (
             <div className={styles.simpleLayout}>
-                <YearPicker
+                <Form.YearPicker
                     label={msg('process.mosaic.panel.dates.form.targetYear.label')}
                     tooltip={msg('process.mosaic.panel.dates.form.targetYear.tooltip')}
                     tooltipPlacement='top'
@@ -138,7 +134,7 @@ class Dates extends React.Component {
         return (
             <div className={styles.advancedLayout}>
                 <div className={styles.targetDate}>
-                    <DatePicker
+                    <Form.DatePicker
                         label={msg('process.mosaic.panel.dates.form.targetDate.label')}
                         tooltip={msg('process.mosaic.panel.dates.form.targetDate.tooltip')}
                         input={targetDate}
@@ -147,7 +143,7 @@ class Dates extends React.Component {
                     />
                 </div>
                 <div className={styles.pastSeasons}>
-                    <Slider
+                    <Form.Slider
                         label={msg('process.mosaic.panel.dates.form.pastSeasons.label')}
                         info={pastSeasons => pastSeasons
                             ? msg('process.mosaic.panel.dates.form.pastSeasons.info.number', {pastSeasons})
@@ -163,7 +159,7 @@ class Dates extends React.Component {
                     />
                 </div>
                 <div className={styles.futureSeasons}>
-                    <Slider
+                    <Form.Slider
                         label={msg('process.mosaic.panel.dates.form.futureSeasons.label')}
                         info={futureSeasons => futureSeasons
                             ? msg('process.mosaic.panel.dates.form.futureSeasons.info.number', {futureSeasons})

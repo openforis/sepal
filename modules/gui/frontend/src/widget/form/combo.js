@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
-import {FieldSet} from 'widget/form'
-import {Input} from 'widget/formComponents'
+import {Form} from 'widget/form/form'
+import {Input} from 'widget/input'
 import {Subject, fromEvent} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -24,7 +24,7 @@ const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
 })
 
-class Combo extends React.Component {
+class _FormCombo extends React.Component {
     inputContainer = React.createRef()
     input = React.createRef()
     list = React.createRef()
@@ -52,9 +52,8 @@ class Combo extends React.Component {
                         ? null
                         : this.showOptions()
         return (
-            <FieldSet
+            <Form.FieldSet
                 className={[styles.container, className].join(' ')}
-                input={input}
                 label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
@@ -66,7 +65,7 @@ class Combo extends React.Component {
                     {this.renderInput()}
                 </div>
                 {showOptions ? this.renderOptions() : null}
-            </FieldSet>
+            </Form.FieldSet>
         )
     }
 
@@ -293,13 +292,13 @@ class Combo extends React.Component {
     }
 }
 
-export default compose(
-    Combo,
+export const FormCombo = compose(
+    _FormCombo,
     withSubscriptions(),
     connect(mapStateToProps)
 )
 
-Combo.propTypes = {
+FormCombo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
@@ -322,7 +321,7 @@ Combo.propTypes = {
     onChange: PropTypes.func
 }
 
-Combo.defaultProps = {
+FormCombo.defaultProps = {
     alignment: 'left',
     placement: 'below',
     tooltipPlacement: 'top'

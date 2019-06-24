@@ -1,6 +1,6 @@
-import {Constraint, Field, FieldSet, form} from 'widget/form'
 import {EMPTY, throwError} from 'rxjs'
-import {Input} from 'widget/input'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
@@ -8,23 +8,22 @@ import {changeCurrentUserPassword$} from 'widget/user'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {switchMap} from 'rxjs/operators'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import styles from './changePassword.module.css'
 
 const fields = {
-    oldPassword: new Field()
+    oldPassword: new Form.Field()
         .notBlank('user.changePassword.form.oldPassword.required'),
-    newPassword: new Field()
+    newPassword: new Form.Field()
         .notBlank('user.changePassword.form.newPassword.required')
         .match(/^.{8,100}$/, 'user.changePassword.form.newPassword.invalid'),
-    confirmPassword: new Field()
+    confirmPassword: new Form.Field()
         .notBlank('user.changePassword.form.confirmPassword.required')
 }
 
 const constraints = {
-    passwordsMatch: new Constraint(['newPassword', 'confirmPassword'])
+    passwordsMatch: new Form.Constraint(['newPassword', 'confirmPassword'])
         .skip(({newPassword, confirmPassword}) => !newPassword || !confirmPassword)
         .predicate(
             ({newPassword, confirmPassword}) => !newPassword || newPassword === confirmPassword,
@@ -57,34 +56,34 @@ class ChangePassword extends React.Component {
     renderForm() {
         const {inputs: {oldPassword, newPassword, confirmPassword}} = this.props
         return (
-            <FieldSet>
-                <Input
+            <Layout>
+                <Form.Input
                     label={msg('user.changePassword.form.oldPassword.label')}
                     type='password'
                     autoFocus
                     input={oldPassword}
                     errorMessage
                 />
-                <Input
+                <Form.Input
                     label={msg('user.changePassword.form.newPassword.label')}
                     type='password'
                     input={newPassword}
                     errorMessage
                 />
-                <Input
+                <Form.Input
                     label={msg('user.changePassword.form.confirmPassword.label')}
                     type='password'
                     input={confirmPassword}
                     errorMessage={[confirmPassword, 'passwordsMatch']}
                 />
-            </FieldSet>
+            </Layout>
         )
     }
 
     render() {
         const {form} = this.props
         return (
-            <FormPanel
+            <Form.Panel
                 className={styles.panel}
                 form={form}
                 isActionForm={true}
@@ -97,8 +96,8 @@ class ChangePassword extends React.Component {
                 <PanelContent>
                     {this.renderForm()}
                 </PanelContent>
-                <FormPanelButtons/>
-            </FormPanel>
+                <Form.PanelButtons/>
+            </Form.Panel>
         )
     }
 }

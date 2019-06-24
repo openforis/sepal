@@ -1,6 +1,5 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -10,15 +9,14 @@ import {dataSetById} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import React from 'react'
-import Slider from 'widget/slider'
 import _ from 'lodash'
 import styles from './retrieve.module.css'
 
 const fields = {
-    bands: new Field()
+    bands: new Form.Field()
         .predicate(bands => bands && bands.length, 'process.mosaic.panel.retrieve.form.bands.atLeastOne'),
-    scale: new Field(),
-    destination: new Field()
+    scale: new Form.Field(),
+    destination: new Form.Field()
         .notEmpty('process.mosaic.panel.retrieve.form.destination.required')
 }
 
@@ -99,7 +97,7 @@ class Retrieve extends React.Component {
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-                <FormPanelButtons
+                <Form.PanelButtons
                     applyLabel={msg('process.mosaic.panel.retrieve.apply')}/>
             </RecipeFormPanel>
         )
@@ -139,13 +137,13 @@ class Retrieve extends React.Component {
         ].filter(({value}) => user.googleTokens || value !== 'GEE')
 
         return (
-            <FieldSet>
-                <Buttons
+            <Layout>
+                <Form.Buttons
                     label={msg('process.mosaic.panel.retrieve.form.bands.label')}
                     input={bands}
                     multiple={true}
                     options={bandOptions}/>
-                <Slider
+                <Form.Slider
                     label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
                     info={scale => msg('process.radarMosaic.panel.retrieve.form.scale.info', {scale})}
                     input={scale}
@@ -156,12 +154,12 @@ class Retrieve extends React.Component {
                     snap
                     range='none'
                 />
-                <Buttons
+                <Form.Buttons
                     label={msg('process.mosaic.panel.retrieve.form.destination.label')}
                     input={destination}
                     multiple={false}
                     options={destinationOptions}/>
-            </FieldSet>
+            </Layout>
         )
     }
 

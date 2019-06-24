@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {FormComponent, Input} from 'widget/formComponents'
+import {Input} from 'widget/input'
+import {Layout} from 'widget/layout'
 import {Scrollable, ScrollableContainer, withScrollable} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -205,24 +206,22 @@ class _Tab extends React.Component {
     }
 
     render() {
-        const {placeholder, selected} = this.props
-        const {title, editing} = this.state
+        const {selected} = this.props
+        const {editing} = this.state
         return (
-            <FormComponent
+            <Layout
+                type='horizontal-nowrap'
+                spacing='none'
                 className={[
                     styles.tab,
                     styles.regular,
                     selected ? styles.selected : null,
                     editing ? styles.editing : null
                 ].join(' ')}
-                layout='horizontal-nowrap'
-                spacing='none'
-                tooltip={title || placeholder}
-                tooltipPlacement='bottom'
             >
                 {this.renderInput()}
                 {this.renderCloseButton()}
-            </FormComponent>
+            </Layout>
         )
     }
 
@@ -243,6 +242,8 @@ class _Tab extends React.Component {
                     autoFocus={!title}
                     border={false}
                     readOnly={!editing}
+                    tooltip={title || placeholder}
+                    tooltipPlacement='bottom'
                     onClick={() => selected
                         ? this.editTitle()
                         : this.selectTab()

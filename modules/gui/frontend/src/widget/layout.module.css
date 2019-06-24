@@ -1,0 +1,54 @@
+.layout {
+    overflow: hidden;
+}
+
+.layout.loose {
+    --vertical-spacing: 3rem;
+    --horizontal-spacing: 1.5rem;
+}
+
+.layout.normal {
+    --vertical-spacing: 2rem;
+    --horizontal-spacing: 1rem;
+}
+
+.layout.compact {
+    --vertical-spacing: 1rem;
+    --horizontal-spacing: .5rem;
+}
+
+.layout.none {
+    --vertical-spacing: 0rem;
+    --horizontal-spacing: 0rem;
+}
+
+.layout > * {
+    margin-bottom: var(--vertical-spacing);
+}
+
+/* .layout.vertical > :not(.layout):last-child { */
+.layout.vertical > *:last-child {
+    margin-bottom: 0;
+}
+
+.layout.horizontal {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: calc(-1 * var(--vertical-spacing));
+}
+
+.layout.horizontal.nowrap {
+    flex-wrap: nowrap;
+}
+
+.layout.horizontal > * {
+    margin-right: var(--horizontal-spacing);
+}
+
+.layout.horizontal > *:last-child {
+    margin-right: 0;
+}

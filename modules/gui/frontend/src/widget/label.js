@@ -48,8 +48,8 @@ Label.propTypes = {
     disabled: PropTypes.any,
     msg: PropTypes.string,
     size: PropTypes.oneOf(['normal', 'large']),
-    tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string
+    tooltip: Tooltip.propTypes.msg,
+    tooltipPlacement: Tooltip.propTypes.placement
 }
 
 Label.defaultProps = {

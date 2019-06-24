@@ -1,0 +1,83 @@
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+.container.clickable {
+    cursor: pointer;
+}
+
+.widget.border {
+    --input-border-color: #606060;
+    --input-border-hover-color: #b0b0b0;
+    --input-border-focus-color: #a0a0a0;
+    border-bottom: 1px dotted var(--input-border-color);
+}
+
+.widget.border:focus-within,
+.widget.border:not(:disabled):hover,
+.widget.border:focus:not(:disabled):hover {
+    border-bottom-style: solid;
+}
+
+.widget.border:not(.error):not(:disabled):hover,
+.widget.border:not(.error):focus:not(:disabled):hover {
+    --input-border-color: var(--input-border-hover-color);
+}
+
+.widget.border:not(.error):focus-within {
+    --input-border-color: var(--input-border-focus-color);
+}
+
+.widget.border.error {
+    --input-border-color: #e81351;
+}
+
+.widget.error {
+    --error-background-color: rgba(232, 19, 81, 0.1);
+    background-color: var(--error-background-color);
+}
+
+label {
+    --label-color: #b0b0b0;
+    --label-background-color: transparent;
+    display: block;
+    margin: 0;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--label-color);
+    background-color: var(--label-background-color);
+}
+
+label .info {
+    cursor: help;
+}
+
+fieldset label {
+    font-size: .7rem;
+    font-weight: normal;
+}
+
+.errorMessageContainer {
+    position: relative;
+    width: 100%;
+}
+
+.errorMessage {
+    --error-color: #e81351;
+    position: absolute;
+    top: 0;
+    bottom: -2rem;
+    left: 0;
+    right: 0;
+    color: var(--error-color);
+    font-size: .8rem;
+    font-weight: 400;
+}
+
+.label i {
+    font-size: .9rem;
+    margin-left: 0.5rem;
+    color: #B5B5B5;
+}

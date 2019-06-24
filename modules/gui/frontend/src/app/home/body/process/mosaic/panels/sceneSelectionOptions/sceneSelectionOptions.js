@@ -1,6 +1,5 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, SceneSelectionType} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -12,10 +11,10 @@ import React from 'react'
 import styles from './sceneSelectionOptions.module.css'
 
 const fields = {
-    type: new Field()
+    type: new Form.Field()
         .notEmpty('process.mosaic.panel.scenes.form.required'),
 
-    targetDateWeight: new Field()
+    targetDateWeight: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
@@ -34,12 +33,12 @@ class SceneSelectionOptions extends React.Component {
                     icon='images'
                     title={msg('process.mosaic.panel.scenes.title')}/>
                 <PanelContent>
-                    <FieldSet>
+                    <Layout>
                         {this.renderTypes()}
                         {this.renderTargetDateWeight()}
-                    </FieldSet>
+                    </Layout>
                 </PanelContent>
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
@@ -55,7 +54,7 @@ class SceneSelectionOptions extends React.Component {
             neverSelected: alwaysAll
         }]
         return (
-            <Buttons
+            <Form.Buttons
                 label={msg('process.mosaic.panel.scenes.form.type.label')}
                 className={styles.sources}
                 input={type}
@@ -76,7 +75,7 @@ class SceneSelectionOptions extends React.Component {
             label: msg('process.mosaic.panel.scenes.form.targetDateWeight.targetDate.label')
         }]
         return (
-            <Buttons
+            <Form.Buttons
                 label={msg('process.mosaic.panel.scenes.form.targetDateWeight.label')}
                 input={targetDateWeight}
                 options={options}

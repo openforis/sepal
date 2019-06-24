@@ -1,27 +1,25 @@
-import {Constraint, ErrorMessage, Field, form} from 'widget/form'
+import {Form, form} from 'widget/form/form'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from '../landCoverRecipe'
 import {compose} from 'compose'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
-import YearPicker from 'widget/yearPicker'
 import moment from 'moment'
 import styles from './period.module.css'
 
 const fields = {
-    startYear: new Field()
+    startYear: new Form.Field()
         .int('process.landCover.panel.period.startYear.malformed'),
 
-    endYear: new Field()
+    endYear: new Form.Field()
         .int('process.landCover.panel.period.endYear.malformed'),
 }
 
 const constraints = {
-    startBeforeEnd: new Constraint(['startYear', 'endYear'])
+    startBeforeEnd: new Form.Constraint(['startYear', 'endYear'])
         .predicate(({startYear, endYear}) => {
             return +startYear < +endYear
         }, 'process.landCover.panel.period.startBeforeEnd')
@@ -42,7 +40,7 @@ class Period extends React.Component {
             : {_: 'allow-then-deactivate'}
 
         return (
-            <FormPanel
+            <Form.Panel
                 id='period'
                 policy={policy}
                 className={styles.panel}
@@ -59,8 +57,8 @@ class Period extends React.Component {
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-                <FormPanelButtons/>
-            </FormPanel>
+                <Form.PanelButtons/>
+            </Form.Panel>
         )
     }
 
@@ -73,7 +71,7 @@ class Period extends React.Component {
                     <Label msg={msg('process.landCover.panel.period.startYear.label')}/>
                 </div>
                 <div className={styles.startYear}>
-                    <YearPicker
+                    <Form.YearPicker
                         input={startYear}
                         startYear={1983}
                         endYear={thisYear}
@@ -83,14 +81,14 @@ class Period extends React.Component {
                     <Label msg={msg('process.landCover.panel.period.endYear.label')}/>
                 </div>
                 <div className={styles.endYear}>
-                    <YearPicker
+                    <Form.YearPicker
                         input={endYear}
                         startYear={1983}
                         endYear={thisYear}
                     />
                 </div>
                 <div className={styles.error}>
-                    <ErrorMessage for={[startYear, endYear, 'startBeforeEnd']}/>
+                    <Form.Error htmlFor={[startYear, endYear, 'startBeforeEnd']}/>
                 </div>
             </div>
         )

@@ -1,4 +1,4 @@
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
 import {Msg, msg} from 'translate'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
@@ -26,7 +26,7 @@ class ClearSelectedScenes extends React.Component {
                     <Msg id='process.mosaic.panel.clearSelectedScenes.message'/>
                 </PanelContent>
 
-                <FormPanelButtons applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}/>
+                <Form.PanelButtons applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}/>
             </RecipeFormPanel>
         )
     }

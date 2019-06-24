@@ -1,7 +1,7 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
-import {FieldSet} from 'widget/form'
+import {Layout} from 'widget/layout'
 import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {compose} from 'compose'
@@ -400,10 +400,10 @@ class Users extends React.Component {
                         <Content horizontalPadding verticalPadding menuPadding>
                             <ScrollableContainer>
                                 <Unscrollable>
-                                    <FieldSet layout='horizontal' spacing='compact'>
+                                    <Layout type='horizontal' spacing='compact'>
                                         {this.renderTextFilter()}
                                         {this.renderStatusFilter()}
-                                    </FieldSet>
+                                    </Layout>
                                 </Unscrollable>
                                 <Scrollable direction='x'>
                                     <ScrollableContainer className={styles.content}>

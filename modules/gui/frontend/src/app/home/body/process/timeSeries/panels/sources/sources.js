@@ -1,6 +1,5 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {Msg, msg} from 'translate'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -15,7 +14,7 @@ import styles from './sources.module.css'
 import updateDataSets from './updateDataSets'
 
 const fields = {
-    dataSets: new Field()
+    dataSets: new Form.Field()
         .notEmpty('process.timeSeries.panel.sources.form.required')
 }
 
@@ -41,7 +40,9 @@ class Sources extends React.Component {
             })
         )
         const content = options.length > 1
-            ? <Buttons className={styles.dataSets} input={dataSets} options={options} multiple/>
+            ? (
+                <Form.Buttons className={styles.dataSets} input={dataSets} options={options} multiple/>
+            )
             : (
                 <div className={styles.oneDataSet}>
                     <Msg id='process.timeSeries.panel.sources.form.dataSets.oneDataSet'/>
@@ -64,11 +65,11 @@ class Sources extends React.Component {
                     icon='cog'
                     title={msg('process.timeSeries.panel.sources.title')}/>
                 <PanelContent>
-                    <FieldSet>
+                    <Layout>
                         {this.renderDataSets()}
-                    </FieldSet>
+                    </Layout>
                 </PanelContent>
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }

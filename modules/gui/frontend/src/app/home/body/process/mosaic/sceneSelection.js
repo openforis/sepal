@@ -1,6 +1,6 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {Field, form} from 'widget/form'
+import {Form, form} from 'widget/form/form'
 import {HoverDetector, HoverOverlay} from 'widget/hover'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
@@ -13,7 +13,6 @@ import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
 import React from 'react'
@@ -24,7 +23,7 @@ import format from 'format'
 import styles from './sceneSelection.module.css'
 
 const fields = {
-    selectedScenes: new Field()
+    selectedScenes: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => {
@@ -71,7 +70,7 @@ class SceneSelection extends React.Component {
         return (
             <React.Fragment>
                 <ScenePreview recipeId={recipeId} targetDate={targetDate}/>
-                <FormPanel
+                <Form.Panel
                     close={deactivate}
                     policy={policy}
                     className={styles.panel}
@@ -89,8 +88,8 @@ class SceneSelection extends React.Component {
                             : this.renderScenes()}
                     </PanelContent>
 
-                    <FormPanelButtons/>
-                </FormPanel>
+                    <Form.PanelButtons/>
+                </Form.Panel>
             </React.Fragment>
         )
     }

@@ -1,7 +1,6 @@
 import 'xterm/dist/xterm.css'
 import * as attach from 'xterm/lib/addons/attach/attach'
 import * as fit from 'xterm/lib/addons/fit/fit'
-
 import {ContentPadding} from 'widget/sectionLayout'
 import {Subject, interval} from 'rxjs'
 import {Terminal as Xterm} from 'xterm'

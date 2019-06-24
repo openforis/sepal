@@ -1,7 +1,7 @@
+import {Form} from 'widget/form/form'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
-import Combo from 'widget/combo'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -19,7 +19,7 @@ class RecipeSection extends React.Component {
             label: recipe.name
         }))
         return (
-            <Combo
+            <Form.Combo
                 label={msg('process.classification.panel.inputImagery.form.recipe.label')}
                 input={input}
                 placeholder={msg('process.classification.panel.inputImagery.form.recipe.placeholder')}

@@ -1,7 +1,7 @@
 import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {FieldSet} from 'widget/form'
+import {Layout} from 'widget/layout'
 import {PageControls, PageData, Pageable} from 'widget/pageable'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {closeTab} from 'widget/tabs'
@@ -166,10 +166,10 @@ class RecipeList extends React.Component {
         else
             return (
                 <div className={styles.header}>
-                    <FieldSet layout='horizontal' spacing='compact'>
+                    <Layout type='horizontal' spacing='compact'>
                         {this.renderSearch()}
                         {this.renderSortButtons()}
-                    </FieldSet>
+                    </Layout>
                 </div>
             )
     }

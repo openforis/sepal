@@ -1,6 +1,5 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -10,19 +9,18 @@ import {selectFrom} from 'stateUtils'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Slider from 'widget/slider'
 import _ from 'lodash'
 import styles from './compositeOptions.module.css'
 
 const fields = {
-    corrections: new Field(),
-    shadowPercentile: new Field(),
-    hazePercentile: new Field(),
-    ndviPercentile: new Field(),
-    dayOfYearPercentile: new Field(),
-    mask: new Field(),
-    cloudBuffer: new Field(),
-    compose: new Field()
+    corrections: new Form.Field(),
+    shadowPercentile: new Form.Field(),
+    hazePercentile: new Form.Field(),
+    ndviPercentile: new Form.Field(),
+    dayOfYearPercentile: new Form.Field(),
+    mask: new Form.Field(),
+    cloudBuffer: new Form.Field(),
+    compose: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
@@ -43,24 +41,24 @@ class CompositeOptions extends React.Component {
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
 
     renderContent() {
         return (
-            <FieldSet>
+            <Layout>
                 {this.renderCorrectionOptions()}
-                <FieldSet spacing='compact'>
+                <Layout spacing='compact'>
                     {this.renderFilterOptions()}
-                </FieldSet>
-                <FieldSet layout='horizontal'>
+                </Layout>
+                <Layout type='horizontal'>
                     {this.renderCloudBufferOptions()}
                     {this.renderMaskOptions()}
                     {this.renderComposeOptions()}
-                </FieldSet>
-            </FieldSet>
+                </Layout>
+            </Layout>
         )
     }
 
@@ -68,7 +66,7 @@ class CompositeOptions extends React.Component {
         const {inputs: {corrections}, sources} = this.props
         const includesSentinel2 = Object.keys(sources).includes('SENTINEL_2')
         return (
-            <Buttons
+            <Form.Buttons
                 label={msg('process.mosaic.panel.composite.form.corrections.label')}
                 input={corrections}
                 multiple={true}
@@ -118,7 +116,7 @@ class CompositeOptions extends React.Component {
     renderMaskOptions() {
         const {inputs: {mask}} = this.props
         return (
-            <Buttons
+            <Form.Buttons
                 label={msg('process.mosaic.panel.composite.form.mask.label')}
                 input={mask}
                 multiple={true}
@@ -139,7 +137,7 @@ class CompositeOptions extends React.Component {
     renderCloudBufferOptions() {
         const {inputs: {cloudBuffer}} = this.props
         return (
-            <Buttons
+            <Form.Buttons
                 label={msg('process.mosaic.panel.composite.form.cloudBuffer.label')}
                 input={cloudBuffer}
                 options={[{
@@ -163,7 +161,7 @@ class CompositeOptions extends React.Component {
     renderComposeOptions() {
         const {inputs: {compose}} = this.props
         return (
-            <Buttons
+            <Form.Buttons
                 label={msg('process.mosaic.panel.composite.form.composingMethod.label')}
                 input={compose}
                 options={[{
@@ -196,7 +194,7 @@ CompositeOptions.propTypes = {
 
 const PercentileField = ({input, disabled = false}) => {
     return (
-        <Slider
+        <Form.Slider
             input={input}
             minValue={0}
             maxValue={100}

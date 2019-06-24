@@ -1,17 +1,16 @@
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import React from 'react'
-import Slider from 'widget/slider'
 import styles from './autoSelectScenes.module.css'
 
 const fields = {
-    min: new Field(),
-    max: new Field()
+    min: new Form.Field(),
+    max: new Form.Field()
 }
 
 class AutoSelectScenes extends React.Component {
@@ -31,7 +30,7 @@ class AutoSelectScenes extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <FormPanelButtons
+                <Form.PanelButtons
                     applyLabel={msg('process.mosaic.panel.autoSelectScenes.form.selectScenes')}/>
             </RecipeFormPanel>
         )
@@ -40,8 +39,8 @@ class AutoSelectScenes extends React.Component {
     renderContent() {
         const {inputs: {min, max}} = this.props
         return (
-            <FieldSet>
-                <Slider
+            <Layout>
+                <Form.Slider
                     label={msg('process.mosaic.panel.autoSelectScenes.form.min.label')}
                     input={min}
                     minValue={1}
@@ -50,7 +49,7 @@ class AutoSelectScenes extends React.Component {
                     snap
                     scale='log'
                     range='low'/>
-                <Slider
+                <Form.Slider
                     label={msg('process.mosaic.panel.autoSelectScenes.form.max.label')}
                     input={max}
                     minValue={min.value}
@@ -59,7 +58,7 @@ class AutoSelectScenes extends React.Component {
                     snap
                     scale='log'
                     range='low'/>
-            </FieldSet>
+            </Layout>
         )
     }
 }

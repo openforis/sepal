@@ -1,4 +1,4 @@
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
 import {PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -43,9 +43,9 @@ class InputImagery extends React.Component {
                     <PanelContent>
                         {this.renderContent()}
                     </PanelContent>
-                    <FormPanelButtons invalid={!images.length}>
+                    <Form.PanelButtons invalid={!images.length}>
                         <PanelButtons.Add onClick={() => this.addImage()}/>
-                    </FormPanelButtons>
+                    </Form.PanelButtons>
                 </RecipeFormPanel>
                 <InputImage/>
             </React.Fragment>
