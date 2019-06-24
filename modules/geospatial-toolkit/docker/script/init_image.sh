@@ -34,10 +34,12 @@ echo "*** Installing misc utilities ***"
 echo "*********************************"
 DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     aria2 \
+    apt-transport-https \
     autoconf \
     bc \
     bison \
     build-essential \
+    ca-certificates \
     csh \
     curl \
     dbview \
@@ -74,6 +76,9 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     parallel \
     pkg-config \
     p7zip-full \
+    python \
+    python3 \
+    python3-dev \
     python-gdal \
     python3-gdal \
     python-dev \
