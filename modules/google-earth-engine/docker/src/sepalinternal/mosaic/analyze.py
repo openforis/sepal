@@ -129,4 +129,4 @@ class _Analyze(ImageOperation):
                 .multiply(list(multiplier_by_band.values()))
                 .copyProperties(self.image)
                 .set('system:time_start', self.image.get('system:time_start'))
-        ).uint16()
+        ).int16()

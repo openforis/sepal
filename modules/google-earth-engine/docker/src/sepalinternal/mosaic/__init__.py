@@ -96,7 +96,7 @@ class Mosaic(object):
             mosaic = collection.qualityMosaic('distanceToMedian')
         return mosaic \
             .select(bands) \
-            .uint16() \
+            .int16() \
             .clip(self.mosaic_def.aoi.geometry())
 
     def _bands_to_select(self, bands):

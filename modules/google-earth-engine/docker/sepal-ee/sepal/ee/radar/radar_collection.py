@@ -139,10 +139,10 @@ def create(
         millisPerDay = 1000 * 60 * 60 * 24
         unix_time_days = date.millis().divide(millisPerDay)
         return image \
-            .addBands(ee.Image(day_of_year).uint16().rename('dayOfYear')) \
-            .addBands(ee.Image(days_from_target).uint16().rename('daysFromTarget')) \
+            .addBands(ee.Image(day_of_year).int16().rename('dayOfYear')) \
+            .addBands(ee.Image(days_from_target).int16().rename('daysFromTarget')) \
             .addBands(ee.Image(days_from_target.multiply(-1)).int16().rename('quality')) \
-            .addBands(ee.Image(unix_time_days).uint16().rename('unixTimeDays'))
+            .addBands(ee.Image(unix_time_days).int16().rename('unixTimeDays'))
 
     def add_harmonic_bands(image):
         def add_for_dependent(dependent):
