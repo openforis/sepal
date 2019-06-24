@@ -78,7 +78,7 @@ class SetPassword extends React.Component {
         const resettingPassword = stream('RESET_PASSWORD').active
         return (
             <Form className={styles.form} onSubmit={() => this.resetPassword(form.values())}>
-                <FieldSet>
+                <FieldSet spacing='loose'>
                     <Input
                         label={msg('landing.reset-password.username.label')}
                         input={username}

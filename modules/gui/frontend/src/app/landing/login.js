@@ -38,7 +38,7 @@ class Login extends React.Component {
         const {form, inputs: {username, password}, action} = this.props
         return (
             <Form className={styles.form} onSubmit={() => this.login(form.values())}>
-                <FieldSet>
+                <FieldSet spacing='loose'>
                     <Input
                         label={msg('landing.login.username.label')}
                         input={username}
