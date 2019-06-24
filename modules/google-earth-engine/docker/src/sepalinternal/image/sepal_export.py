@@ -48,7 +48,7 @@ class SepalExport(ThreadTask):
     def run(self):
         ee.InitializeThread(self.credentials)
         self._drive_folder = drive.create_folder(self.credentials, self.drive_path)
-        self.dependent(drive.Touch([self.drive_path, self.credentials])).submit()
+        self.dependent(drive.Touch([self.drive_path], self.credentials)).submit()
         image_spec = image_spec_factory.create(self.sepal_api, self.image_spec)
         self._export = self.dependent(
             ImageToDrive(
