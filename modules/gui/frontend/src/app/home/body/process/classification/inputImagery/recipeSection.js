@@ -1,6 +1,5 @@
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Combo from 'widget/combo'
 import PropTypes from 'prop-types'
