@@ -55,7 +55,7 @@ def retry(action, times=1):
         reason = content.get('reason', None)
         if times < 20:
             throttle_seconds = max(2 ^ int(times * random.uniform(0.1, 0.2)), 30)
-            logger.warn('Retrying drive operation in {1} seconds after try #{2}: {3}'.format(throttle_seconds, times, reason))
+            logger.warn('Retrying drive operation in {0} seconds after try #{1}: {2}'.format(throttle_seconds, times, reason))
             time.sleep(throttle_seconds)
             return retry(action, times + 1)
         e.message = e._get_reason()
@@ -64,7 +64,7 @@ def retry(action, times=1):
     except Exception as e:
         if times < 20:
             throttle_seconds = max(2 ^ int(times * random.uniform(0.1, 0.2)), 30)
-            logger.warn('Retrying drive operation in {1} seconds after try #{2}: {3}'.format(throttle_seconds, times, str(e)))
+            logger.warn('Retrying drive operation in {0} seconds after try #{1}: {2}'.format(throttle_seconds, times, str(e)))
             time.sleep(throttle_seconds)
             return retry(action, times + 1)
         re_raisable()
