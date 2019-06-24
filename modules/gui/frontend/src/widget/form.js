@@ -456,8 +456,8 @@ FieldSet.propTypes = {
     errorMessage: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
     input: PropTypes.object,
     label: PropTypes.string,
-    layout: PropTypes.oneOf(['vertical', 'horizontal']),
-    spacing: PropTypes.oneOf(['normal', 'compact', 'none']),
+    layout: PropTypes.string,
+    spacing: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string
 }
