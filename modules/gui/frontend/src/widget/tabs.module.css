@@ -37,7 +37,7 @@
     border-top-right-radius: var(--border-top-right-radius);
     border-top-left-radius: .5rem;
     margin-top: .5rem;
-    padding: 0 .75rem 0 .5rem;
+    padding: 0 .75rem 0 .25rem;
     overflow: hidden;
     animation: added 500ms ease-in-out forwards;
 }
