@@ -1,6 +1,6 @@
 import ee
 
-from util import *
+from .util import *
 
 MAX_DISTANCE = 1000000
 

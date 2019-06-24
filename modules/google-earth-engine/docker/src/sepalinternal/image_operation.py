@@ -1,6 +1,7 @@
-import math
+from functools import reduce
 
 import ee
+import math
 
 
 class ImageOperation(object):
@@ -21,8 +22,8 @@ class ImageOperation(object):
 
     def setIfElse(self, name, condition, trueValue, falseValue, args={}):
         self.set(name,
-                 self.toImage(falseValue, args)
-                 .where(self.toImage(condition, args), self.toImage(trueValue, args)))
+            self.toImage(falseValue, args)
+                .where(self.toImage(condition, args), self.toImage(trueValue, args)))
 
     def setAll(self, image):
         # Replace bands in source image, to ensure all image properties are preserved
@@ -32,7 +33,7 @@ class ImageOperation(object):
         return mask.multiply(-1).add(1)
 
     def toImage(self, band, args={}):
-        if isinstance(band, basestring):
+        if isinstance(band, str):
             if band.find('.') > -1 or band.find(' ') > -1 or band.find('{') > -1:
                 band = self.image.expression(self.format(band, args), {'i': self.image})
             else:
@@ -57,7 +58,7 @@ class ImageOperation(object):
         self.image = self.image.updateMask(self.toImage(condition))
 
     def merge(self, o1, o2):
-        return dict(list(o1.iteritems()) + list(o2.iteritems()))
+        return dict(list(o1.items()) + list(o2.items()))
 
     def rescale(self, value, min, max):
         return self.toImage(value) \

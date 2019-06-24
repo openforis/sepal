@@ -12,7 +12,7 @@ class BuildVrt(ThreadTask):
         self.files = files
 
     def run(self):
-        if isinstance(self.files, basestring):
+        if isinstance(self.files, str):
             files = glob(self.files)
         else:
             files = self.files

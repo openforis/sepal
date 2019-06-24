@@ -133,7 +133,7 @@ class Download(ThreadTask):
                 return
             logger.debug('Downloading {0} to {1}. retry={2}'.format(drive_file, destination_path, times))
             try:
-                with open(destination_path, 'w') as destination_file:
+                with open(destination_path, 'wb') as destination_file:
                     request = retry(lambda: self.drive.files().get_media(fileId=drive_file['id']))
                     downloader = MediaIoBaseDownload(fd=destination_file, request=request, chunksize=10 * 1024 * 1024)
                     while self.running():

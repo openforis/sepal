@@ -1,6 +1,6 @@
 import logging
 from abc import abstractmethod
-from gee import get_info
+from .gee import get_info
 from sepal.ee.image import convert
 
 import ee

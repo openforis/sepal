@@ -5,7 +5,7 @@ from itertools import groupby
 
 import ee
 
-from analyze import Analyze
+from .analyze import Analyze
 from ..dates import millis_to_date
 from ..mosaic import DataSet
 from ..mosaic_spec import MosaicSpec
@@ -34,18 +34,17 @@ class LandsatMosaicSpec(MosaicSpec):
             self.scale = min([
                 resolution
                 for band, resolution
-                in _scale_by_band.iteritems()
+                in iter(_scale_by_band.items())
                 if band in self.bands
             ])
         else:
             self.scale = 30
 
 
-
 class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
     def __init__(self, spec):
         super(LandsatAutomaticMosaicSpec, self).__init__(spec)
-        self.sensors = spec['recipe']['model']['sources'].values()[0]
+        self.sensors = list(spec['recipe']['model']['sources'].values())[0]
 
     def _data_sets(self):
         image_filter = ee.Filter.And(

@@ -2,7 +2,7 @@ import logging
 import random
 import time
 
-from exception import re_raisable
+from .exception import re_raisable
 
 logger = logging.getLogger(__name__)
 

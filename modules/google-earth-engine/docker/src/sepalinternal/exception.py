@@ -8,8 +8,7 @@ def re_raisable():
 
     # noinspection PyUnusedLocal
     def re_raise(self):
-        # noinspection PyCompatibility
-        raise type, exception, traceback
+        raise type(exception).with_traceback(traceback)
 
     exception.re_raise = types.MethodType(re_raise, exception)
     return exception
