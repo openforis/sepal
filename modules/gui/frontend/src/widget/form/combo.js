@@ -40,7 +40,7 @@ class _FormCombo extends React.Component {
     }
 
     render() {
-        const {input, errorMessage, standalone, disabled, className, onCancel} = this.props
+        const {errorMessage, standalone, disabled, className, onCancel} = this.props
         const {label, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
         const onClick = e =>
