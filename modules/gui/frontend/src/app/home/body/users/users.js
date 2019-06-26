@@ -7,7 +7,7 @@ import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {forkJoin} from 'rxjs'
-import {map, share, tap, zip} from 'rxjs/operators'
+import {map, zip} from 'rxjs/operators'
 import {msg} from 'translate'
 import Highlight from 'react-highlighter'
 import Icon from 'widget/icon'
@@ -35,15 +35,6 @@ const getUserList$ = () => forkJoin(
     )
 )
 
-// const getUserList$ = () => api.user.getUserList$().pipe(
-//     share()
-// )
-
-// const getBudgetReport$ = () => api.user.getBudgetReport$().pipe(
-//     zip(getUserList$()),
-//     map(([budgetReport]) => budgetReport)
-// )
-
 class Users extends React.Component {
     state = {
         users: [],
@@ -62,22 +53,10 @@ class Users extends React.Component {
                 users: this.getSortedUsers(userList)
             })
 
-        // const mergeBudgetReport = budgetReport =>
-        //     this.setState(({users}) => ({
-        //         users: _.map(users, user => ({
-        //             ...user,
-        //             report: budgetReport[user.username || {}]
-        //         }))
-        //     }))
-
         this.props.stream('LOAD_USER_LIST',
             getUserList$(),
             userList => setUserList(userList)
         )
-        // this.props.stream('LOAD_BUDGET_REPORT',
-        //     getBudgetReport$(),
-        //     budgetReport => mergeBudgetReport(budgetReport)
-        // )
     }
 
     setSorting(sortingOrder, defaultSorting) {
