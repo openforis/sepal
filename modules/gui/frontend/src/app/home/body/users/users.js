@@ -80,9 +80,11 @@ class Users extends React.Component {
         // )
     }
 
-    setSorting(sortingOrder) {
+    setSorting(sortingOrder, defaultSorting) {
         this.setState(prevState => {
-            const sortingDirection = sortingOrder === prevState.sortingOrder ? -prevState.sortingDirection : 1
+            const sortingDirection = sortingOrder === prevState.sortingOrder
+                ? -prevState.sortingDirection
+                : defaultSorting
             return {
                 ...prevState,
                 sortingOrder,
@@ -262,15 +264,16 @@ class Users extends React.Component {
         )
     }
 
-    renderSortingHandle(column) {
-        return this.state.sortingOrder === column
-            ? this.state.sortingDirection === 1
+    renderSortingHandle(column, defaultSorting) {
+        const {sortingOrder, sortingDirection} = this.state
+        return sortingOrder === column
+            ? sortingDirection === defaultSorting
                 ? <Icon name={'sort-down'}/>
                 : <Icon name={'sort-up'}/>
             : <Icon name={'sort'}/>
     }
 
-    renderColumnHeader(column, label, classNames = []) {
+    renderColumnHeader({column, label, defaultSorting, classNames = []}) {
         const {sortingOrder} = this.state
         return (
             <div className={classNames.join(' ')}>
@@ -278,12 +281,12 @@ class Users extends React.Component {
                     chromeless
                     shape='none'
                     additionalClassName='itemType'
-                    onClick={() => this.setSorting(column)}>
+                    onClick={() => this.setSorting(column, defaultSorting)}>
                     <span className={sortingOrder === column ? styles.sorted : null}>
                         {label}
                     </span>
                     <span className={styles.sortingHandle}>
-                        {this.renderSortingHandle(column)}
+                        {this.renderSortingHandle(column, defaultSorting)}
                     </span>
                 </Button>
             </div>
@@ -299,15 +302,60 @@ class Users extends React.Component {
                 <div className={styles.info}>
                     {this.renderInfo()}
                 </div>
-                {this.renderColumnHeader('name', msg('user.userDetails.form.name.label'), [styles.name])}
-                {this.renderColumnHeader('status', msg('user.userDetails.form.status.label'), [styles.status])}
-                {this.renderColumnHeader('updateTime', msg('user.userDetails.form.updateTime.label'), [styles.updateTime])}
-                {this.renderColumnHeader('report.budget.instanceSpending', msg('user.report.resources.quota'), [styles.instanceBudgetQuota, styles.number])}
-                {this.renderColumnHeader('report.current.instanceSpending', msg('user.report.resources.used'), [styles.instanceBudgetUsed, styles.number])}
-                {this.renderColumnHeader('report.budget.storageSpending', msg('user.report.resources.quota'), [styles.storageBudgetQuota, styles.number])}
-                {this.renderColumnHeader('report.current.storageSpending', msg('user.report.resources.used'), [styles.storageBudgetUsed, styles.number])}
-                {this.renderColumnHeader('report.budget.storageQuota', msg('user.report.resources.quota'), [styles.storageQuota, styles.number])}
-                {this.renderColumnHeader('report.current.storageQuota', msg('user.report.resources.used'), [styles.storageUsed, styles.number])}
+                {this.renderColumnHeader({
+                    column: 'name',
+                    label: msg('user.userDetails.form.name.label'),
+                    defaultSorting: 1,
+                    classNames: [styles.name]
+                })}
+                {this.renderColumnHeader({
+                    column: 'status',
+                    label: msg('user.userDetails.form.status.label'),
+                    defaultSorting: 1,
+                    classNames: [styles.status]
+                })}
+                {this.renderColumnHeader({
+                    column: 'updateTime',
+                    label: msg('user.userDetails.form.updateTime.label'),
+                    defaultSorting: -1,
+                    classNames: [styles.updateTime]
+                })}
+                {this.renderColumnHeader({
+                    column: 'report.budget.instanceSpending',
+                    label: msg('user.report.resources.quota'),
+                    defaultSorting: -1,
+                    classNames: [styles.instanceBudgetQuota, styles.number]
+                })}
+                {this.renderColumnHeader({
+                    column: 'report.current.instanceSpending',
+                    label: msg('user.report.resources.used'),
+                    defaultSorting: -1,
+                    classNames: [styles.instanceBudgetUsed, styles.number]
+                })}
+                {this.renderColumnHeader({
+                    column: 'report.budget.storageSpending',
+                    label: msg('user.report.resources.quota'),
+                    defaultSorting: -1,
+                    classNames: [styles.storageBudgetQuota, styles.number]
+                })}
+                {this.renderColumnHeader({
+                    column: 'report.current.storageSpending',
+                    label: msg('user.report.resources.used'),
+                    defaultSorting: -1,
+                    classNames: [styles.storageBudgetUsed, styles.number]
+                })}
+                {this.renderColumnHeader({
+                    column: 'report.budget.storageQuota',
+                    label: msg('user.report.resources.quota'),
+                    defaultSorting: -1,
+                    classNames: [styles.storageQuota, styles.number]
+                })}
+                {this.renderColumnHeader({
+                    column: 'report.current.storageQuota',
+                    label: msg('user.report.resources.used'),
+                    defaultSorting: -1,
+                    classNames: [styles.storageUsed, styles.number]
+                })}
             </div>
         )
     }
