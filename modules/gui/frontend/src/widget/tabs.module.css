@@ -38,11 +38,11 @@
     padding: 0 .75rem 0 .25rem;
     transform-origin: right top;
     overflow: hidden;
-    animation: add 250ms ease-in-out forwards;
+    animation: add 250ms linear forwards;
 }
 
 .tab.closing {
-    animation: remove var(--close-animation-duration) ease-in-out forwards;
+    animation: remove var(--close-animation-duration) ease-in forwards;
 }
 
 @keyframes add {

@@ -62,7 +62,7 @@ export const closeTab = (id, statePath) => {
     setTimeout(() => actionBuilder('CLOSE_TAB')
         .set([statePath, 'selectedTabId'], nextSelectedTabId())
         .del([statePath, 'tabs', {id}])
-        .dispatch(), CLOSE_ANIMATION_DURATION_MS
+        .dispatch(), CLOSE_ANIMATION_DURATION_MS * 1.2
     )
 }
 
