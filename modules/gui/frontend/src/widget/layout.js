@@ -4,9 +4,9 @@ import styles from './layout.module.css'
 
 export class Layout extends React.Component {
     render() {
-        const {type, spacing, className, children} = this.props
+        const {type, spacing, className, style, children} = this.props
         return (
-            <div className={className}>
+            <div className={className} style={style}>
                 <div className={[
                     styles.layout,
                     type.split('-').map(className => styles[className]).join(' '),
@@ -23,6 +23,7 @@ Layout.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
     spacing: PropTypes.oneOf(['loose', 'normal', 'compact', 'none']),
+    style: PropTypes.object,
     type: PropTypes.oneOf(['vertical', 'horizontal', 'horizontal-nowrap'])
 }
 

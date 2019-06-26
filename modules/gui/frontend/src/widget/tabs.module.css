@@ -26,6 +26,7 @@
     --tab-spacing: .3rem;
     --tab-min-width: 8.5rem;
     --tab-max-width: 17rem;
+    --close-animation-duration: 0;
     /* [HACK] transparent colors are needed and cannot be replaced with 'transparent' because of iOS */
     --default-gradient: linear-gradient(to right, var(--tab-default-background-color-transparent), var(--tab-default-background-color) 100%);
     --selected-gradient: linear-gradient(to right, var(--tab-selected-background-color-transparent), var(--tab-selected-background-color) 100%);
@@ -35,13 +36,25 @@
     border-top-left-radius: .5rem;
     margin-top: .5rem;
     padding: 0 .75rem 0 .25rem;
-    animation: added 500ms ease-in-out forwards;
+    transform-origin: right top;
+    overflow: hidden;
+    animation: add 250ms ease-in-out forwards;
 }
 
-@keyframes added {
+.tab.closing {
+    animation: remove var(--close-animation-duration) ease-in-out forwards;
+}
+
+@keyframes add {
     0% {
+        transform: translateY(-100%);
+    }
+}
+
+@keyframes remove {
+    100% {
         opacity: 0;
-        transform: translateY(-50%);
+        transform: translateX(50%);
     }
 }
 
