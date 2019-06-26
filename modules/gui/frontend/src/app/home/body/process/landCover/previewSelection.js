@@ -1,4 +1,4 @@
-// import {Field, form} from 'widget/form'
+// import {Field, form} from 'widget/form/form'
 // import {RecipeActions, RecipeState, Status} from './landCoverRecipe'
 // import {msg} from 'translate'
 // import ComboBox from 'widget/comboBox'
@@ -7,8 +7,8 @@
 // import styles from './previewSelection.module.css'
 
 // const fields = {
-//     type: new Field(),
-//     year: new Field()
+//     type: new Form.Field(),
+//     year: new Form.Field()
 // }
 
 // const mapStateToProps = (state, ownProps) => {

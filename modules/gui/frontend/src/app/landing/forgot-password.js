@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
-import {Field, FieldSet, Form, form} from 'widget/form'
-import {Input} from 'widget/input'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {requestPasswordReset$} from 'widget/user'
@@ -11,7 +11,7 @@ import React from 'react'
 import styles from './forgot-password.module.css'
 
 const fields = {
-    email: new Field()
+    email: new Form.Field()
         .notBlank('landing.forgot-password.required')
         .email('landing.forgot-password.invalid')
 }
@@ -43,8 +43,8 @@ export class ForgotPassword extends React.Component {
                     <div className={styles.instructions}>
                         {msg('landing.forgot-password.instructions')}
                     </div>
-                    <FieldSet>
-                        <Input
+                    <Layout>
+                        <Form.Input
                             input={email}
                             placeholder={msg('landing.forgot-password.placeholder')}
                             autoFocus
@@ -53,7 +53,7 @@ export class ForgotPassword extends React.Component {
                             validate='onBlur'
                             errorMessage
                         />
-                    </FieldSet>
+                    </Layout>
                 </div>
                 <div className={styles.buttons}>
                     <Button

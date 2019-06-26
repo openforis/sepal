@@ -1,6 +1,5 @@
-import {FieldSet} from 'widget/form'
-import {FormButtons} from 'widget/buttons'
-import {Input} from 'widget/input'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {RecipeActions} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
@@ -11,7 +10,6 @@ import {selectFrom} from 'stateUtils'
 import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Combo from 'widget/combo'
 import React from 'react'
 
 const mapRecipeToProps = recipe => {
@@ -71,8 +69,8 @@ class FusionTableSection extends React.Component {
     render() {
         const {allowWholeFusionTable, inputs: {fusionTable}} = this.props
         return (
-            <FieldSet>
-                <Input
+            <Layout>
+                <Form.Input
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.label')}
                     autoFocus
                     input={fusionTable}
@@ -83,7 +81,7 @@ class FusionTableSection extends React.Component {
                 />
                 {allowWholeFusionTable ? this.renderFilterOptions() : null}
                 {this.renderColumnValueRowInputs()}
-            </FieldSet>
+            </Layout>
         )
     }
 
@@ -94,7 +92,7 @@ class FusionTableSection extends React.Component {
             {value: 'INCLUDE_ALL', label: msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTableRowSelection.INCLUDE_ALL')}
         ]
         return (
-            <FormButtons
+            <Form.Buttons
                 input={fusionTableRowSelection}
                 label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTableRowSelection.label')}
                 options={options}
@@ -125,7 +123,7 @@ class FusionTableSection extends React.Component {
 
         return (
             <React.Fragment>
-                <Combo
+                <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.column.label')}
                     input={fusionTableColumn}
                     busy={stream('LOAD_FUSION_TABLE_COLUMNS').active}
@@ -141,7 +139,7 @@ class FusionTableSection extends React.Component {
                     }}
                     errorMessage
                 />
-                <Combo
+                <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.row.label')}
                     input={fusionTableRow}
                     busy={stream('LOAD_FUSION_TABLE_ROWS').active}

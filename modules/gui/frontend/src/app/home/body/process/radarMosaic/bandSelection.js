@@ -1,17 +1,16 @@
 /* eslint-disable react/jsx-key */
-import {Field, form} from 'widget/form'
+import {Form, form} from 'widget/form/form'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Combo from 'widget/combo'
 import React from 'react'
 import _ from 'lodash'
 import styles from './bandSelection.module.css'
 
 const fields = {
-    selection: new Field()
+    selection: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => {
@@ -180,7 +179,7 @@ class BandSelection extends React.PureComponent {
 
 const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =>
     <form>
-        <Combo
+        <Form.Combo
             className={styles.combo}
             input={selection}
             placeholder={msg('process.mosaic.bands.placeholder')}

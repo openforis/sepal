@@ -1,4 +1,4 @@
-import {Input} from 'widget/formComponents'
+import {Input} from 'widget/input'
 import {Shape} from 'widget/shape'
 import {Subject, merge} from 'rxjs'
 import {compose} from 'compose'

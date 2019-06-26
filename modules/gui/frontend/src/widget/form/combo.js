@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
-import {FieldSet} from 'widget/form'
-import {Input} from 'widget/formComponents'
+import {Form} from 'widget/form/form'
+import {Input} from 'widget/input'
+import {List} from 'widget/list'
 import {Subject, fromEvent} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -10,7 +11,6 @@ import {selectFrom} from 'stateUtils'
 import AutoFocus from 'widget/autoFocus'
 import FloatingBox from 'widget/floatingBox'
 import Keybinding from 'widget/keybinding'
-import List from 'widget/list'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -24,7 +24,7 @@ const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
 })
 
-class Combo extends React.Component {
+class _FormCombo extends React.Component {
     inputContainer = React.createRef()
     input = React.createRef()
     list = React.createRef()
@@ -40,7 +40,7 @@ class Combo extends React.Component {
     }
 
     render() {
-        const {input, errorMessage, standalone, disabled, className, onCancel} = this.props
+        const {errorMessage, standalone, disabled, className, onCancel} = this.props
         const {label, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
         const onClick = e =>
@@ -52,9 +52,8 @@ class Combo extends React.Component {
                         ? null
                         : this.showOptions()
         return (
-            <FieldSet
+            <Form.FieldSet
                 className={[styles.container, className].join(' ')}
-                input={input}
                 label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
@@ -66,7 +65,7 @@ class Combo extends React.Component {
                     {this.renderInput()}
                 </div>
                 {showOptions ? this.renderOptions() : null}
-            </FieldSet>
+            </Form.FieldSet>
         )
     }
 
@@ -293,13 +292,13 @@ class Combo extends React.Component {
     }
 }
 
-export default compose(
-    Combo,
+export const FormCombo = compose(
+    _FormCombo,
     withSubscriptions(),
     connect(mapStateToProps)
 )
 
-Combo.propTypes = {
+FormCombo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
@@ -322,7 +321,7 @@ Combo.propTypes = {
     onChange: PropTypes.func
 }
 
-Combo.defaultProps = {
+FormCombo.defaultProps = {
     alignment: 'left',
     placement: 'below',
     tooltipPlacement: 'top'

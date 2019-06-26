@@ -1,34 +1,32 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
+import {maxDate, minDate, momentDate} from 'widget/form/datePicker'
 import {msg} from 'translate'
-import DatePicker, {maxDate, minDate, momentDate} from 'widget/datePicker'
 import React from 'react'
-import YearPicker from 'widget/yearPicker'
 import moment from 'moment'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 const fields = {
-    type: new Field(),
-    year: new Field()
+    type: new Form.Field(),
+    year: new Form.Field()
         .skip((_, {type}) => type !== 'YEARLY_TIME_SCAN')
         .int('process.radarMosaic.panel.dates.form.year.malformed'),
-    fromDate: new Field(),
-    toDate: new Field(),
-    targetDate: new Field()
+    fromDate: new Form.Field(),
+    toDate: new Form.Field(),
+    targetDate: new Form.Field()
 }
 
 class Dates extends React.Component {
     renderYearlyTimeScan() {
         const {inputs: {year}} = this.props
         return (
-            <YearPicker
+            <Form.YearPicker
                 label={msg('process.radarMosaic.panel.dates.form.year.label')}
                 placement='above'
                 input={year}
@@ -42,25 +40,25 @@ class Dates extends React.Component {
         const [fromStart, fromEnd] = fromDateRange(toDate.value)
         const [toStart, toEnd] = toDateRange(fromDate.value)
         return (
-            <FieldSet layout='horizontal'>
-                <DatePicker
+            <Layout type='horizontal'>
+                <Form.DatePicker
                     label={msg('process.radarMosaic.panel.dates.form.fromDate.label')}
                     input={fromDate}
                     startDate={fromStart}
                     endDate={fromEnd}/>
-                <DatePicker
+                <Form.DatePicker
                     label={msg('process.radarMosaic.panel.dates.form.toDate.label')}
                     input={toDate}
                     startDate={toStart}
                     endDate={toEnd}/>
-            </FieldSet>
+            </Layout>
         )
     }
 
     renderPointInTimeMosaic() {
         const {inputs: {targetDate}} = this.props
         return (
-            <DatePicker
+            <Form.DatePicker
                 label={msg('process.radarMosaic.panel.dates.form.targetDate.label')}
                 input={targetDate}
                 startDate={'2014-06-15'}
@@ -78,7 +76,7 @@ class Dates extends React.Component {
                 tooltip: msg([`process.radarMosaic.panel.dates.form.type.${value}.tooltip`])
             }))
         return (
-            <Buttons
+            <Form.Buttons
                 label={msg(['process.radarMosaic.panel.dates.form.type.label'])}
                 className={styles.types}
                 input={type}
@@ -109,12 +107,12 @@ class Dates extends React.Component {
                     icon='calendar-alt'
                     title={msg('process.radarMosaic.panel.dates.title')}/>
                 <PanelContent>
-                    <FieldSet>
+                    <Layout>
                         {this.renderTypeSelector()}
                         {this.renderDatePickers()}
-                    </FieldSet>
+                    </Layout>
                 </PanelContent>
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }

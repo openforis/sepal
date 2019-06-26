@@ -1,6 +1,5 @@
 import {BandSetSpec} from './bandSetSpec'
-import {Field} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {getAvailableIndexes} from './opticalIndexes'
@@ -18,18 +17,18 @@ import guid from 'guid'
 import styles from './inputImage.module.css'
 
 const fields = {
-    imageId: new Field(),
-    section: new Field()
+    imageId: new Form.Field(),
+    section: new Form.Field()
         .notBlank('process.classification.panel.inputImagery.form.section.required'),
-    recipe: new Field()
+    recipe: new Form.Field()
         .skip((value, {section}) => section !== 'RECIPE_REF')
         .notBlank('process.classification.panel.inputImagery.form.recipe.required'),
-    asset: new Field()
+    asset: new Form.Field()
         .skip((value, {section}) => section !== 'ASSET')
         .notBlank('process.classification.panel.inputImagery.form.asset.required'),
-    bands: new Field()
+    bands: new Form.Field()
         .notEmpty('process.classification.panel.inputImagery.form.bands.required'),
-    bandSetSpecs: new Field()
+    bandSetSpecs: new Form.Field()
         .predicate((bandSetSpecs, {bands}) =>
             bandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands)),
         'process.classification.panel.inputImagery.form.bandSetSpecs.required')
@@ -68,7 +67,7 @@ class InputImage extends React.Component {
                     icon='image'
                     label={msg('IMAGE TO CLASSIFY')}
                 />
-                <FormPanelButtons>
+                <Form.PanelButtons>
                     <ButtonSelect
                         label={msg('process.classification.panel.inputImagery.derivedBands.label')}
                         tooltip={msg('process.classification.panel.inputImagery.derivedBands.tooltip')}
@@ -80,7 +79,7 @@ class InputImage extends React.Component {
                         options={this.derivedBandsOptions()}
                         onSelect={option => this.updateBandSetSpecs(option)}
                     />
-                </FormPanelButtons>
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }

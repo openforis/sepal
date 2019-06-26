@@ -1,21 +1,20 @@
-import {Field, FieldSet, form} from 'widget/form'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {select} from 'store'
 import {updateCurrentUserSession$} from 'widget/user'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import Slider from 'widget/slider'
 import actionBuilder from 'action-builder'
 import format from 'format'
 import moment from 'moment'
 import styles from './userSession.module.css'
 
 const fields = {
-    id: new Field(),
-    keepAlive: new Field()
+    id: new Form.Field(),
+    keepAlive: new Form.Field()
 }
 
 const mapStateToProps = () => {
@@ -65,7 +64,7 @@ class UserSession extends React.Component {
             return msg('user.userSession.form.keepAlive.info', {keepAliveUntil})
         }
         return (
-            <FormPanel
+            <Form.Panel
                 className={styles.panel}
                 form={form}
                 statePath='userSessions.userSessionPanel'
@@ -77,18 +76,18 @@ class UserSession extends React.Component {
                     label={`${format.dollars(session.costSinceCreation)} (${format.dollarsPerHour(session.instanceType.hourlyCost)})`}
                 />
                 <PanelContent>
-                    <FieldSet>
-                        <Slider
+                    <Layout>
+                        <Form.Slider
                             input={keepAlive}
                             decimals={2}
                             ticks={[0, 1, 3, 6, 12, 24, 36, 48, 72]}
                             scale='log'
                             info={sliderMessage}
                         />
-                    </FieldSet>
+                    </Layout>
                 </PanelContent>
-                <FormPanelButtons/>
-            </FormPanel>
+                <Form.PanelButtons/>
+            </Form.Panel>
         )
     }
 }

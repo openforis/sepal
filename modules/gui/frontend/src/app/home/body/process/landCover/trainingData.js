@@ -1,6 +1,5 @@
-import {Constraint} from 'widget/form'
-import {Field, FieldSet, form} from 'widget/form'
-import {Input} from 'widget/input'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {Subject} from 'rxjs'
@@ -9,23 +8,21 @@ import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
-import Combo from 'widget/combo'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './trainingData.module.css'
 
 const fields = {
-    fusionTable: new Field()
+    fusionTable: new Form.Field()
         .notBlank('process.landCover.panel.trainingData.form.fusionTable.required'),
-    yearColumn: new Field()
+    yearColumn: new Form.Field()
         .notBlank('process.landCover.panel.trainingData.form.yearColumn.required'),
-    classColumn: new Field()
+    classColumn: new Form.Field()
         .notBlank('process.landCover.panel.trainingData.form.classColumn.required')
 }
 
 const constraints = {
-    yearAndClassColumnsSame: new Constraint(['yearColumn', 'classColumn'])
+    yearAndClassColumnsSame: new Form.Constraint(['yearColumn', 'classColumn'])
         .skip(({fusionTable}) => {
             return !fusionTable
         })
@@ -61,7 +58,7 @@ class TrainingData extends React.Component {
     render() {
         const {recipePath, primitiveTypes, form} = this.props
         return (
-            <FormPanel
+            <Form.Panel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -75,8 +72,8 @@ class TrainingData extends React.Component {
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-                <FormPanelButtons/>
-            </FormPanel>
+                <Form.PanelButtons/>
+            </Form.Panel>
         )
     }
 
@@ -91,8 +88,8 @@ class TrainingData extends React.Component {
         const yearPlaceholder = msg(`process.landCover.panel.trainingData.form.yearColumn.placeholder.${columnState}`)
         const classPlaceholder = msg(`process.landCover.panel.trainingData.form.classColumn.placeholder.${columnState}`)
         return (
-            <FieldSet>
-                <Input
+            <Layout>
+                <Form.Input
                     label={msg('process.landCover.panel.trainingData.form.fusionTable.label')}
                     autoFocus
                     input={fusionTable}
@@ -109,7 +106,7 @@ class TrainingData extends React.Component {
                     }}
                     errorMessage
                 />
-                <Combo
+                <Form.Combo
                     label={msg('process.landCover.panel.trainingData.form.yearColumn.label')}
                     input={yearColumn}
                     busy={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
@@ -117,7 +114,7 @@ class TrainingData extends React.Component {
                     placeholder={yearPlaceholder}
                     options={(columns || []).map(({name}) => ({value: name, label: name}))}
                 />
-                <Combo
+                <Form.Combo
                     label={msg('process.landCover.panel.trainingData.form.classColumn.label')}
                     input={classColumn}
                     busy={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
@@ -126,7 +123,7 @@ class TrainingData extends React.Component {
                     options={(columns || []).map(({name}) => ({value: name, label: name}))}
                     errorMessage={[classColumn, 'yearAndClassColumnsSame']}
                 />
-            </FieldSet>
+            </Layout>
         )
     }
 }

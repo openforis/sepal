@@ -1,5 +1,5 @@
 import {Button, ButtonGroup} from 'widget/button'
-import {FormComponent} from 'widget/formComponents'
+import {Widget} from 'widget/widget'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -101,7 +101,7 @@ export class Buttons extends React.Component {
     render() {
         const {label, tooltip, tooltipPlacement, disabled, options, className} = this.props
         return (
-            <FormComponent
+            <Widget
                 className={className}
                 label={label}
                 tooltip={tooltip}
@@ -111,7 +111,7 @@ export class Buttons extends React.Component {
                 {options.length && options[0].options
                     ? this.renderOptionGroups(options)
                     : this.renderButtons(options)}
-            </FormComponent>
+            </Widget>
         )
     }
 }
@@ -125,40 +125,6 @@ Buttons.propTypes = {
     multiple: PropTypes.any,
     options: PropTypes.array,
     selected: PropTypes.any,
-    tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string,
-    type: PropTypes.string,
-    onChange: PropTypes.any,
-}
-
-export const FormButtons = (
-    {
-        capitalized, className, input, label, multiple, options, tooltip, tooltipPlacement, type, disabled, onChange
-    }) =>
-    <Buttons
-        capitalized={capitalized}
-        className={className}
-        selected={input.value}
-        onChange={value => {
-            input.set(value)
-            onChange && onChange(value)
-        }}
-        label={label}
-        multiple={multiple}
-        options={options}
-        tooltip={tooltip}
-        tooltipPlacement={tooltipPlacement}
-        type={type}
-        disabled={disabled}/>
-
-FormButtons.propTypes = {
-    capitalized: PropTypes.any,
-    className: PropTypes.string,
-    disabled: PropTypes.any,
-    input: PropTypes.object,
-    label: PropTypes.string,
-    multiple: PropTypes.any,
-    options: PropTypes.array,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,

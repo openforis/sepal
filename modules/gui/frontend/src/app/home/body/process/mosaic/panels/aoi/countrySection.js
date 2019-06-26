@@ -1,4 +1,5 @@
-import {FieldSet} from 'widget/form'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -7,7 +8,6 @@ import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
-import Combo from 'widget/combo'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -87,8 +87,8 @@ class CountrySection extends React.Component {
         const countryPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.country.placeholder.${countriesState}`)
         const areaPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.area.placeholder.${areasState}`)
         return (
-            <FieldSet>
-                <Combo
+            <Layout>
+                <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}
                     input={country}
                     placement='below'
@@ -103,7 +103,7 @@ class CountrySection extends React.Component {
                         this.loadCountryAreas(option.value)
                     }}
                 />
-                <Combo
+                <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}
                     input={area}
                     placement='below'
@@ -113,7 +113,7 @@ class CountrySection extends React.Component {
                     disabled={!countryAreas || countryAreas.length === 0}
                     onChange={() => this.aoiChanged$.next()}
                 />
-            </FieldSet>
+            </Layout>
         )
     }
 

@@ -1,5 +1,4 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, form} from 'widget/form'
+import {Form, form} from 'widget/form/form'
 import {PanelButtons} from 'widget/panel'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
@@ -7,14 +6,13 @@ import {compose} from 'compose'
 import {getRevisions, revertToRevision$} from 'app/home/body/process/recipe'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
-import FormPanel from 'widget/formPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
 import moment from 'moment'
 import styles from './revisions.module.css'
 
 const fields = {
-    revision: new Field().notBlank('process.revisions.required')
+    revision: new Form.Field().notBlank('process.revisions.required')
 }
 
 class Revisions extends React.Component {
@@ -30,7 +28,7 @@ class Revisions extends React.Component {
             return {value: timestamp, label}
         })
         return (
-            <Buttons type='vertical-tight' uppercase={false} options={options} input={revision}/>
+            <Form.Buttons type='vertical-tight' uppercase={false} options={options} input={revision}/>
         )
     }
 
@@ -39,7 +37,7 @@ class Revisions extends React.Component {
         const confirm = () => this.revertToRevision(revision.value)
         const cancel = () => deactivate()
         return (
-            <FormPanel
+            <Form.Panel
                 className={styles.panel}
                 form={form}
                 isActionForm
@@ -62,7 +60,7 @@ class Revisions extends React.Component {
                         <PanelButtons.Cancel onClick={cancel}/>
                     </PanelButtons.Extra>
                 </PanelButtons>
-            </FormPanel>
+            </Form.Panel>
         )
     }
 

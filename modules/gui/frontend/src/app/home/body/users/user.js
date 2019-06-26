@@ -1,33 +1,32 @@
-import {Field, FieldSet, form} from 'widget/form'
-import {Input} from 'widget/input'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './user.module.css'
 
 const fields = {
-    username: new Field()
+    username: new Form.Field()
         .notBlank('user.userDetails.form.username.required')
         .match(/^[a-zA-Z_][a-zA-Z0-9]{0,29}$/, 'user.userDetails.form.username.format'),
-    name: new Field()
+    name: new Form.Field()
         .notBlank('user.userDetails.form.name.required'),
-    email: new Field()
+    email: new Form.Field()
         .notBlank('user.userDetails.form.email.required')
         .email('user.userDetails.form.email.required'),
-    organization: new Field()
+    organization: new Form.Field()
         .notBlank('user.userDetails.form.organization.required'),
-    monthlyBudgetInstanceSpending: new Field()
+    monthlyBudgetInstanceSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
         .int('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
         .min(1, 'user.userDetails.form.monthlyBudget.instanceSpending.atLeast1'),
-    monthlyBudgetStorageSpending: new Field()
+    monthlyBudgetStorageSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.storageSpending.atLeast1')
         .int('user.userDetails.form.monthlyBudget.storageSpending.atLeast1')
         .min(1, 'user.userDetails.form.monthlyBudget.storageSpending.atLeast1'),
-    monthlyBudgetStorageQuota: new Field()
+    monthlyBudgetStorageQuota: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
         .int('user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
         .min(1, 'user.userDetails.form.monthlyBudget.storageQuota.atLeast1')
@@ -64,7 +63,7 @@ class UserDetails extends React.Component {
         } = this.props
         const newUser = !this.props.userDetails.username
         return (
-            <FormPanel
+            <Form.Panel
                 className={[styles.panel, newUser ? styles.newUser : styles.existingUser].join(' ')}
                 form={form}
                 statePath='userDetails'
@@ -75,8 +74,8 @@ class UserDetails extends React.Component {
                     icon='user'
                     title={msg('user.userDetails.title')}/>
                 <PanelContent>
-                    <FieldSet>
-                        <Input
+                    <Layout>
+                        <Form.Input
                             label={msg('user.userDetails.form.username.label')}
                             input={username}
                             disabled={!newUser}
@@ -84,54 +83,54 @@ class UserDetails extends React.Component {
                             autoFocus={newUser}
                             errorMessage
                         />
-                        <Input
+                        <Form.Input
                             label={msg('user.userDetails.form.name.label')}
                             input={name}
                             spellCheck={false}
                             autoFocus={!newUser}
                             errorMessage
                         />
-                        <Input
+                        <Form.Input
                             label={msg('user.userDetails.form.email.label')}
                             input={email}
                             spellCheck={false}
                             errorMessage
                         />
-                        <Input
+                        <Form.Input
                             label={msg('user.userDetails.form.organization.label')}
                             input={organization}
                             spellCheck={false}
                             errorMessage
                         />
-                        <FieldSet
+                        <Form.FieldSet
                             className={styles.monthlyLimits}
                             layout='horizontal'
                             label={msg('user.userDetails.form.monthlyLimits.label')}
                             errorMessage={[monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota]}
                         >
-                            <Input
+                            <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.instanceSpending.label')}
                                 type='number'
                                 input={monthlyBudgetInstanceSpending}
                                 spellCheck={false}
                             />
-                            <Input
+                            <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.storageSpending.label')}
                                 type='number'
                                 input={monthlyBudgetStorageSpending}
                                 spellCheck={false}
                             />
-                            <Input
+                            <Form.Input
                                 label={msg('user.userDetails.form.monthlyBudget.storageQuota.label')}
                                 type='number'
                                 input={monthlyBudgetStorageQuota}
                                 spellCheck={false}
                             />
-                        </FieldSet>
-                    </FieldSet>
+                        </Form.FieldSet>
+                    </Layout>
                 </PanelContent>
-                <FormPanelButtons/>
-            </FormPanel>
+                <Form.PanelButtons/>
+            </Form.Panel>
         )
     }
 }

@@ -1,6 +1,5 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Constraint, Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, dateRange} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -14,11 +13,11 @@ import _ from 'lodash'
 import styles from './sources.module.css'
 
 const fields = _.transform(sources,
-    (fields, source) => fields[source] = new Field(),
+    (fields, source) => fields[source] = new Form.Field(),
     {})
 
 const constraints = {
-    dataSetSelected: new Constraint(sources)
+    dataSetSelected: new Form.Constraint(sources)
         .predicate(values =>
             Object.values(values).find(value =>
                 _.isArray(value) && value.length), 'process.mosaic.panel.sources.form.required')
@@ -52,16 +51,16 @@ class Sources extends React.Component {
                 <PanelContent>
                     {this.renderSources()}
                 </PanelContent>
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
 
     renderSources() {
         return (
-            <FieldSet>
+            <Layout>
                 {sources.map(source => this.renderSource(source, imageSourceById[source].dataSets))}
-            </FieldSet>
+            </Layout>
         )
     }
 
@@ -77,7 +76,7 @@ class Sources extends React.Component {
             })
         )
         return (
-            <Buttons
+            <Form.Buttons
                 key={source}
                 label={msg(['process.mosaic.panel.sources.form.source.options', source])}
                 className={styles.dataSets}

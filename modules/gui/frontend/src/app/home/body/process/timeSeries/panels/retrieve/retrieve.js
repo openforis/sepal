@@ -1,6 +1,5 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../../timeSeriesRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -11,7 +10,7 @@ import React from 'react'
 import styles from './retrieve.module.css'
 
 const fields = {
-    indicator: new Field()
+    indicator: new Form.Field()
         .notEmpty('process.timeSeries.panel.retrieve.form.indicator.required')
 }
 
@@ -35,13 +34,13 @@ class Retrieve extends React.Component {
         ]
 
         return (
-            <FieldSet>
-                <Buttons
+            <Layout>
+                <Form.Buttons
                     label={msg('process.timeSeries.panel.retrieve.form.indicator.label')}
                     input={indicator}
                     multiple={false}
                     options={indicatorOptions}/>
-            </FieldSet>
+            </Layout>
         )
     }
 
@@ -58,7 +57,7 @@ class Retrieve extends React.Component {
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-                <FormPanelButtons
+                <Form.PanelButtons
                     applyLabel={msg('process.timeSeries.panel.retrieve.apply')}/>
             </RecipeFormPanel>
         )

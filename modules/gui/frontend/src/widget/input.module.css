@@ -1,0 +1,61 @@
+.input {
+    position: relative;
+}
+
+.input .extraComponent {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: .5;
+}
+
+.input .extraComponent.left {
+    padding-left: .25rem;
+    padding-right: .5rem;
+}
+
+.input .extraComponent.right {
+    padding-right: .25rem;
+}
+
+.input:hover .extraComponent {
+    opacity: 1;
+}
+
+.input input,
+.input textarea {
+    display: block;
+    width: 100%;
+    border: none;
+    padding: .25rem .5rem;
+    color: #fff;
+    background-color: transparent;
+    transition: background-color 800ms ease-out;
+}
+
+.input input[type=number] {
+    text-align: right;
+}
+
+.input input:-webkit-autofill,
+.input input:-webkit-autofill:hover,
+.input input:-webkit-autofill:focus,
+.input input:-webkit-autofill:active {
+    transition: background-color 9999999999s ease-in-out 0s;
+    -webkit-text-fill-color: #fff;
+}
+
+.input input:disabled,
+.input textarea:disabled {
+    color: #888;
+}
+
+.input input::placeholder,
+.input textarea::placeholder {
+    color: #6c757d;
+}
+
+.input input.readOnly,
+.input textarea.readOnly {
+    pointer-events: none;
+}

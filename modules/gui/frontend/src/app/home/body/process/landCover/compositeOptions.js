@@ -1,20 +1,18 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, FieldSet, form} from 'widget/form'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {compose} from 'compose'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
-import FormPanel, {FormPanelButtons} from 'widget/formPanel'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Slider from 'widget/slider'
 import styles from './compositeOptions.module.css'
 
 const fields = {
-    cloudThreshold: new Field(),
-    corrections: new Field(),
-    mask: new Field(),
+    cloudThreshold: new Form.Field(),
+    corrections: new Form.Field(),
+    mask: new Form.Field(),
 }
 
 class CompositeOptions extends React.Component {
@@ -27,7 +25,7 @@ class CompositeOptions extends React.Component {
     render() {
         const {recipePath, form} = this.props
         return (
-            <FormPanel
+            <Form.Panel
                 className={styles.panel}
                 form={form}
                 statePath={recipePath + '.ui'}
@@ -41,16 +39,16 @@ class CompositeOptions extends React.Component {
                 <PanelContent>
                     {this.renderContent()}
                 </PanelContent>
-                <FormPanelButtons/>
-            </FormPanel>
+                <Form.PanelButtons/>
+            </Form.Panel>
         )
     }
 
     renderContent() {
         const {inputs: {cloudThreshold, corrections, mask}} = this.props
         return (
-            <FieldSet>
-                <Slider
+            <Layout>
+                <Form.Slider
                     label={msg('process.landCover.panel.compositeOptions.form.cloudThreshold.label')}
                     tooltip={msg('process.landCover.panel.compositeOptions.form.cloudThreshold.tooltip')}
                     tooltipPlacement='topLeft'
@@ -63,7 +61,7 @@ class CompositeOptions extends React.Component {
                         const type = value === 0 ? 'off' : value === 100 ? 'max' : 'value'
                         return msg(['process.landCover.panel.compositeOptions.form.cloudThreshold', type], {value})
                     }}/>
-                <Buttons
+                <Form.Buttons
                     label={msg('process.landCover.panel.compositeOptions.form.corrections.label')}
                     input={corrections}
                     multiple={true}
@@ -83,7 +81,7 @@ class CompositeOptions extends React.Component {
                             tooltip: msg('process.landCover.panel.compositeOptions.form.corrections.terrain.tooltip')
                         }]}
                 />
-                <Buttons
+                <Form.Buttons
                     label={msg('process.landCover.panel.compositeOptions.form.mask.label')}
                     input={mask}
                     multiple={true}
@@ -107,7 +105,7 @@ class CompositeOptions extends React.Component {
                         // }
                     ]}
                 />
-            </FieldSet>
+            </Layout>
         )
     }
 }

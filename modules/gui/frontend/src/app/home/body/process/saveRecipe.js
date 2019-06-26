@@ -1,17 +1,16 @@
-import {Field, FieldSet, form} from 'widget/form'
-import {Input} from 'widget/input'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {closeRecipe} from './recipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {saveRecipe} from './recipe'
-import FormPanel from 'widget/formPanel'
 import React from 'react'
 import styles from './saveRecipe.module.css'
 
 const fields = {
-    name: new Field()
+    name: new Form.Field()
         .notBlank('process.saveRecipe.form.name.required'),
 }
 
@@ -43,14 +42,14 @@ class SaveRecipe extends React.Component {
         const cancel = () => activatable.deactivate()
         return <React.Fragment>
             <PanelContent>
-                <FieldSet>
-                    <Input
+                <Layout>
+                    <Form.Input
                         label={msg('process.saveRecipe.form.name.label')}
                         autoFocus
                         input={name}
                         errorMessage
                     />
-                </FieldSet>
+                </Layout>
             </PanelContent>
             <PanelButtons onEnter={save} onEscape={cancel}>
                 <PanelButtons.Main>
@@ -66,7 +65,7 @@ class SaveRecipe extends React.Component {
     render() {
         const {form} = this.props
         return (
-            <FormPanel
+            <Form.Panel
                 className={styles.panel}
                 form={form}
                 isActionForm={true}
@@ -76,7 +75,7 @@ class SaveRecipe extends React.Component {
                     icon='save'
                     title={msg('process.saveRecipe.title')}/>
                 {this.renderPanel()}
-            </FormPanel>
+            </Form.Panel>
         )
     }
 }

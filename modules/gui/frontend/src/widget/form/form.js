@@ -1,16 +1,21 @@
-import {FormComponent} from 'widget/formComponents'
+import {FormButtons} from 'widget/form/buttons'
+import {FormCheckbox} from 'widget/form/checkbox'
+import {FormCombo} from 'widget/form/combo'
+import {FormConstraint, FormField} from 'widget/form/property'
+import {FormContext} from 'widget/form/context'
+import {FormDatePicker} from 'widget/form/datePicker'
+import {FormError} from 'widget/form/error'
+import {FormFieldSet} from 'widget/form/fieldset'
+import {FormInput} from 'widget/form/input'
+import {FormPanel} from 'widget/form/panel'
+import {FormPanelButtons} from 'widget/form/panelButtons'
+import {FormSlider} from 'widget/form/slider'
+import {FormYearPicker} from 'widget/form/yearPicker'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import moment from 'moment'
-import withContext from 'context'
-
-const FormContext = React.createContext()
-
-export const withFormContext = withContext(FormContext, 'form')
 
 export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
     WrappedComponent => {
@@ -277,105 +282,6 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
 const getDisplayName = Component =>
     Component.displayName || Component.name || 'Component'
 
-class FormProperty {
-    static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape
-
-    _predicates = []
-    _skip = []
-
-    skip(when) {
-        this._skip.push(when)
-        return this
-    }
-
-    predicate(constraint, messageId, messageArgs = () => ({})) {
-        this._predicates.push([constraint, messageId, messageArgs])
-        return this
-    }
-
-    match(regex, messageId, messageArgs) {
-        return this.predicate(value => regex.test(value), messageId, messageArgs)
-    }
-
-    notEmpty(messageId, messageArgs) {
-        return this.predicate(value => {
-            if (Array.isArray(value))
-                return value.length > 0
-            else if (value === Object(value))
-                return Object.keys(value).length > 0
-            else
-                return !!value
-        },
-        messageId,
-        messageArgs
-        )
-    }
-
-    notBlank(messageId, messageArgs) {
-        return this.predicate(value => !!value, messageId, messageArgs)
-    }
-
-    email(messageId, messageArgs) {
-        return this.match(Constraint._EMAIL_REGEX, messageId, messageArgs)
-    }
-
-    date(format, messageId, messageArgs) {
-        return this.predicate(value => moment(value, format).isValid(), messageId, messageArgs)
-    }
-
-    int(messageId, messageArgs) {
-        return this.predicate(value => String(value).match(/^\d+$/), messageId, messageArgs)
-    }
-
-    min(minValue, messageId, messageArgs) {
-        return this.predicate(value => value >= minValue, messageId, messageArgs)
-    }
-
-    check(name, values) {
-        const skip = this._isSkipped(name, values)
-        const failingConstraint = !skip &&
-            this._predicates.find(constraint =>
-                this._checkPredicate(name, values, constraint[0]) ? null : constraint[1]
-            )
-        return failingConstraint ? msg(failingConstraint[1], failingConstraint[2](values)) : ''
-    }
-
-    _checkPredicate(_name, _values, _predicate) {
-        throw Error('Expected to be implemented by subclass')
-    }
-
-    _isSkipped(_name, _values) {
-        throw Error('Expected to be implemented by subclass')
-    }
-}
-
-export class Constraint extends FormProperty {
-    constructor(fieldNames) {
-        super()
-        this.fieldNames = fieldNames
-        if (!Array.isArray(fieldNames) || fieldNames.length < 2)
-            throw Error('Constructor of Constraint requires an array of at least 2 field names')
-    }
-
-    _checkPredicate(name, values, predicate) {
-        return predicate(values)
-    }
-
-    _isSkipped(name, values) {
-        return this._skip.find(when => when(values))
-    }
-}
-
-export class Field extends FormProperty {
-    _checkPredicate(name, values, predicate) {
-        return predicate(values[name], values)
-    }
-
-    _isSkipped(name, values) {
-        return this._skip.find(when => when(values[name], values))
-    }
-}
-
 export class Form extends React.Component {
     render() {
         const {className, onSubmit, children} = this.props
@@ -398,71 +304,16 @@ Form.propTypes = {
     className: PropTypes.string
 }
 
-export const getErrorMessage = (form, input) =>
-    _.chain([input])
-        .flatten()
-        .compact()
-        .map(source =>
-            _.isString(source)
-                ? form.errors[source]
-                : source.error
-        )
-        .find(error => error)
-        .value() || ''
-
-export const ErrorMessage = props => {
-    return (
-        <FormContext.Consumer>
-            {form => getErrorMessage(form, props['for'])}
-        </FormContext.Consumer>
-    )
-}
-
-ErrorMessage.propTypes = {
-    'for': PropTypes.any.isRequired,
-    className: PropTypes.string
-}
-
-class _FieldSet extends React.Component {
-    render() {
-        const {form, className, layout, spacing, disabled, label,
-            tooltip, tooltipPlacement, errorMessage, children} = this.props
-        return (
-            <FormComponent
-                className={className}
-                layout={layout}
-                spacing={spacing}
-                disabled={disabled}
-                label={label}
-                tooltip={tooltip}
-                tooltipPlacement={tooltipPlacement}
-                errorMessage={errorMessage && getErrorMessage(form, errorMessage)}
-            >
-                {children}
-            </FormComponent>
-        )
-    }
-}
-
-export const FieldSet = compose(
-    _FieldSet,
-    withFormContext()
-)
-
-FieldSet.propTypes = {
-    children: PropTypes.any.isRequired,
-    className: PropTypes.string,
-    disabled: PropTypes.any,
-    errorMessage: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
-    input: PropTypes.object,
-    label: PropTypes.string,
-    layout: PropTypes.oneOf(['vertical', 'horizontal']),
-    spacing: PropTypes.oneOf(['normal', 'compact', 'none']),
-    tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string
-}
-
-FieldSet.defaultProps = {
-    spacing: 'normal',
-    layout: 'vertical'
-}
+Form.Field = FormField
+Form.Constraint = FormConstraint
+Form.Input = FormInput
+Form.Error = FormError
+Form.FieldSet = FormFieldSet
+Form.Slider = FormSlider
+Form.Combo = FormCombo
+Form.Checkbox = FormCheckbox
+Form.YearPicker = FormYearPicker
+Form.DatePicker = FormDatePicker
+Form.Buttons = FormButtons
+Form.Panel = FormPanel
+Form.PanelButtons = FormPanelButtons

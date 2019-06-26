@@ -1,6 +1,5 @@
-import {FormButtons as Buttons} from 'widget/buttons'
-import {Field, FieldSet} from 'widget/form'
-import {FormPanelButtons} from 'widget/formPanel'
+import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -11,7 +10,7 @@ import React from 'react'
 import styles from './auxiliaryImagery.module.css'
 
 const fields = {
-    included: new Field()
+    included: new Form.Field()
         .notBlank('process.classification.panel.auxiliaryImagery.form.required')
 }
 
@@ -36,7 +35,7 @@ class AuxiliaryImagery extends React.Component {
                     {this.renderContent()}
                 </PanelContent>
 
-                <FormPanelButtons/>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
@@ -61,13 +60,13 @@ class AuxiliaryImagery extends React.Component {
             }
         ]
         return (
-            <FieldSet>
-                <Buttons
+            <Layout>
+                <Form.Buttons
                     label={msg(['process.classification.panel.auxiliaryImagery.form.options.label'])}
                     input={included}
                     options={options}
                     multiple/>
-            </FieldSet>
+            </Layout>
         )
     }
 

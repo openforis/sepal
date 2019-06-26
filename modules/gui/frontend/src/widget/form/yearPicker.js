@@ -1,10 +1,10 @@
-import Combo from 'widget/combo'
+import {FormCombo} from 'widget/form/combo'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './yearPicker.module.css'
 
-export default class YearPicker extends React.Component {
+export class FormYearPicker extends React.Component {
     getOptions() {
         const {startYear, endYear} = this.props
         return _.concat(
@@ -17,7 +17,7 @@ export default class YearPicker extends React.Component {
     render() {
         const {input, label, placement, tooltip, tooltipPlacement, autoFocus, errorMessage, onChange} = this.props
         return (
-            <Combo
+            <FormCombo
                 className={styles.yearPicker}
                 input={input}
                 label={label}
@@ -34,7 +34,7 @@ export default class YearPicker extends React.Component {
     }
 }
 
-YearPicker.propTypes = {
+FormYearPicker.propTypes = {
     autoFocus: PropTypes.any,
     endYear: PropTypes.any,
     input: PropTypes.object,

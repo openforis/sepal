@@ -1,18 +1,16 @@
-import {Field, form} from 'widget/form'
+import {Form, form} from 'widget/form/form'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Checkbox from 'widget/checkbox'
-import Combo from 'widget/combo'
 import React from 'react'
 import _ from 'lodash'
 import styles from './bandSelection.module.css'
 
 const fields = {
-    selection: new Field(),
-    panSharpen: new Field()
+    selection: new Form.Field(),
+    panSharpen: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => {
@@ -101,7 +99,7 @@ class BandSelection extends React.Component {
 
 const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =>
     <form>
-        <Combo
+        <Form.Combo
             className={styles.combo}
             input={selection}
             placeholder={msg('process.mosaic.bands.placeholder')}
@@ -139,7 +137,7 @@ const SelectedBands = ({recipeActions, selectedOption, canPanSharpen, panSharpen
             {canPanSharpen
                 ?
                 <div className={styles.panSharpen}>
-                    <Checkbox label={msg('process.mosaic.bands.panSharpen')} input={panSharpen} onChange={enabled =>
+                    <Form.Checkbox label={msg('process.mosaic.bands.panSharpen')} input={panSharpen} onChange={enabled =>
                         recipeActions.setPanSharpen(enabled).dispatch()
                     }/>
                 </div>

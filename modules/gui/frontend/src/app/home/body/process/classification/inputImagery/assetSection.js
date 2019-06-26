@@ -1,4 +1,4 @@
-import {Input} from 'widget/input'
+import {Form} from 'widget/form/form'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -7,7 +7,7 @@ export default class AssetSection extends React.Component {
     render() {
         const {input, onChange} = this.props
         return (
-            <Input
+            <Form.Input
                 label={msg('process.classification.panel.inputImagery.form.asset.label')}
                 autoFocus
                 input={input}

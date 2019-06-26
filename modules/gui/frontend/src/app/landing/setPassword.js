@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {Constraint, Field, FieldSet, Form, form} from 'widget/form'
-import {Input} from 'widget/input'
+import {Form, form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {PropTypes} from 'prop-types'
 import {compose} from 'compose'
 import {history, query} from 'route'
@@ -14,15 +14,15 @@ import styles from './setPassword.module.css'
 
 const fields = {
     username: null,
-    password: new Field()
+    password: new Form.Field()
         .notBlank('landing.reset-password.password.required'),
-    password2: new Field()
+    password2: new Form.Field()
         .notBlank('landing.reset-password.password2.required')
 
 }
 
 const constraints = {
-    passwordsMatch: new Constraint(['password', 'password2'])
+    passwordsMatch: new Form.Constraint(['password', 'password2'])
         .predicate(({password, password2}) =>
             !password || password === password2,
         'landing.reset-password.password2.not-matching')
@@ -78,14 +78,14 @@ class SetPassword extends React.Component {
         const resettingPassword = stream('RESET_PASSWORD').active
         return (
             <Form className={styles.form} onSubmit={() => this.resetPassword(form.values())}>
-                <FieldSet>
-                    <Input
+                <Layout spacing='loose'>
+                    <Form.Input
                         label={msg('landing.reset-password.username.label')}
                         input={username}
                         disabled={true}
                         errorMessage
                     />
-                    <Input
+                    <Form.Input
                         label={msg('landing.reset-password.password.label')}
                         input={password}
                         type='password'
@@ -94,7 +94,7 @@ class SetPassword extends React.Component {
                         tabIndex={1}
                         errorMessage
                     />
-                    <Input
+                    <Form.Input
                         label={msg('landing.reset-password.password2.label')}
                         input={password2}
                         type='password'
@@ -102,7 +102,7 @@ class SetPassword extends React.Component {
                         tabIndex={2}
                         errorMessage={[password2, 'passwordsMatch']}
                     />
-                </FieldSet>
+                </Layout>
                 <Button
                     type='submit'
                     look='apply'

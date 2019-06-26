@@ -1,4 +1,4 @@
-import {FormButtons as Buttons} from 'widget/buttons'
+import {Form} from 'widget/form/form'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -18,7 +18,7 @@ export default class SectionSelection extends React.Component {
             },
         ]
         return (
-            <Buttons
+            <Form.Buttons
                 type='vertical'
                 className={styles.sectionSelection}
                 input={section}

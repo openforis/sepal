@@ -8,7 +8,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import User from 'widget/user'
 import ViewportResizeSensor from 'widget/viewportResizeSensor'
-
 import css1 from './reset.css'
 import css2 from './app.css'
 import css3 from '../style/look.css'

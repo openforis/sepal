@@ -1,4 +1,4 @@
-import {FormButtons as Buttons} from 'widget/buttons'
+import {Form} from 'widget/form/form'
 import {msg} from 'translate'
 import {removeAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
@@ -23,7 +23,7 @@ export default class SectionSelection extends React.Component {
             }
         ]
         return (
-            <Buttons
+            <Form.Buttons
                 type='vertical'
                 className={styles.sources}
                 input={section}
