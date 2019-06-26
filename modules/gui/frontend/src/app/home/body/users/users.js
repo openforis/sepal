@@ -6,7 +6,8 @@ import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {map, share, zip} from 'rxjs/operators'
+import {forkJoin} from 'rxjs'
+import {map, share, tap, zip} from 'rxjs/operators'
 import {msg} from 'translate'
 import Highlight from 'react-highlighter'
 import Icon from 'widget/icon'
@@ -22,14 +23,26 @@ import lookStyles from 'style/look.module.css'
 import moment from 'moment'
 import styles from './users.module.css'
 
-const getUserList$ = () => api.user.getUserList$().pipe(
-    share()
+const getUserList$ = () => forkJoin(
+    api.user.getUserList$(),
+    api.user.getBudgetReport$()
+).pipe(
+    map(([users, budget]) =>
+        _.map(users, user => ({
+            ...user,
+            report: budget[user.username || {}]
+        }))
+    )
 )
 
-const getBudgetReport$ = () => api.user.getBudgetReport$().pipe(
-    zip(getUserList$()),
-    map(([budgetReport]) => budgetReport)
-)
+// const getUserList$ = () => api.user.getUserList$().pipe(
+//     share()
+// )
+
+// const getBudgetReport$ = () => api.user.getBudgetReport$().pipe(
+//     zip(getUserList$()),
+//     map(([budgetReport]) => budgetReport)
+// )
 
 class Users extends React.Component {
     state = {
@@ -49,22 +62,22 @@ class Users extends React.Component {
                 users: this.getSortedUsers(userList)
             })
 
-        const mergeBudgetReport = budgetReport =>
-            this.setState(({users}) => ({
-                users: _.map(users, user => ({
-                    ...user,
-                    report: budgetReport[user.username || {}]
-                }))
-            }))
+        // const mergeBudgetReport = budgetReport =>
+        //     this.setState(({users}) => ({
+        //         users: _.map(users, user => ({
+        //             ...user,
+        //             report: budgetReport[user.username || {}]
+        //         }))
+        //     }))
 
         this.props.stream('LOAD_USER_LIST',
             getUserList$(),
             userList => setUserList(userList)
         )
-        this.props.stream('LOAD_BUDGET_REPORT',
-            getBudgetReport$(),
-            budgetReport => mergeBudgetReport(budgetReport)
-        )
+        // this.props.stream('LOAD_BUDGET_REPORT',
+        //     getBudgetReport$(),
+        //     budgetReport => mergeBudgetReport(budgetReport)
+        // )
     }
 
     setSorting(sortingOrder) {
