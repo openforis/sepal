@@ -15,7 +15,7 @@ import withSubscriptions from 'subscription'
 
 const autoCenter$ = new Subject()
 
-class List extends React.Component {
+class _List extends React.Component {
     render() {
         const {className, ...props} = this.props
         return (
@@ -360,8 +360,8 @@ class ScrollableList extends React.Component {
     }
 }
 
-export default compose(
-    List,
+export const List = compose(
+    _List,
     withSubscriptions(),
     withForwardedRef()
 )
