@@ -1,4 +1,4 @@
-from util import *
+from .util import *
 
 def create(date, footprint):
     jdp = date.getFraction('year')

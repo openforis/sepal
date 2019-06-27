@@ -3,9 +3,9 @@ from collections import namedtuple
 
 import ee
 
-from build_overviews import BuildOverviews
-from build_vrt import BuildVrt
-from set_band_names import SetBandNames
+from .build_overviews import BuildOverviews
+from .build_vrt import BuildVrt
+from .set_band_names import SetBandNames
 from .. import drive
 from .. import image_spec_factory
 from ..drive import Download

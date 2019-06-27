@@ -1,6 +1,6 @@
-import sun_angles
-import view_angles
-from util import *
+from .import sun_angles
+from . import view_angles
+from .util import *
 
 
 def apply(image):

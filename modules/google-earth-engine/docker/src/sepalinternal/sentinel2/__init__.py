@@ -4,7 +4,7 @@ from abc import abstractmethod
 import ee
 from datetime import datetime
 
-from analyze import Analyze
+from .analyze import Analyze
 from ..dates import millis_to_date
 from ..mosaic import DataSet
 from ..mosaic_spec import MosaicSpec
@@ -24,7 +24,7 @@ class Sentinel2MosaicSpec(MosaicSpec):
             self.scale = min([
                 resolution
                 for band, resolution
-                in _scale_by_band.iteritems()
+                in iter(_scale_by_band.items())
                 if band in self.bands
             ])
         else:

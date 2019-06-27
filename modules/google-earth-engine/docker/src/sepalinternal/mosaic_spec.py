@@ -3,10 +3,10 @@ from abc import abstractmethod
 
 import ee
 
-from aoi import Aoi
-from dates import parse_date, day_of_year, add_years, to_millis, milis_per_day
-from image_spec import ImageSpec
-from mosaic import Mosaic
+from .aoi import Aoi
+from .dates import parse_date, day_of_year, add_years, to_millis, milis_per_day
+from .image_spec import ImageSpec
+from .mosaic import Mosaic
 
 
 class MosaicSpec(ImageSpec):
