@@ -1,10 +1,9 @@
+import {Toolbar} from 'widget/toolbar/toolbar'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-// import PanelWizard from 'widget/panelWizard'
-import {compose} from 'compose'
-import Toolbar, {ActivationButton} from 'widget/toolbar'
 import styles from './initToolbar.module.css'
 
 const recipeToProps = recipe => {
@@ -26,15 +25,15 @@ class InitToolbar extends React.Component {
                 placement='bottom-right'
                 panel
                 className={styles.bottom}>
-                <ActivationButton
+                <Toolbar.ActivationButton
                     id='areaOfInterest'
                     label={msg('process.mosaic.panel.areaOfInterest.button')}
                     tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}/>
-                <ActivationButton
+                <Toolbar.ActivationButton
                     id='period'
                     label={msg('process.landCover.panel.period.button')}
                     tooltip={msg('process.landCover.panel.period.tooltip')}/>
-                <ActivationButton
+                <Toolbar.ActivationButton
                     id='typology'
                     label={msg('process.landCover.panel.typology.button')}
                     tooltip={msg('process.landCover.panel.typology.tooltip')}/>

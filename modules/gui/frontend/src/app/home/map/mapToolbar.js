@@ -1,3 +1,4 @@
+import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
@@ -6,7 +7,6 @@ import Keybinding from 'widget/keybinding'
 import Labels from 'app/home/map/labels'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Toolbar, {ToolbarButton} from 'widget/toolbar'
 import styles from './mapToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => ({
@@ -29,28 +29,28 @@ class MapToolbar extends React.Component {
                     className={styles.mapToolbar}
                     horizontal
                     placement='top-right'>
-                    <ToolbarButton
+                    <Toolbar.ToolbarButton
                         disabled={sepalMap.isMaxZoom()}
                         onClick={() => sepalMap.zoomIn()}
                         icon={'plus'}
                         tooltip={msg('process.mosaic.mapToolbar.zoomIn.tooltip')}/>
-                    <ToolbarButton
+                    <Toolbar.ToolbarButton
                         disabled={sepalMap.isMinZoom()}
                         onClick={() => sepalMap.zoomOut()}
                         icon={'minus'}
                         tooltip={msg('process.mosaic.mapToolbar.zoomOut.tooltip')}/>
-                    <ToolbarButton
+                    <Toolbar.ToolbarButton
                         selected={isZooming}
                         disabled={sepalMap.isMaxZoom()}
                         onClick={() => isZooming ? context.cancelZoomArea() : context.zoomArea()}
                         icon={'search'}
                         tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
-                    <ToolbarButton
+                    <Toolbar.ToolbarButton
                         disabled={!hasBounds}
                         onClick={() => sepalMap.getContext(mapContext).fitLayer('aoi')}
                         icon={'bullseye'}
                         tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>
-                    <ToolbarButton
+                    <Toolbar.ToolbarButton
                         selected={labelsShown}
                         onClick={() => Labels.showLabelsAction({
                             shown: !labelsShown,

@@ -1,4 +1,5 @@
 import {SceneSelectionType} from '../mosaicRecipe'
+import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -14,7 +15,6 @@ import React from 'react'
 import Retrieve from 'app/home/body/process/mosaic/panels/retrieve/retrieve'
 import SceneSelectionOptions from 'app/home/body/process/mosaic/panels/sceneSelectionOptions/sceneSelectionOptions'
 import Sources from 'app/home/body/process/mosaic/panels/sources/sources'
-import Toolbar, {ActivationButton} from 'widget/toolbar'
 import _ from 'lodash'
 import styles from './mosaicToolbar.module.css'
 
@@ -55,17 +55,17 @@ class MosaicToolbar extends React.Component {
                     panel
                     className={styles.top}>
 
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='autoSelectScenes'
                         icon='magic'
                         tooltip={msg('process.mosaic.panel.autoSelectScenes.tooltip')}
                         disabled={!sceneAreasLoaded}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='clearSelectedScenes'
                         icon='trash'
                         tooltip={msg('process.mosaic.panel.clearSelectedScenes.tooltip')}
                         disabled={!scenesSelected}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
                         tooltip={msg('process.mosaic.panel.retrieve.tooltip')}
@@ -77,23 +77,23 @@ class MosaicToolbar extends React.Component {
                     placement='bottom-right'
                     panel
                     className={styles.bottom}>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.mosaic.panel.dates.button')}
                         tooltip={msg('process.mosaic.panel.dates.tooltip')}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='sources'
                         label={msg('process.mosaic.panel.sources.button')}
                         tooltip={msg('process.mosaic.panel.sources.tooltip')}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='sceneSelectionOptions'
                         label={msg('process.mosaic.panel.scenes.button')}
                         tooltip={msg('process.mosaic.panel.scenes.tooltip')}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='compositeOptions'
                         label={msg('process.mosaic.panel.composite.button')}
                         tooltip={msg('process.mosaic.panel.composite.tooltip')}/>

@@ -1,3 +1,4 @@
+import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -9,7 +10,6 @@ import Options from './options/options'
 import PanelWizard from 'widget/panelWizard'
 import React from 'react'
 import Retrieve from './retrieve/retrieve'
-import Toolbar, {ActivationButton} from 'widget/toolbar'
 import styles from './radarMosaicToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -38,7 +38,7 @@ class RadarMosaicToolbar extends React.Component {
                     panel
                     className={styles.top}>
 
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
                         tooltip={msg('process.radarMosaic.panel.retrieve.tooltip')}
@@ -50,15 +50,15 @@ class RadarMosaicToolbar extends React.Component {
                     placement='bottom-right'
                     panel
                     className={styles.bottom}>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.radarMosaic.panel.dates.button')}
                         tooltip={msg('process.radarMosaic.panel.dates.tooltip')}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.radarMosaic.panel.options.button')}
                         tooltip={msg('process.radarMosaic.panel.options.tooltip')}/>

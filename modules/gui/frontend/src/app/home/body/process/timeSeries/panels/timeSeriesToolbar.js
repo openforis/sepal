@@ -1,3 +1,4 @@
+import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -10,7 +11,6 @@ import PreProcessingOptions from 'app/home/body/process/timeSeries/panels/prePro
 import React from 'react'
 import Retrieve from 'app/home/body/process/timeSeries/panels/retrieve/retrieve'
 import Sources from 'app/home/body/process/timeSeries/panels/sources/sources'
-import Toolbar, {ActivationButton} from 'widget/toolbar'
 import styles from './timeSeriesToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -37,7 +37,7 @@ class TimeSeriesToolbar extends React.Component {
                     vertical
                     placement='top-right'
                     className={styles.top}>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
                         tooltip={msg('process.timeSeries.panel.retrieve.tooltip')}
@@ -48,19 +48,19 @@ class TimeSeriesToolbar extends React.Component {
                     placement='bottom-right'
                     panel
                     className={styles.bottom}>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='aoi'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='dates'
                         label={msg('process.timeSeries.panel.dates.button')}
                         tooltip={msg('process.timeSeries.panel.dates.tooltip')}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='sources'
                         label={msg('process.timeSeries.panel.sources.button')}
                         tooltip={msg('process.timeSeries.panel.sources.tooltip')}/>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='preProcessingOptions'
                         label={msg('process.timeSeries.panel.preprocess.button')}
                         tooltip={msg('process.timeSeries.panel.preprocess.tooltip')}/>

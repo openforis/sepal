@@ -1,5 +1,5 @@
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {ToolbarButton} from 'widget/toolbar'
+import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -25,7 +25,7 @@ class ShowSceneAreaToggle extends React.Component {
     render() {
         const {sceneAreasShown, sceneAreasLoaded} = this.props
         return (
-            <ToolbarButton
+            <Toolbar.ToolbarButton
                 selected={sceneAreasShown}
                 disabled={!sceneAreasLoaded}
                 onClick={() => this.recipeActions.setSceneAreasShown(!sceneAreasShown).dispatch()}

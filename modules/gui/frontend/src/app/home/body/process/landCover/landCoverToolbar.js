@@ -1,4 +1,5 @@
 import {RecipeActions, RecipeState, Status, createComposites, createLandCoverMap} from './landCoverRecipe'
+import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -9,7 +10,6 @@ import PanelWizard from 'widget/panelWizard'
 import Period from './period'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Toolbar, {PanelButton, ToolbarButton} from 'widget/toolbar'
 import TrainingData from './trainingData'
 import Typology from './typology'
 import styles from './landCoverToolbar.module.css'
@@ -37,13 +37,13 @@ class LandCoverToolbar extends React.Component {
                     vertical
                     placement='top-right'
                     className={styles.top}>
-                    <ToolbarButton
+                    <Toolbar.ToolbarButton
                         name='createComposites'
                         icon={status === Status.CREATING_COMPOSITES ? 'spinner' : 'cloud-download-alt'}
                         tooltip={msg('process.landCover.panel.createComposites.tooltip')}
                         disabled={[Status.UNINITIALIZED, Status.CREATING_COMPOSITES].includes(recipe.model.status)}
                         onClick={() => this.createComposites()}/>
-                    <ToolbarButton
+                    <Toolbar.ToolbarButton
                         name='createPrimitives'
                         icon={status === Status.CREATING_LAND_COVER_MAP ? 'spinner' : 'cloud-download-alt'}
                         tooltip={msg('process.landCover.panel.createLandCoverMap.tooltip')}
@@ -56,36 +56,36 @@ class LandCoverToolbar extends React.Component {
                     vertical
                     placement='bottom-right'
                     className={styles.bottom}>
-                    <PanelButton
+                    <Toolbar.PanelButton
                         name='areaOfInterest'
                         label={msg('process.mosaic.panel.areaOfInterest.button')}
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}>
                         <Aoi recipeId={recipeId}/>
-                    </PanelButton>
-                    <PanelButton
+                    </Toolbar.PanelButton>
+                    <Toolbar.PanelButton
                         name='period'
                         label={msg('process.landCover.panel.period.button')}
                         tooltip={msg('process.landCover.panel.period.tooltip')}>
                         <Period recipeId={recipeId}/>
-                    </PanelButton>
-                    <PanelButton
+                    </Toolbar.PanelButton>
+                    <Toolbar.PanelButton
                         name='typology'
                         label={msg('process.landCover.panel.typology.button')}
                         tooltip={msg('process.landCover.panel.typology.tooltip')}>
                         <Typology recipeId={recipeId}/>
-                    </PanelButton>
-                    <PanelButton
+                    </Toolbar.PanelButton>
+                    <Toolbar.PanelButton
                         name='compositeOptions'
                         label={msg('process.landCover.panel.compositeOptions.button')}
                         tooltip={msg('process.landCover.panel.compositeOptions.tooltip')}>
                         <CompositeOptions recipeId={recipeId}/>
-                    </PanelButton>
-                    <PanelButton
+                    </Toolbar.PanelButton>
+                    <Toolbar.PanelButton
                         name='trainingData'
                         label={msg('process.landCover.panel.trainingData.button')}
                         tooltip={msg('process.landCover.panel.trainingData.tooltip')}>
                         <TrainingData recipeId={recipeId}/>
-                    </PanelButton>
+                    </Toolbar.PanelButton>
                 </Toolbar>
             </PanelWizard>
         )

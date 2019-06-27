@@ -1,3 +1,4 @@
+import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -9,7 +10,6 @@ import PanelWizard from 'widget/panelWizard'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Retrieve from './retrieve/retrieve'
-import Toolbar, {ActivationButton} from 'widget/toolbar'
 import TrainingData from './trainingData/trainingData'
 import styles from './classificationToolbar.module.css'
 
@@ -37,7 +37,7 @@ class ClassificationToolbar extends React.Component {
                     placement='top-right'
                     panel
                     className={styles.top}>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
                         tooltip={msg('process.classification.panel.retrieve.tooltip')}
@@ -48,17 +48,17 @@ class ClassificationToolbar extends React.Component {
                     placement='bottom-right'
                     panel
                     className={styles.bottom}>
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='inputImagery'
                         label={msg('process.classification.panel.inputImagery.button')}
                         tooltip={msg('process.classification.panel.inputImagery.tooltip')}/>
 
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='trainingData'
                         label={msg('process.classification.panel.trainingData.button')}
                         tooltip={msg('process.classification.panel.trainingData.tooltip')}/>
 
-                    <ActivationButton
+                    <Toolbar.ActivationButton
                         id='auxiliaryImagery'
                         label={msg('process.classification.panel.auxiliaryImagery.button')}
                         tooltip={msg('process.classification.panel.auxiliaryImagery.tooltip')}/>

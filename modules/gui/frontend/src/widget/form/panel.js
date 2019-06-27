@@ -1,6 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Panel} from 'widget/panel'
-import {PanelButtonContext} from '../toolbar'
+import {PanelButtonContext} from 'widget/toolbar/panelButtonContext'
 import {PanelWizardContext} from '../panelWizard'
 import {compose} from 'compose'
 import {connect} from 'store'
