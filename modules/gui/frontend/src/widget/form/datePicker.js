@@ -2,8 +2,8 @@ import * as PropTypes from 'prop-types'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Input} from 'widget/input'
-import {List} from 'widget/list'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {ScrollableList} from 'widget/list'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -147,7 +147,7 @@ class _DatePickerPanel extends React.Component {
         const selectedOption = _.find(options, ({value}) => value === selectedYear)
         return (
             <div className={styles.years}>
-                <List
+                <ScrollableList
                     options={options}
                     selectedOption={selectedOption}
                     onSelect={option => this.updateDate('year', option.value)}

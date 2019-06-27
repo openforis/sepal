@@ -15,7 +15,7 @@ import withSubscriptions from 'subscription'
 
 const autoCenter$ = new Subject()
 
-class _List extends React.Component {
+class _ScrollableList extends React.Component {
     render() {
         const {className, ...props} = this.props
         return (
@@ -25,11 +25,9 @@ class _List extends React.Component {
                 <ScrollableContainer className={className}>
                     <Scrollable
                         className={styles.options}
-                        direction='xy'
-                        // onHover={element => this.onHover(element)}
-                    >
+                        direction='xy'>
                         {(scrollableContainerHeight, scrollable) =>
-                            <ScrollableList
+                            <List
                                 {...props}
                                 scrollableContainerHeight={scrollableContainerHeight}
                                 scrollable={scrollable}
@@ -40,8 +38,40 @@ class _List extends React.Component {
         )
     }
 }
+export const ScrollableList = compose(
+    _ScrollableList,
+    withSubscriptions(),
+    withForwardedRef()
+)
 
-class ScrollableList extends React.Component {
+ScrollableList.propTypes = {
+    options: PropTypes.arrayOf(
+        PropTypes.shape({
+            label: PropTypes.oneOfType([PropTypes.number, PropTypes.string, PropTypes.array]),
+            value: PropTypes.any
+        })
+    ).isRequired,
+    onSelect: PropTypes.func.isRequired,
+    alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    autoCenter: PropTypes.any,
+    autoHighlight: PropTypes.any,
+    className: PropTypes.string,
+    keyboard: PropTypes.any,
+    noResults: PropTypes.string,
+    overScroll: PropTypes.any,
+    ref: PropTypes.object,
+    selectedOption: PropTypes.any,
+    tooltip: PropTypes.string,
+    tooltipPlacement: PropTypes.oneOf(['left', 'right']),
+    onCancel: PropTypes.func
+}
+
+ScrollableList.defaultProps = {
+    alignment: 'left',
+    tooltipPlacement: 'right'
+}
+
+class List extends React.Component {
     highlighted = React.createRef()
     selected = React.createRef()
     state = {
@@ -358,37 +388,4 @@ class ScrollableList extends React.Component {
             this.highlightSelectedOption()
         }
     }
-}
-
-export const List = compose(
-    _List,
-    withSubscriptions(),
-    withForwardedRef()
-)
-
-List.propTypes = {
-    options: PropTypes.arrayOf(
-        PropTypes.shape({
-            label: PropTypes.oneOfType([PropTypes.number, PropTypes.string, PropTypes.array]),
-            value: PropTypes.any
-        })
-    ).isRequired,
-    onSelect: PropTypes.func.isRequired,
-    alignment: PropTypes.oneOf(['left', 'center', 'right']),
-    autoCenter: PropTypes.any,
-    autoHighlight: PropTypes.any,
-    className: PropTypes.string,
-    keyboard: PropTypes.any,
-    noResults: PropTypes.string,
-    overScroll: PropTypes.any,
-    ref: PropTypes.object,
-    selectedOption: PropTypes.any,
-    tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.oneOf(['left', 'right']),
-    onCancel: PropTypes.func
-}
-
-List.defaultProps = {
-    alignment: 'left',
-    tooltipPlacement: 'right'
 }

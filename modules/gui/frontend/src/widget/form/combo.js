@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
-import {List} from 'widget/list'
+import {ScrollableList} from 'widget/list'
 import {Subject, fromEvent} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -139,7 +139,7 @@ class _FormCombo extends React.Component {
             <FloatingBox
                 element={this.inputContainer.current}
                 placement={placement}>
-                <List
+                <ScrollableList
                     ref={this.list}
                     className={optionsClassName || styles.options}
                     options={flattenedOptions}

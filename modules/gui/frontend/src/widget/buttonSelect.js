@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {List} from 'widget/list'
+import {ScrollableList} from 'widget/list'
 import {Subject, fromEvent} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -91,7 +91,7 @@ class ButtonSelect extends React.Component {
                 placement={placement}
                 autoWidth
             >
-                <List
+                <ScrollableList
                     ref={this.list}
                     className={optionsClassName || styles.options}
                     options={flattenedOptions}
