@@ -73,16 +73,16 @@ export class Widget extends React.Component {
 
 Widget.propTypes = {
     children: PropTypes.any.isRequired,
-    alignment: Label.propTypes.alignment,
+    alignment: PropTypes.any,
     border: PropTypes.any,
     className: PropTypes.string,
-    disabled: Label.propTypes.disabled,
+    disabled: PropTypes.any,
     errorMessage: PropTypes.any,
-    label: Label.propTypes.msg,
-    layout: Layout.propTypes.type,
-    spacing: Layout.propTypes.spacing,
-    tooltip: Label.propTypes.tooltip,
-    tooltipPlacement: Label.propTypes.tooltipPlacement,
+    label: PropTypes.any,
+    layout: PropTypes.any,
+    spacing: PropTypes.any,
+    tooltip: PropTypes.any,
+    tooltipPlacement: PropTypes.any,
     onClick: PropTypes.func
 }
 

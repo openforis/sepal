@@ -34,13 +34,13 @@ export const FormFieldSet = compose(
 FormFieldSet.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    disabled: Widget.propTypes.disabled,
-    errorMessage: Widget.propTypes.errorMessage,
-    label: Widget.propTypes.label,
-    layout: Widget.propTypes.layout,
-    spacing: Widget.propTypes.spacing,
-    tooltip: Widget.propTypes.tooltip,
-    tooltipPlacement: Widget.propTypes.tooltipPlacement
+    disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
+    label: PropTypes.any,
+    layout: PropTypes.any,
+    spacing: PropTypes.any,
+    tooltip: PropTypes.any,
+    tooltipPlacement: PropTypes.any
 }
 
 FormFieldSet.defaultProps = {

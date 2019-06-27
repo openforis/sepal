@@ -99,9 +99,9 @@ FormDatePicker.propTypes = {
     startDate: PropTypes.any.isRequired,
     autoFocus: PropTypes.any,
     errorMessage: PropTypes.any,
-    label: Label.propTypes.msg,
-    tooltip: Label.propTypes.tooltip,
-    tooltipPlacement: Label.propTypes.tooltipPlacement
+    label: PropTypes.any,
+    tooltip: PropTypes.any,
+    tooltipPlacement: PropTypes.any
 }
 
 class _DatePickerPanel extends React.Component {
