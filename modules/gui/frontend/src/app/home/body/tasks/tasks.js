@@ -1,4 +1,5 @@
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {HoverDetector, HoverOverlay} from 'widget/hover'
 import {Msg, msg} from 'translate'

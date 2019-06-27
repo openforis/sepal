@@ -1,5 +1,6 @@
 import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Observable, Subject, forkJoin, timer} from 'rxjs'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {catchError, delay, exhaustMap, filter, map, takeUntil} from 'rxjs/operators'

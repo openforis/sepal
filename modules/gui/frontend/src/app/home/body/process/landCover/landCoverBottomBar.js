@@ -1,5 +1,6 @@
 import {BottomBar} from 'widget/sectionLayout'
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {compose} from 'compose'
 import Icon from 'widget/icon'

@@ -1,4 +1,5 @@
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {HoverDetector, HoverOverlay} from 'widget/hover'

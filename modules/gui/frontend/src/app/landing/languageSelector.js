@@ -1,4 +1,5 @@
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {getLanguage, setLanguage} from 'translate'
 import React from 'react'
 import styles from './languageSelector.module.css'

@@ -1,0 +1,60 @@
+.container {
+    /* prevent unwanted scrolling due to negative margins */
+    overflow: hidden;
+}
+
+.buttonGroup {
+    --horizontal-spacing: 1rem;
+    --vertical-spacing: 1rem;
+    height: fit-content;
+    display: flex;
+    margin: calc(var(--vertical-spacing) / -2) calc(var(--horizontal-spacing) / -2);
+}
+
+.buttonGroup > * {
+    margin: calc(var(--vertical-spacing) / 2) calc(var(--horizontal-spacing) / 2);
+}
+
+.buttonGroup.horizontal {
+    --horizontal-spacing: .5rem;
+    --vertical-spacing: .5rem;
+    flex-direction: row;
+    align-items: center;
+}
+
+.buttonGroup.horizontal.tight {
+    --horizontal-spacing: 0rem;
+}
+
+.buttonGroup.horizontal.nowrap {
+    flex-wrap: nowrap;
+}
+
+.buttonGroup.horizontal.wrap {
+    flex-wrap: wrap;
+}
+
+.buttonGroup.horizontal.fill {
+    --horizontal-spacing: 1rem;
+    --vertical-spacing: 1rem;
+    flex-grow: 1;
+}
+
+.buttonGroup.horizontal.fill > * {
+    flex-grow: 1;
+}
+
+.buttonGroup.vertical {
+    --horizontal-spacing: 0rem;
+    --vertical-spacing: 1rem;
+    flex-direction: column;
+    flex-wrap: nowrap;
+}
+
+.buttonGroup.vertical > * {
+    width: 100%;
+}
+
+.buttonGroup.vertical.tight {
+    --vertical-spacing: .5rem;
+}

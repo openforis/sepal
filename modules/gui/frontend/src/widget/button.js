@@ -317,28 +317,3 @@ Button.defaultProps = {
     type: 'button',
     width: 'fit'
 }
-
-export const ButtonGroup = ({children, type, className}) =>
-    <div className={[styles.groupContainer, className].join(' ')}>
-        <div className={[
-            styles.group,
-            type.split('-').map(className => styles[className]).join(' ')
-        ].join(' ')}>
-            {children}
-        </div>
-    </div>
-
-ButtonGroup.propTypes = {
-    children: PropTypes.any.isRequired,
-    className: PropTypes.string,
-    type: PropTypes.oneOf([
-        'horizontal-wrap', 'horizontal-wrap-fill',
-        'horizontal-nowrap', 'horizontal-nowrap-fill',
-        'horizontal-tight',
-        'vertical', 'vertical-tight'
-    ])
-}
-
-ButtonGroup.defaultProps = {
-    type: 'horizontal-wrap'
-}

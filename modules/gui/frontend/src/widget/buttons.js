@@ -1,4 +1,5 @@
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Widget} from 'widget/widget'
 import PropTypes from 'prop-types'
 import React from 'react'

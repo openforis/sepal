@@ -1,4 +1,5 @@
-import {Button, ButtonGroup} from 'widget/button'
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {RecipeState} from '../landCoverRecipe'
 import {compose} from 'compose'
 import {connect, select} from 'store'
