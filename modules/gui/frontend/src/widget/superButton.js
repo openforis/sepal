@@ -9,7 +9,7 @@ import lookStyles from 'style/look.module.css'
 import moment from 'moment'
 import styles from './superButton.module.css'
 
-export default class SuperButton extends React.Component {
+export class SuperButton extends React.Component {
     state = {
         selected: false
     }

@@ -1,11 +1,11 @@
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {stopCurrentUserSession$} from 'widget/user'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import SuperButton from 'widget/superButton'
 import actionBuilder from 'action-builder'
 import format from 'format'
 
