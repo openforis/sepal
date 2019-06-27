@@ -1,16 +1,14 @@
-import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
+import {PageableControls} from './pageableControls'
+import {PageableData} from './pageableData'
+import {PageableInfo} from './pageableInfo'
+import {Provider} from './pageableContext'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import Keybinding from 'widget/keybinding'
-import OverflowDetector from 'widget/overflowDetector'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-
-const {Provider, Consumer} = React.createContext()
 
 const mapStateToProps = state => ({
     dimensions: selectFrom(state, 'dimensions') || []
@@ -242,149 +240,6 @@ Pageable.defaultProps = {
     fillLastPage: false,
 }
 
-export class PageData extends React.Component {
-    ref = React.createRef()
-    render() {
-        const {itemKey, children} = this.props
-        return (
-            <Consumer>
-                {({items, next}) =>
-                    <OverflowDetector>
-                        {isOverflown =>
-                            <PageItems
-                                items={items || []}
-                                next={() => next(isOverflown())}
-                                itemKey={itemKey}>
-                                {children}
-                            </PageItems>
-                        }
-                    </OverflowDetector>
-                }
-            </Consumer>
-        )
-    }
-}
-
-PageData.propTypes = {
-    children: PropTypes.func.isRequired,
-    itemKey: PropTypes.func.isRequired
-}
-
-class PageItems extends React.Component {
-    render() {
-        const {items} = this.props
-        return items.map(
-            (item, index) => this.renderItem(item, index)
-        )
-    }
-
-    renderItem(item, index) {
-        const {itemKey, children} = this.props
-        const key = itemKey(item) || index
-        return (
-            <PageItem
-                key={key}
-                item={item}>
-                {children}
-            </PageItem>
-        )
-    }
-
-    componentDidUpdate() {
-        const {next} = this.props
-        next()
-    }
-}
-
-PageItems.propTypes = {
-    children: PropTypes.any.isRequired,
-    itemKey: PropTypes.func.isRequired,
-    items: PropTypes.array.isRequired,
-    next: PropTypes.func.isRequired
-}
-
-class PageItem extends React.Component {
-    render() {
-        const {item, children} = this.props
-        return children(item)
-    }
-
-    shouldComponentUpdate(nextProps) {
-        return nextProps.item !== this.props.item
-    }
-}
-
-export const PageControls = props => {
-    const renderDefaultControls = pageable =>
-        <ButtonGroup type='horizontal-nowrap'>
-            <Button
-                chromeless
-                size='large'
-                shape='pill'
-                icon='fast-backward'
-                onClick={() => pageable.firstPage()}
-                disabled={pageable.isFirstPage}/>
-            <Button
-                chromeless
-                size='large'
-                shape='pill'
-                icon='backward'
-                onClick={() => pageable.previousPage()}
-                disabled={pageable.isFirstPage}/>
-            <Button
-                chromeless
-                size='large'
-                shape='pill'
-                icon='forward'
-                onClick={() => pageable.nextPage()}
-                disabled={pageable.isLastPage}/>
-        </ButtonGroup>
-    const renderCustomControls = pageable =>
-        <React.Fragment>
-            {props.children({...pageable, renderDefaultControls: () => renderDefaultControls(pageable)})}
-        </React.Fragment>
-
-    return (
-        <Consumer>
-            {pageable => props.children
-                ? renderCustomControls(pageable)
-                : renderDefaultControls(pageable)
-            }
-        </Consumer>
-    )
-}
-
-PageControls.propTypes = {
-    children: PropTypes.func
-}
-
-export const PageInfo = props => {
-    const renderDefaultInfo = ({count, start, stop}) =>
-        <div>
-            {msg('pagination.info', {count, start, stop})}
-        </div>
-        
-    const renderCustomInfo = ({count, start, stop}) =>
-        <React.Fragment>
-            {props.children({count, start, stop})}
-        </React.Fragment>
-
-    const pageinfo = ({count, start, stop}) => ({
-        count,
-        start: start + 1,
-        stop
-    })
-
-    return (
-        <Consumer>
-            {pageable => props.children
-                ? renderCustomInfo(pageinfo(pageable))
-                : renderDefaultInfo(pageinfo(pageable))
-            }
-        </Consumer>
-    )
-}
-
-PageInfo.propTypes = {
-    children: PropTypes.func
-}
+Pageable.Data = PageableData
+Pageable.Controls = PageableControls
+Pageable.Info = PageableInfo

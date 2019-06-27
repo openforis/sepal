@@ -2,7 +2,7 @@ import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {Layout} from 'widget/layout'
-import {PageControls, PageData, PageInfo, Pageable} from 'widget/pageable'
+import {Pageable} from 'widget/pageable/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -390,13 +390,13 @@ class Users extends React.Component {
     renderInfo() {
         const results = (count, start, stop) => msg('users.count', {count, start, stop})
         return (
-            <PageInfo>
+            <Pageable.Info>
                 {({count, start, stop}) =>
                     <div className={styles.pageInfo}>
                         {results(count, start, stop)}
                     </div>
                 }
-            </PageInfo>
+            </Pageable.Info>
         )
     }
 
@@ -407,14 +407,14 @@ class Users extends React.Component {
             : ''
         return (
             // [HACK] adding filter to key to force re-rendering
-            <PageData itemKey={user => `${user.username || user.id}|${highlightMatcher}`}>
+            <Pageable.Data itemKey={user => `${user.username || user.id}|${highlightMatcher}`}>
                 {user =>
                     <User
                         user={user}
                         highlight={highlightMatcher}
                         onClick={() => this.editUser(user)}/>
                 }
-            </PageData>
+            </Pageable.Data>
         )
     }
 
@@ -459,7 +459,7 @@ class Users extends React.Component {
                             {this.renderInviteUser()}
                         </Content>
                         <BottomBar className={styles.bottomBar}>
-                            <PageControls/>
+                            <Pageable.Controls/>
                         </BottomBar>
                     </SectionLayout>
                 </Pageable>

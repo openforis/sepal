@@ -2,7 +2,7 @@ import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Layout} from 'widget/layout'
-import {PageControls, PageData, Pageable} from 'widget/pageable'
+import {Pageable} from 'widget/pageable/pageable'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {closeTab} from 'widget/tabs/tabs'
 import {compose} from 'compose'
@@ -142,10 +142,10 @@ class RecipeList extends React.Component {
                         {this.renderSearchAndSort()}
                     </Unscrollable>
                     <Unscrollable className={styles.recipes}>
-                        <PageData
+                        <Pageable.Data
                             itemKey={recipe => `${recipe.id}|${highlightMatcher}`}>
                             {recipe => this.renderRecipe(recipe, highlightMatcher)}
-                        </PageData>
+                        </Pageable.Data>
                     </Unscrollable>
                 </ScrollableContainer>
             )
@@ -190,7 +190,7 @@ class RecipeList extends React.Component {
                         </Content>
                         <BottomBar className={styles.bottomBar}>
                             {recipes && recipes.length
-                                ? <PageControls/>
+                                ? <Pageable.Controls/>
                                 : <div>{msg('process.menu.noSavedRecipies')}</div>
                             }
                         </BottomBar>
