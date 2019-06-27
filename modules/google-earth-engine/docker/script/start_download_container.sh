@@ -21,7 +21,7 @@ else
     echo "User $worker_user initialized"
 fi
 
-exec su - ${worker_user} -c "python -s /src/task_server.py \
+exec su - ${worker_user} -c "python3 -s /src/task_server.py \
  --gee-email ${account} \
  --gee-key-path ${privateKeyPath} \
  --sepal-host ${sepal_host} \
