@@ -82,7 +82,7 @@ class _SearchBox extends React.Component {
     }
 }
 
-const SearchBox = compose(
+export const SearchBox = compose(
     _SearchBox,
     withSubscriptions()
 )
@@ -98,5 +98,3 @@ SearchBox.propTypes = {
 SearchBox.defaultProps = {
     debounce: 250
 }
-
-export default SearchBox
