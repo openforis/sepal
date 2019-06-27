@@ -1,20 +1,3 @@
-.container {
-    position: relative;
-    padding: 0;
-    pointer-events: none;
-}
-
-.tabs {
-    position: relative;
-    display: flex;
-    flex-grow: 1;
-    margin-right: .5rem;
-}
-
-.tabs::-webkit-scrollbar {
-    display: none;
-}
-
 .tab {
     --tab-default-background-color: hsl(0, 0%, 11%);
     --tab-selected-background-color: hsl(60, 2%, 16%);
@@ -111,43 +94,4 @@
 
 .tab.selected:not(.editing) .title:before {
     background: var(--selected-gradient);
-}
-
-.tabActions {
-    display: flex;
-    align-items: center;
-    height: fit-content;
-}
-
-.tabActions > * + * {
-    margin-left: .5rem;
-}
-
-.tabContents {
-    position: relative;
-    height: 100%;
-    width: 100%;
-}
-
-.tabContent {
-    position: absolute;
-    display: flex;
-    height: 100%;
-    width: 100%;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.tabContent.selected {
-    opacity: 1;
-    z-index: 1;
-}
-
-.enabled {
-    display: block;
-}
-
-.disabled {
-    display: none;
 }

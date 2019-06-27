@@ -1,5 +1,5 @@
 import {Subject} from 'rxjs'
-import {addTab, closeTab} from 'widget/tabs'
+import {addTab, closeTab} from 'widget/tabs/tabs'
 import {connect, select, subscribe} from 'store'
 import {debounceTime, groupBy, map, mergeMap, switchMap} from 'rxjs/operators'
 import {downloadObjectZip$} from 'widget/download'

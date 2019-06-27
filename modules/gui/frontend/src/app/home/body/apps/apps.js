@@ -1,3 +1,4 @@
+import {Tabs} from 'widget/tabs/tabs'
 import {appList, loadApps$} from 'apps'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -5,7 +6,6 @@ import {msg} from 'translate'
 import AppLauncher from './appLauncher'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import Tabs from 'widget/tabs'
 
 const mapStateToProps = () => ({
     apps: appList()

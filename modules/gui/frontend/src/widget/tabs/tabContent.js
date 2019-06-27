@@ -4,15 +4,18 @@ import {compose} from 'compose'
 import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './tabs.module.css'
+import styles from './tabContent.module.css'
 
-class TabContent extends React.PureComponent {
+class _TabContent extends React.PureComponent {
     render() {
         const {id, type, selected, children} = this.props
         const portalContainerId = `portal_tab_${id}`
         return (
             <PortalContext id={portalContainerId}>
-                <div className={[styles.tabContent, selected && styles.selected].join(' ')}>
+                <div className={[
+                    styles.tabContent,
+                    selected && styles.selected
+                ].join(' ')}>
                     <Enabled
                         value={selected}
                         enabledClassName={styles.enabled}
@@ -53,6 +56,11 @@ class TabContent extends React.PureComponent {
     }
 }
 
+export const TabContent = compose(
+    _TabContent,
+    connect()
+)
+
 TabContent.propTypes = {
     children: PropTypes.any,
     id: PropTypes.string,
@@ -61,8 +69,3 @@ TabContent.propTypes = {
     onDisable: PropTypes.func,
     onEnable: PropTypes.func
 }
-
-export default compose(
-    TabContent,
-    connect()
-)

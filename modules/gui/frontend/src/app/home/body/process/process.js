@@ -1,4 +1,5 @@
 import {RecipeContext} from 'app/home/body/process/recipeContext'
+import {Tabs} from 'widget/tabs/tabs'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {getRecipeType} from './recipeTypes'
@@ -10,7 +11,6 @@ import React from 'react'
 import Recipes from './recipes'
 import Revisions from 'app/home/body/process/revisions'
 import SaveRecipe from './saveRecipe'
-import Tabs from 'widget/tabs'
 
 class Process extends React.Component {
     renderRecipeList(id) {

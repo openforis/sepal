@@ -1,0 +1,32 @@
+.container {
+    position: relative;
+    padding: 0;
+    pointer-events: none;
+}
+
+.tabs {
+    position: relative;
+    display: flex;
+    flex-grow: 1;
+    margin-right: .5rem;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tabActions {
+    display: flex;
+    align-items: center;
+    height: fit-content;
+}
+
+.tabActions > * + * {
+    margin-left: .5rem;
+}
+
+.tabContents {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
