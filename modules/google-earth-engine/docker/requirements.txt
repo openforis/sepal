@@ -10,4 +10,4 @@ requests>=2.20.0
 gunicorn==19.7.1
 google-cloud-storage==1.14.0
 google-resumable-media==0.3.2
-rx==3.0.0b4
+git+git://github.com/ReactiveX/RxPY.git#egg=rx
