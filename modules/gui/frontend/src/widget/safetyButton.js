@@ -57,5 +57,5 @@ SafetyButton.propTypes = {
 SafetyButton.defaultProps = {
     chromeless: true,
     shape: 'circle',
-    icon: 'trash',
+    icon: 'trash'
 }
