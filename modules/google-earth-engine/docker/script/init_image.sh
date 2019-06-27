@@ -11,8 +11,10 @@ apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
  libgdal-dev\
  gdal-bin\
  git\
- python-gdal\
- python-pip\
+ python3\
+ python3-dev\
+ python3-gdal\
+ python3-pip\
  sssd\
  libpam-sss\
  libnss-sss\

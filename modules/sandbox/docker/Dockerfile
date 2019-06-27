@@ -10,10 +10,7 @@ RUN chmod -R 500 /script && \
     chmod -R 400 /config; sync && \
     /script/init_image.sh
 
-ADD geo-web-viz /usr/local/lib/geo-web-viz
-RUN pip2 install -r /usr/local/lib/geo-web-viz/requirements.txt
-
 ADD .build/sepal-ee /usr/local/src/sepal-ee
-RUN pip2 install -e /usr/local/src/sepal-ee && pip3 install -e /usr/local/src/sepal-ee
+RUN pip3 install -e /usr/local/src/sepal-ee
 
 CMD ["/script/init_container.sh"]
