@@ -66,20 +66,22 @@ def scene_areas():
 
 @http.errorhandler(SepalException)
 def sepal_exception(error):
+    logging.exception('Got SepalException')
     body = {
         'code': error.code,
         'data': error.data,
-        'message': error.message
+        'message': str(error)
     }
     return Response(json.dumps(body), mimetype='application/json', status=400)
 
 
 @http.errorhandler(EEException)
 def ee_exception(error):
+    logging.exception('Got EEException')
     body = {
         'code': 'gee.error.earthEngineException',
-        'data': {'earthEngineMessage': error.message},
-        'message': error.message
+        'data': {'earthEngineMessage': str(error)},
+        'message': str(error)
     }
     return Response(json.dumps(body), mimetype='application/json', status=400)
 
