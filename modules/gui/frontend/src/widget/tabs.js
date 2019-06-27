@@ -14,6 +14,8 @@ import actionBuilder from 'action-builder'
 import guid from 'guid'
 import styles from './tabs.module.css'
 
+const CLOSE_ANIMATION_DURATION_MS = 250
+
 export const addTab = statePath => {
     const id = guid()
     const tab = {id, placeholder: msg('widget.tabs.newTab')}
@@ -53,10 +55,15 @@ export const closeTab = (id, statePath) => {
             return null
     }
 
-    actionBuilder('CLOSE_TAB')
+    actionBuilder('CLOSING_TAB')
+        .set([statePath, 'tabs', {id}, 'closing'], true)
+        .dispatch()
+
+    setTimeout(() => actionBuilder('CLOSE_TAB')
         .set([statePath, 'selectedTabId'], nextSelectedTabId())
         .del([statePath, 'tabs', {id}])
-        .dispatch()
+        .dispatch(), CLOSE_ANIMATION_DURATION_MS * 1.2
+    )
 }
 
 export const selectTab = (id, statePath) => {
@@ -88,6 +95,7 @@ class Tabs extends React.Component {
                 title={tab.title}
                 placeholder={tab.placeholder}
                 selected={tab.id === selectedTabId}
+                closing={tab.closing}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
                 onClose={() => {
@@ -206,7 +214,7 @@ class _Tab extends React.Component {
     }
 
     render() {
-        const {selected} = this.props
+        const {selected, closing} = this.props
         const {editing} = this.state
         return (
             <Layout
@@ -216,9 +224,10 @@ class _Tab extends React.Component {
                     styles.tab,
                     styles.regular,
                     selected ? styles.selected : null,
+                    closing ? styles.closing : null,
                     editing ? styles.editing : null
                 ].join(' ')}
-            >
+                style={{'--close-animation-duration': `${CLOSE_ANIMATION_DURATION_MS}ms`}}>
                 {this.renderInput()}
                 {this.renderCloseButton()}
             </Layout>
@@ -365,6 +374,7 @@ const Tab = compose(
 )
 
 Tab.propTypes = {
+    closing: PropTypes.any,
     id: PropTypes.string,
     placeholder: PropTypes.string,
     selected: PropTypes.any,
