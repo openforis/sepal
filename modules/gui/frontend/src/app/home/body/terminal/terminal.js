@@ -1,13 +1,13 @@
 import 'xterm/dist/xterm.css'
-import * as attach from 'xterm/lib/addons/attach/attach'
 import * as fit from 'xterm/lib/addons/fit/fit'
 import {ContentPadding} from 'widget/sectionLayout'
-import {Subject, interval} from 'rxjs'
+import {Subject} from 'rxjs'
 import {Tabs} from 'widget/tabs/tabs'
+import {TerminalWebSocket} from './terminalWebsocket'
 import {Terminal as Xterm} from 'xterm'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {distinctUntilChanged, filter, map, takeUntil} from 'rxjs/operators'
+import {distinctUntilChanged, filter, map} from 'rxjs/operators'
 import {msg} from 'translate'
 import {post$} from 'http-client'
 import {v4 as uuid} from 'uuid'
@@ -16,11 +16,10 @@ import Notifications from 'widget/notifications'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import styles from './terminal.module.css'
+import withSubscriptions from 'subscription'
 
 Xterm.applyAddon(fit)
-Xterm.applyAddon(attach)
 
-const HEARTBEAT_INTERVAL_MS = 3000
 const RESIZE_DEBOUNCE_MS = 250
 
 export default class Terminal extends React.Component {
@@ -45,7 +44,6 @@ class _TerminalSession extends React.Component {
     resize$ = new Subject()
     fit$ = new Subject()
     focus$ = new Subject()
-    closed$ = new Subject()
 
     constructor(props) {
         super(props)
@@ -108,67 +106,57 @@ class _TerminalSession extends React.Component {
 
     componentWillUnmount() {
         this.terminal.dispose()
-        this.webSocket && this.webSocket.close()
-    }
-
-    startWebSocket(sessionId, onOpen) {
-        const webSocket = new WebSocket(`wss://${window.location.hostname}:${window.location.port}/api/terminal/${sessionId}`)
-        webSocket.onopen = () => {
-            this.props.stream('SEND_TERMINAL_HEARTBEAT',
-                interval(HEARTBEAT_INTERVAL_MS).pipe(
-                    takeUntil(this.closed$)
-                ),
-                () => webSocket.send('')
-            )
-            onOpen(webSocket)
-        }
-        webSocket.onclose = () =>
-            this.closed$.next()
-        webSocket.onerror = () =>
-            Notifications.error({
-                message: msg('terminal.server.error')
-            })
-        this.webSocket = webSocket
+        this.webSocket && this.webSocket.dispose()
     }
 
     startSession(sessionId) {
-        const {terminal, terminalContainer, resize$} = this
-        const {onEnable, onDisable} = this.props
-
-        setTimeout(() => {
-            const bidirectional = true
-            const buffered = true
-            this.startWebSocket(sessionId, webSocket => {
-                terminal.attach(webSocket, bidirectional, buffered)
-                terminal.setOption('allowTransparency', true)
-                terminal.setOption('fontSize', 13)
-                terminal.setOption('bellStyle', 'both')
-                terminal.open(terminalContainer.current)
-                // for some reason theme must be defined after open...
-                terminal.setOption('theme', {
-                    background: 'transparent',
-                    foreground: '#ccc'
-                })
-                terminal.on('resize',
-                    dimensions => resize$.next({sessionId, dimensions})
-                )
-                this.enabled$.next(true)
-                this.fit$.next()
-                this.focus$.next()
-                onEnable(() => {
-                    this.enabled$.next(true)
-                    this.fit$.next()
-                    this.focus$.next()
-                })
-                onDisable(() => {
-                    this.enabled$.next(false)
-                })
-            })
+        this.webSocket = new TerminalWebSocket({
+            url: `wss://${window.location.hostname}:${window.location.port}/api/terminal/${sessionId}`,
+            replyHeartbeats: true
         })
+
+        this.webSocket.onOpen(() => this.startTerminal(sessionId))
+        this.webSocket.onClose(() => console.log('socket closed'))
+        this.webSocket.onError(() =>
+            Notifications.error({
+                message: msg('terminal.server.error')
+            })
+        )
+    }
+
+    startTerminal(sessionId) {
+        const {terminal, terminalContainer, webSocket, resize$} = this
+        const {onEnable, onDisable} = this.props
+        terminal.setOption('allowTransparency', true)
+        terminal.setOption('fontSize', 13)
+        terminal.setOption('bellStyle', 'both')
+        terminal.open(terminalContainer.current)
+        // for some reason theme must be defined after open...
+        terminal.setOption('theme', {
+            background: 'transparent',
+            foreground: '#ccc'
+        })
+        terminal.on('resize',
+            dimensions => resize$.next({sessionId, dimensions})
+        )
+        this.enabled$.next(true)
+        this.fit$.next()
+        this.focus$.next()
+        onEnable(() => {
+            this.enabled$.next(true)
+            this.fit$.next()
+            this.focus$.next()
+        })
+        onDisable(() => {
+            this.enabled$.next(false)
+        })
+        terminal.on('data', data => this.webSocket.send(data))
+        webSocket.onMessage(message => terminal.write(message.data))
     }
 }
 
 const TerminalSession = compose(
     _TerminalSession,
-    connect()
+    connect(),
+    withSubscriptions()
 )
