@@ -9,15 +9,15 @@ import withForwardedRef from 'ref'
 
 class _Shape extends React.Component {
     classNames() {
-        const {chromeless, className, additionalClassName, look, size, shape, airy,
+        const {chromeless, className, additionalClassName, look, size, shape, air,
             alignment, width, disableTransitions} = this.props
         return className ? className : [
             styles.shape,
-            styles[size],
-            styles[shape],
-            styles[alignment],
-            styles[width],
-            airy ? styles.airy : null,
+            styles[`size-${size}`],
+            styles[`shape-${shape}`],
+            styles[`air-${air}`],
+            styles[`alignment-${alignment}`],
+            styles[`width-${width}`],
             lookStyles.look,
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
@@ -97,7 +97,7 @@ export const Shape = compose(
 
 Shape.propTypes = {
     additionalClassName: PropTypes.string,
-    airy: PropTypes.any,
+    air: PropTypes.oneOf(['normal', 'more']),
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     children: PropTypes.any,
     chromeless: PropTypes.any,
@@ -120,6 +120,7 @@ Shape.propTypes = {
 }
 
 Shape.defaultProps = {
+    air: 'normal',
     alignment: 'left',
     iconPlacement: 'left',
     look: 'default',
