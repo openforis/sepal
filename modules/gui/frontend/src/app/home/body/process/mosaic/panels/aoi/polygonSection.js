@@ -1,7 +1,7 @@
-import {Msg} from 'translate'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {compose} from 'compose'
 import {isRecipeOpen} from 'app/home/body/process/recipe'
+import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {sepalMap} from '../../../../../map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
@@ -47,7 +47,7 @@ class PolygonSection extends React.Component {
     render() {
         return (
             <div className={styles.polygon}>
-                <Msg id='process.mosaic.panel.areaOfInterest.form.polygon.description'/>
+                {msg('process.mosaic.panel.areaOfInterest.form.polygon.description')}
             </div>
         )
     }

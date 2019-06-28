@@ -1,6 +1,8 @@
 .polygon {
-    margin: auto;
-    text-align: center;
-    font-style: italic;
-    margin-top: 5rem;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: gray;
+    font-size: .9rem;
 }
