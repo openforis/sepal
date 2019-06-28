@@ -70,7 +70,7 @@ class _FormCombo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, disabled, busy, standalone, inputClassName, input} = this.props
+        const {placeholder, autoFocus, disabled, busy, standalone, readOnly, inputClassName, input} = this.props
         const {focused, filter, selectedOption, showOptions} = this.state
         const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
@@ -97,7 +97,7 @@ class _FormCombo extends React.Component {
                     value={filter}
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
                     disabled={disabled || busy}
-                    readOnly={isMobile()}
+                    readOnly={readOnly || isMobile()}
                     rightComponent={this.renderToggleOptionsButton()}
                     onChange={e => this.setFilter(e.target.value)}
                     onFocus={() => this.setState({focused: true})}
@@ -314,6 +314,7 @@ FormCombo.propTypes = {
     optionTooltipPlacement: PropTypes.string,
     placeholder: PropTypes.string,
     placement: PropTypes.oneOf(['above', 'below']),
+    readOnly: PropTypes.any,
     standalone: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
