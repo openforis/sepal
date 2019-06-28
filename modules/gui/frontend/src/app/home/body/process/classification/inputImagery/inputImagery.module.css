@@ -8,15 +8,6 @@
     padding: 0;
 }
 
-/* .image {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: .5rem;
-    border-radius: var(--button-border-radius);
-    padding: .25rem .5rem;
-} */
-
 .list li:last-child {
     margin-bottom: 0;
 }
@@ -25,13 +16,11 @@
     word-break: break-all;
 }
 
-.imageButtons {
-
-}
-
 .noImagery {
-    color: #6c757d;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: gray;
     font-size: .9rem;
-    text-align: center;
-    margin-top: 4rem;
 }
