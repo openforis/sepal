@@ -1,6 +1,6 @@
 const pty = require('node-pty')
 
-const {USERS_HOME} = require('./config')
+const {USERS_HOME, SSH_SCRIPT_PATH} = require('./config')
 
 const sessions = {}
 
@@ -10,7 +10,7 @@ const create = (id, req) => {
     const username = JSON.parse(req.headers['sepal-user']).username
     const keyFile = `${USERS_HOME}/${username}/.ssh/id_rsa`
     const key = `/tmp/${username}-${id}.key`
-    const terminal = pty.spawn('ssh_gateway.sh', [username, keyFile, key], {
+    const terminal = pty.spawn(SSH_SCRIPT_PATH, [username, keyFile, key], {
         name: 'xterm-color',
         cols: cols || 80,
         rows: rows || 24,
@@ -27,7 +27,7 @@ const create = (id, req) => {
         logs: ''
     }
 
-    terminal.on('data', data => 
+    terminal.on('data', data =>
         session.logs += data
     )
 
