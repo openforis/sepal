@@ -495,6 +495,7 @@ class User extends React.Component {
                     lookStyles.look,
                     lookStyles.transparent,
                     lookStyles.chromeless,
+                    lookStyles.noTransitions,
                     styles.grid,
                     styles.user,
                     status ? styles.clickable : null
