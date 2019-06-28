@@ -2,7 +2,6 @@ import {Form} from 'widget/form/form'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './sectionSelection.module.css'
 
 export default class SectionSelection extends React.Component {
     render() {
@@ -19,8 +18,10 @@ export default class SectionSelection extends React.Component {
         ]
         return (
             <Form.Buttons
+                look='transparent'
+                shape='pill'
                 type='vertical'
-                className={styles.sectionSelection}
+                air='more'
                 input={section}
                 options={options}/>
         )

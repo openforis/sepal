@@ -3,7 +3,6 @@ import {msg} from 'translate'
 import {removeAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './aoi.module.css'
 
 export default class SectionSelection extends React.Component {
     render() {
@@ -24,8 +23,10 @@ export default class SectionSelection extends React.Component {
         ]
         return (
             <Form.Buttons
+                look='transparent'
+                shape='pill'
                 type='vertical'
-                className={styles.sources}
+                air='more'
                 input={section}
                 options={options}/>
         )

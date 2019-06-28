@@ -79,7 +79,7 @@ class Tasks extends React.Component {
                         look='transparent'
                         shape='pill'
                         size='normal'
-                        airy>
+                        air='more'>
                         {msg('tasks.none')}
                     </Shape>
                 </div>
