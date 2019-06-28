@@ -40,7 +40,7 @@ export class Buttons extends React.Component {
     }
 
     renderButton({value, label, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
-        const {chromeless, uppercase = true, disabled: allDisabled} = this.props
+        const {chromeless, air, uppercase = true, disabled: allDisabled, look, shape} = this.props
         const selected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         return chromeless
             ? (
@@ -48,7 +48,7 @@ export class Buttons extends React.Component {
                     key={value}
                     chromeless
                     look='transparent'
-                    shape='pill'
+                    shape={shape || 'pill'}
                     disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
                     tooltip={tooltip}
                     tooltipPlacement='bottom'
@@ -66,7 +66,9 @@ export class Buttons extends React.Component {
             : (
                 <Button
                     key={value}
-                    look={selected ? 'highlight' : 'default'}
+                    look={selected ? 'highlight' : look || 'default'}
+                    shape={shape}
+                    air={air}
                     additionalClassName={uppercase ? styles.uppercase : null}
                     disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
                     tooltip={tooltip}
@@ -118,14 +120,17 @@ export class Buttons extends React.Component {
 }
 
 Buttons.propTypes = {
+    air: PropTypes.any,
     capitalized: PropTypes.any,
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     label: PropTypes.string,
+    look: PropTypes.shape,
     multiple: PropTypes.any,
     options: PropTypes.array,
     selected: PropTypes.any,
+    shape: PropTypes.shape,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,

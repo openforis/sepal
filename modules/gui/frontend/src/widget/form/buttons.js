@@ -4,10 +4,14 @@ import React from 'react'
 
 export const FormButtons = (
     {
-        capitalized, className, input, label, multiple, options, tooltip, tooltipPlacement, type, disabled, onChange
+        capitalized, chromeless, look, shape, air, className, input, label, multiple, options, tooltip, tooltipPlacement, type, disabled, onChange
     }) =>
     <Buttons
         capitalized={capitalized}
+        chromeless={chromeless}
+        look={look}
+        shape={shape}
+        air={air}
         className={className}
         selected={input.value}
         onChange={value => {
@@ -23,13 +27,17 @@ export const FormButtons = (
         disabled={disabled}/>
 
 FormButtons.propTypes = {
+    air: PropTypes.any,
     capitalized: PropTypes.any,
+    chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     input: PropTypes.object,
     label: PropTypes.string,
+    look: PropTypes.string,
     multiple: PropTypes.any,
     options: PropTypes.array,
+    shape: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,
