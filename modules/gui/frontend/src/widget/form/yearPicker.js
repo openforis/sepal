@@ -26,6 +26,7 @@ export class FormYearPicker extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 autoFocus={autoFocus}
+                readOnly={true}
                 onChange={onChange}
                 errorMessage={errorMessage}
                 alignment='center'
