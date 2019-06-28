@@ -8,7 +8,7 @@ import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './aoi.module.css'
+import styles from './polygonSection.module.css'
 
 const mapRecipeToProps = recipe => {
     return {
@@ -46,11 +46,9 @@ class PolygonSection extends React.Component {
 
     render() {
         return (
-            <React.Fragment>
-                <div className={styles.polygon}>
-                    <Msg id='process.mosaic.panel.areaOfInterest.form.polygon.description'/>
-                </div>
-            </React.Fragment>
+            <div className={styles.polygon}>
+                <Msg id='process.mosaic.panel.areaOfInterest.form.polygon.description'/>
+            </div>
         )
     }
 

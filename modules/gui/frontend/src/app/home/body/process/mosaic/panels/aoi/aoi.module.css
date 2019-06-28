@@ -1,29 +1,4 @@
 .panel {
     min-height: 21rem;
     max-width: 20rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.sources {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    margin: 1rem;
-}
-
-.sources > * > * {
-    margin: .75rem;
-}
-
-.polygon {
-    margin: auto;
-    text-align: center;
-    font-style: italic;
-    margin-top: 5rem;
-}
-
-select:disabled {
-    background: #dddddd;
 }
