@@ -4,11 +4,11 @@
     justify-content: flex-end;
 }
 
-.none {
-    text-align: center;
-    margin-top: 20%;
-    color: #ccc;
-    font-style: italic;
+.noTasks {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .tasks {

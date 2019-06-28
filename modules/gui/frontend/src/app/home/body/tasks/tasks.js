@@ -2,11 +2,12 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {HoverDetector, HoverOverlay} from 'widget/hover'
-import {Msg, msg} from 'translate'
 import {Progress} from 'widget/progress'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Shape} from 'widget/shape'
 import {compose} from 'compose'
 import {connect} from 'store'
+import {msg} from 'translate'
 import React from 'react'
 import api from 'api'
 import clipboard from 'clipboard'
@@ -73,8 +74,14 @@ class Tasks extends React.Component {
                 </ScrollableContainer>
             )
             : (
-                <div className={styles.none}>
-                    <Msg id='tasks.none'/>
+                <div className={styles.noTasks}>
+                    <Shape
+                        look='transparent'
+                        shape='pill'
+                        size='normal'
+                        airy>
+                        {msg('tasks.none')}
+                    </Shape>
                 </div>
             )
     }
