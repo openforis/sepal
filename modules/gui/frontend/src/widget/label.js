@@ -31,7 +31,7 @@ export default class Label extends React.Component {
         return tooltip
             ? (
                 <Tooltip msg={tooltip} placement={tooltipPlacement}>
-                    <Icon className={styles.info} name='question-circle'/>
+                    <span><Icon className={styles.info} name='question-circle'/></span>
                 </Tooltip>
             ) : null
     }
