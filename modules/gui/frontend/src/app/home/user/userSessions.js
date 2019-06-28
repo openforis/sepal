@@ -8,6 +8,7 @@ import Notifications from 'widget/notifications'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import format from 'format'
+import styles from './userSessions.module.css'
 
 const mapStateToProps = () => ({
     sessions: select('user.currentUserReport.sessions')
@@ -34,7 +35,9 @@ class UserSessions extends React.Component {
 
     renderNoSessions() {
         return (
-            <div>{msg('user.report.sessions.noSessions')}</div>
+            <div className={styles.noSessions}>
+                {msg('user.report.sessions.noSessions')}
+            </div>
         )
     }
 
