@@ -44,14 +44,15 @@ class _Button extends React.Component {
     }
 
     classNames() {
-        const {chromeless, className, additionalClassName, look, size, shape,
+        const {chromeless, className, additionalClassName, look, size, shape, air,
             alignment, width, onClickHold, hover, disableTransitions} = this.props
         return className ? className : [
             styles.button,
-            styles[size],
-            styles[shape],
-            styles[alignment],
-            styles[width],
+            styles[`size-${size}`],
+            styles[`shape-${shape}`],
+            styles[`air-${air}`],
+            styles[`alignment-${alignment}`],
+            styles[`width-${width}`],
             lookStyles.look,
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
@@ -273,6 +274,7 @@ export const Button = compose(
 
 Button.propTypes = {
     additionalClassName: PropTypes.string,
+    air: PropTypes.oneOf(['normal', 'more']),
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     children: PropTypes.any,
     chromeless: PropTypes.any,
@@ -308,6 +310,7 @@ Button.propTypes = {
 }
 
 Button.defaultProps = {
+    air: 'normal',
     alignment: 'center',
     iconPlacement: 'left',
     look: 'default',
