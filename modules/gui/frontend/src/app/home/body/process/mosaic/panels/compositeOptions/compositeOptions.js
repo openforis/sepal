@@ -99,7 +99,7 @@ class CompositeOptions extends React.Component {
                 <Label
                     msg={msg('process.mosaic.panel.composite.form.filters.label')}
                     tooltip={msg('process.mosaic.panel.composite.form.filters.tooltip')}
-                    tooltipPlacement='topLeft'/>
+                    tooltipPlacement='top'/>
                 <PercentileField
                     input={shadowPercentile}/>
                 <PercentileField
