@@ -8,17 +8,8 @@ import styles from './shape.module.css'
 import withForwardedRef from 'ref'
 
 class _Shape extends React.Component {
-    active() {
-        const {shown = true, disabled = false} = this.props
-        return shown && !disabled
-    }
-
-    nonInteractive() {
-        return !this.active()
-    }
-
     classNames() {
-        const {chromeless, className, additionalClassName, look, size, shape,
+        const {chromeless, className, additionalClassName, look, size, shape, airy,
             alignment, width, disableTransitions} = this.props
         return className ? className : [
             styles.shape,
@@ -26,11 +17,12 @@ class _Shape extends React.Component {
             styles[shape],
             styles[alignment],
             styles[width],
+            airy ? styles.airy : null,
             lookStyles.look,
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
             disableTransitions ? lookStyles.noTransitions : null,
-            this.nonInteractive() ? lookStyles.nonInteractive : null,
+            lookStyles.nonInteractive,
             additionalClassName
         ].join(' ')
     }
@@ -105,6 +97,7 @@ export const Shape = compose(
 
 Shape.propTypes = {
     additionalClassName: PropTypes.string,
+    airy: PropTypes.any,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     children: PropTypes.any,
     chromeless: PropTypes.any,

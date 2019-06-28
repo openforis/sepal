@@ -5,6 +5,7 @@
     --x-large-font-size: 1.1rem;
     --xx-large-font-size: 1.4rem;
     --ratio: 2.2;
+    --extra-padding: 0rem;
     flex-shrink: 0;
     position: relative;
     cursor: pointer;
@@ -67,13 +68,13 @@
 
 .shape.rectangle {
     border-radius: var(--shape-border-radius);
-    padding: 0 calc(var(--font-size) * .8);
+    padding: var(--extra-padding) calc(var(--font-size) * .8 + var(--extra-padding));
 }
 
 .shape.pill {
     border-radius: 500px;
     min-width: 3.5rem;
-    padding: 0 calc(var(--font-size) * .8);
+    padding: var(--extra-padding) calc(var(--font-size) * .8 + var(--extra-padding));
 }
 
 .shape.circle {
@@ -111,4 +112,8 @@
 /* spacing between icon and label */
 .shape > .contents > * + * {
     margin-left: .5rem;
+}
+
+.shape.airy {
+    --extra-padding: 1rem;
 }
