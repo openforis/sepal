@@ -1256,6 +1256,10 @@
       }
     }
   },
+  "footer": {
+    "buildNumber": "Build number",
+    "gitCommit": "Git commit"
+  },
   "tasks": {
     "none": "You have no background tasks.",
     "removeAll": {
