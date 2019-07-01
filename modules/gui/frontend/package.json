@@ -44,10 +44,10 @@
     "xterm": "^3.14.2"
   },
   "scripts": {
-    "start": "NODE_PATH=src/ HTTPS=true react-scripts start",
-    "build": "NODE_PATH=src/ react-scripts build",
-    "test": "NODE_PATH=src/ react-scripts test",
-    "eject": "NODE_PATH=src/ react-scripts eject"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "devDependencies": {
     "eslint-plugin-react": "7.13.0",

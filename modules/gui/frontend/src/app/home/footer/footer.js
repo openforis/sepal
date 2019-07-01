@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import Tooltip from 'widget/tooltip'
 import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
 import {UserMessagesButton} from '../user/userMessages'
@@ -44,9 +45,15 @@ const Logout = () =>
 const Title = () => {
     const wikiURL = 'https://github.com/openforis/sepal/wiki'
     return (
-        <a href={wikiURL} className={styles.title} target={'sepal-wiki'}>
-            Sepal
-        </a>
+        <Tooltip
+            msg={`
+                    Build: ${process.env.REACT_APP_VERSION || '?'}, 
+                    Git commit: ${process.env.REACT_APP_GIT_COMMIT || '?'}`}
+            top>
+            <a href={wikiURL} className={styles.title} target={'sepal-wiki'}>
+                Sepal
+            </a>
+        </Tooltip>
     )
 }
 

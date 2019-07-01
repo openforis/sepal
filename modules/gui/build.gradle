@@ -18,8 +18,8 @@ idea.module {
 mainClassName = 'org.openforis.sepal.gui.Main'
 
 node {
-    version = '10.4.1'
-    npmVersion = '6.1.0'
+    version = '10.14.2'
+    npmVersion = '6.7.0'
     nodeModulesDir = file("${projectDir}/frontend")
     download = true
 }
