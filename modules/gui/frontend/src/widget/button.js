@@ -303,7 +303,7 @@ export const Button = compose(
 
 Button.propTypes = {
     additionalClassName: PropTypes.string,
-    air: PropTypes.oneOf(['normal', 'more']),
+    air: PropTypes.oneOf(['normal', 'more', 'less']),
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     children: PropTypes.any,
     chromeless: PropTypes.any,

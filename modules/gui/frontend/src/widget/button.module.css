@@ -9,16 +9,16 @@
     --large-font-size: 1.0rem;
     --x-large-font-size: 1.1rem;
     --xx-large-font-size: 1.4rem;
-    --ratio: 2.2;
+    --min-size-factor: 2.2;
+    --size: calc(var(--air-factor) * var(--font-size));
     flex-shrink: 0;
     position: relative;
     cursor: pointer;
     transition: all 100ms ease-in-out;
     font-size: var(--font-size);
     line-height: var(--font-size);
-    min-height: fit-content;
-    height: calc(var(--ratio) * var(--font-size));
-    min-width: calc(var(--ratio) * var(--font-size));
+    min-height: calc(var(--size) * var(--min-size-factor));
+    min-width: calc(var(--size) * var(--min-size-factor));
     padding: 0; /* Needed for alignment of button contents */
 }
 
@@ -68,25 +68,21 @@
 
 .button.shape-rectangle {
     border-radius: var(--button-border-radius);
-    padding: calc(var(--air-factor) * .8rem) calc(var(--font-size) * .8 + var(--air-factor) * .5rem);
+    padding: calc(var(--size) * .5) calc(var(--size) * .8);
 }
 
 .button.shape-pill {
     border-radius: 500px;
     min-width: 3.5rem;
-    padding: calc(var(--air-factor) * .7rem) calc(var(--font-size) * .8 + var(--air-factor) * .5rem);
+    padding: calc(var(--size) * .5) calc(var(--size) * .8);
 }
 
 .button.shape-circle {
     border-radius: 50%;
 }
 
-.button.size-xx-large.shape-circle{
-    --ratio: 2.3;
-}
-
 .button.shape-none {
-    --ratio: 1;
+    --air-factor: 0;
     padding: 0;
     border: none !important;
     background: none !important;
@@ -106,11 +102,17 @@
 /* air */
 
 .button.air-normal {
-    --air-factor: 0;
+    --air-factor: 1;
 }
 
 .button.air-more {
-    --air-factor: 1;
+    /* normal +20% */
+    --air-factor: 1.2;
+}
+
+.button.air-less {
+    /* normal -20% */
+    --air-factor: .8;
 }
 
 /* contents */
