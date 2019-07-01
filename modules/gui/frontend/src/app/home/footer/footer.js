@@ -47,7 +47,7 @@ const Title = () => {
     return (
         <Tooltip
             msg={`
-                    Build: ${process.env.REACT_APP_VERSION || '?'}, 
+                    Build: ${process.env.REACT_APP_BUILD_NUMBER || '?'}, 
                     Git commit: ${process.env.REACT_APP_GIT_COMMIT || '?'}`}
             top>
             <a href={wikiURL} className={styles.title} target={'sepal-wiki'}>
