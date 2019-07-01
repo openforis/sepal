@@ -7,6 +7,7 @@ import {UserMessagesButton} from '../user/userMessages'
 import {logout} from 'widget/user'
 import {msg} from 'translate'
 import React from 'react'
+import clipboard from 'clipboard'
 import styles from './footer.module.css'
 
 const Footer = ({className}) => {
@@ -46,31 +47,50 @@ const Logout = () =>
 const Title = () => {
     const wikiURL = 'https://github.com/openforis/sepal/wiki'
     const gitCommit = process.env.REACT_APP_GIT_COMMIT
-    const gitShortCommit = gitCommit
-        ? `${gitCommit.substring(0, 10)}...`
-        : '?'
-    const buildNumber = process.env.REACT_APP_BUILD_NUMBER || '?'
+    const gitShortCommit = gitCommit && `${gitCommit.substring(0, 10)}...`
+    const buildNumber = process.env.REACT_APP_BUILD_NUMBER
     const tooltip =
         <Layout type='vertical' spacing='none'>
             <Layout type='horizontal-nowrap'>
                 <div>{msg('footer.buildNumber')}</div>
-                <Button
-                    chromeless
-                    linkUrl={`http://ops.sepal.io:8080/job/Sepal/${buildNumber}/`}
-                    linkTarget='jenkins'
-                    label={buildNumber}
-                />
+                <ButtonGroup type='horizontal-tight'>
+                    <Button
+                        chromeless
+                        shape='pill'
+                        linkUrl={`http://ops.sepal.io:8080/job/Sepal/${buildNumber}/`}
+                        linkTarget='jenkins'
+                        label={buildNumber || '?'}
+                    />
+                    <Button
+                        chromeless
+                        shape='circle'
+                        icon='copy'
+                        disabled={!buildNumber}
+                        onClick={() => clipboard.copy(buildNumber)}
+                    />
+                </ButtonGroup>
             </Layout>
             <Layout type='horizontal-nowrap'>
                 <div>{msg('footer.gitCommit')}</div>
-                <Button
-                    chromeless
-                    linkUrl={`https://github.com/openforis/sepal/tree/${gitCommit}`}
-                    linkTarget='github'
-                    label={gitShortCommit}
-                />
+                <ButtonGroup type='horizontal-tight'>
+                    <Button
+                        chromeless
+                        shape='pill'
+                        linkUrl={`https://github.com/openforis/sepal/tree/${gitCommit}`}
+                        linkTarget='github'
+                        label={gitShortCommit || '?'}
+                    />
+                    <Button
+                        chromeless
+                        shape='circle'
+                        icon='copy'
+                        disabled={!gitCommit}
+                        onClick={() => clipboard.copy(gitCommit)}
+                    />
+                </ButtonGroup>
             </Layout>
         </Layout>
+
     return (
         <Button
             chromeless
