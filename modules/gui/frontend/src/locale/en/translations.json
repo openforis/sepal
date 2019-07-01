@@ -1258,7 +1258,9 @@
   },
   "footer": {
     "buildNumber": "Build number",
-    "gitCommit": "Git commit"
+    "buildNumberCopied": "Build number copied to clipboard",
+    "gitCommit": "Git commit",
+    "gitCommitCopied": "Git commit copied to clipboard"
   },
   "tasks": {
     "none": "You have no background tasks.",
