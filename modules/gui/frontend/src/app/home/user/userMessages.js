@@ -246,6 +246,7 @@ const _UserMessagesButton = ({className, userMessages}) => {
                         chromeless
                         look='transparent'
                         size='large'
+                        air='less'
                         additionalClassName={[className, unread ? styles.unread : null].join(' ')}
                         icon='bell'
                         disabled={active}

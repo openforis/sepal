@@ -12,10 +12,10 @@ const Footer = ({className}) => {
     return (
         <div className={className}>
             <div className={styles.footer}>
-                <div>
+                <ButtonGroup type='horizontal-tight'>
                     <Title/>
                     <Copyright/>
-                </div>
+                </ButtonGroup>
                 <div>
                     <ButtonGroup type='horizontal-tight'>
                         <UserMessagesButton/>
@@ -36,6 +36,7 @@ const Logout = () =>
         chromeless
         look='transparent'
         size='large'
+        air='less'
         icon='sign-out-alt'
         onClick={logout}
         tooltip={msg('home.sections.logout')}
@@ -44,9 +45,14 @@ const Logout = () =>
 const Title = () => {
     const wikiURL = 'https://github.com/openforis/sepal/wiki'
     return (
-        <a href={wikiURL} className={styles.title} target={'sepal-wiki'}>
-            Sepal
-        </a>
+        <Button
+            chromeless
+            look='transparent'
+            air='less'
+            additionalClassName={styles.title}
+            linkUrl={wikiURL}
+            linkTarget={'sepal-wiki'}
+            label='SEPAL'/>
     )
 }
 

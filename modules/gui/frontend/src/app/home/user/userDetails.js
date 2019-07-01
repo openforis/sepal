@@ -165,6 +165,7 @@ const _UserDetailsButton = ({className, username}) =>
                     chromeless
                     look='transparent'
                     size='large'
+                    air='less'
                     additionalClassName={className}
                     label={username}
                     disabled={active}

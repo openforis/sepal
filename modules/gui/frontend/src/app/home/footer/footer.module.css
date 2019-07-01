@@ -9,7 +9,7 @@
     align-items: center;
     background-color: rgba(28, 28, 28, 0.99);
     border-top: 1px solid hsla(0, 0%, 100%, .1);
-    padding: 0 .5rem;
+    padding: 0 1rem 0 .5rem;
     z-index: 2;  /* stay over the menu */
 }
 
@@ -18,8 +18,8 @@
     font-size: 1.2rem;
     font-weight: bold;
     letter-spacing: .5rem;
+    text-indent: .5rem;
     text-transform: uppercase;
-    margin-left: 1rem;
 }
 
 .copyright {

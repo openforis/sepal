@@ -103,6 +103,7 @@ const _UsageButton = ({userReport, budgetExceeded}) => {
                         chromeless
                         look='transparent'
                         size='large'
+                        air='less'
                         additionalClassName={budgetExceeded ? styles.budgetExceeded : null}
                         icon='dollar-sign'
                         label={label}
