@@ -312,7 +312,7 @@ class DownloadYear(ThreadTask):
                 scale=30,
                 maxPixels=1e12,
                 shardSize=64,
-                fileDimensions=128
+                fileDimensions=512
             ))
         self._image_download = self.dependent(
             Download(
