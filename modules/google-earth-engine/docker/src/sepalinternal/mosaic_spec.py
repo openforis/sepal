@@ -7,6 +7,7 @@ from .aoi import Aoi
 from .dates import parse_date, day_of_year, add_years, to_millis, milis_per_day
 from .image_spec import ImageSpec
 from .mosaic import Mosaic
+from .mosaic.tasseled_cap import tasseled_cap_bands
 
 
 class MosaicSpec(ImageSpec):
@@ -38,7 +39,8 @@ class MosaicSpec(ImageSpec):
         self.cloud_buffer = composite_options.get('cloudBuffer', 0)
         self.brdf_correct = 'BRDF' in composite_options['corrections']
         self.surface_reflectance = 'SR' in composite_options['corrections']
-        self.pan_sharpen = bool(bands.get('panSharpen', False))
+        self.do_tasseled_cap = set(tasseled_cap_bands) & set(self.bands)
+        self.pan_sharpen = bool(bands.get('panSharpen', False)) and not self.do_tasseled_cap
         self.scale = spec.get('scale')
 
     def _viz_params(self):
