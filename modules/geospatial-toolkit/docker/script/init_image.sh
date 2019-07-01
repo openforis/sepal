@@ -84,6 +84,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     python-dev \
     python-opencv \
     python-pandas \
+    python-pip \
     python3-pip \
     python-pyshp \
     python-rasterio \
