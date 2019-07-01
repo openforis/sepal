@@ -16,6 +16,9 @@ const fields = {
         .notBlank('landing.login.password.required')
 }
 
+const signUp = () =>
+    window.location = 'https://docs.google.com/forms/d/e/1FAIpQLSci4hopXNtMOQKJzsUybaJETrAPQp8j6TCqycSBQ0XO37jBwA/viewform?c=0&w=1'
+
 const mapStateToProps = () => ({
     errors: invalidCredentials() ? {password: msg('landing.login.password.invalid')} : {}
 })
@@ -70,7 +73,7 @@ class Login extends React.Component {
                             label={msg('landing.login.sign-up')}
                             tabIndex={4}
                             onMouseDown={e => e.preventDefault()}
-                            onClick={() => window.location = 'https://tinyurl.com/sepal-access'}
+                            onClick={signUp}
                         />
                         <Button
                             chromeless

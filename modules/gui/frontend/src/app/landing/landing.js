@@ -1,7 +1,8 @@
-import {Msg} from 'translate'
+import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {location} from 'route'
+import {msg} from 'translate'
 import Credentials from './credentials'
 import Icon from 'widget/icon'
 import LanguageSelector from 'app/landing/languageSelector'
@@ -20,10 +21,10 @@ const Landing =
             <SlideShow/>
             <div className={styles.landing}>
                 <div className={styles.tagline}>
-                    <Msg id='landing.tagline'/>
+                    {msg('landing.tagline')}
                 </div>
                 <div className={styles.title}>
-                    <Msg id='landing.title'/>
+                    {msg('landing.title')}
                     <hr className={styles.titleUnderline}/>
                 </div>
                 <div className={styles.language}>
@@ -39,9 +40,14 @@ const Landing =
                     <Credentials location={location}/>
                 </div>
                 <div className={styles.privacy}>
-                    <a href={'/privacy-policy'} target="sepal-privacy-policy">
-                        <Msg id='landing.privacyPolicy'/>
-                    </a>
+                    <Button
+                        chromeless
+                        look='transparent'
+                        shape='pill'
+                        link='/privacy-policy'
+                        linkTarget='sepal-privacy-policy'
+                        label={msg('landing.privacyPolicy')}>
+                    </Button>
                 </div>
             </div>
         </div>
@@ -61,8 +67,12 @@ const Feature = ({icon, name}) =>
             <Icon name={icon}/>
         </div>
         <div>
-            <h3 className={styles.featureTitle}><Msg id={`landing.features.${name}.title`}/></h3>
-            <p className={styles.featureDescription}><Msg id={`landing.features.${name}.description`}/></p>
+            <h3 className={styles.featureTitle}>
+                {msg(`landing.features.${name}.title`)}
+            </h3>
+            <p className={styles.featureDescription}>
+                {msg(`landing.features.${name}.description`)}
+            </p>
         </div>
     </div>
 
