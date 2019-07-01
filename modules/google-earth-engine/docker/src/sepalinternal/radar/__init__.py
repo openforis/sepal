@@ -11,7 +11,7 @@ class RadarMosaic(ImageSpec):
         self.spec = spec
         self.model = spec['recipe']['model']
         self.aoi = Aoi.create(spec['recipe']['model']['aoi'])
-        self.bands = spec['bands']
+        self.bands = spec.get('bands', [])
         self.time_scan = not self.model['dates'].get('targetDate')
         self.harmonics_dependents = [
             dependent

@@ -77,7 +77,7 @@ export class Buttons extends React.Component {
                     {label}
                 </Button>
             )
-        
+
     }
 
     renderButtons(options, key) {
@@ -126,11 +126,11 @@ Buttons.propTypes = {
     className: PropTypes.string,
     disabled: PropTypes.any,
     label: PropTypes.string,
-    look: PropTypes.shape,
+    look: PropTypes.string,
     multiple: PropTypes.any,
     options: PropTypes.array,
     selected: PropTypes.any,
-    shape: PropTypes.shape,
+    shape: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
     type: PropTypes.string,

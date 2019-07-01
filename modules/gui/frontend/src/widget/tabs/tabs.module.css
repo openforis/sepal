@@ -9,10 +9,11 @@
     display: flex;
     flex-grow: 1;
     margin-right: .5rem;
+    scrollbar-width: none; /* Hides scrollbars in Firefox */
 }
 
 .tabs::-webkit-scrollbar {
-    display: none;
+    display: none; /* Hides scrollbars in Chrome/Safari */
 }
 
 .tabActions {

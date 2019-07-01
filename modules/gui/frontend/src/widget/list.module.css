@@ -1,6 +1,7 @@
 .options {
     z-index: 2;
     border: 1px solid #333;
+    scrollbar-width: none; /* Hides scrollbars in Firefox */
 }
 
 .options::-webkit-scrollbar {
