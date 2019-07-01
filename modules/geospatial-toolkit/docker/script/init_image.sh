@@ -110,5 +110,8 @@ echo
 echo "************************************"
 echo "*** Installing misc python tools ***"
 echo "************************************"
+pip2 install -r /config/requirements.txt
+pip2 install --upgrade pip
+
 pip3 install -r /config/requirements.txt
 pip3 install --upgrade pip

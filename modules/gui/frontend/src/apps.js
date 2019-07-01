@@ -3,7 +3,8 @@ import {interval} from 'rxjs'
 import {select} from 'store'
 import actionBuilder from 'action-builder'
 import api from 'api'
-import jupyterIcon from 'app/home/body/apps/logo/jupyter.png'
+import jupyterNotebookIcon from 'app/home/body/apps/logo/jupyter-notebook.png'
+import jupyterLabIcon from 'app/home/body/apps/logo/jupyter-lab.png'
 import rstudioIcon from 'app/home/body/apps/logo/r-studio.png'
 
 export const appList = () =>
@@ -19,9 +20,9 @@ export const loadApps$ = () =>
                 endpoint: 'rstudio',
                 single: true
             }
-            const jupyter = {
+            const jupyterNotebook = {
                 path: '/sandbox/jupyter/tree',
-                image: jupyterIcon,
+                image: jupyterNotebookIcon,
                 alt: 'Jupyter notebook',
                 endpoint: 'jupyter',
                 single: true,
@@ -31,8 +32,20 @@ export const loadApps$ = () =>
                     objectFit: 'contain'
                 }
             }
+            const jupyterLab = {
+                path: '/sandbox/jupyter/lab',
+                image: jupyterLabIcon,
+                alt: 'Jupyter Lab',
+                endpoint: 'jupyter',
+                single: true,
+                style: {
+                    height: '90%',
+                    width: '90%',
+                    objectFit: 'contain'
+                }
+            }
             return actionBuilder('SET_APPS')
-                .set('apps.list', [rStudio, jupyter, ...apps])
+                .set('apps.list', [rStudio, jupyterNotebook, jupyterLab, ...apps])
                 .dispatch()
         })
     )
