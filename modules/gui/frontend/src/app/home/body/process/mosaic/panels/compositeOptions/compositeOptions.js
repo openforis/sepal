@@ -53,7 +53,7 @@ class CompositeOptions extends React.Component {
                 <Layout spacing='compact'>
                     {this.renderFilterOptions()}
                 </Layout>
-                <Layout type='horizontal'>
+                <Layout type='vertical'>
                     {this.renderCloudBufferOptions()}
                     {this.renderMaskOptions()}
                     {this.renderComposeOptions()}
@@ -113,27 +113,6 @@ class CompositeOptions extends React.Component {
         )
     }
 
-    renderMaskOptions() {
-        const {inputs: {mask}} = this.props
-        return (
-            <Form.Buttons
-                label={msg('process.mosaic.panel.composite.form.mask.label')}
-                input={mask}
-                multiple={true}
-                options={[{
-                    value: 'CLOUDS',
-                    label: msg('process.mosaic.panel.composite.form.mask.clouds.label'),
-                    tooltip: msg('process.mosaic.panel.composite.form.mask.clouds.tooltip')
-                }, {
-                    value: 'SNOW',
-                    label: msg('process.mosaic.panel.composite.form.mask.snow.label'),
-                    tooltip: msg('process.mosaic.panel.composite.form.mask.snow.tooltip')
-                }]}
-                type='horizontal-nowrap'
-            />
-        )
-    }
-
     renderCloudBufferOptions() {
         const {inputs: {cloudBuffer}} = this.props
         return (
@@ -152,6 +131,27 @@ class CompositeOptions extends React.Component {
                     value: 600,
                     label: msg('process.mosaic.panel.composite.form.cloudBuffer.aggressive.label'),
                     tooltip: msg('process.mosaic.panel.composite.form.cloudBuffer.aggressive.tooltip')
+                }]}
+                type='horizontal-wrap'
+            />
+        )
+    }
+
+    renderMaskOptions() {
+        const {inputs: {mask}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.mosaic.panel.composite.form.mask.label')}
+                input={mask}
+                multiple={true}
+                options={[{
+                    value: 'CLOUDS',
+                    label: msg('process.mosaic.panel.composite.form.mask.clouds.label'),
+                    tooltip: msg('process.mosaic.panel.composite.form.mask.clouds.tooltip')
+                }, {
+                    value: 'SNOW',
+                    label: msg('process.mosaic.panel.composite.form.mask.snow.label'),
+                    tooltip: msg('process.mosaic.panel.composite.form.mask.snow.tooltip')
                 }]}
                 type='horizontal-nowrap'
             />
