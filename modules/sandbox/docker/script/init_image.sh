@@ -87,13 +87,20 @@ echo "**************************"
 jupyter notebook --generate-config
 /usr/bin/python3 -m pip install ipykernel
 /usr/bin/python3 -m ipykernel install
+/usr/bin/python2 -m pip install ipykernel
+/usr/bin/python2 -m ipykernel install
 
 R -e "pacman::p_load('IRkernel')"
 R -e "IRkernel::installspec(user = FALSE)"
 
+npm install -g ijavascript "git+https://github.com/openforis/earthengine-api.git#v0.1.171"
+ijsinstall
 
 /usr/bin/python3 -m pip install ipywidgets
+/usr/bin/python2 -m pip install ipywidgets
 /usr/local/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension
+
+/usr/bin/python3 -m pip install jupyterlab
 
 git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/bin/python3 -m pip install -e jupyter_contrib_nbextensions
@@ -102,3 +109,4 @@ git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/local/bin/jupyter nbextensions_configurator enable
 
 /usr/bin/python3 -m pip install folium
+/usr/bin/python2 -m pip install folium

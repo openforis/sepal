@@ -84,6 +84,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     python-dev \
     python-opencv \
     python-pandas \
+    python-pip \
     python3-pip \
     python-pyshp \
     python-rasterio \
@@ -110,5 +111,8 @@ echo
 echo "************************************"
 echo "*** Installing misc python tools ***"
 echo "************************************"
+pip2 install -r /config/requirements.txt
+pip2 install --upgrade pip
+
 pip3 install -r /config/requirements.txt
 pip3 install --upgrade pip
