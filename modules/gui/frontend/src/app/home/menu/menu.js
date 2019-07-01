@@ -58,7 +58,7 @@ const _SectionLink = ({active, name, icon, disabled}) => {
         <Button
             className={[styles[name], activeClass].join(' ')}
             icon={icon}
-            link={link}
+            route={link}
             tooltip={msg(`home.sections.${name}`)}
             tooltipPlacement='right'
             disabled={disabled}

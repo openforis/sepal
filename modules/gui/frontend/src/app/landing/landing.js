@@ -44,7 +44,7 @@ const Landing =
                         chromeless
                         look='transparent'
                         shape='pill'
-                        link='/privacy-policy'
+                        linkUrl='/privacy-policy'
                         linkTarget='sepal-privacy-policy'
                         label={msg('landing.privacyPolicy')}>
                     </Button>

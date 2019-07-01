@@ -25,7 +25,7 @@ class _Button extends React.Component {
     }
 
     stopPropagation() {
-        const {link, stopPropagation = !link} = this.props
+        const {route, linkUrl, stopPropagation = !(route || linkUrl)} = this.props
         return stopPropagation
     }
 
@@ -35,8 +35,8 @@ class _Button extends React.Component {
     }
 
     linked() {
-        const {onMouseDown, onClick, onClickHold, link, downloadUrl, type} = this.props
-        return onMouseDown || onClick || onClickHold || link || downloadUrl || ['submit', 'reset'].includes(type)
+        const {onMouseDown, onClick, onClickHold, route, linkUrl, downloadUrl, type} = this.props
+        return onMouseDown || onClick || onClickHold || route || linkUrl || downloadUrl || ['submit', 'reset'].includes(type)
     }
 
     nonInteractive() {
@@ -121,12 +121,41 @@ class _Button extends React.Component {
     }
 
     renderLink(contents) {
-        const {link, shown, disabled} = this.props
-        return link && shown && !disabled ? (
-            <Link to={link} onMouseDown={e => e.preventDefault()}>
-                {contents}
-            </Link>
-        ) : contents
+        const {route, linkUrl} = this.props
+        if (!route && !linkUrl) {
+            return contents
+        }
+        if (route && linkUrl) {
+            throw Error('Cannot specify route and linkUrl at the same time.')
+        }
+        if (route) {
+            return this.renderRouteLink(contents)
+        }
+        if (linkUrl) {
+            return this.renderPlainLink(contents)
+        }
+    }
+
+    renderPlainLink(contents) {
+        const {linkUrl, linkTarget, shown, disabled} = this.props
+        return linkUrl && shown && !disabled
+            ? (
+                <a href={linkUrl} target={linkTarget} onMouseDown={e => e.preventDefault()}>
+                    {contents}
+                </a>
+            )
+            : contents
+    }
+
+    renderRouteLink(contents) {
+        const {route, shown, disabled} = this.props
+        return route && shown && !disabled
+            ? (
+                <Link to={route} onMouseDown={e => e.preventDefault()}>
+                    {contents}
+                </Link>
+            )
+            : contents
     }
 
     renderTooltip(contents) {
@@ -290,8 +319,10 @@ Button.propTypes = {
     iconPlacement: PropTypes.oneOf(['left', 'right']),
     iconType: PropTypes.string,
     label: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.array]),
-    link: PropTypes.string,
+    linkTarget: PropTypes.string,
+    linkUrl: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'selected', 'transparent', 'add', 'apply', 'cancel']),
+    route: PropTypes.string,
     shape: PropTypes.oneOf(['rectangle', 'pill', 'circle', 'none']),
     shown: PropTypes.any,
     size: PropTypes.oneOf(['small', 'normal', 'large', 'x-large', 'xx-large']),
@@ -313,6 +344,7 @@ Button.defaultProps = {
     air: 'normal',
     alignment: 'center',
     iconPlacement: 'left',
+    linkTarget: '_blank',
     look: 'default',
     shape: 'rectangle',
     shown: true,
