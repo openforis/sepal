@@ -1,5 +1,6 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
+import {Layout} from 'widget/layout'
 import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -30,10 +31,10 @@ class _Usage extends React.Component {
                     icon='user'
                     title={msg('user.report.title')}/>
                 <PanelContent>
-                    <React.Fragment>
+                    <Layout>
                         {this.renderResosurces()}
                         {this.renderSessions()}
-                    </React.Fragment>
+                    </Layout>
                 </PanelContent>
                 <PanelButtons onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
@@ -46,19 +47,19 @@ class _Usage extends React.Component {
 
     renderResosurces() {
         return (
-            <div className={styles.section}>
+            <React.Fragment>
                 <Label msg={msg('user.report.resources.title')} size='large'/>
                 <UserResources/>
-            </div>
+            </React.Fragment>
         )
     }
 
     renderSessions() {
         return (
-            <div className={styles.section}>
+            <React.Fragment>
                 <Label msg={msg('user.report.sessions.title')} size='large'/>
                 <UserSessions/>
-            </div>
+            </React.Fragment>
         )
     }
 
