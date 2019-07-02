@@ -53,7 +53,7 @@ class CompositeOptions extends React.Component {
                 <Layout spacing='compact'>
                     {this.renderFilterOptions()}
                 </Layout>
-                <Layout type='vertical'>
+                <Layout type='horizontal'>
                     {this.renderCloudBufferOptions()}
                     {this.renderMaskOptions()}
                     {this.renderComposeOptions()}
