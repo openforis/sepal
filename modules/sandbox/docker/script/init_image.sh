@@ -83,27 +83,21 @@ echo
 echo "**************************"
 echo "*** Installing Jupyter ***"
 echo "**************************"
-/usr/local/bin/pip3 install jupyter
-jupyter notebook --generate-config
+/usr/bin/python3 -m pip install jupyter
+/usr/local/bin/jupyter notebook --generate-config
 /usr/bin/python3 -m pip install ipykernel
 /usr/bin/python3 -m ipykernel install
 /usr/bin/python2 -m pip install ipykernel
 /usr/bin/python2 -m ipykernel install
-
 R -e "pacman::p_load('IRkernel')"
 R -e "IRkernel::installspec(user = FALSE)"
-
 /usr/bin/python3 -m pip install ipywidgets
 /usr/bin/python2 -m pip install ipywidgets
-/usr/local/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension
-
 /usr/bin/python3 -m pip install jupyterlab
-
+/usr/bin/python3 -m pip install folium
+/usr/bin/python2 -m pip install folium
 git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/bin/python3 -m pip install -e jupyter_contrib_nbextensions
 /usr/local/bin/jupyter contrib nbextension install
-
 /usr/local/bin/jupyter nbextensions_configurator enable
-
-/usr/bin/python3 -m pip install folium
-/usr/bin/python2 -m pip install folium
+/usr/local/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension
