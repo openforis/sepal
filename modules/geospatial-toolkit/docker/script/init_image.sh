@@ -92,6 +92,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     python-statsmodels-lib \
     python-statsmodels \
     python-virtualenv \
+    python3-venv \
     rsync \
     saga \
     screen \
