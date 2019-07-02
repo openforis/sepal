@@ -8,6 +8,7 @@ import {TabHandle} from './tabHandle'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {delay} from 'rxjs/operators'
+import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -128,7 +129,8 @@ class _Tabs extends React.Component {
                     </Scrollable>
                 </ScrollableContainer>
                 <div className={styles.tabActions}>
-                    {this.renderButtons()}
+                    {isMobile() || this.renderNavigationButtons()}
+                    {this.renderAddButton()}
                     {tabActions && tabActions(selectedTabId)}
                 </div>
             </Keybinding>
@@ -161,7 +163,7 @@ class _Tabs extends React.Component {
         return getTabsInfo(statePath).last
     }
 
-    renderButtons() {
+    renderNavigationButtons() {
         return (
             <ButtonGroup type='horizontal-nowrap'>
                 <Button
@@ -180,7 +182,6 @@ class _Tabs extends React.Component {
                     icon='chevron-right'
                     onClick={() => this.selectNextTab()}
                     disabled={this.isLastTab()}/>
-                {this.renderAddButton()}
             </ButtonGroup>
         )
     }
