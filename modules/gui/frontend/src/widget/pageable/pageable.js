@@ -143,7 +143,6 @@ class _Pageable extends React.Component {
     next(overflow) {
         const {items, fillFirstPage, fillLastPage} = this.props
         const {direction} = this.state
-
         if (direction === 0) {
             return
         }

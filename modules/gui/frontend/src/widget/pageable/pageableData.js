@@ -6,15 +6,15 @@ import React from 'react'
 export class PageableData extends React.Component {
     ref = React.createRef()
     render() {
-        const {itemKey, children} = this.props
+        const {itemKey, direction, className, children} = this.props
         return (
             <Consumer>
                 {({items, next}) =>
-                    <OverflowDetector>
+                    <OverflowDetector className={className}>
                         {isOverflown =>
                             <PageItems
                                 items={items || []}
-                                next={() => next(isOverflown())}
+                                next={() => next(isOverflown(direction))}
                                 itemKey={itemKey}>
                                 {children}
                             </PageItems>
@@ -28,7 +28,9 @@ export class PageableData extends React.Component {
 
 PageableData.propTypes = {
     children: PropTypes.func.isRequired,
-    itemKey: PropTypes.func.isRequired
+    itemKey: PropTypes.func.isRequired,
+    className: PropTypes.string,
+    direction: PropTypes.any
 }
 
 class PageItems extends React.Component {
