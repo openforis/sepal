@@ -3,8 +3,8 @@ import {interval} from 'rxjs'
 import {select} from 'store'
 import actionBuilder from 'action-builder'
 import api from 'api'
-import jupyterNotebookIcon from 'app/home/body/apps/logo/jupyter-notebook.png'
 import jupyterLabIcon from 'app/home/body/apps/logo/jupyter-lab.png'
+import jupyterNotebookIcon from 'app/home/body/apps/logo/jupyter-notebook.png'
 import rstudioIcon from 'app/home/body/apps/logo/r-studio.png'
 
 export const appList = () =>
