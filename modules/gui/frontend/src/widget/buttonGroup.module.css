@@ -1,6 +1,7 @@
 .container {
     /* prevent unwanted scrolling due to negative margins */
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .buttonGroup {
