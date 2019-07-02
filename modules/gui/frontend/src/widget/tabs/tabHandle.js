@@ -2,35 +2,21 @@ import {Button} from 'widget/button'
 import {Input} from 'widget/input'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
+import {renameTab, selectTab} from './tabs'
 import {select} from 'store'
 import {withScrollable} from 'widget/scrollable'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from 'action-builder'
 import styles from './tabHandle.module.css'
 
 const CLOSE_ANIMATION_DURATION_MS = 250
 
 const getTabIndex = (id, statePath) =>
-    select([statePath, 'tabs'])
-        .findIndex(tab => tab.id === id)
+    select([statePath, 'tabs']).findIndex(tab => tab.id === id)
 
 const toTabPath = (id, statePath) =>
     [statePath, 'tabs', getTabIndex(id, statePath)].join('.')
-
-const renameTab = (title, tabPath, onTitleChanged) => {
-    actionBuilder('RENAME_TAB')
-        .set([tabPath, 'title'], title)
-        .dispatch()
-    setTimeout(() => onTitleChanged && onTitleChanged(select(tabPath)), 0)
-}
-
-const selectTab = (id, statePath) => {
-    actionBuilder('SELECT_TAB')
-        .set([statePath, 'selectedTabId'], id)
-        .dispatch()
-}
 
 class _TabHandle extends React.Component {
     constructor(props) {

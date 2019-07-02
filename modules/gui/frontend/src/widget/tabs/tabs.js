@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject} from 'rxjs'
@@ -35,6 +36,41 @@ export const closeTab = (id, statePath) => {
     actionBuilder('CLOSING_TAB')
         .set([statePath, 'tabs', {id}, 'closing'], true)
         .dispatch()
+}
+
+export const renameTab = (title, tabPath, onTitleChanged) => {
+    actionBuilder('RENAME_TAB')
+        .set([tabPath, 'title'], title)
+        .dispatch()
+    setTimeout(() => onTitleChanged && onTitleChanged(select(tabPath)), 0)
+}
+
+export const selectTab = (id, statePath) => {
+    actionBuilder('SELECT_TAB')
+        .set([statePath, 'selectedTabId'], id)
+        .dispatch()
+}
+
+const getTabsInfo = statePath => {
+    const tabs = select([statePath, 'tabs'])
+    const selectedId = select([statePath, 'selectedTabId'])
+    if (tabs && selectedId) {
+        const selectedIndex = tabs.findIndex(tab => tab.id === selectedId)
+        const first = selectedIndex === 0
+        const last = selectedIndex === tabs.length - 1
+        const previousId = !first && tabs[selectedIndex - 1].id
+        const nextId = !last && tabs[selectedIndex + 1].id
+        return {
+            tabs,
+            selectedId,
+            selectedIndex,
+            first,
+            last,
+            previousId,
+            nextId
+        }
+    }
+    return {}
 }
 
 const mapStateToProps = (state, ownProps) => ({
@@ -92,10 +128,60 @@ class _Tabs extends React.Component {
                     </Scrollable>
                 </ScrollableContainer>
                 <div className={styles.tabActions}>
-                    {this.renderAddButton()}
+                    {this.renderButtons()}
                     {tabActions && tabActions(selectedTabId)}
                 </div>
             </Keybinding>
+        )
+    }
+
+    selectPreviousTab() {
+        const {statePath} = this.props
+        const previousId = getTabsInfo(statePath).previousId
+        if (previousId) {
+            selectTab(previousId, statePath)
+        }
+    }
+
+    selectNextTab() {
+        const {statePath} = this.props
+        const nextId = getTabsInfo(statePath).nextId
+        if (nextId) {
+            selectTab(nextId, statePath)
+        }
+    }
+
+    isFirstTab() {
+        const {statePath} = this.props
+        return getTabsInfo(statePath).first
+    }
+
+    isLastTab() {
+        const {statePath} = this.props
+        return getTabsInfo(statePath).last
+    }
+
+    renderButtons() {
+        return (
+            <ButtonGroup type='horizontal-nowrap'>
+                <Button
+                    chromeless
+                    look='transparent'
+                    size='large'
+                    shape='circle'
+                    icon='chevron-left'
+                    onClick={() => this.selectPreviousTab()}
+                    disabled={this.isFirstTab()}/>
+                <Button
+                    chromeless
+                    look='transparent'
+                    size='large'
+                    shape='circle'
+                    icon='chevron-right'
+                    onClick={() => this.selectNextTab()}
+                    disabled={this.isLastTab()}/>
+                {this.renderAddButton()}
+            </ButtonGroup>
         )
     }
 
@@ -104,6 +190,7 @@ class _Tabs extends React.Component {
         return (
             <Button
                 chromeless
+                look='transparent'
                 size='large'
                 shape='circle'
                 icon='plus'
