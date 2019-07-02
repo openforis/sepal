@@ -43,6 +43,7 @@ class Menu extends React.Component {
             <span ref={this.button}>
                 <Button
                     chromeless
+                    look='transparent'
                     size='large'
                     shape='circle'
                     icon='bars'
