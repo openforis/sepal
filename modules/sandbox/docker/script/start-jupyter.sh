@@ -16,7 +16,7 @@ else
     echo "User $sandbox_user initialized"
 fi
 
-sudo -iu $sandbox_user jupyter notebook\
+sudo -iu $sandbox_user python3 /usr/local/bin/jupyter-notebook\
  --no-browser\
  --allow-root\
  --ip=0.0.0.0\

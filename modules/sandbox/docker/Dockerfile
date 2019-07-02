@@ -12,5 +12,6 @@ RUN chmod -R 500 /script && \
 
 ADD .build/sepal-ee /usr/local/src/sepal-ee
 RUN pip3 install -e /usr/local/src/sepal-ee
+RUN pip2 install -e /usr/local/src/sepal-ee
 
 CMD ["/script/init_container.sh"]
