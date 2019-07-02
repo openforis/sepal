@@ -25,7 +25,8 @@ class _Apps extends React.Component {
         return (
             <Tabs
                 label={msg('home.sections.app-launch-pad')}
-                statePath='apps'>
+                statePath='apps'
+                isLandingTab={({path}) => !path}>
                 {({id}) => <AppLauncher id={id} apps={apps}/>}
             </Tabs>
         )

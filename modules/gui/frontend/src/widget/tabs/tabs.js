@@ -187,7 +187,9 @@ class _Tabs extends React.Component {
     }
 
     renderAddButton() {
-        const {statePath} = this.props
+        const {tabs, selectedTabId, isLandingTab} = this.props
+        const selectedTab = tabs.find(tab => tab.id === selectedTabId)
+        const disabled = selectedTab && isLandingTab && isLandingTab(selectedTab)
         return (
             <Button
                 chromeless
@@ -197,8 +199,20 @@ class _Tabs extends React.Component {
                 icon='plus'
                 tooltip={msg('widget.tabs.addTab.tooltip')}
                 tooltipPlacement='bottom'
-                onClick={() => addTab(statePath)}/>
+                disabled={disabled}
+                onClick={() => this.onAdd()}/>
         )
+    }
+
+    onAdd() {
+        const {statePath, tabs, isLandingTab} = this.props
+        if (isLandingTab) {
+            const tab = tabs.find(tab => isLandingTab(tab))
+            if (tab) {
+                return selectTab(tab.id, statePath)
+            }
+        }
+        addTab(statePath)
     }
 
     render() {
@@ -273,6 +287,7 @@ Tabs.propTypes = {
     statePath: PropTypes.string.isRequired,
     children: PropTypes.any,
     isDirty: PropTypes.func,
+    isLandingTab: PropTypes.func,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
     tabs: PropTypes.array,

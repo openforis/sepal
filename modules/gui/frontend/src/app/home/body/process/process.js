@@ -55,6 +55,7 @@ class Process extends React.Component {
                 <Tabs
                     label={msg('home.sections.process')}
                     statePath='process'
+                    isLandingTab={({type}) => !type}
                     tabActions={recipeId => this.renderMenu(recipeId)}
                     onTitleChanged={recipe => saveRecipe(recipe)}
                     onClose={(recipe, close) => this.onCloseTab(recipe, close)}>
