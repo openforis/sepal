@@ -8,7 +8,10 @@ export default class OverflowDetector extends React.Component {
     render() {
         const {className, children} = this.props
         const element = this.ref.current
-        const isOverflown = () => element && element.clientHeight < element.scrollHeight
+        const isOverflown = direction =>
+            direction === 'x'
+                ? element && element.clientWidth < element.scrollWidth
+                : element && element.clientHeight < element.scrollHeight
         return (
             <div ref={this.ref} className={[styles.overflow, className].join(' ')}>
                 {children(isOverflown)}
@@ -19,5 +22,10 @@ export default class OverflowDetector extends React.Component {
 
 OverflowDetector.propTypes = {
     children: PropTypes.func.isRequired,
-    className: PropTypes.string
+    className: PropTypes.string,
+    direction: PropTypes.oneOf(['x', 'y'])
+}
+
+OverflowDetector.defaultProps = {
+    direction: 'y'
 }
