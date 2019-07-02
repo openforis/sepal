@@ -1,6 +1,7 @@
 FROM openforis/geospatial-toolkit
 MAINTAINER OpenForis
 ENV SEPAL_USERS_GRP_NAME sepalUsers
+    VERSION=2019-07-02
 
 ADD config /config
 ADD script /script
