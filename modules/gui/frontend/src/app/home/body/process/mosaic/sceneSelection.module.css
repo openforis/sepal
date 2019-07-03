@@ -49,7 +49,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, var(--thumbnail-size));
     grid-template-rows: repeat(auto-fill, minmax(max-content, 0));;
-    grid-gap: 1rem;
+    gap: 1rem;
     justify-content: center;
 }
 
@@ -60,14 +60,14 @@
     flex-shrink: 0;
     flex-direction: column;
     justify-content: space-between;
-    background-color: #323030;
+    background-color: hsl(37, 8%, 20%);
     border: 1px solid var(--wireframe-color);
     /* [HACK] Prevents Firefox from stretching a single selected scene to fill available space */
     max-height: calc(var(--thumbnail-size) + 5.5rem);
 }
 
 .thumbnail {
-    height: calc(var(--thumbnail-size) - 2px);
+    height: calc(var(--thumbnail-size));
     width: calc(var(--thumbnail-size) - 2px);
     background-size: cover;
     position: relative;
@@ -88,7 +88,6 @@
     color: #ccc;
     background-color: hsl(37, 8%, 20%);
     padding: .3rem .5rem;
-    border: 0 solid var(--wireframe-color);
     border-width: 1px 0 0 0;
 }
 
@@ -196,8 +195,13 @@
         --thumbnail-size: 6rem;
 
         display: flex;
+        gap: 0; /* Firefox uses gap in flexboxes too... */
         flex-direction: column;
         justify-content: left;
+    }
+
+    .selectedScenes .scene:not(:first-child) {
+        margin-top: 1rem;
     }
 
     .selectedScenes .scene {
