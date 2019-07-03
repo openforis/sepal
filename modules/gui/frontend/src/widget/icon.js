@@ -63,6 +63,6 @@ Icon.propTypes = {
 }
 
 Icon.defaultProps = {
-    fixedWidth: true,
+    fixedWidth: false,
     type: 'solid'
 }
