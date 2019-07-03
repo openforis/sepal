@@ -125,6 +125,7 @@ class _FormCombo extends React.Component {
                 air='none'
                 icon={icon[placement]}
                 iconFlipVertical={showOptions}
+                iconFixedWidth
                 onClick={() => showOptions
                     ? this.hideOptions()
                     : this.showOptions()
