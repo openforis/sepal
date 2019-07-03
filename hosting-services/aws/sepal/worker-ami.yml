@@ -98,7 +98,7 @@
       lvg: vg=vg-docker pvs=/dev/xvdf
 
     - name: Create Docker LVM Data Volume
-      lvol: vg=vg-docker lv=data size=12g
+      lvol: vg=vg-docker lv=data size=20g
 
     - name: Create Docker LVM Metadata Volume
       lvol: vg=vg-docker lv=metadata size=100%FREE

@@ -27,13 +27,13 @@
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
-          "volume_size": 15,
+          "volume_size": 30,
           "delete_on_termination": true
         },
         {
           "device_name": "/dev/xvdf",
           "volume_type": "gp2",
-          "volume_size": 15,
+          "volume_size": 30,
           "delete_on_termination": true
         }
       ],
@@ -41,13 +41,13 @@
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
-          "volume_size": 15,
+          "volume_size": 30,
           "delete_on_termination": true
         },
         {
           "device_name": "/dev/xvdf",
           "volume_type": "gp2",
-          "volume_size": 15,
+          "volume_size": 30,
           "delete_on_termination": true
         }
       ]
