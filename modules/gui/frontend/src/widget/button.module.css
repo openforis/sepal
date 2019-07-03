@@ -86,7 +86,6 @@
     padding: 0;
     border: none !important;
     background: none !important;
-    line-height: inherit;
 }
 
 /* width */
@@ -113,6 +112,10 @@
 .button.air-less {
     /* normal -20% */
     --air-factor: .8;
+}
+
+.button.air-none {
+    --air-factor: 0;
 }
 
 /* contents */
