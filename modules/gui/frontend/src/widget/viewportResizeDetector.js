@@ -11,11 +11,11 @@ class ViewportResizeDetector extends React.Component {
     componentDidUpdate() {
         const {dimensions, onChange} = this.props
         onChange && onChange(dimensions)
-        
+
     }
     render() {
         const {children} = this.props
-        return children
+        return children || null
     }
 }
 
