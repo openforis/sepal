@@ -23,7 +23,7 @@
     --background-color: hsla(0, 0%, 10%, .9);
     background-color: var(--background-color);
     box-sizing: content-box;
-    width: 15rem;
+    width: 16.5rem;
 }
 
 /* selected bands */
