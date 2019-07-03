@@ -111,8 +111,10 @@ export class PanelContent extends React.Component {
         return scrollable
             ? (
                 <ScrollableContainer className={styles.panelContentContainer}>
-                    <Scrollable className={[styles.panelContent, className].join(' ')}>
-                        {children}
+                    <Scrollable className={[styles.panelContentWrapper, className].join(' ')}>
+                        <div className={styles.panelContent}>
+                            {children}
+                        </div>
                     </Scrollable>
                 </ScrollableContainer>
             )

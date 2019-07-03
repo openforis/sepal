@@ -120,7 +120,7 @@
     flex-grow: 1;
 }
 
-.panelContent {
+.panelContentWrapper {
     padding: var(--content-padding-vertical) var(--content-padding-horizontal);
     padding-bottom: 0;
     display: flex;
@@ -129,7 +129,7 @@
 }
 
 /* [HACK] Fix Firefox bottom padding + overflow bug */
-.panelContent > *:after {
+.panelContent:after {
     content: "";
     height: var(--content-padding-vertical);
     display: block;
