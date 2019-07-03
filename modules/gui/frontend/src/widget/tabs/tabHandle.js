@@ -99,6 +99,7 @@ class _TabHandle extends React.Component {
                 look='cancel'
                 size='small'
                 shape='none'
+                air='none'
                 icon='times'
                 message='message'
                 onClick={() => onClose()}
