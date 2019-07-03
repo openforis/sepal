@@ -9,7 +9,6 @@ if [ ! -d "$DIRECTORY" ]; then
      --agree-tos\
      --email $SEPAL_OPERATOR_EMAIL_SEPAL_ENV\
      --standalone\
-     --standalone-supported-challenges tls-sni-01\
      -d $SEPAL_HOST_SEPAL_ENV
 fi
 
