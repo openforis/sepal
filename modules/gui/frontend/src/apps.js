@@ -23,7 +23,7 @@ export const loadApps$ = () =>
             const jupyterNotebook = {
                 path: '/sandbox/jupyter/tree',
                 image: jupyterNotebookIcon,
-                alt: 'Jupyter notebook',
+                alt: 'Jupyter Notebook',
                 endpoint: 'jupyter',
                 single: true,
                 style: {

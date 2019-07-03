@@ -30,6 +30,7 @@ class AppLauncher extends React.Component {
         actionBuilder('SET_TAB_PLACEHOLDER', {id, app})
             .assign(['apps.tabs', {id}], {
                 placeholder: app.label || app.alt,
+                title: app.label || app.alt,
                 path: app.path
             })
             .dispatch()
