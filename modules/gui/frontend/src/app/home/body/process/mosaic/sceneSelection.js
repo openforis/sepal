@@ -142,9 +142,7 @@ class SceneSelection extends React.Component {
                     <Label msg={msg('process.mosaic.panel.sceneSelection.availableScenes')}/>
                 </Unscrollable>
                 <Scrollable className={styles.grid}>
-                    {/* <div> */}
                     {scenes.map(scene => this.renderScene(scene, false))}
-                    {/* </div> */}
                 </Scrollable>
             </ScrollableContainer>
         )
@@ -157,9 +155,7 @@ class SceneSelection extends React.Component {
                     <Label msg={msg('process.mosaic.panel.sceneSelection.selectedScenes')}/>
                 </Unscrollable>
                 <Scrollable className={styles.grid}>
-                    {/* <div> */}
                     {scenes.map(scene => this.renderScene(scene, true))}
-                    {/* </div> */}
                 </Scrollable>
             </ScrollableContainer>
         )
