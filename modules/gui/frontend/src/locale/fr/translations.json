@@ -33,13 +33,13 @@
     }
   },
   "apps": {
-    "initializing": "Demarrer une session pour {label}...",
+    "initializing": "Demarrer une session...",
     "loading": {
       "error": {
         "message": "Recharger la page",
         "title": "Echec de chargement"
       },
-      "progress": "Chargement {label}..."
+      "progress": "Chargement..."
     },
     "run": {
       "error": {

@@ -1,10 +1,11 @@
-import {CenteredProgress} from 'widget/progress'
+import {Autofit} from 'widget/autofit'
 import {ContentPadding} from 'widget/sectionLayout'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {forkJoin, timer} from 'rxjs'
 import {msg} from 'translate'
 import {runApp$} from 'apps'
+import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -31,49 +32,45 @@ class AppInstance extends React.Component {
         )
     }
 
-    initializing(label, alt) {
-        return <CenteredProgress title={msg('apps.initializing', {label: label || alt})}/>
-    }
-
-    loading(label, alt) {
-        return (
-            <div className={styles.loading}>
-                <CenteredProgress title={msg('apps.loading.progress', {label: label || alt})}/>
-            </div>
-        )
-    }
-
-    renderApp() {
+    render() {
         const {app: {path, label, alt}} = this.props
         const {appState} = this.state
         return (
             <ContentPadding
                 menuPadding
                 className={styles.appInstance}>
-                <iframe
-                    width='100%'
-                    height='100%'
-                    frameBorder='0'
-                    src={'/api' + path}
-                    title={label || alt}
-                    style={{display: appState === 'READY' ? 'block' : 'none'}}
-                    onLoad={() => this.setState({appState: 'READY'})}
-                />
+                <div className={styles.content}>
+                    <Autofit className={styles.spinner}>
+                        <Icon name='circle-notch' size='10x' spin/>
+                    </Autofit>
+                    <Autofit className={styles.backdrop}>
+                        {label || alt}
+                    </Autofit>
+                    <div className={styles.status}>
+                        {this.renderStatus()}
+                    </div>
+                    <iframe
+                        width='100%'
+                        height='100%'
+                        frameBorder='0'
+                        src={'/'}
+                        // src={'/api' + path}
+                        title={label || alt}
+                        style={{display: appState === 'READY' ? 'block' : 'none'}}
+                        onLoad={() => this.setState({appState: 'READY'})}
+                    />
+                </div>
             </ContentPadding>
         )
     }
 
-    render() {
-        const {app: {label, alt}} = this.props
+    renderStatus() {
         const {appState} = this.state
         return appState === 'REQUESTED'
-            ? this.initializing(label, alt)
-            : (
-                <React.Fragment>
-                    {appState !== 'READY' && this.loading(label, alt)}
-                    {this.renderApp()}
-                </React.Fragment>
-            )
+            ? msg('apps.initializing')
+            : appState !== 'READY'
+                ? msg('apps.loading.progress')
+                : null
     }
 }
 

@@ -33,10 +33,10 @@
     }
   },
   "apps": {
-    "initializing": "Starting session for {label}...",
+    "initializing": "Starting session...",
     "loading": {
       "error": "Failed to load apps. Try to reload the page.",
-      "progress": "Loading {label}..."
+      "progress": "Loading..."
     },
     "run": {
       "error": "Failed to run {label}"
