@@ -122,6 +122,7 @@ class _FormCombo extends React.Component {
             <Button
                 chromeless
                 shape='none'
+                air='none'
                 icon={icon[placement]}
                 iconFlipVertical={showOptions}
                 onClick={() => showOptions
