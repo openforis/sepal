@@ -33,7 +33,9 @@ class Mosaic(object):
         collection = mask_less_green(self.mosaic_def, collection)
         collection = mask_days_from_target(self.mosaic_def, collection)
 
-        bands = list(set(common_bands + optical_bands + tasseled_cap_bands))
+        bands = list(set(common_bands + optical_bands))
+        if self.mosaic_def.do_tasseled_cap:
+            bands = bands + tasseled_cap_bands
         bands_to_select = self.mosaic_def.bands if self.mosaic_def.bands and len(self.mosaic_def.bands) > 0 else bands
         mosaic_bands = bands_to_select
         if self.mosaic_def.do_tasseled_cap:
