@@ -1,6 +1,6 @@
 .panel {
     height: 100%;
-    max-width: 69rem;
+    max-width: 71rem;
     z-index: 5;
 }
 
@@ -40,7 +40,7 @@
 .selectedScenes {
     flex-grow: 1;
     min-width: 6rem;
-    max-width: 16rem;
+    max-width: 18rem;
     margin-left: 2rem;
 }
 
@@ -57,6 +57,7 @@
     position: relative;
     flex-shrink: 0;
     display: flex;
+    flex-shrink: 0;
     flex-direction: column;
     justify-content: space-between;
     background-color: #323030;
@@ -102,6 +103,10 @@
     color: #ccc !important;
 }
 
+.value {
+    width: 4.5rem;
+}
+
 /* bar */
 
 .bar {
@@ -117,6 +122,7 @@
     border-right: 1px solid var(--axis-color);
     background-color: var(--axis-color);
     background-clip: content-box;
+    flex-grow: 1;
 }
 
 .bar:before,
@@ -172,7 +178,7 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    padding: 1rem;
+    padding: 0 1rem;
 }
 
 @media only screen and (max-width: 500px) {
@@ -187,7 +193,7 @@
 
 @media only screen and (min-width: 500px) {
     .selectedScenes .grid {
-        --thumbnail-size: 5rem;
+        --thumbnail-size: 6rem;
 
         display: flex;
         flex-direction: column;
@@ -197,10 +203,6 @@
     .selectedScenes .scene {
         flex-direction: row;
         align-items: center;
-    }
-
-    .selectedScenes .scene + .scene {
-        margin-top: 1rem;
     }
 
     .selectedScenes .details {
