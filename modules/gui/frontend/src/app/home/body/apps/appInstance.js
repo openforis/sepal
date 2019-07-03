@@ -53,8 +53,7 @@ class AppInstance extends React.Component {
                         width='100%'
                         height='100%'
                         frameBorder='0'
-                        src={'/'}
-                        // src={'/api' + path}
+                        src={'/api' + path}
                         title={label || alt}
                         style={{display: appState === 'READY' ? 'block' : 'none'}}
                         onLoad={() => this.setState({appState: 'READY'})}
