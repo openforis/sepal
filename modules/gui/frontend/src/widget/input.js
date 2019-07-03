@@ -127,6 +127,7 @@ class _Input extends React.Component {
                     shape='none'
                     air='none'
                     icon='times'
+                    iconFixedWidth
                     onClick={() => this.props.onChange({target: {value: ''}})}
                     // [TODO] change signature from event to value
                 />
