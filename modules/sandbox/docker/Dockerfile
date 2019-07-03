@@ -6,7 +6,7 @@ ADD config /config
 ADD script /script
 ADD templates /templates
 
-RUN chmod +x /usr/local/bin/*; sync && chmod -R 400 /config; sync && mkdir /script
+RUN chmod +x /usr/local/bin/*; sync && chmod -R 400 /config; sync && mkdir -p /script
 
 ADD script/init_image.sh /script
 RUN chmod u+x /script/init_image.sh; sync && /script/init_image.sh
