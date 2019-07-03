@@ -100,6 +100,7 @@ class ButtonSelect extends React.Component {
                     onCancel={() => this.hideOptions()}
                     autoCenter={!selected}
                     tooltipPlacement={optionTooltipPlacement}
+                    air='more'
                     keyboard
                 />
             </FloatingBox>

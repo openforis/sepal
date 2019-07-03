@@ -142,6 +142,7 @@ class _FormCombo extends React.Component {
                 placement={placement}>
                 <ScrollableList
                     ref={this.list}
+                    air='more'
                     className={optionsClassName || styles.options}
                     options={flattenedOptions}
                     selectedOption={selectedOption}
