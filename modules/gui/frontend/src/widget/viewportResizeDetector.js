@@ -14,11 +14,13 @@ class ViewportResizeDetector extends React.Component {
         
     }
     render() {
-        return null
+        const {children} = this.props
+        return children
     }
 }
 
 ViewportResizeDetector.propTypes = {
+    children: PropTypes.any,
     dimensions: PropTypes.object,
     onChange: PropTypes.func
 }
