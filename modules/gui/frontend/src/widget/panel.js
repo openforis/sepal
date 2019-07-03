@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Modal} from 'widget/modal'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -119,7 +119,12 @@ export class PanelContent extends React.Component {
                 </ScrollableContainer>
             )
             : (
-                <div className={[styles.panelContentContainer, styles.panelContent, className].join(' ')}>
+                <div className={[
+                    styles.panelContentContainer,
+                    styles.panelContentWrapper,
+                    styles.panelContent,
+                    className
+                ].join(' ')}>
                     {children}
                 </div>
             )
