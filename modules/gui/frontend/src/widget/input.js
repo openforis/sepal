@@ -68,27 +68,30 @@ class _Input extends React.Component {
             onBlur, onChange, onFocus
         } = this.props
         return (
-            <input
-                ref={this.ref}
-                className={readOnly ? styles.readOnly : null}
-                type={this.isSearchInput() ? 'text' : type}
-                name={name}
-                value={value}
-                defaultValue={defaultValue}
-                placeholder={placeholder}
-                maxLength={maxLength}
-                tabIndex={tabIndex}
-                autoFocus={autoFocus && !isMobile()}
-                autoComplete={autoComplete ? 'on' : 'off'}
-                autoCorrect={autoCorrect ? 'on' : 'off'}
-                autoCapitalize={autoCapitalize ? 'on' : 'off'}
-                spellCheck={spellCheck ? 'true' : 'false'}
-                disabled={disabled}
-                readOnly={readOnly ? 'readonly' : ''}
-                onBlur={e => onBlur && onBlur(e)}
-                onChange={e => onChange && onChange(e)}
-                onFocus={e => onFocus && onFocus(e)}
-            />
+            // [HACK] input is wrapped in a div for fixing Firefox input width in flex
+            <div className={styles.inputWrapper}>
+                <input
+                    ref={this.ref}
+                    className={readOnly ? styles.readOnly : null}
+                    type={this.isSearchInput() ? 'text' : type}
+                    name={name}
+                    value={value}
+                    defaultValue={defaultValue}
+                    placeholder={placeholder}
+                    maxLength={maxLength}
+                    tabIndex={tabIndex}
+                    autoFocus={autoFocus && !isMobile()}
+                    autoComplete={autoComplete ? 'on' : 'off'}
+                    autoCorrect={autoCorrect ? 'on' : 'off'}
+                    autoCapitalize={autoCapitalize ? 'on' : 'off'}
+                    spellCheck={spellCheck ? 'true' : 'false'}
+                    disabled={disabled}
+                    readOnly={readOnly ? 'readonly' : ''}
+                    onBlur={e => onBlur && onBlur(e)}
+                    onChange={e => onChange && onChange(e)}
+                    onFocus={e => onFocus && onFocus(e)}
+                />
+            </div>
         )
     }
 
@@ -122,6 +125,7 @@ class _Input extends React.Component {
                 <Button
                     chromeless
                     shape='none'
+                    air='none'
                     icon='times'
                     onClick={() => this.props.onChange({target: {value: ''}})}
                     // [TODO] change signature from event to value

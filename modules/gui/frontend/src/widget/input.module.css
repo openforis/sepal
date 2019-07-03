@@ -22,6 +22,10 @@
     opacity: 1;
 }
 
+.inputWrapper {
+    flex-grow: 1;
+}
+
 .input input,
 .input textarea {
     display: block;
