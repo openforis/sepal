@@ -52,6 +52,7 @@ ScrollableList.propTypes = {
         })
     ).isRequired,
     onSelect: PropTypes.func.isRequired,
+    air: PropTypes.any,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     autoCenter: PropTypes.any,
     autoHighlight: PropTypes.any,
@@ -146,12 +147,13 @@ class List extends React.Component {
     }
 
     renderGroup(option, index) {
-        const {alignment} = this.props
+        const {alignment, air} = this.props
         return (
             <li key={index}>
                 <Button
                     chromeless
                     look='transparent'
+                    air={air}
                     additionalClassName={styles.group}
                     label={option.label}
                     width='fill'
@@ -163,12 +165,13 @@ class List extends React.Component {
     }
 
     renderNonSelectableOption(option, index) {
-        const {alignment} = this.props
+        const {alignment, air} = this.props
         return (
             <li key={option.value || index}>
                 <Button
                     chromeless
                     look='transparent'
+                    air={air}
                     label={option.label}
                     width='fill'
                     alignment={alignment}
@@ -179,7 +182,7 @@ class List extends React.Component {
     }
 
     renderSelectableOption(option) {
-        const {selectedOption, tooltipPlacement, alignment} = this.props
+        const {selectedOption, tooltipPlacement, alignment, air} = this.props
         const {overrideHover} = this.state
         const selected = this.isSelected(option)
         const highlighted = this.isHighlighted(option)
@@ -199,6 +202,7 @@ class List extends React.Component {
                 <Button
                     chromeless={!selected}
                     look={selected ? 'selected' : 'highlight'}
+                    air={air}
                     label={option.label}
                     tooltip={option.tooltip}
                     tooltipPlacement={tooltipPlacement}
