@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Modal} from 'widget/modal'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
