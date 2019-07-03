@@ -3,7 +3,6 @@ MAINTAINER OpenForis
 ENV SEPAL_USERS_GRP_NAME sepalUsers
 
 ADD config /config
-ADD script /script
 ADD templates /templates
 
 RUN chmod +x /usr/local/bin/*; sync && chmod -R 400 /config; sync && mkdir -p /script
