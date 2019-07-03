@@ -32,7 +32,7 @@ export default class Icon extends React.Component {
     }
 
     renderIcon() {
-        const {name, type, className, flipHorizontal, flipVertical, fixedWidth} = this.props
+        const {name, type, size, spin, className, flipHorizontal, flipVertical, fixedWidth} = this.props
         const flip = flipHorizontal
             ? flipVertical
                 ? 'both'
@@ -45,8 +45,9 @@ export default class Icon extends React.Component {
                 tag='i'
                 icon={[fontAwesomeCollection(type), name]}
                 fixedWidth={fixedWidth}
-                spin={name === 'spinner'}
+                spin={spin || name === 'spinner'}
                 flip={flip}
+                size={size}
                 className={className}
             />
         )
@@ -59,6 +60,8 @@ Icon.propTypes = {
     fixedWidth: PropTypes.any,
     flipHorizontal: PropTypes.any,
     flipVertical: PropTypes.any,
+    size: PropTypes.string,
+    spin: PropTypes.any,
     type: PropTypes.string
 }
 
