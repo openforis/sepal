@@ -59,7 +59,6 @@ ScrollableList.propTypes = {
     keyboard: PropTypes.any,
     noResults: PropTypes.string,
     overScroll: PropTypes.any,
-    ref: PropTypes.object,
     selectedOption: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.oneOf(['left', 'right']),
