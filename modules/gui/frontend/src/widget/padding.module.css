@@ -1,0 +1,26 @@
+.padding {
+    --content-padding-vertical: 1rem;
+    --content-padding-horizontal: .8rem;
+    padding: 0 var(--content-padding-horizontal);
+}
+
+/* [HACK] Work around Firefox collapsing-padding-when-overflow behavior */
+.padding:before {
+    content: '';
+    height: var(--content-padding-vertical);
+    display: block;
+}
+
+.padding:after {
+    content: '';
+    height: var(--content-padding-vertical);
+    display: block;
+}
+
+.padding.noVertical {
+    --content-padding-vertical: 0rem;
+}
+
+.padding.noHorizontal {
+    --content-padding-horizontal: 0rem;
+}
