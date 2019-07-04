@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Modal} from 'widget/modal'
+import {Padding} from 'widget/padding'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -76,7 +77,7 @@ export class PanelHeader extends React.Component {
         const {icon, title, label} = this.props
         return (
             <React.Fragment>
-                <div>
+                <div className={styles.title}>
                     {icon ? <Icon name={icon}/> : null}
                     {title}
                 </div>
@@ -107,25 +108,33 @@ PanelHeader.propTypes = {
 
 export class PanelContent extends React.Component {
     render() {
-        const {className, scrollable, children} = this.props
+        const {className, scrollable, noHorizontalPadding, noVerticalPadding, children} = this.props
         return scrollable
             ? (
                 <ScrollableContainer className={styles.panelContentContainer}>
-                    <Scrollable className={[styles.panelContentWrapper, className].join(' ')}>
-                        <div className={styles.panelContent}>
+                    <Scrollable className={[styles.panelContent, className].join(' ')}>
+                        <Padding
+                            noHorizontal={noHorizontalPadding}
+                            noVertical={noVerticalPadding}
+                        >
                             {children}
-                        </div>
+                        </Padding>
                     </Scrollable>
                 </ScrollableContainer>
             )
             : (
                 <div className={[
                     styles.panelContentContainer,
-                    styles.panelContentWrapper,
                     styles.panelContent,
                     className
                 ].join(' ')}>
-                    {children}
+                    <Padding
+                        noHorizontal={noHorizontalPadding}
+                        noVertical={noVerticalPadding}
+                        className={styles.nonScrollingPadding}
+                    >
+                        {children}
+                    </Padding>
                 </div>
             )
     }
@@ -138,6 +147,8 @@ PanelContent.defaultProps = {
 PanelContent.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
+    noHorizontalPadding: PropTypes.any,
+    noVerticalPadding: PropTypes.any,
     scrollable: PropTypes.any
 }
 
