@@ -5,7 +5,6 @@ from rx import from_callable, of, throw
 from rx.operators import catch, concat, filter, flat_map, group_by, map, merge, subscribe_on, take_while, do_action
 from rx.scheduler import ThreadPoolScheduler
 from rx.subject import ReplaySubject, Subject
-
 from sepal.rx.retry import retry_with_backoff
 
 
