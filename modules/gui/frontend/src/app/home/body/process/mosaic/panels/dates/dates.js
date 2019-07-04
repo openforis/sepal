@@ -132,53 +132,55 @@ class Dates extends React.Component {
     renderAdvanced() {
         const {inputs: {targetDate, seasonStart, seasonEnd, yearsBefore, yearsAfter}} = this.props
         return (
-            <div className={styles.advancedLayout}>
-                <div className={styles.targetDate}>
-                    <Form.DatePicker
-                        label={msg('process.mosaic.panel.dates.form.targetDate.label')}
-                        tooltip={msg('process.mosaic.panel.dates.form.targetDate.tooltip')}
-                        input={targetDate}
-                        startDate={'1982-08-22'}
-                        endDate={moment().format(DATE_FORMAT)}
-                    />
-                </div>
-                <div className={styles.pastSeasons}>
-                    <Form.Slider
-                        label={msg('process.mosaic.panel.dates.form.pastSeasons.label')}
-                        info={pastSeasons => pastSeasons
-                            ? msg('process.mosaic.panel.dates.form.pastSeasons.info.number', {pastSeasons})
-                            : msg('process.mosaic.panel.dates.form.pastSeasons.info.none')
-                        }
-                        alignment='left'
-                        input={yearsBefore}
-                        ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
-                        snap
-                        scale='log'
-                        invert
-                        range='low'
-                    />
-                </div>
-                <div className={styles.futureSeasons}>
-                    <Form.Slider
-                        label={msg('process.mosaic.panel.dates.form.futureSeasons.label')}
-                        info={futureSeasons => futureSeasons
-                            ? msg('process.mosaic.panel.dates.form.futureSeasons.info.number', {futureSeasons})
-                            : msg('process.mosaic.panel.dates.form.futureSeasons.info.none')
-                        }
-                        alignment='right'
-                        input={yearsAfter}
-                        ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
-                        snap
-                        scale='log'
-                        range='low'
-                    />
-                </div>
-                <div className={styles.season}>
-                    <SeasonSelect
-                        startDate={seasonStart}
-                        endDate={seasonEnd}
-                        centerDate={targetDate}
-                        disabled={targetDate.isInvalid()}/>
+            <div>
+                <div className={styles.advancedLayout}>
+                    <div className={styles.targetDate}>
+                        <Form.DatePicker
+                            label={msg('process.mosaic.panel.dates.form.targetDate.label')}
+                            tooltip={msg('process.mosaic.panel.dates.form.targetDate.tooltip')}
+                            input={targetDate}
+                            startDate={'1982-08-22'}
+                            endDate={moment().format(DATE_FORMAT)}
+                        />
+                    </div>
+                    <div className={styles.pastSeasons}>
+                        <Form.Slider
+                            label={msg('process.mosaic.panel.dates.form.pastSeasons.label')}
+                            info={pastSeasons => pastSeasons
+                                ? msg('process.mosaic.panel.dates.form.pastSeasons.info.number', {pastSeasons})
+                                : msg('process.mosaic.panel.dates.form.pastSeasons.info.none')
+                            }
+                            alignment='left'
+                            input={yearsBefore}
+                            ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
+                            snap
+                            scale='log'
+                            invert
+                            range='low'
+                        />
+                    </div>
+                    <div className={styles.futureSeasons}>
+                        <Form.Slider
+                            label={msg('process.mosaic.panel.dates.form.futureSeasons.label')}
+                            info={futureSeasons => futureSeasons
+                                ? msg('process.mosaic.panel.dates.form.futureSeasons.info.number', {futureSeasons})
+                                : msg('process.mosaic.panel.dates.form.futureSeasons.info.none')
+                            }
+                            alignment='right'
+                            input={yearsAfter}
+                            ticks={[0, 1, 2, 3, 5, 10, {value: 25, label: 'all'}]}
+                            snap
+                            scale='log'
+                            range='low'
+                        />
+                    </div>
+                    <div className={styles.season}>
+                        <SeasonSelect
+                            startDate={seasonStart}
+                            endDate={seasonEnd}
+                            centerDate={targetDate}
+                            disabled={targetDate.isInvalid()}/>
+                    </div>
                 </div>
             </div>
         )
