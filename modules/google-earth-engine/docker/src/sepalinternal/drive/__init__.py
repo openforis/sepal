@@ -270,7 +270,7 @@ class Drive:
         self.credentials = credentials
 
     def __enter__(self):
-        return discovery.build('drive', 'v3', http=(self.credentials.authorize(httplib2.Http())))
+        return discovery.build(serviceName='drive', version='v3', credentials=self.credentials)
 
     def __exit__(self, type, value, traceback):
         pass
