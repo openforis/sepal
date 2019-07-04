@@ -114,7 +114,9 @@ class CreateRecipe extends React.Component {
                     icon='book-open'
                     title={msg('process.recipe.newRecipe.title')}/>
                 <PanelContent>
-                    {listRecipeTypes().map(recipeType => this.renderRecipeType(recipeType))}
+                    <div>
+                        {listRecipeTypes().map(recipeType => this.renderRecipeType(recipeType))}
+                    </div>
                 </PanelContent>
                 <PanelButtons shown={!trigger} onEnter={close} onEscape={close}>
                     <PanelButtons.Main>
