@@ -33,7 +33,7 @@ def export_image_to_asset(
             maxPixels=max_pixels
         ),
         asset_id=asset_id,
-        description='export_image_to_asset(asset_id={}, description={}'.format(asset_id, description),
+        task_description='export_image_to_asset(asset_id={}, description={}'.format(asset_id, description),
         retries=retries
     )
 
@@ -49,7 +49,55 @@ def export_table_to_asset(
             assetId=asset_id
         ),
         asset_id=asset_id,
-        description='export_table_to_asset(asset_id={}, description={}'.format(asset_id, description),
+        task_description='export_table_to_asset(asset_id={}, description={}'.format(asset_id, description),
+        retries=retries
+    )
+
+
+def export_image_to_drive(
+        image, description, folder=None, file_name_prefix=None, dimensions=None, region=None,
+        scale=None, crs=None, crs_transform=None, max_pixels=None, shard_size=None, file_dimensions=None,
+        skip_empty_tiles=None, file_format=None, format_options=None, retries=0
+):
+    return _export_to_drive(
+        to_task=lambda: ee.batch.Export.image.toDrive(
+            image=image,
+            description=description,
+            fileNamePrefix=file_name_prefix,
+            dimensions=dimensions,
+            region=region,
+            scale=scale,
+            crs=crs,
+            crsTransform=crs_transform,
+            maxPixels=max_pixels,
+            shardSize=shard_size,
+            fileDimensions=file_dimensions,
+            skipEmptyTiles=skip_empty_tiles,
+            fileFormat=file_format,
+            formatOptions=format_options
+        ),
+        task_description='export_table_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
+            description, folder, file_name_prefix
+        ),
+        retries=retries
+    )
+
+
+def export_table_to_drive(
+        collection, description=None, folder=None, file_name_prefix=None, file_format=None, selectors=None, retries=3
+):
+    return _export_to_drive(
+        to_task=lambda: ee.batch.Export.table.toDrive(
+            collection=collection,
+            description=description,
+            folder=folder,
+            fileNamePrefix=file_name_prefix,
+            fileFormat=file_format,
+            selectors=selectors
+        ),
+        task_description='export_table_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
+            description, folder, file_name_prefix
+        ),
         retries=retries
     )
 
@@ -72,12 +120,20 @@ def _first_asset_root():
     return asset_roots[0]['id']
 
 
-def _export_to_asset(to_task, asset_id, description, retries):
+def _export_to_asset(to_task, asset_id, task_description, retries):
     return _export(
         to_observable=lambda: delete_asset(asset_id).pipe(
             flat_map(lambda _: execute_task(to_task()))
         ),
-        description=description,
+        description=task_description,
+        retries=retries
+    )
+
+
+def _export_to_drive(to_task, task_description, retries):
+    return _export(
+        to_observable=lambda: execute_task(to_task()),
+        description=task_description,
         retries=retries
     )
 
