@@ -4,6 +4,13 @@
     z-index: 5;
 }
 
+.foo {
+    overflow: hidden;
+    /* display: flex;
+    flex-direction: column;
+    flex-grow: 1; */
+}
+
 .loading {
     flex-direction: column;
     justify-content: center;
@@ -12,7 +19,12 @@
 .title {
     text-align: center;
     border-bottom: 1px solid var(--wireframe-color);
-    margin-bottom: 1rem;
+    /* margin-bottom: 1rem; */
+}
+
+.scenesContainer {
+    display: flex;
+    flex-direction: column;
 }
 
 .scenes {
@@ -20,6 +32,7 @@
     flex-direction: row;
     overflow: hidden;
     height: 100%;
+    padding-top: 1rem;
 }
 
 .noScenes {
@@ -182,7 +195,7 @@
 
 @media only screen and (max-width: 500px) {
     .panel {
-        --content-padding: 1.5rem .5rem;
+        /* --content-padding: 1.5rem .5rem; */
     }
 
     .selectedScenes {

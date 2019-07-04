@@ -112,6 +112,12 @@
     margin-right: .5rem;
 }
 
+.header .title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
 .header .label {
     margin-left: 1rem;
 }
@@ -120,19 +126,17 @@
     flex-grow: 1;
 }
 
-.panelContentWrapper {
-    padding: var(--content-padding-vertical) var(--content-padding-horizontal);
-    padding-bottom: 0;
+.panelContent {
+    padding: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-/* [HACK] Fix Firefox bottom padding + overflow bug */
-.panelContent:after {
-    content: "";
-    height: var(--content-padding-vertical);
-    display: block;
+.nonScrollingPadding {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 @media screen and (max-width: 500px) {

@@ -1,27 +1,20 @@
 import * as PropTypes from 'prop-types'
 import {PanelContent, PanelHeader} from 'widget/panel'
 import ButtonSelect from 'widget/buttonSelect'
-import Icon from 'widget/icon'
 import React from 'react'
 import _ from 'lodash'
-import styles from './panelSections.module.css'
 
 export default class PanelSections extends React.Component {
     render() {
         const {icon} = this.props
         const section = this.findSection()
         return (
-            <div className={styles.sections}>
-                <PanelHeader>
-                    <div className={styles.header}>
-                        <Icon name={icon}/>
-                        {this.renderSelect()}
-                    </div>
-                </PanelHeader>
+            <React.Fragment>
+                <PanelHeader icon={icon} title={this.renderSelect()}/>
                 <PanelContent>
                     {section && section.component}
                 </PanelContent>
-            </div>
+            </React.Fragment>
         )
     }
 

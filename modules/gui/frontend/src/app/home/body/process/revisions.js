@@ -16,9 +16,17 @@ const fields = {
 }
 
 class Revisions extends React.Component {
-    renderRevisions() {
-        const {recipeId, inputs: {revision}} = this.props
-        const options = getRevisions(recipeId).map(timestamp => {
+    renderContent() {
+        const {recipeId} = this.props
+        const revisions = getRevisions(recipeId)
+        return revisions.length
+            ? this.renderRevisions(revisions)
+            : this.renderNoRevisions()
+    }
+
+    renderRevisions(revisions) {
+        const {inputs: {revision}} = this.props
+        const options = revisions.map(timestamp => {
             const date = moment(+timestamp)
             const label =
                 <div className={styles.label}>
@@ -29,6 +37,16 @@ class Revisions extends React.Component {
         })
         return (
             <Form.Buttons type='vertical-tight' uppercase={false} options={options} input={revision}/>
+        )
+    }
+
+    renderNoRevisions() {
+        return (
+            <div>
+                <div className={styles.noRevisions}>
+                    {msg('process.revisions.none')}
+                </div>
+            </div>
         )
     }
 
@@ -47,7 +65,7 @@ class Revisions extends React.Component {
                     icon='clock'
                     title={msg('process.revisions.title')}/>
                 <PanelContent className={styles.content}>
-                    {this.renderRevisions()}
+                    {this.renderContent()}
                 </PanelContent>
                 <PanelButtons onEnter={confirm} onEscape={cancel}>
                     <PanelButtons.Main>

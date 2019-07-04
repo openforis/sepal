@@ -1,5 +1,17 @@
-.container {
-    pointer-events: all;
+.panel {
+    width: 26rem;
+}
+
+.panelContent {
+    display: grid;
+    grid-template-rows: 6rem 15rem;
+    /*grid-template-rows: 10rem 13rem;*/
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+        'years months'
+        'years days';
+    /* padding: .5rem; */
+    column-gap: 1rem;
 }
 
 .input {
@@ -15,22 +27,6 @@
     margin: auto 0;
 }
 
-.panel {
-    width: 26rem;
-}
-
-.panelContent {
-    display: grid;
-    grid-template-rows: 6rem 14rem;
-    /*grid-template-rows: 10rem 13rem;*/
-    grid-template-columns: auto 1fr;
-    grid-template-areas:
-        'years months'
-        'years days';
-    padding: .5rem;
-    column-gap: 1rem;
-}
-
 .years, .months, .days {
     height: 100%;
 }
@@ -39,15 +35,17 @@
     grid-area: years;
     width: 4rem;
     position: relative;
+    padding-right: .75rem;
+    border-right: var(--wireframe);
 }
 
 .months {
     grid-area: months;
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    /*grid-template-columns: repeat(3, 1fr);*/
     grid-template-rows: repeat(auto-fill, 2rem);
     justify-items: center;
+    padding-top: .5rem;
 }
 
 .days {

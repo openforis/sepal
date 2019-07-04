@@ -1121,7 +1121,8 @@
     },
     "revisions": {
       "revert": "Revert to revision",
-      "title": "Revisions"
+      "title": "Revisions",
+      "none": "No revision available."
     },
     "saveRecipe": {
       "form": {

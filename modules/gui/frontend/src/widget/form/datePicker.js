@@ -119,10 +119,14 @@ class _DatePickerPanel extends React.Component {
                 <PanelHeader
                     icon='calendar-alt'
                     title={title}/>
-                <PanelContent className={styles.panelContent}>
-                    {this.renderYears()}
-                    {this.renderMonths()}
-                    {this.renderDays()}
+                <PanelContent noVerticalPadding>
+                    <div>
+                        <div className={styles.panelContent}>
+                            {this.renderYears()}
+                            {this.renderMonths()}
+                            {this.renderDays()}
+                        </div>
+                    </div>
                 </PanelContent>
                 <PanelButtons onEnter={() => this.select()} onEscape={() => this.close()}>
                     <PanelButtons.Main>
