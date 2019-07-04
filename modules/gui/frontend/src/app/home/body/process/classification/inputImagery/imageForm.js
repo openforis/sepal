@@ -1,6 +1,7 @@
 import * as PropTypes from 'prop-types'
 import {BandSetSpec} from './bandSetSpec'
 import {CenteredProgress} from 'widget/progress'
+import {Layout} from 'widget/layout'
 import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -47,7 +48,7 @@ class ImageForm extends Component {
     render() {
         const {stream, input, inputComponent, inputs: {bands}} = this.props
         return (
-            <React.Fragment>
+            <Layout>
                 <div ref={this.element} className={styles.inputComponent}>
                     {React.createElement(inputComponent, {
                         input,
@@ -64,7 +65,7 @@ class ImageForm extends Component {
                             : null
                     }
                 </div>
-            </React.Fragment>
+            </Layout>
         )
     }
 
