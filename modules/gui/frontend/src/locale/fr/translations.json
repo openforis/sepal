@@ -949,7 +949,8 @@
     },
     "revisions": {
       "revert": "Retourner aux révisions",
-      "title": "Révisions"
+      "title": "Révisions",
+      "none": "Pas de révision disponible."
     },
     "saveRecipe": {
       "form": {
