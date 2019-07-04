@@ -14,9 +14,9 @@ modules = [server, task_server]
 app = Flask(__name__)
 
 
-@app.before_request
-def before():
-    gee.init_ee()
+# @app.before_request
+# def before():
+#     gee.init_ee()
 
 
 @app.route('/')

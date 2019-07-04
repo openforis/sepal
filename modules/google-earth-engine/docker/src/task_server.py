@@ -5,8 +5,7 @@ from collections import namedtuple
 from threading import local
 
 import ee
-import oauth2client.client
-import oauth2client.client
+from ee.oauth import AccessTokenCredentials
 from flask import Flask, Blueprint, Response
 from flask import request
 
@@ -34,36 +33,9 @@ earthengine_credentials_file = None
 
 Context = namedtuple('Context', 'credentials, username, download_dir, sepal_api')
 
-
-class AccessTokenCredentials(oauth2client.client.OAuth2Credentials):
-    def __init__(self):
-        super(AccessTokenCredentials, self).__init__(
-            AccessTokenCredentials._read_access_token(),
-            None, None, None, None, None, None
-        )
-
-    @staticmethod
-    def create():
-        if os.path.exists(earthengine_credentials_file) \
-                and AccessTokenCredentials._read_access_token():
-            return AccessTokenCredentials()
-        else:
-            return None
-
-    @staticmethod
-    def _read_access_token():
-        return json.load(open(earthengine_credentials_file)).get('access_token')
-
-    def _refresh(self, http):
-        self.access_token = AccessTokenCredentials._read_access_token()
-
-    def __str__(self):
-        return 'AccessTokenCredentials()'
-
-
 @http.before_request
 def before():
-    credentials = AccessTokenCredentials.create()
+    credentials = AccessTokenCredentials.create(earthengine_credentials_file)
     if not credentials:
         credentials = gee.service_account_credentials
     logger.info('Using credentials: ' + str(credentials))

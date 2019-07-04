@@ -3,8 +3,9 @@ from threading import Semaphore
 
 import ee
 from flask import request
-from oauth2client.client import OAuth2Credentials
-from oauth2client.service_account import ServiceAccountCredentials
+from google.auth import crypt
+from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
 
 service_account_credentials = None
 import logging
@@ -15,11 +16,16 @@ get_info_semaphore = Semaphore(2)
 
 def init_service_account_credentials(args):
     global service_account_credentials
-    service_account_credentials = ServiceAccountCredentials.from_p12_keyfile(
+
+    with open(args['gee_key_path'], 'r') as file_:
+        key_data = file_.read()
+    signer = crypt.RSASigner.from_string(key_data)
+    service_account_credentials = service_account.Credentials(
+        signer=signer,
         service_account_email=args['gee_email'],
-        filename=args['gee_key_path'],
-        private_key_password='notasecret',
-        scopes=ee.oauth.SCOPE + ' https://www.googleapis.com/auth/drive ')
+        token_uri=ee.oauth.TOKEN_URI,
+        scopes=ee.oauth.SCOPES + ['https://www.googleapis.com/auth/drive']
+    )
 
 
 def init_ee():
@@ -28,7 +34,7 @@ def init_ee():
         user = json.loads(request.headers['sepal-user'])
         googleTokens = user.get('googleTokens', None)
         if googleTokens:
-            credentials = OAuth2Credentials(googleTokens['accessToken'], None, None, None, None, None, None)
+            credentials = Credentials(googleTokens['accessToken'])
     ee.InitializeThread(credentials)
 
 

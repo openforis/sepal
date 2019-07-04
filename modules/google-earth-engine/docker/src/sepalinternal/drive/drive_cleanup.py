@@ -17,7 +17,7 @@ class DriveCleanup:
     stopped = False
 
     def __init__(self, credentials):
-        self.drive = discovery.build('drive', 'v3', http=(credentials.authorize(httplib2.Http())))
+        self.drive = discovery.build(serviceName='drive', version='v3', credentials=credentials)
         self.stopped_event = threading.Event()
 
     def start(self):
