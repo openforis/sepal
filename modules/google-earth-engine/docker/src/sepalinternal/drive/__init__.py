@@ -1,5 +1,4 @@
 import fnmatch
-import json
 import logging
 import os
 import random
@@ -8,7 +7,6 @@ from collections import namedtuple
 from datetime import datetime
 from threading import Semaphore
 
-import httplib2
 from apiclient import discovery
 from apiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
@@ -54,7 +52,9 @@ def retry(action, retries=20, times=1):
         reason = e._get_reason()
         if times <= retries:
             throttle_seconds = min(pow(2, times * random.uniform(0.1, 0.2)), 30)
-            logger.warn('Retrying drive operation in {0} seconds after try #{1}: {2}'.format(int(throttle_seconds), times, reason))
+            logger.warn(
+                'Retrying drive operation in {0} seconds after try #{1}: {2}'.format(int(throttle_seconds), times,
+                    reason))
             time.sleep(throttle_seconds)
             return retry(action, retries, times + 1)
         e.message = reason
@@ -63,7 +63,9 @@ def retry(action, retries=20, times=1):
     except Exception as e:
         if times <= retries:
             throttle_seconds = min(pow(2, times * random.uniform(0.1, 0.2)), 30)
-            logger.warn('Retrying drive operation in {0} seconds after try #{1}: {2}'.format(int(throttle_seconds), times, str(e)))
+            logger.warn(
+                'Retrying drive operation in {0} seconds after try #{1}: {2}'.format(int(throttle_seconds), times,
+                    str(e)))
             time.sleep(throttle_seconds)
             return retry(action, retries, times + 1)
         re_raisable()
@@ -94,7 +96,7 @@ class Download(ThreadTask):
 
             if not files:
                 raise Exception('No files found to download. path: {0}, matching: {1}'
-                                .format(self.spec.drive_path, self.spec.matching))
+                    .format(self.spec.drive_path, self.spec.matching))
 
             if not os.path.exists(self.spec.destination_path):
                 os.makedirs(self.spec.destination_path)
@@ -153,7 +155,7 @@ class Download(ThreadTask):
                 e.message = e._get_reason()
                 last_exception = re_raisable()
                 logger.warn('Failed to download {0} to {1}. retry={2}, error={3}'
-                            .format(drive_file, destination_path, times, last_exception.message))
+                    .format(drive_file, destination_path, times, last_exception.message))
 
         self.reject(last_exception)
 
