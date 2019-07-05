@@ -110,7 +110,6 @@ class SceneSelection extends React.Component {
         const selectedScenes = this.getSelectedScenes()
         const haveScenes = availableScenes.length || selectedScenes.length
         return haveScenes ? (
-            // <div className={styles.scenesContainer}>
             <div className={styles.scenes}>
                 <div className={styles.availableScenes}>
                     {this.renderAvailableScenes(availableScenes)}
@@ -119,7 +118,6 @@ class SceneSelection extends React.Component {
                     {this.renderSelectedScenes(selectedScenes)}
                 </div>
             </div>
-            // </div>
         ) : (
             <div className={styles.noScenes}>
                 {msg('process.mosaic.panel.sceneSelection.noScenes')}
@@ -148,10 +146,8 @@ class SceneSelection extends React.Component {
                     <Label msg={msg('process.mosaic.panel.sceneSelection.availableScenes')}/>
                 </Unscrollable>
                 <Scrollable>
-                    <Padding noHorizontal>
-                        <div className={styles.grid}>
-                            {scenes.map(scene => this.renderScene(scene, false))}
-                        </div>
+                    <Padding noHorizontal className={styles.grid}>
+                        {scenes.map(scene => this.renderScene(scene, false))}
                     </Padding>
                 </Scrollable>
             </ScrollableContainer>
@@ -165,10 +161,8 @@ class SceneSelection extends React.Component {
                     <Label msg={msg('process.mosaic.panel.sceneSelection.selectedScenes')}/>
                 </Unscrollable>
                 <Scrollable>
-                    <Padding noHorizontal>
-                        <div className={styles.grid}>
-                            {scenes.map(scene => this.renderScene(scene, true))}
-                        </div>
+                    <Padding noHorizontal className={styles.grid}>
+                        {scenes.map(scene => this.renderScene(scene, true))}
                     </Padding>
                 </Scrollable>
             </ScrollableContainer>
