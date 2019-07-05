@@ -1,8 +1,8 @@
 from threading import local
 
 from apiclient import discovery
-from rx import Callable, from_callable, of
-from rx.operators import do_action, flat_map, filter, map, reduce
+from rx import Callable, concat, from_callable, of, throw
+from rx.operators import flat_map, filter, map, reduce
 from sepal.rx.workqueue import WorkQueue
 
 from . import get_credentials
@@ -18,32 +18,56 @@ class Drive(local):
         )
 
     def get_by_path(self, path):
-        root = {'id': 'root'}
+        root_stream = of({'id': 'root'})
 
-        def find_with_parent(parent, name):
-            files = self._list_with_parent(parent, name)
-            return files[0] if files else None
-
-        return _execute(
-            lambda: of(*path.split('/')).pipe(
-                filter(lambda name: name and name.strip()),  # Allows double // and training /
-                reduce(find_with_parent, root)
+        def find_with_parent(parent_stream, name):
+            return parent_stream.pipe(
+                flat_map(lambda parent: self.list_folder(parent, name)),
+                map(lambda files: files[0] if len(files) else None),
+                flat_map(lambda file: of(file) if file else throw(Exception('File {} does not exist.'.format(path))))
             )
+
+        return of(*path.split('/')).pipe(
+            filter(lambda name: name and name.strip()),  # Allows double // and training /
+            reduce(find_with_parent, root_stream),
+            flat_map(
+                lambda file_stream: file_stream.pipe(
+                    map(lambda file: file)
+                )
+            )
+
         )
 
-    def list_directory(self, directory):
-        return _execute(
-            lambda: self._list_with_parent(directory)
+    def list_folder(self, parent, name=None):
+        def action():
+            if name:
+                q = "'{0}' in parents and name = '{1}'".format(parent['id'], name)
+            else:
+                q = "'{0}' in parents".format(parent['id'])
+            return self.service.files().list(q=q, fields="files(id, name, size, mimeType, modifiedTime)").execute().get(
+                'files', [])
+
+        return _execute(action)
+
+    def list_folder_recursively(self, folder):
+        def recurse(file):
+            if _is_folder(file):
+                return concat(
+                    of([file]),
+                    self.list_folder_recursively(file),
+                )
+            else:
+                return of([file])
+
+        return self.list_folder(folder).pipe(
+            flat_map(lambda files: of(*files)),
+            flat_map(recurse),
+            reduce(lambda acc, files: acc + files, [])
         )
 
-    def _list_with_parent(self, parent, name=None):
-        if name:
-            q = "'{0}' in parents and name = '{1}'".format(parent['id'], name)
-        else:
-            q = "'{0}' in parents".format(parent['id'])
-        files = self.service.files().list(q=q, fields="files(id, name, size, mimeType, modifiedTime)").execute().get(
-            'files', [])
-        return files
+
+def _is_folder(file):
+    return file['mimeType'] == 'application/vnd.google-apps.folder'
 
 
 def download_from_drive(
@@ -54,9 +78,7 @@ def download_from_drive(
 ):
     drive = Drive(get_credentials())
     return drive.get_by_path(source).pipe(
-        do_action(lambda file: print('got file_by_path: {}'.format(file))),
-        flat_map(lambda directory: drive.list_directory(directory)),
-        do_action(lambda dir: print('got list_directory: {}'.format(dir)))
+        flat_map(lambda directory: drive.list_folder_recursively(directory))
     )
 
 
