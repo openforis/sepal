@@ -1,8 +1,6 @@
-from typing import Callable
-
 import ee
 import rx
-from rx import of
+from rx import Callable, of
 from rx.core.typing import RelativeTime
 from rx.operators import do_action, flat_map
 from rx.scheduler import TimeoutScheduler
