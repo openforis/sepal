@@ -1,0 +1,19 @@
+.buttons {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 'extra spacer main';
+    padding: var(--padding-panel-buttons);
+    border-top: var(--wireframe);
+    transition: opacity 200ms ease-in-out;
+    flex-shrink: 0;
+}
+
+.buttons .main {
+    grid-area: main;
+    justify-self: flex-end;
+}
+
+.buttons .extra {
+    grid-area: extra;
+    justify-self: flex-start;
+}

@@ -1,7 +1,7 @@
 import {EMPTY, throwError} from 'rxjs'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {changeCurrentUserPassword$} from 'widget/user'
@@ -90,12 +90,12 @@ class ChangePassword extends React.Component {
                 modal
                 onApply={userPasswords => this.changePassword$(userPasswords)}
                 close={() => this.close()}>
-                <PanelHeader
+                <Panel.Header
                     iscon='key'
                     title={msg('user.changePassword.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     {this.renderForm()}
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </Form.Panel>
         )

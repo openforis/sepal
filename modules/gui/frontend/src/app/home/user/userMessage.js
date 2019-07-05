@@ -1,6 +1,6 @@
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import Label from 'widget/label'
@@ -45,7 +45,7 @@ class UserMessage extends React.Component {
         const {inputs: {subject, contents}} = this.props
         return (
             <React.Fragment>
-                <PanelContent>
+                <Panel.Content>
                     <Layout>
                         <Form.Input
                             label={msg('userMessage.form.subject.label')}
@@ -61,7 +61,7 @@ class UserMessage extends React.Component {
                         />
                         {contents.value ? this.renderPreview() : null}
                     </Layout>
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </React.Fragment>
         )
@@ -78,7 +78,7 @@ class UserMessage extends React.Component {
                 modal
                 onApply={message => onApply(message)}
                 close={() => onCancel()}>
-                <PanelHeader
+                <Panel.Header
                     icon='bell'
                     title={msg('userMessage.title')}/>
                 {this.renderPanel()}

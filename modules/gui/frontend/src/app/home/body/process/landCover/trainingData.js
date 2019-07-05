@@ -1,6 +1,6 @@
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
@@ -66,12 +66,12 @@ class TrainingData extends React.Component {
                     values,
                     model: valuesToModel(values, primitiveTypes)
                 }).dispatch()}>
-                <PanelHeader
+                <Panel.Header
                     icon='cog'
                     title={msg('process.landCover.panel.trainingData.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     {this.renderContent()}
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </Form.Panel>
         )

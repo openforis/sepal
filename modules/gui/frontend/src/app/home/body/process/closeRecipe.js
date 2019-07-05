@@ -1,4 +1,4 @@
-import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {closeRecipe} from './recipe'
@@ -25,23 +25,23 @@ class CloseRecipe extends React.Component {
             <Panel
                 className={styles.panel}
                 type='modal'>
-                <PanelHeader
+                <Panel.Header
                     icon='exclamation-triangle'
                     title={title}/>
-                <PanelContent>
+                <Panel.Content>
                     <div className={styles.message}>
                         {msg('process.closeRecipe.message')}
                     </div>
-                </PanelContent>
-                <PanelButtons onEnter={save} onEscape={cancel}>
-                    <PanelButtons.Main>
-                        <PanelButtons.Cancel onClick={cancel}/>
-                        <PanelButtons.Save dots onClick={save}/>
-                    </PanelButtons.Main>
-                    <PanelButtons.Extra>
-                        <PanelButtons.Discard onClick={discard}/>
-                    </PanelButtons.Extra>
-                </PanelButtons>
+                </Panel.Content>
+                <Panel.Buttons onEnter={save} onEscape={cancel}>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Cancel onClick={cancel}/>
+                        <Panel.Buttons.Save dots onClick={save}/>
+                    </Panel.Buttons.Main>
+                    <Panel.Buttons.Extra>
+                        <Panel.Buttons.Discard onClick={discard}/>
+                    </Panel.Buttons.Extra>
+                </Panel.Buttons>
             </Panel>
         )
     }

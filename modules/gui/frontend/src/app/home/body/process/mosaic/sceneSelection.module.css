@@ -4,13 +4,6 @@
     z-index: 5;
 }
 
-.foo {
-    overflow: hidden;
-    /* display: flex;
-    flex-direction: column;
-    flex-grow: 1; */
-}
-
 .loading {
     flex-direction: column;
     justify-content: center;
@@ -19,7 +12,6 @@
 .title {
     text-align: center;
     border-bottom: 1px solid var(--wireframe-color);
-    /* margin-bottom: 1rem; */
 }
 
 .scenesContainer {

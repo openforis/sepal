@@ -1,6 +1,5 @@
 import {Form, form} from 'widget/form/form'
-import {PanelButtons} from 'widget/panel'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {getRevisions, revertToRevision$} from 'app/home/body/process/recipe'
@@ -61,23 +60,23 @@ class Revisions extends React.Component {
                 isActionForm
                 close={() => deactivate()}
                 modal>
-                <PanelHeader
+                <Panel.Header
                     icon='clock'
                     title={msg('process.revisions.title')}/>
-                <PanelContent className={styles.content}>
+                <Panel.Content className={styles.content}>
                     {this.renderContent()}
-                </PanelContent>
-                <PanelButtons onEnter={confirm} onEscape={cancel}>
-                    <PanelButtons.Main>
-                        <PanelButtons.Confirm
+                </Panel.Content>
+                <Panel.Buttons onEnter={confirm} onEscape={cancel}>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Confirm
                             label={msg('process.revisions.revert')}
                             disabled={form.isInvalid()}
                             onClick={confirm}/>
-                    </PanelButtons.Main>
-                    <PanelButtons.Extra>
-                        <PanelButtons.Cancel onClick={cancel}/>
-                    </PanelButtons.Extra>
-                </PanelButtons>
+                    </Panel.Buttons.Main>
+                    <Panel.Buttons.Extra>
+                        <Panel.Buttons.Cancel onClick={cancel}/>
+                    </Panel.Buttons.Extra>
+                </Panel.Buttons>
             </Form.Panel>
         )
     }

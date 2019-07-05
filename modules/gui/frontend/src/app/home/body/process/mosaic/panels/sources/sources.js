@@ -1,6 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions, dateRange} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -45,12 +45,12 @@ class Sources extends React.Component {
                     }
                 }}
                 onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <PanelHeader
+                <Panel.Header
                     icon='satellite-dish'
                     title={msg('process.mosaic.panel.sources.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     {this.renderSources()}
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </RecipeFormPanel>
         )

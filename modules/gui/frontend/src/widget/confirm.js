@@ -1,4 +1,4 @@
-import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -13,24 +13,24 @@ export default class Confirm extends React.Component {
             <Panel
                 className={styles.panel}
                 type='modal'>
-                <PanelHeader
+                <Panel.Header
                     icon='exclamation-triangle'
                     title={title || msg('widget.confirm.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     <div className={styles.message}>
                         {message || children}
                     </div>
-                </PanelContent>
-                <PanelButtons onEnter={confirm} onEscape={cancel}>
-                    <PanelButtons.Main>
-                        <PanelButtons.Confirm
+                </Panel.Content>
+                <Panel.Buttons onEnter={confirm} onEscape={cancel}>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Confirm
                             label={label}
                             onClick={confirm}/>
-                    </PanelButtons.Main>
-                    <PanelButtons.Extra>
-                        <PanelButtons.Cancel onClick={cancel}/>
-                    </PanelButtons.Extra>
-                </PanelButtons>
+                    </Panel.Buttons.Main>
+                    <Panel.Buttons.Extra>
+                        <Panel.Buttons.Cancel onClick={cancel}/>
+                    </Panel.Buttons.Extra>
+                </Panel.Buttons>
             </Panel>
         )
     }

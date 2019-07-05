@@ -1,6 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../radarMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -106,12 +106,12 @@ class Options extends React.Component {
                 className={styles.panel}
                 placement='bottom-right'
                 onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <PanelHeader
+                <Panel.Header
                     icon='layer-group'
                     title={msg('process.radarMosaic.panel.options.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     {this.renderContent()}
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </RecipeFormPanel>
         )

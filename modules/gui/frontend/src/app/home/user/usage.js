@@ -1,7 +1,7 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
-import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -27,20 +27,20 @@ class _Usage extends React.Component {
             <Panel
                 className={styles.panel}
                 type='modal'>
-                <PanelHeader
+                <Panel.Header
                     icon='user'
                     title={msg('user.report.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     <Layout>
                         {this.renderResosurces()}
                         {this.renderSessions()}
                     </Layout>
-                </PanelContent>
-                <PanelButtons onEnter={close} onEscape={close}>
-                    <PanelButtons.Main>
-                        <PanelButtons.Close onClick={close}/>
-                    </PanelButtons.Main>
-                </PanelButtons>
+                </Panel.Content>
+                <Panel.Buttons onEnter={close} onEscape={close}>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Close onClick={close}/>
+                    </Panel.Buttons.Main>
+                </Panel.Buttons>
             </Panel>
         )
     }

@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -86,21 +86,21 @@ class CreateRecipe extends React.Component {
         const back = () => this.showRecipeTypeInfo()
         return (
             <React.Fragment>
-                <PanelHeader
+                <Panel.Header
                     icon='book-open'
                     title={recipeType.name}>
-                </PanelHeader>
-                <PanelContent>
+                </Panel.Header>
+                <Panel.Content>
                     {recipeType ? recipeType.details : null}
-                </PanelContent>
-                <PanelButtons onEnter={close} onEscape={close}>
-                    <PanelButtons.Main>
-                        <PanelButtons.Close onClick={close}/>
-                    </PanelButtons.Main>
-                    <PanelButtons.Extra>
-                        <PanelButtons.Back onClick={back}/>
-                    </PanelButtons.Extra>
-                </PanelButtons>
+                </Panel.Content>
+                <Panel.Buttons onEnter={close} onEscape={close}>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Close onClick={close}/>
+                    </Panel.Buttons.Main>
+                    <Panel.Buttons.Extra>
+                        <Panel.Buttons.Back onClick={back}/>
+                    </Panel.Buttons.Extra>
+                </Panel.Buttons>
             </React.Fragment>
         )
     }
@@ -110,19 +110,19 @@ class CreateRecipe extends React.Component {
         const close = () => this.closePanel()
         return (
             <React.Fragment>
-                <PanelHeader
+                <Panel.Header
                     icon='book-open'
                     title={msg('process.recipe.newRecipe.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     <div>
                         {listRecipeTypes().map(recipeType => this.renderRecipeType(recipeType))}
                     </div>
-                </PanelContent>
-                <PanelButtons shown={!trigger} onEnter={close} onEscape={close}>
-                    <PanelButtons.Main>
-                        <PanelButtons.Close onClick={close}/>
-                    </PanelButtons.Main>
-                </PanelButtons>
+                </Panel.Content>
+                <Panel.Buttons shown={!trigger} onEnter={close} onEscape={close}>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Close onClick={close}/>
+                    </Panel.Buttons.Main>
+                </Panel.Buttons>
             </React.Fragment>
         )
     }
