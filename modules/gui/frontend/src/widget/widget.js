@@ -7,30 +7,29 @@ import styles from './widget.module.css'
 export class Widget extends React.Component {
     render() {
         const {layout, spacing, errorMessage, border, className, onClick, children} = this.props
+        const error = !(errorMessage === undefined || errorMessage === false)
         return (
-            <React.Fragment>
-                <div
+            <div
+                className={[
+                    styles.container,
+                    onClick ? styles.clickable : null,
+                    error ? styles.errorMessageSpacer : null,
+                    className
+                ].join(' ')}
+                onClick={e => onClick && onClick(e)}>
+                {this.renderLabel()}
+                <Layout
+                    type={layout}
+                    spacing={spacing}
                     className={[
-                        styles.container,
-                        onClick ? styles.clickable : null,
-                        className
-                    ].join(' ')}
-                    onClick={e => onClick && onClick(e)}>
-                    {this.renderLabel()}
-                    <Layout
-                        type={layout}
-                        spacing={spacing}
-                        className={[
-                            styles.widget,
-                            border ? styles.border : null,
-                            errorMessage ? styles.error : null
-                        ].join(' ')}>
-                        {children}
-                    </Layout>
-                    {this.renderErrorMessage()}
-                </div>
-                {this.renderErrorMessageSpacer()}
-            </React.Fragment>
+                        styles.widget,
+                        border ? styles.border : null,
+                        errorMessage ? styles.error : null
+                    ].join(' ')}>
+                    {children}
+                </Layout>
+                {this.renderErrorMessage()}
+            </div>
         )
     }
 
@@ -61,13 +60,6 @@ export class Widget extends React.Component {
                 </div>
             )
             : null
-    }
-
-    renderErrorMessageSpacer() {
-        const {errorMessage} = this.props
-        return errorMessage === undefined || errorMessage === false
-            ? null
-            : <div/>
     }
 }
 

@@ -81,3 +81,7 @@ fieldset label {
     margin-left: 0.5rem;
     color: #B5B5B5;
 }
+
+.container.errorMessageSpacer:last-child {
+    margin-bottom: 1.5rem !important;
+}
