@@ -158,11 +158,13 @@ def _first_asset_root():
 
 
 def _export_to_asset(create_task, description, retries):
-    action = lambda: execute(create_task).pipe(
-        flat_map(lambda task: delete_asset(task.config['assetId']).pipe(
-            flat_map(lambda _: execute_task(task))
-        ))
-    )
+    def action():
+        return execute(create_task).pipe(
+            flat_map(lambda task: delete_asset(task.config['assetId']).pipe(
+                flat_map(lambda _: execute_task(task))
+            ))
+        )
+
     return _export(
         action=action,
         description=description,
