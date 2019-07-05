@@ -2,6 +2,10 @@
     --content-padding-vertical: 1rem;
     --content-padding-horizontal: .8rem;
     padding: var(--content-padding-vertical) var(--content-padding-horizontal);
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 0;
 }
 
 .padding.noVertical {

@@ -31,6 +31,10 @@
     margin-bottom: 0;
 }
 
+.layout.vertical {
+    /* Adding flex column (as it should) to vertical layout breaks widget spacing... */
+}
+
 .layout.horizontal {
     width: 100%;
     display: flex;

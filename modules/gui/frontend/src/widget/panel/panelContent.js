@@ -9,8 +9,8 @@ export class PanelContent extends React.Component {
         const {className, scrollable, noHorizontalPadding, noVerticalPadding, children} = this.props
         return scrollable
             ? (
-                <ScrollableContainer className={styles.container}>
-                    <Scrollable className={[styles.panelContent, className].join(' ')}>
+                <ScrollableContainer className={styles.scrollable}>
+                    <Scrollable className={className}>
                         <Padding
                             noHorizontal={noHorizontalPadding}
                             noVertical={noVerticalPadding}
@@ -21,19 +21,13 @@ export class PanelContent extends React.Component {
                 </ScrollableContainer>
             )
             : (
-                <div className={[
-                    styles.container,
-                    styles.panelContent,
-                    className
-                ].join(' ')}>
-                    <Padding
-                        noHorizontal={noHorizontalPadding}
-                        noVertical={noVerticalPadding}
-                        className={styles.nonScrollingPadding}
-                    >
-                        {children}
-                    </Padding>
-                </div>
+                <Padding
+                    noHorizontal={noHorizontalPadding}
+                    noVertical={noVerticalPadding}
+                    className={[styles.nonScrollable, className].join(' ')}
+                >
+                    {children}
+                </Padding>
             )
     }
 }
