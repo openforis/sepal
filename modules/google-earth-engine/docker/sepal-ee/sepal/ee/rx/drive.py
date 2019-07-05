@@ -38,12 +38,12 @@ class Drive(local):
 
         )
 
-    def list_folder(self, parent, name_filter=None):
+    def list_folder(self, folder, name_filter=None):
         def action():
             if name_filter:
-                q = "'{0}' in parents and name = '{1}'".format(parent['id'], name_filter)
+                q = "'{0}' in parents and name = '{1}'".format(folder['id'], name_filter)
             else:
-                q = "'{0}' in parents".format(parent['id'])
+                q = "'{0}' in parents".format(folder['id'])
             return self.service.files().list(q=q, fields="files(id, name, size, mimeType, modifiedTime)").execute().get(
                 'files', [])
 
