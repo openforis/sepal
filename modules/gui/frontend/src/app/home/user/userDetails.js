@@ -4,7 +4,7 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -84,7 +84,7 @@ class _UserDetails extends React.Component {
         return this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT').active
             ? <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>
             : <React.Fragment>
-                <PanelContent>
+                <Panel.Content>
                     <Layout>
                         <Form.Input
                             label={msg('user.userDetails.form.name.label')}
@@ -110,7 +110,7 @@ class _UserDetails extends React.Component {
                             </ButtonGroup>
                         </div>
                     </Layout>
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons>
                     <Activator id='changePassword'>
                         {({canActivate, activate}) =>
@@ -135,7 +135,7 @@ class _UserDetails extends React.Component {
                 modal
                 onApply={userDetails => this.updateUserDetails(userDetails)}
                 close={() => deactivate()}>
-                <PanelHeader
+                <Panel.Header
                     icon='user'
                     title={msg('user.userDetails.title')}/>
                 {this.renderPanel()}

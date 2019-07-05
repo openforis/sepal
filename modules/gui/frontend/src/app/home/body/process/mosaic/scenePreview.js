@@ -1,4 +1,4 @@
-import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {compose} from 'compose'
 import {dataSetById} from 'sources'
@@ -37,11 +37,11 @@ class ScenePreview extends React.Component {
                 <Panel
                     className={styles.panel}
                     type='modal'>
-                    <PanelHeader
+                    <Panel.Header
                         icon='image'
                         title={'Scene preview'}
                         label={id}/>
-                    <PanelContent>
+                    <Panel.Content>
                         <Hammer onTap={() => this.closePreview()}>
                             <div
                                 className={styles.thumbnail}
@@ -55,12 +55,12 @@ class ScenePreview extends React.Component {
                             <LabelValue name='daysFromTarget' value={daysFromTargetString} icon='calendar-check'/>
                             <LabelValue name='cloudCover' value={cloudCover + '%'} icon='cloud'/>
                         </div>
-                    </PanelContent>
-                    <PanelButtons onEnter={close} onEscape={close}>
-                        <PanelButtons.Main>
-                            <PanelButtons.Close onClick={close}/>
-                        </PanelButtons.Main>
-                    </PanelButtons>
+                    </Panel.Content>
+                    <Panel.Buttons onEnter={close} onEscape={close}>
+                        <Panel.Buttons.Main>
+                            <Panel.Buttons.Close onClick={close}/>
+                        </Panel.Buttons.Main>
+                    </Panel.Buttons>
                 </Panel>
             )
         } else

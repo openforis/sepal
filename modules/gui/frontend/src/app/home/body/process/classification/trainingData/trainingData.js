@@ -1,7 +1,7 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Msg, msg} from 'translate'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
@@ -62,13 +62,13 @@ class TrainingData extends React.Component {
                 placement='bottom-right'
                 className={styles.panel}
                 onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <PanelHeader
+                <Panel.Header
                     icon='cog'
                     title={msg('process.classification.panel.trainingData.title')}/>
 
-                <PanelContent>
+                <Panel.Content>
                     {this.renderContent()}
-                </PanelContent>
+                </Panel.Content>
 
                 <Form.PanelButtons/>
             </RecipeFormPanel>

@@ -1,5 +1,5 @@
 import {FormPanelContext} from './panel'
-import {PanelButtons} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -7,9 +7,9 @@ export class FormPanelButtons extends React.Component {
     renderExtraButtons() {
         const {children} = this.props
         return children ? (
-            <PanelButtons.Extra>
+            <Panel.Buttons.Extra>
                 {children}
-            </PanelButtons.Extra>
+            </Panel.Buttons.Extra>
         ) : null
     }
 
@@ -22,27 +22,27 @@ export class FormPanelButtons extends React.Component {
                 : onOk
         const onEscape = invalid || canSubmit ? onCancel : onOk
         return (
-            <PanelButtons
+            <Panel.Buttons
                 onEnter={onEnter}
                 onEscape={onEscape}>
-                <PanelButtons.Main>
-                    <PanelButtons.Cancel
+                <Panel.Buttons.Main>
+                    <Panel.Buttons.Cancel
                         shown={canSubmit}
                         onClick={onCancel}/>
-                    <PanelButtons.Apply
+                    <Panel.Buttons.Apply
                         type={'submit'}
                         label={applyLabel}
                         shown={canSubmit}
                         disabled={invalid}
                         onClick={onOk}/>
-                    <PanelButtons.Close
+                    <Panel.Buttons.Close
                         type={'submit'}
                         label={applyLabel}
                         shown={!canSubmit}
                         onClick={onOk}/>
-                </PanelButtons.Main>
+                </Panel.Buttons.Main>
                 {this.renderExtraButtons()}
-            </PanelButtons>
+            </Panel.Buttons>
         )
     }
 
@@ -54,23 +54,23 @@ export class FormPanelButtons extends React.Component {
                     ? onDone
                     : onNext
         return (
-            <PanelButtons
+            <Panel.Buttons
                 onEnter={onEnter}>
-                <PanelButtons.Main>
-                    <PanelButtons.Back
+                <Panel.Buttons.Main>
+                    <Panel.Buttons.Back
                         shown={!first}
                         onClick={onBack}/>
-                    <PanelButtons.Done
+                    <Panel.Buttons.Done
                         shown={last}
                         disabled={invalid}
                         onClick={onDone}/>
-                    <PanelButtons.Next
+                    <Panel.Buttons.Next
                         shown={!last}
                         disabled={invalid}
                         onClick={onNext}/>
-                </PanelButtons.Main>
+                </Panel.Buttons.Main>
                 {this.renderExtraButtons()}
-            </PanelButtons>
+            </Panel.Buttons>
         )
     }
 

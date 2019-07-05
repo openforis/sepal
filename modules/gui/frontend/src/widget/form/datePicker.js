@@ -2,7 +2,7 @@ import * as PropTypes from 'prop-types'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Input} from 'widget/input'
-import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {ScrollableList} from 'widget/list'
 import {Widget} from 'widget/widget'
 import {activatable} from 'widget/activation/activatable'
@@ -116,10 +116,10 @@ class _DatePickerPanel extends React.Component {
             <Panel
                 className={styles.panel}
                 type='modal'>
-                <PanelHeader
+                <Panel.Header
                     icon='calendar-alt'
                     title={title}/>
-                <PanelContent noVerticalPadding>
+                <Panel.Content noVerticalPadding>
                     <div>
                         <div className={styles.panelContent}>
                             {this.renderYears()}
@@ -127,12 +127,12 @@ class _DatePickerPanel extends React.Component {
                             {this.renderDays()}
                         </div>
                     </div>
-                </PanelContent>
-                <PanelButtons onEnter={() => this.select()} onEscape={() => this.close()}>
-                    <PanelButtons.Main>
+                </Panel.Content>
+                <Panel.Buttons onEnter={() => this.select()} onEscape={() => this.close()}>
+                    <Panel.Buttons.Main>
                         {this.renderButtons()}
-                    </PanelButtons.Main>
-                </PanelButtons>
+                    </Panel.Buttons.Main>
+                </Panel.Buttons>
             </Panel>
         )
     }
@@ -249,10 +249,10 @@ class _DatePickerPanel extends React.Component {
     renderButtons() {
         return this.isDirty()
             ? <React.Fragment>
-                <PanelButtons.Cancel onClick={() => this.close()}/>
-                <PanelButtons.Select onClick={() => this.select()}/>
+                <Panel.Buttons.Cancel onClick={() => this.close()}/>
+                <Panel.Buttons.Select onClick={() => this.select()}/>
             </React.Fragment>
-            : <PanelButtons.Close onClick={() => this.close()}/>
+            : <Panel.Buttons.Close onClick={() => this.close()}/>
     }
 
     componentDidMount() {

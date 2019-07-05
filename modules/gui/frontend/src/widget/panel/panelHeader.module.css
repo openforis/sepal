@@ -1,0 +1,30 @@
+.header {
+    flex-grow: 0;
+    flex-shrink: 0;
+    font-size: .9rem;
+    font-family: var(--header-font-family);
+    text-transform: uppercase;
+    color: var(--header-color);
+    padding: var(--header-padding);
+    border-bottom: var(--wireframe);
+    display: flex;
+    justify-content: space-between;
+}
+
+.header * {
+    text-transform: uppercase;
+}
+
+.header > div > *:first-child {
+    margin-right: .5rem;
+}
+
+.header .title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.header .label {
+    margin-left: 1rem;
+}

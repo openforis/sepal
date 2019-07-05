@@ -1,6 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../timeSeriesRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -61,12 +61,12 @@ class PreProcessingOptions extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'>
-                <PanelHeader
+                <Panel.Header
                     icon='cog'
                     title={msg('process.timeSeries.panel.preprocess.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     {this.renderContent()}
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </RecipeFormPanel>
         )

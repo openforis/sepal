@@ -1,6 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions, SceneSelectionType} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -29,15 +29,15 @@ class SceneSelectionOptions extends React.Component {
                 className={styles.panel}
                 placement='bottom-right'
                 onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <PanelHeader
+                <Panel.Header
                     icon='images'
                     title={msg('process.mosaic.panel.scenes.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     <Layout>
                         {this.renderTypes()}
                         {this.renderTargetDateWeight()}
                     </Layout>
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </RecipeFormPanel>
         )

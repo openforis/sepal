@@ -1,6 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -91,12 +91,12 @@ class Retrieve extends React.Component {
                 isActionForm
                 placement='top-right'
                 onApply={values => RecipeActions(recipeId).retrieve(values).dispatch()}>
-                <PanelHeader
+                <Panel.Header
                     icon='cloud-download-alt'
                     title={msg('process.mosaic.panel.retrieve.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     {this.renderContent()}
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons
                     applyLabel={msg('process.mosaic.panel.retrieve.apply')}/>
             </RecipeFormPanel>

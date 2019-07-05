@@ -1,6 +1,6 @@
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
@@ -99,12 +99,12 @@ class Dates extends React.Component {
                 className={advanced.value ? styles.advanced : styles.simple}
                 placement='bottom-right'
                 onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <PanelHeader
+                <Panel.Header
                     icon='calendar-alt'
                     title={msg('process.mosaic.panel.dates.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     {advanced.value ? this.renderAdvanced() : this.renderSimple()}
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons>
                     <Button
                         label={advanced.value ? msg('button.less') : msg('button.more')}

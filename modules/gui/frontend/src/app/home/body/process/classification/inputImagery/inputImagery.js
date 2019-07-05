@@ -1,5 +1,5 @@
 import {Form} from 'widget/form/form'
-import {PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {SuperButton} from 'widget/superButton'
@@ -37,14 +37,14 @@ class InputImagery extends React.Component {
                     className={styles.panel}
                     placement='bottom-right'
                     onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                    <PanelHeader
+                    <Panel.Header
                         icon='image'
                         title={msg('process.classification.panel.inputImagery.title')}/>
-                    <PanelContent>
+                    <Panel.Content>
                         {this.renderContent()}
-                    </PanelContent>
+                    </Panel.Content>
                     <Form.PanelButtons invalid={!images.length}>
-                        <PanelButtons.Add onClick={() => this.addImage()}/>
+                        <Panel.Buttons.Add onClick={() => this.addImage()}/>
                     </Form.PanelButtons>
                 </RecipeFormPanel>
                 <InputImage/>

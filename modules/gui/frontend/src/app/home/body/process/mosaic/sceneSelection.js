@@ -4,7 +4,7 @@ import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {HoverDetector, HoverOverlay} from 'widget/hover'
 import {Padding} from 'widget/padding'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {activatable} from 'widget/activation/activatable'
@@ -80,18 +80,18 @@ class SceneSelection extends React.Component {
                     type='center'
                     onApply={({selectedScenes}) => this.onApply(selectedScenes)}
                     onCancel={() => this.deselectSceneArea()}>
-                    <PanelHeader
+                    <Panel.Header
                         icon='images'
                         title={msg('process.mosaic.panel.autoSelectScenes.form.selectScenes')}/>
 
-                    <PanelContent className={loading ? styles.loading : null}
+                    <Panel.Content className={loading ? styles.loading : null}
                         scrollable={false}
                         noVerticalPadding
                     >
                         {loading
                             ? this.renderProgress()
                             : this.renderScenes()}
-                    </PanelContent>
+                    </Panel.Content>
 
                     <Form.PanelButtons/>
                 </Form.Panel>

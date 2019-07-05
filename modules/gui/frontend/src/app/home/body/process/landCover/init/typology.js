@@ -1,5 +1,5 @@
 import {Form, form} from 'widget/form/form'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeActions, RecipeState} from '../landCoverRecipe'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -29,12 +29,12 @@ class Typology extends React.Component {
                     values,
                     model: valuesToModel(values)
                 }).dispatch()}>
-                <PanelHeader
+                <Panel.Header
                     icon='cog'
                     title={msg('process.landCover.panel.typology.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     {this.renderContent()}
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </Form.Panel>
         )

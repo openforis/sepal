@@ -1,7 +1,7 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Msg, msg} from 'translate'
-import {Panel, PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {SuperButton} from 'widget/superButton'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -185,24 +185,24 @@ class _UserMessages extends React.Component {
             <Panel
                 className={styles.panel}
                 type='modal'>
-                <PanelHeader
+                <Panel.Header
                     icon='bell'
                     title={msg('userMessages.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     {this.renderMessages()}
-                </PanelContent>
-                <PanelButtons onEnter={close} onEscape={close}>
-                    <PanelButtons.Main>
-                        <PanelButtons.Close onClick={close}/>
-                    </PanelButtons.Main>
-                    <PanelButtons.Extra>
-                        <PanelButtons.Add
+                </Panel.Content>
+                <Panel.Buttons onEnter={close} onEscape={close}>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Close onClick={close}/>
+                    </Panel.Buttons.Main>
+                    <Panel.Buttons.Extra>
+                        <Panel.Buttons.Add
                             label={msg('userMessages.post')}
                             icon='pencil-alt'
                             onClick={add}
                             shown={isAdmin}/>
-                    </PanelButtons.Extra>
-                </PanelButtons>
+                    </Panel.Buttons.Extra>
+                </Panel.Buttons>
             </Panel>
         )
     }

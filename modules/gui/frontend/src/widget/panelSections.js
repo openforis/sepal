@@ -1,5 +1,5 @@
 import * as PropTypes from 'prop-types'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import ButtonSelect from 'widget/buttonSelect'
 import React from 'react'
 import _ from 'lodash'
@@ -10,10 +10,10 @@ export default class PanelSections extends React.Component {
         const section = this.findSection()
         return (
             <React.Fragment>
-                <PanelHeader icon={icon} title={this.renderSelect()}/>
-                <PanelContent>
+                <Panel.Header icon={icon} title={this.renderSelect()}/>
+                <Panel.Content>
                     {section && section.component}
-                </PanelContent>
+                </Panel.Content>
             </React.Fragment>
         )
     }

@@ -1,6 +1,6 @@
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -70,10 +70,10 @@ class UserDetails extends React.Component {
                 modal
                 onApply={userDetails => this.save(userDetails)}
                 close={() => this.cancel()}>
-                <PanelHeader
+                <Panel.Header
                     icon='user'
                     title={msg('user.userDetails.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     <Layout>
                         <Form.Input
                             label={msg('user.userDetails.form.username.label')}
@@ -128,7 +128,7 @@ class UserDetails extends React.Component {
                             />
                         </Form.FieldSet>
                     </Layout>
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </Form.Panel>
         )

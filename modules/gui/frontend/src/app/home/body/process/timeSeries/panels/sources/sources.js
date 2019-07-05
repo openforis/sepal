@@ -1,7 +1,7 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Msg, msg} from 'translate'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {arrayEquals} from 'collections'
 import {compose} from 'compose'
@@ -61,14 +61,14 @@ class Sources extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'>
-                <PanelHeader
+                <Panel.Header
                     icon='cog'
                     title={msg('process.timeSeries.panel.sources.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     <Layout>
                         {this.renderDataSets()}
                     </Layout>
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </RecipeFormPanel>
         )

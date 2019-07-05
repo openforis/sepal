@@ -1,6 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -62,14 +62,14 @@ class Dates extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'>
-                <PanelHeader
+                <Panel.Header
                     icon='cog'
                     title={msg('process.timeSeries.panel.dates.title')}/>
-                <PanelContent>
+                <Panel.Content>
                     <Layout>
                         {this.renderContent()}
                     </Layout>
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </RecipeFormPanel>
         )

@@ -1,6 +1,6 @@
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {select} from 'store'
@@ -71,11 +71,11 @@ class UserSession extends React.Component {
                 type='modal'
                 onApply={session => this.updateSession(session)}
                 close={() => this.unselectSession()}>
-                <PanelHeader
+                <Panel.Header
                     title={`${session.instanceType.name} (${session.instanceType.description})`}
                     label={`${format.dollars(session.costSinceCreation)} (${format.dollarsPerHour(session.instanceType.hourlyCost)})`}
                 />
-                <PanelContent>
+                <Panel.Content>
                     <Layout>
                         <Form.Slider
                             input={keepAlive}
@@ -85,7 +85,7 @@ class UserSession extends React.Component {
                             info={sliderMessage}
                         />
                     </Layout>
-                </PanelContent>
+                </Panel.Content>
                 <Form.PanelButtons/>
             </Form.Panel>
         )

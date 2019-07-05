@@ -1,6 +1,6 @@
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {PanelButtons, PanelContent, PanelHeader} from 'widget/panel'
+import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {closeRecipe} from './recipe'
 import {compose} from 'compose'
@@ -41,7 +41,7 @@ class SaveRecipe extends React.Component {
         const save = () => this.saveRecipe()
         const cancel = () => activatable.deactivate()
         return <React.Fragment>
-            <PanelContent>
+            <Panel.Content>
                 <Layout>
                     <Form.Input
                         label={msg('process.saveRecipe.form.name.label')}
@@ -50,15 +50,15 @@ class SaveRecipe extends React.Component {
                         errorMessage
                     />
                 </Layout>
-            </PanelContent>
-            <PanelButtons onEnter={save} onEscape={cancel}>
-                <PanelButtons.Main>
-                    <PanelButtons.Cancel onClick={cancel}/>
-                    <PanelButtons.Save
+            </Panel.Content>
+            <Panel.Buttons onEnter={save} onEscape={cancel}>
+                <Panel.Buttons.Main>
+                    <Panel.Buttons.Cancel onClick={cancel}/>
+                    <Panel.Buttons.Save
                         disabled={form.isInvalid()}
                         onClick={save}/>
-                </PanelButtons.Main>
-            </PanelButtons>
+                </Panel.Buttons.Main>
+            </Panel.Buttons>
         </React.Fragment>
     }
 
@@ -71,7 +71,7 @@ class SaveRecipe extends React.Component {
                 isActionForm={true}
                 modal
                 close={() => this.close()}>
-                <PanelHeader
+                <Panel.Header
                     icon='save'
                     title={msg('process.saveRecipe.title')}/>
                 {this.renderPanel()}
