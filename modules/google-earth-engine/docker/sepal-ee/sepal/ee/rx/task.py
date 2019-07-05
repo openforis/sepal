@@ -1,10 +1,10 @@
 import ee
 from ee.batch import Task
-from rx import interval, of, throw
+from rx import of, throw
 from rx.operators import distinct_until_changed, flat_map, take_while
-from rx.scheduler import TimeoutScheduler
 
-from .observable import ee_observable
+from .observables import execute
+from .observables import interval
 
 _MONITORING_FREQUENCY = 5
 
@@ -28,18 +28,16 @@ def execute_task(task):
         def is_running(state):
             return state in [Task.State.UNSUBMITTED, Task.State.READY, Task.State.RUNNING]
 
-        credentials = ee.Credentials()
-        return interval(_MONITORING_FREQUENCY, TimeoutScheduler()).pipe(
-            flat_map(lambda _: ee_observable(
+        return interval(_MONITORING_FREQUENCY).pipe(
+            flat_map(lambda _: execute(
                 action=load_status,
-                description='monitor task ' + str(task),
-                credentials=credentials)
+                description='monitor task ' + str(task))
             ),
             flat_map(extract_state),
             distinct_until_changed(),
             take_while(is_running, inclusive=True)
         )
 
-    return ee_observable(start, description='start task ' + str(task)).pipe(
+    return execute(start, description='start task ' + str(task)).pipe(
         flat_map(lambda _: monitor())
     )
