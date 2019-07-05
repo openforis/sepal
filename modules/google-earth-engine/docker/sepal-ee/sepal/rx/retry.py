@@ -4,6 +4,7 @@ import random
 import rx
 from rx import of, throw
 from rx.operators import catch, delay, flat_map
+from rx.scheduler import TimeoutScheduler
 
 
 def default_backoff(times):
@@ -13,10 +14,10 @@ def default_backoff(times):
 def retry_with_backoff(retries, description=None, backoff=default_backoff):
     def do_retry(source, tries, exception):
         if tries <= retries:
-            logging.info('retry_with_backoff(tries={}, retries={}, exception={}, description={})'.format(
+            logging.warning('retry_with_backoff(tries={}, retries={}, exception={}, description={})'.format(
                 tries, retries, exception, description))
             return of(None).pipe(
-                delay(backoff(tries)),
+                delay(backoff(tries), TimeoutScheduler()),
                 flat_map(source),
                 catch(handler=lambda e, src: do_retry(src, tries + 1, e))
             )
