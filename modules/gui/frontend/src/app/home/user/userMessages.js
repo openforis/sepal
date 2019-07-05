@@ -17,6 +17,7 @@ import actionBuilder from 'action-builder'
 import api from 'api'
 import moment from 'moment'
 import styles from './userMessages.module.css'
+import {NoData} from 'widget/noData'
 
 const mapStateToProps = state => {
     const currentUser = state.user.currentUser
@@ -126,9 +127,7 @@ class _UserMessages extends React.Component {
             )
         } else {
             return (
-                <div className={styles.noMessages}>
-                    {msg('userMessages.noMessages')}
-                </div>
+                <NoData message={msg('userMessages.noMessages')}/>
             )
         }
     }

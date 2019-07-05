@@ -1,4 +1,5 @@
 import {Form, form} from 'widget/form/form'
+import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
@@ -42,9 +43,7 @@ class Revisions extends React.Component {
     renderNoRevisions() {
         return (
             <div>
-                <div className={styles.noRevisions}>
-                    {msg('process.revisions.none')}
-                </div>
+                <NoData message={msg('process.revisions.none')}/>
             </div>
         )
     }

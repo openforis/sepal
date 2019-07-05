@@ -12,6 +12,7 @@ import InputImage from './inputImage'
 import React from 'react'
 import guid from 'guid'
 import styles from './inputImagery.module.css'
+import {NoData} from 'widget/noData'
 
 const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images') || []
@@ -85,9 +86,7 @@ class InputImagery extends React.Component {
 
     renderNoImageryMessage() {
         return (
-            <div className={styles.noImagery}>
-                {msg('process.classification.panel.inputImagery.noImagery')}
-            </div>
+            <NoData message={msg('process.classification.panel.inputImagery.noImagery')}></NoData>
         )
     }
 

@@ -1,4 +1,5 @@
 .layout {
+    display: flex;
     overflow: hidden;
 }
 
@@ -26,14 +27,16 @@
     margin-bottom: var(--vertical-spacing);
 }
 
-/* .layout.vertical > :not(.layout):last-child { */
 .layout.vertical > *:last-child {
     margin-bottom: 0;
 }
 
+.layout.vertical {
+    flex-direction: column;
+}
+
 .layout.horizontal {
     width: 100%;
-    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;

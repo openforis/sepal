@@ -112,16 +112,39 @@ class SceneSelection extends React.Component {
         return haveScenes ? (
             <div className={styles.scenes}>
                 <div className={styles.availableScenes}>
-                    {this.renderAvailableScenes(availableScenes)}
+                    {this.renderScenesSection({
+                        scenes: availableScenes,
+                        title: msg('process.mosaic.panel.sceneSelection.availableScenes'),
+                        selected: false
+                    })}
                 </div>
                 <div className={styles.selectedScenes}>
-                    {this.renderSelectedScenes(selectedScenes)}
+                    {this.renderScenesSection({
+                        scenes: selectedScenes,
+                        title: msg('process.mosaic.panel.sceneSelection.selectedScenes'),
+                        selected: true
+                    })}
                 </div>
             </div>
         ) : (
             <div className={styles.noScenes}>
                 {msg('process.mosaic.panel.sceneSelection.noScenes')}
             </div>
+        )
+    }
+
+    renderScenesSection({scenes, title, selected}) {
+        return (
+            <ScrollableContainer>
+                <Unscrollable className={styles.title}>
+                    <Label msg={title}/>
+                </Unscrollable>
+                <Scrollable>
+                    <Padding noHorizontal className={styles.grid}>
+                        {scenes.map(scene => this.renderScene(scene, selected))}
+                    </Padding>
+                </Scrollable>
+            </ScrollableContainer>
         )
     }
 
@@ -136,36 +159,6 @@ class SceneSelection extends React.Component {
                 onAdd={() => this.addScene(scene)}
                 onRemove={() => this.removeScene(scene)}
                 recipeActions={this.recipeActions}/>
-        )
-    }
-
-    renderAvailableScenes(scenes) {
-        return (
-            <ScrollableContainer>
-                <Unscrollable className={styles.title}>
-                    <Label msg={msg('process.mosaic.panel.sceneSelection.availableScenes')}/>
-                </Unscrollable>
-                <Scrollable>
-                    <Padding noHorizontal className={styles.grid}>
-                        {scenes.map(scene => this.renderScene(scene, false))}
-                    </Padding>
-                </Scrollable>
-            </ScrollableContainer>
-        )
-    }
-
-    renderSelectedScenes(scenes) {
-        return (
-            <ScrollableContainer>
-                <Unscrollable className={styles.title}>
-                    <Label msg={msg('process.mosaic.panel.sceneSelection.selectedScenes')}/>
-                </Unscrollable>
-                <Scrollable>
-                    <Padding noHorizontal className={styles.grid}>
-                        {scenes.map(scene => this.renderScene(scene, true))}
-                    </Padding>
-                </Scrollable>
-            </ScrollableContainer>
         )
     }
 
