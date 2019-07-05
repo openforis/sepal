@@ -22,7 +22,7 @@ class Drive(local):
 
         def find_with_parent(parent_stream, name):
             return parent_stream.pipe(
-                flat_map(lambda parent: self.list_folder(parent, name)),
+                flat_map(lambda parent: self.list_folder(parent, name_filter=name)),
                 map(lambda files: files[0] if len(files) else None),
                 flat_map(lambda file: of(file) if file else throw(Exception('File {} does not exist.'.format(path))))
             )
@@ -38,10 +38,10 @@ class Drive(local):
 
         )
 
-    def list_folder(self, parent, name=None):
+    def list_folder(self, parent, name_filter=None):
         def action():
-            if name:
-                q = "'{0}' in parents and name = '{1}'".format(parent['id'], name)
+            if name_filter:
+                q = "'{0}' in parents and name = '{1}'".format(parent['id'], name_filter)
             else:
                 q = "'{0}' in parents".format(parent['id'])
             return self.service.files().list(q=q, fields="files(id, name, size, mimeType, modifiedTime)").execute().get(
