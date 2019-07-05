@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {ContentPadding} from 'widget/sectionLayout'
+import {Padding} from 'widget/padding'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -76,8 +77,10 @@ class AppLauncher extends React.Component {
         return (
             <ContentPadding menuPadding horizontalPadding>
                 <ScrollableContainer>
-                    <Scrollable direction='y' className={styles.apps}>
-                        {this.renderApps()}
+                    <Scrollable direction='y'>
+                        <Padding className={styles.apps}>
+                            {this.renderApps()}
+                        </Padding>
                     </Scrollable>
                 </ScrollableContainer>
             </ContentPadding>

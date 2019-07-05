@@ -1,12 +1,10 @@
 .apps {
     --app-height: 9rem;
-    pointer-events: all;
     display: grid;
     grid-template-columns: repeat(auto-fill, 20rem);
     grid-template-rows: repeat(auto-fill, var(--app-height));
     grid-gap: 2rem;
     justify-content: center;
-    padding: 2rem 0;
 }
 
 .app {
