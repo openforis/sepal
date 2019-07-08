@@ -14,7 +14,12 @@
 }
 
 .notification {
+    --error-color: hsl(0, 60%, 40%);
+    --info-color: hsl(202, 60%, 40%);
+    --warning-color: hsl(39, 60%, 40%);
+    --success-color: hsl(90, 60%, 35%);
     --background-opacity: .85;
+    position: relative;
     width: 20rem;
     pointer-events: all;
     background-color: hsla(0, 0%, 0%, var(--background-opacity));
@@ -76,12 +81,16 @@
 .notification .dismiss {
     text-align: center;
     font-size: .8rem;
-    color: #ccc;
+    color: gray;
 }
 
 .notification .title {
     color: var(--color);
     font-weight: bold;
+}
+
+.notification .message {
+    color: #ccc;
 }
 
 .notification .error {

@@ -89,7 +89,7 @@ class _Tabs extends React.Component {
 
     renderTab(tab) {
         const {selectedTabId, statePath, onTitleChanged, onClose} = this.props
-        const close = () => closeTab(tab.id, statePath)
+        const close = () => this.closeTab(tab.id)
         return (
             <TabHandle
                 key={tab.id}
@@ -117,11 +117,13 @@ class _Tabs extends React.Component {
     }
 
     renderTabs() {
-        const {tabs, selectedTabId, tabActions, statePath} = this.props
+        const {tabs, selectedTabId, tabActions} = this.props
         return (
             <Keybinding keymap={{
-                'Ctrl+Shift+W': () => closeTab(selectedTabId, statePath),
-                'Ctrl+Shift+T': () => addTab(statePath),
+                'Ctrl+Shift+W': () => this.closeTab(selectedTabId),
+                'Ctrl+Shift+T': () => this.addTab(),
+                'Ctrl+Shift+ArrowLeft': () => this.selectPreviousTab(),
+                'Ctrl+Shift+ArrowRight': () => this.selectNextTab()
             }}>
                 <ScrollableContainer>
                     <Scrollable direction='x' className={styles.tabs}>
@@ -186,10 +188,13 @@ class _Tabs extends React.Component {
         )
     }
 
-    renderAddButton() {
+    isAddDisabled() {
         const {tabs, selectedTabId, isLandingTab} = this.props
         const selectedTab = tabs.find(tab => tab.id === selectedTabId)
-        const disabled = selectedTab && isLandingTab && isLandingTab(selectedTab)
+        return selectedTab && isLandingTab && isLandingTab(selectedTab)
+    }
+
+    renderAddButton() {
         return (
             <Button
                 chromeless
@@ -199,12 +204,12 @@ class _Tabs extends React.Component {
                 icon='plus'
                 tooltip={msg('widget.tabs.addTab.tooltip')}
                 tooltipPlacement='bottom'
-                disabled={disabled}
-                onClick={() => this.onAdd()}/>
+                disabled={this.isAddDisabled()}
+                onClick={() => this.addTab()}/>
         )
     }
 
-    onAdd() {
+    addTab() {
         const {statePath, tabs, isLandingTab} = this.props
         if (isLandingTab) {
             const tab = tabs.find(tab => isLandingTab(tab))
@@ -212,7 +217,14 @@ class _Tabs extends React.Component {
                 return selectTab(tab.id, statePath)
             }
         }
-        addTab(statePath)
+        if (!this.isAddDisabled()) {
+            addTab(statePath)
+        }
+    }
+
+    closeTab(id) {
+        const {statePath} = this.props
+        closeTab(id, statePath)
     }
 
     render() {
@@ -243,12 +255,12 @@ class _Tabs extends React.Component {
             close$.pipe(
                 delay(CLOSE_ANIMATION_DURATION_MS * 1.2)
             ).subscribe(
-                ({id, statePath}) => this.closeTab(id, statePath)
+                ({id, statePath}) => this.finalizeCloseTab(id, statePath)
             )
         )
     }
 
-    closeTab(id, statePath) {
+    finalizeCloseTab(id, statePath) {
         const nextSelectedTabId = () => {
             const tabs = select([statePath, 'tabs'])
             const tabIndex = tabs.findIndex(tab => tab.id === id)
