@@ -121,7 +121,7 @@ class _Tabs extends React.Component {
         return (
             <Keybinding keymap={{
                 'Ctrl+Shift+W': () => closeTab(selectedTabId, statePath),
-                'Ctrl+Shift+T': () => addTab(statePath),
+                'Ctrl+Shift+T': () => this.onAdd(),
                 'Ctrl+Shift+ArrowLeft': () => this.selectPreviousTab(),
                 'Ctrl+Shift+ArrowRight': () => this.selectNextTab()
             }}>
@@ -188,10 +188,13 @@ class _Tabs extends React.Component {
         )
     }
 
-    renderAddButton() {
+    isAddDisabled() {
         const {tabs, selectedTabId, isLandingTab} = this.props
         const selectedTab = tabs.find(tab => tab.id === selectedTabId)
-        const disabled = selectedTab && isLandingTab && isLandingTab(selectedTab)
+        return selectedTab && isLandingTab && isLandingTab(selectedTab)
+    }
+
+    renderAddButton() {
         return (
             <Button
                 chromeless
@@ -201,7 +204,7 @@ class _Tabs extends React.Component {
                 icon='plus'
                 tooltip={msg('widget.tabs.addTab.tooltip')}
                 tooltipPlacement='bottom'
-                disabled={disabled}
+                disabled={this.isAddDisabled()}
                 onClick={() => this.onAdd()}/>
         )
     }
@@ -214,7 +217,9 @@ class _Tabs extends React.Component {
                 return selectTab(tab.id, statePath)
             }
         }
-        addTab(statePath)
+        if (!this.isAddDisabled()) {
+            addTab(statePath)
+        }
     }
 
     render() {
