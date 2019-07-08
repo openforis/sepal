@@ -49,3 +49,4 @@ def interval(period: RelativeTime):
     return of(True).pipe(
         flat_map(lambda _: schedule())
     )
+

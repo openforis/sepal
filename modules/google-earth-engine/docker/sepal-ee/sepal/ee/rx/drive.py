@@ -1,11 +1,16 @@
+import os
 from threading import local
 
 from apiclient import discovery
+from apiclient.http import MediaIoBaseDownload
 from rx import Callable, concat, from_callable, of, throw
-from rx.operators import flat_map, filter, map, reduce
+from rx.operators import do_action, flat_map, filter, first, map, reduce, take_while
+
+from sepal.ee.rx import get_credentials
+from sepal.rx import forever, using_file
 from sepal.rx.workqueue import WorkQueue
 
-from . import get_credentials
+CHUNK_SIZE = 10 * 1024 * 1024
 
 
 class Drive(local):
@@ -18,7 +23,7 @@ class Drive(local):
         )
 
     def get_by_path(self, path):
-        root_stream = of({'id': 'root'})
+        root_stream = of({'id': 'root', 'path': '/'})
 
         def find_with_parent(parent_stream, name):
             return parent_stream.pipe(
@@ -34,8 +39,8 @@ class Drive(local):
                 lambda file_stream: file_stream.pipe(
                     map(lambda file: file)
                 )
-            )
-
+            ),
+            first()
         )
 
     def list_folder(self, folder, name_filter=None):
@@ -44,8 +49,19 @@ class Drive(local):
                 q = "'{0}' in parents and name = '{1}'".format(folder['id'], name_filter)
             else:
                 q = "'{0}' in parents".format(folder['id'])
-            return self.service.files().list(q=q, fields="files(id, name, size, mimeType, modifiedTime)").execute().get(
-                'files', [])
+            files = self.service.files().list(
+                q=q,
+                fields="files(id, name, size, mimeType, modifiedTime)"
+            ).execute().get('files', [])
+            for file in files:
+                file['path'] = '{}{}{}'.format(
+                    folder['path'],
+                    file['name'].replace('/', '_'),
+                    '/' if _is_folder(file) else ''
+                )
+            return files
+
+        # TODO: Deal with pagination
 
         return _execute(action)
 
@@ -65,6 +81,60 @@ class Drive(local):
             reduce(lambda acc, files: acc + files, [])
         )
 
+    def download(self, file, destination):
+        destination = os.path.abspath(destination)
+
+        def create_downloader(destination_file):
+            request = self.service.files().get_media(fileId=file['id'])
+            return MediaIoBaseDownload(fd=destination_file, request=request, chunksize=CHUNK_SIZE)
+
+        def next_chunk(downloader):
+            status, done = downloader.next_chunk()
+            return 1.0 if done else status.progress()
+
+        def download_file(destination_file):
+            do_action(lambda _: os.makedirs(destination_file, exist_ok=True))
+            return of(create_downloader(destination_file)).pipe(
+                flat_map(
+                    lambda downloader: forever().pipe(
+                        map(lambda _: next_chunk(downloader)),
+                        take_while(lambda progress: progress < 1, inclusive=True),
+                        map(lambda progress: {
+                            'progress': progress,
+                            'downloaded_bytes': int(int(file['size']) * progress)
+                        })
+                    )
+                )
+            )
+
+        def action():
+            return using_file(file=destination, mode='wb', to_observable=download_file)
+
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        return _execute(action, retries=0, description='Download {} to {}'.format(file, destination))
+
+    def download_all(self, file, destination):
+        destination = os.path.abspath(destination)
+
+        def get_destination(f):
+            relative_path = f['path'][len(file['path']):]
+            next_destination = '{}{}{}'.format(
+                destination,
+                '' if destination[-1] == '/' else '/',
+                relative_path
+            )
+            return next_destination
+
+        if _is_folder(file):
+            return self.list_folder_recursively(file).pipe(
+                flat_map(lambda files: of(*files)),
+                filter(lambda f: not _is_folder(f)),
+                # TODO: Come up with a new destination based on f['path'] and file['path'] difference
+                flat_map(lambda f: self.download(f, get_destination(f)))
+            )
+        else:
+            return self.download(file, destination)
+
 
 def _is_folder(file):
     return file['mimeType'] == 'application/vnd.google-apps.folder'
@@ -77,8 +147,9 @@ def download_from_drive(
         move: bool = False
 ):
     drive = Drive(get_credentials())
-    return drive.get_by_path(source).pipe(
-        flat_map(lambda directory: drive.list_folder_recursively(directory))
+    to_download = drive.get_by_path(source)
+    return to_download.pipe(
+        flat_map(lambda file: drive.download_all(file, destination)),
     )
 
 
