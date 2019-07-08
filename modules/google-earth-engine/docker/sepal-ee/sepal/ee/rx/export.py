@@ -39,7 +39,7 @@ def export_image_to_asset(
 
     return _export_to_asset(
         create_task=create_task,
-        task_description='export_image_to_asset(asset_id={}, description={}'.format(asset_id, description),
+        description='export_image_to_asset(asset_id={}, description={}'.format(asset_id, description),
         retries=retries
     )
 
@@ -61,7 +61,7 @@ def export_table_to_asset(
 
     return _export_to_asset(
         create_task=create_task,
-        task_description='export_table_to_asset(asset_id={}, description={}'.format(asset_id, description),
+        description='export_table_to_asset(asset_id={}, description={}'.format(asset_id, description),
         retries=retries
     )
 
@@ -104,7 +104,7 @@ def export_image_to_drive(
 
     return _export_to_drive(
         create_task=create_task,
-        task_description='export_table_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
+        description='export_table_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
             description, folder, file_name_prefix
         ),
         retries=retries
@@ -132,7 +132,7 @@ def export_table_to_drive(
 
     return _export_to_drive(
         create_task=create_task,
-        task_description='export_table_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
+        description='export_table_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
             description, folder, file_name_prefix
         ),
         retries=retries
@@ -157,23 +157,25 @@ def _first_asset_root():
     return asset_roots[0]['id']
 
 
-def _export_to_asset(create_task, task_description, retries):
-    action = lambda: execute(create_task).pipe(
-        flat_map(lambda task: delete_asset(task.config['assetId']).pipe(
-            flat_map(lambda _: execute_task(task))
-        ))
-    )
+def _export_to_asset(create_task, description, retries):
+    def create_observable():
+        return execute(create_task).pipe(
+            flat_map(lambda task: delete_asset(task.config['assetId']).pipe(
+                flat_map(lambda _: execute_task(task))
+            ))
+        )
+
     return _export(
-        action=action,
-        description=task_description,
+        create_observable=create_observable,
+        description=description,
         retries=retries
     )
 
 
-def _export_to_drive(create_task, task_description, retries):
+def _export_to_drive(create_task, description, retries):
     return _export(
-        action=lambda: execute_task(create_task()),
-        description=task_description,
+        create_observable=lambda: execute_task(create_task()),
+        description=description,
         retries=retries
     )
 
@@ -185,12 +187,12 @@ _ee_exports = WorkQueue(
 )
 
 
-def _export(action, description, retries):
+def _export(create_observable, description, retries):
     return concat(
         of('PENDING'),
         enqueue(
             queue=_ee_exports,
-            action=action,
+            action=create_observable,
             description=description,
             retries=retries
         )
