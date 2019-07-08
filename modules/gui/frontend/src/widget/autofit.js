@@ -30,13 +30,14 @@ export class Autofit extends React.Component {
     }
 
     setScale() {
+        const {maxScale} = this.props
         const {scale} = this.state
         const element = this.element.current
         const parent = this.parent.current
         if (parent && element) {
             const horizontalScale = parent.clientWidth / element.clientWidth
             const verticalScale = parent.clientHeight / element.clientHeight
-            const nextScale = Math.min(horizontalScale, verticalScale)
+            const nextScale = Math.min(Math.min(horizontalScale, verticalScale), maxScale)
             if (scale !== nextScale) {
                 this.setState({scale: nextScale})
             }
@@ -46,5 +47,10 @@ export class Autofit extends React.Component {
 
 Autofit.propTypes = {
     children: PropTypes.any,
-    className: PropTypes.string
+    className: PropTypes.string,
+    maxScale: PropTypes.number
+}
+
+Autofit.defaultProps = {
+    maxScale: Number.MAX_SAFE_INTEGER
 }
