@@ -9,6 +9,7 @@ export const PageableControls = props => {
         <ButtonGroup type='horizontal-nowrap'>
             <Button
                 chromeless
+                look='transparent'
                 size='large'
                 shape='pill'
                 icon='fast-backward'
@@ -16,6 +17,7 @@ export const PageableControls = props => {
                 disabled={pageable.isFirstPage}/>
             <Button
                 chromeless
+                look='transparent'
                 size='large'
                 shape='pill'
                 icon='backward'
@@ -23,6 +25,7 @@ export const PageableControls = props => {
                 disabled={pageable.isFirstPage}/>
             <Button
                 chromeless
+                look='transparent'
                 size='large'
                 shape='pill'
                 icon='forward'
