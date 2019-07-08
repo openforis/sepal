@@ -117,7 +117,7 @@ class _Tabs extends React.Component {
     }
 
     renderTabs() {
-        const {tabs, selectedTabId, tabActions, statePath} = this.props
+        const {tabs, selectedTabId, tabActions} = this.props
         return (
             <Keybinding keymap={{
                 'Ctrl+Shift+W': () => this.closeTab(selectedTabId),
