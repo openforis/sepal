@@ -122,6 +122,8 @@ class _Tabs extends React.Component {
             <Keybinding keymap={{
                 'Ctrl+Shift+W': () => closeTab(selectedTabId, statePath),
                 'Ctrl+Shift+T': () => addTab(statePath),
+                'Ctrl+Shift+ArrowLeft': () => this.selectPreviousTab(),
+                'Ctrl+Shift+ArrowRight': () => this.selectNextTab()
             }}>
                 <ScrollableContainer>
                     <Scrollable direction='x' className={styles.tabs}>
