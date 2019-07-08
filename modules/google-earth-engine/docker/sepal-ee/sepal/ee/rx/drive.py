@@ -1,3 +1,4 @@
+import fnmatch
 import os
 from threading import local
 
@@ -5,7 +6,6 @@ from apiclient import discovery
 from apiclient.http import MediaIoBaseDownload
 from rx import Callable, concat, empty, from_callable, of, throw
 from rx.operators import do_action, expand, flat_map, filter, first, map, reduce, scan, take_while
-
 from sepal.ee.rx import get_credentials
 from sepal.rx import forever, using_file
 from sepal.rx.workqueue import WorkQueue
@@ -116,7 +116,8 @@ class Drive(local):
                         take_while(lambda progress: progress < 1, inclusive=True),
                         map(lambda progress: {
                             'progress': progress,
-                            'downloaded_bytes': int(int(file['size']) * progress)
+                            'downloaded_bytes': int(int(file['size']) * progress),
+                            'file': file
                         })
                     )
                 )
@@ -128,7 +129,7 @@ class Drive(local):
         os.makedirs(os.path.dirname(destination), exist_ok=True)
         return _execute(action, retries=0, description='Download {} to {}'.format(file, destination))
 
-    def download_all(self, file, destination):
+    def download_all(self, file, destination, matching=None, delete_after_download=False):
         destination = os.path.abspath(destination)
 
         def get_destination(f):
@@ -161,13 +162,26 @@ class Drive(local):
                 'downloaded_bytes': downloaded_bytes
             }
 
+        def is_file_matching(f):
+            return not matching or fnmatch.fnmatch(f['path'], matching)
+
+        def delete_downloaded(downloaded):
+            if delete_after_download:
+                return self.delete_file(downloaded['file']).pipe(
+                    map(lambda _: downloaded)
+                )
+            else:
+                return of(downloaded)
+
         if _is_folder(file):
             return self.list_folder_recursively(file).pipe(
                 flat_map(
                     lambda files: of(True).pipe(
                         flat_map(lambda _: of(*files).pipe(
                             filter(lambda f: not _is_folder(f)),
-                            flat_map(lambda f: self.download(f, get_destination(f)))
+                            filter(is_file_matching),
+                            flat_map(lambda f: self.download(f, get_destination(f))),
+                            flat_map(delete_downloaded)
                         )),
                         scan(update_stats, seed_stats(files))
                     )
@@ -175,6 +189,12 @@ class Drive(local):
             )
         else:
             return self.download(file, destination)
+
+    def delete_file(self, file):
+        def action():
+            self.service.files().delete(fileId=file['id']).execute()
+
+        return _execute(action)
 
 
 def _is_folder(file):
@@ -185,12 +205,18 @@ def download_from_drive(
         source: str,
         destination: str,
         matching: str = None,
-        move: bool = False
+        delete_after_download: bool = False
 ):
     drive = Drive(get_credentials())
-    to_download = drive.get_by_path(source)
-    return to_download.pipe(
-        flat_map(lambda file: drive.download_all(file, destination)),
+    return drive.get_by_path(source).pipe(
+        flat_map(
+            lambda file: drive.download_all(
+                file=file,
+                destination=destination,
+                matching=matching,
+                delete_after_download=delete_after_download
+            )
+        )
     )
 
 
