@@ -3,14 +3,15 @@ from threading import local
 
 from apiclient import discovery
 from apiclient.http import MediaIoBaseDownload
-from rx import Callable, concat, from_callable, of, throw
-from rx.operators import do_action, flat_map, filter, first, map, reduce, take_while
+from rx import Callable, concat, empty, from_callable, of, throw
+from rx.operators import do_action, expand, flat_map, filter, first, map, reduce, scan, take_while
 
 from sepal.ee.rx import get_credentials
 from sepal.rx import forever, using_file
 from sepal.rx.workqueue import WorkQueue
 
 CHUNK_SIZE = 10 * 1024 * 1024
+PAGE_SIZE = 100
 
 
 class Drive(local):
@@ -44,15 +45,28 @@ class Drive(local):
         )
 
     def list_folder(self, folder, name_filter=None):
-        def action():
-            if name_filter:
-                q = "'{0}' in parents and name = '{1}'".format(folder['id'], name_filter)
-            else:
-                q = "'{0}' in parents".format(folder['id'])
-            files = self.service.files().list(
-                q=q,
-                fields="files(id, name, size, mimeType, modifiedTime)"
-            ).execute().get('files', [])
+        def next_page(acc):
+            def load_page():
+                if name_filter:
+                    q = "'{0}' in parents and name = '{1}'".format(folder['id'], name_filter)
+                else:
+                    q = "'{0}' in parents".format(folder['id'])
+                page = self.service.files().list(
+                    q=q,
+                    fields="nextPageToken, files(id, name, size, mimeType, modifiedTime)",
+                    pageSize=PAGE_SIZE,
+                    pageToken=acc.get('nextPageToken')).execute()
+                return page
+
+            return _execute(load_page, retries=0).pipe(
+                map(lambda page: {
+                    'files': acc['files'] + page.get('files', []),
+                    'nextPageToken': page.get('nextPageToken')
+                })
+            )
+
+        def extract_files(result):
+            files = result.get('files', [])
             for file in files:
                 file['path'] = '{}{}{}'.format(
                     folder['path'],
@@ -61,9 +75,10 @@ class Drive(local):
                 )
             return files
 
-        # TODO: Deal with pagination
-
-        return _execute(action)
+        return next_page({'files': [], 'nextPageToken': None}).pipe(
+            expand(lambda acc: next_page(acc) if acc.get('nextPageToken') else empty()),
+            map(extract_files)
+        )
 
     def list_folder_recursively(self, folder):
         def recurse(file):
@@ -78,7 +93,7 @@ class Drive(local):
         return self.list_folder(folder).pipe(
             flat_map(lambda files: of(*files)),
             flat_map(recurse),
-            reduce(lambda acc, files: acc + files, [])
+            reduce(lambda acc, files: acc + files, []),
         )
 
     def download(self, file, destination):
@@ -125,12 +140,38 @@ class Drive(local):
             )
             return next_destination
 
+        def seed_stats(files):
+            return {
+                'progress': 0,
+                'total_files': len(files),
+                'total_bytes': sum([int(f.get('size', 0)) for f in files]),
+                'downloaded_files': 0,
+                'downloaded_bytes': 0
+            }
+
+        def update_stats(stats, download):
+            downloaded_files = stats['downloaded_files'] + (0 if download['progress'] < 1 else 1)
+            downloaded_bytes = stats['downloaded_bytes'] + download['downloaded_bytes']
+            progress = downloaded_bytes / stats['total_bytes']
+            return {
+                'progress': progress,
+                'total_files': stats['total_files'],
+                'total_bytes': stats['total_bytes'],
+                'downloaded_files': downloaded_files,
+                'downloaded_bytes': downloaded_bytes
+            }
+
         if _is_folder(file):
             return self.list_folder_recursively(file).pipe(
-                flat_map(lambda files: of(*files)),
-                filter(lambda f: not _is_folder(f)),
-                # TODO: Come up with a new destination based on f['path'] and file['path'] difference
-                flat_map(lambda f: self.download(f, get_destination(f)))
+                flat_map(
+                    lambda files: of(True).pipe(
+                        flat_map(lambda _: of(*files).pipe(
+                            filter(lambda f: not _is_folder(f)),
+                            flat_map(lambda f: self.download(f, get_destination(f)))
+                        )),
+                        scan(update_stats, seed_stats(files))
+                    )
+                )
             )
         else:
             return self.download(file, destination)
