@@ -96,7 +96,7 @@ class Drive(local):
             reduce(lambda acc, files: acc + files, []),
         )
 
-    def download(self, file, destination):
+    def download_file(self, file, destination):
         destination = os.path.abspath(destination)
 
         def create_downloader(destination_file):
@@ -107,7 +107,7 @@ class Drive(local):
             status, done = downloader.next_chunk()
             return 1.0 if done else status.progress()
 
-        def download_file(destination_file):
+        def download(destination_file):
             do_action(lambda _: os.makedirs(destination_file, exist_ok=True))
             return of(create_downloader(destination_file)).pipe(
                 flat_map(
@@ -124,12 +124,12 @@ class Drive(local):
             )
 
         def action():
-            return using_file(file=destination, mode='wb', to_observable=download_file)
+            return using_file(file=destination, mode='wb', to_observable=download)
 
         os.makedirs(os.path.dirname(destination), exist_ok=True)
         return _execute(action, retries=0, description='Download {} to {}'.format(file, destination))
 
-    def download_all(self, file, destination, matching=None, delete_after_download=False):
+    def download_directory(self, file, destination, matching=None, delete_after_download=False):
         destination = os.path.abspath(destination)
 
         def get_destination(f):
@@ -180,7 +180,7 @@ class Drive(local):
                         flat_map(lambda _: of(*files).pipe(
                             filter(lambda f: not _is_folder(f)),
                             filter(is_file_matching),
-                            flat_map(lambda f: self.download(f, get_destination(f))),
+                            flat_map(lambda f: self.download_file(f, get_destination(f))),
                             flat_map(delete_downloaded)
                         )),
                         scan(update_stats, seed_stats(files))
@@ -188,17 +188,13 @@ class Drive(local):
                 )
             )
         else:
-            return self.download(file, destination)
+            return self.download_file(file, destination)
 
     def delete_file(self, file):
         def action():
             self.service.files().delete(fileId=file['id']).execute()
 
         return _execute(action)
-
-
-def _is_folder(file):
-    return file['mimeType'] == 'application/vnd.google-apps.folder'
 
 
 def download_from_drive(
@@ -210,7 +206,7 @@ def download_from_drive(
     drive = Drive(get_credentials())
     return drive.get_by_path(source).pipe(
         flat_map(
-            lambda file: drive.download_all(
+            lambda file: drive.download_directory(
                 file=file,
                 destination=destination,
                 matching=matching,
@@ -218,6 +214,10 @@ def download_from_drive(
             )
         )
     )
+
+
+def _is_folder(file):
+    return file['mimeType'] == 'application/vnd.google-apps.folder'
 
 
 _drive_executions = WorkQueue(
