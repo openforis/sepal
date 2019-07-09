@@ -41,8 +41,7 @@ class AppInstance extends React.Component {
     }
 
     render() {
-        const {app: {path, label, alt}} = this.props
-        const {appState} = this.state
+        const {app: {label, alt}} = this.props
         return (
             <ContentPadding
                 menuPadding
@@ -57,18 +56,28 @@ class AppInstance extends React.Component {
                     <div className={styles.status}>
                         {this.renderStatus()}
                     </div>
-                    <iframe
-                        width='100%'
-                        height='100%'
-                        frameBorder='0'
-                        src={'/api' + path}
-                        title={label || alt}
-                        style={{display: appState === 'READY' ? 'block' : 'none'}}
-                        onLoad={() => this.setState({appState: 'READY'})}
-                    />
+                    {this.renderIFrame()}
                 </div>
             </ContentPadding>
         )
+    }
+
+    renderIFrame() {
+        const {app: {path, label, alt}} = this.props
+        const {appState} = this.state
+        return this.props.stream('RUN_APP').completed
+            ? (
+                <iframe
+                    width='100%'
+                    height='100%'
+                    frameBorder='0'
+                    src={'/api' + path}
+                    title={label || alt}
+                    style={{display: appState === 'READY' ? 'block' : 'none'}}
+                    onLoad={() => this.setState({appState: 'READY'})}
+                />
+            )
+            : null
     }
 
     renderStatus() {
