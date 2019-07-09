@@ -17,6 +17,7 @@ class AppInstance extends React.Component {
     }
 
     constructor(props) {
+        console.log('Constructor')
         super(props)
         this.runApp(props.app)
     }
@@ -27,7 +28,7 @@ class AppInstance extends React.Component {
                 runApp$(app.path),
                 timer(500)
             ),
-            () => this.setState({appState: 'INITIALIZED'}),
+            () => this.setState(prevState => ({appState: prevState === 'READY' ? 'READY' : 'INITIALIZED'})),
             () => Notifications.error({message: msg('apps.run.error', {label: app.label || app.alt})})
         )
     }
