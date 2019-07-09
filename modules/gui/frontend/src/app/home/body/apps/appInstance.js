@@ -1,14 +1,14 @@
-import {Autofit} from 'widget/autofit'
-import {ContentPadding} from 'widget/sectionLayout'
-import {compose} from 'compose'
-import {connect} from 'store'
-import {forkJoin, timer} from 'rxjs'
-import {msg} from 'translate'
 import {runApp$} from 'apps'
-import Icon from 'widget/icon'
-import Notifications from 'widget/notifications'
+import {compose} from 'compose'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {forkJoin, timer} from 'rxjs'
+import {connect} from 'store'
+import {msg} from 'translate'
+import {Autofit} from 'widget/autofit'
+import Icon from 'widget/icon'
+import Notifications from 'widget/notifications'
+import {ContentPadding} from 'widget/sectionLayout'
 import styles from './appInstance.module.css'
 
 class AppInstance extends React.Component {
@@ -17,19 +17,26 @@ class AppInstance extends React.Component {
     }
 
     constructor(props) {
-        console.log('Constructor')
         super(props)
         this.runApp(props.app)
     }
 
     runApp(app) {
         this.props.stream('RUN_APP',
-            forkJoin(
+            forkJoin([
                 runApp$(app.path),
                 timer(500)
-            ),
-            () => this.setState(prevState => ({appState: prevState === 'READY' ? 'READY' : 'INITIALIZED'})),
+            ]),
+            () => this.onInitialized(),
             () => Notifications.error({message: msg('apps.run.error', {label: app.label || app.alt})})
+        )
+    }
+
+    onInitialized() {
+        this.setState(({appState}) =>
+            appState === 'READY'
+                ? null
+                : {appState: 'INITIALIZED'}
         )
     }
 
