@@ -37,6 +37,7 @@
     100% {
         opacity: 1;
         transform: none;
+        visibility: visible; /* Enables event capturing */
     }
 }
 
@@ -48,5 +49,6 @@
     100% {
         opacity: 0;
         transform: translateX(15%);
+        visibility: hidden; /* Disables event capturing */
     }
 }
