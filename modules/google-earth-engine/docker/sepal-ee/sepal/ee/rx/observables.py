@@ -5,6 +5,7 @@ from rx.core.typing import RelativeTime
 from rx.operators import do_action, flat_map
 from rx.scheduler import TimeoutScheduler
 from sepal.rx.workqueue import WorkQueue
+from sepal.ee import get_credentials
 
 from . import operators
 
@@ -41,7 +42,7 @@ def execute(
 
 def interval(period: RelativeTime):
     def schedule():
-        credentials = operators.get_credentials()
+        credentials = get_credentials()
         return rx.interval(period, TimeoutScheduler()).pipe(
             do_action(lambda _: ee.InitializeThread(credentials)),
         )
