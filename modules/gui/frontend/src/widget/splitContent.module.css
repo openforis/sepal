@@ -59,7 +59,7 @@
 }
 
 .area.right {
-    clip-path: inset(0 0 0 var(--lclip-eft));
+    clip-path: inset(0 0 0 var(--clip-left));
 }
 
 .area.bottom-right {
