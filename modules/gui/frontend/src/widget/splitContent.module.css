@@ -1,0 +1,104 @@
+.container {
+    --half-margin-size: 1px;
+    --half-handle-size: 20px;
+    --dragging-color: white;
+
+    --top: var(--y);
+    --right: calc(100% - var(--x));
+    --bottom: calc(100% - var(--y));
+    --left: var(--x);
+
+    --clip-top: calc(var(--top) + var(--half-margin-size));
+    --clip-right: calc(var(--right) + var(--half-margin-size));
+    --clip-bottom: calc(var(--bottom) + var(--half-margin-size));
+    --clip-left: calc(var(--left) + var(--half-margin-size));
+
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: gray;
+    overflow: hidden;
+    pointer-events: all;
+}
+
+.container.dragging {
+    background-color: var(--dragging-color);
+    cursor: move;
+}
+
+.container.dragging .areas:after {
+    /* insert a capturing layer between the handle and anything else */
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: all;
+}
+
+.areas {
+    pointer-events: all;
+}
+
+.area {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    user-select: none;
+}
+
+.area.top {
+    clip-path: inset(0 0 var(--clip-bottom) 0);
+}
+
+.area.top-right {
+    clip-path: inset(0 0 var(--clip-bottom) var(--clip-left));
+}
+
+.area.right {
+    clip-path: inset(0 0 0 var(--lclip-eft));
+}
+
+.area.bottom-right {
+    clip-path: inset(var(--clip-top) 0 0 var(--clip-left));
+}
+
+.area.bottom {
+    clip-path: inset(var(--clip-top) 0 0 0);
+}
+
+.area.bottom-left {
+    clip-path: inset(var(--clip-top) var(--clip-right) 0 0);
+}
+
+.area.left {
+    clip-path: inset(0 var(--clip-right) 0 0);
+}
+
+.area.top-left {
+    clip-path: inset(0 var(--clip-right) var(--clip-bottom) 0);
+}
+
+.handle {
+    position: absolute;
+    top: calc(var(--top) - var(--half-handle-size));
+    left: calc(var(--left) - var(--half-handle-size));
+    width: calc(2 * var(--half-handle-size));
+    height: calc(2 * var(--half-handle-size));
+    border-radius: var(--half-handle-size);
+    background-color: transparent;
+    border: 2px solid gray;
+    cursor: move;
+    pointer-events: all;
+}
+
+.handle:hover {
+    border-color: var(--dragging-color);
+}
+
+.dragging .handle {
+    border-color: var(--dragging-color);
+}
