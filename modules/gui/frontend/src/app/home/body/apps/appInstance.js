@@ -1,14 +1,14 @@
-import {Autofit} from 'widget/autofit'
-import {ContentPadding} from 'widget/sectionLayout'
-import {compose} from 'compose'
-import {connect} from 'store'
-import {forkJoin, timer} from 'rxjs'
-import {msg} from 'translate'
 import {runApp$} from 'apps'
-import Icon from 'widget/icon'
-import Notifications from 'widget/notifications'
+import {compose} from 'compose'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {forkJoin, timer} from 'rxjs'
+import {connect} from 'store'
+import {msg} from 'translate'
+import {Autofit} from 'widget/autofit'
+import Icon from 'widget/icon'
+import Notifications from 'widget/notifications'
+import {ContentPadding} from 'widget/sectionLayout'
 import styles from './appInstance.module.css'
 
 class AppInstance extends React.Component {
@@ -23,18 +23,25 @@ class AppInstance extends React.Component {
 
     runApp(app) {
         this.props.stream('RUN_APP',
-            forkJoin(
+            forkJoin([
                 runApp$(app.path),
                 timer(500)
-            ),
-            () => this.setState({appState: 'INITIALIZED'}),
+            ]),
+            () => this.onInitialized(),
             () => Notifications.error({message: msg('apps.run.error', {label: app.label || app.alt})})
         )
     }
 
+    onInitialized() {
+        this.setState(({appState}) =>
+            appState === 'READY'
+                ? null
+                : {appState: 'INITIALIZED'}
+        )
+    }
+
     render() {
-        const {app: {path, label, alt}} = this.props
-        const {appState} = this.state
+        const {app: {label, alt}} = this.props
         return (
             <ContentPadding
                 menuPadding
@@ -49,18 +56,28 @@ class AppInstance extends React.Component {
                     <div className={styles.status}>
                         {this.renderStatus()}
                     </div>
-                    <iframe
-                        width='100%'
-                        height='100%'
-                        frameBorder='0'
-                        src={'/api' + path}
-                        title={label || alt}
-                        style={{display: appState === 'READY' ? 'block' : 'none'}}
-                        onLoad={() => this.setState({appState: 'READY'})}
-                    />
+                    {this.renderIFrame()}
                 </div>
             </ContentPadding>
         )
+    }
+
+    renderIFrame() {
+        const {app: {path, label, alt}} = this.props
+        const {appState} = this.state
+        return this.props.stream('RUN_APP').completed
+            ? (
+                <iframe
+                    width='100%'
+                    height='100%'
+                    frameBorder='0'
+                    src={'/api' + path}
+                    title={label || alt}
+                    style={{display: appState === 'READY' ? 'block' : 'none'}}
+                    onLoad={() => this.setState({appState: 'READY'})}
+                />
+            )
+            : null
     }
 
     renderStatus() {

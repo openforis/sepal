@@ -574,7 +574,7 @@ class MockServer extends AbstractMvcFilter {
             boolean sandboxServerUp = true
             // visualization - sandbox apis
             post('/sandbox/start') {
-                params.endpoint // Either rstudio, geo-web-viz, or shiny
+                params.endpoint // Either rstudio, or shiny
                 if (sandboxServerUp)
                     send toJson([status: 'STARTED'])
                 else

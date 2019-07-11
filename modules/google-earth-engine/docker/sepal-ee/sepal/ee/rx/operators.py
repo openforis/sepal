@@ -3,10 +3,9 @@ import rx
 from rx import from_callable
 from rx.core.typing import Mapper
 from rx.operators import do_action, flat_map
+from sepal.ee import get_credentials
 from sepal.rx.retry import retry_with_backoff
 from sepal.rx.workqueue import WorkQueue
-
-from . import get_credentials
 
 
 def retry(
@@ -40,7 +39,8 @@ def enqueue(
             lambda value: queue.enqueue(
                 observable=mapper_to_observable(value),
                 group=str(credentials),
-                description=description
+                description=description,
+                retries=0
             )
         ),
         retry(retries, description)

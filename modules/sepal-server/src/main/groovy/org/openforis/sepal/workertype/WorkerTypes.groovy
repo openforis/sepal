@@ -77,7 +77,7 @@ final class WorkerTypes {
 
     private static class SandboxFactory implements Factory {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
-            def publishedPorts = [(222): 22, (8787): 8787, (3838): 3838, (5678): 5678, (8888): 8888]
+            def publishedPorts = [(222): 22, (8787): 8787, (3838): 3838, (8888): 8888]
             def username = instance.reservation.username
             def userHome = "$config.userHomes/${username}" as String
             def userTmp = tempDir(instance, config)
@@ -85,7 +85,7 @@ final class WorkerTypes {
             new WorkerType(SANDBOX, [
                 new Image(
                     name: 'sandbox',
-                    exposedPorts: [22, 8787, 3838, 5678, 8888],
+                    exposedPorts: [22, 8787, 3838, 8888],
                     publishedPorts: publishedPorts,
                     volumes: [
                         '/data/sepal/shiny': '/shiny',
