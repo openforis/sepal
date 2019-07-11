@@ -1,3 +1,4 @@
+import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
@@ -5,7 +6,6 @@ import {intersect} from 'collections'
 import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReactResizeDetector from 'react-resize-detector'
 import moment from 'moment'
 import styles from './seasonSelect.module.css'
 import withSubscriptions from '../subscription'
@@ -242,9 +242,7 @@ class Timeline extends React.Component {
                         className={styles.selectedRange}
                         style={selectRangeStyle}/>
                 </div>
-                <ReactResizeDetector
-                    handleWidth
-                    onResize={width => this.widthUpdated(width)}/>
+                <ElementResizeDetector onResize={({width}) => this.widthUpdated(width)}/>
             </div>
         )
     }

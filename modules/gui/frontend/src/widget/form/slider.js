@@ -1,3 +1,4 @@
+import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Widget} from 'widget/widget'
 import {animationFrameScheduler, combineLatest, fromEvent, interval, merge} from 'rxjs'
 import {compose} from 'compose'
@@ -6,7 +7,6 @@ import Hammer from 'hammerjs'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReactResizeDetector from 'react-resize-detector'
 import ViewportResizeDetector from 'widget/viewportResizeDetector'
 import _ from 'lodash'
 import styles from './slider.module.css'
@@ -219,9 +219,12 @@ class _SliderDynamics extends React.Component {
         const {addSubscription} = this.props
         this.setHandlePositionByValue()
 
-        const handle = new Hammer(handleRef, {threshold: 1})
+        const handle = new Hammer(handleRef)
         // limit handle movement to horizontal axis
-        handle.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
+        handle.get('pan').set({
+            direction: Hammer.DIRECTION_HORIZONTAL,
+            threshold: 1
+        })
 
         const clickableArea = new Hammer(clickableAreaRef, {threshold: 1})
 
@@ -474,11 +477,7 @@ export class FormSlider extends React.Component {
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
-                    <ReactResizeDetector
-                        handleWidth
-                        onResize={width =>
-                            this.setState({width})
-                        }/>
+                    <ElementResizeDetector onResize={({width}) => this.setState({width})}/>
                     {width ? this.renderContainer() : null}
                 </div>
             </div>

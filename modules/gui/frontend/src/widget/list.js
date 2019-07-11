@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
@@ -7,7 +8,6 @@ import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReactResizeDetector from 'react-resize-detector'
 import _ from 'lodash'
 import styles from './list.module.css'
 import withForwardedRef from 'ref'
@@ -19,9 +19,7 @@ class _ScrollableList extends React.Component {
     render() {
         const {className, ...props} = this.props
         return (
-            <ReactResizeDetector
-                handleHeight
-                onResize={() => autoCenter$.next()}>
+            <ElementResizeDetector onResize={() => autoCenter$.next()}>
                 <ScrollableContainer className={className}>
                     <Scrollable
                         className={styles.options}
@@ -34,7 +32,7 @@ class _ScrollableList extends React.Component {
                             />}
                     </Scrollable>
                 </ScrollableContainer>
-            </ReactResizeDetector>
+            </ElementResizeDetector>
         )
     }
 }

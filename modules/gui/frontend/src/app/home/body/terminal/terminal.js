@@ -1,6 +1,7 @@
 import 'xterm/dist/xterm.css'
 import * as fit from 'xterm/lib/addons/fit/fit'
 import {ContentPadding} from 'widget/sectionLayout'
+import {ElementResizeDetector} from 'widget/elementResizeDetector'
 import {Subject} from 'rxjs'
 import {Tabs} from 'widget/tabs/tabs'
 import {TerminalWebSocket} from './terminalWebsocket'
@@ -14,13 +15,10 @@ import {v4 as uuid} from 'uuid'
 import {withLatestFrom} from 'rxjs/operators'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import ReactResizeDetector from 'react-resize-detector'
 import styles from './terminal.module.css'
 import withSubscriptions from 'subscription'
 
 Xterm.applyAddon(fit)
-
-const RESIZE_DEBOUNCE_MS = 250
 
 export default class Terminal extends React.Component {
     render() {
@@ -86,17 +84,11 @@ class _TerminalSession extends React.Component {
 
     render() {
         return (
-            <ReactResizeDetector
-                handleWidth
-                handleHeight
-                refreshMode='debounce'
-                refreshRate={RESIZE_DEBOUNCE_MS}
-                onResize={() => this.fit$.next()}
-            >
+            <ElementResizeDetector onResize={() => this.fit$.next()}>
                 <ContentPadding menuPadding horizontalPadding verticalPadding>
                     <div className={styles.terminal} ref={this.terminalContainer}></div>
                 </ContentPadding>
-            </ReactResizeDetector>
+            </ElementResizeDetector>
         )
     }
 
