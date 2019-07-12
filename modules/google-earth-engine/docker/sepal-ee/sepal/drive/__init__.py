@@ -9,27 +9,16 @@ _local = local()
 def InitializeThread(credentials):
     if not credentials:
         raise ValueError('No credentials provided')
-    _local.credentials = credentials
-    _local.service = discovery.build(
-        serviceName='drive',
-        version='v3',
-        cache_discovery=False,
-        credentials=credentials
-    )
-
-
-def get_service():
-    service = getattr(_local, 'service', None)
-    if not service:
-        raise Exception('sepal.drive.InitializeThread() not called in current thread')
+    service = discovery.build(serviceName='drive', version='v3', cache_discovery=False, credentials=credentials)
+    _local.service = service
     return service
 
 
-def get_credentials():
-    credentials = getattr(_local, 'credentials', None)
-    if not credentials:
-        raise Exception('sepal.drive.InitializeThread() not called in current thread')
-    return credentials
+def get_service(credentials):
+    service = getattr(_local, 'service', None)
+    if not service:
+        service = InitializeThread(credentials)
+    return service
 
 
 def is_folder(file):

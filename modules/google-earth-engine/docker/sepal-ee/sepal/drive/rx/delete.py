@@ -4,8 +4,11 @@ from sepal.drive import get_service
 from .observables import execute
 
 
-def delete_file(file: dict) -> Observable:
+def delete_file(
+        credentials,
+        file: dict
+) -> Observable:
     def action():
-        get_service().files().delete(fileId=file['id']).execute()
+        get_service(credentials).files().delete(fileId=file['id']).execute()
 
-    return execute(action)
+    return execute(credentials, action, retries=3, description='delete file {}'.format(file))

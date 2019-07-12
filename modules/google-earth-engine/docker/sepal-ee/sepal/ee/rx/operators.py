@@ -1,18 +1,17 @@
 import ee
 import rx
-from rx import from_callable
+from rx import of
 from rx.core.typing import Mapper
 from rx.operators import do_action, flat_map
-from sepal.ee import get_credentials
 from sepal.rx.retry import retry_with_backoff
 from sepal.rx.workqueue import WorkQueue
 
 
 def retry(
+        credentials,
         retries: int,
         description: str
 ):
-    credentials = get_credentials()
     return rx.pipe(
         do_action(lambda _: ee.InitializeThread(credentials)),
         retry_with_backoff(retries=retries, description=description)
@@ -20,19 +19,15 @@ def retry(
 
 
 def enqueue(
+        credentials,
         queue: WorkQueue,
         mapper: Mapper,
         description: str = None,
         retries: int = None
 ):
-    credentials = get_credentials()
-
     def mapper_to_observable(value):
-        def initializing_mapper():
-            ee.InitializeThread(credentials)
-            return mapper(value)
-
-        return from_callable(initializing_mapper, _ee_executions.scheduler)
+        ee.InitializeThread(credentials)
+        return mapper(value)
 
     return rx.pipe(
         flat_map(
@@ -40,10 +35,10 @@ def enqueue(
                 observable=mapper_to_observable(value),
                 group=str(credentials),
                 description=description,
-                retries=0
+                retries=retries
             )
         ),
-        retry(retries, description)
+        retry(credentials, retries, description)
     )
 
 
@@ -55,13 +50,17 @@ _ee_executions = WorkQueue(
 
 
 def execute(
+        credentials,
         mapper: Mapper = None,
         retries: int = 3,
         description: str = None
 ):
-    return enqueue(
-        queue=_ee_executions,
-        mapper=mapper,
-        description=description,
-        retries=retries
+    return rx.pipe(
+        enqueue(
+            credentials,
+            queue=_ee_executions,
+            mapper=lambda value: of(mapper(value)),
+            description=description,
+            retries=retries
+        )
     )

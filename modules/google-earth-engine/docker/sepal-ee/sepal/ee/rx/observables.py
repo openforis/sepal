@@ -5,12 +5,12 @@ from rx.core.typing import RelativeTime
 from rx.operators import do_action, flat_map
 from rx.scheduler import TimeoutScheduler
 from sepal.rx.workqueue import WorkQueue
-from sepal.ee import get_credentials
 
 from . import operators
 
 
 def enqueue(
+        credentials,
         queue: WorkQueue,
         action: Callable = None,
         description: str = None,
@@ -18,6 +18,7 @@ def enqueue(
 ):
     return of(True).pipe(
         operators.enqueue(
+            credentials,
             queue=queue,
             mapper=lambda _: action(),
             description=description,
@@ -27,12 +28,14 @@ def enqueue(
 
 
 def execute(
+        credentials,
         action: Callable,
         retries: int = 3,
         description: str = None
 ):
     return of(True).pipe(
         operators.execute(
+            credentials,
             mapper=lambda _: action(),
             retries=retries,
             description=description
@@ -40,14 +43,12 @@ def execute(
     )
 
 
-def interval(period: RelativeTime):
+def interval(credentials, period: RelativeTime):
     def schedule():
-        credentials = get_credentials()
-        return rx.interval(period, TimeoutScheduler()).pipe(
+        return rx.interval(period, TimeoutScheduler.singleton()).pipe(
             do_action(lambda _: ee.InitializeThread(credentials)),
         )
 
     return of(True).pipe(
         flat_map(lambda _: schedule())
     )
-

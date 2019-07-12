@@ -17,7 +17,7 @@ def retry_with_backoff(retries, description=None, backoff=default_backoff):
             logging.warning('retry_with_backoff(tries={}, retries={}, exception={}, description={})'.format(
                 tries, retries, exception, description))
             return of(None).pipe(
-                delay(backoff(tries), TimeoutScheduler()),
+                delay(backoff(tries), TimeoutScheduler.singleton()),
                 flat_map(source),
                 catch(handler=lambda e, src: do_retry(src, tries + 1, e))
             )
