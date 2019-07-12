@@ -13,29 +13,32 @@ const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 
 const lerp = rate => (value, target) => value + (target - value) * Math.min(rate, 1)
 
-const SMOOTHING_FACTOR = .15
+const SMOOTHING_FACTOR = .2
 
 const resize$ = new Subject()
 
 class _SplitContent extends React.Component {
-    container = React.createRef()
-    handle = React.createRef()
+    centerHandle = React.createRef()
+    verticalHandle = React.createRef()
+    horizontalHandle = React.createRef()
 
     state = {
         size: {},
         position: {},
-        dragging: false
+        handle: {},
+        dragging: false,
+        initialized: false
     }
 
     render() {
-        const {position: {x, y}, dragging, className} = this.state
+        const {position: {x, y}, dragging, initialized, className} = this.state
         return (
             <ElementResizeDetector onResize={size => resize$.next(size)}>
                 <div
-                    ref={this.container}
                     className={[
                         styles.container,
                         dragging ? styles.dragging : null,
+                        initialized ? styles.initialized : null,
                         className
                     ].join(' ')}
                     style={{
@@ -45,7 +48,9 @@ class _SplitContent extends React.Component {
                     <div className={styles.areas}>
                         {this.renderAreas()}
                     </div>
-                    {this.renderHandle()}
+                    {this.renderVerticalHandle()}
+                    {this.renderHorizontalHandle()}
+                    {this.renderCenterHandle()}
                 </div>
             </ElementResizeDetector>
         )
@@ -57,6 +62,7 @@ class _SplitContent extends React.Component {
     }
 
     renderArea({placement, content}) {
+        const {initialized} = this.state
         return (
             <div
                 key={placement}
@@ -64,27 +70,117 @@ class _SplitContent extends React.Component {
                     styles.area,
                     styles[placement]
                 ].join(' ')}>
-                {content}
+                {initialized ? content : null}
             </div>
         )
     }
 
-    renderHandle() {
-        const {areas} = this.props
-        const showHandle = areas.length > 1
-        return showHandle
+    renderVerticalHandle() {
+        const {handle: {vertical}} = this.state
+        const placements = this.placements(['top', 'bottom'])
+        return vertical
             ? (
                 <div
-                    ref={this.handle}
-                    className={styles.handle}
+                    ref={this.verticalHandle}
+                    className={_.flatten([
+                        styles.handle,
+                        styles.axis,
+                        styles.vertical,
+                        placements.map(placement => styles[placement]),
+                    ]).join(' ')}
                 />
             )
             : null
     }
 
+    renderHorizontalHandle() {
+        const {handle: {horizontal}} = this.state
+        const placements = this.placements(['left', 'right'])
+        return horizontal
+            ? (
+                <div
+                    ref={this.horizontalHandle}
+                    className={_.flatten([
+                        styles.handle,
+                        styles.axis,
+                        styles.horizontal,
+                        placements.map(placement => styles[placement]),
+                    ]).join(' ')}
+                />
+            )
+            : null
+    }
+
+    renderCenterHandle() {
+        const {handle: {center}} = this.state
+        return center
+            ? (
+                <div
+                    ref={this.centerHandle}
+                    className={[
+                        styles.handle,
+                        styles.center
+                    ].join(' ')}
+                />
+            )
+            : null
+    }
+
+    placements(placements) {
+        const {areas} = this.props
+        return _.chain(areas)
+            .map(area => area.placement)
+            .intersection(placements)
+            .value()
+    }
+
+    static getDerivedStateFromProps(props) {
+        const calculateSplit = areas => {
+            const areaCount = areas.length
+            if (areaCount > 2) {
+                return {
+                    vertical: true,
+                    horizontal: true,
+                    center: true
+                }
+            }
+            if (areaCount === 2) {
+                const vertical = _.some(areas, ({placement}) => !['center', 'top', 'bottom'].includes(placement))
+                const horizontal = _.some(areas, ({placement}) => !['center', 'left', 'right'].includes(placement))
+                return {
+                    vertical,
+                    horizontal,
+                    center: true
+                }
+            }
+            return {
+                vertical: false,
+                horizontal: false,
+                center: false
+            }
+        }
+    
+        return {
+            handle: calculateSplit(props.areas)
+        }
+    }
+
     componentDidMount() {
         this.initializeResizeDetector()
-        this.initializeHandle()
+
+        const directionConstraint = () => {
+            if (!this.horizontalHandle.current) {
+                return 'y'
+            }
+            if (!this.verticalHandle.current) {
+                return 'x'
+            }
+            return null
+        }
+
+        this.initializeHandle(this.centerHandle, directionConstraint())
+        this.initializeHandle(this.horizontalHandle, 'x')
+        this.initializeHandle(this.verticalHandle, 'y')
     }
 
     initializeResizeDetector() {
@@ -97,21 +193,25 @@ class _SplitContent extends React.Component {
                     position: {
                         x: size.width / 2,
                         y: size.height / 2
-                    }
+                    },
+                    initialized: true
                 })
             )
         )
     }
 
-    initializeHandle() {
+    initializeHandle(handleRef, directionConstraint) {
         const {addSubscription} = this.props
 
-        if (!this.handle.current) {
+        if (!handleRef.current) {
             return
         }
-        
-        const handle = new Hammer(this.handle.current)
-        handle.get('pan').set({direction: Hammer.DIRECTION_ALL, threshold: 0})
+
+        const handle = new Hammer(handleRef.current)
+        handle.get('pan').set({
+            direction: Hammer.DIRECTION_ALL,
+            threshold: 0
+        })
 
         const dragLerp = (current, target) => {
             const customLerp = lerp(SMOOTHING_FACTOR)
@@ -134,8 +234,8 @@ class _SplitContent extends React.Component {
                     return panMove$.pipe(
                         map(event =>
                             this.clampPosition({
-                                x: x + event.deltaX,
-                                y: y + event.deltaY
+                                x: directionConstraint === 'x' ? x : x + event.deltaX,
+                                y: directionConstraint === 'y' ? y : y + event.deltaY
                             })
                         ),
                         distinctUntilChanged(_.isEqual),
@@ -149,16 +249,20 @@ class _SplitContent extends React.Component {
                 return animationFrame$.pipe(
                     map(() => targetPosition),
                     scan(dragLerp, position),
+                    map(({x, y}) => ({
+                        x: Math.round(x),
+                        y: Math.round(y)
+                    })),
                     distinctUntilChanged(_.isEqual)
                 )
             })
         )
-    
+        
         const dragging$ = merge(
             panStart$.pipe(mapTo(true)),
             panEnd$.pipe(mapTo(false)),
         )
-    
+        
         addSubscription(
             handlePosition$.subscribe(position =>
                 this.setState({position})
