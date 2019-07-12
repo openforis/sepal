@@ -1,8 +1,7 @@
 import ee
 from ee.batch import Task
 from rx import of, throw
-from rx.operators import distinct_until_changed, flat_map, take_while
-from sepal.rx.operators import on_dispose
+from rx.operators import distinct_until_changed, finally_action, flat_map, take_while
 
 from .observables import execute
 from .observables import interval
@@ -41,5 +40,5 @@ def execute_task(credentials, task):
 
     return execute(credentials, start, description='start task ' + str(task)).pipe(
         flat_map(lambda _: monitor()),
-        on_dispose(lambda: task.cancel())
+        finally_action(lambda: task.cancel())
     )

@@ -4,13 +4,12 @@ import os
 
 # noinspection PyUnresolvedReferences
 from apiclient.http import MediaIoBaseDownload
-from rx import combine_latest, concat, defer, empty, from_list, Observable, of
-from rx.operators import flat_map, map, merge_all, take_until, take_while
-from rx.subject import Subject
+from rx import combine_latest, concat, empty, Observable, of
+from rx.operators import flat_map, map, take_while
 from sepal.drive import get_service, is_folder
 from sepal.drive.rx.list import list_folder_recursively
 from sepal.drive.rx.observables import interval
-from sepal.rx import forever, using_file
+from sepal.rx import aside, forever, using_file
 from sepal.rx.workqueue import WorkQueue
 
 from .delete import delete_file
@@ -18,7 +17,8 @@ from .observables import enqueue
 from .touch import touch
 
 CHUNK_SIZE = 10 * 1024 * 1024
-TOUCH_PERIOD = 15 * 60  # Every 15 minutes - to prevent it from being garbage collected from Service Account
+TOUCH_PERIOD = 1
+# TOUCH_PERIOD = 15 * 60  # Every 15 minutes - to prevent it from being garbage collected from Service Account
 
 # Work (i.e. exports) is grouped by credentials, limiting concurrent exports per credentials
 _drive_downloads = WorkQueue(
@@ -51,9 +51,9 @@ def download(
 
     def delete_downloaded(f):
         if delete_after_download:
-            return delete_file(f.pipe(
+            return delete_file(credentials, f).pipe(
                 flat_map(lambda _: empty())
-            ))
+            )
         else:
             return empty()
 
@@ -87,31 +87,24 @@ def download(
 
         os.makedirs(os.path.dirname(dest), exist_ok=True)
 
-        touching_stopped = Subject()
+        initial_progress_stream = of({'progress': 0, 'downloaded_bytes': 0, 'file': f})
         touch_stream = interval(credentials, period=TOUCH_PERIOD).pipe(
-            flat_map(lambda _: touch(credentials, f)),
-            flat_map(lambda _: empty()),
-            take_until(touching_stopped),
+            flat_map(lambda _: touch(credentials, f))
+        )
+        download_stream = enqueue(
+            credentials,
+            queue=_drive_downloads,
+            action=action,
+            retries=0,
+            description='Download {} to {}'.format(f, dest)
+        ).pipe(
+            aside(touch_stream)
         )
 
-        def stop_touching():
-            touching_stopped.on_next(True)
-            return empty()
-
-        download_stream = concat(
-            of({'progress': 0, 'downloaded_bytes': 0, 'file': f}),
-            enqueue(
-                credentials,
-                queue=_drive_downloads,
-                action=action,
-                retries=0,
-                description='Download {} to {}'.format(f, dest)
-            ),
-            defer(lambda _: stop_touching()),
-            defer(lambda _: delete_downloaded(f))
-        )
-        return from_list([download_stream, touch_stream]).pipe(
-            merge_all()
+        return concat(
+            initial_progress_stream,
+            download_stream,
+            delete_downloaded(f)
         )
 
     def download_folder(folder):
