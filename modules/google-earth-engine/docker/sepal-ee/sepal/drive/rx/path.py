@@ -1,16 +1,19 @@
 from rx import from_list, Observable, of, throw
 from rx.operators import flat_map, filter, first, map, reduce
 
-from .download import download_directory
+from .download import download
 from .list import list_folder
 
 
-def file_by_path(path: str) -> Observable:
+def file_by_path(
+        credentials,
+        path: str
+) -> Observable:
     root_stream = of({'id': 'root', 'path': '/'})
 
     def find_with_parent(parent_stream, name):
         return parent_stream.pipe(
-            flat_map(lambda parent: list_folder(parent, name_filter=name)),
+            flat_map(lambda parent: list_folder(credentials, parent, name_filter=name)),
             map(lambda files: files[0] if len(files) else None),
             flat_map(lambda file: of(file) if file else throw(Exception('File {} does not exist.'.format(path))))
         )
@@ -28,14 +31,16 @@ def file_by_path(path: str) -> Observable:
 
 
 def download_path(
+        credentials,
         path: str,
         destination: str,
         matching: str = None,
         delete_after_download: bool = False
 ) -> Observable:
-    return file_by_path(path).pipe(
+    return file_by_path(credentials, path).pipe(
         flat_map(
-            lambda file: download_directory(
+            lambda file: download(
+                credentials,
                 file=file,
                 destination=destination,
                 matching=matching,

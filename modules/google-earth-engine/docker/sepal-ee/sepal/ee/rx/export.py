@@ -9,6 +9,7 @@ from .task import execute_task
 
 
 def export_image_to_asset(
+        credentials,
         image: ee.Image,
         description: str = None,
         asset_id: str = None,
@@ -38,6 +39,7 @@ def export_image_to_asset(
         )
 
     return _export_to_asset(
+        credentials,
         create_task=create_task,
         description='export_image_to_asset(asset_id={}, description={}'.format(asset_id, description),
         retries=retries
@@ -45,6 +47,7 @@ def export_image_to_asset(
 
 
 def export_table_to_asset(
+        credentials,
         collection: ee.FeatureCollection,
         description: str = None,
         asset_id: str = None,
@@ -60,6 +63,7 @@ def export_table_to_asset(
         )
 
     return _export_to_asset(
+        credentials,
         create_task=create_task,
         description='export_table_to_asset(asset_id={}, description={}'.format(asset_id, description),
         retries=retries
@@ -67,6 +71,7 @@ def export_table_to_asset(
 
 
 def export_image_to_drive(
+        credentials,
         image: ee.Image,
         description: str,
         folder: str = None,
@@ -82,7 +87,7 @@ def export_image_to_drive(
         skip_empty_tiles=None,
         file_format: str = None,
         format_options: str = None,
-        retries: int = 0
+        retries: int = 3
 ):
     def create_task():
         return ee.batch.Export.image.toDrive(
@@ -103,6 +108,7 @@ def export_image_to_drive(
         )
 
     return _export_to_drive(
+        credentials,
         create_task=create_task,
         description='export_table_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
             description, folder, file_name_prefix
@@ -112,6 +118,7 @@ def export_image_to_drive(
 
 
 def export_table_to_drive(
+        credentials,
         collection: ee.FeatureCollection,
         description: str = None,
         folder: str = None,
@@ -131,6 +138,7 @@ def export_table_to_drive(
         )
 
     return _export_to_drive(
+        credentials,
         create_task=create_task,
         description='export_table_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
             description, folder, file_name_prefix
@@ -157,24 +165,26 @@ def _first_asset_root():
     return asset_roots[0]['id']
 
 
-def _export_to_asset(create_task, description, retries):
+def _export_to_asset(credentials, create_task, description, retries):
     def create_observable():
-        return execute(create_task).pipe(
-            flat_map(lambda task: delete_asset(task.config['assetId']).pipe(
-                flat_map(lambda _: execute_task(task))
+        return execute(credentials, create_task, description=description).pipe(
+            flat_map(lambda task: delete_asset(credentials, task.config['assetId']).pipe(
+                flat_map(lambda _: execute_task(credentials, task))
             ))
         )
 
     return _export(
+        credentials,
         create_observable=create_observable,
         description=description,
         retries=retries
     )
 
 
-def _export_to_drive(create_task, description, retries):
+def _export_to_drive(credentials, create_task, description, retries):
     return _export(
-        create_observable=lambda: execute_task(create_task()),
+        credentials,
+        create_observable=lambda: execute_task(credentials, create_task()),
         description=description,
         retries=retries
     )
@@ -187,10 +197,11 @@ _ee_exports = WorkQueue(
 )
 
 
-def _export(create_observable, description, retries):
+def _export(credentials, create_observable, description, retries):
     return concat(
         of('PENDING'),
         enqueue(
+            credentials,
             queue=_ee_exports,
             action=create_observable,
             description=description,

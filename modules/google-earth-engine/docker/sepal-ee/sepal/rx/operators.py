@@ -12,10 +12,9 @@ def take_until_disposed():
     )
 
 
-def on_dispose(action: Callable, scheduler=None):
+def on_dispose(action: Callable):
     def _subscription_listener(source: Observable) -> Observable:
-        def subscribe(observer, scheduler_=None):
-            _scheduler = scheduler or scheduler_
+        def subscribe(observer, scheduler=None):
             subscription = source.subscribe(observer, scheduler=scheduler)
 
             def dispose():

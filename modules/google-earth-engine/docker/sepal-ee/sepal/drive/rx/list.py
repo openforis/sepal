@@ -8,6 +8,7 @@ PAGE_SIZE = 100
 
 
 def list_folder(
+        credentials,
         folder: dict,
         name_filter: str = None
 ) -> Observable:
@@ -17,7 +18,7 @@ def list_folder(
                 q = "'{0}' in parents and name = '{1}'".format(folder['id'], name_filter)
             else:
                 q = "'{0}' in parents".format(folder['id'])
-            request = get_service().files().list(
+            request = get_service(credentials).files().list(
                 q=q,
                 fields="nextPageToken, files(id, name, size, mimeType, modifiedTime)",
                 pageSize=PAGE_SIZE,
@@ -25,7 +26,12 @@ def list_folder(
             )
             return request.execute()
 
-        return execute(load_page, retries=0).pipe(
+        return execute(
+            credentials,
+            load_page,
+            retries=0,
+            description='loading file page {}, {}'.format(folder, acc)
+        ).pipe(
             map(lambda page: {
                 'files': acc['files'] + page.get('files', []),
                 'nextPageToken': page.get('nextPageToken')
@@ -48,17 +54,20 @@ def list_folder(
     )
 
 
-def list_folder_recursively(folder: dict) -> Observable:
+def list_folder_recursively(
+        credentials,
+        folder: dict
+) -> Observable:
     def recurse(file):
         if is_folder(file):
             return concat(
                 of([file]),
-                list_folder_recursively(file),
+                list_folder_recursively(credentials, file),
             )
         else:
             return of([file])
 
-    return list_folder(folder).pipe(
+    return list_folder(credentials, folder).pipe(
         flat_map(lambda files: from_list(files)),
         flat_map(recurse),
         reduce(lambda acc, files: acc + files, []),
