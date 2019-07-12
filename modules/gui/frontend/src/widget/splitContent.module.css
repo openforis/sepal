@@ -14,11 +14,6 @@
     --bottom: calc(100% - var(--y));
     --left: var(--x);
 
-    --clip-top: calc(var(--top) + var(--half-margin-size));
-    --clip-right: calc(var(--right) + var(--half-margin-size));
-    --clip-bottom: calc(var(--bottom) + var(--half-margin-size));
-    --clip-left: calc(var(--left) + var(--half-margin-size));
-
     --vertical-handle-top: 0;
     --vertical-handle-bottom: 0;
     --horizontal-handle-left: 0;
@@ -59,44 +54,34 @@
 /* area */
 
 .area {
+    --clip-top: 0;
+    --clip-bottom: 0;
+    --clip-left: 0;
+    --clip-right: 0;
+    
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
     user-select: none;
+    clip-path: inset(var(--clip-top) var(--clip-right) var(--clip-bottom) var(--clip-left));
 }
 
 .area.top {
-    clip-path: inset(0 0 var(--clip-bottom) 0);
-}
-
-.area.top-right {
-    clip-path: inset(0 0 var(--clip-bottom) var(--clip-left));
-}
-
-.area.right {
-    clip-path: inset(0 0 0 var(--clip-left));
-}
-
-.area.bottom-right {
-    clip-path: inset(var(--clip-top) 0 0 var(--clip-left));
+    --clip-bottom: calc(var(--bottom) + var(--half-margin-size));
 }
 
 .area.bottom {
-    clip-path: inset(var(--clip-top) 0 0 0);
-}
-
-.area.bottom-left {
-    clip-path: inset(var(--clip-top) var(--clip-right) 0 0);
+    --clip-top: calc(var(--top) + var(--half-margin-size));
 }
 
 .area.left {
-    clip-path: inset(0 var(--clip-right) 0 0);
+    --clip-right: calc(var(--right) + var(--half-margin-size));
 }
 
-.area.top-left {
-    clip-path: inset(0 var(--clip-right) var(--clip-bottom) 0);
+.area.right {
+    --clip-left: calc(var(--left) + var(--half-margin-size));
 }
 
 /* handle */
@@ -153,11 +138,11 @@
 }
 
 .handle.axis.vertical.top {
-    --vertical-handle-top: var(--clip-top);
+    --vertical-handle-top: var(--top);
 }
 
 .handle.axis.vertical.bottom {
-    --vertical-handle-bottom: var(--clip-bottom);
+    --vertical-handle-bottom: var(--bottom);
 }
 
 /* horizontal axis handle */
@@ -177,17 +162,16 @@
 }
 
 .handle.axis.horizontal.left {
-    --horizontal-handle-left: var(--clip-left);
+    --horizontal-handle-left: var(--left);
 }
 
 .handle.axis.horizontal.right {
-    --horizontal-handle-right: var(--clip-right);
+    --horizontal-handle-right: var(--right);
 }
 
 /* handle hover/dragging */
 
 .handle:hover,
-/* .dragging .handle.center, */
 .dragging.x.y .handle.center,
 .dragging.x .handle.axis.vertical,
 .dragging.y .handle.axis.horizontal {

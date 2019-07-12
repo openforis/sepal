@@ -81,10 +81,10 @@ class _SplitContent extends React.Component {
         return (
             <div
                 key={placement}
-                className={[
+                className={_.flatten([
                     styles.area,
-                    styles[placement]
-                ].join(' ')}>
+                    placement.split('-').map(placement => styles[placement])
+                ]).join(' ')}>
                 {initialized ? content : null}
             </div>
         )
