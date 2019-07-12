@@ -1,8 +1,10 @@
+import logging
 from threading import local
 
 from apiclient import discovery
 
 _local = local()
+logging.getLogger('googleapiclient').setLevel(logging.WARNING)
 
 
 def get_service(credentials):
