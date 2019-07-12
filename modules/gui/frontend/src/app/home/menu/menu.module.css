@@ -14,6 +14,11 @@
     min-height: fit-content;
 }
 
+.menu .section > * {
+    pointer-events: all;
+    margin-bottom: 1rem;
+}
+
 .menu button:disabled:before{
     content: '';
     position: absolute;
@@ -31,7 +36,6 @@
     height: var(--button-size);
     border: none;
     border-radius: 0 .25rem .25rem 0;
-    margin-bottom: 1rem;
     padding: 0;
     color: rgba(255, 255, 255, 0.8);
     --opacity: 1;
