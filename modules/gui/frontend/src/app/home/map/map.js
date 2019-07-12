@@ -362,11 +362,20 @@ class Map extends React.Component {
         return <div ref={this.mapElement} className={this.props.className}/>
     }
 
+    componentDidMount() {
+        this.update()
+    }
+
     componentDidUpdate() {
+        this.update()
+    }
+
+    update() {
         const apiKey = this.props.apiKey
         if (apiKey && !this.state.initialized) { // Create map once there is an API key
             this.setState({initialized: true})
             createMap(this.mapElement.current)
+
             this.initialized = true
         }
     }
