@@ -3,11 +3,10 @@ import random
 from typing import Optional
 
 from rx import of, Observable, throw
-from rx.operators import catch, concat, delay, do_action, filter, flat_map, group_by, map, merge, observe_on, share, \
-    take_while, take_until
+from rx.operators import catch, concat, delay, do_action, filter, finally_action, flat_map, group_by, map, merge, \
+    observe_on, share, take_while, take_until
 from rx.scheduler import ThreadPoolScheduler
 from rx.subject import Subject
-from sepal.rx.operators import on_dispose
 from sepal.rx.operators import take_until_disposed
 from sepal.rx.retry import retry_with_backoff
 
@@ -103,7 +102,7 @@ class WorkQueue(object):
             flat_map(lambda r: throw_if_error(r)),
             take_while(lambda r: not r.get('complete')),
             flat_map(lambda r: of(r.get('value'))),
-            on_dispose(dispose_request)
+            finally_action(dispose_request)
         )
         self._requests.on_next({'request': request, 'concurrency_group': group})
         return result_stream
