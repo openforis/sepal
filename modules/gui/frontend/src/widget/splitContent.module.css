@@ -109,7 +109,6 @@
     position: absolute;
     pointer-events: all;
     cursor: move;
-    background-color: transparent;
     visibility: hidden;
 }
 
@@ -120,13 +119,12 @@
     left: calc(var(--left) - var(--half-center-handle-size));
     width: calc(2 * var(--half-center-handle-size));
     height: calc(2 * var(--half-center-handle-size));
-    border-radius: var(--half-center-handle-size);
     border: calc(2 * var(--half-axis-handle-size)) solid var(--idle-color);
+    border-radius: var(--half-center-handle-size);
 }
 
 .handle.center:hover {
     border-color: var(--dragging-color);
-    border-width: calc(2 * var(--half-axis-handle-size));
 }
 
 /* axis handle */
