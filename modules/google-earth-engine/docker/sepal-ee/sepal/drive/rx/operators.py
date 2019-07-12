@@ -1,5 +1,5 @@
 import rx
-from rx import defer, of
+from rx import from_callable
 from rx.core.typing import Mapper
 from rx.operators import flat_map
 from sepal.rx.workqueue import WorkQueue
@@ -41,7 +41,7 @@ def execute(
         enqueue(
             credentials,
             queue=_drive_executions,
-            mapper=lambda value: defer(lambda _: of(mapper(value))),
+            mapper=lambda value: from_callable(lambda: mapper(value)),
             description=description,
             retries=retries
         )
