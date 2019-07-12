@@ -121,6 +121,7 @@
     height: calc(2 * var(--half-center-handle-size));
     border: calc(2 * var(--half-axis-handle-size)) solid var(--idle-color);
     border-radius: var(--half-center-handle-size);
+    z-index: 2;
 }
 
 .handle.center:hover {
@@ -128,6 +129,10 @@
 }
 
 /* axis handle */
+
+.handle.axis {
+    z-index: 1;
+}
 
 .handle.axis:before {
     content: '';

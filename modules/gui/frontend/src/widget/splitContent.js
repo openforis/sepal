@@ -23,9 +23,19 @@ class _SplitContent extends React.Component {
     horizontalHandle = React.createRef()
 
     state = {
-        size: {},
-        position: {},
-        handle: {},
+        size: {
+            height: undefined,
+            width: undefined
+        },
+        position: {
+            x: undefined,
+            y: undefined
+        },
+        handle: {
+            vertical: false,
+            horizontal: false,
+            center: false
+        },
         dragging: false,
         initialized: false
     }
@@ -48,9 +58,9 @@ class _SplitContent extends React.Component {
                     <div className={styles.areas}>
                         {this.renderAreas()}
                     </div>
+                    {this.renderCenterHandle()}
                     {this.renderVerticalHandle()}
                     {this.renderHorizontalHandle()}
-                    {this.renderCenterHandle()}
                 </div>
             </ElementResizeDetector>
         )
@@ -75,9 +85,24 @@ class _SplitContent extends React.Component {
         )
     }
 
+    renderCenterHandle() {
+        const {handle: {center}} = this.state
+        return center
+            ? (
+                <div
+                    ref={this.centerHandle}
+                    className={[
+                        styles.handle,
+                        styles.center
+                    ].join(' ')}
+                />
+            )
+            : null
+    }
+
     renderVerticalHandle() {
         const {handle: {vertical}} = this.state
-        const placements = this.placements(['top', 'bottom'])
+        const placements = this.getInterferingPlacements(['top', 'bottom'])
         return vertical
             ? (
                 <div
@@ -95,7 +120,7 @@ class _SplitContent extends React.Component {
 
     renderHorizontalHandle() {
         const {handle: {horizontal}} = this.state
-        const placements = this.placements(['left', 'right'])
+        const placements = this.getInterferingPlacements(['left', 'right'])
         return horizontal
             ? (
                 <div
@@ -111,22 +136,7 @@ class _SplitContent extends React.Component {
             : null
     }
 
-    renderCenterHandle() {
-        const {handle: {center}} = this.state
-        return center
-            ? (
-                <div
-                    ref={this.centerHandle}
-                    className={[
-                        styles.handle,
-                        styles.center
-                    ].join(' ')}
-                />
-            )
-            : null
-    }
-
-    placements(placements) {
+    getInterferingPlacements(placements) {
         const {areas} = this.props
         return _.chain(areas)
             .map(area => area.placement)
@@ -135,6 +145,11 @@ class _SplitContent extends React.Component {
     }
 
     static getDerivedStateFromProps(props) {
+        const hasSplit = (areas, nonSplitPlacements) =>
+            _.some(areas, ({placement}) =>
+                !nonSplitPlacements.includes(placement)
+            )
+
         const calculateSplit = areas => {
             const areaCount = areas.length
             if (areaCount > 2) {
@@ -145,11 +160,9 @@ class _SplitContent extends React.Component {
                 }
             }
             if (areaCount === 2) {
-                const vertical = _.some(areas, ({placement}) => !['center', 'top', 'bottom'].includes(placement))
-                const horizontal = _.some(areas, ({placement}) => !['center', 'left', 'right'].includes(placement))
                 return {
-                    vertical,
-                    horizontal,
+                    vertical: hasSplit(areas, ['center', 'top', 'bottom']),
+                    horizontal: hasSplit(areas, ['center', 'left', 'right']),
                     center: true
                 }
             }
