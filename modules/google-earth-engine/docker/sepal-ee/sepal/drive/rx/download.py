@@ -18,7 +18,7 @@ from .observables import enqueue
 from .touch import touch
 
 CHUNK_SIZE = 10 * 1024 * 1024
-TOUCH_PERIOD = 5
+TOUCH_PERIOD = 15 * 60  # Every 15 minutes - to prevent it from being garbage collected from Service Account
 
 # Work (i.e. exports) is grouped by credentials, limiting concurrent exports per credentials
 _drive_downloads = WorkQueue(
@@ -63,6 +63,7 @@ def download(
     def download_file(f, dest):
         def next_chunk(downloader):
             status, done = downloader.next_chunk()
+            logging.debug('downloaded chunk from {} to {}: {}'.format(file, destination, status))
             return 1.0 if done else status.progress()
 
         def download_from_drive(destination_file):
