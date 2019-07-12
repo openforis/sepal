@@ -36,7 +36,10 @@ class _SplitContent extends React.Component {
             horizontal: false,
             center: false
         },
-        dragging: false,
+        dragging: {
+            x: false,
+            y: false
+        },
         initialized: false
     }
 
@@ -47,7 +50,9 @@ class _SplitContent extends React.Component {
                 <div
                     className={[
                         styles.container,
-                        dragging ? styles.dragging : null,
+                        dragging.x || dragging.y ? styles.dragging : null,
+                        dragging.x ? styles.x : null,
+                        dragging.y ? styles.y : null,
                         initialized ? styles.initialized : null,
                         className
                     ].join(' ')}
@@ -191,9 +196,20 @@ class _SplitContent extends React.Component {
             return null
         }
 
-        this.initializeHandle(this.centerHandle, directionConstraint())
-        this.initializeHandle(this.horizontalHandle, 'x')
-        this.initializeHandle(this.verticalHandle, 'y')
+        this.initializeHandle({
+            ref: this.centerHandle,
+            lockDirection: directionConstraint()
+        })
+        this.initializeHandle({
+            ref: this.horizontalHandle,
+            direction: 'y',
+            lockDirection: 'x'
+        })
+        this.initializeHandle({
+            ref: this.verticalHandle,
+            direction: 'x',
+            lockDirection: 'y'
+        })
     }
 
     initializeResizeDetector() {
@@ -213,14 +229,14 @@ class _SplitContent extends React.Component {
         )
     }
 
-    initializeHandle(handleRef, directionConstraint) {
+    initializeHandle({ref, direction, lockDirection}) {
         const {addSubscription} = this.props
 
-        if (!handleRef.current) {
+        if (!ref.current) {
             return
         }
 
-        const handle = new Hammer(handleRef.current)
+        const handle = new Hammer(ref.current)
         handle.get('pan').set({
             direction: Hammer.DIRECTION_ALL,
             threshold: 0
@@ -247,8 +263,8 @@ class _SplitContent extends React.Component {
                     return panMove$.pipe(
                         map(event =>
                             this.clampPosition({
-                                x: directionConstraint === 'x' ? x : x + event.deltaX,
-                                y: directionConstraint === 'y' ? y : y + event.deltaY
+                                x: lockDirection === 'x' ? x : x + event.deltaX,
+                                y: lockDirection === 'y' ? y : y + event.deltaY
                             })
                         ),
                         distinctUntilChanged(_.isEqual),
@@ -281,7 +297,12 @@ class _SplitContent extends React.Component {
                 this.setState({position})
             ),
             dragging$.subscribe(dragging =>
-                this.setState({dragging})
+                this.setState({
+                    dragging: {
+                        x: dragging && direction !== 'y',
+                        y: dragging && direction !== 'x'
+                    }
+                })
             )
         )
     }

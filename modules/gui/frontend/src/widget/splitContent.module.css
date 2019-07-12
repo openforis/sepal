@@ -5,6 +5,7 @@
     --handle-comfort-margin: -.25rem;
     --idle-color: gray;
     --dragging-color: white;
+    --color: var(--idle-color);
 
     /* --x and --y are injected */
 
@@ -35,7 +36,6 @@
 }
 
 .container.dragging {
-    background-color: var(--dragging-color);
     cursor: move;
 }
 
@@ -119,28 +119,21 @@
     left: calc(var(--left) - var(--half-center-handle-size));
     width: calc(2 * var(--half-center-handle-size));
     height: calc(2 * var(--half-center-handle-size));
-    border: calc(2 * var(--half-axis-handle-size)) solid var(--idle-color);
+    border: calc(2 * var(--half-axis-handle-size)) solid var(--color);
     border-radius: var(--half-center-handle-size);
     z-index: 2;
-}
-
-.handle.center:hover {
-    border-color: var(--dragging-color);
 }
 
 /* axis handle */
 
 .handle.axis {
+    background-color: var(--color);
     z-index: 1;
 }
 
 .handle.axis:before {
     content: '';
     position: absolute;
-}
-
-.handle.axis:hover {
-    background-color: var(--dragging-color);
 }
 
 /* vertical axis handle */
@@ -167,7 +160,7 @@
     --vertical-handle-bottom: var(--clip-bottom);
 }
 
-/* horizontal axix handle */
+/* horizontal axis handle */
 
 .handle.axis.horizontal {
     top: calc(var(--top) - var(--half-axis-handle-size));
@@ -191,8 +184,12 @@
     --horizontal-handle-right: var(--clip-right);
 }
 
-/* while dragging  */
+/* handle hover/dragging */
 
-.dragging .handle {
-    border-color: var(--dragging-color);
+.handle:hover,
+/* .dragging .handle.center, */
+.dragging.x.y .handle.center,
+.dragging.x .handle.axis.vertical,
+.dragging.y .handle.axis.horizontal {
+    --color: var(--dragging-color);
 }
