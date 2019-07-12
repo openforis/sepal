@@ -4,11 +4,10 @@ import os
 
 # noinspection PyUnresolvedReferences
 from apiclient.http import MediaIoBaseDownload
-from rx import combine_latest, concat, empty, Observable, of
+from rx import combine_latest, concat, empty, interval, Observable, of
 from rx.operators import flat_map, map, take_while
 from sepal.drive import get_service, is_folder
 from sepal.drive.rx.list import list_folder_recursively
-from sepal.drive.rx.observables import interval
 from sepal.rx import aside, forever, using_file
 from sepal.rx.workqueue import WorkQueue
 
@@ -88,7 +87,7 @@ def download(
         os.makedirs(os.path.dirname(dest), exist_ok=True)
 
         initial_progress_stream = of({'progress': 0, 'downloaded_bytes': 0, 'file': f})
-        touch_stream = interval(credentials, period=TOUCH_PERIOD).pipe(
+        touch_stream = interval(TOUCH_PERIOD).pipe(
             flat_map(lambda _: touch(credentials, f))
         )
         download_stream = enqueue(

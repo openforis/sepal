@@ -41,14 +41,3 @@ def execute(
             description=description
         )
     )
-
-
-def interval(credentials, period: RelativeTime):
-    def schedule():
-        return rx.interval(period, TimeoutScheduler.singleton()).pipe(
-            do_action(lambda _: sepal.drive.InitializeThread(credentials)),
-        )
-
-    return of(True).pipe(
-        flat_map(lambda _: schedule())
-    )
