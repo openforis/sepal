@@ -13,29 +13,47 @@ const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 
 const lerp = rate => (value, target) => value + (target - value) * Math.min(rate, 1)
 
-const SMOOTHING_FACTOR = .15
+const SMOOTHING_FACTOR = .2
 
 const resize$ = new Subject()
 
 class _SplitContent extends React.Component {
-    container = React.createRef()
-    handle = React.createRef()
+    centerHandle = React.createRef()
+    verticalHandle = React.createRef()
+    horizontalHandle = React.createRef()
 
     state = {
-        size: {},
-        position: {},
-        dragging: false
+        size: {
+            height: undefined,
+            width: undefined
+        },
+        position: {
+            x: undefined,
+            y: undefined
+        },
+        handle: {
+            vertical: false,
+            horizontal: false,
+            center: false
+        },
+        dragging: {
+            x: false,
+            y: false
+        },
+        initialized: false
     }
 
     render() {
-        const {position: {x, y}, dragging, className} = this.state
+        const {position: {x, y}, dragging, initialized, className} = this.state
         return (
             <ElementResizeDetector onResize={size => resize$.next(size)}>
                 <div
-                    ref={this.container}
                     className={[
                         styles.container,
-                        dragging ? styles.dragging : null,
+                        dragging.x || dragging.y ? styles.dragging : null,
+                        dragging.x ? styles.x : null,
+                        dragging.y ? styles.y : null,
+                        initialized ? styles.initialized : null,
                         className
                     ].join(' ')}
                     style={{
@@ -45,7 +63,9 @@ class _SplitContent extends React.Component {
                     <div className={styles.areas}>
                         {this.renderAreas()}
                     </div>
-                    {this.renderHandle()}
+                    {this.renderCenterHandle()}
+                    {this.renderVerticalHandle()}
+                    {this.renderHorizontalHandle()}
                 </div>
             </ElementResizeDetector>
         )
@@ -57,6 +77,7 @@ class _SplitContent extends React.Component {
     }
 
     renderArea({placement, content}) {
+        const {initialized} = this.state
         return (
             <div
                 key={placement}
@@ -64,27 +85,131 @@ class _SplitContent extends React.Component {
                     styles.area,
                     styles[placement]
                 ].join(' ')}>
-                {content}
+                {initialized ? content : null}
             </div>
         )
     }
 
-    renderHandle() {
-        const {areas} = this.props
-        const showHandle = areas.length > 1
-        return showHandle
+    renderCenterHandle() {
+        const {handle: {center}} = this.state
+        return center
             ? (
                 <div
-                    ref={this.handle}
-                    className={styles.handle}
+                    ref={this.centerHandle}
+                    className={[
+                        styles.handle,
+                        styles.center
+                    ].join(' ')}
                 />
             )
             : null
     }
 
+    renderVerticalHandle() {
+        const {handle: {vertical}} = this.state
+        const placements = this.getInterferingPlacements(['top', 'bottom'])
+        return vertical
+            ? (
+                <div
+                    ref={this.verticalHandle}
+                    className={_.flatten([
+                        styles.handle,
+                        styles.axis,
+                        styles.vertical,
+                        placements.map(placement => styles[placement]),
+                    ]).join(' ')}
+                />
+            )
+            : null
+    }
+
+    renderHorizontalHandle() {
+        const {handle: {horizontal}} = this.state
+        const placements = this.getInterferingPlacements(['left', 'right'])
+        return horizontal
+            ? (
+                <div
+                    ref={this.horizontalHandle}
+                    className={_.flatten([
+                        styles.handle,
+                        styles.axis,
+                        styles.horizontal,
+                        placements.map(placement => styles[placement]),
+                    ]).join(' ')}
+                />
+            )
+            : null
+    }
+
+    getInterferingPlacements(placements) {
+        const {areas} = this.props
+        return _.chain(areas)
+            .map(area => area.placement)
+            .intersection(placements)
+            .value()
+    }
+
+    static getDerivedStateFromProps(props) {
+        const hasSplit = (areas, nonSplitPlacements) =>
+            _.some(areas, ({placement}) =>
+                !nonSplitPlacements.includes(placement)
+            )
+
+        const calculateSplit = areas => {
+            const areaCount = areas.length
+            if (areaCount > 2) {
+                return {
+                    vertical: true,
+                    horizontal: true,
+                    center: true
+                }
+            }
+            if (areaCount === 2) {
+                return {
+                    vertical: hasSplit(areas, ['center', 'top', 'bottom']),
+                    horizontal: hasSplit(areas, ['center', 'left', 'right']),
+                    center: true
+                }
+            }
+            return {
+                vertical: false,
+                horizontal: false,
+                center: false
+            }
+        }
+    
+        return {
+            handle: calculateSplit(props.areas)
+        }
+    }
+
     componentDidMount() {
         this.initializeResizeDetector()
-        this.initializeHandle()
+
+        const directionConstraint = () => {
+            if (!this.horizontalHandle.current) {
+                return 'y'
+            }
+            if (!this.verticalHandle.current) {
+                return 'x'
+            }
+            return null
+        }
+
+        this.initializeHandle({
+            ref: this.centerHandle,
+            lockDirection: directionConstraint()
+        })
+        this.initializeHandle({
+            ref: this.horizontalHandle,
+            direction: 'y',
+            lockDirection: 'x'
+        })
+        this.initializeHandle({
+            ref: this.verticalHandle,
+            direction: 'x',
+            lockDirection: 'y'
+        })
     }
 
     initializeResizeDetector() {
@@ -97,21 +222,25 @@ class _SplitContent extends React.Component {
                     position: {
                         x: size.width / 2,
                         y: size.height / 2
-                    }
+                    },
+                    initialized: true
                 })
             )
         )
     }
 
-    initializeHandle() {
+    initializeHandle({ref, direction, lockDirection}) {
         const {addSubscription} = this.props
 
-        if (!this.handle.current) {
+        if (!ref.current) {
             return
         }
-        
-        const handle = new Hammer(this.handle.current)
-        handle.get('pan').set({direction: Hammer.DIRECTION_ALL, threshold: 0})
+
+        const handle = new Hammer(ref.current)
+        handle.get('pan').set({
+            direction: Hammer.DIRECTION_ALL,
+            threshold: 0
+        })
 
         const dragLerp = (current, target) => {
             const customLerp = lerp(SMOOTHING_FACTOR)
@@ -134,8 +263,8 @@ class _SplitContent extends React.Component {
                     return panMove$.pipe(
                         map(event =>
                             this.clampPosition({
-                                x: x + event.deltaX,
-                                y: y + event.deltaY
+                                x: lockDirection === 'x' ? x : x + event.deltaX,
+                                y: lockDirection === 'y' ? y : y + event.deltaY
                             })
                         ),
                         distinctUntilChanged(_.isEqual),
@@ -149,22 +278,31 @@ class _SplitContent extends React.Component {
                 return animationFrame$.pipe(
                     map(() => targetPosition),
                     scan(dragLerp, position),
+                    map(({x, y}) => ({
+                        x: Math.round(x),
+                        y: Math.round(y)
+                    })),
                     distinctUntilChanged(_.isEqual)
                 )
             })
         )
-    
+        
         const dragging$ = merge(
             panStart$.pipe(mapTo(true)),
             panEnd$.pipe(mapTo(false)),
         )
-    
+        
         addSubscription(
             handlePosition$.subscribe(position =>
                 this.setState({position})
             ),
             dragging$.subscribe(dragging =>
-                this.setState({dragging})
+                this.setState({
+                    dragging: {
+                        x: dragging && direction !== 'y',
+                        y: dragging && direction !== 'x'
+                    }
+                })
             )
         )
     }
