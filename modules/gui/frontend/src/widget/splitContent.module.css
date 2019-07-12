@@ -2,8 +2,11 @@
     --half-margin-size: 1px;
     --half-center-handle-size: 20px;
     --half-axis-handle-size: 1px;
-    --dragging-color: white;
     --handle-comfort-margin: -.25rem;
+    --idle-color: gray;
+    --dragging-color: white;
+
+    /* --x and --y are injected */
 
     --top: var(--y);
     --right: calc(100% - var(--x));
@@ -28,7 +31,7 @@
 }
 
 .container.initialized {
-    background-color: gray;
+    background-color: var(--idle-color);
 }
 
 .container.dragging {
@@ -118,8 +121,7 @@
     width: calc(2 * var(--half-center-handle-size));
     height: calc(2 * var(--half-center-handle-size));
     border-radius: var(--half-center-handle-size);
-    border: 2px solid transparent;
-    border-color: gray;
+    border: calc(2 * var(--half-axis-handle-size)) solid var(--idle-color);
 }
 
 .handle.center:hover {
