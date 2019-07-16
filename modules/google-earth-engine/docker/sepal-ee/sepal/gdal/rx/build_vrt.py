@@ -2,7 +2,7 @@ from glob import glob
 from typing import Union
 
 from osgeo import gdal
-from rx import from_callable, Observable
+from rx import Observable, defer, from_callable
 from sepal.rx.workqueue import WorkQueue
 
 gdal_queue = WorkQueue(2)
@@ -22,8 +22,10 @@ def build_vrt(
         if vrt:
             vrt.FlushCache()
 
-    return gdal_queue.enqueue(
-        from_callable(action),
-        retries=3,
-        description='build_vrt({}, {})'.format(destination, files)
+    return defer(
+        lambda _: gdal_queue.enqueue(
+            from_callable(action),
+            retries=3,
+            description='build_vrt({}, {})'.format(destination, files)
+        )
     )

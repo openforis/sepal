@@ -20,7 +20,7 @@ def export_image_to_asset(
         crs: str = None,
         crs_transform: str = None,
         max_pixels: int = None,
-        retries: int = 3
+        retries: int = 0
 ):
     asset_id, description = _init_asset_id_and_description(asset_id, description)
 
@@ -51,7 +51,7 @@ def export_table_to_asset(
         collection: ee.FeatureCollection,
         description: str = None,
         asset_id: str = None,
-        retries: int = 3
+        retries: int = 0
 ):
     asset_id, description = _init_asset_id_and_description(asset_id, description)
 
@@ -87,12 +87,13 @@ def export_image_to_drive(
         skip_empty_tiles=None,
         file_format: str = None,
         format_options: str = None,
-        retries: int = 3
+        retries: int = 0
 ):
     def create_task():
         return ee.batch.Export.image.toDrive(
             image=image,
             description=description,
+            folder=folder,
             fileNamePrefix=file_name_prefix,
             dimensions=dimensions,
             region=region,
@@ -110,7 +111,7 @@ def export_image_to_drive(
     return _export_to_drive(
         credentials,
         create_task=create_task,
-        description='export_table_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
+        description='export_image_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
             description, folder, file_name_prefix
         ),
         retries=retries
@@ -125,7 +126,7 @@ def export_table_to_drive(
         file_name_prefix: str = None,
         file_format: str = None,
         selectors=None,
-        retries: int = 3
+        retries: int = 0
 ):
     def create_task():
         return ee.batch.Export.table.toDrive(

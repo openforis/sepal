@@ -2,11 +2,12 @@ import logging
 import random
 from typing import Optional
 
-from rx import of, Observable, throw
+from rx import Observable, of
 from rx.operators import catch, concat, delay, do_action, filter, finally_action, flat_map, group_by, map, merge, \
-    observe_on, share, take_while, take_until
+    observe_on, share, take_until, take_while
 from rx.scheduler import ThreadPoolScheduler
 from rx.subject import Subject
+from sepal.rx import throw
 from sepal.rx.operators import take_until_disposed
 from sepal.rx.retry import retry_with_backoff
 
