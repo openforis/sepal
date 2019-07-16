@@ -1,6 +1,15 @@
-.layout {
+
+.layout > .content {
     display: flex;
     overflow: hidden;
+}
+
+.layout > .content > * {
+    margin-bottom: var(--vertical-spacing);
+}
+
+.layout.horizontal {
+    margin-right: calc(-1 * var(--horizontal-spacing));
 }
 
 .layout.loose {
@@ -23,19 +32,15 @@
     --horizontal-spacing: 0rem;
 }
 
-.layout > * {
-    margin-bottom: var(--vertical-spacing);
-}
-
-.layout.vertical > *:last-child {
+.layout.vertical > .content > *:last-child {
     margin-bottom: 0;
 }
 
-.layout.vertical {
+.layout.vertical > .content {
     flex-direction: column;
 }
 
-.layout.horizontal {
+.layout.horizontal > .content {
     width: 100%;
     flex-direction: row;
     flex-wrap: wrap;
@@ -44,14 +49,10 @@
     margin-bottom: calc(-1 * var(--vertical-spacing));
 }
 
-.layout.horizontal.nowrap {
+.layout.horizontal.nowrap > .content {
     flex-wrap: nowrap;
 }
 
-.layout.horizontal > * {
+.layout.horizontal > .content > * {
     margin-right: var(--horizontal-spacing);
-}
-
-.layout.horizontal > *:last-child {
-    margin-right: 0;
 }
