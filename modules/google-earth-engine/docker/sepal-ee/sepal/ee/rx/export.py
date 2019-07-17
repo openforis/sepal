@@ -1,7 +1,8 @@
 import ee
-from rx import concat, of
+from rx import concat
 from rx.operators import flat_map
 from sepal.rx.workqueue import WorkQueue
+from sepal.task.rx.observables import progress
 
 from .asset import delete_asset
 from .observables import enqueue, execute
@@ -200,7 +201,10 @@ _ee_exports = WorkQueue(
 
 def _export(credentials, create_observable, description, retries):
     return concat(
-        of('PENDING'),
+        progress(
+            default_message='Submitting export task to Google Earth Engine...',
+            message_key='tasks.ee.export.pending'
+        ),
         enqueue(
             credentials,
             queue=_ee_exports,

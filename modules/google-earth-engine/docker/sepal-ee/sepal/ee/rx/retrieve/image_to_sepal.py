@@ -7,11 +7,28 @@ from sepal.drive.rx.path import create_folder_with_path, delete_file_with_path, 
 from sepal.ee.rx.export import export_image_to_drive
 from sepal.ee.rx.image import get_band_names
 from sepal.gdal.rx import build_vrt, set_band_names
-from sepal.task.rx.operators import progress
-from sepal.format import format_bytes
+from sepal.task.rx.observables import progress
 
 
-def image_to_sepal(credentials, image, description, download_dir, band_names=None):
+def image_to_sepal(
+        credentials,
+        image: ee.Image,
+        description: str,
+        download_dir,
+        band_names: list = None,
+        dimensions=None,
+        region: ee.Geometry = None,
+        scale: int = None,
+        crs: str = None,
+        crs_transform: str = None,
+        max_pixels: int = None,
+        shard_size: int = None,
+        file_dimensions=None,
+        skip_empty_tiles=None,
+        file_format: str = None,
+        format_options: str = None,
+        retries: int = 0
+):
     drive_folder_path = '_'.join(['Sepal', description, str(uuid.uuid4())])
     destination_path = download_dir + '/' + description
 
@@ -27,32 +44,23 @@ def image_to_sepal(credentials, image, description, download_dir, band_names=Non
         )
 
     def _export_to_drive():
-        def export_progress(state):
-            if state == 'PENDING':
-                return progress(
-                    default_message='Submitting export task to Google Earth Engine...',
-                    message_key='tasks.retrieve.image_to_sepal.gee_task_pending'
-                )
-            elif state == 'READY':
-                return progress(
-                    default_message='Waiting for Google Earth Engine to start export...',
-                    message_key='tasks.retrieve.image_to_sepal.gee_task_ready'
-                )
-            elif state == 'RUNNING':
-                return progress(
-                    default_message='Google Earth Engine is exporting image...',
-                    message_key='tasks.retrieve.image_to_sepal.gee_task_running'
-                )
-            else:
-                return empty()
-
         return export_image_to_drive(
             credentials,
             image,
             description=description,
-            folder=drive_folder_path
-        ).pipe(
-            flat_map(export_progress)
+            folder=drive_folder_path,
+            dimensions=dimensions,
+            region=region,
+            scale=scale,
+            crs=crs,
+            crs_transform=crs_transform,
+            max_pixels=max_pixels,
+            shard_size=shard_size,
+            file_dimensions=file_dimensions,
+            skip_empty_tiles=skip_empty_tiles,
+            file_format=file_format,
+            format_options=format_options,
+            retries=retries,
         )
 
     def _download_from_drive():
@@ -61,15 +69,6 @@ def image_to_sepal(credentials, image, description, download_dir, band_names=Non
             path=drive_folder_path,
             destination=destination_path,
             delete_after_download=True
-        ).pipe(
-            flat_map(lambda status: progress(
-                default_message='Downloaded {downloaded_files} of {total_files} files ({downloaded} of {total})',
-                message_key='tasks.retrieve.image_to_sepal.download_progress',
-                downloaded_files=status['downloaded_files'],
-                downloaded=format_bytes(status['downloaded_bytes']),
-                total_files=status['total_files'],
-                total=format_bytes(status['total_bytes'])
-            ))
         )
 
     def _delete_drive_folder():

@@ -18,11 +18,12 @@ def dispose():
 
 
 def throw(e):
+    raise e
     # noinspection PyBroadException
-    try:
-        raise e
-    except Exception:
-        return rx.throw(e)
+    # try:
+    #     raise e
+    # except Exception:
+    #     return rx.throw(e)
 
 
 def flat_map_of(action: Callable) -> Callable[[Observable], Observable]:

@@ -1,8 +1,9 @@
 import ee
 from ee.batch import Task
-from rx import of
+from rx import empty, of
 from rx.operators import distinct_until_changed, finally_action, flat_map, take_while
 from sepal.rx import throw
+from sepal.task.rx.observables import progress
 
 from .observables import execute, interval
 
@@ -23,6 +24,25 @@ def execute_task(credentials, task):
         else:
             return of(state)
 
+    def to_progress(state):
+        if state == 'PENDING':
+            return progress(
+                default_message='Submitting export task to Google Earth Engine...',
+                message_key='tasks.ee.export.pending'
+            )
+        elif state == 'READY':
+            return progress(
+                default_message='Waiting for Google Earth Engine to start export...',
+                message_key='tasks.ee.export.ready'
+            )
+        elif state == 'RUNNING':
+            return progress(
+                default_message='Google Earth Engine is exporting image...',
+                message_key='tasks.ee.export.running'
+            )
+        else:
+            return empty()
+
     def monitor():
         def is_running(state):
             return state in [Task.State.UNSUBMITTED, Task.State.READY, Task.State.RUNNING]
@@ -38,7 +58,8 @@ def execute_task(credentials, task):
             ),
             flat_map(extract_state),
             distinct_until_changed(),
-            take_while(is_running, inclusive=True)
+            take_while(is_running, inclusive=True),
+            flat_map(to_progress)
         )
 
     return execute(
