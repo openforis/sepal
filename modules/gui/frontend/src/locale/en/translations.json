@@ -608,6 +608,9 @@
             "tooltip": "Show labels"
           }
         },
+        "layers": {
+          "tooltip": "Select layers to show"
+        },
         "sceneAreas": {
           "hide": {
             "tooltip": "Hide scene areas"
@@ -838,6 +841,9 @@
           },
           "title": "Dates",
           "tooltip": "Specify dates"
+        },
+        "layers": {
+          "title": "Layers"
         },
         "retrieve": {
           "apply": "Retrieve",

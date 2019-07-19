@@ -1,0 +1,83 @@
+.panel {
+    max-width: fit-content;
+}
+
+.image:not(:last-child) {
+    margin-bottom: .5rem;
+}
+
+
+.panel.dragging {
+    transform: translateY(calc(100% - 2.5rem));
+    transition: transform 150ms ease-in-out 200ms;
+}
+
+.panel.dragging * {
+    cursor: copy !important;
+}
+
+.panel.dragging:hover * {
+    cursor: no-drop !important;
+}
+
+.layoutButtons {
+    display: flex;
+    justify-content: center;
+}
+
+.layersListHeader {
+    display: flex;
+    justify-content: space-between;
+}
+
+.layerRow {
+    display: flex;
+}
+
+.layerRow:not(:last-child) {
+    margin-bottom: .5rem;
+}
+
+.layer {
+    flex-grow: 1;
+}
+
+
+.layerTitle {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.layerContent {
+    height: 3rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.rgbBands {
+    display: flex;
+}
+
+.rgbBands > *:not(:last-child) {
+    display: flex;
+    margin-right: .5rem
+}
+
+.red {
+    color: hsl(0, 70%, 35%);
+}
+
+.green {
+    color: hsl(120, 70%, 30%);
+}
+
+.blue {
+    color: hsl(240, 80%, 63%);
+}
+
+.rotate90 {
+    transform: rotate(90deg)
+}
