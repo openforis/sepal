@@ -1,21 +1,31 @@
 import logging
 import random
+from typing import Callable, Optional
 
 import rx
-from rx import of, throw
+from rx import Observable, of
+from rx.core.typing import Mapper
 from rx.operators import catch, delay, flat_map
 from rx.scheduler import TimeoutScheduler
+from sepal.rx import throw
 
 
 def default_backoff(times):
     return min(pow(2, times * random.uniform(0.1, 0.2)), 30)
 
 
-def retry_with_backoff(retries, description=None, backoff=default_backoff):
+def retry_with_backoff(
+        retries: int = 0,
+        description: str = None,
+        backoff: Optional[Mapper] = default_backoff
+) -> Callable[[Observable], Observable]:
     def do_retry(source, tries, exception):
+        print('retry_with_backoff(tries={}, retries={}, description={}, exception={})'.format(tries, retries, description, exception))
         if tries <= retries:
-            logging.warning('retry_with_backoff(tries={}, retries={}, exception={}, description={})'.format(
-                tries, retries, exception, description))
+            logging.warning(
+                'retry_with_backoff(tries={}, retries={}, exception={}, description={})'.format(
+                    tries, retries, exception, description
+                ))
             return of(None).pipe(
                 delay(backoff(tries), TimeoutScheduler.singleton()),
                 flat_map(source),

@@ -4,7 +4,7 @@ import os
 
 # noinspection PyUnresolvedReferences
 from apiclient.http import MediaIoBaseDownload
-from rx import combine_latest, concat, empty, interval, Observable, of
+from rx import Observable, combine_latest, concat, empty, interval, of
 from rx.operators import flat_map, map, take_while
 from sepal.drive import get_service, is_folder
 from sepal.drive.rx.list import list_folder_recursively
@@ -60,6 +60,8 @@ def download(
         return [f for f in files if not is_folder(f) and is_file_matching(f)]
 
     def download_file(f, dest):
+        total_bytes = int(f['size'])
+
         def next_chunk(downloader):
             status, done = downloader.next_chunk()
             logging.debug('downloaded chunk from {} to {}: {}'.format(file, destination, status))
@@ -75,8 +77,8 @@ def download(
                 map(lambda _: next_chunk(downloader)),
                 take_while(lambda progress: progress < 1, inclusive=True),
                 map(lambda progress: {
-                    'progress': progress,
-                    'downloaded_bytes': int(int(f['size']) * progress),
+                    'downloaded_bytes': int(total_bytes * progress),
+                    'total_bytes': total_bytes,
                     'file': f
                 })
             )
@@ -86,7 +88,7 @@ def download(
 
         os.makedirs(os.path.dirname(dest), exist_ok=True)
 
-        initial_progress_stream = of({'progress': 0, 'downloaded_bytes': 0, 'file': f})
+        initial_progress_stream = of({'downloaded_bytes': 0, 'total_bytes': total_bytes, 'file': f})
         touch_stream = interval(TOUCH_PERIOD).pipe(
             flat_map(lambda _: touch(credentials, f))
         )
@@ -110,11 +112,10 @@ def download(
         def aggregate_progress(progresses: list):
             total_files = len(progresses)
             total_bytes = sum([int(p['file']['size']) for p in progresses])
-            downloaded_files = len([p for p in progresses if p['progress'] == 1.0])
+            downloaded_files = len([p for p in progresses if p['downloaded_bytes'] == p['total_bytes']])
             downloaded_bytes = sum([p['downloaded_bytes'] for p in progresses])
 
             return {
-                'progress': downloaded_bytes / total_bytes,
                 'downloaded_files': downloaded_files,
                 'downloaded_bytes': downloaded_bytes,
                 'total_files': total_files,

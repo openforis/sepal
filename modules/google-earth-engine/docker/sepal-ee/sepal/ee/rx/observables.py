@@ -14,7 +14,7 @@ def enqueue(
         queue: WorkQueue,
         action: Callable = None,
         description: str = None,
-        retries: int = None
+        retries: int = 0
 ):
     return of(True).pipe(
         operators.enqueue(
