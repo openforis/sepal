@@ -1,6 +1,11 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
+import {compose} from 'compose'
+import {debounceTime, distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
+import Hammer from 'hammerjs'
 import Highlight from 'react-highlighter'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
@@ -8,10 +13,18 @@ import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
 import moment from 'moment'
 import styles from './superButton.module.css'
+import withSubscriptions from 'subscription'
 
-export class SuperButton extends React.Component {
+class _SuperButton extends React.Component {
+    ref = React.createRef()
+
     state = {
-        selected: false
+        selected: false,
+        dragging: false,
+        draggingPosition: {
+            x: undefined,
+            y: undefined
+        }
     }
 
     handleClick() {
@@ -28,7 +41,7 @@ export class SuperButton extends React.Component {
 
     isInteractive() {
         const {onClick, clickToSelect, selected} = this.props
-        return onClick || (clickToSelect && !selected)
+        return onClick || (clickToSelect && !selected) || this.isDraggable()
     }
 
     isInternallySelected() {
@@ -46,7 +59,37 @@ export class SuperButton extends React.Component {
             : this.isInternallySelected()
     }
 
+    isDraggable() {
+        const {onDragStart, onDrag, onDragEnd} = this.props
+        return onDragStart || onDrag || onDragEnd
+    }
+
+    isDragging() {
+        const {dragging} = this.state
+        return dragging
+    }
+
     render() {
+        return (
+            <React.Fragment>
+                {this.renderButton()}
+                {/* {this.renderDraggable()} */}
+            </React.Fragment>
+        )
+    }
+
+    renderDraggable() {
+        const {dragging} = this.state
+        return dragging
+            ? (
+                <Portal>
+                    {this.renderButton(dragging)}
+                </Portal>
+            )
+            : null
+    }
+
+    renderButton(coords) {
         const {className, title, description} = this.props
         const classNames = _.flatten([
             styles.container,
@@ -55,9 +98,19 @@ export class SuperButton extends React.Component {
             lookStyles.noTransitions,
             this.isSelected() === true ? [lookStyles.hover, styles.selected] : null,
             this.isInteractive() ? null : lookStyles.nonInteractive,
+            this.isDraggable() ? styles.draggable : null,
+            this.isDragging() ? styles.dragging : null,
             className]).join(' ')
         return (
-            <div className={classNames}>
+            <div
+                // ref={this.ref}
+                className={classNames}
+                style={{
+                    position: coords ? 'absolute' : 'inherit',
+                    top: coords && coords.y,
+                    left: coords && coords.x
+                }}
+            >
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     <div className={styles.info}>
@@ -69,6 +122,7 @@ export class SuperButton extends React.Component {
                         className={styles.buttons}>
                         {this.renderTimestamp()}
                         {this.renderExtraButtons()}
+                        {this.renderDragButton()}
                         {this.renderEditButton()}
                         {this.renderDuplicateButton()}
                         {this.renderRemoveButton()}
@@ -175,6 +229,24 @@ export class SuperButton extends React.Component {
             : null
     }
 
+    renderDragButton() {
+        const {onDragStart, onDrag, onDragEnd, dragTooltip, tooltipPlacement} = this.props
+        return onDragStart || onDrag || onDragEnd
+            ? (
+                <Button
+                    ref={this.ref}
+                    chromeless
+                    shape='circle'
+                    size='large'
+                    icon='arrows-alt'
+                    additionalClassName={styles.dragHandle}
+                    tooltip={dragTooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    onClick={() => null}/>
+            )
+            : null
+    }
+
     renderChildren() {
         const {children} = this.props
         return children && this.isSelected() !== false
@@ -185,13 +257,73 @@ export class SuperButton extends React.Component {
             )
             : null
     }
+
+    initializeDraggable() {
+        const {onDragStart, onDrag, onDragEnd} = this.props
+        const {addSubscription} = this.props
+        const draggable = this.ref.current
+        const hammer = new Hammer(draggable)
+        hammer.get('pan').set({direction: Hammer.DIRECTION_ALL})
+        const pan$ = fromEvent(hammer, 'panstart panmove panend')
+        const filterPanEvent = type => pan$.pipe(filter(e => e.type === type))
+        const start$ = filterPanEvent('panstart')
+        const move$ = filterPanEvent('panmove')
+        const end$ = filterPanEvent('panend')
+        const animationFrame$ = interval(0, animationFrameScheduler)
+        const drag$ = start$.pipe(
+            switchMap(() =>
+                animationFrame$.pipe(
+                    switchMap(() =>
+                        move$.pipe(
+                            map(e => e.center)
+                        )),
+                    debounceTime(10),
+                    distinctUntilChanged()
+                )
+            )
+        )
+        
+        addSubscription(
+            onDragStart && start$.subscribe(() => this.onDragStart()),
+            onDrag && drag$.subscribe(e => this.onDrag(e)),
+            onDragEnd && end$.subscribe(() => this.onDragEnd())
+        )
+    }
+
+    onDragStart() {
+        const {onDragStart} = this.props
+        this.setState({dragging: true}, () => onDragStart && onDragStart())
+    }
+
+    onDrag(coords) {
+        const {onDrag} = this.props
+        this.setState({dragging: coords}, () => onDrag && onDrag(coords))
+        onDrag && onDrag(coords)
+    }
+
+    onDragEnd() {
+        const {onDragEnd} = this.props
+        this.setState({dragging: false}, () => onDragEnd && onDragEnd())
+    }
+
+    componentDidMount() {
+        if (this.isDraggable()) {
+            this.initializeDraggable()
+        }
+    }
 }
+
+export const SuperButton = compose(
+    _SuperButton,
+    withSubscriptions()
+)
 
 SuperButton.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     clickToSelect: PropTypes.any,
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    dragTooltip: PropTypes.string,
     duplicateTooltip: PropTypes.string,
     editTooltip: PropTypes.string,
     extraButtons: PropTypes.arrayOf(PropTypes.object),
@@ -207,6 +339,9 @@ SuperButton.propTypes = {
     tooltipPlacement: PropTypes.string,
     unsafeRemove: PropTypes.any,
     onClick: PropTypes.func,
+    onDrag: PropTypes.func,
+    onDragEnd: PropTypes.func,
+    onDragStart: PropTypes.func,
     onDuplicate: PropTypes.func,
     onEdit: PropTypes.func,
     onInfo: PropTypes.func,
