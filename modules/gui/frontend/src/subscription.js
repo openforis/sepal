@@ -9,7 +9,7 @@ const withSubscriptions = () =>
                     ...this.props,
                     addSubscription: (...subscriptions) => {
                         subscriptions.forEach(subscription =>
-                            this.subscriptions.push(subscription))
+                            subscription && this.subscriptions.push(subscription))
                     }
                 })
             }
