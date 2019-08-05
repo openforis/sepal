@@ -78,3 +78,15 @@ to prevent click-through from click-hold buttons */
     cursor: default;
     pointer-events: all;
 }
+
+.draggable {
+    cursor: grab;
+}
+
+.dragging {
+    opacity: .2;
+}
+
+.dragHandle {
+    cursor: grab;
+}

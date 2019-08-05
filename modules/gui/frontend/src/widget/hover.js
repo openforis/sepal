@@ -3,6 +3,7 @@ import {delay, distinctUntilChanged, map, mapTo, switchMap, takeUntil, zip} from
 import {fromEvent, merge, of} from 'rxjs'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import styles from './hover.module.css'
 import withSubscriptions from 'subscription'
 
@@ -50,8 +51,14 @@ class _HoverDetector extends React.Component {
         )
 
         addSubscription(
-            mouseStatus$.subscribe(hover => this.setState({hover}))
+            mouseStatus$.subscribe(hover => this.setHover(hover))
         )
+    }
+
+    setHover(hover) {
+        const {onHover} = this.props
+        this.setState({hover})
+        onHover && onHover(hover)
     }
 
     render() {
@@ -60,7 +67,7 @@ class _HoverDetector extends React.Component {
         return (
             <Provider value={hover}>
                 <div ref={this.ref} className={className}>
-                    {children}
+                    {_.isFunction(children) ? children(hover) : children}
                 </div>
             </Provider>
         )
@@ -74,7 +81,8 @@ export const HoverDetector = compose(
 
 HoverDetector.propTypes = {
     children: PropTypes.any.isRequired,
-    className: PropTypes.string
+    className: PropTypes.string,
+    onHover: PropTypes.func
 }
 
 export const HoverOverlay = props =>

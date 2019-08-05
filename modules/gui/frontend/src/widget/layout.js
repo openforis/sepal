@@ -9,12 +9,15 @@ export class Layout extends React.Component {
     render() {
         const {type, spacing, className, style, children} = this.props
         return (
-            <div className={className} style={style}>
-                <div className={[
+            <div
+                className={[
                     styles.layout,
                     ...typeClassNames(type),
-                    styles[spacing]
-                ].join(' ')}>
+                    styles[spacing],
+                    className
+                ].join(' ')}
+                style={style}>
+                <div className={styles.content}>
                     {children}
                 </div>
             </div>
