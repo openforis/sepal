@@ -20,7 +20,6 @@ def retry_with_backoff(
         backoff: Optional[Mapper] = default_backoff
 ) -> Callable[[Observable], Observable]:
     def do_retry(source, tries, exception):
-        print('retry_with_backoff(tries={}, retries={}, description={}, exception={})'.format(tries, retries, description, exception))
         if tries <= retries:
             logging.warning(
                 'retry_with_backoff(tries={}, retries={}, exception={}, description={})'.format(

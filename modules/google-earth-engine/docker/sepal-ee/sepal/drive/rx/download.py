@@ -4,7 +4,7 @@ import os
 
 # noinspection PyUnresolvedReferences
 from apiclient.http import MediaIoBaseDownload
-from rx import Observable, combine_latest, concat, empty, interval, of
+from rx import Observable, combine_latest, concat, empty, interval
 from rx.operators import flat_map, map, take_while
 from sepal.drive import get_service, is_folder
 from sepal.drive.rx.list import list_folder_recursively
@@ -17,7 +17,7 @@ from .delete import delete_file
 from .observables import enqueue
 from .touch import touch
 
-CHUNK_SIZE = 10 * 1024 * 1024
+CHUNK_SIZE = 100 * 1024 * 1024
 TOUCH_PERIOD = 15 * 60  # Every 15 minutes - to prevent it from being garbage collected from Service Account
 
 # Work (i.e. exports) is grouped by credentials, limiting concurrent exports per credentials
@@ -33,6 +33,7 @@ def download(
         destination: str,
         matching: str = None,
         delete_after_download: bool = False,
+        retries: int = 3
 ) -> Observable:
     logging.debug('downloading {} to {}'.format(file, destination))
     destination = os.path.abspath(destination)
@@ -58,7 +59,16 @@ def download(
             return empty()
 
     def filter_files(files):
-        return [f for f in files if not is_folder(f) and is_file_matching(f)]
+        seen_file_ids = set()
+        unique_files = []
+        for f in files:
+            file_id = f['id']
+            if file_id not in seen_file_ids:
+                seen_file_ids.add(file_id)
+                unique_files.append(f)
+
+        filtered = [f for f in unique_files if not is_folder(f) and is_file_matching(f)]
+        return filtered
 
     def download_file(f, dest):
         total_bytes = int(f['size'])
@@ -109,7 +119,7 @@ def download(
             credentials,
             queue=_drive_downloads,
             action=action,
-            retries=0,
+            retries=retries,
             description='Download {} to {}'.format(f, dest)
         ).pipe(
             aside(touch_stream)

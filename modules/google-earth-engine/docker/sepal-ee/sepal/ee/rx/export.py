@@ -194,7 +194,7 @@ def _export_to_drive(credentials, create_task, description, retries):
 
 # Work (i.e. exports) is grouped by credentials, limiting concurrent exports per credentials
 _ee_exports = WorkQueue(
-    concurrency_per_group=2,
+    concurrency_per_group=5,
     description='earth-engine-exports'
 )
 

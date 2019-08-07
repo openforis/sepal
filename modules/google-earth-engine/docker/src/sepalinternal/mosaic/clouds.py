@@ -7,8 +7,8 @@ def mask_clouds(mosaic_def, collection):
     if not mosaic_def.mask_clouds:
         reduced = collection.select('cloud') \
             .reduce(ee.Reducer.sum()
-                    .combine(ee.Reducer.count(), "", True)
-                    .combine(ee.Reducer.min(), "", True))
+            .combine(ee.Reducer.count(), "", True)
+            .combine(ee.Reducer.min(), "", True))
         # Proportion of pixels that are cloudy
         cloud_proportion = reduced.select('cloud_sum') \
             .divide(reduced.select('cloud_count'))

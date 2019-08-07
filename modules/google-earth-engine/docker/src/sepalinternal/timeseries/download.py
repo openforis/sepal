@@ -7,13 +7,11 @@ import uuid
 from collections import namedtuple
 from glob import glob
 from os import listdir, pardir
-from os.path import abspath
-from os.path import isdir, join
-from ..gee import get_info
+from os.path import abspath, isdir, join
 
 import ee
-from osgeo import gdal
 from dateutil.parser import parse
+from osgeo import gdal
 
 from .timeseries import TimeSeries
 from .. import drive
@@ -22,15 +20,15 @@ from ..drive import Download
 from ..export.image_to_drive import ImageToDrive
 from ..export.table_to_drive import TableToDrive
 from ..format import format_bytes
-from ..task.task import ThreadTask, Task
-from datetime import datetime
+from ..gee import get_info
+from ..task.task import Task, ThreadTask
 
 logger = logging.getLogger(__name__)
 
 
 def create(spec, context):
     aoi_spec = spec['aoi']
-    if aoi_spec['type'] == 'FUSION_TABLE' :
+    if aoi_spec['type'] == 'FUSION_TABLE':
         if aoi_spec.get('keyColumn'):
             aoi = Aoi.create(aoi_spec).feature_collection
         else:
@@ -391,7 +389,7 @@ class ProcessYear(ThreadTask):
 
 class Status(object):
     def __init__(self, state, export_progress=0, download_progress=0, downloaded_bytes=0, pre_process_progress=0,
-                 exception=None):
+            exception=None):
         super(Status, self).__init__()
         self.state = state
         self.export_progress = export_progress

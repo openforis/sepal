@@ -37,7 +37,7 @@ def execute_task(credentials, task):
             )
         elif state == 'RUNNING':
             return progress(
-                default_message='Google Earth Engine is exporting image...',
+                default_message='Google Earth Engine is exporting...',
                 message_key='tasks.ee.export.running'
             )
         else:

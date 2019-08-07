@@ -12,9 +12,9 @@ from sepal.task.rx.observables import progress
 
 def image_to_sepal(
         credentials,
-        image: ee.Image,
         description: str,
-        download_dir,
+        download_dir: str,
+        image: ee.Image,
         band_names: list = None,
         dimensions=None,
         region: ee.Geometry = None,
