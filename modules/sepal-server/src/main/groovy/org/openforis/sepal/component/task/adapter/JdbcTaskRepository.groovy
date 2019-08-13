@@ -126,9 +126,9 @@ class JdbcTaskRepository implements TaskRepository {
             recipeId: row.recipe_id,
             username: row.username,
             operation: row.operation,
-            params: new JsonSlurper().parseText(row.params instanceof Clob ? ((Clob) row.params).asciiStream.text : row.params) as Map,
+            params: new JsonSlurper().parseText(row.longText('params')) as Map,
             sessionId: row.session_id,
-            statusDescription: row.status_description ?: state.description,
+            statusDescription: row.longText('status_description') ?: state.description,
             creationTime: row.creation_time,
             updateTime: row.update_time
         )

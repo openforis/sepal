@@ -1,0 +1,2 @@
+ALTER TABLE task
+  MODIFY COLUMN status_description LONGTEXT NOT NULL;
