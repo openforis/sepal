@@ -154,7 +154,7 @@ def download(
             flat_map(
                 lambda files: combine_latest(
                     *[download_file(f, get_file_destination(f)) for f in files]
-                )
+                ) if files else empty()
             ),
             flat_map(aggregate_progress)
         )
