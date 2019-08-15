@@ -8,14 +8,10 @@ import org.openforis.sepal.taskexecutor.endpoint.Endpoints
 import org.openforis.sepal.taskexecutor.endpoint.SepalAdminUsernamePasswordVerifier
 import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorEndpoint
 import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorUserProvider
-import org.openforis.sepal.taskexecutor.landsatscene.GoogleLandsatDownload
-import org.openforis.sepal.taskexecutor.landsatscene.LandsatSceneDownload
-import org.openforis.sepal.taskexecutor.landsatscene.S3Landsat8Download
 import org.openforis.sepal.taskexecutor.manager.BackgroundExecutingTaskManager
 import org.openforis.sepal.taskexecutor.manager.ExecutorBackedBackgroundExecutor
 import org.openforis.sepal.taskexecutor.manager.SepalNotifyingTaskProgressMonitor
 import org.openforis.sepal.taskexecutor.python.PythonModuleExecutor
-import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
 import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.lifecycle.Lifecycle
 import org.openforis.sepal.util.lifecycle.Stoppable
@@ -40,16 +36,8 @@ class Main {
             config.taskExecutorPassword
         )
         def backgroundExecutor = stoppable new ExecutorBackedBackgroundExecutor(progressMonitor)
-        def backgroundDownloader = stoppable new BackgroundDownloader()
         def taskManager = new BackgroundExecutingTaskManager(
-            new PythonModuleExecutor.Factory(config.googleEarthEngineDownloadEndpoint), [
-            'landsat-scene-download': new LandsatSceneDownload.Factory(
-                config.workingDir,
-                new S3Landsat8Download(config.s3Endpoint, backgroundDownloader, config.username),
-                new GoogleLandsatDownload(config.googleEndpoint, backgroundDownloader, config.username),
-                config.username
-            )
-        ], backgroundExecutor)
+            new PythonModuleExecutor.Factory(config.googleEarthEngineDownloadEndpoint), [:], backgroundExecutor)
         def endpoints = new Endpoints(pathRestrictions,
             new TaskExecutorEndpoint(taskManager))
         start new ResourceServer(config.port, '/api', endpoints)
