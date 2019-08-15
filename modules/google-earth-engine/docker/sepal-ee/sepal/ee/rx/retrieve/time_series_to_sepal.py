@@ -12,16 +12,17 @@ from typing import Union
 
 import ee
 from osgeo import gdal
-from rx import Observable, combine_latest, concat, empty, from_callable, from_iterable, merge, of
-from rx.operators import flat_map, flat_map_indexed, map, scan
+from rx import Observable, combine_latest, concat, defer, empty, from_callable, merge, of
+from rx.operators import flat_map, map, scan
 from sepal.drive.rx.path import create_folder_with_path, delete_file_with_path, download_path
 from sepal.ee.dates import add_days, map_days, split_range_by_year, to_date, to_ee_date
-from sepal.ee.geometry import tile
 from sepal.ee.image import set_precision
 from sepal.ee.rx.export import export_image_to_drive, export_table_to_drive
 from sepal.ee.rx.observables import execute
+from sepal.ee.tile import tile
 from sepal.format import format_bytes
 from sepal.gdal import set_band_metadata
+from sepal.rx.operators import merge_finalize
 from sepal.task.rx.observables import progress
 
 TILE_SIZE_IN_DEGREES = 1
@@ -39,7 +40,7 @@ def time_series_to_sepal(
         scale: int = None,
         crs: str = None,
         crs_transform: str = None,
-        max_pixels: int = None,
+        max_pixels: Union[int, float] = None,
         shard_size: int = None,
         file_dimensions=None,
         skip_empty_tiles=None,
@@ -78,24 +79,44 @@ def time_series_to_sepal(
                 ),
                 message_key='tasks.retrieve.time_series_to_sepal.progress',
                 exported=exported,
-                downloaded=downloaded_bytes,
+                downloaded=downloaded,
                 downloaded_bytes=downloaded_bytes,
                 processed=processed
             )
 
         features_collection = _to_features_collection(region)
-        return _extract_feature_indexes(features_collection).pipe(
-            flat_map(
-                lambda feature_indexes: _to_geometries(features_collection, feature_indexes).pipe(
-                    flat_map(lambda geometries: from_iterable(geometries)),
-                    flat_map_indexed(
-                        lambda geometry, i: _export_geometry(geometry, geometry_description=str(i + 1))
-                    ),
-                    scan(lambda acc, p: {**acc, p['geometry']: p}, {}),
-                    flat_map(lambda progresses: aggregate_progress(
-                        progresses,
-                        count=len(feature_indexes) * len(year_ranges)
-                    ))
+
+        def export_geometry(geometry, i, geometry_count):
+            geometry_description = str(i + 1).zfill(len(str(geometry_count)))
+            return defer(
+                lambda _: _export_geometry(
+                    geometry,
+                    geometry_description=geometry_description
+                )
+            )
+
+        return concat(
+            progress(
+                default_message='Tiling AOI...',
+                message_key='tasks.retrieve.time_series_to_sepal.tiling'
+            ),
+            _extract_feature_indexes(features_collection).pipe(
+                flat_map(
+                    lambda feature_indexes: _to_geometries(features_collection, feature_indexes).pipe(
+                        flat_map(
+                            lambda geometries: concat(
+                                *[
+                                    export_geometry(geometry, i, len(feature_indexes))
+                                    for i, geometry in enumerate(geometries)
+                                ]
+                            )
+                        ),
+                        scan(lambda acc, p: {**acc, p['geometry']: p}, {}),
+                        flat_map(lambda progresses: aggregate_progress(
+                            progresses,
+                            count=len(feature_indexes) * len(year_ranges)
+                        ))
+                    )
                 )
             )
         )
@@ -120,16 +141,7 @@ def time_series_to_sepal(
         )
 
     def _to_features_collection(r) -> ee.FeatureCollection:
-        if isinstance(r, ee.FeatureCollection):
-            return r
-        elif isinstance(r, ee.Feature):
-            return tile(r.geometry(), TILE_SIZE_IN_DEGREES)
-        elif isinstance(r, ee.Geometry):
-            return tile(r, TILE_SIZE_IN_DEGREES)
-        else:
-            raise ValueError(
-                'region must be ee.FeatureCollection, ee.Feature, or ee.Geometry. Was {}'.format(type(r))
-            )
+        return tile(r, TILE_SIZE_IN_DEGREES)
 
     def _extract_feature_indexes(_feature_collection):
         def action():
@@ -159,6 +171,15 @@ def time_series_to_sepal(
             'downloaded': 0,
             'processed': 0
         })
+
+        def aggregate_downloaded_bytes(p):
+            return {
+                'exported': p['exported'],
+                'downloaded': p['downloaded'],
+                'downloaded_bytes': p['stack_bytes'] + p['dates_bytes'],
+                'processed': p['processed']
+            }
+
         return concat(
             initial_progress,
             merge(
@@ -169,12 +190,7 @@ def time_series_to_sepal(
             of({'processed': 1})
         ).pipe(
             scan(lambda acc, p: {**acc, **p}, {}),
-            map(lambda p: {
-                'exported': p['exported'],
-                'downloaded': p['downloaded'],
-                'downloaded_bytes': p['stack_bytes'] + p['dates_bytes'],
-                'processed': p['processed']
-            })
+            map(aggregate_downloaded_bytes)
         )
 
     def _create_stack(geometry, start, end):
@@ -368,7 +384,7 @@ def time_series_to_sepal(
         return concat(
             progress(
                 default_message='Deleting Google Drive download folder...',
-                message_key='tasks.retrieve.image_to_sepal.deleting_drive_folder'
+                message_key='tasks.retrieve.time_series_to_sepal.deleting_drive_folder'
             ),
             delete_file_with_path(
                 credentials,
@@ -387,4 +403,6 @@ def time_series_to_sepal(
         _create_drive_folder(),
         _export_geometries(),
         _delete_drive_folder()
+    ).pipe(
+        merge_finalize(_delete_drive_folder)
     )

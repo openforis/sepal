@@ -41,8 +41,8 @@ def subtract_months(d, months):
 def split_range_by_year(start_date, end_date):
     start_date = to_date(start_date)
     end_date = to_date(end_date)
-    start_year = add_days(start_date, -1).year  # -1 day since exclusive date
-    end_year = end_date.year
+    start_year = start_date.year
+    end_year = add_days(end_date, -1).year  # -1 day since exclusive date
     return [(
         date(year, 1, 1) if year != start_year else start_date,
         date(year + 1, 1, 1) if year != end_year else end_date

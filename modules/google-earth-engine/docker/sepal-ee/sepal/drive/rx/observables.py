@@ -30,7 +30,7 @@ def enqueue(
 def execute(
         credentials,
         action: Callable,
-        retries: int = 3,
+        retries: int = 5,
         description: str = None
 ) -> Observable:
     return of(True).pipe(

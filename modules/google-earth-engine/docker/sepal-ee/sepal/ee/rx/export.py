@@ -1,3 +1,5 @@
+from typing import Union
+
 import ee
 from rx import concat
 from rx.operators import flat_map
@@ -20,7 +22,7 @@ def export_image_to_asset(
         scale: int = None,
         crs: str = None,
         crs_transform: str = None,
-        max_pixels: int = None,
+        max_pixels: Union[int, float] = None,
         retries: int = 0
 ):
     asset_id, description = _init_asset_id_and_description(asset_id, description)

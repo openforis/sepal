@@ -1,5 +1,8 @@
-import ee
 import math
+
+import ee
+from sepal.ee.image import replace
+
 
 # Volumetric model (Hoekman & Reiche 2015)
 def apply(image):
@@ -27,10 +30,10 @@ def apply(image):
     phi_r = ee.Image.constant(phi_i).subtract(phi_s)
 
     # convert all to radians
-    phi_rRad = phi_r.multiply(math.pi/180)
-    alpha_sRad = alpha_s.multiply(math.pi/180)
-    theta_iRad = theta_i.multiply(math.pi/180)
-    ninetyRad = ee.Image.constant(90).multiply(math.pi/180)
+    phi_rRad = phi_r.multiply(math.pi / 180)
+    alpha_sRad = alpha_s.multiply(math.pi / 180)
+    theta_iRad = theta_i.multiply(math.pi / 180)
+    ninetyRad = ee.Image.constant(90).multiply(math.pi / 180)
 
     # slope steepness in range (eq. 2)
     alpha_r = (alpha_sRad.tan().multiply(phi_rRad.cos())).atan()
@@ -40,7 +43,7 @@ def apply(image):
 
     # local incidence angle (eq. 4)
     theta_lia = (alpha_az.cos().multiply((theta_iRad.subtract(alpha_r)).cos())).acos()
-    theta_liaDeg = theta_lia.multiply(180/math.pi)
+    theta_liaDeg = theta_lia.multiply(180 / math.pi)
 
     # 2.2
     # Gamma_nought_flat
@@ -59,7 +62,7 @@ def apply(image):
 
     # we add a layover/shadow mask to the original implementation
     # layover, where slope > radar viewing angle
-    alpha_rDeg = alpha_r.multiply(180/math.pi)
+    alpha_rDeg = alpha_r.multiply(180 / math.pi)
     layover = alpha_rDeg.lt(theta_i)
 
     # shadow where LIA > 90
@@ -72,14 +75,10 @@ def apply(image):
         .addBands(layover).addBands(shadow).addBands(gamma0dB).addBands(ratio_1)
 
     # rename bands for output
-    output = ee.Image(
+    return replace(
+        output,
         output.select(
             ['VV', 'VH', 'slope_1', 'slope_2'],
             ['VV', 'VH', 'layover', 'shadow']
-        )
-        .addBands(image.select('angle'))
-        .set('system:time_start', image.get('system:time_start'))
-        .copyProperties(image)
+        ).addBands(image.select('angle'))
     )
-
-    return output

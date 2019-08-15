@@ -1,12 +1,13 @@
+from typing import Callable
+
 import rx
-from rx import Callable, Observable, generate
+from rx import Observable, generate, of
 from rx.operators import flat_map
-from rx.subject import Subject
+from sepal.rx import operators
 
 from .aside import aside
 from .file import using_file
-
-_dispose = Subject()
+from .subscribe_and_wait import subscribe_and_wait
 
 
 def forever():
@@ -14,7 +15,7 @@ def forever():
 
 
 def dispose():
-    _dispose.on_next(True)
+    operators._dispose.on_next(True)
 
 
 def throw(e):
@@ -27,3 +28,9 @@ def throw(e):
 
 def flat_map_of(action: Callable) -> Callable[[Observable], Observable]:
     return flat_map(lambda _: action())
+
+
+def merge_finalize(handler: Callable[[], Observable]) -> Observable:
+    return of(True).pipe(
+        operators.merge_finalize(handler)
+    )

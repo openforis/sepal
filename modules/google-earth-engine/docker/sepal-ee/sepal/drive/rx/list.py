@@ -11,7 +11,7 @@ def list_folder(
         credentials,
         folder: dict,
         name_filter: str = None,
-        retries: int = 3
+        retries: int = 5
 ) -> Observable:
     def next_page(acc):
         def load_page():
@@ -58,7 +58,7 @@ def list_folder(
 def list_folder_recursively(
         credentials,
         folder: dict,
-        retries: int = 3
+        retries: int = 5
 ) -> Observable:
     def recurse(file):
         if is_folder(file):

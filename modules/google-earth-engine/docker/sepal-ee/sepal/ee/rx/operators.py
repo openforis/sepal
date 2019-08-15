@@ -1,6 +1,6 @@
 import ee
 import rx
-from rx import defer, of
+from rx import defer, from_callable
 from rx.core.typing import Mapper
 from rx.operators import do_action, flat_map
 from sepal.rx.retry import retry_with_backoff
@@ -44,7 +44,7 @@ def enqueue(
 
 # A single group is used to execute EE operations, independent of user and credentials used.
 _ee_executions = WorkQueue(
-    concurrency_per_group=20,
+    concurrency_per_group=5,
     description='earth-engine-actions'
 )
 
@@ -59,7 +59,7 @@ def execute(
         enqueue(
             credentials,
             queue=_ee_executions,
-            mapper=lambda value: of(mapper(value)),
+            mapper=lambda value: from_callable(lambda: mapper(value)),
             description=description,
             retries=retries
         )

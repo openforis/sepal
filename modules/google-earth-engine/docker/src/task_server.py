@@ -57,7 +57,7 @@ def healthcheck():
 def submit():
     task_request = request.get_json()
     repository.submit(
-        id=task_request['task'],
+        task_id=task_request['task'],
         module=task_request['module'],
         spec=task_request['spec'],
         context=thread_local.context

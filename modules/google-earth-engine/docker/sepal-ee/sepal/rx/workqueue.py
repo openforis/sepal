@@ -1,42 +1,41 @@
 import logging
-import random
-from typing import Optional
 
-from rx import Observable, of
-from rx.operators import catch, concat, delay, do_action, filter, finally_action, flat_map, group_by, map, merge, \
-    observe_on, share, take_until, take_while
-from rx.scheduler import ThreadPoolScheduler
+from rx import Observable, empty, of
+from rx.operators import catch, concat, delay, do_action, finally_action, flat_map, group_by, map, merge, merge_all, \
+    observe_on, take_until, take_while
+from rx.scheduler.threadpoolscheduler import ThreadPoolScheduler
 from rx.subject import Subject
-from sepal.rx import throw
-from sepal.rx.operators import take_until_disposed
+from sepal.rx.operators import take_until_disposed, throw_when
 from sepal.rx.retry import retry_with_backoff
 
 
 class WorkQueue(object):
-
     def __init__(self, concurrency_per_group, delay_seconds=0, description=None):
-        self.scheduler = ThreadPoolScheduler(concurrency_per_group)
-        self.request_scheduler = ThreadPoolScheduler(10)
-        self._requests = Subject()
-        self._output_subject = Subject()
-        self._output = self._output_subject.pipe(share())
+        self._queue = Subject()
         self._description = description
-        self._subscription = self._requests.pipe(
-            observe_on(self.scheduler),
-            group_by(lambda r: r['concurrency_group']),
+        self.request_scheduler = ThreadPoolScheduler(concurrency_per_group)
+        producer_scheduler = ThreadPoolScheduler(concurrency_per_group)
+
+        def on_next(result):
+            output = result['output']
+            output.on_next({'value': result.get('value'), 'completed': result.get('completed')})
+
+        self._subscription = self._queue.pipe(
+            observe_on(producer_scheduler),
+            group_by(lambda r: r['group']),
             flat_map(
                 lambda concurrency_group: concurrency_group.pipe(
-                    map(lambda r: r['request']),
+                    map(lambda r: r['work']),
+                    delay(delay_seconds),
                     merge(max_concurrent=concurrency_per_group),
-                    delay(delay_seconds)
+                    merge_all(),
                 )
             ),
             take_until_disposed()
         ).subscribe(
-            on_next=lambda request: self._output_subject.on_next(request),
+            on_next=on_next,
             on_error=lambda error: logging.exception('Error in {} request stream'.format(self)),
-            on_completed=lambda: self.dispose(),
-            scheduler=self.scheduler
+            scheduler=producer_scheduler
         )
 
     def enqueue(
@@ -45,68 +44,55 @@ class WorkQueue(object):
             group: str = 'default-group',
             retries: int = 0,
             description: str = None
-    ):
-        description = description or str(Observable)
-        key = '{}({})'.format(description, random.random())
-
+    ) -> Observable:
         def log_status(status):
             logging.debug(str({
                 'WorkQueue': str(self),
                 'group': group,
-                'key': key,
                 status: description
             }))
 
         log_status('ENQUEUED')
-        error: Optional[Exception] = None
+        output = Subject()
+        errors = Subject()
+        output_finalized = Subject()
 
-        def handle_error(e):
+        def handle_error(e, _):
             log_status('FAILED')
-            nonlocal error
-            error = e
-            return of({'key': key, 'error': e})
+            errors.on_next(e)
+            return empty()
 
-        def throw_if_error(r):
-            if error:
-                return throw(error)
-            else:
-                return of(r)
+        def set_output_finalized():
+            output_finalized.on_next(True)
 
-        request_disposed = Subject()
-
-        def dispose_request():
-            request_disposed.on_next(True)
-
-        request = of(True).pipe(
-            do_action(
-                lambda _: log_status('STARTED')
-            ),
+        work = of(True).pipe(
+            do_action(lambda _: log_status('STARTED')),
+            take_until(output_finalized),
             flat_map(
                 lambda _: observable.pipe(
-                    map(lambda value: {'key': key, 'value': value}),
+                    map(lambda value: of({'value': value, 'output': output})),
                     retry_with_backoff(
                         retries=retries,
                         description='{}.enqueue(group={}, description={})'.format(self, group, description)
                     ),
-                    catch(handler=lambda e, o: handle_error(e)),
-                    take_until(request_disposed),
-                    take_until_disposed(),
-                ),
+                    catch(handler=handle_error),
+                    take_until(output_finalized),
+                    take_until_disposed()
+                )
             ),
-            concat(of({'key': key, 'complete': True}).pipe(
-                do_action(lambda _: log_status('COMPLETED'))
-            )),
+            concat(of(of({'completed': True, 'output': output}))),
+            finally_action(lambda: log_status('COMPLETED'))
         )
-        result_stream = self._output.pipe(
+
+        self._queue.on_next({'work': work, 'group': group})
+
+        return output.pipe(
             observe_on(self.request_scheduler),
-            filter(lambda r: r['key'] == key),
-            flat_map(lambda r: throw_if_error(r)),
-            take_while(lambda r: not r.get('complete')),
-            flat_map(lambda r: of(r.get('value'))),
-            finally_action(dispose_request)
+            throw_when(errors),
+            take_while(lambda r: not r.get('completed')),
+            map(lambda r: r.get('value')),
+            finally_action(set_output_finalized)
         )
-        self._requests.on_next({'request': request, 'concurrency_group': group})
-        return result_stream
 
     def dispose(self):
         if self._subscription:

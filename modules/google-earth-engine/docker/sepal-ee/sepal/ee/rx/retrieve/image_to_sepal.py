@@ -1,4 +1,5 @@
 import uuid
+from typing import Union
 
 import ee
 from rx import concat, empty, of
@@ -7,6 +8,7 @@ from sepal.drive.rx.path import create_folder_with_path, delete_file_with_path, 
 from sepal.ee.rx.export import export_image_to_drive
 from sepal.ee.rx.image import get_band_names
 from sepal.gdal.rx import build_vrt, set_band_names
+from sepal.rx.operators import merge_finalize
 from sepal.task.rx.observables import progress
 
 
@@ -21,7 +23,7 @@ def image_to_sepal(
         scale: int = None,
         crs: str = None,
         crs_transform: str = None,
-        max_pixels: int = None,
+        max_pixels: Union[int, float] = None,
         shard_size: int = None,
         file_dimensions=None,
         skip_empty_tiles=None,
@@ -122,7 +124,9 @@ def image_to_sepal(
         _create_drive_folder(),
         _export_to_drive(),
         _download_from_drive(),
-        _delete_drive_folder(),  # TODO: Make sure folder is deleted on error too
+        _delete_drive_folder(),
         _build_vrt(),
         _set_band_names()
+    ).pipe(
+        merge_finalize(_delete_drive_folder)
     )

@@ -1,10 +1,9 @@
 import logging
 import threading
+from datetime import datetime, timedelta
 from threading import Thread
 
-import httplib2
 from apiclient import discovery
-from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 DELAY_SECS = 60 * 5

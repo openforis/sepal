@@ -1,5 +1,7 @@
+from typing import Callable
+
 import rx
-from rx import defer, from_callable
+from rx import Observable, defer, from_callable
 from rx.core.typing import Mapper
 from rx.operators import flat_map
 from sepal.rx.workqueue import WorkQueue
@@ -11,7 +13,7 @@ def enqueue(
         mapper: Mapper,
         description: str = None,
         retries: int = 0
-):
+) -> Callable[[Observable], Observable]:
     return rx.pipe(
         flat_map(
             lambda value: queue.enqueue(
@@ -34,9 +36,9 @@ _drive_actions = WorkQueue(
 def execute(
         credentials,
         mapper: Mapper = None,
-        retries: int = 3,
+        retries: int = 5,
         description: str = None
-):
+) -> Callable[[Observable], Observable]:
     return rx.pipe(
         enqueue(
             credentials,

@@ -7,7 +7,7 @@ from .observables import execute
 def delete_file(
         credentials,
         file: dict,
-        retries: int = 3
+        retries: int = 5
 ) -> Observable:
     def action():
         get_service(credentials).files().delete(fileId=file['id']).execute()

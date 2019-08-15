@@ -1,3 +1,5 @@
+import logging
+
 import ee
 from ee.batch import Task
 from rx import empty, of
@@ -7,18 +9,38 @@ from sepal.task.rx.observables import progress
 
 from .observables import execute, interval
 
-_MONITORING_FREQUENCY = 5
+_MONITORING_FREQUENCY = 10
 
 
 def execute_task(credentials, task):
     def start():
-        task.start()
+
+        def action():
+            task.start()
+
+        return execute(
+            credentials,
+            action,
+            description='start task ' + str(task),
+            retries=3
+        )
+
+    def cancel():
+        if task.state in [Task.State.COMPLETED, Task.State.CANCEL_REQUESTED, Task.State.CANCELLED, Task.State.FAILED]:
+            return
+        ee.InitializeThread(credentials)
+        try:
+            task.cancel()
+        except Exception:
+            logging.exception('{}: cancelling failed'.format(task))
+        return empty()
 
     def load_status():
         return task.status()
 
     def extract_state(status):
         state = status['state']
+        task.state = state
         if state == 'FAILED':
             return throw(ee.EEException(status.get('error_message')))
         else:
@@ -62,12 +84,7 @@ def execute_task(credentials, task):
             flat_map(to_progress)
         )
 
-    return execute(
-        credentials,
-        start,
-        description='start task ' + str(task),
-        retries=3
-    ).pipe(
+    return start().pipe(
         flat_map(lambda _: monitor()),
-        finally_action(lambda: task.cancel())
+        finally_action(cancel),
     )

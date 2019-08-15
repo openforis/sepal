@@ -2,7 +2,7 @@ from sepal.drive import get_service
 from sepal.drive.rx.observables import execute
 
 
-def create_folder(credentials, parent, name, retries: int = 3):
+def create_folder(credentials, parent, name, retries: int = 5):
     path = '{}{}/'.format(parent['path'], name)
 
     def action():

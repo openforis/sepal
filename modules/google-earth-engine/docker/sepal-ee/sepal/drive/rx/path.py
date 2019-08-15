@@ -13,7 +13,7 @@ _root_folder = {'id': 'root', 'name': 'root', 'path': '/'}
 def file_with_path(
         credentials,
         path: str,
-        retries: int = 3
+        retries: int = 5
 ) -> Observable:
     return _files_in_path(credentials, path, retries).pipe(
         last(),
@@ -27,7 +27,7 @@ def download_path(
         destination: str,
         matching: str = None,
         delete_after_download: bool = False,
-        retries: int = 3
+        retries: int = 5
 ) -> Observable:
     return file_with_path(credentials, path).pipe(
         flat_map(
@@ -43,7 +43,7 @@ def download_path(
     )
 
 
-def create_folder_with_path(credentials, path: str, retries: int = 3):
+def create_folder_with_path(credentials, path: str, retries: int = 5):
     def create_if_missing(parent, name_file):
         name = name_file[0]
         file = name_file[1]
@@ -61,7 +61,7 @@ def create_folder_with_path(credentials, path: str, retries: int = 3):
     )
 
 
-def delete_file_with_path(credentials, path: str, retries: int = 3):
+def delete_file_with_path(credentials, path: str, retries: int = 5):
     return _files_in_path(credentials, path, retries).pipe(
         last(),
         filter(lambda file: file),

@@ -33,7 +33,7 @@ def download(
         destination: str,
         matching: str = None,
         delete_after_download: bool = False,
-        retries: int = 3
+        retries: int = 5
 ) -> Observable:
     logging.debug('downloading {} to {}'.format(file, destination))
     destination = os.path.abspath(destination)
