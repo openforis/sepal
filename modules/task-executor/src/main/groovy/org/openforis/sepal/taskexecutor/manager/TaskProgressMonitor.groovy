@@ -1,5 +1,6 @@
 package org.openforis.sepal.taskexecutor.manager
 
+import groovy.json.JsonOutput
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.taskexecutor.api.TaskExecution
 import org.openforis.sepal.util.NamedThreadFactory
@@ -27,7 +28,7 @@ class SepalNotifyingTaskProgressMonitor implements TaskProgressMonitor {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final SepalTaskProgressNotifier notifier
     private final executor = Executors.newSingleThreadScheduledExecutor(
-            NamedThreadFactory.singleThreadFactory('task-progress-monitor')
+        NamedThreadFactory.singleThreadFactory('task-progress-monitor')
     )
 
     SepalNotifyingTaskProgressMonitor(String sepalEndpoint, String taskExecutorUsername, String taskExecutorPassword) {
@@ -42,7 +43,11 @@ class SepalNotifyingTaskProgressMonitor implements TaskProgressMonitor {
     }
 
     void completed(String taskId) {
-        notifier.notifyStateChange(taskId, 'COMPLETED', 'Completed')
+        notifier.notifyStateChange(
+            taskId,
+            'COMPLETED',
+            JsonOutput.toJson([defaultMessage: 'Completed!', messageKey: 'tasks.status.completed', messageArgs: [:]])
+        )
     }
 
     void failed(String taskId, String message) {
@@ -74,14 +79,14 @@ class SepalTaskProgressNotifier {
     void notifyAboutActiveTasks(Collection<TaskExecution> taskExecutions) {
         try {
             def progress = taskExecutions.collectEntries {
-                [(it.taskId): it.progress().message]
+                [(it.taskId): it.progress().toJson()]
             }
             LOG.info("Progress: $progress")
             if (progress)
                 sepal.post(
-                        path: 'tasks/active',
-                        requestContentType: URLENC,
-                        body: [progress: toJson(progress)])
+                    path: 'tasks/active',
+                    requestContentType: URLENC,
+                    body: [progress: toJson(progress)])
         } catch (Exception e) {
             LOG.error("Failed to notify $sepal.uri on progress. taskIds: ${taskExecutions.collect { it.taskId }}", e)
         }
@@ -90,12 +95,12 @@ class SepalTaskProgressNotifier {
     void notifyStateChange(String taskId, String state, String message) {
         try {
             sepal.post(
-                    path: "tasks/task/$taskId/state-updated",
-                    requestContentType: URLENC,
-                    body: [
-                            state            : state,
-                            statusDescription: message
-                    ])
+                path: "tasks/task/$taskId/state-updated",
+                requestContentType: URLENC,
+                body: [
+                    state: state,
+                    statusDescription: message
+                ])
         } catch (Exception e) {
             LOG.error("Failed to notify $sepal.uri on progress. taskId: $taskId, state: $state, message: $message", e)
         }

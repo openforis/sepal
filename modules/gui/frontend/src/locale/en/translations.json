@@ -1267,6 +1267,31 @@
     "none": "You have no background tasks.",
     "removeAll": {
       "tooltip": "Remove all completed, failed, or stopped tasks"
+    },
+    "status": {
+      "initializing": "Initializing...",
+      "executing": "Executing...",
+      "completed": "Completed!",
+      "canceled": "Canceled",
+      "failed": "Failed: {error}",
+      "EEException": "Earth Engine: {error}"
+    },
+    "drive": {
+      "download_folder": "Downloaded {downloaded_files} of {total_files} files ({downloaded} of {total})"
+    },
+    "retrieve": {
+      "image_to_sepal": {
+        "creating_drive_folder": "Creating Google Drive Folders...",
+        "building_vrt": "Building VRT...",
+        "setting_band_names": "Setting band names...",
+        "deleting_drive_folder": "Deleting Google Drive Folders..."
+      },
+      "time_series_to_sepal": {
+        "creating_drive_folder": "Creating Google Drive Folders...",
+        "tiling": "Tiling AOI...",
+        "progress": "Exported {exported}%, Downloaded {downloaded}% ({downloaded_bytes}), Processed {processed}%",
+        "deleting_drive_folder": "Deleting Google Drive Folder."
+      }
     }
   },
   "terminal": {

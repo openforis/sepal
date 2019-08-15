@@ -55,7 +55,7 @@ class Tasks extends React.Component {
             <HoverDetector key={task.id} className={[styles.task, look.look, look.transparent].join(' ')}>
                 <div className={styles.name}>{task.name}</div>
                 <Progress className={styles.progress} status={task.status}/>
-                <div className={styles.statusDescription}>{task.statusDescription}</div>
+                <div className={styles.statusDescription}>{this.getDescription(task)}</div>
                 <HoverOverlay>
                     {this.renderOverlay(task)}
                 </HoverOverlay>
@@ -114,6 +114,22 @@ class Tasks extends React.Component {
                 </Content>
             </SectionLayout>
         )
+    }
+
+    getDescription(task) {
+        let description
+        try {
+            description = JSON.parse(task.statusDescription)
+        } catch(e) {
+            description = task.statusDescription
+        }
+        console.log({description})
+        if (typeof description === 'string') {
+            return description
+        } else {
+            return msg(description.messageKey, description.messageArgs, description.defaultMessage)
+        }
+
     }
 
     componentDidUpdate(prevProps) {
