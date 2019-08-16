@@ -8,4 +8,4 @@ gunicorn==19.7.1
 google-cloud-storage==1.14.0
 google-resumable-media==0.3.2
 google-api-python-client==1.7.9
-git+git://github.com/cdanielw/RxPY.git#egg=rx
+git+git://github.com/cdanielw/RxPY.git@3.0.1#egg=rx
