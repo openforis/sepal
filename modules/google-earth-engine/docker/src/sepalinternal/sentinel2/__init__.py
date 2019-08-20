@@ -1,8 +1,8 @@
 import _strptime
 from abc import abstractmethod
+from datetime import datetime
 
 import ee
-from datetime import datetime
 
 from .analyze import Analyze
 from ..dates import millis_to_date
@@ -82,6 +82,7 @@ class Sentinel2ManualMosaicSpec(Sentinel2MosaicSpec):
     def __str__(self):
         return 'sentinel.Sentinel2ManualMosaicSpec(' + str(self.spec) + ')'
 
+
 class Sentinel2DataSet(DataSet):
     def __init__(self, image_filter, surface_reflectance):
         super(Sentinel2DataSet, self).__init__()
@@ -113,6 +114,14 @@ class Sentinel2DataSet(DataSet):
         if not self.surface_reflectance:
             bands['cirrus'] = 'B10'
         return bands
+
+
+def sentinel_2_data_set(geometry, spec, date_filter):
+    image_filter = ee.Filter.And(
+        ee.Filter.geometry(geometry),
+        date_filter
+    )
+    return Sentinel2DataSet(image_filter, spec.surface_reflectance)
 
 
 _scale_by_band = {

@@ -939,6 +939,10 @@
                   "label": "L4-5 T2",
                   "tooltip": "Landsat 4-5 Tier 2"
                 },
+                "SENTINEL_1": {
+                  "label": "Sentinel 1",
+                  "tooltip": "Sentinel 1A and Sentinel 1B"
+                },
                 "SENTINEL_2": {
                   "label": "A + B",
                   "tooltip": "Sentinel 2A and Sentinel 2B"
@@ -1211,6 +1215,10 @@
             "indicator": {
               "label": "Indicator",
               "required": "You must select an indicator"
+            },
+            "scale": {
+              "label": "Scale",
+              "info": "{scale} meters"
             }
           },
           "task": "Retrieve {name} to Sepal workspace",
@@ -1221,7 +1229,12 @@
           "button": "SRC",
           "form": {
             "dataSets": {
-              "label": "Datasets",
+              "optical": {
+                "label": "Optical"
+              },
+              "radar": {
+                "label": "Radar"
+              },
               "options": {
                 "LANDSAT_7": {
                   "label": "L7",
@@ -1246,6 +1259,14 @@
                 "LANDSAT_TM_T2": {
                   "label": "L4-5 T2",
                   "tooltip": "Landsat 4-5 Tier 2"
+                },
+                "SENTINEL_1": {
+                  "label": "S1",
+                  "tooltip": "Sentinel 1 A+B"
+                },
+                "SENTINEL_2": {
+                  "label": "S2",
+                  "tooltip": "Sentinel 2 A+B"
                 }
               }
             },

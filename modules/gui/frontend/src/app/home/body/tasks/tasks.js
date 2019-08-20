@@ -123,7 +123,6 @@ class Tasks extends React.Component {
         } catch(e) {
             description = task.statusDescription
         }
-        console.log({description})
         if (typeof description === 'string') {
             return description
         } else {
