@@ -44,7 +44,7 @@ class LandsatMosaicSpec(MosaicSpec):
 class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
     def __init__(self, spec):
         super(LandsatAutomaticMosaicSpec, self).__init__(spec)
-        self.sensors = list(spec['recipe']['model']['sources'].values())[0]
+        self.sensors = list(spec['recipe']['model']['sources']['LANDSAT'])
 
     def _data_sets(self):
         image_filter = ee.Filter.And(
