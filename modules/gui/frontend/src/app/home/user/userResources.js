@@ -59,13 +59,12 @@ export default compose(
 
 const PercentCell = ({used, budget, level=null}) => {
     const ratio = used / budget
-    if (!level) {
-        level = 'high'
-        if (ratio < 0.75)
-            level = 'low'
-        else if (ratio < 1)
+        if (ratio >= 1)
+            level = 'high'
+        else if (ratio > 0.75 && level !== 'high')
             level = 'medium'
-    }
+        else if (!level)
+            level = 'low'
     return <td className={[styles.percent, styles[level]].join(' ')}>
         {format.percent(used, budget, 0)}
     </td>
