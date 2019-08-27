@@ -38,8 +38,11 @@ final class StorageUseService {
         def now = clock.now()
         def year = year(now)
         def month = monthOfYear(now)
-        def costPerGbMonth = hostingService.storageCostPerGbMonth()
-        storageUse.gbHours * costPerGbMonth / daysInMonth(year, month) / 24
+        storageUse.gbHours * costPerGbMonth() / daysInMonth(year, month) / 24
+    }
+
+    double costPerGbMonth() {
+        return hostingService.storageCostPerGbMonth()
     }
 
     private StorageUse determineCurrentStorageUse(StorageUse lastStorageUse, double gbUsed) {

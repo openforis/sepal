@@ -1,20 +1,3 @@
-button.budgetExceeded {
-    color: var(--error-color) !important;
-    animation: pulse 1250ms ease-out infinite;
-}
-
-@keyframes pulse {
-    0% {
-        opacity: 1;
-    }
-    10% {
-        opacity: 1;
-    }
-    100% {
-        opacity: .2;
-    }
-}
-
 .resources {
     width: 100%;
     padding: 0 1rem;

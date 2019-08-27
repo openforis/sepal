@@ -10,4 +10,5 @@ class Spending {
     double monthlyStorageSpending
     double storageQuota
     double storageUsed
+    double costPerGbMonth
 }

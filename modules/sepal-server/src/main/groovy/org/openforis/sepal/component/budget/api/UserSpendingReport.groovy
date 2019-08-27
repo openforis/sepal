@@ -11,4 +11,5 @@ class UserSpendingReport {
     double instanceBudget
     double storageBudget
     double storageQuota
+    double costPerGbMonth
 }
