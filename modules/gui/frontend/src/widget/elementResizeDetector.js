@@ -8,16 +8,16 @@ import withSubscriptions from 'subscription'
 
 const UPDATE_DEBOUNCE_MS = 250
 
-const resize$ = new Subject()
-
 export class _ElementResizeDetector extends React.Component {
+    resize$ = new Subject()
+
     render() {
         const {children} = this.props
         return (
             <ReactResizeDetector
                 handleHeight
                 handleWidth
-                onResize={(width, height) => resize$.next({width, height})}>
+                onResize={(width, height) => this.resize$.next({width, height})}>
                 {children || null}
             </ReactResizeDetector>
         )
@@ -26,7 +26,7 @@ export class _ElementResizeDetector extends React.Component {
     componentDidMount() {
         const {debounce, onResize, addSubscription} = this.props
         addSubscription(
-            resize$.pipe(
+            this.resize$.pipe(
                 debounceTime(debounce),
                 distinctUntilChanged()
             ).subscribe(
