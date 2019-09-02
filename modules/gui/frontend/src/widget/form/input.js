@@ -23,7 +23,7 @@ class _FormInput extends React.Component {
                     ? input.value
                     : ''
                 }
-                errorMessage={errorMessage && getErrorMessage(form, input)}
+                errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
                 tabIndex={tabIndex}
                 onChange={e => {
                     input.handleChange(e)
@@ -46,7 +46,7 @@ class _FormInput extends React.Component {
                 className={className}
                 name={input.name}
                 value={input.value || ''}
-                errorMessage={errorMessage && getErrorMessage(form, input)}
+                errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
                 tabIndex={tabIndex}
                 minRows={minRows}
                 maxRows={maxRows}
