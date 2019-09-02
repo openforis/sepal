@@ -1,6 +1,7 @@
 .container {
     position: relative;
     width: 100%;
+    height: 6rem;
     padding: 5rem 5rem 2.5rem 5rem;
     font-family: "Source Sans Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: 400;
