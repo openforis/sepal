@@ -220,7 +220,8 @@
       "password": {
         "label": "Password",
         "placeholder": "Enter a new password",
-        "required": "Password is required"
+        "required": "Password is required",
+        "invalid": "Password must be at least 8 characters long"
       },
       "password2": {
         "label": "Confirm password",

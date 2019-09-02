@@ -219,7 +219,8 @@
       "password": {
         "label": "Mot de passe",
         "placeholder": "Entrer un mot de passe",
-        "required": "Mot de passe requis"
+        "required": "Mot de passe requis",
+        "invalid": "Le mot de passe doit avoir au moins 8 caractères"
       },
       "password2": {
         "label": "Confirmer mot de passe",
@@ -1105,7 +1106,7 @@
           "required": "Nouveau mot de passe requis"
         },
         "newPassword": {
-          "invalid": "LE mot de passe doit avoir au moins 8 caractères",
+          "invalid": "Le mot de passe doit avoir au moins 8 caractères",
           "label": "Nouveau mot de passe",
           "notMatching": "Les mots de passe ne correspondent pas",
           "required": "Nouveau mot de passe requis"

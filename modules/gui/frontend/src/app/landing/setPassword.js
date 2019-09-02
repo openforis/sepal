@@ -15,7 +15,8 @@ import styles from './setPassword.module.css'
 const fields = {
     username: null,
     password: new Form.Field()
-        .notBlank('landing.reset-password.password.required'),
+        .notBlank('landing.reset-password.password.required')
+        .match(/^.{8,100}$/, 'landing.reset-password.password.invalid'),
     password2: new Form.Field()
         .notBlank('landing.reset-password.password2.required')
 
@@ -23,9 +24,13 @@ const fields = {
 
 const constraints = {
     passwordsMatch: new Form.Constraint(['password', 'password2'])
-        .predicate(({password, password2}) =>
-            !password || password === password2,
-        'landing.reset-password.password2.not-matching')
+        .skip(
+            ({password2}) => !password2
+        )
+        .predicate(
+            ({password, password2}) => !password || password === password2,
+            'landing.reset-password.password2.not-matching'
+        )
 }
 
 const mapStateToProps = () => ({
