@@ -50,7 +50,8 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
                         monthlyStorageBudget: 3,
                         monthlyStorageSpending: 4,
                         storageQuota: 5,
-                        storageUsed: 6
+                        storageUsed: 6,
+                        costPerGbMonth: 0
                 ))
 
         when:
@@ -91,7 +92,8 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
                         monthlyStorageBudget: 3d,
                         monthlyStorageSpending: 4d,
                         storageQuota: 5d,
-                        storageUsed: 6d
+                        storageUsed: 6d,
+                        costPerGbMonth: 0d
                 ]
         ])
     }
