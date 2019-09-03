@@ -59,8 +59,8 @@ class Login extends React.Component {
                         tabIndex={2}
                         errorMessage
                     />
-                    <ButtonGroup type='horizontal-wrap-fill'>
-                        <ButtonGroup type='horizontal-tight'>
+                    <ButtonGroup layout='horizontal-wrap-fill'>
+                        <ButtonGroup layout='horizontal-nowrap-tight'>
                             <Button
                                 chromeless
                                 look='transparent'
@@ -84,7 +84,7 @@ class Login extends React.Component {
                                 onClick={() => this.forgotPassword()}
                             />
                         </ButtonGroup>
-                        <ButtonGroup type='horizontal-nowrap-fill'>
+                        <ButtonGroup layout='horizontal-nowrap-fill'>
                             <Button
                                 type='submit'
                                 look='apply'

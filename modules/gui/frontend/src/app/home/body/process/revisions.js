@@ -36,7 +36,7 @@ class Revisions extends React.Component {
             return {value: timestamp, label}
         })
         return (
-            <Form.Buttons type='vertical-tight' uppercase={false} options={options} input={revision}/>
+            <Form.Buttons layout='vertical-tight' uppercase={false} options={options} input={revision}/>
         )
     }
 

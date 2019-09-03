@@ -56,7 +56,7 @@ export class ForgotPassword extends React.Component {
                             validate='onBlur'
                             errorMessage
                         />
-                        <ButtonGroup type='horizontal-spaced'>
+                        <ButtonGroup layout='horizontal-nowrap-spaced'>
                             <Button
                                 chromeless
                                 look='transparent'

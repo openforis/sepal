@@ -15,12 +15,12 @@ const Footer = ({className}) => {
     return (
         <div className={className}>
             <div className={styles.footer}>
-                <ButtonGroup type='horizontal-tight'>
+                <ButtonGroup layout='horizontal-nowrap-tight'>
                     <Title/>
                     <Copyright/>
                 </ButtonGroup>
                 <div>
-                    <ButtonGroup type='horizontal-tight'>
+                    <ButtonGroup layout='horizontal-nowrap-tight'>
                         <UserMessagesButton/>
                         <UsageButton/>
                         <UserDetailsButton/>
@@ -60,7 +60,7 @@ const Title = () => {
         <Layout type='vertical' spacing='none'>
             <Layout type='horizontal-nowrap'>
                 <div>{msg('footer.buildNumber')}</div>
-                <ButtonGroup type='horizontal-tight'>
+                <ButtonGroup layout='horizontal-nowrap-tight'>
                     <Button
                         chromeless
                         shape='pill'
@@ -82,7 +82,7 @@ const Title = () => {
             </Layout>
             <Layout type='horizontal-nowrap'>
                 <div>{msg('footer.gitCommit')}</div>
-                <ButtonGroup type='horizontal-tight'>
+                <ButtonGroup layout='horizontal-nowrap-tight'>
                     <Button
                         chromeless
                         shape='pill'
