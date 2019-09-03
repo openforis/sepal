@@ -27,6 +27,14 @@
     --horizontal-spacing: 0rem;
 }
 
+.buttonGroup.horizontal.spaced {
+    justify-content: space-between;
+}
+
+.buttonGroup.horizontal.right {
+    justify-content: flex-end;
+}
+
 .buttonGroup.horizontal.nowrap {
     flex-wrap: nowrap;
 }

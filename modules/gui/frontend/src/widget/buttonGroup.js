@@ -24,7 +24,7 @@ ButtonGroup.propTypes = {
     type: PropTypes.oneOf([
         'horizontal-wrap', 'horizontal-wrap-fill',
         'horizontal-nowrap', 'horizontal-nowrap-fill',
-        'horizontal-tight',
+        'horizontal-tight', 'horizontal-spaced', 'horizontal-right',
         'vertical', 'vertical-tight'
     ])
 }
