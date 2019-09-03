@@ -107,19 +107,19 @@ class SetPassword extends React.Component {
                         tabIndex={2}
                         errorMessage={[password2, 'passwordsMatch']}
                     />
+                    <div className={styles.buttons}>
+                        <Button
+                            type='submit'
+                            look='apply'
+                            size='x-large'
+                            shape='pill'
+                            icon={resettingPassword ? 'spinner' : 'sign-in-alt'}
+                            label={msg('landing.reset-password.button')}
+                            disabled={form.isInvalid() || resettingPassword}
+                            tabIndex={3}
+                        />
+                    </div>
                 </Layout>
-                <div className={styles.buttons}>
-                    <Button
-                        type='submit'
-                        look='apply'
-                        size='x-large'
-                        shape='pill'
-                        icon={resettingPassword ? 'spinner' : 'sign-in-alt'}
-                        label={msg('landing.reset-password.button')}
-                        disabled={form.isInvalid() || resettingPassword}
-                        tabIndex={3}
-                    />
-                </div>
             </Form>
         )
     }
