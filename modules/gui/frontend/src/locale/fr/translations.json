@@ -215,7 +215,7 @@
     },
     "privacyPolicy": "Politique de confidentialité",
     "reset-password": {
-      "button": "Réinitialiser mot de passe",
+      "button": "Initialiser mot de passe",
       "password": {
         "label": "Mot de passe",
         "placeholder": "Entrer un mot de passe",
