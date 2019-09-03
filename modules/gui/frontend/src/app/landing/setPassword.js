@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
@@ -107,7 +108,7 @@ class SetPassword extends React.Component {
                         tabIndex={2}
                         errorMessage={[password2, 'passwordsMatch']}
                     />
-                    <div className={styles.buttons}>
+                    <ButtonGroup type='horizontal-right'>
                         <Button
                             type='submit'
                             look='apply'
@@ -118,7 +119,7 @@ class SetPassword extends React.Component {
                             disabled={form.isInvalid() || resettingPassword}
                             tabIndex={3}
                         />
-                    </div>
+                    </ButtonGroup>
                 </Layout>
             </Form>
         )
