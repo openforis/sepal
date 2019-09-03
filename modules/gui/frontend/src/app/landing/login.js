@@ -99,7 +99,8 @@ class Login extends React.Component {
                         </ButtonGroup>
                     </ButtonGroup>
                 </Layout>
-            </Form>)
+            </Form>
+        )
     }
 }
 
