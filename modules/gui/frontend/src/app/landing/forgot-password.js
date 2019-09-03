@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {compose} from 'compose'
@@ -39,11 +40,13 @@ export class ForgotPassword extends React.Component {
                 className={styles.form}
                 onSubmit={() => this.requestPasswordReset(email.value)}>
                 <div className={styles.inputs}>
-                    <Label msg={msg('landing.forgot-password.label')}/>
-                    <div className={styles.instructions}>
-                        {msg('landing.forgot-password.instructions')}
-                    </div>
-                    <Layout>
+                    <Layout spacing='loose'>
+                        <div>
+                            <Label msg={msg('landing.forgot-password.label')}/>
+                            <div className={styles.instructions}>
+                                {msg('landing.forgot-password.instructions')}
+                            </div>
+                        </div>
                         <Form.Input
                             input={email}
                             placeholder={msg('landing.forgot-password.placeholder')}
@@ -53,30 +56,30 @@ export class ForgotPassword extends React.Component {
                             validate='onBlur'
                             errorMessage
                         />
+                        <ButtonGroup type='horizontal-spaced'>
+                            <Button
+                                chromeless
+                                look='transparent'
+                                size='large'
+                                shape='pill'
+                                icon='undo'
+                                label={msg('landing.forgot-password.cancel-link')}
+                                tabIndex={3}
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => this.cancel()}
+                            />
+                            <Button
+                                type='submit'
+                                look='apply'
+                                size='x-large'
+                                shape='pill'
+                                icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'envelope'}
+                                label={msg('landing.forgot-password.button')}
+                                disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
+                                tabIndex={2}
+                            />
+                        </ButtonGroup>
                     </Layout>
-                </div>
-                <div className={styles.buttons}>
-                    <Button
-                        chromeless
-                        look='transparent'
-                        size='large'
-                        shape='pill'
-                        icon='undo'
-                        label={msg('landing.forgot-password.cancel-link')}
-                        tabIndex={3}
-                        onMouseDown={e => e.preventDefault()}
-                        onClick={() => this.cancel()}
-                    />
-                    <Button
-                        type='submit'
-                        look='apply'
-                        size='x-large'
-                        shape='pill'
-                        icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'envelope'}
-                        label={msg('landing.forgot-password.button')}
-                        disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
-                        tabIndex={2}
-                    />
                 </div>
             </Form>
         )
