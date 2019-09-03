@@ -35,16 +35,17 @@
 }
 
 .label {
+    font-size: .75rem;
     margin: 0;
-    color: #ccc;
+    color: #aaa;
 }
 
 .label i {
-    width: 1.8rem;
+    width: 1.5rem;
     display: inline-block;
 }
 
 .value {
-    margin-left: 1.8rem;
-    font-size: 1rem;
+    margin-left: 1.5rem;
+    font-size: .9rem;
 }

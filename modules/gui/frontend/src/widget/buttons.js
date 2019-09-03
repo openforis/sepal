@@ -81,9 +81,9 @@ export class Buttons extends React.Component {
     }
 
     renderButtons(options, key) {
-        const {type} = this.props
+        const {layout} = this.props
         return (
-            <ButtonGroup key={key} className={styles.buttons} type={type}>
+            <ButtonGroup key={key} className={styles.buttons} layout={layout}>
                 {options.map(option => this.renderButton(
                     _.isObjectLike(option)
                         ? option
@@ -126,6 +126,7 @@ Buttons.propTypes = {
     className: PropTypes.string,
     disabled: PropTypes.any,
     label: PropTypes.string,
+    layout: PropTypes.string,
     look: PropTypes.string,
     multiple: PropTypes.any,
     options: PropTypes.array,
@@ -133,6 +134,5 @@ Buttons.propTypes = {
     shape: PropTypes.string,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
-    type: PropTypes.string,
     onChange: PropTypes.any,
 }

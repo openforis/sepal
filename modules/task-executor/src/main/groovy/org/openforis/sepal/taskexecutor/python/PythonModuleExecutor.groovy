@@ -1,5 +1,6 @@
 package org.openforis.sepal.taskexecutor.python
 
+import groovy.json.JsonSlurper
 import groovy.transform.Immutable
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.taskexecutor.api.Progress
@@ -39,7 +40,7 @@ class PythonModuleExecutor implements TaskExecutor {
             LOG.info("Status of task $taskId: $status")
             this.status.set(status)
             if (status.hasFailed())
-                throw new Failed(status.message as String)
+                throw new Failed(status.defaultMessage)
             return status.active
         }
     }
@@ -50,7 +51,7 @@ class PythonModuleExecutor implements TaskExecutor {
     }
 
     Progress progress() {
-        return new Progress(status.get().message)
+        return status.get().toProgress()
     }
 
     static class Factory implements TaskExecutorFactory {
@@ -67,7 +68,7 @@ class PythonModuleExecutor implements TaskExecutor {
 
     static class Failed extends RuntimeException {
         Failed(String message) {
-            super(message)
+            super((String) message)
         }
     }
 
@@ -96,9 +97,14 @@ class PythonModuleExecutor implements TaskExecutor {
                 contentType: JSON,
                 query: [task: geeTaskId]
             )
+            def progressText = response.data.progress
+            def progress = new JsonSlurper().parseText(progressText)
             return new Status(
                 state: response.data.state as Status.State,
-                message: response.data.message)
+                defaultMessage: progress.default_message,
+                messageKey: progress.message_key,
+                messageArgs: progress.message_args
+            )
         }
 
         void cancel(String geeTaskId) {
@@ -113,7 +119,9 @@ class PythonModuleExecutor implements TaskExecutor {
     @Immutable
     private static class Status {
         State state
-        String message
+        String defaultMessage
+        String messageKey
+        Map<String, String> messageArgs
 
         boolean isActive() {
             state == State.ACTIVE
@@ -129,6 +137,10 @@ class PythonModuleExecutor implements TaskExecutor {
 
         enum State {
             ACTIVE, COMPLETED, CANCELED, FAILED
+        }
+
+        Progress toProgress() {
+            return new Progress(defaultMessage, messageKey, messageArgs)
         }
     }
 }

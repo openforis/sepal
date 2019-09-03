@@ -1,7 +1,8 @@
+import api from 'api'
+import _ from 'lodash'
+import moment from 'moment'
 import {msg} from 'translate'
 import {recipeActionBuilder} from '../recipe'
-import api from 'api'
-import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -16,6 +17,12 @@ export const defaultModel = {
     preProcessingOptions: {
         corrections: ['SR', 'BRDF'],
         mask: ['SNOW']
+    },
+    options: {
+        orbits: ['ASCENDING'],
+        geometricCorrection: 'ELLIPSOID',
+        speckleFilter: 'NONE',
+        outlierRemoval: 'NONE',
     }
 }
 
@@ -44,13 +51,15 @@ const submitRetrieveRecipeTask = recipe => {
                 title: msg(['process.timeSeries.panel.retrieve.task'], {name}),
                 description: name,
                 indicator: recipe.ui.retrieveOptions.indicator,
-                dataSets: recipe.model.sources[Object.keys(recipe.model.sources)[0]],
+                scale: recipe.ui.retrieveOptions.scale,
+                dataSets: _.flatten(Object.values(recipe.model.sources)),
                 aoi: recipe.model.aoi,
                 fromDate: recipe.model.dates.startDate,
                 toDate: recipe.model.dates.endDate,
                 maskSnow: recipe.model.preProcessingOptions.mask.includes('SNOW'),
                 brdfCorrect: recipe.model.preProcessingOptions.corrections.includes('BRDF'),
-                surfaceReflectance: recipe.model.preProcessingOptions.corrections.includes('SR')
+                surfaceReflectance: recipe.model.preProcessingOptions.corrections.includes('SR'),
+                ...recipe.model.options,
             }
     }
     return api.tasks.submit$(task).subscribe()

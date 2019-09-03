@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
@@ -15,7 +16,8 @@ import styles from './setPassword.module.css'
 const fields = {
     username: null,
     password: new Form.Field()
-        .notBlank('landing.reset-password.password.required'),
+        .notBlank('landing.reset-password.password.required')
+        .match(/^.{8,100}$/, 'landing.reset-password.password.invalid'),
     password2: new Form.Field()
         .notBlank('landing.reset-password.password2.required')
 
@@ -23,9 +25,13 @@ const fields = {
 
 const constraints = {
     passwordsMatch: new Form.Constraint(['password', 'password2'])
-        .predicate(({password, password2}) =>
-            !password || password === password2,
-        'landing.reset-password.password2.not-matching')
+        .skip(
+            ({password2}) => !password2
+        )
+        .predicate(
+            ({password, password2}) => !password || password === password2,
+            'landing.reset-password.password2.not-matching'
+        )
 }
 
 const mapStateToProps = () => ({
@@ -102,19 +108,19 @@ class SetPassword extends React.Component {
                         tabIndex={2}
                         errorMessage={[password2, 'passwordsMatch']}
                     />
+                    <ButtonGroup layout='horizontal-nowrap-right'>
+                        <Button
+                            type='submit'
+                            look='apply'
+                            size='x-large'
+                            shape='pill'
+                            icon={resettingPassword ? 'spinner' : 'check'}
+                            label={msg('landing.reset-password.button')}
+                            disabled={form.isInvalid() || resettingPassword}
+                            tabIndex={3}
+                        />
+                    </ButtonGroup>
                 </Layout>
-                <div className={styles.buttons}>
-                    <Button
-                        type='submit'
-                        look='apply'
-                        size='x-large'
-                        shape='pill'
-                        icon={resettingPassword ? 'spinner' : 'sign-in-alt'}
-                        label={msg('landing.reset-password.button')}
-                        disabled={form.isInvalid() || resettingPassword}
-                        tabIndex={3}
-                    />
-                </div>
             </Form>
         )
     }

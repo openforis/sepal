@@ -216,11 +216,12 @@
     },
     "privacyPolicy": "Privacy policy",
     "reset-password": {
-      "button": "Reset password",
+      "button": "Set password",
       "password": {
         "label": "Password",
         "placeholder": "Enter a new password",
-        "required": "Password is required"
+        "required": "Password is required",
+        "invalid": "Password must be at least 8 characters long"
       },
       "password2": {
         "label": "Confirm password",
@@ -945,6 +946,10 @@
                   "label": "L4-5 T2",
                   "tooltip": "Landsat 4-5 Tier 2"
                 },
+                "SENTINEL_1": {
+                  "label": "Sentinel 1",
+                  "tooltip": "Sentinel 1A and Sentinel 1B"
+                },
                 "SENTINEL_2": {
                   "label": "A + B",
                   "tooltip": "Sentinel 2A and Sentinel 2B"
@@ -1217,6 +1222,10 @@
             "indicator": {
               "label": "Indicator",
               "required": "You must select an indicator"
+            },
+            "scale": {
+              "label": "Scale",
+              "info": "{scale} meters"
             }
           },
           "task": "Retrieve {name} to Sepal workspace",
@@ -1227,7 +1236,12 @@
           "button": "SRC",
           "form": {
             "dataSets": {
-              "label": "Datasets",
+              "optical": {
+                "label": "Optical"
+              },
+              "radar": {
+                "label": "Radar"
+              },
               "options": {
                 "LANDSAT_7": {
                   "label": "L7",
@@ -1252,6 +1266,14 @@
                 "LANDSAT_TM_T2": {
                   "label": "L4-5 T2",
                   "tooltip": "Landsat 4-5 Tier 2"
+                },
+                "SENTINEL_1": {
+                  "label": "S1",
+                  "tooltip": "Sentinel 1 A+B"
+                },
+                "SENTINEL_2": {
+                  "label": "S2",
+                  "tooltip": "Sentinel 2 A+B"
                 }
               }
             },
@@ -1273,6 +1295,31 @@
     "none": "You have no background tasks.",
     "removeAll": {
       "tooltip": "Remove all completed, failed, or stopped tasks"
+    },
+    "status": {
+      "initializing": "Initializing...",
+      "executing": "Executing...",
+      "completed": "Completed!",
+      "canceled": "Canceled",
+      "failed": "Failed: {error}",
+      "EEException": "Earth Engine: {error}"
+    },
+    "drive": {
+      "download_folder": "Downloaded {downloaded_files} of {total_files} files ({downloaded} of {total})"
+    },
+    "retrieve": {
+      "image_to_sepal": {
+        "creating_drive_folder": "Creating Google Drive Folders...",
+        "building_vrt": "Building VRT...",
+        "setting_band_names": "Setting band names...",
+        "deleting_drive_folder": "Deleting Google Drive Folders..."
+      },
+      "time_series_to_sepal": {
+        "creating_drive_folder": "Creating Google Drive Folders...",
+        "tiling": "Tiling AOI...",
+        "progress": "Exported {exported}%, Downloaded {downloaded}% ({downloaded_bytes}), Processed {processed}%",
+        "deleting_drive_folder": "Deleting Google Drive Folder."
+      }
     }
   },
   "terminal": {

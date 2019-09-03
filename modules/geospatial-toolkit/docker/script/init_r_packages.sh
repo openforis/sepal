@@ -34,6 +34,7 @@ R -e "pacman::p_load(\
         'dismo',\
         'dplyr',\
         'DT',\
+        'formatR',\
         'Formula',\
         'ggmap',\
         'ggplot2',\

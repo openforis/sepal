@@ -245,7 +245,7 @@ def create(
 
     collection = ee.ImageCollection('COPERNICUS/S1_GRD') \
         .filterBounds(region) \
-        .filterDate(start_date, end_date) \
+        .filterDate(dates.to_ee_date(start_date), dates.to_ee_date(end_date)) \
         .filterMetadata('resolution_meters', 'equals', 10) \
         .filter(ee.Filter.eq('instrumentMode', 'IW')) \
         .filter(ee.Filter.And(

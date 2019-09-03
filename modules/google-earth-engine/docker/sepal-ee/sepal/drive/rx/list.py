@@ -4,13 +4,14 @@ from sepal.drive import get_service, is_folder
 
 from .observables import execute
 
-PAGE_SIZE = 100
+PAGE_SIZE = 1000
 
 
 def list_folder(
         credentials,
         folder: dict,
-        name_filter: str = None
+        name_filter: str = None,
+        retries: int = 5
 ) -> Observable:
     def next_page(acc):
         def load_page():
@@ -29,7 +30,7 @@ def list_folder(
         return execute(
             credentials,
             load_page,
-            retries=0,
+            retries=retries,
             description='loading file page {}, {}'.format(folder, acc)
         ).pipe(
             map(lambda page: {
@@ -56,18 +57,19 @@ def list_folder(
 
 def list_folder_recursively(
         credentials,
-        folder: dict
+        folder: dict,
+        retries: int = 5
 ) -> Observable:
     def recurse(file):
         if is_folder(file):
             return concat(
                 of([file]),
-                list_folder_recursively(credentials, file),
+                list_folder_recursively(credentials, file, retries),
             )
         else:
             return of([file])
 
-    return list_folder(credentials, folder).pipe(
+    return list_folder(credentials, folder, retries=retries).pipe(
         flat_map(lambda files: from_list(files)),
         flat_map(recurse),
         reduce(lambda acc, files: acc + files, []),

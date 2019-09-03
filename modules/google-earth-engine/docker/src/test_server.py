@@ -42,7 +42,7 @@ def destroy():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument('--gee-email', required=True, help='Earth Engine service account email')
     parser.add_argument('--gee-key-path', required=True, help='Path to Earth Engine service account key')

@@ -167,7 +167,7 @@ class _Tabs extends React.Component {
 
     renderNavigationButtons() {
         return (
-            <ButtonGroup type='horizontal-nowrap'>
+            <ButtonGroup layout='horizontal-nowrap'>
                 <Button
                     chromeless
                     look='transparent'

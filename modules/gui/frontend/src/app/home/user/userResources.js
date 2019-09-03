@@ -6,7 +6,7 @@ import format from 'format'
 import styles from './userResources.module.css'
 
 const mapStateToProps = () => ({
-    userReport: select('user.currentUserReport')
+    userReport: select('user.currentUserReport'),
 })
 
 class UserResources extends React.Component {
@@ -32,7 +32,13 @@ class UserResources extends React.Component {
                         <th>{msg('user.report.resources.monthlyStorage')}</th>
                         <td className={styles.number}>{format.dollars(spending.monthlyStorageBudget)}</td>
                         <td className={styles.number}>{format.dollars(spending.monthlyStorageSpending)}</td>
-                        <PercentCell used={spending.monthlyStorageSpending} budget={spending.monthlyStorageBudget}/>
+                        <PercentCell
+                            used={spending.monthlyStorageSpending}
+                            budget={spending.monthlyStorageBudget}
+                            level={spending.projectedStorageSpending > spending.monthlyStorageBudget
+                                ? 'medium'
+                                : undefined
+                            }/>
                     </tr>
                     <tr>
                         <th>{msg('user.report.resources.storage')}</th>
@@ -51,13 +57,14 @@ export default compose(
     connect(mapStateToProps)
 )
 
-const PercentCell = ({used, budget}) => {
+const PercentCell = ({used, budget, level=null}) => {
     const ratio = used / budget
-    let level = 'high'
-    if (ratio < 0.75)
-        level = 'low'
-    else if (ratio < 1)
-        level = 'medium'
+        if (ratio >= 1)
+            level = 'high'
+        else if (ratio > 0.75 && level !== 'high')
+            level = 'medium'
+        else if (!level)
+            level = 'low'
     return <td className={[styles.percent, styles[level]].join(' ')}>
         {format.percent(used, budget, 0)}
     </td>

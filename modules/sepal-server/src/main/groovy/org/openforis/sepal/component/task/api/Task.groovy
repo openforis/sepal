@@ -1,5 +1,6 @@
 package org.openforis.sepal.component.task.api
 
+import groovy.json.JsonOutput
 import groovy.transform.Immutable
 
 import static org.openforis.sepal.component.task.api.Task.State.*
@@ -82,16 +83,16 @@ class Task {
     }
 
     enum State {
-        PENDING('Initializing...'),
-        ACTIVE('Executing...'),
-        COMPLETED('Completed!'),
-        CANCELED('Canceled'),
-        FAILED('Failed')
+        PENDING([defaultMessage: 'Initializing...', messageKey: 'tasks.status.initializing', messageArgs: [:]]),
+        ACTIVE([defaultMessage: 'Executing...', messageKey: 'tasks.status.executing', messageArgs: [:]]),
+        COMPLETED([defaultMessage: 'Completed!', messageKey: 'tasks.status.completed', messageArgs: [:]]),
+        CANCELED([defaultMessage: 'Canceled.', messageKey: 'tasks.status.canceled', messageArgs: [:]]),
+        FAILED([defaultMessage: 'Failed: Internal Error', messageKey: 'tasks.status.failed', messageArgs: [error: 'Internal Error']])
 
         final String description
 
-        State(String description) {
-            this.description = description
+        State(Map<String, String> description) {
+            this.description = JsonOutput.toJson(description)
         }
     }
 }

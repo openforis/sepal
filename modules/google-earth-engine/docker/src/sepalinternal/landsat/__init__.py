@@ -1,9 +1,9 @@
 import _strptime
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from itertools import groupby
 
 import ee
+from sepal.ee.image import replace
 
 from .analyze import Analyze
 from ..dates import millis_to_date
@@ -44,7 +44,7 @@ class LandsatMosaicSpec(MosaicSpec):
 class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
     def __init__(self, spec):
         super(LandsatAutomaticMosaicSpec, self).__init__(spec)
-        self.sensors = list(spec['recipe']['model']['sources'].values())[0]
+        self.sensors = list(spec['recipe']['model']['sources']['LANDSAT'])
 
     def _data_sets(self):
         image_filter = ee.Filter.And(
@@ -222,12 +222,11 @@ class LandsatDataSet(DataSet):
                     'intercepts': [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
                 }
             }[prefix]
-            t = image.get("system:time_start")
-            bandNames = ee.List(['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])
-            otherBands = ee.Image(image).bandNames().removeAll(bandNames)
-            others = image.select(otherBands)
-            image = ee.Image(image).select(bandNames).multiply(coefs['slopes']).add(coefs['intercepts']).float()
-            return ee.Image(image.addBands(others).copyProperties(image).set("system:time_start", t))
+            band_names = ee.List(['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])
+            other_bands = image.bandNames().removeAll(band_names)
+            others = image.select(other_bands)
+            image = replace(image, image.select(band_names).multiply(coefs['slopes']).add(coefs['intercepts']).float())
+            return replace(image, image.addBands(others))
 
     def bands(self):
         return {
@@ -281,6 +280,7 @@ class LandsatDataSet(DataSet):
                 'pixel_qa': 'pixel_qa'},
         }[self.collection_name]
 
+
 _scale_by_band = {
     'aerosol': 30,
     'blue': 30,
@@ -303,6 +303,7 @@ _scale_by_band = {
     'daysFromTarget': 30,
     'unixTimeDays': 30
 }
+
 
 def _flatten(iterable):
     return [item for sublist in iterable for item in sublist]

@@ -1,4 +1,5 @@
 import ee
+from sepal.ee.image import select_and_add_missing
 
 from ..image_operation import ImageOperation
 
@@ -7,17 +8,17 @@ def mask_clouds(mosaic_def, collection):
     if not mosaic_def.mask_clouds:
         reduced = collection.select('cloud') \
             .reduce(ee.Reducer.sum()
-                    .combine(ee.Reducer.count(), "", True)
-                    .combine(ee.Reducer.min(), "", True))
+            .combine(ee.Reducer.count(), "", True)
+            .combine(ee.Reducer.min(), "", True))
         # Proportion of pixels that are cloudy
-        cloud_proportion = reduced.select('cloud_sum') \
-            .divide(reduced.select('cloud_count'))
+        cloud_proportion = select_and_add_missing(reduced, ['cloud_sum']) \
+            .divide(select_and_add_missing(reduced, ['cloud_count']))
         # A representative proportion of pixels that are cloudy cloudy for the neighborhood
         normal_cloud_proportion = cloud_proportion.reproject(crs='EPSG:4326', scale=10000) \
             .max(cloud_proportion.reproject(crs='EPSG:4326', scale=20000))
         # Measure of how a locations cloud proportion differs from the general area
         cloud_proportion_diff = cloud_proportion.subtract(normal_cloud_proportion)
-        only_clouds = reduced.select('cloud_min')
+        only_clouds = select_and_add_missing(reduced, ['cloud_min'])
 
         # When there is higher proportion of clouds than the normally, keep the clouds.
         # It's probably something (typically buildings) misclassified as clouds.

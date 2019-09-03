@@ -89,5 +89,5 @@ const modelToValues = model => {
 
 export default compose(
     PreProcessingOptions,
-    recipeFormPanel({id: 'preProcessingOptions', fields, modelToValues, valuesToModel})
+    recipeFormPanel({id: 'options', fields, modelToValues, valuesToModel})
 )

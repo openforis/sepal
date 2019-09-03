@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from functools import reduce
+from sepal.ee.image import select_and_add_missing
 
 import ee
 
@@ -65,17 +66,16 @@ class Mosaic(object):
 
             def add_distance(image):
                 distanceByBand = image.expression(
-                    '1 - abs((i - m) / (i + m))', {
+                    'pow(i - m, 2)', {
                         'i': image.select(distance_bands),
                         'm': collection.select(distance_bands).median()})
                 return image.addBands(
-                    distanceByBand.reduce(ee.Reducer.sum()).rename(['distanceToMedian'])
+                    distanceByBand.reduce(ee.Reducer.sum()).sqrt().multiply(-1).rename(['distanceToMedian'])
                 )
 
             collection = collection.map(add_distance)
             mosaic = collection.qualityMosaic('distanceToMedian')
-        return mosaic \
-            .select(bands) \
+        return select_and_add_missing(mosaic, bands) \
             .int16() \
             .clip(self.mosaic_def.aoi.geometry())
 

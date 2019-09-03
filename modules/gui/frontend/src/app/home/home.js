@@ -1,19 +1,20 @@
-import {ActivationContext} from 'widget/activation/activationContext'
-import {PortalContainer} from 'widget/portal'
-import {compose} from 'compose'
-import {connect} from 'store'
-import {exhaustMap, map} from 'rxjs/operators'
-import {isFloating} from './menu/menuMode'
-import {timer} from 'rxjs'
-import Body from './body/body'
-import Footer from './footer/footer'
-import Map from './map/map'
-import Menu from './menu/menu'
-import PropTypes from 'prop-types'
-import React from 'react'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import {compose} from 'compose'
+import moment from 'moment'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {timer} from 'rxjs'
+import {exhaustMap, map} from 'rxjs/operators'
+import {connect} from 'store'
+import {ActivationContext} from 'widget/activation/activationContext'
+import {PortalContainer} from 'widget/portal'
+import Body from './body/body'
+import Footer from './footer/footer'
 import styles from './home.module.css'
+import Map from './map/map'
+import Menu from './menu/menu'
+import {isFloating} from './menu/menuMode'
 
 const mapStateToProps = () => ({
     floatingMenu: isFloating(),
@@ -28,12 +29,26 @@ const timedRefresh$ = (api$, refreshSeconds = 60) =>
 const updateUserReport$ = () =>
     timedRefresh$(api.user.loadCurrentUserReport$, 10).pipe(
         map(currentUserReport => {
+            const projectedStorageSpending = projectStorageSpending(currentUserReport.spending)
+            currentUserReport.spending.projectedStorageSpending = projectedStorageSpending
             return actionBuilder('UPDATE_CURRENT_USER_REPORT')
                 .set('user.currentUserReport', currentUserReport)
                 .set('user.budgetExceeded', isBudgetExceeded(currentUserReport))
+                .set('user.budgetWarning', projectedStorageSpending > currentUserReport.spending.monthlyStorageBudget)
                 .dispatch()
         })
     )
+
+const projectStorageSpending = spending => {
+    const storageUsed = spending.storageUsed
+    const costPerGbMonth = spending.costPerGbMonth
+    const today = moment().date()
+    const lastOfMonth = moment().endOf('month').date()
+    const fractionLeftOfMonth = 1 - today / lastOfMonth
+    const storageCostForRestOfMonth = storageUsed * costPerGbMonth * fractionLeftOfMonth
+    const monthlyStorageSpending = spending.monthlyStorageSpending
+    return  monthlyStorageSpending + storageCostForRestOfMonth
+}
 
 const isBudgetExceeded = currentUserReport => {
     const {

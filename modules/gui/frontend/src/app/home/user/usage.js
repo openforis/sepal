@@ -1,18 +1,18 @@
-import {Activator} from 'widget/activation/activator'
-import {Button} from 'widget/button'
-import {Layout} from 'widget/layout'
-import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
+import format from 'format'
+import React from 'react'
 import {connect, select} from 'store'
 import {msg} from 'translate'
+import {activatable} from 'widget/activation/activatable'
+import {Activator} from 'widget/activation/activator'
+import {Button} from 'widget/button'
 import Label from 'widget/label'
-import React from 'react'
+import {Layout} from 'widget/layout'
+import {Panel} from 'widget/panel/panel'
+import styles from './usage.module.css'
 import UserResources from './userResources'
 import UserSession from './userSession'
 import UserSessions from './userSessions'
-import format from 'format'
-import styles from './usage.module.css'
 
 const mapStateToProps = () => ({
     userReport: select('user.currentUserReport'),
@@ -89,7 +89,7 @@ const Usage = compose(
 
 Usage.propTypes = {}
 
-const _UsageButton = ({userReport, budgetExceeded}) => {
+const _UsageButton = ({userReport, budgetExceeded, budgetWarning}) => {
     const hourlySpending = userReport.sessions
         ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
         : 0
@@ -105,7 +105,8 @@ const _UsageButton = ({userReport, budgetExceeded}) => {
                         look='transparent'
                         size='large'
                         air='less'
-                        additionalClassName={budgetExceeded ? styles.budgetExceeded : null}
+                        additionalClassName={budgetExceeded ? styles.budgetExceeded
+                            : budgetWarning ? styles.budgetWarning : null}
                         icon='dollar-sign'
                         label={label}
                         disabled={active}
@@ -124,6 +125,7 @@ export const UsageButton = compose(
     _UsageButton,
     connect(state => ({
         userReport: (state.user && state.user.currentUserReport) || {},
-        budgetExceeded: select('user.budgetExceeded')
+        budgetExceeded: select('user.budgetExceeded'),
+        budgetWarning: select('user.budgetWarning'),
     }))
 )

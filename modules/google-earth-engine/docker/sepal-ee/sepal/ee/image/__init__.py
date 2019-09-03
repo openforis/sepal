@@ -1,5 +1,6 @@
-import ee
 import math
+
+import ee
 
 
 def evaluate_pairwise(image, bands, expression, name_template):
@@ -43,18 +44,18 @@ def evaluate_pairwise(image, bands, expression, name_template):
     def evaluate_image_bands_pairwise():
         return list_to_image(
             image_bands \
-            .slice(0, image_bands.size().divide(image_bands.size()).multiply(-1))
-            .map(lambda band1:
-                image_bands \
-                    .slice(image_bands.indexOf(ee.String(band1)).add(1))
-                    .map(lambda band2:
-                        evaluate_pair(
-                            image.select([ee.String(band1)]),
-                            image.select([ee.String(band2)])
-                        )
-                    )
-            ) \
-            .flatten()
+                .slice(0, image_bands.size().divide(image_bands.size()).multiply(-1))
+                .map(lambda band1:
+            image_bands \
+                .slice(image_bands.indexOf(ee.String(band1)).add(1))
+                .map(lambda band2:
+            evaluate_pair(
+                image.select([ee.String(band1)]),
+                image.select([ee.String(band2)])
+            )
+            )
+                ) \
+                .flatten()
         )
 
     return when(
@@ -82,7 +83,7 @@ def evaluate(image, required_bands, expression, name):
 
     image_bands = band_intersection(image, required_bands)
     has_required_bands = image_bands.length().eq(len(required_bands))
-    return ee.Image(when(has_required_bands, evaluate_image))
+    return when(has_required_bands, evaluate_image)
 
 
 def list_to_image(image_list):
@@ -135,6 +136,13 @@ def band_intersection(image, bands):
     ))
 
 
+def replace(image, replacement_image):
+    """
+    Replaces all bands in image with the bands in image2. All properties from image are kept.
+    """
+    return image.select([]).addBands(replacement_image)
+
+
 def when(condition, true_callback):
     """
     Returns an image with result of callback when condition is true, otherwise an image without bands.
@@ -144,4 +152,13 @@ def when(condition, true_callback):
         0,
         condition.Not().Not().subtract(1)  # -1 if false, 0 if true
     )
-    return ee.Image(true_list.iterate(lambda ignore1, ignore2: true_callback(), ee.Image().select([])))
+    return ee.Image().select([]).addBands(
+        ee.Image(
+            true_list.iterate(lambda ignore1, ignore2: true_callback(), ee.Image().select([]))
+        )
+    )
+
+
+def set_precision(image, precision):
+    return getattr(image, precision)()
+

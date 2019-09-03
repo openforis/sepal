@@ -1,7 +1,10 @@
+from typing import Union
+
 import ee
-from rx import concat, of
+from rx import concat
 from rx.operators import flat_map
 from sepal.rx.workqueue import WorkQueue
+from sepal.task.rx.observables import progress
 
 from .asset import delete_asset
 from .observables import enqueue, execute
@@ -19,8 +22,8 @@ def export_image_to_asset(
         scale: int = None,
         crs: str = None,
         crs_transform: str = None,
-        max_pixels: int = None,
-        retries: int = 3
+        max_pixels: Union[int, float] = None,
+        retries: int = 0
 ):
     asset_id, description = _init_asset_id_and_description(asset_id, description)
 
@@ -51,7 +54,7 @@ def export_table_to_asset(
         collection: ee.FeatureCollection,
         description: str = None,
         asset_id: str = None,
-        retries: int = 3
+        retries: int = 0
 ):
     asset_id, description = _init_asset_id_and_description(asset_id, description)
 
@@ -87,12 +90,13 @@ def export_image_to_drive(
         skip_empty_tiles=None,
         file_format: str = None,
         format_options: str = None,
-        retries: int = 3
+        retries: int = 0
 ):
     def create_task():
         return ee.batch.Export.image.toDrive(
             image=image,
             description=description,
+            folder=folder,
             fileNamePrefix=file_name_prefix,
             dimensions=dimensions,
             region=region,
@@ -110,7 +114,7 @@ def export_image_to_drive(
     return _export_to_drive(
         credentials,
         create_task=create_task,
-        description='export_table_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
+        description='export_image_to_drive(description={}, folder={}, fileNamePrefix={}'.format(
             description, folder, file_name_prefix
         ),
         retries=retries
@@ -125,7 +129,7 @@ def export_table_to_drive(
         file_name_prefix: str = None,
         file_format: str = None,
         selectors=None,
-        retries: int = 3
+        retries: int = 0
 ):
     def create_task():
         return ee.batch.Export.table.toDrive(
@@ -192,14 +196,17 @@ def _export_to_drive(credentials, create_task, description, retries):
 
 # Work (i.e. exports) is grouped by credentials, limiting concurrent exports per credentials
 _ee_exports = WorkQueue(
-    concurrency_per_group=2,
+    concurrency_per_group=5,
     description='earth-engine-exports'
 )
 
 
 def _export(credentials, create_observable, description, retries):
     return concat(
-        of('PENDING'),
+        progress(
+            default_message='Submitting export task to Google Earth Engine...',
+            message_key='tasks.ee.export.pending'
+        ),
         enqueue(
             credentials,
             queue=_ee_exports,

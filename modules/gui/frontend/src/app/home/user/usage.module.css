@@ -1,3 +1,24 @@
 .panel {
     width: 40rem;
 }
+
+button.budgetExceeded {
+    color: var(--error-color) !important;
+    animation: pulse 1250ms ease-out infinite;
+}
+
+button.budgetWarning {
+    color: var(--warning-color) !important;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        opacity: .2;
+    }
+}

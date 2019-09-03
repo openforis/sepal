@@ -18,6 +18,5 @@ class Analyze(ImageOperation):
         return self.image
 
     def _mask_if_any_band_is_masked(self):
-        for band in list(self.bands.keys()):
-            isMasked = self.toImage(band).mask().reduce('min').eq(0)
-            self.updateMask(isMasked.Not())
+        has_masked = self.image.mask().reduce('min').eq(0)
+        self.updateMask(has_masked.Not())

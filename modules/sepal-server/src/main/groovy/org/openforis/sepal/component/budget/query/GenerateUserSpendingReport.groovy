@@ -32,6 +32,7 @@ class GenerateUserSpendingReportHandler implements QueryHandler<UserSpendingRepo
         double instanceSpending = instanceSpendingService.instanceSpending(username)
         def storageUse = storageUseService.storageUseForThisMonth(query.username)
         double storageSpending = storageUseService.calculateSpending(storageUse)
+        double costPerGbMonth = storageUseService.costPerGbMonth()
         def budget = budgetRepository.userBudget(username)
         new UserSpendingReport(
             username: username,
@@ -40,7 +41,8 @@ class GenerateUserSpendingReportHandler implements QueryHandler<UserSpendingRepo
             storageUsage: storageUse.gb,
             instanceBudget: budget.instanceSpending,
             storageBudget: budget.storageSpending,
-            storageQuota: budget.storageQuota
+            storageQuota: budget.storageQuota,
+            costPerGbMonth: costPerGbMonth
         )
     }
 }

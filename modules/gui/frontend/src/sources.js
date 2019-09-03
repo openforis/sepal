@@ -159,12 +159,3 @@ export const isDataSetInDateRange = (dataSetId, fromDate, toDate) => {
     const endOk = moment(toDate).subtract(1, 'days').year() >= dataSet.fromYear
     return startOk && endOk
 }
-
-export const isSourceInDateRange = (sourceId, fromDate, toDate) => {
-    if (!sourceId)
-        return false
-    else
-        return !!imageSourceById[sourceId].dataSets.find(dataSetId =>
-            isDataSetInDateRange(dataSetId, fromDate, toDate)
-        )
-}

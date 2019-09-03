@@ -26,7 +26,7 @@ class LandCoverBottomBar extends Component {
                 {this.renderPrimitiveSelector()}
                 {hasNext ? this.renderNextPrimitiveButton() : null}
             </div>
-            <ButtonGroup type='horizontal-nowrap'>
+            <ButtonGroup layout='horizontal-nowrap'>
                 {this.renderCreatePrimitiveButton()}
                 {this.renderNextButton()}
             </ButtonGroup>
