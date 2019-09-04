@@ -28,7 +28,7 @@ class Tasks extends React.Component {
         return (
             <div className={styles.overlay}>
                 {['FAILED', 'COMPLETED', 'CANCELED'].includes(task.status) ? (
-                    <ButtonGroup type='vertical'>
+                    <ButtonGroup layout='vertical'>
                         <Button
                             icon='copy'
                             label={msg('button.copyToClipboard')}

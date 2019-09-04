@@ -216,7 +216,7 @@
     },
     "privacyPolicy": "Privacy policy",
     "reset-password": {
-      "button": "Reset password",
+      "button": "Set password",
       "password": {
         "label": "Password",
         "placeholder": "Enter a new password",

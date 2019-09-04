@@ -25,7 +25,7 @@ export default class SectionSelection extends React.Component {
             <Form.Buttons
                 look='transparent'
                 shape='pill'
-                type='vertical'
+                layout='vertical'
                 air='more'
                 input={section}
                 options={options}/>

@@ -2,7 +2,6 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {getLanguage, setLanguage} from 'translate'
 import React from 'react'
-import styles from './languageSelector.module.css'
 
 const LanguageSelector = () => {
     const languages = [
@@ -12,12 +11,10 @@ const LanguageSelector = () => {
     ]
 
     return (
-        <div className={styles.languages}>
-            <ButtonGroup>
-                {languages.map(({code, name}) =>
-                    <Language key={code} code={code} name={name} selected={code === getLanguage()}/>)}
-            </ButtonGroup>
-        </div>
+        <ButtonGroup>
+            {languages.map(({code, name}) =>
+                <Language key={code} code={code} name={name} selected={code === getLanguage()}/>)}
+        </ButtonGroup>
     )
 }
 

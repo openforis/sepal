@@ -118,7 +118,7 @@ class _SuperButton extends React.Component {
                         <div className={styles.description}>{this.renderHighlight(description)}</div>
                     </div>
                     <ButtonGroup
-                        type='horizontal-nowrap'
+                        layout='horizontal-nowrap'
                         className={styles.buttons}>
                         {this.renderTimestamp()}
                         {this.renderExtraButtons()}

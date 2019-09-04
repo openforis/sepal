@@ -59,47 +59,48 @@ class Login extends React.Component {
                         tabIndex={2}
                         errorMessage
                     />
-                </Layout>
-                <div className={styles.buttons}>
-                    <ButtonGroup
-                        type='horizontal-wrap'
-                        className={styles.extraButtons}>
-                        <Button
-                            chromeless
-                            look='transparent'
-                            size='large'
-                            shape='pill'
-                            alignment='left'
-                            label={msg('landing.login.sign-up')}
-                            tabIndex={4}
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={signUp}
-                        />
-                        <Button
-                            chromeless
-                            look='transparent'
-                            size='large'
-                            shape='pill'
-                            alignment='left'
-                            label={msg('landing.login.forgot-password-link')}
-                            tabIndex={5}
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={() => this.forgotPassword()}
-                        />
+                    <ButtonGroup layout='horizontal-wrap-fill'>
+                        <ButtonGroup layout='horizontal-nowrap-tight'>
+                            <Button
+                                chromeless
+                                look='transparent'
+                                size='large'
+                                shape='pill'
+                                alignment='left'
+                                label={msg('landing.login.sign-up')}
+                                tabIndex={4}
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={signUp}
+                            />
+                            <Button
+                                chromeless
+                                look='transparent'
+                                size='large'
+                                shape='pill'
+                                alignment='left'
+                                label={msg('landing.login.forgot-password-link')}
+                                tabIndex={5}
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => this.forgotPassword()}
+                            />
+                        </ButtonGroup>
+                        <ButtonGroup layout='horizontal-nowrap-fill'>
+                            <Button
+                                type='submit'
+                                look='apply'
+                                size='x-large'
+                                shape='pill'
+                                additionalClassName={styles.loginButton}
+                                icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
+                                label={msg('landing.login.button')}
+                                disabled={form.isInvalid() || action('LOGIN').dispatching}
+                                tabIndex={3}
+                            />
+                        </ButtonGroup>
                     </ButtonGroup>
-                    <Button
-                        type='submit'
-                        look='apply'
-                        size='x-large'
-                        shape='pill'
-                        additionalClassName={styles.loginButton}
-                        icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
-                        label={msg('landing.login.button')}
-                        disabled={form.isInvalid() || action('LOGIN').dispatching}
-                        tabIndex={3}
-                    />
-                </div>
-            </Form>)
+                </Layout>
+            </Form>
+        )
     }
 }
 

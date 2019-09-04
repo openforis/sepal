@@ -2,17 +2,17 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './buttonGroup.module.css'
 
-const typeClassNames = type =>
-    type.split('-').map(className => styles[className])
+const classNames = layout =>
+    layout.split('-').map(className => styles[className])
 
-export const ButtonGroup = ({children, type, className}) =>
+export const ButtonGroup = ({children, layout, className}) =>
     <div className={[
         styles.container,
         className
     ].join(' ')}>
         <div className={[
             styles.buttonGroup,
-            ...typeClassNames(type)
+            ...classNames(layout)
         ].join(' ')}>
             {children}
         </div>
@@ -21,14 +21,22 @@ export const ButtonGroup = ({children, type, className}) =>
 ButtonGroup.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
-    type: PropTypes.oneOf([
-        'horizontal-wrap', 'horizontal-wrap-fill',
-        'horizontal-nowrap', 'horizontal-nowrap-fill',
-        'horizontal-tight',
-        'vertical', 'vertical-tight'
+    layout: PropTypes.oneOf([
+        'horizontal-wrap',
+        'horizontal-wrap-tight',
+        'horizontal-wrap-spaced',
+        'horizontal-wrap-fill', // it adds more vertical space too
+        'horizontal-wrap-right',
+        'horizontal-nowrap',
+        'horizontal-nowrap-tight',
+        'horizontal-nowrap-spaced',
+        'horizontal-nowrap-fill',
+        'horizontal-nowrap-right',
+        'vertical',
+        'vertical-tight'
     ])
 }
 
 ButtonGroup.defaultProps = {
-    type: 'horizontal-wrap'
+    layout: 'horizontal-wrap'
 }
