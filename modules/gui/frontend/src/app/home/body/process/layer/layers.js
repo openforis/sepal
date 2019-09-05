@@ -9,6 +9,7 @@ import {msg} from 'translate'
 // import PropTypes from 'prop-types'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject} from 'rxjs'
+// import {removeArea} from './layerAreas'
 import React from 'react'
 import styles from './layers.module.css'
 
@@ -63,13 +64,25 @@ export class _Layers extends React.Component {
                 areas={areas}
                 drag$={this.drag$}
                 onUpdate={areas => this.setState({areas})}>
-                {({value}) =>
-                    <div className={styles.area}>
-                        {value}
-                    </div>
-                }
+                {({area, value}) => (
+                    <SuperButton
+                        className={styles.layerButton}
+                        title={`Layer ${value}`}
+                        dragTooltip={msg('drag to drop area to show layer')}
+                        removeMessage={msg('please confirm removal of this layer')}
+                        removeTooltip={msg('remove this layer')}
+                        drag$={this.drag$}
+                        dragValue={value}
+                        onRemove={() => this.removeArea(area)}
+                    />
+                )}
             </LayerDrop>
         )
+    }
+
+    removeArea(area) {
+        const {areas} = this.state
+        // this.setState({areas: removeArea({areas, area})})
     }
 
     renderLayers() {
@@ -80,6 +93,7 @@ export class _Layers extends React.Component {
                         {this.renderLayer(1)}
                         {this.renderLayer(2)}
                         {this.renderLayer(3)}
+                        {this.renderLayer(4)}
                     </Padding>
                 </Scrollable>
             </ScrollableContainer>
@@ -90,15 +104,13 @@ export class _Layers extends React.Component {
         return (
             <SuperButton
                 className={styles.layerButton}
-                title='title'
+                title={`Layer ${layer}`}
                 description='description'
                 dragTooltip={msg('drag to drop area to show layer')}
                 removeMessage={msg('please confirm removal of this layer')}
                 removeTooltip={msg('remove this layer')}
                 drag$={this.drag$}
                 dragValue={layer}
-                // onDrag={cursor => this.drag$.next({dragging: layer, dragPosition: cursor})}
-                // onDragEnd={() => this.drag$.next({})}
                 onRemove={() => null}
             />
         )
