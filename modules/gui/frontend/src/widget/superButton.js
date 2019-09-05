@@ -5,7 +5,6 @@ import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Highlight from 'react-highlighter'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
@@ -20,11 +19,7 @@ class _SuperButton extends React.Component {
 
     state = {
         selected: false,
-        dragging: false,
-        draggingPosition: {
-            x: undefined,
-            y: undefined
-        }
+        dragging: false
     }
 
     handleClick() {
@@ -60,8 +55,8 @@ class _SuperButton extends React.Component {
     }
 
     isDraggable() {
-        const {onDragStart, onDrag, onDragEnd} = this.props
-        return onDragStart || onDrag || onDragEnd
+        const {drag$, onDragStart, onDrag, onDragEnd} = this.props
+        return drag$ || onDragStart || onDrag || onDragEnd
     }
 
     isDragging() {
@@ -70,26 +65,6 @@ class _SuperButton extends React.Component {
     }
 
     render() {
-        return (
-            <React.Fragment>
-                {this.renderButton()}
-                {/* {this.renderDraggable()} */}
-            </React.Fragment>
-        )
-    }
-
-    renderDraggable() {
-        const {dragging} = this.state
-        return dragging
-            ? (
-                <Portal>
-                    {this.renderButton(dragging)}
-                </Portal>
-            )
-            : null
-    }
-
-    renderButton(coords) {
         const {className, title, description} = this.props
         const classNames = _.flatten([
             styles.container,
@@ -100,17 +75,10 @@ class _SuperButton extends React.Component {
             this.isInteractive() ? null : lookStyles.nonInteractive,
             this.isDraggable() ? styles.draggable : null,
             this.isDragging() ? styles.dragging : null,
-            className]).join(' ')
+            className
+        ]).join(' ')
         return (
-            <div
-                // ref={this.ref}
-                className={classNames}
-                style={{
-                    position: coords ? 'absolute' : 'inherit',
-                    top: coords && coords.y,
-                    left: coords && coords.x
-                }}
-            >
+            <div className={classNames}>
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     <div className={styles.info}>
@@ -230,8 +198,8 @@ class _SuperButton extends React.Component {
     }
 
     renderDragButton() {
-        const {onDragStart, onDrag, onDragEnd, dragTooltip, tooltipPlacement} = this.props
-        return onDragStart || onDrag || onDragEnd
+        const {dragTooltip, tooltipPlacement} = this.props
+        return this.isDraggable()
             ? (
                 <Button
                     ref={this.ref}
@@ -259,18 +227,17 @@ class _SuperButton extends React.Component {
     }
 
     initializeDraggable() {
-        const {onDragStart, onDrag, onDragEnd} = this.props
         const {addSubscription} = this.props
         const draggable = this.ref.current
         const hammer = new Hammer(draggable)
         hammer.get('pan').set({direction: Hammer.DIRECTION_ALL})
         const pan$ = fromEvent(hammer, 'panstart panmove panend')
         const filterPanEvent = type => pan$.pipe(filter(e => e.type === type))
-        const start$ = filterPanEvent('panstart')
+        const dragStart$ = filterPanEvent('panstart')
         const move$ = filterPanEvent('panmove')
-        const end$ = filterPanEvent('panend')
+        const dragEnd$ = filterPanEvent('panend')
         const animationFrame$ = interval(0, animationFrameScheduler)
-        const drag$ = start$.pipe(
+        const dragMove$ = dragStart$.pipe(
             switchMap(() =>
                 animationFrame$.pipe(
                     switchMap(() =>
@@ -284,26 +251,32 @@ class _SuperButton extends React.Component {
         )
         
         addSubscription(
-            onDragStart && start$.subscribe(() => this.onDragStart()),
-            onDrag && drag$.subscribe(e => this.onDrag(e)),
-            onDragEnd && end$.subscribe(() => this.onDragEnd())
+            dragStart$.subscribe(() => this.onDragStart()),
+            dragMove$.subscribe(coords => this.onDragMove(coords)),
+            dragEnd$.subscribe(() => this.onDragEnd())
         )
     }
 
     onDragStart() {
-        const {onDragStart} = this.props
-        this.setState({dragging: true}, () => onDragStart && onDragStart())
+        const {drag$, dragValue, onDragStart} = this.props
+        this.setState({dragging: true}, () => {
+            drag$ && drag$.next({dragging: true, value: dragValue})
+            onDragStart && onDragStart(dragValue)
+        })
     }
 
-    onDrag(coords) {
-        const {onDrag} = this.props
-        this.setState({dragging: coords}, () => onDrag && onDrag(coords))
+    onDragMove(coords) {
+        const {drag$, onDrag} = this.props
+        drag$ && drag$.next({coords})
         onDrag && onDrag(coords)
     }
 
     onDragEnd() {
-        const {onDragEnd} = this.props
-        this.setState({dragging: false}, () => onDragEnd && onDragEnd())
+        const {drag$, onDragEnd} = this.props
+        this.setState({dragging: false}, () => {
+            drag$ && drag$.next({dragging: false})
+            onDragEnd && onDragEnd()
+        })
     }
 
     componentDidMount() {
@@ -323,7 +296,9 @@ SuperButton.propTypes = {
     className: PropTypes.string,
     clickToSelect: PropTypes.any,
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    drag$: PropTypes.object,
     dragTooltip: PropTypes.string,
+    dragValue: PropTypes.any,
     duplicateTooltip: PropTypes.string,
     editTooltip: PropTypes.string,
     extraButtons: PropTypes.arrayOf(PropTypes.object),
@@ -345,7 +320,7 @@ SuperButton.propTypes = {
     onDuplicate: PropTypes.func,
     onEdit: PropTypes.func,
     onInfo: PropTypes.func,
-    onRemove: PropTypes.func,
+    onRemove: PropTypes.func
 }
 
 SuperButton.defaultProps = {
