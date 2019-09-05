@@ -1,3 +1,4 @@
+import {LayerDrop} from './layerDrop'
 import {Padding} from 'widget/padding'
 import {Panel} from 'widget/panel/panel'
 import {SuperButton} from 'widget/superButton'
@@ -5,25 +6,20 @@ import {Toolbar} from 'widget/toolbar/toolbar'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import LayerDrop from './layerDrop'
 // import PropTypes from 'prop-types'
-import React from 'react'
-// import _ from 'lodash'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Subject} from 'rxjs'
+import React from 'react'
 import styles from './layers.module.css'
 
 export class _Layers extends React.Component {
     state = {
         areas: {
             center: 0
-        },
-        dragging: false,
-        draggingPosition: {
-            x: undefined,
-            y: undefined
-        },
-        draggingValue: null
+        }
     }
+
+    drag$ = new Subject()
 
     render() {
         const {activatable: {deactivate}} = this.props
@@ -60,17 +56,13 @@ export class _Layers extends React.Component {
     }
 
     renderDropTarget() {
-        const {areas, dragging, draggingPosition, draggingValue} = this.state
+        const {areas} = this.state
         return (
             <LayerDrop
                 className={styles.dropTarget}
                 areas={areas}
-                cursor={draggingPosition}
-                value={draggingValue}
-                dragging={dragging}
-                onUpdate={nextAreas => {
-                    this.setState({nextAreas})
-                }}>
+                drag$={this.drag$}
+                onUpdate={areas => this.setState({areas})}>
                 {({value}) =>
                     <div className={styles.area}>
                         {value}
@@ -88,7 +80,6 @@ export class _Layers extends React.Component {
                         {this.renderLayer(1)}
                         {this.renderLayer(2)}
                         {this.renderLayer(3)}
-                        {this.renderLayer(4)}
                     </Padding>
                 </Scrollable>
             </ScrollableContainer>
@@ -104,32 +95,14 @@ export class _Layers extends React.Component {
                 dragTooltip={msg('drag to drop area to show layer')}
                 removeMessage={msg('please confirm removal of this layer')}
                 removeTooltip={msg('remove this layer')}
-                onDragStart={() => this.onDragStart(layer)}
-                onDrag={cursor => this.onDrag(cursor)}
-                onDragEnd={() => this.onDragEnd()}
+                drag$={this.drag$}
+                dragValue={layer}
+                // onDrag={cursor => this.drag$.next({dragging: layer, dragPosition: cursor})}
+                // onDragEnd={() => this.drag$.next({})}
                 onRemove={() => null}
             />
         )
     }
-
-    onDragStart(layer) {
-        this.setState({
-            dragging: true,
-            draggingValue: layer
-        })
-    }
-
-    onDrag(draggingPosition) {
-        this.setState({draggingPosition})
-    }
-
-    onDragEnd() {
-        this.setState(({nextAreas}) => ({
-            dragging: false,
-            areas: nextAreas
-        }))
-    }
-
 }
 
 const policy = () => ({

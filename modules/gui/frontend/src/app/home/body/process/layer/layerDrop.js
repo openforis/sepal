@@ -1,18 +1,23 @@
 import {HoverDetector} from 'widget/hover'
 import {assignAreas, validAreas} from './layerAreas'
-import {throwStatement} from '@babel/types'
+import {compose} from 'compose'
+import {distinctUntilChanged, filter, map, mapTo} from 'rxjs/operators'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './layerDrop.module.css'
+import withSubscription from 'subscription'
 
-export default class LayerDrop extends React.Component {
+class _LayerDrop extends React.Component {
     state = {
         areaCenters: null,
         nextAreas: undefined,
         closestArea: undefined,
-        hovering: false
+        hovering: false,
+        dragging: false,
+        dragValue: null
     }
+
     areaRefs = {
         center: React.createRef(),
         top: React.createRef(),
@@ -26,24 +31,22 @@ export default class LayerDrop extends React.Component {
     }
 
     setHovering(hovering) {
-        const {areas, onHover} = this.props
         this.setState({hovering})
-        if (onHover && !hovering) {
-            onHover(areas)
-        }
     }
 
     render() {
-        const {areas, dragging, className} = this.props
-        const {hovering} = this.state
+        const {areas, className} = this.props
+        const {dragging, hovering} = this.state
         const includeCorners = Object.keys(areas).length > 1
         return (
-            <HoverDetector onHover={hovering => this.setHovering(hovering)} className={[
-                styles.container,
-                dragging ? styles.dragging : null,
-                hovering ? styles.hovering : null,
-                className
-            ].join(' ')}>
+            <HoverDetector
+                className={[
+                    styles.container,
+                    dragging ? styles.dragging : null,
+                    hovering ? styles.hovering : null,
+                    className
+                ].join(' ')}
+                onHover={hovering => this.setHovering(hovering)}>
                 {this.renderCenter()}
                 {this.renderTopBottom()}
                 {this.renderLeftRight()}
@@ -98,8 +101,8 @@ export default class LayerDrop extends React.Component {
     }
 
     renderArea(area) {
-        const {areas, dragging, children} = this.props
-        const {closestArea} = this.state
+        const {areas, children} = this.props
+        const {dragging, closestArea} = this.state
         const highlighted = dragging && (closestArea === area)
         const value = areas[area]
         return (
@@ -115,35 +118,102 @@ export default class LayerDrop extends React.Component {
                     {value && children({area, value})}
                 </div>
             </div>
+            // <div
+            //     ref={this.areaRefs[area]}
+            //     key={area}
+            //     className={[
+            //         styles.area,
+            //         highlighted ? styles.highlighted : null,
+            //         value ? styles.assigned : null
+            //     ].join(' ')}>
+            //     <div className={styles.placeholder}>
+            //         {value && children({area, value})}
+            //     </div>
+            // </div>
         )
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        const {areas, cursor, value, onUpdate} = this.props
-        const {hovering, areaCenters} = this.state
-        if (areas && !areaCenters) {
-            this.setState({areaCenters: this.calculateDropTargetCenters()})
-        }
-        if (hovering) {
-            if (areaCenters && !_.isEqual(prevProps.cursor, cursor)) {
-                const closestArea = this.calculateClosestArea(areaCenters, cursor)
-                if (closestArea !== prevState.closestArea) {
-                    const nextAreas = assignAreas({areas, area: closestArea, value})
-                    this.setState({nextAreas, areaCenters: this.calculateDropTargetCenters()})
-                    onUpdate && onUpdate(nextAreas)
-                }
-                this.setState({closestArea})
-            }
+    componentDidMount() {
+        const {drag$} = this.props
+        
+        const dragStart$ = drag$.pipe(
+            filter(({dragging}) => dragging === true),
+            map(({value}) => value)
+        )
+        const dragMove$ = drag$.pipe(
+            filter(({coords}) => coords),
+            map(({coords}) => coords),
+            map(coords => this.calculateClosestArea(coords)),
+            distinctUntilChanged()
+        )
+        const dragEnd$ = drag$.pipe(
+            filter(({dragging}) => dragging === false),
+            mapTo()
+        )
+        
+        withSubscription(
+            dragStart$.subscribe(
+                value => this.onDragStart(value)
+            ),
+            dragMove$.subscribe(
+                closestArea => this.onDragMove(closestArea)
+            ),
+            dragEnd$.subscribe(
+                () => this.onDragEnd()
+            )
+        )
+    }
+
+    onDragStart(value) {
+        this.setState({
+            dragging: true,
+            dragValue: value
+        })
+    }
+
+    onDragMove(closestArea) {
+        const {areas} = this.props
+        const {dragValue} = this.state
+        if (closestArea) {
+            this.setState({
+                closestArea,
+                nextAreas: assignAreas({areas, area: closestArea, value: dragValue}),
+                areaCenters: this.calculateDropTargetCenters()
+            })
         }
     }
 
-    calculateClosestArea(areaCenters, cursor) {
-        return _.chain(areaCenters)
-            .mapValues(center => Math.pow(center.x - cursor.x, 2) + Math.pow(center.y - cursor.y, 2))
-            .toPairs()
-            .minBy(1)
-            .get(0)
-            .value()
+    onDragEnd() {
+        const {onUpdate} = this.props
+        const {hovering, nextAreas} = this.state
+        this.setState({
+            dragging: false,
+            dragValue: null
+        })
+        if (hovering) {
+            onUpdate && onUpdate(nextAreas)
+        }
+    }
+
+    componentDidUpdate() {
+        const {areas} = this.props
+        const {areaCenters} = this.state
+        if (areas && !areaCenters) {
+            this.setState({areaCenters: this.calculateDropTargetCenters()})
+        }
+    }
+
+    calculateClosestArea(cursor) {
+        const {areaCenters, dragging} = this.state
+        const squaredDistanceFromCursor = center => Math.pow(center.x - cursor.x, 2) + Math.pow(center.y - cursor.y, 2)
+        return dragging
+            ? _.chain(areaCenters)
+                .mapValues(areaCenter => squaredDistanceFromCursor(areaCenter))
+                .toPairs()
+                .minBy(1)
+                .get(0)
+                .value()
+            : null
     }
 
     calculateDropTargetCenters() {
@@ -154,11 +224,15 @@ export default class LayerDrop extends React.Component {
             const {top, right, bottom, left} = areaElement.getBoundingClientRect()
             const center = {y: Math.round((top + bottom) / 2), x: Math.round((left + right) / 2)}
             centers[area] = center
-        }
-        )
+        })
         return centers
     }
 }
+
+export const LayerDrop = compose(
+    _LayerDrop,
+    withSubscription()
+)
 
 LayerDrop.propTypes = {
     areas: PropTypes.shape({
@@ -166,10 +240,6 @@ LayerDrop.propTypes = {
         value: PropTypes.any
     }),
     className: PropTypes.string,
-    cursor: PropTypes.shape({
-        x: PropTypes.number,
-        y: PropTypes.number,
-    }),
-    value: PropTypes.any,
+    drag$: PropTypes.object,
     onUpdate: PropTypes.func
 }
