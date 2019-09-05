@@ -20,6 +20,44 @@ export const assignArea = ({areas, area, value}) => {
     return nextState
 }
 
+export const removeArea = ({areas, area}) => {
+    const replacementMap = {
+        center: () => [],
+        top: areas => areas.bottom
+            ? {center: areas.bottom}
+            : {left: areas.bottomLeft, right: areas.bottomRight},
+        bottom: areas => areas.top
+            ? {center: areas.top}
+            : {left: areas.topLeft, right: areas.topRight},
+        left: areas => areas.right
+            ? {center: areas.right}
+            : {top: areas.topRight, bottom: areas.bottomRight},
+        right: areas => areas.left
+            ? {center: areas.left}
+            : {top: areas.topLeft, bottom: areas.bottomLeft},
+        topLeft: areas => areas.right
+            ? {left: areas.bottomLeft}
+            : {top: areas.topRight},
+        topRight: areas => areas.left
+            ? {right: areas.bottomRight}
+            : {top: areas.topLeft},
+        bottomLeft: areas => areas.right
+            ? {left: areas.topLeft}
+            : {bottom: areas.bottomRight},
+        bottomRight: areas => areas.left
+            ? {right: areas.topRight}
+            : {bottom: areas.bottomLeft}
+    }
+
+    const replacements = replacementMap[area]
+
+    return _.reduce(
+        replacements(areas),
+        (areas, value, area) => assignArea({areas, area, value}),
+        areas
+    )
+}
+
 const maskByArea = {
     center: [
         [1, 1],

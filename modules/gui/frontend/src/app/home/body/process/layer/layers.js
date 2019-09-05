@@ -9,7 +9,7 @@ import {msg} from 'translate'
 // import PropTypes from 'prop-types'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {Subject} from 'rxjs'
-// import {removeArea} from './layerAreas'
+import {removeArea} from './layerAreas'
 import React from 'react'
 import styles from './layers.module.css'
 
@@ -82,7 +82,7 @@ export class _Layers extends React.Component {
 
     removeArea(area) {
         const {areas} = this.state
-        // this.setState({areas: removeArea({areas, area})})
+        this.setState({areas: removeArea({areas, area})})
     }
 
     renderLayers() {
