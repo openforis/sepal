@@ -64,19 +64,23 @@ export class _Layers extends React.Component {
                 areas={areas}
                 drag$={this.drag$}
                 onUpdate={areas => this.setState({areas})}>
-                {({area, value}) => (
-                    <SuperButton
-                        className={styles.layerButton}
-                        title={`Layer ${value}`}
-                        dragTooltip={msg('drag to drop area to show layer')}
-                        removeMessage={msg('please confirm removal of this layer')}
-                        removeTooltip={msg('remove this layer')}
-                        drag$={this.drag$}
-                        dragValue={value}
-                        onRemove={() => this.removeArea(area)}
-                    />
-                )}
+                {({area, value}) => this.renderAreaInfo(area, value)}
             </LayerDrop>
+        )
+    }
+
+    renderAreaInfo(area, value) {
+        return (
+            <SuperButton
+                className={styles.layerButton}
+                title={`Layer ${value}`}
+                dragTooltip={msg('drag to drop area to show layer')}
+                removeMessage={msg('please confirm removal of this layer')}
+                removeTooltip={msg('remove this layer')}
+                drag$={this.drag$}
+                dragValue={value}
+                onRemove={() => this.removeArea(area)}
+            />
         )
     }
 
@@ -94,6 +98,8 @@ export class _Layers extends React.Component {
                         {this.renderLayer(2)}
                         {this.renderLayer(3)}
                         {this.renderLayer(4)}
+                        {this.renderLayer(5)}
+                        {this.renderLayer(6)}
                     </Padding>
                 </Scrollable>
             </ScrollableContainer>
