@@ -1,5 +1,5 @@
 import {HoverDetector} from 'widget/hover'
-import {assignAreas, validAreas} from './layerAreas'
+import {assignArea, validAreas} from './layerAreas'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo} from 'rxjs/operators'
 import PropTypes from 'prop-types'
@@ -118,18 +118,6 @@ class _LayerDrop extends React.Component {
                     {value && children({area, value})}
                 </div>
             </div>
-            // <div
-            //     ref={this.areaRefs[area]}
-            //     key={area}
-            //     className={[
-            //         styles.area,
-            //         highlighted ? styles.highlighted : null,
-            //         value ? styles.assigned : null
-            //     ].join(' ')}>
-            //     <div className={styles.placeholder}>
-            //         {value && children({area, value})}
-            //     </div>
-            // </div>
         )
     }
 
@@ -177,7 +165,7 @@ class _LayerDrop extends React.Component {
         if (closestArea) {
             this.setState({
                 closestArea,
-                nextAreas: assignAreas({areas, area: closestArea, value: dragValue}),
+                nextAreas: assignArea({areas, area: closestArea, value: dragValue}),
                 areaCenters: this.calculateDropTargetCenters()
             })
         }

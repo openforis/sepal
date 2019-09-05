@@ -7,7 +7,7 @@ export const validAreas = areas => {
         : ['center', 'top', 'topRight', 'right', 'bottomRight', 'bottom', 'bottomLeft', 'left', 'topLeft']
 }
 
-export const assignAreas = ({areas, area, value}) => {
+export const assignArea = ({areas, area, value}) => {
     assertValidState(areas)
     const newMask = maskByArea[area]
     const nextState = {[area]: value}

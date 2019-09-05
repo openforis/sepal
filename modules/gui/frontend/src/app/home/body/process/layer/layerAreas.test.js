@@ -1,4 +1,4 @@
-import {assignAreas, validAreas} from './layerAreas'
+import {assignArea, validAreas} from './layerAreas'
 import _ from 'lodash'
 
 /* eslint-disable no-undef */
@@ -31,8 +31,8 @@ test('validAreas(${JSON.stringify(areas)}) => ${result}')
         // {areas: {left, bottom}, result: []},
     )
 
-test('assignAreas(${JSON.stringify(areas)}, area, value) => ${result}')
-    .assert(({areas, area, value, result}) => expect(assignAreas({areas, area, value})).toEqual(result))
+test('assignArea(${JSON.stringify(areas)}, area, value) => ${result}')
+    .assert(({areas, area, value, result}) => expect(assignArea({areas, area, value})).toEqual(result))
     .where(
         {areas: {center}, value: 'value', area: 'center', result: {center: 'value'}},
         {areas: {center}, value: 'value', area: 'left', result: {left: 'value', right: center}},
