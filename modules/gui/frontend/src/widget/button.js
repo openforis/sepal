@@ -12,7 +12,7 @@ import styles from './button.module.css'
 import withForwardedRef from 'ref'
 import withSubscriptions from 'subscription'
 
-const CLICK_HOLD_DELAY_MS = 750
+const CLICK_HOLD_DURATION_MS = 600
 const CLICK_CANCEL_DELAY_MS = 250
 
 const windowMouseUp$ = fromEvent(window, 'mouseup').pipe(distinctUntilChanged())
@@ -111,7 +111,7 @@ class _Button extends React.Component {
         const {onClickHold} = this.props
         const style = {
             '--click-hold-delay-ms': `${CLICK_CANCEL_DELAY_MS}ms`,
-            '--click-hold-duration-ms': `${CLICK_HOLD_DELAY_MS - CLICK_CANCEL_DELAY_MS}ms`
+            '--click-hold-duration-ms': `${CLICK_HOLD_DURATION_MS - CLICK_CANCEL_DELAY_MS}ms`
         }
         return onClickHold ? (
             <span ref={this.button} className={styles.wrapper} style={style}>
@@ -248,7 +248,7 @@ class _Button extends React.Component {
             const clickHold$ =
                 mouseTrigger$.pipe(
                     switchMap(() =>
-                        timer(CLICK_HOLD_DELAY_MS).pipe(
+                        timer(CLICK_HOLD_DURATION_MS).pipe(
                             takeUntil(cancel$),
                             switchMap(() =>
                                 mouseActivate$.pipe(
