@@ -31,11 +31,8 @@ class _LayerDrop extends React.Component {
     }
 
     render() {
-        const {areas, className} = this.props
-        const {nextAreas, dragging, hovering} = this.state
-        const currentAreas = dragging && hovering
-            ? nextAreas || areas
-            : areas
+        const {className} = this.props
+        const {dragging, hovering} = this.state
         return (
             <HoverDetector
                 className={[
@@ -45,50 +42,69 @@ class _LayerDrop extends React.Component {
                     className
                 ].join(' ')}
                 onHover={hovering => this.setState({hovering})}>
-                {this.renderAreas(currentAreas)}
+                {this.renderCurrentAreas()}
+                {this.renderNextAreas()}
             </HoverDetector>
         )
     }
 
-    renderAreas(areas) {
+    renderCurrentAreas() {
+        const {areas} = this.props
+        const {nextAreas, dragging, hovering} = this.state
+        const hidden = !!(dragging && hovering && nextAreas)
+        return (
+            <div className={hidden ? styles.hidden : null}>
+                {this.renderAreas(areas, true)}
+            </div>
+        )
+    }
+
+    renderNextAreas() {
+        const {nextAreas, dragging, hovering} = this.state
+        return dragging && hovering && nextAreas
+            ? this.renderAreas(nextAreas, false)
+            : null
+    }
+
+    renderAreas(areas, current) {
         return (
             <React.Fragment>
                 <div className={styles.layoutWrapper}>
                     <div className={[styles.layout, styles.center].join(' ')}>
-                        {this.renderArea(areas, 'center')}
+                        {this.renderArea(areas, current, 'center')}
                     </div>
                 </div>
                 <div className={styles.layoutWrapper}>
                     <div className={[styles.layout, styles.topBottom].join(' ')}>
-                        {this.renderArea(areas, 'top')}
-                        {this.renderArea(areas, 'bottom')}
+                        {this.renderArea(areas, current, 'top')}
+                        {this.renderArea(areas, current, 'bottom')}
                     </div>
                 </div>
                 <div className={styles.layoutWrapper}>
                     <div className={[styles.layout, styles.leftRight].join(' ')}>
-                        {this.renderArea(areas, 'left')}
-                        {this.renderArea(areas, 'right')}
+                        {this.renderArea(areas, current, 'left')}
+                        {this.renderArea(areas, current, 'right')}
                     </div>
                 </div>
                 <div className={styles.layoutWrapper}>
                     <div className={[styles.layout, styles.corners].join(' ')}>
-                        {this.renderArea(areas, 'topLeft')}
-                        {this.renderArea(areas, 'topRight')}
-                        {this.renderArea(areas, 'bottomLeft')}
-                        {this.renderArea(areas, 'bottomRight')}
+                        {this.renderArea(areas, current, 'topLeft')}
+                        {this.renderArea(areas, current, 'topRight')}
+                        {this.renderArea(areas, current, 'bottomLeft')}
+                        {this.renderArea(areas, current, 'bottomRight')}
                     </div>
                 </div>
             </React.Fragment>
         )
     }
 
-    renderArea(areas, area) {
+    renderArea(areas, current, area) {
         const {dragging, closestArea} = this.state
-        const highlighted = dragging && area === closestArea
+        const highlighted = !current && dragging && area === closestArea
         const value = areas[area]
         return (
             <div
-                ref={this.areaRefs[area]}
+                ref={current ? this.areaRefs[area] : null}
                 key={area}
                 className={[
                     styles.area,

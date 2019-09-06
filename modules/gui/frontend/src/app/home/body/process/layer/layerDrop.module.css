@@ -19,6 +19,10 @@
     pointer-events: none;
 }
 
+.hidden .layoutWrapper {
+    opacity: 0;
+}
+
 .layout {
     display: grid;
     width: 100%;
