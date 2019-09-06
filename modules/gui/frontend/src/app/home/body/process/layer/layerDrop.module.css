@@ -19,10 +19,6 @@
     pointer-events: none;
 }
 
-.placeholder {
-    pointer-events: all;
-}
-
 .layout {
     display: grid;
     width: 100%;
@@ -63,6 +59,10 @@
     background-color: hsla(240, 100%, 60%, .5);
 }
 
-.dragging .placeholder {
+.areaContent {
+    pointer-events: all;
+}
+
+.dragging .areaContent {
     pointer-events: none;
 }

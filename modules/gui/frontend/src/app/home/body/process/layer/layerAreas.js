@@ -2,9 +2,14 @@ import _ from 'lodash'
 
 export const validAreas = areas => {
     assertValidState(areas)
-    return Object.keys(areas).length === 1
-        ? ['center', 'top', 'right', 'bottom', 'left']
-        : ['center', 'top', 'topRight', 'right', 'bottomRight', 'bottom', 'bottomLeft', 'left', 'topLeft']
+    const size = _.size(areas)
+    if (size === 0) {
+        return ['center']
+    }
+    if (size === 1) {
+        return ['center', 'top', 'right', 'bottom', 'left']
+    }
+    return ['center', 'top', 'topRight', 'right', 'bottomRight', 'bottom', 'bottomLeft', 'left', 'topLeft']
 }
 
 export const assignArea = ({areas, area, value}) => {
@@ -22,7 +27,6 @@ export const assignArea = ({areas, area, value}) => {
 
 export const removeArea = ({areas, area}) => {
     const replacementMap = {
-        center: () => [],
         top: areas => areas.bottom
             ? {center: areas.bottom}
             : {left: areas.bottomLeft, right: areas.bottomRight},
@@ -49,13 +53,16 @@ export const removeArea = ({areas, area}) => {
             : {bottom: areas.bottomLeft}
     }
 
-    const replacements = replacementMap[area]
-
-    return _.reduce(
-        replacements(areas),
-        (areas, value, area) => assignArea({areas, area, value}),
-        areas
-    )
+    if (area === 'center') {
+        return {}
+    } else {
+        const replacements = replacementMap[area]
+        return _.reduce(
+            replacements(areas),
+            (areas, value, area) => assignArea({areas, area, value}),
+            areas
+        )
+    }
 }
 
 const maskByArea = {
@@ -113,7 +120,7 @@ const assertValidState = areas => {
         .keys()
         .map(area => _.flatten(maskByArea[area]))
         .reduce((acc, mask) => sum(acc, mask), nullMask)
-        .every(value => value === 1)
+        .every(value => value <= 1)
         .value()
     if (!valid) {
         throw Error('Invalid areas: ' + JSON.stringify(areas))

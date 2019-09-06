@@ -30,14 +30,12 @@ class _LayerDrop extends React.Component {
         topLeft: React.createRef(),
     }
 
-    setHovering(hovering) {
-        this.setState({hovering})
-    }
-
     render() {
         const {areas, className} = this.props
-        const {dragging, hovering} = this.state
-        const includeCorners = Object.keys(areas).length > 1
+        const {nextAreas, dragging, hovering} = this.state
+        const currentAreas = dragging && hovering
+            ? nextAreas || areas
+            : areas
         return (
             <HoverDetector
                 className={[
@@ -46,64 +44,47 @@ class _LayerDrop extends React.Component {
                     hovering ? styles.hovering : null,
                     className
                 ].join(' ')}
-                onHover={hovering => this.setHovering(hovering)}>
-                {this.renderCenter()}
-                {this.renderTopBottom()}
-                {this.renderLeftRight()}
-                {includeCorners ? this.renderCorners() : null}
+                onHover={hovering => this.setState({hovering})}>
+                {this.renderAreas(currentAreas)}
             </HoverDetector>
         )
     }
 
-    renderCenter() {
+    renderAreas(areas) {
         return (
-            <div className={styles.layoutWrapper}>
-                <div className={[styles.layout, styles.center].join(' ')}>
-                    {this.renderArea('center')}
+            <React.Fragment>
+                <div className={styles.layoutWrapper}>
+                    <div className={[styles.layout, styles.center].join(' ')}>
+                        {this.renderArea(areas, 'center')}
+                    </div>
                 </div>
-            </div>
+                <div className={styles.layoutWrapper}>
+                    <div className={[styles.layout, styles.topBottom].join(' ')}>
+                        {this.renderArea(areas, 'top')}
+                        {this.renderArea(areas, 'bottom')}
+                    </div>
+                </div>
+                <div className={styles.layoutWrapper}>
+                    <div className={[styles.layout, styles.leftRight].join(' ')}>
+                        {this.renderArea(areas, 'left')}
+                        {this.renderArea(areas, 'right')}
+                    </div>
+                </div>
+                <div className={styles.layoutWrapper}>
+                    <div className={[styles.layout, styles.corners].join(' ')}>
+                        {this.renderArea(areas, 'topLeft')}
+                        {this.renderArea(areas, 'topRight')}
+                        {this.renderArea(areas, 'bottomLeft')}
+                        {this.renderArea(areas, 'bottomRight')}
+                    </div>
+                </div>
+            </React.Fragment>
         )
     }
 
-    renderTopBottom() {
-        return (
-            <div className={styles.layoutWrapper}>
-                <div className={[styles.layout, styles.topBottom].join(' ')}>
-                    {this.renderArea('top')}
-                    {this.renderArea('bottom')}
-                </div>
-            </div>
-        )
-    }
-
-    renderLeftRight() {
-        return (
-            <div className={styles.layoutWrapper}>
-                <div className={[styles.layout, styles.leftRight].join(' ')}>
-                    {this.renderArea('left')}
-                    {this.renderArea('right')}
-                </div>
-            </div>
-        )
-    }
-
-    renderCorners() {
-        return (
-            <div className={styles.layoutWrapper}>
-                <div className={[styles.layout, styles.corners].join(' ')}>
-                    {this.renderArea('topLeft')}
-                    {this.renderArea('topRight')}
-                    {this.renderArea('bottomLeft')}
-                    {this.renderArea('bottomRight')}
-                </div>
-            </div>
-        )
-    }
-
-    renderArea(area) {
-        const {areas, children} = this.props
+    renderArea(areas, area) {
         const {dragging, closestArea} = this.state
-        const highlighted = dragging && (closestArea === area)
+        const highlighted = dragging && area === closestArea
         const value = areas[area]
         return (
             <div
@@ -114,11 +95,20 @@ class _LayerDrop extends React.Component {
                     highlighted ? styles.highlighted : null,
                     value ? styles.assigned : null
                 ].join(' ')}>
-                <div className={styles.placeholder}>
-                    {value && children({area, value})}
-                </div>
+                {this.renderAreaContent(area, value)}
             </div>
         )
+    }
+
+    renderAreaContent(area, value) {
+        const {children} = this.props
+        return value
+            ? (
+                <div className={styles.areaContent}>
+                    {children({area, value})}
+                </div>
+            )
+            : null
     }
 
     componentDidMount() {
@@ -152,6 +142,13 @@ class _LayerDrop extends React.Component {
         )
     }
 
+    componentDidUpdate(prevProps) {
+        const {areas} = this.props
+        if (prevProps.areas !== areas) {
+            this.setState({areaCenters: this.calculateDropTargetCenters()})
+        }
+    }
+
     onDragStart(value) {
         this.setState({
             dragging: true,
@@ -165,8 +162,7 @@ class _LayerDrop extends React.Component {
         if (closestArea) {
             this.setState({
                 closestArea,
-                nextAreas: assignArea({areas, area: closestArea, value: dragValue}),
-                areaCenters: this.calculateDropTargetCenters()
+                nextAreas: assignArea({areas, area: closestArea, value: dragValue})
             })
         }
     }
@@ -183,17 +179,10 @@ class _LayerDrop extends React.Component {
         }
     }
 
-    componentDidUpdate() {
-        const {areas} = this.props
-        const {areaCenters} = this.state
-        if (areas && !areaCenters) {
-            this.setState({areaCenters: this.calculateDropTargetCenters()})
-        }
-    }
-
     calculateClosestArea(cursor) {
         const {areaCenters, dragging} = this.state
-        const squaredDistanceFromCursor = center => Math.pow(center.x - cursor.x, 2) + Math.pow(center.y - cursor.y, 2)
+        const squaredDistanceFromCursor = center =>
+            Math.pow(center.x - cursor.x, 2) + Math.pow(center.y - cursor.y, 2)
         return dragging
             ? _.chain(areaCenters)
                 .mapValues(areaCenter => squaredDistanceFromCursor(areaCenter))
@@ -207,12 +196,15 @@ class _LayerDrop extends React.Component {
     calculateDropTargetCenters() {
         const {areas} = this.props
         const centers = {}
-        validAreas(areas).forEach(area => {
-            const areaElement = this.areaRefs[area].current
-            const {top, right, bottom, left} = areaElement.getBoundingClientRect()
-            const center = {y: Math.round((top + bottom) / 2), x: Math.round((left + right) / 2)}
-            centers[area] = center
-        })
+        validAreas(areas)
+            .forEach(area => {
+                const areaElement = this.areaRefs[area].current
+                const {top, right, bottom, left} = areaElement.getBoundingClientRect()
+                centers[area] = {
+                    x: Math.round((left + right) / 2),
+                    y: Math.round((top + bottom) / 2)
+                }
+            })
         return centers
     }
 }

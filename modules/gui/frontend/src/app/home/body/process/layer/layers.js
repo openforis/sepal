@@ -1,25 +1,31 @@
 import {LayerDrop} from './layerDrop'
-import {Padding} from 'widget/padding'
 import {Panel} from 'widget/panel/panel'
+import {Scrollable, ScrollableContainer} from 'widget/scrollable'
+import {Subject} from 'rxjs'
 import {SuperButton} from 'widget/superButton'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
-// import PropTypes from 'prop-types'
-import {Scrollable, ScrollableContainer} from 'widget/scrollable'
-import {Subject} from 'rxjs'
+import {recipeActionBuilder} from '../recipe'
 import {removeArea} from './layerAreas'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+// import PropTypes from 'prop-types'
+import {v4 as uuid} from 'uuid'
 import React from 'react'
+import _ from 'lodash'
 import styles from './layers.module.css'
 
-export class _Layers extends React.Component {
-    state = {
-        areas: {
-            center: 0
-        }
+const mapRecipeToProps = recipe => {
+    const map = recipe.map || {}
+    return {
+        recipeId: recipe.id,
+        layers: map.layers || [],
+        areas: map.areas || {}
     }
+}
 
+export class _Layers extends React.Component {
     drag$ = new Subject()
 
     render() {
@@ -34,7 +40,6 @@ export class _Layers extends React.Component {
                     title={msg('process.mosaic.panel.layers.title')}/>
                 <Panel.Content
                     scrollable={false}
-                    noVerticalPadding
                     className={styles.panelContent}>
                     {this.renderContent()}
                 </Panel.Content>
@@ -42,6 +47,9 @@ export class _Layers extends React.Component {
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close onClick={close}/>
                     </Panel.Buttons.Main>
+                    <Panel.Buttons.Extra>
+                        <Panel.Buttons.Add onClick={() => this.addLayer()}/>
+                    </Panel.Buttons.Extra>
                 </Panel.Buttons>
             </Panel>
         )
@@ -50,57 +58,44 @@ export class _Layers extends React.Component {
     renderContent() {
         return (
             <div className={styles.content}>
-                {this.renderDropTarget()}
+                {this.renderAreas()}
                 {this.renderLayers()}
             </div>
         )
     }
 
-    renderDropTarget() {
-        const {areas} = this.state
+    renderAreas() {
+        const {areas} = this.props
         return (
             <LayerDrop
-                className={styles.dropTarget}
                 areas={areas}
                 drag$={this.drag$}
-                onUpdate={areas => this.setState({areas})}>
-                {({area, value}) => this.renderAreaInfo(area, value)}
+                onUpdate={areas => this.updateAreas(areas)}>
+                {({area, value}) => this.renderArea(area, value)}
             </LayerDrop>
         )
     }
 
-    renderAreaInfo(area, value) {
+    renderArea(area, layerId) {
         return (
             <SuperButton
-                className={styles.layerButton}
-                title={`Layer ${value}`}
+                title={`Layer ${layerId}`}
                 dragTooltip={msg('drag to drop area to show layer')}
                 removeMessage={msg('please confirm removal of this layer')}
                 removeTooltip={msg('remove this layer')}
                 drag$={this.drag$}
-                dragValue={value}
+                dragValue={layerId}
                 onRemove={() => this.removeArea(area)}
             />
         )
     }
 
-    removeArea(area) {
-        const {areas} = this.state
-        this.setState({areas: removeArea({areas, area})})
-    }
-
     renderLayers() {
+        const {layers} = this.props
         return (
             <ScrollableContainer>
                 <Scrollable className={styles.layers}>
-                    <Padding noHorizontal>
-                        {this.renderLayer(1)}
-                        {this.renderLayer(2)}
-                        {this.renderLayer(3)}
-                        {this.renderLayer(4)}
-                        {this.renderLayer(5)}
-                        {this.renderLayer(6)}
-                    </Padding>
+                    {layers.map(layer => this.renderLayer(layer))}
                 </Scrollable>
             </ScrollableContainer>
         )
@@ -109,17 +104,67 @@ export class _Layers extends React.Component {
     renderLayer(layer) {
         return (
             <SuperButton
-                className={styles.layerButton}
-                title={`Layer ${layer}`}
+                key={layer.id}
+                title={`Layer ${layer.id}`}
                 description='description'
                 dragTooltip={msg('drag to drop area to show layer')}
                 removeMessage={msg('please confirm removal of this layer')}
                 removeTooltip={msg('remove this layer')}
                 drag$={this.drag$}
-                dragValue={layer}
-                onRemove={() => null}
+                dragValue={layer.id}
+                onRemove={() => this.removeLayer(layer)}
             />
         )
+    }
+
+    componentDidMount() {
+        const {areas, layers} = this.props
+        this.actionBuilder('SAVE_AREAS_AND_LAYERS')
+            .set('map.areas', areas)
+            .set('map.layers', layers)
+            .dispatch()
+    }
+
+    updateAreas(areas) {
+        this.actionBuilder('UPDATE_AREAS')
+            .set('map.areas', areas)
+            .dispatch()
+    }
+
+    removeArea(area) {
+        const {areas} = this.props
+        this.actionBuilder('REMOVE_AREA')
+            .set('map.areas', removeArea({areas, area}))
+            .dispatch()
+    }
+
+    addLayer() {
+        this.actionBuilder('REMOVE_LAYER')
+            .push('map.layers', {id: uuid().substr(-10)})
+            .dispatch()
+    }
+
+    removeLayer(layer) {
+        const {areas} = this.props
+        const removeAreaByLayer = (areas, layer) => {
+            const area = _.chain(areas)
+                .pickBy(layerId => layerId === layer.id)
+                .keys()
+                .first()
+                .value()
+            return area
+                ? removeAreaByLayer(removeArea({areas, area}), layer)
+                : areas
+        }
+        this.actionBuilder('REMOVE_LAYER')
+            .del(['map.layers', {id: layer.id}])
+            .set('map.areas', removeAreaByLayer(areas, layer))
+            .dispatch()
+    }
+
+    actionBuilder(type, props) {
+        const {recipeId} = this.props
+        return recipeActionBuilder(recipeId)(type, props)
     }
 }
 
@@ -129,6 +174,7 @@ const policy = () => ({
 
 export const Layers = compose(
     _Layers,
+    withRecipe(mapRecipeToProps),
     activatable({id: 'layers', policy})
 )
 
