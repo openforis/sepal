@@ -78,7 +78,7 @@ class _SuperButton extends React.Component {
             className
         ]).join(' ')
         return (
-            <div className={classNames}>
+            <div className={classNames} ref={this.ref}>
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     <div className={styles.info}>
@@ -90,7 +90,7 @@ class _SuperButton extends React.Component {
                         className={styles.buttons}>
                         {this.renderTimestamp()}
                         {this.renderExtraButtons()}
-                        {this.renderDragButton()}
+                        {/* {this.renderDragButton()} */}
                         {this.renderEditButton()}
                         {this.renderDuplicateButton()}
                         {this.renderRemoveButton()}
