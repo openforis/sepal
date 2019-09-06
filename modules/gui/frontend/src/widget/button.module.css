@@ -154,11 +154,11 @@
 @keyframes fill {
     0% {
         top: 80%;
-        background: hsla(0, 0%, 100%, .2);
+        background-color: hsla(0, 0%, 100%, .1);
         }
-    90% {
+    99% {
         top: 0;
-        background-color: hsla(0, 0%, 100%, .2);
+        background-color: hsla(0, 0%, 100%, .1);
     }
     100% {
         top: 0;
