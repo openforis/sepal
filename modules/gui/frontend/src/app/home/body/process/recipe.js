@@ -220,6 +220,13 @@ let prevTabs = []
 const findPrevRecipe = recipe =>
     prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
 
+const persistentProps = recipe =>
+    _.pick(recipe, ['model', 'map'])
+
+const isToBeSaved = (prevRecipe, recipe) =>
+    persistentProps(prevRecipe) && !_.isEqual(persistentProps(prevRecipe), persistentProps(recipe))
+// persistentProps(prevRecipe) && !_.isEqual(_.pick(prevRecipe, persistentProps), _.pick(recipe, persistentProps))
+
 subscribe('process.tabs', recipes => {
     if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
         const recipesToSave = recipes
@@ -228,10 +235,7 @@ subscribe('process.tabs', recipes => {
                     saved.id === recipe.id
                 )
             )
-            .filter(recipe => {
-                const prevRecipe = findPrevRecipe(recipe)
-                return prevRecipe.model && !_.isEqual(prevRecipe.model, recipe.model)
-            })
+            .filter(recipe => isToBeSaved(findPrevRecipe(recipe), recipe))
         if (recipesToSave.length > 0) {
             recipesToSave.forEach(recipe => {
                 saveToBackend$.next(recipe)
