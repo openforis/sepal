@@ -6,7 +6,6 @@ import {Toolbar} from 'widget/toolbar/toolbar'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {removeArea} from './layerAreas'
 import {v4 as uuid} from 'uuid'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
@@ -31,7 +30,7 @@ export class _MapLayout extends React.Component {
                 type='modal'>
                 <Panel.Header
                     icon='layer-group'
-                    title={msg('process.mosaic.panel.layers.title')}/>
+                    title={msg('map.layout.title')}/>
                 <Panel.Content
                     scrollable={false}
                     className={styles.panelContent}>
@@ -60,26 +59,8 @@ export class _MapLayout extends React.Component {
 
     addLayer() {
         const {recipeActionBuilder} = this.props
-        recipeActionBuilder('REMOVE_LAYER')
+        recipeActionBuilder('ADD_LAYER')
             .push('map.layers', {id: uuid().substr(-10)})
-            .dispatch()
-    }
-
-    removeLayer(layerId) {
-        const {areas, recipeActionBuilder} = this.props
-        const removeAreaByLayer = (areas, layerId) => {
-            const area = _.chain(areas)
-                .pickBy(areaLayerId => areaLayerId === layerId)
-                .keys()
-                .first()
-                .value()
-            return area
-                ? removeAreaByLayer(removeArea({areas, area}), layerId)
-                : areas
-        }
-        recipeActionBuilder('REMOVE_LAYER')
-            .del(['map.layers', {id: layerId}])
-            .set('map.areas', removeAreaByLayer(areas, layerId))
             .dispatch()
     }
 }

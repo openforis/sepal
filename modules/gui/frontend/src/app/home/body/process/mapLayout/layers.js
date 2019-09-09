@@ -38,9 +38,8 @@ export class _Layers extends React.Component {
                 key={layerId}
                 title={`Layer ${layerId}`}
                 description='description'
-                dragTooltip={msg('drag to drop area to show layer')}
-                removeMessage={msg('please confirm removal of this layer')}
-                removeTooltip={msg('remove this layer')}
+                removeMessage={msg('map.layout.layer.remove.message')}
+                removeTooltip={msg('map.layout.layer.remove.tooltip')}
                 drag$={drag$}
                 dragValue={layerId}
                 onRemove={() => this.removeLayer(layerId)}

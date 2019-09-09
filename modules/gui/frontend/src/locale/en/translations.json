@@ -243,11 +243,22 @@
   },
   "map": {
     "layer": {
-      "error": "Failed to load layer",
-      "edit.tooltip": "Edit area properties",
-      "remove": {
-        "message": "Please confirm removal of this area",
-        "tooltip": "Remove area"
+      "error": "Failed to load layer"
+    },
+    "layout": {
+      "title": "Map layout",
+      "layer": {
+        "remove": {
+          "message": "Please confirm removal of this layer",
+          "tooltip": "Remove layer"
+        }
+      },
+      "area": {
+        "edit.tooltip": "Edit area properties",
+        "remove": {
+          "message": "Please confirm removal of this area",
+          "tooltip": "Remove area"
+        }
       }
     }
   },

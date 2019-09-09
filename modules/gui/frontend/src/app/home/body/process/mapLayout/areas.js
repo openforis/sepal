@@ -135,9 +135,9 @@ class _Areas extends React.Component {
                 <div className={styles.areaContent}>
                     <SuperButton
                         title={`Layer ${layerId}`}
-                        editTooltip={msg('map.layer.edit.tooltip')}
-                        removeMessage={msg('map.layer.remove.message')}
-                        removeTooltip={msg('map.layer.remove.tooltip')}
+                        editTooltip={msg('map.layout.area.edit.tooltip')}
+                        removeMessage={msg('map.layout.area.remove.message')}
+                        removeTooltip={msg('map.layout.area.remove.tooltip')}
                         drag$={this.areaDrag$}
                         dragValue={area}
                         onEdit={() => null}
@@ -202,34 +202,18 @@ class _Areas extends React.Component {
 
     onLayerDragStart(layerId) {
         const {areas} = this.props
-        // const currentAreas = areas
         this.onDragStart({
             dragValue: layerId,
             currentAreas: areas
         })
-        // const areaCenters = this.calculateDropTargetCenters(currentAreas)
-        // this.setState({
-        //     dragging: true,
-        //     dragValue: layerId,
-        //     currentAreas,
-        //     areaCenters
-        // })
     }
 
     onAreaDragStart(area) {
         const {areas} = this.props
-        // const currentAreas = removeArea({areas, area})
         this.onDragStart({
             dragValue: areas[area],
             currentAreas: removeArea({areas, area})
         })
-        // const areaCenters = this.calculateDropTargetCenters(currentAreas)
-        // this.setState({
-        //     dragging: true,
-        //     dragValue: areas[area],
-        //     currentAreas,
-        //     areaCenters
-        // })
     }
 
     onDragStart({dragValue, currentAreas}) {
