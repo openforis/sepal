@@ -5,7 +5,11 @@
     user-select: none;
 }
 
-.container.dragging {
+.container.moving {
+    cursor: move;
+}
+
+.container.adding {
     cursor: copy;
 }
 

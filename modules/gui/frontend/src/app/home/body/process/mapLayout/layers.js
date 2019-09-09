@@ -14,7 +14,6 @@ import styles from './layers.module.css'
 const mapRecipeToProps = recipe => {
     const map = recipe.map || {}
     return {
-        recipeId: recipe.id,
         layers: map.layers || [],
         areas: map.areas || {}
     }

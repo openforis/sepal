@@ -16,7 +16,6 @@ import withSubscription from 'subscription'
 const mapRecipeToProps = recipe => {
     const map = recipe.map || {}
     return {
-        recipeId: recipe.id,
         areas: map.areas || {}
     }
 }
@@ -29,6 +28,7 @@ class _Areas extends React.Component {
         closestArea: undefined,
         hovering: false,
         dragging: false,
+        dragMode: undefined,
         dragValue: null
     }
 
@@ -47,15 +47,15 @@ class _Areas extends React.Component {
     areaDrag$ = new Subject()
 
     render() {
-        const {dragging, hovering} = this.state
+        const {dragging, dragMode, hovering} = this.state
         return (
             <Padding noHorizontal>
                 <HoverDetector
-                    className={[
+                    className={_.flatten([
                         styles.container,
-                        dragging ? styles.dragging : null,
+                        dragging ? [styles.dragging, styles[dragMode]] : null,
                         hovering ? styles.hovering : null
-                    ].join(' ')}
+                    ]).join(' ')}
                     onHover={hovering => this.setState({hovering})}>
                     {this.renderCurrentAreas()}
                     {this.renderNextAreas()}
@@ -206,6 +206,8 @@ class _Areas extends React.Component {
     onLayerDragStart(layerId) {
         const {areas} = this.props
         this.onDragStart({
+            dragging: true,
+            dragMode: 'adding',
             dragValue: layerId,
             currentAreas: areas
         })
@@ -214,16 +216,19 @@ class _Areas extends React.Component {
     onAreaDragStart(area) {
         const {areas} = this.props
         this.onDragStart({
+            dragging: true,
+            dragMode: 'moving',
             dragValue: areas[area],
             currentAreas: removeArea({areas, area})
         })
     }
 
-    onDragStart({dragValue, currentAreas}) {
+    onDragStart({dragging, dragMode, dragValue, currentAreas}) {
         const areaCenters = this.calculateDropTargetCenters(currentAreas)
         this.setState({
-            dragging: true,
-            dragValue: dragValue,
+            dragging,
+            dragMode,
+            dragValue,
             currentAreas,
             areaCenters
         })
