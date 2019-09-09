@@ -33,6 +33,7 @@ export class _MapLayout extends React.Component {
                     title={msg('map.layout.title')}/>
                 <Panel.Content
                     scrollable={false}
+                    noVerticalPadding
                     className={styles.panelContent}>
                     {this.renderContent()}
                 </Panel.Content>

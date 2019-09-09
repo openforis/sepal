@@ -1,3 +1,4 @@
+import {Padding} from 'widget/padding'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
@@ -25,7 +26,9 @@ export class _Layers extends React.Component {
         return (
             <ScrollableContainer>
                 <Scrollable className={styles.layers}>
-                    {layers.map(layer => this.renderLayer(layer.id))}
+                    <Padding noHorizontal>
+                        {layers.map(layer => this.renderLayer(layer.id))}
+                    </Padding>
                 </Scrollable>
             </ScrollableContainer>
         )

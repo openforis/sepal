@@ -1,4 +1,5 @@
 import {HoverDetector} from 'widget/hover'
+import {Padding} from 'widget/padding'
 import {Subject, merge} from 'rxjs'
 import {SuperButton} from 'widget/superButton'
 import {assignArea, removeArea, validAreas} from './layerAreas'
@@ -48,16 +49,18 @@ class _Areas extends React.Component {
     render() {
         const {dragging, hovering} = this.state
         return (
-            <HoverDetector
-                className={[
-                    styles.container,
-                    dragging ? styles.dragging : null,
-                    hovering ? styles.hovering : null
-                ].join(' ')}
-                onHover={hovering => this.setState({hovering})}>
-                {this.renderCurrentAreas()}
-                {this.renderNextAreas()}
-            </HoverDetector>
+            <Padding noHorizontal>
+                <HoverDetector
+                    className={[
+                        styles.container,
+                        dragging ? styles.dragging : null,
+                        hovering ? styles.hovering : null
+                    ].join(' ')}
+                    onHover={hovering => this.setState({hovering})}>
+                    {this.renderCurrentAreas()}
+                    {this.renderNextAreas()}
+                </HoverDetector>
+            </Padding>
         )
     }
 
