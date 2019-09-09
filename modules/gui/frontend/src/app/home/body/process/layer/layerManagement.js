@@ -4,7 +4,6 @@ import {Panel} from 'widget/panel/panel'
 import {SuperButton} from 'widget/superButton'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
-import {recipeActionBuilder} from '../recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import AddLayer from 'app/home/body/process/layer/add/addLayer'
 import Draggable from 'widget/draggable'
@@ -181,7 +180,7 @@ class LayerManagement extends React.Component {
     }
 
     actionBuilder(type, props) {
-        const {recipeId} = this.props
+        const {recipeId, recipeActionBuilder} = this.props
         return recipeActionBuilder(recipeId)(type, props)
     }
 
