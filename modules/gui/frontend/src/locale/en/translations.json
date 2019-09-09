@@ -243,7 +243,12 @@
   },
   "map": {
     "layer": {
-      "error": "Failed to load layer"
+      "error": "Failed to load layer",
+      "edit.tooltip": "Edit area properties",
+      "remove": {
+        "message": "Please confirm removal of this area",
+        "tooltip": "Remove area"
+      }
     }
   },
   "notifications": {

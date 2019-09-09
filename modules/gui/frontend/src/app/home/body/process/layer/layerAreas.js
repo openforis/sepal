@@ -3,13 +3,13 @@ import _ from 'lodash'
 export const validAreas = areas => {
     assertValidState(areas)
     const size = _.size(areas)
-    if (size === 0) {
-        return ['center']
+    if (size > 1) {
+        return ['center', 'top', 'topRight', 'right', 'bottomRight', 'bottom', 'bottomLeft', 'left', 'topLeft']
     }
-    if (size === 1) {
+    if (size > 0) {
         return ['center', 'top', 'right', 'bottom', 'left']
     }
-    return ['center', 'top', 'topRight', 'right', 'bottomRight', 'bottom', 'bottomLeft', 'left', 'topLeft']
+    return ['center']
 }
 
 export const assignArea = ({areas, area, value}) => {

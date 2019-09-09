@@ -1,16 +1,29 @@
 import {HoverDetector} from 'widget/hover'
-import {assignArea, validAreas} from './layerAreas'
+import {Subject, merge} from 'rxjs'
+import {SuperButton} from 'widget/superButton'
+import {assignArea, removeArea, validAreas} from './layerAreas'
 import {compose} from 'compose'
 import {distinctUntilChanged, filter, map, mapTo} from 'rxjs/operators'
+import {msg} from 'translate'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './layerDrop.module.css'
+import styles from './areas.module.css'
 import withSubscription from 'subscription'
 
-class _LayerDrop extends React.Component {
+const mapRecipeToProps = recipe => {
+    const map = recipe.map || {}
+    return {
+        recipeId: recipe.id,
+        areas: map.areas || {}
+    }
+}
+
+class _Areas extends React.Component {
     state = {
         areaCenters: null,
+        currentAreas: undefined,
         nextAreas: undefined,
         closestArea: undefined,
         hovering: false,
@@ -30,16 +43,16 @@ class _LayerDrop extends React.Component {
         topLeft: React.createRef(),
     }
 
+    areaDrag$ = new Subject()
+
     render() {
-        const {className} = this.props
         const {dragging, hovering} = this.state
         return (
             <HoverDetector
                 className={[
                     styles.container,
                     dragging ? styles.dragging : null,
-                    hovering ? styles.hovering : null,
-                    className
+                    hovering ? styles.hovering : null
                 ].join(' ')}
                 onHover={hovering => this.setState({hovering})}>
                 {this.renderCurrentAreas()}
@@ -116,24 +129,50 @@ class _LayerDrop extends React.Component {
         )
     }
 
-    renderAreaContent(area, value) {
-        const {children} = this.props
-        return value
+    renderAreaContent(area, layerId) {
+        return layerId
             ? (
                 <div className={styles.areaContent}>
-                    {children({area, value})}
+                    <SuperButton
+                        title={`Layer ${layerId}`}
+                        editTooltip={msg('map.layer.edit.tooltip')}
+                        removeMessage={msg('map.layer.remove.message')}
+                        removeTooltip={msg('map.layer.remove.tooltip')}
+                        drag$={this.areaDrag$}
+                        dragValue={area}
+                        onEdit={() => null}
+                        onRemove={() => this.removeArea(area)}
+                    />
                 </div>
             )
             : null
     }
 
     componentDidMount() {
-        const {drag$} = this.props
-        
-        const dragStart$ = drag$.pipe(
+        const {areas, recipeActionBuilder} = this.props
+        recipeActionBuilder('SAVE_AREAS')
+            .set('map.areas', areas)
+            .dispatch()
+        this.initializeDragDrop()
+    }
+
+    initializeDragDrop() {
+        const {layerDrag$} = this.props
+        const {areaDrag$} = this
+
+        const drag$ = merge(layerDrag$, areaDrag$)
+
+        const layerDragStart$ = layerDrag$.pipe(
             filter(({dragging}) => dragging === true),
-            map(({value}) => value)
+            map(({value}) => value),
+            map(layerId => layerId)
         )
+        const areaDragStart$ = areaDrag$.pipe(
+            filter(({dragging}) => dragging === true),
+            map(({value}) => value),
+            map(area => area)
+        )
+
         const dragMove$ = drag$.pipe(
             filter(({coords}) => coords),
             map(({coords}) => coords),
@@ -146,8 +185,11 @@ class _LayerDrop extends React.Component {
         )
         
         withSubscription(
-            dragStart$.subscribe(
-                value => this.onDragStart(value)
+            layerDragStart$.subscribe(
+                value => this.onLayerDragStart(value)
+            ),
+            areaDragStart$.subscribe(
+                area => this.onAreaDragStart(area)
             ),
             dragMove$.subscribe(
                 closestArea => this.onDragMove(closestArea)
@@ -158,41 +200,79 @@ class _LayerDrop extends React.Component {
         )
     }
 
-    componentDidUpdate(prevProps) {
+    onLayerDragStart(layerId) {
         const {areas} = this.props
-        if (prevProps.areas !== areas) {
-            this.setState({areaCenters: this.calculateDropTargetCenters()})
-        }
+        // const currentAreas = areas
+        this.onDragStart({
+            dragValue: layerId,
+            currentAreas: areas
+        })
+        // const areaCenters = this.calculateDropTargetCenters(currentAreas)
+        // this.setState({
+        //     dragging: true,
+        //     dragValue: layerId,
+        //     currentAreas,
+        //     areaCenters
+        // })
     }
 
-    onDragStart(value) {
+    onAreaDragStart(area) {
+        const {areas} = this.props
+        // const currentAreas = removeArea({areas, area})
+        this.onDragStart({
+            dragValue: areas[area],
+            currentAreas: removeArea({areas, area})
+        })
+        // const areaCenters = this.calculateDropTargetCenters(currentAreas)
+        // this.setState({
+        //     dragging: true,
+        //     dragValue: areas[area],
+        //     currentAreas,
+        //     areaCenters
+        // })
+    }
+
+    onDragStart({dragValue, currentAreas}) {
+        const areaCenters = this.calculateDropTargetCenters(currentAreas)
         this.setState({
             dragging: true,
-            dragValue: value
+            dragValue: dragValue,
+            currentAreas,
+            areaCenters
         })
     }
 
     onDragMove(closestArea) {
-        const {areas} = this.props
-        const {dragValue} = this.state
-        if (closestArea) {
+        const {currentAreas, dragValue} = this.state
+        if (currentAreas && closestArea) {
+            const nextAreas = assignArea({
+                areas: currentAreas,
+                area: closestArea,
+                value: dragValue}
+            )
             this.setState({
                 closestArea,
-                nextAreas: assignArea({areas, area: closestArea, value: dragValue})
+                nextAreas
             })
         }
     }
 
     onDragEnd() {
-        const {onUpdate} = this.props
         const {hovering, nextAreas} = this.state
         this.setState({
             dragging: false,
             dragValue: null
         })
         if (hovering) {
-            onUpdate && onUpdate(nextAreas)
+            this.updateAreas(nextAreas)
         }
+    }
+
+    updateAreas(areas) {
+        const {recipeActionBuilder} = this.props
+        recipeActionBuilder('UPDATE_AREAS')
+            .set('map.areas', areas)
+            .dispatch()
     }
 
     calculateClosestArea(cursor) {
@@ -209,33 +289,38 @@ class _LayerDrop extends React.Component {
             : null
     }
 
-    calculateDropTargetCenters() {
-        const {areas} = this.props
+    calculateDropTargetCenters(areas) {
         const centers = {}
-        validAreas(areas)
-            .forEach(area => {
-                const areaElement = this.areaRefs[area].current
-                const {top, right, bottom, left} = areaElement.getBoundingClientRect()
-                centers[area] = {
-                    x: Math.round((left + right) / 2),
-                    y: Math.round((top + bottom) / 2)
-                }
-            })
+        const valid = validAreas(areas)
+        valid.forEach(area => {
+            const areaElement = this.areaRefs[area].current
+            const {top, right, bottom, left} = areaElement.getBoundingClientRect()
+            centers[area] = {
+                x: Math.round((left + right) / 2),
+                y: Math.round((top + bottom) / 2)
+            }
+        })
         return centers
+    }
+
+    removeArea(area) {
+        const {areas, recipeActionBuilder} = this.props
+        recipeActionBuilder('REMOVE_AREA')
+            .set('map.areas', removeArea({areas, area}))
+            .dispatch()
     }
 }
 
-export const LayerDrop = compose(
-    _LayerDrop,
+export const Areas = compose(
+    _Areas,
+    withRecipe(mapRecipeToProps),
     withSubscription()
 )
 
-LayerDrop.propTypes = {
+Areas.propTypes = {
     areas: PropTypes.shape({
         area: PropTypes.oneOf(['center', 'top', 'topRight', 'right', 'bottomRight', 'bottom', 'bottomLeft', 'left', 'topLeft']),
         value: PropTypes.any
     }),
-    className: PropTypes.string,
-    drag$: PropTypes.object,
-    onUpdate: PropTypes.func
+    layerDrag$: PropTypes.object
 }

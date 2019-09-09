@@ -1,0 +1,25 @@
+.panel {
+    width: 60rem;
+}
+
+.panelContent {
+    min-height: 0;
+    min-width: 0;
+}
+
+.content {
+    height: 30rem;
+    max-height: calc(100vh - 10rem);
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 100%;
+    grid-column-gap: 1rem;
+}
+
+@media screen and (max-width: 500px) {
+    .content {
+        grid-template-columns: 1fr;
+        grid-template-rows: 50% 50%;
+    }
+}

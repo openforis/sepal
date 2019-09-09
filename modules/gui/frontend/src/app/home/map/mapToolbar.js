@@ -5,7 +5,7 @@ import {msg} from 'translate'
 import {sepalMap} from './map'
 import Keybinding from 'widget/keybinding'
 // import Labels from 'app/home/map/labels'
-import {Layers, LayersButton} from '../body/process/layer/layers.js'
+import {MapLayout, MapLayoutButton} from '../body/process/layer/mapLayout.js'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './mapToolbar.module.css'
@@ -25,7 +25,7 @@ class MapToolbar extends React.Component {
         const context = sepalMap.getContext(mapContext)
         return (
             <React.Fragment>
-                <Layers/>
+                <MapLayout/>
                 <Toolbar
                     className={styles.mapToolbar}
                     horizontal
@@ -51,7 +51,7 @@ class MapToolbar extends React.Component {
                         onClick={() => sepalMap.getContext(mapContext).fitLayer('aoi')}
                         icon={'bullseye'}
                         tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>
-                    <LayersButton/>
+                    <MapLayoutButton/>
                     {/* <Toolbar.ToolbarButton
                         selected={labelsShown}
                         onClick={() => Labels.showLabelsAction({
