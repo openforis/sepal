@@ -11,7 +11,7 @@
     "@fortawesome/react-fontawesome": "0.1.4",
     "base-64": "0.1.0",
     "cross-fetch": "3.0.4",
-    "earthengine-api": "git+https://github.com/openforis/earthengine-api.git#v0.1.182",
+    "earthengine-api": "git+https://github.com/openforis/earthengine-api.git#v0.1.197",
     "escape-string-regexp": "^2.0.0",
     "flat": "4.1.0",
     "google-maps": "3.3.0",
