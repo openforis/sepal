@@ -95,24 +95,24 @@ export class _Layers extends React.Component {
         return (
             <ScrollableContainer>
                 <Scrollable className={styles.layers}>
-                    {layers.map(layer => this.renderLayer(layer))}
+                    {layers.map(layer => this.renderLayer(layer.id))}
                 </Scrollable>
             </ScrollableContainer>
         )
     }
 
-    renderLayer(layer) {
+    renderLayer(layerId) {
         return (
             <SuperButton
-                key={layer.id}
-                title={`Layer ${layer.id}`}
+                key={layerId}
+                title={`Layer ${layerId}`}
                 description='description'
                 dragTooltip={msg('drag to drop area to show layer')}
                 removeMessage={msg('please confirm removal of this layer')}
                 removeTooltip={msg('remove this layer')}
                 drag$={this.drag$}
-                dragValue={layer.id}
-                onRemove={() => this.removeLayer(layer)}
+                dragValue={layerId}
+                onRemove={() => this.removeLayer(layerId)}
             />
         )
     }
@@ -144,21 +144,21 @@ export class _Layers extends React.Component {
             .dispatch()
     }
 
-    removeLayer(layer) {
+    removeLayer(layerId) {
         const {areas} = this.props
-        const removeAreaByLayer = (areas, layer) => {
+        const removeAreaByLayer = (areas, layerId) => {
             const area = _.chain(areas)
-                .pickBy(layerId => layerId === layer.id)
+                .pickBy(areaLayerId => areaLayerId === layerId)
                 .keys()
                 .first()
                 .value()
             return area
-                ? removeAreaByLayer(removeArea({areas, area}), layer)
+                ? removeAreaByLayer(removeArea({areas, area}), layerId)
                 : areas
         }
         this.actionBuilder('REMOVE_LAYER')
-            .del(['map.layers', {id: layer.id}])
-            .set('map.areas', removeAreaByLayer(areas, layer))
+            .del(['map.layers', {id: layerId}])
+            .set('map.areas', removeAreaByLayer(areas, layerId))
             .dispatch()
     }
 
