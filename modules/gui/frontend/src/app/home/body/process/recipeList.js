@@ -6,19 +6,16 @@ import {Pageable} from 'widget/pageable/pageable'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {SuperButton} from 'widget/superButton'
-import {closeTab} from 'widget/tabs/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {duplicateRecipe$, isRecipeOpen, loadRecipe$, loadRecipes$, removeRecipe$, selectRecipe} from './recipe'
 import {getRecipeType} from './recipeTypes'
+import {loadRecipes$} from './recipe'
 import {msg} from 'translate'
-import CreateRecipe from './createRecipe'
 import Icon from 'widget/icon'
-import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './recipes.module.css'
+import styles from './recipeList.module.css'
 
 const mapStateToProps = () => {
     const recipes = select('process.recipes')
@@ -27,7 +24,7 @@ const mapStateToProps = () => {
     }
 }
 
-class RecipeList extends React.Component {
+class _RecipeList extends React.Component {
     state = {
         sortingOrder: 'updateTime',
         sortingDirection: -1,
@@ -43,27 +40,6 @@ class RecipeList extends React.Component {
         if (!this.props.recipes) {
             this.props.stream('LOAD_RECIPES', loadRecipes$())
         }
-    }
-
-    openRecipe(recipeId) {
-        if (isRecipeOpen(recipeId)) {
-            selectRecipe(recipeId)
-        } else {
-            this.props.stream('LOAD_RECIPE', loadRecipe$(recipeId))
-        }
-    }
-
-    duplicateRecipe(recipeIdToDuplicate) {
-        this.props.stream('DUPLICATE_RECIPE', duplicateRecipe$(recipeIdToDuplicate, this.props.recipeId))
-    }
-
-    removeRecipe(recipeId) {
-        this.props.stream('REMOVE_RECIPE',
-            removeRecipe$(recipeId),
-            () => {
-                closeTab(recipeId, 'process')
-                Notifications.success({message: msg('process.recipe.remove.success')})
-            })
     }
 
     setSorting(sortingOrder) {
@@ -86,7 +62,7 @@ class RecipeList extends React.Component {
             return _.isString(item) ? item.toUpperCase() : item
         }, sortingDirection === 1 ? 'asc' : 'desc')
     }
-
+    
     setFilter(filterValues) {
         this.setState({
             filterValues
@@ -111,6 +87,7 @@ class RecipeList extends React.Component {
     }
 
     renderRecipe(recipe, highlightMatcher) {
+        const {onSelect, onDuplicate, onRemove} = this.props
         return (
             <SuperButton
                 key={recipe.id}
@@ -121,9 +98,9 @@ class RecipeList extends React.Component {
                 duplicateTooltip={msg('process.menu.duplicateRecipe')}
                 removeMessage={msg('process.menu.removeRecipe.message', {recipe: recipe.name})}
                 removeTooltip={msg('process.menu.removeRecipe.tooltip')}
-                onClick={() => this.openRecipe(recipe.id)}
-                onDuplicate={() => this.duplicateRecipe(recipe.id)}
-                onRemove={() => this.removeRecipe(recipe.id)}
+                onClick={onSelect ? () => onSelect(recipe.id) : null}
+                onDuplicate={onDuplicate ? () => onDuplicate(recipe.id) : null}
+                onRemove={onRemove ? () => onRemove(recipe.id) : null}
             />
         )
     }
@@ -175,12 +152,9 @@ class RecipeList extends React.Component {
     }
 
     render() {
-        const {recipeId, recipes} = this.props
+        const {recipes} = this.props
         return (
             <React.Fragment>
-                <CreateRecipe
-                    recipeId={recipeId}
-                    trigger={recipes && !recipes.length}/>
                 <Pageable
                     items={this.getSortedRecipes()}
                     matcher={recipe => this.recipeMatchesFilter(recipe)}>
@@ -240,12 +214,13 @@ class RecipeList extends React.Component {
 
 }
 
-export default compose(
-    RecipeList,
+export const RecipeList = compose(
+    _RecipeList,
     connect(mapStateToProps)
 )
 
 RecipeList.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    recipes: PropTypes.array
+    onDuplicate: PropTypes.func,
+    onRemove: PropTypes.func,
+    onSelect: PropTypes.func
 }
