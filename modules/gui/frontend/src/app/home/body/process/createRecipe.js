@@ -45,7 +45,7 @@ const setTabType = (recipeId, type, tabPlaceholder) =>
         })
         .dispatch()
 
-class CreateRecipe extends React.Component {
+class _CreateRecipe extends React.Component {
     state = {
         selectedRecipeType: null
     }
@@ -164,15 +164,15 @@ class CreateRecipe extends React.Component {
     }
 }
 
+export const CreateRecipe = compose(
+    _CreateRecipe,
+    connect(mapStateToProps)
+)
+
 CreateRecipe.propTypes = {
     recipeId: PropTypes.string.isRequired,
     trigger: PropTypes.any
 }
-
-export default compose(
-    CreateRecipe,
-    connect(mapStateToProps)
-)
 
 class RecipeType extends React.Component {
     render() {
