@@ -9,7 +9,6 @@ import {msg} from 'translate'
 import {v4 as uuid} from 'uuid'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
-import _ from 'lodash'
 import styles from './mapLayout.module.css'
 
 const mapRecipeToProps = recipe => {
