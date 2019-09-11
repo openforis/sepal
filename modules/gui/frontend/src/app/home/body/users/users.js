@@ -252,23 +252,28 @@ class Users extends React.Component {
             : <Icon name={'sort'}/>
     }
 
+    getSortingHandleIcon(column, defaultSorting) {
+        const {sortingOrder, sortingDirection} = this.state
+        return sortingOrder === column
+            ? sortingDirection === defaultSorting
+                ? 'sort-down'
+                : 'sort-up'
+            : 'sort'
+    }
+
     renderColumnHeader({column, label, defaultSorting, classNames = []}) {
         const {sortingOrder} = this.state
         return (
-            <div className={classNames.join(' ')}>
-                <Button
-                    chromeless
-                    shape='none'
-                    additionalClassName='itemType'
-                    onClick={() => this.setSorting(column, defaultSorting)}>
-                    <span className={sortingOrder === column ? styles.sorted : null}>
-                        {label}
-                    </span>
-                    <span className={styles.sortingHandle}>
-                        {this.renderSortingHandle(column, defaultSorting)}
-                    </span>
-                </Button>
-            </div>
+            <Button
+                chromeless
+                look='transparent'
+                shape='none'
+                content={sortingOrder === column ? 'smallcaps-highlight' : 'smallcaps'}
+                label={label}
+                icon={this.getSortingHandleIcon(column, defaultSorting)}
+                iconPlacement='right'
+                additionalClassName={classNames.join(' ')}
+                onClick={() => this.setSorting(column, defaultSorting)}/>
         )
     }
 
