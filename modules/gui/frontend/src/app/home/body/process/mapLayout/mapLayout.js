@@ -1,12 +1,14 @@
+import {AddLayer} from './addLayer'
 import {Areas} from './areas'
 import {Layers} from './layers'
 import {Panel} from 'widget/panel/panel'
+import {SelectRecipe} from './selectRecipe'
 import {Subject} from 'rxjs'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {activatable} from 'widget/activation/activatable'
+import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {v4 as uuid} from 'uuid'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './mapLayout.module.css'
@@ -17,7 +19,19 @@ const mapRecipeToProps = recipe => {
     }
 }
 
-export class _MapLayout extends React.Component {
+export class MapLayout extends React.Component {
+    render() {
+        return (
+            <React.Fragment>
+                <MapLayoutPanel/>
+                <AddLayer/>
+                <SelectRecipe/>
+            </React.Fragment>
+        )
+    }
+}
+
+class _MapLayoutPanel extends React.Component {
     layerDrag$ = new Subject()
 
     render() {
@@ -58,21 +72,25 @@ export class _MapLayout extends React.Component {
     }
 
     addLayer() {
-        const {recipeActionBuilder} = this.props
-        recipeActionBuilder('ADD_LAYER')
-            .push('map.layers', {id: uuid().substr(-10)})
-            .dispatch()
+        const {activator: {activatables: {addLayer}}} = this.props
+        console.log(addLayer)
+        addLayer.activate()
+        // const {recipeActionBuilder} = this.props
+        // recipeActionBuilder('ADD_LAYER')
+        //     .push('map.layers', {id: uuid().substr(-10)})
+        //     .dispatch()
     }
 }
 
 const policy = () => ({
-    _: 'allow'
+    _: 'allow-then-deactivate'
 })
 
-export const MapLayout = compose(
-    _MapLayout,
+const MapLayoutPanel = compose(
+    _MapLayoutPanel,
     withRecipe(mapRecipeToProps),
-    activatable({id: 'layers', policy})
+    activatable({id: 'mapLayout', policy}),
+    activator('addLayer')
 )
 
 MapLayout.propTypes = {}
@@ -81,7 +99,7 @@ export class MapLayoutButton extends React.Component {
     render() {
         return (
             <Toolbar.ActivationButton
-                id='layers'
+                id='mapLayout'
                 icon='layer-group'
                 tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}
                 disabled={false}
