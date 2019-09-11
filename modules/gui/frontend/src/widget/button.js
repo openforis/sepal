@@ -44,13 +44,14 @@ class _Button extends React.Component {
     }
 
     classNames() {
-        const {chromeless, className, additionalClassName, look, size, shape, air,
+        const {chromeless, className, additionalClassName, look, size, shape, air, content,
             alignment, width, onClickHold, hover, disableTransitions} = this.props
         return className ? className : [
             styles.button,
             styles[`size-${size}`],
             styles[`shape-${shape}`],
             styles[`air-${air}`],
+            styles[`content-${content}`],
             styles[`alignment-${alignment}`],
             styles[`width-${width}`],
             lookStyles.look,
@@ -309,6 +310,7 @@ Button.propTypes = {
     children: PropTypes.any,
     chromeless: PropTypes.any,
     className: PropTypes.string,
+    content: PropTypes.oneOf(['default', 'smallcaps', 'smallcaps-highlight']),
     disabled: PropTypes.any,
     disableTransitions: PropTypes.any,
     downloadFilename: PropTypes.any,
@@ -346,6 +348,7 @@ Button.defaultProps = {
     air: 'normal',
     alignment: 'center',
     iconPlacement: 'left',
+    content: 'default',
     linkTarget: '_blank',
     look: 'default',
     shape: 'rectangle',
