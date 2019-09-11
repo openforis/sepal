@@ -80,7 +80,7 @@ export class RecipeListData extends React.Component {
     renderSortButtons() {
         return (
             <ButtonGroup layout='horizontal-nowrap-tight'>
-                {this.renderSortButton('updateTime', msg('process.recipe.updateTime'))}
+                {this.renderSortButton('updateTime', msg('process.recipe.lastUpdate'))}
                 {this.renderSortButton('name', msg('process.recipe.name'))}
             </ButtonGroup>
         )

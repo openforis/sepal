@@ -300,7 +300,7 @@ class Users extends React.Component {
                 })}
                 {this.renderColumnHeader({
                     column: 'updateTime',
-                    label: msg('user.userDetails.form.updateTime.label'),
+                    label: msg('user.userDetails.form.lastUpdate.label'),
                     defaultSorting: -1,
                     classNames: [styles.updateTime]
                 })}

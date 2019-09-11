@@ -1144,7 +1144,7 @@
         "success": "Recipe has been removed"
       },
       "type": "Type",
-      "updateTime": "Update time"
+      "lastUpdate": "Last update"
     },
     "revisions": {
       "revert": "Revert to revision",
@@ -1431,8 +1431,8 @@
           "PENDING": "Pending",
           "label": "Status"
         },
-        "updateTime": {
-          "label": "Updated"
+        "lastUpdate": {
+          "label": "Last update"
         },
         "username": {
           "format": "Username should start with a letter",

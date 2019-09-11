@@ -944,9 +944,7 @@
       },
       "remove": {
         "success": "La formule a été supprimée"
-      },
-      "type": "Type",
-      "updateTime": "Update time"
+      }
     },
     "revisions": {
       "revert": "Retourner aux révisions",
