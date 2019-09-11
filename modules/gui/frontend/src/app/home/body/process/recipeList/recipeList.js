@@ -47,6 +47,13 @@ class _RecipeList extends React.Component {
         )
     }
 
+    componentDidMount() {
+        const {recipes, stream} = this.props
+        if (!recipes) {
+            stream('LOAD_RECIPES', loadRecipes$())
+        }
+    }
+
     isLoading() {
         const {recipes, action} = this.props
         return !recipes && !action('LOAD_RECIPES').dispatched
@@ -57,11 +64,10 @@ class _RecipeList extends React.Component {
         return recipes && recipes.length
     }
 
-    componentDidMount() {
-        const {recipes, stream} = this.props
-        if (!recipes) {
-            stream('LOAD_RECIPES', loadRecipes$())
-        }
+    setFilter(filterValues) {
+        this.setState({
+            filterValues
+        })
     }
 
     setSorting(sortingOrder) {
@@ -85,12 +91,6 @@ class _RecipeList extends React.Component {
         }, sortingDirection === 1 ? 'asc' : 'desc')
     }
     
-    setFilter(filterValues) {
-        this.setState({
-            filterValues
-        })
-    }
-
     recipeMatchesFilter(recipe) {
         const {filterValues} = this.state
         const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))

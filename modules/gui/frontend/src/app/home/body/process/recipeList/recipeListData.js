@@ -9,7 +9,6 @@ import {SearchBox} from 'widget/searchBox'
 import {SuperButton} from 'widget/superButton'
 import {getRecipeType} from '../recipeTypes'
 import {msg} from 'translate'
-import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './recipeListData.module.css'
@@ -95,27 +94,23 @@ export class RecipeListData extends React.Component {
                         chromeless
                         look='transparent'
                         shape='pill'
-                        size='large'
-                        additionalClassName='itemType'
-                        onClick={() => setSorting(column)}>
-                        <span className={[styles.sortable, sortingOrder === column ? styles.sorted : null].join(' ')}>
-                            {label}
-                        </span>
-                        <span className={styles.sortingHandle}>
-                            {this.renderSortingHandle({column, sortingOrder, sortingDirection})}
-                        </span>
-                    </Button>
+                        label={label}
+                        content={sortingOrder === column ? 'smallcaps-highlight' : 'smallcaps'}
+                        icon={this.getHandleIcon({column, sortingOrder, sortingDirection})}
+                        iconPlacement='right'
+                        onClick={() => setSorting(column)}/>
                 )}
             </Consumer>
         )
     }
 
-    renderSortingHandle({column, sortingOrder, sortingDirection}) {
-        return sortingOrder === column
+    getHandleIcon({column, sortingOrder, sortingDirection}) {
+        const sorted = sortingOrder === column
+        return sorted
             ? sortingDirection === 1
-                ? <Icon name={'sort-down'}/>
-                : <Icon name={'sort-up'}/>
-            : <Icon name={'sort'}/>
+                ? 'sort-down'
+                : 'sort-up'
+            : 'sort'
     }
 
     renderRecipe(recipe, highlightMatcher) {
