@@ -429,12 +429,12 @@
     "menu": {
       "duplicateRecipe": "Dupliquer une formule",
       "exportRecipe": "Exporter une formule",
-      "noSavedRecipies": "Pas de formules sauvées",
+      "noSavedRecipes": "Pas de formules sauvées",
       "recipeNotSaved": "formule non sauvegardée",
       "removeRecipe": "Supprimer une formule",
       "revertToOldRevision": "Retour à la révision précédente",
       "saveRecipe": "Sauver une formule...",
-      "savedRecipies": "formules sauvegardées",
+      "savedRecipes": "Formules sauvegardées",
       "searchRecipes": "Chercher une formule"
     },
     "mosaic": {

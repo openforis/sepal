@@ -1,5 +1,6 @@
+import {BottomBar, Content, SectionLayout} from 'widget/sectionLayout'
 import {CreateRecipe} from './createRecipe'
-import {RecipeList} from './recipeList'
+import {RecipeList} from './recipeList/recipeList'
 import {closeTab} from 'widget/tabs/tabs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
@@ -8,6 +9,7 @@ import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
+import styles from './recipeHome.module.css'
 
 const mapStateToProps = () => {
     const recipes = select('process.recipes')
@@ -20,16 +22,26 @@ class _RecipeHome extends React.Component {
     render() {
         const {recipeId, recipes} = this.props
         return (
-            <React.Fragment>
-                <CreateRecipe
-                    recipeId={recipeId}
-                    trigger={recipes && !recipes.length}/>
-                <RecipeList
-                    onSelect={recipeId => this.openRecipe(recipeId)}
-                    onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
-                    onRemove={recipeId => this.removeRecipe(recipeId)}
-                />
-            </React.Fragment>
+            <RecipeList>
+                <SectionLayout>
+                    <Content horizontalPadding verticalPadding menuPadding className={styles.container}>
+                        <CreateRecipe
+                            recipeId={recipeId}
+                            trigger={recipes && !recipes.length}/>
+                        <RecipeList.Data
+                            onSelect={recipeId => this.openRecipe(recipeId)}
+                            onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
+                            onRemove={recipeId => this.removeRecipe(recipeId)}
+                        />
+                    </Content>
+                    <BottomBar className={styles.bottomBar}>
+                        {recipes && recipes.length
+                            ? <RecipeList.Pagination/>
+                            : <div>{msg('process.menu.noSavedRecipes')}</div>
+                        }
+                    </BottomBar>
+                </SectionLayout>
+            </RecipeList>
         )
     }
 

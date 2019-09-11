@@ -592,7 +592,7 @@
     "menu": {
       "duplicateRecipe": "Duplicate recipe",
       "exportRecipe": "Export recipe",
-      "noSavedRecipies": "No saved recipies",
+      "noSavedRecipes": "No saved recipes",
       "recipeNotSaved": "Recipe is not saved.",
       "removeRecipe": {
         "message": "Do you want to remove '{recipe}'?",
