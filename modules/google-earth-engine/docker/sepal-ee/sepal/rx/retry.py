@@ -21,7 +21,7 @@ def retry_with_backoff(
 ) -> Callable[[Observable], Observable]:
     def do_retry(source, tries, exception):
         if tries <= retries:
-            logging.warning(
+            logging.exception(
                 'retry_with_backoff(tries={}, retries={}, exception={}, description={})'.format(
                     tries, retries, exception, description
                 ))
