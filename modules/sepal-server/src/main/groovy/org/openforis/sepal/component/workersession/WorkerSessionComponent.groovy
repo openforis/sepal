@@ -106,7 +106,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         schedule(12, MINUTES,
             new RemoveOrphanedTmpDirs()
         )
-        schedule(13, MINUTES,
+        schedule(5, MINUTES,
             new RefreshGoogleTokens()
         )
     }
