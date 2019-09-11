@@ -134,7 +134,8 @@
 /* content: smallcaps */
 
 .button.content-smallcaps > .contents {
-    font-size: calc(var(--font-size) * .8);
+    font-size: calc(var(--font-size) * .9);
+    line-height: calc(var(--font-size) * .9);
     font-weight: 800;
     opacity: .6;
     text-transform: uppercase;
@@ -143,7 +144,8 @@
 /* content: smallcaps-highlight */
 
 .button.content-smallcaps-highlight > .contents {
-    font-size: calc(var(--font-size) * .8);
+    font-size: calc(var(--font-size) * .9);
+    line-height: calc(var(--font-size) * .9);
     font-weight: 800;
     opacity: .75;
     text-transform: uppercase;
