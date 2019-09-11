@@ -20,8 +20,7 @@ export class AddLayer extends React.Component {
 
 class _AddLayerPanel extends React.Component {
     render() {
-        // const {activatable: {deactivate}} = this.props
-        const {activator: {activatables: {mapLayout}}} = this.props
+        const {activatable: {deactivate}} = this.props
         return (
             <Panel type='modal' className={styles.panel}>
                 <Panel.Header title='Add layer'/>
@@ -30,8 +29,7 @@ class _AddLayerPanel extends React.Component {
                 </Panel.Content>
                 <Panel.Buttons>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={() => mapLayout.activate()}/>
-                        {/* <Panel.Buttons.Close onClick={deactivate}/> */}
+                        <Panel.Buttons.Close onClick={deactivate}/>
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
             </Panel>
@@ -72,11 +70,13 @@ class _AddLayerPanel extends React.Component {
 }
 
 const policy = () => ({
-    _: 'allow-then-deactivate'
+    _: 'allow',
+    mapLayout: 'allow',
+    selectRecipe: 'allow-then-deactivate'
 })
 
 const AddLayerPanel = compose(
     _AddLayerPanel,
-    activatable({id: 'addLayer', policy, alwaysAllow: false}),
+    activatable({id: 'addLayer', policy}),
     activator('mapLayout', 'selectRecipe')
 )

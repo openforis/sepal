@@ -4,7 +4,6 @@ import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {removeArea} from './layerAreas'
-import {v4 as uuid} from 'uuid'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -26,40 +25,35 @@ export class _Layers extends React.Component {
             <ScrollableContainer>
                 <Scrollable className={styles.layers}>
                     <Padding noHorizontal>
-                        {layers.map(layer => this.renderLayer(layer.id))}
+                        {layers.map(layer => this.renderLayer(layer))}
                     </Padding>
                 </Scrollable>
             </ScrollableContainer>
         )
     }
 
-    renderLayer(layerId) {
+    renderLayer(layer) {
         const {drag$} = this.props
-        return (
-            <SuperButton
-                key={layerId}
-                title={`Layer ${layerId}`}
-                description='description'
-                removeMessage={msg('map.layout.layer.remove.message')}
-                removeTooltip={msg('map.layout.layer.remove.tooltip')}
-                drag$={drag$}
-                dragValue={layerId}
-                onRemove={() => this.removeLayer(layerId)}
-            />
-        )
+        return layer && layer.id
+            ? (
+                <SuperButton
+                    key={layer.id}
+                    title={layer.type}
+                    description={layer.id.substr(-8)}
+                    removeMessage={msg('map.layout.layer.remove.message')}
+                    removeTooltip={msg('map.layout.layer.remove.tooltip')}
+                    drag$={drag$}
+                    dragValue={layer.id}
+                    onRemove={() => this.removeLayer(layer.id)}
+                />
+            )
+            : null
     }
 
     componentDidMount() {
         const {layers, recipeActionBuilder} = this.props
         recipeActionBuilder('SAVE_LAYERS')
             .set('map.layers', layers)
-            .dispatch()
-    }
-
-    addLayer() {
-        const {recipeActionBuilder} = this.props
-        recipeActionBuilder('REMOVE_LAYER')
-            .push('map.layers', {id: uuid().substr(-10)})
             .dispatch()
     }
 

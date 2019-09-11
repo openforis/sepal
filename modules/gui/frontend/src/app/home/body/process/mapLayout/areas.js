@@ -16,6 +16,7 @@ import withSubscription from 'subscription'
 const mapRecipeToProps = recipe => {
     const map = recipe.map || {}
     return {
+        layers: map.layers || [],
         areas: map.areas || {}
     }
 }
@@ -127,17 +128,20 @@ class _Areas extends React.Component {
                     highlighted ? styles.highlighted : null,
                     value ? styles.assigned : null
                 ].join(' ')}>
-                {this.renderAreaContent(area, value)}
+                {this.renderLayerInfo(area, value)}
             </div>
         )
     }
 
-    renderAreaContent(area, layerId) {
-        return layerId
+    renderLayerInfo(area, layerId) {
+        const {layers} = this.props
+        const layer = layers.find(layer => layer.id === layerId)
+        return layer && layer.id
             ? (
                 <div className={styles.areaContent}>
                     <SuperButton
-                        title={`Layer ${layerId}`}
+                        title={layer.type}
+                        description={layer.id.substr(-8)}
                         editTooltip={msg('map.layout.area.edit.tooltip')}
                         removeMessage={msg('map.layout.area.remove.message')}
                         removeTooltip={msg('map.layout.area.remove.tooltip')}

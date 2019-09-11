@@ -1,9 +1,10 @@
 import {Panel} from 'widget/panel/panel'
 import {RecipeList} from '../recipeList/recipeList'
 import {activatable} from 'widget/activation/activatable'
-// import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {v4 as uuid} from 'uuid'
+import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import styles from './selectRecipe.module.css'
 
@@ -37,19 +38,25 @@ class _SelectRecipe extends React.Component {
     }
 
     selectRecipe(recipeId) {
-        console.log({recipeId})
-        // const {activator: {activatables: {fooRecipe}}} = this.props
-        // fooRecipe.activate({recipeId: recipeId})
+        const {recipeActionBuilder, activatable: {deactivate}} = this.props
+        recipeActionBuilder('ADD_LAYER')
+            .push('map.layers', {
+                id: uuid(),
+                type: 'SEPAL_RECIPE',
+                recipeId
+            })
+            .dispatch()
+        deactivate()
     }
 }
 
 const policy = () => ({
-    _: 'allow-then-deactivate'
+    _: 'allow'
 })
 
 export const SelectRecipe = compose(
     _SelectRecipe,
-    activatable({id: 'selectRecipe', policy, alwaysAllow: false}),
-    // activator('fooRecipe'),
+    withRecipe(() => ({})),
+    activatable({id: 'selectRecipe', policy}),
     connect(mapStateToProps)
 )

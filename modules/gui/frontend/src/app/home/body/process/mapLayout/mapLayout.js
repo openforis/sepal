@@ -73,17 +73,12 @@ class _MapLayoutPanel extends React.Component {
 
     addLayer() {
         const {activator: {activatables: {addLayer}}} = this.props
-        console.log(addLayer)
         addLayer.activate()
-        // const {recipeActionBuilder} = this.props
-        // recipeActionBuilder('ADD_LAYER')
-        //     .push('map.layers', {id: uuid().substr(-10)})
-        //     .dispatch()
     }
 }
 
 const policy = () => ({
-    _: 'allow-then-deactivate'
+    _: 'allow'
 })
 
 const MapLayoutPanel = compose(
