@@ -40,7 +40,7 @@ export class Buttons extends React.Component {
     }
 
     renderButton({value, label, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected}) {
-        const {chromeless, air, uppercase = true, disabled: allDisabled, look, shape} = this.props
+        const {chromeless, air, disabled: allDisabled, look, shape} = this.props
         const selected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         return chromeless
             ? (
@@ -50,18 +50,11 @@ export class Buttons extends React.Component {
                     look='transparent'
                     shape={shape || 'pill'}
                     disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
+                    label={label}
+                    content={selected ? 'smallcaps-highlight' : 'smallcaps'}
                     tooltip={tooltip}
                     tooltipPlacement='bottom'
-                    onClick={() => this.select(value)}>
-                    <div className={[
-                        'itemType',
-                        styles.chromeless,
-                        selected ? styles.selected : null,
-                        uppercase ? styles.uppercase : null
-                    ].join(' ')}>
-                        {label}
-                    </div>
-                </Button>
+                    onClick={() => this.select(value)}/>
             )
             : (
                 <Button
@@ -69,13 +62,12 @@ export class Buttons extends React.Component {
                     look={selected ? 'highlight' : look || 'default'}
                     shape={shape}
                     air={air}
-                    additionalClassName={uppercase ? styles.uppercase : null}
                     disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
+                    label={label}
+                    content='smallcaps'
                     tooltip={tooltip}
                     tooltipPlacement='bottom'
-                    onClick={() => this.select(value)}>
-                    {label}
-                </Button>
+                    onClick={() => this.select(value)}/>
             )
 
     }
@@ -121,7 +113,6 @@ export class Buttons extends React.Component {
 
 Buttons.propTypes = {
     air: PropTypes.any,
-    capitalized: PropTypes.any,
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,

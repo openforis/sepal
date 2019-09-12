@@ -244,6 +244,22 @@
   "map": {
     "layer": {
       "error": "Failed to load layer"
+    },
+    "layout": {
+      "title": "Map layout",
+      "layer": {
+        "remove": {
+          "message": "Please confirm removal of this layer",
+          "tooltip": "Remove layer"
+        }
+      },
+      "area": {
+        "edit.tooltip": "Edit area properties",
+        "remove": {
+          "message": "Please confirm removal of this area",
+          "tooltip": "Remove area"
+        }
+      }
     }
   },
   "notifications": {
@@ -576,7 +592,7 @@
     "menu": {
       "duplicateRecipe": "Duplicate recipe",
       "exportRecipe": "Export recipe",
-      "noSavedRecipies": "No saved recipies",
+      "noSavedRecipes": "No saved recipes",
       "recipeNotSaved": "Recipe is not saved.",
       "removeRecipe": {
         "message": "Do you want to remove '{recipe}'?",
@@ -608,6 +624,9 @@
           "show": {
             "tooltip": "Show labels"
           }
+        },
+        "layers": {
+          "tooltip": "Select layers to show"
         },
         "sceneAreas": {
           "hide": {
@@ -839,6 +858,9 @@
           },
           "title": "Dates",
           "tooltip": "Specify dates"
+        },
+        "layers": {
+          "title": "Layers"
         },
         "retrieve": {
           "apply": "Retrieve",

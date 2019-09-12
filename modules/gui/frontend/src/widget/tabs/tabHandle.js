@@ -96,10 +96,10 @@ class _TabHandle extends React.Component {
         return (
             <Button
                 chromeless
-                look='cancel'
+                look='default'
                 size='small'
-                shape='none'
-                air='none'
+                shape='circle'
+                air='less'
                 icon='times'
                 message='message'
                 onClick={() => onClose()}

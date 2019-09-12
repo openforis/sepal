@@ -1,6 +1,7 @@
 import {ActivationContext} from 'widget/activation/activationContext'
 import {compose} from 'compose'
 import {connect, select} from 'store'
+import {recipeActionBuilder} from './recipe'
 import {toPathList} from 'stateUtils'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -27,7 +28,10 @@ export const withRecipe = mapRecipeToProps =>
         const mapStateToProps = (state, ownProps) => {
             const {recipeContext: {statePath}} = ownProps
             const recipe = {...select(statePath)}
-            return mapRecipeToProps(recipe, ownProps)
+            return {
+                recipeActionBuilder: recipeActionBuilder(recipe.id),
+                ...mapRecipeToProps(recipe, ownProps)
+            }
         }
         return compose(
             WrappedComponent,

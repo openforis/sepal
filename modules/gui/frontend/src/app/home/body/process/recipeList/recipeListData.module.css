@@ -1,0 +1,26 @@
+.header {
+    margin-bottom: 1rem !important;
+}
+
+.recipes {
+    flex-shrink: 1;
+}
+
+@media only screen and (max-width: 500px) {
+    .updateTime {
+        display: none;
+    }
+}
+
+.sortable {
+    border-bottom: 1px solid transparent;
+}
+
+.sorted {
+    color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.sortingHandle {
+    margin-left: .25rem;
+}

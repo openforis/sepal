@@ -1,4 +1,5 @@
 import {RecipeContext} from 'app/home/body/process/recipeContext'
+import {RecipeHome} from './recipeHome'
 import {Tabs} from 'widget/tabs/tabs'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
@@ -8,26 +9,20 @@ import {saveRecipe} from './recipe'
 import CloseRecipe from './closeRecipe'
 import ProcessMenu from './processMenu'
 import React from 'react'
-import Recipes from './recipes'
 import Revisions from 'app/home/body/process/revisions'
 import SaveRecipe from './saveRecipe'
 
 class Process extends React.Component {
-    renderRecipeList(id) {
-        return <Recipes recipeId={id}/>
-    }
-
     renderRecipeByType(type) {
         return React.createElement(
             getRecipeType(type).components.recipe
         )
     }
 
-    renderRecipe(id, type) {
+    renderRecipe(recipeId, type) {
         return type
             ? this.renderRecipeByType(type)
-            : this.renderRecipeList(id)
-
+            : <RecipeHome recipeId={recipeId}/>
     }
 
     renderMenu(recipeId) {
