@@ -14,11 +14,9 @@ export const defaultModel = {
     sources: {
         LANDSAT: ['LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
     },
-    preProcessingOptions: {
-        corrections: ['SR', 'BRDF'],
-        mask: ['SNOW']
-    },
     options: {
+        corrections: [],
+        mask: ['SNOW'],
         orbits: ['ASCENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
@@ -56,9 +54,9 @@ const submitRetrieveRecipeTask = recipe => {
                 aoi: recipe.model.aoi,
                 fromDate: recipe.model.dates.startDate,
                 toDate: recipe.model.dates.endDate,
-                maskSnow: recipe.model.preProcessingOptions.mask.includes('SNOW'),
-                brdfCorrect: recipe.model.preProcessingOptions.corrections.includes('BRDF'),
-                surfaceReflectance: recipe.model.preProcessingOptions.corrections.includes('SR'),
+                maskSnow: recipe.model.options.mask.includes('SNOW'),
+                brdfCorrect: recipe.model.options.corrections.includes('BRDF'),
+                surfaceReflectance: recipe.model.options.corrections.includes('SR'),
                 ...recipe.model.options,
             }
     }
