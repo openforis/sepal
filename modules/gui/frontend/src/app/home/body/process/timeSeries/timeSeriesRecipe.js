@@ -42,6 +42,7 @@ export const RecipeActions = id => {
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
+    const options = {...recipe.model.options, ...recipe.model.preProcessingOptions}
     const task = {
         'operation': 'timeseries.download',
         'params':
@@ -54,10 +55,10 @@ const submitRetrieveRecipeTask = recipe => {
                 aoi: recipe.model.aoi,
                 fromDate: recipe.model.dates.startDate,
                 toDate: recipe.model.dates.endDate,
-                maskSnow: recipe.model.options.mask.includes('SNOW'),
-                brdfCorrect: recipe.model.options.corrections.includes('BRDF'),
-                surfaceReflectance: recipe.model.options.corrections.includes('SR'),
-                ...recipe.model.options,
+                maskSnow: options.mask.includes('SNOW'),
+                brdfCorrect: options.corrections.includes('BRDF'),
+                surfaceReflectance: options.corrections.includes('SR'),
+                ...options,
             }
     }
     return api.tasks.submit$(task).subscribe()
