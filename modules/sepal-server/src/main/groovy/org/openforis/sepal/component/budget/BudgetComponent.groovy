@@ -60,7 +60,7 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
         def storageUseChecker = new CheckUserStorageUseHandler(storageUseService, budgetRepository, eventDispatcher)
         command(CheckUserStorageUse, storageUseChecker)
         command(UpdateBudget, new UpdateBudgetHandler(budgetRepository))
-        command(DetermineUserStorageUsage, new DetermineUserStorageUsageHandler(storageUseService, userRepository))
+        command(DetermineUserStorageUsage, new DetermineUserStorageUsageHandler(storageUseService, userRepository, connectionManager))
         command(UpdateSpendingReport, new UpdateSpendingReportHandler(budgetRepository, generateSpendingReportHandler))
 
         query(GenerateSpendingReport,
