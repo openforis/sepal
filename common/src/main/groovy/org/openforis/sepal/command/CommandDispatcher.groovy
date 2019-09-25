@@ -32,19 +32,9 @@ class HandlerRegistryCommandDispatcher implements CommandDispatcher {
         LOG.debug("Executing command $command")
         try {
             if (handler instanceof AfterCommitCommandHandler)
-                transactionManager.registerAfterCommitCallback { result ->
-                    LOG.debug("Executing after commit callback for command $command")
-                    def (ignore, duration) = time {
-                        transactionManager.withTransaction {
-                            ((AfterCommitCommandHandler) handler).afterCommit(command, result)
-                        }
-                    }
-                    LOG.debug("Completed after commit callback for command $command after $duration millis")
-                }
+                registerAfterCommitCallback(command, handler)
             def (result, duration) = time {
-                transactionManager.withTransaction {
-                    handler.execute(command)
-                }
+                execute(command, handler)
             }
             LOG.debug("Completed command $command after $duration millis")
             return result
@@ -52,6 +42,27 @@ class HandlerRegistryCommandDispatcher implements CommandDispatcher {
             def executionFailed = new ExecutionFailed(handler, command, e)
             LOG.error(executionFailed.message, e)
             throw executionFailed
+        }
+    }
+
+    private <R> R execute(Command<R> command, CommandHandler<R, Command<R>> handler) {
+        if (handler instanceof NonTransactionalCommandHandler)
+            return handler.execute(command)
+        else
+            return transactionManager.withTransaction {
+                handler.execute(command)
+            }
+    }
+
+    private <R> void registerAfterCommitCallback(Command<R> command, CommandHandler<R, Command<R>> handler) {
+        transactionManager.registerAfterCommitCallback { result ->
+            LOG.debug("Executing after commit callback for command $command")
+            def (ignore, duration) = time {
+                transactionManager.withTransaction {
+                    ((AfterCommitCommandHandler) handler).afterCommit(command, result)
+                }
+            }
+            LOG.debug("Completed after commit callback for command $command after $duration millis")
         }
     }
 
