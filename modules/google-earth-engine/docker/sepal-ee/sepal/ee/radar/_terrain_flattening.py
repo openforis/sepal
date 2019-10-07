@@ -76,7 +76,7 @@ def apply(image):
 
     # rename bands for output
     return replace(
-        output,
+        image,
         output.select(
             ['VV', 'VH', 'slope_1', 'slope_2'],
             ['VV', 'VH', 'layover', 'shadow']

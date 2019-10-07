@@ -14,7 +14,7 @@ from ..sepal_exception import SepalException
 class Classification(ImageSpec):
     def __init__(self, sepal_api, spec, create_image_spec):
         super(Classification, self).__init__()
-        self.pyramiding_policy = '{"class": "mode"}'
+        self.pyramiding_policy = {"class": "mode"}
         self.spec = spec
         model = spec['recipe']['model']
         self.trainingData = ee.FeatureCollection('ft:' + model['trainingData']['fusionTable'])

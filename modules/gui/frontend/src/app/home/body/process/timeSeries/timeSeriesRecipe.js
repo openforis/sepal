@@ -14,11 +14,9 @@ export const defaultModel = {
     sources: {
         LANDSAT: ['LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
     },
-    preProcessingOptions: {
-        corrections: ['SR', 'BRDF'],
-        mask: ['SNOW']
-    },
     options: {
+        corrections: [],
+        mask: ['SNOW'],
         orbits: ['ASCENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
@@ -44,6 +42,7 @@ export const RecipeActions = id => {
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
+    const options = {...recipe.model.options, ...recipe.model.preProcessingOptions}
     const task = {
         'operation': 'timeseries.download',
         'params':
@@ -56,10 +55,10 @@ const submitRetrieveRecipeTask = recipe => {
                 aoi: recipe.model.aoi,
                 fromDate: recipe.model.dates.startDate,
                 toDate: recipe.model.dates.endDate,
-                maskSnow: recipe.model.preProcessingOptions.mask.includes('SNOW'),
-                brdfCorrect: recipe.model.preProcessingOptions.corrections.includes('BRDF'),
-                surfaceReflectance: recipe.model.preProcessingOptions.corrections.includes('SR'),
-                ...recipe.model.options,
+                maskSnow: options.mask.includes('SNOW'),
+                brdfCorrect: options.corrections.includes('BRDF'),
+                surfaceReflectance: options.corrections.includes('SR'),
+                ...options,
             }
     }
     return api.tasks.submit$(task).subscribe()

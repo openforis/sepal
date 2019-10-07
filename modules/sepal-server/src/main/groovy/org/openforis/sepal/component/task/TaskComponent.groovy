@@ -17,7 +17,7 @@ import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
 
-import static java.util.concurrent.TimeUnit.SECONDS
+import static java.util.concurrent.TimeUnit.MINUTES
 
 class TaskComponent extends DataSourceBackedComponent implements EndpointRegistry {
     TaskComponent(
@@ -66,6 +66,6 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
     }
 
     void onStart() {
-        schedule(10, SECONDS, new CancelTimedOutTasks())
+        schedule(1, MINUTES, new CancelTimedOutTasks())
     }
 }
