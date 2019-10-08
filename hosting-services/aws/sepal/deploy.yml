@@ -39,7 +39,7 @@
 
     - file: path="/etc/rsyslog.d" state=directory
     - name: Copy rsyslog.d
-      synchronize: src="rsyslog.d" dest=/etc/rsyslog.d
+      synchronize: src="rsyslog.d" dest=/etc/
 
     - name: Start rsyslog
       service: name=rsyslog state=started
