@@ -12,9 +12,9 @@
         ldap_host: "{{ ec2_private_ip_address }}"
         sepal_http_ip: "{{ ec2_private_ip_address }}"
         sepal_ssh_ip: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
-        syslog_host: "{{ ec2_private_ip_address }}"
         elk_host: "{{ elk_host }}"
         syslog_address: "unixgram:///dev/log"
+        syslog_host: "{{ ec2_private_ip_address }}"
 
     - file: path="/data/sepal/etc" state=directory
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
@@ -36,6 +36,10 @@
     # rsyslog
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+
+    - file: path="/etc/rsyslog.d" state=directory
+    - name: Copy rsyslog.d
+      synchronize: src="rsyslog.d" dest=/etc/rsyslog.d
 
     - name: Start rsyslog
       service: name=rsyslog state=started

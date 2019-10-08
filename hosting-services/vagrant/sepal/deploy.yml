@@ -32,11 +32,18 @@
     - copy: src="{{ config_home }}/certificates/sepal-https.key" dest=/data/letsencrypt/live/{{ sepal_host }}/privkey.pem
     - copy: src="{{ config_home }}/certificates/sepal-https.crt" dest=/data/letsencrypt/live/{{ sepal_host }}/fullchain.pem
 
+    - name: Copy rsyslog.conf
+      template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+
+    - name: Copy rsyslog.d
+      synchronize: src="rsyslog.d" dest=/etc/
+
     - set_fact:
        ldap_host: "{{ vagrant_ip }}"
        elk_host: "{{ vagrant_ip }}"
        hosting_service: vagrant
        syslog_address: "tcp://172.17.0.1:514"
+       syslog_host: "172.17.0.1"
        workspace: "/opt/sepal/"
 
   post_tasks:
