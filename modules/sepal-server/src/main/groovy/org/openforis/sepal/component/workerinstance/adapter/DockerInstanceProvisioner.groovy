@@ -82,13 +82,13 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         ]
                     ]
                 ],
-//                LogConfig: [
-//                    "Type": "syslog",
-//                    "Config": [
-//                        "syslog-address": "tcp://${syslogHost}:514",
-//                        "tag": image.containerName(instance),
-//                    ]
-//                ]
+                LogConfig: [
+                    "Type": "syslog",
+                    "Config": [
+                        "syslog-address": "tcp://${syslogHost}:514",
+                        "tag": image.containerName(instance),
+                    ]
+                ]
             ],
             ExposedPorts: image.exposedPorts.collectEntries {
                 ["$it/tcp", [:]]
