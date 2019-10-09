@@ -32,14 +32,24 @@
         masked: no
 
     - name: Configure monit 1/2
-      synchronize: src=monit/copy/* dest=/
+      synchronize: src="monit/copy/" dest="/" owner=no
 
     - name: Configure monit 2/2
       template: src=monit/template/etc/monit.d/config dest=/etc/monit.d/config
 
+    - name: Set monit file permissions
+      file:
+        path: "{{ item }}"
+        owner: root
+        group: root
+        recurse: yes
+      with_list:
+        - /etc/monit.d
+        - /usr/local/bin
+
     - name: Make dockercheck script executable
-        file: dest=/usr/local/bin/dockercheck mode=a+x
-    
+      file: dest="/usr/local/bin/dockercheck" mode="a+x"
+
     - file: path="/data/sepal/etc" state=directory
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
 
