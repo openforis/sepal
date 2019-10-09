@@ -60,7 +60,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void createContainer(WorkerInstance instance, Image image) {
-        def request = toJson(
+        def body = toJson(
             Image: "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
             Tty: true,
             Cmd: image.runCommand,
@@ -72,6 +72,9 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         "$hostDir:$it"
                     }
                 }.flatten(),
+                PortBindings: image.publishedPorts.collectEntries { publishedPort, exposedPort ->
+                    ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
+                },
                 Links: image.links.collect { "$it.key:$it.value" },
                 Mounts: [
                     [
@@ -86,7 +89,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                     "Type": "syslog",
                     "Config": [
                         "syslog-address": "tcp://${syslogHost}:514",
-                        "tag": image.containerName(instance),
+                        "tag": "{{.FullID}}",
                     ]
                 ]
             ],
@@ -97,14 +100,15 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                 "$it.key=$it.value"
             }
         )
-        LOG.debug("Creating container from image $image on instance $instance")
+        def request = [
+            path: "containers/create",
+            query: [name: image.containerName(instance)],
+            body: body,
+            requestContentType: JSON
+        ]
+        LOG.debug("Creating container from image $image on instance $instance with request $request")
         withClient(instance) {
-            def response = post(
-                path: "containers/create",
-                query: [name: image.containerName(instance)],
-                body: request,
-                requestContentType: JSON
-            )
+            def response = post(request)
             if (response.data.Warnings)
                 LOG.warn("Warning when creating docker container on $instance: $response.data.Warnings")
         }
@@ -112,16 +116,13 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void startContainer(WorkerInstance instance, Image image) {
-        def request = toJson(PortBindings: image.publishedPorts.collectEntries { publishedPort, exposedPort ->
-            ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
-        })
-        LOG.debug("Starting container from image $image on instance $instance")
+        def request = [
+            path: "containers/${image.containerName(instance)}/start",
+            requestContentType: JSON
+        ]
+        LOG.debug("Starting container from image $image on instance $instance with request $request")
         withClient(instance) {
-            post(
-                path: "containers/${image.containerName(instance)}/start",
-                body: request,
-                requestContentType: JSON
-            )
+            post(request)
         }
         LOG.debug("Started container from image $image on instance $instance")
     }

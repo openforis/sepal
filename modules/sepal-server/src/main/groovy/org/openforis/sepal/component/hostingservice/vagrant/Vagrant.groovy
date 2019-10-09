@@ -30,6 +30,6 @@ class Vagrant implements HostingServiceAdapter {
     }
 
     InstanceProvisioner getInstanceProvisioner() {
-        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, 'localhost')
+        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, '172.17.0.1')
     }
 }
