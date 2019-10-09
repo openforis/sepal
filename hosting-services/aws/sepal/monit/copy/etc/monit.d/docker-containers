@@ -1,0 +1,75 @@
+check program gui with path /usr/local/bin/dockercheck-gui
+    depends on docker
+    if status != 0 then alert
+
+check program sepal with path /usr/local/bin/dockercheck-sepal
+    depends on docker
+    if status != 0 then alert
+
+check program google-earth-engine with path /usr/local/bin/dockercheck-google-earth-engine
+    depends on docker
+    if status != 0 then alert
+
+check program ldap with path /usr/local/bin/dockercheck-ldap
+    depends on docker
+    if status != 0 then alert
+
+check program kafka with path /usr/local/bin/dockercheck-kafka
+    depends on docker
+    if status != 0 then alert
+
+check program zookeeper with path /usr/local/bin/dockercheck-zookeeper
+    depends on docker
+    if status != 0 then alert
+
+check program api-gateway with path /usr/local/bin/dockercheck-api-gateway
+    depends on docker
+    if status != 0 then alert
+
+check program ssh-gateway with path /usr/local/bin/dockercheck-ssh-gateway
+    depends on docker
+    if status != 0 then alert
+
+check program user with path /usr/local/bin/dockercheck-user
+    depends on docker
+    if status != 0 then alert
+
+check program haproxy with path /usr/local/bin/dockercheck-haproxy
+    depends on docker
+    if status != 0 then alert
+
+check program letsencrypt with path /usr/local/bin/dockercheck-letsencrypt
+    depends on docker
+    if status != 0 then alert
+
+check program terminal with path /usr/local/bin/dockercheck-terminal
+    depends on docker
+    if status != 0 then alert
+
+check program peatlands with path /usr/local/bin/dockercheck-peatlands
+    depends on docker
+    if status != 0 then alert
+
+check program ceo-gateway with path /usr/local/bin/dockercheck-ceo-gateway
+    depends on docker
+    if status != 0 then alert
+
+check program ceo with path /usr/local/bin/dockercheck-ceo
+    depends on docker
+    if status != 0 then alert
+
+check program mysql-backup with path /usr/local/bin/dockercheck-mysql-backup
+    depends on docker
+    if status != 0 then alert
+
+check program mysql with path /usr/local/bin/dockercheck-mysql
+    depends on docker
+    if status != 0 then alert
+
+check program ldap-backup with path /usr/local/bin/dockercheck-ldap-backup
+    depends on docker
+    if status != 0 then alert
+
+check program backup with path /usr/local/bin/dockercheck-backup
+    depends on docker
+    if status != 0 then alert

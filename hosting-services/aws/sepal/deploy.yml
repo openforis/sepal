@@ -16,6 +16,30 @@
         syslog_address: "unixgram:///dev/log"
         syslog_host: "{{ ec2_private_ip_address }}"
 
+    - name: Install EPEL repository
+      yum:
+        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+
+    - name: Install monit
+      yum:
+        name: 'monit'
+
+    - name: Stop monit
+      systemd:
+        name: monit
+        state: stopped
+        enabled: yes
+        masked: no
+
+    - name: Configure monit 1/2
+      synchronize: src=monit/copy/* dest=/
+
+    - name: Configure monit 2/2
+      template: src=monit/template/etc/monit.d/config dest=/etc/monit.d/config
+
+    - name: Make dockercheck script executable
+        file: dest=/usr/local/bin/dockercheck mode=a+x
+    
     - file: path="/data/sepal/etc" state=directory
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
 
@@ -94,6 +118,14 @@
     - name: Enable docker
       systemd:
         name: docker
+        state: started
+        enabled: yes
+        masked: no
+
+  post_tasks:
+    - name: Start monit
+      systemd:
+        name: monit
         state: started
         enabled: yes
         masked: no

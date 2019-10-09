@@ -1,0 +1,10 @@
+## Check general system resources such as load average, cpu and memory
+## usage. Each test specifies a resource, conditions and the action to be
+## performed should a test fail.
+#
+check system $HOST
+    if loadavg (1min) > 4 for 10 cycles then alert
+    if loadavg (5min) > 2 for 10 cycles then alert
+    if cpu usage > 95% for 10 cycles then alert
+    if memory usage > 75% for 10 cycles then alert
+    if swap usage > 25% for 10 cycles then alert
