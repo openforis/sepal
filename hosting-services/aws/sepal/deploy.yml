@@ -42,12 +42,14 @@
         mode: "0644"
 
     - name: Configure monit 2/3
-      template: src="monit/config" dest="/etc/monit.d/config"
+      template: 
+        src: "monit/config.template"
+        dest: "/etc/monit.d/config"
         owner: "root"
         group: "root"
         mode: "0644"
 
-    - name: Configure monit 3/3 (dockercheck)
+    - name: Configure monit 3/3
       copy:
         src: "monit/dockercheck/"
         dest: "/usr/local/bin/"
