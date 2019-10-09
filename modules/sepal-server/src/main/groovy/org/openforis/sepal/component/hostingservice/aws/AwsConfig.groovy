@@ -9,6 +9,7 @@ class AwsConfig {
     final String availabilityZone
     final String accessKey
     final String secretKey
+    final String syslogHost
     final String sepalVersion
     final String environment
 
@@ -18,6 +19,7 @@ class AwsConfig {
         availabilityZone = c.string('availabilityZone')
         accessKey = c.string('accessKey')
         secretKey = c.string('secretKey')
+        syslogHost = c.string('syslogHost')
         sepalVersion = c.string('sepalVersion')
         environment = c.string('environment')
     }

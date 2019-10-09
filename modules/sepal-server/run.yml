@@ -47,3 +47,4 @@
       EE_ACCOUNT_SEPAL_ENV: "{{ google_earth_engine_account }}"
       EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"
       GOOGLE_MAPS_API_KEY_SEPAL_ENV: "{{ google_maps_api_key }}"
+      SYSLOG_HOST_SEPAL_ENV: "{{ syslog_host }}"
