@@ -5,7 +5,7 @@ target
 
 #Gradle
 .gradle
-bin
+#bin
 build
 
 #Eclipse
