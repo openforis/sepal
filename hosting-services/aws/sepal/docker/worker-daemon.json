@@ -1,0 +1,8 @@
+{
+  "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"],
+  "storage-driver": "devicemapper",
+  "storage-opts": [
+    "dm.datadev=/dev/vg-docker/data",
+    "dm.metadatadev=/dev/vg-docker/metadata"
+  ]
+}
