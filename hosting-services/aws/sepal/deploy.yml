@@ -16,6 +16,8 @@
         syslog_address: "unixgram:///dev/log"
         syslog_host: "{{ ec2_private_ip_address }}"
 
+    # monit
+
     - name: Install EPEL repository
       yum:
         name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
@@ -31,24 +33,27 @@
         enabled: yes
         masked: no
 
-    - name: Configure monit 1/2
-      synchronize: src="monit/copy/" dest="/" owner=no
+    - name: Configure monit 1/3
+      copy:
+        src: "monit/monit.d/"
+        dest: "/etc/monit.d/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
 
-    - name: Configure monit 2/2
-      template: src=monit/template/etc/monit.d/config dest=/etc/monit.d/config
+    - name: Configure monit 2/3
+      template: src="monit/config" dest="/etc/monit.d/config"
+        owner: "root"
+        group: "root"
+        mode: "0644"
 
-    - name: Set monit file permissions
-      file:
-        path: "{{ item }}"
-        owner: root
-        group: root
-        recurse: yes
-      with_list:
-        - /etc/monit.d
-        - /usr/local/bin
-
-    - name: Make dockercheck script executable
-      file: dest="/usr/local/bin/dockercheck" mode="a+x"
+    - name: Configure monit 3/3 (dockercheck)
+      copy:
+        src: "monit/dockercheck/"
+        dest: "/usr/local/bin/"
+        owner: "root"
+        group: "root"
+        mode: "0755"
 
     - file: path="/data/sepal/etc" state=directory
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
@@ -71,12 +76,25 @@
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
 
-    - file: path="/etc/rsyslog.d" state=directory
     - name: Copy rsyslog.d
-      synchronize: src="rsyslog.d" dest=/etc/
+      copy:
+        src: "rsyslog.d/"
+        dest: "/etc/rsyslogd.d/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
 
     - name: Start rsyslog
       service: name=rsyslog state=started
+
+    # logrotate
+    - name: Copy worker-instances logrotate configuration
+      copy:
+        src: "logrotate.d/"
+        dest: "/etc/logrotate.d/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
 
     # docker
     - file: path="/data/docker/storage/devicemapper/metadata" state=directory
