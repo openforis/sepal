@@ -89,7 +89,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                     "Type": "syslog",
                     "Config": [
                         "syslog-address": "tcp://${syslogHost}:514",
-                        "tag": "{{.FullID}}",
+                        "tag": "{{.Name}}",
                     ]
                 ]
             ],
