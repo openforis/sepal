@@ -196,7 +196,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             def response = get(path: 'containers/json', query: [all: true])
             def allContainers = response.data
             return allContainers.findAll {
-                it.Names.find { String name -> name.startsWith('/worker-') }
+                it.Names.find { String name -> name.endsWith('.worker') }
             }
         }
     }

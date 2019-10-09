@@ -144,7 +144,7 @@ final class Image {
     List<String> waitCommand = []
 
     String containerName(WorkerInstance instance) {
-        "worker-${name}-${instance.reservation.username}"
+        "${instance.reservation.username}.${name}.worker"
     }
 }
 
