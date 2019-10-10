@@ -1,7 +1,7 @@
-import 'xterm/dist/xterm.css'
-import * as fit from 'xterm/lib/addons/fit/fit'
+import 'xterm/css/xterm.css'
 import {ContentPadding} from 'widget/sectionLayout'
 import {ElementResizeDetector} from 'widget/elementResizeDetector'
+import {FitAddon} from 'xterm-addon-fit'
 import {Subject} from 'rxjs'
 import {Tabs} from 'widget/tabs/tabs'
 import {TerminalWebSocket} from './terminalWebsocket'
@@ -17,8 +17,6 @@ import Notifications from 'widget/notifications'
 import React from 'react'
 import styles from './terminal.module.css'
 import withSubscriptions from 'subscription'
-
-Xterm.applyAddon(fit)
 
 export default class Terminal extends React.Component {
     render() {
@@ -37,6 +35,7 @@ class _TerminalSession extends React.Component {
     terminal = new Xterm({
         rendererType: 'canvas'
     })
+    fitAddon = new FitAddon()
     webSocket = null
     enabled$ = new Subject()
     resize$ = new Subject()
@@ -46,7 +45,9 @@ class _TerminalSession extends React.Component {
     constructor(props) {
         super(props)
         const {stream} = props
-        const {terminal, filterEnabled$, resize$, fit$, focus$} = this
+        const {terminal, fitAddon, filterEnabled$, resize$, fit$, focus$} = this
+
+        terminal.loadAddon(fitAddon)
 
         const sizeChanged$ = resize$.pipe(
             distinctUntilChanged(),
@@ -59,7 +60,7 @@ class _TerminalSession extends React.Component {
         )
         stream('REQUEST_FIT_TERMINAL',
             filterEnabled$(fit$),
-            () => terminal.fit()
+            () => fitAddon.fit()
         )
         stream('REQUEST_FOCUS_TERMINAL',
             filterEnabled$(focus$),
