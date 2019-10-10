@@ -81,7 +81,7 @@
     - name: Copy rsyslog.d
       copy:
         src: "rsyslog.d/"
-        dest: "/etc/rsyslogd.d/"
+        dest: "/etc/rsyslog.d/"
         owner: "root"
         group: "root"
         mode: "0644"
