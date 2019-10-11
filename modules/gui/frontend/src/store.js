@@ -36,23 +36,42 @@ export const select = (...path) =>
     selectFrom(state(), path)
     // _.cloneDeep(selectFrom(state(), path))
 
-const includeDispatchingProp = (id, mapStateToProps) =>
+const includeDispatchingProp = mapStateToProps =>
     (state, ownProps) => {
         if (ownProps.enabled === false)
             return {}
         return {
             ...mapStateToProps(state, ownProps),
             actions: state.actions || {},
-            streams: state.stream && state.stream[id]
+            streams: state.stream && state.stream[ownProps.componentId]
         }
     }
 
 export const connect = mapStateToProps => {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
 
+    // Component hierarchy:
+    //
+    // ComponentIdAssignment
+    // AddEnabledProp
+    // ConnectedComponent
+    // ReduxConnectedComponent
+    // PreventUpdateWhenDisabled
+    // WrappedComponent
+
     return WrappedComponent => {
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
-        const id = `${displayName}:${guid()}`
+
+        class ComponentIdAssignment extends Component {
+            id = `${displayName}:${guid()}`
+            render() {
+                return (
+                    <AddEnabledProp {...this.props} componentId={this.id}>
+                        {this.props.children}
+                    </AddEnabledProp>
+                )
+            }
+        }
 
         class PreventUpdateWhenDisabled extends Component {
             shouldComponentUpdate(nextProps) {
@@ -83,7 +102,7 @@ export const connect = mapStateToProps => {
         }
 
         const ReduxConnectedComponent = connectToRedux(
-            includeDispatchingProp(id, mapStateToProps), null, null, {
+            includeDispatchingProp(mapStateToProps), null, null, {
                 areStatePropsEqual: _.isEqual
             }
         )(PreventUpdateWhenDisabled)
@@ -91,7 +110,7 @@ export const connect = mapStateToProps => {
         class ConnectedComponent extends React.PureComponent {
             constructor(props) {
                 super(props)
-                this.id = id
+                this.id = props.componentId
                 this.componentWillUnmount$ = new Subject()
                 this.asyncActionBuilder = this.asyncActionBuilder.bind(this)
                 this.action = this.action.bind(this)
@@ -111,7 +130,7 @@ export const connect = mapStateToProps => {
 
             action(type) {
                 const actions = select('actions') || {}
-                const componentActions = actions[this.id] || {}
+                const componentActions = actions[this.props.componentId] || {}
                 const undispatched = !componentActions[type]
                 const dispatching = componentActions[type] === 'DISPATCHING'
                 const completed = componentActions[type] === 'COMPLETED'
@@ -136,7 +155,7 @@ export const connect = mapStateToProps => {
                     stream: this.stream,
                     onEnable: this.setEnableListener,
                     onDisable: this.setDisableListener,
-                    componentId: this.id,
+                    // componentId: this.id,
                     componentWillUnmount$: this.componentWillUnmount$
                 })
             }
@@ -157,7 +176,7 @@ export const connect = mapStateToProps => {
             = PreventUpdateWhenDisabled.displayName
             = `Store(${WrappedComponent.displayName})`
 
-        return AddEnabledProp
+        return ComponentIdAssignment
     }
 }
 
