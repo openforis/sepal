@@ -16,12 +16,12 @@
         syslog_address: "unixgram:///dev/log"
         syslog_host: "{{ ec2_private_ip_address }}"
 
-    # shell color prompt
-    - name: Set bash color prompt
+    # bash prompt
+    - name: Set bash prompt
       blockinfile:
         path: /etc/profile
         block: |
-          \# Color prompt
+          \# Bash prompt
           PS1='{{bash_prompt}}'
 
     # monit
