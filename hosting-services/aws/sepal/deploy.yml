@@ -21,7 +21,7 @@
       blockinfile:
         path: /etc/profile
         block: |
-          \# Bash prompt
+          # Bash prompt
           PS1='{{bash_prompt}}'
 
     # monit
