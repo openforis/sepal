@@ -50,6 +50,14 @@
         group: "9999"
         mode: "u=rwx,g=rwxs"
         state: "directory"
+    
+    - name: Create sepal worker instance log dir on EFS
+      file:
+        path: "/efs/data/sepal/worker-instance-log"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
 
     - name: Unmount EFS Nfs4
       mount:

@@ -29,3 +29,12 @@
     dump: 0
     passno: 0
 
+- name: Mount EFS Sepal worker instance log Dir
+  mount:
+    name: "/var/log/worker-instance"
+    fstype: "efs"
+    state: "mounted"
+    src: "{{ efs_id }}:/data/sepal/worker-instance-log"
+    opts: "defaults,_netdev"
+    dump: 0
+    passno: 0
