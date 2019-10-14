@@ -129,7 +129,7 @@ class _TerminalSession extends React.Component {
             background: 'transparent',
             foreground: '#ccc'
         })
-        terminal.on('resize',
+        terminal.onResize(
             dimensions => resize$.next({sessionId, dimensions})
         )
         this.enabled$.next(true)
@@ -143,7 +143,7 @@ class _TerminalSession extends React.Component {
         onDisable(() => {
             this.enabled$.next(false)
         })
-        terminal.on('data', data => this.webSocket.send(data))
+        terminal.onData(data => this.webSocket.send(data))
         webSocket.onMessage(message => terminal.write(message.data))
     }
 }
