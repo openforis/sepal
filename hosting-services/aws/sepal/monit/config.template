@@ -8,4 +8,4 @@ set mailserver {{ smtp_host }} port {{ smtp_port }}
 
 set mail-format { from: {{ smtp_from }} }
 
-set alert {{ sepal_operator_email }}
+set alert {{ sepal_monitoring_email }}
