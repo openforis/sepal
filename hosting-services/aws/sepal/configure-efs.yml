@@ -54,8 +54,8 @@
     - name: Create sepal worker instance log dir on EFS
       file:
         path: "/efs/data/sepal/worker-instance-log"
-        owner: "9999"
-        group: "9999"
+        owner: "root"
+        group: "root"
         mode: "u=rwx,g=rwxs"
         state: "directory"
 
