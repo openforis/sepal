@@ -16,8 +16,15 @@
         syslog_address: "unixgram:///dev/log"
         syslog_host: "{{ ec2_private_ip_address }}"
 
-    # monit
+    # shell color prompt
+    - name: Set bash color prompt
+      blockinfile:
+        path: /etc/profile
+        block: |
+          \# Color prompt
+          PS1='{{bash_prompt}}'
 
+    # monit
     - name: Install EPEL repository
       yum:
         name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
