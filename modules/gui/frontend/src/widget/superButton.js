@@ -1,8 +1,8 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
+import {Subject, animationFrameScheduler, fromEvent, interval, timer} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs/operators'
 import Hammer from 'hammerjs'
 import Highlight from 'react-highlighter'
 import PropTypes from 'prop-types'
@@ -14,35 +14,30 @@ import moment from 'moment'
 import styles from './superButton.module.css'
 import withSubscriptions from 'subscription'
 
+const EXPAND_DELAYED_TIMEOUT_MS = 1000
+
 class _SuperButton extends React.Component {
     ref = React.createRef()
+    expand$ = new Subject()
 
     state = {
         expanded: false,
         dragging: false
     }
 
-    handleClick() {
-        const {onClick, clickToExpand} = this.props
-        if (onClick) {
-            onClick && onClick()
-            return
-        }
-        if (clickToExpand) {
-            this.setState(({expanded}) => ({expanded: !expanded}))
-            return
-        }
+    isExpandable() {
+        const {clickToExpand, children} = this.props
+        return clickToExpand && children
     }
 
     isInteractive() {
-        const {onClick, clickToExpand, expanded} = this.props
-        return onClick || (clickToExpand && !expanded) || this.isDraggable()
+        const {onClick, expanded} = this.props
+        return onClick || (this.isExpandable() && !expanded) || this.isDraggable()
     }
 
     isInternallySelected() {
-        const {clickToExpand} = this.props
-        const {expanded: expanded} = this.state
-        return clickToExpand
+        const {expanded} = this.state
+        return this.isExpandable()
             ? expanded
             : undefined
     }
@@ -62,6 +57,25 @@ class _SuperButton extends React.Component {
     isDragging() {
         const {dragging} = this.state
         return dragging
+    }
+
+    handleClick() {
+        const {onClick, onExpand} = this.props
+        if (onClick) {
+            onClick && onClick()
+            return
+        }
+        if (this.isExpandable()) {
+            this.setState(
+                ({expanded}) => ({expanded: !expanded}),
+                () => {
+                    const {expanded} = this.state
+                    expanded && onExpand && onExpand()
+                    this.expand$.next(expanded)
+                }
+            )
+            return
+        }
     }
 
     render() {
@@ -279,9 +293,34 @@ class _SuperButton extends React.Component {
         })
     }
 
+    initializeExpandable() {
+        const {onExpandDelayed, addSubscription} = this.props
+        const expanded$ = this.expand$.pipe(
+            filter(expanded => expanded)
+        )
+        const collapsed$ = this.expand$.pipe(
+            filter(expanded => !expanded)
+        )
+
+        addSubscription(
+            expanded$.pipe(
+                switchMap(() =>
+                    timer(EXPAND_DELAYED_TIMEOUT_MS).pipe(
+                        takeUntil(collapsed$)
+                    )
+                )
+            ).subscribe(
+                () => onExpandDelayed && onExpandDelayed()
+            )
+        )
+    }
+
     componentDidMount() {
         if (this.isDraggable()) {
             this.initializeDraggable()
+        }
+        if (this.isExpandable()) {
+            this.initializeExpandable()
         }
     }
 }
@@ -319,6 +358,8 @@ SuperButton.propTypes = {
     onDragStart: PropTypes.func,
     onDuplicate: PropTypes.func,
     onEdit: PropTypes.func,
+    onExpand: PropTypes.func,
+    onExpandDelayed: PropTypes.func,
     onInfo: PropTypes.func,
     onRemove: PropTypes.func
 }
