@@ -1,6 +1,7 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Msg, msg} from 'translate'
+import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {SuperButton} from 'widget/superButton'
 import {activatable} from 'widget/activation/activatable'
@@ -17,7 +18,6 @@ import actionBuilder from 'action-builder'
 import api from 'api'
 import moment from 'moment'
 import styles from './userMessages.module.css'
-import {NoData} from 'widget/noData'
 
 const mapStateToProps = state => {
     const currentUser = state.user.currentUser
@@ -169,7 +169,7 @@ class _UserMessages extends React.Component {
                     this.renderStatusButton(userMessage)
                 ]}
                 // selected={userMessage.state === 'UNREAD' ? true : undefined}
-                clickToSelect
+                clickToExpand
             >
                 <Markdown className={styles.contents} source={userMessage.message.contents}/>
             </SuperButton>

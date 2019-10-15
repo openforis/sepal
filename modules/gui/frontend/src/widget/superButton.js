@@ -18,39 +18,39 @@ class _SuperButton extends React.Component {
     ref = React.createRef()
 
     state = {
-        selected: false,
+        expanded: false,
         dragging: false
     }
 
     handleClick() {
-        const {onClick, clickToSelect} = this.props
+        const {onClick, clickToExpand} = this.props
         if (onClick) {
             onClick && onClick()
             return
         }
-        if (clickToSelect) {
-            this.setState(({selected}) => ({selected: !selected}))
+        if (clickToExpand) {
+            this.setState(({expanded}) => ({expanded: !expanded}))
             return
         }
     }
 
     isInteractive() {
-        const {onClick, clickToSelect, selected} = this.props
-        return onClick || (clickToSelect && !selected) || this.isDraggable()
+        const {onClick, clickToExpand, expanded} = this.props
+        return onClick || (clickToExpand && !expanded) || this.isDraggable()
     }
 
     isInternallySelected() {
-        const {clickToSelect} = this.props
-        const {selected} = this.state
-        return clickToSelect
-            ? selected
+        const {clickToExpand} = this.props
+        const {expanded: expanded} = this.state
+        return clickToExpand
+            ? expanded
             : undefined
     }
 
     isSelected() {
-        const {selected} = this.props
-        return selected !== undefined
-            ? selected
+        const {expanded} = this.props
+        return expanded !== undefined
+            ? expanded
             : this.isInternallySelected()
     }
 
@@ -71,7 +71,7 @@ class _SuperButton extends React.Component {
             lookStyles.look,
             lookStyles.transparent,
             lookStyles.noTransitions,
-            this.isSelected() === true ? [lookStyles.hover, styles.selected] : null,
+            this.isSelected() === true ? [lookStyles.hover, styles.expanded] : null,
             this.isInteractive() ? null : lookStyles.nonInteractive,
             this.isDraggable() ? styles.draggable : null,
             this.isDragging() ? styles.dragging : null,
@@ -294,13 +294,14 @@ export const SuperButton = compose(
 SuperButton.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
-    clickToSelect: PropTypes.any,
+    clickToExpand: PropTypes.any,
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     drag$: PropTypes.object,
     dragTooltip: PropTypes.string,
     dragValue: PropTypes.any,
     duplicateTooltip: PropTypes.string,
     editTooltip: PropTypes.string,
+    expanded: PropTypes.any,
     extraButtons: PropTypes.arrayOf(PropTypes.object),
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
@@ -308,7 +309,6 @@ SuperButton.propTypes = {
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
     removeTooltip: PropTypes.string,
-    selected: PropTypes.any,
     timestamp: PropTypes.any,
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     tooltipPlacement: PropTypes.string,

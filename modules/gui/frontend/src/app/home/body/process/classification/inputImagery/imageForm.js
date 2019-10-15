@@ -104,7 +104,7 @@ class ImageForm extends Component {
                 removeDisabled={bandSetSpec.type === 'IMAGE_BANDS'}
                 onClick={() => this.editBandSetSpec(bandSetSpec)}
                 onRemove={() => this.removeBandSetSpec(bandSetSpec)}
-                selected={selected}
+                expanded={selected}
             >
                 {this.renderBandSetSpecEditor(bandSetSpec)}
             </SuperButton>
