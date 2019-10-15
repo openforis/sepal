@@ -71,7 +71,7 @@ class _UserMessages extends React.Component {
         )
     }
 
-    updateUserMessageState(userMessage) {
+    updateUserMessage(userMessage) {
         const id = userMessage.message.id
         const state = userMessage.state
         this.props.stream('REQUEST_UPDATE_USER_MESSAGE_STATE',
@@ -91,7 +91,20 @@ class _UserMessages extends React.Component {
         !modal && showUserMessages()
     }
 
-    toggleMessageState(userMessage) {
+    readState(read) {
+        return read
+            ? 'READ'
+            : 'UNREAD'
+    }
+
+    setReadState(userMessage) {
+        this.updateUserMessage({
+            ...userMessage,
+            state: 'READ'
+        })
+    }
+
+    toggleReadState(userMessage) {
         const nextState = state => {
             switch(state) {
             case 'READ':
@@ -102,7 +115,7 @@ class _UserMessages extends React.Component {
                 throw Error(`Unsupported message state "${state}"`)
             }
         }
-        this.updateUserMessageState({
+        this.updateUserMessage({
             ...userMessage,
             state: nextState(userMessage.state)
         })
@@ -142,7 +155,7 @@ class _UserMessages extends React.Component {
                 size='large'
                 icon={state === 'UNREAD' ? 'bell' : 'check'}
                 additionalClassName={[styles.subject, styles[state]].join(' ')}
-                onClick={() => this.toggleMessageState(userMessage)}
+                onClick={() => this.toggleReadState(userMessage)}
                 tooltip={msg(`userMessages.state.${state}`)}
                 tooltipPlacement='top'
             />
@@ -163,12 +176,12 @@ class _UserMessages extends React.Component {
                 editTooltip={msg('userMessages.edit')}
                 removeMessage={msg('userMessages.removeConfirmation', {subject: message.subject})}
                 removeTooltip={msg('userMessages.remove')}
+                onExpandDelayed={() => this.setReadState(userMessage, 'READ')}
                 onEdit={isAdmin ? () => this.editMessage(message) : null}
                 onRemove={isAdmin ? () => this.removeMessage(message) : null}
                 extraButtons={[
                     this.renderStatusButton(userMessage)
                 ]}
-                // selected={userMessage.state === 'UNREAD' ? true : undefined}
                 clickToExpand
             >
                 <Markdown className={styles.contents} source={userMessage.message.contents}/>
