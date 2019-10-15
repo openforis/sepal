@@ -167,7 +167,12 @@ def time_series_to_sepal(
         stack = _create_stack(geometry, year_start, year_end)
         if not stack.bandNames().size().getInfo():
             logging.info('No data between {} and {}'.format(year_start, year_end))
-            return empty()
+            return of({
+                'exported': 1,
+                'downloaded': 1,
+                'downloaded_bytes': 0,
+                'processed': 1
+            })
         initial_progress = of({
             'exported': 0,
             'stack_bytes': 0,
