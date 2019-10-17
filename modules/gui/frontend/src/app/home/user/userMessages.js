@@ -1,6 +1,7 @@
-import {Activator} from 'widget/activation/activator'
+import {Activator, activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {Msg, msg} from 'translate'
+import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {SuperButton} from 'widget/superButton'
 import {activatable} from 'widget/activation/activatable'
@@ -17,7 +18,6 @@ import actionBuilder from 'action-builder'
 import api from 'api'
 import moment from 'moment'
 import styles from './userMessages.module.css'
-import {NoData} from 'widget/noData'
 
 const mapStateToProps = state => {
     const currentUser = state.user.currentUser
@@ -71,7 +71,7 @@ class _UserMessages extends React.Component {
         )
     }
 
-    updateUserMessageState(userMessage) {
+    updateUserMessage(userMessage) {
         const id = userMessage.message.id
         const state = userMessage.state
         this.props.stream('REQUEST_UPDATE_USER_MESSAGE_STATE',
@@ -91,7 +91,20 @@ class _UserMessages extends React.Component {
         !modal && showUserMessages()
     }
 
-    toggleMessageState(userMessage) {
+    readState(read) {
+        return read
+            ? 'READ'
+            : 'UNREAD'
+    }
+
+    setReadState(userMessage) {
+        this.updateUserMessage({
+            ...userMessage,
+            state: 'READ'
+        })
+    }
+
+    toggleReadState(userMessage) {
         const nextState = state => {
             switch(state) {
             case 'READ':
@@ -102,7 +115,7 @@ class _UserMessages extends React.Component {
                 throw Error(`Unsupported message state "${state}"`)
             }
         }
-        this.updateUserMessageState({
+        this.updateUserMessage({
             ...userMessage,
             state: nextState(userMessage.state)
         })
@@ -142,7 +155,7 @@ class _UserMessages extends React.Component {
                 size='large'
                 icon={state === 'UNREAD' ? 'bell' : 'check'}
                 additionalClassName={[styles.subject, styles[state]].join(' ')}
-                onClick={() => this.toggleMessageState(userMessage)}
+                onClick={() => this.toggleReadState(userMessage)}
                 tooltip={msg(`userMessages.state.${state}`)}
                 tooltipPlacement='top'
             />
@@ -163,13 +176,13 @@ class _UserMessages extends React.Component {
                 editTooltip={msg('userMessages.edit')}
                 removeMessage={msg('userMessages.removeConfirmation', {subject: message.subject})}
                 removeTooltip={msg('userMessages.remove')}
+                onExpandDelayed={() => this.setReadState(userMessage, 'READ')}
                 onEdit={isAdmin ? () => this.editMessage(message) : null}
                 onRemove={isAdmin ? () => this.removeMessage(message) : null}
                 extraButtons={[
                     this.renderStatusButton(userMessage)
                 ]}
-                // selected={userMessage.state === 'UNREAD' ? true : undefined}
-                clickToSelect
+                clickToExpand
             >
                 <Markdown className={styles.contents} source={userMessage.message.contents}/>
             </SuperButton>
@@ -216,10 +229,15 @@ class _UserMessages extends React.Component {
     }
 
     render() {
+        const {userMessages} = this.props
         const {selectedMessage} = this.state
-        return selectedMessage
-            ? this.renderMessagePanel(selectedMessage)
-            : this.renderMessagesPanel()
+        if (userMessages) {
+            return selectedMessage
+                ? this.renderMessagePanel(selectedMessage)
+                : this.renderMessagesPanel()
+        } else {
+            return null
+        }
     }
 }
 
@@ -235,34 +253,50 @@ UserMessages.propTypes = {
     className: PropTypes.string
 }
 
-const _UserMessagesButton = ({className, userMessages}) => {
-    const unread = _.filter(userMessages, {state: 'UNREAD'}).length
-    return (
-        <React.Fragment>
-            <Activator id='userMessages'>
-                {({active, activate}) =>
-                    <Button
-                        chromeless
-                        look='transparent'
-                        size='large'
-                        air='less'
-                        additionalClassName={[className, unread ? styles.unread : null].join(' ')}
-                        icon='bell'
-                        disabled={active}
-                        onClick={() => activate()}
-                        tooltip={msg('home.sections.user.messages')}
-                        tooltipPlacement='top'
-                        tooltipDisabled={active}/>
-                }
-            </Activator>
-            <UserMessages/>
-        </React.Fragment>
-    )
+class _UserMessagesButton extends React.Component {
+    state = {
+        shown: false
+    }
+
+    render() {
+        const {className, unreadUserMessages} = this.props
+        return (
+            <React.Fragment>
+                <UserMessages/>
+                <Activator id='userMessages'>
+                    {({active, activate}) =>
+                        <Button
+                            chromeless
+                            look='transparent'
+                            size='large'
+                            air='less'
+                            additionalClassName={[className, unreadUserMessages ? styles.unread : null].join(' ')}
+                            icon='bell'
+                            disabled={active}
+                            onClick={() => activate()}
+                            tooltip={msg('home.sections.user.messages')}
+                            tooltipPlacement='top'
+                            tooltipDisabled={active}/>
+                    }
+                </Activator>
+            </React.Fragment>
+        )
+    }
+
+    componentDidUpdate() {
+        const {unreadUserMessages} = this.props
+        const {shown} = this.state
+        if (unreadUserMessages && !shown) {
+            const {activator: {activatables: {userMessages}}} = this.props
+            this.setState({shown: true}, () => userMessages.activate())
+        }
+    }
 }
 
 export const UserMessagesButton = compose(
     _UserMessagesButton,
     connect(state => ({
-        userMessages: state.user.userMessages
-    }))
+        unreadUserMessages: _.filter(state.user.userMessages, {state: 'UNREAD'}).length
+    })),
+    activator('userMessages')
 )
