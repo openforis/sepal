@@ -24,6 +24,15 @@
           # Bash prompt
           PS1='{{bash_prompt}}'
 
+    # set locale
+    - name: Set locale
+      lineinfile:
+        path: /etc/environment
+        line: "{{ item }}"
+        with_items:
+          - LANG=en_US.utf-8
+          - LC_ALL=en_US.utf-8
+
     # monit
     - name: Install EPEL repository
       yum:
