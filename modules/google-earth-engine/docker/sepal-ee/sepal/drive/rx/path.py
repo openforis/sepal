@@ -1,4 +1,7 @@
-from rx import Observable, from_list, of, zip
+import logging
+
+from googleapiclient.errors import HttpError
+from rx import Observable, empty, from_list, of, zip
 from rx.operators import filter, first, flat_map, last, map, merge_scan
 from sepal.rx import throw
 
@@ -61,11 +64,18 @@ def create_folder_with_path(credentials, path: str, retries: int = 5):
     )
 
 
-def delete_file_with_path(credentials, path: str, retries: int = 5):
+def delete_file_with_path(credentials, path: str, retries: int = 2):
+    def delete(file):
+        try:
+            return delete_file(credentials, file, retries)
+        except HttpError:
+            logging.warning('Failed to delete file {} with path {}'.format(file, path))
+            return empty()
+
     return _files_in_path(credentials, path, retries).pipe(
         last(),
         filter(lambda file: file),
-        flat_map(lambda file: delete_file(credentials, file, retries=retries))
+        flat_map(lambda file: delete(file))
     )
 
 

@@ -4,6 +4,7 @@ import os
 
 # noinspection PyUnresolvedReferences
 from apiclient.http import MediaIoBaseDownload
+from googleapiclient.errors import HttpError
 from rx import Observable, combine_latest, concat, empty, interval
 from rx.operators import flat_map, map, take_while
 from sepal.drive import get_service, is_folder
@@ -52,9 +53,13 @@ def download(
 
     def delete_downloaded(f):
         if delete_after_download:
-            return delete_file(credentials, f).pipe(
-                flat_map(lambda _: empty())
-            )
+            try:
+                return delete_file(credentials, f).pipe(
+                    flat_map(lambda _: empty())
+                )
+            except HttpError:
+                logging.warning('Failed to delete downloaded file {}'.format(file))
+                return empty()
         else:
             return empty()
 
