@@ -1,0 +1,19 @@
+{
+  "name": "gee",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path /Users/paolini/Workspace/FAO/sepal-config/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir /Users/paolini/Workspace/FAO/sepal-config/sepal-server/home/admin --username admin"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/earthengine": "^0.1.203",
+    "commander": "^3.0.2",
+    "express": "^4.17.1",
+    "i": "^0.3.6",
+    "npm": "^6.12.0"
+  }
+}
