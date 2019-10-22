@@ -13,7 +13,9 @@
     "@google/earthengine": "^0.1.203",
     "commander": "^3.0.2",
     "express": "^4.17.1",
+    "express-http-context": "^1.2.3",
     "i": "^0.3.6",
-    "npm": "^6.12.0"
+    "npm": "^6.12.0",
+    "rxjs": "^6.5.3"
   }
 }

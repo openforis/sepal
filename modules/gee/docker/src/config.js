@@ -18,7 +18,7 @@ const {geeEmail, geeKeyPath, sepalHost, sepalUsername, sepalPassword, homeDir, u
 
 const geeKey = fs.readFileSync(geeKeyPath)
 
-const geeAuth = {
+const serviceAccountCredentials = {
     client_email: geeEmail,
     private_key: geeKey
 }
@@ -26,7 +26,7 @@ const geeAuth = {
 console.info('Configuration loaded')
 
 module.exports = {
-    geeAuth,
+    serviceAccountCredentials,
     sepalHost,
     sepalUsername,
     sepalPassword,
