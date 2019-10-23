@@ -32,12 +32,9 @@ const rateLimit = (count, slidingWindowTime) => {
 
 const token$ = new Subject()
 const rateLimitedToken$ = token$.pipe(
+    tap(token => console.log(`Enqueued token: ${token}`)),
     rateLimit(COUNT, SLIDING_WINDOW_TIME),
     tap(token => console.log(`Dequeued token: ${token}`))
-)
-
-token$.subscribe(
-    token => console.log(`Enqueued token: ${token}`)
 )
 
 module.exports = port => {
