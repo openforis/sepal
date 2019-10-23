@@ -1,31 +1,20 @@
-const {parentPort} = require('worker_threads')
-const {Subject} = require('rxjs')
-const {mergeMap} = require('rxjs/operators')
+const {of, timer} = require('rxjs')
+const {mergeMap, tap, mapTo} = require('rxjs/operators')
+const rateLimit = require('./job/operators/rateLimit')
 
-let subPort
-parentPort.once('message', port => subPort = port)
-
-// const globalRateLimit = bucket =>
-//     observable$ => observable$.pipe(
-//         mergeMap(value => {
-//             const observable$ = new Subject()
-//             subPort.once('message', () => {
-//                 observable$.next(value)
-//                 observable$.complete()
-//             })
-//             subPort.postMessage({
-//                 type: 'globalRateLimit',
-//                 bucket,
-//                 value
-//             })
-//             return observable$
-//         })
-//     )
-
-// const {of} = require('rxjs')
-
-// module.exports = () => {
-//     of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).pipe(
-//         globalRateLimit('foo')
-//     ).subscribe(console.log)
-// }
+module.exports = (dummy, onError, onComplete) => {
+    console.log(`Running test ${dummy}`)
+    of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).pipe(
+        rateLimit(3, 1000),
+        tap(value => console.log(`Submitted: ${value}`)),
+        mergeMap(value =>
+            timer(Math.random() * 2000).pipe(
+                mapTo(value)
+            )
+        )
+    ).subscribe(
+        value => console.log(`Got: ${value}`),
+        error => onError && onError(error),
+        () => onComplete && onComplete('done!')
+    )
+}

@@ -1,15 +1,16 @@
 const config = require('./config')
 const express = require('express')
-const gee = require('./gee/gee')
+const job = require('./job')
+const gee = require('./gee')
 
 const app = express()
 
-app.post('/preview', (req, res) => {
-    gee(req, 'preview', [123], result => res.send(result))
+app.get('/test', (req, res) => {
+    job.submit({relativePath: 'test', args: [123]}, result => res.send(result))
 })
 
-app.get('/test', (req, res) => {
-    gee(req, 'test', [123], result => res.send(result))
+app.post('/preview', (req, res) => {
+    gee.submit(req, 'preview', [123], result => res.send(result))
 })
 
 app.get('*', (req, res) => {
@@ -24,10 +25,3 @@ app.post('*', (req, _res) => {
 app.listen(config.port, () =>
     console.info(`Listening on port ${config.port}`)
 )
-
-// const rateLimit = require('./rateLimit')
-// const {of} = require('rxjs')
-
-// of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).pipe(
-//     rateLimit(3, 1000)
-// ).subscribe(console.log)
