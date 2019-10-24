@@ -1,7 +1,8 @@
 const {Subject, BehaviorSubject, timer} = require('rxjs')
 const {mergeMap, map, take, filter, tap} = require('rxjs/operators')
+const log = require('../log')
 
-const COUNT = 3
+const COUNT = 4
 const SLIDING_WINDOW_TIME = 1000
 
 const rateLimit = (count, slidingWindowTime) => {
@@ -32,9 +33,9 @@ const rateLimit = (count, slidingWindowTime) => {
 
 const token$ = new Subject()
 const rateLimitedToken$ = token$.pipe(
-    tap(token => console.log(`Enqueued token: ${token}`)),
+    tap(token => log.trace(`Enqueued token: ${token}`)),
     rateLimit(COUNT, SLIDING_WINDOW_TIME),
-    tap(token => console.log(`Dequeued token: ${token}`))
+    tap(token => log.trace(`Dequeued token: ${token}`))
 )
 
 module.exports = port => {

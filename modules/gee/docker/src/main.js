@@ -1,27 +1,41 @@
+const Koa = require('koa')
+const logger = require('koa-logger')
+const pino = require('koa-pino-logger')
+const router = require('koa-router')()
 const config = require('./config')
-const express = require('express')
 const job = require('./job')
-const gee = require('./gee')
+// const gee = require('./gee')
+const stream = require('./middleware/stream')
+const log = require('./log')
+// const workers = require('./workers')
 
-const app = express()
+const app = new Koa()
 
-app.get('/test', (req, res) => {
-    job.submit({relativePath: 'test', args: [123]}, result => res.send(result))
-})
+app.use(logger())
+// app.use(pino())
+app.use(stream)
 
-app.post('/preview', (req, res) => {
-    gee.submit(req, 'preview', [123], result => res.send(result))
-})
+router
+    .get('/test', ctx =>
+        ctx.stream$ = job.submit({relativePath: 'test', args: [123]})
+    )
+    .post('/preview', ctx => {
+        // ctx.stream$ = workers(ctx).preview(123)
+        // ctx.stream$ = gee.submit(ctx.req, 'preview', [123])
+        const sepalUser = JSON.parse(ctx.request.headers['sepal-user'])
+        const serviceAccountCredentials = config.serviceAccountCredentials
+        const credentials = {
+            sepalUser,
+            serviceAccountCredentials
+        }
+        ctx.stream$ = job.submit({relativePath: 'preview', args: [123], credentials})
+    })
+    .get('*', ctx => {
+        ctx.body = {status: 'OK'}
+    })
 
-app.get('*', (req, res) => {
-    console.log('GET', req.url)
-    res.send({status: 'OK'})
-})
-
-app.post('*', (req, _res) => {
-    console.log('POST', req.url)
-})
+app.use(router.routes())
 
 app.listen(config.port, () =>
-    console.info(`Listening on port ${config.port}`)
+    log.info(`Listening on port ${config.port}`)
 )

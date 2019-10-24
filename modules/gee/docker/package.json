@@ -5,19 +5,24 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path /Users/paolini/Workspace/FAO/sepal-config/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir /Users/paolini/Workspace/FAO/sepal-config/sepal-server/home/admin --username admin"
+    "dev": "LEVEL=debug nodemon src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path /Users/paolini/Workspace/FAO/sepal-config/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir /Users/paolini/Workspace/FAO/sepal-config/sepal-server/home/admin --username admin | pino-pretty"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@google/earthengine": "^0.1.203",
     "commander": "^3.0.2",
-    "express": "^4.17.1",
-    "express-http-context": "^1.2.3",
-    "i": "^0.3.6",
+    "koa": "^2.10.0",
+    "koa-logger": "^3.2.1",
+    "koa-pino-logger": "^2.1.3",
+    "koa-router": "^7.4.0",
     "lodash": "^4.17.15",
     "npm": "^6.12.0",
+    "pino": "^5.13.5",
     "rxjs": "^6.5.3",
     "uuid": "^3.3.3"
+  },
+  "devDependencies": {
+    "pino-pretty": "^3.2.2"
   }
 }

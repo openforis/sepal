@@ -1,5 +1,6 @@
 const program = require('commander')
 const fs = require('fs')
+const log = require('./log')
 
 const DEFAULT_PORT = 5001
 
@@ -23,7 +24,7 @@ const serviceAccountCredentials = {
     private_key: geeKey
 }
 
-console.info('Configuration loaded')
+log.info('Configuration loaded')
 
 module.exports = {
     serviceAccountCredentials,

@@ -26,12 +26,12 @@ const job$ = ({sepalUser, serviceAccountCredentials, modulePath, args, callback}
 
 queue$.pipe(
     mergeMap(job$ => {
-        console.log({job$})
+        log.debug({job$})
         return job$
     }, CONCURRENCY)
 ).subscribe(
     message => {
-        console.log({message})
+        log.debug({message})
     }
 )
 
