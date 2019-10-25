@@ -14,7 +14,7 @@ parentPort.once('message', ports => {
 
     const start = ({jobName, jobPath, args}) => {
         const workers = require(jobPath)()
-        log.info(`Starting worker ${jobName}`)
+        log.info(`Starting worker: ${jobName}`)
 
         const jobs = _.chain(workers)
             .zip(args)

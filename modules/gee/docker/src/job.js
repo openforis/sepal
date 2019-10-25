@@ -1,6 +1,6 @@
 const {Worker, MessageChannel} = require('worker_threads')
 const {Subject} = require('rxjs')
-const {finalize, switchMap} = require('rxjs/operators')
+const {finalize, takeUntil, switchMap} = require('rxjs/operators')
 const path = require('path')
 const _ = require('lodash')
 const log = require('./log')
@@ -39,31 +39,26 @@ const setupWorker = portNames =>
     })
 
 const startWorker = ({jobName, jobPath}, args) => {
-    const observable$ = new Subject()
-    const job$ = new Subject()
-    const result$ = job$.pipe(
-        switchMap(job => observable$.pipe(
-            finalize(() => job.postMessage({stop: true}))
-        ))
-    )
+    const start$ = new Subject()
+    const stop$ = new Subject()
+    const result$ = new Subject()
     setupWorker(['job', 'rateLimit'])
         .then(
             ({worker, ports: {job, rateLimit}}) => {
-                job$.next(job)
+                start$.next(job)
                 const subscription = rateLimiter(rateLimit)
                 const handleMessage = message => {
                     if (message.value) {
                         log.trace(`Worker sent value: ${message.value}`)
-                        observable$.next(message.value)
+                        result$.next(message.value)
                     }
                     if (message.error) {
                         log.error(`Worker sent error: ${message.error}`)
-                        observable$.error(message.error)
+                        result$.error(message.error)
                     }
                     if (message.complete) {
                         log.info('Worker completed')
-                        observable$.complete() // WHY BOTH?
-                        result$.complete() // WHY BOTH?
+                        stop$.next()
                     }
                     if (message.error || message.complete) {
                         worker.unref() // is this correct? terminate() probably isn't...
@@ -75,7 +70,12 @@ const startWorker = ({jobName, jobPath}, args) => {
                 job.postMessage({start: {jobName, jobPath, args}})
             }
         )
-    return result$
+    return start$.pipe(
+        switchMap(job => result$.pipe(
+            finalize(() => job.postMessage({stop: true}))
+        )),
+        takeUntil(stop$)
+    )
 }
 
 const submit = ({jobName, jobPath, before, ctx}) => {
