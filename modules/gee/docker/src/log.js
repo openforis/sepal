@@ -5,11 +5,13 @@ const logger = pino({
     prettyPrint: false
 })
 
+// const logger = console
+
 module.exports = {
-    trace: msg => logger.trace(msg),
-    debug: msg => logger.debug(msg),
-    info: msg => logger.info(msg),
-    warn: msg => logger.warn(msg),
-    error: msg => logger.error(msg),
-    fatal: msg => logger.fatal(msg)
+    trace: (...args) => logger.trace(...args),
+    debug: (...args) => logger.debug(...args),
+    info: (...args) => logger.info(...args),
+    warn: (...args) => logger.warn(...args),
+    error: (...args) => logger.error(...args),
+    fatal: (...args) => logger.fatal(...args)
 }

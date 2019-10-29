@@ -4,12 +4,13 @@ const {takeUntil} = require('rxjs/operators')
 module.exports = async (ctx, next) => {
     const close$ = new Subject()
     ctx.req.on('close', () => {
-        close$.next(1)
+        close$.next()
     })
     await next()
     if (ctx.stream$) {
-        ctx.body = await ctx.stream$.pipe(
+        const body$ = ctx.stream$.pipe(
             takeUntil(close$)
-        ).toPromise()
+        )
+        ctx.body = await body$.toPromise()
     }
 }

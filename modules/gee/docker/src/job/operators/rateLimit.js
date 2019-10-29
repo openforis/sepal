@@ -1,7 +1,7 @@
 const {Subject} = require('rxjs')
 const {mergeMap} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
-const {ports: {rateLimit}} = require('../worker')
+const {ports: {rateLimit}} = require('../../worker')
 
 module.exports = () =>
     observable$ => observable$.pipe(

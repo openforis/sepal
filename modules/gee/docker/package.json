@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "LEVEL=debug nodemon src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path /Users/paolini/Workspace/FAO/sepal-config/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir /Users/paolini/Workspace/FAO/sepal-config/sepal-server/home/admin --username admin | pino-pretty"
+    "dev": "LEVEL=debug nodemon src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path ~/Workspace/FAO/sepal-config/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir ~/Workspace/FAO/sepal-config/sepal-server/home/admin --username admin | pino-pretty"
   },
   "author": "",
   "license": "ISC",
@@ -23,6 +23,7 @@
     "uuid": "^3.3.3"
   },
   "devDependencies": {
+    "eslint-plugin-sort-imports-es6-autofix": "^0.5.0",
     "pino-pretty": "^3.2.2"
   }
 }
