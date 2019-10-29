@@ -5,9 +5,10 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "main": "LEVEL=debug ENVIRONMENT=main nodemon src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path ~/Workspace/FAO/sepal-config/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir ~/Workspace/FAO/sepal-config/sepal-server/home/admin --username admin | pino-pretty",
-    "task": "LEVEL=debug ENVIRONMENT=task nodemon src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path ~/Workspace/FAO/sepal-config/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir ~/Workspace/FAO/sepal-config/sepal-server/home/admin --username admin | pino-pretty"
+    "main": "LEVEL=debug ENVIRONMENT=main nodemon --inspect src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path ~/sepal-config/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir ~/sepal-config/sepal-server/home/admin --username admin | pino-pretty",
+    "task": "LEVEL=debug ENVIRONMENT=task nodemon --inspect src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path ~/sepal-config/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir ~/sepal-config/sepal-server/home/admin --username admin | pino-pretty"
   },
+  "type": "module",
   "author": "",
   "license": "ISC",
   "dependencies": {

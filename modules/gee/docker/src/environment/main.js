@@ -8,7 +8,7 @@ router
         ctx.stream$ = test(ctx).submit(100)
     )
     .post('/preview', ctx => {
-        ctx.stream$ = preview(ctx).submit(15)
+        ctx.stream$ = preview(ctx).submit(ctx.request.body)
     })
     .get('*', ctx => {
         ctx.body = {status: 'OK'}
@@ -18,4 +18,4 @@ module.exports = {
     routes: router.routes(),
     scheduled: []
 }
-    
+
