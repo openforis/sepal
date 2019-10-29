@@ -25,6 +25,10 @@ const getMap$ = (image, visParams) =>
         })
     )
 
+const fromCallback = (resolve, reject) => {
+    from(new Promise((resolve, reject) => callback))
+}
+
 // const fromCallback$ = callback => {
 //     const result$ = new Subject()
 //     callback(result$)

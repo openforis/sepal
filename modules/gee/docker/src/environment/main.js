@@ -5,7 +5,7 @@ const preview = require('../jobs/preview')
 
 router
     .get('/test', ctx =>
-        ctx.stream$ = test(ctx).submit(100)
+        ctx.stream$ = test(ctx).submit(10)
     )
     .post('/preview', ctx => {
         ctx.stream$ = preview(ctx).submit(ctx.request.body)
