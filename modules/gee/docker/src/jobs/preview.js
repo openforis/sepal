@@ -1,5 +1,5 @@
 const log = require('../log')
-const foo = require('../job')
+const job = require('../job')
 const geeAuth = require('./geeAuth')
 
 const worker$ = value => {
@@ -21,7 +21,7 @@ const worker$ = value => {
     )
 }
 
-module.exports = foo({
+module.exports = job({
     jobName: 'Map preview',
     jobPath: __filename,
     before: [geeAuth],
