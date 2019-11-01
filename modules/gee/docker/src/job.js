@@ -51,20 +51,21 @@ const startWorker = ({jobName, jobPath}, args) => {
                     if (message.value) {
                         log.trace(`Worker sent value: ${message.value}`)
                         result$.next(message.value)
-                    }
-                    if (message.error) {
-                        const error = JSON.parse(message.error)
-                        log.error(`Worker sent error: ${error.message}`)
-                        result$.error(error)
-                    }
-                    if (message.complete) {
-                        log.info('Worker completed')
-                        stop$.next()
-                    }
-                    if (message.error || message.complete) {
-                        worker.unref() // is this correct? terminate() probably isn't...
-                        subscription.cleanup()
-                        job.off('message', handleMessage)
+                    } else {
+                        if (message.error) {
+                            const error = JSON.parse(message.error)
+                            log.error(`Worker sent error: ${error.message}`)
+                            result$.error(error)
+                        }
+                        if (message.complete) {
+                            log.info('Worker completed')
+                            stop$.next()
+                        }
+                        if (message.error || message.complete) {
+                            worker.unref() // is this correct? terminate() probably isn't...
+                            subscription.cleanup()
+                            job.off('message', handleMessage)
+                        }
                     }
                 }
                 job.on('message', handleMessage)
