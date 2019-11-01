@@ -12,23 +12,29 @@ parentPort.once('message', ports => {
     exported.ports = ports
     const jobPort = ports.job
 
+    const next = value =>
+        jobPort.postMessage({value})
+
+    const complete = () =>
+        jobPort.postMessage({complete: true})
+
+    const error = error =>
+        jobPort.postMessage({
+            error: JSON.stringify(error, Object.getOwnPropertyNames(error))
+        })
+
     const start = ({jobName, jobPath, args}) => {
         const workers = require(jobPath)()
         log.info(`Starting worker: ${jobName}`)
 
-        const jobs = _.chain(workers)
+        const jobs$ = _.chain(workers)
             .zip(args)
             .map(([worker$, args]) => worker$(...args))
             .value()
             
-        const job$ = concat(...jobs)
-        job$.pipe(
+        concat(...jobs$).pipe(
             takeUntil(stop$)
-        ).subscribe(
-            value => jobPort.postMessage({value}),
-            error => jobPort.postMessage({error}),
-            () => jobPort.postMessage({complete: true})
-        )
+        ).subscribe({next, error, complete})
     }
 
     const stop = () => {
@@ -46,6 +52,7 @@ parentPort.once('message', ports => {
             stop()
         }
     }
+
     jobPort.on('message', handleMessage)
     parentPort.postMessage('READY')
 })

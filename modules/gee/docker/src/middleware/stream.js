@@ -11,6 +11,12 @@ module.exports = async (ctx, next) => {
         const body$ = ctx.stream$.pipe(
             takeUntil(close$)
         )
-        ctx.body = await body$.toPromise()
+        try {
+            ctx.body = await body$.toPromise()
+        } catch (error) {
+            console.error(error.message)
+            ctx.body = error.message
+            ctx.status = 500
+        }
     }
 }

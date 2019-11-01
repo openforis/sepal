@@ -4,7 +4,7 @@ const testBefore = require('./testBefore')
 
 const worker$ = count => {
     const {of, timer} = require('rxjs')
-    const {mergeMap, tap, mapTo} = require('rxjs/operators')
+    const {mergeMap, tap, map} = require('rxjs/operators')
     const rateLimit = require('../job/operators/rateLimit')
 
     log.info(`Running Test with count: ${count}`)
@@ -15,10 +15,16 @@ const worker$ = count => {
         tap(value => log.trace(`Submitted value: ${value}`)),
         mergeMap(value =>
             timer(Math.random() * 2000).pipe(
-                mapTo(value),
+                map(() => {
+                    if (Math.random() < .1) {
+                        throw new Error('Random error!')
+                    }
+                    return value
+                }),
                 tap(value => log.trace(`Got value: ${value}`)),
             )
-        )
+        ),
+        map(value => `The result is ${value}`)
     )
 }
 

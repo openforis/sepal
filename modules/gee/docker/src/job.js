@@ -53,8 +53,9 @@ const startWorker = ({jobName, jobPath}, args) => {
                         result$.next(message.value)
                     }
                     if (message.error) {
-                        log.error(`Worker sent error: ${message.error}`)
-                        result$.error(message.error)
+                        const error = JSON.parse(message.error)
+                        log.error(`Worker sent error: ${error.message}`)
+                        result$.error(error)
                     }
                     if (message.complete) {
                         log.info('Worker completed')
