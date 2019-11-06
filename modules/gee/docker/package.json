@@ -26,7 +26,7 @@
     "uuid": "^3.3.3"
   },
   "devDependencies": {
-    "eslint-plugin-sort-imports-es6-autofix": "^0.5.0",
+    "eslint": "^6.6.0",
     "pino-pretty": "^3.2.2"
   }
 }

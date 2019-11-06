@@ -19,7 +19,7 @@
     },
     "plugins": [
         // "import",
-        "sort-imports-es6-autofix"
+        // "sort-imports-es6-autofix"
     ],
     "rules": {
         "arrow-parens": [
@@ -101,11 +101,11 @@
         "semi": [
             "error",
             "never"
-        ],
-        "sort-imports-es6-autofix/sort-imports-es6": ["error", {
-            "ignoreCase": false,
-            "ignoreMemberSort": false,
-            "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
-        }]
+        ]
+        // "sort-imports-es6-autofix/sort-imports-es6": ["error", {
+        //     "ignoreCase": false,
+        //     "ignoreMemberSort": false,
+        //     "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+        // }]
     }
 }
