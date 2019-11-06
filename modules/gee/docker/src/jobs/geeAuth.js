@@ -1,8 +1,15 @@
 const log = require('../log')
 
+const getSepalUser = ctx => {
+    const sepalUser = ctx.request.headers['sepal-user']
+    return sepalUser
+        ? JSON.parse(sepalUser)
+        : {}
+}
+
 const getCredentials = ctx => {
     const config = require('../config')
-    const sepalUser = JSON.parse(ctx.request.headers['sepal-user'])
+    const sepalUser = getSepalUser(ctx)
     const serviceAccountCredentials = config.serviceAccountCredentials
     return {
         sepalUser,
