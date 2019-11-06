@@ -2,6 +2,7 @@ package org.openforis.sepal.component.processingrecipe.migration
 
 import groovy.json.JsonSlurper
 import groovy.transform.ToString
+import org.openforis.sepal.component.processingrecipe.migration.v3.V3Migration
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -58,6 +59,7 @@ class MosaicMigrations extends AbstractMigrations {
             }
             return result
         })
+        addMigration(3, { return V3Migration.migrate(it) })
     }
 
     private static sources(sensorGroup, sensors) {

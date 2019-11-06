@@ -13,6 +13,7 @@ from sepalinternal.aoi import Aoi
 from sepalinternal.drive.drive_cleanup import DriveCleanup
 from sepalinternal.sepal_api import SepalApi
 from sepalinternal.sepal_exception import SepalException
+from sepalinternal import table
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
@@ -64,13 +65,48 @@ def scene_areas():
     return Response(json.dumps(areas), mimetype='application/json')
 
 
+
+@http.route('/table/columns')
+def columns():
+    table_id = request.values['tableId']
+    columns = table.columns(table_id)
+    return Response(json.dumps(columns), mimetype='application/json')
+
+@http.route('/table/columnValues')
+def column_values():
+    table_id = request.values['tableId']
+    column_name = request.values['columnName']
+    values = table.column_values(table_id, column_name)
+    return Response(json.dumps(values), mimetype='application/json')
+
+@http.route('/table/map')
+def table_map():
+    table_id = request.values['tableId']
+    column_name = request.values['columnName']
+    column_value = request.values['columnValue']
+    color = request.values.get('color', '#272723')
+    ee_map = table.ee_map(table_id, column_name, column_value, color)
+    return Response(json.dumps(ee_map), mimetype='application/json')
+
+@http.route('/table/query', methods=['POST'])
+def table_query():
+    query = request.get_json()
+    select = query['select']
+    from_table = query['from']
+    where = query['where']
+    order_by = query['orderBy']
+    results = table.query(select, from_table, where, order_by)
+    return Response(json.dumps(results), mimetype='application/json')
+
+
 @http.errorhandler(SepalException)
 def sepal_exception(error):
-    logging.exception('Got SepalException')
+    # logging.exception('Got SepalException')
     body = {
         'code': error.code,
         'data': error.data,
-        'message': str(error)
+        'message': str(error),
+        'cause': str(error.cause)
     }
     return Response(json.dumps(body), mimetype='application/json', status=400)
 

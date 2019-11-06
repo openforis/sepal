@@ -22,8 +22,10 @@ class ProcessingRecipeComponent extends DataSourceBackedComponent implements End
     static final String SCHEMA = 'processing_recipe'
     static final Map<String, Migrations> MIGRATIONS_BY_RECIPE_TYPE = [
         MOSAIC: new MosaicMigrations(),
+        RADAR_MOSAIC: new RadarMosaicMigrations(),
         CLASSIFICATION: new ClassificationMigrations(),
-        CHANGE_DETECTION: new ChangeDetectionMigrations()
+        CHANGE_DETECTION: new ChangeDetectionMigrations(),
+        TIME_SERIES: new TimeSeriesMigrations()
     ]
 
     static ProcessingRecipeComponent create() {

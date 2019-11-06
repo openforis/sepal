@@ -6,12 +6,12 @@ from .gee import get_info
 class Aoi:
     _fusion_table_by_data_set = {
         'LANDSAT': {
-            'table_id': 'ft:1EJjaOloQD5NL7ReC5aVtn8cX05xbdEbZthUiCFB6',
+            'table_id': 'users/wiell/SepalResources/landsatSceneAreas',
             'id_column': 'name',
             'coordinates': lambda sceneArea: sceneArea[0]['coordinates'][0]
         },
         'SENTINEL_2': {
-            'table_id': 'ft:1z3OSnCDFQqUHIXlU_hwVc5h4ZrDP2VdQNNfG3RZB',
+            'table_id': 'users/wiell/SepalResources/sentinel2SceneAreas',
             'id_column': 'name',
             'coordinates': lambda sceneArea: sceneArea[0]['geometries'][1]['coordinates'][0]
         }
@@ -34,6 +34,7 @@ class Aoi:
         type = {
             'POLYGON': Polygon,
             'FUSION_TABLE': FusionTable,
+            'EE_TABLE': EETable,
         }[spec['type']]
         return type(spec)
 
@@ -96,6 +97,26 @@ class FusionTable(Aoi):
 
     def __str__(self):
         return 'FusionTable(table_name: ' + self.table_name \
+               + ', key_column: ' + self.key_column \
+               + ', value_column: ' + self.value_column + ')'
+
+
+
+class EETable(Aoi):
+    def __init__(self, spec):
+        self.table_name = spec['id']
+        self.key_column = spec['keyColumn']
+        table = ee.FeatureCollection(self.table_name)
+        self.value_column = spec['key']
+        filters = [ee.Filter.eq(self.key_column, self.value_column)]
+        if is_number(self.value_column):
+            filters.append(ee.Filter.eq(self.key_column, float(self.value_column)))
+        self.feature_collection = table.filter(ee.Filter.Or(*filters))
+        geometry = self.feature_collection.geometry()
+        Aoi.__init__(self, geometry, spec)
+
+    def __str__(self):
+        return 'EETable(table_name: ' + self.table_name \
                + ', key_column: ' + self.key_column \
                + ', value_column: ' + self.value_column + ')'
 

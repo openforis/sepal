@@ -36,7 +36,7 @@ export const initGoogleMapsApi$ = () => {
 
     const loadGoogleMapsApi$ = apiKey => Observable.create(observer => {
         GoogleMapsLoader.KEY = apiKey
-        GoogleMapsLoader.VERSION = '3.35'
+        GoogleMapsLoader.VERSION = '3.38'
         GoogleMapsLoader.LIBRARIES = ['drawing']
         GoogleMapsLoader.load(g => {
             google = g

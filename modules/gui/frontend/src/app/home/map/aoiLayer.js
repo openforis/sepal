@@ -1,9 +1,11 @@
 import './map.module.css'
 import {sepalMap} from './map'
+import {setEETableLayer} from './eeTableLayer'
 import {setFusionTableLayer} from './fusionTable'
 import {setPolygonLayer} from './polygonLayer'
 
 export const countryFusionTable = '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU'
+export const countryEETable = 'users/wiell/SepalResources/countries'
 
 export const removeAoiLayer = contextId => {
     sepalMap.getContext(contextId).removeLayer('aoi')
@@ -13,15 +15,14 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => 
     const layerId = 'aoi'
     switch (aoi && aoi.type) {
     case 'COUNTRY':
-        return setFusionTableLayer({
+        return setEETableLayer({
             contextId,
             layerSpec: {
                 id: layerId,
-                tableId: countryFusionTable,
-                keyColumn: 'id',
-                key: aoi.areaCode || aoi.countryCode
+                tableId: countryEETable,
+                columnName: 'id',
+                columnValue: aoi.areaCode || aoi.countryCode
             },
-            fill,
             destroy$,
             onInitialized
         })
@@ -38,7 +39,18 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => 
             destroy$,
             onInitialized
         })
-
+    case 'EE_TABLE':
+        return setEETableLayer({
+            contextId,
+            layerSpec: {
+                id: layerId,
+                tableId: aoi.id,
+                columnName: aoi.keyColumn,
+                columnValue: aoi.key
+            },
+            destroy$,
+            onInitialized
+        })
     case 'POLYGON':
         return setPolygonLayer({
             contextId,

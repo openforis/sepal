@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.processingrecipe.migration
 
+import org.openforis.sepal.component.processingrecipe.migration.v3.V3Migration
+
 class ClassificationMigrations extends AbstractMigrations {
     ClassificationMigrations() {
         super('CLASSIFICATION')
@@ -24,6 +26,7 @@ class ClassificationMigrations extends AbstractMigrations {
                 result.model.trainingData = trainingData
             return result
         })
+        addMigration(3, { return V3Migration.migrate(it) })
     }
 
     static void addImage(type, id, Map result) {

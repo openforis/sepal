@@ -45,7 +45,7 @@ class ImageSpec(object):
         bounds_polygon = ee.List(geometry.bounds().coordinates().get(0))
         bounds = get_info(ee.List([bounds_polygon.get(0), bounds_polygon.get(2)]))
         mapId = feature.getMapId({
-            'color': '#272723'
+            'color': '#5e2926'
         })
         return {
             'mapId': mapId['mapid'],

@@ -31,7 +31,7 @@ class TimeSeriesToolbar extends React.Component {
                 onDone={() => setInitialized(recipeId)}>
 
                 <Retrieve/>
-                <Aoi allowWholeFusionTable={true}/>
+                <Aoi allowWholeEETable={true}/>
                 <Dates/>
                 <Sources/>
                 {_.isEmpty(sources['SENTINEL_1'])

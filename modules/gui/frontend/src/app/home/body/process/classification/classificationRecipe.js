@@ -24,8 +24,8 @@ export const RecipeActions = id => {
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
         },
-        setFusionTableColumns(columns) {
-            return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
+        setEETableColumns(columns) {
+            return set('SET_EE_TABLE_COLUMNS', 'ui.eeTable.columns', columns, {columns})
         },
         hidePreview() {
             return set('HIDE_PREVIEW', 'ui.hidePreview', true)
