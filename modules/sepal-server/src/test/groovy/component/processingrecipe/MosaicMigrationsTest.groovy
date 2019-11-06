@@ -3,8 +3,10 @@ package component.processingrecipe
 import groovy.json.JsonOutput
 import org.openforis.sepal.component.processingrecipe.command.MigrateRecipes
 import org.openforis.sepal.component.processingrecipe.migration.MosaicMigrations
+import spock.lang.Ignore
 import spock.lang.Unroll
 
+@Ignore
 class MosaicMigrationsTest extends RecipeTest {
 
     def 'Test with polygon'() {
