@@ -135,10 +135,21 @@
     "notFound": "Fusion Table not found",
     "unauthorized": "You don't have access to this Fusion Table"
   },
+  "eeTable": {
+    "failedToLoad": "Failed to load EE Table",
+    "notFound": "EE Table not found",
+    "unauthorized": "You don't have access to this EE Table"
+  },
   "gee": {
     "classification": {
       "error": {
         "noTrainingData": "There is no training data in selected area of interest."
+      }
+    },
+    "table": {
+      "error": {
+        "notFound": "Table not found",
+        "notATable": "Not a Table"
       }
     },
     "error": {
@@ -444,18 +455,18 @@
         "trainingData": {
           "button": "TRN",
           "form": {
-            "fusionTable": {
-              "invalid": "Invalid Fution Table ID",
-              "label": "Fusion table",
-              "placeholder": "Enter a Fusion Table ID",
-              "required": "Fusion Table must be specified"
+            "eeTable": {
+              "invalid": "Invalid EE Table ID",
+              "label": "EE table",
+              "placeholder": "Enter a EE Table ID",
+              "required": "EE Table must be specified"
             },
-            "fusionTableColumn": {
+            "eeTableColumn": {
               "label": "Class column",
               "placeholder": {
                 "loaded": "Select a column...",
                 "loading": "Loading columns...",
-                "noFusionTable": "Enter a Fusion Table ID first"
+                "noEETable": "Enter an EE Table ID first"
               },
               "required": "A column must be selected"
             },
@@ -567,6 +578,12 @@
               "label": "Fusion table",
               "placeholder": "Enter a Fusion Table ID",
               "required": "Fusion Table must be specified"
+            },
+            "eeTable": {
+              "invalid": "Invalid EE Table ID",
+              "label": "EE table",
+              "placeholder": "Enter a EE Table ID",
+              "required": "EE Table must be specified"
             },
             "yearAndClassColumnsSame": "Year and class columns are the same",
             "yearColumn": {
@@ -706,6 +723,39 @@
                 "required": "A row must be selected"
               },
               "title": "Select from Fusion Table"
+            },
+            "eeTable": {
+              "eeTableRowSelection": {
+                "label": "Rows",
+                "FILTER": "Filter",
+                "INCLUDE_ALL": "Include all"
+              },
+              "column": {
+                "label": "Column",
+                "placeholder": {
+                  "loaded": "Select a column...",
+                  "loading": "Loading columns...",
+                  "noEETable": "Enter a EE Table ID first"
+                },
+                "required": "A column must be selected"
+              },
+              "eeTable": {
+                "label": "EE Table",
+                "placeholder": "Enter a EE Table ID",
+                "required": "EE Table must be specified"
+              },
+              "row": {
+                "label": "Value",
+                "placeholder": {
+                  "loaded": "Select a value...",
+                  "loading": "Loading rows...",
+                  "noColumn": "Select a column first",
+                  "noEETable": "Enter a EE Table ID first",
+                  "noRows": "No rows in EE Table"
+                },
+                "required": "A row must be selected"
+              },
+              "title": "Select from EE Table"
             },
             "polygon": {
               "description": "Draw a polygon on the map.",

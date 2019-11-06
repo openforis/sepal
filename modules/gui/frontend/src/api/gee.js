@@ -27,7 +27,23 @@ export default {
         }).pipe(toResponse),
     recipeGeometry$: recipe =>
         postJson$('/api/gee/recipe/geometry', {body: {recipe}})
-            .pipe(toResponse)
+            .pipe(toResponse),
+    loadEETableColumns$: tableId =>
+        get$(`/api/gee/table/columns`,
+            {query: {tableId}}
+    ).pipe(toResponse),
+    loadEETableColumnValues$: (tableId, columnName) =>
+        get$(`/api/gee/table/columnValues`,
+            {query: {tableId, columnName}}
+    ).pipe(toResponse),
+    eeTableMap$: ({tableId, columnName, columnValue, color}) =>
+        get$(`/api/gee/table/map`,
+            {query: {tableId, columnName, columnValue, color}}
+    ).pipe(toResponse),
+    queryEETable$: ({select, from, where, orderBy}) =>
+        postJson$(`/api/gee/table/query`,
+            {body: {select, from, where, orderBy}}
+        ).pipe(toResponse),
 }
 
 const toResponse = map(e => e.response)

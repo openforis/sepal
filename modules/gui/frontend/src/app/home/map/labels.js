@@ -3,7 +3,7 @@ import {google, sepalMap} from 'app/home/map/map'
 import actionBuilder from 'action-builder'
 
 export default class Labels {
-    static showLabelsAction({layerIndex = 1, shown, statePath, mapContext}) {
+    static showLabelsAction({layerIndex = 2, shown, statePath, mapContext}) {
         return actionBuilder('SET_LABELS_SHOWN', {shown})
             .set([statePath, 'labelsShown'], shown)
             .sideEffect(() => {

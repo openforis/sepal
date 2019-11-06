@@ -1,17 +1,18 @@
 import {ajax} from 'rxjs/ajax'
-import {catchError, flatMap, map, retryWhen, zip} from 'rxjs/operators'
+import {catchError, flatMap, map, retryWhen} from 'rxjs/operators'
 import {logout} from 'widget/user'
 import {msg} from 'translate'
-import {of, range, throwError, timer} from 'rxjs'
+import {of, range, throwError, timer, zip} from 'rxjs'
 import Notifications from 'widget/notifications'
 import base64 from 'base-64'
 
 const DEFAULT_RETRIES = 4
 
-export const get$ = (url, {retries = DEFAULT_RETRIES, query, headers, validStatuses, ...args} = {}) => {
+export const get$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) => {
     return execute$(url, 'GET', {
         retries,
         query,
+        body,
         headers,
         validStatuses, ...args
     })
@@ -96,12 +97,14 @@ function execute$(url, method, {retries, query, username, password, headers, val
             }
         }),
         retryWhen(function (error$) {
-            return error$.pipe(
-                zip(range(1, retries + 1)),
+            return zip(
+                error$,
+                range(1, retries + 1)
+            ).pipe(
                 flatMap(
-                    ([error$, retry]) => {
-                        if (retry > retries)
-                            return throwError(error$)
+                    ([error, retry]) => {
+                        if (error.status < 500 || retry > retries)
+                            return throwError(error)
                         else
                             return timer(Math.pow(2, retry) * 200)
                     }

@@ -24,7 +24,7 @@ class _RadarMosaic extends React.Component {
             <SectionLayout>
                 <Content>
                     <div className={styles.radarMosaic}>
-                        <MapToolbar statePath={statePath + '.ui'} mapContext={recipeId} labelLayerIndex={1}/>
+                        <MapToolbar statePath={statePath + '.ui'} mapContext={recipeId} labelLayerIndex={2}/>
                         <RadarMosaicToolbar/>
                         <AoiLayer/>
                         {initialized

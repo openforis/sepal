@@ -3,50 +3,51 @@ import {Layout} from 'widget/layout'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
+import {countryEETable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
-import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
+import api from 'api'
 
 const loadCountries$ = () => {
-    return queryFusionTable$(`
-            SELECT id, label 
-            FROM ${countryFusionTable}
-            WHERE parent_id != '' 
-            ORDER BY label ASC`).pipe(
-        map(e =>
-            actionBuilder('SET_COUNTRIES', {countries: e.response})
-                .set('countries', e.response.rows)
+    return api.gee.queryEETable$({
+        select: ['id', 'label'],
+        from: countryEETable,
+        where: [['parent_id', 'equals', '']],
+        orderBy: ['label']
+    }).pipe(
+        map(countries => countries.map(({id, label}) => ({value: id, label}))),
+        map(countries =>
+            actionBuilder('SET_COUNTRIES', {countries})
+                .set('countries', countries)
                 .dispatch()
         )
     )
 }
 
 const loadCountryForArea$ = areaId => {
-    return queryFusionTable$(`
-            SELECT parent_id 
-            FROM ${countryFusionTable} 
-            WHERE id = '${areaId}'
-            ORDER BY label ASC`).pipe(
-        map(e =>
-            e.response.rows && e.response.rows.length === 1 && e.response.rows[0][0]
-        )
-    )
+    return api.gee.queryEETable$({
+        select: ['parent_id'],
+        from: countryEETable,
+        where: [['id', 'equals', areaId]],
+        orderBy: ['label']
+    })
 }
 
 const loadCountryAreas$ = countryId => {
-    return queryFusionTable$(`
-            SELECT id, label 
-            FROM ${countryFusionTable} 
-            WHERE parent_id = '${countryId}'
-            ORDER BY label ASC`).pipe(
-        map(e =>
-            actionBuilder('SET_COUNTRY_AREA', {countries: e.response})
-                .set(['areasByCountry', countryId], e.response.rows)
+    return api.gee.queryEETable$({
+        select: ['id', 'label'],
+        from: countryEETable,
+        where: [['parent_id', 'equals', countryId]],
+        orderBy: ['label']
+    }).pipe(
+        map(countries => countries.map(({id, label}) => ({value: id, label}))),
+        map(areas =>
+            actionBuilder('SET_COUNTRY_AREA', {countryId, areas})
+                .set(['areasByCountry', countryId], areas)
                 .dispatch()
         )
     )
@@ -92,7 +93,7 @@ class CountrySection extends React.Component {
                     label={msg('process.mosaic.panel.areaOfInterest.form.country.country.label')}
                     input={country}
                     placement='below'
-                    options={(countries || []).map(([value, label]) => ({value, label}))}
+                    options={countries || []}
                     placeholder={countryPlaceholder}
                     busy={stream('LOAD_COUNTRIES').active}
                     disabled={!countries}
@@ -107,7 +108,7 @@ class CountrySection extends React.Component {
                     label={msg('process.mosaic.panel.areaOfInterest.form.country.area.label')}
                     input={area}
                     placement='below'
-                    options={(countryAreas || []).map(([value, label]) => ({value, label}))}
+                    options={(countryAreas || [])}
                     placeholder={areaPlaceholder}
                     busy={stream('LOAD_COUNTRY_AREAS').active}
                     disabled={!countryAreas || countryAreas.length === 0}
@@ -150,8 +151,7 @@ class CountrySection extends React.Component {
                 countryCode: country.value,
                 areaCode: area.value
             },
-            fill: true,
-            destroy$: componentWillUnmount$,
+            // destroy$: componentWillUnmount$,
             onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi')
         })
     }

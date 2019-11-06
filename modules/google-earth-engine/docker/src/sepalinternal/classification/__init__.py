@@ -17,8 +17,8 @@ class Classification(ImageSpec):
         self.pyramiding_policy = {"class": "mode"}
         self.spec = spec
         model = spec['recipe']['model']
-        self.trainingData = ee.FeatureCollection('ft:' + model['trainingData']['fusionTable'])
-        self.classProperty = model['trainingData']['fusionTableColumn']
+        self.trainingData = ee.FeatureCollection(model['trainingData']['eeTable'])
+        self.classProperty = model['trainingData']['eeTableColumn']
 
         def to_image_spec(image):
             image_spec = create_image_spec(sepal_api, {'recipe': image})
@@ -45,7 +45,7 @@ class Classification(ImageSpec):
             raise SepalException(code='gee.classification.error.noTrainingData', message='No training data in AOI.')
 
         image = ee.Image([self._with_covariates(image) for image in self.images])
-        # Force updates to fusion table to be reflected
+        # Force updates to EE table to be reflected
         self.trainingData = self.trainingData.map(_force_cache_flush)
         training = image.sampleRegions(
             collection=self.trainingData,

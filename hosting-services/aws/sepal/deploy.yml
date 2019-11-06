@@ -29,9 +29,9 @@
       lineinfile:
         path: /etc/environment
         line: "{{ item }}"
-        with_items:
-          - "LANG=en_US.utf-8"
-          - "LC_ALL=en_US.utf-8"
+      with_items:
+        - "LANG=en_US.utf-8"
+        - "LC_ALL=en_US.utf-8"
 
     # monit
     - name: Install EPEL repository
@@ -58,7 +58,7 @@
         mode: "0644"
 
     - name: Configure monit 2/3
-      template: 
+      template:
         src: "monit/config.template"
         dest: "/etc/monit.d/config"
         owner: "root"

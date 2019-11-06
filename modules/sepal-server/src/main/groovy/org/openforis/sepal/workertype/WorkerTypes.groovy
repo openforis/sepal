@@ -118,9 +118,6 @@ final class WorkerTypes {
 
     static String tempDir(instance, config) {
         def username = instance.reservation.username
-        def localTmp = "/data/home/$username/tmp/$instance.id" as String
-        new File(localTmp).mkdirs()
-        Terminal.execute(new File('/'), '/bin/chmod', '1777', localTmp)
         return "$config.userHomes/${username}/tmp/$instance.id" as String
     }
 }

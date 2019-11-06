@@ -4,24 +4,27 @@ import {sepalMap} from './map'
 import EarthEngineLayer from './earthEngineLayer'
 import api from 'api'
 
-export const setRecipeGeometryLayer = (
+export const setEETableLayer = (
     {
         contextId,
-        layerSpec: {id, recipe, layerIndex = 0},
+        layerSpec: {id, tableId, columnName, columnValue, layerIndex = 0},
         destroy$,
         onInitialized
     }) => {
-
-    const layer = recipe
-        ? new RecipeGeometryLayer({mapId$: api.gee.recipeGeometry$(recipe), layerIndex, recipe})
-        : null
+    const watchedProps = {tableId, columnName, columnValue}
+    const layer = columnValue
+        ? new RecipeGeometryLayer({
+            mapId$: api.gee.eeTableMap$({tableId, columnName, columnValue, color: '#5e2926'}),
+            layerIndex,
+            watchedProps
+        }): null
     sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
     return layer
 }
 
 class RecipeGeometryLayer extends EarthEngineLayer {
-    constructor({mapId$, layerIndex, recipe}) {
-        super({layerIndex, mapId$: mapId$, props: recipe})
+    constructor({mapId$, layerIndex, watchedProps}) {
+        super({layerIndex, mapId$, props: watchedProps})
     }
 
     initialize$() {
