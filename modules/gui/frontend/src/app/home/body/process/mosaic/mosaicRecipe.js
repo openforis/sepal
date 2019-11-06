@@ -51,7 +51,7 @@ export const RecipeActions = id => {
 
     return {
         setLabelsShown(shown) {
-            return Labels.showLabelsAction({shown, mapContext: id, statePath: recipePath(id, 'ui'), layerIndex: 1})
+            return Labels.showLabelsAction({shown, mapContext: id, statePath: recipePath(id, 'ui'), layerIndex: 2})
         },
         setSceneAreasShown(shown) {
             return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})

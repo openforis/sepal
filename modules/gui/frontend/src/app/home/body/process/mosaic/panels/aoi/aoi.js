@@ -198,7 +198,7 @@ const modelToValues = (model = {}) => {
         if (model.id === countryEETable) // TODO: Add EE Table for countries
             return {
                 section: 'COUNTRY',
-                [model.level.toLowerCase()]: model.key
+                [model.level ? model.level.toLowerCase() : 'COUNTRY']: model.key
             }
         else
             return {
