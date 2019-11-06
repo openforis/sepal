@@ -1,6 +1,7 @@
 const {Worker, MessageChannel} = require('worker_threads')
 const {Subject} = require('rxjs')
 const {finalize, takeUntil, switchMap} = require('rxjs/operators')
+const {deserializeError} = require('serialize-error')
 const path = require('path')
 const _ = require('lodash')
 const log = require('./log')
@@ -53,8 +54,8 @@ const startWorker = ({jobName, jobPath}, args) => {
                         result$.next(message.value)
                     } else {
                         if (message.error) {
-                            const error = JSON.parse(message.error)
-                            log.error(`Worker sent error: ${error.message}`)
+                            const error = deserializeError(message.error)
+                            log.error(`Worker error: ${error.message} (${error.type})`)
                             result$.error(error)
                         }
                         if (message.complete) {
