@@ -1,6 +1,30 @@
 const {Subject} = require('rxjs')
 const {takeUntil} = require('rxjs/operators')
 
+const errorCodes = {
+    'system': 500,
+    'notfound': 404,
+    'default': 400
+}
+
+const errorCode = type =>
+    errorCodes[type] || 500
+
+const renderStream = async (ctx, body$) => {
+    try {
+        ctx.body = await body$.toPromise()
+    } catch (error) {
+        ctx.status = errorCode(error.type)
+        ctx.body = error.type
+            ? {
+                code: error.key,
+                data: error.data,
+                cause: error.cause
+            }
+            : 'other error'
+    }
+}
+
 module.exports = async (ctx, next) => {
     const close$ = new Subject()
     ctx.req.on('close', () => {
@@ -11,12 +35,6 @@ module.exports = async (ctx, next) => {
         const body$ = ctx.stream$.pipe(
             takeUntil(close$)
         )
-        try {
-            ctx.body = await body$.toPromise()
-        } catch (error) {
-            console.error(error.message)
-            ctx.body = error.message
-            ctx.status = 500
-        }
+        await renderStream(ctx, body$)
     }
 }
