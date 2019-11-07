@@ -15,23 +15,23 @@ export ANSIBLE_CONFIG=../ansible.cfg
 
 source $CONFIG_HOME/export_aws_keys.sh
 
-ansible-playbook provision.yml \
-    -i $INVENTORY \
-    --private-key=${PRIVATE_KEY}  \
-    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
+#ansible-playbook provision.yml \
+#    -i $INVENTORY \
+#    --private-key=${PRIVATE_KEY}  \
+#    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
 
 # Refresh EC2 inventory cache, to make sure provisioned instance is included
-$INVENTORY --refresh-cache > /dev/null
+#$INVENTORY --refresh-cache > /dev/null
 
-ansible-playbook provision-security-groups.yml \
-    -i $INVENTORY \
-    --private-key=${PRIVATE_KEY}  \
-    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
-
-ansible-playbook configure-efs.yml \
-    -i $INVENTORY \
-    --private-key=${PRIVATE_KEY}  \
-    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
+#ansible-playbook provision-security-groups.yml \
+#    -i $INVENTORY \
+#    --private-key=${PRIVATE_KEY}  \
+#    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
+#
+#ansible-playbook configure-efs.yml \
+#    -i $INVENTORY \
+#    --private-key=${PRIVATE_KEY}  \
+#    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
 
 jsonConfig=$(mktemp /tmp/sepal-json-config.XXXXXX)
 python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < $CONFIG_HOME/secret.yml > $jsonConfig
