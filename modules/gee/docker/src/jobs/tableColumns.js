@@ -6,10 +6,23 @@ const worker$ = ({tableId}) => {
     const ee = require('@google/earthengine')
     const {getAsset$, getInfo$} = require('./eeUtils')
     const {Exception, SystemException, NotFoundException} = require('../exception')
-    const {of, throwError} = require('rxjs')
+    const {throwError} = require('rxjs')
     const {switchMap, catchError} = require('rxjs/operators')
 
     log.info(`Get columns for table: ${tableId}`)
+
+    const handleError$ = cause =>
+        getAsset$(tableId).pipe(
+            switchMap(asset =>
+                throwError(
+                    asset
+                        ? asset.type === 'FeatureCollection'
+                            ? new SystemException(cause, 'Failed to load table columns', {tableId})
+                            : new Exception(cause, 'Not a table', 'gee.table.error.notATable', {tableId})
+                        : new NotFoundException(cause, 'Not found', 'gee.table.error.notFound', {tableId})
+                )
+            )
+        )
 
     return getInfo$(
         ee.FeatureCollection(tableId)
@@ -17,20 +30,7 @@ const worker$ = ({tableId}) => {
             .propertyNames()
             .sort()
     ).pipe(
-        catchError(cause =>
-            getAsset$(tableId).pipe(
-                catchError(() => of()),
-                switchMap(asset =>
-                    throwError(
-                        asset
-                            ? asset.type === 'FeatureCollection'
-                                ? new SystemException(cause, 'Failed to load table columns', 'foo')
-                                : new Exception(cause, 'Not a table', 'gee.table.error.notATable', {tableId})
-                            : new NotFoundException(cause, 'Not found', 'gee.table.error.notFound', {tableId})
-                    )
-                )
-            )
-        )
+        catchError(handleError$)
     )
 }
 

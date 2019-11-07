@@ -3,7 +3,7 @@ const bodyParser = require('koa-bodyparser')
 const logger = require('koa-logger')
 // const pino = require('koa-pino-logger')
 const config = require('./config')
-const stream = require('./middleware/stream')
+const stream = require('./stream')
 const environments = require('./environment')
 const log = require('./log')
 

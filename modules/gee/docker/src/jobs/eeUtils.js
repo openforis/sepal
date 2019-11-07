@@ -1,5 +1,7 @@
-const {Subject} = require('rxjs')
 const ee = require('@google/earthengine')
+const {Subject, throwError} = require('rxjs')
+const {catchError} = require('rxjs/operators')
+const {SystemException} = require('../exception')
 
 const wrap$ = callback => {
     const observable$ = new Subject()
@@ -18,6 +20,10 @@ exports.getAsset$ = eeId =>
             error
                 ? reject(error)
                 : resolve(result))
+    ).pipe(
+        catchError(cause =>
+            throwError(new SystemException(cause, 'Failed to get asset', {eeId}))
+        )
     )
 
 exports.getInfo$ = eeObject =>
