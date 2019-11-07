@@ -1,10 +1,10 @@
 const log = require('../log')
 const job = require('../job')
-const geeAuth = require('./geeAuth')
+const eeAuth = require('./eeAuth')
 
 const worker$ = ({tableId}) => {
     const ee = require('@google/earthengine')
-    const {getAsset$, getInfo$} = require('./geeUtils')
+    const {getAsset$, getInfo$} = require('./eeUtils')
     const {Exception, SystemException, NotFoundException} = require('../exception')
     const {of, throwError} = require('rxjs')
     const {switchMap, catchError} = require('rxjs/operators')
@@ -37,6 +37,6 @@ const worker$ = ({tableId}) => {
 module.exports = job({
     jobName: 'Get table columns',
     jobPath: __filename,
-    before: [geeAuth],
+    before: [eeAuth],
     worker$
 })

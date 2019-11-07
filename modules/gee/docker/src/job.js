@@ -27,7 +27,7 @@ const setupPorts = ({worker, ports}) =>
                 if (status === 'READY') {
                     resolve({worker, ports: ports.localPorts})
                 } else {
-                    reject('Worker not ready.')
+                    reject('Cannot initialize worker.')
                 }
             })
             .postMessage(ports.remotePorts, _.values(ports.remotePorts))

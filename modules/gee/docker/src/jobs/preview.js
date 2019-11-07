@@ -1,10 +1,10 @@
 const log = require('../log')
 const job = require('../job')
-const geeAuth = require('./geeAuth')
+const eeAuth = require('./eeAuth')
 const {getMap$} = require('../rxee/image')
-const {toGeometry} = require('../gee/aoi')
-const {allScenes} = require('../gee/optical/collection')
-const {toMosaic} = require('../gee/optical/mosaic')
+const {toGeometry} = require('../ee/aoi')
+const {allScenes} = require('../ee/optical/collection')
+const {toMosaic} = require('../ee/optical/mosaic')
 
 const worker$ = value => {
     const ee = require('@google/earthengine')
@@ -35,6 +35,6 @@ const worker$ = value => {
 module.exports = job({
     jobName: 'Map preview',
     jobPath: __filename,
-    before: [geeAuth],
+    before: [eeAuth],
     worker$
 })

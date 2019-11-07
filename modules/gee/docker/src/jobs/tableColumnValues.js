@@ -1,7 +1,7 @@
 const log = require('../log')
 const job = require('../job')
-const geeAuth = require('./geeAuth')
-const {getInfo$} = require('./geeUtils')
+const eeAuth = require('./eeAuth')
+const {getInfo$} = require('./eeUtils')
 
 const worker$ = ({tableId, columnName}) => {
     const ee = require('@google/earthengine')
@@ -21,6 +21,6 @@ const worker$ = ({tableId, columnName}) => {
 module.exports = job({
     jobName: 'Get table columns',
     jobPath: __filename,
-    before: [geeAuth],
+    before: [eeAuth],
     worker$
 })
