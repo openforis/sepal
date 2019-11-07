@@ -6,13 +6,15 @@ const worker$ = ({tableId}) => {
     const ee = require('@google/earthengine')
     const {getAsset$, getInfo$} = require('./eeUtils')
     const {Exception, SystemException, NotFoundException} = require('../exception')
-    const {throwError} = require('rxjs')
-    const {switchMap, catchError} = require('rxjs/operators')
+    const {throwError, of} = require('rxjs')
+    const {switchMap, catchError, tap} = require('rxjs/operators')
 
     log.info(`Get columns for table: ${tableId}`)
 
     const handleError$ = cause =>
         getAsset$(tableId).pipe(
+            tap(console.log),
+            catchError(() => of()),
             switchMap(asset =>
                 throwError(
                     asset

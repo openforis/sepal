@@ -3,7 +3,7 @@ const {Subject, concat} = require('rxjs')
 const {takeUntil} = require('rxjs/operators')
 const {serializeError} = require('serialize-error')
 const _ = require('lodash')
-const log = require('./log')
+const log = require('../log')
 
 const exported = {}
 

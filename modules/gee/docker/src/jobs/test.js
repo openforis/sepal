@@ -2,29 +2,27 @@ const log = require('../log')
 const job = require('../job')
 const testBefore = require('./testBefore')
 
-const worker$ = count => {
+const worker$ = (count, minDuration, maxDuration = minDuration) => {
     const {of, timer} = require('rxjs')
-    const {mergeMap, tap, map} = require('rxjs/operators')
-    const rateLimit = require('../job/operators/rateLimit')
+    const {mergeMap, map} = require('rxjs/operators')
+    // const rateLimit = require('../job/operators/rateLimit')
 
-    log.info(`Running Test with count: ${count}`)
+    log.info(`Running Test with count: ${count}, minDuration: ${minDuration}ms, maxDuration: ${maxDuration}ms`)
 
     const sequence = [...Array(count).keys()]
     return of(...sequence).pipe(
-        rateLimit(3, 1000),
-        tap(value => log.trace(`Submitted value: ${value}`)),
+        // rateLimit(3, 1000),
+        map(() => Math.random() * (maxDuration - minDuration) + minDuration),
         mergeMap(value =>
-            timer(Math.random() * 2000).pipe(
+            timer(value).pipe(
                 map(() => {
-                    if (Math.random() < .1) {
-                        throw new Error('Random error!')
-                    }
-                    return value
+                    // if (Math.random() < .1) {
+                    //     throw new Error('Random error!')
+                    // }
+                    return Math.random()
                 }),
-                tap(value => log.trace(`Got value: ${value}`)),
             )
-        ),
-        map(value => `The result is ${value}`)
+        )
     )
 }
 
