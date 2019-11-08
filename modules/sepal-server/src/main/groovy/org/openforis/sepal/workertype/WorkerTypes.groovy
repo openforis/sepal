@@ -118,10 +118,10 @@ final class WorkerTypes {
 
     static String tempDir(instance, config) {
         def username = instance.reservation.username
-        def localTmp = "$config.userHomes/$username/tmp/$instance.id" as String
+        def localTmp = "/data/sepal/home/$username/tmp/$instance.id" as String
         new File(localTmp).mkdirs()
         Terminal.execute(new File('/'), '/bin/chmod', '1777', localTmp)
-        return localTmp
+        return "$config.userHomes/${username}/tmp/$instance.id" as String
     }
 }
 
