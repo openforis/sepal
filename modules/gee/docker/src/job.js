@@ -1,18 +1,13 @@
-const {switchMap} = require('rxjs/operators')
 const _ = require('lodash')
-const {getWorker$} = require('./worker/pool')
-// const log = require('./log')
+// const {submit$} = require('./worker/single')
+const {submit$} = require('./worker/pool')
 
 const beforeArgs = (before = [], ctx) =>
     before.map((m => m(ctx)))
 
 const submit = ({jobName, jobPath, before, ctx}) => ({
     submit$: (...args) =>
-        getWorker$(jobName, jobPath).pipe(
-            switchMap(worker =>
-                worker.submit$([...beforeArgs(before, ctx), args])
-            )
-        )
+        submit$(jobName, jobPath, [...beforeArgs(before, ctx), args])
 })
 
 const beforeWorkers$ = (before = []) =>
