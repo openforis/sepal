@@ -9,17 +9,12 @@ const exported = {}
 
 parentPort.once('message', ports => {
     const stop$ = new Subject()
-    exported.ports = ports
     const jobPort = ports.job
+    exported.ports = ports
 
     const next = value => {
-        log.trace(`Worker: next: ${value}`)
+        log.trace(`Worker: value: ${value}`)
         return jobPort.postMessage({value})
-    }
-
-    const complete = () => {
-        log.trace('Worker: complete')
-        return jobPort.postMessage({complete: true})
     }
 
     const error = error => {
@@ -27,9 +22,14 @@ parentPort.once('message', ports => {
         return jobPort.postMessage({error: serializeError(error)})
     }
 
+    const complete = () => {
+        log.trace('Worker: complete')
+        return jobPort.postMessage({complete: true})
+    }
+
     const start = ({jobName, jobPath, args}) => {
         const workers = require(jobPath)()
-        log.info(`Worker: starting ${jobName}`)
+        log.info(`Worker: starting job ${jobName}`)
 
         const jobs$ = _.chain(workers)
             .zip(args)
@@ -42,8 +42,20 @@ parentPort.once('message', ports => {
     }
 
     const stop = () => {
-        log.info('Worker: stop')
+        log.info('Worker: stopping job')
         stop$.next()
+    }
+
+    const handleMessage = message => {
+        message.start && start(message.start)
+        message.stop && stop()
+        message.dispose && dispose()
+    }
+
+    const init = () => {
+        log.trace('Worker: ready')
+        jobPort.on('message', handleMessage)
+        parentPort.postMessage('READY')
     }
 
     const dispose = () => {
@@ -51,21 +63,7 @@ parentPort.once('message', ports => {
         jobPort.off('message', handleMessage)
     }
 
-    const handleMessage = message => {
-        if (message.start) {
-            start(message.start)
-        }
-        if (message.stop) {
-            stop()
-        }
-        if (message.dispose) {
-            dispose()
-        }
-    }
-
-    jobPort.on('message', handleMessage)
-    log.trace('Worker: ready')
-    parentPort.postMessage('READY')
+    init()
 })
 
 module.exports = exported

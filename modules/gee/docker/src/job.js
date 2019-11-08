@@ -1,6 +1,6 @@
 const {switchMap} = require('rxjs/operators')
 const _ = require('lodash')
-const {getWorker$} = require('./workerPool')
+const {getWorker$} = require('./worker/pool')
 // const log = require('./log')
 
 const beforeArgs = (before = [], ctx) =>
