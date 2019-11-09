@@ -2,7 +2,6 @@ const {Subject, ReplaySubject} = require('rxjs')
 const {finalize, takeUntil, switchMap, first} = require('rxjs/operators')
 const {Worker, MessageChannel} = require('worker_threads')
 const {deserializeError} = require('serialize-error')
-const {v4: uuid} = require('uuid')
 const path = require('path')
 const _ = require('lodash')
 const log = require('../log')
@@ -41,7 +40,6 @@ const bootstrapWorker$ = (jobName, channelNames) => {
 const initWorker = (jobName, jobPath) => {
     const init$ = new ReplaySubject()
     const dispose$ = new Subject()
-    const id = uuid()
 
     // bootstrapWorker$(jobName, ['job', 'rateLimit'])
     bootstrapWorker$(jobName, ['job'])
@@ -100,7 +98,6 @@ const initWorker = (jobName, jobPath) => {
         const stop = port => {
             port.postMessage({stop: true})
             port.off('message', handleWorkerMessage)
-            // releaseWorkerInstance(jobName, id)
         }
 
         const run$ = port => {
@@ -119,7 +116,7 @@ const initWorker = (jobName, jobPath) => {
     const dispose = () =>
         dispose$.next()
 
-    return {id, submit$, dispose}
+    return {submit$, dispose}
 }
 
 module.exports = {

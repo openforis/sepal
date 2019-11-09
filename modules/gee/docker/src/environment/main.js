@@ -6,7 +6,7 @@ const tableColumns = require('../jobs/tableColumns')
 const tableColumnValues = require('../jobs/tableColumnValues')
 router
     .get('/test', ctx =>
-        ctx.stream$ = test(ctx).submit$(1, 0)
+        ctx.stream$ = test(ctx).submit$(1, 5000, 5000)
     )
     .post('/preview', ctx => {
         ctx.stream$ = preview(ctx).submit$(ctx.request.body)

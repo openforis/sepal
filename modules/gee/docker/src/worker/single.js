@@ -1,7 +1,7 @@
 const {finalize} = require('rxjs/operators')
 const _ = require('lodash')
 const log = require('../log')
-const {initWorker} = require('./manager')
+const {initWorker} = require('./factory')
 
 const submit$ = (jobName, jobPath, args) => {
     log.trace(`Submitting <${jobName}> to single worker`)
