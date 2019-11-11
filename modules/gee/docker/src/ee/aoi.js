@@ -24,4 +24,3 @@ const eeTable = ({id, keyColumn, key}) => {
 }
 
 module.exports = {toGeometry}
-

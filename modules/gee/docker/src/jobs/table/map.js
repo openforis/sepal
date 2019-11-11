@@ -13,8 +13,8 @@ const worker$ = ({tableId, columnName, columnValue, color}) => {
 
     const table = filterTable({tableId, columnName, columnValue})
     const geometry = table.geometry()
-
     const boundsPolygon = ee.List(geometry.bounds().coordinates().get(0))
+
     return forkJoin({
         bounds: getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)])),
         eeMap: getMap$(table, {color})
@@ -29,4 +29,3 @@ module.exports = job({
     before: [eeAuth],
     worker$
 })
-

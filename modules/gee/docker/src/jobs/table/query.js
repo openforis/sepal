@@ -13,6 +13,7 @@ const worker$ = ({select, from, where = [], orderBy = []}) => {
     const collection = ee.FeatureCollection(from)
     const filtered = where.reduce((c, f) => c.filterMetadata(f[0], f[1], f[2]), collection)
     const sorted = orderBy.reduce((c, sort) => c.sort(sort), filtered)
+    
     return getInfo$(sorted
         .reduceColumns(ee.Reducer.toList(select.length), select)
         .get('list')
@@ -35,4 +36,3 @@ module.exports = job({
     before: [eeAuth],
     worker$
 })
-
