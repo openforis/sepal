@@ -7,13 +7,12 @@ const worker$ = ({tableId}) => {
     const {getAsset$, getInfo$} = require('@sepal/ee/utils')
     const {Exception, SystemException, NotFoundException} = require('../../exception')
     const {throwError, of} = require('rxjs')
-    const {switchMap, catchError, tap} = require('rxjs/operators')
+    const {switchMap, catchError} = require('rxjs/operators')
 
     log.debug('Get EE Table columns:', {tableId})
 
     const handleError$ = cause =>
         getAsset$(tableId).pipe(
-            tap(console.log),
             catchError(() => of()),
             switchMap(asset =>
                 throwError(

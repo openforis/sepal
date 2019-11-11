@@ -8,7 +8,7 @@ const worker$ = value => {
     const {allScenes} = require('@sepal/ee/optical/collection')
     const {toMosaic} = require('@sepal/ee/optical/mosaic')
 
-    log.info(`Running EE preview with value ${value}`)
+    log.debug('EE Image preview:', {value})
 
     const model = value.recipe.model
     const region = toGeometry(model.aoi)
@@ -31,7 +31,7 @@ const worker$ = value => {
 }
 
 module.exports = job({
-    jobName: 'Map preview',
+    jobName: 'EE Image preview',
     jobPath: __filename,
     before: [eeAuth],
     worker$

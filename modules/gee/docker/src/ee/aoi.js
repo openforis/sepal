@@ -1,7 +1,6 @@
 const ee = require('@google/earthengine')
 
 const toGeometry = aoi => {
-    console.log(aoi)
     switch (aoi.type) {
         case 'POLYGON':
             return polygon(aoi)

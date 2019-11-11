@@ -15,9 +15,6 @@ router.get('/status', ctx => {
 
 router.post('/submit', ctx => {
     const params = ctx.request.body
-    console.log('submit', {
-        params
-    })
     ctx.response.status = 204
 })
 
