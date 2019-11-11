@@ -1,11 +1,11 @@
-const log = require('../log')
-const job = require('../job')
-const eeAuth = require('./eeAuth')
+const log = require('../../log')
+const job = require('../../job')
+const eeAuth = require('../eeAuth')
 
 const worker$ = ({tableId, columnName, columnValue, color}) => {
     const ee = require('@google/earthengine')
-    const {filterTable} = require('../ee/table')
-    const {getInfo$, getMap$} = require('./eeUtils')
+    const {filterTable} = require('../../ee/table')
+    const {getInfo$, getMap$} = require('../eeUtils')
     const {forkJoin} = require('rxjs')
     const {map} = require('rxjs/operators')
 

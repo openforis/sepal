@@ -1,10 +1,10 @@
-const log = require('../log')
-const job = require('../job')
-const eeAuth = require('./eeAuth')
-const {getInfo$} = require('./eeUtils')
+const log = require('../../log')
+const job = require('../../job')
+const eeAuth = require('../eeAuth')
 
 const worker$ = ({select, from, where = [], orderBy = []}) => {
     const ee = require('@google/earthengine')
+    const {getInfo$} = require('../eeUtils')
     const {map} = require('rxjs/operators')
     const _ = require('lodash')
 

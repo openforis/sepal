@@ -1,7 +1,7 @@
-const log = require('../log')
-const job = require('../job')
-const eeAuth = require('./eeAuth')
-const {getInfo$} = require('./eeUtils')
+const log = require('../../log')
+const job = require('../../job')
+const eeAuth = require('../eeAuth')
+const {getInfo$} = require('../eeUtils')
 
 const worker$ = ({tableId, columnName}) => {
     const ee = require('@google/earthengine')
@@ -14,7 +14,7 @@ const worker$ = ({tableId, columnName}) => {
             .sort(columnName)
             .aggregate_array(columnName)
     ).pipe(
-        
+
     )
 }
 

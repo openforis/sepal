@@ -1,11 +1,11 @@
-const log = require('../log')
-const job = require('../job')
-const eeAuth = require('./eeAuth')
+const log = require('../../log')
+const job = require('../../job')
+const eeAuth = require('../eeAuth')
 
 const worker$ = ({tableId}) => {
     const ee = require('@google/earthengine')
-    const {getAsset$, getInfo$} = require('./eeUtils')
-    const {Exception, SystemException, NotFoundException} = require('../exception')
+    const {getAsset$, getInfo$} = require('../eeUtils')
+    const {Exception, SystemException, NotFoundException} = require('../../exception')
     const {throwError, of} = require('rxjs')
     const {switchMap, catchError, tap} = require('rxjs/operators')
 
