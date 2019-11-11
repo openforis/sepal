@@ -34,9 +34,9 @@ exports.getInfo$ = eeObject =>
                 : resolve(result))
     )
 
-exports.getMap$ = (eeImage, visParams) =>
+exports.getMap$ = (eeObject, visParams) =>
     wrap$((resolve, reject) =>
-        eeImage.getMap(visParams, (map, error) =>
+        eeObject.getMap(visParams, (map, error) =>
             error
                 ? reject(error)
                 : resolve({

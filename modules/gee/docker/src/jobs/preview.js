@@ -1,12 +1,13 @@
 const log = require('../log')
 const job = require('../job')
 const eeAuth = require('./eeAuth')
-const {getMap$} = require('./eeUtils')
-const {toGeometry} = require('../ee/aoi')
-const {allScenes} = require('../ee/optical/collection')
-const {toMosaic} = require('../ee/optical/mosaic')
 
 const worker$ = value => {
+    const {getMap$} = require('./eeUtils')
+    const {toGeometry} = require('../ee/aoi')
+    const {allScenes} = require('../ee/optical/collection')
+    const {toMosaic} = require('../ee/optical/mosaic')
+
     log.info(`Running EE preview with value ${value}`)
 
     const model = value.recipe.model
