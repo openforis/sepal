@@ -9,7 +9,7 @@ const worker$ = ({tableId}) => {
     const {throwError, of} = require('rxjs')
     const {switchMap, catchError, tap} = require('rxjs/operators')
 
-    log.info(`Get columns for table: ${tableId}`)
+    log.debug('Get EE Table columns:', {tableId})
 
     const handleError$ = cause =>
         getAsset$(tableId).pipe(

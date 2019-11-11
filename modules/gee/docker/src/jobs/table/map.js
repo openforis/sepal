@@ -9,21 +9,22 @@ const worker$ = ({tableId, columnName, columnValue, color}) => {
     const {forkJoin} = require('rxjs')
     const {map} = require('rxjs/operators')
 
-    log.info(`Request EE table map: tableId: ${tableId}, columnName: ${columnName}, columnValue: ${columnValue}`)
+    log.debug('Request EE Table map:', {tableId, columnName, columnValue, color})
 
     const table = filterTable({tableId, columnName, columnValue})
     const geometry = table.geometry()
 
     const boundsPolygon = ee.List(geometry.bounds().coordinates().get(0))
-    const bounds$ = getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)]))
-    const eeMap$ = getMap$(table, {color})
-    return forkJoin({bounds: bounds$, eeMap: eeMap$}).pipe(
+    return forkJoin({
+        bounds: getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)])),
+        eeMap: getMap$(table, {color})
+    }).pipe(
         map(({bounds, eeMap}) => ({bounds, ...eeMap}))
     )
 }
 
 module.exports = job({
-    jobName: 'Request EE table map',
+    jobName: 'Request EE Table map',
     jobPath: __filename,
     before: [eeAuth],
     worker$

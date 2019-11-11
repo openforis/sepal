@@ -8,7 +8,7 @@ const worker$ = ({select, from, where = [], orderBy = []}) => {
     const {map} = require('rxjs/operators')
     const _ = require('lodash')
 
-    log.info(`Query EE table: select ${select} from ${from} where ${where} orderBy ${orderBy}`)
+    log.debug('Query EE table:', {select, from, where, orderBy})
 
     const collection = ee.FeatureCollection(from)
     const filtered = where.reduce((c, f) => c.filterMetadata(f[0], f[1], f[2]), collection)
@@ -30,7 +30,7 @@ const worker$ = ({select, from, where = [], orderBy = []}) => {
 }
 
 module.exports = job({
-    jobName: 'Query table',
+    jobName: 'Query EE Table',
     jobPath: __filename,
     before: [eeAuth],
     worker$
