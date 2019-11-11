@@ -1,5 +1,5 @@
 const {Subject, ReplaySubject} = require('rxjs')
-const {finalize, takeUntil, switchMap, first} = require('rxjs/operators')
+const {finalize, takeUntil, switchMap, first, map} = require('rxjs/operators')
 const {Worker, MessageChannel} = require('worker_threads')
 const {deserializeError} = require('serialize-error')
 const path = require('path')
@@ -21,46 +21,29 @@ const createChannels = names =>
         remotePorts: {}
     })
 
+const setupPorts = (worker, ports) =>
+    worker.postMessage(ports, _.values(ports))
+
 const bootstrapWorker$ = (jobName, channelNames) => {
     const worker$ = new Subject()
     const worker = createWorker(jobName)
-    const channels = createChannels(channelNames)
-    worker
-        .once('message', status => {
-            if (status === 'READY') {
-                worker$.next({worker, ports: channels.localPorts})
-            } else {
-                worker$.error('Cannot initialize worker.')
-            }
-        })
-        .postMessage(channels.remotePorts, _.values(channels.remotePorts))
-    return worker$
+    const {localPorts, remotePorts} = createChannels(channelNames)
+    worker.once('message', status => {
+        if (status === 'READY') {
+            worker$.next({worker, ports: localPorts})
+        } else {
+            worker$.error('Cannot initialize worker.')
+        }
+    })
+    setupPorts(worker, remotePorts)
+    return worker$.pipe(
+        first()
+    )
 }
 
-const initWorker = (jobName, jobPath) => {
+const initWorker$ = (jobName, jobPath) => {
     const init$ = new ReplaySubject()
     const dispose$ = new Subject()
-
-    // bootstrapWorker$(jobName, ['job', 'rateLimit'])
-    bootstrapWorker$(jobName, ['job'])
-        .subscribe(
-            ({worker, ports: {job: jobPort, rateLimitPort}}) => {
-                init$.next(jobPort)
-                // const subscription = rateLimiter(rateLimitPort)
-                // jobPort.on('message', handleWorkerMessage)
-
-                dispose$.pipe(
-                    first()
-                ).subscribe(
-                    () => {
-                        worker.unref() // is this correct? terminate() probably isn't...
-                        // subscription.cleanup()
-                        log.info(`Job: worker <${jobName}> disposed.`)
-                    }
-                )
-                log.info('Job: worker ready')
-            }
-        )
 
     const submit$ = args => {
         const result$ = new Subject()
@@ -113,12 +96,30 @@ const initWorker = (jobName, jobPath) => {
         )
     }
 
-    const dispose = () =>
-        dispose$.next()
+    // bootstrapWorker$(jobName, ['job', 'rateLimit'])
+    return bootstrapWorker$(jobName, ['job']).pipe(
+        map(
+            ({worker, ports: {job: jobPort, rateLimitPort}}) => {
+                init$.next(jobPort)
+                // const subscription = rateLimiter(rateLimitPort)
+                // jobPort.on('message', handleWorkerMessage)
 
-    return {submit$, dispose}
+                dispose$.pipe(
+                    first()
+                ).subscribe(
+                    () => {
+                        worker.unref() // is this correct? terminate() probably isn't...
+                        // subscription.cleanup()
+                        log.info(`Job: worker <${jobName}> disposed`)
+                    }
+                )
+                log.info('Job: worker ready')
+
+                return {submit$, dispose$}
+            }
+        ))
 }
 
 module.exports = {
-    initWorker
+    initWorker$
 }

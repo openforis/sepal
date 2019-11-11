@@ -7,7 +7,7 @@ const worker$ = (count, minDuration, maxDuration = minDuration) => {
     const {mergeMap, map} = require('rxjs/operators')
     // const rateLimit = require('../job/operators/rateLimit')
 
-    log.info(`Running Test with count: ${count}, minDuration: ${minDuration}ms, maxDuration: ${maxDuration}ms`)
+    log.info(`Running Test TWO with count: ${count}, minDuration: ${minDuration}ms, maxDuration: ${maxDuration}ms`)
 
     const sequence = [...Array(count).keys()]
     return of(...sequence).pipe(
@@ -27,7 +27,7 @@ const worker$ = (count, minDuration, maxDuration = minDuration) => {
 }
 
 module.exports = job({
-    jobName: 'Test',
+    jobName: 'Test2',
     jobPath: __filename,
     before: [testBefore],
     worker$

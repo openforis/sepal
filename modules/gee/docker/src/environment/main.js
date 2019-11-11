@@ -1,12 +1,16 @@
 const router = require('koa-router')()
 
-const test = require('../jobs/test')
+const test1 = require('../jobs/test1')
+const test2 = require('../jobs/test2')
 const preview = require('../jobs/preview')
 const tableColumns = require('../jobs/tableColumns')
 const tableColumnValues = require('../jobs/tableColumnValues')
 router
-    .get('/test', ctx =>
-        ctx.stream$ = test(ctx).submit$(1, 5000, 5000)
+    .get('/test1', ctx =>
+        ctx.stream$ = test1(ctx).submit$(1, 3000, 3000)
+    )
+    .get('/test2', ctx =>
+        ctx.stream$ = test2(ctx).submit$(1, 3000, 3000)
     )
     .post('/preview', ctx => {
         ctx.stream$ = preview(ctx).submit$(ctx.request.body)
