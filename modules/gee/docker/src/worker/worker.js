@@ -1,5 +1,5 @@
 const {parentPort} = require('worker_threads')
-const {Subject, concat} = require('rxjs')
+const {Subject, concat, defer} = require('rxjs')
 const {takeUntil} = require('rxjs/operators')
 const {serializeError} = require('serialize-error')
 const _ = require('lodash')
@@ -33,9 +33,8 @@ parentPort.once('message', ports => {
 
         const jobs$ = _.chain(workers)
             .zip(args)
-            .map(([worker$, args]) => worker$(...args))
+            .map(([worker$, args]) => defer(() => worker$(...args)))
             .value()
-            
         concat(...jobs$).pipe(
             takeUntil(stop$)
         ).subscribe({next, error, complete})
