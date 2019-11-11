@@ -4,7 +4,7 @@ const {Worker, MessageChannel} = require('worker_threads')
 const {deserializeError} = require('serialize-error')
 const path = require('path')
 const _ = require('lodash')
-const log = require('../log')
+const log = require('@sepal/log')
 
 const WORKER_PATH = path.join(__dirname, 'worker.js')
 
@@ -53,20 +53,20 @@ const initWorker$ = (jobName, jobPath) => {
             log.trace(`Job: worker <${jobName}> value: ${value}`)
             result$.next(value)
         }
-    
+
         const handleError = serializedError => {
             const error = deserializeError(serializedError)
             log.error(`Job: worker <${jobName}> error: ${error.message} (${error.type})`)
             result$.error(error)
             stop$.next()
         }
-    
+
         const handleComplete = () => {
             log.info(`Job: worker <${jobName}> completed`)
             result$.complete()
             stop$.next()
         }
-    
+
         const handleWorkerMessage = message => {
             message.value && handleValue(message.value)
             message.error && handleError(message.error)

@@ -1,12 +1,12 @@
-const log = require('../log')
-const job = require('../job')
-const eeAuth = require('./eeAuth')
+const log = require('@sepal/log')
+const job = require('@sepal/job')
+const eeAuth = require('@sepal/ee/auth')
 
 const worker$ = value => {
-    const {getMap$} = require('./eeUtils')
-    const {toGeometry} = require('../ee/aoi')
-    const {allScenes} = require('../ee/optical/collection')
-    const {toMosaic} = require('../ee/optical/mosaic')
+    const {getMap$} = require('@sepal/ee/utils')
+    const {toGeometry} = require('@sepal/ee/aoi')
+    const {allScenes} = require('@sepal/ee/optical/collection')
+    const {toMosaic} = require('@sepal/ee/optical/mosaic')
 
     log.info(`Running EE preview with value ${value}`)
 

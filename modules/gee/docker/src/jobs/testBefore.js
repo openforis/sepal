@@ -1,5 +1,5 @@
 const {of} = require('rxjs')
-const log = require('../log')
+const log = require('@sepal/log')
 
 const args = ['A', 123, true]
 

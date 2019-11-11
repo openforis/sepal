@@ -1,9 +1,10 @@
+require('module-alias/register')
 const {parentPort} = require('worker_threads')
 const {Subject, concat, defer} = require('rxjs')
 const {takeUntil} = require('rxjs/operators')
 const {serializeError} = require('serialize-error')
 const _ = require('lodash')
-const log = require('../log')
+const log = require('@sepal/log')
 
 const exported = {}
 

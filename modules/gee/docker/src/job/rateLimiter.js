@@ -1,6 +1,6 @@
 const {Subject, BehaviorSubject, timer} = require('rxjs')
 const {mergeMap, map, take, filter, tap} = require('rxjs/operators')
-const log = require('../log')
+const log = require('@sepal/log')
 
 const COUNT = 4
 const SLIDING_WINDOW_TIME = 1000
@@ -42,7 +42,7 @@ module.exports = port => {
     const listener = message => {
         token$.next(message)
     }
-    
+
     port.on('message', listener)
     const subscription = rateLimitedToken$.subscribe(
         message => port.postMessage(message)

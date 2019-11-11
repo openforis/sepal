@@ -1,5 +1,5 @@
 const router = require('koa-router')()
-const log = require('../log')
+const log = require('@sepal/log')
 
 router.get('/healthCheck', ctx =>
     ctx.body = {status: 'OK'}

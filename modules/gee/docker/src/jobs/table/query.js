@@ -1,10 +1,10 @@
-const log = require('../../log')
-const job = require('../../job')
-const eeAuth = require('../eeAuth')
+const log = require('@sepal/log')
+const job = require('@sepal/job')
+const eeAuth = require('@sepal/ee/auth')
 
 const worker$ = ({select, from, where = [], orderBy = []}) => {
     const ee = require('@google/earthengine')
-    const {getInfo$} = require('../eeUtils')
+    const {getInfo$} = require('@sepal/ee/utils')
     const {map} = require('rxjs/operators')
     const _ = require('lodash')
 

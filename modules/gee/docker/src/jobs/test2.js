@@ -1,5 +1,5 @@
-const log = require('../log')
-const job = require('../job')
+const log = require('@sepal/log')
+const job = require('@sepal/job')
 const testBefore = require('./testBefore')
 
 const worker$ = (count, minDuration, maxDuration = minDuration) => {

@@ -1,4 +1,4 @@
-const log = require('../log')
+const log = require('@sepal/log')
 
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']
@@ -22,7 +22,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     const {concat} = require('rxjs')
 
     log.info('Running EE authentication')
-    
+
     const initialize = () =>
         new Promise((resolve, reject) => {
             log.debug('Initializing library')
@@ -37,7 +37,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
                 reject(error)
             }
         })
-    
+
     const authenticateServiceAccount = credentials =>
         new Promise((resolve, reject) => {
             log.debug('Authenticating service account')
@@ -51,7 +51,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
                 reject(error)
             }
         })
-    
+
     const authenticateUserAccount = googleTokens =>
         new Promise((resolve, reject) => {
             log.debug('Authenticating user account')
@@ -70,7 +70,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
                 reject(error)
             }
         })
-    
+
     const authenticate = ({sepalUser: {googleTokens}, serviceAccountCredentials}) =>
         googleTokens
             ? authenticateUserAccount(googleTokens)

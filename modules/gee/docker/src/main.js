@@ -1,3 +1,4 @@
+require('module-alias/register')
 const Koa = require('koa')
 const bodyParser = require('koa-bodyparser')
 const logger = require('koa-logger')
@@ -5,7 +6,7 @@ const logger = require('koa-logger')
 const config = require('./config')
 const stream = require('./stream')
 const environments = require('./environment')
-const log = require('./log')
+const log = require('@sepal/log')
 
 const environment = process.env.ENVIRONMENT || 'main'
 
