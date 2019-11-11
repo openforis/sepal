@@ -5,7 +5,7 @@ const eeAuth = require('@sepal/ee/auth')
 const worker$ = ({tableId}) => {
     const ee = require('@google/earthengine')
     const {getAsset$, getInfo$} = require('@sepal/ee/utils')
-    const {Exception, SystemException, NotFoundException} = require('../../exception')
+    const {Exception, SystemException, NotFoundException} = require('@sepal/exception')
     const {throwError, of} = require('rxjs')
     const {switchMap, catchError} = require('rxjs/operators')
 

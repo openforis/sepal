@@ -19,11 +19,11 @@ const worker$ = ({select, from, where = [], orderBy = []}) => {
     ).pipe(
         map(
             rows => rows.map(row => {
-                    const l = row.map((value, i) =>
-                        ({[select[i]]: value})
-                    )
-                    return _.assign({}, ...l)
-                }
+                const l = row.map((value, i) =>
+                    ({[select[i]]: value})
+                )
+                return _.assign({}, ...l)
+            }
             )
         )
     )

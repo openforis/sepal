@@ -1,7 +1,7 @@
 const ee = require('@google/earthengine')
 const {Subject, throwError} = require('rxjs')
 const {catchError} = require('rxjs/operators')
-const {SystemException} = require('../exception')
+const {SystemException} = require('@sepal/exception')
 
 const wrap$ = callback => {
     const observable$ = new Subject()

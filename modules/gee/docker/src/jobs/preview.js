@@ -14,19 +14,20 @@ const worker$ = value => {
     const region = toGeometry(model.aoi)
     const dataSets = Object.values(model.sources)
         .flat()
-        .map(dataSet => {
-            return dataSet === 'LANDSAT_TM'
+        .map(dataSet =>
+            dataSet === 'LANDSAT_TM'
                 ? ['LANDSAT_4', 'LANDSAT_5']
                 : dataSet === 'LANDSAT_TM_T2'
                     ? ['LANDSAT_4_T2', 'LANDSAT_5_T2']
                     : dataSet
-        })
+        )
         .flat()
-    const reflectance = model.compositeOptions.corrections.includes('SR')
-        ? 'SR' : 'TOA'
+    const surfaceReflectance = model.compositeOptions.corrections.includes('SR')
+    const reflectance = surfaceReflectance ? 'SR' : 'TOA'
     const collection = allScenes({region, dataSets, reflectance})
     const image = toMosaic({region, collection})
     const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}
+
     return getMap$(image, visParams)
 }
 

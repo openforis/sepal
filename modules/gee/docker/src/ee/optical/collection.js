@@ -23,11 +23,11 @@ const allScenes = (
         ee.Filter.date('2018-07-01', '2018-08-01')
     )
     return dataSets.reduce((mergedCollection, dataSet) =>
-            mergeImageCollections(
-                mergedCollection,
-                toCollection({dataSet, reflectance, filter})
-            ),
-        ee.ImageCollection([])
+        mergeImageCollections(
+            mergedCollection,
+            toCollection({dataSet, reflectance, filter})
+        ),
+    ee.ImageCollection([])
     )
 }
 
