@@ -11,6 +11,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import Notifications from 'widget/notifications'
 
 const loadCountries$ = () => {
     return api.gee.queryEETable$({
@@ -140,10 +141,16 @@ class CountrySection extends React.Component {
 
     update() {
         const {recipeId, countries, stream, inputs: {country, area}, componentWillUnmount$} = this.props
-        if (!countries && !stream('LOAD_COUNTRIES').active)
+        if (!countries && !stream('LOAD_COUNTRIES').active && !stream('LOAD_COUNTRIES').failed) {
             this.props.stream('LOAD_COUNTRIES',
-                loadCountries$())
-
+                loadCountries$(),
+                null,
+                error => Notifications.error({
+                    message: msg('process.mosaic.panel.areaOfInterest.form.country.country.loadFailed'),
+                    timeout: 0
+                })
+            )
+        }
         setAoiLayer({
             contextId: recipeId,
             aoi: {

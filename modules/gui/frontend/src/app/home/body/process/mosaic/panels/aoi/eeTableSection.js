@@ -135,11 +135,12 @@ class EETableSection extends React.Component {
             api.gee.loadEETableColumns$(eeTableId).pipe(
                 takeUntil(this.eeTableChanged$)),
             columns => this.recipe.setEETableColumns(columns).dispatch(),
-            error => {
-                return this.props.inputs.eeTable.setInvalid(
-                    msg(error.response.code, error.response.data)
+            error =>
+                this.props.inputs.eeTable.setInvalid(
+                    error.response
+                        ? msg(error.response.code, error.response.data)
+                        : msg('eeTable.failedToLoad')
                 )
-            }
         )
     }
 
