@@ -46,8 +46,7 @@ const toCollection = ({dataSet, reflectance, filter}) => {
         )
 }
 
-const specByDataSet = reflectance => (
-    {
+const specByDataSet = reflectance => ({
         TOA: {
             LANDSAT_4: {
                 name: 'LANDSAT/LT04/C01/T1_TOA',
@@ -330,8 +329,7 @@ const specByDataSet = reflectance => (
                 }
             }
         }
-    }[reflectance]
-)
+    }[reflectance])
 
 const selectedScenes = ({}) => {
 }
