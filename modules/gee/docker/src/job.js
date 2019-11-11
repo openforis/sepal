@@ -1,6 +1,6 @@
 const _ = require('lodash')
 // const {submit$} = require('./worker/single')
-const {submit$} = require('./worker/pool')
+const {submit$} = require('./worker/pooled')
 
 const beforeArgs = (before = [], ctx) =>
     before.map((m => m(ctx)))

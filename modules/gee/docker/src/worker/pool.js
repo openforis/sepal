@@ -1,92 +1,54 @@
-const {Subject, of} = require('rxjs')
-const {first, groupBy, mergeMap, tap, map, share, filter} = require('rxjs/operators')
+const {of} = require('rxjs')
+const {tap, map} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
-const log = require('@sepal/log')
-const {initWorker$} = require('./factory')
 
-const workerPool = {}
-const workerRequest$ = new Subject()
-const workerResponse$ = new Subject()
+module.exports = ({create$, onCold, onHot}) => {
+    const pool = {}
 
-const GROUP_CONCURRENCY = 2
+    const add = (slot, instance) =>
+        pool[slot] = [...(pool[slot] || []), instance]
 
-const releaseWorkerInstance = (jobName, id) => {
-    const workerInstance = _.find(workerPool[jobName], workerInstance => workerInstance.id === id)
-    if (workerInstance) {
-        workerInstance.locked = false
-    }
-}
+    const lock = instance =>
+        instance.locked = true
 
-const createWorkerInstance = (jobName, worker) => {
-    const workerInstance = {
-        worker,
-        id: uuid(),
-        locked: true
-    }
-    workerPool[jobName] = [...(workerPool[jobName] || []), workerInstance]
-    return workerInstance
-}
+    const release = instance =>
+        instance.locked = false
 
-const startNewWorkerInstance$ = (jobName, jobPath) =>
-    initWorker$(jobName, jobPath).pipe(
-        map(worker => createWorkerInstance(jobName, worker)),
-        tap(workerInstance => log.trace(`Job: using cold worker <${jobName}.${workerInstance.id}>`))
-    )
+    const releaseable = instance => ({
+        item: instance.item,
+        release: () => release(instance)
+    })
 
-const getUnlockedWorkerInstance = jobName =>
-    _.find(workerPool[jobName], workerInstance => !workerInstance.locked)
-
-const getWorkerInstance$ = (jobName, jobPath) => {
-    const workerInstance = getUnlockedWorkerInstance(jobName)
-    if (workerInstance) {
-        workerInstance.locked = true
-        log.trace(`Job: using hot worker <${jobName}.${workerInstance.id}>`)
-        return of(workerInstance)
-    }
-    return startNewWorkerInstance$(jobName, jobPath)
-}
-
-const submitRequest = ({requestId, jobName, jobPath, args}) =>
-    workerRequest$.next({requestId, jobName, jobPath, args})
-
-const getResponse$ = requestId =>
-    workerResponse$.pipe(
-        share(),
-        filter(response => response.requestId === requestId),
-        map(({result}) => result),
-        first()
-    )
-
-const submit$ = (jobName, jobPath, args) => {
-    log.trace(`Submitting <${jobName}> to pooled worker`)
-    const requestId = uuid()
-    submitRequest({requestId, jobName, jobPath, args})
-    return getResponse$(requestId)
-}
-
-workerRequest$.pipe(
-    groupBy(({jobName}) => jobName),
-    mergeMap(group =>
-        group.pipe(
-            mergeMap(({requestId, jobName, jobPath, args}) =>
-                getWorkerInstance$(jobName, jobPath).pipe(
-                    mergeMap(({worker, id}) =>
-                        worker.submit$(args).pipe(
-                            map(result => ({
-                                requestId,
-                                result
-                            })),
-                            tap(() => releaseWorkerInstance(jobName, id))
-                        ))
-                ), null, GROUP_CONCURRENCY
-            )
+    const hot$ = (slot, instance) =>
+        of(instance).pipe(
+            tap(({id}) => onHot && onHot(slot, id))
         )
-    )
-).subscribe(
-    response => workerResponse$.next(response)
-)
 
-module.exports = {
-    submit$
+    const cold$ = (slot, createArgs) =>
+        create$(createArgs).pipe(
+            map(item => ({
+                id: uuid(),
+                item
+            })),
+            tap(instance => add(slot, instance)),
+            tap(({id}) => onCold && onCold(slot, id))
+        )
+
+    const instance$ = ({slot, instance, createArgs}) =>
+        instance
+            ? hot$(slot, instance)
+            : cold$(slot, createArgs)
+
+    return {
+        get$: (slot, createArgs) =>
+            instance$({
+                slot,
+                instance: _.find(pool[slot], ({locked}) => !locked),
+                createArgs
+            }).pipe(
+                tap(instance => lock(instance)),
+                map(instance => releaseable(instance))
+            )
+    }
 }
