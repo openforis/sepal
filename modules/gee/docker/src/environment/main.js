@@ -1,12 +1,12 @@
 const router = require('koa-router')()
 
-const test1 = require('../jobs/test1')
-const test2 = require('../jobs/test2')
-const preview = require('../jobs/preview')
-const tableColumns = require('../jobs/table/columns')
-const tableColumnValues = require('../jobs/table/columnValues')
-const tableQuery = require('../jobs/table/query')
-const tableMap= require('../jobs/table/map')
+const test1 = require('@sepal/jobs/test1')
+const test2 = require('@sepal/jobs/test2')
+const preview = require('@sepal/jobs/image/preview')
+const tableColumns = require('@sepal/jobs/table/columns')
+const tableColumnValues = require('@sepal/jobs/table/columnValues')
+const tableQuery = require('@sepal/jobs/table/query')
+const tableMap= require('@sepal/jobs/table/map')
 router
     .get('/test1',
             ctx => ctx.stream$ = test1(ctx).submit$(1, 3000, 3000))
