@@ -99,7 +99,8 @@ const initWorker$ = (jobName, jobPath) => {
     // bootstrapWorker$(jobName, ['job', 'rateLimit'])
     return bootstrapWorker$(jobName, ['job']).pipe(
         map(
-            ({worker, ports: {job: jobPort, rateLimitPort}}) => {
+            // ({worker, ports: {job: jobPort, rateLimitPort}}) => {
+            ({worker, ports: {job: jobPort}}) => {
                 init$.next(jobPort)
                 // const subscription = rateLimiter(rateLimitPort)
                 // jobPort.on('message', handleWorkerMessage)
