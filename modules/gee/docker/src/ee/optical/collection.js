@@ -1,12 +1,14 @@
 const ee = require('@google/earthengine')
+const _ = require('lodash')
+const moment = require('moment')
 
 const allScenes = (
     {
         region,
         dates: {
-            targetDate = null,
-            seasonStart = null,
-            seasonEnd = null,
+            targetDate,
+            seasonStart,
+            seasonEnd,
             yearsBefore = 0,
             yearsAfter = 0
         } = {},
@@ -20,7 +22,7 @@ const allScenes = (
     }) => {
     const filter = ee.Filter.and(
         ee.Filter.bounds(region),
-        ee.Filter.date('2018-07-01', '2018-08-01')
+        dateFilter({seasonStart, seasonEnd, yearsBefore, yearsAfter})
     )
     return dataSets.reduce((mergedCollection, dataSet) =>
         mergeImageCollections(
@@ -29,6 +31,26 @@ const allScenes = (
         ),
     ee.ImageCollection([])
     )
+}
+
+const dateFilter = ({seasonStart, seasonEnd, yearsBefore, yearsAfter}) => {
+    const dateFormat = 'YYYY-MM-DD'
+    const filter = (yearDelta) => {
+        console.log({
+            from: moment(seasonStart).add(yearDelta, 'years').format(dateFormat),
+            to: moment(seasonEnd).add(yearDelta, 'years').format(dateFormat)
+        })
+        return ee.Filter.date(
+            moment(seasonStart).add(yearDelta, 'years').format(dateFormat),
+            moment(seasonEnd).add(yearDelta, 'years').format(dateFormat)
+        )
+    }
+
+    return ee.Filter.or(...[
+        filter(0),
+        _.range(0, yearsBefore).map(i => filter(i - 1)),
+        _.range(0, yearsAfter).map(i => filter(i + 1)),
+    ].flat())
 }
 
 const mergeImageCollections = (c1, c2) =>

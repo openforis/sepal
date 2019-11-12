@@ -24,7 +24,8 @@ const worker$ = value => {
         .flat()
     const surfaceReflectance = model.compositeOptions.corrections.includes('SR')
     const reflectance = surfaceReflectance ? 'SR' : 'TOA'
-    const collection = allScenes({region, dataSets, reflectance})
+    const dates = model.dates
+    const collection = allScenes({region, dataSets, reflectance, dates})
     const image = toMosaic({region, collection})
     const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}
 
