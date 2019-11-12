@@ -27,17 +27,17 @@ const allScenes = (
         dateFilter({seasonStart, seasonEnd, yearsBefore, yearsAfter})
     )
     return dataSets.reduce((mergedCollection, dataSet) =>
-            mergeImageCollections(
-                mergedCollection,
-                createCollection({dataSet, reflectance, filter})
-            ),
-        ee.ImageCollection([])
+        mergeImageCollections(
+            mergedCollection,
+            createCollection({dataSet, reflectance, filter})
+        ),
+    ee.ImageCollection([])
     )
 }
 
 const dateFilter = ({seasonStart, seasonEnd, yearsBefore, yearsAfter}) => {
     const dateFormat = 'YYYY-MM-DD'
-    const filter = (yearDelta) =>
+    const filter = yearDelta =>
         ee.Filter.date(
             moment(seasonStart).add(yearDelta, 'years').format(dateFormat),
             moment(seasonEnd).add(yearDelta, 'years').format(dateFormat)
@@ -93,7 +93,6 @@ const toEELandsatId = ({id, date}) =>
         '_',
         moment(date, 'YYYY-MM-DD').format('YYYYMMDD')
     ].join('')
-
 
 const mergeImageCollections = (c1, c2) =>
     ee.ImageCollection(c1.merge(c2))

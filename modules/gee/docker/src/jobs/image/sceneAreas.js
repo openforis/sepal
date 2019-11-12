@@ -36,7 +36,6 @@ const worker$ = ({aoi, source}) => {
     )
 }
 
-
 module.exports = job({
     jobName: 'Scene Areas',
     jobPath: __filename,

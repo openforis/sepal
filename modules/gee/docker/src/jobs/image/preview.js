@@ -10,7 +10,6 @@ const worker$ = value => {
 
     log.debug('EE Image preview:', {value})
 
-
     const model = value.recipe.model
     const region = toGeometry(model.aoi)
     const dataSets = extractDataSets(model.sources)
@@ -34,14 +33,14 @@ module.exports = job({
     worker$
 })
 
-const extractDataSets = (sources) =>
+const extractDataSets = sources =>
     Object.values(sources)
         .flat()
         .map(dataSet =>
             dataSet === 'LANDSAT_TM'
                 ? ['LANDSAT_4', 'LANDSAT_5']
                 : dataSet === 'LANDSAT_TM_T2'
-                ? ['LANDSAT_4_T2', 'LANDSAT_5_T2']
-                : dataSet
+                    ? ['LANDSAT_4_T2', 'LANDSAT_5_T2']
+                    : dataSet
         )
         .flat()
