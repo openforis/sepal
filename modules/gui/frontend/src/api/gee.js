@@ -8,8 +8,8 @@ export default {
         postJson$('/api/gee/bands', {body: {recipe, ...params}, retries: 0})
             .pipe(toResponse),
     sceneAreas$: ({aoi, source}) =>
-        get$('/api/gee/sceneareas', {query: {
-            aoi: JSON.stringify(aoi),
+        postJson$('/api/gee/sceneareas', {body: {
+            aoi: aoi,
             source: source
         }}).pipe(toResponse),
     scenesInSceneArea$: ({sceneAreaId, dates, sources, sceneSelectionOptions}) =>
