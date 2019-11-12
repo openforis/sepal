@@ -2,6 +2,7 @@ const ee = require('@google/earthengine')
 const _ = require('lodash')
 const moment = require('moment')
 const dataSetSpecs = require('./dataSetSpecs')
+const imageProcessor = require('./imageProcessor')
 
 const allScenes = (
     {
@@ -49,13 +50,13 @@ const dateFilter = ({seasonStart, seasonEnd, yearsBefore, yearsAfter}) => {
     ].flat())
 }
 
-const selectedScenes = ({reflectance = 'TOA', scenes}) =>
+const selectedScenes = ({reflectance, scenes}) =>
     _.chain(scenes)
         .values()
         .flatten()
         .groupBy('dataSet')
         .mapValues(scenes =>
-            scenes.map(scene => toEELandsatId(scene))
+            scenes.map(scene => toEEId(scene))
         )
         .mapValues((ids, dataSet) =>
             createCollectionWithScenes({dataSet, reflectance, ids})
@@ -67,15 +68,6 @@ const selectedScenes = ({reflectance = 'TOA', scenes}) =>
         )
         .value()
 
-const preProcessImage = spec => {
-    const fromBands = Object.values(spec.bands)
-    const toBands = Object.keys(spec.bands)
-    return image =>
-        image
-            .multiply(spec.factor) // TODO: Different factors for different bands?
-            .select(fromBands, toBands)
-}
-
 const createCollectionWithScenes = ({dataSet, reflectance, ids}) =>
     createCollection({dataSet, reflectance, filter: ee.Filter.inList('system:index', ids)})
 
@@ -83,8 +75,13 @@ const createCollection = ({dataSet, reflectance, filter}) => {
     const spec = dataSetSpecs[reflectance][dataSet]
     return ee.ImageCollection(spec.name)
         .filter(filter)
-        .map(preProcessImage(spec))
+        .map(imageProcessor({spec}))
 }
+
+const toEEId = ({id, dataSet, date}) =>
+    dataSet === 'SENTINEL_2'
+        ? id
+        : toEELandsatId({id, date})
 
 const toEELandsatId = ({id, date}) =>
     [
@@ -96,6 +93,7 @@ const toEELandsatId = ({id, date}) =>
         '_',
         moment(date, 'YYYY-MM-DD').format('YYYYMMDD')
     ].join('')
+
 
 const mergeImageCollections = (c1, c2) =>
     ee.ImageCollection(c1.merge(c2))

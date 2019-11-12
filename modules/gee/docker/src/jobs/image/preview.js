@@ -20,7 +20,7 @@ const worker$ = value => {
     const useAllScenes = model.sceneSelectionOptions.type === 'ALL'
     const collection = useAllScenes
         ? allScenes({region, dataSets, reflectance, dates})
-        : selectedScenes({region, scenes: model.scenes})
+        : selectedScenes({region, reflectance, scenes: model.scenes})
     const image = toMosaic({region, collection})
     const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}
 
