@@ -20,6 +20,7 @@ const getCredentials = ctx => {
 const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     const ee = require('@google/earthengine')
     const {concat} = require('rxjs')
+    require('./extensions')
 
     log.info('Running EE authentication')
 
