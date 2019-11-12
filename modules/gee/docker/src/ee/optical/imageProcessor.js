@@ -10,11 +10,30 @@ const imageProcessor = ({spec}) => {
         .value()
 
     return image =>
-        image
-            .select(fromBands, toBands)
-            .updateBands(bandsToConvertToFloat, image => image.divide(10000))
-            .multiply(10000)
-            .int16()
+        compose(
+            normalize(fromBands, toBands, bandsToConvertToFloat),
+            applyQABands(),
+            toInt16()
+        )(image)
 }
+
+const normalize = (fromBands, toBands, bandsToConvertToFloat) =>
+    image => image
+        .select(fromBands, toBands)
+        .updateBands(bandsToConvertToFloat, image => image.divide(10000))
+
+const applyQABands = () =>
+    image => image
+
+const toInt16 = () =>
+    image => image
+        .multiply(10000)
+        .int16()
+
+const compose = (...operations) =>
+    image => operations.reduce(
+        (image, operation) => operation(image),
+        image
+    )
 
 module.exports = imageProcessor
