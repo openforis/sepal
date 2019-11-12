@@ -35,16 +35,11 @@ const allScenes = (
 
 const dateFilter = ({seasonStart, seasonEnd, yearsBefore, yearsAfter}) => {
     const dateFormat = 'YYYY-MM-DD'
-    const filter = (yearDelta) => {
-        console.log({
-            from: moment(seasonStart).add(yearDelta, 'years').format(dateFormat),
-            to: moment(seasonEnd).add(yearDelta, 'years').format(dateFormat)
-        })
-        return ee.Filter.date(
+    const filter = (yearDelta) =>
+        ee.Filter.date(
             moment(seasonStart).add(yearDelta, 'years').format(dateFormat),
             moment(seasonEnd).add(yearDelta, 'years').format(dateFormat)
         )
-    }
 
     return ee.Filter.or(...[
         filter(0),

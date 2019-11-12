@@ -29,7 +29,6 @@ const worker$ = ({aoi, source}) => {
             .reduceColumns(ee.Reducer.toList(2), ['.geo', table.idColumn])
             .get('list')
     ).pipe(
-        tap(sceneAreas => {console.log('***************', {sceneAreas})}),
         map(sceneAreas =>
             sceneAreas.map(sceneArea => ({
                 id: sceneArea[1],
