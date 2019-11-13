@@ -1,9 +1,12 @@
 const _ = require('lodash')
 
-const applyQA = require('./qa')
+const addMissingBands = require('./addMissingBands')
+const addIndexes = require('./addIndexes')
+const addHazeScore = require('./addHazeScore')
+const applyQA = require('./applyQA')
 
-const imageProcessor = ({spec}) => {
-    const bands = spec.bands
+const index = ({dataSetSpec}) => {
+    const bands = dataSetSpec.bands
     const fromBands = Object.values(bands).map(band => band.name)
     const toBands = Object.keys(bands)
     const bandsToConvertToFloat = _.chain(bands)
@@ -15,6 +18,9 @@ const imageProcessor = ({spec}) => {
         compose(
             normalize(fromBands, toBands, bandsToConvertToFloat),
             applyQA(toBands),
+            addMissingBands(),
+            addIndexes(),
+            addHazeScore(),
             maskClouds(),
             toInt16()
         )(image)
@@ -24,6 +30,7 @@ const normalize = (fromBands, toBands, bandsToConvertToFloat) =>
     image => image
         .select(fromBands, toBands)
         .updateBands(bandsToConvertToFloat, image => image.divide(10000))
+
 
 const maskClouds = () =>
     image => image.updateMask(
@@ -41,4 +48,4 @@ const compose = (...operations) =>
         image
     )
 
-module.exports = imageProcessor
+module.exports = index

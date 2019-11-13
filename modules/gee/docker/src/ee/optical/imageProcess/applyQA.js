@@ -16,7 +16,7 @@ const pixelQA = image => {
         .addBands(hasAttribute('shadow').rename('toMask'))
         .addBands(hasAttribute('cloud').rename('cloud'))
         .addBands(hasAttribute('snow').rename('snow'))
-    // .removeBands('pixel_qa')
+        .removeBands('pixel_qa')
 }
 
 const BQA = image => {
@@ -25,7 +25,7 @@ const BQA = image => {
         .addBands(hasAttribute('badPixels', 'shadow').rename('toMask'))
         .addBands(hasAttribute('cloud', 'cirrus').rename('cloud'))
         .addBands(hasAttribute('snow').rename('snow'))
-    // .removeBands('BQA')
+        .removeBands('BQA')
 }
 
 const noQA = image =>

@@ -2,7 +2,7 @@ const ee = require('@google/earthengine')
 const _ = require('lodash')
 const moment = require('moment')
 const dataSetSpecs = require('./dataSetSpecs')
-const imageProcessor = require('./imageProcessor')
+const imageProcess = require('./imageProcess')
 
 const allScenes = (
     {
@@ -72,10 +72,10 @@ const createCollectionWithScenes = ({dataSet, reflectance, ids}) =>
     createCollection({dataSet, reflectance, filter: ee.Filter.inList('system:index', ids)})
 
 const createCollection = ({dataSet, reflectance, filter}) => {
-    const spec = dataSetSpecs[reflectance][dataSet]
-    return ee.ImageCollection(spec.name)
+    const dataSetSpec = dataSetSpecs[reflectance][dataSet]
+    return ee.ImageCollection(dataSetSpec.collectionName)
         .filter(filter)
-        .map(imageProcessor({spec}))
+        .map(imageProcess({dataSetSpec}))
 }
 
 const toEEId = ({id, dataSet, date}) =>

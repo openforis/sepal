@@ -1,7 +1,7 @@
 {
   "TOA": {
     "LANDSAT_4": {
-      "name": "LANDSAT/LT04/C01/T1_TOA",
+      "collectionName": "LANDSAT/LT04/C01/T1_TOA",
       "bands": {
         "blue": {"name": "B1", "scaled":  false},
         "green": {"name": "B2", "scaled":  false},
@@ -14,7 +14,7 @@
       }
     },
     "LANDSAT_4_T2": {
-      "name": "LANDSAT/LT04/C01/T2_TOA",
+      "collectionName": "LANDSAT/LT04/C01/T2_TOA",
       "bands": {
         "blue": {"name": "B1", "scaled": false},
         "green": {"name": "B2", "scaled": false},
@@ -27,7 +27,7 @@
       }
     },
     "LANDSAT_5": {
-      "name": "LANDSAT/LT05/C01/T1_TOA",
+      "collectionName": "LANDSAT/LT05/C01/T1_TOA",
       "bands": {
         "blue": {"name": "B1", "scaled": false},
         "green": {"name": "B2", "scaled": false},
@@ -40,7 +40,7 @@
       }
     },
     "LANDSAT_5_T2": {
-      "name": "LANDSAT/LT05/C01/T2_TOA",
+      "collectionName": "LANDSAT/LT05/C01/T2_TOA",
       "bands": {
         "blue": {"name": "B1", "scaled": false},
         "green": {"name": "B2", "scaled": false},
@@ -53,7 +53,7 @@
       }
     },
     "LANDSAT_7": {
-      "name": "LANDSAT/LE07/C01/T1_TOA",
+      "collectionName": "LANDSAT/LE07/C01/T1_TOA",
       "bands": {
         "blue": {"name": "B1", "scaled": false},
         "green": {"name": "B2", "scaled": false},
@@ -68,7 +68,7 @@
       }
     },
     "LANDSAT_7_T2": {
-      "name": "LANDSAT/LE07/C01/T2_TOA",
+      "collectionName": "LANDSAT/LE07/C01/T2_TOA",
       "bands": {
         "blue": {"name": "B1", "scaled": false},
         "green": {"name": "B2", "scaled": false},
@@ -83,7 +83,7 @@
       }
     },
     "LANDSAT_8": {
-      "name": "LANDSAT/LC08/C01/T1_TOA",
+      "collectionName": "LANDSAT/LC08/C01/T1_TOA",
       "bands": {
         "aerosol": {"name": "B1", "scaled": false},
         "blue": {"name": "B2", "scaled": false},
@@ -100,7 +100,7 @@
       }
     },
     "LANDSAT_8_T2": {
-      "name": "LANDSAT/LC08/C01/T2_TOA",
+      "collectionName": "LANDSAT/LC08/C01/T2_TOA",
       "bands": {
         "aerosol": {"name": "B1", "scaled": false},
         "blue": {"name": "B2", "scaled": false},
@@ -117,7 +117,7 @@
       }
     },
     "SENTINEL_2": {
-      "name": "COPERNICUS/S2",
+      "collectionName": "COPERNICUS/S2",
       "scaled": false,
       "bands": {
         "aerosol": {"name": "B1", "scaled": true},
@@ -137,7 +137,7 @@
   },
   "SR": {
     "LANDSAT_4": {
-      "name": "LANDSAT/LT04/C01/T1_SR",
+      "collectionName": "LANDSAT/LT04/C01/T1_SR",
       "scaled": false,
       "bands": {
         "blue": {"name": "B1", "scaled": true},
@@ -151,7 +151,7 @@
       }
     },
     "LANDSAT_4_T2": {
-      "name": "LANDSAT/LT04/C01/T2_SR",
+      "collectionName": "LANDSAT/LT04/C01/T2_SR",
       "scaled": false,
       "bands": {
         "blue": {"name": "B1", "scaled": true},
@@ -165,7 +165,7 @@
       }
     },
     "LANDSAT_5": {
-      "name": "LANDSAT/LT05/C01/T1_SR",
+      "collectionName": "LANDSAT/LT05/C01/T1_SR",
       "scaled": false,
       "bands": {
         "blue": {"name": "B1", "scaled": true},
@@ -179,7 +179,7 @@
       }
     },
     "LANDSAT_5_T2": {
-      "name": "LANDSAT/LT05/C01/T2_SR",
+      "collectionName": "LANDSAT/LT05/C01/T2_SR",
       "scaled": false,
       "bands": {
         "blue": {"name": "B1", "scaled": true},
@@ -193,7 +193,7 @@
       }
     },
     "LANDSAT_7": {
-      "name": "LANDSAT/LE07/C01/T1_SR",
+      "collectionName": "LANDSAT/LE07/C01/T1_SR",
       "scaled": false,
       "bands": {
         "blue": {"name": "B1", "scaled": true},
@@ -208,7 +208,7 @@
       }
     },
     "LANDSAT_7_T2": {
-      "name": "LANDSAT/LE07/C01/T2_SR",
+      "collectionName": "LANDSAT/LE07/C01/T2_SR",
       "scaled": false,
       "bands": {
         "blue": {"name": "B1", "scaled": true},
@@ -222,7 +222,7 @@
       }
     },
     "LANDSAT_8": {
-      "name": "LANDSAT/LC08/C01/T1_SR",
+      "collectionName": "LANDSAT/LC08/C01/T1_SR",
       "scaled": false,
       "bands": {
         "aerosol": {"name": "B1", "scaled": true},
@@ -238,7 +238,7 @@
       }
     },
     "LANDSAT_8_T2": {
-      "name": "LANDSAT/LC08/C01/T2_SR",
+      "collectionName": "LANDSAT/LC08/C01/T2_SR",
       "scaled": false,
       "bands": {
         "aerosol": {"name": "B1", "scaled": true},
@@ -254,7 +254,7 @@
       }
     },
     "SENTINEL_2": {
-      "name": "COPERNICUS/S2_SR",
+      "collectionName": "COPERNICUS/S2_SR",
       "scaled": false,
       "bands": {
         "aerosol": {"name": "B1", "scaled": true},
