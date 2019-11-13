@@ -7,11 +7,11 @@ import {countryEETable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import api from 'api'
-import Notifications from 'widget/notifications'
 
 const loadCountries$ = () => {
     return api.gee.queryEETable$({

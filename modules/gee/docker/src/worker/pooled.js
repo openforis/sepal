@@ -12,9 +12,10 @@ const workerResponse$ = new Subject()
 const GROUP_CONCURRENCY = 2
 
 const workerPool = Pool({
-    create$: ({jobName, jobPath}) => initWorker$(jobName, jobPath),
-    onCold: (jobName, id) => log.trace(`Job: using cold worker <${jobName}.${id}>`),
-    onHot: (jobName, id) => log.trace(`Job: using hot worker <${jobName}.${id}>`)
+    create$: ({jobId, jobPath}) => initWorker$(jobId, jobPath),
+    onCold: ({jobId}) => log.debug(`Creating worker <${jobId}>`),
+    onHot: ({jobId}) => log.debug(`Recycling worker <${jobId}>`),
+    onRelease: ({jobId}) => log.trace(`Released worker <${jobId}>`)
 })
 
 const getWorkerInstance$ = (jobName, jobPath) =>

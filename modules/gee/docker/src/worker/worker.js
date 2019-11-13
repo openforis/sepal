@@ -8,41 +8,45 @@ const log = require('@sepal/log')
 
 const exported = {}
 
-parentPort.once('message', ports => {
+parentPort.once('message', ({name, ports}) => {
     const stop$ = new Subject()
     const jobPort = ports.job
     exported.ports = ports
 
+    const workerMessage = msg =>
+        `[Worker <${name}>] ${msg}`
+
     const next = value => {
-        log.trace(`Worker: value: ${value}`)
+        log.trace(workerMessage(`emitted value: ${value}`))
         return jobPort.postMessage({value})
     }
 
     const error = error => {
-        log.trace(`Worker: error: ${error}`)
+        log.trace(workerMessage(`error: ${error}`))
         return jobPort.postMessage({error: serializeError(error)})
     }
 
     const complete = () => {
-        log.trace('Worker: complete')
+        log.trace(workerMessage('complete'))
         return jobPort.postMessage({complete: true})
     }
 
-    const start = ({jobName, jobPath, args}) => {
+    const start = ({jobPath, args}) => {
         const workers = require(jobPath)()
-        log.info(`Worker: starting job ${jobName}`)
+        log.trace(workerMessage('starting job'))
 
         const jobs$ = _.chain(workers)
             .zip(args)
             .map(([worker$, args]) => defer(() => worker$(...args)))
             .value()
+
         concat(...jobs$).pipe(
             takeUntil(stop$)
         ).subscribe({next, error, complete})
     }
 
     const stop = () => {
-        log.info('Worker: stopping job')
+        log.trace(workerMessage('stopping job'))
         stop$.next()
     }
 
@@ -53,13 +57,13 @@ parentPort.once('message', ports => {
     }
 
     const init = () => {
-        log.trace('Worker: ready')
+        log.trace(workerMessage('ready'))
         jobPort.on('message', handleMessage)
         parentPort.postMessage('READY')
     }
 
     const dispose = () => {
-        log.info('Worker: dispose')
+        log.debug(workerMessage('dispose'))
         jobPort.off('message', handleMessage)
     }
 

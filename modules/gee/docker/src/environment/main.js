@@ -13,7 +13,7 @@ const router = Router()
 
 router
     .get('/test1',
-        ctx => ctx.stream$ = test1(ctx).submit$(1, 3000, 3000))
+        ctx => ctx.stream$ = test1(ctx).submit$(1, 1000, 2000))
     .get('/test2',
         ctx => ctx.stream$ = test2(ctx).submit$(1, 3000, 3000))
 

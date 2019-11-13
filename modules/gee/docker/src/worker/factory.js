@@ -21,12 +21,9 @@ const createChannels = names =>
         remotePorts: {}
     })
 
-const setupPorts = (worker, ports) =>
-    worker.postMessage(ports, _.values(ports))
-
-const bootstrapWorker$ = (jobName, channelNames) => {
+const bootstrapWorker$ = (name, channelNames) => {
     const worker$ = new Subject()
-    const worker = createWorker(jobName)
+    const worker = createWorker()
     const {localPorts, remotePorts} = createChannels(channelNames)
     worker.once('message', status => {
         if (status === 'READY') {
@@ -35,13 +32,13 @@ const bootstrapWorker$ = (jobName, channelNames) => {
             worker$.error('Cannot initialize worker.')
         }
     })
-    setupPorts(worker, remotePorts)
+    worker.postMessage({name, ports: remotePorts}, _.values(remotePorts))
     return worker$.pipe(
         first()
     )
 }
 
-const initWorker$ = (jobName, jobPath) => {
+const initWorker$ = (name, jobPath) => {
     const init$ = new ReplaySubject()
     const dispose$ = new Subject()
 
@@ -50,19 +47,25 @@ const initWorker$ = (jobName, jobPath) => {
         const stop$ = new Subject()
 
         const handleValue = value => {
-            log.trace(`Job: worker <${jobName}> value: ${value}`)
-            result$.next(value)
+            log.trace(`Worker <${name}> emitted value: ${value}`)
+            // result$.next(value)
+            result$.next({value})
         }
 
         const handleError = serializedError => {
             const error = deserializeError(serializedError)
-            log.error(`Job: worker <${jobName}> error: ${error.message} (${error.type})`)
-            result$.error(error)
+            const errors = _.compact([
+                error.message,
+                error.type ? `(${error.type})` : null
+            ]).join()
+            log.error(`Worker <${name}> error: ${errors}`)
+            // result$.error(error)
+            result$.next({error})
             stop$.next()
         }
 
         const handleComplete = () => {
-            log.info(`Job: worker <${jobName}> completed`)
+            log.debug(`Worker <${name}> completed`)
             result$.complete()
             stop$.next()
         }
@@ -74,8 +77,12 @@ const initWorker$ = (jobName, jobPath) => {
         }
 
         const start = port => {
+            const workerArgs = _.last(args)
+            workerArgs
+                ? log.debug(`Worker <${name}> running job with args:`, workerArgs)
+                : log.debug('Worker <${name}> running job with no args')
             port.on('message', handleWorkerMessage)
-            port.postMessage({start: {jobName, jobPath, args}})
+            port.postMessage({start: {jobPath, args}})
         }
 
         const stop = port => {
@@ -97,7 +104,7 @@ const initWorker$ = (jobName, jobPath) => {
     }
 
     // bootstrapWorker$(jobName, ['job', 'rateLimit'])
-    return bootstrapWorker$(jobName, ['job']).pipe(
+    return bootstrapWorker$(name, ['job']).pipe(
         map(
             // ({worker, ports: {job: jobPort, rateLimitPort}}) => {
             ({worker, ports: {job: jobPort}}) => {
@@ -111,10 +118,10 @@ const initWorker$ = (jobName, jobPath) => {
                     () => {
                         worker.unref() // is this correct? terminate() probably isn't...
                         // subscription.cleanup()
-                        log.info(`Job: worker <${jobName}> disposed`)
+                        log.info(`Worker <${name}> disposed`)
                     }
                 )
-                log.info('Job: worker ready')
+                log.trace('Worker ready')
 
                 return {submit$, dispose$}
             }

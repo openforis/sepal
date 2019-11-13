@@ -16,9 +16,9 @@ const worker$ = (count, minDuration, maxDuration = minDuration) => {
         mergeMap(value =>
             timer(value).pipe(
                 map(() => {
-                    // if (Math.random() < .1) {
-                    //     throw new Error('Random error!')
-                    // }
+                    if (Math.random() < 1) {
+                        throw new Error('Random error!')
+                    }
                     return Math.random()
                 }),
             )

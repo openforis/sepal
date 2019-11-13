@@ -2,16 +2,16 @@ const log = require('@sepal/log')
 const job = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
 
-const worker$ = value => {
+const worker$ = ({recipe}) => {
     const ee = require('@google/earthengine')
     const {getMap$} = require('@sepal/ee/utils')
     const {toGeometry} = require('@sepal/ee/aoi')
     const {allScenes, selectedScenes} = require('@sepal/ee/optical/collection')
     const {toMosaic} = require('@sepal/ee/optical/mosaic')
 
-    log.debug('EE Image preview:', {value})
+    // log.debug('EE Image preview:', {recipe})
 
-    const model = value.recipe.model
+    const model = recipe.model
     const region = toGeometry(model.aoi)
     const dataSets = extractDataSets(model.sources)
     const surfaceReflectance = model.compositeOptions.corrections.includes('SR')
@@ -22,7 +22,6 @@ const worker$ = value => {
         ? allScenes({region, dataSets, reflectance, dates})
         : selectedScenes({region, reflectance, scenes: model.scenes})
     const image = toMosaic({region, collection})
-
 
     // console.log(image.reduceRegion({
     //     reducer: ee.Reducer.minMax(),
