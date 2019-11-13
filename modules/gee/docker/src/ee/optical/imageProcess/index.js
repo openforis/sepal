@@ -2,6 +2,7 @@ const _ = require('lodash')
 
 const addMissingBands = require('./addMissingBands')
 const addIndexes = require('./addIndexes')
+const addSnow = require('./addSnow')
 const addHazeScore = require('./addHazeScore')
 const applyQA = require('./applyQA')
 
@@ -20,6 +21,7 @@ const index = ({dataSetSpec}) => {
             applyQA(toBands),
             addMissingBands(),
             addIndexes(),
+            addSnow(),
             addHazeScore(),
             maskClouds(),
             toInt16()

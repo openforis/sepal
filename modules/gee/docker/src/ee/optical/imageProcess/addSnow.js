@@ -2,9 +2,15 @@ const ee = require('@google/earthengine')
 
 // Based on https://earth.esa.int/c/document_library/get_file?folderId=349490&name=DLFE-4518.pdf
 const addSnow = () =>
-    image => image
+    image => image.addBands(snow(image))
 
-
+const snow = image =>
+    image
+        .expression('i.snow or snowProbability > 0.12', {
+            i: image,
+            snowProbability: snowProbability(image)
+        })
+        .rename('snow')
 
 const snowProbability = image =>
     combine(
@@ -12,7 +18,7 @@ const snowProbability = image =>
         image.select('nir').unitScaleClamp(0.15, 0.35),
         image.expression('i.blue/i.red', {i: image}).unitScaleClamp(0.18, 0.22),
         image.select('ndsi').unitScaleClamp(0.85, 0.95),
-    )
+    ).rename('snowProbability')
 
 const combine = (...probabilities) =>
     probabilities.reduce(
@@ -20,4 +26,4 @@ const combine = (...probabilities) =>
         1
     )
 
-self.set('snow', 'i.snow or i.snowProbability > 0.12')
+module.exports = addSnow

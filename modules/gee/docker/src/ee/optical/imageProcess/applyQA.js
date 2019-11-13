@@ -16,7 +16,7 @@ const pixelQA = image => {
         .addBands(hasAttribute('shadow').rename('toMask'))
         .addBands(hasAttribute('cloud').rename('cloud'))
         .addBands(hasAttribute('snow').rename('snow'))
-        .removeBands('pixel_qa')
+        // .removeBands('pixel_qa')
 }
 
 const BQA = image => {
