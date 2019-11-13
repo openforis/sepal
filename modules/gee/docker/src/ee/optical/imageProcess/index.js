@@ -6,7 +6,7 @@ const addSnow = require('./addSnow')
 const addHazeScore = require('./addHazeScore')
 const applyQA = require('./applyQA')
 
-const index = ({dataSetSpec}) => {
+const imageProcess = ({dataSetSpec, reflectance}) => {
     const bands = dataSetSpec.bands
     const fromBands = Object.values(bands).map(band => band.name)
     const toBands = Object.keys(bands)
@@ -22,7 +22,7 @@ const index = ({dataSetSpec}) => {
             addMissingBands(),
             addIndexes(),
             addSnow(),
-            addHazeScore(),
+            addHazeScore(reflectance),
             maskClouds(),
             toInt16()
         )(image)
@@ -50,4 +50,4 @@ const compose = (...operations) =>
         image
     )
 
-module.exports = index
+module.exports = imageProcess

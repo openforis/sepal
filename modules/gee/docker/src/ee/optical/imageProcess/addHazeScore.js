@@ -1,15 +1,24 @@
-const addHazeScore = () =>
-    image => image.addBands(hazeScore(image))
+const ee = require('@google/earthengine')
 
-const hazeScore = image =>
-    image
+const addHazeScore = reflectance =>
+    image => image.addBands(
+        reflectance === 'TOA'
+            ? hazeScore(image)
+            : ee.Image(1).rename('hazeScore')
+    )
+
+const hazeScore = image => {
+    const variabilityProb = variabilityProbability(image)
+    return image
         .expression(`max(1 - (hazeProb + variabilityProb + cirrusCloudProb + aerosolProb) / 10, 0)`, {
+            variabilityProb,
             hazeProb: hazeProbability(image),
-            variabilityProb: variabilityProbability(image),
             cirrusCloudProb: cirrusCloudProbability(image),
             aerosolProb: aerosolProbability(image)
         })
+        .updateMask(variabilityProb.gt(-0.5))
         .rename('hazeScore')
+}
 
 const hazeProbability = image =>
     image
@@ -42,19 +51,10 @@ const whiteness = image =>
 
 const variabilityProbability = image =>
     image
-        .expression('1 - max(max(abs(i.ndvi), abs(i.ndsi)), whiteness)', {
+        .expression('min(1 - max(max(abs(i.ndvi), abs(i.ndsi)), whiteness), 0.1)', {
                 i: image,
                 whiteness: whiteness(image)
             }
         )
         .rename('variabilityProbability')
-
-/*
-TODO: This doesn't make sense - min value will be 0.1, so never any need for masking
-
-        self.set('variabilityProbability',
-            'max(i.variabilityProbability, 0.1)')
-        self.setIf('toMask', '!i.toMask', 'i.variabilityProbability < -0.5')  # Remove bad pixels
-*/
-
 module.exports = addHazeScore

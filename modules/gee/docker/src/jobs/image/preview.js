@@ -22,14 +22,18 @@ const worker$ = value => {
         ? allScenes({region, dataSets, reflectance, dates})
         : selectedScenes({region, reflectance, scenes: model.scenes})
     const image = toMosaic({region, collection})
-    const visParams = {bands: ['snow'], min: 0, max: 10000}
-    // console.log(image.bandNames().getInfo())
-    // const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}
+
+
     // console.log(image.reduceRegion({
     //     reducer: ee.Reducer.minMax(),
     //     geometry: region,
     //     scale: 1000
     // }).getInfo())
+
+    // const visParams = {bands: ['snow'], min: 0, max: 10000}
+    // console.log(image.bandNames().getInfo())
+    // const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}
+    const visParams = {bands: ['hazeScore'], min: 0, max: 10000}
     return getMap$(image, visParams)
 }
 

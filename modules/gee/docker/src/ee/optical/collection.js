@@ -75,7 +75,7 @@ const createCollection = ({dataSet, reflectance, filter}) => {
     const dataSetSpec = dataSetSpecs[reflectance][dataSet]
     return ee.ImageCollection(dataSetSpec.collectionName)
         .filter(filter)
-        .map(imageProcess({dataSetSpec}))
+        .map(imageProcess({dataSetSpec, reflectance}))
 }
 
 const toEEId = ({id, dataSet, date}) =>
