@@ -1,7 +1,7 @@
 const ee = require('@google/earthengine')
 
 const addHazeScore = reflectance =>
-    image => image.addBands(
+    image => image.addBandsReplace(
         reflectance === 'TOA'
             ? hazeScore(image)
             : ee.Image(1).rename('hazeScore')

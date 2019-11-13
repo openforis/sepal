@@ -18,7 +18,7 @@ const allScenes = (
         reflectance = 'TOA',
         compositeOptions: {
             corrections = [],
-            mask = null,
+            mask = [],
             cloudBuffer = null
         } = {}
     }) => {

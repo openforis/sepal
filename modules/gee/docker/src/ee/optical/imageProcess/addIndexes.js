@@ -1,8 +1,8 @@
 const addIndexes = () =>
     image => image
-        .addBands(ndsi(image))
-        .addBands(ndvi(image))
-        .addBands(ndwi(image))
+        .addBandsReplace(ndsi(image))
+        .addBandsReplace(ndvi(image))
+        .addBandsReplace(ndwi(image))
 
 const ndsi = image =>
     image

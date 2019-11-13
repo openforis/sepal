@@ -2,7 +2,7 @@ const ee = require('@google/earthengine')
 
 // Based on https://earth.esa.int/c/document_library/get_file?folderId=349490&name=DLFE-4518.pdf
 const addSnow = () =>
-    image => image.addBands(snow(image))
+    image => image.addBandsReplace(snow(image))
 
 const snow = image =>
     image

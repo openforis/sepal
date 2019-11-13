@@ -35,6 +35,9 @@ module.exports = {
     },
 
     unitScaleClamp(low, high) {
-        return this.unitScale(low, high).clamp(0, 1)
+        return this
+            .subtract(low)
+            .divide(high - low)
+            .clamp(0, 1)
     }
 }

@@ -3,7 +3,11 @@ const _ = require('lodash')
 const addMissingBands = require('./addMissingBands')
 const addIndexes = require('./addIndexes')
 const addSnow = require('./addSnow')
+const addWater = require('./addWater')
+const addShadowScore = require('./addShadowScore')
 const addHazeScore = require('./addHazeScore')
+const addSoil = require('./addSoil')
+const addCloud = require('./addCloud')
 const applyQA = require('./applyQA')
 
 const imageProcess = ({dataSetSpec, reflectance}) => {
@@ -22,7 +26,11 @@ const imageProcess = ({dataSetSpec, reflectance}) => {
             addMissingBands(),
             addIndexes(),
             addSnow(),
+            addWater(),
+            addShadowScore(),
             addHazeScore(reflectance),
+            addSoil(),
+            addCloud(),
             maskClouds(),
             toInt16()
         )(image)

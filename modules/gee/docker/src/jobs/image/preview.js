@@ -32,8 +32,9 @@ const worker$ = value => {
 
     // const visParams = {bands: ['snow'], min: 0, max: 10000}
     // console.log(image.bandNames().getInfo())
-    // const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}
-    const visParams = {bands: ['hazeScore'], min: 0, max: 10000}
+    // const visParams = {bands: ['hazeScore'], min: 0, max: 10000}
+
+    const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}
     return getMap$(image, visParams)
 }
 

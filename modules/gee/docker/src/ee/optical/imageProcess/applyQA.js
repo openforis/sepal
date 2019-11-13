@@ -13,26 +13,26 @@ const applyQA = bands =>
 const pixelQA = image => {
     const hasAttribute = hasAttributes(image.select('pixel_qa'), PIXEL_QA_ATTRIBUTES)
     return image
-        .addBands(hasAttribute('shadow').rename('toMask'))
-        .addBands(hasAttribute('cloud').rename('cloud'))
-        .addBands(hasAttribute('snow').rename('snow'))
-        // .removeBands('pixel_qa')
+        .addBandsReplace(hasAttribute('shadow').rename('toMask'))
+        .addBandsReplace(hasAttribute('cloud').rename('cloud'))
+        .addBandsReplace(hasAttribute('snow').rename('snow'))
+        .removeBands('pixel_qa')
 }
 
 const BQA = image => {
     const hasAttribute = hasAttributes(image.select('BQA'), BQA_ATTRIBUTES)
     return image
-        .addBands(hasAttribute('badPixels', 'shadow').rename('toMask'))
-        .addBands(hasAttribute('cloud', 'cirrus').rename('cloud'))
-        .addBands(hasAttribute('snow').rename('snow'))
+        .addBandsReplace(hasAttribute('badPixels', 'shadow').rename('toMask'))
+        .addBandsReplace(hasAttribute('cloud', 'cirrus').rename('cloud'))
+        .addBandsReplace(hasAttribute('snow').rename('snow'))
         .removeBands('BQA')
 }
 
 const noQA = image =>
     image
-        .addBands(ee.Image(0).rename('toMask'))
-        .addBands(ee.Image(0).rename('cloud'))
-        .addBands(ee.Image(0).rename('snow'))
+        .addBandsReplace(ee.Image(0).rename('toMask'))
+        .addBandsReplace(ee.Image(0).rename('cloud'))
+        .addBandsReplace(ee.Image(0).rename('snow'))
 
 const hasAttributes = (image, attributeByValue) =>
     (...attributes) =>
