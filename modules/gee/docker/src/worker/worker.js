@@ -1,7 +1,7 @@
 require('module-alias/register')
 const {parentPort} = require('worker_threads')
-const {Subject, concat, defer} = require('rxjs')
-const {takeUntil} = require('rxjs/operators')
+const {Subject, of, concat} = require('rxjs')
+const {mergeMap, takeUntil, tap} = require('rxjs/operators')
 const {serializeError} = require('serialize-error')
 const _ = require('lodash')
 const log = require('@sepal/log')
@@ -13,40 +13,50 @@ parentPort.once('message', ({name, ports}) => {
     const jobPort = ports.job
     exported.ports = ports
 
-    const workerMessage = msg =>
+    const msg = msg =>
         `[Worker <${name}>] ${msg}`
 
     const next = value => {
-        log.trace(workerMessage(`emitted value: ${value}`))
+        log.trace(msg(`emitted value: ${value}`))
         return jobPort.postMessage({value})
     }
 
     const error = error => {
-        log.trace(workerMessage(`error: ${error}`))
+        log.trace(msg(`error: ${error}`))
         return jobPort.postMessage({error: serializeError(error)})
     }
 
     const complete = () => {
-        log.trace(workerMessage('complete'))
+        log.trace(msg('complete'))
         return jobPort.postMessage({complete: true})
     }
 
     const start = ({jobPath, args}) => {
-        const workers = require(jobPath)()
-        log.trace(workerMessage('starting job'))
+        const tasks = require(jobPath)()
+        log.trace(msg('starting job'))
 
-        const jobs$ = _.chain(workers)
+        const tasks$ = _.chain(tasks)
             .zip(args)
-            .map(([worker$, args]) => defer(() => worker$(...args)))
+            .map(([{jobName, worker$}, args]) =>
+                of({jobName, worker$, args})
+            )
             .value()
 
-        concat(...jobs$).pipe(
+        run(tasks$)
+    }
+
+    const run = tasks$ => {
+        concat(...tasks$).pipe(
+            tap(({jobName, args}) =>
+                log.trace(msg(`running ${jobName} with args:`), args)
+            ),
+            mergeMap(({worker$, args}) => worker$(...args), 1),
             takeUntil(stop$)
         ).subscribe({next, error, complete})
     }
 
     const stop = () => {
-        log.trace(workerMessage('stopping job'))
+        log.trace(msg('stopping job'))
         stop$.next()
     }
 
@@ -57,13 +67,13 @@ parentPort.once('message', ({name, ports}) => {
     }
 
     const init = () => {
-        log.trace(workerMessage('ready'))
+        log.trace(msg('ready'))
         jobPort.on('message', handleMessage)
         parentPort.postMessage('READY')
     }
 
     const dispose = () => {
-        log.debug(workerMessage('dispose'))
+        log.debug(msg('dispose'))
         jobPort.off('message', handleMessage)
     }
 

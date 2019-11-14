@@ -42,12 +42,15 @@ const initWorker$ = (name, jobPath) => {
     const init$ = new ReplaySubject()
     const dispose$ = new Subject()
 
+    const msg = msg =>
+        `Worker <${name}> ${msg}`
+
     const submit$ = args => {
         const result$ = new Subject()
         const stop$ = new Subject()
 
         const handleValue = value => {
-            log.trace(`Worker <${name}> emitted value: ${value}`)
+            log.trace(msg(`emitted value: ${value}`))
             // result$.next(value)
             result$.next({value})
         }
@@ -58,14 +61,14 @@ const initWorker$ = (name, jobPath) => {
                 error.message,
                 error.type ? `(${error.type})` : null
             ]).join()
-            log.error(`Worker <${name}> error: ${errors}`)
+            log.error(msg(`error: ${errors}`))
             // result$.error(error)
             result$.next({error})
             stop$.next()
         }
 
         const handleComplete = () => {
-            log.debug(`Worker <${name}> completed`)
+            log.debug(msg('completed'))
             result$.complete()
             stop$.next()
         }
@@ -79,8 +82,8 @@ const initWorker$ = (name, jobPath) => {
         const start = port => {
             const workerArgs = _.last(args)
             workerArgs
-                ? log.debug(`Worker <${name}> running with args:`, workerArgs)
-                : log.debug('Worker <${name}> running with no args')
+                ? log.debug(msg('running with args:'), workerArgs)
+                : log.debug(msg('running with no args'))
             port.on('message', handleWorkerMessage)
             port.postMessage({start: {jobPath, args}})
         }
@@ -118,7 +121,7 @@ const initWorker$ = (name, jobPath) => {
                     () => {
                         worker.unref() // is this correct? terminate() probably isn't...
                         // subscription.cleanup()
-                        log.info(`Worker <${name}> disposed`)
+                        log.info(msg('disposed'))
                     }
                 )
                 log.trace('Worker ready')

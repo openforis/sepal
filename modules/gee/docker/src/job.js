@@ -1,4 +1,5 @@
 const _ = require('lodash')
+
 // const {submit$} = require('./worker/single')
 const {submit$} = require('./worker/pooled')
 
@@ -13,11 +14,18 @@ const submit = ({jobName, jobPath, before, ctx}) => ({
 const beforeWorkers$ = (before = []) =>
     before.map((m => m()))
     
-const worker = ({before, worker$}) => (
-    [...beforeWorkers$(before), worker$]
-)
-
-module.exports = ({jobName, jobPath, before, worker$}) =>
-    ctx => ctx
+const worker = ({jobName, before, worker$}) =>
+    [...beforeWorkers$(before), {jobName, worker$}]
+    
+const job = ({jobName, jobPath, before, worker$}) => {
+    return ctx => ctx
         ? submit({jobName, jobPath, before, ctx})
-        : worker({before, worker$})
+        : worker({jobName, before, worker$})
+}
+
+const before = ({jobName, worker$, args}) =>
+    ctx => ctx
+        ? args(ctx)
+        : {jobName, worker$}
+
+module.exports = {job, before}

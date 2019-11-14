@@ -1,3 +1,4 @@
+const {before} = require('@sepal/job')
 const log = require('@sepal/log')
 
 const getSepalUser = ctx => {
@@ -22,11 +23,9 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     const {concat} = require('rxjs')
     require('./extensions')
 
-    log.info('Running EE authentication')
-
     const initialize = () =>
         new Promise((resolve, reject) => {
-            log.debug('Initializing library')
+            log.trace('Initializing library')
             try {
                 ee.initialize(
                     null,
@@ -41,7 +40,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
 
     const authenticateServiceAccount = credentials =>
         new Promise((resolve, reject) => {
-            log.debug('Authenticating service account')
+            log.trace('Running EE authentication (service account)')
             try {
                 ee.data.authenticateViaPrivateKey(
                     credentials,
@@ -55,7 +54,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
 
     const authenticateUserAccount = googleTokens =>
         new Promise((resolve, reject) => {
-            log.debug('Authenticating user account')
+            log.trace('Running EE authentication (user account)')
             const secondsToExpiration = (googleTokens.accessTokenExpiryDate - Date.now()) / 1000
             try {
                 ee.data.setAuthToken(
@@ -83,6 +82,8 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     )
 }
 
-module.exports = ctx => ctx
-    ? [getCredentials(ctx)]
-    : worker$
+module.exports = before({
+    jobName: 'EE Authentication',
+    worker$,
+    args: ctx => [getCredentials(ctx)]
+})

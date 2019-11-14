@@ -1,4 +1,5 @@
-const job = require('@sepal/job')
+const {job} = require('@sepal/job')
+const before = require('./testBefore')
 
 const worker$ = (count, minDuration, maxDuration = minDuration) => {
     const {of, timer} = require('rxjs')
@@ -25,5 +26,6 @@ const worker$ = (count, minDuration, maxDuration = minDuration) => {
 module.exports = job({
     jobName: 'Test2',
     jobPath: __filename,
+    before: [before],
     worker$
 })

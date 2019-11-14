@@ -1,5 +1,5 @@
 // const log = require('@sepal/log')
-const job = require('@sepal/job')
+const {job} = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
 const {getInfo$} = require('@sepal/ee/utils')
 

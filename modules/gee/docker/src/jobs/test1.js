@@ -1,4 +1,5 @@
-const job = require('@sepal/job')
+const {job} = require('@sepal/job')
+const before = require('./testBefore')
 
 const worker$ = (count, minDuration, maxDuration = minDuration) => {
     const {of, timer} = require('rxjs')
@@ -13,7 +14,7 @@ const worker$ = (count, minDuration, maxDuration = minDuration) => {
             timer(value).pipe(
                 map(() => {
                     if (Math.random() < 1) {
-                        throw new Error('Random error!')
+                        // throw new Error('Random error!')
                     }
                     return Math.random()
                 }),
@@ -25,5 +26,6 @@ const worker$ = (count, minDuration, maxDuration = minDuration) => {
 module.exports = job({
     jobName: 'Test1',
     jobPath: __filename,
+    before: [before],
     worker$
 })

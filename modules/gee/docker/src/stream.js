@@ -28,8 +28,10 @@ const handleError = (ctx, error) => {
 
 const renderStream = async (ctx, body$) => {
     const result = await body$.toPromise()
-    result.value && handleSuccess(ctx, result.value)
-    result.error && handleError(ctx, result.error)
+    if (result) {
+        result.value && handleSuccess(ctx, result.value)
+        result.error && handleError(ctx, result.error)
+    }
 
     // try {
     //     ctx.body = await body$.toPromise()
