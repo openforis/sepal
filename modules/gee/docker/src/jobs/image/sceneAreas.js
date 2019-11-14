@@ -1,4 +1,4 @@
-const log = require('@sepal/log')
+// const log = require('@sepal/log')
 const job = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
 
@@ -7,8 +7,6 @@ const worker$ = ({aoi, source}) => {
     const {toGeometry} = require('@sepal/ee/aoi')
     const {getInfo$} = require('@sepal/ee/utils')
     const {map} = require('rxjs/operators')
-
-    log.debug('Scene Areas:', {aoi, source})
 
     const geometry = toGeometry(aoi)
     const table = {

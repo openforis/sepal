@@ -79,8 +79,8 @@ const initWorker$ = (name, jobPath) => {
         const start = port => {
             const workerArgs = _.last(args)
             workerArgs
-                ? log.debug(`Worker <${name}> running job with args:`, workerArgs)
-                : log.debug('Worker <${name}> running job with no args')
+                ? log.debug(`Worker <${name}> running with args:`, workerArgs)
+                : log.debug('Worker <${name}> running with no args')
             port.on('message', handleWorkerMessage)
             port.postMessage({start: {jobPath, args}})
         }

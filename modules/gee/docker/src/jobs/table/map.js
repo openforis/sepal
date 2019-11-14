@@ -1,4 +1,4 @@
-const log = require('@sepal/log')
+// const log = require('@sepal/log')
 const job = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
 
@@ -8,8 +8,6 @@ const worker$ = ({tableId, columnName, columnValue, color}) => {
     const {getInfo$, getMap$} = require('@sepal/ee/utils')
     const {forkJoin} = require('rxjs')
     const {map} = require('rxjs/operators')
-
-    log.debug('Request EE Table map:', {tableId, columnName, columnValue, color})
 
     const table = filterTable({tableId, columnName, columnValue})
     const geometry = table.geometry()

@@ -1,12 +1,10 @@
-const log = require('@sepal/log')
+// const log = require('@sepal/log')
 const job = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
 const {getInfo$} = require('@sepal/ee/utils')
 
 const worker$ = ({tableId, columnName}) => {
     const ee = require('@google/earthengine')
-
-    log.debug('Get EE Table column values:', {tableId, columnName})
 
     return getInfo$(
         ee.FeatureCollection(tableId)

@@ -1,4 +1,4 @@
-const log = require('@sepal/log')
+// const log = require('@sepal/log')
 const job = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
 
@@ -8,8 +8,6 @@ const worker$ = ({tableId}) => {
     const {Exception, SystemException, NotFoundException} = require('@sepal/exception')
     const {throwError, of} = require('rxjs')
     const {switchMap, catchError} = require('rxjs/operators')
-
-    log.debug('Get EE Table columns:', {tableId})
 
     const handleError$ = cause =>
         getAsset$(tableId).pipe(

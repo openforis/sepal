@@ -1,13 +1,9 @@
-const log = require('@sepal/log')
 const job = require('@sepal/job')
-const testBefore = require('./testBefore')
 
 const worker$ = (count, minDuration, maxDuration = minDuration) => {
     const {of, timer} = require('rxjs')
     const {mergeMap, map} = require('rxjs/operators')
     // const rateLimit = require('../job/operators/rateLimit')
-
-    log.info(`Running Test TWO with count: ${count}, minDuration: ${minDuration}ms, maxDuration: ${maxDuration}ms`)
 
     const sequence = [...Array(count).keys()]
     return of(...sequence).pipe(
@@ -29,6 +25,5 @@ const worker$ = (count, minDuration, maxDuration = minDuration) => {
 module.exports = job({
     jobName: 'Test2',
     jobPath: __filename,
-    before: [testBefore],
     worker$
 })

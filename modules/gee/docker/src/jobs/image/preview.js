@@ -1,15 +1,13 @@
-const log = require('@sepal/log')
+// const log = require('@sepal/log')
 const job = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
 
 const worker$ = ({recipe}) => {
-    const ee = require('@google/earthengine')
+    // const ee = require('@google/earthengine')
     const {getMap$} = require('@sepal/ee/utils')
     const {toGeometry} = require('@sepal/ee/aoi')
     const {allScenes, selectedScenes} = require('@sepal/ee/optical/collection')
     const {toMosaic} = require('@sepal/ee/optical/mosaic')
-
-    // log.debug('EE Image preview:', {recipe})
 
     const model = recipe.model
     const region = toGeometry(model.aoi)

@@ -1,4 +1,4 @@
-const log = require('@sepal/log')
+// const log = require('@sepal/log')
 const job = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
 
@@ -7,8 +7,6 @@ const worker$ = ({select, from, where = [], orderBy = []}) => {
     const {getInfo$} = require('@sepal/ee/utils')
     const {map} = require('rxjs/operators')
     const _ = require('lodash')
-
-    log.debug('Query EE table:', {select, from, where, orderBy})
 
     const collection = ee.FeatureCollection(from)
     const filtered = where.reduce((c, f) => c.filterMetadata(f[0], f[1], f[2]), collection)
