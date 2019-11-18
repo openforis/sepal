@@ -1,275 +1,782 @@
 {
-  "TOA": {
-    "LANDSAT_4": {
-      "collectionName": "LANDSAT/LT04/C01/T1_TOA",
-      "bands": {
-        "blue": {"name": "B1", "scaled":  false},
-        "green": {"name": "B2", "scaled":  false},
-        "red": {"name": "B3", "scaled":  false},
-        "nir": {"name": "B4", "scaled":  false},
-        "swir1": {"name": "B5", "scaled":  false},
-        "thermal": {"name": "B6", "scaled":  false},
-        "swir2": {"name": "B7", "scaled":  false},
-        "BQA": {"name": "BQA", "scaled": false}
-      }
+    "TOA": {
+        "LANDSAT_4": {
+            "collectionName": "LANDSAT/LT04/C01/T1_TOA",
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": false
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": false
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": false
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": false
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": false
+                },
+                "thermal": {
+                    "name": "B6",
+                    "scaled": false
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": false
+                },
+                "BQA": {
+                    "name": "BQA",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_4_T2": {
+            "collectionName": "LANDSAT/LT04/C01/T2_TOA",
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": false
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": false
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": false
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": false
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": false
+                },
+                "thermal": {
+                    "name": "B6",
+                    "scaled": false
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": false
+                },
+                "BQA": {
+                    "name": "BQA",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_5": {
+            "collectionName": "LANDSAT/LT05/C01/T1_TOA",
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": false
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": false
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": false
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": false
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": false
+                },
+                "thermal": {
+                    "name": "B6",
+                    "scaled": false
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": false
+                },
+                "BQA": {
+                    "name": "BQA",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_5_T2": {
+            "collectionName": "LANDSAT/LT05/C01/T2_TOA",
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": false
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": false
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": false
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": false
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": false
+                },
+                "thermal": {
+                    "name": "B6",
+                    "scaled": false
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": false
+                },
+                "BQA": {
+                    "name": "BQA",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_7": {
+            "collectionName": "LANDSAT/LE07/C01/T1_TOA",
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": false
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": false
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": false
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": false
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": false
+                },
+                "thermal": {
+                    "name": "B6_VCID_1",
+                    "scaled": false
+                },
+                "thermal2": {
+                    "name": "B6_VCID_2",
+                    "scaled": false
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": false
+                },
+                "pan": {
+                    "name": "B8",
+                    "scaled": false
+                },
+                "BQA": {
+                    "name": "BQA",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_7_T2": {
+            "collectionName": "LANDSAT/LE07/C01/T2_TOA",
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": false
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": false
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": false
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": false
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": false
+                },
+                "thermal": {
+                    "name": "B6_VCID_1",
+                    "scaled": false
+                },
+                "thermal2": {
+                    "name": "B6_VCID_2",
+                    "scaled": false
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": false
+                },
+                "pan": {
+                    "name": "B8",
+                    "scaled": false
+                },
+                "BQA": {
+                    "name": "BQA",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_8": {
+            "collectionName": "LANDSAT/LC08/C01/T1_TOA",
+            "bands": {
+                "aerosol": {
+                    "name": "B1",
+                    "scaled": false
+                },
+                "blue": {
+                    "name": "B2",
+                    "scaled": false
+                },
+                "green": {
+                    "name": "B3",
+                    "scaled": false
+                },
+                "red": {
+                    "name": "B4",
+                    "scaled": false
+                },
+                "nir": {
+                    "name": "B5",
+                    "scaled": false
+                },
+                "swir1": {
+                    "name": "B6",
+                    "scaled": false
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": false
+                },
+                "pan": {
+                    "name": "B8",
+                    "scaled": false
+                },
+                "cirrus": {
+                    "name": "B9",
+                    "scaled": false
+                },
+                "thermal": {
+                    "name": "B10",
+                    "scaled": false
+                },
+                "thermal2": {
+                    "name": "B11",
+                    "scaled": false
+                },
+                "BQA": {
+                    "name": "BQA",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_8_T2": {
+            "collectionName": "LANDSAT/LC08/C01/T2_TOA",
+            "bands": {
+                "aerosol": {
+                    "name": "B1",
+                    "scaled": false
+                },
+                "blue": {
+                    "name": "B2",
+                    "scaled": false
+                },
+                "green": {
+                    "name": "B3",
+                    "scaled": false
+                },
+                "red": {
+                    "name": "B4",
+                    "scaled": false
+                },
+                "nir": {
+                    "name": "B5",
+                    "scaled": false
+                },
+                "swir1": {
+                    "name": "B6",
+                    "scaled": false
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": false
+                },
+                "pan": {
+                    "name": "B8",
+                    "scaled": false
+                },
+                "cirrus": {
+                    "name": "B9",
+                    "scaled": false
+                },
+                "thermal": {
+                    "name": "B10",
+                    "scaled": false
+                },
+                "thermal2": {
+                    "name": "B11",
+                    "scaled": false
+                },
+                "BQA": {
+                    "name": "BQA",
+                    "scaled": false
+                }
+            }
+        },
+        "SENTINEL_2": {
+            "collectionName": "COPERNICUS/S2",
+            "scaled": false,
+            "bands": {
+                "aerosol": {
+                    "name": "B1",
+                    "scaled": true
+                },
+                "blue": {
+                    "name": "B2",
+                    "scaled": true
+                },
+                "green": {
+                    "name": "B3",
+                    "scaled": true
+                },
+                "red": {
+                    "name": "B4",
+                    "scaled": true
+                },
+                "redEdge1": {
+                    "name": "B5",
+                    "scaled": true
+                },
+                "redEdge2": {
+                    "name": "B6",
+                    "scaled": true
+                },
+                "redEdge3": {
+                    "name": "B7",
+                    "scaled": true
+                },
+                "nir": {
+                    "name": "B8",
+                    "scaled": true
+                },
+                "redEdge4": {
+                    "name": "B8A",
+                    "scaled": true
+                },
+                "waterVapor": {
+                    "name": "B9",
+                    "scaled": true
+                },
+                "swir1": {
+                    "name": "B11",
+                    "scaled": true
+                },
+                "swir2": {
+                    "name": "B12",
+                    "scaled": true
+                }
+            }
+        }
     },
-    "LANDSAT_4_T2": {
-      "collectionName": "LANDSAT/LT04/C01/T2_TOA",
-      "bands": {
-        "blue": {"name": "B1", "scaled": false},
-        "green": {"name": "B2", "scaled": false},
-        "red": {"name": "B3", "scaled": false},
-        "nir": {"name": "B4", "scaled": false},
-        "swir1": {"name": "B5", "scaled": false},
-        "thermal": {"name": "B6", "scaled": false},
-        "swir2": {"name": "B7", "scaled": false},
-        "BQA": {"name": "BQA", "scaled": false}
-      }
-    },
-    "LANDSAT_5": {
-      "collectionName": "LANDSAT/LT05/C01/T1_TOA",
-      "bands": {
-        "blue": {"name": "B1", "scaled": false},
-        "green": {"name": "B2", "scaled": false},
-        "red": {"name": "B3", "scaled": false},
-        "nir": {"name": "B4", "scaled": false},
-        "swir1": {"name": "B5", "scaled": false},
-        "thermal": {"name": "B6", "scaled": false},
-        "swir2": {"name": "B7", "scaled": false},
-        "BQA": {"name": "BQA", "scaled": false}
-      }
-    },
-    "LANDSAT_5_T2": {
-      "collectionName": "LANDSAT/LT05/C01/T2_TOA",
-      "bands": {
-        "blue": {"name": "B1", "scaled": false},
-        "green": {"name": "B2", "scaled": false},
-        "red": {"name": "B3", "scaled": false},
-        "nir": {"name": "B4", "scaled": false},
-        "swir1": {"name": "B5", "scaled": false},
-        "thermal": {"name": "B6", "scaled": false},
-        "swir2": {"name": "B7", "scaled": false},
-        "BQA": {"name": "BQA", "scaled": false}
-      }
-    },
-    "LANDSAT_7": {
-      "collectionName": "LANDSAT/LE07/C01/T1_TOA",
-      "bands": {
-        "blue": {"name": "B1", "scaled": false},
-        "green": {"name": "B2", "scaled": false},
-        "red": {"name": "B3", "scaled": false},
-        "nir": {"name": "B4", "scaled": false},
-        "swir1": {"name": "B5", "scaled": false},
-        "thermal": {"name": "B6_VCID_1", "scaled": false},
-        "thermal2": {"name": "B6_VCID_2", "scaled": false},
-        "swir2": {"name": "B7", "scaled": false},
-        "pan": {"name": "B8", "scaled": false},
-        "BQA": {"name": "BQA", "scaled": false}
-      }
-    },
-    "LANDSAT_7_T2": {
-      "collectionName": "LANDSAT/LE07/C01/T2_TOA",
-      "bands": {
-        "blue": {"name": "B1", "scaled": false},
-        "green": {"name": "B2", "scaled": false},
-        "red": {"name": "B3", "scaled": false},
-        "nir": {"name": "B4", "scaled": false},
-        "swir1": {"name": "B5", "scaled": false},
-        "thermal": {"name": "B6_VCID_1", "scaled": false},
-        "thermal2": {"name": "B6_VCID_2", "scaled": false},
-        "swir2": {"name": "B7", "scaled": false},
-        "pan": {"name": "B8", "scaled": false},
-        "BQA": {"name": "BQA", "scaled": false}
-      }
-    },
-    "LANDSAT_8": {
-      "collectionName": "LANDSAT/LC08/C01/T1_TOA",
-      "bands": {
-        "aerosol": {"name": "B1", "scaled": false},
-        "blue": {"name": "B2", "scaled": false},
-        "green": {"name": "B3", "scaled": false},
-        "red": {"name": "B4", "scaled": false},
-        "nir": {"name": "B5", "scaled": false},
-        "swir1": {"name": "B6", "scaled": false},
-        "swir2": {"name": "B7", "scaled": false},
-        "pan": {"name": "B8", "scaled": false},
-        "cirrus": {"name": "B9", "scaled": false},
-        "thermal": {"name": "B10", "scaled": false},
-        "thermal2": {"name": "B11", "scaled": false},
-        "BQA": {"name": "BQA", "scaled": false}
-      }
-    },
-    "LANDSAT_8_T2": {
-      "collectionName": "LANDSAT/LC08/C01/T2_TOA",
-      "bands": {
-        "aerosol": {"name": "B1", "scaled": false},
-        "blue": {"name": "B2", "scaled": false},
-        "green": {"name": "B3", "scaled": false},
-        "red": {"name": "B4", "scaled": false},
-        "nir": {"name": "B5", "scaled": false},
-        "swir1": {"name": "B6", "scaled": false},
-        "swir2": {"name": "B7", "scaled": false},
-        "pan": {"name": "B8", "scaled": false},
-        "cirrus": {"name": "B9", "scaled": false},
-        "thermal": {"name": "B10", "scaled": false},
-        "thermal2": {"name": "B11", "scaled": false},
-        "BQA": {"name": "BQA", "scaled": false}
-      }
-    },
-    "SENTINEL_2": {
-      "collectionName": "COPERNICUS/S2",
-      "scaled": false,
-      "bands": {
-        "aerosol": {"name": "B1", "scaled": true},
-        "blue": {"name": "B2", "scaled": true},
-        "green": {"name": "B3", "scaled": true},
-        "red": {"name": "B4", "scaled": true},
-        "redEdge1": {"name": "B5", "scaled": true},
-        "redEdge2": {"name": "B6", "scaled": true},
-        "redEdge3": {"name": "B7", "scaled": true},
-        "nir": {"name": "B8", "scaled": true},
-        "redEdge4": {"name": "B8A", "scaled": true},
-        "waterVapor": {"name": "B9", "scaled": true},
-        "swir1": {"name": "B11", "scaled": true},
-        "swir2": {"name": "B12", "scaled": true}
-      }
+    "SR": {
+        "LANDSAT_4": {
+            "collectionName": "LANDSAT/LT04/C01/T1_SR",
+            "scaled": false,
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": true
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": true
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": true
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": true
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": true
+                },
+                "thermal": {
+                    "name": "B6",
+                    "scaled": true
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": true
+                },
+                "pixel_qa": {
+                    "name": "pixel_qa",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_4_T2": {
+            "collectionName": "LANDSAT/LT04/C01/T2_SR",
+            "scaled": false,
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": true
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": true
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": true
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": true
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": true
+                },
+                "thermal": {
+                    "name": "B6",
+                    "scaled": true
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": true
+                },
+                "pixel_qa": {
+                    "name": "pixel_qa",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_5": {
+            "collectionName": "LANDSAT/LT05/C01/T1_SR",
+            "scaled": false,
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": true
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": true
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": true
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": true
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": true
+                },
+                "thermal": {
+                    "name": "B6",
+                    "scaled": true
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": true
+                },
+                "pixel_qa": {
+                    "name": "pixel_qa",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_5_T2": {
+            "collectionName": "LANDSAT/LT05/C01/T2_SR",
+            "scaled": false,
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": true
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": true
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": true
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": true
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": true
+                },
+                "thermal": {
+                    "name": "B6",
+                    "scaled": true
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": true
+                },
+                "pixel_qa": {
+                    "name": "pixel_qa",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_7": {
+            "collectionName": "LANDSAT/LE07/C01/T1_SR",
+            "scaled": false,
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": true
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": true
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": true
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": true
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": true
+                },
+                "thermal": {
+                    "name": "B6",
+                    "scaled": true
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": true
+                },
+                "pan": {
+                    "name": "B8",
+                    "scaled": true
+                },
+                "pixel_qa": {
+                    "name": "pixel_qa",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_7_T2": {
+            "collectionName": "LANDSAT/LE07/C01/T2_SR",
+            "scaled": false,
+            "bands": {
+                "blue": {
+                    "name": "B1",
+                    "scaled": true
+                },
+                "green": {
+                    "name": "B2",
+                    "scaled": true
+                },
+                "red": {
+                    "name": "B3",
+                    "scaled": true
+                },
+                "nir": {
+                    "name": "B4",
+                    "scaled": true
+                },
+                "swir1": {
+                    "name": "B5",
+                    "scaled": true
+                },
+                "thermal": {
+                    "name": "B6",
+                    "scaled": true
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": true
+                },
+                "pixel_qa": {
+                    "name": "pixel_qa",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_8": {
+            "collectionName": "LANDSAT/LC08/C01/T1_SR",
+            "scaled": false,
+            "bands": {
+                "aerosol": {
+                    "name": "B1",
+                    "scaled": true
+                },
+                "blue": {
+                    "name": "B2",
+                    "scaled": true
+                },
+                "green": {
+                    "name": "B3",
+                    "scaled": true
+                },
+                "red": {
+                    "name": "B4",
+                    "scaled": true
+                },
+                "nir": {
+                    "name": "B5",
+                    "scaled": true
+                },
+                "swir1": {
+                    "name": "B6",
+                    "scaled": true
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": true
+                },
+                "thermal": {
+                    "name": "B10",
+                    "scaled": true
+                },
+                "thermal2": {
+                    "name": "B11",
+                    "scaled": true
+                },
+                "pixel_qa": {
+                    "name": "pixel_qa",
+                    "scaled": false
+                }
+            }
+        },
+        "LANDSAT_8_T2": {
+            "collectionName": "LANDSAT/LC08/C01/T2_SR",
+            "scaled": false,
+            "bands": {
+                "aerosol": {
+                    "name": "B1",
+                    "scaled": true
+                },
+                "blue": {
+                    "name": "B2",
+                    "scaled": true
+                },
+                "green": {
+                    "name": "B3",
+                    "scaled": true
+                },
+                "red": {
+                    "name": "B4",
+                    "scaled": true
+                },
+                "nir": {
+                    "name": "B5",
+                    "scaled": true
+                },
+                "swir1": {
+                    "name": "B6",
+                    "scaled": true
+                },
+                "swir2": {
+                    "name": "B7",
+                    "scaled": true
+                },
+                "thermal": {
+                    "name": "B10",
+                    "scaled": true
+                },
+                "thermal2": {
+                    "name": "B11",
+                    "scaled": true
+                },
+                "pixel_qa": {
+                    "name": "pixel_qa",
+                    "scaled": false
+                }
+            }
+        },
+        "SENTINEL_2": {
+            "collectionName": "COPERNICUS/S2_SR",
+            "scaled": false,
+            "bands": {
+                "aerosol": {
+                    "name": "B1",
+                    "scaled": true
+                },
+                "blue": {
+                    "name": "B2",
+                    "scaled": true
+                },
+                "green": {
+                    "name": "B3",
+                    "scaled": true
+                },
+                "red": {
+                    "name": "B4",
+                    "scaled": true
+                },
+                "redEdge1": {
+                    "name": "B5",
+                    "scaled": true
+                },
+                "redEdge2": {
+                    "name": "B6",
+                    "scaled": true
+                },
+                "redEdge3": {
+                    "name": "B7",
+                    "scaled": true
+                },
+                "nir": {
+                    "name": "B8",
+                    "scaled": true
+                },
+                "redEdge4": {
+                    "name": "B8A",
+                    "scaled": true
+                },
+                "waterVapor": {
+                    "name": "B9",
+                    "scaled": true
+                },
+                "swir1": {
+                    "name": "B11",
+                    "scaled": true
+                },
+                "swir2": {
+                    "name": "B12",
+                    "scaled": true
+                }
+            }
+        }
     }
-  },
-  "SR": {
-    "LANDSAT_4": {
-      "collectionName": "LANDSAT/LT04/C01/T1_SR",
-      "scaled": false,
-      "bands": {
-        "blue": {"name": "B1", "scaled": true},
-        "green": {"name": "B2", "scaled": true},
-        "red": {"name": "B3", "scaled": true},
-        "nir": {"name": "B4", "scaled": true},
-        "swir1": {"name": "B5", "scaled": true},
-        "thermal": {"name": "B6", "scaled": true},
-        "swir2": {"name": "B7", "scaled": true},
-        "pixel_qa": {"name": "pixel_qa", "scaled": false}
-      }
-    },
-    "LANDSAT_4_T2": {
-      "collectionName": "LANDSAT/LT04/C01/T2_SR",
-      "scaled": false,
-      "bands": {
-        "blue": {"name": "B1", "scaled": true},
-        "green": {"name": "B2", "scaled": true},
-        "red": {"name": "B3", "scaled": true},
-        "nir": {"name": "B4", "scaled": true},
-        "swir1": {"name": "B5", "scaled": true},
-        "thermal": {"name": "B6", "scaled": true},
-        "swir2": {"name": "B7", "scaled": true},
-        "pixel_qa": {"name": "pixel_qa", "scaled": false}
-      }
-    },
-    "LANDSAT_5": {
-      "collectionName": "LANDSAT/LT05/C01/T1_SR",
-      "scaled": false,
-      "bands": {
-        "blue": {"name": "B1", "scaled": true},
-        "green": {"name": "B2", "scaled": true},
-        "red": {"name": "B3", "scaled": true},
-        "nir": {"name": "B4", "scaled": true},
-        "swir1": {"name": "B5", "scaled": true},
-        "thermal": {"name": "B6", "scaled": true},
-        "swir2": {"name": "B7", "scaled": true},
-        "pixel_qa": {"name": "pixel_qa", "scaled": false}
-      }
-    },
-    "LANDSAT_5_T2": {
-      "collectionName": "LANDSAT/LT05/C01/T2_SR",
-      "scaled": false,
-      "bands": {
-        "blue": {"name": "B1", "scaled": true},
-        "green": {"name": "B2", "scaled": true},
-        "red": {"name": "B3", "scaled": true},
-        "nir": {"name": "B4", "scaled": true},
-        "swir1": {"name": "B5", "scaled": true},
-        "thermal": {"name": "B6", "scaled": true},
-        "swir2": {"name": "B7", "scaled": true},
-        "pixel_qa": {"name": "pixel_qa", "scaled": false}
-      }
-    },
-    "LANDSAT_7": {
-      "collectionName": "LANDSAT/LE07/C01/T1_SR",
-      "scaled": false,
-      "bands": {
-        "blue": {"name": "B1", "scaled": true},
-        "green": {"name": "B2", "scaled": true},
-        "red": {"name": "B3", "scaled": true},
-        "nir": {"name": "B4", "scaled": true},
-        "swir1": {"name": "B5", "scaled": true},
-        "thermal": {"name": "B6", "scaled": true},
-        "swir2": {"name": "B7", "scaled": true},
-        "pan": {"name": "B8", "scaled": true},
-        "pixel_qa": {"name": "pixel_qa", "scaled": false}
-      }
-    },
-    "LANDSAT_7_T2": {
-      "collectionName": "LANDSAT/LE07/C01/T2_SR",
-      "scaled": false,
-      "bands": {
-        "blue": {"name": "B1", "scaled": true},
-        "green": {"name": "B2", "scaled": true},
-        "red": {"name": "B3", "scaled": true},
-        "nir": {"name": "B4", "scaled": true},
-        "swir1": {"name": "B5", "scaled": true},
-        "thermal": {"name": "B6", "scaled": true},
-        "swir2": {"name": "B7", "scaled": true},
-        "pixel_qa": {"name": "pixel_qa", "scaled": false}
-      }
-    },
-    "LANDSAT_8": {
-      "collectionName": "LANDSAT/LC08/C01/T1_SR",
-      "scaled": false,
-      "bands": {
-        "aerosol": {"name": "B1", "scaled": true},
-        "blue": {"name": "B2", "scaled": true},
-        "green": {"name": "B3", "scaled": true},
-        "red": {"name": "B4", "scaled": true},
-        "nir": {"name": "B5", "scaled": true},
-        "swir1": {"name": "B6", "scaled": true},
-        "swir2": {"name": "B7", "scaled": true},
-        "thermal": {"name": "B10", "scaled": true},
-        "thermal2": {"name": "B11", "scaled": true},
-        "pixel_qa": {"name": "pixel_qa", "scaled": false}
-      }
-    },
-    "LANDSAT_8_T2": {
-      "collectionName": "LANDSAT/LC08/C01/T2_SR",
-      "scaled": false,
-      "bands": {
-        "aerosol": {"name": "B1", "scaled": true},
-        "blue": {"name": "B2", "scaled": true},
-        "green": {"name": "B3", "scaled": true},
-        "red": {"name": "B4", "scaled": true},
-        "nir": {"name": "B5", "scaled": true},
-        "swir1": {"name": "B6", "scaled": true},
-        "swir2": {"name": "B7", "scaled": true},
-        "thermal": {"name": "B10", "scaled": true},
-        "thermal2": {"name": "B11", "scaled": true},
-        "pixel_qa": {"name": "pixel_qa", "scaled": false}
-      }
-    },
-    "SENTINEL_2": {
-      "collectionName": "COPERNICUS/S2_SR",
-      "scaled": false,
-      "bands": {
-        "aerosol": {"name": "B1", "scaled": true},
-        "blue": {"name": "B2", "scaled": true},
-        "green": {"name": "B3", "scaled": true},
-        "red": {"name": "B4", "scaled": true},
-        "redEdge1": {"name": "B5", "scaled": true},
-        "redEdge2": {"name": "B6", "scaled": true},
-        "redEdge3": {"name": "B7", "scaled": true},
-        "nir": {"name": "B8", "scaled": true},
-        "redEdge4": {"name": "B8A", "scaled": true},
-        "waterVapor": {"name": "B9", "scaled": true},
-        "swir1": {"name": "B11", "scaled": true},
-        "swir2": {"name": "B12", "scaled": true}
-      }
-    }
-  }
 }

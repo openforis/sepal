@@ -10,7 +10,7 @@ const addHazeScore = reflectance =>
 const hazeScore = image => {
     const variabilityProb = variabilityProbability(image)
     return image
-        .expression(`max(1 - (hazeProb + variabilityProb + cirrusCloudProb + aerosolProb) / 10, 0)`, {
+        .expression('max(1 - (hazeProb + variabilityProb + cirrusCloudProb + aerosolProb) / 10, 0)', {
             variabilityProb,
             hazeProb: hazeProbability(image),
             cirrusCloudProb: cirrusCloudProbability(image),
@@ -43,18 +43,17 @@ const meanVis = image =>
 const whiteness = image =>
     image
         .expression('(abs(i.blue - meanVis) + abs(i.green - meanVis) + abs(i.red - meanVis)) / meanVis', {
-                i: image,
-                meanVis: meanVis(image)
-            }
-        )
+            i: image,
+            meanVis: meanVis(image)
+        })
         .rename('whiteness')
 
 const variabilityProbability = image =>
     image
         .expression('min(1 - max(max(abs(i.ndvi), abs(i.ndsi)), whiteness), 0.1)', {
-                i: image,
-                whiteness: whiteness(image)
-            }
-        )
+            i: image,
+            whiteness: whiteness(image)
+        })
         .rename('variabilityProbability')
+        
 module.exports = addHazeScore

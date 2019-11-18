@@ -43,5 +43,4 @@ const cloudScore = image => {
     return score
 }
 
-
 module.exports = addCloud
