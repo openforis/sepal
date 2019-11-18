@@ -3,7 +3,7 @@ const {job} = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
 
 const worker$ = ({recipe}) => {
-    // const ee = require('@google/earthengine')
+    const ee = require('@google/earthengine')
     const {getMap$} = require('@sepal/ee/utils')
     const {toGeometry} = require('@sepal/ee/aoi')
     const {allScenes, selectedScenes} = require('@sepal/ee/optical/collection')
@@ -20,16 +20,6 @@ const worker$ = ({recipe}) => {
         ? allScenes({region, dataSets, reflectance, dates})
         : selectedScenes({region, reflectance, scenes: model.scenes})
     const image = toMosaic({region, collection})
-
-    // console.log(image.reduceRegion({
-    //     reducer: ee.Reducer.minMax(),
-    //     geometry: region,
-    //     scale: 1000
-    // }).getInfo())
-
-    // const visParams = {bands: ['snow'], min: 0, max: 10000}
-    // console.log(image.bandNames().getInfo())
-    // const visParams = {bands: ['hazeScore'], min: 0, max: 10000}
 
     const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}
     return getMap$(image, visParams)

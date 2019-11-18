@@ -39,5 +39,16 @@ module.exports = {
             .subtract(low)
             .divide(high - low)
             .clamp(0, 1)
+    },
+
+    selfExpression(expression, additionalImages) {
+        return this.expression(expression, {i: this, ...additionalImages})
+    },
+
+    compose(...operations) {
+        return operations.reduce(
+            (image, operation) => image.addBandsReplace(operation(image)),
+            this
+        )
     }
 }

@@ -1,3 +1,4 @@
+const ee = require('@google/earthengine')
 const _ = require('lodash')
 
 const addMissingBands = require('./addMissingBands')
@@ -8,9 +9,10 @@ const addShadowScore = require('./addShadowScore')
 const addHazeScore = require('./addHazeScore')
 const addSoil = require('./addSoil')
 const addCloud = require('./addCloud')
+const addDates = require('./addDates')
 const applyQA = require('./applyQA')
 
-const imageProcess = ({dataSetSpec, reflectance}) => {
+const imageProcess = ({dataSetSpec, reflectance, targetDate}) => {
     const bands = dataSetSpec.bands
     const fromBands = Object.values(bands).map(band => band.name)
     const toBands = Object.keys(bands)
@@ -32,6 +34,7 @@ const imageProcess = ({dataSetSpec, reflectance}) => {
             addSoil(),
             addCloud(),
             maskClouds(),
+            addDates(targetDate),
             toInt16()
         )(image)
 }
@@ -41,15 +44,16 @@ const normalize = (fromBands, toBands, bandsToConvertToFloat) =>
         .select(fromBands, toBands)
         .updateBands(bandsToConvertToFloat, image => image.divide(10000))
 
-
 const maskClouds = () =>
     image => image.updateMask(
         image.select('cloud').not()
     )
 
+const scale = ee.Image(10000)
+
 const toInt16 = () =>
     image => image
-        .multiply(10000)
+        .multiply(scale)
         .int16()
 
 const compose = (...operations) =>

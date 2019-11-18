@@ -29,7 +29,7 @@ const allScenes = (
     return dataSets.reduce((mergedCollection, dataSet) =>
         mergeImageCollections(
             mergedCollection,
-            createCollection({dataSet, reflectance, filter})
+            createCollection({dataSet, reflectance, targetDate, filter})
         ),
     ee.ImageCollection([])
     )
@@ -50,7 +50,7 @@ const dateFilter = ({seasonStart, seasonEnd, yearsBefore, yearsAfter}) => {
     ].flat())
 }
 
-const selectedScenes = ({reflectance, scenes}) =>
+const selectedScenes = ({reflectance, targetDate, scenes}) =>
     _.chain(scenes)
         .values()
         .flatten()
@@ -59,7 +59,7 @@ const selectedScenes = ({reflectance, scenes}) =>
             scenes.map(scene => toEEId(scene))
         )
         .mapValues((ids, dataSet) =>
-            createCollectionWithScenes({dataSet, reflectance, ids})
+            createCollectionWithScenes({dataSet, reflectance, targetDate, ids})
         )
         .values()
         .reduce(
@@ -68,14 +68,14 @@ const selectedScenes = ({reflectance, scenes}) =>
         )
         .value()
 
-const createCollectionWithScenes = ({dataSet, reflectance, ids}) =>
-    createCollection({dataSet, reflectance, filter: ee.Filter.inList('system:index', ids)})
+const createCollectionWithScenes = ({dataSet, reflectance, targetDate, ids}) =>
+    createCollection({dataSet, reflectance, targetDate, filter: ee.Filter.inList('system:index', ids)})
 
-const createCollection = ({dataSet, reflectance, filter}) => {
+const createCollection = ({dataSet, reflectance, targetDate, filter}) => {
     const dataSetSpec = dataSetSpecs[reflectance][dataSet]
     return ee.ImageCollection(dataSetSpec.collectionName)
         .filter(filter)
-        .map(imageProcess({dataSetSpec, reflectance}))
+        .map(imageProcess({dataSetSpec, reflectance, targetDate}))
 }
 
 const toEEId = ({id, dataSet, date}) =>
