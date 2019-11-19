@@ -112,7 +112,7 @@
         "template-curly-spacing": [
             "error"
         ]
-                // "sort-imports-es6-autofix/sort-imports-es6": ["error", {
+        // "sort-imports-es6-autofix/sort-imports-es6": ["error", {
         //     "ignoreCase": false,
         //     "ignoreMemberSort": false,
         //     "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]

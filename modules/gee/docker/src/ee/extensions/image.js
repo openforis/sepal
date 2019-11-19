@@ -67,5 +67,9 @@ module.exports = {
                     .addBands(ee.Image()) // Adds a dummy band, to prevent errors when bandNames is empty
             ).select(bandNames)
         )
+    },
+
+    withBand(bandName, func) {
+        return func(this.select(bandName)).rename(bandName)
     }
 }

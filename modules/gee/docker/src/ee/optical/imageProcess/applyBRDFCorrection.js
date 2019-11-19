@@ -11,9 +11,9 @@ const applyBRDFCorrection = ({maxZenith}) =>
         const viewZen = getViewZen(corners, maxZenith)
         const {sunAz, sunZen} = getSunAngles(image.date())
         const sunZenOut = getSunZenOut(image.geometry())
-        const relativeSunViewAz = expr('sunAz - viewAz', {sunAz, viewAz})
-        const kvol = getRossThick(sunZen, viewZen, relativeSunViewAz)
-        const kvol0 = getRossThick(sunZenOut, 0, 0)
+        const relativeSunViewAz = sunAz.subtract(viewAz)
+        const kvol = rossThick(sunZen, viewZen, relativeSunViewAz)
+        const kvol0 = rossThick(sunZenOut, 0, 0)
         const kgeo = liThin(sunZen, viewZen, relativeSunViewAz)
         const kgeo0 = liThin(sunZenOut, 0, 0)
         return image.addBandsReplace(
@@ -26,7 +26,7 @@ const getViewAz = corners => {
     const lowerCenter = gp.pointBetween(corners.lowerLeft, corners.lowerRight)
     const slope = gp.slopeBetween(lowerCenter, upperCenter)
     const slopePerp = ee.Number(-1).divide(slope)
-    return expr('PI/2 - atan(slopePerp)', {slopePerp})
+    return expr('PI / 2 - atan(slopePerp)', {slopePerp})
 }
 
 const getViewZen = (corners, maxZenith) => {
@@ -104,11 +104,11 @@ const getSunZenOut = geometry => {
         .toRadians()
 }
 
-const getRossThick = (sunZen, viewZen, relativeSunViewAz) => {
+const rossThick = (sunZen, viewZen, relativeSunViewAz) => {
     const cosPhaseAngle = getCosPhaseAngle(sunZen, viewZen, relativeSunViewAz)
     const phaseAngle = expr('acos(cosPhaseAngle)', {cosPhaseAngle})
     return expr(
-        '((PI/2 - phaseAngle) * cosPhaseAngle + sin(phaseAngle)) / (cos(sunZen) + cos(viewZen)) - PI/4',
+        '((PI / 2 - phaseAngle) * cosPhaseAngle + sin(phaseAngle)) / (cos(sunZen) + cos(viewZen)) - PI / 4',
         {phaseAngle, cosPhaseAngle, sunZen, viewZen}
     )
 }
@@ -128,9 +128,9 @@ const liThin = (sunZen, viewZen, relativeSunViewAz) => {
         {distance, sunZenPrime, viewZenPrime, relativeSunViewAz, temp, h_b_ratio: 2}
     ).clamp(-1, 1)
     const t = expr('acos(cosT)', {cosT})
-    const overlap = expr('(1/PI) * (t - sin(t) * cosT) * (temp)', {t, cosT, temp}).min(0)
+    const overlap = expr('(1 / PI) * (t - sin(t) * cosT) * (temp)', {t, cosT, temp}).min(0)
     return expr(
-        'overlap - temp + (1/2) * (1 + cos(cosPhaseAnglePrime)) * (1/cos(sunZenPrime)) * (1/cos(viewZenPrime))',
+        'overlap - temp + (1 / 2) * (1 + cos(cosPhaseAnglePrime)) * (1/cos(sunZenPrime)) * (1/cos(viewZenPrime))',
         {overlap, temp, cosPhaseAnglePrime, sunZenPrime, viewZenPrime}
     )
 }
@@ -147,7 +147,7 @@ const getCosPhaseAngle = (sunZen, viewZen, relativeSunViewAz) =>
     ).clamp(-1, 1)
 
 const adjustBands = ({image, kvol, kvol0, kgeo, kgeo0}) => {
-    const coefficientsByBand = {
+    const COEFFICIENTS = {
         'blue': {fiso: 0.0774, fgeo: 0.0079, fvol: 0.0372},
         'green': {fiso: 0.1306, fgeo: 0.0178, fvol: 0.0580},
         'red': {fiso: 0.1690, fgeo: 0.0227, fvol: 0.0574},
@@ -157,26 +157,22 @@ const adjustBands = ({image, kvol, kvol0, kgeo, kgeo0}) => {
     }
         
     return ee.Image(
-        _.map(coefficientsByBand, (coefficients, bandName) =>
-            applyCFactor({band: image.select(bandName), kvol, kvol0, kgeo, kgeo0, coefficients}).rename(bandName)
+        _.map(COEFFICIENTS, (coefficients, bandName) =>
+            image.withBand(bandName, band =>
+                applyCFactor(band, {kvol, kvol0, kgeo, kgeo0, coefficients})
+            )
         )
     )
 }
 
-const applyCFactor = ({band, kvol, kvol0, kgeo, kgeo0, coefficients}) => {
+const applyCFactor = (band, {kvol, kvol0, kgeo, kgeo0, coefficients}) => {
     const brdf = getBrdf(kvol, kgeo, coefficients)
     const brdf0 = getBrdf(kvol0, kgeo0, coefficients)
-    return expr(
-        'band * brdf0 / brdf',
-        {band, brdf, brdf0}
-    )
+    return expr('band * brdf0 / brdf', {band, brdf, brdf0})
 }
 
 const getBrdf = (kvol, kgeo, coefficients) =>
-    expr(
-        'fiso + 4 * fvol * kvol + fgeo * kgeo',
-        {...coefficients, kvol, kgeo}
-    )
+    expr('fiso + 4 * fvol * kvol + fgeo * kgeo', {...coefficients, kvol, kgeo})
 
 const findCorners = track => {
     // const track = dataSetSpec.track(i)
@@ -208,12 +204,7 @@ const findCorners = track => {
     const lowerRight = findCorner(gp.y(bounds.get(1)), ys, gp.x(bounds.get(1)), xs)
     const upperRight = findCorner(gp.x(bounds.get(2)), xs, gp.y(bounds.get(2)), ys)
     const upperLeft = findCorner(gp.y(bounds.get(3)), ys, gp.x(bounds.get(3)), xs)
-    return {
-        upperLeft,
-        upperRight,
-        lowerRight,
-        lowerLeft
-    }
+    return {upperLeft, upperRight, lowerRight, lowerLeft}
 }
 
 module.exports = applyBRDFCorrection
