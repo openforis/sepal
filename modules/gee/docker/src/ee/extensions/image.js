@@ -1,12 +1,22 @@
 const ee = require('@google/earthengine')
 
 module.exports = {
-    updateBands(bandNames, update) {
-        return this.addBandsReplace(
-            update(
-                this.select(bandNames)
-                    .addBands(ee.Image()) // Adds a dummy band, to prevent errors when bandNames is empty
-            ).select(bandNames)
+    addBandsReplace(image, names) {
+        return this.addBands(image, names, true)
+    },
+
+    compose(...operations) {
+        return operations.reduce(
+            (image, operation) => image.addBandsReplace(operation(image)),
+            this
+        )
+    },
+
+    removeBands(...bands) {
+        return this.select(
+            this.bandNames().filter(
+                ee.Filter.inList('item', bands.flat()).not()
+            )
         )
     },
 
@@ -22,16 +32,8 @@ module.exports = {
         return this.addBands(defaults).select(bands)
     },
 
-    removeBands(...bands) {
-        return this.select(
-            this.bandNames().filter(
-                ee.Filter.inList('item', bands.flat()).not()
-            )
-        )
-    },
-
-    addBandsReplace(image, names) {
-        return this.addBands(image, names, true)
+    selfExpression(expression, additionalImages) {
+        return this.expression(expression, {i: this, ...additionalImages})
     },
 
     unitScaleClamp(low, high) {
@@ -41,14 +43,12 @@ module.exports = {
             .clamp(0, 1)
     },
 
-    selfExpression(expression, additionalImages) {
-        return this.expression(expression, {i: this, ...additionalImages})
-    },
-
-    compose(...operations) {
-        return operations.reduce(
-            (image, operation) => image.addBandsReplace(operation(image)),
-            this
+    updateBands(bandNames, update) {
+        return this.addBandsReplace(
+            update(
+                this.select(bandNames)
+                    .addBands(ee.Image()) // Adds a dummy band, to prevent errors when bandNames is empty
+            ).select(bandNames)
         )
     }
 }
