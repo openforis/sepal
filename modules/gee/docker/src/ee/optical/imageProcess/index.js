@@ -9,10 +9,11 @@ const addShadowScore = require('./addShadowScore')
 const addHazeScore = require('./addHazeScore')
 const addSoil = require('./addSoil')
 const addCloud = require('./addCloud')
+const applyBRDFCorrection = require('./applyBRDFCorrection')
 const addDates = require('./addDates')
 const applyQA = require('./applyQA')
 
-const imageProcess = ({dataSetSpec, reflectance, targetDate}) => {
+const imageProcess = ({dataSetSpec, reflectance, brdfCorrect, targetDate}) => {
     const bands = dataSetSpec.bands
     const fromBands = Object.values(bands).map(band => band.name)
     const toBands = Object.keys(bands)
@@ -34,6 +35,7 @@ const imageProcess = ({dataSetSpec, reflectance, targetDate}) => {
             addSoil(),
             addCloud(),
             maskClouds(),
+            brdfCorrect && applyBRDFCorrection(dataSetSpec),
             addDates(targetDate),
             toInt16()
         )(image)
@@ -57,9 +59,14 @@ const toInt16 = () =>
         .int16()
 
 const compose = (...operations) =>
-    image => operations.reduce(
-        (image, operation) => operation(image),
-        image
-    )
+    image =>
+        operations
+            .filter(operation => operation)
+            .reduce(
+                (image, operation) => image.select([]).addBands(
+                    operation(image)
+                ),
+                image
+            )
 
 module.exports = imageProcess

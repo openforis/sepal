@@ -14,11 +14,13 @@ const worker$ = ({recipe}) => {
     const dataSets = extractDataSets(model.sources)
     const surfaceReflectance = model.compositeOptions.corrections.includes('SR')
     const reflectance = surfaceReflectance ? 'SR' : 'TOA'
+    const brdfCorrect = model.compositeOptions.corrections.includes('BRDF')
     const dates = model.dates
+    const targetDate = dates.targetDate
     const useAllScenes = model.sceneSelectionOptions.type === 'ALL'
     const collection = useAllScenes
-        ? allScenes({region, dataSets, reflectance, dates})
-        : selectedScenes({region, reflectance, scenes: model.scenes})
+        ? allScenes({region, dataSets, reflectance, brdfCorrect, dates})
+        : selectedScenes({region, reflectance, brdfCorrect, targetDate, scenes: model.scenes})
     const image = toMosaic({region, collection})
 
     const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}

@@ -2,6 +2,7 @@
     "TOA": {
         "LANDSAT_4": {
             "collectionName": "LANDSAT/LT04/C01/T1_TOA",
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -39,6 +40,7 @@
         },
         "LANDSAT_4_T2": {
             "collectionName": "LANDSAT/LT04/C01/T2_TOA",
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -76,6 +78,7 @@
         },
         "LANDSAT_5": {
             "collectionName": "LANDSAT/LT05/C01/T1_TOA",
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -113,6 +116,7 @@
         },
         "LANDSAT_5_T2": {
             "collectionName": "LANDSAT/LT05/C01/T2_TOA",
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -150,6 +154,7 @@
         },
         "LANDSAT_7": {
             "collectionName": "LANDSAT/LE07/C01/T1_TOA",
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -195,6 +200,7 @@
         },
         "LANDSAT_7_T2": {
             "collectionName": "LANDSAT/LE07/C01/T2_TOA",
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -240,6 +246,7 @@
         },
         "LANDSAT_8": {
             "collectionName": "LANDSAT/LC08/C01/T1_TOA",
+            "maxZenith": 7.5,
             "bands": {
                 "aerosol": {
                     "name": "B1",
@@ -293,6 +300,7 @@
         },
         "LANDSAT_8_T2": {
             "collectionName": "LANDSAT/LC08/C01/T2_TOA",
+            "maxZenith": 7.5,
             "bands": {
                 "aerosol": {
                     "name": "B1",
@@ -347,6 +355,7 @@
         "SENTINEL_2": {
             "collectionName": "COPERNICUS/S2",
             "scaled": false,
+            "maxZenith": 10.3,
             "bands": {
                 "aerosol": {
                     "name": "B1",
@@ -403,6 +412,7 @@
         "LANDSAT_4": {
             "collectionName": "LANDSAT/LT04/C01/T1_SR",
             "scaled": false,
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -441,6 +451,7 @@
         "LANDSAT_4_T2": {
             "collectionName": "LANDSAT/LT04/C01/T2_SR",
             "scaled": false,
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -479,6 +490,7 @@
         "LANDSAT_5": {
             "collectionName": "LANDSAT/LT05/C01/T1_SR",
             "scaled": false,
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -517,6 +529,7 @@
         "LANDSAT_5_T2": {
             "collectionName": "LANDSAT/LT05/C01/T2_SR",
             "scaled": false,
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -555,6 +568,7 @@
         "LANDSAT_7": {
             "collectionName": "LANDSAT/LE07/C01/T1_SR",
             "scaled": false,
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -597,6 +611,7 @@
         "LANDSAT_7_T2": {
             "collectionName": "LANDSAT/LE07/C01/T2_SR",
             "scaled": false,
+            "maxZenith": 7.5,
             "bands": {
                 "blue": {
                     "name": "B1",
@@ -635,6 +650,7 @@
         "LANDSAT_8": {
             "collectionName": "LANDSAT/LC08/C01/T1_SR",
             "scaled": false,
+            "maxZenith": 7.5,
             "bands": {
                 "aerosol": {
                     "name": "B1",
@@ -681,6 +697,7 @@
         "LANDSAT_8_T2": {
             "collectionName": "LANDSAT/LC08/C01/T2_SR",
             "scaled": false,
+            "maxZenith": 7.5,
             "bands": {
                 "aerosol": {
                     "name": "B1",
@@ -727,6 +744,7 @@
         "SENTINEL_2": {
             "collectionName": "COPERNICUS/S2_SR",
             "scaled": false,
+            "maxZenith": 10.3,
             "bands": {
                 "aerosol": {
                     "name": "B1",
