@@ -11,3 +11,4 @@ const patch = (eeClass, extensions) =>
     })
 
 patch(ee.Image, require('./image'))
+patch(ee.Number, require('./number'))

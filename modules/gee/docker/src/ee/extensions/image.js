@@ -1,15 +1,24 @@
 const ee = require('@google/earthengine')
 
+// class methods
+
+ee.Image.expr = (expression, args) =>
+    ee.Image().expression(expression, {PI: Math.PI, ...args})
+
+// instance methods
+
 module.exports = {
     addBandsReplace(image, names) {
         return this.addBands(image, names, true)
     },
 
     compose(...operations) {
-        return operations.reduce(
-            (image, operation) => image.addBandsReplace(operation(image)),
-            this
-        )
+        return operations
+            .filter(operation => operation)
+            .reduce(
+                (image, operation) => image.addBandsReplace(operation(image)),
+                this
+            )
     },
 
     removeBands(...bands) {
@@ -34,6 +43,14 @@ module.exports = {
 
     selfExpression(expression, additionalImages) {
         return this.expression(expression, {i: this, ...additionalImages})
+    },
+
+    toDegrees() {
+        return this.multiply(180).divide(Math.PI)
+    },
+
+    toRadians() {
+        return this.multiply(Math.PI).divide(180)
     },
 
     unitScaleClamp(low, high) {
