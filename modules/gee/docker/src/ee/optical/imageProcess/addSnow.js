@@ -4,8 +4,7 @@ const addSnow = () =>
 
 const snow = image =>
     image
-        .expression('i.snow or snowProbability > 0.12', {
-            i: image,
+        .selfExpression('i.snow or snowProbability > 0.12', {
             snowProbability: snowProbability(image)
         })
         .rename('snow')
@@ -14,7 +13,7 @@ const snowProbability = image =>
     combine(
         image.select('ndsi').unitScaleClamp(0.2, 0.42),
         image.select('nir').unitScaleClamp(0.15, 0.35),
-        image.expression('i.blue/i.red', {i: image}).unitScaleClamp(0.18, 0.22),
+        image.selfExpression('i.blue/i.red').unitScaleClamp(0.18, 0.22),
         image.select('ndsi').unitScaleClamp(0.85, 0.95),
     ).rename('snowProbability')
 

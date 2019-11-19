@@ -5,11 +5,10 @@ const addCloud = () =>
 
 const cloud = image =>
     image
-        .expression(`
+        .selfExpression(`
             !i.soil and !i.snow and 
             (i.cloud or cloudScore > 0.25 or (cloudScore > 0 and i.aerosol > 0.2) or i.hazeScore == 0)
         `, {
-            i: image,
             cloudScore: cloudScore(image)
         })
         .rename('cloud')
@@ -29,12 +28,12 @@ const cloudScore = image => {
 
     // Clouds are reasonably bright in all visible bands.
     score = score.min(
-        image.expression('i.red + i.green + i.blue', {i: image}).unitScaleClamp(0.2, 0.8)
+        image.selfExpression('i.red + i.green + i.blue').unitScaleClamp(0.2, 0.8)
     )
 
     // Clouds are reasonably bright in all infrared bands.
     score = score.min(
-        image.expression('i.nir + i.swir1 + i.swir2', {i: image}).unitScaleClamp(0.3, 0.8)
+        image.selfExpression('i.nir + i.swir1 + i.swir2').unitScaleClamp(0.3, 0.8)
     )
 
     // However, clouds are not snow.

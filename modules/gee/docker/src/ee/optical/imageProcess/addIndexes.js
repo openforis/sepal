@@ -6,17 +6,17 @@ const addIndexes = () =>
 
 const ndsi = image =>
     image
-        .expression('(i.green - i.swir1) / (i.green + i.swir1)', {i: image})
+        .selfExpression('(i.green - i.swir1) / (i.green + i.swir1)')
         .rename('ndsi')
 
 const ndvi = image =>
     image
-        .expression('(i.nir - i.red) / (i.nir + i.red)', {i: image})
+        .selfExpression('(i.nir - i.red) / (i.nir + i.red)')
         .rename('ndvi')
 
 const ndwi = image =>
     image
-        .expression('(i.green - i.nir) / (i.green + i.nir)', {i: image})
+        .selfExpression('(i.green - i.nir) / (i.green + i.nir)')
         .rename('ndwi')
 
 module.exports = addIndexes

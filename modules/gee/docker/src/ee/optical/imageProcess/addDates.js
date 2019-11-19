@@ -21,10 +21,7 @@ const daysFromTarget = targetDate =>
     image => {
         const targetDay = parseInt(moment(targetDate, 'YYYY-MM-DD').format('DDD'))
         const delta = image
-            .selfExpression(
-                'abs(targetDay - i.dayOfYear)',
-                {targetDay}
-            )
+            .selfExpression('abs(targetDay - i.dayOfYear)', {targetDay})
             .rename('delta')
         return delta
             .selfExpression('min(i.delta, 365 - i.delta)')

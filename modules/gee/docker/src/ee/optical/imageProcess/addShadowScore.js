@@ -3,7 +3,7 @@ const addShadowScore = () =>
 
 const shadowScore = image =>
     image
-        .expression('sqrt((pow(i.green, 2) + pow(i.red, 2) + pow(i.nir, 2)) / 3)', {i: image})
+        .selfExpression('sqrt((pow(i.green, 2) + pow(i.red, 2) + pow(i.nir, 2)) / 3)')
         .rename('shadowScore')
 
 module.exports = addShadowScore
