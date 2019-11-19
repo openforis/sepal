@@ -92,6 +92,13 @@
             "error",
             "never"
         ],
+        "object-shorthand": [
+            "error", 
+            "properties"
+        ],
+        "prefer-template": [
+            "error"
+        ],
         "space-before-blocks": "error",
         "space-infix-ops": "error",
         "quotes": [
@@ -101,8 +108,11 @@
         "semi": [
             "error",
             "never"
+        ],
+        "template-curly-spacing": [
+            "error"
         ]
-        // "sort-imports-es6-autofix/sort-imports-es6": ["error", {
+                // "sort-imports-es6-autofix/sort-imports-es6": ["error", {
         //     "ignoreCase": false,
         //     "ignoreMemberSort": false,
         //     "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
