@@ -1,6 +1,7 @@
 // const log = require('@sepal/log')
 const {job} = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
+const visParams = require('./visParams.json')
 
 const worker$ = ({recipe, bands: {selection, panSharpen}}) => {
     const {getMap$} = require('@sepal/ee/utils')
@@ -21,8 +22,7 @@ const worker$ = ({recipe, bands: {selection, panSharpen}}) => {
         : selectedScenes({region, reflectance, brdfCorrect, panSharpen, targetDate, scenes: model.scenes})
     const image = toMosaic({region, collection})
 
-    const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}
-    return getMap$(image, visParams)
+    return getMap$(image, visParams[reflectance][selection.join('|')])
 }
 
 module.exports = job({
