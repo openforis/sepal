@@ -17,6 +17,7 @@ const allScenes = (
         dataSets,
         reflectance = 'TOA',
         brdfCorrect,
+        panSharpen,
         compositeOptions: {
             corrections = [],
             mask = [],
@@ -30,7 +31,7 @@ const allScenes = (
     return dataSets.reduce((mergedCollection, dataSet) =>
         mergeImageCollections(
             mergedCollection,
-            createCollection({dataSet, reflectance, brdfCorrect, targetDate, filter})
+            createCollection({dataSet, reflectance, brdfCorrect, panSharpen, targetDate, filter})
         ),
     ee.ImageCollection([])
     )
@@ -51,7 +52,7 @@ const dateFilter = ({seasonStart, seasonEnd, yearsBefore, yearsAfter}) => {
     ].flat())
 }
 
-const selectedScenes = ({reflectance, brdfCorrect, targetDate, scenes}) =>
+const selectedScenes = ({reflectance, brdfCorrect, panSharpen, targetDate, scenes}) =>
     _.chain(scenes)
         .values()
         .flatten()
@@ -60,7 +61,7 @@ const selectedScenes = ({reflectance, brdfCorrect, targetDate, scenes}) =>
             scenes.map(scene => toEEId(scene))
         )
         .mapValues((ids, dataSet) =>
-            createCollectionWithScenes({dataSet, reflectance, brdfCorrect, targetDate, ids})
+            createCollectionWithScenes({dataSet, reflectance, brdfCorrect, panSharpen, targetDate, ids})
         )
         .values()
         .reduce(
@@ -69,10 +70,10 @@ const selectedScenes = ({reflectance, brdfCorrect, targetDate, scenes}) =>
         )
         .value()
 
-const createCollectionWithScenes = ({dataSet, reflectance, brdfCorrect, targetDate, ids}) =>
-    createCollection({dataSet, reflectance, brdfCorrect, targetDate, filter: ee.Filter.inList('system:index', ids)})
+const createCollectionWithScenes = ({dataSet, reflectance, brdfCorrect, panSharpen, targetDate, ids}) =>
+    createCollection({dataSet, reflectance, brdfCorrect, panSharpen, targetDate, filter: ee.Filter.inList('system:index', ids)})
 
-const createCollection = ({dataSet, reflectance, brdfCorrect, targetDate, filter}) => {
+const createCollection = ({dataSet, reflectance, brdfCorrect, panSharpen, targetDate, filter}) => {
     const dataSetSpec = dataSetSpecs[reflectance][dataSet]
 
     // const collection = ee.ImageCollection(dataSetSpec.collectionName)
@@ -83,7 +84,7 @@ const createCollection = ({dataSet, reflectance, brdfCorrect, targetDate, filter
     
     return ee.ImageCollection(dataSetSpec.collectionName)
         .filter(filter)
-        .map(imageProcess({dataSetSpec, reflectance, brdfCorrect, targetDate}))
+        .map(imageProcess({dataSetSpec, reflectance, brdfCorrect, panSharpen, targetDate}))
 }
 
 const toEEId = ({id, dataSet, date}) =>

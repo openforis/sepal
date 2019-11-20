@@ -2,13 +2,11 @@
 const {job} = require('@sepal/job')
 const eeAuth = require('@sepal/ee/auth')
 
-const worker$ = ({recipe}) => {
-    const ee = require('@google/earthengine')
+const worker$ = ({recipe, bands: {selection, panSharpen}}) => {
     const {getMap$} = require('@sepal/ee/utils')
     const {toGeometry} = require('@sepal/ee/aoi')
     const {allScenes, selectedScenes} = require('@sepal/ee/optical/collection')
     const {toMosaic} = require('@sepal/ee/optical/mosaic')
-
     const model = recipe.model
     const region = toGeometry(model.aoi)
     const dataSets = extractDataSets(model.sources)
@@ -19,8 +17,8 @@ const worker$ = ({recipe}) => {
     const targetDate = dates.targetDate
     const useAllScenes = model.sceneSelectionOptions.type === 'ALL'
     const collection = useAllScenes
-        ? allScenes({region, dataSets, reflectance, brdfCorrect, dates})
-        : selectedScenes({region, reflectance, brdfCorrect, targetDate, scenes: model.scenes})
+        ? allScenes({region, dataSets, reflectance, panSharpen, brdfCorrect, dates})
+        : selectedScenes({region, reflectance, brdfCorrect, panSharpen, targetDate, scenes: model.scenes})
     const image = toMosaic({region, collection})
 
     const visParams = {bands: ['red', 'green', 'blue'], min: 0, max: 3000, gamma: 1.5}

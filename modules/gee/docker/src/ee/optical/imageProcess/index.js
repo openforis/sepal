@@ -10,10 +10,11 @@ const addHazeScore = require('./addHazeScore')
 const addSoil = require('./addSoil')
 const addCloud = require('./addCloud')
 const applyBRDFCorrection = require('./applyBRDFCorrection')
+const applyPanSharpening = require('./applyPanSharpening')
 const addDates = require('./addDates')
 const applyQA = require('./applyQA')
 
-const imageProcess = ({dataSetSpec, reflectance, brdfCorrect, targetDate}) => {
+const imageProcess = ({dataSetSpec, reflectance, brdfCorrect, panSharpen, targetDate}) => {
     const bands = dataSetSpec.bands
     const fromBands = Object.values(bands).map(band => band.name)
     const toBands = Object.keys(bands)
@@ -36,6 +37,7 @@ const imageProcess = ({dataSetSpec, reflectance, brdfCorrect, targetDate}) => {
             addCloud(),
             maskClouds(),
             brdfCorrect && applyBRDFCorrection(dataSetSpec),
+            panSharpen && toBands.includes('pan') && applyPanSharpening(),
             addDates(targetDate),
             toInt16()
         )(image)
