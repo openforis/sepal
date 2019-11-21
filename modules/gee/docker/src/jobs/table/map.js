@@ -25,5 +25,6 @@ module.exports = job({
     jobName: 'Request EE Table map',
     jobPath: __filename,
     before: [eeAuth],
+    args: ctx => [ctx.request.query],
     worker$
 })

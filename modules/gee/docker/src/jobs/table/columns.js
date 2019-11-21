@@ -37,5 +37,6 @@ module.exports = job({
     jobName: 'Get table columns',
     jobPath: __filename,
     before: [eeAuth],
+    args: ctx => [ctx.request.query],
     worker$
 })

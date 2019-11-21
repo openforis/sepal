@@ -38,5 +38,6 @@ module.exports = job({
     jobName: 'Scene Areas',
     jobPath: __filename,
     before: [eeAuth],
+    args: ctx => [ctx.request.body],
     worker$
 })

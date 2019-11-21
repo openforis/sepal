@@ -27,5 +27,6 @@ module.exports = job({
     jobName: 'Test1',
     jobPath: __filename,
     before: [before],
+    args: _ctx => [1, 1000, 2000],
     worker$
 })

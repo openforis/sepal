@@ -13,5 +13,6 @@ module.exports = job({
     jobName: 'EE Image preview',
     jobPath: __filename,
     before: [eeAuth],
+    args: ctx => [ctx.request.body],
     worker$
 })
