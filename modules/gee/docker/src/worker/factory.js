@@ -96,13 +96,13 @@ const initWorker$ = (name, jobPath) => {
         const run$ = port => {
             start(port)
             return result$.pipe(
+                takeUntil(stop$),
                 finalize(() => stop(port))
             )
         }
 
         return init$.pipe(
-            switchMap(port => run$(port)),
-            takeUntil(stop$)
+            switchMap(port => run$(port))
         )
     }
 
