@@ -1,6 +1,5 @@
 // const log = require('@sepal/log')
-const {job} = require('@sepal/job')
-const eeAuth = require('@sepal/ee/auth')
+const job = require('@sepal/job')
 const ImageFactory = require('@sepal/ee/imageFactory')
 
 const worker$ = ({recipe, bands}) => {
@@ -12,7 +11,7 @@ const worker$ = ({recipe, bands}) => {
 module.exports = job({
     jobName: 'EE Image preview',
     jobPath: __filename,
-    before: [eeAuth],
+    before: [require('@sepal/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$
 })

@@ -32,26 +32,11 @@ const renderStream = async (ctx, body$) => {
         result.value && handleSuccess(ctx, result.value)
         result.error && handleError(ctx, result.error)
     }
-
-    // try {
-    //     ctx.body = await body$.toPromise()
-    // } catch (error) {
-    //     ctx.status = errorCode(error.type)
-    //     ctx.body = error.type
-    //         ? {
-    //             code: error.key,
-    //             data: error.data,
-    //             cause: error.cause
-    //         }
-    //         : 'other error'
-    // }
 }
 
 module.exports = async (ctx, next) => {
     const close$ = new Subject()
-    ctx.req.on('close', () => {
-        close$.next()
-    })
+    ctx.req.on('close', () => close$.next())
     await next()
     if (ctx.stream$) {
         const body$ = ctx.stream$.pipe(

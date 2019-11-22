@@ -1,6 +1,5 @@
 // const log = require('@sepal/log')
-const {job} = require('@sepal/job')
-const eeAuth = require('@sepal/ee/auth')
+const job = require('@sepal/job')
 
 const worker$ = ({tableId}) => {
     const ee = require('@google/earthengine')
@@ -36,7 +35,7 @@ const worker$ = ({tableId}) => {
 module.exports = job({
     jobName: 'Get table columns',
     jobPath: __filename,
-    before: [eeAuth],
+    before: [require('@sepal/ee/initialize')],
     args: ctx => [ctx.request.query],
     worker$
 })

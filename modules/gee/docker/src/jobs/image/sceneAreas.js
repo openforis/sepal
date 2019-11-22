@@ -1,6 +1,5 @@
 // const log = require('@sepal/log')
-const {job} = require('@sepal/job')
-const eeAuth = require('@sepal/ee/auth')
+const job = require('@sepal/job')
 
 const worker$ = ({aoi, source}) => {
     const ee = require('@google/earthengine')
@@ -37,7 +36,7 @@ const worker$ = ({aoi, source}) => {
 module.exports = job({
     jobName: 'Scene Areas',
     jobPath: __filename,
-    before: [eeAuth],
+    before: [require('@sepal/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$
 })
