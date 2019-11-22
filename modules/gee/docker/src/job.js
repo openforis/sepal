@@ -25,13 +25,16 @@ const depArgs = (deps = []) =>
 const depWorker$ = (deps = []) =>
     deps.map((m => m()))
     
-const jobWorker = ({jobName, before, worker$}) =>
+const worker = ({jobName, before, worker$}) =>
     _.flatten([...depWorker$(before), {jobName, worker$}])
 
 const evaluateArgs = (argFuncs, ctx) =>
-    _.map(_.flattenDeep(argFuncs), argFunc => argFunc(ctx))
+    _.chain(argFuncs)
+        .flattenDeep()
+        .map(argFunc => argFunc(ctx))
+        .value()
 
-const jobArgs = ({jobName, jobPath, before, args, ctx}) => {
+const submit = ({jobName, jobPath, before, args, ctx}) => {
     const argFuncs = [...depArgs(before), args]
     return isDependency(ctx)
         ? argFuncs
@@ -44,8 +47,8 @@ const job = ({jobName, jobPath, before = [], worker$, args = () => []}) => {
     assert(args, _.isFunction, 'args is required')
     assert(before, _.isArray, 'before must be an array')
     return ctx => isWorker(ctx)
-        ? jobWorker({jobName, before, worker$})
-        : jobArgs({jobName, jobPath, before, args, ctx})
+        ? worker({jobName, before, worker$})
+        : submit({jobName, jobPath, before, args, ctx})
 }
 
 module.exports = job
