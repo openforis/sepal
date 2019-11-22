@@ -1,4 +1,4 @@
-const {before} = require('@sepal/job')
+const job = require('@sepal/job')
 const log = require('@sepal/log')
 
 const getSepalUser = ctx => {
@@ -20,23 +20,7 @@ const getCredentials = ctx => {
 
 const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     const ee = require('@google/earthengine')
-    const {concat} = require('rxjs')
     require('./extensions')
-
-    const initialize = () =>
-        new Promise((resolve, reject) => {
-            log.trace('Initializing library')
-            try {
-                ee.initialize(
-                    null,
-                    null,
-                    () => resolve(),
-                    error => reject(error)
-                )
-            } catch (error) {
-                reject(error)
-            }
-        })
 
     const authenticateServiceAccount = credentials =>
         new Promise((resolve, reject) => {
@@ -76,13 +60,10 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
             ? authenticateUserAccount(googleTokens)
             : authenticateServiceAccount(serviceAccountCredentials)
 
-    return concat(
-        authenticate({sepalUser, serviceAccountCredentials}),
-        initialize()
-    )
+    return authenticate({sepalUser, serviceAccountCredentials})
 }
 
-module.exports = before({
+module.exports = job({
     jobName: 'EE Authentication',
     worker$,
     args: ctx => [getCredentials(ctx)]

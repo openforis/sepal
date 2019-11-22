@@ -1,7 +1,6 @@
 const Router = require('koa-router')
 
-const test1$ = require('@sepal/jobs/test1')
-const test2$ = require('@sepal/jobs/test2')
+const test$ = require('@sepal/jobs/test')
 const sceneAreas$ = require('@sepal/jobs/image/sceneAreas')
 const preview$ = require('@sepal/jobs/image/preview')
 const tableColumns$ = require('@sepal/jobs/table/columns')
@@ -12,10 +11,8 @@ const tableMap$ = require('@sepal/jobs/table/map')
 const router = Router()
 
 router
-    .get('/test1',
-        ctx => ctx.stream$ = test1$(ctx))
-    .get('/test2',
-        ctx => ctx.stream$ = test2$(ctx))
+    .get('/test',
+        ctx => ctx.stream$ = test$(ctx))
 
 router
     .post('/sceneareas',
