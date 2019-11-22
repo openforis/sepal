@@ -12,7 +12,7 @@ const worker$ = (count, minDuration, maxDuration = minDuration) => {
         mergeMap(value =>
             timer(value).pipe(
                 map(() => {
-                    if (Math.random() < 1) {
+                    if (Math.random() < .5) {
                         // throw new Error('Random error!')
                     }
                     return Math.random()
@@ -26,6 +26,6 @@ module.exports = job({
     jobName: 'Test1',
     jobPath: __filename,
     before: [require('./test_1'), require('./test_2')],
-    args: _ctx => [1, 1000, 2000],
+    args: _ctx => [1, 1000, 1000],
     worker$
 })

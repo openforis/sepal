@@ -1,5 +1,5 @@
 const {Subject} = require('rxjs')
-const {takeUntil} = require('rxjs/operators')
+const {first, takeUntil} = require('rxjs/operators')
 const log = require('./log')
 
 const errorCodes = {
@@ -40,6 +40,7 @@ module.exports = async (ctx, next) => {
     await next()
     if (ctx.stream$) {
         const body$ = ctx.stream$.pipe(
+            first(),
             takeUntil(close$)
         )
         await renderStream(ctx, body$)

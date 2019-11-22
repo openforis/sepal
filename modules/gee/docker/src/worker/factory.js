@@ -1,7 +1,8 @@
 const {Subject, ReplaySubject} = require('rxjs')
-const {finalize, takeUntil, switchMap, first, map} = require('rxjs/operators')
+const {finalize, takeUntil, switchMap, filter, first, map} = require('rxjs/operators')
 const {Worker, MessageChannel} = require('worker_threads')
 const {deserializeError} = require('serialize-error')
+const {v4: uuid} = require('uuid')
 const path = require('path')
 const _ = require('lodash')
 const log = require('@sepal/log')
@@ -47,57 +48,70 @@ const initWorker$ = (name, jobPath) => {
 
     const submit$ = args => {
         const result$ = new Subject()
-        const stop$ = new Subject()
-
-        const handleValue = value => {
-            log.trace(msg(`emitted value: ${value}`))
-            // result$.next(value)
-            result$.next({value})
-        }
-
-        const handleError = serializedError => {
-            const error = deserializeError(serializedError)
-            const errors = _.compact([
-                error.message,
-                error.type ? `(${error.type})` : null
-            ]).join()
-            log.error(msg(`error: ${errors}`))
-            // result$.error(error)
-            result$.next({error})
-            stop$.next()
-        }
-
-        const handleComplete = () => {
-            log.debug(msg('completed'))
-            result$.complete()
-            stop$.next()
-        }
-
-        const handleWorkerMessage = message => {
-            message.value && handleValue(message.value)
-            message.error && handleError(message.error)
-            message.complete && handleComplete()
-        }
-
-        const start = port => {
-            const workerArgs = _.last(args)
-            workerArgs
-                ? log.debug(msg('running with args:'), workerArgs)
-                : log.debug(msg('running with no args'))
-            port.on('message', handleWorkerMessage)
-            port.postMessage({start: {jobPath, args}})
-        }
-
-        const stop = port => {
-            port.postMessage({stop: true})
-            port.off('message', handleWorkerMessage)
-        }
 
         const run$ = port => {
-            start(port)
+            const jobId = uuid()
+
+            const open = () =>
+                port.on('message', handleWorkerMessage)
+
+            const send = msg =>
+                port.postMessage(msg)
+
+            const close = () =>
+                port.off('message', handleWorkerMessage)
+
+            const handleWorkerMessage = message =>
+                message.jobId === jobId
+                    ? handleValidWorkerMessage(message)
+                    : handleInvalidWorkerMessage(message)
+        
+            const handleValidWorkerMessage = message => {
+                message.value && handleValue(message.value)
+                message.error && handleError(message.error)
+                message.complete && handleComplete(message.complete)
+            }
+            
+            const handleInvalidWorkerMessage = message =>
+                log.warn(msg(`sent msg with non-matching jobId (expected <${jobId.substr(-4)}>):`), message)
+
+            const handleValue = value => {
+                log.trace(msg(`job <${jobId.substr(-4)}> emitted value: ${value}`))
+                result$.next({value})
+            }
+    
+            const handleError = serializedError => {
+                const error = deserializeError(serializedError)
+                const errors = _.compact([
+                    error.message,
+                    error.type ? `(${error.type})` : null
+                ]).join()
+                log.error(msg(`job <${jobId.substr(-4)}> error: ${errors}`))
+                result$.next({error})
+                close()
+            }
+    
+            const handleComplete = () => {
+                log.debug(msg(`job <${jobId.substr(-4)}> completed`))
+                result$.complete()
+                close()
+            }
+    
+            const start = jobId => {
+                const workerArgs = _.last(args)
+                _.isEmpty(workerArgs)
+                    ? log.debug(msg('running with no args'))
+                    : log.debug(msg('running with args:'), workerArgs)
+                open()
+                send({start: {jobId, jobPath, args}})
+            }
+    
+            const stop = jobId =>
+                send({stop: {jobId}})
+    
+            start(jobId)
             return result$.pipe(
-                takeUntil(stop$),
-                finalize(() => stop(port))
+                finalize(() => stop(jobId))
             )
         }
 

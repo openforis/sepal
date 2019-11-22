@@ -2,7 +2,7 @@ const job = require('@sepal/job')
 const {EMPTY} = require('rxjs')
 const {delay} = require('rxjs/operators')
 
-const worker$ = () => EMPTY.pipe(delay(Math.random() * 500))
+const worker$ = () => EMPTY.pipe(delay(100))
 
 module.exports = job({
     jobName: 'Test 2',

@@ -1,5 +1,5 @@
 const {Subject} = require('rxjs')
-const {first, groupBy, mergeMap, tap, map, share, filter, finalize, takeUntil} = require('rxjs/operators')
+const {groupBy, mergeMap, tap, map, share, filter, finalize, takeUntil} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('@sepal/log')
@@ -30,8 +30,7 @@ const pooledWorker = concurrency => {
         workerResponse$.pipe(
             share(),
             filter(response => response.requestId === requestId),
-            map(({result}) => result),
-            first()
+            map(({result}) => result)
         )
     
     workerRequest$.pipe(
@@ -46,8 +45,10 @@ const pooledWorker = concurrency => {
                                     requestId,
                                     result
                                 })),
-                                tap(() => release()),
-                                takeUntil(cancel$)
+                                takeUntil(cancel$.pipe(
+                                    filter(cancel => cancel.requestId === requestId)
+                                )),
+                                tap(() => release())
                             ))
                     ), null, concurrency
                 )
@@ -63,7 +64,7 @@ const pooledWorker = concurrency => {
             const requestId = uuid()
             submitRequest({requestId, jobName, jobPath, args})
             return getResponse$(requestId).pipe(
-                finalize(() => cancel$.next())
+                finalize(() => cancel$.next({requestId}))
             )
         }
     }

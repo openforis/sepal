@@ -1,7 +1,7 @@
 require('module-alias/register')
 const {parentPort} = require('worker_threads')
 const {Subject, of, concat} = require('rxjs')
-const {mergeMap, takeUntil, tap} = require('rxjs/operators')
+const {mergeMap, takeUntil, tap, filter} = require('rxjs/operators')
 const {serializeError} = require('serialize-error')
 const _ = require('lodash')
 const log = require('@sepal/log')
@@ -16,24 +16,9 @@ parentPort.once('message', ({name, ports}) => {
     const msg = msg =>
         `[Worker <${name}>] ${msg}`
 
-    const next = value => {
-        log.trace(msg(`emitted value: ${value}`))
-        return jobPort.postMessage({value})
-    }
-
-    const error = error => {
-        log.trace(msg(`error: ${error}`))
-        return jobPort.postMessage({error: serializeError(error)})
-    }
-
-    const complete = () => {
-        log.trace(msg('complete'))
-        return jobPort.postMessage({complete: true})
-    }
-
-    const start = ({jobPath, args}) => {
+    const start = ({jobId, jobPath, args}) => {
         const tasks = require(jobPath)()
-        log.trace(msg('starting job'))
+        log.trace(msg(`start job <${jobId.substr(-4)}>`))
 
         const tasks$ = _.chain(tasks)
             .zip(args)
@@ -42,27 +27,42 @@ parentPort.once('message', ({name, ports}) => {
             )
             .value()
 
-        run(tasks$)
+        run(jobId, tasks$)
     }
 
-    const run = tasks$ => {
+    const run = (jobId, tasks$) => {
+        const next = value => {
+            log.trace(msg(`emitted value: ${value}`))
+            return jobPort.postMessage({jobId, value})
+        }
+    
+        const error = error => {
+            log.trace(msg(`error: ${error}`))
+            return jobPort.postMessage({jobId, error: serializeError(error)})
+        }
+    
+        const complete = () => {
+            log.trace(msg('complete'))
+            return jobPort.postMessage({jobId, complete: true})
+        }
+    
         concat(...tasks$).pipe(
             tap(({jobName, args}) =>
                 log.trace(msg(`running ${jobName} with args:`), args)
             ),
             mergeMap(({worker$, args}) => worker$(...args), 1),
-            takeUntil(stop$)
+            takeUntil(stop$.pipe(filter(id => id === jobId)))
         ).subscribe({next, error, complete})
     }
 
-    const stop = () => {
-        log.trace(msg('stopping job'))
-        stop$.next()
+    const stop = ({jobId}) => {
+        log.trace(msg(`stop job <${jobId.substr(-4)}>`))
+        stop$.next(jobId)
     }
 
     const handleMessage = message => {
         message.start && start(message.start)
-        message.stop && stop()
+        message.stop && stop(message.stop)
         message.dispose && dispose()
     }
 

@@ -2,7 +2,7 @@ const _ = require('lodash')
 
 // const {submit$} = require('./worker/single')
 const PooledWorker = require('./worker/pooled')
-const {submit$} = PooledWorker(2)
+const {submit$} = PooledWorker(3)
 
 // NOTE: ctx is three-state:
 //
