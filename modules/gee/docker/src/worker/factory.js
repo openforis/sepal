@@ -1,5 +1,5 @@
 const {Subject, ReplaySubject} = require('rxjs')
-const {finalize, takeUntil, switchMap, filter, first, map} = require('rxjs/operators')
+const {finalize, switchMap, first, map} = require('rxjs/operators')
 const {Worker, MessageChannel} = require('worker_threads')
 const {deserializeError} = require('serialize-error')
 const {v4: uuid} = require('uuid')
@@ -43,9 +43,11 @@ const initWorker$ = (name, jobPath) => {
     const init$ = new ReplaySubject()
     const dispose$ = new Subject()
 
-    const msg = msg =>
-        `Worker <${name}> ${msg}`
-
+    const msg = (msg, jobId) => [
+        `[${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
+        msg
+    ].join(' ')
+    
     const submit$ = args => {
         const result$ = new Subject()
 
@@ -73,10 +75,10 @@ const initWorker$ = (name, jobPath) => {
             }
             
             const handleInvalidWorkerMessage = message =>
-                log.warn(msg(`sent msg with non-matching jobId (expected <${jobId.substr(-4)}>):`), message)
+                log.warn(msg('sent msg with non-matching jobId:', jobId), message)
 
             const handleValue = value => {
-                log.trace(msg(`job <${jobId.substr(-4)}> emitted value: ${value}`))
+                log.trace(msg(`value: ${value}`, jobId))
                 result$.next({value})
             }
     
@@ -86,13 +88,13 @@ const initWorker$ = (name, jobPath) => {
                     error.message,
                     error.type ? `(${error.type})` : null
                 ]).join()
-                log.error(msg(`job <${jobId.substr(-4)}> error: ${errors}`))
+                log.error(msg(`error: ${errors}`, jobId))
                 result$.next({error})
                 close()
             }
     
             const handleComplete = () => {
-                log.debug(msg(`job <${jobId.substr(-4)}> completed`))
+                log.debug(msg('completed', jobId))
                 result$.complete()
                 close()
             }
@@ -100,8 +102,8 @@ const initWorker$ = (name, jobPath) => {
             const start = jobId => {
                 const workerArgs = _.last(args)
                 _.isEmpty(workerArgs)
-                    ? log.debug(msg('running with no args'))
-                    : log.debug(msg('running with args:'), workerArgs)
+                    ? log.debug(msg('started with no args', jobId))
+                    : log.debug(msg('started with args:', jobId), workerArgs)
                 open()
                 send({start: {jobId, jobPath, args}})
             }

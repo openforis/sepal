@@ -13,12 +13,30 @@ parentPort.once('message', ({name, ports}) => {
     const jobPort = ports.job
     exported.ports = ports
 
-    const msg = msg =>
-        `[Worker <${name}>] ${msg}`
+    const msg = (msg, jobId) => [
+        `Worker [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
+        msg
+    ].join(' ')
 
     const start = ({jobId, jobPath, args}) => {
+        log.trace(msg('start', jobId))
+        
+        const next = value => {
+            log.trace(msg(`value: ${value}`, jobId))
+            return jobPort.postMessage({jobId, value})
+        }
+    
+        const error = error => {
+            log.trace(msg(`error: ${error}`, jobId))
+            return jobPort.postMessage({jobId, error: serializeError(error)})
+        }
+    
+        const complete = () => {
+            log.trace(msg('complete', jobId))
+            return jobPort.postMessage({jobId, complete: true})
+        }
+    
         const tasks = require(jobPath)()
-        log.trace(msg(`start job <${jobId.substr(-4)}>`))
 
         const tasks$ = _.chain(tasks)
             .zip(args)
@@ -27,36 +45,17 @@ parentPort.once('message', ({name, ports}) => {
             )
             .value()
 
-        run(jobId, tasks$)
-    }
-
-    const run = (jobId, tasks$) => {
-        const next = value => {
-            log.trace(msg(`emitted value: ${value}`))
-            return jobPort.postMessage({jobId, value})
-        }
-    
-        const error = error => {
-            log.trace(msg(`error: ${error}`))
-            return jobPort.postMessage({jobId, error: serializeError(error)})
-        }
-    
-        const complete = () => {
-            log.trace(msg('complete'))
-            return jobPort.postMessage({jobId, complete: true})
-        }
-    
         concat(...tasks$).pipe(
-            tap(({jobName, args}) =>
-                log.trace(msg(`running ${jobName} with args:`), args)
-            ),
             mergeMap(({worker$, args}) => worker$(...args), 1),
+            tap(({jobName, args}) =>
+                log.trace(msg(`running <${jobName}> with args:`, jobId), args)
+            ),
             takeUntil(stop$.pipe(filter(id => id === jobId)))
         ).subscribe({next, error, complete})
     }
 
     const stop = ({jobId}) => {
-        log.trace(msg(`stop job <${jobId.substr(-4)}>`))
+        log.trace(msg('stop', jobId))
         stop$.next(jobId)
     }
 
