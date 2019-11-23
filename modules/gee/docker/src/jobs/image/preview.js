@@ -1,5 +1,4 @@
-// const log = require('@sepal/log')
-const job = require('@sepal/job')
+const job = require('@sepal/worker/job')
 const ImageFactory = require('@sepal/ee/imageFactory')
 
 const worker$ = ({recipe, bands}) => {

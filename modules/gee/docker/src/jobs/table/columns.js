@@ -1,5 +1,4 @@
-// const log = require('@sepal/log')
-const job = require('@sepal/job')
+const job = require('@sepal/worker/job')
 
 const worker$ = ({tableId}) => {
     const ee = require('@google/earthengine')

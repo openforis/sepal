@@ -1,4 +1,4 @@
-const job = require('@sepal/job')
+const job = require('@sepal/worker/job')
 const log = require('@sepal/log')
 
 const worker$ = () => {
@@ -22,6 +22,6 @@ const worker$ = () => {
 
 module.exports = job({
     jobName: 'EE Initialization',
-    before: [require('./auth')],
+    before: [require('./authenticate')],
     worker$
 })

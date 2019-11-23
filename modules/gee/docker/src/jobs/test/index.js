@@ -1,4 +1,4 @@
-const job = require('@sepal/job')
+const job = require('@sepal/worker/job')
 
 const worker$ = (count, minDuration, maxDuration = minDuration) => {
     const {of, timer} = require('rxjs')
