@@ -15,7 +15,7 @@ const worker$ = (count, minDuration, maxDuration = minDuration) => {
                     if (Math.random() < .5) {
                         // throw new Error('Random error!')
                     }
-                    return Math.random()
+                    return `\n${Math.random().toFixed(5)}`
                 }),
             )
         )
@@ -26,6 +26,6 @@ module.exports = job({
     jobName: 'Test1',
     jobPath: __filename,
     before: [require('./test_1'), require('./test_2')],
-    args: _ctx => [1, 1000, 1000],
+    args: _ctx => [1, 3000, 3000],
     worker$
 })
