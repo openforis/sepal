@@ -111,7 +111,7 @@ const initWorker$ = (name, jobPath) => {
                     finalize(() => stop(jobId))
                 )
             },
-            dispose$() {
+            dispose() {
                 closePort()
                 worker.unref() // is this correct? terminate() probably isn't...
                 log.info(msg('disposed'))
