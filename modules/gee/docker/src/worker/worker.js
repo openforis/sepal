@@ -18,7 +18,7 @@ parentPort.once('message', ({name, ports}) => {
         msg
     ].join(' ')
 
-    const start = ({jobId, jobPath, args}) => {
+    const start = ({jobId, start: {jobPath, args}}) => {
         log.trace(msg('start', jobId))
         
         const next = value => {
@@ -46,10 +46,10 @@ parentPort.once('message', ({name, ports}) => {
             .value()
 
         concat(...tasks$).pipe(
-            mergeMap(({worker$, args}) => worker$(...args), 1),
             tap(({jobName, args}) =>
                 log.trace(msg(`running <${jobName}> with args:`, jobId), args)
             ),
+            mergeMap(({worker$, args}) => worker$(...args), 1),
             takeUntil(stop$.pipe(filter(id => id === jobId)))
         ).subscribe({next, error, complete})
     }
@@ -60,9 +60,9 @@ parentPort.once('message', ({name, ports}) => {
     }
 
     const handleMessage = message => {
-        message.start && start(message.start)
-        message.stop && stop(message.stop)
-        message.dispose && dispose()
+        message.start && start(message)
+        message.stop && stop(message)
+        message.dispose && dispose(message)
     }
 
     const init = () => {
