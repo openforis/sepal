@@ -9,10 +9,7 @@ const log = require('@sepal/log')
 
 const WORKER_PATH = path.join(__dirname, 'worker.js')
 
-const createWorker = () =>
-    new Worker(WORKER_PATH)
-
-const createChannels = names =>
+const createMessageChannels = names =>
     _.transform(names, (data, name) => {
         const {port1: localPort, port2: remotePort} = new MessageChannel()
         data.localPorts[name] = localPort
@@ -24,8 +21,8 @@ const createChannels = names =>
 
 const bootstrapWorker$ = (name, channelNames) => {
     const worker$ = new Subject()
-    const worker = createWorker()
-    const {localPorts, remotePorts} = createChannels(channelNames)
+    const worker = new Worker(WORKER_PATH)
+    const {localPorts, remotePorts} = createMessageChannels(channelNames)
     worker.once('message', status => {
         if (status === 'READY') {
             worker$.next({worker, ports: localPorts})
@@ -73,69 +70,58 @@ const initWorker$ = (name, jobPath) => {
         result$.next({jobId, complete})
     }
 
-    const submit$ = port => {
+    const setupWorker = (worker, port) => {
+        const openPort = () => port.on('message', handleWorkerMessage)
+        const closePort = () => port.off('message', handleWorkerMessage)
         const send = msg => port.postMessage(msg)
 
-        port.on('message', handleWorkerMessage)
+        openPort()
+        log.trace('Worker ready')
 
-        return args => {
-            const jobId = uuid()
-            const jobResult$ = new Subject()
-
-            result$.pipe(
-                filter(message => message.jobId === jobId)
-            ).subscribe(
-                message => {
-                    message.value && jobResult$.next({value: message.value})
-                    message.error && jobResult$.error({error: message.error})
-                    message.complete && jobResult$.complete()
-                },
-                error => log.error(error), // how to handle this?
-                complete => log.warn(complete) // how to handle this?
-            )
-
-            const start = jobId => {
-                const workerArgs = _.last(args)
-                _.isEmpty(workerArgs)
-                    ? log.debug(msg('started with no args', jobId))
-                    : log.debug(msg('started with args:', jobId), workerArgs)
-                send({jobId, start: {jobPath, args}})
+        return {
+            submit$(args) {
+                const jobId = uuid()
+                const jobResult$ = new Subject()
+    
+                result$.pipe(
+                    filter(message => message.jobId === jobId)
+                ).subscribe(
+                    message => {
+                        message.value && jobResult$.next({value: message.value})
+                        message.error && jobResult$.error({error: message.error})
+                        message.complete && jobResult$.complete()
+                    },
+                    error => log.error(error), // how to handle this?
+                    complete => log.warn(complete) // how to handle this?
+                )
+    
+                const start = jobId => {
+                    const workerArgs = _.last(args)
+                    _.isEmpty(workerArgs)
+                        ? log.debug(msg('started with no args', jobId))
+                        : log.debug(msg('started with args:', jobId), workerArgs)
+                    send({jobId, start: {jobPath, args}})
+                }
+    
+                const stop = jobId =>
+                    send({jobId, stop: true})
+    
+                start(jobId)
+                return jobResult$.pipe(
+                    finalize(() => stop(jobId))
+                )
+            },
+            dispose$() {
+                closePort()
+                worker.unref() // is this correct? terminate() probably isn't...
+                log.info(msg('disposed'))
             }
-
-            const stop = jobId =>
-                send({jobId, stop: true})
-
-            start(jobId)
-            return jobResult$.pipe(
-                finalize(() => stop(jobId))
-            )
         }
     }
 
-    const dispose = (worker, port) => {
-        port.off('message', handleWorkerMessage)
-        worker.unref() // is this correct? terminate() probably isn't...
-        log.info(msg('disposed'))
-    }
-
-    const dispose$ = (worker, jobPort) => {
-        const dispose$ = new Subject()
-        dispose$.pipe(
-            first()
-        ).subscribe(
-            () => dispose(worker, jobPort)
-        )
-        return dispose$
-    }
-
     return bootstrapWorker$(name, ['job']).pipe(
-        map(({worker, ports: {job: jobPort}}) => {
-            log.trace('Worker ready')
-            return {
-                submit$: submit$(jobPort),
-                dispose$: dispose$(worker, jobPort)
-            }
-        }))
+        map(({worker, ports: {job: port}}) => setupWorker(worker, port))
+    )
 }
 
 module.exports = {
