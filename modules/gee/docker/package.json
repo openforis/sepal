@@ -16,7 +16,7 @@
     "@ee": "src/ee"
   },
   "dependencies": {
-    "@google/earthengine": "^0.1.203",
+    "@google/earthengine": "0.1.203",
     "commander": "^4.0.1",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",
