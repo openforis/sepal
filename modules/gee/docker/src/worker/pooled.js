@@ -23,8 +23,8 @@ const pooledWorker = concurrency => {
             map(({item: worker, release}) => ({worker, release}))
         )
     
-    const submitRequest = ({requestId, jobName, jobPath, args}) =>
-        workerRequest$.next({requestId, jobName, jobPath, args})
+    const submitRequest = ({requestId, jobName, jobPath, args, args$}) =>
+        workerRequest$.next({requestId, jobName, jobPath, args, args$})
     
     const getResponse$ = requestId =>
         workerResponse$.pipe(
@@ -37,10 +37,10 @@ const pooledWorker = concurrency => {
         groupBy(({jobName}) => jobName),
         mergeMap(group =>
             group.pipe(
-                mergeMap(({requestId, jobName, jobPath, args}) =>
+                mergeMap(({requestId, jobName, jobPath, args, args$}) =>
                     getWorkerInstance$(jobName, jobPath).pipe(
                         mergeMap(({worker, release}) =>
-                            worker.submit$(args).down$.pipe(
+                            worker.submit$(args, args$).pipe(
                                 map(result => ({
                                     requestId,
                                     result
@@ -60,10 +60,10 @@ const pooledWorker = concurrency => {
     )
 
     return {
-        submit$(jobName, jobPath, args) {
+        submit$(jobName, jobPath, args, args$) {
             log.trace(`Submitting <${jobName}> to pooled worker`)
             const requestId = uuid()
-            submitRequest({requestId, jobName, jobPath, args})
+            submitRequest({requestId, jobName, jobPath, args, args$})
             return getResponse$(requestId).pipe(
                 finalize(() => cancel$.next({requestId}))
             )

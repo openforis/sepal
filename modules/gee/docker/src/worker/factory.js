@@ -79,10 +79,10 @@ const initWorker$ = (name, jobPath) => {
         log.trace('Worker ready')
 
         return {
-            submit$(args) {
+            submit$(args, args$) {
                 const jobId = uuid()
                 const jobResult$ = new Subject()
-    
+
                 result$.pipe(
                     filter(message => message.jobId === jobId)
                 ).subscribe(
@@ -107,11 +107,16 @@ const initWorker$ = (name, jobPath) => {
                     send({jobId, stop: true})
     
                 start(jobId)
-                return {
-                    down$: jobResult$.pipe(
-                        finalize(() => stop(jobId))
+
+                if (args$) {
+                    args$.subscribe(
+                        value => send({jobId, value})
                     )
                 }
+
+                return jobResult$.pipe(
+                    finalize(() => stop(jobId))
+                )
             },
             dispose() {
                 closePort()

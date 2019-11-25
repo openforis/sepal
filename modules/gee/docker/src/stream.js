@@ -37,7 +37,7 @@ const renderStream = async (ctx, body$) => {
 const handleHttp = async ctx => {
     const close$ = new Subject()
     ctx.req.on('close', () => close$.next())
-    const body$ = ctx.down$.pipe(
+    const body$ = ctx.result$.pipe(
         first(),
         takeUntil(close$)
     )
@@ -47,12 +47,17 @@ const handleHttp = async ctx => {
 const handleWebsocket = async ctx => {
     const ws = await ctx.ws()
     const close$ = new Subject()
+    
     ws.on('close', () => {
         close$.next()
         ws.terminate()
     })
-    ws.on('message', message => ctx.up$ && ctx.up$.next(message))
-    ctx.down$.pipe(
+
+    ws.on('message', message =>
+        ctx.args$.next(message)
+    )
+       
+    ctx.result$.pipe(
         takeUntil(close$)
     ).subscribe(
         result => {
@@ -62,15 +67,16 @@ const handleWebsocket = async ctx => {
     )
 }
 
-const wrapper = func =>
-    ctx => {
-        ctx.down$ = func(ctx)
-        ctx.up$ = null
+const wrapper = func => {
+    return ctx => {
+        ctx.args$ = new Subject()
+        ctx.result$ = func(ctx)
     }
+}
 
 const resolve = async (ctx, next) => {
     await next()
-    if (ctx.down$) {
+    if (ctx.result$) {
         ctx.ws
             ? await handleWebsocket(ctx)
             : await handleHttp(ctx)

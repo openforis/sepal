@@ -3,11 +3,11 @@ const _ = require('lodash')
 const log = require('@sepal/log')
 const {initWorker$} = require('./factory')
 
-const submit$ = (jobName, jobPath, args) =>
+const submit$ = (jobName, jobPath, args, args$) =>
     initWorker$(jobName, jobPath).pipe(
         tap(() => log.trace(`Submitting <${jobName}> to single worker`)),
         switchMap(({submit$, dispose$}) =>
-            submit$(args).pipe(
+            submit$(args, args$).pipe(
                 finalize(() => dispose$.next())
             )
         )

@@ -1,8 +1,8 @@
 const _ = require('lodash')
 
-// const {submit$} = require('./single')
-const PooledWorker = require('./pooled')
-const {submit$} = PooledWorker(3)
+const {submit$} = require('./single')
+// const PooledWorker = require('./pooled')
+// const {submit$} = PooledWorker(3)
 
 // NOTE: ctx is three-state:
 //
@@ -38,7 +38,7 @@ const submit = ({jobName, jobPath, before, args, ctx}) => {
     const argFuncs = [...depArgs(before), args]
     return isDependency(ctx)
         ? argFuncs
-        : submit$(jobName, jobPath, evaluateArgs(argFuncs, ctx))
+        : submit$(jobName, jobPath, evaluateArgs(argFuncs, ctx), ctx.args$)
 }
 
 const job = ({jobName, jobPath, before = [], worker$, args = () => []}) => {
