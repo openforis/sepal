@@ -11,7 +11,7 @@ const tableMap$ = require('@sepal/jobs/table/map')
 const router = Router()
 
 router
-    .get('/test',
+    .get('/test/:min/:max',
         ctx => ctx.stream$ = test$(ctx))
 
 router
