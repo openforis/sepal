@@ -49,10 +49,10 @@ const pooledWorker = concurrency => {
                                     filter(cancel => cancel.requestId === requestId)
                                 )),
                                 tap(() => release())
-                            ), null, 1)
+                            ))
                     ), null, concurrency
                 ),
-            ), null, 1
+            )
         )
     ).subscribe(
         response => workerResponse$.next(response)
