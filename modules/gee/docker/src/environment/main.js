@@ -1,6 +1,6 @@
 const Router = require('koa-router')
+const {wrapper} = require('../stream')
 
-const test$ = require('@sepal/jobs/test')
 const sceneAreas$ = require('@sepal/jobs/image/sceneAreas')
 const preview$ = require('@sepal/jobs/image/preview')
 const tableColumns$ = require('@sepal/jobs/table/columns')
@@ -11,22 +11,12 @@ const tableMap$ = require('@sepal/jobs/table/map')
 const router = Router()
 
 router
-    .get('/test/:min/:max',
-        ctx => ctx.stream$ = test$(ctx))
-
-router
-    .post('/sceneareas',
-        ctx => ctx.stream$ = sceneAreas$(ctx))
-    .post('/preview',
-        ctx => ctx.stream$ = preview$(ctx))
-    .get('/table/columns',
-        ctx => ctx.stream$ = tableColumns$(ctx))
-    .get('/table/columnValues',
-        ctx => ctx.stream$ = tableColumnValues$(ctx))
-    .post('/table/query',
-        ctx => ctx.stream$ = tableQuery$(ctx))
-    .get('/table/map',
-        ctx => ctx.stream$ = tableMap$(ctx))
+    .post('/sceneareas', wrapper(ctx => sceneAreas$(ctx)))
+    .post('/preview', wrapper(ctx => preview$(ctx)))
+    .get('/table/columns', wrapper(ctx => tableColumns$(ctx)))
+    .get('/table/columnValues', wrapper(ctx => tableColumnValues$(ctx)))
+    .post('/table/query', wrapper(ctx => tableQuery$(ctx)))
+    .get('/table/map', wrapper(ctx => tableMap$(ctx)))
 
 module.exports = {
     routes: router.routes(),

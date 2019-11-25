@@ -107,9 +107,11 @@ const initWorker$ = (name, jobPath) => {
                     send({jobId, stop: true})
     
                 start(jobId)
-                return jobResult$.pipe(
-                    finalize(() => stop(jobId))
-                )
+                return {
+                    down$: jobResult$.pipe(
+                        finalize(() => stop(jobId))
+                    )
+                }
             },
             dispose() {
                 closePort()

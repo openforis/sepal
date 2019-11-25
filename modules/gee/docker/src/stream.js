@@ -34,15 +34,47 @@ const renderStream = async (ctx, body$) => {
     }
 }
 
-module.exports = async (ctx, next) => {
+const handleHttp = async ctx => {
     const close$ = new Subject()
     ctx.req.on('close', () => close$.next())
+    const body$ = ctx.down$.pipe(
+        first(),
+        takeUntil(close$)
+    )
+    await renderStream(ctx, body$)
+}
+
+const handleWebsocket = async ctx => {
+    const ws = await ctx.ws()
+    const close$ = new Subject()
+    ws.on('close', () => {
+        close$.next()
+        ws.terminate()
+    })
+    ws.on('message', message => ctx.up$ && ctx.up$.next(message))
+    ctx.down$.pipe(
+        takeUntil(close$)
+    ).subscribe(
+        result => {
+            result.value && ws.send(result.value)
+            // result.error && ws.send(result.error)
+        }
+    )
+}
+
+const wrapper = func =>
+    ctx => {
+        ctx.down$ = func(ctx)
+        ctx.up$ = null
+    }
+
+const resolve = async (ctx, next) => {
     await next()
-    if (ctx.stream$) {
-        const body$ = ctx.stream$.pipe(
-            first(),
-            takeUntil(close$)
-        )
-        await renderStream(ctx, body$)
+    if (ctx.down$) {
+        ctx.ws
+            ? await handleWebsocket(ctx)
+            : await handleHttp(ctx)
     }
 }
+
+module.exports = {wrapper, resolve}

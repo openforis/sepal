@@ -40,7 +40,7 @@ const pooledWorker = concurrency => {
                 mergeMap(({requestId, jobName, jobPath, args}) =>
                     getWorkerInstance$(jobName, jobPath).pipe(
                         mergeMap(({worker, release}) =>
-                            worker.submit$(args).pipe(
+                            worker.submit$(args).down$.pipe(
                                 map(result => ({
                                     requestId,
                                     result
@@ -49,7 +49,8 @@ const pooledWorker = concurrency => {
                                     filter(cancel => cancel.requestId === requestId)
                                 )),
                                 tap(() => release())
-                            ))
+                            )
+                        )
                     ), null, concurrency
                 ),
             )
