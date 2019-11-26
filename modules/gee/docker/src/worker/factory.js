@@ -44,33 +44,40 @@ const initWorker$ = (name, jobPath) => {
     
     const result$ = new Subject()
 
-    const handleWorkerMessage = message => {
-        message.value && handleValue(message)
-        message.error && handleError(message)
-        message.complete && handleComplete(message)
-    }
-
-    const handleValue = ({jobId, value}) => {
-        log.trace(msg(`value: ${value}`, jobId))
-        result$.next({jobId, value})
-    }
-
-    const handleError = ({jobId, error: serializedError}) => {
-        const error = deserializeError(serializedError)
-        const errors = _.compact([
-            error.message,
-            error.type ? `(${error.type})` : null
-        ]).join()
-        log.error(msg(`error: ${errors}`, jobId))
-        result$.next({jobId, error})
-    }
-
-    const handleComplete = ({jobId, complete}) => {
-        log.debug(msg('completed', jobId))
-        result$.next({jobId, complete})
-    }
-
     const setupWorker = (worker, port) => {
+        const handleWorkerMessage = message => {
+            message.value && handleValue(message)
+            message.error && handleError(message)
+            message.complete && handleComplete(message)
+            message.dispose && handleDispose(message, worker)
+        }
+    
+        const handleValue = ({jobId, value}) => {
+            log.trace(msg(`value: ${value}`, jobId))
+            result$.next({jobId, value})
+        }
+    
+        const handleError = ({jobId, error: serializedError}) => {
+            const error = deserializeError(serializedError)
+            const errors = _.compact([
+                error.message,
+                error.type ? `(${error.type})` : null
+            ]).join()
+            log.error(msg(`error: ${errors}`, jobId))
+            result$.next({jobId, error})
+        }
+    
+        const handleComplete = ({jobId, complete}) => {
+            log.debug(msg('completed', jobId))
+            result$.next({jobId, complete})
+        }
+
+        const handleDispose = ({jobId}, worker) => {
+            log.debug(msg('disposed', jobId))
+            closePort()
+            worker.terminate()
+        }
+        
         const openPort = () => port.on('message', handleWorkerMessage)
         const closePort = () => port.off('message', handleWorkerMessage)
         const send = msg => port.postMessage(msg)
@@ -119,9 +126,7 @@ const initWorker$ = (name, jobPath) => {
                 )
             },
             dispose() {
-                closePort()
-                worker.unref() // is this correct? terminate() probably isn't...
-                log.info(msg('disposed'))
+                send({dispose: true})
             }
         }
     }

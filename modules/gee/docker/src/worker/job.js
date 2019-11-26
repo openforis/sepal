@@ -1,8 +1,13 @@
 const _ = require('lodash')
 
-const {submit$} = require('./single')
-// const PooledWorker = require('./pooled')
-// const {submit$} = PooledWorker(3)
+const PooledWorker = require('./pooled')
+
+// const {submit$} = require('./single')
+const {submit$} = PooledWorker({
+    concurrency: 100,
+    maxIdleMilliseconds: 5000,
+    minIdleCount: 0
+})
 
 // NOTE: ctx is three-state:
 //

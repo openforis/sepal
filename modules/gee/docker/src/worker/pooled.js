@@ -6,7 +6,7 @@ const log = require('@sepal/log')
 const {initWorker$} = require('./factory')
 const Pool = require('./pool')
 
-const pooledWorker = concurrency => {
+const pooledWorker = ({concurrency, maxIdleMilliseconds, minIdleCount}) => {
     const workerRequest$ = new Subject()
     const workerResponse$ = new Subject()
     const cancel$ = new Subject()
@@ -15,11 +15,14 @@ const pooledWorker = concurrency => {
         create$: ({jobId, jobPath}) => initWorker$(jobId, jobPath),
         onCold: ({jobId}) => log.debug(`Creating worker <${jobId}>`),
         onHot: ({jobId}) => log.debug(`Recycling worker <${jobId}>`),
-        onRelease: ({jobId}) => log.trace(`Released worker <${jobId}>`)
+        onRelease: ({jobId}) => log.trace(`Released worker <${jobId}>`),
+        onDispose: ({item}) => item.dispose(),
+        maxIdleMilliseconds,
+        minIdleCount
     })
     
     const getWorkerInstance$ = (jobName, jobPath) =>
-        workerPool.get$(jobName, {jobName, jobPath}).pipe(
+        workerPool.get$({slot: jobName, createArgs: {jobName, jobPath}}).pipe(
             map(({item: worker, release}) => ({worker, release}))
         )
     

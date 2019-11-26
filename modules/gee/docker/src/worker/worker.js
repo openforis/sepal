@@ -76,8 +76,8 @@ parentPort.once('message', ({name, ports}) => {
     const handleMessage = message => {
         message.start && start(message)
         message.stop && stop(message)
-        message.dispose && dispose(message)
         message.value && next(message)
+        message.dispose && dispose(message)
     }
 
     const init = () => {
@@ -87,7 +87,8 @@ parentPort.once('message', ({name, ports}) => {
     }
 
     const dispose = () => {
-        log.debug(msg('dispose'))
+        log.trace(msg('dispose'))
+        jobPort.postMessage({dispose: true})
         jobPort.off('message', handleMessage)
     }
 
