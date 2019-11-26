@@ -75,7 +75,8 @@ const initWorker$ = (name, jobPath) => {
         const handleDispose = ({jobId}, worker) => {
             log.debug(msg('disposed', jobId))
             closePort()
-            worker.terminate()
+            worker.unref()
+            // worker.terminate() [TODO] implement forced termination after timeout
         }
         
         const openPort = () => port.on('message', handleWorkerMessage)
