@@ -48,8 +48,7 @@ const main = ({jobName, jobPath, minIdleCount, before, args, ctx}) => {
             jobPath,
             minIdleCount,
             args: evaluateArgs(argFuncs, ctx),
-            args$:
-              ctx.args$
+            args$: ctx.args$
         })
 }
 
