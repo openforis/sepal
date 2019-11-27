@@ -5,8 +5,7 @@ const PooledWorker = require('./pooled')
 // const {submit$} = require('./single')
 const {submit$} = PooledWorker({
     concurrency: 100,
-    maxIdleMilliseconds: 1000,
-    minIdleCount: 0
+    maxIdleMilliseconds: 1000
 })
 
 // NOTE: ctx is three-state:
