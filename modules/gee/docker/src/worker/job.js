@@ -17,12 +17,6 @@ const {submit$} = PooledWorker({
 const isDependency = ctx => ctx === null
 const isWorker = ctx => ctx === undefined
 
-const assert = (arg, func, msg) => {
-    if (!func(arg)) {
-        throw new Error(msg)
-    }
-}
-
 const depArgs = (deps = []) =>
     deps.map((m => m(null)))
 
@@ -51,10 +45,21 @@ const main = ({jobName, jobPath, minIdleCount, before, args, ctx}) => {
         })
 }
 
+const assert = (arg, func, msg) => {
+    if (!func(arg)) {
+        throw new Error(msg)
+    }
+}
+
+const defined = v => !_.isNil(v)
+
 const job = ({jobName, jobPath, minIdleCount, before = [], worker$, args = () => []}) => {
-    assert(jobName, _.isString, 'jobName is required')
-    assert(worker$, _.isFunction, 'worker$ is required')
-    assert(args, _.isFunction, 'args is required')
+    assert(jobName, defined, 'jobName is required')
+    assert(jobName, _.isString, 'jobName must be a string')
+    assert(worker$, defined, 'worker$ is required')
+    assert(worker$, _.isFunction, 'worker$ must be a function')
+    assert(args, defined, 'args is required')
+    assert(args, _.isFunction, 'args must be a function')
     assert(before, _.isArray, 'before must be an array')
     return ctx => isWorker(ctx)
         ? worker({jobName, before, worker$})
