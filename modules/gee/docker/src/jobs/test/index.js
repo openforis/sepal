@@ -22,8 +22,8 @@ const worker$ = (minDuration, maxDuration = minDuration) => {
 module.exports = job({
     jobName: 'Test1',
     jobPath: __filename,
+    minIdleCount: 3,
     before: [require('./test_1'), require('./test_2')],
     args: ({params: {min, max}}) => [parseInt(min), parseInt(max)],
     worker$,
-    minIdleCount: 3
 })

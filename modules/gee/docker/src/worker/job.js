@@ -5,7 +5,7 @@ const PooledWorker = require('./pooled')
 // const {submit$} = require('./single')
 const {submit$} = PooledWorker({
     concurrency: 100,
-    maxIdleMilliseconds: 5000,
+    maxIdleMilliseconds: 1000,
     minIdleCount: 0
 })
 
@@ -39,21 +39,28 @@ const evaluateArgs = (argFuncs, ctx) =>
         .map(argFunc => argFunc(ctx))
         .value()
 
-const main = ({jobName, jobPath, before, args, ctx}) => {
+const main = ({jobName, jobPath, minIdleCount, before, args, ctx}) => {
     const argFuncs = [...depArgs(before), args]
     return isDependency(ctx)
         ? argFuncs
-        : submit$(jobName, jobPath, evaluateArgs(argFuncs, ctx), ctx.args$)
+        : submit$({
+            jobName,
+            jobPath,
+            minIdleCount,
+            args: evaluateArgs(argFuncs, ctx),
+            args$:
+              ctx.args$
+        })
 }
 
-const job = ({jobName, jobPath, before = [], worker$, args = () => []}) => {
+const job = ({jobName, jobPath, minIdleCount, before = [], worker$, args = () => []}) => {
     assert(jobName, _.isString, 'jobName is required')
     assert(worker$, _.isFunction, 'worker$ is required')
     assert(args, _.isFunction, 'args is required')
     assert(before, _.isArray, 'before must be an array')
     return ctx => isWorker(ctx)
         ? worker({jobName, before, worker$})
-        : main({jobName, jobPath, before, args, ctx})
+        : main({jobName, jobPath, minIdleCount, before, args, ctx})
 }
 
 module.exports = job

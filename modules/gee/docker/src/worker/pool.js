@@ -3,84 +3,80 @@ const {tap, map, mergeMap, takeUntil, mapTo, filter} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 
-module.exports = ({create$, onCold, onHot, onRelease, onDispose, maxIdleMilliseconds, minIdleCount}) => {
-    const pool = {}
+module.exports = ({name, create$, onCold, onHot, onRelease, onDispose, maxIdleMilliseconds = 1000, minIdleCount = 0}) => {
+    const pool = []
     const lock$ = new Subject()
     const unlock$ = new Subject()
 
     lock$.subscribe(
-        ({instance}) => instance.locked = true
+        instance => instance.locked = true
     )
 
     unlock$.pipe(
-        tap(({instance}) => instance.locked = false),
-        mergeMap(({slot, instance: currentInstance}) =>
+        tap(instance => instance.locked = false),
+        mergeMap(instance =>
             timer(maxIdleMilliseconds).pipe(
                 takeUntil(lock$.pipe(
-                    filter(({instance}) => instance === currentInstance)
+                    filter(currentInstance => currentInstance === instance)
                 )),
-                mapTo({slot, instance: currentInstance})
+                mapTo(instance)
             )
         )
     ).subscribe(
-        ({slot, instance}) => dispose(slot, instance)
+        instance => dispose(instance)
     )
 
-    const lock = (slot, instance) =>
-        lock$.next({slot, instance})
+    const lock = instance =>
+        lock$.next(instance)
 
-    const unlock = (slot, instance) =>
-        unlock$.next(({slot, instance}))
+    const unlock = instance =>
+        unlock$.next(instance)
 
-    const jobId = (slot, id) => `${slot}.${id.substr(-4)}`
+    const instanceId = id => `${name}.${id.substr(-4)}`
 
-    const add = (slot, instance) =>
-        pool[slot] = [...(pool[slot] || []), instance]
+    const add = instance =>
+        pool.push(instance)
 
-    const dispose = (slot, instance) => {
-        const idleCount = _.filter(pool[slot], instance => !instance.locked).length
+    const dispose = instance => {
+        const idleCount = _.filter(pool, instance => !instance.locked).length
         if (idleCount > minIdleCount) {
-            onDispose && onDispose({slot, id: instance.id, item: instance.item, jobId: jobId(slot, instance.id)})
-            _.pull(pool[slot], instance)
+            onDispose && onDispose({id: instance.id, item: instance.item, instanceId: instanceId(instance.id)})
+            _.pull(pool, instance)
         }
     }
 
-    const releaseable = (slot, instance) => ({
+    const releaseable = instance => ({
         item: instance.item,
         release: () => {
-            unlock(slot, instance)
-            onRelease && onRelease({slot, id: instance.id, jobId: jobId(slot, instance.id)})
+            unlock(instance)
+            onRelease && onRelease({id: instance.id, instanceId: instanceId(instance.id)})
         }
     })
 
-    const hot$ = (slot, instance) =>
+    const hot$ = instance =>
         of(instance).pipe(
-            tap(({id}) => onHot && onHot({slot, id, jobId: jobId(slot, id)}))
+            tap(({id}) => onHot && onHot({id, instanceId: instanceId(id)}))
         )
 
-    const cold$ = (slot, createArgs) => {
+    const cold$ = () => {
         const id = uuid()
-        return create$({...createArgs, jobId: jobId(slot, id)}).pipe(
+        return create$(instanceId(id)).pipe(
             map(item => ({id, item})),
-            tap(instance => add(slot, instance)),
-            tap(({id}) => onCold && onCold({slot, id, jobId: jobId(slot, id)}))
+            tap(instance => add(instance)),
+            tap(({id}) => onCold && onCold({id, instanceId: instanceId(id)}))
         )
     }
 
-    const instance$ = ({slot, instance, createArgs}) =>
+    const instance$ = instance =>
         instance
-            ? hot$(slot, instance)
-            : cold$(slot, createArgs)
+            ? hot$(instance)
+            : cold$()
 
     return {
-        get$: ({slot, createArgs}) =>
-            instance$({
-                slot,
-                instance: _.find(pool[slot], ({locked}) => !locked),
-                createArgs
-            }).pipe(
-                tap(instance => lock(slot, instance)),
-                map(instance => releaseable(slot, instance))
+        get$: () =>
+            instance$(_.find(pool, ({locked}) => !locked)).pipe(
+                tap(instance => lock(instance)),
+                map(instance => releaseable(instance))
             )
     }
 }
