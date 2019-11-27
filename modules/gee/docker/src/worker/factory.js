@@ -38,7 +38,7 @@ const bootstrapWorker$ = (name, channelNames) => {
 
 const initWorker$ = (name, jobPath) => {
     const msg = (msg, jobId) => [
-        `[${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
+        `Worker [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
         msg
     ].join(' ')
     
