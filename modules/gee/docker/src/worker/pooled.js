@@ -17,13 +17,7 @@ const PooledWorker = ({concurrency, maxIdleMilliseconds}) => {
         Pool({
             name: jobName,
             create$: instanceId => initWorker$(instanceId, jobPath),
-            onCold: ({instanceId}) => log.debug(`Creating worker <${instanceId}>`),
-            onHot: ({instanceId}) => log.debug(`Recycling worker <${instanceId}>`),
-            onRelease: ({instanceId}) => log.trace(`Released worker <${instanceId}>`),
-            onDispose: ({instanceId, item}) => {
-                item.dispose()
-                log.debug(`Disposed worker <${instanceId}>`)
-            },
+            onDispose: ({item}) => item.dispose(),
             maxIdleMilliseconds,
             minIdleCount
         })
