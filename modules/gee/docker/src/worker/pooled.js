@@ -13,28 +13,34 @@ const PooledWorker = ({concurrency, maxIdleMilliseconds}) => {
 
     const pools = {}
 
-    const getWorkerInstance$ = ({jobName, jobPath, minIdleCount}) => {
-        if (!pools[jobName]) {
-            const pool = Pool({
-                name: jobName,
-                create$: instanceId => initWorker$(instanceId, jobPath),
-                onCold: ({instanceId}) => log.debug(`Creating worker <${instanceId}>`),
-                onHot: ({instanceId}) => log.debug(`Recycling worker <${instanceId}>`),
-                onRelease: ({instanceId}) => log.trace(`Released worker <${instanceId}>`),
-                onDispose: ({instanceId, item}) => {
-                    item.dispose()
-                    log.debug(`Disposed worker <${instanceId}>`)
-                },
-                maxIdleMilliseconds,
-                minIdleCount
-            })
-            pools[jobName] = pool
-        }
+    const createPool = ({jobName, jobPath, minIdleCount}) => {
+        const pool = Pool({
+            name: jobName,
+            create$: instanceId => initWorker$(instanceId, jobPath),
+            onCold: ({instanceId}) => log.debug(`Creating worker <${instanceId}>`),
+            onHot: ({instanceId}) => log.debug(`Recycling worker <${instanceId}>`),
+            onRelease: ({instanceId}) => log.trace(`Released worker <${instanceId}>`),
+            onDispose: ({instanceId, item}) => {
+                item.dispose()
+                log.debug(`Disposed worker <${instanceId}>`)
+            },
+            maxIdleMilliseconds,
+            minIdleCount
+        })
+        pools[jobName] = pool
+    }
 
-        return pools[jobName].get$().pipe(
+    const getPool = ({jobName, jobPath, minIdleCount}) => {
+        if (!pools[jobName]) {
+            createPool({jobName, jobPath, minIdleCount})
+        }
+        return pools[jobName]
+    }
+
+    const getWorkerInstance$ = ({jobName, jobPath, minIdleCount}) =>
+        getPool({jobName, jobPath, minIdleCount}).get$().pipe(
             map(({item: worker, release}) => ({worker, release}))
         )
-    }
     
     const submitRequest = ({requestId, jobName, jobPath, minIdleCount, args, args$}) =>
         workerRequest$.next({requestId, jobName, jobPath, minIdleCount, args, args$})
