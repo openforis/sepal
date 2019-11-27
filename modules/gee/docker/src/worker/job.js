@@ -39,7 +39,7 @@ const evaluateArgs = (argFuncs, ctx) =>
         .map(argFunc => argFunc(ctx))
         .value()
 
-const submit = ({jobName, jobPath, before, args, ctx}) => {
+const main = ({jobName, jobPath, before, args, ctx}) => {
     const argFuncs = [...depArgs(before), args]
     return isDependency(ctx)
         ? argFuncs
@@ -53,7 +53,7 @@ const job = ({jobName, jobPath, before = [], worker$, args = () => []}) => {
     assert(before, _.isArray, 'before must be an array')
     return ctx => isWorker(ctx)
         ? worker({jobName, before, worker$})
-        : submit({jobName, jobPath, before, args, ctx})
+        : main({jobName, jobPath, before, args, ctx})
 }
 
 module.exports = job
