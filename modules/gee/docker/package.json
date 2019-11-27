@@ -5,8 +5,8 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "main": "LEVEL=debug ENVIRONMENT=main nodemon --inspect src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir $SEPAL_CONFIG/sepal-server/home/admin --username admin",
-    "mainpino": "LEVEL=debug ENVIRONMENT=main nodemon --inspect src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir $SEPAL_CONFIG/sepal-server/home/admin --username admin | pino-pretty",
+    "main": "LEVEL=info ENVIRONMENT=main nodemon --inspect src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir $SEPAL_CONFIG/sepal-server/home/admin --username admin",
+    "mainpino": "LEVEL=trace ENVIRONMENT=main nodemon --inspect src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir $SEPAL_CONFIG/sepal-server/home/admin --username admin | pino-pretty",
     "task": "LEVEL=debug ENVIRONMENT=task nodemon --inspect src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir $SEPAL_CONFIG/sepal-server/home/admin --username admin | pino-pretty"
   },
   "type": "module",

@@ -13,8 +13,8 @@ const PooledWorker = ({concurrency, maxIdleMilliseconds}) => {
 
     const pools = {}
 
-    const createPool = ({jobName, jobPath, minIdleCount}) => {
-        const pool = Pool({
+    const createPool = ({jobName, jobPath, minIdleCount}) =>
+        Pool({
             name: jobName,
             create$: instanceId => initWorker$(instanceId, jobPath),
             onCold: ({instanceId}) => log.debug(`Creating worker <${instanceId}>`),
@@ -27,12 +27,10 @@ const PooledWorker = ({concurrency, maxIdleMilliseconds}) => {
             maxIdleMilliseconds,
             minIdleCount
         })
-        pools[jobName] = pool
-    }
-
+        
     const getPool = ({jobName, jobPath, minIdleCount}) => {
         if (!pools[jobName]) {
-            createPool({jobName, jobPath, minIdleCount})
+            pools[jobName] = createPool({jobName, jobPath, minIdleCount})
         }
         return pools[jobName]
     }
