@@ -72,14 +72,8 @@ const initWorker$ = (name, jobPath) => {
             result$.next({jobId, complete})
         }
 
-        // const handleDispose = ({jobId}, worker) => {
-        //     log.debug(msg('disposed', jobId))
-        //     closePort()
-        //     worker.unref()
-        // }
-        
         const openPort = () => port.on('message', handleWorkerMessage)
-        const closePort = () => port.off('message', handleWorkerMessage)
+        // const closePort = () => port.off('message', handleWorkerMessage)
         const send = msg => port.postMessage(msg)
 
         openPort()
