@@ -31,11 +31,17 @@ def ee_map(table_id, column_name, column_value, color):
         filters = [ee.Filter.eq(column_name, column_value)]
         if is_number(column_value):
             filters.append(ee.Filter.eq(column_name, float(column_value)))
-        collection = collection.filter(ee.Filter.Or(*filters))
+        collection = collection\
+            .filter(ee.Filter.Or(*filters))
         geometry = collection.geometry()
         bounds_polygon = ee.List(geometry.bounds().coordinates().get(0))
         bounds = ee.List([bounds_polygon.get(0), bounds_polygon.get(2)]).getInfo()
-        ee_map = collection.getMapId({
+        ee_map = collection \
+            .style(
+                color='FFFFFF50',
+                fillColor='FFFFFF08'
+            )\
+            .getMapId({
             'color': color
         })
         return {
