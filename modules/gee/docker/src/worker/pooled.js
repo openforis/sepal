@@ -1,12 +1,12 @@
 const {Subject} = require('rxjs')
-const {groupBy, mergeMap, tap, map, share, filter, finalize, takeUntil} = require('rxjs/operators')
+const {groupBy, mergeMap, map, share, filter, finalize, takeUntil} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('@sepal/log')
 const {initWorker$} = require('./factory')
 const Pool = require('./pool')
 
-const pooledWorker = ({concurrency, maxIdleMilliseconds, minIdleCount}) => {
+const PooledWorker = ({concurrency, maxIdleMilliseconds, minIdleCount}) => {
     const workerRequest$ = new Subject()
     const workerResponse$ = new Subject()
     const cancel$ = new Subject()
@@ -77,4 +77,4 @@ const pooledWorker = ({concurrency, maxIdleMilliseconds, minIdleCount}) => {
     }
 }
 
-module.exports = pooledWorker
+module.exports = PooledWorker
