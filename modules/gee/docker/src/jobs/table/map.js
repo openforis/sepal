@@ -22,6 +22,7 @@ const worker$ = ({tableId, columnName, columnValue, color}) => {
 module.exports = job({
     jobName: 'Request EE Table map',
     jobPath: __filename,
+    minIdleCount: 10,
     before: [require('@sepal/ee/initialize')],
     args: ctx => [ctx.request.query],
     worker$

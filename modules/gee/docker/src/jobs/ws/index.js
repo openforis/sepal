@@ -16,5 +16,6 @@ const worker$ = args$ => {
 module.exports = job({
     jobName: 'Websocket',
     jobPath: __filename,
+    minIdleCount: 1,
     worker$
 })
