@@ -49,7 +49,7 @@ const initWorker$ = (name, jobPath) => {
             message.value && handleValue(message)
             message.error && handleError(message)
             message.complete && handleComplete(message)
-            message.dispose && handleDispose(message, worker)
+            // message.dispose && handleDispose(message, worker)
         }
     
         const handleValue = ({jobId, value}) => {
@@ -72,12 +72,11 @@ const initWorker$ = (name, jobPath) => {
             result$.next({jobId, complete})
         }
 
-        const handleDispose = ({jobId}, worker) => {
-            log.debug(msg('disposed', jobId))
-            closePort()
-            worker.unref()
-            // worker.terminate() [TODO] implement forced termination after timeout
-        }
+        // const handleDispose = ({jobId}, worker) => {
+        //     log.debug(msg('disposed', jobId))
+        //     closePort()
+        //     worker.unref()
+        // }
         
         const openPort = () => port.on('message', handleWorkerMessage)
         const closePort = () => port.off('message', handleWorkerMessage)
@@ -127,7 +126,8 @@ const initWorker$ = (name, jobPath) => {
                 )
             },
             dispose() {
-                send({dispose: true})
+                worker.terminate()
+                // send({dispose: true})
             }
         }
     }
