@@ -9,37 +9,33 @@ module.exports = ({create$, onCold, onHot, onRelease, onDispose, maxIdleMillisec
     const unlock$ = new Subject()
 
     lock$.subscribe(
-        instance => instance.locked = true
-    )
-
-    unlock$.subscribe(
-        ({instance}) => instance.locked = false
+        ({instance}) => instance.locked = true
     )
 
     unlock$.pipe(
-        mergeMap(
-            ({slot, instance}) =>
-                timer(maxIdleMilliseconds).pipe(
-                    mapTo({slot, instance}),
-                    takeUntil(lock$.pipe(
-                        filter(i => i === instance)
-                    ))
-                )
+        tap(({instance}) => instance.locked = false),
+        mergeMap(({slot, instance: currentInstance}) =>
+            timer(maxIdleMilliseconds).pipe(
+                takeUntil(lock$.pipe(
+                    filter(({instance}) => instance === currentInstance)
+                )),
+                mapTo({slot, instance: currentInstance})
+            )
         )
     ).subscribe(
         ({slot, instance}) => dispose(slot, instance)
     )
 
+    const lock = (slot, instance) =>
+        lock$.next({slot, instance})
+
+    const unlock = (slot, instance) =>
+        unlock$.next(({slot, instance}))
+
     const jobId = (slot, id) => `${slot}.${id.substr(-4)}`
 
     const add = (slot, instance) =>
         pool[slot] = [...(pool[slot] || []), instance]
-
-    const lock = instance =>
-        lock$.next(instance)
-
-    const unlock = (slot, instance) =>
-        unlock$.next(({slot, instance}))
 
     const dispose = (slot, instance) => {
         const idleCount = _.filter(pool[slot], instance => !instance.locked).length
@@ -83,7 +79,7 @@ module.exports = ({create$, onCold, onHot, onRelease, onDispose, maxIdleMillisec
                 instance: _.find(pool[slot], ({locked}) => !locked),
                 createArgs
             }).pipe(
-                tap(instance => lock(instance)),
+                tap(instance => lock(slot, instance)),
                 map(instance => releaseable(slot, instance))
             )
     }

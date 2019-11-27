@@ -16,7 +16,10 @@ const pooledWorker = ({concurrency, maxIdleMilliseconds, minIdleCount}) => {
         onCold: ({jobId}) => log.debug(`Creating worker <${jobId}>`),
         onHot: ({jobId}) => log.debug(`Recycling worker <${jobId}>`),
         onRelease: ({jobId}) => log.trace(`Released worker <${jobId}>`),
-        onDispose: ({item}) => item.dispose(),
+        onDispose: ({jobId, item}) => {
+            item.dispose()
+            log.debug(`Disposed worker <${jobId}>`)
+        },
         maxIdleMilliseconds,
         minIdleCount
     })
@@ -32,7 +35,7 @@ const pooledWorker = ({concurrency, maxIdleMilliseconds, minIdleCount}) => {
     const getResponse$ = requestId =>
         workerResponse$.pipe(
             share(),
-            filter(response => response.requestId === requestId),
+            filter(({requestId: currentRequestId}) => currentRequestId === requestId),
             map(({result}) => result)
         )
     
@@ -49,9 +52,9 @@ const pooledWorker = ({concurrency, maxIdleMilliseconds, minIdleCount}) => {
                                     result
                                 })),
                                 takeUntil(cancel$.pipe(
-                                    filter(cancel => cancel.requestId === requestId)
+                                    filter(({requestId: currentRequestId}) => currentRequestId === requestId),
                                 )),
-                                tap(() => release())
+                                finalize(() => release())
                             )
                         )
                     ), null, concurrency
