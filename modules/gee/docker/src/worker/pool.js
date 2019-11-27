@@ -39,16 +39,16 @@ module.exports = ({name, create$, onCold, onHot, onRelease, onDispose, onKeep, m
         pool.push(instance)
 
     const msg = (instance, action) =>
-        `Pool <${name}>: ${action} instance <${instance.id.substr(-4)}>`
+        `Pool instance [${name}.${instance.id.substr(-4)}] ${action}`
 
     const dispose = instance => {
         const idleCount = _.filter(pool, instance => !instance.locked).length
         if (idleCount > minIdleCount) {
-            log.debug(msg(instance, 'disposing'))
+            log.debug(msg(instance, 'disposed'))
             onDispose && onDispose({id: instance.id, item: instance.item, instanceId: instanceId(instance.id)})
             _.pull(pool, instance)
         } else {
-            log.debug(msg(instance, 'keeping'))
+            log.debug(msg(instance, 'kept'))
             onKeep && onKeep({id: instance.id, item: instance.item, instanceId: instanceId(instance.id)})
         }
     }
@@ -57,14 +57,14 @@ module.exports = ({name, create$, onCold, onHot, onRelease, onDispose, onKeep, m
         item: instance.item,
         release: () => {
             unlock(instance)
-            log.debug(msg(instance, 'releasing'))
+            log.debug(msg(instance, 'released'))
             onRelease && onRelease({id: instance.id, instanceId: instanceId(instance.id)})
         }
     })
 
     const hot$ = instance =>
         of(instance).pipe(
-            tap(instance => log.debug(msg(instance, 'recycling'))),
+            tap(instance => log.debug(msg(instance, 'recycled'))),
             tap(({id}) => onHot && onHot({id, instanceId: instanceId(id)}))
         )
 
@@ -73,7 +73,7 @@ module.exports = ({name, create$, onCold, onHot, onRelease, onDispose, onKeep, m
         return create$(instanceId(id)).pipe(
             map(item => ({id, item})),
             tap(instance => add(instance)),
-            tap(instance => log.debug(msg(instance, 'creating'))),
+            tap(instance => log.debug(msg(instance, 'created'))),
             tap(({id}) => onCold && onCold({id, instanceId: instanceId(id)}))
         )
     }
