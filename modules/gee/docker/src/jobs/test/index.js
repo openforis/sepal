@@ -24,5 +24,6 @@ module.exports = job({
     jobPath: __filename,
     before: [require('./test_1'), require('./test_2')],
     args: ({params: {min, max}}) => [parseInt(min), parseInt(max)],
-    worker$
+    worker$,
+    minIdleCount: 3
 })
