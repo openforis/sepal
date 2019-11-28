@@ -38,7 +38,7 @@ const bootstrapWorker$ = (name, channelNames) => {
 
 const initWorker$ = (name, jobPath) => {
     const msg = (msg, jobId) => [
-        `Worker [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
+        `Worker job [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
         msg
     ].join(' ')
     
@@ -73,7 +73,6 @@ const initWorker$ = (name, jobPath) => {
         }
 
         const openPort = () => port.on('message', handleWorkerMessage)
-        // const closePort = () => port.off('message', handleWorkerMessage)
         const send = msg => port.postMessage(msg)
 
         openPort()
@@ -121,7 +120,6 @@ const initWorker$ = (name, jobPath) => {
             },
             dispose() {
                 worker.terminate()
-                // send({dispose: true})
             }
         }
     }

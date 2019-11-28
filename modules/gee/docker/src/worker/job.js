@@ -1,5 +1,4 @@
 const _ = require('lodash')
-
 const PooledWorker = require('./pooled')
 
 // const {submit$} = require('./single')

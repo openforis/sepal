@@ -16,10 +16,11 @@ const PooledWorker = ({concurrency = 10, defaultMinIdleCount = 0, defaultMaxIdle
     const createPool = ({jobName, jobPath, minIdleCount = defaultMinIdleCount, maxIdleMilliseconds = defaultMaxIdleMilliseconds}) =>
         Pool({
             name: jobName,
+            maxIdleMilliseconds,
+            minIdleCount,
             create$: instanceId => initWorker$(instanceId, jobPath),
             onDispose: ({item}) => item.dispose(),
-            maxIdleMilliseconds,
-            minIdleCount
+            onMsg: ({instanceId, action}) => `Worker instance [${instanceId}] ${action}`
         })
         
     const getPool = ({jobName, jobPath, minIdleCount, maxIdleMilliseconds}) => {

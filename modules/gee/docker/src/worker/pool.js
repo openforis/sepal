@@ -4,7 +4,7 @@ const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('@sepal/log')
 
-module.exports = ({name, create$, onCold, onHot, onRelease, onDispose, onKeep, maxIdleMilliseconds = 1000, minIdleCount = 0}) => {
+module.exports = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCold, onHot, onRelease, onDispose, onKeep, onMsg}) => {
     const pool = []
     const lock$ = new Subject()
     const unlock$ = new Subject()
@@ -39,8 +39,10 @@ module.exports = ({name, create$, onCold, onHot, onRelease, onDispose, onKeep, m
         pool.push(instance)
 
     const msg = (instance, action) =>
-        `Pool instance [${name}.${instance.id.substr(-4)}] ${action}`
-
+        onMsg
+            ? onMsg({instanceId: `${name}.${instance.id.substr(-4)}`, action})
+            : `Pool instance [${name}.${instance.id.substr(-4)}] ${action}`
+    
     const dispose = instance => {
         const idleCount = _.filter(pool, instance => !instance.locked).length
         if (idleCount > minIdleCount) {
