@@ -28,7 +28,6 @@ const worker$ = ({select, from, where = [], orderBy = []}) => {
 module.exports = job({
     jobName: 'Query EE Table',
     jobPath: __filename,
-    minIdleCount: 10,
     before: [require('@sepal/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$

@@ -5,7 +5,8 @@ const PooledWorker = require('./pooled')
 // const {submit$} = require('./single')
 const {submit$} = PooledWorker({
     concurrency: 100,
-    maxIdleMilliseconds: 1000
+    defaultMinIdleCount: 10,
+    defaultMaxIdleMilliseconds: 5000
 })
 
 // NOTE: ctx is three-state:
@@ -32,7 +33,7 @@ const evaluateArgs = (argFuncs, ctx) =>
         .map(argFunc => argFunc(ctx))
         .value()
 
-const main = ({jobName, jobPath, minIdleCount, before, args, ctx}) => {
+const main = ({jobName, jobPath, minIdleCount, maxIdleMilliseconds, before, args, ctx}) => {
     const argFuncs = [...depArgs(before), args]
     return isDependency(ctx)
         ? argFuncs
@@ -40,30 +41,34 @@ const main = ({jobName, jobPath, minIdleCount, before, args, ctx}) => {
             jobName,
             jobPath,
             minIdleCount,
+            maxIdleMilliseconds,
             args: evaluateArgs(argFuncs, ctx),
             args$: ctx.args$
         })
 }
 
-const assert = (arg, func, msg) => {
-    if (!func(arg)) {
-        throw new Error(msg)
+const assert = (arg, func, msg, required = false) => {
+    const valid = required
+        ? !_.isNil(arg) && func(arg)
+        : _.isNil(arg) || func(arg)
+    if (!valid) {
+        throw new Error([
+            msg,
+            required ? '(required)' : ''
+        ].join(' '))
     }
 }
-
-const defined = v => !_.isNil(v)
-
-const job = ({jobName, jobPath, minIdleCount, before = [], worker$, args = () => []}) => {
-    assert(jobName, defined, 'jobName is required')
-    assert(jobName, _.isString, 'jobName must be a string')
-    assert(worker$, defined, 'worker$ is required')
-    assert(worker$, _.isFunction, 'worker$ must be a function')
-    assert(args, defined, 'args is required')
-    assert(args, _.isFunction, 'args must be a function')
-    assert(before, _.isArray, 'before must be an array')
+const job = ({jobName, jobPath, minIdleCount, maxIdleMilliseconds, before = [], worker$, args = () => []}) => {
+    assert(jobName, _.isString, 'jobName must be a string', true)
+    assert(worker$, _.isFunction, 'worker$ must be a function', true)
+    assert(args, _.isFunction, 'args must be a function', true)
+    assert(before, _.isArray, 'before must be an array', false)
+    assert(minIdleCount, _.isNumber, 'minIdleCount must be a number', false)
+    assert(maxIdleMilliseconds, _.isNumber, 'maxIdleMilliseconds must be a number', false)
+    
     return ctx => isWorker(ctx)
         ? worker({jobName, before, worker$})
-        : main({jobName, jobPath, minIdleCount, before, args, ctx})
+        : main({jobName, jobPath, minIdleCount, maxIdleMilliseconds, before, args, ctx})
 }
 
 module.exports = job

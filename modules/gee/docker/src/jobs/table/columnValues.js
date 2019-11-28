@@ -15,7 +15,6 @@ const worker$ = ({tableId, columnName}) => {
 module.exports = job({
     jobName: 'Get EE Table column values',
     jobPath: __filename,
-    minIdleCount: 10,
     before: [require('@sepal/ee/initialize')],
     args: ctx => [ctx.request.query],
     worker$

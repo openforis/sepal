@@ -6,14 +6,14 @@ const log = require('@sepal/log')
 const {initWorker$} = require('./factory')
 const Pool = require('./pool')
 
-const PooledWorker = ({concurrency, maxIdleMilliseconds}) => {
+const PooledWorker = ({concurrency = 10, defaultMinIdleCount = 0, defaultMaxIdleMilliseconds = 0}) => {
     const workerRequest$ = new Subject()
     const workerResponse$ = new Subject()
     const cancel$ = new Subject()
 
     const pools = {}
 
-    const createPool = ({jobName, jobPath, minIdleCount}) =>
+    const createPool = ({jobName, jobPath, minIdleCount = defaultMinIdleCount, maxIdleMilliseconds = defaultMaxIdleMilliseconds}) =>
         Pool({
             name: jobName,
             create$: instanceId => initWorker$(instanceId, jobPath),
@@ -22,20 +22,20 @@ const PooledWorker = ({concurrency, maxIdleMilliseconds}) => {
             minIdleCount
         })
         
-    const getPool = ({jobName, jobPath, minIdleCount}) => {
+    const getPool = ({jobName, jobPath, minIdleCount, maxIdleMilliseconds}) => {
         if (!pools[jobName]) {
-            pools[jobName] = createPool({jobName, jobPath, minIdleCount})
+            pools[jobName] = createPool({jobName, jobPath, minIdleCount, maxIdleMilliseconds})
         }
         return pools[jobName]
     }
 
-    const getWorkerInstance$ = ({jobName, jobPath, minIdleCount}) =>
-        getPool({jobName, jobPath, minIdleCount}).get$().pipe(
+    const getWorkerInstance$ = ({jobName, jobPath, minIdleCount, maxIdleMilliseconds}) =>
+        getPool({jobName, jobPath, minIdleCount, maxIdleMilliseconds}).get$().pipe(
             map(({item: worker, release}) => ({worker, release}))
         )
     
-    const submitRequest = ({requestId, jobName, jobPath, minIdleCount, args, args$}) =>
-        workerRequest$.next({requestId, jobName, jobPath, minIdleCount, args, args$})
+    const submitRequest = ({requestId, jobName, jobPath, minIdleCount, maxIdleMilliseconds, args, args$}) =>
+        workerRequest$.next({requestId, jobName, jobPath, minIdleCount, maxIdleMilliseconds, args, args$})
     
     const getResponse$ = requestId =>
         workerResponse$.pipe(
@@ -48,8 +48,8 @@ const PooledWorker = ({concurrency, maxIdleMilliseconds}) => {
         groupBy(({jobName}) => jobName),
         mergeMap(group =>
             group.pipe(
-                mergeMap(({requestId, jobName, jobPath, minIdleCount, args, args$}) =>
-                    getWorkerInstance$({jobName, jobPath, minIdleCount}).pipe(
+                mergeMap(({requestId, jobName, jobPath, minIdleCount, maxIdleMilliseconds, args, args$}) =>
+                    getWorkerInstance$({jobName, jobPath, minIdleCount, maxIdleMilliseconds}).pipe(
                         mergeMap(({worker, release}) =>
                             worker.submit$(args, args$).pipe(
                                 map(result => ({
@@ -71,10 +71,10 @@ const PooledWorker = ({concurrency, maxIdleMilliseconds}) => {
     )
 
     return {
-        submit$({jobName, jobPath, minIdleCount, args, args$}) {
+        submit$({jobName, jobPath, minIdleCount, maxIdleMilliseconds, args, args$}) {
             log.trace(`Submitting <${jobName}> to pooled worker`)
             const requestId = uuid()
-            submitRequest({requestId, jobName, jobPath, minIdleCount, args, args$})
+            submitRequest({requestId, jobName, jobPath, minIdleCount, maxIdleMilliseconds, args, args$})
             return getResponse$(requestId).pipe(
                 finalize(() => cancel$.next({requestId}))
             )

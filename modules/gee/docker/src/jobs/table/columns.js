@@ -34,7 +34,6 @@ const worker$ = ({tableId}) => {
 module.exports = job({
     jobName: 'Get table columns',
     jobPath: __filename,
-    minIdleCount: 10,
     before: [require('@sepal/ee/initialize')],
     args: ctx => [ctx.request.query],
     worker$

@@ -35,7 +35,6 @@ const worker$ = ({aoi, source}) => {
 module.exports = job({
     jobName: 'Scene Areas',
     jobPath: __filename,
-    minIdleCount: 10,
     before: [require('@sepal/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$
