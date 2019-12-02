@@ -1,8 +1,8 @@
 const job = require('@sepal/worker/job')
-const {getInfo$} = require('@sepal/ee/utils')
 
 const worker$ = ({tableId, columnName}) => {
     const ee = require('@google/earthengine')
+    const {getInfo$} = require('@sepal/ee/utils')
 
     return getInfo$(
         ee.FeatureCollection(tableId)
