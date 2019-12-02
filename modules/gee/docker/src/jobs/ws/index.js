@@ -1,20 +1,27 @@
 const job = require('@sepal/worker/job')
 
-const worker$ = args$ => {
-    const {timer, merge} = require('rxjs')
-    const {map, take} = require('rxjs/operators')
+const worker$ = (name, args$) => {
+    const {timer, merge, of} = require('rxjs')
+    const {map, take, switchMap, delay} = require('rxjs/operators')
 
     return merge(
-        timer(1000, 1000).pipe(
-            map(value => `Hello websocket! Value: ${value}`),
-            take(5)
+        timer(0, 3000).pipe(
+            map(value => `Hello ${name}! Value: ${value}`),
+            take(10)
         ),
-        args$
+        args$.pipe(
+            switchMap(value =>
+                of(`ok: ${value}`).pipe(
+                    delay(750),
+                )
+            )
+        )
     )
 }
 
 module.exports = job({
-    jobName: 'Websocket',
+    jobName: 'Websocket demo',
     jobPath: __filename,
+    args: ({params: {name}}) => [name],
     worker$
 })

@@ -8,7 +8,7 @@ const router = Router()
 
 router
     .get('/test/:min/:max', wrapper(ctx => test$(ctx)))
-    .get('/ws', wrapper(ctx => ws$(ctx)))
+    .get('/ws/:name', wrapper(ctx => ws$(ctx)))
         
 module.exports = {
     routes: router.routes()
