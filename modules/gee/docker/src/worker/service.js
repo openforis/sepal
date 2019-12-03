@@ -4,8 +4,8 @@ const context = require('@sepal/worker/context')
 
 const request$ = (serviceName, data) => {
     const requestId = uuid()
-    context.get('request$').next({serviceName, requestId, data})
-    return context.get('response$').pipe(
+    context.request$.next({serviceName, requestId, data})
+    return context.response$.pipe(
         filter(({requestId: currentRequestId}) => currentRequestId === requestId),
         map(({response}) => response),
         first()
