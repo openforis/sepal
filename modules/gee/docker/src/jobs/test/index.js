@@ -10,7 +10,7 @@ const worker$ = (minDuration, maxDuration = minDuration) => {
             timer(duration).pipe(
                 map(() => {
                     if (Math.random() < .5) {
-                        // throw new Error('Random error!')
+                        throw new Error('Random error!')
                     }
                     return `\n${duration} (${minDuration}-${maxDuration})`
                 }),

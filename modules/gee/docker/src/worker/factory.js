@@ -4,6 +4,7 @@ const {Worker, MessageChannel} = require('worker_threads')
 const {deserializeError} = require('serialize-error')
 const {v4: uuid} = require('uuid')
 const path = require('path')
+const service = require('@sepal/service')
 const _ = require('lodash')
 const log = require('@sepal/log')
 
@@ -41,22 +42,28 @@ const initWorker$ = (name, jobPath) => {
         `Worker job [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
         msg
     ].join(' ')
-    
+
     const result$ = new Subject()
 
     const setupWorker = (worker, port) => {
         const handleWorkerMessage = message => {
+            message.request && handleRequest(message)
             message.value && handleValue(message)
             message.error && handleError(message)
             message.complete && handleComplete(message)
             // message.dispose && handleDispose(message, worker)
         }
-    
+
+        const handleRequest = ({jobId, request: {serviceName, requestId, data}}) => {
+            service.handle$({serviceName, requestId, data})
+                .subscribe(response => send({jobId, response: {requestId, response}}))
+        }
+
         const handleValue = ({jobId, value}) => {
             log.trace(msg(`value: ${value}`, jobId))
             result$.next({jobId, value})
         }
-    
+
         const handleError = ({jobId, error: serializedError}) => {
             const error = deserializeError(serializedError)
             const errors = _.compact([
@@ -66,7 +73,7 @@ const initWorker$ = (name, jobPath) => {
             log.error(msg(`error: ${errors}`, jobId))
             result$.next({jobId, error})
         }
-    
+
         const handleComplete = ({jobId, complete}) => {
             log.debug(msg('completed', jobId))
             result$.next({jobId, complete})
@@ -94,7 +101,7 @@ const initWorker$ = (name, jobPath) => {
                     error => log.error(error), // how to handle this?
                     complete => log.warn(complete) // how to handle this?
                 )
-    
+
                 const start = jobId => {
                     const workerArgs = _.last(args)
                     _.isEmpty(workerArgs)
@@ -102,10 +109,10 @@ const initWorker$ = (name, jobPath) => {
                         : log.debug(msg('started with args:', jobId), workerArgs)
                     send({jobId, start: {jobPath, args}})
                 }
-    
+
                 const stop = jobId =>
                     send({jobId, stop: true})
-    
+
                 start(jobId)
 
                 if (args$) {
@@ -124,7 +131,7 @@ const initWorker$ = (name, jobPath) => {
         }
     }
 
-    return bootstrapWorker$(name, ['job']).pipe(
+    return bootstrapWorker$(name, ['job', 'conversation']).pipe(
         map(({worker, ports: {job: port}}) => setupWorker(worker, port))
     )
 }
