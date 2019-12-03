@@ -10,6 +10,8 @@ const context = require('./context')
 const exported = {}
 const request$ = new ReplaySubject()
 const response$ = new Subject()
+context.request$ = request$
+context.response$ = response$.pipe(share())
 
 parentPort.once('message', ({name, ports}) => {
     const args$ = new Subject()
@@ -26,8 +28,6 @@ parentPort.once('message', ({name, ports}) => {
 
     const start = ({jobId, start: {jobPath, args}}) => {
         log.trace(msg('start', jobId))
-        context.request$ = request$
-        context.response$ = response$.pipe(share())
         const tasks = require(jobPath)()
 
         const tasks$ = _.chain(tasks)
