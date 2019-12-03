@@ -26,8 +26,8 @@ parentPort.once('message', ({name, ports}) => {
 
     const start = ({jobId, start: {jobPath, args}}) => {
         log.trace(msg('start', jobId))
-        context.set('request$', request$)
-        context.set('response$', response$.pipe(share()))
+        context.request$ = request$
+        context.response$ = response$.pipe(share())
         const tasks = require(jobPath)()
 
         const tasks$ = _.chain(tasks)
