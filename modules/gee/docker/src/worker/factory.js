@@ -131,7 +131,7 @@ const initWorker$ = (name, jobPath) => {
         }
     }
 
-    return bootstrapWorker$(name, ['job', 'conversation']).pipe(
+    return bootstrapWorker$(name, ['job', 'service']).pipe(
         map(({worker, ports: {job: port}}) => setupWorker(worker, port))
     )
 }

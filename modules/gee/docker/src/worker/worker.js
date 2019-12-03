@@ -17,8 +17,9 @@ parentPort.once('message', ({name, ports}) => {
     const args$ = new Subject()
     const stop$ = new Subject()
     const jobPort = ports.job
-    const conversationPort = ports.conversation
-    conversationPort.on('message', message => response$.next(message))
+
+    const servicePort = ports.service
+    servicePort.on('message', message => response$.next(message))
     exported.ports = ports
 
     const msg = (msg, jobId) => [
