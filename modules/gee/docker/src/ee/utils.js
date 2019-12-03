@@ -1,18 +1,14 @@
 const ee = require('@google/earthengine')
-const {Subject, throwError} = require('rxjs')
-const {catchError} = require('rxjs/operators')
+const {throwError} = require('rxjs')
+const {catchError, switchMap, tap} = require('rxjs/operators')
 const {SystemException} = require('@sepal/exception')
+const getToken$ = require('@sepal/token')
 
-const wrap$ = callback => {
-    const observable$ = new Subject()
-    new Promise(callback)
-        .then(value => {
-            observable$.next(value)
-            observable$.complete()
-        })
-        .catch(error => observable$.error(error))
-    return observable$
-}
+const wrap$ = callback =>
+    getToken$('ee').pipe(
+        tap(token => console.log('TOKEN', token)),
+        switchMap(() => new Promise(callback))
+    )
 
 exports.getAsset$ = eeId =>
     wrap$((resolve, reject) =>

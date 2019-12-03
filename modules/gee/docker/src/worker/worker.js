@@ -1,17 +1,22 @@
 require('module-alias/register')
 const {parentPort} = require('worker_threads')
-const {Subject, of, concat} = require('rxjs')
-const {map, mergeMap, takeUntil, tap, filter} = require('rxjs/operators')
+const {ReplaySubject, Subject, of, concat} = require('rxjs')
+const {map, mergeMap, takeUntil, tap, filter, share} = require('rxjs/operators')
 const {serializeError} = require('serialize-error')
 const _ = require('lodash')
 const log = require('@sepal/log')
+const context = require('./context')
 
 const exported = {}
+const request$ = new ReplaySubject()
+const response$ = new Subject()
 
 parentPort.once('message', ({name, ports}) => {
     const args$ = new Subject()
     const stop$ = new Subject()
     const jobPort = ports.job
+    const conversationPort = ports.conversation
+    conversationPort.on('message', message => response$.next(message))
     exported.ports = ports
 
     const msg = (msg, jobId) => [
@@ -21,7 +26,8 @@ parentPort.once('message', ({name, ports}) => {
 
     const start = ({jobId, start: {jobPath, args}}) => {
         log.trace(msg('start', jobId))
-        
+        context.set('request$', request$)
+        context.set('response$', response$.pipe(share()))
         const tasks = require(jobPath)()
 
         const tasks$ = _.chain(tasks)
@@ -41,26 +47,34 @@ parentPort.once('message', ({name, ports}) => {
 
     const run = (jobId, tasks$, args$) => {
         const next = value => {
-            log.trace(msg(`value: ${value}`, jobId))
-            return jobPort.postMessage({jobId, value})
+            log.trace(msg(`value: ${JSON.stringify(value)}`, jobId))
+            return jobPort.postMessage({jobId, ...value})
         }
-    
+
         const error = error => {
             log.trace(msg(`error: ${error}`, jobId))
             return jobPort.postMessage({jobId, error: serializeError(error)})
         }
-    
+
         const complete = () => {
             log.trace(msg('complete', jobId))
             return jobPort.postMessage({jobId, complete: true})
         }
-    
-        concat(...tasks$).pipe(
+
+        const job$ = concat(...tasks$).pipe(
             tap(({jobName, args}) =>
                 log.trace(msg(`running <${jobName}> with args:`, jobId), args)
             ),
             mergeMap(({worker$, args}) => worker$(...args, args$), 1),
             takeUntil(stop$.pipe(filter(id => id === jobId)))
+        )
+
+        request$.pipe(
+            map(request => ({request}))
+        ).subscribe(next)
+
+        job$.pipe(
+            map(value => ({value}))
         ).subscribe({next, error, complete})
     }
 
@@ -77,6 +91,7 @@ parentPort.once('message', ({name, ports}) => {
         message.start && start(message)
         message.stop && stop(message)
         message.value && next(message)
+        message.response && response$.next(message.response)
     }
 
     const init = () => {

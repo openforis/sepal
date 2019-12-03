@@ -47,7 +47,7 @@ const handleHttp = async ctx => {
 const handleWebsocket = async ctx => {
     const ws = await ctx.ws()
     const close$ = new Subject()
-    
+
     ws.on('close', () => {
         close$.next()
         ws.terminate()
@@ -56,7 +56,7 @@ const handleWebsocket = async ctx => {
     ws.on('message', message =>
         ctx.args$.next(message)
     )
-       
+
     ctx.result$.pipe(
         takeUntil(close$)
     ).subscribe(
