@@ -20,7 +20,6 @@ const allScenes = (
         brdfCorrect,
         panSharpen,
         compositeOptions: {
-            corrections = [],
             mask = [],
             cloudBuffer = null
         } = {}
@@ -71,8 +70,10 @@ const selectedScenes = ({reflectance, calibrate, brdfCorrect, panSharpen, target
         )
         .value()
 
-const createCollectionWithScenes = ({dataSet, reflectance, calibrate, brdfCorrect, panSharpen, targetDate, ids}) =>
-    createCollection({dataSet, reflectance, calibrate, brdfCorrect, panSharpen, targetDate, filter: ee.Filter.inList('system:index', ids)})
+const createCollectionWithScenes = ({dataSet, reflectance, calibrate, brdfCorrect, panSharpen, targetDate, ids}) => {
+    const filter = ee.Filter.inList('system:index', ids)
+    return createCollection({dataSet, reflectance, calibrate, brdfCorrect, panSharpen, targetDate, filter})
+}
 
 const createCollection = ({dataSet, reflectance, calibrate, brdfCorrect, panSharpen, targetDate, filter}) => {
     const dataSetSpec = dataSetSpecs[reflectance][dataSet]
@@ -88,9 +89,7 @@ const createCollection = ({dataSet, reflectance, calibrate, brdfCorrect, panShar
         .map(imageProcess({dataSetSpec, reflectance, calibrate, brdfCorrect, panSharpen, targetDate}))
 
     /*
-    calibrate images in image process step
-
-    mask_clouds
+     mask_clouds
     filters
         shadows
         haze

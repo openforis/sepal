@@ -50,16 +50,13 @@ const normalize = (fromBands, toBands, bandsToConvertToFloat) =>
         .updateBands(bandsToConvertToFloat, image => image.divide(10000))
 
 const calibrateBands = coefs =>
-    image => {
-        console.log('************* CALIBRATING', coefs)
-        // return image
-        return image.addBands(
+    image =>
+        image.addBands(
             image
                 .select(['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])
                 .multiply(coefs.slopes).add(coefs.intercepts).float(),
             null, true
         )
-    }
 
 const maskClouds = () =>
     image => image.updateMask(
