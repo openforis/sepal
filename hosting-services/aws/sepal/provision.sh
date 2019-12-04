@@ -20,7 +20,7 @@ ansible-playbook provision.yml \
     --private-key=${PRIVATE_KEY}  \
     --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
 
- Refresh EC2 inventory cache, to make sure provisioned instance is included
+# Refresh EC2 inventory cache, to make sure provisioned instance is included
 $INVENTORY --refresh-cache > /dev/null
 
 ansible-playbook provision-security-groups.yml \
