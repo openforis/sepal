@@ -1,4 +1,5 @@
 const express = require('express')
+const session = require('express-session')
 const request = require('request')
 const urljoin = require('url-join')
 const randomColor = require('randomcolor')
@@ -7,14 +8,15 @@ const config = require('./config')
 
 const app = express()
 
+app.use(session({
+    secret: '343ji43j4n3jn4jk3n',
+    resave: false,
+    saveUninitialized: true
+}))
+
 app.use(express.json())
 
-app.use((err, req, res, next) => {
-    console.info(err.stack)
-    res.status(500).send('Something went wrong!!')
-})
-
-app.get('/login', (req, res, next) => {
+app.use(['/login', '/create-project'], (req, res, next) => {
     const {url, username, password, userId} = config.ceo
     request.post({
         url: urljoin(url, 'login'),
@@ -23,9 +25,11 @@ app.get('/login', (req, res, next) => {
             password,
         },
     }).on('response', response => {
+        const cookie = response.headers['set-cookie']
+        req.session.cookie = cookie
         request.get({
             headers: {
-                Cookie: response.headers['set-cookie'],
+                Cookie: cookie,
             },
             url: urljoin(url, 'account'),
             qs: {
@@ -34,7 +38,9 @@ app.get('/login', (req, res, next) => {
             followRedirect: false,
         }).on('response', response => {
             const {statusCode} = response
-            res.sendStatus(statusCode !== 302 ? 200 : 403)
+            req.loginStatusCode = statusCode !== 302 ? 200 : 403
+            req.isLogged = statusCode !== 302 ? true : false
+            next()
         }).on('error', err => {
             next(err)
         })
@@ -43,7 +49,14 @@ app.get('/login', (req, res, next) => {
     })
 })
 
+app.get('/login', (req, res, next) => {
+    res.sendStatus(req.loginStatusCode)
+})
+
 app.post('/create-project', (req, res, next) => {
+    const {isLogged} = req
+    if (!isLogged) res.status(500).send({error: 'Login failed!'})
+    const {cookie} = req.session
     const {url, institutionId} = config.ceo
     const {classes, plotSize, plots, title} = req.body
     if (!Array.isArray(classes) || classes.length === 0
@@ -103,6 +116,9 @@ app.post('/create-project', (req, res, next) => {
         sampleFileBase64: '',
     }
     request.post({
+        headers: {
+            Cookie: cookie['0'],
+        },
         qs: {
             institutionId
         },
@@ -176,6 +192,11 @@ app.get('/get-collected-data/:id', (req, res, next) => {
     }).on('error', err => {
         next(err)
     })
+})
+
+app.use((err, req, res, next) => {
+    console.info(err.stack)
+    res.status(500).send('Something went wrong!')
 })
 
 const PORT = process.env.PORT || 3000
