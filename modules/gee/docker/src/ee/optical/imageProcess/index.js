@@ -13,8 +13,9 @@ const applyBRDFCorrection = require('./applyBRDFCorrection')
 const applyPanSharpening = require('./applyPanSharpening')
 const addDates = require('./addDates')
 const applyQA = require('./applyQA')
+const bufferClouds = require('./bufferClouds')
 
-const imageProcess = ({dataSetSpec, reflectance, calibrate, brdfCorrect, panSharpen, targetDate}) => {
+const imageProcess = ({dataSetSpec, reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate}) => {
     const bands = dataSetSpec.bands
     const fromBands = Object.values(bands).map(band => band.name)
     const toBands = Object.keys(bands)
@@ -22,7 +23,6 @@ const imageProcess = ({dataSetSpec, reflectance, calibrate, brdfCorrect, panShar
         .pickBy(({scaled}) => scaled)
         .keys()
         .value()
-
     return image =>
         compose(
             normalize(fromBands, toBands, bandsToConvertToFloat),
@@ -34,8 +34,10 @@ const imageProcess = ({dataSetSpec, reflectance, calibrate, brdfCorrect, panShar
             addShadowScore(),
             addHazeScore(reflectance),
             addSoil(),
-            addCloud(),
-            maskClouds(),
+            cloudMasking === 'AGGRESSIVE' && addCloud(),
+            cloudBuffer > 0 && bufferClouds(cloudBuffer),
+            snowMasking !== 'OFF' && maskSnow(),
+            cloudMasking !== 'OFF' && maskClouds(cloudMasking),
             calibrate && dataSetSpec.calibrationCoefs && calibrateBands(dataSetSpec.calibrationCoefs),
             brdfCorrect && applyBRDFCorrection(dataSetSpec),
             panSharpen && toBands.includes('pan') && applyPanSharpening(),
@@ -57,6 +59,12 @@ const calibrateBands = coefs =>
                 .multiply(coefs.slopes).add(coefs.intercepts).float(),
             null, true
         )
+
+const maskSnow = () =>
+    image => image.updateMask(
+        image.select('snow').not()
+    )
+
 
 const maskClouds = () =>
     image => image.updateMask(

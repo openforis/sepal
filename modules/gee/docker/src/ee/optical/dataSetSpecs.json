@@ -444,6 +444,10 @@
                 "swir2": {
                     "name": "B12",
                     "scaled": true
+                },
+                "QA60": {
+                    "name": "QA60",
+                    "scaled": false
                 }
             }
         }
@@ -833,6 +837,10 @@
                 "swir2": {
                     "name": "B12",
                     "scaled": true
+                },
+                "QA60": {
+                    "name": "QA60",
+                    "scaled": false
                 }
             }
         }

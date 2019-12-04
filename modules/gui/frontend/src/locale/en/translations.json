@@ -842,21 +842,36 @@
               },
               "tooltip": "Filter out pixels in selected scenes based on the below properties"
             },
-            "mask": {
-              "clouds": {
-                "label": "Clouds",
-                "tooltip": "Mask clouds instead of just trying to use cloud-free pixels. Can cause built-up areas to be masked out."
+            "snowMasking": {
+              "off": {
+                "label": "Off",
+                "tooltip": "Don't mask snow."
               },
-              "label": "Mask",
-              "snow": {
-                "label": "Snow",
-                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
+              "label": "Snow masking",
+              "on": {
+                "label": "On",
+                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
+              }
+            },
+            "cloudMasking": {
+              "label": "Cloud masking",
+              "none": {
+                "label": "Off",
+                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
+              },
+              "moderate": {
+                "label": "Moderate",
+                "tooltip": "Rely only on image source QA bands for cloud masking"
+              },
+              "aggressive": {
+                "label": "Aggressive",
+                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
               }
             },
             "cloudBuffer": {
               "label": "Cloud buffering",
               "none": {
-                "label": "None",
+                "label": "Off",
                 "tooltip": "Only mask the clouds. It might leave hazy pixels around masked clouds, but will minimize the amount of maxed pixels in the mosaic."
               },
               "moderate": {

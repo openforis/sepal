@@ -30,7 +30,9 @@ export const defaultModel = {
     compositeOptions: {
         corrections: ['SR', 'BRDF'],
         filters: [],
-        mask: ['CLOUDS', 'SNOW'],
+        cloudMasking: 'MODERATE',
+        cloudBuffering: 0,
+        snowMasking: 'ON',
         compose: 'MEDOID'
     },
     scenes: {}

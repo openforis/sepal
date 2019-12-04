@@ -18,8 +18,9 @@ const fields = {
     hazePercentile: new Form.Field(),
     ndviPercentile: new Form.Field(),
     dayOfYearPercentile: new Form.Field(),
-    mask: new Form.Field(),
+    cloudMasking: new Form.Field(),
     cloudBuffer: new Form.Field(),
+    snowMasking: new Form.Field(),
     compose: new Form.Field()
 }
 
@@ -54,8 +55,9 @@ class CompositeOptions extends React.Component {
                     {this.renderFilterOptions()}
                 </Layout>
                 <Layout type='horizontal'>
+                    {this.renderCloudMaskingOptions()}
                     {this.renderCloudBufferOptions()}
-                    {this.renderMaskOptions()}
+                    {this.renderSnowMaskingOptions()}
                     {this.renderComposeOptions()}
                 </Layout>
             </Layout>
@@ -113,6 +115,30 @@ class CompositeOptions extends React.Component {
         )
     }
 
+    renderCloudMaskingOptions() {
+        const {inputs: {cloudMasking}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.mosaic.panel.composite.form.cloudMasking.label')}
+                input={cloudMasking}
+                options={[{
+                    value: 'OFF',
+                    label: msg('process.mosaic.panel.composite.form.cloudMasking.none.label'),
+                    tooltip: msg('process.mosaic.panel.composite.form.cloudMasking.none.tooltip')
+                }, {
+                    value: 'MODERATE',
+                    label: msg('process.mosaic.panel.composite.form.cloudMasking.moderate.label'),
+                    tooltip: msg('process.mosaic.panel.composite.form.cloudMasking.moderate.tooltip')
+                }, {
+                    value: 'AGGRESSIVE',
+                    label: msg('process.mosaic.panel.composite.form.cloudMasking.aggressive.label'),
+                    tooltip: msg('process.mosaic.panel.composite.form.cloudMasking.aggressive.tooltip')
+                }]}
+                type='horizontal-wrap'
+            />
+        )
+    }
+
     renderCloudBufferOptions() {
         const {inputs: {cloudBuffer}} = this.props
         return (
@@ -137,21 +163,20 @@ class CompositeOptions extends React.Component {
         )
     }
 
-    renderMaskOptions() {
-        const {inputs: {mask}} = this.props
+    renderSnowMaskingOptions() {
+        const {inputs: {snowMasking}} = this.props
         return (
             <Form.Buttons
-                label={msg('process.mosaic.panel.composite.form.mask.label')}
-                input={mask}
-                multiple={true}
+                label={msg('process.mosaic.panel.composite.form.snowMasking.label')}
+                input={snowMasking}
                 options={[{
-                    value: 'CLOUDS',
-                    label: msg('process.mosaic.panel.composite.form.mask.clouds.label'),
-                    tooltip: msg('process.mosaic.panel.composite.form.mask.clouds.tooltip')
+                    value: 'OFF',
+                    label: msg('process.mosaic.panel.composite.form.snowMasking.off.label'),
+                    tooltip: msg('process.mosaic.panel.composite.form.snowMasking.off.tooltip')
                 }, {
-                    value: 'SNOW',
-                    label: msg('process.mosaic.panel.composite.form.mask.snow.label'),
-                    tooltip: msg('process.mosaic.panel.composite.form.mask.snow.tooltip')
+                    value: 'ON',
+                    label: msg('process.mosaic.panel.composite.form.snowMasking.on.label'),
+                    tooltip: msg('process.mosaic.panel.composite.form.snowMasking.on.tooltip')
                 }]}
                 type='horizontal-nowrap'
             />
@@ -222,8 +247,9 @@ const valuesToModel = values => ({
         {type: 'NDVI', percentile: values.ndviPercentile},
         {type: 'DAY_OF_YEAR', percentile: values.dayOfYearPercentile},
     ].filter(({percentile}) => percentile),
-    mask: values.mask,
+    cloudMasking: values.cloudMasking,
     cloudBuffer: values.cloudBuffer,
+    snowMasking: values.snowMasking,
     compose: values.compose,
 })
 
@@ -238,8 +264,9 @@ const modelToValues = model => {
         hazePercentile: getPercentile('HAZE'),
         ndviPercentile: getPercentile('NDVI'),
         dayOfYearPercentile: getPercentile('DAY_OF_YEAR'),
-        mask: model.mask,
+        cloudMasking: model.cloudMasking,
         cloudBuffer: model.cloudBuffer,
+        snowMasking: model.snowMasking,
         compose: model.compose,
     })
 }
