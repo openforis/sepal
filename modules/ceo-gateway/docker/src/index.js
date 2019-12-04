@@ -15,19 +15,22 @@ app.use((err, req, res, next) => {
 })
 
 app.get('/login', (req, res, next) => {
-    const {url, username, password, institutionId} = config.ceo
+    const {url, username, password, userId} = config.ceo
     request.post({
         url: urljoin(url, 'login'),
         form: {
             email: username,
-            password: password,
+            password,
         },
     }).on('response', response => {
         request.get({
             headers: {
                 Cookie: response.headers['set-cookie'],
             },
-            url: urljoin(url, 'account', institutionId),
+            url: urljoin(url, 'account'),
+            qs: {
+                userId
+            },
             followRedirect: false,
         }).on('response', response => {
             const {statusCode} = response
@@ -74,7 +77,7 @@ app.post('/create-project', (req, res, next) => {
     const data = {
         baseMapSource: 'DigitalGlobeRecentImagery',
         description: title,
-        institution: institutionId,
+        institutionId,
         lonMin: '',
         lonMax: '',
         latMin: '',
@@ -93,12 +96,16 @@ app.post('/create-project', (req, res, next) => {
         sampleValues: sampleValues,
         surveyRules: [],
         useTemplatePlots: '',
+        useTemplateWidgets: '',
         plotFileName: 'plots.csv',
         plotFileBase64: ',' + Buffer.from(plotFile).toString('base64'),
         sampleFileName: '',
         sampleFileBase64: '',
     }
     request.post({
+        qs: {
+            institutionId
+        },
         url: urljoin(url, 'create-project'),
         json: data,
     }).on('response', response => {
