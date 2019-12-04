@@ -14,7 +14,7 @@ const applyPanSharpening = require('./applyPanSharpening')
 const addDates = require('./addDates')
 const applyQA = require('./applyQA')
 
-const imageProcess = ({dataSetSpec, reflectance, brdfCorrect, panSharpen, targetDate}) => {
+const imageProcess = ({dataSetSpec, reflectance, calibrate, brdfCorrect, panSharpen, targetDate}) => {
     const bands = dataSetSpec.bands
     const fromBands = Object.values(bands).map(band => band.name)
     const toBands = Object.keys(bands)
@@ -36,6 +36,7 @@ const imageProcess = ({dataSetSpec, reflectance, brdfCorrect, panSharpen, target
             addSoil(),
             addCloud(),
             maskClouds(),
+            calibrate && dataSetSpec.calibrationCoefs && calibrateBands(dataSetSpec.calibrationCoefs),
             brdfCorrect && applyBRDFCorrection(dataSetSpec),
             panSharpen && toBands.includes('pan') && applyPanSharpening(),
             addDates(targetDate),
@@ -47,6 +48,18 @@ const normalize = (fromBands, toBands, bandsToConvertToFloat) =>
     image => image
         .select(fromBands, toBands)
         .updateBands(bandsToConvertToFloat, image => image.divide(10000))
+
+const calibrateBands = coefs =>
+    image => {
+        console.log('************* CALIBRATING', coefs)
+        // return image
+        return image.addBands(
+            image
+                .select(['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])
+                .multiply(coefs.slopes).add(coefs.intercepts).float(),
+            null, true
+        )
+    }
 
 const maskClouds = () =>
     image => image.updateMask(

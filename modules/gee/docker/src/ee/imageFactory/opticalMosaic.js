@@ -4,13 +4,13 @@ const {toGeometry} = require('@sepal/ee/aoi')
 const {allScenes, selectedScenes} = require('@sepal/ee/optical/collection')
 const {toMosaic} = require('@sepal/ee/optical/mosaic')
 const _ = require('lodash')
-    
+
 const canPanSharpen = selectedBands =>
     _.chain(selectedBands)
         .difference(['blue', 'green', 'red', 'nir'])
         .isEmpty()
         .value()
-   
+
 module.exports = (recipe, {selection: selectedBands, panSharpen}) =>
     opticalMosaic(recipe, selectedBands, panSharpen && canPanSharpen(selectedBands))
 
@@ -18,15 +18,17 @@ const opticalMosaic = (recipe, selectedBands, panSharpen) => {
     const model = recipe.model
     const region = toGeometry(model.aoi)
     const dataSets = extractDataSets(model.sources)
-    const surfaceReflectance = model.compositeOptions.corrections.includes('SR')
+    const corrections = model.compositeOptions.corrections
+    const surfaceReflectance = corrections.includes('SR')
     const reflectance = surfaceReflectance ? 'SR' : 'TOA'
-    const brdfCorrect = model.compositeOptions.corrections.includes('BRDF')
+    const calibrate = corrections.includes('CALIBRATE')
+    const brdfCorrect = corrections.includes('BRDF')
     const dates = model.dates
     const targetDate = dates.targetDate
     const useAllScenes = model.sceneSelectionOptions.type === 'ALL'
     const collection = useAllScenes
-        ? allScenes({region, dataSets, reflectance, panSharpen, brdfCorrect, dates})
-        : selectedScenes({region, reflectance, brdfCorrect, panSharpen, targetDate, scenes: model.scenes})
+        ? allScenes({region, dataSets, reflectance, panSharpen, calibrate, brdfCorrect, dates})
+        : selectedScenes({region, reflectance, calibrate, brdfCorrect, panSharpen, targetDate, scenes: model.scenes})
 
     return {
         getImage() {
