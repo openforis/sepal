@@ -4,7 +4,7 @@ const {Worker, MessageChannel} = require('worker_threads')
 const {deserializeError} = require('serialize-error')
 const {v4: uuid} = require('uuid')
 const path = require('path')
-const service = require('@sepal/service')
+const service = require('@sepal/worker/service')
 const _ = require('lodash')
 const log = require('@sepal/log')
 
@@ -37,33 +37,22 @@ const bootstrapWorker$ = (name, channelNames) => {
     )
 }
 
-const initWorker$ = (name, jobPath) => {
+const setupWorker = ({name, jobPath, worker, ports}) => {
+    const workerResult$ = new Subject()
+
     const msg = (msg, jobId) => [
         `Worker job [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
         msg
     ].join(' ')
 
-    const result$ = new Subject()
+    // translate upstream worker messages to workerResult$ stream
 
-    const setupWorker = (worker, port) => {
-        const handleWorkerMessage = message => {
-            message.request && handleRequest(message)
-            message.value && handleValue(message)
-            message.error && handleError(message)
-            message.complete && handleComplete(message)
-            // message.dispose && handleDispose(message, worker)
-        }
-
-        const handleRequest = ({jobId, request: {serviceName, requestId, data}}) => {
-            service.handle$({serviceName, requestId, data})
-                .subscribe(response => send({jobId, response: {requestId, response}}))
-        }
-
+    const handleUpstreamWorkerMessage = message => {
         const handleValue = ({jobId, value}) => {
             log.trace(msg(`value: ${value}`, jobId))
-            result$.next({jobId, value})
+            workerResult$.next({jobId, value})
         }
-
+    
         const handleError = ({jobId, error: serializedError}) => {
             const error = deserializeError(serializedError)
             const errors = _.compact([
@@ -71,70 +60,86 @@ const initWorker$ = (name, jobPath) => {
                 error.type ? `(${error.type})` : null
             ]).join()
             log.error(msg(`error: ${errors}`, jobId))
-            result$.next({jobId, error})
+            workerResult$.next({jobId, error})
         }
-
+    
         const handleComplete = ({jobId, complete}) => {
             log.debug(msg('completed', jobId))
-            result$.next({jobId, complete})
+            workerResult$.next({jobId, complete})
         }
 
-        const openPort = () => port.on('message', handleWorkerMessage)
-        const send = msg => port.postMessage(msg)
-
-        openPort()
-        log.trace('Worker ready')
-
-        return {
-            submit$(args, args$) {
-                const jobId = uuid()
-                const jobResult$ = new Subject()
-
-                result$.pipe(
-                    filter(message => message.jobId === jobId)
-                ).subscribe(
-                    message => {
-                        message.value && jobResult$.next({value: message.value})
-                        message.error && jobResult$.error({error: message.error})
-                        message.complete && jobResult$.complete()
-                    },
-                    error => log.error(error), // how to handle this?
-                    complete => log.warn(complete) // how to handle this?
-                )
-
-                const start = jobId => {
-                    const workerArgs = _.last(args)
-                    _.isEmpty(workerArgs)
-                        ? log.debug(msg('started with no args', jobId))
-                        : log.debug(msg('started with args:', jobId), workerArgs)
-                    send({jobId, start: {jobPath, args}})
-                }
-
-                const stop = jobId =>
-                    send({jobId, stop: true})
-
-                start(jobId)
-
-                if (args$) {
-                    args$.subscribe(
-                        value => send({jobId, value})
-                    )
-                }
-
-                return jobResult$.pipe(
-                    finalize(() => stop(jobId))
-                )
-            },
-            dispose() {
-                worker.terminate()
-            }
-        }
+        message.value && handleValue(message)
+        message.error && handleError(message)
+        message.complete && handleComplete(message)
     }
 
-    return bootstrapWorker$(name, ['job', 'service']).pipe(
-        map(({worker, ports: {job: port}}) => setupWorker(worker, port))
-    )
+    ports.job.on('message', handleUpstreamWorkerMessage)
+
+    // handle service messages
+
+    service.initMain(ports.service)
+
+    const getJobResult$ = jobId => {
+        const jobResult$ = new Subject()
+        workerResult$.pipe(
+            filter(message => message.jobId === jobId)
+        ).subscribe(
+            message => {
+                message.value && jobResult$.next({value: message.value})
+                message.error && jobResult$.error({error: message.error})
+                message.complete && jobResult$.complete()
+            },
+            error => log.error(error), // how to handle this?
+            complete => log.warn(complete) // how to handle this?
+        )
+        return jobResult$
+    }
+
+    const submit$ = (args, args$) => {
+        const jobId = uuid()
+
+        const sendMessage = msg =>
+            ports.job.postMessage({jobId, ...msg})
+
+        const start = () => {
+            const workerArgs = _.last(args)
+            _.isEmpty(workerArgs)
+                ? log.debug(msg('started with no args', jobId))
+                : log.debug(msg('started with args:', jobId), workerArgs)
+            sendMessage({start: {jobPath, args}})
+        }
+
+        const stop = () =>
+            sendMessage({stop: true})
+
+        args$ && args$.subscribe(
+            value => sendMessage({value})
+        )
+
+        start()
+
+        return getJobResult$(jobId).pipe(
+            finalize(() => stop())
+        )
+    }
+
+    const dispose = () =>
+        worker.terminate()
+
+    log.trace('Worker ready')
+
+    return {
+        submit$,
+        dispose
+    }
 }
+
+const initWorker$ = (name, jobPath) =>
+    bootstrapWorker$(name, ['job', 'service']).pipe(
+        map(({worker, ports}) =>
+            setupWorker({name, jobPath, worker, ports})
+        )
+    )
 
 module.exports = {
     initWorker$
