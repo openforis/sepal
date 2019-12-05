@@ -4,6 +4,7 @@ const moment = require('moment')
 const dataSetSpecs = require('./dataSetSpecs')
 const imageProcess = require('./imageProcess')
 const maskClouds = require('./maskClouds')
+const applyPercentileFilter = require('./applyPercentileFilter')
 
 const allScenes = (
     {
@@ -22,6 +23,7 @@ const allScenes = (
         cloudMasking,
         cloudBuffer,
         snowMasking,
+        filters,
         panSharpen
     }) => {
     const filter = ee.Filter.and(
@@ -29,11 +31,23 @@ const allScenes = (
         dateFilter({seasonStart, seasonEnd, yearsBefore, yearsAfter})
     )
     return dataSets.reduce((mergedCollection, dataSet) =>
-        mergeImageCollections(
-            mergedCollection,
-            createCollection({dataSet, reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, filter})
-        ),
-    ee.ImageCollection([])
+            mergeImageCollections(
+                mergedCollection,
+                createCollection({
+                    dataSet,
+                    reflectance,
+                    calibrate,
+                    brdfCorrect,
+                    filters,
+                    cloudMasking,
+                    cloudBuffer,
+                    snowMasking,
+                    panSharpen,
+                    targetDate,
+                    filter
+                })
+            ),
+        ee.ImageCollection([])
     )
 }
 
@@ -52,7 +66,7 @@ const dateFilter = ({seasonStart, seasonEnd, yearsBefore, yearsAfter}) => {
     ].flat())
 }
 
-const selectedScenes = ({reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, scenes}) =>
+const selectedScenes = ({reflectance, calibrate, brdfCorrect, filters, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, scenes}) =>
     _.chain(scenes)
         .values()
         .flatten()
@@ -61,7 +75,19 @@ const selectedScenes = ({reflectance, calibrate, brdfCorrect, cloudMasking, clou
             scenes.map(scene => toEEId(scene))
         )
         .mapValues((ids, dataSet) =>
-            createCollectionWithScenes({dataSet, reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, ids})
+            createCollectionWithScenes({
+                dataSet,
+                reflectance,
+                calibrate,
+                brdfCorrect,
+                filters,
+                cloudMasking,
+                cloudBuffer,
+                snowMasking,
+                panSharpen,
+                targetDate,
+                ids
+            })
         )
         .values()
         .reduce(
@@ -70,12 +96,24 @@ const selectedScenes = ({reflectance, calibrate, brdfCorrect, cloudMasking, clou
         )
         .value()
 
-const createCollectionWithScenes = ({dataSet, reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, ids}) => {
+const createCollectionWithScenes = ({dataSet, reflectance, calibrate, brdfCorrect, filters, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, ids}) => {
     const filter = ee.Filter.inList('system:index', ids)
-    return createCollection({dataSet, reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, filter})
+    return createCollection({
+        dataSet,
+        reflectance,
+        calibrate,
+        brdfCorrect,
+        filters,
+        cloudMasking,
+        cloudBuffer,
+        snowMasking,
+        panSharpen,
+        targetDate,
+        filter
+    })
 }
 
-const createCollection = ({dataSet, reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, filter}) => {
+const createCollection = ({dataSet, reflectance, calibrate, brdfCorrect, filters, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, filter}) => {
     const dataSetSpec = dataSetSpecs[reflectance][dataSet]
 
     // const collection = ee.ImageCollection(dataSetSpec.collectionName)
@@ -86,25 +124,38 @@ const createCollection = ({dataSet, reflectance, calibrate, brdfCorrect, cloudMa
 
     const collection = ee.ImageCollection(dataSetSpec.collectionName)
         .filter(filter)
-        .map(imageProcess({dataSetSpec, reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate}))
+        .map(imageProcess({
+            dataSetSpec,
+            reflectance,
+            calibrate,
+            brdfCorrect,
+            cloudMasking,
+            cloudBuffer,
+            snowMasking,
+            panSharpen,
+            targetDate
+        }))
 
-    return cloudMasking === 'OFF'
-        ? maskClouds(collection)
-        : collection // Already masked when mapping over collection
+    return collection.compose(
+        cloudMasking === 'OFF' && maskClouds(),
+        ...filters.map(applyFilter)
+    )
+
     /*
-    filters
-        shadows
-        haze
-        ndvi
-        days from target
-
-     common bands
-
 
      to mosaic then tasseled cap on result
      */
-
 }
+
+const bandByFilter = {
+    SHADOW: 'shadowScore',
+    HAZE: 'hazeScore',
+    NDVI: 'ndvi',
+    DAY_OF_YEAR: 'targetDayCloseness'
+}
+
+const applyFilter = filter =>
+    applyPercentileFilter(bandByFilter[filter.type], filter.percentile)
 
 const toEEId = ({id, dataSet, date}) =>
     dataSet === 'SENTINEL_2'

@@ -27,12 +27,13 @@ const opticalMosaic = (recipe, selectedBands, panSharpen) => {
     const dates = model.dates
     const targetDate = dates.targetDate
     const useAllScenes = model.sceneSelectionOptions.type === 'ALL'
+    const filters = compositeOptions.filters
     const cloudMasking = compositeOptions.cloudMasking
     const cloudBuffer = compositeOptions.cloudBuffer
     const snowMasking = compositeOptions.snowMasking
     const collection = useAllScenes
-        ? allScenes({region, dataSets, reflectance, cloudMasking, cloudBuffer, snowMasking, panSharpen, calibrate, brdfCorrect, dates})
-        : selectedScenes({region, reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, scenes: model.scenes})
+        ? allScenes({region, dataSets, reflectance, filters, cloudMasking, cloudBuffer, snowMasking, panSharpen, calibrate, brdfCorrect, dates})
+        : selectedScenes({region, reflectance, calibrate, brdfCorrect, filters, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, scenes: model.scenes})
 
     return {
         getImage() {

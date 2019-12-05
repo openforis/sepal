@@ -42,7 +42,8 @@ const imageProcess = ({dataSetSpec, reflectance, calibrate, brdfCorrect, cloudMa
             brdfCorrect && applyBRDFCorrection(dataSetSpec),
             panSharpen && toBands.includes('pan') && applyPanSharpening(),
             addDates(targetDate),
-            toInt16()
+            toInt16(),
+            updateMask()
         )(image)
 }
 
@@ -77,6 +78,13 @@ const toInt16 = () =>
     image => image
         .multiply(scale)
         .int16()
+
+
+const updateMask = () =>
+    image => image
+        .updateMask(
+            image.mask().reduce(ee.Reducer.min()).not().not()
+        )
 
 const compose = (...operations) =>
     image =>
