@@ -1,5 +1,3 @@
-// const moment = require('moment')
-// const visParams = require('./opticalMosaic.json')
 const {toGeometry} = require('@sepal/ee/aoi')
 const {allScenes, selectedScenes} = require('@sepal/ee/optical/collection')
 const {toMosaic} = require('@sepal/ee/optical/mosaic')
@@ -34,10 +32,10 @@ const opticalMosaic = (recipe, selectedBands, panSharpen) => {
     const collection = useAllScenes
         ? allScenes({region, dataSets, reflectance, filters, cloudMasking, cloudBuffer, snowMasking, panSharpen, calibrate, brdfCorrect, dates})
         : selectedScenes({region, reflectance, calibrate, brdfCorrect, filters, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, scenes: model.scenes})
-
+    const composingMethod = compositeOptions.compose
     return {
         getImage() {
-            return toMosaic({region, collection})
+            return toMosaic({region, collection, composingMethod, selectedBands})
         },
         getVisParams() {
             if (selectedBands === 'unixTimeDays') {
