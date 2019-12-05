@@ -67,6 +67,7 @@ class SandboxWebProxy {
                 .setIoThreads(processorCount)
                 .setWorkerThreads(processorCount * 32)
                 .setSocketOption(Options.WRITE_TIMEOUT, 60 * 1000)
+                .setSocketOption(Options.KEEP_ALIVE, true)
                 .setServerOption(UndertowOptions.REQUEST_PARSE_TIMEOUT, 60 * 1000)
                 .setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 60 * 1000)
                 .build()

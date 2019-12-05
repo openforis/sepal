@@ -8,7 +8,7 @@ echo "***********************"
 export SDKMAN_DIR=/usr/local/lib/sdkman
 curl -s get.sdkman.io | bash
 source "$SDKMAN_DIR/bin/sdkman-init.sh"
-yes | sdk install java 11.0.2-open
+yes | sdk install java 12.0.2.hs-adpt
 sdk install groovy
 
 source "$SDKMAN_DIR/bin/sdkman-init.sh"

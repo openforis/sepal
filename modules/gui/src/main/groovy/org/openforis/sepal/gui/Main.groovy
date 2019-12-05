@@ -2,9 +2,11 @@ package org.openforis.sepal.gui
 
 import io.undertow.Handlers
 import io.undertow.Undertow
+import io.undertow.UndertowOptions
 import io.undertow.server.handlers.resource.ClassPathResourceManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.xnio.Options
 
 import static io.undertow.Handlers.resource
 import static io.undertow.Handlers.rewrite
@@ -34,6 +36,10 @@ class Main {
                 .setHandler(handler)
                 .setIoThreads(processorCount)
                 .setWorkerThreads(processorCount * 32)
+                .setSocketOption(Options.WRITE_TIMEOUT, 60 * 1000)
+                .setSocketOption(Options.KEEP_ALIVE, true)
+                .setServerOption(UndertowOptions.REQUEST_PARSE_TIMEOUT, 60 * 1000)
+                .setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 60 * 1000)
                 .build()
         server.start()
         addShutdownHook { server.stop() }

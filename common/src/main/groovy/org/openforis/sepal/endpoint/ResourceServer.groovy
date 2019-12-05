@@ -1,10 +1,12 @@
 package org.openforis.sepal.endpoint
 
 import io.undertow.Undertow
+import io.undertow.UndertowOptions
 import io.undertow.server.handlers.resource.ClassPathResourceManager
 import org.openforis.sepal.util.lifecycle.Lifecycle
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.xnio.Options
 
 import javax.servlet.*
 
@@ -48,6 +50,10 @@ final class ResourceServer implements Lifecycle {
                 .addHttpListener(port, "0.0.0.0")
                 .setIoThreads(processorCount)
                 .setWorkerThreads(processorCount * 32)
+                .setSocketOption(Options.WRITE_TIMEOUT, 60 * 1000)
+                .setSocketOption(Options.KEEP_ALIVE, true)
+                .setServerOption(UndertowOptions.REQUEST_PARSE_TIMEOUT, 60 * 1000)
+                .setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 60 * 1000)
                 .setHandler(handler)
                 .build()
     }
