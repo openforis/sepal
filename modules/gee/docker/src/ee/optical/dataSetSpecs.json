@@ -37,7 +37,7 @@
                     "name": "B7",
                     "scaled": false
                 },
-                "BQA": {
+                "qa": {
                     "name": "BQA",
                     "scaled": false
                 }
@@ -80,7 +80,7 @@
                     "name": "B7",
                     "scaled": false
                 },
-                "BQA": {
+                "qa": {
                     "name": "BQA",
                     "scaled": false
                 }
@@ -123,7 +123,7 @@
                     "name": "B7",
                     "scaled": false
                 },
-                "BQA": {
+                "qa": {
                     "name": "BQA",
                     "scaled": false
                 }
@@ -166,7 +166,7 @@
                     "name": "B7",
                     "scaled": false
                 },
-                "BQA": {
+                "qa": {
                     "name": "BQA",
                     "scaled": false
                 }
@@ -217,7 +217,7 @@
                     "name": "B8",
                     "scaled": false
                 },
-                "BQA": {
+                "qa": {
                     "name": "BQA",
                     "scaled": false
                 }
@@ -268,7 +268,7 @@
                     "name": "B8",
                     "scaled": false
                 },
-                "BQA": {
+                "qa": {
                     "name": "BQA",
                     "scaled": false
                 }
@@ -327,7 +327,7 @@
                     "name": "B11",
                     "scaled": false
                 },
-                "BQA": {
+                "qa": {
                     "name": "BQA",
                     "scaled": false
                 }
@@ -386,7 +386,7 @@
                     "name": "B11",
                     "scaled": false
                 },
-                "BQA": {
+                "qa": {
                     "name": "BQA",
                     "scaled": false
                 }
@@ -445,7 +445,7 @@
                     "name": "B12",
                     "scaled": true
                 },
-                "QA60": {
+                "qa": {
                     "name": "QA60",
                     "scaled": false
                 }
@@ -486,7 +486,7 @@
                     "name": "B7",
                     "scaled": true
                 },
-                "pixel_qa": {
+                "qa": {
                     "name": "pixel_qa",
                     "scaled": false
                 }
@@ -525,7 +525,7 @@
                     "name": "B7",
                     "scaled": true
                 },
-                "pixel_qa": {
+                "qa": {
                     "name": "pixel_qa",
                     "scaled": false
                 }
@@ -564,7 +564,7 @@
                     "name": "B7",
                     "scaled": true
                 },
-                "pixel_qa": {
+                "qa": {
                     "name": "pixel_qa",
                     "scaled": false
                 }
@@ -603,7 +603,7 @@
                     "name": "B7",
                     "scaled": true
                 },
-                "pixel_qa": {
+                "qa": {
                     "name": "pixel_qa",
                     "scaled": false
                 }
@@ -642,11 +642,7 @@
                     "name": "B7",
                     "scaled": true
                 },
-                "pan": {
-                    "name": "B8",
-                    "scaled": true
-                },
-                "pixel_qa": {
+                "qa": {
                     "name": "pixel_qa",
                     "scaled": false
                 }
@@ -685,7 +681,7 @@
                     "name": "B7",
                     "scaled": true
                 },
-                "pixel_qa": {
+                "qa": {
                     "name": "pixel_qa",
                     "scaled": false
                 }
@@ -732,7 +728,7 @@
                     "name": "B11",
                     "scaled": true
                 },
-                "pixel_qa": {
+                "qa": {
                     "name": "pixel_qa",
                     "scaled": false
                 }
@@ -779,7 +775,7 @@
                     "name": "B11",
                     "scaled": true
                 },
-                "pixel_qa": {
+                "qa": {
                     "name": "pixel_qa",
                     "scaled": false
                 }
@@ -838,7 +834,7 @@
                     "name": "B12",
                     "scaled": true
                 },
-                "QA60": {
+                "qa": {
                     "name": "QA60",
                     "scaled": false
                 }

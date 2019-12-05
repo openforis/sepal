@@ -30,6 +30,7 @@ const allScenes = (
         ee.Filter.bounds(region),
         dateFilter({seasonStart, seasonEnd, yearsBefore, yearsAfter})
     )
+
     return dataSets.reduce((mergedCollection, dataSet) =>
             mergeImageCollections(
                 mergedCollection,
@@ -45,7 +46,7 @@ const allScenes = (
                     panSharpen,
                     targetDate,
                     filter
-                })
+                }).select(findCommonBands(dataSets, reflectance))
             ),
         ee.ImageCollection([])
     )
@@ -66,11 +67,14 @@ const dateFilter = ({seasonStart, seasonEnd, yearsBefore, yearsAfter}) => {
     ].flat())
 }
 
-const selectedScenes = ({reflectance, calibrate, brdfCorrect, filters, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, scenes}) =>
-    _.chain(scenes)
+const selectedScenes = ({reflectance, calibrate, brdfCorrect, filters, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, scenes}) => {
+    const scenesByDataSet = _.chain(scenes)
         .values()
         .flatten()
         .groupBy('dataSet')
+        .value()
+    const dataSets = Object.keys(scenesByDataSet)
+    return _.chain(scenesByDataSet)
         .mapValues(scenes =>
             scenes.map(scene => toEEId(scene))
         )
@@ -87,7 +91,7 @@ const selectedScenes = ({reflectance, calibrate, brdfCorrect, filters, cloudMask
                 panSharpen,
                 targetDate,
                 ids
-            })
+            }).select(findCommonBands(dataSets, reflectance))
         )
         .values()
         .reduce(
@@ -95,6 +99,7 @@ const selectedScenes = ({reflectance, calibrate, brdfCorrect, filters, cloudMask
             ee.ImageCollection([])
         )
         .value()
+}
 
 const createCollectionWithScenes = ({dataSet, reflectance, calibrate, brdfCorrect, filters, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate, ids}) => {
     const filter = ee.Filter.inList('system:index', ids)
@@ -140,11 +145,13 @@ const createCollection = ({dataSet, reflectance, calibrate, brdfCorrect, filters
         cloudMasking === 'OFF' && maskClouds(),
         ...filters.map(applyFilter)
     )
+}
 
-    /*
-
-     to mosaic then tasseled cap on result
-     */
+const findCommonBands = (dataSets, reflectance) => {
+    const allBands = dataSets
+        .map(dataSetName => dataSetSpecs[reflectance][dataSetName])
+        .map(dataSet => Object.keys(dataSet.bands))
+    return _.intersection(...allBands)
 }
 
 const bandByFilter = {

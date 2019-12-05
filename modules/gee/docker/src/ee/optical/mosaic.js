@@ -1,20 +1,9 @@
 const ee = require('@google/earthengine')
 
-const toMosaic = ({region, collection, composingMethod, selectedBands}) => {
-    console.log('********** selectedBands', selectedBands)
-    console.log('********** composingMethod', composingMethod)
-
-    const mosaic = composingMethod === 'MEDIAN'
+const toMosaic = ({collection, composingMethod}) => {
+    return composingMethod === 'MEDIAN'
         ? median(collection)
         : medoid(collection)
-
-    const bands = selectedBands.length
-        ? selectedBands
-        : []
-
-    return mosaic
-        .select(bands)
-        .clip(region)
 }
 
 const median = collection =>

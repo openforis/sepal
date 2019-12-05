@@ -23,10 +23,11 @@ const imageProcess = ({dataSetSpec, reflectance, calibrate, brdfCorrect, cloudMa
         .pickBy(({scaled}) => scaled)
         .keys()
         .value()
+    const qaBand = bands.qa.name
     return image =>
         compose(
             normalize(fromBands, toBands, bandsToConvertToFloat),
-            applyQA(toBands),
+            applyQA(toBands, qaBand),
             addMissingBands(),
             addIndexes(),
             addSnow(),
