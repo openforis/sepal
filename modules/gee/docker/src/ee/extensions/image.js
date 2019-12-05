@@ -14,9 +14,10 @@ module.exports = {
 
     compose(...operations) {
         return operations
-            .filter(operation => operation)
             .reduce(
-                (image, operation) => image.addBandsReplace(operation(image)),
+                (image, operation) => typeof operation === 'function'
+                    ? image.addBandsReplace(operation(image))
+                    : image,
                 this
             )
     },

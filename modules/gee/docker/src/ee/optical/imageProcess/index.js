@@ -13,8 +13,9 @@ const applyBRDFCorrection = require('./applyBRDFCorrection')
 const applyPanSharpening = require('./applyPanSharpening')
 const addDates = require('./addDates')
 const applyQA = require('./applyQA')
+const bufferClouds = require('./bufferClouds')
 
-const imageProcess = ({dataSetSpec, reflectance, brdfCorrect, panSharpen, targetDate}) => {
+const imageProcess = ({dataSetSpec, reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate}) => {
     const bands = dataSetSpec.bands
     const fromBands = Object.values(bands).map(band => band.name)
     const toBands = Object.keys(bands)
@@ -22,11 +23,11 @@ const imageProcess = ({dataSetSpec, reflectance, brdfCorrect, panSharpen, target
         .pickBy(({scaled}) => scaled)
         .keys()
         .value()
-
+    const qaBand = bands.qa.name
     return image =>
         compose(
             normalize(fromBands, toBands, bandsToConvertToFloat),
-            applyQA(toBands),
+            applyQA(toBands, qaBand),
             addMissingBands(),
             addIndexes(),
             addSnow(),
@@ -34,12 +35,16 @@ const imageProcess = ({dataSetSpec, reflectance, brdfCorrect, panSharpen, target
             addShadowScore(),
             addHazeScore(reflectance),
             addSoil(),
-            addCloud(),
-            maskClouds(),
+            cloudMasking === 'AGGRESSIVE' && addCloud(),
+            cloudBuffer > 0 && bufferClouds(cloudBuffer),
+            snowMasking !== 'OFF' && maskSnow(),
+            cloudMasking !== 'OFF' && maskClouds(cloudMasking),
+            calibrate && dataSetSpec.calibrationCoefs && calibrateBands(dataSetSpec.calibrationCoefs),
             brdfCorrect && applyBRDFCorrection(dataSetSpec),
             panSharpen && toBands.includes('pan') && applyPanSharpening(),
             addDates(targetDate),
-            toInt16()
+            toInt16(),
+            updateMask()
         )(image)
 }
 
@@ -47,6 +52,21 @@ const normalize = (fromBands, toBands, bandsToConvertToFloat) =>
     image => image
         .select(fromBands, toBands)
         .updateBands(bandsToConvertToFloat, image => image.divide(10000))
+
+const calibrateBands = coefs =>
+    image =>
+        image.addBands(
+            image
+                .select(['blue', 'green', 'red', 'nir', 'swir1', 'swir2'])
+                .multiply(coefs.slopes).add(coefs.intercepts).float(),
+            null, true
+        )
+
+const maskSnow = () =>
+    image => image.updateMask(
+        image.select('snow').not()
+    )
+
 
 const maskClouds = () =>
     image => image.updateMask(
@@ -59,6 +79,13 @@ const toInt16 = () =>
     image => image
         .multiply(scale)
         .int16()
+
+
+const updateMask = () =>
+    image => image
+        .updateMask(
+            image.mask().reduce(ee.Reducer.min()).not().not()
+        )
 
 const compose = (...operations) =>
     image =>

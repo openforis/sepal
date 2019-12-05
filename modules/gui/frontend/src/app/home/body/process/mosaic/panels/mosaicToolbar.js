@@ -33,6 +33,7 @@ const mapRecipeToProps = recipe => {
 class MosaicToolbar extends React.Component {
     render() {
         const {recipeId, initialized, sceneSelectionType, sceneAreasLoaded, scenesSelected} = this.props
+        const selectScenes = sceneSelectionType === SceneSelectionType.SELECT
         return (
             <PanelWizard
                 panels={['aoi', 'dates', 'sources']}
@@ -59,7 +60,7 @@ class MosaicToolbar extends React.Component {
                         id='autoSelectScenes'
                         icon='magic'
                         tooltip={msg('process.mosaic.panel.autoSelectScenes.tooltip')}
-                        disabled={!sceneAreasLoaded}/>
+                        disabled={!sceneAreasLoaded || !selectScenes}/>
                     <Toolbar.ActivationButton
                         id='clearSelectedScenes'
                         icon='trash'
@@ -69,7 +70,7 @@ class MosaicToolbar extends React.Component {
                         id='retrieve'
                         icon='cloud-download-alt'
                         tooltip={msg('process.mosaic.panel.retrieve.tooltip')}
-                        disabled={!initialized || (sceneSelectionType === SceneSelectionType.SELECT && !scenesSelected)}
+                        disabled={!initialized || (selectScenes && !scenesSelected)}
                     />
                 </Toolbar>
                 <Toolbar

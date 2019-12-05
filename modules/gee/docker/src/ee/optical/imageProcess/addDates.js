@@ -8,6 +8,7 @@ const addDates = targetDate =>
         image.compose(
             dayOfYear(),
             daysFromTarget(targetDate),
+            targetDayCloseness(),
             unixTimeDays()
         )
 
@@ -27,6 +28,10 @@ const daysFromTarget = targetDate =>
             .selfExpression('min(i.delta, 365 - i.delta)')
             .rename('daysFromTarget')
     }
+
+const targetDayCloseness = () =>
+    image => image.select('daysFromTarget').multiply(-1).rename('targetDayCloseness')
+
 
 const unixTimeDays = () =>
     image =>
