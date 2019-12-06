@@ -1,13 +1,12 @@
 const {Subject} = require('rxjs')
 const {share, filter} = require('rxjs/operators')
 
-const subchannel = ({in$, out$}, channelId, subIn$ = new Subject()) => {
+const subchannel = ({in$, out$}, channelId, subIn$ = new Subject(), subOut$ = new Subject()) => {
     subIn$.subscribe({
         next: value => in$.next({channelId, value}),
         error: error => in$.next({channelId, error}),
         complete: () => in$.next({channelId, complete: true})
     })
-    const subOut$ = new Subject()
     out$.pipe(
         share(),
         filter(({channelId: currentChannelId}) => currentChannelId === channelId)

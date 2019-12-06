@@ -1,9 +1,7 @@
 const {Subject} = require('rxjs')
 const {serializeError} = require('serialize-error')
 
-const channel = (port, in$ = new Subject()) => {
-    const out$ = new Subject()
-
+const channel = (port, in$ = new Subject(), out$ = new Subject()) => {
     const handleValue = value =>
         out$.next(value)
     
