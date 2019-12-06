@@ -53,7 +53,6 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
     
         const sendMessage = msg =>
             in$.next({jobId, ...msg})
-            // ports.job.postMessage({jobId, ...msg})
 
         const start = () => {
             const workerArgs = _.last(args)
