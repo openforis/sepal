@@ -1,10 +1,11 @@
 const job = require('@sepal/worker/job')
-const {timer} = require('rxjs')
-const {withToken$} = require('@sepal/token')
+const {EMPTY, timer} = require('rxjs')
+const {delay} = require('rxjs/operators')
+const {withToken} = require('@sepal/token')
 
-const worker$ = () =>
-    timer(100)
-    // withToken$('test1', timer(100))
+const worker$ = () => EMPTY.pipe(delay(100))
+// const worker$ = () =>
+// withToken$('test1', timer(100))
 
 module.exports = job({
     jobName: 'Test 1',

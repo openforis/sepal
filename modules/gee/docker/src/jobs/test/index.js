@@ -5,21 +5,21 @@ const worker$ = (minDuration, maxDuration = minDuration) => {
     const {timer, of} = require('rxjs')
     const {mergeMap, map} = require('rxjs/operators')
         
-    return withToken$('test',
-        of(true).pipe(
-            map(() => Math.round(Math.random() * (maxDuration - minDuration) + minDuration)),
-            mergeMap(duration =>
-                timer(duration).pipe(
-                    map(() => {
-                        if (Math.random() < .5) {
+    // return withToken$('test',
+    return of(true).pipe(
+        map(() => Math.round(Math.random() * (maxDuration - minDuration) + minDuration)),
+        mergeMap(duration =>
+            timer(duration).pipe(
+                map(() => {
+                    if (Math.random() < .5) {
                         // throw new Error('Random error!')
-                        }
-                        return `\n${duration} (${minDuration}-${maxDuration})`
-                    }),
-                )
+                    }
+                    return `\n${duration} (${minDuration}-${maxDuration})`
+                }),
             )
         )
     )
+    // )
 }
 
 module.exports = job({
