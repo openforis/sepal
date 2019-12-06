@@ -48,7 +48,6 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
 
     const submit$ = (args, args$) => {
         const jobId = uuid()
-
         const {in$, out$} = transport.createChannel('job')
     
         const sendMessage = msg =>

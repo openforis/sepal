@@ -37,17 +37,16 @@ const transport = ({id = uuid(), port, in$ = new Subject(), out$ = new Subject()
             out$.complete()
         }
     
-        const handleCreateChannel = channelId => {
+        const createChannel = channelId => {
             log.trace(msg('create channel:'), channelId)
-            const chan = channel(transportInstance, channelId)
-            onChannel && onChannel(chan)
+            onChannel && onChannel(channel(transportInstance, channelId))
         }
         
         const outMessage = message => {
             message.value && outValue(message.value)
             message.error && outError(message.error)
             message.complete && outComplete()
-            message.createChannel && handleCreateChannel(message.createChannel)
+            message.createChannel && createChannel(message.createChannel)
         }
     
         port.on('message', outMessage)

@@ -20,12 +20,9 @@ const initWorker = (port, name) => {
     
     Transport({id: 'worker', port,
         onChannel: ({in$, out$}) => {
-            out$.subscribe(
-                message => handleJobMessage(message)
-            )
-
             const start = ({jobId, start: {jobPath, args}}) => {
                 log.trace(msg('start', jobId))
+
                 const tasks = require(jobPath)()
             
                 const tasks$ = _.chain(tasks)
@@ -34,17 +31,13 @@ const initWorker = (port, name) => {
                         of({jobName, worker$, args})
                     )
                     .value()
-            
-                const jobArgs$ = args$.pipe(
+
+                const args$ = args$.pipe(
                     filter(arg => arg.jobId === jobId),
                     map(({value}) => value)
                 )
             
-                run(jobId, tasks$, jobArgs$)
-            }
-            
-            const run = (jobId, tasks$, args$) => {
-                const jobResult$ = concat(...tasks$).pipe(
+                const result$ = concat(...tasks$).pipe(
                     tap(({jobName, args}) =>
                         log.trace(msg(`running <${jobName}> with args:`, jobId), args)
                     ),
@@ -53,9 +46,11 @@ const initWorker = (port, name) => {
                     takeUntil(stop$.pipe(filter(id => id === jobId)))
                 )
         
-                jobResult$.subscribe(
-                    message => in$.next(message)
-                )
+                result$.subscribe({
+                    next: value => in$.next(value),
+                    error: error => in$.error(error),
+                    complete: () => in$.complete()
+                })
             }
             
             const stop = ({jobId}) => {
@@ -67,11 +62,13 @@ const initWorker = (port, name) => {
                 args$.next({jobId, value})
             }
             
-            const handleJobMessage = message => {
-                message.start && start(message)
-                message.stop && stop(message)
-                message.value && next(message)
-            }
+            out$.subscribe(
+                message => {
+                    message.start && start(message)
+                    message.stop && stop(message)
+                    message.value && next(message)
+                }
+            )
         }
     })
 }
