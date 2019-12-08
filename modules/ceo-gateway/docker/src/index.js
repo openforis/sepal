@@ -138,11 +138,23 @@ app.post('/create-project', (req, res, next) => {
                     errorMessage: projectId,
                 })
             } else {
-                const ceoCollectionUrl = urljoin(url, 'collection', `?projectId=${projectId}&tokenKey=${tokenKey}`)
-                res.send({
-                    projectId,
-                    ceoCollectionUrl,
-                    errorMessage: '',
+                request.post({
+                    headers: {
+                        Cookie: cookie,
+                    },
+                    url: urljoin(url, 'publish-project'),
+                    qs: {
+                        projectId,
+                    },
+                }).on('response', response => {
+                    const ceoCollectionUrl = urljoin(url, 'collection', `?projectId=${projectId}&tokenKey=${tokenKey}`)
+                    res.send({
+                        projectId,
+                        ceoCollectionUrl,
+                        errorMessage: '',
+                    })
+                }).on('error', err => {
+                    next(err)
                 })
             }
         })
