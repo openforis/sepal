@@ -16,7 +16,7 @@ app.use(session({
 
 app.use(express.json())
 
-app.use(['/login', '/create-project'], (req, res, next) => {
+app.use(['/login', '/create-project', '/get-collected-data'], (req, res, next) => {
     const {url, username, password, userId} = config.ceo
     request.post({
         url: urljoin(url, 'login'),
@@ -119,10 +119,10 @@ app.post('/create-project', (req, res, next) => {
         headers: {
             Cookie: cookie['0'],
         },
-        qs: {
-            institutionId
-        },
         url: urljoin(url, 'create-project'),
+        qs: {
+            institutionId,
+        },
         json: data,
     }).on('response', response => {
         const {statusCode} = response
@@ -133,14 +133,14 @@ app.post('/create-project', (req, res, next) => {
                 res.status(400).send({
                     projectId: 0,
                     ceoCollectionUrl: '',
-                    errorMessage: projectId
+                    errorMessage: projectId,
                 })
             } else {
                 const ceoCollectionUrl = urljoin(url, 'collection', projectId)
                 res.send({
                     projectId,
                     ceoCollectionUrl,
-                    errorMessage: ''
+                    errorMessage: '',
                 })
             }
         })
@@ -150,10 +150,19 @@ app.post('/create-project', (req, res, next) => {
 })
 
 app.get('/get-collected-data/:id', (req, res, next) => {
+    const {isLogged} = req
+    if (!isLogged) res.status(500).send({error: 'Login failed!'})
+    const {cookie} = req.session
     const {url} = config.ceo
     const {id} = req.params
     request.get({
-        url: urljoin(url, 'get-project-by-id', id),
+        headers: {
+            Cookie: cookie['0'],
+        },
+        url: urljoin(url, 'get-project-by-id'),
+        qs: {
+            projectId: id,
+        },
     }).on('response', response => {
         const {statusCode} = response
         if (statusCode !== 200) return res.sendStatus(statusCode)
@@ -167,7 +176,13 @@ app.get('/get-collected-data/:id', (req, res, next) => {
                 return acc
             }, {})
             request.get({
-                url: urljoin(url, 'dump-project-raw-data', id),
+                headers: {
+                    Cookie: cookie['0'],
+                },
+                url: urljoin(url, 'dump-project-raw-data'),
+                qs: {
+                    projectId: id,
+                },
             }).on('response', response => {
                 let body = ''
                 response.on('data', data => {
