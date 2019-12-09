@@ -1,10 +1,11 @@
 const {Subject} = require('rxjs')
-const {share, filter, finalize, takeUntil, tap, takeWhile} = require('rxjs/operators')
+const {finalize, takeUntil} = require('rxjs/operators')
+const {serializeError, deserializeError} = require('serialize-error')
 const {v4: uuid} = require('uuid')
 const log = require('../log')
 
 const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new Subject()}) => {
-    const {id: transportId, in$: transportIn$, out$: transportOut$} = transport
+    const {id: transportId, port} = transport
     const stop$ = new Subject()
     
     const msg = (message, direction) => [
@@ -12,34 +13,51 @@ const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new
         message
     ].join(' ')
 
-    const transportIn = msg => {
-        transportIn$.next({channelId, ...msg})
+    const postMessage = message => {
+        port.postMessage({channelId, message})
     }
+    
+    const handleReceivedMessage = handler =>
+        ({channelId: messageChannelId, message}) =>
+            messageChannelId === channelId && handler(message)
 
-    const handleIn = () => {
+    const handleIn$ = () => {
         const inMsg = message => msg(message, 'in')
 
         const next = value => {
             log.debug(inMsg('value:'), value)
-            transportIn({value})
+            postMessage({value})
         }
     
         const error = error => {
             log.debug(inMsg('error:'), error)
-            transportIn({error})
+            postMessage({error: serializeError(error)})
         }
     
         const complete = () => {
             log.debug(inMsg('complete'))
-            transportIn({complete: true})
+            postMessage({complete: true})
         }
     
+        const stop = () => {
+            stop$.next()
+            port.off('message', handleMessage)
+        }
+
+        const handleMessage = handleReceivedMessage(
+            message => message.stop && stop()
+        )
+        
+        port.on('message', handleMessage)
+
         in$.pipe(
             takeUntil(stop$)
         ).subscribe({next, error, complete})
+
+        return in$
     }
     
-    const handleOut = () => {
+    const handleOut$ = () => {
         const outMsg = message => msg(message, 'out')
 
         const value = value => {
@@ -47,9 +65,9 @@ const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new
             out$.next(value)
         }
     
-        const error = error => {
-            log.debug(outMsg('error:'), error)
-            out$.error(error)
+        const error = serializedError => {
+            log.debug(outMsg('error:'), serializedError)
+            out$.error(deserializeError(serializedError))
             stop()
         }
     
@@ -60,37 +78,34 @@ const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new
         }
 
         const stop = () => {
-            stop$.next()
+            port.off('message', handleMessage)
         }
 
-        transportOut$.pipe(
-            // tap(log.info),
-            share(),
-            filter(({channelId: currentChannelId}) => currentChannelId === channelId)
-        ).pipe(
-            takeUntil(stop$)
-        ).subscribe({
-            next: message => {
+        const handleMessage = handleReceivedMessage(
+            message => {
                 message.value && value(message.value)
                 message.error && error(message.error)
                 message.complete && complete()
-                message.finalize && stop()
             }
-        })
-    }
+        )
 
-    handleIn()
-    handleOut()
+        port.on('message', handleMessage)
+
+        return out$.pipe(
+            finalize(() => {
+                log.debug(outMsg('finalized'))
+                postMessage({stop: true})
+            })
+        )
+    }
 
     log.debug(msg('created'))
     
     return {
         transportId,
         channelId,
-        in$,
-        out$: out$.pipe(
-            finalize(() => transportIn({finalize: true}))
-        )
+        in$: handleIn$(),
+        out$: handleOut$()
     }
 }
 

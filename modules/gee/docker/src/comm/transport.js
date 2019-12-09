@@ -1,80 +1,43 @@
-const {Subject} = require('rxjs')
-const {serializeError} = require('serialize-error')
 const {v4: uuid} = require('uuid')
 const channel = require('./channel')
 const log = require('../log')
 
-const transport = ({id = uuid(), port, in$ = new Subject(), out$ = new Subject(), onChannel}) => {
+const transport = ({id = uuid(), port, onChannel}) => {
     const send = message =>
         port.postMessage(message)
-
-    const createChannel = channelId => {
-        log.trace(msg('create channel:'), channelId)
-        send({createChannel: channelId})
-        return channel({
-            transport: transportInstance,
-            channelId
-        })
-    }
-
-    const transportInstance = {id, in$, out$, createChannel}
 
     const msg = msg => [
         `Transport [${id}]`,
         msg
     ].join(' ')
 
-    const handleIn = () => {
-        const next = value =>
-            send({value})
-
-        const error = error =>
-            send({error: serializeError(error)})
-
-        const complete = () =>
-            send({complete: true})
-
-        in$.subscribe({next, error, complete})
+    const createChannel = channelId => {
+        log.trace(msg('create channel:'), channelId)
+        return channel({
+            transport: transportInstance,
+            channelId
+        })
     }
-
-    const handleOut = () => {
-        const outValue = value => {
-            log.trace(msg('value:'), value)
-            out$.next(value)
-        }
         
-        const outError = error => {
-            log.trace(msg('error:'), error)
-            out$.error(error)
+    const transportInstance = {
+        id,
+        port,
+        createChannel: channelId => {
+            send({createChannel: channelId})
+            return createChannel(channelId)
         }
-        
-        const outComplete = () => {
-            log.trace(msg('complete'))
-            out$.complete()
-        }
+    }
     
-        const createChannel = channelId => {
-            log.trace(msg('create channel:'), channelId)
-            onChannel && onChannel(
-                channel({
-                    transport: transportInstance,
-                    channelId
-                })
+    const outMessage = message => {
+        const channelId = message.createChannel
+        if (channelId && onChannel) {
+            onChannel(
+                createChannel(channelId)
             )
         }
-        
-        const outMessage = message => {
-            message.value && outValue(message.value)
-            message.error && outError(message.error)
-            message.complete && outComplete()
-            message.createChannel && createChannel(message.createChannel)
-        }
-    
-        port.on('message', outMessage)
     }
-
-    handleIn()
-    handleOut()
+    
+    port.on('message', outMessage)
 
     return transportInstance
 }
