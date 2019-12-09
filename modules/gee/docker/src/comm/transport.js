@@ -11,7 +11,10 @@ const transport = ({id = uuid(), port, in$ = new Subject(), out$ = new Subject()
     const createChannel = channelId => {
         log.trace(msg('create channel:'), channelId)
         send({createChannel: channelId})
-        return channel(transportInstance, channelId)
+        return channel({
+            transport: transportInstance,
+            channelId
+        })
     }
 
     const transportInstance = {id, in$, out$, createChannel}
@@ -20,6 +23,19 @@ const transport = ({id = uuid(), port, in$ = new Subject(), out$ = new Subject()
         `Transport [${id}]`,
         msg
     ].join(' ')
+
+    const handleIn = () => {
+        const next = value =>
+            send({value})
+
+        const error = error =>
+            send({error: serializeError(error)})
+
+        const complete = () =>
+            send({complete: true})
+
+        in$.subscribe({next, error, complete})
+    }
 
     const handleOut = () => {
         const outValue = value => {
@@ -39,7 +55,12 @@ const transport = ({id = uuid(), port, in$ = new Subject(), out$ = new Subject()
     
         const createChannel = channelId => {
             log.trace(msg('create channel:'), channelId)
-            onChannel && onChannel(channel(transportInstance, channelId))
+            onChannel && onChannel(
+                channel({
+                    transport: transportInstance,
+                    channelId
+                })
+            )
         }
         
         const outMessage = message => {
@@ -50,19 +71,6 @@ const transport = ({id = uuid(), port, in$ = new Subject(), out$ = new Subject()
         }
     
         port.on('message', outMessage)
-    }
-
-    const handleIn = () => {
-        const next = value =>
-            send({value})
-
-        const error = error =>
-            send({error: serializeError(error)})
-
-        const complete = () =>
-            send({complete: true})
-
-        in$.subscribe({next, error, complete})
     }
 
     handleIn()

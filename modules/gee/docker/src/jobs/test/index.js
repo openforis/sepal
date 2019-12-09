@@ -11,7 +11,7 @@ const worker$ = (minDuration, maxDuration = minDuration) => {
         mergeMap(duration =>
             timer(duration).pipe(
                 map(() => {
-                    if (Math.random() < .5) {
+                    if (Math.random() < 1) {
                         // throw new Error('Random error!')
                     }
                     return `\n${duration} (${minDuration}-${maxDuration})`
