@@ -39,15 +39,15 @@ const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new
             postMessage({complete: true})
         }
     
+        const handleMessage = handleReceivedMessage(
+            message => message.stop && stop()
+        )
+        
         const stop = () => {
             stop$.next()
             port.off('message', handleMessage)
         }
 
-        const handleMessage = handleReceivedMessage(
-            message => message.stop && stop()
-        )
-        
         port.on('message', handleMessage)
 
         in$.pipe(
@@ -77,10 +77,6 @@ const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new
             stop()
         }
 
-        const stop = () => {
-            port.off('message', handleMessage)
-        }
-
         const handleMessage = handleReceivedMessage(
             message => {
                 message.value && value(message.value)
@@ -88,6 +84,10 @@ const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new
                 message.complete && complete()
             }
         )
+
+        const stop = () => {
+            port.off('message', handleMessage)
+        }
 
         port.on('message', handleMessage)
 
