@@ -32,7 +32,7 @@ const initWorker = (port, name) => {
                     )
                     .value()
 
-                const args$ = args$.pipe(
+                const jobArgs$ = args$.pipe(
                     filter(arg => arg.jobId === jobId),
                     map(({value}) => value)
                 )
@@ -41,7 +41,7 @@ const initWorker = (port, name) => {
                     tap(({jobName, args}) =>
                         log.trace(msg(`running <${jobName}> with args:`, jobId), args)
                     ),
-                    mergeMap(({worker$, args}) => worker$(...args, args$), 1),
+                    mergeMap(({worker$, args}) => worker$(...args, jobArgs$), 1),
                     map(value => ({jobId, value})),
                     takeUntil(stop$.pipe(filter(id => id === jobId)))
                 )
