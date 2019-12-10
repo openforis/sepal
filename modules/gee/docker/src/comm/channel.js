@@ -25,7 +25,7 @@ const channel = ({transport, channelId = uuid(), direction, in$ = new Subject(),
         const inMsg = message => msg(message, 'in')
 
         const next = value => {
-            log.debug(inMsg('value:'), value)
+            log.warn(inMsg('value:'), value)
             postMessage({value})
         }
     
@@ -46,11 +46,11 @@ const channel = ({transport, channelId = uuid(), direction, in$ = new Subject(),
         const stop = () => {
             stop$.next()
             port.off('message', handleMessage)
-            log.trace(`removed listener ${direction}.in`)
+            log.trace(inMsg(`removed <${direction}> listener`))
         }
 
         port.on('message', handleMessage)
-        log.trace(`added listener ${direction}.in`)
+        log.trace(inMsg(`added <${direction}> listener`))
 
         in$.pipe(
             takeUntil(stop$)
@@ -89,11 +89,11 @@ const channel = ({transport, channelId = uuid(), direction, in$ = new Subject(),
 
         const stop = () => {
             port.off('message', handleMessage)
-            log.trace(`removed listener ${direction}.out`)
+            log.trace(outMsg(`removed <${direction}> listener`))
         }
 
         port.on('message', handleMessage)
-        log.trace(`added listener ${direction}.out`)
+        log.trace(outMsg(`added <${direction}> listener`))
 
         return out$.pipe(
             finalize(() => {
