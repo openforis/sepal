@@ -1,7 +1,6 @@
 const {Subject} = require('rxjs')
 const {finalize, first, map, filter} = require('rxjs/operators')
 const {Worker, MessageChannel} = require('worker_threads')
-const {deserializeError} = require('serialize-error')
 const {v4: uuid} = require('uuid')
 const path = require('path')
 const Transport = require('../comm/transport')
@@ -61,8 +60,10 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
             sendMessage({start: {jobPath, args}})
         }
 
-        const stop = () =>
+        const stop = () => {
             sendMessage({stop: true})
+            in$.complete()
+        }
 
         args$ && args$.subscribe(
             value => sendMessage({value})
