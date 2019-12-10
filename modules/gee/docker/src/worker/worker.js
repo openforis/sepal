@@ -20,9 +20,6 @@ const initWorker = (port, name) => {
     
     Transport({id: 'worker', port,
         onChannel: ({in$, out$}) => {
-
-            log.warn('onChannel')
-            
             const start = ({jobId, start: {jobPath, args}}) => {
                 log.trace(msg('start', jobId))
 

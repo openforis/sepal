@@ -11,11 +11,12 @@ const transport = ({id = uuid(), port, onChannel}) => {
         msg
     ].join(' ')
 
-    const createChannel = channelId => {
+    const createChannel = (channelId, direction) => {
         log.trace(msg('create channel:'), channelId)
         return channel({
             transport: transportInstance,
-            channelId
+            channelId,
+            direction
         })
     }
         
@@ -24,7 +25,7 @@ const transport = ({id = uuid(), port, onChannel}) => {
         port,
         createChannel: channelId => {
             send({createChannel: channelId})
-            return createChannel(channelId)
+            return createChannel(channelId, 'direct')
         }
     }
     
@@ -32,7 +33,7 @@ const transport = ({id = uuid(), port, onChannel}) => {
         const channelId = message.createChannel
         if (channelId && onChannel) {
             onChannel(
-                createChannel(channelId)
+                createChannel(channelId, 'reverse')
             )
         }
     }

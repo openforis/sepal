@@ -4,7 +4,7 @@ const {serializeError, deserializeError} = require('serialize-error')
 const {v4: uuid} = require('uuid')
 const log = require('../log')
 
-const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new Subject()}) => {
+const channel = ({transport, channelId = uuid(), direction, in$ = new Subject(), out$ = new Subject()}) => {
     const {id: transportId, port} = transport
     const stop$ = new Subject()
     
@@ -39,16 +39,18 @@ const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new
             postMessage({complete: true})
         }
     
-        const stop = () => {
-            stop$.next()
-            port.off('message', handleMessage)
-        }
-
         const handleMessage = handleReceivedMessage(
             message => message.stop && stop()
         )
         
+        const stop = () => {
+            stop$.next()
+            port.off('message', handleMessage)
+            log.trace(`removed listener ${direction}.in`)
+        }
+
         port.on('message', handleMessage)
+        log.trace(`added listener ${direction}.in`)
 
         in$.pipe(
             takeUntil(stop$)
@@ -77,10 +79,6 @@ const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new
             stop()
         }
 
-        const stop = () => {
-            port.off('message', handleMessage)
-        }
-
         const handleMessage = handleReceivedMessage(
             message => {
                 message.value && value(message.value)
@@ -89,7 +87,13 @@ const channel = ({transport, channelId = uuid(), in$ = new Subject(), out$ = new
             }
         )
 
+        const stop = () => {
+            port.off('message', handleMessage)
+            log.trace(`removed listener ${direction}.out`)
+        }
+
         port.on('message', handleMessage)
+        log.trace(`added listener ${direction}.out`)
 
         return out$.pipe(
             finalize(() => {
