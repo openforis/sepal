@@ -80,7 +80,6 @@ class CompositeOptions extends React.Component {
                     value: 'BRDF',
                     label: msg('process.mosaic.panel.composite.form.corrections.brdf.label'),
                     tooltip: msg('process.mosaic.panel.composite.form.corrections.brdf.tooltip'),
-                    neverSelected: includesSentinel2
                 }, {
                     value: 'CALIBRATE',
                     label: msg('process.mosaic.panel.composite.form.corrections.calibrate.label'),

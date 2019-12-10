@@ -15,7 +15,7 @@ const addDates = require('./addDates')
 const applyQA = require('./applyQA')
 const bufferClouds = require('./bufferClouds')
 
-const imageProcess = ({dataSetSpec, reflectance, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate}) => {
+const imageProcess = ({dataSetSpec, calibrate, brdfCorrect, cloudMasking, cloudBuffer, snowMasking, panSharpen, targetDate}) => {
     const bands = dataSetSpec.bands
     const fromBands = Object.values(bands).map(band => band.name)
     const toBands = Object.keys(bands)
@@ -33,7 +33,7 @@ const imageProcess = ({dataSetSpec, reflectance, calibrate, brdfCorrect, cloudMa
             addSnow(),
             addWater(),
             addShadowScore(),
-            addHazeScore(reflectance),
+            addHazeScore(dataSetSpec.reflectance),
             addSoil(),
             cloudMasking === 'AGGRESSIVE' && addCloud(),
             cloudBuffer > 0 && bufferClouds(cloudBuffer),
