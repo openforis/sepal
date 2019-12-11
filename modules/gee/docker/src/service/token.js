@@ -1,11 +1,11 @@
 const {BehaviorSubject, ReplaySubject, of} = require('rxjs')
-const {first, switchMap, filter, finalize} = require('rxjs/operators')
+const {first, switchMap, filter, finalize, map, tap} = require('rxjs/operators')
 const log = require('../log')
 
 //     get: {get: <namespace>} => <token>
 // release: {release: <token>} => null
 
-const TOKEN_COUNT = 3
+const TOKEN_COUNT = 10
 
 const tokens$ = new BehaviorSubject(TOKEN_COUNT)
 
@@ -23,7 +23,7 @@ const tokenIn$ = tokens => {
     return of(true)
 }
 
-const getToken$ = namespace => {
+const getToken$ = (requestId, namespace) => {
     log.warn('requesting token', namespace)
     const token$ = new ReplaySubject()
 
@@ -31,16 +31,16 @@ const getToken$ = namespace => {
         first(),
         switchMap(tokens => tokenOut$(tokens))
     ).subscribe(() => {
-        token$.next(true)
-        log.warn('HERE')
+        token$.next({token: true})
     })
 
     return token$.pipe(
+        map(value => ({requestId, value})),
         finalize(() => log.error('FINALIZED'))
     )
 }
 
-const releaseToken$ = token => {
+const releaseToken$ = (requestId, token) => {
     log.warn('returning token', token)
     return tokens$.pipe(
         first(),
@@ -50,10 +50,10 @@ const releaseToken$ = token => {
 
 const handle$ = (requestId, message) => {
     if (message.get) {
-        return getToken$(message.get)
+        return getToken$(requestId, message.get)
     }
     if (message.release) {
-        return releaseToken$(message.release)
+        return releaseToken$(requestId, message.release)
     }
 }
 

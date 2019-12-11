@@ -1,10 +1,25 @@
 const ee = require('@google/earthengine')
-const {throwError} = require('rxjs')
-const {catchError} = require('rxjs/operators')
+const {from, throwError} = require('rxjs')
+const {catchError, filter} = require('rxjs/operators')
 const {SystemException} = require('@sepal/exception')
 const {withToken$} = require('@sepal/token')
 
-const ee$ = callback => withToken$('ee', new Promise(callback))
+const ee$ = promiseCallback =>
+    withToken$('ee',
+        from(new Promise(
+            (resolve, reject) => {
+                try {
+                    promiseCallback(resolve, reject)
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        ).pipe(
+            filter(value => value)
+        )
+    )
+
+exports.ee$ = ee$
 
 exports.getAsset$ = eeId =>
     ee$((resolve, reject) =>

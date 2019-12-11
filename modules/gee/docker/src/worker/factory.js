@@ -39,6 +39,9 @@ const bootstrapWorker$ = (name, channelNames) => {
 
 const setupWorker = ({name, jobPath, worker, ports}) => {
     const transport = Transport({id: 'main', port: ports.job})
+    
+    const {in$: serviceIn$, out$: serviceOut$} = transport.createChannel('service')
+    service.initMain(serviceIn$, serviceOut$)
      
     const msg = (msg, jobId) => [
         `Worker job [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
@@ -89,7 +92,8 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
 }
 
 const initWorker$ = (name, jobPath) =>
-    bootstrapWorker$(name, ['job', 'service']).pipe(
+// bootstrapWorker$(name, ['job', 'service']).pipe(
+    bootstrapWorker$(name, ['job']).pipe(
         map(({worker, ports}) =>
             setupWorker({name, jobPath, worker, ports})
         )

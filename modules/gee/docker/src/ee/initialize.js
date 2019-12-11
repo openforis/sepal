@@ -3,20 +3,17 @@ const log = require('@sepal/log')
 
 const worker$ = () => {
     const ee = require('@google/earthengine')
+    const {ee$} = require('@sepal/ee/utils')
     require('./extensions')
 
-    return new Promise((resolve, reject) => {
+    return ee$((resolve, reject) => {
         log.trace('Initializing library')
-        try {
-            ee.initialize(
-                null,
-                null,
-                () => resolve(),
-                error => reject(error)
-            )
-        } catch (error) {
-            reject(error)
-        }
+        ee.initialize(
+            null,
+            null,
+            () => resolve(),
+            error => reject(error)
+        )
     })
 }
 

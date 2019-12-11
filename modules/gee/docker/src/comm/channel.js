@@ -25,7 +25,7 @@ const channel = ({transport, channelId = uuid(), direction, in$ = new Subject(),
         const inMsg = message => msg(message, 'in')
 
         const next = value => {
-            log.warn(inMsg('value:'), value)
+            log.debug(inMsg('value:'), value)
             postMessage({value})
         }
     
@@ -40,7 +40,9 @@ const channel = ({transport, channelId = uuid(), direction, in$ = new Subject(),
         }
     
         const handleMessage = handleReceivedMessage(
-            message => message.stop && stop()
+            message => {
+                message.stop && stop()
+            }
         )
         
         const stop = () => {

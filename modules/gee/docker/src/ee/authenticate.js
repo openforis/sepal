@@ -20,39 +20,32 @@ const getCredentials = ctx => {
 
 const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     const ee = require('@google/earthengine')
+    const {ee$} = require('@sepal/ee/utils')
     require('./extensions')
 
     const authenticateServiceAccount = credentials =>
-        new Promise((resolve, reject) => {
+        ee$((resolve, reject) => {
             log.trace('Running EE authentication (service account)')
-            try {
-                ee.data.authenticateViaPrivateKey(
-                    credentials,
-                    () => resolve(),
-                    error => reject(error)
-                )
-            } catch (error) {
-                reject(error)
-            }
+            ee.data.authenticateViaPrivateKey(
+                credentials,
+                () => resolve(),
+                error => reject(error)
+            )
         })
 
     const authenticateUserAccount = googleTokens =>
-        new Promise((resolve, reject) => {
+        ee$(resolve => {
             log.trace('Running EE authentication (user account)')
             const secondsToExpiration = (googleTokens.accessTokenExpiryDate - Date.now()) / 1000
-            try {
-                ee.data.setAuthToken(
-                    null,
-                    'Bearer',
-                    googleTokens.accessToken,
-                    secondsToExpiration,
-                    null,
-                    () => resolve(),
-                    false
-                )
-            } catch (error) {
-                reject(error)
-            }
+            ee.data.setAuthToken(
+                null,
+                'Bearer',
+                googleTokens.accessToken,
+                secondsToExpiration,
+                null,
+                () => resolve(),
+                false
+            )
         })
 
     const authenticate = ({sepalUser: {googleTokens}, serviceAccountCredentials}) =>

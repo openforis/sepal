@@ -1,36 +1,39 @@
 const {ReplaySubject, Subject} = require('rxjs')
-const {filter, map, share} = require('rxjs/operators')
+const {filter, map, share, first} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
-const {streamToPort} = require('./communication')
+const log = require('../log')
 
 const serviceRequest$ = new ReplaySubject()
 const serviceResponse$ = new Subject()
 
-const handle$ = ({serviceName, requestId, data}) =>
-    require(`@sepal/service/${serviceName}`).handle$(requestId, data)
+const initMain = (in$, out$) => {
+    const handle$ = ({serviceName, requestId, data}) =>
+        require(`@sepal/service/${serviceName}`).handle$(requestId, data)
 
-const handleUpstreamMessage = (port, {jobId, value: {serviceName, requestId, data}}) => {
-    handle$({serviceName, requestId, data})
-        .subscribe(
-            response => port.postMessage({jobId, value: {requestId, response}})
-        )
-}
-    
-const initMain = port => {
-    port.on('message', message => handleUpstreamMessage(port, message))
+    out$.subscribe(
+        ({serviceName, requestId, data}) => {
+            log.warn('service request:', {serviceName, requestId, data})
+            handle$({serviceName, requestId, data}).subscribe({
+                next: value => {
+                    in$.next(value)
+                },
+                error: error => in$.error(error),
+                complete: () => in$.complete()
+            })
+        }
+    )
 }
 
-const handleDownstreamMessage = message => {
-    message.value && serviceResponse$.next(message.value)
-}
-
-const initWorker = port => {
-    streamToPort({
-        stream$: serviceRequest$,
-        port,
+const initWorker = (in$, out$) => {
+    serviceRequest$.subscribe({
+        next: request => in$.next(request)
     })
-    
-    port.on('message', handleDownstreamMessage)
+    out$.subscribe({
+        next: response => {
+            log.warn('got service response', response)
+            serviceResponse$.next(response)
+        }
+    })
 }
 
 const request$ = (serviceName, data) => {
@@ -39,7 +42,8 @@ const request$ = (serviceName, data) => {
     return serviceResponse$.pipe(
         share(),
         filter(({requestId: currentRequestId}) => currentRequestId === requestId),
-        map(({value}) => value)
+        map(({value}) => value),
+        first()
     )
 }
 

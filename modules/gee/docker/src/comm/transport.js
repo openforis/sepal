@@ -1,5 +1,6 @@
 const {v4: uuid} = require('uuid')
 const channel = require('./channel')
+const _ = require('lodash')
 const log = require('../log')
 
 const transport = ({id = uuid(), port, onChannel}) => {
@@ -32,9 +33,20 @@ const transport = ({id = uuid(), port, onChannel}) => {
     const outMessage = message => {
         const channelId = message.createChannel
         if (channelId && onChannel) {
-            onChannel(
-                createChannel(channelId, 'reverse')
-            )
+            if (_.isFunction(onChannel)) {
+                onChannel(
+                    createChannel(channelId, 'reverse')
+                )
+            } else {
+                const handler = onChannel[channelId]
+                if (handler) {
+                    handler(
+                        createChannel(channelId, 'reverse')
+                    )
+                } else {
+                    log.warn('Undefined handler for channel:', channelId)
+                }
+            }
         }
     }
     
