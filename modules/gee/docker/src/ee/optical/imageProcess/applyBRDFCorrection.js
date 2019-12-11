@@ -7,13 +7,13 @@ const tileOrbits = ee.FeatureCollection('users/wiell/SepalResources/sentinel2Til
 
 const applyBRDFCorrection = ({dataSetName, maxZenith}) =>
     image =>
-        dataSetName === 'SENTINEL_2'
+        ee.Image(dataSetName === 'SENTINEL_2'
             ? ee.Algorithms.If(
                 getTileOrbit(image),
                 correct(image, dataSetName, maxZenith),
                 image
             )
-            : correct(image, dataSetName, maxZenith)
+            : correct(image, dataSetName, maxZenith))
 
 const getTileOrbit = image =>
     tileOrbits
