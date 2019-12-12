@@ -12,21 +12,17 @@ const transport = ({id = uuid(), port, onChannel}) => {
         msg
     ].join(' ')
 
-    const createChannel = (channelId, direction) => {
+    const createChannel = ({channelId, direction, in$, out$}) => {
         log.trace(msg('create channel:'), channelId)
-        return channel({
-            transport: transportInstance,
-            channelId,
-            direction
-        })
+        return channel({transport, channelId, direction, in$, out$})
     }
         
-    const transportInstance = {
+    const transport = {
         id,
         port,
         createChannel: channelId => {
             send({createChannel: channelId})
-            return createChannel(channelId, 'direct')
+            return createChannel({channelId, direction: 'direct'})
         }
     }
     
@@ -35,14 +31,17 @@ const transport = ({id = uuid(), port, onChannel}) => {
         if (channelId && onChannel) {
             if (_.isFunction(onChannel)) {
                 onChannel(
-                    createChannel(channelId, 'reverse')
+                    createChannel({channelId, direction: 'reverse'})
                 )
             } else {
                 const handler = onChannel[channelId]
-                if (handler) {
+                if (_.isFunction(handler)) {
                     handler(
-                        createChannel(channelId, 'reverse')
+                        createChannel({channelId, direction: 'reverse'})
                     )
+                } else if (_.isPlainObject(handler)) {
+                    const {in$, out$} = handler
+                    createChannel({channelId, direction: 'reverse', in$, out$})
                 } else {
                     log.warn('Undefined handler for channel:', channelId)
                 }
@@ -52,7 +51,7 @@ const transport = ({id = uuid(), port, onChannel}) => {
     
     port.on('message', outMessage)
 
-    return transportInstance
+    return transport
 }
 
 module.exports = transport

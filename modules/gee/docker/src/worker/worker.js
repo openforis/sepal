@@ -70,10 +70,9 @@ const initWorker = (port, name) => {
         )
     }
 
-    const setupService = (in$, out$) => {
-        service.initWorker(in$, out$)
-    }
-    
+    const setupService = (request$, response$) =>
+        service.initWorker(request$, response$)
+
     Transport({id: 'worker', port,
         onChannel: {
             job: ({in$, out$}) => setupJob(in$, out$),
