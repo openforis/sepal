@@ -1,50 +1,54 @@
 const {BehaviorSubject, ReplaySubject, of} = require('rxjs')
-const {first, switchMap, filter, finalize, map, tap} = require('rxjs/operators')
+const {first, switchMap, filter, map} = require('rxjs/operators')
 const log = require('../log')
 
-//     get: {get: <namespace>} => <token>
-// release: {release: <token>} => null
+const TOKENS = {
+    test: 10,
+    default: 10
+}
 
-const TOKEN_COUNT = 10
+const tokens$ = new BehaviorSubject(TOKENS)
 
-const tokens$ = new BehaviorSubject(TOKEN_COUNT)
-
-const availableTokens$ = tokens$.pipe(
-    filter(tokens => tokens > 0)
+const availableTokens$ = bucket => tokens$.pipe(
+    filter(tokens => tokens[bucket] > 0)
 )
 
-const tokenOut$ = tokens => {
-    tokens$.next(tokens - 1)
+const updateBucket = (tokens, bucket, update) => {
+    bucket = tokens[bucket] ? bucket : 'default'
+    tokens$.next({...tokens, [bucket]: update(tokens[bucket])})
+}
+
+const tokenOut$ = (tokens, bucket) => {
+    updateBucket(tokens, bucket, count => count - 1)
     return of(true)
 }
 
-const tokenIn$ = tokens => {
-    tokens$.next(tokens + 1)
+const tokenIn$ = (tokens, bucket) => {
+    updateBucket(tokens, bucket, count => count + 1)
     return of(true)
 }
 
-const getToken$ = (requestId, namespace) => {
-    log.warn('requesting token', namespace)
+const getToken$ = (requestId, bucket) => {
+    log.trace(`Token requested for bucket [${bucket}]`)
     const token$ = new ReplaySubject()
 
-    availableTokens$.pipe(
+    availableTokens$(bucket).pipe(
         first(),
-        switchMap(tokens => tokenOut$(tokens))
+        switchMap(tokens => tokenOut$(tokens, bucket))
     ).subscribe(() => {
-        token$.next({token: true})
+        token$.next({bucket})
     })
 
     return token$.pipe(
-        map(value => ({requestId, value})),
-        finalize(() => log.error('FINALIZED'))
+        map(value => ({requestId, value}))
     )
 }
 
-const releaseToken$ = (requestId, token) => {
-    log.warn('returning token', token)
+const releaseToken$ = (requestId, {bucket}) => {
+    log.trace(`Token returned for bucket [${bucket}]`)
     return tokens$.pipe(
         first(),
-        switchMap(tokens => tokenIn$(tokens))
+        switchMap(tokens => tokenIn$(tokens, bucket))
     )
 }
 
