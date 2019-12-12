@@ -129,13 +129,13 @@ app.post('/create-project', (req, res, next) => {
         if (statusCode !== 200) return res.sendStatus(statusCode)
         response.on('data', data => {
             const jsonObject = JSON.parse(data)
-            const {projectId, tokenKey} = jsonObject
+            const {projectId, tokenKey, errorMessage} = jsonObject
             const isInteger = n => !isNaN(parseInt(n)) && isFinite(n) && !n.includes('.')
             if (!isInteger(projectId)) {
                 res.status(400).send({
                     projectId: 0,
                     ceoCollectionUrl: '',
-                    errorMessage: projectId,
+                    errorMessage,
                 })
             } else {
                 request.post({
