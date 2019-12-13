@@ -70,15 +70,13 @@ const initWorker = (port, name) => {
         )
     }
 
-    const setupService = (request$, response$) =>
-        service.initWorker(request$, response$)
-
-    Transport({id: 'worker', port,
-        onChannel: {
-            job: ({in$, out$}) => setupJob(in$, out$),
-            service: ({in$, out$}) => setupService(in$, out$)
-        }
+    const transport = Transport({id: 'worker', port})
+    
+    transport.onChannel({
+        job: ({in$, out$}) => setupJob(in$, out$)
     })
+
+    service.initWorker(transport)
 }
 
 parentPort.once('message', ({name, ports}) => {

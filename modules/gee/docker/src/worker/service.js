@@ -1,38 +1,37 @@
-const {ReplaySubject, Subject} = require('rxjs')
-const {filter, map, share, first} = require('rxjs/operators')
-const {v4: uuid} = require('uuid')
+const {map, first, finalize} = require('rxjs/operators')
+const log = require('@sepal/log')
 
-const serviceRequest$ = new ReplaySubject()
-const serviceResponse$ = new Subject()
+let transport
 
 const initMain = (request$, response$) => {
-    const handle$ = ({serviceName, requestId, data}) =>
-        require(`@sepal/service/${serviceName}`).handle$(requestId, data)
+    const handle$ = ({serviceName, data}) =>
+        require(`@sepal/service/${serviceName}`).handle$(data)
 
     request$.subscribe(
-        ({serviceName, requestId, data}) =>
-            handle$({serviceName, requestId, data}).subscribe(
-                value => response$.next(value)
-            )
+        ({serviceName, data}) => {
+            log.warn(`Received a service request for [${serviceName}] with data:`, data)
+            return handle$({serviceName, data}).subscribe({
+                next: value => {
+                    log.warn(`Sending a service response for [${serviceName}]:`, value)
+                    response$.next(value)
+                    response$.complete()
+                },
+                error: error => log.error('ERROR', error),
+                complete: () => log.error('COMPLETE')
+            })
+        }
     )
 }
 
-const initWorker = (request$, response$) => {
-    serviceRequest$.subscribe(
-        request => request$.next(request)
-    )
-    response$.subscribe(
-        response => serviceResponse$.next(response)
-    )
+const initWorker = theTransport => {
+    transport = theTransport
 }
 
 const request$ = (serviceName, data) => {
-    const requestId = uuid()
-    serviceRequest$.next({serviceName, requestId, data})
-
-    return serviceResponse$.pipe(
-        share(),
-        filter(({requestId: currentRequestId}) => currentRequestId === requestId),
+    const {in$: request$, out$: response$} = transport.createChannel('service')
+    
+    request$.next({serviceName, data})
+    return response$.pipe(
         map(({value}) => value),
         first()
     )

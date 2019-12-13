@@ -40,9 +40,11 @@ const bootstrapWorker$ = (name, channelNames) => {
 const setupWorker = ({name, jobPath, worker, ports}) => {
     const transport = Transport({id: 'main', port: ports.job})
     
-    const {in$: response$, out$: request$} = transport.createChannel('service')
-    service.initMain(request$, response$)
-     
+    transport.onChannel({
+        service: ({in$: response$, out$: request$}) =>
+            service.initMain(request$, response$)
+    })
+ 
     const msg = (msg, jobId) => [
         `Worker job [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
         msg
@@ -51,7 +53,7 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
     const submit$ = (args, args$) => {
         const jobId = uuid()
         const {in$, out$} = transport.createChannel('job')
-    
+        
         const sendMessage = msg =>
             in$.next({jobId, ...msg})
 
