@@ -1,25 +1,24 @@
 const {Subject} = require('rxjs')
 const {finalize, takeUntil} = require('rxjs/operators')
 const {serializeError, deserializeError} = require('serialize-error')
-const {v4: uuid} = require('uuid')
 const log = require('../log')
 
-const channel = ({transport, channelId = uuid(), direction, in$ = new Subject(), out$ = new Subject()}) => {
+const channel = ({transport, channelId, conversationId, direction, in$ = new Subject(), out$ = new Subject()}) => {
     const {id: transportId, port} = transport
     const stop$ = new Subject()
     
     const msg = (message, direction) => [
-        `Channel [${transportId}.${channelId}${direction ? `.${direction}` : ''}]`,
+        `Channel [${transportId}.${channelId}.${conversationId}${direction ? `.${direction}` : ''}]`,
         message
     ].join(' ')
 
     const postMessage = message => {
-        port.postMessage({channelId, message})
+        port.postMessage({channelId, conversationId, message})
     }
     
     const handleReceivedMessage = handler =>
-        ({channelId: messageChannelId, message}) =>
-            messageChannelId === channelId && handler(message)
+        ({channelId: messageChannelId, conversationId: messageConversationId, message}) =>
+            messageChannelId === channelId && messageConversationId === conversationId && handler(message)
 
     const handleIn$ = () => {
         const inMsg = message => msg(message, 'in')
@@ -110,6 +109,7 @@ const channel = ({transport, channelId = uuid(), direction, in$ = new Subject(),
     return {
         transportId,
         channelId,
+        conversationId,
         in$: handleIn$(),
         out$: handleOut$()
     }

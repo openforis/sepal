@@ -3,7 +3,7 @@ const channel = require('./channel')
 const _ = require('lodash')
 const log = require('../log')
 
-const transport = ({id = uuid(), port, onChannel}) => {
+const transport = ({id = uuid(), port}) => {
     const send = message =>
         port.postMessage(message)
 
@@ -12,44 +12,48 @@ const transport = ({id = uuid(), port, onChannel}) => {
         msg
     ].join(' ')
 
-    const createChannel = ({channelId, direction, in$, out$}) => {
+    const createChannel = ({channelId, conversationId, direction, in$, out$}) => {
         log.trace(msg('create channel:'), channelId)
-        return channel({transport, channelId, direction, in$, out$})
+        return channel({transport, channelId, conversationId, direction, in$, out$})
     }
-        
-    const transport = {
-        id,
-        port,
-        createChannel: channelId => {
-            send({createChannel: channelId})
-            return createChannel({channelId, direction: 'direct'})
-        }
-    }
-    
-    const outMessage = message => {
-        const channelId = message.createChannel
+
+    const handleCreateChannel = ({channelId, conversationId}, onChannel) => {
         if (channelId && onChannel) {
             if (_.isFunction(onChannel)) {
                 onChannel(
-                    createChannel({channelId, direction: 'reverse'})
+                    createChannel({channelId, conversationId, direction: 'reverse'})
                 )
             } else {
                 const handler = onChannel[channelId]
                 if (_.isFunction(handler)) {
                     handler(
-                        createChannel({channelId, direction: 'reverse'})
+                        createChannel({channelId, conversationId, direction: 'reverse'})
                     )
                 } else if (_.isPlainObject(handler)) {
                     const {in$, out$} = handler
-                    createChannel({channelId, direction: 'reverse', in$, out$})
+                    createChannel({channelId, conversationId, direction: 'reverse', in$, out$})
                 } else {
                     log.warn('Undefined handler for channel:', channelId)
                 }
             }
         }
     }
-    
-    port.on('message', outMessage)
+        
+    const transport = {
+        id,
+        port,
+        createChannel: (channelId, conversationId = uuid()) => {
+            send({createChannel: {channelId, conversationId}})
+            return createChannel({channelId, conversationId, direction: 'direct'})
+        },
+        onChannel: onChannel => {
+            const handleMessage = message => {
+                message.createChannel && handleCreateChannel(message.createChannel, onChannel)
+            }
+            
+            port.on('message', handleMessage)
+        }
+    }
 
     return transport
 }
