@@ -1,64 +1,70 @@
-const {BehaviorSubject, ReplaySubject, of} = require('rxjs')
-const {first, switchMap, filter, map} = require('rxjs/operators')
+const {Subject, ReplaySubject, zip} = require('rxjs')
+const {first, map, filter, delay, finalize} = require('rxjs/operators')
+const {v4: uuid} = require('uuid')
 const log = require('../log')
 
-const TOKENS = {
-    test: 10,
-    default: 10
-}
+const RATE_LIMIT_MS = 1000
 
-const tokens$ = new BehaviorSubject(TOKENS)
+const rateToken$ = new Subject()
+const concurrencyToken$ = new Subject()
+const requestToken$ = new Subject()
+const responseToken$ = new Subject()
 
-const availableTokens$ = bucket => tokens$.pipe(
-    filter(tokens => tokens[bucket] > 0)
+const token$ = zip(rateToken$, concurrencyToken$, requestToken$).pipe(
+    map(([rateToken, jobToken, requestToken]) =>
+        ({rateToken, jobToken, requestToken})
+    ),
 )
 
-const updateBucket = (tokens, bucket, update) => {
-    bucket = tokens[bucket] ? bucket : 'default'
-    tokens$.next({...tokens, [bucket]: update(tokens[bucket])})
-}
+token$.subscribe({
+    next: token => {
+        log.debug('Serving token', token)
+        responseToken$.next(token)
+    },
+    error: error => log.error('ERROR', error),
+    complete: () => log.error('COMPLETE')
+})
 
-const tokenOut$ = (tokens, bucket) => {
-    updateBucket(tokens, bucket, count => count - 1)
-    return of(true)
-}
+token$.pipe(
+    delay(RATE_LIMIT_MS)
+).subscribe({
+    next: ({rateToken}) => {
+        log.debug('Recycling rate token', rateToken)
+        rateToken$.next(rateToken)
+    },
+    error: error => log.error('ERROR', error),
+    complete: () => log.error('COMPLETE')
+})
 
-const tokenIn$ = (tokens, bucket) => {
-    updateBucket(tokens, bucket, count => count + 1)
-    return of(true)
-}
+rateToken$.next(1)
+rateToken$.next(2)
+rateToken$.next(3)
+rateToken$.next(4)
+rateToken$.next(5)
+concurrencyToken$.next(1)
+concurrencyToken$.next(2)
+concurrencyToken$.next(3)
+concurrencyToken$.next(4)
+concurrencyToken$.next(5)
 
-const getToken$ = (requestId, bucket) => {
-    log.trace(`Token requested for bucket [${bucket}]`)
-    const token$ = new ReplaySubject()
+// const handle$ = () => of({foo: 'bar'})
 
-    availableTokens$(bucket).pipe(
+const handle$ = () => {
+    const requestId = uuid()
+    log.debug('Requesting token for request', requestId)
+    const response$ = new ReplaySubject()
+    responseToken$.pipe(
+        filter(({requestToken: {requestId: tokenRequestId}}) =>
+            tokenRequestId === requestId
+        ),
         first(),
-        switchMap(tokens => tokenOut$(tokens, bucket))
-    ).subscribe(() => {
-        token$.next({bucket})
-    })
-
-    return token$.pipe(
-        map(value => ({requestId, value}))
+    ).subscribe(
+        token => response$.next(token)
     )
-}
-
-const releaseToken$ = (requestId, {bucket}) => {
-    log.trace(`Token returned for bucket [${bucket}]`)
-    return tokens$.pipe(
-        first(),
-        switchMap(tokens => tokenIn$(tokens, bucket))
+    requestToken$.next({requestId})
+    return response$.pipe(
+        finalize(() => log.error('finalized'))
     )
-}
-
-const handle$ = (requestId, message) => {
-    if (message.get) {
-        return getToken$(requestId, message.get)
-    }
-    if (message.release) {
-        return releaseToken$(requestId, message.release)
-    }
 }
 
 module.exports = {handle$}
