@@ -1,24 +1,29 @@
-const {map, first} = require('rxjs/operators')
+const {Subject} = require('rxjs')
+const {takeUntil} = require('rxjs/operators')
 const log = require('@sepal/log')
 
 let transport
 
 const initMain = (request$, response$) => {
-    const handle$ = ({serviceName, data}) =>
-        require(`@sepal/service/${serviceName}`).handle$(data)
+    const handle$ = ({servicePath, data}) =>
+        require(`@sepal/${servicePath}`).handle$(data)
+
+    const stop$ = new Subject()
 
     request$.subscribe(
-        ({serviceName, data}) => {
-            log.warn(`Received a service request for [${serviceName}] with data:`, data)
-            handle$({serviceName, data}).subscribe({
-                next: value => {
-                    log.warn(`Sending a service response for [${serviceName}]:`, value)
+        ({servicePath, data}) => {
+            log.warn(`Received a service request for [${servicePath}] with data:`, data)
+            handle$({servicePath, data}).pipe(
+                takeUntil(stop$)
+            ).subscribe(
+                value => {
+                    log.warn(`Sending a service response for [${servicePath}]:`, value)
                     response$.next(value)
-                },
-                error: error => log.error('ERROR', error),
-                complete: () => log.error('COMPLETE')
-            })
-        }
+                }
+            )
+        },
+        error => log.error(error),
+        () => stop$.next()
     )
 }
 
@@ -26,14 +31,10 @@ const initWorker = theTransport => {
     transport = theTransport
 }
 
-const request$ = (serviceName, data) => {
+const request$ = (servicePath, data) => {
     const {in$: request$, out$: response$} = transport.createChannel('service')
-    
-    request$.next({serviceName, data})
-    return response$.pipe(
-        map(({value}) => value),
-        first()
-    )
+    request$.next({servicePath, data})
+    return response$
 }
 
 module.exports = {
