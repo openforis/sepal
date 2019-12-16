@@ -3,7 +3,7 @@ const _ = require('lodash')
 const gp = require('./geometryParser')
 
 const expr = ee.Image.expr
-const tileOrbits = ee.FeatureCollection('users/wiell/SepalResources/sentinel2TileOrbits_test')
+const tileOrbits = ee.FeatureCollection('users/wiell/SepalResources/sentinel2TileOrbits')
 
 const applyBRDFCorrection = ({dataSetName, maxZenith}) =>
     image =>
