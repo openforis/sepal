@@ -12,12 +12,12 @@ const initMain = (request$, response$) => {
 
     request$.subscribe(
         ({servicePath, data}) => {
-            log.warn(`Received a service request for [${servicePath}] with data:`, data)
+            log.debug(`Service request for [${servicePath}] with data:`, data)
             handle$({servicePath, data}).pipe(
                 takeUntil(stop$)
             ).subscribe(
                 value => {
-                    log.warn(`Sending a service response for [${servicePath}]:`, value)
+                    log.debug(`Service response for [${servicePath}]:`, value)
                     response$.next(value)
                 }
             )

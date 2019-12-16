@@ -58,7 +58,7 @@ const tokenService = ({rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
         requestToken$.next({requestId})
         return response$.pipe(
             finalize(() => {
-                log.error('Recycling concurrency token', currentToken.concurrencyToken)
+                log.debug('Recycling concurrency token', currentToken.concurrencyToken)
                 concurrencyToken$.next(currentToken.concurrencyToken)
             })
         )
