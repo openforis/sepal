@@ -1,4 +1,4 @@
-const {map, first, finalize} = require('rxjs/operators')
+const {map, first} = require('rxjs/operators')
 const log = require('@sepal/log')
 
 let transport
@@ -10,11 +10,10 @@ const initMain = (request$, response$) => {
     request$.subscribe(
         ({serviceName, data}) => {
             log.warn(`Received a service request for [${serviceName}] with data:`, data)
-            return handle$({serviceName, data}).subscribe({
+            handle$({serviceName, data}).subscribe({
                 next: value => {
                     log.warn(`Sending a service response for [${serviceName}]:`, value)
                     response$.next(value)
-                    response$.complete()
                 },
                 error: error => log.error('ERROR', error),
                 complete: () => log.error('COMPLETE')
