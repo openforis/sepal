@@ -4,18 +4,22 @@ const service = require('@sepal/worker/service')
 const log = require('./log')
 
 const withToken$ = (servicePath, observable$) => {
-    const stop$ = new Subject()
-    return service.request$(servicePath).pipe(
+    const releaseToken$ = new Subject()
+    const token$ = service.request$(servicePath)
+
+    const releaseToken = token => {
+        releaseToken$.next()
+        log.debug('Returning token: ', token)
+    }
+    
+    return token$.pipe(
         tap(token => log.debug('Using token: ', token)),
         mergeMap(token =>
             observable$.pipe(
-                finalize(() => {
-                    stop$.next()
-                    log.debug('Returning token: ', token)
-                })
+                finalize(() => releaseToken(token))
             )
         ),
-        takeUntil(stop$)
+        takeUntil(releaseToken$)
     )
 }
 

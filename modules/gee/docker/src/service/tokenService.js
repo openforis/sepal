@@ -25,7 +25,7 @@ const tokenService = ({rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
     
     token$.subscribe(
         token => {
-            log.debug('Serving token', token)
+            log.debug('Serving token:', token)
             responseToken$.next(token)
         }
     )
@@ -34,7 +34,7 @@ const tokenService = ({rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
         delay(rateWindowMs)
     ).subscribe(
         ({rateToken}) => {
-            log.debug('Recycling rate token', rateToken)
+            log.debug('Recycling rate token:', rateToken)
             rateToken$.next(rateToken)
         }
     )
@@ -42,7 +42,7 @@ const tokenService = ({rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
     const handle$ = () => {
         const requestId = uuid()
         let currentToken
-        log.debug('Requesting token for request', requestId)
+        log.debug('Getting token for request:', requestId)
         const response$ = new ReplaySubject()
         responseToken$.pipe(
             filter(({requestToken: {requestId: tokenRequestId}}) =>
@@ -58,7 +58,7 @@ const tokenService = ({rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
         requestToken$.next({requestId})
         return response$.pipe(
             finalize(() => {
-                log.debug('Recycling concurrency token', currentToken.concurrencyToken)
+                log.debug('Recycling concurrency token:', currentToken.concurrencyToken)
                 concurrencyToken$.next(currentToken.concurrencyToken)
             })
         )
