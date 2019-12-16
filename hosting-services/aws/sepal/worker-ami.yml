@@ -119,6 +119,13 @@
         name: ec2-user
         groups: docker
 
+    - name: Create /etc/systemd/system/docker.service.d
+      file:
+        path: "/etc/systemd/system/docker.service.d"
+        state: directory
+    - name: Copy /etc/systemd/system/docker.service.d/docker.conf
+      copy: src=docker/docker.conf dest=/etc/systemd/system/docker.service.d/docker.conf
+
     - name: Enable docker
       systemd:
         name: docker

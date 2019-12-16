@@ -17,7 +17,16 @@ program
 
 const {geeEmail, geeKeyPath, sepalHost, sepalUsername, sepalPassword, homeDir, username, port} = program
 
-const geeKey = fs.readFileSync(geeKeyPath, {encoding: 'utf8'})
+const readFile = path => {
+    try {
+        return fs.readFileSync(path, {encoding: 'utf8'})
+    } catch (error) {
+        log.warn(`Cannot read GEE key: ${path}`)
+        return null
+    }
+}
+
+const geeKey = readFile(geeKeyPath)
 
 const serviceAccountCredentials = {
     client_email: geeEmail,

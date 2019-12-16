@@ -165,6 +165,7 @@ def time_series_to_sepal(
 
     def _export_year(geometry, year_start, year_end, export_description, year_dir):
         stack = _create_stack(geometry, year_start, year_end)
+        ee.InitializeThread(credentials)
         if not stack.bandNames().size().getInfo():
             logging.info('No data between {} and {}'.format(year_start, year_end))
             return of({

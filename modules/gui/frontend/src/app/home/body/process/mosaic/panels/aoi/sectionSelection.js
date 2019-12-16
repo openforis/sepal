@@ -13,10 +13,6 @@ export default class SectionSelection extends React.Component {
                 label: msg('process.mosaic.panel.areaOfInterest.form.country.title')
             },
             {
-                value: 'FUSION_TABLE',
-                label: msg('process.mosaic.panel.areaOfInterest.form.fusionTable.title')
-            },
-            {
                 value: 'EE_TABLE',
                 label: msg('process.mosaic.panel.areaOfInterest.form.eeTable.title')
             },

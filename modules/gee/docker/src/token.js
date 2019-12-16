@@ -1,19 +1,20 @@
-const {of} = require('rxjs')
-const {finalize, switchMap, tap} = require('rxjs/operators')
+const {pipe} = require('rxjs')
+const {finalize, switchMap, mergeMap, tap} = require('rxjs/operators')
 const service = require('@sepal/worker/service')
+const log = require('./log')
 
-const releaseToken = token => {
-    console.log(`released token ${  token}`)
-}
-
-const getToken$ = namespace => {
-    console.log('getToken$')
-    const token$ = service.request$('token', {namespace})
-    return token$.pipe(
-        tap(token => console.log('********** GOT A TOKEN ', token)),
-        switchMap(token => of(token).pipe(
-            finalize(() => releaseToken(token))
-        ))
+const withToken$ = (namespace, observable$) =>
+    service.request$('token').pipe(
+        tap(token => log.warn('DOING SOMETHING WITH TOKEN', token)),
+        mergeMap(() => observable$),
+        finalize(() => log.warn('DONE WITH TOKEN'))
     )
-}
-module.exports = getToken$
+
+const withToken = (namespace, func$) =>
+    pipe(
+        switchMap(
+            value => withToken$(namespace, func$(value))
+        )
+    )
+
+module.exports = {withToken$, withToken}

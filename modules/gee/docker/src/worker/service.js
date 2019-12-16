@@ -1,46 +1,44 @@
-const {filter, first, map} = require('rxjs/operators')
-const {v4: uuid} = require('uuid')
-const context = require('@sepal/worker/context')
+const {map, first, finalize} = require('rxjs/operators')
+const log = require('@sepal/log')
+
+let transport
+
+const initMain = (request$, response$) => {
+    const handle$ = ({serviceName, data}) =>
+        require(`@sepal/service/${serviceName}`).handle$(data)
+
+    request$.subscribe(
+        ({serviceName, data}) => {
+            log.warn(`Received a service request for [${serviceName}] with data:`, data)
+            return handle$({serviceName, data}).subscribe({
+                next: value => {
+                    log.warn(`Sending a service response for [${serviceName}]:`, value)
+                    response$.next(value)
+                    response$.complete()
+                },
+                error: error => log.error('ERROR', error),
+                complete: () => log.error('COMPLETE')
+            })
+        }
+    )
+}
+
+const initWorker = theTransport => {
+    transport = theTransport
+}
 
 const request$ = (serviceName, data) => {
-    const requestId = uuid()
-    context.request$.next({serviceName, requestId, data})
-    return context.response$.pipe(
-        filter(({requestId: currentRequestId}) => currentRequestId === requestId),
-        map(({response}) => response),
+    const {in$: request$, out$: response$} = transport.createChannel('service')
+    
+    request$.next({serviceName, data})
+    return response$.pipe(
+        map(({value}) => value),
         first()
     )
 }
 
 module.exports = {
+    initMain,
+    initWorker,
     request$
 }
-
-// const {ReplaySubject, Subject} = require('rxjs')
-// const {filter, first, map, share} = require('rxjs/operators')
-// const {v4: uuid} = require('uuid')
-
-// const serviceRequest$ = new ReplaySubject()
-// const serviceResponse$ = new Subject()
-
-// const init = servicePort =>
-//     servicePort.on('message', message => serviceResponse$.next(message))
-
-// const request$ = (serviceName, data) => {
-//     const requestId = uuid()
-//     serviceRequest$.next({serviceName, requestId, data})
-//     return serviceResponse$.pipe(
-//         share(),
-//         filter(({requestId: currentRequestId}) => currentRequestId === requestId),
-//         map(({response}) => response),
-//         first()
-//     )
-// }
-
-// const response$ = () => serviceResponse$
-
-// module.exports = {
-//     init,
-//     request$,
-//     response$
-// }

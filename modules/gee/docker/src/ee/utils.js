@@ -1,17 +1,28 @@
 const ee = require('@google/earthengine')
-const {throwError} = require('rxjs')
-const {catchError, switchMap, tap} = require('rxjs/operators')
+const {from, throwError} = require('rxjs')
+const {catchError, filter} = require('rxjs/operators')
 const {SystemException} = require('@sepal/exception')
-const getToken$ = require('@sepal/token')
+const {withToken$} = require('@sepal/token')
 
-const wrap$ = callback =>
-    getToken$('ee').pipe(
-        tap(token => console.log('TOKEN', token)),
-        switchMap(() => new Promise(callback))
+const ee$ = promiseCallback =>
+    withToken$('ee',
+        from(new Promise(
+            (resolve, reject) => {
+                try {
+                    promiseCallback(resolve, reject)
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        ).pipe(
+            filter(value => value)
+        )
     )
 
+exports.ee$ = ee$
+
 exports.getAsset$ = eeId =>
-    wrap$((resolve, reject) =>
+    ee$((resolve, reject) =>
         ee.data.getAsset(eeId, (result, error) =>
             error
                 ? reject(error)
@@ -23,7 +34,7 @@ exports.getAsset$ = eeId =>
     )
 
 exports.getInfo$ = eeObject =>
-    wrap$((resolve, reject) =>
+    ee$((resolve, reject) =>
         eeObject.getInfo((result, error) =>
             error
                 ? reject(error)
@@ -31,7 +42,7 @@ exports.getInfo$ = eeObject =>
     )
 
 exports.getMap$ = (eeObject, visParams) =>
-    wrap$((resolve, reject) =>
+    ee$((resolve, reject) =>
         eeObject.getMap(visParams, (map, error) =>
             error
                 ? reject(error)

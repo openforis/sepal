@@ -26,6 +26,7 @@ import org.openforis.sepal.undertow.PatchedProxyHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.xnio.OptionMap
+import org.xnio.Options
 import org.xnio.Xnio
 
 class RootHandler implements HttpHandler {
@@ -161,13 +162,17 @@ class RootHandler implements HttpHandler {
             def sslContext = new SSLContextBuilder()
                     .loadTrustMaterial(null, new TrustSelfSignedStrategy())
                     .build()
-            def xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY, sslContext)
+            def options = OptionMap.builder()
+                .set(Options.WRITE_TIMEOUT, 60 * 1000)
+                .set(Options.KEEP_ALIVE, true)
+                .getMap()
+            def xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), options, sslContext)
             def proxyClient = new LoadBalancingProxyClient(
                     maxQueueSize: 4096,
                     connectionsPerThread: 20,
                     softMaxConnectionsPerThread: 10
             )
-            proxyClient.addHost(URI.create(target), xnioSsl)
+            proxyClient.addHost(URI.create(target), null, xnioSsl, options)
             proxyClient.ttl = 30 * 1000
             proxyHandler = new PatchedProxyHandler(
                     proxyClient,

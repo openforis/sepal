@@ -27,3 +27,7 @@ git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/bin/python3 /usr/local/bin/jupyter nbextensions_configurator enable
 /usr/bin/python3 /usr/local/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension
 /usr/bin/python3 /usr/local/bin/jupyter labextension install jupyter-leaflet
+
+npm install -g --unsafe-perm ijavascript
+npm install -g js-beautify
+ijsinstall --install=global
