@@ -97,6 +97,7 @@ const channel = ({transport, channelId, conversationId, direction, in$ = new Sub
         log.trace(outMsg(`added <${direction}> listener`))
 
         return out$.pipe(
+            takeUntil(stop$),
             finalize(() => {
                 log.debug(outMsg('finalized'))
                 postMessage({stop: true})

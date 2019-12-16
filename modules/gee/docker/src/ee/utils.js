@@ -1,11 +1,11 @@
 const ee = require('@google/earthengine')
 const {from, throwError} = require('rxjs')
-const {catchError, filter} = require('rxjs/operators')
+const {catchError} = require('rxjs/operators')
 const {SystemException} = require('@sepal/exception')
 const {withToken$} = require('@sepal/token')
 
 const ee$ = promiseCallback =>
-    withToken$('ee',
+    withToken$('ee/tokenService',
         from(new Promise(
             (resolve, reject) => {
                 try {
@@ -14,8 +14,6 @@ const ee$ = promiseCallback =>
                     reject(error)
                 }
             })
-        ).pipe(
-            filter(value => value)
         )
     )
 

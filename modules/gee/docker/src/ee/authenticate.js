@@ -19,13 +19,15 @@ const getCredentials = ctx => {
 }
 
 const worker$ = ({sepalUser, serviceAccountCredentials}) => {
+    const {EMPTY} = require('rxjs')
+    const {switchMapTo} = require('rxjs/operators')
     const ee = require('@google/earthengine')
     const {ee$} = require('@sepal/ee/utils')
     require('./extensions')
 
-    const authenticateServiceAccount = credentials =>
+    const authenticateServiceAccount$ = credentials =>
         ee$((resolve, reject) => {
-            log.trace('Running EE authentication (service account)')
+            log.debug('Running EE authentication (service account)')
             ee.data.authenticateViaPrivateKey(
                 credentials,
                 () => resolve(),
@@ -33,9 +35,9 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
             )
         })
 
-    const authenticateUserAccount = googleTokens =>
+    const authenticateUserAccount$ = googleTokens =>
         ee$(resolve => {
-            log.trace('Running EE authentication (user account)')
+            log.debug('Running EE authentication (user account)')
             const secondsToExpiration = (googleTokens.accessTokenExpiryDate - Date.now()) / 1000
             ee.data.setAuthToken(
                 null,
@@ -48,12 +50,14 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
             )
         })
 
-    const authenticate = ({sepalUser: {googleTokens}, serviceAccountCredentials}) =>
+    const authenticate$ = ({sepalUser: {googleTokens}, serviceAccountCredentials}) =>
         googleTokens
-            ? authenticateUserAccount(googleTokens)
-            : authenticateServiceAccount(serviceAccountCredentials)
+            ? authenticateUserAccount$(googleTokens)
+            : authenticateServiceAccount$(serviceAccountCredentials)
 
-    return authenticate({sepalUser, serviceAccountCredentials})
+    return authenticate$({sepalUser, serviceAccountCredentials}).pipe(
+        switchMapTo(EMPTY)
+    )
 }
 
 module.exports = job({

@@ -5,7 +5,7 @@ const worker$ = (minDuration, maxDuration = minDuration) => {
     const {timer, of} = require('rxjs')
     const {mergeMap, map} = require('rxjs/operators')
         
-    return withToken$('test',
+    return withToken$('service/testService',
         of(true).pipe(
             map(() => Math.round(Math.random() * (maxDuration - minDuration) + minDuration)),
             mergeMap(duration =>
