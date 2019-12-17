@@ -16,7 +16,7 @@ const initWorker = (port, name) => {
     const stop$ = new Subject()
 
     const msg = (msg, jobId) => [
-        `Worker [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
+        `Job [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
         msg
     ].join(' ')
 
@@ -29,7 +29,7 @@ const initWorker = (port, name) => {
         
     const setupJob = (in$, out$) => {
         const start = ({jobId, start: {jobPath, args}}) => {
-            log.trace(msg('start', jobId))
+            log.debug(msg('start', jobId))
 
             const tasks = require(jobPath)()
         
@@ -47,7 +47,7 @@ const initWorker = (port, name) => {
         
             const result$ = concat(...tasks$).pipe(
                 tap(({jobName, args}) =>
-                    log.trace(msg(`running <${jobName}> with args:`, jobId), args)
+                    log.debug(msg(`running task <${jobName}> with args:`, jobId), args)
                 ),
                 mergeMap(({worker$, args}) => worker$(...args, jobArgs$), 1),
                 map(value => ({jobId, value})),
@@ -63,7 +63,7 @@ const initWorker = (port, name) => {
         }
         
         const stop = ({jobId}) => {
-            log.trace(msg('stop', jobId))
+            log.debug(msg('stop', jobId))
             stop$.next(jobId)
         }
         

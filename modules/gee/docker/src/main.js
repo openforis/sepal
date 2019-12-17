@@ -16,7 +16,7 @@ app.use(async (ctx, next) => {
     log.debug(`${ctx.method} ${ctx.url} started`)
     await next()
     const ms = new Date() - start
-    log.debug(`${ctx.method} ${ctx.url} - ${ms}ms`)
+    log.info(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
 
 app.use(bodyParser())
@@ -27,6 +27,6 @@ app.use(environments[environment].routes)
 app.use(environments.test.routes)
 
 const server = app.listen(config.port, () =>
-    log.info(`Listening on port ${config.port}`)
+    log.info(`Server started on port ${config.port}`)
 )
 server.setTimeout(10 * 60 * 1000)

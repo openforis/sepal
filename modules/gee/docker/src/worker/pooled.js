@@ -73,7 +73,7 @@ const PooledWorker = ({concurrency = 10, defaultMinIdleCount = 0, defaultMaxIdle
 
     return {
         submit$({jobName, jobPath, minIdleCount, maxIdleMilliseconds, args, args$}) {
-            log.debug(`Submitting <${jobName}> to pooled worker`)
+            log.debug(`Submitting job [${jobName}] to pooled worker`)
             const requestId = uuid()
             submitRequest({requestId, jobName, jobPath, minIdleCount, maxIdleMilliseconds, args, args$})
             return getResponse$(requestId).pipe(

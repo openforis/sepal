@@ -59,15 +59,14 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
 
         const start = () => {
             const workerArgs = _.last(args)
-            log.info(msg('started', jobId))
             _.isEmpty(workerArgs)
-                ? log.debug(msg('running with no args', jobId))
-                : log.debug(msg('running with args:', jobId), workerArgs)
+                ? log.debug(msg('started with no args', jobId))
+                : log.debug(msg('started with args:', jobId), workerArgs)
             sendMessage({start: {jobPath, args}})
         }
 
         const stop = () => {
-            log.info(msg('complete', jobId))
+            log.debug(msg('complete', jobId))
             sendMessage({stop: true})
             in$.complete()
         }
