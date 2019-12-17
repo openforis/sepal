@@ -1,6 +1,6 @@
 const {switchMap, tap, finalize} = require('rxjs/operators')
 const _ = require('lodash')
-const log = require('@sepal/log')
+const log = require('@sepal/log')('job')
 const {initWorker$} = require('./factory')
 
 const submit$ = ({jobName, jobPath, args, args$}) =>

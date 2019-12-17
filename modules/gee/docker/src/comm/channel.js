@@ -1,7 +1,7 @@
 const {Subject} = require('rxjs')
 const {finalize, takeUntil} = require('rxjs/operators')
 const {serializeError, deserializeError} = require('serialize-error')
-const log = require('../log')
+const log = require('../log')('channel')
 
 const channel = ({transport, channelId, conversationId, direction, in$ = new Subject(), out$ = new Subject()}) => {
     const {id: transportId, port} = transport

@@ -7,7 +7,7 @@ const {Exception, SystemException, isException} = require('../exception')
 const _ = require('lodash')
 const service = require('./service')
 const Transport = require('../comm/transport')
-const log = require('@sepal/log')
+const log = require('@sepal/log')('worker')
 
 const exported = {}
 

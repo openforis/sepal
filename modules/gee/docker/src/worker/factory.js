@@ -6,7 +6,7 @@ const path = require('path')
 const Transport = require('../comm/transport')
 const service = require('@sepal/worker/service')
 const _ = require('lodash')
-const log = require('@sepal/log')
+const log = require('@sepal/log')('job')
 
 const WORKER_PATH = path.join(__dirname, 'worker.js')
 
@@ -46,7 +46,7 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
     })
  
     const msg = (msg, jobId) => [
-        `Worker job [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
+        `Job [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,
         msg
     ].join(' ')
 
@@ -59,13 +59,15 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
 
         const start = () => {
             const workerArgs = _.last(args)
+            log.info(msg('started', jobId))
             _.isEmpty(workerArgs)
-                ? log.debug(msg('started with no args', jobId))
-                : log.debug(msg('started with args:', jobId), workerArgs)
+                ? log.debug(msg('running with no args', jobId))
+                : log.debug(msg('running with args:', jobId), workerArgs)
             sendMessage({start: {jobPath, args}})
         }
 
         const stop = () => {
+            log.info(msg('complete', jobId))
             sendMessage({stop: true})
             in$.complete()
         }
@@ -85,7 +87,7 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
     const dispose = () =>
         worker.terminate()
 
-    log.trace('Worker ready')
+    log.debug('Worker ready')
 
     return {
         submit$,

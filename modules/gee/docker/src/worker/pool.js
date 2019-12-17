@@ -2,7 +2,7 @@ const {Subject, timer, of} = require('rxjs')
 const {tap, map, mergeMap, takeUntil, mapTo, filter} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
-const log = require('@sepal/log')
+const log = require('@sepal/log')('pool')
 
 module.exports = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCold, onHot, onRelease, onDispose, onKeep, onMsg}) => {
     const pool = []

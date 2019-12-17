@@ -2,7 +2,7 @@ const {Subject, ReplaySubject, zip, concat, of} = require('rxjs')
 const {first, map, filter, delay, finalize} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
-const log = require('../log')
+const log = require('../log')('token')
 
 const rateToken$ = new Subject()
 const concurrencyToken$ = new Subject()

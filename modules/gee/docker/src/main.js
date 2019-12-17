@@ -2,18 +2,23 @@ require('module-alias/register')
 const Koa = require('koa')
 const bodyParser = require('koa-bodyparser')
 const websocket = require('koa-easy-ws')
-// const logger = require('koa-pino-logger')
 const config = require('./config')
 const {resolve} = require('./stream')
 const environments = require('./environment')
-const log = require('@sepal/log')
+const log = require('@sepal/log')('http')
 
 const environment = process.env.ENVIRONMENT || 'main'
 
 const app = new Koa()
-app.silent = true
 
-// app.use(logger())
+app.use(async (ctx, next) => {
+    const start = new Date()
+    log.debug(`${ctx.method} ${ctx.url} started`)
+    await next()
+    const ms = new Date() - start
+    log.debug(`${ctx.method} ${ctx.url} - ${ms}ms`)
+})
+
 app.use(bodyParser())
 app.use(websocket())
 

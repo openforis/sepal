@@ -2,7 +2,7 @@ const {Subject} = require('rxjs')
 const {groupBy, mergeMap, map, share, filter, finalize, takeUntil} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
-const log = require('@sepal/log')
+const log = require('@sepal/log')('job')
 const {initWorker$} = require('./factory')
 const Pool = require('./pool')
 
@@ -73,7 +73,7 @@ const PooledWorker = ({concurrency = 10, defaultMinIdleCount = 0, defaultMaxIdle
 
     return {
         submit$({jobName, jobPath, minIdleCount, maxIdleMilliseconds, args, args$}) {
-            log.trace(`Submitting <${jobName}> to pooled worker`)
+            log.debug(`Submitting <${jobName}> to pooled worker`)
             const requestId = uuid()
             submitRequest({requestId, jobName, jobPath, minIdleCount, maxIdleMilliseconds, args, args$})
             return getResponse$(requestId).pipe(

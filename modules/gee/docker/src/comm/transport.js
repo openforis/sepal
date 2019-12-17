@@ -1,7 +1,7 @@
 const {v4: uuid} = require('uuid')
 const channel = require('./channel')
 const _ = require('lodash')
-const log = require('../log')
+const log = require('../log')('transport')
 
 const transport = ({id = uuid(), port}) => {
     const send = message =>
@@ -13,7 +13,7 @@ const transport = ({id = uuid(), port}) => {
     ].join(' ')
 
     const createChannel = ({channelId, conversationId, direction, in$, out$}) => {
-        log.trace(msg('create channel:'), channelId)
+        log.debug(msg(`create ${direction} channel:`), channelId)
         return channel({transport, channelId, conversationId, direction, in$, out$})
     }
 

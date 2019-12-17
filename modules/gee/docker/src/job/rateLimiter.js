@@ -1,6 +1,6 @@
 const {Subject, BehaviorSubject, timer} = require('rxjs')
 const {mergeMap, map, take, filter, tap} = require('rxjs/operators')
-const log = require('@sepal/log')
+const log = require('@sepal/log')()
 
 const COUNT = 4
 const SLIDING_WINDOW_TIME = 1000

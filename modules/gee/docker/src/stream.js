@@ -1,7 +1,7 @@
 const {Subject} = require('rxjs')
 const {first, takeUntil} = require('rxjs/operators')
 const {deserializeError} = require('serialize-error')
-const log = require('./log')
+const log = require('./log')()
 
 const errorCodes = {
     'system': 500,

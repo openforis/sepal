@@ -1,6 +1,6 @@
 const {Subject} = require('rxjs')
 const {takeUntil} = require('rxjs/operators')
-const log = require('@sepal/log')
+const log = require('@sepal/log')('service')
 
 let transport
 
