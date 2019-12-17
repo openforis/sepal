@@ -1658,5 +1658,8 @@
       },
       "newTab": "New_Tab"
     }
+  },
+  "error": {
+      "internal": "Internal error"
   }
 }

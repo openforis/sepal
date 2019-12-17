@@ -1,7 +1,9 @@
 require('module-alias/register')
 const {parentPort} = require('worker_threads')
 const {Subject, of, concat} = require('rxjs')
-const {map, mergeMap, takeUntil, tap, filter} = require('rxjs/operators')
+const {catchError, map, mergeMap, takeUntil, tap, filter} = require('rxjs/operators')
+const {serializeError} = require('serialize-error')
+const {Exception, SystemException, isException} = require('../exception')
 const _ = require('lodash')
 const service = require('./service')
 const Transport = require('../comm/transport')
@@ -18,6 +20,13 @@ const initWorker = (port, name) => {
         msg
     ].join(' ')
 
+    const formatError = error =>
+        isException(error)
+            ? error
+            : _.isString(error)
+                ? new Exception(error, `EE: ${error}`, 'gee.error.earthEngineException', {earthEngineMessage: error})
+                : new SystemException(error, 'Internal error', 'error.internal')
+        
     const setupJob = (in$, out$) => {
         const start = ({jobId, start: {jobPath, args}}) => {
             log.trace(msg('start', jobId))
@@ -42,6 +51,7 @@ const initWorker = (port, name) => {
                 ),
                 mergeMap(({worker$, args}) => worker$(...args, jobArgs$), 1),
                 map(value => ({jobId, value})),
+                catchError(error => of({jobId, error: serializeError(formatError(error))})),
                 takeUntil(stop$.pipe(filter(id => id === jobId)))
             )
     

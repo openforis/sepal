@@ -1,5 +1,6 @@
 const {Subject} = require('rxjs')
 const {first, takeUntil} = require('rxjs/operators')
+const {deserializeError} = require('serialize-error')
 const log = require('./log')
 
 const errorCodes = {
@@ -11,11 +12,15 @@ const errorCodes = {
 const errorCode = type =>
     errorCodes[type] || 500
 
-const handleSuccess = (ctx, value) =>
-    ctx.body = value
+const logError = error => {
+    const message = error.message || error
+    const stack = error.cause && error.cause.stack
+    log.error(`${message}\n${stack}`)
+}
 
-const handleError = (ctx, error) => {
-    log.error(error)
+const handleError = (ctx, serializedError) => {
+    const error = deserializeError(serializedError)
+    logError(error)
     ctx.status = errorCode(error.type)
     ctx.body = error.type
         ? {
@@ -25,6 +30,9 @@ const handleError = (ctx, error) => {
         }
         : 'other error'
 }
+
+const handleSuccess = (ctx, value) =>
+    ctx.body = value
 
 const renderStream = async (ctx, body$) => {
     const result = await body$.toPromise()

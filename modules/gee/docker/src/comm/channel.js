@@ -8,7 +8,7 @@ const channel = ({transport, channelId, conversationId, direction, in$ = new Sub
     const stop$ = new Subject()
     
     const msg = (message, direction) => [
-        `Channel [${transportId}.${channelId}.${conversationId}${direction ? `.${direction}` : ''}]`,
+        `Channel [${transportId}.${channelId}.${conversationId.substr(-4)}${direction ? `.${direction}` : ''}]`,
         message
     ].join(' ')
 
@@ -29,8 +29,9 @@ const channel = ({transport, channelId, conversationId, direction, in$ = new Sub
         }
     
         const error = error => {
-            log.debug(inMsg('error:'), error)
-            postMessage({error: serializeError(error)})
+            const serializedError = serializeError(error)
+            log.debug(inMsg('error:'), serializedError)
+            postMessage({error: serializedError})
         }
     
         const complete = () => {
