@@ -25,13 +25,12 @@
     "log4js": "^6.1.0",
     "module-alias": "^2.2.2",
     "moment": "^2.24.0",
-    "npm": "^6.13.1",
+    "npm": "^6.13.4",
     "rxjs": "^6.5.3",
     "serialize-error": "^5.0.0",
     "uuid": "^3.3.3"
   },
   "devDependencies": {
-    "eslint": "^6.7.1",
-    "pino-pretty": "^3.4.0"
+    "eslint": "^6.7.2"
   }
 }
