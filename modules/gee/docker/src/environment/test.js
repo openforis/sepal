@@ -7,7 +7,7 @@ const ws$ = require('@sepal/jobs/ws')
 const router = Router()
 
 router
-    .get('/test/:min/:max', wrapper(ctx => test$(ctx)))
+    .get('/test/:min/:max/:errorProbability', wrapper(ctx => test$(ctx)))
     .get('/ws/:name', wrapper(ctx => ws$(ctx)))
         
 module.exports = {
