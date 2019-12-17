@@ -36,9 +36,9 @@ export default {
         get$(`/api/gee/table/columnValues`,
             {query: {tableId, columnName}}
     ).pipe(toResponse),
-    eeTableMap$: ({tableId, columnName, columnValue, color}) =>
+    eeTableMap$: ({tableId, columnName, columnValue, color, fillColor}) =>
         get$(`/api/gee/table/map`,
-            {query: {tableId, columnName, columnValue, color}}
+            {query: {tableId, columnName, columnValue, color, fillColor}}
     ).pipe(toResponse),
     queryEETable$: ({select, from, where, orderBy}) =>
         postJson$(`/api/gee/table/query`,

@@ -131,7 +131,6 @@ const createCollection = ({dataSet, reflectance, calibrate, brdfCorrect, filters
         .filter(filter)
         .map(imageProcess({
             dataSetSpec,
-            reflectance,
             calibrate,
             brdfCorrect,
             cloudMasking,

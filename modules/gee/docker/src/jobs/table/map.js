@@ -1,6 +1,6 @@
 const job = require('@sepal/worker/job')
 
-const worker$ = ({tableId, columnName, columnValue, color}) => {
+const worker$ = ({tableId, columnName, columnValue, color='#FFFFFF50', fillColor='#FFFFFF08'}) => {
     const ee = require('@google/earthengine')
     const {filterTable} = require('@sepal/ee/table')
     const {getInfo$, getMap$} = require('@sepal/ee/utils')
@@ -10,10 +10,9 @@ const worker$ = ({tableId, columnName, columnValue, color}) => {
     const table = filterTable({tableId, columnName, columnValue})
     const geometry = table.geometry()
     const boundsPolygon = ee.List(geometry.bounds().coordinates().get(0))
-
     return forkJoin({
         bounds: getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)])),
-        eeMap: getMap$(table, {color})
+        eeMap: getMap$(table.style({color, fillColor}))
     }).pipe(
         map(({bounds, eeMap}) => ({bounds, ...eeMap}))
     )

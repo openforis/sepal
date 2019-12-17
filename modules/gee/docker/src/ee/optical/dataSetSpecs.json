@@ -1,9 +1,10 @@
 {
     "TOA": {
         "LANDSAT_4": {
+            "reflectance": "TOA",
+            "dataSetName": "LANDSAT_4",
             "collectionName": "LANDSAT/LT04/C01/T1_TOA",
             "maxZenith": 7.5,
-
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
                 "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
@@ -44,9 +45,10 @@
             }
         },
         "LANDSAT_4_T2": {
+            "reflectance": "TOA",
+            "dataSetName": "LANDSAT_4_T2",
             "collectionName": "LANDSAT/LT04/C01/T2_TOA",
             "maxZenith": 7.5,
-
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
                 "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
@@ -87,9 +89,10 @@
             }
         },
         "LANDSAT_5": {
+            "reflectance": "TOA",
+            "dataSetName": "LANDSAT_5",
             "collectionName": "LANDSAT/LT05/C01/T1_TOA",
             "maxZenith": 7.5,
-
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
                 "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
@@ -130,9 +133,10 @@
             }
         },
         "LANDSAT_5_T2": {
+            "reflectance": "TOA",
+            "dataSetName": "LANDSAT_5_T2",
             "collectionName": "LANDSAT/LT05/C01/T2_TOA",
             "maxZenith": 7.5,
-
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
                 "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
@@ -173,9 +177,10 @@
             }
         },
         "LANDSAT_7": {
+            "reflectance": "TOA",
+            "dataSetName": "LANDSAT_5_T2",
             "collectionName": "LANDSAT/LE07/C01/T1_TOA",
             "maxZenith": 7.5,
-
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
                 "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
@@ -224,9 +229,10 @@
             }
         },
         "LANDSAT_7_T2": {
+            "reflectance": "TOA",
+            "dataSetName": "LANDSAT_7_T2",
             "collectionName": "LANDSAT/LE07/C01/T2_TOA",
             "maxZenith": 7.5,
-
             "calibrationCoefs": {
                 "slopes": [1.10601, 0.99091, 1.05681, 1.0045, 1.03611, 1.04011],
                 "intercepts": [-0.0139, 0.00411, -0.0024, -0.0076, 0.00411, 0.00861]
@@ -275,9 +281,10 @@
             }
         },
         "LANDSAT_8": {
+            "reflectance": "TOA",
+            "dataSetName": "LANDSAT_8",
             "collectionName": "LANDSAT/LC08/C01/T1_TOA",
             "maxZenith": 7.5,
-
             "calibrationCoefs": {
                 "slopes": [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
                 "intercepts": [-0.0107, 0.0026, -0.0015, 0.0033, 0.0065, 0.0046]
@@ -334,9 +341,10 @@
             }
         },
         "LANDSAT_8_T2": {
+            "reflectance": "TOA",
+            "dataSetName": "LANDSAT_8_T2",
             "collectionName": "LANDSAT/LC08/C01/T2_TOA",
             "maxZenith": 7.5,
-
             "calibrationCoefs": {
                 "slopes": [1.0946, 1.0043, 1.0524, 0.8954, 1.0049, 1.0002],
                 "intercepts": [-0.0107, 0.0026, -0.0015, 0.0033, 0.0065, 0.0046]
@@ -393,6 +401,8 @@
             }
         },
         "SENTINEL_2": {
+            "reflectance": "TOA",
+            "dataSetName": "SENTINEL_2",
             "collectionName": "COPERNICUS/S2",
             "scaled": false,
             "maxZenith": 10.3,
@@ -454,6 +464,8 @@
     },
     "SR": {
         "LANDSAT_4": {
+            "reflectance": "SR",
+            "dataSetName": "LANDSAT_4",
             "collectionName": "LANDSAT/LT04/C01/T1_SR",
             "scaled": false,
             "maxZenith": 7.5,
@@ -493,6 +505,8 @@
             }
         },
         "LANDSAT_4_T2": {
+            "reflectance": "SR",
+            "dataSetName": "LANDSAT_4_T2",
             "collectionName": "LANDSAT/LT04/C01/T2_SR",
             "scaled": false,
             "maxZenith": 7.5,
@@ -532,6 +546,8 @@
             }
         },
         "LANDSAT_5": {
+            "reflectance": "SR",
+            "dataSetName": "LANDSAT_5",
             "collectionName": "LANDSAT/LT05/C01/T1_SR",
             "scaled": false,
             "maxZenith": 7.5,
@@ -571,6 +587,8 @@
             }
         },
         "LANDSAT_5_T2": {
+            "reflectance": "SR",
+            "dataSetName": "LANDSAT_5_T2",
             "collectionName": "LANDSAT/LT05/C01/T2_SR",
             "scaled": false,
             "maxZenith": 7.5,
@@ -610,6 +628,8 @@
             }
         },
         "LANDSAT_7": {
+            "reflectance": "SR",
+            "dataSetName": "LANDSAT_7",
             "collectionName": "LANDSAT/LE07/C01/T1_SR",
             "scaled": false,
             "maxZenith": 7.5,
@@ -649,6 +669,8 @@
             }
         },
         "LANDSAT_7_T2": {
+            "reflectance": "SR",
+            "dataSetName": "LANDSAT_7_T2",
             "collectionName": "LANDSAT/LE07/C01/T2_SR",
             "scaled": false,
             "maxZenith": 7.5,
@@ -688,6 +710,8 @@
             }
         },
         "LANDSAT_8": {
+            "reflectance": "SR",
+            "dataSetName": "LANDSAT_8",
             "collectionName": "LANDSAT/LC08/C01/T1_SR",
             "scaled": false,
             "maxZenith": 7.5,
@@ -735,6 +759,8 @@
             }
         },
         "LANDSAT_8_T2": {
+            "reflectance": "SR",
+            "dataSetName": "LANDSAT_8_T2",
             "collectionName": "LANDSAT/LC08/C01/T2_SR",
             "scaled": false,
             "maxZenith": 7.5,
@@ -782,6 +808,8 @@
             }
         },
         "SENTINEL_2": {
+            "reflectance": "SR",
+            "dataSetName": "SENTINEL_2",
             "collectionName": "COPERNICUS/S2_SR",
             "scaled": false,
             "maxZenith": 10.3,

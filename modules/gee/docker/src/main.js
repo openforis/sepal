@@ -16,11 +16,12 @@ app.silent = true
 // app.use(logger())
 app.use(bodyParser())
 app.use(websocket())
-  
+
 app.use(resolve)
 app.use(environments[environment].routes)
 app.use(environments.test.routes)
 
-app.listen(config.port, () =>
+const server = app.listen(config.port, () =>
     log.info(`Listening on port ${config.port}`)
 )
+server.setTimeout(10 * 60 * 1000)

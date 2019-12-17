@@ -14,7 +14,7 @@ export const setEETableLayer = (
     const watchedProps = {tableId, columnName, columnValue}
     const layer = columnValue
         ? new RecipeGeometryLayer({
-            mapId$: api.gee.eeTableMap$({tableId, columnName, columnValue, color: '#5e2926'}),
+            mapId$: api.gee.eeTableMap$({tableId, columnName, columnValue, color: '#FFFFFF50', fillColor: '#FFFFFF08'}),
             layerIndex,
             watchedProps
         }): null
