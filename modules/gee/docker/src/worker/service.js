@@ -12,7 +12,9 @@ const initMain = (request$, response$) => {
 
     request$.subscribe(
         ({servicePath, data}) => {
-            log.debug(`Service request for [${servicePath}] with data:`, data)
+            data
+                ? log.debug(`Service request for [${servicePath}] with data:`, data)
+                : log.debug(`Service request for [${servicePath}]`)
             handle$({servicePath, data}).pipe(
                 takeUntil(stop$)
             ).subscribe(
