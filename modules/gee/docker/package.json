@@ -6,7 +6,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "main": "ENVIRONMENT=main nodemon --inspect src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir $SEPAL_CONFIG/sepal-server/home/admin --username admin",
-    "mainpino": "ENVIRONMENT=main nodemon --inspect src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir $SEPAL_CONFIG/sepal-server/home/admin --username admin | pino-pretty -t -i hostname,pid",
     "task": "ENVIRONMENT=task nodemon --inspect src/main.js --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir $SEPAL_CONFIG/sepal-server/home/admin --username admin | pino-pretty"
   },
   "author": "",
@@ -21,14 +20,12 @@
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",
     "koa-easy-ws": "^1.1.3",
-    "koa-pino-logger": "^2.1.3",
     "koa-router": "^7.4.0",
     "lodash": "^4.17.15",
     "log4js": "^6.1.0",
     "module-alias": "^2.2.2",
     "moment": "^2.24.0",
     "npm": "^6.13.1",
-    "pino": "^5.14.0",
     "rxjs": "^6.5.3",
     "serialize-error": "^5.0.0",
     "uuid": "^3.3.3"
