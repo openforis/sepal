@@ -1,4 +1,4 @@
-const tokenService = require('./tokenService')
+const tokenService = require('../../service/tokenService')
 
 module.exports = tokenService({
     rateLimit: 1,

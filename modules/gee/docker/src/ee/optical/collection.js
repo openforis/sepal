@@ -32,23 +32,23 @@ const allScenes = (
     )
 
     return dataSets.reduce((mergedCollection, dataSet) =>
-            mergeImageCollections(
-                mergedCollection,
-                createCollection({
-                    dataSet,
-                    reflectance,
-                    calibrate,
-                    brdfCorrect,
-                    filters,
-                    cloudMasking,
-                    cloudBuffer,
-                    snowMasking,
-                    panSharpen,
-                    targetDate,
-                    filter
-                }).select(findCommonBands(dataSets, reflectance))
-            ),
-        ee.ImageCollection([])
+        mergeImageCollections(
+            mergedCollection,
+            createCollection({
+                dataSet,
+                reflectance,
+                calibrate,
+                brdfCorrect,
+                filters,
+                cloudMasking,
+                cloudBuffer,
+                snowMasking,
+                panSharpen,
+                targetDate,
+                filter
+            }).select(findCommonBands(dataSets, reflectance))
+        ),
+    ee.ImageCollection([])
     )
 }
 
