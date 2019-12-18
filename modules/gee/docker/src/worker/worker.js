@@ -27,7 +27,7 @@ const initWorker = (port, name) => {
                 ? new Exception(error, `EE: ${error}`, 'gee.error.earthEngineException', {earthEngineMessage: error})
                 : new SystemException(error, 'Internal error', 'error.internal')
         
-    const setupJob = (in$, out$) => {
+    const setupJob = (response$, request$) => {
         const start = ({jobId, start: {jobPath, args}}) => {
             log.debug(msg('start', jobId))
 
@@ -56,9 +56,9 @@ const initWorker = (port, name) => {
             )
     
             result$.subscribe({
-                next: value => in$.next(value),
-                error: error => in$.error(error),
-                complete: () => in$.complete()
+                next: value => response$.next(value),
+                error: error => response$.error(error),
+                complete: () => response$.complete()
             })
         }
         
@@ -70,13 +70,15 @@ const initWorker = (port, name) => {
         const next = ({jobId, value}) => {
             args$.next({jobId, value})
         }
-        
-        out$.subscribe(
+
+        request$.subscribe(
             message => {
                 message.start && start(message)
                 message.stop && stop(message)
                 message.value && next(message)
-            }
+            },
+            error => log.fatal(`Worker [${name}] request stream failed:`, error),
+            // stream is allowed to complete
         )
     }
 

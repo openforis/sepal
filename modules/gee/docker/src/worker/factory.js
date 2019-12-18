@@ -1,5 +1,5 @@
-const {Subject} = require('rxjs')
-const {finalize, first, map, filter} = require('rxjs/operators')
+const {Subject,  ReplaySubject, EMPTY ,of} = require('rxjs')
+const {finalize, first, map, filter, catchError} = require('rxjs/operators')
 const {Worker, MessageChannel} = require('worker_threads')
 const {v4: uuid} = require('uuid')
 const path = require('path')
@@ -72,12 +72,17 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
         }
 
         args$ && args$.subscribe(
-            value => sendMessage({value})
+            value => sendMessage({value}),
+            // [TODO] handle error
         )
 
         start()
 
         return out$.pipe(
+            catchError(error => {
+                log.error(error.toString())
+                return of({jobId, error})
+            }),
             filter(message => message.jobId === jobId),
             finalize(() => stop())
         )

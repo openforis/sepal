@@ -1,6 +1,7 @@
 const {Subject} = require('rxjs')
 const {first, takeUntil} = require('rxjs/operators')
 const {deserializeError} = require('serialize-error')
+const {isException} = require('./exception')
 const log = require('./log')()
 
 const errorCodes = {
@@ -12,14 +13,19 @@ const errorCodes = {
 const errorCode = type =>
     errorCodes[type] || 500
 
-const logError = error => {
-    const message = error.message || error
+const logException = error => {
     const stack = error.cause && error.cause.stack
+    const message = error.message || error
     log.error(`${message}\n${stack}`)
 }
 
-const handleError = (ctx, serializedError) => {
-    const error = deserializeError(serializedError)
+const logError = error => {
+    isException(error)
+        ? logException(error)
+        : log.error(error)
+}
+
+const handleError = (ctx, error) => {
     logError(error)
     ctx.status = errorCode(error.type)
     ctx.body = error.type
@@ -35,10 +41,14 @@ const handleSuccess = (ctx, value) =>
     ctx.body = value
 
 const renderStream = async (ctx, body$) => {
-    const result = await body$.toPromise()
-    if (result) {
-        result.value && handleSuccess(ctx, result.value)
-        result.error && handleError(ctx, result.error)
+    try {
+        const result = await body$.toPromise()
+        if (result) {
+            result.value && handleSuccess(ctx, result.value)
+            result.error && handleError(ctx, deserializeError(result.error))
+        }
+    } catch (error) {
+        handleError(ctx, error)
     }
 }
 
@@ -71,7 +81,8 @@ const handleWebsocket = async ctx => {
         result => {
             result.value && ws.send(result.value)
             // result.error && ws.send(result.error)
-        }
+        },
+        // [TODO] handle error
     )
 }
 

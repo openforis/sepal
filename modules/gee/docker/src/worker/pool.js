@@ -10,7 +10,9 @@ module.exports = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, 
     const unlock$ = new Subject()
 
     lock$.subscribe(
-        instance => instance.locked = true
+        instance => instance.locked = true,
+        error => log.fatal('Pool lock stream failed:', error),
+        () => log.fatal('Pool lock stream completed')
     )
 
     unlock$.pipe(
@@ -24,7 +26,9 @@ module.exports = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, 
             )
         )
     ).subscribe(
-        instance => dispose(instance)
+        instance => dispose(instance),
+        error => log.fatal('Pool unlock stream failed:', error),
+        () => log.fatal('Pool unlock stream completed')
     )
 
     const lock = instance =>

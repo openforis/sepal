@@ -27,7 +27,9 @@ const tokenService = ({rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
         token => {
             log.debug('Serving token:', token)
             responseToken$.next(token)
-        }
+        },
+        error => log.fatal('Token stream failed:', error),
+        () => log.fatal('Token stream completed')
     )
     
     token$.pipe(
@@ -36,7 +38,9 @@ const tokenService = ({rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
         ({rateToken}) => {
             log.debug('Recycling rate token:', rateToken)
             rateToken$.next(rateToken)
-        }
+        },
+        error => log.fatal('Token stream failed:', error),
+        () => log.fatal('Token stream completed')
     )
     
     const handle$ = () => {
@@ -53,7 +57,9 @@ const tokenService = ({rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
             token => {
                 currentToken = token
                 response$.next(token)
-            }
+            },
+            error => log.fatal('Token stream failed:', error)
+            // stream is allowed to complete
         )
         requestToken$.next({requestId})
         return response$.pipe(

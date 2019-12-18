@@ -6,7 +6,11 @@ const config = require('./log4js')
 log4js.configure(config)
 
 const getArgs = args =>
-    _.map(args, arg => _.isObjectLike(arg) ? JSON.stringify(arg) : arg)
+    _.map(args, arg =>
+        _.isObjectLike(arg) && !(arg instanceof Error)
+            ? JSON.stringify(arg)
+            : arg
+    )
 
 module.exports = name => {
     const logger = log4js.getLogger(name)

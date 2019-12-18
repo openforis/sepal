@@ -1,11 +1,11 @@
-const {Subject} = require('rxjs')
+const {Subject, ReplaySubject} = require('rxjs')
 const {finalize, takeUntil} = require('rxjs/operators')
 const {serializeError, deserializeError} = require('serialize-error')
 const log = require('../log')('channel')
 
-const channel = ({transport, channelId, conversationId, direction, in$ = new Subject(), out$ = new Subject()}) => {
+const channel = ({transport, channelId, conversationId, direction, in$ = new ReplaySubject(), out$ = new ReplaySubject()}) => {
     const {id: transportId, port} = transport
-    const stop$ = new Subject()
+    const stop$ = new ReplaySubject()
     
     const msg = (message, direction) => [
         `Channel [${transportId}.${channelId}.${conversationId.substr(-4)}${direction ? `.${direction}` : ''}]`,

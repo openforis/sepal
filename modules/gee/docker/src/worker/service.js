@@ -21,7 +21,9 @@ const initMain = (request$, response$) => {
                 value => {
                     log.debug(`Service response for [${servicePath}]:`, value)
                     response$.next(value)
-                }
+                },
+                error => response$.error(error),
+                // stream is allowed to complete
             )
         },
         error => log.error(error),

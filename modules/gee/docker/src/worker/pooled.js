@@ -1,5 +1,5 @@
-const {Subject} = require('rxjs')
-const {groupBy, mergeMap, map, share, filter, finalize, takeUntil} = require('rxjs/operators')
+const {Subject, of} = require('rxjs')
+const {groupBy, mergeMap, map, filter, finalize, takeUntil, catchError} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('@sepal/log')('job')
@@ -40,7 +40,6 @@ const PooledWorker = ({concurrency = 10, defaultMinIdleCount = 0, defaultMaxIdle
     
     const getResponse$ = requestId =>
         workerResponse$.pipe(
-            share(),
             filter(({requestId: currentRequestId}) => currentRequestId === requestId),
             map(({result}) => result)
         )
@@ -53,6 +52,7 @@ const PooledWorker = ({concurrency = 10, defaultMinIdleCount = 0, defaultMaxIdle
                     getWorkerInstance$({jobName, jobPath, minIdleCount, maxIdleMilliseconds}).pipe(
                         mergeMap(({worker, release}) =>
                             worker.submit$(args, args$).pipe(
+                                catchError(error => of({error})),
                                 map(result => ({
                                     requestId,
                                     result
@@ -68,7 +68,9 @@ const PooledWorker = ({concurrency = 10, defaultMinIdleCount = 0, defaultMaxIdle
             )
         )
     ).subscribe(
-        response => workerResponse$.next(response)
+        response => workerResponse$.next(response),
+        error => log.fatal('Pooled worker request stream failed:', error),
+        () => log.fatal('Pooled worker request stream completed')
     )
 
     return {
