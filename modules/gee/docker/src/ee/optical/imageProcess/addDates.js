@@ -32,7 +32,6 @@ const daysFromTarget = targetDate =>
 const targetDayCloseness = () =>
     image => image.select('daysFromTarget').multiply(-1).rename('targetDayCloseness')
 
-
 const unixTimeDays = () =>
     image =>
         ee.Image(

@@ -1,4 +1,4 @@
-const ee = require('@google/earthengine')
+// const ee = require('@google/earthengine')
 
 // class methods
 

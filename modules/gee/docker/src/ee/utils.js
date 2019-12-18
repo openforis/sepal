@@ -27,7 +27,7 @@ const ee$ = (operation, promiseCallback) =>
 exports.ee$ = ee$
 
 exports.getAsset$ = eeId =>
-    ee$('get asset', (resolve, reject) => 
+    ee$('get asset', (resolve, reject) =>
         ee.data.getAsset(eeId, (result, error) =>
             error
                 ? reject(error)

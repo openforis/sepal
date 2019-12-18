@@ -83,7 +83,6 @@ const getLandsatViewAngles = (image, maxZenith) => {
         return expr('PI / 2 - atan(slopePerp)', {slopePerp})
     }
 
-
     const getViewZen = (corners, maxZenith) => {
         const maxDistanceToSceneEdge = 1000000
         const leftLine = gp.toLine(corners.upperLeft, corners.lowerLeft)
@@ -128,7 +127,7 @@ const getSentinel2ViewAngles = image => {
                 return [x, y]
             }
 
-            return  ee.Geometry.LineString([shift(p1), shift(p2)], 'EPSG:3857', false)
+            return ee.Geometry.LineString([shift(p1), shift(p2)], 'EPSG:3857', false)
         }
         // Offset the orbit
         const shift = ee.Number(500)

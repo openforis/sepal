@@ -1,5 +1,4 @@
 const job = require('@sepal/worker/job')
-const log = require('@sepal/log')('ee')
 
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']

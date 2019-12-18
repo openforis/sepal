@@ -6,7 +6,7 @@ router.get('/healthCheck', ctx =>
 )
 
 router.get('/status', ctx => {
-    const {task} = ctx.request.query
+    // const {task} = ctx.request.query
     ctx.body = {
         status: 'ACTIVE',
         progress: '{"defaultMessage":"Completed!","messageKey":"tasks.status.completed","messageArgs":{}}'
@@ -14,12 +14,12 @@ router.get('/status', ctx => {
 })
 
 router.post('/submit', ctx => {
-    const params = ctx.request.body
+    // const params = ctx.request.body
     ctx.response.status = 204
 })
 
 router.post('/cancel', ctx => {
-    const {task} = ctx.request.query
+    // const {task} = ctx.request.query
     ctx.response.status = 204
 })
 

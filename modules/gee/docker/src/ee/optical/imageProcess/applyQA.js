@@ -37,7 +37,6 @@ const QA60 = image =>
         .addBandsReplace(image.select('qa').not().not().rename('cloud'))
         .addBandsReplace(ee.Image(0).rename('snow'))
 
-
 // const noQA = image =>
 //     image
 //         .addBandsReplace(ee.Image(0).rename('toMask'))

@@ -13,7 +13,7 @@ const mosaic = (recipe, selectedBands) => {
     const harmonicDependents = [...new Set(selectedBands
         .filter(harmonicBand)
         .map(band => {
-            return band.replace('_' + harmonicBand(band), '')
+            return band.replace(`_${harmonicBand(band)}`, '')
         }))]
     return {
         getImage() {
@@ -92,6 +92,6 @@ const mosaic = (recipe, selectedBands) => {
 
 const harmonicBand = band =>
     ['constant', 't', 'phase', 'amplitude', 'residuals']
-        .find(harmonicBand => band.endsWith('_' + harmonicBand))
+        .find(harmonicBand => band.endsWith(`_${harmonicBand}`))
 
 module.exports = mosaic

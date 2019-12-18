@@ -1,6 +1,6 @@
 const job = require('@sepal/worker/job')
 
-const worker$ = ({tableId, columnName, columnValue, color='#FFFFFF50', fillColor='#FFFFFF08'}) => {
+const worker$ = ({tableId, columnName, columnValue, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     const ee = require('@google/earthengine')
     const {filterTable} = require('@sepal/ee/table')
     const {getInfo$, getMap$} = require('@sepal/ee/utils')

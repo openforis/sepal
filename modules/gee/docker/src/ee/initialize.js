@@ -1,5 +1,4 @@
 const job = require('@sepal/worker/job')
-const log = require('@sepal/log')('ee')
 
 const worker$ = () => {
     const {EMPTY} = require('rxjs')

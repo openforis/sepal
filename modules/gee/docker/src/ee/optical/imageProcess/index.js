@@ -67,7 +67,6 @@ const maskSnow = () =>
         image.select('snow').not()
     )
 
-
 const maskClouds = () =>
     image => image.updateMask(
         image.select('cloud').not()
@@ -79,7 +78,6 @@ const toInt16 = () =>
     image => image
         .multiply(scale)
         .int16()
-
 
 const updateMask = () =>
     image => image

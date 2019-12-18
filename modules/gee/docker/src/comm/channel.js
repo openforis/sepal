@@ -1,4 +1,4 @@
-const {Subject, ReplaySubject} = require('rxjs')
+const {ReplaySubject} = require('rxjs')
 const {finalize, takeUntil} = require('rxjs/operators')
 const {serializeError, deserializeError} = require('serialize-error')
 const log = require('../log')('channel')

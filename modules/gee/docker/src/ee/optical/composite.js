@@ -29,5 +29,4 @@ const medoid = collection => {
         .qualityMosaic('distanceToMedian')
 }
 
-
 module.exports = {toComposite}

@@ -63,11 +63,11 @@ const addHarmonicBands = (image, dependents) => {
         const date = image.date()
         const t = ee.Image(
             date.difference(ee.Date('1970-01-01'), 'year')
-        ).float().rename(dependent + '_t')
-        const constant = ee.Image.constant(1).rename(dependent + '_constant')
+        ).float().rename(`${dependent}_t`)
+        const constant = ee.Image.constant(1).rename(`${dependent}_constant`)
         const timeRadians = t.multiply(2 * Math.PI)
-        const cos = timeRadians.cos().rename(dependent + '_cos')
-        const sin = timeRadians.sin().rename(dependent + '_sin')
+        const cos = timeRadians.cos().rename(`${dependent}_cos`)
+        const sin = timeRadians.sin().rename(`${dependent}_sin`)
         return t
             .addBands(constant)
             .addBands(cos)
@@ -78,7 +78,7 @@ const addHarmonicBands = (image, dependents) => {
 
 const addHarmonics = ({collection, harmonicDependents, region, fit}) => {
     const calculateHarmonics = (collection, dependent, region) => {
-        const independents = ee.List([dependent + '_constant', dependent + '_t', dependent + '_cos', dependent + '_sin'])
+        const independents = ee.List([`${dependent}_constant`, `${dependent}_t`, `${dependent}_cos`, `${dependent}_sin`])
         const trend = collection
             .select(independents.add(dependent))
             // The output of this reducer is a 4x1 array image.
@@ -92,16 +92,16 @@ const addHarmonics = ({collection, harmonicDependents, region, fit}) => {
             .arrayProject([0])
             .arrayFlatten([independents])
 
-        const sin = trendCoefficients.select(dependent + '_sin')
-        const cos = trendCoefficients.select(dependent + '_cos')
-        const phase = sin.atan2(cos).rename(dependent + '_phase')
+        const sin = trendCoefficients.select(`${dependent}_sin`)
+        const cos = trendCoefficients.select(`${dependent}_cos`)
+        const phase = sin.atan2(cos).rename(`${dependent}_phase`)
 
-        const amplitude = sin.hypot(sin).rename(dependent + '_amplitude')
+        const amplitude = sin.hypot(sin).rename(`${dependent}_amplitude`)
 
         const residuals = trend.select('residuals')
             .arrayProject([0])
             .arrayFlatten([['residuals']])
-            .rename(dependent + '_residuals')
+            .rename(`${dependent}_residuals`)
 
         const harmonics = phase
             .addBands(amplitude)
@@ -113,10 +113,10 @@ const addHarmonics = ({collection, harmonicDependents, region, fit}) => {
             const fitted = image.select(independents)
                 .multiply(trendCoefficients)
                 .reduce('sum')
-                .rename(dependent + '_fitted')
+                .rename(`${dependent}_fitted`)
             const residuals = image.select(dependent)
                 .subtract(fitted)
-                .rename(dependent + '_residuals')
+                .rename(`${dependent}_residuals`)
             return fitted
                 .addBands(residuals)
                 .float()
@@ -269,7 +269,6 @@ const stdDevsFromMedianOutlierRemoval = (collection, stdDevs) => {
     return maskedCollection
 }
 
-
 const applySnic = image => {
     const bands = ['VV', 'VH']
     const snic = ee.Algorithms.Image.Segmentation.SNIC({
@@ -294,7 +293,6 @@ const applyRefinedLee = image => {
                 .rename(band), null, true)
     }
 }
-
 
 function toLinearScale(image) {
     return ee.Image(10).pow(image.divide(10))

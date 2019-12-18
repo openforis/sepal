@@ -8,7 +8,7 @@ module.exports = (recipe, ...args) =>
 
 const getImplementation = type => {
     const implementation = factory[type]
-    if (!implementation ) {
+    if (!implementation) {
         throw new Error(`Unsupported recipe type: ${type}`)
     }
     return implementation
