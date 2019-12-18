@@ -1,6 +1,6 @@
 const factory = {
-    'MOSAIC': (...args) => require('./opticalMosaic')(...args),
-    'CLASSIFICATION': (...args) => require('./classification')(...args)
+    'MOSAIC': (...args) => require('@sepal/ee/optical/mosaic')(...args),
+    'RADAR_MOSAIC': (...args) => require('@sepal/ee/radar/mosaic')(...args),
 }
 
 module.exports = (recipe, ...args) =>

@@ -70,6 +70,17 @@ module.exports = {
         )
     },
 
+    excludeBands(...regExpressions) {
+        const bandNames = this.bandNames()
+            .map(name => {
+                const excluded = ee.Number(ee.List(
+                    regExpressions.map(regex => ee.String(name).match(regex).size())
+                ).reduce(ee.Reducer.min())).not()
+                return ee.List([name]).slice(excluded.subtract(1).max(0), excluded)
+            }).flatten()
+        return this.select(bandNames)
+    },
+
     withBand(bandName, func) {
         return func(this.select(bandName)).rename(bandName)
     }
