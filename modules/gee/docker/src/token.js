@@ -1,11 +1,14 @@
 const {Subject, pipe} = require('rxjs')
 const {finalize, takeUntil, switchMap, mergeMap, tap} = require('rxjs/operators')
+const {v4: uuid} = require('uuid')
 const service = require('@sepal/worker/service')
 const log = require('./log')('token')
 
 const withToken$ = (servicePath, observable$) => {
     const releaseToken$ = new Subject()
-    const token$ = service.request$(servicePath)
+    const requestId = uuid()
+
+    const token$ = service.request$(servicePath, requestId)
 
     const msg = ({requestId, rateToken, concurrencyToken}) =>
         `[Token.${requestId.substr(-4)}.R${rateToken}.C${concurrencyToken}]`
