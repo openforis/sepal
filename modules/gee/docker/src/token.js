@@ -9,11 +9,11 @@ const withToken$ = (servicePath, observable$) => {
 
     const releaseToken = token => {
         releaseToken$.next()
-        log.debug('Returning token: ', token)
+        log.debug('Returning token:', token)
     }
     
     return token$.pipe(
-        tap(token => log.debug('Using token: ', token)),
+        tap(token => log.debug('Using token:', token)),
         mergeMap(token =>
             observable$.pipe(
                 finalize(() => releaseToken(token))
@@ -22,7 +22,7 @@ const withToken$ = (servicePath, observable$) => {
         takeUntil(releaseToken$)
     )
 }
-
+\
 const withToken = (servicePath, func$) =>
     pipe(
         switchMap(
