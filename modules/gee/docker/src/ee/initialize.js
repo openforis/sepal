@@ -8,15 +8,14 @@ const worker$ = () => {
     const {ee$} = require('@sepal/ee/utils')
     require('./extensions')
 
-    return ee$((resolve, reject) => {
-        log.debug('Initializing library')
+    return ee$('initalize', (resolve, reject) =>
         ee.initialize(
             null,
             null,
             () => resolve(),
             error => reject(error)
         )
-    }).pipe(
+    ).pipe(
         switchMapTo(EMPTY)
     )
 }

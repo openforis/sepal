@@ -25,30 +25,30 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     const {ee$} = require('@sepal/ee/utils')
     require('./extensions')
 
+    const secondsToExpiration = expiration =>
+        (expiration - Date.now()) / 1000
+
     const authenticateServiceAccount$ = credentials =>
-        ee$((resolve, reject) => {
-            log.debug('Running EE authentication (service account)')
+        ee$('autenticate service account', (resolve, reject) =>
             ee.data.authenticateViaPrivateKey(
                 credentials,
                 () => resolve(),
                 error => reject(error)
             )
-        })
+        )
 
     const authenticateUserAccount$ = googleTokens =>
-        ee$(resolve => {
-            log.debug('Running EE authentication (user account)')
-            const secondsToExpiration = (googleTokens.accessTokenExpiryDate - Date.now()) / 1000
+        ee$('authenticate user account', resolve =>
             ee.data.setAuthToken(
                 null,
                 'Bearer',
                 googleTokens.accessToken,
-                secondsToExpiration,
+                secondsToExpiration(googleTokens.accessTokenExpiryDate),
                 null,
                 () => resolve(),
                 false
             )
-        })
+        )
 
     const authenticate$ = ({sepalUser: {googleTokens}, serviceAccountCredentials}) =>
         googleTokens

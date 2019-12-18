@@ -3,13 +3,20 @@ const {from, throwError} = require('rxjs')
 const {catchError} = require('rxjs/operators')
 const {SystemException} = require('@sepal/exception')
 const {withToken$} = require('@sepal/token')
+const log = require('@sepal/log')('ee')
 
-const ee$ = promiseCallback =>
+const ee$ = (operation, promiseCallback) =>
     withToken$('ee/tokenService',
         from(new Promise(
             (resolve, reject) => {
                 try {
-                    promiseCallback(resolve, reject)
+                    log.trace(`Earth Engine <${operation}> starting`)
+                    const t0 = Date.now()
+                    promiseCallback(result => {
+                        const t1 = Date.now()
+                        log.debug(`Earth Engine <${operation}> (${t1 - t0}ms)`)
+                        resolve(result)
+                    }, reject)
                 } catch (error) {
                     reject(error)
                 }
@@ -20,7 +27,7 @@ const ee$ = promiseCallback =>
 exports.ee$ = ee$
 
 exports.getAsset$ = eeId =>
-    ee$((resolve, reject) =>
+    ee$('get asset', (resolve, reject) => 
         ee.data.getAsset(eeId, (result, error) =>
             error
                 ? reject(error)
@@ -32,7 +39,7 @@ exports.getAsset$ = eeId =>
     )
 
 exports.getInfo$ = eeObject =>
-    ee$((resolve, reject) =>
+    ee$('get info', (resolve, reject) =>
         eeObject.getInfo((result, error) =>
             error
                 ? reject(error)
@@ -40,7 +47,7 @@ exports.getInfo$ = eeObject =>
     )
 
 exports.getMap$ = (eeObject, visParams) =>
-    ee$((resolve, reject) =>
+    ee$('get map', (resolve, reject) =>
         eeObject.getMap(visParams, (map, error) =>
             error
                 ? reject(error)
