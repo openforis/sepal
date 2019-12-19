@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 const {Subject, ReplaySubject, zip, concat, of} = require('rxjs')
-=======
-const {Subject, ReplaySubject, zip, concat, of, merge} = require('rxjs')
->>>>>>> ae7f541387c8d870d9b4c3e60e04283913be0e7f
 const {first, map, filter, delay, finalize, tap} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
