@@ -2,28 +2,18 @@ const ee = require('@google/earthengine')
 const {toGeometry} = require('@sepal/ee/aoi')
 const {createCollection} = require('./collection')
 const {toDateComposite, toTimeScan} = require('@sepal/ee/radar/composite')
+const {compose} = require('@sepal/utils/functional')
 
 const moment = require('moment')
 
 const mosaic = (recipe, selectedBands) => {
     const model = recipe.model
     const region = toGeometry(model.aoi)
-    let {fromDate: startDate, toDate: endDate, targetDate} = model.dates
+    const {startDate, endDate, targetDate} = getDates(recipe)
     const {orbits, geometricCorrection, speckleFilter, outlierRemoval} = model.options
-    const harmonicDependents = [...new Set(selectedBands
-        .filter(harmonicBand)
-        .map(band => {
-            return band.replace(`_${harmonicBand(band)}`, '')
-        }))]
+    const harmonicDependents = getHarmonicDependencies(selectedBands)
     return {
         getImage() {
-            const dateFormat = 'YYYY-MM-DD'
-            const days = 366 / 2
-            if (targetDate && !startDate)
-                startDate = moment(targetDate).add(-days, 'days').format(dateFormat)
-            if (targetDate && !endDate)
-                endDate = moment(targetDate).add(days, 'days').format(dateFormat)
-
             const collection = createCollection({
                 startDate,
                 endDate,
@@ -35,14 +25,12 @@ const mosaic = (recipe, selectedBands) => {
                 outlierRemoval,
                 harmonicDependents
             })
-            let mosaic = targetDate
-                ? toDateComposite(collection, targetDate)
-                : toTimeScan(collection)
-            if (harmonicDependents.length) {
-                const harmonics = ee.Image(collection.get('harmonics'))
-                mosaic = mosaic.addBands(harmonics)
-            }
-            return mosaic.clip(region)
+
+            return compose(
+                collection,
+                toComposite(targetDate),
+                harmonicDependents.length && addHarmonics(collection),
+            ).clip(region)
         },
         getVisParams() {
             const bands = {
@@ -83,12 +71,41 @@ const mosaic = (recipe, selectedBands) => {
             const palette = selectedBands.length === 1
                 ? selectedBands[0].stretch
                 : null
-
             const hsv = harmonicDependents.length > 0
             return {bands: selectedBands, min, max, stretch, palette, hsv}
         }
     }
 }
+
+const getDates = recipe => {
+    const {fromDate, toDate, targetDate} = recipe.model.dates
+    const dateFormat = 'YYYY-MM-DD'
+    const days = 366 / 2
+    const startDate = targetDate && !fromDate
+        ? moment(targetDate).add(-days, 'days').format(dateFormat)
+        : fromDate
+    const endDate = targetDate && !toDate
+        ? moment(targetDate).add(days, 'days').format(dateFormat)
+        : toDate
+    return {startDate, endDate, targetDate}
+}
+
+const toComposite = targetDate =>
+    collection => targetDate
+        ? toDateComposite(collection, targetDate)
+        : toTimeScan(collection)
+
+const addHarmonics = collection =>
+    image => image.addBands(ee.Image(collection.get('harmonics')))
+
+
+const getHarmonicDependencies = selectedBands => [
+    ...new Set(selectedBands
+        .filter(harmonicBand)
+        .map(band => {
+            return band.replace(`_${harmonicBand(band)}`, '')
+        }))
+]
 
 const harmonicBand = band =>
     ['constant', 't', 'phase', 'amplitude', 'residuals']

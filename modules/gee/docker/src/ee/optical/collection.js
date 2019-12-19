@@ -5,6 +5,7 @@ const dataSetSpecs = require('./dataSetSpecs')
 const imageProcess = require('./imageProcess')
 const maskClouds = require('./maskClouds')
 const applyPercentileFilter = require('./applyPercentileFilter')
+const {compose} = require('@sepal/utils/functional')
 
 const allScenes = (
     {
@@ -140,7 +141,8 @@ const createCollection = ({dataSet, reflectance, calibrate, brdfCorrect, filters
             targetDate
         }))
 
-    return collection.compose(
+    return compose(
+        collection,
         cloudMasking === 'OFF' && maskClouds(),
         ...filters.map(applyFilter)
     )
