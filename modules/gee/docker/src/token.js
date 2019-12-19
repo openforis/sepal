@@ -11,7 +11,7 @@ const withToken$ = (servicePath, observable$) => {
     const token$ = service.request$(servicePath, requestId)
 
     const msg = ({requestId, rateToken, concurrencyToken}) =>
-        `[Token.${requestId.substr(-4)}.R${rateToken}.C${concurrencyToken}]`
+        `[Token.${requestId.substr(-4)}${rateToken ? `.R${rateToken}` : ''}${concurrencyToken ? `.C${concurrencyToken}` : ''}]`
     
     const releaseToken = token => {
         releaseToken$.next()

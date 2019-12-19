@@ -1,5 +1,5 @@
 const {Subject, ReplaySubject, zip, concat, of} = require('rxjs')
-const {first, map, filter, delay, finalize, tap} = require('rxjs/operators')
+const {first, map, filter, delay, finalize, tap, mapTo} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('../log')('token')
@@ -12,31 +12,39 @@ const responseToken$ = new Subject()
 const initialToken$ = count =>
     of(...(_.range(1, count + 1)))
 
+const msg = ({requestId, rateToken, concurrencyToken}) =>
+    `[Token.${requestId.substr(-4)}${rateToken ? `.R${rateToken}` : ''}${concurrencyToken ? `.C${concurrencyToken}` : ''}]`
+
 const tokenService = ({rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
     const token$ = zip(
         requestId$,
-        concat(initialToken$(rateLimit), rateToken$),
-        concat(initialToken$(concurrencyLimit), concurrencyToken$)
+        rateLimit
+            ? concat(initialToken$(rateLimit), rateToken$)
+            : requestId$.pipe(mapTo()),
+        concurrencyLimit
+            ? concat(initialToken$(concurrencyLimit), concurrencyToken$)
+            : requestId$.pipe(mapTo())
     ).pipe(
         map(([requestId, rateToken, concurrencyToken]) =>
             ({requestId, rateToken, concurrencyToken})
         ),
     )
 
-    const msg = ({requestId, rateToken, concurrencyToken}) =>
-        `[Token.${requestId.substr(-4)}.R${rateToken}.C${concurrencyToken}]`
-
     const serveToken = token =>
         responseToken$.next(token)
     
     const recycleRateToken = token => {
-        log.debug(`Recycling rate token ${token.rateToken}/${rateLimit} from ${msg(token)}`)
-        rateToken$.next(token.rateToken)
+        if (rateLimit) {
+            log.debug(`Recycling rate token ${token.rateToken}/${rateLimit} from ${msg(token)}`)
+            rateLimit && rateToken$.next(token.rateToken)
+        }
     }
     
     const recycleConcurrencytoken = token => {
-        log.debug(`Recycling concurrency token ${token.concurrencyToken}/${concurrencyLimit} from ${msg(token)}`)
-        concurrencyToken$.next(token.concurrencyToken)
+        if (concurrencyLimit) {
+            log.debug(`Recycling concurrency token ${token.concurrencyToken}/${concurrencyLimit} from ${msg(token)}`)
+            concurrencyToken$.next(token.concurrencyToken)
+        }
     }
 
     token$.subscribe(
