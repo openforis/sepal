@@ -25,9 +25,10 @@ const worker$ = (minDuration, maxDuration = minDuration, errorProbability = 0) =
 module.exports = job({
     jobName: 'Test1',
     jobPath: __filename,
-    minIdleCount: 1,
+    maxConcurrency: 20,
+    minIdleCount: 5,
     maxIdleMilliseconds: 2000,
-    before: [require('./test_1'), require('./test_2')],
+    // before: [require('./test_1'), require('./test_2')],
     args: ({params: {min, max, errorProbability}}) => [parseInt(min), parseInt(max), parseInt(errorProbability)],
     worker$,
 })

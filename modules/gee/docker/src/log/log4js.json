@@ -27,7 +27,7 @@
         },
         "pool": {
             "appenders": ["console"],
-            "level": "info"
+            "level": "debug"
         },
         "service": {
             "appenders": ["console"],
@@ -35,7 +35,7 @@
         },
         "token": {
             "appenders": ["console"],
-            "level": "info"
+            "level": "debug"
         },
         "transport": {
             "appenders": ["console"],
