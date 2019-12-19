@@ -1,5 +1,5 @@
 const ee = require('@google/earthengine')
-
+const _ = require('lodash')
 // class methods
 
 ee.Image.expr = (expression, args) =>
@@ -12,6 +12,37 @@ module.exports = {
         return this.addBands(image, names, true)
     },
 
+    combinePairwise(algorithm, suffix = '') {
+        const callback = _.isString(algorithm)
+            ? (img1, img2) => ee.Image.expr(algorithm, {b1: img1, b2: img2})
+            : algorithm
+        const image = this
+        return ee.Image(
+            image.bandNames().iterate(
+                (b1, accImage) => {
+                    b1 = ee.String(b1)
+                    accImage = ee.Image(accImage)
+                    const img1 = image.select(b1).rename('img1')
+                    const i1 = image.bandNames().indexOf(b1)
+                    const combinations = ee.Image(image.bandNames().slice(i1.add(1)).iterate(
+                        (b2, accImage) => {
+                            b2 = ee.String(b2)
+                            accImage = ee.Image(accImage)
+                            const img2 = image.select(b2).rename('img2')
+                            return accImage.addBands(
+                                callback(img1, img2)
+                                    .rename(b1.cat('_').cat(b2).cat(suffix || ''))
+                            )
+                        },
+                        ee.Image([]))
+                    )
+                    return accImage.addBands(combinations)
+                },
+                ee.Image([])
+            )
+        )
+    },
+
     compose(...operations) {
         return operations
             .reduce(
@@ -22,6 +53,21 @@ module.exports = {
             )
     },
 
+    bandCount() {
+        return this.bandNames().size()
+    },
+
+    excludeBands(...regExpressions) {
+        const bandNames = this.bandNames()
+            .map(name => {
+                const excluded = ee.Number(ee.List(
+                    regExpressions.map(regex => ee.String(name).match(regex).size())
+                ).reduce(ee.Reducer.min())).not()
+                return ee.List([name]).slice(excluded.subtract(1).max(0), excluded)
+            }).flatten()
+        return this.select(bandNames)
+    },
+
     removeBands(...bands) {
         return this.select(
             this.bandNames().filter(
@@ -30,7 +76,7 @@ module.exports = {
         )
     },
 
-    selectOrDefault(bands, defaultImage) {
+    selectOrDefault(bands, defaultImage=ee.Image()) {
         const defaults = ee.Image(
             ee.List(bands).iterate(
                 (bandName, acc) => ee.Image(acc).addBands(
@@ -40,6 +86,14 @@ module.exports = {
             )
         )
         return this.addBands(defaults).select(bands)
+    },
+
+    selectExisting(bands) {
+        return this.select(
+            this.bandNames().filter(ee.Filter(
+                ee.Filter.inList('item', bands)
+            ))
+        )
     },
 
     selfExpression(expression, additionalImages) {
@@ -70,15 +124,19 @@ module.exports = {
         )
     },
 
-    excludeBands(...regExpressions) {
-        const bandNames = this.bandNames()
-            .map(name => {
-                const excluded = ee.Number(ee.List(
-                    regExpressions.map(regex => ee.String(name).match(regex).size())
-                ).reduce(ee.Reducer.min())).not()
-                return ee.List([name]).slice(excluded.subtract(1).max(0), excluded)
-            }).flatten()
-        return this.select(bandNames)
+    when(condition, value) {
+        const trueList = ee.List.sequence(
+            0,
+            condition.not().not().subtract(1)  // -1 if false, 0 if true
+        )
+        return ee.Image([]).addBands(
+            ee.Image(
+                trueList.iterate(
+                    (ignore1, ignore2) => value,
+                    ee.Image([])
+                )
+            )
+        )
     },
 
     withBand(bandName, func) {

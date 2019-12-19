@@ -9,7 +9,7 @@ const {compose} = require('@sepal/utils/functional')
 
 const allScenes = (
     {
-        region,
+        geometry,
         dates: {
             targetDate,
             seasonStart,
@@ -28,7 +28,7 @@ const allScenes = (
         panSharpen
     }) => {
     const filter = ee.Filter.and(
-        ee.Filter.bounds(region),
+        ee.Filter.bounds(geometry),
         dateFilter({seasonStart, seasonEnd, yearsBefore, yearsAfter})
     )
 

@@ -9,7 +9,7 @@ const createCollection = (
         startDate,
         endDate,
         targetDate,
-        region,
+        geometry,
         orbits = ['ASCENDING'],
         geometricCorrection = 'ELLIPSOID',
         speckleFilter = 'NONE',
@@ -18,16 +18,16 @@ const createCollection = (
         fit = false
     }) =>
     compose(
-        filteredCollection({region, startDate, endDate, orbits}),
+        filteredCollection({geometry, startDate, endDate, orbits}),
         mapCollection({targetDate, speckleFilter, geometricCorrection, harmonicDependents}),
         removeOutliers(outlierRemoval),
-        addHarmonics({harmonicDependents, region, fit})
+        addHarmonics({harmonicDependents, geometry, fit})
     )
 
-const filteredCollection = ({region, startDate, endDate, orbits}) =>
+const filteredCollection = ({geometry, startDate, endDate, orbits}) =>
     ee.ImageCollection('COPERNICUS/S1_GRD')
         .filter(ee.Filter.and(
-            ee.Filter.bounds(region),
+            ee.Filter.bounds(geometry),
             ee.Filter.date(startDate, endDate),
             ee.Filter.eq('instrumentMode', 'IW'),
             ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'),
@@ -84,14 +84,14 @@ const addHarmonicBands = dependents =>
             )
         )
 
-const addHarmonics = ({harmonicDependents, region, fit}) =>
+const addHarmonics = ({harmonicDependents, geometry, fit}) =>
     collection => {
         const harmonicsWithFit = harmonicDependents.map(dependent =>
             calculateHarmonics(collection, dependent)
         )
         const harmonics = ee.Image(
             harmonicsWithFit.map(({harmonics}) => harmonics)
-        ).clip(region)
+        ).clip(geometry)
         if (fit)
             collection = collection
                 .map(image =>

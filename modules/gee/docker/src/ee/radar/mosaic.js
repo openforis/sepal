@@ -1,4 +1,5 @@
 const ee = require('@google/earthengine')
+const {of} = require('rxjs')
 const {toGeometry} = require('@sepal/ee/aoi')
 const {createCollection} = require('./collection')
 const {toDateComposite, toTimeScan} = require('@sepal/ee/radar/composite')
@@ -8,31 +9,34 @@ const moment = require('moment')
 
 const mosaic = (recipe, selectedBands) => {
     const model = recipe.model
-    const region = toGeometry(model.aoi)
+    const geometry = toGeometry(model.aoi)
     const {startDate, endDate, targetDate} = getDates(recipe)
     const {orbits, geometricCorrection, speckleFilter, outlierRemoval} = model.options
     const harmonicDependents = getHarmonicDependencies(selectedBands)
     return {
-        getImage() {
+        getImage$() {
             const collection = createCollection({
                 startDate,
                 endDate,
                 targetDate,
-                region,
+                geometry,
                 orbits,
                 geometricCorrection,
                 speckleFilter,
                 outlierRemoval,
                 harmonicDependents
             })
-
-            return compose(
+            const mosaic = compose(
                 collection,
                 toComposite(targetDate),
                 harmonicDependents.length && addHarmonics(collection),
-            ).clip(region)
+            )
+            return of(mosaic
+                .select(selectedBands.length > 0 ? selectedBands : '.*')
+                .clip(geometry)
+            )
         },
-        getVisParams() {
+        getVisParams$() {
             const bands = {
                 VV: {range: [-20, 2]},
                 VV_min: {range: [-25, 4]},
@@ -72,7 +76,11 @@ const mosaic = (recipe, selectedBands) => {
                 ? selectedBands[0].stretch
                 : null
             const hsv = harmonicDependents.length > 0
-            return {bands: selectedBands, min, max, stretch, palette, hsv}
+            const visParams = {bands: selectedBands, min, max, stretch, palette, hsv}
+            return of(visParams)
+        },
+        getGeometry$() {
+            return of(geometry)
         }
     }
 }

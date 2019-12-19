@@ -1,3 +1,4 @@
+const {of} = require('rxjs')
 const {toGeometry} = require('@sepal/ee/aoi')
 const {allScenes, selectedScenes} = require('@sepal/ee/optical/collection')
 const {toComposite} = require('@sepal/ee/optical/composite')
@@ -15,7 +16,7 @@ module.exports = (recipe, {selection: selectedBands, panSharpen}) =>
 
 const mosaic = (recipe, selectedBands, panSharpen) => {
     const model = recipe.model
-    const region = toGeometry(model.aoi)
+    const geometry = toGeometry(model.aoi)
     const dataSets = extractDataSets(model.sources)
     const compositeOptions = model.compositeOptions
     const corrections = compositeOptions.corrections
@@ -32,7 +33,7 @@ const mosaic = (recipe, selectedBands, panSharpen) => {
     const snowMasking = compositeOptions.snowMasking
     const collection = useAllScenes
         ? allScenes({
-            region,
+            region: geometry,
             dataSets,
             reflectance,
             filters,
@@ -45,7 +46,7 @@ const mosaic = (recipe, selectedBands, panSharpen) => {
             dates
         })
         : selectedScenes({
-            region,
+            region: geometry,
             reflectance,
             calibrate,
             brdfCorrect,
@@ -59,18 +60,25 @@ const mosaic = (recipe, selectedBands, panSharpen) => {
         })
     const composingMethod = compositeOptions.compose
     return {
-        getImage() {
+        getImage$() {
             const mosaic = toComposite({collection, composingMethod})
-            return addTasseledCap(mosaic, selectedBands)
-                .select(selectedBands.length > 0 ? selectedBands : '.*')
-                .clip(region)
+            return of(
+                addTasseledCap(mosaic, selectedBands)
+                    .select(selectedBands.length > 0 ? selectedBands : '.*')
+                    .clip(geometry)
+            )
         },
-        getVisParams() {
+        getVisParams$() {
             if (selectedBands === 'unixTimeDays') {
-                return null // [TODO]
+                return of() // [TODO]
             } else {
-                return visParams[reflectance][selectedBands.join('|')]
+                return of(
+                    visParams[reflectance][selectedBands.join('|')]
+                )
             }
+        },
+        getGeometry$() {
+            return of(geometry)
         }
     }
 }
@@ -82,8 +90,8 @@ const extractDataSets = sources =>
             dataSet === 'LANDSAT_TM'
                 ? ['LANDSAT_4', 'LANDSAT_5']
                 : dataSet === 'LANDSAT_TM_T2'
-                    ? ['LANDSAT_4_T2', 'LANDSAT_5_T2']
-                    : dataSet
+                ? ['LANDSAT_4_T2', 'LANDSAT_5_T2']
+                : dataSet
         )
         .flat()
 
