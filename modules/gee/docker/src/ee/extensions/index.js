@@ -11,5 +11,4 @@ const patch = (eeClass, extensions) =>
     })
 
 patch(ee.Image, require('./image'))
-patch(ee.ImageCollection, require('./imageCollection'))
 patch(ee.Number, require('./number'))

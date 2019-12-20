@@ -1,7 +1,6 @@
 const {Subject} = require('rxjs')
 const {first, takeUntil} = require('rxjs/operators')
 const {deserializeError} = require('serialize-error')
-const {isException} = require('./exception')
 const log = require('./log')()
 
 const errorCodes = {
@@ -13,17 +12,12 @@ const errorCodes = {
 const errorCode = type =>
     errorCodes[type] || 500
 
-const logException = error => {
-    const stack = error.cause && error.cause.stack
-    const message = error.message || error
-    log.error(`${message}\n${stack}`)
-}
-
-const logError = error => {
-    isException(error)
-        ? logException(error)
-        : log.error(error)
-}
+const logError = error =>
+    log.error(
+        error.cause && error.cause.stack
+            ? error.cause.stack
+            : error
+    )
 
 const handleError = (ctx, error) => {
     logError(error)

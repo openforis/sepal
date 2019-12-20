@@ -5,10 +5,11 @@ const dataSetSpecs = require('./dataSetSpecs')
 const imageProcess = require('./imageProcess')
 const maskClouds = require('./maskClouds')
 const applyPercentileFilter = require('./applyPercentileFilter')
+const {compose} = require('@sepal/utils/functional')
 
 const allScenes = (
     {
-        region,
+        geometry,
         dates: {
             targetDate,
             seasonStart,
@@ -27,7 +28,7 @@ const allScenes = (
         panSharpen
     }) => {
     const filter = ee.Filter.and(
-        ee.Filter.bounds(region),
+        ee.Filter.bounds(geometry),
         dateFilter({seasonStart, seasonEnd, yearsBefore, yearsAfter})
     )
 
@@ -140,7 +141,8 @@ const createCollection = ({dataSet, reflectance, calibrate, brdfCorrect, filters
             targetDate
         }))
 
-    return collection.compose(
+    return compose(
+        collection,
         cloudMasking === 'OFF' && maskClouds(),
         ...filters.map(applyFilter)
     )
