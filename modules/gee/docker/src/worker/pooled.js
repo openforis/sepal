@@ -1,5 +1,5 @@
 const {Subject, of} = require('rxjs')
-const {mergeMap, map, filter, finalize, takeUntil, catchError} = require('rxjs/operators')
+const {mergeMap, map, filter, finalize, takeUntil, catchError, tap} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('@sepal/log')('job')
@@ -22,21 +22,19 @@ const PooledWorker = ({jobName, jobPath, maxConcurrency = 100, minIdleCount = 10
 
     workerRequest$.pipe(
         mergeMap(({requestId, args, args$}) =>
-            pool.get$().pipe(
-                map(({item: worker, release}) => ({worker, release})),
-                mergeMap(({worker, release}) =>
+            pool.getInstance$().pipe(
+                mergeMap(worker =>
                     worker.submit$(args, args$).pipe(
                         catchError(error => of({error})),
                         map(result => ({
                             requestId,
                             result
-                        })),
-                        takeUntil(cancel$.pipe(
-                            filter(({requestId: currentRequestId}) => currentRequestId === requestId),
-                        )),
-                        finalize(() => release())
+                        }))
                     )
-                )
+                ),
+                takeUntil(cancel$.pipe(
+                    filter(({requestId: currentRequestId}) => currentRequestId === requestId)
+                ))
             ), null, maxConcurrency
         ),
     ).subscribe(
@@ -53,7 +51,9 @@ const PooledWorker = ({jobName, jobPath, maxConcurrency = 100, minIdleCount = 10
             return workerResponse$.pipe(
                 filter(({requestId: currentRequestId}) => currentRequestId === requestId),
                 map(({result}) => result),
-                finalize(() => cancel$.next({requestId}))
+                finalize(() => {
+                    cancel$.next({requestId})
+                })
             )
         }
     }

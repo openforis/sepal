@@ -1,10 +1,10 @@
-const {Subject, timer, of} = require('rxjs')
-const {tap, map, mergeMap, takeUntil, mapTo, filter} = require('rxjs/operators')
+const {Subject, timer, of, concat} = require('rxjs')
+const {tap, map, mergeMap, takeUntil, mapTo, filter, finalize, switchMap} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('@sepal/log')('pool')
 
-module.exports = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCold, onHot, onRelease, onDispose, onKeep, onMsg}) => {
+const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCold, onHot, onRelease, onDispose, onKeep, onMsg}) => {
     const pool = []
     const lock$ = new Subject()
     const unlock$ = new Subject()
@@ -59,14 +59,11 @@ module.exports = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, 
         }
     }
 
-    const releaseable = instance => ({
-        item: instance.item,
-        release: () => {
-            unlock(instance)
-            log.debug(msg(instance, 'released'))
-            onRelease && onRelease({id: instance.id, instanceId: instanceId(instance.id)})
-        }
-    })
+    const release = instance => {
+        unlock(instance)
+        log.debug(msg(instance, 'released'))
+        onRelease && onRelease({id: instance.id, instanceId: instanceId(instance.id)})
+    }
 
     const hot$ = instance =>
         of(instance).pipe(
@@ -84,16 +81,25 @@ module.exports = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, 
         )
     }
 
-    const instance$ = instance =>
-        instance
+    const getInstance$ = () => {
+        const instance = _.find(pool, ({locked}) => !locked)
+        return instance
             ? hot$(instance)
             : cold$()
+    }
 
     return {
-        get$: () =>
-            instance$(_.find(pool, ({locked}) => !locked)).pipe(
-                tap(instance => lock(instance)),
-                map(instance => releaseable(instance))
+        getInstance$: () =>
+            getInstance$().pipe(
+                switchMap(instance =>
+                    concat(of(instance), new Subject()).pipe(
+                        tap(instance => lock(instance)),
+                        map(({item}) => item),
+                        finalize(() => release(instance))
+                    )
+                )
             )
     }
 }
+
+module.exports = Pool
