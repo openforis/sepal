@@ -4,17 +4,23 @@ const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('@sepal/log')('job')
 const {initWorker$} = require('./factory')
-const Pool = require('./pool')
+const LimitedPool = require('./limitedPool')
 
-const PooledWorker = ({jobName, jobPath, maxConcurrency = 100, minIdleCount = 10, maxIdleMilliseconds = 5000}) => {
+const RATE_WINDOW_MS = 100
+const RATE_LIMIT = 1
+
+const PooledWorker = ({jobName, jobPath, concurrencyLimit = 100, minIdleCount = 10, maxIdleMilliseconds = 5000}) => {
     const workerRequest$ = new Subject()
     const workerResponse$ = new Subject()
     const cancel$ = new Subject()
 
-    const pool = Pool({
+    const pool = LimitedPool({
         name: jobName,
         maxIdleMilliseconds,
         minIdleCount,
+        rateWindowMs: RATE_WINDOW_MS,
+        rateLimit: RATE_LIMIT,
+        concurrencyLimit,
         create$: instanceId => initWorker$(instanceId, jobPath),
         onDispose: ({item}) => item.dispose(),
         onMsg: ({instanceId, action}) => `Worker instance [${instanceId}] ${action}`
@@ -35,7 +41,7 @@ const PooledWorker = ({jobName, jobPath, maxConcurrency = 100, minIdleCount = 10
                 takeUntil(cancel$.pipe(
                     filter(({requestId: currentRequestId}) => currentRequestId === requestId)
                 ))
-            ), null, maxConcurrency
+            )
         ),
     ).subscribe(
         response => workerResponse$.next(response),
