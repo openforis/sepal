@@ -5,7 +5,6 @@ const _ = require('lodash')
 const log = require('./log')('limiter')
 
 const Limiter = ({name, rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
-
     const requestId$ = new Subject()
     const rateToken$ = new Subject()
     const concurrencyToken$ = new Subject()
