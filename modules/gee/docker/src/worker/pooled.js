@@ -1,5 +1,5 @@
 const {Subject, of} = require('rxjs')
-const {mergeMap, map, filter, finalize, takeUntil, catchError, tap} = require('rxjs/operators')
+const {mergeMap, map, filter, finalize, takeUntil, catchError} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('@sepal/log')('job')
