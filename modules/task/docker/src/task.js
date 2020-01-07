@@ -19,30 +19,32 @@ const submitTask = ({id, name, params}) => {
     const task$ = task.submit$(id, params)
     const taskCompleted$ = new Subject()
     concat(
-        stateChanged$(id, 'ACTIVE', 'USE A REASONABLE MESSAGE HERE'), // TODO: Message and key
+        stateChanged$(id, 'ACTIVE', {
+            messageKey: 'tasks.status.executing',
+            defaultMessage: 'Executing...'
+        }),
         task$
             .pipe(
+                finalize(() => taskCompleted$.next(true)),
                 windowTime(MAX_UPDATE_RATE),
                 switchMap(window$ => window$.pipe(last())),
-                tap(progress => console.log('debounced', progress)),
                 switchMap(progress =>
                     interval(HEARTBEAT_RATE).pipe(
                         exhaustMap(() => taskProgressed$(id, progress)),
                         takeUntil(taskCompleted$)
                     )
-                ),
-                finalize(() => taskCompleted$.next())
+                )
             )
     ).subscribe({
         error: error => taskFailed(id, error),
-        completed: () => taskCompleted(id)
+        complete: () => taskCompleted(id)
     })
 }
 
 const taskProgressed$ = (id, progress) => {
     log.info(`${id}: Notifying Sepal server on progress`, progress)
     return http.post$(`https://${sepalHost}/api/tasks/active`, {
-        query: {progress: {id: progress.message}},
+        query: {progress: {[id]: progress.message}},
         username: sepalUsername,
         password: sepalPassword
     }).pipe(
@@ -60,7 +62,7 @@ const taskFailed = (id, error) => {
 }
 
 const taskCompleted = id => {
-    log.debug(`${id}: Task completed`)
+    log.info(`${id}: Task completed`)
     const message = 'Completed' // TODO: Object with key etc.?
     stateChanged$(id, 'COMPLETED', message).subscribe({
         error: error => log.error(`${id}: Failed to notify Sepal server on completed task`, error),
