@@ -5,7 +5,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "rxjs": "^6.5.3"
+    "rxjs": "^6.5.3",
+    "request": "^2.88.0"
   },
   "devDependencies": {
     "base-64": "^0.1.0",
