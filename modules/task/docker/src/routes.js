@@ -1,7 +1,4 @@
-const {of} = require('rxjs')
-const {stream} = require('sepalHttpServer')
-const log = require('sepalLog')()
-const {submitTask} = require('./task')
+const {submitTask, cancelTask} = require('./task')
 
 module.exports = router =>
     router
@@ -16,7 +13,8 @@ module.exports = router =>
             ctx.status = 204
         })
 
-        .delete('/api/tasks/:id', ctx => {
-            console.log('********* DELETE  TASK', ctx.params.id) // TODO: Implement...
+        .delete('/api/tasks/:taskId', ctx => {
+            const {taskId} = ctx.params
+            cancelTask(taskId)
             ctx.status = 204
         })
