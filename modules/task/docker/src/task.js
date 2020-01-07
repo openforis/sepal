@@ -1,5 +1,6 @@
-const {Subject, concat, interval} = require('rxjs')
-const {exhaustMap, finalize, last, switchMap, takeUntil, tap, windowTime} = require('rxjs/operators')
+const {Subject, concat} = require('rxjs')
+const {filter, share, takeUntil, tap} = require('rxjs/operators')
+const {lastInWindow, repeating} = require('./rxjs/operators')
 const log = require('sepalLog')('task')
 const http = require('sepalHttpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
@@ -7,37 +8,36 @@ const {sepalHost, sepalUsername, sepalPassword} = require('./config')
 const HEARTBEAT_RATE = 1000
 const MAX_UPDATE_RATE = 1000
 
+const cancelSubject$ = new Subject()
+const cancelTask$ = cancelSubject$.pipe(share())
+
 const tasks = {
     'image.sepal_export': require('./tasks/exportImage')
 }
+
 const submitTask = ({id, name, params}) => {
     console.log('Submitting task', {id, name})
     const task = tasks[name]
     if (!task)
         throw new Error(`Task doesn't exist: ${name}`)
 
-    const task$ = task.submit$(id, params)
-    const taskCompleted$ = new Subject()
-    concat(
-        stateChanged$(id, 'ACTIVE', {
-            messageKey: 'tasks.status.executing',
-            defaultMessage: 'Executing...'
-        }),
-        task$
-            .pipe(
-                finalize(() => taskCompleted$.next(true)),
-                windowTime(MAX_UPDATE_RATE),
-                switchMap(window$ => window$.pipe(last())),
-                switchMap(progress =>
-                    interval(HEARTBEAT_RATE).pipe(
-                        exhaustMap(() => taskProgressed$(id, progress)),
-                        takeUntil(taskCompleted$)
-                    )
-                )
-            )
-    ).subscribe({
+    const initialState$ = stateChanged$(id, 'ACTIVE', {
+        messageKey: 'tasks.status.executing',
+        defaultMessage: 'Executing...'
+    })
+    const task$ = task.submit$(id, params).pipe(
+        lastInWindow(MAX_UPDATE_RATE),
+        repeating(progress => taskProgressed$(id, progress), HEARTBEAT_RATE)
+    )
+    const cancel$ = cancelTask$.pipe(
+        filter(taskId => taskId === id)
+    )
+    const progress$ = concat(initialState$, task$).pipe(
+        takeUntil(cancel$)
+    )
+    progress$.subscribe({
         error: error => taskFailed(id, error),
-        complete: () => taskCompleted(id)
+        complete: () => taskCompleted(id) // TODO: How do we know if canceled or succeeded?
     })
 }
 
@@ -81,4 +81,9 @@ const stateChanged$ = (id, state, message) => {
     })
 }
 
-module.exports = {submitTask}
+const cancelTask = id => {
+    log.info(`${id}: Canceling task`)
+    cancelTask$.next(id)
+}
+
+module.exports = {submitTask, cancelTask}

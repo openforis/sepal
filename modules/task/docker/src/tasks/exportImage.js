@@ -1,5 +1,5 @@
 const {interval} = require('rxjs')
-const {map, take} = require('rxjs/operators')
+const {map, take, tap} = require('rxjs/operators')
 
 module.exports = {
     submit$: (id, params) =>
@@ -7,6 +7,7 @@ module.exports = {
             map(i => ({
                message: 'SOME MESSAGE ' + i
             })),
+            tap(m => console.log('Working: ', m)),
             take(100)
         )
 }
