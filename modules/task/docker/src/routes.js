@@ -15,3 +15,8 @@ module.exports = router =>
             })
             ctx.status = 204
         })
+
+        .delete('/api/tasks/:id', ctx => {
+            console.log('********* DELETE  TASK', ctx.params.id) // TODO: Implement...
+            ctx.status = 204
+        })
