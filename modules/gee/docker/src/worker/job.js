@@ -1,4 +1,4 @@
-const {Subject} = require('rxjs')
+const {ReplaySubject} = require('rxjs')
 const {deserializeError} = require('serialize-error')
 const _ = require('lodash')
 const PooledWorker = require('./pooled')
@@ -51,7 +51,7 @@ const getWorkerGroup = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdle
 }
 
 const unwrap$ = wrapped$ => {
-    const unwrapped$ = new Subject()
+    const unwrapped$ = new ReplaySubject()
     wrapped$.subscribe({
         next: ({value, error}) => {
             value && unwrapped$.next(value)
