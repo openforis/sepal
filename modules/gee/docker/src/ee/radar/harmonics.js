@@ -17,7 +17,7 @@ const calculateDependentBands = dependentBand => {
 }
 
 const calculateHarmonics = (collection, dependent) => {
-    const independents = ee.List([dependent + '_constant', dependent + '_t', dependent + '_cos', dependent + '_sin'])
+    const independents = ee.List([`${dependent}_constant`, `${dependent}_t`, `${dependent}_cos`, `${dependent}_sin`])
     const trend = collection
         .select(independents.add(dependent))
         .reduce(ee.Reducer.linearRegression({
@@ -29,25 +29,25 @@ const calculateHarmonics = (collection, dependent) => {
         .arrayProject([0])
         .arrayFlatten([independents])
 
-    const sin = trendCoefficients.select(dependent + '_sin')
-    const cos = trendCoefficients.select(dependent + '_cos')
-    const phase = sin.atan2(cos).rename(dependent + '_phase')
+    const sin = trendCoefficients.select(`${dependent}_sin`)
+    const cos = trendCoefficients.select(`${dependent}_cos`)
+    const phase = sin.atan2(cos).rename(`${dependent}_phase`)
 
-    const amplitude = sin.hypot(sin).rename(dependent + '_amplitude')
+    const amplitude = sin.hypot(sin).rename(`${dependent}_amplitude`)
 
     const residuals = trend.select('residuals')
         .arrayProject([0])
         .arrayFlatten([['residuals']])
-        .rename(dependent + '_residuals')
+        .rename(`${dependent}_residuals`)
 
     const fit = image => {
         const fitted = image.select(independents)
             .multiply(trendCoefficients)
             .reduce('sum')
-            .rename(dependent + '_fitted')
+            .rename(`${dependent}_fitted`)
         const residuals = image.select(dependent)
             .subtract(fitted)
-            .rename(dependent + '_residuals')
+            .rename(`${dependent}_residuals`)
         return fitted
             .addBands(residuals)
             .float()

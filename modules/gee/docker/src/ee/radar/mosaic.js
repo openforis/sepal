@@ -106,7 +106,6 @@ const toComposite = targetDate =>
 const addHarmonics = collection =>
     image => image.addBands(ee.Image(collection.get('harmonics')))
 
-
 const getHarmonicDependencies = selectedBands => [
     ...new Set(selectedBands
         .filter(harmonicBand)

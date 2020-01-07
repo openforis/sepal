@@ -1,8 +1,8 @@
 const {Subject} = require('rxjs')
-// const {Subject} = require('rxjs')
+const {deserializeError} = require('serialize-error')
 const _ = require('lodash')
 const PooledWorker = require('./pooled')
-const log = require('sepalLog')('job')
+// const log = require('sepalLog')('job')
 
 // const {submit$} = require('./single')
 // const {submit$} = PooledWorker({
@@ -55,7 +55,7 @@ const unwrap$ = wrapped$ => {
     wrapped$.subscribe({
         next: ({value, error}) => {
             value && unwrapped$.next(value)
-            error && unwrapped$.error(error)
+            error && unwrapped$.error(deserializeError(error))
         },
         error: error => unwrapped$.error(error),
         complete: () => unwrapped$.complete()

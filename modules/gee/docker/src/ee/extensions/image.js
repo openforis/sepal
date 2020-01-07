@@ -76,7 +76,7 @@ module.exports = {
         )
     },
 
-    selectOrDefault(bands, defaultImage=ee.Image()) {
+    selectOrDefault(bands, defaultImage = ee.Image()) {
         const defaults = ee.Image(
             ee.List(bands).iterate(
                 (bandName, acc) => ee.Image(acc).addBands(

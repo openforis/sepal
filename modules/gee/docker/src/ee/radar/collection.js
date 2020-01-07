@@ -34,8 +34,8 @@ const filteredCollection = ({geometry, startDate, endDate, orbits}) =>
             ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'),
             orbits.length > 1
                 ? ee.Filter.or(
-                ee.Filter.eq('orbitProperties_pass', orbits[0]),
-                ee.Filter.eq('orbitProperties_pass', orbits[1])
+                    ee.Filter.eq('orbitProperties_pass', orbits[0]),
+                    ee.Filter.eq('orbitProperties_pass', orbits[1])
                 )
                 : ee.Filter.eq('orbitProperties_pass', orbits[0])
         ))

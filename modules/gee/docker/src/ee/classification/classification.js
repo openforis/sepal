@@ -8,13 +8,13 @@ const {zip} = require('rxjs')
 
 const classify =
     ({
-         model: {
-             inputImagery: {images: imageRecipes},
-             trainingData: {eeTable, eeTableColumn},
-             auxiliaryImagery = [],
-             scale
-         }
-     }) => {
+        model: {
+            inputImagery: {images: imageRecipes},
+            trainingData: {eeTable, eeTableColumn},
+            auxiliaryImagery = [],
+            scale
+        }
+    }) => {
         const referenceData = flushCache(ee.FeatureCollection(eeTable))
         // TODO: Verify that geometry has training data - where and when?
 
@@ -46,8 +46,8 @@ const classify =
                     })
                 ).pipe(
                     map(({min, max}) => ({
-                            min, max, palette: colors.slice(0, max - min + 1).join(',')
-                        })
+                        min, max, palette: colors.slice(0, max - min + 1).join(',')
+                    })
                     )
                 )
             },
@@ -66,12 +66,12 @@ const addCovariates = (image, bandSetSpecs, auxiliaryImagery) => {
     return ee.Image(
         bandSetSpecs.map(({type, included, operation}) => {
             switch (type) {
-                case 'IMAGE_BANDS':
-                    return image.selectExisting(included)
-                case 'PAIR_WISE_EXPRESSION':
-                    return combinePairwise(image, included, operation)
-                case 'INDEXES':
-                    return calculateIndexes(image, included)
+            case 'IMAGE_BANDS':
+                return image.selectExisting(included)
+            case 'PAIR_WISE_EXPRESSION':
+                return combinePairwise(image, included, operation)
+            case 'INDEXES':
+                return calculateIndexes(image, included)
             }
         })
     ).addBands(
@@ -86,19 +86,18 @@ const getAuxiliaryImagery = auxiliaryImagery =>
     ee.Image(
         auxiliaryImagery.map(type => {
             switch (type) {
-                case 'LATITUDE':
-                    return createLatitudeImage()
-                case 'TERRAIN':
-                    return createTerrainImage()
-                case 'WATER':
-                    return createSurfaceWaterImage()
+            case 'LATITUDE':
+                return createLatitudeImage()
+            case 'TERRAIN':
+                return createTerrainImage()
+            case 'WATER':
+                return createSurfaceWaterImage()
             }
         })
     )
 
 const createLatitudeImage = () =>
     ee.Image.pixelLonLat().select('latitude').float()
-
 
 const createTerrainImage = () => {
     const elevation = ee.Image('USGS/SRTMGL1_003')
@@ -128,7 +127,7 @@ const createSurfaceWaterImage = () => {
     ]
     const transitionMasks = ee.Image(
         transitions.map((transition, i) =>
-            water.select('transition').eq(i).rename('water_' + transition))
+            water.select('transition').eq(i).rename(`water_${transition}`))
     )
 
     return water
@@ -138,7 +137,6 @@ const createSurfaceWaterImage = () => {
         )
         .addBands(transitionMasks)
 }
-
 
 const combinePairwise = (image, bands, operation) => {
     const operations = {
@@ -150,9 +148,8 @@ const combinePairwise = (image, bands, operation) => {
     }
     return image
         .selectExisting(bands)
-        .combinePairwise(operations[operation], '_' + operation.toLowerCase())
+        .combinePairwise(operations[operation], `_${operation.toLowerCase()}`)
 }
-
 
 const calculateIndexes = (image, indexNames) =>
     ee.Image(
