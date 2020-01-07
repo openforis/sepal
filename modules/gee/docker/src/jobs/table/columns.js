@@ -1,9 +1,9 @@
-const job = require('@sepal/worker/job')
+const job = require('root/worker/job')
 
 const worker$ = ({tableId}) => {
     const ee = require('@google/earthengine')
-    const {getAsset$, getInfo$} = require('@sepal/ee/utils')
-    const {Exception, SystemException, NotFoundException} = require('@sepal/exception')
+    const {getAsset$, getInfo$} = require('root/ee/utils')
+    const {Exception, SystemException, NotFoundException} = require('root/exception')
     const {throwError, of} = require('rxjs')
     const {switchMap, catchError} = require('rxjs/operators')
 
@@ -34,7 +34,7 @@ const worker$ = ({tableId}) => {
 module.exports = job({
     jobName: 'Get table columns',
     jobPath: __filename,
-    before: [require('@sepal/ee/initialize')],
+    before: [require('root/ee/initialize')],
     args: ctx => [ctx.request.query],
     worker$
 })

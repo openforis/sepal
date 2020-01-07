@@ -1,9 +1,9 @@
-const job = require('@sepal/worker/job')
+const job = require('root/worker/job')
 
 const worker$ = ({aoi, source}) => {
     const ee = require('@google/earthengine')
-    const {toGeometry} = require('@sepal/ee/aoi')
-    const {getInfo$} = require('@sepal/ee/utils')
+    const {toGeometry} = require('root/ee/aoi')
+    const {getInfo$} = require('root/ee/utils')
     const {map} = require('rxjs/operators')
 
     const geometry = toGeometry(aoi)
@@ -35,7 +35,7 @@ const worker$ = ({aoi, source}) => {
 module.exports = job({
     jobName: 'Scene Areas',
     jobPath: __filename,
-    before: [require('@sepal/ee/initialize')],
+    before: [require('root/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$
 })

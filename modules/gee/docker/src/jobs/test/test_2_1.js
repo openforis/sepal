@@ -1,4 +1,4 @@
-const job = require('@sepal/worker/job')
+const job = require('root/worker/job')
 const {EMPTY} = require('rxjs')
 const {delay} = require('rxjs/operators')
 

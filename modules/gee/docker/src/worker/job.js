@@ -1,6 +1,8 @@
+const {Subject} = require('rxjs')
+// const {Subject} = require('rxjs')
 const _ = require('lodash')
 const PooledWorker = require('./pooled')
-const log = require('@sepal/log')('job')
+const log = require('sepalLog')('job')
 
 // const {submit$} = require('./single')
 // const {submit$} = PooledWorker({
@@ -48,16 +50,31 @@ const getWorkerGroup = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdle
     return workerGroups[jobName]
 }
 
+const unwrap$ = wrapped$ => {
+    const unwrapped$ = new Subject()
+    wrapped$.subscribe({
+        next: ({value, error}) => {
+            value && unwrapped$.next(value)
+            error && unwrapped$.error(error)
+        },
+        error: error => unwrapped$.error(error),
+        complete: () => unwrapped$.complete()
+    })
+    return unwrapped$
+}
+
 const main = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before, args, ctx}) => {
     const argFuncs = [...depArgs(before), args]
     return isDependency(ctx)
         ? argFuncs
-        : getWorkerGroup({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}).submit$({
-            jobName,
-            jobPath,
-            args: evaluateArgs(argFuncs, ctx),
-            args$: ctx.args$
-        })
+        : unwrap$(
+            getWorkerGroup({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}).submit$({
+                jobName,
+                jobPath,
+                args: evaluateArgs(argFuncs, ctx),
+                args$: ctx.args$
+            })
+        )
 }
 
 const assert = (arg, func, msg, required = false) => {

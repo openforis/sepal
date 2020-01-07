@@ -5,7 +5,7 @@ const dataSetSpecs = require('./dataSetSpecs')
 const imageProcess = require('./imageProcess')
 const maskClouds = require('./maskClouds')
 const applyPercentileFilter = require('./applyPercentileFilter')
-const {compose} = require('@sepal/utils/functional')
+const {compose} = require('root/utils/functional')
 
 const allScenes = (
     {

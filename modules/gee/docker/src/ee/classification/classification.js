@@ -1,9 +1,9 @@
 const ee = require('@google/earthengine')
 const {map} = require('rxjs/operators')
-const {calculateIndex} = require('@sepal/ee/optical/indexes')
+const {calculateIndex} = require('root/ee/optical/indexes')
 
-const imageFactory = require('@sepal/ee/imageFactory')
-const {getInfo$} = require('@sepal/ee/utils')
+const imageFactory = require('root/ee/imageFactory')
+const {getInfo$} = require('root/ee/utils')
 const {zip} = require('rxjs')
 
 const classify =

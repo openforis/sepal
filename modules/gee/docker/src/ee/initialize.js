@@ -1,10 +1,10 @@
-const job = require('@sepal/worker/job')
+const job = require('root/worker/job')
 
 const worker$ = () => {
     const {EMPTY} = require('rxjs')
     const {switchMapTo} = require('rxjs/operators')
     const ee = require('@google/earthengine')
-    const {ee$} = require('@sepal/ee/utils')
+    const {ee$} = require('root/ee/utils')
     require('./extensions')
 
     return ee$('initalize', (resolve, reject) =>

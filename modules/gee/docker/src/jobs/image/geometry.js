@@ -1,9 +1,9 @@
 const ee = require('@google/earthengine')
-const job = require('@sepal/worker/job')
+const job = require('root/worker/job')
 
 const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
-    const ImageFactory = require('@sepal/ee/imageFactory')
-    const {getInfo$, getMap$} = require('@sepal/ee/utils')
+    const ImageFactory = require('root/ee/imageFactory')
+    const {getInfo$, getMap$} = require('root/ee/utils')
     const {forkJoin} = require('rxjs')
     const {map, switchMap} = require('rxjs/operators')
 
@@ -25,7 +25,7 @@ const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
 module.exports = job({
     jobName: 'EE geometry',
     jobPath: __filename,
-    before: [require('@sepal/ee/initialize')],
+    before: [require('root/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$
 })

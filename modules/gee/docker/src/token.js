@@ -1,8 +1,8 @@
 const {Subject, pipe} = require('rxjs')
 const {finalize, takeUntil, switchMap, mergeMap, tap} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
-const service = require('@sepal/worker/service')
-const log = require('./log')('token')
+const service = require('root/worker/service')
+const log = require('sepalLog')('token')
 
 const withToken$ = (servicePath, observable$) => {
     const releaseToken$ = new Subject()

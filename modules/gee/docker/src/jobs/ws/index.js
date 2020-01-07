@@ -1,4 +1,4 @@
-const job = require('@sepal/worker/job')
+const job = require('root/worker/job')
 
 const worker$ = (name, args$) => {
     const {timer, merge, of} = require('rxjs')

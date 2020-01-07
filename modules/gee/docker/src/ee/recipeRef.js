@@ -1,6 +1,6 @@
 const ee = require('@google/earthengine')
 const {of} = require('rxjs')
-const imageFactory = require('@sepal/ee/imageFactory')
+const imageFactory = require('root/ee/imageFactory')
 
 const asset = ({id}) => {
     console.log(recipe)

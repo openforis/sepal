@@ -1,8 +1,8 @@
 const {of} = require('rxjs')
-const {toGeometry} = require('@sepal/ee/aoi')
-const {allScenes, selectedScenes} = require('@sepal/ee/optical/collection')
-const {toComposite} = require('@sepal/ee/optical/composite')
-const addTasseledCap = require('@sepal/ee/optical/addTasseledCap')
+const {toGeometry} = require('root/ee/aoi')
+const {allScenes, selectedScenes} = require('root/ee/optical/collection')
+const {toComposite} = require('root/ee/optical/composite')
+const addTasseledCap = require('root/ee/optical/addTasseledCap')
 const _ = require('lodash')
 
 const canPanSharpen = selectedBands =>

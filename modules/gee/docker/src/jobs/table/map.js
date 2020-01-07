@@ -1,9 +1,9 @@
-const job = require('@sepal/worker/job')
+const job = require('root/worker/job')
 
 const worker$ = ({tableId, columnName, columnValue, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     const ee = require('@google/earthengine')
-    const {filterTable} = require('@sepal/ee/table')
-    const {getInfo$, getMap$} = require('@sepal/ee/utils')
+    const {filterTable} = require('root/ee/table')
+    const {getInfo$, getMap$} = require('root/ee/utils')
     const {forkJoin} = require('rxjs')
     const {map} = require('rxjs/operators')
 
@@ -21,7 +21,7 @@ const worker$ = ({tableId, columnName, columnValue, color = '#FFFFFF50', fillCol
 module.exports = job({
     jobName: 'Request EE Table map',
     jobPath: __filename,
-    before: [require('@sepal/ee/initialize')],
+    before: [require('root/ee/initialize')],
     args: ctx => [ctx.request.query],
     worker$
 })

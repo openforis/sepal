@@ -1,8 +1,8 @@
-const job = require('@sepal/worker/job')
+const job = require('root/worker/job')
 
 const worker$ = ({select, from, where = [], orderBy = []}) => {
     const ee = require('@google/earthengine')
-    const {getInfo$} = require('@sepal/ee/utils')
+    const {getInfo$} = require('root/ee/utils')
     const {map} = require('rxjs/operators')
     const _ = require('lodash')
 
@@ -28,7 +28,7 @@ const worker$ = ({select, from, where = [], orderBy = []}) => {
 module.exports = job({
     jobName: 'Query EE Table',
     jobPath: __filename,
-    before: [require('@sepal/ee/initialize')],
+    before: [require('root/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$
 })

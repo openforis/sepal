@@ -1,9 +1,10 @@
-const job = require('@sepal/worker/job')
-const {withToken$} = require('@sepal/token')
+const job = require('root/worker/job')
+const {withToken$} = require('root/token')
 
 const worker$ = (minDuration, maxDuration = minDuration, errorProbability = 0) => {
     const {timer, of} = require('rxjs')
     const {mergeMap, map} = require('rxjs/operators')
+    // const foo = require('sepalLog')
         
     // return withToken$('jobs/test/tokenService',
     return of(true).pipe(

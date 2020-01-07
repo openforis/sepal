@@ -1,0 +1,26 @@
+const {stream} = require('sepalHttpServer')
+
+const sceneAreas$ = require('root/jobs/image/sceneAreas')
+const preview$ = require('root/jobs/image/preview')
+const imageBands$ = require('root/jobs/image/bands')
+const imageGeometry$ = require('root/jobs/image/geometry')
+const tableColumns$ = require('root/jobs/table/columns')
+const tableColumnValues$ = require('root/jobs/table/columnValues')
+const tableQuery$ = require('root/jobs/table/query')
+const tableMap$ = require('root/jobs/table/map')
+// const recipeGeometry$ = require('root/jobs/table/map')
+const test$ = require('root/jobs/test')
+const wsTest$ = require('root/jobs/ws')
+
+module.exports = router =>
+    router
+        .post('/sceneareas', stream(ctx => sceneAreas$(ctx)))
+        .post('/preview', stream(ctx => preview$(ctx)))
+        .post('/bands', stream(ctx => imageBands$(ctx)))
+        .post('/recipe/geometry', stream(ctx => imageGeometry$(ctx)))
+        .get('/table/columns', stream(ctx => tableColumns$(ctx)))
+        .get('/table/columnValues', stream(ctx => tableColumnValues$(ctx)))
+        .post('/table/query', stream(ctx => tableQuery$(ctx)))
+        .get('/table/map', stream(ctx => tableMap$(ctx)))
+        .get('/test/:min/:max/:errorProbability', stream(ctx => test$(ctx)))
+        .get('/ws/:name', stream(ctx => wsTest$(ctx)))

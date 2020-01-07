@@ -1,12 +1,12 @@
 const {Subject} = require('rxjs')
 const {takeUntil} = require('rxjs/operators')
-const log = require('@sepal/log')('service')
+const log = require('sepalLog')('service')
 
 let transport
 
 const initMain = (request$, response$) => {
     const handle$ = ({servicePath, data}) =>
-        require(`@sepal/${servicePath}`).handle$(data)
+        require(`root/${servicePath}`).handle$(data)
 
     const stop$ = new Subject()
 

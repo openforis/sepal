@@ -1,9 +1,9 @@
 const ee = require('@google/earthengine')
 const {of} = require('rxjs')
-const {toGeometry} = require('@sepal/ee/aoi')
+const {toGeometry} = require('root/ee/aoi')
 const {createCollection} = require('./collection')
-const {toDateComposite, toTimeScan} = require('@sepal/ee/radar/composite')
-const {compose} = require('@sepal/utils/functional')
+const {toDateComposite, toTimeScan} = require('root/ee/radar/composite')
+const {compose} = require('root/utils/functional')
 
 const moment = require('moment')
 

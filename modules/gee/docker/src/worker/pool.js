@@ -2,7 +2,7 @@ const {Subject, timer, of, concat} = require('rxjs')
 const {tap, map, mergeMap, takeUntil, mapTo, filter, finalize, switchMap} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
-const log = require('@sepal/log')('pool')
+const log = require('sepalLog')('pool')
 
 const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCold, onHot, onRelease, onDispose, onKeep, onMsg}) => {
     const pool = []

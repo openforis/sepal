@@ -1,5 +1,5 @@
 const ee = require('@google/earthengine')
-const {compose} = require('@sepal/utils/functional')
+const {compose} = require('root/utils/functional')
 const {refinedLee} = require('./refinedLee')
 const {terrainCorrection} = require('./terrainCorrection')
 const {calculateHarmonics, calculateDependentBands} = require('./harmonics')

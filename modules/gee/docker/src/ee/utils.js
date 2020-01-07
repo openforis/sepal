@@ -1,9 +1,9 @@
 const ee = require('@google/earthengine')
 const {from, throwError} = require('rxjs')
 const {catchError} = require('rxjs/operators')
-const {SystemException} = require('@sepal/exception')
-const {withToken$} = require('@sepal/token')
-const log = require('@sepal/log')('ee')
+const {SystemException} = require('root/exception')
+const {withToken$} = require('root/token')
+const log = require('sepalLog')('ee')
 
 const ee$ = (operation, promiseCallback) =>
     withToken$('ee/tokenService',

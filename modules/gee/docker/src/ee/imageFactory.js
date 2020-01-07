@@ -1,9 +1,9 @@
 const factory = {
-    'MOSAIC': () => require('@sepal/ee/optical/mosaic'),
-    'RADAR_MOSAIC': () => require('@sepal/ee/radar/mosaic'),
-    'CLASSIFICATION': () => require('@sepal/ee/classification/classification'),
-    'RECIPE_REF': () => require('@sepal/ee/recipeRef'),
-    'ASSET': () => require('@sepal/ee/asset')
+    'MOSAIC': () => require('root/ee/optical/mosaic'),
+    'RADAR_MOSAIC': () => require('root/ee/radar/mosaic'),
+    'CLASSIFICATION': () => require('root/ee/classification/classification'),
+    'RECIPE_REF': () => require('root/ee/recipeRef'),
+    'ASSET': () => require('root/ee/asset')
 }
 
 const getImplementation = type => {

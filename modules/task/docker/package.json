@@ -1,31 +1,31 @@
 {
-  "name": "task",
-  "version": "1.0.0",
-  "description": "",
-  "main": "src/main.js",
-  "scripts": {
-    "dev": "bash dev.sh",
-    "main": "node $npm_package_main --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir $SEPAL_CONFIG/sepal-server/home/admin --username admin",
-    "postinstall": "link-module-alias",
-    "preinstall": "command -v link-module-alias && link-module-alias clean || true",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "_moduleAliases": {
-    "sepalLog": "node_modules/log/src",
-    "sepalHttpClient": "node_modules/httpClient/src",
-    "sepalHttpServer": "node_modules/httpServer/src"
-  },
-  "dependencies": {
-    "commander": "^4.0.1",
-    "httpClient": "../../../lib/js/httpClient",
-    "httpServer": "../../../lib/js/httpServer",
-    "log": "../../../lib/js/log",
-    "rxjs": "^6.5.3"
-  },
-  "devDependencies": {
-    "eslint": "^6.7.2",
-    "link-module-alias": "^1.2.0"
-  }
+    "name": "task",
+    "version": "1.0.0",
+    "description": "",
+    "main": "src/main.js",
+    "scripts": {
+        "dev": "bash dev.sh",
+        "main": "node $npm_package_main --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem --sepal-host localhost:3000 --sepal-username 'sepalAdmin' --sepal-password 'the admin password' --home-dir $SEPAL_CONFIG/sepal-server/home/admin --username admin",
+        "postinstall": "link-module-alias",
+        "preinstall": "command -v link-module-alias && link-module-alias clean || true",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "_moduleAliases": {
+        "sepalLog": "node_modules/log/src",
+        "sepalHttpClient": "node_modules/httpClient/src",
+        "sepalHttpServer": "node_modules/httpServer/src"
+    },
+    "dependencies": {
+        "commander": "^4.0.1",
+        "httpClient": "../../../lib/js/httpClient",
+        "httpServer": "../../../lib/js/httpServer",
+        "log": "../../../lib/js/log",
+        "rxjs": "^6.5.3"
+    },
+    "devDependencies": {
+        "eslint": "^6.7.2",
+        "link-module-alias": "^1.2.0"
+    }
 }

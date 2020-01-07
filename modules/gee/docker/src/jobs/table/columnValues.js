@@ -1,8 +1,8 @@
-const job = require('@sepal/worker/job')
+const job = require('root/worker/job')
 
 const worker$ = ({tableId, columnName}) => {
     const ee = require('@google/earthengine')
-    const {getInfo$} = require('@sepal/ee/utils')
+    const {getInfo$} = require('root/ee/utils')
 
     return getInfo$(
         ee.FeatureCollection(tableId)
@@ -15,7 +15,7 @@ const worker$ = ({tableId, columnName}) => {
 module.exports = job({
     jobName: 'Get EE Table column values',
     jobPath: __filename,
-    before: [require('@sepal/ee/initialize')],
+    before: [require('root/ee/initialize')],
     args: ctx => [ctx.request.query],
     worker$
 })

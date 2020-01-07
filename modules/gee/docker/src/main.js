@@ -1,32 +1,10 @@
-require('module-alias/register')
-const Koa = require('koa')
-const bodyParser = require('koa-bodyparser')
-const websocket = require('koa-easy-ws')
+require('sepalLog/configure')(require('./log4js.json'))
+
 const config = require('./config')
-const {resolve} = require('./stream')
-const environments = require('./environment')
-const log = require('@sepal/log')('http')
+const server = require('sepalHttpServer')
+const routes = require('./routes')
 
-const environment = process.env.ENVIRONMENT || 'main'
-
-const app = new Koa()
-
-app.use(async (ctx, next) => {
-    const start = new Date()
-    log.debug(`${ctx.method} ${ctx.url} started`)
-    await next()
-    const ms = new Date() - start
-    log.info(`${ctx.method} ${ctx.url} - ${ms}ms`)
+server.start({
+    port: config.port,
+    routes
 })
-
-app.use(bodyParser())
-app.use(websocket())
-
-app.use(resolve)
-app.use(environments[environment].routes)
-app.use(environments.test.routes)
-
-const server = app.listen(config.port, () =>
-    log.info(`Server started on port ${config.port}`)
-)
-server.setTimeout(10 * 60 * 1000)

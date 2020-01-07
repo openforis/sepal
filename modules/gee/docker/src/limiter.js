@@ -2,7 +2,7 @@ const {Subject, ReplaySubject, zip, concat, of} = require('rxjs')
 const {first, map, filter, delay, finalize, tap, mapTo} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
-const log = require('./log')('limiter')
+const log = require('sepalLog')('limiter')
 
 const Limiter = ({name, rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
     const requestId$ = new Subject()
