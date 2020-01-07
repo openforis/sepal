@@ -1,13 +1,25 @@
-const {Subject, timer, of, concat} = require('rxjs')
-const {tap, map, mergeMap, takeUntil, mapTo, filter, finalize, switchMap} = require('rxjs/operators')
+const {Subject, timer, of} = require('rxjs')
+const {tap, map, mergeMap, takeUntil, mapTo, filter} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
+const TokenService = require('../service/tokenService')
 const log = require('@sepal/log')('pool')
 
-const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCold, onHot, onRelease, onDispose, onKeep, onMsg}) => {
+module.exports = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCold, onHot, onRelease, onDispose, onKeep, onMsg}) => {
     const pool = []
     const lock$ = new Subject()
     const unlock$ = new Subject()
+
+    const rateLimiter = TokenService({
+        rateWindowMs: 100,
+        rateLimit: 1,
+        concurrencyLimit: 0
+    })
+
+    const concurrencyLimiter = TokenService({
+        rateLimit: 0, // should be infinite
+        concurrencyLimit: 100
+    })
 
     lock$.subscribe(
         instance => instance.locked = true,
@@ -59,11 +71,14 @@ const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCo
         }
     }
 
-    const release = instance => {
-        unlock(instance)
-        log.debug(msg(instance, 'released'))
-        onRelease && onRelease({id: instance.id, instanceId: instanceId(instance.id)})
-    }
+    const releaseable = instance => ({
+        item: instance.item,
+        release: () => {
+            unlock(instance)
+            log.debug(msg(instance, 'released'))
+            onRelease && onRelease({id: instance.id, instanceId: instanceId(instance.id)})
+        }
+    })
 
     const hot$ = instance =>
         of(instance).pipe(
@@ -73,33 +88,29 @@ const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCo
 
     const cold$ = () => {
         const id = uuid()
-        return create$(instanceId(id)).pipe(
-            map(item => ({id, item})),
-            tap(instance => add(instance)),
-            tap(instance => log.debug(msg(instance, 'created'))),
-            tap(({id}) => onCold && onCold({id, instanceId: instanceId(id)}))
+        // return create$(instanceId(id)).pipe(
+        return rateLimiter.handle$().pipe(
+            mergeMap(() => create$(instanceId(id)).pipe(
+                map(item => ({id, item})),
+                tap(instance => add(instance)),
+                tap(instance => log.debug(msg(instance, 'created'))),
+                tap(({id}) => onCold && onCold({id, instanceId: instanceId(id)}))
+            ))
         )
     }
 
-    const getInstance$ = () => {
-        const instance = _.find(pool, ({locked}) => !locked)
-        return instance
+    const instance$ = instance =>
+        instance
             ? hot$(instance)
             : cold$()
-    }
 
     return {
-        getInstance$: () =>
-            getInstance$().pipe(
-                switchMap(instance =>
-                    concat(of(instance), new Subject()).pipe(
-                        tap(instance => lock(instance)),
-                        map(({item}) => item),
-                        finalize(() => release(instance))
-                    )
-                )
+        get$: () =>
+            concurrencyLimiter.handle$().pipe(
+                mergeMap(() => instance$(_.find(pool, ({locked}) => !locked)).pipe(
+                    tap(instance => lock(instance)),
+                    map(instance => releaseable(instance))
+                ))
             )
     }
 }
-
-module.exports = Pool

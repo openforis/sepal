@@ -1,6 +1,7 @@
 const tokenService = require('../../service/tokenService')
 
 module.exports = tokenService({
-    rateLimit: 1,
-    concurrencyLimit: 2
+    name: 'Test',
+    rateLimit: 5,
+    concurrencyLimit: 5
 })

@@ -1,12 +1,13 @@
 const _ = require('lodash')
 const PooledWorker = require('./pooled')
+const log = require('@sepal/log')('job')
 
 // const {submit$} = require('./single')
-const {submit$} = PooledWorker({
-    concurrency: 100,
-    defaultMinIdleCount: 10,
-    defaultMaxIdleMilliseconds: 5000
-})
+// const {submit$} = PooledWorker({
+//     concurrency: 100,
+//     defaultMinIdleCount: 10,
+//     defaultMaxIdleMilliseconds: 5000
+// })
 
 // NOTE: ctx is three-state:
 //
@@ -32,15 +33,28 @@ const evaluateArgs = (argFuncs, ctx) =>
         .map(argFunc => argFunc(ctx))
         .value()
 
-const main = ({jobName, jobPath, minIdleCount, maxIdleMilliseconds, before, args, ctx}) => {
+const workerGroups = {}
+
+const getWorkerGroup = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}) => {
+    if (!workerGroups[jobName]) {
+        workerGroups[jobName] = PooledWorker({
+            jobName,
+            jobPath,
+            maxConcurrency,
+            minIdleCount,
+            maxIdleMilliseconds
+        })
+    }
+    return workerGroups[jobName]
+}
+
+const main = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before, args, ctx}) => {
     const argFuncs = [...depArgs(before), args]
     return isDependency(ctx)
         ? argFuncs
-        : submit$({
+        : getWorkerGroup({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}).submit$({
             jobName,
             jobPath,
-            minIdleCount,
-            maxIdleMilliseconds,
             args: evaluateArgs(argFuncs, ctx),
             args$: ctx.args$
         })
@@ -57,7 +71,8 @@ const assert = (arg, func, msg, required = false) => {
         ].join(' '))
     }
 }
-const job = ({jobName, jobPath, minIdleCount, maxIdleMilliseconds, before = [], worker$, args = () => []}) => {
+
+const job = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before = [], worker$, args = () => []}) => {
     assert(jobName, _.isString, 'jobName must be a string', true)
     assert(worker$, _.isFunction, 'worker$ must be a function', true)
     assert(args, _.isFunction, 'args must be a function', true)
@@ -67,7 +82,7 @@ const job = ({jobName, jobPath, minIdleCount, maxIdleMilliseconds, before = [], 
     
     return ctx => isWorker(ctx)
         ? worker({jobName, before, worker$})
-        : main({jobName, jobPath, minIdleCount, maxIdleMilliseconds, before, args, ctx})
+        : main({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before, args, ctx})
 }
 
 module.exports = job
