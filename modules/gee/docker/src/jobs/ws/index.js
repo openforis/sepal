@@ -12,7 +12,7 @@ const worker$ = (name, args$) => {
         args$.pipe(
             switchMap(value =>
                 of(`ok: ${value}`).pipe(
-                    delay(750),
+                    delay(250),
                 )
             )
         )
