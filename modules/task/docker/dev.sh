@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 LIBS=$SEPAL_HOME/lib/js
-nodemon \
+NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --watch src \
     --watch $LIBS/log \
     --watch $LIBS/httpClient \

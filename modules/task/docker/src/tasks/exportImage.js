@@ -3,10 +3,10 @@ const {map, take} = require('rxjs/operators')
 
 module.exports = {
     submit$: (id, params) =>
-        interval(1000).pipe(
+        interval(100).pipe(
             map(i => ({
                message: 'SOME MESSAGE ' + i
             })),
-            take(3)
+            take(100)
         )
 }

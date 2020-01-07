@@ -1,47 +1,52 @@
-const {concat} = require('rxjs')
-const {switchMap, tap} = require('rxjs/operators')
+const {Subject, concat, interval} = require('rxjs')
+const {exhaustMap, finalize, last, switchMap, takeUntil, tap, windowTime} = require('rxjs/operators')
 const log = require('sepalLog')('task')
 const http = require('sepalHttpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
 
+const HEARTBEAT_RATE = 1000
+const MAX_UPDATE_RATE = 1000
+
 const tasks = {
     'image.sepal_export': require('./tasks/exportImage')
 }
-
 const submitTask = ({id, name, params}) => {
     console.log('Submitting task', {id, name})
     const task = tasks[name]
     if (!task)
         throw new Error(`Task doesn't exist: ${name}`)
-    // stateChanged() to active before doing anything else
-    // Create initial state
-    // BehavioralSubject
-    // Heartbeats - to prevent server from timing job out
-    // Debounce - not to flood server with fast updates
-    const task$ = task
-        .submit$(id, params)
-        .pipe(
-            switchMap(progress => taskProgressed$(id, progress))
-        )
+
+    const task$ = task.submit$(id, params)
+    const taskCompleted$ = new Subject()
     concat(
-        stateChanged$(id, 'ACTIVE', 'USE A REASONABLE MESSAGE HERE'),
+        stateChanged$(id, 'ACTIVE', 'USE A REASONABLE MESSAGE HERE'), // TODO: Message and key
         task$
+            .pipe(
+                windowTime(MAX_UPDATE_RATE),
+                switchMap(window$ => window$.pipe(last())),
+                tap(progress => console.log('debounced', progress)),
+                switchMap(progress =>
+                    interval(HEARTBEAT_RATE).pipe(
+                        exhaustMap(() => taskProgressed$(id, progress)),
+                        takeUntil(taskCompleted$)
+                    )
+                ),
+                finalize(() => taskCompleted$.next())
+            )
     ).subscribe({
         error: error => taskFailed(id, error),
-        completed: () => taskCompleted
+        completed: () => taskCompleted(id)
     })
 }
 
 const taskProgressed$ = (id, progress) => {
-    log.debug(`${id}: Notifying Sepal server on progress`, progress)
-    return http.postJson$(`https://${sepalHost}/tasks/task/${id}/state-updated`, {
-        body: {
-            statusDescription: progress
-        },
+    log.info(`${id}: Notifying Sepal server on progress`, progress)
+    return http.post$(`https://${sepalHost}/api/tasks/active`, {
+        query: {progress: {id: progress.message}},
         username: sepalUsername,
         password: sepalPassword
     }).pipe(
-        tap(() => log.info(`${id}: Notified Sepal server on progress`, progress))
+        tap(() => log.info(`${id}: Notified Sepal server of progress`, progress))
     )
 }
 
@@ -59,12 +64,12 @@ const taskCompleted = id => {
     const message = 'Completed' // TODO: Object with key etc.?
     stateChanged$(id, 'COMPLETED', message).subscribe({
         error: error => log.error(`${id}: Failed to notify Sepal server on completed task`, error),
-        completed: () => log.info(`${id}: Notified Sepal server on completed task`)
+        completed: () => log.info(`${id}: Notified Sepal server of completed task`)
     })
 }
 
-const stateChanged$ = (id, state, message) =>
-    http.postForm$(`https://${sepalHost}/tasks/task/${id}/state-updated`, {
+const stateChanged$ = (id, state, message) => {
+    return http.postForm$(`https://${sepalHost}/api/tasks/task/${id}/state-updated`, {
         body: {
             state: state,
             statusDescription: message
@@ -72,5 +77,6 @@ const stateChanged$ = (id, state, message) =>
         username: sepalUsername,
         password: sepalPassword
     })
+}
 
 module.exports = {submitTask}
