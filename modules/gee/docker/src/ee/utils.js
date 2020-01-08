@@ -2,11 +2,13 @@ const ee = require('@google/earthengine')
 const {from, throwError} = require('rxjs')
 const {catchError} = require('rxjs/operators')
 const {SystemException} = require('root/exception')
-const {withToken$} = require('root/token')
 const log = require('sepalLog')('ee')
+const {withLimiter$} = require('root/limiter')
+
+const limiter$ = withLimiter$('ee/limiter')
 
 const ee$ = (operation, promiseCallback) =>
-    withToken$('ee/tokenService',
+    limiter$(
         from(new Promise(
             (resolve, reject) => {
                 try {

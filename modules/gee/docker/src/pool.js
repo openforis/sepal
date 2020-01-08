@@ -3,6 +3,7 @@ const {tap, map, mergeMap, takeUntil, mapTo, filter, finalize, switchMap} = requ
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('sepalLog')('pool')
+const {Limiter$} = require('./limiter')
 
 const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCold, onHot, onRelease, onDispose, onKeep, onMsg}) => {
     const pool = []
@@ -102,4 +103,26 @@ const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCo
     }
 }
 
-module.exports = Pool
+const LimitedPool = ({rateWindowMs, rateLimit, concurrencyLimit, create$, ...args}) => {
+    const rateLimiter$ = Limiter$({
+        name: 'LimitedPool rate',
+        rateWindowMs,
+        rateLimit
+    })
+    const concurrencyLimiter$ = Limiter$({
+        name: 'LimitedPool concurrency',
+        concurrencyLimit
+    })
+    const pool = Pool({...args, create$: instanceId => {
+        return rateLimiter$().pipe(
+            mergeMap(() => create$(instanceId))
+        )
+    }})
+    return {
+        getInstance$: () => concurrencyLimiter$().pipe(
+            mergeMap(() => pool.getInstance$())
+        )
+    }
+}
+
+module.exports = {Pool, LimitedPool}

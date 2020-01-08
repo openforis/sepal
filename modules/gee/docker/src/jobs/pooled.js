@@ -4,7 +4,7 @@ const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('sepalLog')('job')
 const {initWorker$} = require('../worker/factory')
-const LimitedPool = require('../limitedPool')
+const {LimitedPool} = require('../pool')
 
 const RATE_WINDOW_MS = 100
 const RATE_LIMIT = 1

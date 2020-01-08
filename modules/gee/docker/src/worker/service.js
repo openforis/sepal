@@ -4,18 +4,16 @@ const log = require('sepalLog')('service')
 
 let transport
 
-const initMain = (request$, response$) => {
-    const handle$ = ({servicePath, data}) =>
-        require(`root/${servicePath}`).handle$(data)
-
+const start = (servicePath, request$, response$) => {
+    const service$ = require(`root/${servicePath}`)
     const stop$ = new Subject()
 
     request$.subscribe(
-        ({servicePath, data}) => {
+        data => {
             data
                 ? log.debug(`Service request for [${servicePath}] with data:`, data)
                 : log.debug(`Service request for [${servicePath}]`)
-            handle$({servicePath, data}).pipe(
+            service$(data).pipe(
                 takeUntil(stop$)
             ).subscribe(
                 value => {
@@ -31,18 +29,18 @@ const initMain = (request$, response$) => {
     )
 }
 
-const initWorker = theTransport => {
+const setTransport = theTransport => {
     transport = theTransport
 }
 
-const request$ = (servicePath, data) => {
-    const {in$: request$, out$: response$} = transport.createChannel('service')
-    request$.next({servicePath, data})
+const submit$ = (servicePath, data) => {
+    const {in$: request$, out$: response$} = transport.createChannel(servicePath)
+    request$.next(data)
     return response$
 }
 
 module.exports = {
-    initMain,
-    initWorker,
-    request$
+    start,
+    setTransport,
+    submit$
 }

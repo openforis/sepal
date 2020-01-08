@@ -18,20 +18,29 @@ const transport = ({id = uuid(), port}) => {
     }
 
     const handleCreateChannel = ({channelId, conversationId}, onChannel) => {
+        const byCallback = ({channelId, conversationId, onChannel}) =>
+            onChannel(
+                createChannel({channelId, conversationId, direction: 'reverse'})
+            )
+    
+        const byCallbackMap = ({channelId, conversationId, handler}) =>
+            handler(
+                createChannel({channelId, conversationId, direction: 'reverse'})
+            )
+
+        const byStreams = ({channelId, conversationId, in$, out$}) =>
+            createChannel({channelId, conversationId, direction: 'reverse', in$, out$})
+
         if (channelId && onChannel) {
             if (_.isFunction(onChannel)) {
-                onChannel(
-                    createChannel({channelId, conversationId, direction: 'reverse'})
-                )
+                byCallback({channelId, conversationId, onChannel})
             } else {
                 const handler = onChannel[channelId]
                 if (_.isFunction(handler)) {
-                    handler(
-                        createChannel({channelId, conversationId, direction: 'reverse'})
-                    )
+                    byCallbackMap({channelId, conversationId, handler})
                 } else if (_.isPlainObject(handler)) {
                     const {in$, out$} = handler
-                    createChannel({channelId, conversationId, direction: 'reverse', in$, out$})
+                    byStreams({channelId, conversationId, in$, out$})
                 } else {
                     log.warn('Undefined handler for channel:', channelId)
                 }

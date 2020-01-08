@@ -1,26 +1,27 @@
 const job = require('root/jobs/job')
 
 const worker$ = (minDuration, maxDuration = minDuration, errorProbability = 0) => {
-    const {withToken$} = require('root/token')
+    const {withLimiter$} = require('root/limiter')
+    const limiter$ = withLimiter$('jobs/test/limiter')
     const {timer, of} = require('rxjs')
     const {mergeMap, map} = require('rxjs/operators')
     // const foo = require('sepalLog')
         
-    // return withToken$('jobs/test/tokenService',
-    return of(true).pipe(
-        map(() => Math.round(Math.random() * (maxDuration - minDuration) + minDuration)),
-        mergeMap(duration =>
-            timer(duration).pipe(
-                map(() => {
-                    if (Math.random() < errorProbability / 100) {
-                        throw new Error('Random error!')
-                    }
-                    return `${duration}ms (${minDuration}-${maxDuration}ms)`
-                }),
+    return limiter$(
+        of(true).pipe(
+            map(() => Math.round(Math.random() * (maxDuration - minDuration) + minDuration)),
+            mergeMap(duration =>
+                timer(duration).pipe(
+                    map(() => {
+                        if (Math.random() < errorProbability / 100) {
+                            throw new Error('Random error!')
+                        }
+                        return `${duration}ms (${minDuration}-${maxDuration}ms)`
+                    }),
+                )
             )
         )
     )
-    // )
 }
 
 module.exports = job({

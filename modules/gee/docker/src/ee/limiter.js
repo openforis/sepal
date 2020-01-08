@@ -1,6 +1,6 @@
-const tokenService = require('../service/tokenService')
+const {Limiter$} = require('../limiter')
 
-module.exports = tokenService({
+module.exports = Limiter$({
     name: 'EE',
     rateWindowMs: 1000,
     rateLimit: 10,

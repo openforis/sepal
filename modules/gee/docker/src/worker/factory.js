@@ -30,10 +30,10 @@ const bootstrapWorker$ = name => {
 const setupWorker = ({name, jobPath, worker, port}) => {
     const transport = Transport({id: 'main', port})
     
-    transport.onChannel({
-        service: ({in$: response$, out$: request$}) =>
-            service.initMain(request$, response$)
-    })
+    transport.onChannel(
+        ({channelId: servicePath, in$: response$, out$: request$}) =>
+            service.start(servicePath, request$, response$)
+    )
  
     const msg = (msg, jobId) => [
         `Job [${name}${jobId ? `.${jobId.substr(-4)}` : ''}]`,

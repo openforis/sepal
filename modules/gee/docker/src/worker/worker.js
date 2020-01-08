@@ -89,7 +89,7 @@ const initWorker = (port, name) => {
         job: ({in$, out$}) => setupJob(in$, out$)
     })
 
-    service.initWorker(transport)
+    service.setTransport(transport)
 }
 
 parentPort.once('message', ({name, port}) => {

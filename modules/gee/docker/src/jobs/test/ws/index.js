@@ -2,7 +2,7 @@ const job = require('root/jobs/job')
 
 const worker$ = (name, args$) => {
     const {timer, merge, of} = require('rxjs')
-    const {map, take, switchMap, delay} = require('rxjs/operators')
+    const {map, take, mergeMap, delay} = require('rxjs/operators')
 
     return merge(
         timer(0, 3000).pipe(
@@ -10,7 +10,7 @@ const worker$ = (name, args$) => {
             take(10)
         ),
         args$.pipe(
-            switchMap(value =>
+            mergeMap(value =>
                 of(`ok: ${value}`).pipe(
                     delay(250),
                 )

@@ -1,10 +1,11 @@
 const {Subject, ReplaySubject, zip, concat, of} = require('rxjs')
-const {first, map, filter, delay, finalize, tap, mapTo} = require('rxjs/operators')
+const {first, map, filter, delay, finalize, tap, mapTo, takeUntil, mergeMap} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('sepalLog')('limiter')
+const service = require('root/worker/service')
 
-const Limiter = ({name, rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
+const Limiter$ = ({name, rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
     const requestId$ = new Subject()
     const rateToken$ = new Subject()
     const concurrencyToken$ = new Subject()
@@ -68,7 +69,7 @@ const Limiter = ({name, rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
         () => log.fatal(msg('token stream completed'))
     )
 
-    const next$ = (requestId = uuid()) => {
+    return (requestId = uuid()) => {
         let currentToken
         log.debug(msg(`requesting token for request [${requestId.substr(-4)}]`))
         const response$ = new ReplaySubject()
@@ -91,8 +92,29 @@ const Limiter = ({name, rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
             finalize(() => recycleConcurrencytoken(currentToken))
         )
     }
-
-    return {next$}
 }
 
-module.exports = Limiter
+const withLimiter$ = servicePath =>
+    observable$ => {
+        const releaseToken$ = new Subject()
+        const requestId = uuid()
+    
+        const token$ = service.submit$(servicePath, requestId)
+        
+        const releaseToken = token => {
+            releaseToken$.next()
+            log.debug(`Returning token ${token}`)
+        }
+        
+        return token$.pipe(
+            tap(token => log.debug(`Using token ${token}`)),
+            mergeMap(token =>
+                observable$.pipe(
+                    finalize(() => releaseToken(token))
+                )
+            ),
+            takeUntil(releaseToken$)
+        )
+    }
+
+module.exports = {Limiter$, withLimiter$}
