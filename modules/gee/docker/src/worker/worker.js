@@ -1,11 +1,10 @@
 require('sepalLog/configure')(require('../log4js.json'))
 
-// require('module-alias/register')
 const {parentPort} = require('worker_threads')
 const {Subject, of, concat} = require('rxjs')
 const {catchError, map, mergeMap, takeUntil, tap, filter} = require('rxjs/operators')
 const {serializeError} = require('serialize-error')
-const {Exception, SystemException, isException} = require('../exception')
+const {Exception, SystemException, isException} = require('root/exception')
 const _ = require('lodash')
 const service = require('./service')
 const Transport = require('../comm/transport')

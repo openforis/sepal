@@ -1,7 +1,7 @@
 const job = require('root/worker/job')
-const {withToken$} = require('root/token')
 
 const worker$ = (minDuration, maxDuration = minDuration, errorProbability = 0) => {
+    const {withToken$} = require('root/token')
     const {timer, of} = require('rxjs')
     const {mergeMap, map} = require('rxjs/operators')
     // const foo = require('sepalLog')
@@ -15,7 +15,7 @@ const worker$ = (minDuration, maxDuration = minDuration, errorProbability = 0) =
                     if (Math.random() < errorProbability / 100) {
                         throw new Error('Random error!')
                     }
-                    return `\n${duration} (${minDuration}-${maxDuration})`
+                    return `${duration}ms (${minDuration}-${maxDuration}ms)`
                 }),
             )
         )

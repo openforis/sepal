@@ -1,10 +1,11 @@
 const job = require('root/worker/job')
-const {zip} = require('rxjs')
-const {switchMap} = require('rxjs/operators')
 
 const worker$ = ({recipe, bands}) => {
     const ImageFactory = require('root/ee/imageFactory')
     const {getMap$} = require('root/ee/utils')
+    const {zip} = require('rxjs')
+    const {switchMap} = require('rxjs/operators')
+    
     const {getImage$, getVisParams$} = ImageFactory(recipe, bands)
     return zip(getImage$(), getVisParams$()).pipe(
         switchMap(([image, visParams]) => visParams.hsv

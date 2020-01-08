@@ -1,4 +1,3 @@
-const ee = require('@google/earthengine')
 const job = require('root/worker/job')
 
 const worker$ = ({recipe}) => {

@@ -1,7 +1,7 @@
-const ee = require('@google/earthengine')
 const job = require('root/worker/job')
 
 const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
+    const ee = require('@google/earthengine')
     const ImageFactory = require('root/ee/imageFactory')
     const {getInfo$, getMap$} = require('root/ee/utils')
     const {forkJoin} = require('rxjs')
