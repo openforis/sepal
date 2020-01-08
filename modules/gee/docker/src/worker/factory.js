@@ -10,35 +10,25 @@ const log = require('sepalLog')('job')
 
 const WORKER_PATH = path.join(__dirname, 'worker.js')
 
-const createMessageChannels = names =>
-    _.transform(names, (data, name) => {
-        const {port1: localPort, port2: remotePort} = new MessageChannel()
-        data.localPorts[name] = localPort
-        data.remotePorts[name] = remotePort
-    }, {
-        localPorts: {},
-        remotePorts: {}
-    })
-
-const bootstrapWorker$ = (name, channelNames) => {
+const bootstrapWorker$ = name => {
     const worker$ = new Subject()
     const worker = new Worker(WORKER_PATH)
-    const {localPorts, remotePorts} = createMessageChannels(channelNames)
+    const {port1: localPort, port2: remotePort} = new MessageChannel()
     worker.once('message', status => {
         if (status === 'READY') {
-            worker$.next({worker, ports: localPorts})
+            worker$.next({worker, port: localPort})
         } else {
             worker$.error('Cannot initialize worker.')
         }
     })
-    worker.postMessage({name, ports: remotePorts}, _.values(remotePorts))
+    worker.postMessage({name, port: remotePort}, [remotePort])
     return worker$.pipe(
         first()
     )
 }
 
-const setupWorker = ({name, jobPath, worker, ports}) => {
-    const transport = Transport({id: 'main', port: ports.job})
+const setupWorker = ({name, jobPath, worker, port}) => {
+    const transport = Transport({id: 'main', port})
     
     transport.onChannel({
         service: ({in$: response$, out$: request$}) =>
@@ -100,9 +90,9 @@ const setupWorker = ({name, jobPath, worker, ports}) => {
 }
 
 const initWorker$ = (name, jobPath) =>
-    bootstrapWorker$(name, ['job']).pipe(
-        map(({worker, ports}) =>
-            setupWorker({name, jobPath, worker, ports})
+    bootstrapWorker$(name).pipe(
+        map(({worker, port}) =>
+            setupWorker({name, jobPath, worker, port})
         )
     )
 

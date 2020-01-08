@@ -92,9 +92,9 @@ const initWorker = (port, name) => {
     service.initWorker(transport)
 }
 
-parentPort.once('message', ({name, ports}) => {
-    exported.ports = ports
-    initWorker(ports.job, name)
+parentPort.once('message', ({name, port}) => {
+    exported.port = port
+    initWorker(port, name)
     parentPort.postMessage('READY')
 })
 
