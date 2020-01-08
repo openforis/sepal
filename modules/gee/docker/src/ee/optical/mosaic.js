@@ -33,7 +33,7 @@ const mosaic = (recipe, selectedBands, panSharpen) => {
     const snowMasking = compositeOptions.snowMasking
     const collection = useAllScenes
         ? allScenes({
-            region: geometry,
+            geometry,
             dataSets,
             reflectance,
             filters,
@@ -46,7 +46,6 @@ const mosaic = (recipe, selectedBands, panSharpen) => {
             dates
         })
         : selectedScenes({
-            region: geometry,
             reflectance,
             calibrate,
             brdfCorrect,
