@@ -1,4 +1,4 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     const ee = require('@google/earthengine')
@@ -25,7 +25,7 @@ const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
 module.exports = job({
     jobName: 'EE geometry',
     jobPath: __filename,
-    before: [require('root/ee/initialize')],
+    before: [require('root/jobs/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$
 })

@@ -1,4 +1,4 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']
@@ -8,7 +8,7 @@ const getSepalUser = ctx => {
 }
 
 const getCredentials = ctx => {
-    const config = require('../config')
+    const config = require('../../config')
     const sepalUser = getSepalUser(ctx)
     const serviceAccountCredentials = config.serviceAccountCredentials
     return {
@@ -22,7 +22,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     const {switchMapTo} = require('rxjs/operators')
     const ee = require('@google/earthengine')
     const {ee$} = require('root/ee/utils')
-    require('./extensions')
+    require('../../ee/extensions')
 
     const secondsToExpiration = expiration =>
         (expiration - Date.now()) / 1000

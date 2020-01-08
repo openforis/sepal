@@ -1,4 +1,4 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const worker$ = ({aoi, source}) => {
     const ee = require('@google/earthengine')
@@ -35,7 +35,7 @@ const worker$ = ({aoi, source}) => {
 module.exports = job({
     jobName: 'Scene Areas',
     jobPath: __filename,
-    before: [require('root/ee/initialize')],
+    before: [require('root/jobs/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$
 })

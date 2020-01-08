@@ -1,11 +1,11 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const worker$ = ({recipe, bands}) => {
     const ImageFactory = require('root/ee/imageFactory')
     const {getMap$} = require('root/ee/utils')
     const {zip} = require('rxjs')
     const {switchMap} = require('rxjs/operators')
-    
+
     const {getImage$, getVisParams$} = ImageFactory(recipe, bands)
     return zip(getImage$(), getVisParams$()).pipe(
         switchMap(([image, visParams]) => visParams.hsv
@@ -41,7 +41,7 @@ const hsvToRgb = (image, visParams) => {
 module.exports = job({
     jobName: 'EE Image preview',
     jobPath: __filename,
-    before: [require('root/ee/initialize')],
+    before: [require('root/jobs/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$
 })

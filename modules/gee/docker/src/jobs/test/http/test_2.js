@@ -1,4 +1,4 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const worker$ = () => {
     const {EMPTY} = require('rxjs')
@@ -7,7 +7,8 @@ const worker$ = () => {
 }
 
 module.exports = job({
-    jobName: 'Test 1',
+    jobName: 'Test 2',
     worker$,
-    args: _ctx => ['1']
+    before: [require('./test_2_1')],
+    args: _ctx => ['2']
 })

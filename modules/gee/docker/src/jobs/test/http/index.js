@@ -1,4 +1,4 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const worker$ = (minDuration, maxDuration = minDuration, errorProbability = 0) => {
     const {withToken$} = require('root/token')

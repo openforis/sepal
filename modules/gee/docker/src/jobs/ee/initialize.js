@@ -1,11 +1,11 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const worker$ = () => {
     const {EMPTY} = require('rxjs')
     const {switchMapTo} = require('rxjs/operators')
     const ee = require('@google/earthengine')
     const {ee$} = require('root/ee/utils')
-    require('./extensions')
+    require('../../ee/extensions')
 
     return ee$('initalize', (resolve, reject) =>
         ee.initialize(

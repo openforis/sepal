@@ -1,4 +1,4 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const worker$ = ({tableId, columnName, columnValue, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     const ee = require('@google/earthengine')
@@ -21,7 +21,7 @@ const worker$ = ({tableId, columnName, columnValue, color = '#FFFFFF50', fillCol
 module.exports = job({
     jobName: 'Request EE Table map',
     jobPath: __filename,
-    before: [require('root/ee/initialize')],
+    before: [require('root/jobs/ee/initialize')],
     args: ctx => [ctx.request.query],
     worker$
 })

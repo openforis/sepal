@@ -3,7 +3,7 @@ const {of} = require('rxjs')
 const {toGeometry} = require('root/ee/aoi')
 const {createCollection} = require('./collection')
 const {toDateComposite, toTimeScan} = require('root/ee/radar/composite')
-const {compose} = require('root/utils/functional')
+const {compose} = require('../functional')
 
 const moment = require('moment')
 

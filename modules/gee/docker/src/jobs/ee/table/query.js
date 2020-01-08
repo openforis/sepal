@@ -1,4 +1,4 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const worker$ = ({select, from, where = [], orderBy = []}) => {
     const ee = require('@google/earthengine')
@@ -28,7 +28,7 @@ const worker$ = ({select, from, where = [], orderBy = []}) => {
 module.exports = job({
     jobName: 'Query EE Table',
     jobPath: __filename,
-    before: [require('root/ee/initialize')],
+    before: [require('root/jobs/ee/initialize')],
     args: ctx => [ctx.request.body],
     worker$
 })

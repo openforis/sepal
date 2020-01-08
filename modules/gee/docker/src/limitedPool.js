@@ -1,6 +1,6 @@
 const {mergeMap} = require('rxjs/operators')
 const Pool = require('./pool')
-const Limiter = require('../limiter')
+const Limiter = require('./limiter')
 
 module.exports = ({rateWindowMs, rateLimit, concurrencyLimit, create$, ...args}) => {
     const rateLimiter = Limiter({

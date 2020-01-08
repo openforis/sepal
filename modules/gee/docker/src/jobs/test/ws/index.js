@@ -1,4 +1,4 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const worker$ = (name, args$) => {
     const {timer, merge, of} = require('rxjs')

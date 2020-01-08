@@ -1,4 +1,4 @@
-const job = require('root/worker/job')
+const job = require('root/jobs/job')
 
 const worker$ = ({tableId}) => {
     const ee = require('@google/earthengine')
@@ -34,7 +34,7 @@ const worker$ = ({tableId}) => {
 module.exports = job({
     jobName: 'Get table columns',
     jobPath: __filename,
-    before: [require('root/ee/initialize')],
+    before: [require('root/jobs/ee/initialize')],
     args: ctx => [ctx.request.query],
     worker$
 })

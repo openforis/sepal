@@ -15,7 +15,7 @@
         },
         "ee": {
             "appenders": ["console"],
-            "level": "info"
+            "level": "debug"
         },
         "http": {
             "appenders": ["console"],
