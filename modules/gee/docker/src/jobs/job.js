@@ -1,15 +1,8 @@
 const {ReplaySubject} = require('rxjs')
 const {deserializeError} = require('serialize-error')
 const _ = require('lodash')
-const PooledWorker = require('./pooled')
+const PooledWorker = require('../worker/pooled')
 // const log = require('sepalLog')('job')
-
-// const {submit$} = require('./single')
-// const {submit$} = PooledWorker({
-//     concurrency: 100,
-//     defaultMinIdleCount: 10,
-//     defaultMaxIdleMilliseconds: 5000
-// })
 
 // NOTE: ctx is three-state:
 //

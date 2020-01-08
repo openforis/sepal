@@ -3,7 +3,7 @@ const {mergeMap, map, filter, finalize, takeUntil, catchError} = require('rxjs/o
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('sepalLog')('job')
-const {initWorker$} = require('../worker/factory')
+const {initWorker$} = require('./factory')
 const {LimitedPool} = require('../pool')
 
 const RATE_WINDOW_MS = 100
