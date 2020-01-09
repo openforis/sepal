@@ -1,7 +1,7 @@
 const {ReplaySubject} = require('rxjs')
 const {deserializeError} = require('serialize-error')
 const _ = require('lodash')
-const PooledWorker = require('../worker/pooled')
+const getWorker = require('../worker/workers')
 // const log = require('sepalLog')('job')
 
 // NOTE: ctx is three-state:
@@ -28,21 +28,6 @@ const evaluateArgs = (argFuncs, ctx) =>
         .map(argFunc => argFunc(ctx))
         .value()
 
-const workerGroups = {}
-
-const getWorkerGroup = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}) => {
-    if (!workerGroups[jobName]) {
-        workerGroups[jobName] = PooledWorker({
-            jobName,
-            jobPath,
-            maxConcurrency,
-            minIdleCount,
-            maxIdleMilliseconds
-        })
-    }
-    return workerGroups[jobName]
-}
-
 const unwrap$ = wrapped$ => {
     const unwrapped$ = new ReplaySubject()
     wrapped$.subscribe({
@@ -61,7 +46,7 @@ const main = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMillisecon
     return isDependency(ctx)
         ? argFuncs
         : unwrap$(
-            getWorkerGroup({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}).submit$({
+            getWorker({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}).submit$({
                 jobName,
                 jobPath,
                 args: evaluateArgs(argFuncs, ctx),
@@ -84,9 +69,11 @@ const assert = (arg, func, msg, required = false) => {
 
 const job = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before = [], worker$, args = () => []}) => {
     assert(jobName, _.isString, 'jobName must be a string', true)
+    assert(jobPath, _.isString, 'jobPath must be a string', false)
     assert(worker$, _.isFunction, 'worker$ must be a function', true)
     assert(args, _.isFunction, 'args must be a function', true)
     assert(before, _.isArray, 'before must be an array', false)
+    assert(maxConcurrency, _.isNumber, 'maxConcurrency must be a number', false)
     assert(minIdleCount, _.isNumber, 'minIdleCount must be a number', false)
     assert(maxIdleMilliseconds, _.isNumber, 'maxIdleMilliseconds must be a number', false)
     

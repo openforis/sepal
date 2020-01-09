@@ -2,6 +2,6 @@ const {Limiter$} = require('../../limiter')
 
 module.exports = Limiter$({
     name: 'Test',
-    rateLimit: 5,
-    concurrencyLimit: 5
+    maxRate: 5,
+    maxConcurrency: 5
 })

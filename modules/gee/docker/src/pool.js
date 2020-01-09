@@ -103,15 +103,15 @@ const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCo
     }
 }
 
-const LimitedPool = ({rateWindowMs, rateLimit, concurrencyLimit, create$, ...args}) => {
+const LimitedPool = ({rateWindowMs, maxRate, maxConcurrency, create$, ...args}) => {
     const rateLimiter$ = Limiter$({
         name: 'LimitedPool rate',
         rateWindowMs,
-        rateLimit
+        maxRate
     })
     const concurrencyLimiter$ = Limiter$({
         name: 'LimitedPool concurrency',
-        concurrencyLimit
+        maxConcurrency
     })
     const pool = Pool({...args, create$: instanceId => {
         return rateLimiter$().pipe(

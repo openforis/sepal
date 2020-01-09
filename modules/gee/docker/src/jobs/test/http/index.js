@@ -27,7 +27,7 @@ const worker$ = (minDuration, maxDuration = minDuration, errorProbability = 0) =
 module.exports = job({
     jobName: 'Test1',
     jobPath: __filename,
-    concurrencyLimit: 20,
+    maxConcurrency: 20,
     minIdleCount: 5,
     maxIdleMilliseconds: 2000,
     // before: [require('./test_1'), require('./test_2')],

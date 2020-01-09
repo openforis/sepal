@@ -5,7 +5,7 @@ const _ = require('lodash')
 const log = require('sepalLog')('limiter')
 const service = require('root/worker/service')
 
-const Limiter$ = ({name, rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
+const Limiter$ = ({name, rateWindowMs = 1000, maxRate, maxConcurrency}) => {
     const requestId$ = new Subject()
     const rateToken$ = new Subject()
     const concurrencyToken$ = new Subject()
@@ -20,12 +20,12 @@ const Limiter$ = ({name, rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
     const initialToken$ = count =>
         of(...(_.range(1, count + 1)))
 
-    const rateLimit$ = rateLimit
-        ? concat(initialToken$(rateLimit), rateToken$)
+    const rateLimit$ = maxRate
+        ? concat(initialToken$(maxRate), rateToken$)
         : requestId$.pipe(mapTo())
 
-    const concurrencyLimit$ = concurrencyLimit
-        ? concat(initialToken$(concurrencyLimit), concurrencyToken$)
+    const concurrencyLimit$ = maxConcurrency
+        ? concat(initialToken$(maxConcurrency), concurrencyToken$)
         : requestId$.pipe(mapTo())
 
     const token$ = zip(
@@ -42,15 +42,15 @@ const Limiter$ = ({name, rateWindowMs = 1000, rateLimit, concurrencyLimit}) => {
         responseToken$.next(token)
     
     const recycleRateToken = token => {
-        if (rateLimit) {
-            log.debug(msg(`recycling rate token ${token.rateToken}/${rateLimit} from token ${tokenId(token)}`))
-            rateLimit && rateToken$.next(token.rateToken)
+        if (maxRate) {
+            log.debug(msg(`recycling rate token ${token.rateToken}/${maxRate} from token ${tokenId(token)}`))
+            maxRate && rateToken$.next(token.rateToken)
         }
     }
     
     const recycleConcurrencytoken = token => {
-        if (concurrencyLimit) {
-            log.debug(msg(`recycling concurrency token ${token.concurrencyToken}/${concurrencyLimit} from token ${tokenId(token)}`))
+        if (maxConcurrency) {
+            log.debug(msg(`recycling concurrency token ${token.concurrencyToken}/${maxConcurrency} from token ${tokenId(token)}`))
             concurrencyToken$.next(token.concurrencyToken)
         }
     }

@@ -7,9 +7,33 @@ const {initWorker$} = require('./factory')
 const {LimitedPool} = require('../pool')
 
 const RATE_WINDOW_MS = 100
-const RATE_LIMIT = 1
+const MAX_RATE = 1
+const MAX_CONCURRENCY = 100
+const MIN_IDLE_COUNT = 10
+const MAX_IDLE_MS = 5000
 
-const PooledWorker = ({jobName, jobPath, concurrencyLimit = 100, minIdleCount = 10, maxIdleMilliseconds = 5000}) => {
+const workers = {}
+
+const getWorker = ({
+    jobName,
+    jobPath,
+    maxConcurrency = MAX_CONCURRENCY,
+    minIdleCount = MIN_IDLE_COUNT,
+    maxIdleMilliseconds = MAX_IDLE_MS
+}) => {
+    if (!workers[jobName]) {
+        workers[jobName] = createWorker({
+            jobName,
+            jobPath,
+            maxConcurrency,
+            minIdleCount,
+            maxIdleMilliseconds
+        })
+    }
+    return workers[jobName]
+}
+
+const createWorker = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}) => {
     const workerRequest$ = new Subject()
     const workerResponse$ = new Subject()
     const cancel$ = new Subject()
@@ -19,8 +43,8 @@ const PooledWorker = ({jobName, jobPath, concurrencyLimit = 100, minIdleCount = 
         maxIdleMilliseconds,
         minIdleCount,
         rateWindowMs: RATE_WINDOW_MS,
-        rateLimit: RATE_LIMIT,
-        concurrencyLimit,
+        maxRate: MAX_RATE,
+        maxConcurrency,
         create$: instanceId => initWorker$(instanceId, jobPath),
         onDispose: ({item}) => item.dispose(),
         onMsg: ({instanceId, action}) => `Worker instance [${instanceId}] ${action}`
@@ -65,4 +89,4 @@ const PooledWorker = ({jobName, jobPath, concurrencyLimit = 100, minIdleCount = 
     }
 }
 
-module.exports = PooledWorker
+module.exports = getWorker
