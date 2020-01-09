@@ -1,0 +1,17 @@
+{
+    "name": "ee",
+    "version": "1.0.0",
+    "description": "",
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "log": "file:../log",
+        "service": "file:../service",
+        "@google/earthengine": "0.1.203",
+        "moment": "^2.24.0",
+        "rxjs": "^6.5.3"
+    },
+    "devDependencies": {
+        "eslint": "^6.7.2"
+    }
+}
