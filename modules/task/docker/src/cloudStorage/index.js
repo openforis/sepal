@@ -2,13 +2,13 @@ const fs = require('fs')
 const {Subject, from, of} = require('rxjs')
 const {map, switchMap} = require('rxjs/operators')
 const crypto = require('crypto')
-const {Storage} = require('@google-cloud/storage')
 const http = require('sepalHttpClient')
-const config = require('./config')
+const {Storage} = require('@google-cloud/storage')
+const config = require('root/config')
 
-const projectId = 'openforis-sepal' // TODO: Config
-const storage = new Storage({credentials: config.serviceAccountCredentials, projectId})
 
+const projectId = config.googleProjectId
+const cloudStorage = new Storage({credentials: config.serviceAccountCredentials, projectId})
 
 const getBucketName = ({username, email}) => {
     const emailHash = crypto.createHash('md5').update(email).digest('hex').substring(0, 4)
@@ -16,12 +16,12 @@ const getBucketName = ({username, email}) => {
 }
 
 const bucketExists$ = user =>
-    from(storage.bucket(user.bucketName).exists()).pipe(
+    from(cloudStorage.bucket(user.bucketName).exists()).pipe(
         map(response => response[0])
     )
 
 const createBucket$ = user =>
-    from(storage.createBucket(user.bucketName, {
+    from(cloudStorage.createBucket(user.bucketName, {
         location: 'EUROPE-WEST2', // TODO: Config
         storageClass: 'STANDARD',
         iamConfiguration: {
@@ -57,7 +57,7 @@ const setBucketPermissions$ = user => {
             }
         ]
     }
-    const bucket = storage.bucket(user.bucketName)
+    const bucket = cloudStorage.bucket(user.bucketName)
     return from(bucket.iam.setPolicy(policy))
 }
 
@@ -92,7 +92,7 @@ const readJsonFile$ = filePath => {
     return data$
 }
 
-const initCloudStorage$ = () =>
+const initUserBucket$ = () =>
     readJsonFile$(`${config.homeDir}/.config/earthengine/credentials`).pipe(
         map(credentials => credentials.access_token),
         switchMap(accessToken => getEmail$(accessToken).pipe(
@@ -106,4 +106,5 @@ const initCloudStorage$ = () =>
         switchMap(user => createIfMissingBucket$(user))
     )
 
-module.exports = {initCloudStorage$}
+
+module.exports = {cloudStorage, initUserBucket$}

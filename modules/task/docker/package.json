@@ -13,6 +13,7 @@
     "author": "",
     "license": "ISC",
     "_moduleAliases": {
+        "root": "src",
         "sepalLog": "node_modules/log/src",
         "sepalHttpClient": "node_modules/httpClient/src",
         "sepalHttpServer": "node_modules/httpServer/src"
@@ -20,6 +21,7 @@
     "dependencies": {
         "@google-cloud/storage": "^4.2.0",
         "commander": "^4.0.1",
+        "fast-crc32c": "^2.0.0",
         "httpClient": "../../../lib/js/httpClient",
         "httpServer": "../../../lib/js/httpServer",
         "log": "../../../lib/js/log",

@@ -7,6 +7,7 @@ const DEFAULT_PORT = 1026
 program
     .option('--gee-email <value>')
     .option('--gee-key-path <value>')
+    .option('--google-project-id <value>')
     .option('--sepal-host <value>')
     .option('--sepal-username <value>')
     .option('--sepal-password <value>')
@@ -15,7 +16,7 @@ program
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .parse(process.argv)
 
-const {geeEmail, geeKeyPath, sepalHost, sepalUsername, sepalPassword, homeDir, username, port} = program
+const {geeEmail, geeKeyPath, googleProjectId, sepalHost, sepalUsername, sepalPassword, homeDir, username, port} = program
 
 const readFile = path => {
     try {
@@ -36,6 +37,7 @@ const serviceAccountCredentials = {
 log.info('Configuration loaded')
 
 module.exports = {
+    googleProjectId,
     serviceAccountCredentials,
     sepalHost,
     sepalUsername,
