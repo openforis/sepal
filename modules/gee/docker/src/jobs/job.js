@@ -1,4 +1,5 @@
-const {ReplaySubject} = require('rxjs')
+const {Subject, ReplaySubject} = require('rxjs')
+const {takeUntil, finalize} = require('rxjs/operators')
 const {deserializeError} = require('serialize-error')
 const _ = require('lodash')
 const {getWorker} = require('../worker/workers')
@@ -30,15 +31,20 @@ const evaluateArgs = (argFuncs, ctx) =>
 
 const unwrap$ = wrapped$ => {
     const unwrapped$ = new ReplaySubject()
-    wrapped$.subscribe({
-        next: ({value, error}) => {
+    const stop$ = new Subject()
+    wrapped$.pipe(
+        takeUntil(stop$)
+    ).subscribe(
+        ({value, error}) => {
             value && unwrapped$.next(value)
             error && unwrapped$.error(deserializeError(error))
         },
-        error: error => unwrapped$.error(error),
-        complete: () => unwrapped$.complete()
-    })
-    return unwrapped$
+        error => unwrapped$.error(error)
+        // stream is allowed to complete
+    )
+    return unwrapped$.pipe(
+        finalize(() => stop$.next())
+    )
 }
 
 const main = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before, args, ctx}) => {
