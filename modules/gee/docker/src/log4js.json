@@ -33,7 +33,7 @@
             "appenders": ["console"],
             "level": "info"
         },
-        "token": {
+        "limiter": {
             "appenders": ["console"],
             "level": "info"
         },
