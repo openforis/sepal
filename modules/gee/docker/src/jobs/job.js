@@ -1,7 +1,7 @@
 const {ReplaySubject} = require('rxjs')
 const {deserializeError} = require('serialize-error')
 const _ = require('lodash')
-const getWorker = require('../worker/workers')
+const {getWorker} = require('../worker/workers')
 // const log = require('sepalLog')('job')
 
 // NOTE: ctx is three-state:

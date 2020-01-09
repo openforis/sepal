@@ -89,4 +89,4 @@ const createWorker = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMi
     }
 }
 
-module.exports = getWorker
+module.exports = {getWorker}

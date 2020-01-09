@@ -26,9 +26,7 @@ const ee$ = (operation, promiseCallback) =>
         )
     )
 
-exports.ee$ = ee$
-
-exports.getAsset$ = eeId =>
+const getAsset$ = eeId =>
     ee$('get asset', (resolve, reject) =>
         ee.data.getAsset(eeId, (result, error) =>
             error
@@ -40,7 +38,7 @@ exports.getAsset$ = eeId =>
         )
     )
 
-exports.getInfo$ = eeObject =>
+const getInfo$ = eeObject =>
     ee$('get info', (resolve, reject) =>
         eeObject.getInfo((result, error) =>
             error
@@ -48,7 +46,7 @@ exports.getInfo$ = eeObject =>
                 : resolve(result))
     )
 
-exports.getMap$ = (eeObject, visParams) =>
+const getMap$ = (eeObject, visParams) =>
     ee$('get map', (resolve, reject) =>
         eeObject.getMap(visParams, (map, error) =>
             error
@@ -59,3 +57,5 @@ exports.getMap$ = (eeObject, visParams) =>
                 })
         )
     )
+
+module.exports = {ee$, getAsset$, getInfo$, getMap$}

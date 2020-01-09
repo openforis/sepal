@@ -96,6 +96,4 @@ const initWorker$ = (name, jobPath) =>
         )
     )
 
-module.exports = {
-    initWorker$
-}
+module.exports = {initWorker$}
