@@ -18,6 +18,7 @@
         "sepalHttpServer": "node_modules/httpServer/src"
     },
     "dependencies": {
+        "@google-cloud/storage": "^4.2.0",
         "commander": "^4.0.1",
         "httpClient": "../../../lib/js/httpClient",
         "httpServer": "../../../lib/js/httpServer",
