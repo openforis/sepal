@@ -3,7 +3,7 @@ const {first, map, filter, delay, finalize, tap, mapTo, takeUntil, mergeMap} = r
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('sepalLog')('limiter')
-const service = require('root/worker/service')
+const service = require('root/service')
 
 const Limiter$ = ({name, rateWindowMs = 1000, maxRate, maxConcurrency}) => {
     const requestId$ = new Subject()

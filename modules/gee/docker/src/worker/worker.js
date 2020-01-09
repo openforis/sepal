@@ -6,7 +6,7 @@ const {catchError, map, mergeMap, takeUntil, tap, filter} = require('rxjs/operat
 const {serializeError} = require('serialize-error')
 const {Exception, SystemException, isException} = require('root/exception')
 const _ = require('lodash')
-const service = require('./service')
+const service = require('../service')
 const Transport = require('./transport')
 const log = require('sepalLog')('worker')
 

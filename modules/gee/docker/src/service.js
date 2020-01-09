@@ -4,8 +4,11 @@ const log = require('sepalLog')('service')
 
 let transport
 
+const getService$ = servicePath =>
+    require(`root/${servicePath}`)
+
 const start = (servicePath, request$, response$) => {
-    const service$ = require(`root/${servicePath}`)
+    const service$ = getService$(servicePath)
     const stop$ = new Subject()
 
     request$.subscribe(
@@ -33,11 +36,21 @@ const setTransport = theTransport => {
     transport = theTransport
 }
 
-const submit$ = (servicePath, data) => {
+const submitRemote$ = (servicePath, data) => {
     const {in$: request$, out$: response$} = transport.createChannel(servicePath)
     request$.next(data)
     return response$
 }
+
+const submitLocal$ = (servicePath, data) => {
+    const service$ = getService$(servicePath)
+    return service$(data)
+}
+
+const submit$ = (servicePath, data) =>
+    transport
+        ? submitRemote$(servicePath, data)
+        : submitLocal$(servicePath, data)
 
 module.exports = {
     start,

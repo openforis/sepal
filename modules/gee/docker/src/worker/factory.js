@@ -6,7 +6,7 @@ const path = require('path')
 const _ = require('lodash')
 const log = require('sepalLog')('job')
 const Transport = require('./transport')
-const service = require('./service')
+const service = require('../service')
 
 const WORKER_PATH = path.join(__dirname, 'worker.js')
 
