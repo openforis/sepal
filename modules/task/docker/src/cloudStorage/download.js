@@ -1,39 +1,85 @@
 const fs = require('fs')
-const {Subject, EMPTY, from, of} = require('rxjs')
-const {expand, map, mergeMap, switchMap, takeWhile, tap} = require('rxjs/operators')
+const {Subject, EMPTY, concat, from, of} = require('rxjs')
+const {expand, map, mergeMap, scan, switchMap} = require('rxjs/operators')
 const {cloudStorage} = require('root/cloudStorage')
 const path = require('path')
+const format = require('root/format')
 
-// const CHUNK_SIZE = 100 * 1024 * 1024
-const CHUNK_SIZE = 40 * 1024 // 10 KB
+const CHUNK_SIZE = 10 * 1024 * 1024
+const CONCURRENT_FILE_DOWNLOAD = 1
 
-const getFileSize$ = file =>
-    from(file.getMetadata()).pipe(
-        map(response => response[0].size)
+const downloadFromCloudStorage$ = ({bucketName, prefix, toPath}) => {
+    return from(cloudStorage
+        .bucket(`gs://${bucketName}`)
+        .getFiles({prefix, autoPaginate: true}))
+        .pipe(
+            map(response => response[0]),
+            switchMap(files => concat(
+                of(getProgress({files})),
+                downloadFiles$({files, prefix, toPath})
+            ))
+        )
+}
+
+const getProgress = (
+    {
+        files,
+        currentProgress = {downloadedFiles: 0, downloadedBytes: 0},
+        fileProgress = {start: 0, end: -1}
+    }) => {
+    const downloadedFiles = currentProgress.downloadedFiles + (isDownloaded(fileProgress) ? 1 : 0)
+    const downloadedBytes = currentProgress.downloadedBytes + fileProgress.end - fileProgress.start + 1
+    const downloaded = formatFileSize(downloadedBytes)
+    const totalFiles = files.length
+    const totalBytes = files
+        .map(file => Number(file.metadata.size))
+        .reduce((total, bytes) => total + bytes, 0)
+    const total = formatFileSize(totalBytes)
+    return {
+        defaultMessage: `Downloaded ${downloadedFiles} of ${totalFiles} files (${downloaded} of ${total})`,
+        messageKey: 'tasks.drive.download_folder',
+        downloadedFiles,
+        downloadedBytes,
+        downloaded,
+        totalFiles,
+        totalBytes,
+        total
+    }
+}
+
+const initialState = files => getProgress({files})
+
+const downloadFiles$ = ({files, prefix, toPath}) => {
+    return of(files).pipe(
+        switchMap(files => of(...files)),
+        mergeMap(file => downloadFile$(file, prefix, toPath), CONCURRENT_FILE_DOWNLOAD),
+        scan((currentProgress, fileProgress) => getProgress({
+            files,
+            currentProgress,
+            fileProgress
+        }), initialState(files))
     )
+}
 
-const createDirs$ = path =>
-    from(fs.promises.mkdir(path, {recursive: true}))
-
-const downloadFile$ = (file, fromPath, toPath) => {
-    const relativePath = file.metadata.name.substring(fromPath.length)
-    const toFilePath = fromPath.endsWith('/')
+const downloadFile$ = (file, prefix, toPath) => {
+    const relativePath = file.metadata.name.substring(prefix.length)
+    const toFilePath = prefix.endsWith('/')
         ? path.join(toPath, relativePath)
-        : path.join(toPath, path.basename(fromPath), relativePath)
+        : path.join(toPath, path.basename(prefix), relativePath)
     const downloadChunk$ = start => {
         const end = start + CHUNK_SIZE
-        console.log('DOWNLOADING CHUNK ', start, end)
         const chunk$ = new Subject()
+        const startTime = new Date().getTime()
+        let next
         file.createReadStream({start, end})
-            .on('error', error => {
-                console.log('GOT AN ERROR', error)
-            })
+            .on('error', error => chunk$.error(error))
             .on('response', response => {
                 const [contentRange, unit, start, end, length] = response.headers['content-range'].match('(.*) (.*)-(.*)/(.*)')
-                chunk$.next({end: Number(end), length: Number(length)})
+                next = {path: path.basename(toFilePath), start, end: Number(end), length: Number(length)}
             })
-            .on('end', () => {
-                console.log('DOWNLOAD COMPLETE')
+            .on('finish', response => {
+                chunk$.next({...next, time: new Date().getTime() - startTime})
+                chunk$.complete()
             })
             .pipe(fs.createWriteStream(toFilePath, start ? {flags: 'a'} : {}))
         return chunk$
@@ -42,33 +88,18 @@ const downloadFile$ = (file, fromPath, toPath) => {
     return createDirs$(path.dirname(toFilePath)).pipe(
         switchMap(() =>
             downloadChunk$(0).pipe(
-                expand(({end, length}) => end < length - 1 ? downloadChunk$(end + 1) : EMPTY),
-                takeWhile(({end, length}) => end < length - 1)
+                expand(({end, length}) => isDownloaded({end, length}) ? EMPTY : downloadChunk$(end + 1))
             )
         )
     )
 }
 
-const downloadFromCloudStorage$ = ({bucketName, fromPath, toPath}) => {
-    return from(cloudStorage
-        .bucket(`gs://${bucketName}`)
-        .getFiles({
-            prefix: fromPath,
-            autoPaginate: true,
-        }))
-        .pipe(
-            switchMap(files => of(...files[0])),
-            mergeMap(file => downloadFile$(file, fromPath, toPath)) // TODO: Should we globally limit concurrency, or just here?
-        )
+const createDirs$ = path =>
+    from(fs.promises.mkdir(path, {recursive: true}))
 
-    //
-    // const file = cloudStorage
-    //     .bucket(`gs://${bucketName}`)
-    //     .file(fromPath)
-    //
-    // return getFileSize$(file).pipe(
-    //     switchMap(fileSize => downloadFile$(file, toPath))
-    // )
-}
+const isDownloaded = fileProgress => fileProgress.end >= fileProgress.length - 1
+
+const formatFileSize = bytes =>
+    format.fileSize(bytes)
 
 module.exports = {downloadFromCloudStorage$}
