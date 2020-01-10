@@ -1,6 +1,6 @@
 const fs = require('fs')
 const {Subject, EMPTY, concat, from, of} = require('rxjs')
-const {expand, map, mergeMap, scan, switchMap} = require('rxjs/operators')
+const {expand, finalize, map, mergeMap, scan, switchMap} = require('rxjs/operators')
 const {cloudStorage} = require('root/cloudStorage')
 const path = require('path')
 const format = require('root/format')
@@ -8,16 +8,16 @@ const format = require('root/format')
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1
 
-const downloadFromCloudStorage$ = ({bucketName, prefix, toPath}) => {
-    return from(cloudStorage
-        .bucket(`gs://${bucketName}`)
-        .getFiles({prefix, autoPaginate: true}))
+const downloadFromCloudStorage$ = ({bucketName, prefix, toPath, deleteAfterDownload}) => {
+    const bucket = cloudStorage.bucket(`gs://${bucketName}`)
+    return from(bucket.getFiles({prefix, autoPaginate: true}))
         .pipe(
             map(response => response[0]),
             switchMap(files => concat(
                 of(getProgress({files})),
-                downloadFiles$({files, prefix, toPath})
-            ))
+                downloadFiles$({files, prefix, toPath, deleteAfterDownload})
+            )),
+            finalize(() => deleteAfterDownload ? bucket.deleteFiles({prefix}): null)
         )
 }
 
@@ -49,10 +49,10 @@ const getProgress = (
 
 const initialState = files => getProgress({files})
 
-const downloadFiles$ = ({files, prefix, toPath}) => {
+const downloadFiles$ = ({files, prefix, toPath, deleteAfterDownload}) => {
     return of(files).pipe(
         switchMap(files => of(...files)),
-        mergeMap(file => downloadFile$(file, prefix, toPath), CONCURRENT_FILE_DOWNLOAD),
+        mergeMap(file => downloadFile$({file, prefix, toPath, deleteAfterDownload}), CONCURRENT_FILE_DOWNLOAD),
         scan((currentProgress, fileProgress) => getProgress({
             files,
             currentProgress,
@@ -61,7 +61,7 @@ const downloadFiles$ = ({files, prefix, toPath}) => {
     )
 }
 
-const downloadFile$ = (file, prefix, toPath) => {
+const downloadFile$ = ({file, prefix, toPath, deleteAfterDownload}) => {
     const relativePath = file.metadata.name.substring(prefix.length)
     const toFilePath = prefix.endsWith('/')
         ? path.join(toPath, relativePath)
@@ -82,7 +82,9 @@ const downloadFile$ = (file, prefix, toPath) => {
                 chunk$.complete()
             })
             .pipe(fs.createWriteStream(toFilePath, start ? {flags: 'a'} : {}))
-        return chunk$
+        return deleteAfterDownload
+            ? concat(chunk$, deleteFile$(file))
+            : chunk$
     }
 
     return createDirs$(path.dirname(toFilePath)).pipe(
@@ -91,6 +93,12 @@ const downloadFile$ = (file, prefix, toPath) => {
                 expand(({end, length}) => isDownloaded({end, length}) ? EMPTY : downloadChunk$(end + 1))
             )
         )
+    )
+}
+
+const deleteFile$ = file => {
+    return from(file.bucket.deleteFiles({prefix: file.name})).pipe(
+        switchMap(() => EMPTY)
     )
 }
 
