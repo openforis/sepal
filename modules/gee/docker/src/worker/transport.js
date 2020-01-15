@@ -1,7 +1,7 @@
 const {v4: uuid} = require('uuid')
 const channel = require('./channel')
 const _ = require('lodash')
-const log = require('sepalLog')('transport')
+const log = require('sepal/log')('transport')
 
 const transport = ({id = uuid(), port}) => {
     const send = message =>

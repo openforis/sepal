@@ -4,9 +4,9 @@ const {Worker, MessageChannel} = require('worker_threads')
 const {v4: uuid} = require('uuid')
 const path = require('path')
 const _ = require('lodash')
-const log = require('sepalLog')('job')
+const log = require('sepal/log')('job')
 const Transport = require('./transport')
-const service = require('../service')
+const service = require('sepal/service')
 
 const WORKER_PATH = path.join(__dirname, 'worker.js')
 

@@ -5,6 +5,7 @@
     "main": "main.js",
     "scripts": {
         "dev": "bash dev.sh",
+        "test": "bash test.sh",
         "postinstall": "link-module-alias",
         "preinstall": "command -v link-module-alias && link-module-alias clean || true"
     },
@@ -12,13 +13,11 @@
     "license": "ISC",
     "_moduleAliases": {
         "root": "src",
-        "sepalHttpServer": "node_modules/httpServer/src",
-        "sepalLog": "node_modules/log/src"
+        "sepal": "node_modules/shared/src",
+        "ee": "node_modules/shared/src/ee"
     },
     "dependencies": {
-        "httpServer": "../../../lib/js/httpServer",
-        "log": "../../../lib/js/log",
-        "@google/earthengine": "0.1.203",
+        "shared": "../../../lib/js/shared",
         "commander": "^4.0.1",
         "lodash": "^4.17.15",
         "log4js": "^6.1.0",

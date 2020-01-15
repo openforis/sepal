@@ -1,9 +1,8 @@
 const job = require('root/jobs/job')
 
 const worker$ = ({aoi, source}) => {
-    const ee = require('@google/earthengine')
-    const {toGeometry} = require('root/ee/aoi')
-    const {getInfo$} = require('root/ee/utils')
+    const ee = require('ee')
+    const {toGeometry} = require('sepal/ee/aoi')
     const {map} = require('rxjs/operators')
 
     const geometry = toGeometry(aoi)
@@ -17,7 +16,7 @@ const worker$ = ({aoi, source}) => {
             idColumn: 'name'
         }
     }[source]
-    return getInfo$(
+    return ee.getInfo$(
         ee.FeatureCollection(table.id)
             .filterBounds(geometry)
             .reduceColumns(ee.Reducer.toList(2), ['.geo', table.idColumn])

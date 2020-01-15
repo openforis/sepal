@@ -1,13 +1,12 @@
 const job = require('root/jobs/job')
+const {limiter} = require('sepal/ee/eeLimiter')
 
 const worker$ = () => {
     const {EMPTY} = require('rxjs')
     const {switchMapTo} = require('rxjs/operators')
-    const ee = require('@google/earthengine')
-    const {ee$} = require('root/ee/utils')
-    require('../../ee/extensions')
+    const ee = require('ee')
 
-    return ee$('initalize', (resolve, reject) =>
+    return ee.$('initalize', (resolve, reject) =>
         ee.initialize(
             null,
             null,
@@ -22,5 +21,6 @@ const worker$ = () => {
 module.exports = job({
     jobName: 'EE Initialization',
     before: [require('./authenticate')],
+    services: [limiter],
     worker$
 })

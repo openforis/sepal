@@ -1,7 +1,7 @@
 const {ReplaySubject} = require('rxjs')
 const {finalize, takeUntil} = require('rxjs/operators')
 const {serializeError, deserializeError} = require('serialize-error')
-const log = require('sepalLog')('channel')
+const log = require('sepal/log')('channel')
 
 const channel = ({transport, channelId, conversationId, direction, in$ = new ReplaySubject(), out$ = new ReplaySubject()}) => {
     const {id: transportId, port} = transport

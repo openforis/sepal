@@ -3,7 +3,9 @@ const {takeUntil, finalize} = require('rxjs/operators')
 const {deserializeError} = require('serialize-error')
 const _ = require('lodash')
 const {getWorker} = require('../worker/workers')
-// const log = require('sepalLog')('job')
+const {addServices} = require('sepal/service/registry')
+
+// const log = require('sepal/log')('job')
 
 // NOTE: ctx is three-state:
 //
@@ -47,8 +49,9 @@ const unwrap$ = wrapped$ => {
     )
 }
 
-const main = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before, args, ctx}) => {
+const main = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before, services, args, ctx}) => {
     const argFuncs = [...depArgs(before), args]
+    addServices(services)
     return isDependency(ctx)
         ? argFuncs
         : unwrap$(
@@ -73,7 +76,7 @@ const assert = (arg, func, msg, required = false) => {
     }
 }
 
-const job = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before = [], worker$, args = () => []}) => {
+const job = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before = [], services = [], worker$, args = () => []}) => {
     assert(jobName, _.isString, 'jobName must be a string', true)
     assert(jobPath, _.isString, 'jobPath must be a string', false)
     assert(worker$, _.isFunction, 'worker$ must be a function', true)
@@ -85,7 +88,7 @@ const job = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMillisecond
     
     return ctx => isWorker(ctx)
         ? worker({jobName, before, worker$})
-        : main({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before, args, ctx})
+        : main({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before, services, args, ctx})
 }
 
 module.exports = job

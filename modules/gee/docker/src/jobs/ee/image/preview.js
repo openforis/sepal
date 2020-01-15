@@ -1,16 +1,18 @@
 const job = require('root/jobs/job')
 
 const worker$ = ({recipe, bands}) => {
-    const ImageFactory = require('root/ee/imageFactory')
-    const {getMap$} = require('root/ee/utils')
+    // const log = require('sepal/log')('ee')
+
+    const ImageFactory = require('sepal/ee/imageFactory')
+    const ee = require('ee')
     const {zip} = require('rxjs')
     const {switchMap} = require('rxjs/operators')
 
     const {getImage$, getVisParams$} = ImageFactory(recipe, bands)
     return zip(getImage$(), getVisParams$()).pipe(
         switchMap(([image, visParams]) => visParams.hsv
-            ? getMap$(hsvToRgb(image, visParams))
-            : getMap$(image, visParams))
+            ? ee.getMap$(hsvToRgb(image, visParams))
+            : ee.getMap$(image, visParams))
     )
 }
 

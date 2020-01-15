@@ -1,9 +1,8 @@
 const job = require('root/jobs/job')
 
 const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
-    const ee = require('@google/earthengine')
-    const ImageFactory = require('root/ee/imageFactory')
-    const {getInfo$, getMap$} = require('root/ee/utils')
+    const ee = require('ee')
+    const ImageFactory = require('sepal/ee/imageFactory')
     const {forkJoin} = require('rxjs')
     const {map, switchMap} = require('rxjs/operators')
 
@@ -13,8 +12,8 @@ const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
             const table = ee.FeatureCollection([ee.Feature(geometry)])
             const boundsPolygon = ee.List(geometry.bounds().coordinates().get(0))
             return forkJoin({
-                bounds: getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)])),
-                eeMap: getMap$(table.style({color, fillColor}))
+                bounds: ee.getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)])),
+                eeMap: ee.getMap$(table.style({color, fillColor}))
             }).pipe(
                 map(({bounds, eeMap}) => ({bounds, ...eeMap}))
             )

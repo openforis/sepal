@@ -1,14 +1,14 @@
 const job = require('root/jobs/job')
 
 const worker$ = ({recipe}) => {
-    const ImageFactory = require('root/ee/imageFactory')
-    const {getInfo$} = require('root/ee/utils')
+    const ImageFactory = require('sepal/ee/imageFactory')
+    const ee = require('ee')
     const {switchMap} = require('rxjs/operators')
 
     const {getImage$} = ImageFactory(recipe)
     return getImage$().pipe(
         switchMap(image => {
-            return getInfo$(image.bandNames())
+            return ee.getInfo$(image.bandNames())
         })
     )
 }

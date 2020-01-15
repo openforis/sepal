@@ -1,4 +1,4 @@
-const {stream} = require('sepalHttpServer')
+const {stream} = require('sepal/httpServer')
 
 const sceneAreas$ = require('root/jobs/ee/image/sceneAreas')
 const preview$ = require('root/jobs/ee/image/preview')
@@ -10,6 +10,7 @@ const tableQuery$ = require('root/jobs/ee/table/query')
 const tableMap$ = require('root/jobs/ee/table/map')
 // const recipeGeometry$ = require('root/jobs/ee/table/map')
 const testHttp$ = require('root/jobs/test/http')
+const testHttpDirect$ = require('root/jobs/test/http/test')
 const testWs$ = require('root/jobs/test/ws')
 
 module.exports = router =>
@@ -23,4 +24,7 @@ module.exports = router =>
         .post('/table/query', stream(ctx => tableQuery$(ctx)))
         .get('/table/map', stream(ctx => tableMap$(ctx)))
         .get('/test/:min/:max/:errorProbability', stream(ctx => testHttp$(ctx)))
+        .get('/test2/:min/:max/:errorProbability', stream(
+            ({params: {min, max, errorProbability}}) => testHttpDirect$(parseInt(min), parseInt(max), parseInt(errorProbability))
+        ))
         .get('/ws/:name', stream(ctx => testWs$(ctx)))

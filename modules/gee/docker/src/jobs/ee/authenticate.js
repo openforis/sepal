@@ -20,15 +20,18 @@ const getCredentials = ctx => {
 const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     const {EMPTY} = require('rxjs')
     const {switchMapTo} = require('rxjs/operators')
-    const ee = require('@google/earthengine')
-    const {ee$} = require('root/ee/utils')
-    require('../../ee/extensions')
+    const ee = require('ee')
 
-    const secondsToExpiration = expiration =>
-        (expiration - Date.now()) / 1000
+    const secondsToExpiration = expiration => {
+        const millisecondsLeft = expiration - Date.now()
+        if (millisecondsLeft < 0) {
+            throw new Error('Token expired')
+        }
+        return millisecondsLeft / 1000
+    }
 
     const authenticateServiceAccount$ = credentials =>
-        ee$('autenticate service account', (resolve, reject) =>
+        ee.$('autenticate service account', (resolve, reject) =>
             ee.data.authenticateViaPrivateKey(
                 credentials,
                 () => resolve(),
@@ -37,7 +40,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
         )
 
     const authenticateUserAccount$ = googleTokens =>
-        ee$('authenticate user account', resolve =>
+        ee.$('authenticate user account', resolve =>
             ee.data.setAuthToken(
                 null,
                 'Bearer',

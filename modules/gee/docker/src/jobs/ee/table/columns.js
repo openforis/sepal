@@ -1,14 +1,13 @@
 const job = require('root/jobs/job')
 
 const worker$ = ({tableId}) => {
-    const ee = require('@google/earthengine')
-    const {getAsset$, getInfo$} = require('root/ee/utils')
+    const ee = require('ee')
     const {Exception, SystemException, NotFoundException} = require('root/exception')
     const {throwError, of} = require('rxjs')
     const {switchMap, catchError} = require('rxjs/operators')
 
     const handleError$ = cause =>
-        getAsset$(tableId).pipe(
+        ee.getAsset$(tableId).pipe(
             catchError(() => of()),
             switchMap(asset =>
                 throwError(
@@ -21,7 +20,7 @@ const worker$ = ({tableId}) => {
             )
         )
 
-    return getInfo$(
+    return ee.getInfo$(
         ee.FeatureCollection(tableId)
             .first()
             .propertyNames()

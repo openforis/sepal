@@ -3,8 +3,7 @@
 LIBS=../../../lib/js
 nodemon \
     --watch src \
-    --watch $LIBS/log \
-    --watch $LIBS/httpServer \
+    --watch $LIBS/shared \
     --inspect=0.0.0.0:9228 src/main.js \
     --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com \
     --gee-key-path $SEPAL_CONFIG/google-earth-engine/key.pem \

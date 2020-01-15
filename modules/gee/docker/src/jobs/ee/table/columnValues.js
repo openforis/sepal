@@ -1,10 +1,9 @@
 const job = require('root/jobs/job')
 
 const worker$ = ({tableId, columnName}) => {
-    const ee = require('@google/earthengine')
-    const {getInfo$} = require('root/ee/utils')
+    const ee = require('ee')
 
-    return getInfo$(
+    return ee.getInfo$(
         ee.FeatureCollection(tableId)
             .distinct(columnName)
             .sort(columnName)

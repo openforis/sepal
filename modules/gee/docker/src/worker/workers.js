@@ -2,7 +2,7 @@ const {Subject, of} = require('rxjs')
 const {mergeMap, map, filter, finalize, takeUntil, catchError} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
-const log = require('sepalLog')('job')
+const log = require('sepal/log')('job')
 const {initWorker$} = require('./factory')
 const {LimitedPool} = require('../pool')
 

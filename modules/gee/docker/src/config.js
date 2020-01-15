@@ -1,6 +1,6 @@
 const program = require('commander')
 const fs = require('fs')
-const log = require('sepalLog')()
+const log = require('sepal/log')()
 
 const DEFAULT_PORT = 5001
 

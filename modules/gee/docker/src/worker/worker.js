@@ -1,4 +1,4 @@
-require('sepalLog/configure')(require('../log4js.json'))
+require('sepal/log/configure')(require('../log4js.json'))
 
 const {parentPort} = require('worker_threads')
 const {Subject, of, concat} = require('rxjs')
@@ -6,9 +6,9 @@ const {catchError, map, mergeMap, takeUntil, tap, filter} = require('rxjs/operat
 const {serializeError} = require('serialize-error')
 const {Exception, SystemException, isException} = require('root/exception')
 const _ = require('lodash')
-const service = require('../service')
+const service = require('sepal/service')
 const Transport = require('./transport')
-const log = require('sepalLog')('worker')
+const log = require('sepal/log')('worker')
 
 const exported = {}
 
@@ -47,9 +47,10 @@ const initWorker = (port, name) => {
             )
         
             const result$ = concat(...tasks$).pipe(
-                tap(({jobName, args}) =>
-                    log.debug(msg(`running task <${jobName}> with args:`, jobId), args)
-                ),
+                tap(({jobName, args}) => {
+                    log.debug(msg(`running task <${jobName}>:`, jobId))
+                    log.trace(msg(`running task <${jobName}> with args:`, jobId), args)
+                }),
                 mergeMap(({worker$, args}) => worker$(...args, jobArgs$), 1),
                 map(value => ({jobId, value})),
                 catchError(error => of({jobId, error: serializeError(formatError(error))})),
