@@ -13,7 +13,7 @@ class Aoi:
         'SENTINEL_2': {
             'table_id': 'users/wiell/SepalResources/sentinel2SceneAreas',
             'id_column': 'name',
-            'coordinates': lambda sceneArea: sceneArea[0]['geometries'][1]['coordinates'][0]
+            'coordinates': lambda sceneArea: sceneArea[0]['coordinates'][0]
         }
     }
 
@@ -58,11 +58,14 @@ class Aoi:
         scene_areas = [
             {
                 'id': scene_area[1],
-                'polygon': list(map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](scene_area))),
+                'polygon': self._to_polygon(table, scene_area),
             }
             for scene_area in scene_area_table
         ]
         return scene_areas
+
+    def _to_polygon(self, table, scene_area):
+        return list(map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](scene_area)))
 
     def geometry(self):
         """Gets the ee.Geometry of this Aoi.
