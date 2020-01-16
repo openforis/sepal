@@ -1,8 +1,8 @@
 const {Subject, concat} = require('rxjs')
-const {filter, share, takeUntil, tap} = require('rxjs/operators')
+const {filter, map, share, takeUntil, tap} = require('rxjs/operators')
 const {lastInWindow, repeating} = require('./rxjs/operators')
-const log = require('sepalLog')('task')
-const http = require('sepalHttpClient')
+const log = require('sepal/log')('task')
+const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
 
 const HEARTBEAT_RATE = 1000
@@ -16,7 +16,7 @@ const tasks = {
 }
 
 const submitTask = ({id, name, params}) => {
-    console.log('Submitting task', {id, name})
+    log.info(`${id}: Submitting task ${name}`)
     const task = tasks[name]
     if (!task)
         throw new Error(`Task doesn't exist: ${name}`)
@@ -25,14 +25,13 @@ const submitTask = ({id, name, params}) => {
         messageKey: 'tasks.status.executing',
         defaultMessage: 'Executing...'
     })
-    const task$ = task.submit$(id, params).pipe(
-        lastInWindow(MAX_UPDATE_RATE),
-        repeating(progress => taskProgressed$(id, progress), HEARTBEAT_RATE)
-    )
+    const task$ = task.submit$(id, params)
     const cancel$ = cancelTask$.pipe(
         filter(taskId => taskId === id)
     )
     const progress$ = concat(initialState$, task$).pipe(
+        lastInWindow(MAX_UPDATE_RATE),
+        repeating(progress => taskProgressed$(id, progress), HEARTBEAT_RATE),
         takeUntil(cancel$)
     )
     progress$.subscribe({
@@ -78,7 +77,9 @@ const stateChanged$ = (id, state, message) => {
         },
         username: sepalUsername,
         password: sepalPassword
-    })
+    }).pipe(
+        map(() => message)
+    )
 }
 
 const cancelTask = id => {

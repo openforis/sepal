@@ -14,18 +14,16 @@
     "license": "ISC",
     "_moduleAliases": {
         "root": "src",
-        "sepalLog": "node_modules/log/src",
-        "sepalHttpClient": "node_modules/httpClient/src",
-        "sepalHttpServer": "node_modules/httpServer/src"
+        "sepal": "node_modules/shared/src",
+        "ee": "node_modules/shared/src/ee"
     },
     "dependencies": {
         "@google-cloud/storage": "^4.2.0",
+        "@google/earthengine": "^0.1.203",
         "commander": "^4.0.1",
         "fast-crc32c": "^2.0.0",
-        "httpClient": "../../../lib/js/httpClient",
-        "httpServer": "../../../lib/js/httpServer",
-        "log": "../../../lib/js/log",
-        "rxjs": "^6.5.3"
+        "shared": "../../../lib/js/shared",
+        "rxjs": "^6.5.4"
     },
     "devDependencies": {
         "eslint": "^6.7.2",

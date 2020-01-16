@@ -33,6 +33,10 @@
             "appenders": ["console"],
             "level": "info"
         },
+        "task": {
+            "appenders": ["console"],
+            "level": "info"
+        },
         "token": {
             "appenders": ["console"],
             "level": "info"
