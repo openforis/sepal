@@ -23,8 +23,8 @@ module.exports = router =>
         .get('/table/columnValues', stream(ctx => tableColumnValues$(ctx)))
         .post('/table/query', stream(ctx => tableQuery$(ctx)))
         .get('/table/map', stream(ctx => tableMap$(ctx)))
-        .get('/test/:min/:max/:errorProbability', stream(ctx => testHttp$(ctx)))
-        .get('/test2/:min/:max/:errorProbability', stream(
+        .get('/test/worker/:min/:max/:errorProbability', stream(ctx => testHttp$(ctx)))
+        .get('/test/direct/:min/:max/:errorProbability', stream(
             ({params: {min, max, errorProbability}}) => testHttpDirect$(parseInt(min), parseInt(max), parseInt(errorProbability))
         ))
         .get('/ws/:name', stream(ctx => testWs$(ctx)))
