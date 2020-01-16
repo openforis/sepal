@@ -23,7 +23,7 @@
         "log4js": "^6.1.0",
         "moment": "^2.24.0",
         "request": "^2.88.0",
-        "rxjs": "^6.5.3",
+        "rxjs": "^6.5.4",
         "uuid": "^3.3.3"
     },
     "devDependencies": {

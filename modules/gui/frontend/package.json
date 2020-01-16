@@ -39,7 +39,7 @@
     "react-textarea-autosize": "^7.1.0",
     "react-transition-group": "4.3.0",
     "redux": "4.0.4",
-    "rxjs": "6.5.3",
+    "rxjs": "6.5.4",
     "uuid": "^3.3.3",
     "xterm": "^4.1.0",
     "xterm-addon-fit": "^0.2.1"
