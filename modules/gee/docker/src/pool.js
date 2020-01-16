@@ -1,9 +1,10 @@
-const {Subject, timer, of, concat} = require('rxjs')
+const {Subject, from, timer, of, concat} = require('rxjs')
 const {tap, map, mergeMap, takeUntil, mapTo, filter, finalize, switchMap} = require('rxjs/operators')
 const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('sepal/log')('pool')
 const {Limiter$} = require('sepal/service/limiter')
+// const {Limiter$} = require('./limiter')
 
 const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCold, onHot, onRelease, onDispose, onKeep, onMsg}) => {
     const pool = []
@@ -113,15 +114,22 @@ const LimitedPool = ({rateWindowMs, maxRate, maxConcurrency, create$, ...args}) 
         name: 'LimitedPool concurrency',
         maxConcurrency
     })
-    const pool = Pool({...args, create$: instanceId => {
-        return rateLimiter$().pipe(
-            mergeMap(() => create$(instanceId))
-        )
-    }})
+    const pool = Pool({
+        ...args,
+        create$: instanceId =>
+            from( // [HACK] https://github.com/ReactiveX/rxjs/issues/5237
+                rateLimiter$()
+            ).pipe(
+                mergeMap(() => create$(instanceId))
+            )
+    })
     return {
-        getInstance$: () => concurrencyLimiter$().pipe(
-            mergeMap(() => pool.getInstance$())
-        )
+        getInstance$: () =>
+            from( // [HACK] https://github.com/ReactiveX/rxjs/issues/5237
+                concurrencyLimiter$()
+            ).pipe(
+                mergeMap(() => pool.getInstance$())
+            )
     }
 }
 
