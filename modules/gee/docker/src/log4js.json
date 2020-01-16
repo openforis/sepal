@@ -25,15 +25,15 @@
             "appenders": ["console"],
             "level": "info"
         },
+        "limiter": {
+            "appenders": ["console"],
+            "level": "info"
+        },
         "pool": {
             "appenders": ["console"],
             "level": "info"
         },
         "service": {
-            "appenders": ["console"],
-            "level": "info"
-        },
-        "limiter": {
             "appenders": ["console"],
             "level": "info"
         },
