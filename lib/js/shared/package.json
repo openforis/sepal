@@ -14,6 +14,7 @@
     },
     "dependencies": {
         "@google/earthengine": "0.1.203",
+        "base-64": "^0.1.0",
         "koa": "^2.11.0",
         "koa-bodyparser": "^4.2.1",
         "koa-easy-ws": "^1.1.3",

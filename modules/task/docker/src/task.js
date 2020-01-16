@@ -1,8 +1,8 @@
 const {Subject, concat} = require('rxjs')
 const {filter, share, takeUntil, tap} = require('rxjs/operators')
 const {lastInWindow, repeating} = require('./rxjs/operators')
-const log = require('sepalLog')('task')
-const http = require('sepalHttpClient')
+const log = require('sepal/log')('task')
+const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
 
 const HEARTBEAT_RATE = 1000

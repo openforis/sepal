@@ -2,7 +2,7 @@ const fs = require('fs')
 const {Subject, from, of} = require('rxjs')
 const {map, switchMap} = require('rxjs/operators')
 const crypto = require('crypto')
-const http = require('sepalHttpClient')
+const http = require('sepal/httpClient')
 const {Storage} = require('@google-cloud/storage')
 const config = require('root/config')
 
