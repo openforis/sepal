@@ -81,9 +81,7 @@ const createWorker = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMi
             return workerResponse$.pipe(
                 filter(({requestId: currentRequestId}) => currentRequestId === requestId),
                 map(({result}) => result),
-                finalize(() => {
-                    cancel$.next({requestId})
-                })
+                finalize(() => cancel$.next({requestId}))
             )
         }
     }
