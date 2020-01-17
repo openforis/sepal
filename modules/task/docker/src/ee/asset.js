@@ -1,7 +1,19 @@
 const ee = require('ee')
 const {EMPTY} = require('rxjs')
-const {map, switchMap} = require('rxjs/operators')
+const {switchMap} = require('rxjs/operators')
 const {progress} = require('root/rxjs/operators')
+
+const assetRoots$ = () =>
+    ee.$('asset roots', (resolve, reject) =>
+        ee.data.getAssetRoots(
+            (assetRoots, error) => {
+                const rootPaths = assetRoots.map(({id}) => id)
+                return error
+                    ? reject(error)
+                    : resolve(rootPaths)
+            }
+        )
+    )
 
 const deleteAsset$ = assetId =>
     ee.getAsset$(assetId).pipe(
@@ -21,4 +33,4 @@ const delete$ = assetId =>
         })
     )
 
-module.exports = {deleteAsset$}
+module.exports = {assetRoots$, deleteAsset$}
