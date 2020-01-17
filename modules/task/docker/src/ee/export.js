@@ -26,6 +26,7 @@ const exportImageToAsset$ = (
                     image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels
                 ),
                 description: `exportImageToAsset(assetId: ${assetId}, description: ${description})`,
+                assetId,
                 retries
             })
         )
@@ -54,7 +55,7 @@ const exportToAsset$ = ({createTask, description, assetId, retries}) => {
         create$: () => {
             const task = createTask()
             return concat(
-                deleteAsset$(assetId), // TODO: Get assetId a different way
+                deleteAsset$(assetId),
                 executeTask$(task)
             )
         },
