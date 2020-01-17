@@ -4,6 +4,7 @@ const {lastInWindow, repeating} = require('./rxjs/operators')
 const log = require('sepal/log')('task')
 const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
+const progress = require('root/progress')
 
 const HEARTBEAT_RATE = 1000
 const MAX_UPDATE_RATE = 1000
@@ -12,14 +13,15 @@ const cancelSubject$ = new Subject()
 const cancelTask$ = cancelSubject$.pipe(share())
 
 const tasks = {
-    'image.sepal_export': require('./tasks/exportImage')
+    'image.asset_export': require('./tasks/imageAssetExport'),
+    'image.sepal_export': require('./tasks/imageSepalExport'),
 }
 
 const submitTask = ({id, name, params}) => {
-    log.info(`${id}: Submitting task ${name}`)
+    log.info(msg(id, `Submitting ${name}`))
     const task = tasks[name]
     if (!task)
-        throw new Error(`Task doesn't exist: ${name}`)
+        throw new Error(msg(id, `Doesn't exist: ${name}`))
 
     const initialState$ = stateChanged$(id, 'ACTIVE', {
         messageKey: 'tasks.status.executing',
@@ -30,42 +32,50 @@ const submitTask = ({id, name, params}) => {
         filter(taskId => taskId === id)
     )
     const progress$ = concat(initialState$, task$).pipe(
+        tap(progress => log.info(msg(id, progress.defaultMessage))),
         lastInWindow(MAX_UPDATE_RATE),
         repeating(progress => taskProgressed$(id, progress), HEARTBEAT_RATE),
         takeUntil(cancel$)
     )
     progress$.subscribe({
         error: error => taskFailed(id, error),
-        complete: () => taskCompleted(id) // TODO: How do we know if canceled or succeeded?
+        complete: () => taskCompleted(id)
     })
 }
 
 const taskProgressed$ = (id, progress) => {
-    log.info(`${id}: Notifying Sepal server on progress`, progress)
+    log.debug(msg(id, `Notifying Sepal server on progress ${progress}`))
     return http.post$(`https://${sepalHost}/api/tasks/active`, {
         query: {progress: {[id]: progress.message}},
         username: sepalUsername,
         password: sepalPassword
     }).pipe(
-        tap(() => log.info(`${id}: Notified Sepal server of progress`, progress))
+        tap(() => log.trace(msg(id, `Notified Sepal server of progress ${progress}`)))
     )
 }
 
 const taskFailed = (id, error) => {
-    log.error(`${id}: Task failed`, error)
-    const message = 'Failed' // TODO: Object with key etc.?
+    log.error(msg(id, `Failed: `), error)
+    const message = progress({
+        defaultMessage: 'Failed to execute task: ',
+        messageKey: 'tasks.status.failed',
+        messageArgs: {error: String(error)}
+    })
     stateChanged$(id, 'FAILED', message).subscribe({
-        error: error => log.error(`${id}: Failed to notify Sepal server on failed task`, error),
-        completed: () => log.info(`${id}: Notified Sepal server of failed task`)
+        error: error => log.error(msg(id, `Failed to notify Sepal server on failed task`), error),
+        completed: () => log.info(msg(id, `Notified Sepal server of failed task`))
     })
 }
 
 const taskCompleted = id => {
-    log.info(`${id}: Task completed`)
-    const message = 'Completed' // TODO: Object with key etc.?
+    log.info(msg(id, `Completed`))
+    const message = progress({
+        defaultMessage: 'Completed!',
+        messageKey: 'tasks.status.completed'
+    })
     stateChanged$(id, 'COMPLETED', message).subscribe({
-        error: error => log.error(`${id}: Failed to notify Sepal server on completed task`, error),
-        completed: () => log.info(`${id}: Notified Sepal server of completed task`)
+        error: error => log.error(msg(id, `Failed to notify Sepal server on completed task`), error),
+        completed: () => log.info(msg(id, `Notified Sepal server of completed task`))
     })
 }
 
@@ -83,8 +93,10 @@ const stateChanged$ = (id, state, message) => {
 }
 
 const cancelTask = id => {
-    log.info(`${id}: Canceling task`)
+    log.info(msg(id, `Canceling task`))
     cancelTask$.next(id)
 }
+
+const msg = (id, msg) => `Task ${id}: ${msg}`
 
 module.exports = {submitTask, cancelTask}
