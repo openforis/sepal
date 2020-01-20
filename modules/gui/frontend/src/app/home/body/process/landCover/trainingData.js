@@ -32,100 +32,100 @@ const constraints = {
 }
 
 class TrainingData extends React.Component {
-    constructor(props) {
-        super(props)
-        this.fusionTableChanged$ = new Subject()
-        this.recipeActions = RecipeActions(props.recipeId)
-    }
-
-    loadFusionTableColumns(fusionTableId) {
-        this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
-            loadFusionTableColumns$(fusionTableId, {includedTypes: ['NUMBER']}).pipe(
-                map(response => {
-                    if (response.error)
-                        this.props.inputs.fusionTable.setInvalid(
-                            msg(response.error.key)
-                        )
-                    return (response.columns || [])
-                        .filter(column => column.type !== 'LOCATION')
-                }),
-                map(columns => this.recipeActions.setFusionTableColumns(columns)),
-                takeUntil(this.fusionTableChanged$))
-        )
-            .dispatch()
-    }
-
-    render() {
-        const {recipePath, primitiveTypes, form} = this.props
-        return (
-            <Form.Panel
-                className={styles.panel}
-                form={form}
-                statePath={recipePath + '.ui'}
-                onApply={values => this.recipeActions.setTrainingData({
-                    values,
-                    model: valuesToModel(values, primitiveTypes)
-                }).dispatch()}>
-                <Panel.Header
-                    icon='cog'
-                    title={msg('process.landCover.panel.trainingData.title')}/>
-                <Panel.Content>
-                    {this.renderContent()}
-                </Panel.Content>
-                <Form.PanelButtons/>
-            </Form.Panel>
-        )
-    }
-
-    renderContent() {
-        const {action, columns, inputs: {fusionTable, yearColumn, classColumn}} = this.props
-        const columnState = action('LOAD_FUSION_TABLE_COLUMNS').dispatching
-            ? 'loading'
-            : columns && columns.length > 0
-                ? 'loaded'
-                : 'noFusionTable'
-
-        const yearPlaceholder = msg(`process.landCover.panel.trainingData.form.yearColumn.placeholder.${columnState}`)
-        const classPlaceholder = msg(`process.landCover.panel.trainingData.form.classColumn.placeholder.${columnState}`)
-        return (
-            <Layout>
-                <Form.Input
-                    label={msg('process.landCover.panel.trainingData.form.fusionTable.label')}
-                    autoFocus
-                    input={fusionTable}
-                    placeholder={msg('process.landCover.panel.trainingData.form.fusionTable.placeholder')}
-                    spellCheck={false}
-                    onChange={e => {
-                        yearColumn.set('')
-                        classColumn.set('')
-                        this.recipeActions.setFusionTableColumns(null).dispatch()
-                        this.fusionTableChanged$.next()
-                        const fusionTableMinLength = 30
-                        if (e && e.target.value.length > fusionTableMinLength)
-                            this.loadFusionTableColumns(e.target.value)
-                    }}
-                    errorMessage
-                />
-                <Form.Combo
-                    label={msg('process.landCover.panel.trainingData.form.yearColumn.label')}
-                    input={yearColumn}
-                    busy={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
-                    disabled={!columns || columns.length === 0}
-                    placeholder={yearPlaceholder}
-                    options={(columns || []).map(({name}) => ({value: name, label: name}))}
-                />
-                <Form.Combo
-                    label={msg('process.landCover.panel.trainingData.form.classColumn.label')}
-                    input={classColumn}
-                    busy={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
-                    disabled={!columns || columns.length === 0}
-                    placeholder={classPlaceholder}
-                    options={(columns || []).map(({name}) => ({value: name, label: name}))}
-                    errorMessage={[classColumn, 'yearAndClassColumnsSame']}
-                />
-            </Layout>
-        )
-    }
+    // constructor(props) {
+    //     super(props)
+    //     this.fusionTableChanged$ = new Subject()
+    //     this.recipeActions = RecipeActions(props.recipeId)
+    // }
+    //
+    // loadFusionTableColumns(fusionTableId) {
+    //     this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
+    //         loadFusionTableColumns$(fusionTableId, {includedTypes: ['NUMBER']}).pipe(
+    //             map(response => {
+    //                 if (response.error)
+    //                     this.props.inputs.fusionTable.setInvalid(
+    //                         msg(response.error.key)
+    //                     )
+    //                 return (response.columns || [])
+    //                     .filter(column => column.type !== 'LOCATION')
+    //             }),
+    //             map(columns => this.recipeActions.setFusionTableColumns(columns)),
+    //             takeUntil(this.fusionTableChanged$))
+    //     )
+    //         .dispatch()
+    // }
+    //
+    // render() {
+    //     const {recipePath, primitiveTypes, form} = this.props
+    //     return (
+    //         <Form.Panel
+    //             className={styles.panel}
+    //             form={form}
+    //             statePath={recipePath + '.ui'}
+    //             onApply={values => this.recipeActions.setTrainingData({
+    //                 values,
+    //                 model: valuesToModel(values, primitiveTypes)
+    //             }).dispatch()}>
+    //             <Panel.Header
+    //                 icon='cog'
+    //                 title={msg('process.landCover.panel.trainingData.title')}/>
+    //             <Panel.Content>
+    //                 {this.renderContent()}
+    //             </Panel.Content>
+    //             <Form.PanelButtons/>
+    //         </Form.Panel>
+    //     )
+    // }
+    //
+    // renderContent() {
+    //     const {action, columns, inputs: {fusionTable, yearColumn, classColumn}} = this.props
+    //     const columnState = action('LOAD_FUSION_TABLE_COLUMNS').dispatching
+    //         ? 'loading'
+    //         : columns && columns.length > 0
+    //             ? 'loaded'
+    //             : 'noFusionTable'
+    //
+    //     const yearPlaceholder = msg(`process.landCover.panel.trainingData.form.yearColumn.placeholder.${columnState}`)
+    //     const classPlaceholder = msg(`process.landCover.panel.trainingData.form.classColumn.placeholder.${columnState}`)
+    //     return (
+    //         <Layout>
+    //             <Form.Input
+    //                 label={msg('process.landCover.panel.trainingData.form.fusionTable.label')}
+    //                 autoFocus
+    //                 input={fusionTable}
+    //                 placeholder={msg('process.landCover.panel.trainingData.form.fusionTable.placeholder')}
+    //                 spellCheck={false}
+    //                 onChange={e => {
+    //                     yearColumn.set('')
+    //                     classColumn.set('')
+    //                     this.recipeActions.setFusionTableColumns(null).dispatch()
+    //                     this.fusionTableChanged$.next()
+    //                     const fusionTableMinLength = 30
+    //                     if (e && e.target.value.length > fusionTableMinLength)
+    //                         this.loadFusionTableColumns(e.target.value)
+    //                 }}
+    //                 errorMessage
+    //             />
+    //             <Form.Combo
+    //                 label={msg('process.landCover.panel.trainingData.form.yearColumn.label')}
+    //                 input={yearColumn}
+    //                 busy={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
+    //                 disabled={!columns || columns.length === 0}
+    //                 placeholder={yearPlaceholder}
+    //                 options={(columns || []).map(({name}) => ({value: name, label: name}))}
+    //             />
+    //             <Form.Combo
+    //                 label={msg('process.landCover.panel.trainingData.form.classColumn.label')}
+    //                 input={classColumn}
+    //                 busy={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
+    //                 disabled={!columns || columns.length === 0}
+    //                 placeholder={classPlaceholder}
+    //                 options={(columns || []).map(({name}) => ({value: name, label: name}))}
+    //                 errorMessage={[classColumn, 'yearAndClassColumnsSame']}
+    //             />
+    //         </Layout>
+    //     )
+    // }
 }
 
 TrainingData.propTypes = {

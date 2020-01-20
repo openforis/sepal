@@ -100,6 +100,7 @@ class EETableSection extends React.Component {
                     ? 'noColumn'
                     : 'noEETable'
 
+        console.log('eeTableRowSelection.value', !this.hasColumns() || eeTableRowSelection.value === 'INCLUDE_ALL')
         return (
             <React.Fragment>
                 <Form.Combo
