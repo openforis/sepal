@@ -14,7 +14,8 @@
     "_moduleAliases": {
         "root": "src",
         "sepal": "node_modules/shared/src",
-        "ee": "node_modules/shared/src/ee"
+        "ee": "node_modules/shared/src/ee",
+        "rxjs": "node_modules/shared/src/rxjs"
     },
     "dependencies": {
         "shared": "../../../lib/js/shared",
@@ -23,7 +24,6 @@
         "log4js": "^6.1.0",
         "moment": "^2.24.0",
         "npm": "^6.13.4",
-        "rxjs": "^6.5.4",
         "serialize-error": "^5.0.0",
         "uuid": "^3.3.3"
     },
