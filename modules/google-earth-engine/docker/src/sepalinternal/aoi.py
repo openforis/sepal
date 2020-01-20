@@ -111,10 +111,13 @@ class EETable(Aoi):
         self.key_column = spec['keyColumn']
         table = ee.FeatureCollection(self.table_name)
         self.value_column = spec['key']
-        filters = [ee.Filter.eq(self.key_column, self.value_column)]
-        if is_number(self.value_column):
-            filters.append(ee.Filter.eq(self.key_column, float(self.value_column)))
-        self.feature_collection = table.filter(ee.Filter.Or(*filters))
+        if self.key_column:
+            filters = [ee.Filter.eq(self.key_column, self.value_column)]
+            if is_number(self.value_column):
+                filters.append(ee.Filter.eq(self.key_column, float(self.value_column)))
+            self.feature_collection = table.filter(ee.Filter.Or(*filters))
+        else:
+            self.feature_collection = table
         geometry = self.feature_collection.geometry()
         Aoi.__init__(self, geometry, spec)
 
