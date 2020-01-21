@@ -13,14 +13,16 @@ class Segment(object):
     # TODO: Fix
     # defaultT = toT(defaultDate) || segmentImage.expression('(i.tStart + i.tEnd) / 2',:i: segmentImage)
 
-    def fit(self, date, t, harmonics=3, extrapolateMaxDays=0, extrapolateMaxFraction=0):
+    def fit(self, date=None, t=None, harmonics=3, extrapolateMaxDays=0, extrapolateMaxFraction=0):
+        if not date and not t:
+            date = self.defaultDate
         t = ee.Image(self.toT(date) if date else t)
         tStart = self.segmentImage.select('tStart')
         tEnd = self.segmentImage.select('tEnd')
         extrapolateMaxDays = date_conversion.days(tStart, tEnd, self.dateFormat).multiply(
             extrapolateMaxFraction).round() \
             if extrapolateMaxFraction else ee.Image(extrapolateMaxDays)
-        extrapolateMaxDays = extrapolateMaxDays.where(extrapolateMaxDays.lt(0), ee.Image(sys.maxint))
+        extrapolateMaxDays = extrapolateMaxDays.where(extrapolateMaxDays.lt(0), ee.Image(sys.maxsize))
 
         daysFromStart = date_conversion.days(t, tStart, self.dateFormat)
         daysFromEnd = date_conversion.days(tEnd, t, self.dateFormat)
@@ -32,17 +34,17 @@ class Segment(object):
         return harmonic_fit.fitImage(coefs, t, self.dateFormat, harmonics) \
             .updateMask(extrapolateMaxDays.gte(daysFromSegment))
 
-    def startFit(self, harmonics):
+    def startFit(self, harmonics=3):
         return self.fit(t=self.segmentImage.select('tStart'), harmonics=harmonics)
 
-    def endFit(self, harmonics):
+    def endFit(self, harmonics=3):
         return self.fit(t=self.segmentImage.select('tEnd'), harmonics=harmonics)
 
-    def middleFit(self, harmonics):
+    def middleFit(self, harmonics=3):
         t = self.segmentImage.expression('i.tStart + (i.tEnd - i.tStart) / 2', {'i': self.segmentImage})
         return self.fit(t=t, harmonics=harmonics)
 
-    def mean(self, harmonics):
+    def mean(self, harmonics=3):
         return harmonic_fit.meanImage(
             self.segmentImage.select('.*_coefs'),
             self.segmentImage.select('tStart'),

@@ -7,6 +7,7 @@ from .segment import Segment
 
 class Segments(object):
     def __init__(self, segmentsImage, dateFormat=0, maxSegments=50):
+        self.segmentsImage = segmentsImage
         self.segmentsImage = self.updateImageMask(segmentsImage)
         self.dateFormat = dateFormat
         self.maxSegments = maxSegments
@@ -99,13 +100,13 @@ class Segments(object):
     def find(self):
         return Find(self.toCollection(), self.dateFormat, self.maxSegments)
 
-    def findByDate(self, date, strategy):
+    def findByDate(self, date, strategy='mask'):
         return Segment(
             self.getSegmentImage(
                 self.segmentIndex(date, strategy)
             ),
             self.dateFormat,
-            self.date
+            date
         )
 
     def first(self):
