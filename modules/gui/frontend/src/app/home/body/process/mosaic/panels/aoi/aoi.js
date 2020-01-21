@@ -6,7 +6,6 @@ import {countryEETable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {msg} from 'translate'
 import {sepalMap} from 'app/home/map/map'
 import CountrySection from './countrySection'
-import FusionTableSection from './fusionTableSection'
 import EETableSection from './eeTableSection'
 import PanelSections from 'widget/panelSections'
 import PolygonSection from './polygonSection'
@@ -23,7 +22,6 @@ const fields = {
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
     area: new Form.Field(),
     eeTable: new Form.Field()
-        .skip((value, {section}) => section !== 'FUSION_TABLE')
         .notBlank('process.mosaic.panel.areaOfInterest.form.eeTable.eeTable.required'),
     allowWholeEETable: new Form.Field(),
     eeTableRowSelection: new Form.Field(),
@@ -33,26 +31,9 @@ const fields = {
         .skip((value, {eeTable}) => !eeTable)
         .notBlank('process.mosaic.panel.areaOfInterest.form.eeTable.column.required'),
     eeTableRow: new Form.Field()
-        .skip((value, {section}) => section !== 'FUSION_TABLE')
         .skip((_, {eeTableRowSelection}) => eeTableRowSelection === 'INCLUDE_ALL')
         .skip((value, {eeTableColumn}) => !eeTableColumn)
         .notBlank('process.mosaic.panel.areaOfInterest.form.eeTable.row.required'),
-
-    fusionTable: new Form.Field()
-        .skip((value, {section}) => section !== 'FUSION_TABLE')
-        .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.required'),
-    allowWholeFusionTable: new Form.Field(),
-    fusionTableRowSelection: new Form.Field(),
-    fusionTableColumn: new Form.Field()
-        .skip((value, {section}) => section !== 'FUSION_TABLE')
-        .skip((_, {fusionTableRowSelection}) => fusionTableRowSelection === 'INCLUDE_ALL')
-        .skip((value, {fusionTable}) => !fusionTable)
-        .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.column.required'),
-    fusionTableRow: new Form.Field()
-        .skip((value, {section}) => section !== 'FUSION_TABLE')
-        .skip((_, {fusionTableRowSelection}) => fusionTableRowSelection === 'INCLUDE_ALL')
-        .skip((value, {fusionTableColumn}) => !fusionTableColumn)
-        .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.row.required'),
 
     polygon: new Form.Field()
         .skip((value, {section}) => section !== 'POLYGON')
@@ -67,7 +48,7 @@ class Aoi extends React.Component {
     }
 
     render() {
-        const {recipeId, allowWholeFusionTable, allowWholeEETable, inputs} = this.props
+        const {recipeId, allowWholeEETable, inputs} = this.props
         const sections = [{
             component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
         }, {
@@ -75,14 +56,6 @@ class Aoi extends React.Component {
             label: msg('process.mosaic.panel.areaOfInterest.form.country.title'),
             title: 'COUNTRY/PROVINCE',
             component: <CountrySection recipeId={recipeId} inputs={inputs}/>
-        }, {
-            value: 'FUSION_TABLE',
-            label: msg('process.mosaic.panel.areaOfInterest.form.fusionTable.title'),
-            title: 'FUSION TABLE',
-            component: <FusionTableSection
-                recipeId={recipeId}
-                inputs={inputs}
-                allowWholeFusionTable={allowWholeFusionTable}/>
         }, {
             value: 'EE_TABLE',
             label: msg('process.mosaic.panel.areaOfInterest.form.eeTable.title'),
@@ -121,8 +94,8 @@ class Aoi extends React.Component {
     }
 
     componentDidUpdate() {
-        const {inputs, allowWholeFusionTable = ''} = this.props
-        inputs.allowWholeFusionTable.set(allowWholeFusionTable)
+        const {inputs, allowWholeEETable = ''} = this.props
+        inputs.allowWholeEETable.set(allowWholeEETable)
     }
 
     showPreview() {
@@ -154,7 +127,7 @@ class Aoi extends React.Component {
 }
 
 Aoi.propTypes = {
-    allowWholeFusionTable: PropTypes.any
+    allowWholeEETable: PropTypes.any
 }
 
 const valuesToModel = values => {
@@ -166,14 +139,6 @@ const valuesToModel = values => {
             keyColumn: 'id',
             key: values.area || values.country,
             level: values.area ? 'AREA' : 'COUNTRY'
-        }
-    case 'FUSION_TABLE':
-        return {
-            type: 'FUSION_TABLE',
-            id: values.fusionTable,
-            keyColumn: values.fusionTableRowSelection === 'FILTER' ? values.fusionTableColumn : null,
-            key: values.fusionTableRowSelection === 'FILTER' ? values.fusionTableRow : null,
-            bounds: values.bounds
         }
     case 'EE_TABLE':
         return {
@@ -207,14 +172,6 @@ const modelToValues = (model = {}) => {
                 eeTableColumn: model.keyColumn,
                 eeTableRow: model.key,
                 eeTableRowSelection: model.keyColumn ? 'FILTER' : 'INCLUDE_ALL'
-            }
-    else if (model.type === 'FUSION_TABLE')
-            return {
-                section: 'FUSION_TABLE',
-                fusionTable: model.id,
-                fusionTableColumn: model.keyColumn,
-                fusionTableRow: model.key,
-                fusionTableRowSelection: model.keyColumn ? 'FILTER' : 'INCLUDE_ALL'
             }
     else if (model.type === 'POLYGON')
         return {

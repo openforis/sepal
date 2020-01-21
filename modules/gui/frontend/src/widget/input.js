@@ -28,7 +28,7 @@ class _Input extends React.Component {
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, border, onClick} = this.props
+        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, busyMessage, border, onClick} = this.props
         return (
             <Widget
                 className={[
@@ -40,6 +40,7 @@ class _Input extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 errorMessage={errorMessage}
+                busyMessage={busyMessage}
                 border={border}
                 onClick={e => onClick && onClick(e)}
             >
@@ -152,6 +153,7 @@ Input.propTypes = {
     autoCorrect: PropTypes.any,
     autoFocus: PropTypes.any,
     border: PropTypes.any,
+    busyMessage: PropTypes.string,
     className: PropTypes.string,
     defaultValue: PropTypes.any,
     disabled: PropTypes.any,
@@ -198,7 +200,7 @@ class _Textarea extends React.Component {
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, border} = this.props
+        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, busyMessage, border} = this.props
         return (
             <Widget
                 className={[
@@ -210,6 +212,7 @@ class _Textarea extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 errorMessage={errorMessage}
+                busyMessage={busyMessage}
                 border={border}>
                 {this.renderTextArea()}
             </Widget>
@@ -249,9 +252,10 @@ export const Textarea = compose(
 
 Textarea.propTypes = {
     autoFocus: PropTypes.any,
+    busyMessage: PropTypes.string,
     className: PropTypes.string,
     disabled: PropTypes.any,
-    errorMessage: PropTypes.any,
+    errorMessage: PropTypes.string,
     label: PropTypes.any,
     maxRows: PropTypes.number,
     minRows: PropTypes.number,

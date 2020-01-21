@@ -1,10 +1,8 @@
 import './map.module.css'
 import {sepalMap} from './map'
 import {setEETableLayer} from './eeTableLayer'
-import {setFusionTableLayer} from './fusionTable'
 import {setPolygonLayer} from './polygonLayer'
 
-export const countryFusionTable = '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU'
 export const countryEETable = 'users/wiell/SepalResources/countries'
 
 export const removeAoiLayer = contextId => {
@@ -23,19 +21,6 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => 
                 columnName: 'id',
                 columnValue: aoi.areaCode || aoi.countryCode
             },
-            destroy$,
-            onInitialized
-        })
-    case 'FUSION_TABLE':
-        return setFusionTableLayer({
-            contextId,
-            layerSpec: {
-                id: layerId,
-                tableId: aoi.id,
-                keyColumn: aoi.keyColumn,
-                key: aoi.key
-            },
-            fill,
             destroy$,
             onInitialized
         })

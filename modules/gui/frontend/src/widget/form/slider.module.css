@@ -17,16 +17,6 @@
     position: relative;
 }
 
-.disabled {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background-color: var(--panel-default-overlay-color);
-    z-index: 10;
-}
-
 .container {
     width: 100%;
     height: var(--container-height);

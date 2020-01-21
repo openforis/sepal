@@ -46,9 +46,6 @@ export const RecipeActions = id => {
                 'model.compositeOptions': model,
             }, {values, model})
         },
-        setFusionTableColumns(columns) {
-            return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
-        },
         setPreviewType(type, value) {
             return setAll('SET_PREVIEW_TYPE', {
                 'ui.preview.type': type,

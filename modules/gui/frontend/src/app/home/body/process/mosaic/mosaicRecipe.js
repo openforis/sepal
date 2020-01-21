@@ -68,12 +68,6 @@ export const RecipeActions = id => {
                 'ui.bands.panSharpen': enabled
             }, {enabled})
         },
-        setFusionTableColumns(columns) {
-            return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
-        },
-        setFusionTableRows(rows) {
-            return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
-        },
         setEETableColumns(columns) {
             return set('SET_EE_TABLE_COLUMNS', 'ui.eeTable.columns', columns, {columns})
         },
