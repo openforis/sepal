@@ -12,7 +12,7 @@ class _FormInput extends React.Component {
     }
 
     renderInput() {
-        const {form, className, input, errorMessage, type, validate, tabIndex, onChange, onBlur, ...props} = this.props
+        const {form, className, input, errorMessage, busyMessage, type, validate, tabIndex, onChange, onBlur, ...props} = this.props
         return (
             <Input
                 {...props}
@@ -24,6 +24,7 @@ class _FormInput extends React.Component {
                     : ''
                 }
                 errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
+                busyMessage={busyMessage}
                 tabIndex={tabIndex}
                 onChange={e => {
                     input.handleChange(e)
@@ -39,7 +40,7 @@ class _FormInput extends React.Component {
     }
 
     renderTextArea() {
-        const {form, className, input, errorMessage, minRows, maxRows, validate, tabIndex, onChange, onBlur, ...props} = this.props
+        const {form, className, input, errorMessage, busyMessage, minRows, maxRows, validate, tabIndex, onChange, onBlur, ...props} = this.props
         return (
             <Textarea
                 {...props}
@@ -47,6 +48,7 @@ class _FormInput extends React.Component {
                 name={input.name}
                 value={input.value || ''}
                 errorMessage={getErrorMessage(form, errorMessage === true ? input : errorMessage)}
+                busyMessage={busyMessage}
                 tabIndex={tabIndex}
                 minRows={minRows}
                 maxRows={maxRows}
@@ -74,6 +76,7 @@ FormInput.propTypes = {
     autoComplete: PropTypes.any,
     autoCorrect: PropTypes.any,
     autoFocus: PropTypes.any,
+    busyMessage: PropTypes.any,
     className: PropTypes.string,
     errorMessage: PropTypes.any,
     label: PropTypes.string,
