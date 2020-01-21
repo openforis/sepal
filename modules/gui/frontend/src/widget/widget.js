@@ -1,4 +1,3 @@
-import {Disable} from 'widget/disable'
 import {Layout} from 'widget/layout'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
@@ -20,7 +19,6 @@ export class Widget extends React.Component {
                     disabled ? styles.disabled : null,
                     className
                 ].join(' ')}
-                // disabled={disabled}
                 onClick={e => onClick && onClick(e)}>
                 {this.renderLabel()}
                 <Layout
