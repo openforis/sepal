@@ -51,6 +51,7 @@ class EETableSection extends React.Component {
                     spellCheck={false}
                     onChange={e => this.onEETableChange(e)}
                     errorMessage
+                    busyMessage={this.props.stream('LOAD_EE_TABLE_COLUMNS').active}
                 />
                 {allowWholeEETable ? this.renderFilterOptions() : null}
                 {this.renderColumnValueRowInputs()}
