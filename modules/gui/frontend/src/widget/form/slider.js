@@ -116,7 +116,6 @@ SliderContainer.propTypes = {
     input: PropTypes.object.isRequired,
     decimals: PropTypes.number,
     denormalize: PropTypes.func,
-    disabled: PropTypes.any,
     info: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.func
@@ -485,7 +484,7 @@ export class FormSlider extends React.Component {
     }
 
     renderContainer() {
-        const {input, scale = 'linear', decimals = 0, snap, range = 'left', invert = false, info, disabled} = this.props
+        const {input, scale = 'linear', decimals = 0, snap, range = 'left', invert = false, info} = this.props
         const {ticks, minValue, maxValue, width} = this.state
         return (
             <SliderContainer
@@ -499,31 +498,23 @@ export class FormSlider extends React.Component {
                 scale={scale}
                 invert={invert}
                 info={info}
-                width={width}
-                disabled={disabled}/>
+                width={width}/>
         )
 
     }
 
-    renderDisabledOverlay() {
-        const {disabled} = this.props
-        return disabled
-            ? <div className={styles.disabled}/>
-            : null
-    }
-
     render() {
-        const {label, tooltip, tooltipPlacement, alignment} = this.props
+        const {label, tooltip, tooltipPlacement, alignment, disabled} = this.props
         return (
             <Widget
                 className={styles.wrapper}
                 label={label}
                 alignment={alignment}
+                disabled={disabled}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}>
                 {this.renderInfo()}
                 {this.renderSlider()}
-                {this.renderDisabledOverlay()}
             </Widget>
         )
     }
