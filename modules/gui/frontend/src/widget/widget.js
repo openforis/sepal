@@ -15,7 +15,7 @@ export class Widget extends React.Component {
                 className={[
                     styles.container,
                     styles[widgetState],
-                    onClick ? styles.clickable : null,
+                    onClick && !disabled ? styles.clickable : null,
                     disabled ? styles.disabled : null,
                     className
                 ].join(' ')}
