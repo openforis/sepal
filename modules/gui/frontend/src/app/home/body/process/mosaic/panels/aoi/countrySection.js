@@ -96,7 +96,7 @@ class CountrySection extends React.Component {
                     placement='below'
                     options={countries || []}
                     placeholder={countryPlaceholder}
-                    busy={stream('LOAD_COUNTRIES').active}
+                    busyMessage={stream('LOAD_COUNTRIES').active}
                     disabled={!countries}
                     autoFocus
                     onChange={option => {
@@ -111,7 +111,7 @@ class CountrySection extends React.Component {
                     placement='below'
                     options={(countryAreas || [])}
                     placeholder={areaPlaceholder}
-                    busy={stream('LOAD_COUNTRY_AREAS').active}
+                    busyMessage={stream('LOAD_COUNTRY_AREAS').active}
                     disabled={!countryAreas || countryAreas.length === 0}
                     onChange={() => this.aoiChanged$.next()}
                 />

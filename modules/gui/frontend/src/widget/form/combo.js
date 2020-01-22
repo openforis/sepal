@@ -40,7 +40,7 @@ class _FormCombo extends React.Component {
     }
 
     render() {
-        const {errorMessage, standalone, disabled, className, onCancel} = this.props
+        const {errorMessage, busyMessage, standalone, disabled, className, onCancel} = this.props
         const {label, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
         const onClick = e =>
@@ -58,7 +58,8 @@ class _FormCombo extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
-                errorMessage={errorMessage}>
+                errorMessage={errorMessage}
+                busyMessage={busyMessage}>
                 <div
                     ref={this.inputContainer}
                     onClick={onClick}>
@@ -70,7 +71,7 @@ class _FormCombo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, disabled, busy, standalone, readOnly, inputClassName, input} = this.props
+        const {placeholder, autoFocus, disabled, busyMessage, standalone, readOnly, inputClassName, input} = this.props
         const {focused, filter, selectedOption, showOptions} = this.state
         const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
@@ -96,7 +97,7 @@ class _FormCombo extends React.Component {
                     type='search'
                     value={filter}
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
-                    disabled={disabled || busy}
+                    disabled={disabled || busyMessage}
                     readOnly={readOnly || isMobile()}
                     rightComponent={this.renderToggleOptionsButton()}
                     onChange={e => this.setFilter(e.target.value)}
@@ -306,7 +307,7 @@ FormCombo.propTypes = {
     options: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     autoFocus: PropTypes.any,
-    busy: PropTypes.any,
+    busyMessage: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
