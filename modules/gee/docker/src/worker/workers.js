@@ -39,7 +39,7 @@ const createWorker = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMi
     const cancel$ = new Subject()
 
     const pool = LimitedPool({
-        name: jobName,
+        name: `Worker/${jobName}`,
         maxIdleMilliseconds,
         minIdleCount,
         rateWindowMs: RATE_WINDOW_MS,

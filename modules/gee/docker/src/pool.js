@@ -103,17 +103,18 @@ const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCo
     }
 }
 
-const LimitedPool = ({rateWindowMs, maxRate, maxConcurrency, create$, ...args}) => {
+const LimitedPool = ({name, rateWindowMs, maxRate, maxConcurrency, create$, ...args}) => {
     const rateLimiter$ = Limiter$({
-        name: 'LimitedPool rate',
+        name: `${name}/R`,
         rateWindowMs,
         maxRate
     })
     const concurrencyLimiter$ = Limiter$({
-        name: 'LimitedPool concurrency',
+        name: `${name}/C`,
         maxConcurrency
     })
     const pool = Pool({
+        name,
         ...args,
         create$: instanceId =>
             from( // [HACK] https://github.com/ReactiveX/rxjs/issues/5237
