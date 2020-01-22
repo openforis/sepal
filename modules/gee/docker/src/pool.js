@@ -4,7 +4,6 @@ const {v4: uuid} = require('uuid')
 const _ = require('lodash')
 const log = require('sepal/log')('pool')
 const {Limiter$} = require('sepal/service/limiter')
-// const {Limiter$} = require('./limiter')
 
 const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCold, onHot, onRelease, onDispose, onKeep, onMsg}) => {
     const pool = []
@@ -52,9 +51,9 @@ const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCo
     const dispose = instance => {
         const idleCount = _.filter(pool, instance => !instance.locked).length
         if (idleCount > minIdleCount) {
+            _.pull(pool, instance)
             log.debug(msg(instance, 'disposed'))
             onDispose && onDispose({id: instance.id, item: instance.item, instanceId: instanceId(instance.id)})
-            _.pull(pool, instance)
         } else {
             log.debug(msg(instance, 'kept'))
             onKeep && onKeep({id: instance.id, item: instance.item, instanceId: instanceId(instance.id)})
