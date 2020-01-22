@@ -43,12 +43,12 @@ const Pool = ({name, maxIdleMilliseconds = 1000, minIdleCount = 0, create$, onCo
 
     const add = instance =>
         pool.push(instance)
-
+        
     const msg = (instance, action) =>
         onMsg
-            ? onMsg({instanceId: `${name}.${instance.id.substr(-4)}`, action})
-            : `Pool instance [${name}.${instance.id.substr(-4)}] ${action}`
-    
+            ? `${onMsg({instanceId: `${name}.${instance.id.substr(-4)}`, action})} (${pool.length} active)`
+            : `Pool instance [${name}.${instance.id.substr(-4)}] ${action} (${pool.length} active)`
+
     const dispose = instance => {
         const idleCount = _.filter(pool, instance => !instance.locked).length
         if (idleCount > minIdleCount) {
