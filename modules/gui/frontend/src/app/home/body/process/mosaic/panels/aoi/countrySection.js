@@ -77,10 +77,12 @@ class CountrySection extends React.Component {
 
     render() {
         const {stream, countries, countryAreas, inputs: {country, area}} = this.props
-        const countriesState = stream('LOAD_COUNTRIES').active
+        const loadCountries = stream('LOAD_COUNTRIES')
+        const loadCountryAreas = stream('LOAD_COUNTRY_AREAS')
+        const countriesState = loadCountries.active
             ? 'loading'
             : 'loaded'
-        const areasState = stream('LOAD_COUNTRY_AREAS').active
+        const areasState = loadCountryAreas.active
             ? 'loading'
             : country.value
                 ? countryAreas && countryAreas.length > 0 ? 'loaded' : 'noAreas'
@@ -95,8 +97,8 @@ class CountrySection extends React.Component {
                     placement='below'
                     options={countries || []}
                     placeholder={countryPlaceholder}
-                    busyMessage={stream('LOAD_COUNTRIES').active}
-                    disabled={!countries}
+                    busyMessage={loadCountries.active}
+                    disabled={loadCountries.failed}
                     autoFocus
                     onChange={option => {
                         area.set('')
@@ -110,8 +112,8 @@ class CountrySection extends React.Component {
                     placement='below'
                     options={(countryAreas || [])}
                     placeholder={areaPlaceholder}
-                    busyMessage={stream('LOAD_COUNTRY_AREAS').active}
-                    disabled={!countryAreas || countryAreas.length === 0}
+                    busyMessage={loadCountryAreas.active}
+                    disabled={loadCountryAreas.failed || !countryAreas || countryAreas.length === 0}
                     onChange={() => this.aoiChanged$.next()}
                 />
             </Layout>
