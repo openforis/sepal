@@ -39,18 +39,24 @@ class _FormCombo extends React.Component {
         focused: false
     }
 
+    isActive() {
+        const {busyMessage, disabled} = this.props
+        return !(disabled || busyMessage)
+    }
+
     render() {
-        const {errorMessage, standalone, disabled, className, onCancel} = this.props
+        const {errorMessage, busyMessage, standalone, disabled, className, onCancel} = this.props
         const {label, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
-        const onClick = e =>
-            standalone
-                ? onCancel && onCancel(e)
-                : showOptions
-                    ? this.hideOptions()
-                    : disabled
-                        ? null
+        const onClick = e => {
+            if (this.isActive()) {
+                return standalone
+                    ? onCancel && onCancel(e)
+                    : showOptions
+                        ? this.hideOptions()
                         : this.showOptions()
+            }
+        }
         return (
             <Form.FieldSet
                 className={[styles.container, className].join(' ')}
@@ -58,7 +64,8 @@ class _FormCombo extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
-                errorMessage={errorMessage}>
+                errorMessage={errorMessage}
+                busyMessage={busyMessage}>
                 <div
                     ref={this.inputContainer}
                     onClick={onClick}>
@@ -70,7 +77,7 @@ class _FormCombo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, disabled, busy, standalone, readOnly, inputClassName, input} = this.props
+        const {placeholder, autoFocus, standalone, readOnly, inputClassName, input} = this.props
         const {focused, filter, selectedOption, showOptions} = this.state
         const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
@@ -83,7 +90,7 @@ class _FormCombo extends React.Component {
         }
         return (
             <Keybinding
-                disabled={disabled || !focused}
+                disabled={!this.isActive() || !focused}
                 keymap={keymap}>
                 <Input
                     ref={this.input}
@@ -96,7 +103,7 @@ class _FormCombo extends React.Component {
                     type='search'
                     value={filter}
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
-                    disabled={disabled || busy}
+                    disabled={!this.isActive()}
                     readOnly={readOnly || isMobile()}
                     rightComponent={this.renderToggleOptionsButton()}
                     onChange={e => this.setFilter(e.target.value)}
@@ -126,6 +133,7 @@ class _FormCombo extends React.Component {
                 icon={icon[placement]}
                 iconFlipVertical={showOptions}
                 iconFixedWidth
+                disabled={!this.isActive()}
                 onClick={() => showOptions
                     ? this.hideOptions()
                     : this.showOptions()
@@ -306,7 +314,7 @@ FormCombo.propTypes = {
     options: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     autoFocus: PropTypes.any,
-    busy: PropTypes.any,
+    busyMessage: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.any,
