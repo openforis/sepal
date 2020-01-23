@@ -1,17 +1,17 @@
-import api from 'api'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {sepalMap} from 'app/home/map/map'
-import {compose} from 'compose'
-import React from 'react'
-import {Subject} from 'rxjs'
-import {debounceTime, map, takeUntil} from 'rxjs/operators'
-import {selectFrom} from 'stateUtils'
-import withSubscriptions from 'subscription'
-import {msg} from 'translate'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {RecipeActions} from '../../mosaicRecipe'
+import {Subject} from 'rxjs'
+import {compose} from 'compose'
+import {debounceTime, map, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import {sepalMap} from 'app/home/map/map'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import React from 'react'
+import api from 'api'
+import withSubscriptions from 'subscription'
 
 const mapRecipeToProps = recipe => {
     return {
@@ -101,7 +101,7 @@ class EETableSection extends React.Component {
                     ? 'noColumn'
                     : 'noEETable'
 
-        console.log('eeTableRowSelection.value', !this.hasColumns() || eeTableRowSelection.value === 'INCLUDE_ALL')
+        // console.log('eeTableRowSelection.value', !this.hasColumns() || eeTableRowSelection.value === 'INCLUDE_ALL')
         return (
             <React.Fragment>
                 <Form.Combo
@@ -149,9 +149,9 @@ class EETableSection extends React.Component {
         this.props.stream('LOAD_EE_TABLE_ROWS',
             api.gee.loadEETableColumnValues$(this.props.inputs.eeTable.value, column).pipe(
                 map(values => {
-                        this.recipe.setEETableRows(values)
-                            .dispatch()
-                    }
+                    this.recipe.setEETableRows(values)
+                        .dispatch()
+                }
                 ),
                 takeUntil(this.eeTableColumnChanged$),
                 takeUntil(this.eeTableChanged$)

@@ -21,13 +21,14 @@ class AoiLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId, aoi, tabCount, componentWillUnmount$} = this.props
+        // const {recipeId, aoi, tabCount, componentWillUnmount$} = this.props
+        const {recipeId, aoi, tabCount} = this.props
         setAoiLayer({
             contextId: recipeId,
             aoi,
             // destroy$: componentWillUnmount$,
             onInitialized: () => {
-                console.log('onInitialized')
+                // console.log('onInitialized')
                 if (tabCount === 1) {
                     sepalMap.setContext(recipeId)
                     sepalMap.getContext(recipeId).fitLayer('aoi')
