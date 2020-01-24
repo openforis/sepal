@@ -15,7 +15,7 @@ export const RecipeContext = ({rootStatePath = 'process.tabs', recipeId, childre
             <Context.Provider value={{
                 statePath: toPathList([rootStatePath, {id: recipeId}])
             }}>
-                <ActivationContext id={'recipe-' + recipeId}>
+                <ActivationContext id={`recipe-${recipeId}`}>
                     {children}
                 </ActivationContext>
             </Context.Provider>

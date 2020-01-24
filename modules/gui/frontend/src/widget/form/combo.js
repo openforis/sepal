@@ -259,7 +259,7 @@ class _FormCombo extends React.Component {
 
     matcher(filter) {
         // match beginning of multiple words in order (e.g. "u k" matches "United Kingdom")
-        return RegExp(filter.split(/\s/).map(part => '\\b' + escapeStringRegexp(part)).join('.*'), 'i')
+        return RegExp(filter.split(/\s/).map(part => `\\b${escapeStringRegexp(part)}`).join('.*'), 'i')
     }
 
     updateOptions() {

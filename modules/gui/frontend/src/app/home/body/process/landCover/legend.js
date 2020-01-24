@@ -25,7 +25,7 @@ class Legend extends React.Component {
     renderPrimitiveType(type) {
         return (
             <React.Fragment key={type.id}>
-                <span className={styles.color} style={{backgroundColor: '#' + type.color}}/>
+                <span className={styles.color} style={{backgroundColor: `#${type.color}`}}/>
                 <span className={styles.label}>{type.label}</span>
             </React.Fragment>
         )

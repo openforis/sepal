@@ -172,13 +172,13 @@ class _Pageable extends React.Component {
                     }
                 } else if (stop === start) {
                     return {
-                        stop: stop
+                        stop
                     }
                 } else {
                     const item = items[stop - 1]
                     if (this.isMatching(item)) {
                         return {
-                            stop: stop,
+                            stop,
                             pageItems: [...pageItems, item]
                         }
                     }
@@ -205,13 +205,13 @@ class _Pageable extends React.Component {
                     }
                 } else if (start === stop) {
                     return {
-                        start: start
+                        start
                     }
                 } else {
                     const item = items[start]
                     if (this.isMatching(item)) {
                         return {
-                            start: start,
+                            start,
                             pageItems: [item, ...pageItems]
                         }
                     }

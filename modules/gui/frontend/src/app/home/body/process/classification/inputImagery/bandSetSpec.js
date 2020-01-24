@@ -36,7 +36,7 @@ const specClass = spec => {
     case 'INDEXES':
         return Indexes
     default :
-        throw Error('Unsupported band set spec class: ' + JSON.stringify(spec))
+        throw Error(`Unsupported band set spec class: ${JSON.stringify(spec)}`)
     }
 }
 

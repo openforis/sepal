@@ -27,7 +27,7 @@ class _TimeSeries extends React.Component {
         const {recipeId, recipePath} = this.props
         return (
             <div className={styles.timeSeries}>
-                <MapToolbar statePath={recipePath + '.ui'} mapContext={recipeId} labelLayerIndex={1}/>
+                <MapToolbar statePath={`${recipePath}.ui`} mapContext={recipeId} labelLayerIndex={1}/>
                 <TimeSeriesToolbar/>
             </div>
         )

@@ -1,20 +1,20 @@
-import actionBuilder from 'action-builder'
-import api from 'api'
-import {compose} from 'compose'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {timer} from 'rxjs'
-import {exhaustMap, map} from 'rxjs/operators'
-import {connect} from 'store'
 import {ActivationContext} from 'widget/activation/activationContext'
 import {PortalContainer} from 'widget/portal'
+import {compose} from 'compose'
+import {connect} from 'store'
+import {exhaustMap, map} from 'rxjs/operators'
+import {isFloating} from './menu/menuMode'
+import {timer} from 'rxjs'
 import Body from './body/body'
 import Footer from './footer/footer'
-import styles from './home.module.css'
 import Map from './map/map'
 import Menu from './menu/menu'
-import {isFloating} from './menu/menuMode'
+import PropTypes from 'prop-types'
+import React from 'react'
+import actionBuilder from 'action-builder'
+import api from 'api'
+import moment from 'moment'
+import styles from './home.module.css'
 
 const mapStateToProps = () => ({
     floatingMenu: isFloating(),
@@ -47,7 +47,7 @@ const projectStorageSpending = spending => {
     const fractionLeftOfMonth = 1 - today / lastOfMonth
     const storageCostForRestOfMonth = storageUsed * costPerGbMonth * fractionLeftOfMonth
     const monthlyStorageSpending = spending.monthlyStorageSpending
-    return  monthlyStorageSpending + storageCostForRestOfMonth
+    return monthlyStorageSpending + storageCostForRestOfMonth
 }
 
 const isBudgetExceeded = currentUserReport => {

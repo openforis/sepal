@@ -72,11 +72,6 @@ const validateResponse = (response, validStatuses) =>
     !validStatuses || validStatuses.includes(response.status)
         ? response
         : throwError(response)
-
-
-
-
-
         
 const execute$ = (url, method, {retries, query, username, password, headers, validStatuses, ...args}) => {
     const queryString = toQueryString(query)
@@ -84,7 +79,7 @@ const execute$ = (url, method, {retries, query, username, password, headers, val
     headers = {'No-auth-challenge': true, ...headers}
     if (username || password)
         headers = {
-            'Authorization': 'Basic ' + base64.encode(username + ':' + password),
+            'Authorization': `Basic ${base64.encode(`${username}:${password}`)}`,
             ...headers
         }
     return ajax({url: urlWithQuery, method, headers, ...args}).pipe(

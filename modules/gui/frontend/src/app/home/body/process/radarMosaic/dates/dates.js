@@ -132,8 +132,8 @@ const valuesToModel = values => {
         return {targetDate: values.targetDate}
     else
         return {
-            fromDate: yearlyTimeScan ? values.year + '-01-01' : values.fromDate,
-            toDate: yearlyTimeScan ? (Number(values.year) + 1) + '-01-01' : values.toDate
+            fromDate: yearlyTimeScan ? `${values.year}-01-01` : values.fromDate,
+            toDate: yearlyTimeScan ? `${Number(values.year) + 1}-01-01` : values.toDate
         }
 }
 

@@ -20,7 +20,7 @@ const fontAwesomeCollection = type => {
     case 'brands':
         return 'fab'
     default:
-        throw Error('Unsupported icon type: ' + type)
+        throw Error(`Unsupported icon type: ${type}`)
     }
 }
 

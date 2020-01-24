@@ -17,7 +17,7 @@ export const setEETableLayer = (
             mapId$: api.gee.eeTableMap$({tableId, columnName, columnValue, color: '#FFFFFF50', fillColor: '#FFFFFF08'}),
             layerIndex,
             watchedProps
-        }): null
+        }) : null
     sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
     return layer
 }

@@ -52,7 +52,7 @@ export default compose(
 )
 
 const _SectionLink = ({active, name, icon, disabled}) => {
-    const link = '/' + name
+    const link = `/${name}`
     const activeClass = active ? styles.active : null
     return (
         <Button
@@ -70,7 +70,7 @@ const SectionLink = compose(
     _SectionLink,
     connect(
         (state, {name}) => ({
-            active: isPathInLocation('/' + name)
+            active: isPathInLocation(`/${name}`)
         })
     )
 )

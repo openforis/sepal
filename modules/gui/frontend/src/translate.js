@@ -1,9 +1,9 @@
 import {IntlProvider, injectIntl} from 'react-intl'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import flat from 'flat'
 import moment from 'moment'
-import _ from 'lodash'
 
 let intl, intlEn
 const initIntl = intlInstance => intl = intlInstance

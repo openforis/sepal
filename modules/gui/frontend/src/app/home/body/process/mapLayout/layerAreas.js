@@ -123,7 +123,7 @@ const assertValidState = areas => {
         .every(value => value <= 1)
         .value()
     if (!valid) {
-        throw Error('Invalid areas: ' + JSON.stringify(areas))
+        throw Error(`Invalid areas: ${JSON.stringify(areas)}`)
     }
 }
 

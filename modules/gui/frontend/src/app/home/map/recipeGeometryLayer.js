@@ -21,7 +21,7 @@ export const setRecipeGeometryLayer = (
 
 class RecipeGeometryLayer extends EarthEngineLayer {
     constructor({mapId$, layerIndex, recipe}) {
-        super({layerIndex, mapId$: mapId$, props: recipe})
+        super({layerIndex, mapId$, props: recipe})
     }
 
     initialize$() {

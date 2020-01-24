@@ -115,7 +115,7 @@ class InputImage extends React.Component {
                 id: recipe.value
             }
         default:
-            throw Error('Unexpected image section: ' + section.value)
+            throw Error(`Unexpected image section: ${section.value}`)
         }
     }
 
@@ -135,7 +135,7 @@ class InputImage extends React.Component {
                     {id: guid(), type: 'INDEXES', included: []}
                 )
             default:
-                throw Error('Unsupported type: ' + JSON.stringify(option))
+                throw Error(`Unsupported type: ${JSON.stringify(option)}`)
             }
         }
 

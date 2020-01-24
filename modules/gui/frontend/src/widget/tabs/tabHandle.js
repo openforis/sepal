@@ -24,7 +24,7 @@ class _TabHandle extends React.Component {
         const {title = ''} = props
         this.state = {
             editing: false,
-            title: title,
+            title,
             prevTitle: title
         }
     }
