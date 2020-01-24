@@ -1,18 +1,18 @@
 {
-  "name": "terminal",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "express": "^4.16.4",
-    "express-ws": "^4.0.0",
-    "node-pty": "^0.8.1",
-    "rxjs": "^6.5.4"
-  }
+    "name": "terminal",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "node src/server.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.17.1",
+        "express-ws": "^4.0.0",
+        "node-pty": "^0.9.0",
+        "rxjs": "^6.5.4"
+    }
 }

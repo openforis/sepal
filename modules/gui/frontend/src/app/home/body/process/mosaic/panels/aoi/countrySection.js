@@ -142,7 +142,8 @@ class CountrySection extends React.Component {
     }
 
     update() {
-        const {recipeId, countries, stream, inputs: {country, area}, componentWillUnmount$} = this.props
+        // const {recipeId, countries, stream, inputs: {country, area}, componentWillUnmount$} = this.props
+        const {recipeId, countries, stream, inputs: {country, area}} = this.props
         if (!countries && !stream('LOAD_COUNTRIES').active && !stream('LOAD_COUNTRIES').failed) {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),

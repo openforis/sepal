@@ -1,16 +1,16 @@
 import {Form, form} from 'widget/form/form'
-import {Layout} from 'widget/layout'
-import {Panel} from 'widget/panel/panel'
+// import {Layout} from 'widget/layout'
+// import {Panel} from 'widget/panel/panel'
 import {RecipeActions, RecipeState} from './landCoverRecipe'
-import {Subject} from 'rxjs'
+// import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {initValues, withRecipePath} from 'app/home/body/process/recipe'
-import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
-import {map, takeUntil} from 'rxjs/operators'
-import {msg} from 'translate'
+// import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
+// import {map, takeUntil} from 'rxjs/operators'
+// import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './trainingData.module.css'
+// import styles from './trainingData.module.css'
 
 const fields = {
     fusionTable: new Form.Field()
@@ -132,20 +132,20 @@ TrainingData.propTypes = {
     recipeId: PropTypes.string,
 }
 
-const valuesToModel = (values, primitiveTypes) => {
-    const classByPrimitive = {}
-    primitiveTypes && primitiveTypes.forEach(primitiveType => {
-        return classByPrimitive[primitiveType.id] = primitiveType.value
-    }
-    )
-    return {
-        type: 'fusionTable',
-        tableId: values.fusionTable,
-        yearColumn: values.yearColumn,
-        classColumn: values.classColumn,
-        classByPrimitive
-    }
-}
+// const valuesToModel = (values, primitiveTypes) => {
+//     const classByPrimitive = {}
+//     primitiveTypes && primitiveTypes.forEach(primitiveType => {
+//         return classByPrimitive[primitiveType.id] = primitiveType.value
+//     }
+//     )
+//     return {
+//         type: 'fusionTable',
+//         tableId: values.fusionTable,
+//         yearColumn: values.yearColumn,
+//         classColumn: values.classColumn,
+//         classByPrimitive
+//     }
+// }
 
 const modelToValues = (model = {}) => ({
     fusionTable: model.tableId,
