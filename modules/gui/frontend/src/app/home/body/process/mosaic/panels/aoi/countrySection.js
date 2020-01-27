@@ -98,7 +98,7 @@ class CountrySection extends React.Component {
                     placement='below'
                     options={countries || []}
                     placeholder={countryPlaceholder}
-                    busyMessage={loadCountries.active}
+                    busyMessage={loadCountries.active && msg('widget.loading')}
                     disabled={loadCountries.failed}
                     autoFocus
                     onChange={option => {
@@ -113,7 +113,7 @@ class CountrySection extends React.Component {
                     placement='below'
                     options={(countryAreas || [])}
                     placeholder={areaPlaceholder}
-                    busyMessage={loadCountryAreas.active}
+                    busyMessage={loadCountryAreas.active && msg('widget.loading')}
                     disabled={loadCountryAreas.failed || !countryAreas || countryAreas.length === 0}
                     onChange={() => this.aoiChanged$.next()}
                 />
@@ -148,9 +148,9 @@ class CountrySection extends React.Component {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),
                 null,
-                error => Notifications.error({
+                () => Notifications.error({
                     message: msg('process.mosaic.panel.areaOfInterest.form.country.country.loadFailed'),
-                    timeout: 0
+                    timeout: 10
                 })
             )
         }
