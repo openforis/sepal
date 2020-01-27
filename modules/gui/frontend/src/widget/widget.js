@@ -93,11 +93,7 @@ export class Widget extends React.Component {
 
     getBusyMessage() {
         const {busyMessage} = this.props
-        if (busyMessage) {
-            return busyMessage === true
-                ? msg('widget.busy')
-                : busyMessage
-        }
+        return busyMessage
     }
 }
 
