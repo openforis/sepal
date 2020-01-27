@@ -3,6 +3,9 @@ const channel = require('./channel')
 const _ = require('lodash')
 const log = require('sepal/log')('transport')
 
+const DIRECT = 'direct'
+const REVERSE = 'reverse'
+
 const transport = ({id = uuid(), port}) => {
     const send = message =>
         port.postMessage(message)
@@ -20,16 +23,16 @@ const transport = ({id = uuid(), port}) => {
     const handleCreateChannel = ({channelId, conversationId}, onChannel) => {
         const byCallback = ({channelId, conversationId, onChannel}) =>
             onChannel(
-                createChannel({channelId, conversationId, direction: 'reverse'})
+                createChannel({channelId, conversationId, direction: REVERSE})
             )
     
         const byCallbackMap = ({channelId, conversationId, handler}) =>
             handler(
-                createChannel({channelId, conversationId, direction: 'reverse'})
+                createChannel({channelId, conversationId, direction: REVERSE})
             )
 
         const byStreams = ({channelId, conversationId, in$, out$}) =>
-            createChannel({channelId, conversationId, direction: 'reverse', in$, out$})
+            createChannel({channelId, conversationId, direction: REVERSE, in$, out$})
 
         if (channelId && onChannel) {
             if (_.isFunction(onChannel)) {
@@ -53,7 +56,7 @@ const transport = ({id = uuid(), port}) => {
         port,
         createChannel: (channelId, conversationId = uuid()) => {
             send({createChannel: {channelId, conversationId}})
-            return createChannel({channelId, conversationId, direction: 'direct'})
+            return createChannel({channelId, conversationId, direction: DIRECT})
         },
         onChannel: onChannel => {
             const handleMessage = message => {
