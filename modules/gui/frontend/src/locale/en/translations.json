@@ -1627,7 +1627,6 @@
     "page": "Page {pageNumber} of {pageCount}"
   },
   "widget": {
-    "busy": "Busy...",
     "error": "Error",
     "comboBox": {
       "loading": "Loading..."
