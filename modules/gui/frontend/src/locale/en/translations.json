@@ -1622,7 +1622,8 @@
       "noResults": "No results"
     },
     "notification": {
-      "dismiss": "Click notification to dismiss",
+      "dismiss": "Click to dismiss",
+      "dismissOrWait": "Click to dismiss or wait {timeout} seconds",
       "error": {
         "title": "Error"
       },
