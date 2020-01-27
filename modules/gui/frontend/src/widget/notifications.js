@@ -20,7 +20,7 @@ const autoDismiss$ = publish$
     .pipe(
         filter(notification => notification.timeout),
         mergeMap(notification =>
-            timer(notification.timeout).pipe(
+            timer(notification.timeout * 1000).pipe(
                 map(() => notification.id)
             )
         )
@@ -51,7 +51,7 @@ const publish = notification => {
         id = uuid(),
         level = 'info',
         title = defaultTitle[level],
-        timeout = 3000,
+        timeout = 3,
         dismissable = true,
         ...notification
     }) => ({id, level, title, timeout, dismissable, ...notification})
