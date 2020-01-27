@@ -74,7 +74,7 @@
     bottom: 0;
     height: 1px;
     z-index: 2; /* make sure busy spinner is above the overlay */
-    background-color: white;
+    background-color: #b0b0b0;
     animation: busy 600ms linear infinite alternate;
 }
 
