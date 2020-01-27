@@ -1612,6 +1612,7 @@
   },
   "widget": {
     "error": "Error",
+    "loading": "Loading...",
     "comboBox": {
       "loading": "Loading..."
     },
