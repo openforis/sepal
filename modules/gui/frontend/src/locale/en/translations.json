@@ -686,7 +686,8 @@
                 "placeholder": {
                   "loaded": "Select a country...",
                   "loading": "Loading countries..."
-                }
+                },
+                "loadFailed": "Cannot load countries"
               },
               "required": "Country is required",
               "title": "Select country/province"
