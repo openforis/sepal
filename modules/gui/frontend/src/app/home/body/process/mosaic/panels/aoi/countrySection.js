@@ -148,9 +148,9 @@ class CountrySection extends React.Component {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),
                 null,
-                error => Notifications.error({
+                () => Notifications.error({
                     message: msg('process.mosaic.panel.areaOfInterest.form.country.country.loadFailed'),
-                    timeout: 0
+                    timeout: 10
                 })
             )
         }
