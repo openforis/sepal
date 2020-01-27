@@ -145,8 +145,14 @@ class CountrySection extends React.Component {
         const {recipeId, countries, stream, inputs: {country, area}} = this.props
         if (!countries && !stream('LOAD_COUNTRIES').active)
             this.props.stream('LOAD_COUNTRIES',
-                loadCountries$())
-
+                loadCountries$(),
+                null,
+                () => Notifications.error({
+                    message: msg('process.mosaic.panel.areaOfInterest.form.country.country.loadFailed'),
+                    timeout: 10
+                })
+            )
+        }
         setAoiLayer({
             contextId: recipeId,
             aoi: {
