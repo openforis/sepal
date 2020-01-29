@@ -132,6 +132,7 @@
             "ignoreCase": false,
             "ignoreMemberSort": false,
             "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
-        }]
+        }],
+        "space-in-parens": ["error", "never"]
     }
 }
