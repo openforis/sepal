@@ -116,6 +116,7 @@ class CountrySection extends React.Component {
                     busyMessage={loadCountryAreas.active && msg('widget.loading')}
                     disabled={loadCountryAreas.failed || !countryAreas || countryAreas.length === 0}
                     onChange={() => this.aoiChanged$.next()}
+                    allowClear
                 />
             </Layout>
         )
