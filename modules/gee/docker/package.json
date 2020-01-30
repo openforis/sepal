@@ -18,16 +18,15 @@
     },
     "dependencies": {
         "shared": "../../../lib/js/shared",
-        "commander": "^4.0.1",
+        "commander": "^4.1.0",
         "lodash": "^4.17.15",
-        "log4js": "^6.1.0",
+        "log4js": "^6.1.1",
         "moment": "^2.24.0",
-        "npm": "^6.13.4",
         "serialize-error": "^5.0.0",
-        "uuid": "^3.3.3"
+        "uuid": "^3.4.0"
     },
     "devDependencies": {
-        "eslint": "^6.7.2",
+        "eslint": "^6.8.0",
         "link-module-alias": "^1.2.0"
     }
 }
