@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
@@ -105,7 +106,7 @@ class _FormCombo extends React.Component {
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
                     disabled={!this.isActive()}
                     readOnly={readOnly || isMobile()}
-                    rightComponent={this.renderToggleOptionsButton()}
+                    rightComponent={this.renderButtons()}
                     onChange={e => this.setFilter(e.target.value)}
                     onFocus={() => this.setState({focused: true})}
                     onBlur={() => {
@@ -116,6 +117,32 @@ class _FormCombo extends React.Component {
                 <AutoFocus ref={this.input} enabled={autoFocus}/>
             </Keybinding>
         )
+    }
+
+    renderButtons() {
+        return (
+            <ButtonGroup layout='horizontal-nowrap'>
+                {this.renderClearButton()}
+                {this.renderToggleOptionsButton()}
+            </ButtonGroup>
+        )
+    }
+
+    renderClearButton() {
+        const {allowClear} = this.props
+        const {selectedOption} = this.state
+        return allowClear && selectedOption
+            ? (
+                <Button
+                    chromeless
+                    shape='none'
+                    air='none'
+                    icon='times'
+                    iconFixedWidth
+                    onClick={() => this.select$.next()}
+                />
+            )
+            : null
     }
 
     renderToggleOptionsButton() {
@@ -196,7 +223,7 @@ class _FormCombo extends React.Component {
     setSelectedOption(selectedOption) {
         this.updateState({
             selectedOption,
-            selected: true
+            selected: !!selectedOption
         })
     }
 
@@ -313,6 +340,7 @@ FormCombo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.string,

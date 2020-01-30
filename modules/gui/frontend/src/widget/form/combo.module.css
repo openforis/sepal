@@ -15,3 +15,8 @@
     --background-color: hsla(0, 0%, 0%, .9);
     background-color: var(--background-color);
 }
+
+.buttons {
+    display: flex;
+    flex-direction: row;
+}
