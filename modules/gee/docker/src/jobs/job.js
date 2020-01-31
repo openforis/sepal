@@ -1,8 +1,5 @@
-const {Subject, ReplaySubject} = require('rxjs')
-const {takeUntil, finalize} = require('rxjs/operators')
-const {deserializeError} = require('serialize-error')
 const _ = require('lodash')
-const {getWorker} = require('../worker/workers')
+const {getWorkerManager} = require('../worker/manager')
 const {addServices} = require('sepal/service/registry')
 
 // const log = require('sepal/log')('job')
@@ -10,7 +7,7 @@ const {addServices} = require('sepal/service/registry')
 // NOTE: ctx is three-state:
 //
 // - <undefined> when called from worker
-// - <object> when called from main thread
+// - <object> when called from main thread as the entry point
 // - <null> wren called from main thread as a dependency
 
 const isDependency = ctx => ctx === null
@@ -31,37 +28,15 @@ const evaluateArgs = (argFuncs, ctx) =>
         .map(argFunc => argFunc(ctx))
         .value()
 
-const unwrap$ = wrapped$ => {
-    const unwrapped$ = new ReplaySubject()
-    const stop$ = new Subject()
-    wrapped$.pipe(
-        takeUntil(stop$)
-    ).subscribe(
-        ({value, error}) => {
-            value && unwrapped$.next(value)
-            error && unwrapped$.error(deserializeError(error))
-        },
-        error => unwrapped$.error(error)
-        // stream is allowed to complete
-    )
-    return unwrapped$.pipe(
-        finalize(() => stop$.next())
-    )
-}
-
 const main = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds, before, services, args, ctx}) => {
     const argFuncs = [...depArgs(before), args]
     addServices(services)
     return isDependency(ctx)
         ? argFuncs
-        : unwrap$(
-            getWorker({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}).submit$({
-                jobName,
-                jobPath,
-                args: evaluateArgs(argFuncs, ctx),
-                args$: ctx.args$
-            })
-        )
+        : getWorkerManager({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}).submit$({
+            args: evaluateArgs(argFuncs, ctx),
+            args$: ctx.args$
+        })
 }
 
 const assert = (arg, func, msg, required = false) => {
