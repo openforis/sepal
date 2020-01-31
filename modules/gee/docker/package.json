@@ -22,7 +22,6 @@
         "lodash": "^4.17.15",
         "log4js": "^6.1.1",
         "moment": "^2.24.0",
-        "serialize-error": "^5.0.0",
         "uuid": "^3.4.0"
     },
     "devDependencies": {

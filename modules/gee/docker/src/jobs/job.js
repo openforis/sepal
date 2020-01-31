@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const {getWorkerManager} = require('../worker/manager')
+const {getWorkerManager} = require('sepal/worker/manager')
 const {addServices} = require('sepal/service/registry')
 
 // const log = require('sepal/log')('job')
