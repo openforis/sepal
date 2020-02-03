@@ -114,13 +114,16 @@ class EETableSection extends React.Component {
                     ? 'noColumn'
                     : 'noEETable'
 
+        const eeTableColumnDisabled = !this.hasColumns() || eeTableRowSelection.value === 'INCLUDE_ALL'
+        const eeTableRowDisabled = !rows || eeTableColumnDisabled
+
         return (
             <React.Fragment>
                 <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.eeTable.column.label')}
                     input={eeTableColumn}
                     busy={stream('LOAD_EE_TABLE_COLUMNS').active}
-                    disabled={!this.hasColumns() || eeTableRowSelection.value === 'INCLUDE_ALL'}
+                    disabled={eeTableColumnDisabled}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.column.placeholder.${columnState}`)}
                     options={(columns || []).map(column => ({value: column, label: column}))}
                     onChange={column => {
@@ -136,7 +139,7 @@ class EETableSection extends React.Component {
                     label={msg('process.mosaic.panel.areaOfInterest.form.eeTable.row.label')}
                     input={eeTableRow}
                     busy={stream('LOAD_EE_TABLE_ROWS').active}
-                    disabled={!rows || stream('LOAD_EE_TABLE_COLUMNS').active || eeTableRowSelection.value === 'INCLUDE_ALL'}
+                    disabled={eeTableRowDisabled}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.row.placeholder.${rowState}`)}
                     options={(rows || []).map(value => ({value, label: value}))}
                     errorMessage
