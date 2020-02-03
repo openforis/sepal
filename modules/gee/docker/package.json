@@ -14,8 +14,7 @@
     "_moduleAliases": {
         "root": "src",
         "sepal": "node_modules/shared/src",
-        "ee": "node_modules/shared/src/ee",
-        "rxjs": "node_modules/shared/src/rxjs"
+        "ee": "node_modules/shared/src/ee"
     },
     "dependencies": {
         "shared": "../../../lib/js/shared",

@@ -31,7 +31,7 @@ export const downloadObjectZip$ = ({filename, data}) => {
         })
     return from(zipPromise).pipe(
         map(zippedRecipe =>
-            downloadObject(zippedRecipe, filename + '.zip')
+            downloadObject(zippedRecipe, `${filename}.zip`)
         )
     )
 }

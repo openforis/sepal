@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
@@ -39,18 +40,24 @@ class _FormCombo extends React.Component {
         focused: false
     }
 
+    isActive() {
+        const {busyMessage, disabled} = this.props
+        return !(disabled || busyMessage)
+    }
+
     render() {
         const {errorMessage, busyMessage, standalone, disabled, className, onCancel} = this.props
         const {label, tooltip, tooltipPlacement} = this.props
         const {showOptions} = this.state
-        const onClick = e =>
-            standalone
-                ? onCancel && onCancel(e)
-                : showOptions
-                    ? this.hideOptions()
-                    : disabled
-                        ? null
+        const onClick = e => {
+            if (this.isActive()) {
+                return standalone
+                    ? onCancel && onCancel(e)
+                    : showOptions
+                        ? this.hideOptions()
                         : this.showOptions()
+            }
+        }
         return (
             <Form.FieldSet
                 className={[styles.container, className].join(' ')}
@@ -71,7 +78,7 @@ class _FormCombo extends React.Component {
     }
 
     renderInput() {
-        const {placeholder, autoFocus, disabled, busyMessage, standalone, readOnly, inputClassName, input} = this.props
+        const {placeholder, autoFocus, standalone, readOnly, inputClassName, input} = this.props
         const {focused, filter, selectedOption, showOptions} = this.state
         const showOptionsKeyBinding = showOptions ? undefined : () => this.showOptions()
         const keymap = {
@@ -84,7 +91,7 @@ class _FormCombo extends React.Component {
         }
         return (
             <Keybinding
-                disabled={disabled || !focused}
+                disabled={!this.isActive() || !focused}
                 keymap={keymap}>
                 <Input
                     ref={this.input}
@@ -97,9 +104,9 @@ class _FormCombo extends React.Component {
                     type='search'
                     value={filter}
                     placeholder={selectedOption && !standalone ? selectedOption.label : placeholder}
-                    disabled={disabled || busyMessage}
+                    disabled={!this.isActive()}
                     readOnly={readOnly || isMobile()}
-                    rightComponent={this.renderToggleOptionsButton()}
+                    rightComponent={this.renderButtons()}
                     onChange={e => this.setFilter(e.target.value)}
                     onFocus={() => this.setState({focused: true})}
                     onBlur={() => {
@@ -110,6 +117,32 @@ class _FormCombo extends React.Component {
                 <AutoFocus ref={this.input} enabled={autoFocus}/>
             </Keybinding>
         )
+    }
+
+    renderButtons() {
+        return (
+            <ButtonGroup layout='horizontal-nowrap'>
+                {this.renderClearButton()}
+                {this.renderToggleOptionsButton()}
+            </ButtonGroup>
+        )
+    }
+
+    renderClearButton() {
+        const {allowClear} = this.props
+        const {selectedOption} = this.state
+        return allowClear && selectedOption
+            ? (
+                <Button
+                    chromeless
+                    shape='none'
+                    air='none'
+                    icon='times'
+                    iconFixedWidth
+                    onClick={() => this.select$.next()}
+                />
+            )
+            : null
     }
 
     renderToggleOptionsButton() {
@@ -127,6 +160,7 @@ class _FormCombo extends React.Component {
                 icon={icon[placement]}
                 iconFlipVertical={showOptions}
                 iconFixedWidth
+                disabled={!this.isActive()}
                 onClick={() => showOptions
                     ? this.hideOptions()
                     : this.showOptions()
@@ -189,7 +223,7 @@ class _FormCombo extends React.Component {
     setSelectedOption(selectedOption) {
         this.updateState({
             selectedOption,
-            selected: true
+            selected: !!selectedOption
         })
     }
 
@@ -252,7 +286,7 @@ class _FormCombo extends React.Component {
 
     matcher(filter) {
         // match beginning of multiple words in order (e.g. "u k" matches "United Kingdom")
-        return RegExp(filter.split(/\s/).map(part => '\\b' + escapeStringRegexp(part)).join('.*'), 'i')
+        return RegExp(filter.split(/\s/).map(part => `\\b${escapeStringRegexp(part)}`).join('.*'), 'i')
     }
 
     updateOptions() {
@@ -306,6 +340,7 @@ FormCombo.propTypes = {
     input: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
     busyMessage: PropTypes.any,
     className: PropTypes.string,

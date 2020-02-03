@@ -53,7 +53,7 @@ class ScenePreview extends React.Component {
                             <LabelValue name='dataSet' value={dataSetById[dataSet].name} icon='satellite-dish'/>
                             <LabelValue name='date' value={date} icon='calendar'/>
                             <LabelValue name='daysFromTarget' value={daysFromTargetString} icon='calendar-check'/>
-                            <LabelValue name='cloudCover' value={cloudCover + '%'} icon='cloud'/>
+                            <LabelValue name='cloudCover' value={`${cloudCover}%`} icon='cloud'/>
                         </div>
                     </Panel.Content>
                     <Panel.Buttons onEnter={close} onEscape={close}>

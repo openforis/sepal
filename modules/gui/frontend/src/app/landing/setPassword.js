@@ -49,7 +49,7 @@ class SetPassword extends React.Component {
             () => {
                 Notifications.error({
                     message: msg('landing.validate-token.error'),
-                    timeout: 10000
+                    timeout: 10
                 })
                 history().push('/process') // [TODO] fix this
             }

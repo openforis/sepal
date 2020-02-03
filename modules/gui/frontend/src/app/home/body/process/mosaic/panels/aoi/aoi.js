@@ -154,7 +154,7 @@ const valuesToModel = values => {
             path: values.polygon
         }
     default:
-        throw Error('Invalid aoi section: ' + values.section)
+        throw Error(`Invalid aoi section: ${values.section}`)
     }
 }
 

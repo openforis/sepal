@@ -78,10 +78,12 @@ class CountrySection extends React.Component {
 
     render() {
         const {stream, countries, countryAreas, inputs: {country, area}} = this.props
-        const countriesState = stream('LOAD_COUNTRIES').active
+        const loadCountries = stream('LOAD_COUNTRIES')
+        const loadCountryAreas = stream('LOAD_COUNTRY_AREAS')
+        const countriesState = loadCountries.active
             ? 'loading'
             : 'loaded'
-        const areasState = stream('LOAD_COUNTRY_AREAS').active
+        const areasState = loadCountryAreas.active
             ? 'loading'
             : country.value
                 ? countryAreas && countryAreas.length > 0 ? 'loaded' : 'noAreas'
@@ -96,8 +98,8 @@ class CountrySection extends React.Component {
                     placement='below'
                     options={countries || []}
                     placeholder={countryPlaceholder}
-                    busyMessage={stream('LOAD_COUNTRIES').active}
-                    disabled={!countries}
+                    busyMessage={loadCountries.active && msg('widget.loading')}
+                    disabled={loadCountries.failed}
                     autoFocus
                     onChange={option => {
                         area.set('')
@@ -111,9 +113,10 @@ class CountrySection extends React.Component {
                     placement='below'
                     options={(countryAreas || [])}
                     placeholder={areaPlaceholder}
-                    busyMessage={stream('LOAD_COUNTRY_AREAS').active}
-                    disabled={!countryAreas || countryAreas.length === 0}
+                    busyMessage={loadCountryAreas.active && msg('widget.loading')}
+                    disabled={loadCountryAreas.failed || !countryAreas || countryAreas.length === 0}
                     onChange={() => this.aoiChanged$.next()}
+                    allowClear
                 />
             </Layout>
         )
@@ -140,14 +143,15 @@ class CountrySection extends React.Component {
     }
 
     update() {
-        const {recipeId, countries, stream, inputs: {country, area}, componentWillUnmount$} = this.props
+        // const {recipeId, countries, stream, inputs: {country, area}, componentWillUnmount$} = this.props
+        const {recipeId, countries, stream, inputs: {country, area}} = this.props
         if (!countries && !stream('LOAD_COUNTRIES').active && !stream('LOAD_COUNTRIES').failed) {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),
                 null,
-                error => Notifications.error({
+                () => Notifications.error({
                     message: msg('process.mosaic.panel.areaOfInterest.form.country.country.loadFailed'),
-                    timeout: 0
+                    timeout: 10
                 })
             )
         }

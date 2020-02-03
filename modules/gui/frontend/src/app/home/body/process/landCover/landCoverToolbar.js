@@ -25,7 +25,7 @@ const mapStateToProps = (state, ownProps) => {
 class LandCoverToolbar extends React.Component {
     render() {
         const {recipeId, recipePath, recipe} = this.props
-        const statePath = recipePath + '.ui'
+        const statePath = `${recipePath}.ui`
         const trainingData = recipe.model.trainingData || {}
         const status = recipe.model.status
         return (

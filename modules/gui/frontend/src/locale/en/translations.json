@@ -1627,8 +1627,8 @@
     "page": "Page {pageNumber} of {pageCount}"
   },
   "widget": {
-    "busy": "Busy...",
     "error": "Error",
+    "loading": "Loading...",
     "comboBox": {
       "loading": "Loading..."
     },
@@ -1639,7 +1639,8 @@
       "noResults": "No results"
     },
     "notification": {
-      "dismiss": "Click notification to dismiss",
+      "dismiss": "Click to dismiss",
+      "dismissOrWait": "Click to dismiss or wait {timeout} seconds",
       "error": {
         "title": "Error"
       },

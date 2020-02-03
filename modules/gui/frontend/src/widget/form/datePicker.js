@@ -34,7 +34,7 @@ export const minDate = (date1, date2) => pickDate(date1, date2, moment.min)
 export const constrainDate = (date, min, max) => maxDate(minDate(date, max), min)
 
 export class FormDatePicker extends React.Component {
-    id = 'DatePicker-' + guid()
+    id = `DatePicker-${guid()}`
     inputElement = React.createRef()
 
     render() {

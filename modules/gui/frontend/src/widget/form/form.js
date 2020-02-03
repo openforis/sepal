@@ -226,7 +226,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                 const inputs = {}
                 Object.keys(fields).forEach(name => {
                     inputs[name] = {
-                        name: name,
+                        name,
                         value: this.state.values[name],
                         error: this.state.errors[name],
                         validationFailed: !!this.state.errors[name] || !!this.getConstraintErrorsForField(name),

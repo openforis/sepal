@@ -157,7 +157,7 @@ class _SliderDynamics extends React.Component {
         return (
             <React.Fragment>
                 {((range === 'low' && !invert) || (range === 'high' && invert)) ? this.renderLeftRange() : null}
-                {((range === 'high' && !invert ) || (range === 'low' && invert)) ? this.renderRightRange() : null}
+                {((range === 'high' && !invert) || (range === 'low' && invert)) ? this.renderRightRange() : null}
             </React.Fragment>
         )
     }

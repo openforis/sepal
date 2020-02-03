@@ -12,7 +12,7 @@
     bottom: 0;
     left: 0;
     background-color: var(--panel-default-overlay-color);
-    z-index: 10;
+    z-index: 1;
     pointer-events: all;
 }
 
@@ -73,7 +73,8 @@
     right: 0;
     bottom: 0;
     height: 1px;
-    background-color: white;
+    z-index: 2; /* make sure busy spinner is above the overlay */
+    background-color: #b0b0b0;
     animation: busy 600ms linear infinite alternate;
 }
 

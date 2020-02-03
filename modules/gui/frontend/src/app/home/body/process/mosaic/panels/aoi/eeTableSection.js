@@ -1,17 +1,17 @@
-import api from 'api'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {sepalMap} from 'app/home/map/map'
-import {compose} from 'compose'
-import React from 'react'
-import {Subject} from 'rxjs'
-import {debounceTime, map, takeUntil} from 'rxjs/operators'
-import {selectFrom} from 'stateUtils'
-import withSubscriptions from 'subscription'
-import {msg} from 'translate'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {RecipeActions} from '../../mosaicRecipe'
+import {Subject} from 'rxjs'
+import {compose} from 'compose'
+import {debounceTime, distinctUntilChanged, filter, map, takeUntil, tap} from 'rxjs/operators'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import {sepalMap} from 'app/home/map/map'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import React from 'react'
+import api from 'api'
+import withSubscriptions from 'subscription'
 
 const mapRecipeToProps = recipe => {
     return {
@@ -32,11 +32,24 @@ class EETableSection extends React.Component {
 
         addSubscription(
             this.loadColumns$.pipe(
-                debounceTime(1000)
+                debounceTime(750),
+                distinctUntilChanged(),
+                tap(() => this.reset()),
+                filter(tableId => tableId)
             ).subscribe(
                 tableId => this.loadColumns(tableId)
             )
         )
+    }
+
+    reset() {
+        const {inputs: {eeTableColumn, eeTableRow}} = this.props
+        eeTableColumn.set('')
+        eeTableRow.set('')
+        this.recipe.setEETableColumns(null).dispatch()
+        this.recipe.setEETableRows(null).dispatch()
+        this.eeTableChanged$.next()
+        this.eeTableColumnChanged$.next()
     }
 
     render() {
@@ -49,9 +62,9 @@ class EETableSection extends React.Component {
                     input={eeTable}
                     placeholder={msg('process.mosaic.panel.areaOfInterest.form.eeTable.eeTable.placeholder')}
                     spellCheck={false}
-                    onChange={e => this.onEETableChange(e)}
+                    onChange={e => this.loadColumns$.next(e.target.value)}
                     errorMessage
-                    busyMessage={this.props.stream('LOAD_EE_TABLE_COLUMNS').active}
+                    busyMessage={this.props.stream('LOAD_EE_TABLE_COLUMNS').active && msg('widget.loading')}
                 />
                 {allowWholeEETable ? this.renderFilterOptions() : null}
                 {this.renderColumnValueRowInputs()}
@@ -101,7 +114,7 @@ class EETableSection extends React.Component {
                     ? 'noColumn'
                     : 'noEETable'
 
-        console.log('eeTableRowSelection.value', !this.hasColumns() || eeTableRowSelection.value === 'INCLUDE_ALL')
+        // console.log('eeTableRowSelection.value', !this.hasColumns() || eeTableRowSelection.value === 'INCLUDE_ALL')
         return (
             <React.Fragment>
                 <Form.Combo
@@ -150,9 +163,9 @@ class EETableSection extends React.Component {
         this.props.stream('LOAD_EE_TABLE_ROWS',
             api.gee.loadEETableColumnValues$(this.props.inputs.eeTable.value, column).pipe(
                 map(values => {
-                        this.recipe.setEETableRows(values)
-                            .dispatch()
-                    }
+                    this.recipe.setEETableRows(values)
+                        .dispatch()
+                }
                 ),
                 takeUntil(this.eeTableColumnChanged$),
                 takeUntil(this.eeTableChanged$)
@@ -163,17 +176,6 @@ class EETableSection extends React.Component {
     hasColumns() {
         const {columns} = this.props
         return columns && columns.length > 0
-    }
-
-    onEETableChange(e) {
-        const {inputs: {eeTableColumn, eeTableRow}} = this.props
-        eeTableColumn.set('')
-        eeTableRow.set('')
-        this.recipe.setEETableColumns(null).dispatch()
-        this.recipe.setEETableRows(null).dispatch()
-        this.eeTableChanged$.next()
-        this.eeTableColumnChanged$.next()
-        this.loadColumns$.next(e.target.value)
     }
 
     componentDidMount() {

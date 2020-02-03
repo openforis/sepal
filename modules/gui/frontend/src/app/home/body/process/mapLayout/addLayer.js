@@ -65,7 +65,7 @@ class _AddLayerPanel extends React.Component {
     }
 
     addAsset() {
-        console.log('Add asset')
+        // console.log('Add asset')
     }
 }
 

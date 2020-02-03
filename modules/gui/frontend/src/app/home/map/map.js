@@ -48,7 +48,7 @@ export const initGoogleMapsApi$ = () => {
 
     return loadGoogleMapsApiKey$.pipe(
         mergeMap(loadGoogleMapsApi$),
-        map(apiKey => actionBuilder('SET_GOOGLE_MAPS_API_INITIALIZED', {apiKey: apiKey})
+        map(apiKey => actionBuilder('SET_GOOGLE_MAPS_API_INITIALIZED', {apiKey})
             .set('map.apiKey', apiKey)
             .build()
         )
@@ -489,6 +489,6 @@ onInit(google =>
         }
 
         show(shown) {
-            this.component.setState({shown: shown})
+            this.component.setState({shown})
         }
     })

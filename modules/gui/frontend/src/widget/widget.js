@@ -1,8 +1,8 @@
 import {Layout} from 'widget/layout'
+import {msg} from 'translate'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg} from 'translate'
 import styles from './widget.module.css'
 
 export class Widget extends React.Component {
@@ -15,7 +15,7 @@ export class Widget extends React.Component {
                 className={[
                     styles.container,
                     styles[widgetState],
-                    onClick ? styles.clickable : null,
+                    onClick && !disabled ? styles.clickable : null,
                     disabled ? styles.disabled : null,
                     className
                 ].join(' ')}
@@ -38,9 +38,9 @@ export class Widget extends React.Component {
 
     getWidgetState() {
         const {errorMessage, busyMessage} = this.props
-        return errorMessage 
+        return errorMessage
             ? 'error'
-            : busyMessage 
+            : busyMessage
                 ? 'busy'
                 : 'normal'
     }
@@ -61,10 +61,10 @@ export class Widget extends React.Component {
 
     renderMessage() {
         const {errorMessage, busyMessage} = this.props
-        const messageStyle = errorMessage 
-            ? styles.error 
-            : busyMessage 
-                ? styles.busy 
+        const messageStyle = errorMessage
+            ? styles.error
+            : busyMessage
+                ? styles.busy
                 : null
         const message = this.getMessage()
         return message
@@ -93,11 +93,7 @@ export class Widget extends React.Component {
 
     getBusyMessage() {
         const {busyMessage} = this.props
-        if (busyMessage) {
-            return busyMessage === true
-                ? msg('widget.busy')
-                : busyMessage
-        }
+        return busyMessage
     }
 }
 
