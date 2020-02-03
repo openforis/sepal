@@ -31,11 +31,11 @@
         },
         "pool": {
             "appenders": ["console"],
-            "level": "info"
+            "level": "debug"
         },
         "service": {
             "appenders": ["console"],
-            "level": "info"
+            "level": "debug"
         },
         "transport": {
             "appenders": ["console"],
@@ -43,7 +43,7 @@
         },
         "worker": {
             "appenders": ["console"],
-            "level": "info"
+            "level": "debug"
         }
     }
 }
