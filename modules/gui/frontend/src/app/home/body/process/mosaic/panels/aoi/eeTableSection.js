@@ -34,7 +34,7 @@ class EETableSection extends React.Component {
             this.loadColumns$.pipe(
                 debounceTime(750),
                 distinctUntilChanged(),
-                tap(() => this.reset()),
+                // tap(() => this.reset()),
                 filter(tableId => tableId)
             ).subscribe(
                 tableId => this.loadColumns(tableId)
@@ -114,7 +114,6 @@ class EETableSection extends React.Component {
                     ? 'noColumn'
                     : 'noEETable'
 
-        // console.log('eeTableRowSelection.value', !this.hasColumns() || eeTableRowSelection.value === 'INCLUDE_ALL')
         return (
             <React.Fragment>
                 <Form.Combo
@@ -125,6 +124,7 @@ class EETableSection extends React.Component {
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.column.placeholder.${columnState}`)}
                     options={(columns || []).map(column => ({value: column, label: column}))}
                     onChange={column => {
+                        console.log('eeTableColumn onChange')
                         eeTableRow.set('')
                         this.recipe.setEETableRows(null).dispatch()
                         this.eeTableColumnChanged$.next()
@@ -136,7 +136,7 @@ class EETableSection extends React.Component {
                     label={msg('process.mosaic.panel.areaOfInterest.form.eeTable.row.label')}
                     input={eeTableRow}
                     busy={stream('LOAD_EE_TABLE_ROWS').active}
-                    disabled={!rows || eeTableRowSelection.value === 'INCLUDE_ALL'}
+                    disabled={!rows || stream('LOAD_EE_TABLE_COLUMNS').active || eeTableRowSelection.value === 'INCLUDE_ALL'}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.row.placeholder.${rowState}`)}
                     options={(rows || []).map(value => ({value, label: value}))}
                     errorMessage
