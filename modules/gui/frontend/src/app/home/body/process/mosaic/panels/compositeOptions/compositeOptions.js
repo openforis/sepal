@@ -66,7 +66,7 @@ class CompositeOptions extends React.Component {
 
     renderCorrectionOptions() {
         const {inputs: {corrections}, sources} = this.props
-        const includesSentinel2 = Object.keys(sources).includes('SENTINEL_2')
+        // const includesSentinel2 = Object.keys(sources).includes('SENTINEL_2')
         return (
             <Form.Buttons
                 label={msg('process.mosaic.panel.composite.form.corrections.label')}

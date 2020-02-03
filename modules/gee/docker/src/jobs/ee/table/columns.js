@@ -2,7 +2,7 @@ const job = require('root/jobs/job')
 
 const worker$ = ({tableId}) => {
     const ee = require('ee')
-    const {Exception, SystemException, NotFoundException} = require('root/exception')
+    const {Exception, SystemException, NotFoundException} = require('sepal/exception')
     const {throwError, of} = require('rxjs')
     const {switchMap, catchError} = require('rxjs/operators')
 
