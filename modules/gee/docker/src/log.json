@@ -1,12 +1,15 @@
 {
-    "default": "info",
-    "channel": "info",
-    "ee": "debug",
-    "http": "info",
-    "job": "info",
-    "limiter": "info",
-    "pool": "debug",
-    "service": "debug",
-    "transport": "info",
-    "worker": "debug"
+    "port": 5101,
+    "categories": {
+        "default": "info",
+        "channel": "info",
+        "ee": "debug",
+        "http": "info",
+        "job": "info",
+        "limiter": "info",
+        "pool": "debug",
+        "service": "debug",
+        "transport": "info",
+        "worker": "debug"
+    }
 }
