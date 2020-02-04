@@ -1,4 +1,4 @@
-require('sepal/log/configure')(require('./log4js.json'))
+require('sepal/log/configure').server(require('./log.json'))
 
 const config = require('./config')
 const routes = require('./routes')

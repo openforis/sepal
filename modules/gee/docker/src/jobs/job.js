@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const {getWorkerManager} = require('sepal/worker/manager')
 const {addServices} = require('sepal/service/registry')
+const logConfig = require('root/log.json')
 
 // const log = require('sepal/log')('job')
 
@@ -33,7 +34,7 @@ const main = ({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMillisecon
     addServices(services)
     return isDependency(ctx)
         ? argFuncs
-        : getWorkerManager({jobName, jobPath, maxConcurrency, minIdleCount, maxIdleMilliseconds}).submit$({
+        : getWorkerManager({jobName, jobPath, logConfig, maxConcurrency, minIdleCount, maxIdleMilliseconds}).submit$({
             args: evaluateArgs(argFuncs, ctx),
             args$: ctx.args$
         })

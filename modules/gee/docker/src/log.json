@@ -1,0 +1,12 @@
+{
+    "default": "info",
+    "channel": "info",
+    "ee": "debug",
+    "http": "info",
+    "job": "info",
+    "limiter": "info",
+    "pool": "debug",
+    "service": "debug",
+    "transport": "info",
+    "worker": "debug"
+}
