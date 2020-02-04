@@ -7,9 +7,10 @@
         "http": "info",
         "job": "info",
         "limiter": "info",
-        "pool": "debug",
-        "service": "debug",
+        "logger": "info",
+        "pool": "info",
+        "service": "info",
         "transport": "info",
-        "worker": "debug"
+        "worker": "info"
     }
 }
