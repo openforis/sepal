@@ -18,7 +18,7 @@
     },
     "dependencies": {
         "shared": "../../../lib/js/shared",
-        "commander": "^4.1.0",
+        "commander": "^4.1.1",
         "lodash": "^4.17.15",
         "log4js": "^6.1.1",
         "moment": "^2.24.0",
