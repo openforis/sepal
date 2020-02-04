@@ -1,7 +1,7 @@
 const job = require('root/jobs/job')
 
 const worker$ = ({recipe, bands}) => {
-    // const log = require('sepal/log')('ee')
+    // const log = require('sepal/log').getLogger('ee')
 
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')

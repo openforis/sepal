@@ -11,6 +11,6 @@
         "pool": "info",
         "service": "info",
         "transport": "info",
-        "worker": "info"
+        "worker": "debug"
     }
 }

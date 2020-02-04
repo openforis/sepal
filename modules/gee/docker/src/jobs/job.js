@@ -3,7 +3,7 @@ const {getWorkerManager} = require('sepal/worker/manager')
 const {addServices} = require('sepal/service/registry')
 const logConfig = require('root/log.json')
 
-// const log = require('sepal/log')('job')
+// const log = require('sepal/log').getLogger('job')
 
 // NOTE: ctx is three-state:
 //
