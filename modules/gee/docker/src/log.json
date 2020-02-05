@@ -1,19 +1,18 @@
 {
     "port": 5101,
     "categories": {
-        "default": "info"
     },
-    "_categories": {
-        "default": "info",
-        "channel": "info",
-        "ee": "info",
-        "http": "info",
-        "limiter": "info",
-        "logger": "info",
-        "manager": "info",
-        "pool": "info",
-        "service": "info",
-        "transport": "info",
-        "worker": "info"
+    "availableCategories": {
+        "default": "debug",
+        "channel": "debug",
+        "ee": "debug",
+        "http": "debug",
+        "limiter": "debug",
+        "logger": "debug",
+        "manager": "debug",
+        "pool": "debug",
+        "service": "debug",
+        "transport": "debug",
+        "worker": "debug"
     }
 }
