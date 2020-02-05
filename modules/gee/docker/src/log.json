@@ -1,16 +1,19 @@
 {
     "port": 5101,
     "categories": {
+        "default": "info"
+    },
+    "_categories": {
         "default": "info",
         "channel": "info",
-        "ee": "debug",
+        "ee": "info",
         "http": "info",
-        "job": "info",
         "limiter": "info",
         "logger": "info",
+        "manager": "info",
         "pool": "info",
         "service": "info",
         "transport": "info",
-        "worker": "debug"
+        "worker": "info"
     }
 }
