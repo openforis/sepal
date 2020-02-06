@@ -8,16 +8,16 @@ const format = require('root/format')
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1
 
-const downloadFromCloudStorage$ = ({bucketName, prefix, toPath, deleteAfterDownload}) => {
-    const bucket = cloudStorage.bucket(`gs://${bucketName}`)
-    return from(bucket.getFiles({prefix, autoPaginate: true}))
+const downloadFromCloudStorage$ = ({bucket, prefix, downloadDir, deleteAfterDownload}) => {
+    const bucketPath = cloudStorage.bucket(`gs://${bucket}`)
+    return from(bucketPath.getFiles({prefix, autoPaginate: true}))
         .pipe(
             map(response => response[0]),
             switchMap(files => concat(
                 of(getProgress({files})),
-                downloadFiles$({files, prefix, toPath, deleteAfterDownload})
+                downloadFiles$({files, prefix, downloadDir, deleteAfterDownload})
             )),
-            finalize(() => deleteAfterDownload ? bucket.deleteFiles({prefix}): null)
+            finalize(() => deleteAfterDownload ? bucketPath.deleteFiles({prefix}): null)
         )
 }
 
@@ -49,10 +49,10 @@ const getProgress = (
 
 const initialState = files => getProgress({files})
 
-const downloadFiles$ = ({files, prefix, toPath, deleteAfterDownload}) => {
+const downloadFiles$ = ({files, prefix, downloadDir, deleteAfterDownload}) => {
     return of(files).pipe(
         switchMap(files => of(...files)),
-        mergeMap(file => downloadFile$({file, prefix, toPath, deleteAfterDownload}), CONCURRENT_FILE_DOWNLOAD),
+        mergeMap(file => downloadFile$({file, prefix, downloadDir, deleteAfterDownload}), CONCURRENT_FILE_DOWNLOAD),
         scan((currentProgress, fileProgress) => getProgress({
             files,
             currentProgress,
@@ -61,11 +61,11 @@ const downloadFiles$ = ({files, prefix, toPath, deleteAfterDownload}) => {
     )
 }
 
-const downloadFile$ = ({file, prefix, toPath, deleteAfterDownload}) => {
+const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
     const relativePath = file.metadata.name.substring(prefix.length)
     const toFilePath = prefix.endsWith('/')
-        ? path.join(toPath, relativePath)
-        : path.join(toPath, path.basename(prefix), relativePath)
+        ? path.join(downloadDir, relativePath)
+        : path.join(downloadDir, path.basename(prefix), relativePath)
     const downloadChunk$ = start => {
         const end = start + CHUNK_SIZE
         const chunk$ = new Subject()

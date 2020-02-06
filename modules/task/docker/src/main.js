@@ -1,4 +1,4 @@
-require('sepal/log/configure')(require('./log4js.json'))
+require('sepal/log').configureServer(require('./log.json'))
 const server = require('sepal/httpServer')
 const config = require('./config')
 const routes = require('./routes')
@@ -10,5 +10,3 @@ initializeEE$().subscribe(
         routes
     })
 )
-
-

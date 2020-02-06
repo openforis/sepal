@@ -53,7 +53,7 @@ const authenticateServiceAccount$ = serviceAccountCredentials =>
     )
 
 const authenticateUserAccount$ = userCredentials =>
-    ee.$('authenticate user account', resolve => {
+    ee.$('authenticate user account', (resolve, reject) => {
             ee.sepal.setAuthType('USER')
             ee.data.setAuthToken(
                 null,
@@ -61,7 +61,7 @@ const authenticateUserAccount$ = userCredentials =>
                 userCredentials.accessToken,
                 secondsToExpiration(userCredentials.accessTokenExpiryDate),
                 null,
-                () => resolve(),
+                error => error ? reject(error) : resolve(),
                 false
             )
         }
@@ -90,7 +90,6 @@ const initialize$ = () =>
     )
 
 const authTokenRefresher = (authArgs, callback) => {
-    console.log('***************** authTokenRefresher', authArgs)
     initialize$().subscribe({
         error: callback({error}),
         complete: callback(ee.data.getAuthToken())

@@ -1,0 +1,16 @@
+{
+    "port": 5102,
+    "categories": {
+        "default": "info",
+        "channel": "info",
+        "ee": "info",
+        "http": "info",
+        "job": "info",
+        "limiter": "info",
+        "pool": "info",
+        "service": "info",
+        "task": "info",
+        "transport": "info",
+        "worker": "info"
+    }
+}

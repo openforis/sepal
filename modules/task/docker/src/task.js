@@ -1,13 +1,13 @@
 const {Subject, concat} = require('rxjs')
 const {filter, map, share, takeUntil, tap} = require('rxjs/operators')
 const {lastInWindow, repeating} = require('./rxjs/operators')
-const log = require('sepal/log')('task')
+const log = require('sepal/log').getLogger('task')
 const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
 const progress = require('root/progress')
 
-const HEARTBEAT_RATE = 1000
-const MAX_UPDATE_RATE = 1000
+const HEARTBEAT_RATE = 60 * 1000
+const MAX_UPDATE_RATE = 60 * 1000
 
 const cancelSubject$ = new Subject()
 const cancelTask$ = cancelSubject$.pipe(share())

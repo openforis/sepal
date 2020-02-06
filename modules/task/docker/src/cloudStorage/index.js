@@ -1,6 +1,6 @@
 const fs = require('fs')
 const {Subject, from, of} = require('rxjs')
-const {map, switchMap} = require('rxjs/operators')
+const {first, map, switchMap} = require('rxjs/operators')
 const crypto = require('crypto')
 const http = require('sepal/httpClient')
 const {Storage} = require('@google-cloud/storage')
@@ -10,6 +10,9 @@ const config = require('root/config')
 const projectId = config.googleProjectId
 const cloudStorage = new Storage({credentials: config.serviceAccountCredentials, projectId})
 
+/**
+ * Get bucket name for Sepal username and Google account email.
+ */
 const getBucketName = ({username, email}) => {
     const emailHash = crypto.createHash('md5').update(email).digest('hex').substring(0, 4)
     return `${username}-${emailHash}-${config.sepalHost}`.replace(/[^a-zA-Z0-9\-]/g, '-')
@@ -40,23 +43,27 @@ const createBucket$ = user =>
     )
 
 const setBucketPermissions$ = user => {
-    const policy = {
-        kind: 'storage#policy',
-        bindings: [
-            {
-                role: 'roles/storage.objectCreator',
-                members: [`user:${user.email}`],
-            },
-            {
-                role: 'roles/storage.admin',
-                members: [
-                    `projectEditor:${projectId}`,
-                    `projectOwner:${projectId}`,
-                    `serviceAccount:${config.serviceAccountCredentials.client_email}`
-                ],
-            }
-        ]
-    }
+    const userBindings = [{
+        role: 'roles/storage.objectCreator',
+        members: [`user:${user.email}`],
+    },
+        {
+            role: 'roles/storage.legacyBucketWriter',
+            members: [`user:${user.email}`],
+        },
+    ]
+    const bindings = [
+        {
+            role: 'roles/storage.admin',
+            members: [
+                `projectEditor:${projectId}`,
+                `projectOwner:${projectId}`,
+                `serviceAccount:${config.serviceAccountCredentials.client_email}`
+            ],
+        },
+        ...user.serviceAccount ? [] : userBindings
+    ]
+    const policy = {kind: 'storage#policy', bindings}
     const bucket = cloudStorage.bucket(user.bucketName)
     return from(bucket.iam.setPolicy(policy))
 }
@@ -92,8 +99,14 @@ const readJsonFile$ = filePath => {
     return data$
 }
 
-const initUserBucket$ = () =>
-    readJsonFile$(`${config.homeDir}/.config/earthengine/credentials`).pipe(
+const fileExist$ = path => {
+    const exists$ = new Subject()
+    fs.access(path, error => exists$.next(error ? null : path))
+    return exists$.pipe(first())
+}
+
+const getUser$ = path =>
+    readJsonFile$(path).pipe(
         map(credentials => credentials.access_token),
         switchMap(accessToken => getEmail$(accessToken).pipe(
             map(email => ({
@@ -102,7 +115,22 @@ const initUserBucket$ = () =>
                 email,
                 bucketName: getBucketName({username: config.username, email})
             }))
-        )),
+        ))
+    )
+
+const getServiceAccount$ = () => {
+    const username = 'service-account'
+    const email = config.serviceAccountCredentials.client_email
+    const bucketName = getBucketName({username, email})
+    return of({username, email, bucketName, serviceAccount: true})
+}
+
+const initUserBucket$ = () =>
+    fileExist$(`${config.homeDir}/.config/earthengine/credentials`).pipe(
+        switchMap(path => path
+            ? getUser$(path)
+            : getServiceAccount$()
+        ),
         switchMap(user => createIfMissingBucket$(user))
     )
 

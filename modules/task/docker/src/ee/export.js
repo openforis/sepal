@@ -4,6 +4,10 @@ const {map, switchMap} = require('rxjs/operators')
 const {executeTask$} = require('./task')
 const {assetRoots$, deleteAsset$} = require('./asset')
 const path = require('path')
+const moment = require('moment')
+const {initUserBucket$} = require('root/cloudStorage')
+const {downloadFromCloudStorage$} = require('root/cloudStorage/download')
+const log = require('sepal/log').getLogger('ee')
 
 const exportImageToAsset$ = (
     {
@@ -16,10 +20,10 @@ const exportImageToAsset$ = (
         scale,
         crs,
         crsTransform,
-        maxPixels,
+        maxPixels = 1e13,
         retries = 0
     }) =>
-    destination$(description, assetId).pipe(
+    assetDestination$(description, assetId).pipe(
         switchMap(({description, assetId}) =>
             exportToAsset$({
                 createTask: () => ee.batch.Export.image.toAsset(
@@ -32,7 +36,53 @@ const exportImageToAsset$ = (
         )
     )
 
-const destination$ = (description, assetId) => {
+const exportImageToSepal$ = (
+    {
+        image,
+        description,
+        downloadDir,
+        dimensions,
+        region,
+        scale,
+        crs,
+        crsTransform,
+        maxPixels,
+        shardSize,
+        fileDimensions,
+        skipEmptyTiles,
+        fileFormat,
+        formatOptions,
+        retries
+    }) => {
+    const fileNamePrefix = `ee_export/${description}_${moment().format('YYYY-MM-DD_HH:mm:SS')}/`
+    return initUserBucket$().pipe(
+        switchMap(bucket => {
+                const export$ = exportToCloudStorage$({
+                    createTask: () => {
+                        log.fatal({description, bucket, fileNamePrefix})
+                        return ee.batch.Export.image.toCloudStorage(
+                            // image, 'test', 'admin-d2a3-localhost-3000', null,
+                            // null, null, 30
+                            image, description, bucket, fileNamePrefix, dimensions, region, scale, crs,
+                            crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+                        )
+                    },
+                    description: `exportImageToSepal(description: ${description})`,
+                    retries
+                })
+                const download$ = downloadFromCloudStorage$({
+                    bucket,
+                    prefix: fileNamePrefix,
+                    downloadDir,
+                    deleteAfterDownload: false
+                })
+                return concat(export$, download$)
+            }
+        )
+    )
+}
+
+const assetDestination$ = (description, assetId) => {
     if (!assetId && !description)
         throw new Error('description or assetId must be specified')
     description = description || path.dirname(assetId)
@@ -64,8 +114,23 @@ const exportToAsset$ = ({createTask, description, assetId, retries}) => {
     })
 }
 
+
+const exportToCloudStorage$ = ({createTask, description, retries}) => {
+    log.warn('Exporting task', description)
+    return export$({
+        create$: () => {
+            const task = createTask()
+            return concat(
+                executeTask$(task)
+            )
+        },
+        description,
+        retries
+    })
+}
+
 const export$ = ({create$, description, retries}) =>
     create$() // TODO: Retries...
 
 
-module.exports = {exportImageToAsset$}
+module.exports = {exportImageToAsset$, exportImageToSepal$}
