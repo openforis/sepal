@@ -1,7 +1,7 @@
 const ee = require('ee')
 const {EMPTY, interval, of, throwError} = require('rxjs')
 const {distinctUntilChanged, exhaustMap, filter, finalize, map, switchMap, takeWhile, tap} = require('rxjs/operators')
-const log = require('sepal/log')('task')
+const log = require('sepal/log').getLogger('task')
 const progress = require('root/progress')
 
 const MONITORING_FREQUENCY = 1000
@@ -29,7 +29,6 @@ const monitor$ = task =>
             : of(state)
         ),
         distinctUntilChanged(),
-        tap(console.log),
         takeWhile(status => isRunning(status)),
         switchMap(status => progress$(status))
     )

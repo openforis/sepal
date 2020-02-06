@@ -15,14 +15,15 @@
     "_moduleAliases": {
         "root": "src",
         "sepal": "node_modules/shared/src",
-        "ee": "node_modules/shared/src/ee",
-        "rxjs": "node_modules/shared/src/rxjs"
+        "ee": "node_modules/shared/src/ee"
     },
     "dependencies": {
         "@google-cloud/storage": "^4.2.0",
         "@google/earthengine": "^0.1.203",
         "commander": "^4.0.1",
         "fast-crc32c": "^2.0.0",
+        "moment": "^2.24.0",
+        "rxjs": "^6.5.4",
         "shared": "../../../lib/js/shared"
     },
     "devDependencies": {
