@@ -4,10 +4,11 @@ const {exportImageToAsset$} = require('root/ee/export')
 
 module.exports = {
     submit$: (id, {image: {recipe, bands, scale}}) => {
+        const description = recipe.title || recipe.placeholder
         const {getImage$} = ImageFactory(recipe, bands)
         return getImage$().pipe(
             switchMap(image => exportImageToAsset$({
-                image, description: recipe.title, scale
+                image, description, scale, crs: 'EPSG:4326', maxPixels: 1e13
             }))
         )
     }
