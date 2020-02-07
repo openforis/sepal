@@ -10,7 +10,7 @@ module.exports = {
         const {getImage$} = ImageFactory(recipe, bands)
         return getImage$().pipe(
             switchMap(image => exportImageToSepal$({
-                image, description, downloadDir, scale, crs: 'EPSG:4326', maxPixels: 1e13
+                image, description, downloadDir, scale, crs: 'EPSG:4326'
             }))
         )
     }

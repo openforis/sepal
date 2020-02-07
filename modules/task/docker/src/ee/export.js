@@ -46,7 +46,7 @@ const exportImageToSepal$ = (
         scale,
         crs,
         crsTransform,
-        maxPixels,
+        maxPixels = 1e13,
         shardSize,
         fileDimensions,
         skipEmptyTiles,
