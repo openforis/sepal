@@ -86,80 +86,272 @@ R -e "pacman::p_load(\
 
 # OpenForis shiny apps
 R -e "pacman::p_load(\
+        'abind',\
+        'askpass',\
+        'assertthat',\
+        'backports',\
+        'base64enc',\
+        'bfast',\
+        'bfastSpatial',\
+        'BH',\
+        'BiodiversityR',\
         'BIOMASS',\
+        'bit',\
+        'bit64',\
+        'blob',\
+        'brew',\
+        'broom',\
+        'callr',\
         'car',\
         'caret',\
+        'cellranger',\
         'chron',\
+        'classInt',\
+        'cli',\
+        'clipr',\
         'colorspace',\
+        'colourpicker',\
+        'corrplot',\
+        'countrycode',\
+        'crayon',\
+        'curl',\
         'data.table',\
         'DBI',\
+        'DBItest',\
+        'dbplyr',\
+        'desc',\
+        'devtools',\
+        'dggridR',\
+        'DiagrammeR',\
         'dichromat',\
         'digest',\
+        'dismo',\
+        'doMC',\
+        'doMC',\
+        'doParallel',\
+        'downloader',\
+        'dplyr',\
+        'DT',\
+        'e1071',\
+        'ellipsis',\
+        'evaluate',\
         'evir',\
+        'expss',\
+        'fansi',\
+        'fasterize',\
+        'feather',\
+        'filehash',\
+        'forcats',\
+        'foreach',\
+        'foreach',\
         'forecast',\
         'foreign',\
+        'formattable',\
+        'fs',\
+        'future',\
+        'generics',\
         'geoR',\
         'geosphere',\
         'ggalluvial',\
+        'ggExtra',\
+        'ggfortify',\
+        'ggmap',\
+        'ggplot2',\
         'ggrepel',\
         'ggthemes',\
+        'ggthemr',\
+        'GISTools',\
         'glmnet',\
+        'globals',\
+        'glue',\
         'googleVis',\
+        'gpclib',\
         'grid',\
         'gridExtra',\
         'gsubfn',\
         'gtable',\
+        'haven',\
+        'hexbin',\
+        'highr',\
+        'Hmisc',\
+        'hms',\
+        'htmltools',\
         'htmlwidgets',\
+        'httpuv',\
         'httr',\
+        'igraph',\
+        'influenceR',\
+        'iterators',\
         'jpeg',\
         'jsonlite',\
+        'kableExtra',\
+        'keras',\
+        'knitr',\
         'labeling',\
+        'later',\
         'lattice',\
+        'latticeExtra',\
         'lazyeval',\
+        'leaflet',\
+        'lifecycle',\
+        'listenv',\
+        'littler',\
         'lme4',\
         'lmfor',\
+        'lubridate',\
+        'magick',\
+        'magrittr',\
         'manipulate',\
         'mapproj',\
         'maps',\
+        'maptools',\
+        'mapview',\
+        'markdown',\
         'MASS',\
+        'memoise',\
         'mgcv',\
+        'mime',\
+        'miniUI',\
         'missForest',\
+        'mockery',\
+        'mockr',\
+        'modelr',\
         'moments',\
         'multcomp',\
+        'multicore',\
         'munsell',\
         'networkD3',\
         'nlme',\
+        'nlstools',\
+        'openssl',\
         'outliers',\
-        'permute',\
+        'pacman',\
+        'parallel',\
+        'party',\
+        'permutate',\
+        'pillar',\
+        'pkgconfig',\
+        'pkgKitten',\
+        'plyr',\
         'png',\
+        'PracTools',\
+        'praise',\
+        'prettycode',\
+        'prettyunits',\
+        'processx',\
+        'progress',\
+        'promises',\
         'proto',\
+        'ps',\
+        'purrr',\
         'quantmod',\
+        'R6',\
+        'random',\
+        'randomForest',\
+        'raster',\
+        'rasterVis',\
+        'RColorBrewer',\
         'Rcpp',\
+        'RcppArmadillo',\
         'RcppEigen',\
+        'readr',\
+        'readxl',\
+        'rematch',\
+        'rematch2',\
+        'rentrez',\
+        'reprex',\
         'reshape',\
         'reshape2',\
+        'rgbif',\
+        'rgbif',\
+        'rgdal',\
+        'rgeos',\
+        'rgexf',\
         'RgoogleMaps',\
+        'rhandsontable',\
+        'rJava',\
+        'rlang',\
+        'rmarkdown',\
+        'Rook',\
+        'rpart',\
+        'rpart.plot',\
         'RPostgreSQL',\
+        'rprojroot',\
+        'rPython',\
+        'rsconnect',\
+        'RSQLite',\
+        'RStoolbox',\
+        'rstudioapi',\
+        'rticles',\
+        'RUnit',\
+        'rvest',\
+        'Rweka',\
         'rworldmap',\
+        'samplingbook',\
         'scales',\
+        'selectr',\
+        'sf',\
+        'shiny',\
+        'shinyBS',\
+        'shinydashboard',\
+        'shinyFiles',\
+        'shinyjs',\
+        'snow',\
+        'sourcetools',\
+        'sp',\
         'spatial',\
         'splines',\
+        'sqldf',\
         'stats',\
         'stats4',\
         'stringi',\
+        'stringr',\
+        'strucchange',\
+        'styler',\
         'summarytools',\
         'survival',\
+        'sys',\
+        'taxize',\
+        'taxize',\
+        'Taxonstand',\
+        'testit',\
+        'testthat',\
         'tibble',\
+        'tidyr',\
+        'tidyselect',\
+        'tidyverse',\
+        'tikzDevice',\
+        'tint',\
+        'tinytex',\
         'tools',\
         'treemap',\
+        'tufte',\
+        'units',\
+        'UpSetR',\
         'urltools',\
+        'utf8',\
         'utils',\
         'vcd',\
+        'vctrs',\
         'vegan',\
+        'viridis',\
+        'viridisLite',\
+        'visNetwork',\
+        'vtree',\
+        'webshot',\
+        'whisker',\
+        'withr',\
+        'WorldFlora',\
+        'writexl',\
+        'xfun',\
         'XLConnect',\
         'xlsx',\
+        'xlsxjars',\
         'XML',\
         'xml2',\
+        'xtable',\
         'xts',\
-        'yaml'\
+        'yaml',\
+        'zeallot',\
+        'zoo'\
     )"
