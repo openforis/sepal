@@ -107,7 +107,6 @@ class _TerminalSession extends React.Component {
             url: `wss://${window.location.hostname}:${window.location.port}/api/terminal/${sessionId}`,
             replyHeartbeats: true
         })
-
         this.webSocket.onOpen(() => this.startTerminal(sessionId))
         // this.webSocket.onClose(() => console.log('socket closed'))
         this.webSocket.onError(() =>

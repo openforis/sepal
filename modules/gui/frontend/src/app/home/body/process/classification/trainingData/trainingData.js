@@ -10,8 +10,8 @@ import {map, takeUntil} from 'rxjs/operators'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './trainingData.module.css'
 import api from 'api'
+import styles from './trainingData.module.css'
 
 const fields = {
     eeTable: new Form.Field()

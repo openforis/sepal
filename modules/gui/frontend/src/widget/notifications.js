@@ -20,7 +20,7 @@ const autoDismiss$ = publish$
     .pipe(
         filter(notification => notification.timeout),
         mergeMap(notification =>
-            timer(notification.timeout).pipe(
+            timer(notification.timeout * 1000).pipe(
                 map(() => notification.id)
             )
         )
@@ -51,7 +51,7 @@ const publish = notification => {
         id = uuid(),
         level = 'info',
         title = defaultTitle[level],
-        timeout = 3000,
+        timeout = 3,
         dismissable = true,
         ...notification
     }) => ({id, level, title, timeout, dismissable, ...notification})
@@ -99,10 +99,13 @@ class _Notifications extends React.Component {
         )
     }
 
-    renderDismissMessage() {
+    renderDismissMessage(timeout) {
+        const message = timeout
+            ? msg('widget.notification.dismissOrWait', {timeout})
+            : msg('widget.notification.dismiss')
         return (
             <div className={styles.dismiss}>
-                {msg('widget.notification.dismiss')}
+                {message}
             </div>
         )
     }
@@ -126,7 +129,7 @@ class _Notifications extends React.Component {
                     {message ? this.renderMessage(message) : null}
                     {error ? this.renderError(error) : null}
                     {content ? this.renderContent(content, dismiss) : null}
-                    {timeout === 0 ? this.renderDismissMessage() : null}
+                    {this.renderDismissMessage(timeout)}
                 </div>
             )
             : null

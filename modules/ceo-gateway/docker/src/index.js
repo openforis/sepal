@@ -3,10 +3,14 @@ const session = require('express-session')
 const request = require('request')
 const urljoin = require('url-join')
 const randomColor = require('randomcolor')
+const swaggerUi = require('swagger-ui-express')
 
 const config = require('./config')
+const swaggerDocument = require('./swagger.json')
 
 const app = express()
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.use(session({
     secret: '343ji43j4n3jn4jk3n',

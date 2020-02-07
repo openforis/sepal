@@ -1,4 +1,5 @@
 import {Form} from 'widget/form/form'
+import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -12,7 +13,6 @@ import InputImage from './inputImage'
 import React from 'react'
 import guid from 'guid'
 import styles from './inputImagery.module.css'
-import {NoData} from 'widget/noData'
 
 const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images') || []

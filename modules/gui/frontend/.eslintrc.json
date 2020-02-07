@@ -1,4 +1,4 @@
-module.exports = {
+{
     "parser": "babel-eslint",
     "env": {
         "node":  true,
@@ -8,7 +8,7 @@ module.exports = {
     },
     "extends": [
         "eslint:recommended",
-        "plugin:react/recommended",
+        "plugin:react/recommended"
         // "plugin:import/errors",
         // "plugin:import/warnings"
     ],
@@ -69,12 +69,12 @@ module.exports = {
         ],
         "no-console": [
             "error", {
-                allow: ["info", "warn", "error"]
+                "allow": ["info", "warn", "error"]
             }
         ],
         "no-multi-spaces": [
             "error", {
-                ignoreEOLComments: true
+                "ignoreEOLComments": true
             }
         ],
         "no-multiple-empty-lines": [
@@ -132,6 +132,7 @@ module.exports = {
             "ignoreCase": false,
             "ignoreMemberSort": false,
             "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
-        }]
+        }],
+        "space-in-parens": ["error", "never"]
     }
-};
+}

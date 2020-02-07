@@ -1,18 +1,18 @@
-import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
-import Options from 'app/home/body/process/radarMosaic/options/options'
+import {Toolbar} from 'widget/toolbar/toolbar'
+import {compose} from 'compose'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
 import Dates from 'app/home/body/process/timeSeries/panels/dates/dates'
+import Options from 'app/home/body/process/radarMosaic/options/options'
+import PanelWizard from 'widget/panelWizard'
 import PreProcessingOptions from 'app/home/body/process/timeSeries/panels/preProcessingOptions/preProcessingOptions'
+import React from 'react'
 import Retrieve from 'app/home/body/process/timeSeries/panels/retrieve/retrieve'
 import Sources from 'app/home/body/process/timeSeries/panels/sources/sources'
-import {compose} from 'compose'
 import _ from 'lodash'
-import React from 'react'
-import {selectFrom} from 'stateUtils'
-import {msg} from 'translate'
-import PanelWizard from 'widget/panelWizard'
-import {Toolbar} from 'widget/toolbar/toolbar'
 import styles from './timeSeriesToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -38,7 +38,6 @@ class TimeSeriesToolbar extends React.Component {
                     ? <PreProcessingOptions/>
                     : <Options/>
                 }
-
 
                 <Toolbar
                     vertical
