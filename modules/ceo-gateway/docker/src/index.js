@@ -20,8 +20,8 @@ app.use(session({
 
 app.use(express.json())
 
-app.use(['/login', '/create-project', '/get-collected-data'], (req, res, next) => {
-    const {url, username, password, userId} = config.ceo
+app.use(['/login', '/create-project', '/get-collected-data', '/delete-project'], (req, res, next) => {
+    const {ceo: {url, username, password, userId}} = config
     request.post({
         url: urljoin(url, 'login'),
         form: {
@@ -60,8 +60,8 @@ app.get('/login', (req, res, next) => {
 app.post('/create-project', (req, res, next) => {
     const {isLogged} = req
     if (!isLogged) res.status(500).send({error: 'Login failed!'})
-    const {cookie} = req.session
-    const {url, institutionId} = config.ceo
+    const {session: {cookie}} = req
+    const {ceo: {url, institutionId}} = config
     const {classes, plotSize, plots, title} = req.body
     if (!Array.isArray(classes) || classes.length === 0
         || typeof plotSize !== 'number' || plotSize < 0
@@ -170,9 +170,8 @@ app.post('/create-project', (req, res, next) => {
 app.get('/get-collected-data/:id', (req, res, next) => {
     const {isLogged} = req
     if (!isLogged) res.status(500).send({error: 'Login failed!'})
-    const {cookie} = req.session
-    const {url} = config.ceo
-    const {id} = req.params
+    const {session: {cookie}, params: {id}} = req
+    const {ceo: {url}} = config
     request.get({
         headers: {
             Cookie: cookie['0'],
@@ -222,6 +221,27 @@ app.get('/get-collected-data/:id', (req, res, next) => {
                 next(err)
             })
         })
+    }).on('error', err => {
+        next(err)
+    })
+})
+
+app.get('/delete-project/:id', (req, res, next) => {
+    const {isLogged} = req
+    if (!isLogged) res.status(500).send({error: 'Login failed!'})
+    const {session: {cookie}, params: {id}} = req
+    const {ceo: {url}} = config
+    request.post({
+        headers: {
+            Cookie: cookie,
+        },
+        url: urljoin(url, 'archive-project'),
+        qs: {
+            projectId: id,
+        },
+    }).on('response', response => {
+        const {statusCode} = response
+        res.sendStatus(statusCode)
     }).on('error', err => {
         next(err)
     })
