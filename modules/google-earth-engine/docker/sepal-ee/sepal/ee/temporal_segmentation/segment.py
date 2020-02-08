@@ -5,7 +5,7 @@ from . import date_conversion, harmonic_fit
 
 
 class Segment(object):
-    def __init__(self, segmentImage, dateFormat, defaultDate):
+    def __init__(self, segmentImage, dateFormat=0, defaultDate=None):
         self.segmentImage = segmentImage
         self.dateFormat = dateFormat
         self.defaultDate = defaultDate
