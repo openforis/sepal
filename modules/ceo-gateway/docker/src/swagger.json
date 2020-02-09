@@ -73,9 +73,6 @@
       "get": {
         "summary": "Gets collected data",
         "description": "",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "text/plain"
         ],
@@ -92,6 +89,60 @@
         "responses": {
           "200": {
             "description": "Returns collected data in CSV format (id,YCoordinate,XCoordinate,class,editedClass)"
+          }
+        }
+      }
+    },
+    "/delete-project/{id}": {
+      "get": {
+        "summary": "Deletes a project",
+        "description": "",
+        "produces": [
+          "text/plain"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
+      }
+    },
+    "/get-project-stats/{id}": {
+      "get": {
+        "summary": "Gets project stats",
+        "description": "",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a JSON which includes the projectId and the project stats",
+            "schema": {
+              "$ref": "#/definitions/GetProjectStatsResponse"
+            }
           }
         }
       }
@@ -144,6 +195,35 @@
         },
         "errorMessage": {
           "type": "string"
+        }
+      }
+    },
+    "GetProjectStatsResponse": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "unanalyzedPlots": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "analyzedPlots": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "flaggedPlots": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalPlotsReviewed": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "completationPercentage": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     }
