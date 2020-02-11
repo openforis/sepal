@@ -21,9 +21,9 @@ ENV JAVA_HOME /usr/local/lib/sdkman/candidates/java/current
 RUN chmod +x /init_image; sync
 RUN /init_image
 RUN /downloads
-RUN /usr/local/bin/plugins.sh /plugins.txt
+#RUN /usr/local/bin/plugins.sh /plugins.txt
 
-ADD config/settings.xml /etc/maven/settings.xml
+#ADD config/settings.xml /etc/maven/settings.xml
 
 VOLUME /var/jenkins_home
 

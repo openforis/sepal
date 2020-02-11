@@ -4,16 +4,16 @@
     <description></description>
     <keepDependencies>false</keepDependencies>
     <properties>
-        <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.29.4">
+        <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.29.5">
             <projectUrl>https://github.com/openforis/sepal/</projectUrl>
             <displayName></displayName>
         </com.coravy.hudson.plugins.github.GithubProjectProperty>
     </properties>
-    <scm class="hudson.plugins.git.GitSCM" plugin="git@3.10.0">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@4.1.1">
         <configVersion>2</configVersion>
         <userRemoteConfigs>
             <hudson.plugins.git.UserRemoteConfig>
-                <url>https://github.com/openforis/sepal.git</url>
+                <url>https://github.com/openforis/sepal</url>
             </hudson.plugins.git.UserRemoteConfig>
         </userRemoteConfigs>
         <branches>
@@ -29,21 +29,20 @@
     <disabled>false</disabled>
     <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
     <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
-    <jdk>java-10-open</jdk>
     <triggers>
-        <com.cloudbees.jenkins.GitHubPushTrigger plugin="github@1.29.4">
+        <com.cloudbees.jenkins.GitHubPushTrigger plugin="github@1.29.5">
             <spec></spec>
         </com.cloudbees.jenkins.GitHubPushTrigger>
     </triggers>
     <concurrentBuild>false</concurrentBuild>
     <builders>
-        <hudson.plugins.gradle.Gradle plugin="gradle@1.32">
+        <hudson.plugins.gradle.Gradle plugin="gradle@1.36">
             <switches></switches>
             <tasks>build</tasks>
             <rootBuildScriptDir></rootBuildScriptDir>
             <buildFile></buildFile>
-            <gradleName>(Default)</gradleName>
-            <useWrapper>true</useWrapper>
+            <gradleName>gradle6</gradleName>
+            <useWrapper>false</useWrapper>
             <makeExecutable>false</makeExecutable>
             <useWorkspaceAsHome>false</useWorkspaceAsHome>
             <wrapperLocation></wrapperLocation>
@@ -52,9 +51,7 @@
             <passAllAsProjectProperties>false</passAllAsProjectProperties>
         </hudson.plugins.gradle.Gradle>
         <hudson.tasks.Shell>
-            <command>${WORKSPACE}/hosting-services/common/operations/build-and-push-images.sh $BUILD_NUMBER $WORKSPACE
-                /opt/sepal
-            </command>
+            <command>${WORKSPACE}/hosting-services/common/operations/build-and-push-images.sh $BUILD_NUMBER $WORKSPACE /opt/sepal</command>
         </hudson.tasks.Shell>
     </builders>
     <publishers/>

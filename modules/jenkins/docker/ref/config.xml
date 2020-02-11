@@ -1,13 +1,21 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.1' encoding='UTF-8'?>
 <hudson>
-  <disabledAdministrativeMonitors/>
-  <version>1.635</version>
-  <numExecutors>2</numExecutors>
+  <disabledAdministrativeMonitors>
+    <string>jenkins.security.s2m.MasterKillSwitchWarning</string>
+    <string>hudson.diagnosis.ReverseProxySetupMonitor</string>
+    <string>hudsonHomeIsFull</string>
+  </disabledAdministrativeMonitors>
+  <version>2.220</version>
+  <installStateName>DOWNGRADE</installStateName>
+  <numExecutors>1</numExecutors>
   <mode>NORMAL</mode>
   <useSecurity>true</useSecurity>
-  <authorizationStrategy class="hudson.security.FullControlOnceLoggedInAuthorizationStrategy"/>
-  <securityRealm class="hudson.security.PAMSecurityRealm" plugin="pam-auth@1.1">
-    <serviceName>sshd</serviceName>
+  <authorizationStrategy class="hudson.security.FullControlOnceLoggedInAuthorizationStrategy">
+    <denyAnonymousReadAccess>false</denyAnonymousReadAccess>
+  </authorizationStrategy>
+  <securityRealm class="hudson.security.HudsonPrivateSecurityRealm">
+    <disableSignup>true</disableSignup>
+    <enableCaptcha>false</enableCaptcha>
   </securityRealm>
   <disableRememberMe>false</disableRememberMe>
   <projectNamingStrategy class="jenkins.model.ProjectNamingStrategy$DefaultProjectNamingStrategy"/>
@@ -16,14 +24,10 @@
   <markupFormatter class="hudson.markup.EscapedMarkupFormatter"/>
   <jdks>
     <jdk>
-      <name>java-8-oracle</name>
-      <home>/usr/local/lib/sdkman/candidates/java/current</home>
+      <name>java-11</name>
+      <home>/usr/local/lib/sdkman/candidates/java/current/</home>
       <properties/>
     </jdk>
-    <name>java-10-open</name>
-    <home>/usr/local/lib/sdkman/candidates/java/12.0.2.hs-adpt</home>
-    <properties/>
-  </jdk>
   </jdks>
   <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
   <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
@@ -33,14 +37,17 @@
   <views>
     <hudson.model.AllView>
       <owner class="hudson" reference="../../.."/>
-      <name>All</name>
+      <name>all</name>
       <filterExecutors>false</filterExecutors>
       <filterQueue>false</filterQueue>
       <properties class="hudson.model.View$PropertyList"/>
     </hudson.model.AllView>
   </views>
-  <primaryView>All</primaryView>
-  <slaveAgentPort>0</slaveAgentPort>
+  <primaryView>all</primaryView>
+  <slaveAgentPort>-1</slaveAgentPort>
+  <disabledAgentProtocols>
+    <string>JNLP4-connect</string>
+  </disabledAgentProtocols>
   <label></label>
   <nodeProperties/>
   <globalNodeProperties/>
