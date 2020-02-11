@@ -11,7 +11,8 @@ apt-get update && apt-get install -y \
     python-pip \
     apt-transport-https \
     fontconfig \
-    fontconfig-config
+    fontconfig-config \
+    rsync
 
 export SDKMAN_DIR=/usr/local/lib/sdkman
 curl -s get.sdkman.io | bash
