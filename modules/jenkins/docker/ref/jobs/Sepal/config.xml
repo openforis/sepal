@@ -41,7 +41,7 @@
             <tasks>build</tasks>
             <rootBuildScriptDir></rootBuildScriptDir>
             <buildFile></buildFile>
-            <gradleName>gradle6</gradleName>
+            <gradleName>gradle-6</gradleName>
             <useWrapper>false</useWrapper>
             <makeExecutable>false</makeExecutable>
             <useWorkspaceAsHome>false</useWorkspaceAsHome>

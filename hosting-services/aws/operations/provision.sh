@@ -21,19 +21,12 @@ source $CONFIG_HOME/export_aws_keys.sh
 ansible-playbook provision.yml \
     -i ${INVENTORY_FILE_PATH} \
     --private-key=$PRIVATE_KEY \
-    --extra-vars "\
-            region=$REGION \
-            secret_vars_file=$CONFIG_HOME/secret.yml \
-            config_home=$CONFIG_HOME"
+    --extra-vars "region=$REGION secret_vars_file=$CONFIG_HOME/secret.yml config_home=$CONFIG_HOME"
 
-${INVENTORY_FILE_PATH} --refresh-cache > /dev/null
+#${INVENTORY_FILE_PATH} --refresh-cache > /dev/null
 
 ansible-playbook deploy.yml \
     -i ${INVENTORY_FILE_PATH} \
     --private-key=$PRIVATE_KEY \
-    --extra-vars "\
-            region=$REGION \
-            version=$VERSION \
-            secret_vars_file=$CONFIG_HOME/secret.yml \
-            config_home=$CONFIG_HOME"
+    --extra-vars "region=$REGION version=$VERSION secret_vars_file=$CONFIG_HOME/secret.yml config_home=$CONFIG_HOME"
 

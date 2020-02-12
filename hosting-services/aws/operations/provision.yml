@@ -35,7 +35,7 @@
       ec2:
         key_name: "{{ region }}"
         group: Operations
-        instance_type: t2.medium
+        instance_type: t3a.medium
         image: "{{ ami }}"
         region: "{{ region }}"
         wait: true
@@ -45,8 +45,15 @@
         instance_tags:
           Name: "Operations"
           Type: Operations
+        ebs_optimized: true
         volumes:
-          - device_name: /dev/sda1
+          - device_name: /dev/xvda
+            delete_on_termination: false
+            volume_type: gp2
+            volume_size: 100
+          - device_name: /dev/sdb
+            delete_on_termination: false
+            volume_type: gp2
             volume_size: 100
       register: ec2
 
