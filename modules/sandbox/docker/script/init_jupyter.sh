@@ -20,8 +20,8 @@ R -e "IRkernel::installspec(user = FALSE)"
 /usr/bin/python2 -m pip install folium
 /usr/bin/python3 -m pip install ipyleaflet
 /usr/bin/python2 -m pip install ipyleaflet
-/usr/bin/python3 /usr/local/bin/jupyter labextension install @jupyter-widgets/jupyterlab-manager
-/usr/bin/python3 -m pip install jupyterlab-discovery
+#/usr/bin/python3 /usr/local/bin/jupyter labextension install @jupyter-widgets/jupyterlab-manager
+#/usr/bin/python3 -m pip install jupyterlab-discovery
 git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 /usr/bin/python3 -m pip install -e jupyter_contrib_nbextensions
 /usr/bin/python3 /usr/local/bin/jupyter contrib nbextension install
