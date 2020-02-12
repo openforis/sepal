@@ -12,7 +12,10 @@ apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
  supervisor\
  gdal-bin\
  libgdal-dev\
- python-gdal
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
+    python-gdal \
+    python3-gdal
 
 curl -sL https://deb.nodesource.com/setup_8.x | bash -
 apt-get install -y nodejs
