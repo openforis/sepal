@@ -1,7 +1,3 @@
 {
-  "storage-driver": "devicemapper",
-  "storage-opts": [
-    "dm.datadev=/dev/vg-docker/data",
-    "dm.metadatadev=/dev/vg-docker/metadata"
-  ]
+  "storage-driver": "overlay2"
 }

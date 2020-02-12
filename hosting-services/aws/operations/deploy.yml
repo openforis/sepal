@@ -32,20 +32,12 @@
     - name: Copy Jenkins Image
       copy: src="../../../modules/jenkins/" dest="/opt/sepal/modules/jenkins/"
 
-
-
-    # docker
-    - file: path="/data/docker/storage/devicemapper/metadata" state=directory
-    - file: path="/data/docker/storage/tmp" state=directory
-
-    - name: Create Docker LVM Volume Group
-      lvg: vg=vg-docker pvs=/dev/sdb
-
-    - name: Create Docker LVM Data Volume
-      lvol: vg=vg-docker lv=data size=30g
-
-    - name: Create Docker LVM Metadata Volume
-      lvol: vg=vg-docker lv=metadata size=19g
+    - name: Mount Docker volume
+      mount:
+        path: /var/lib/docker
+        src: /dev/sdb
+        fstype: xfs
+        state: mounted
 
     - name: Create docker-registry certificate dir
       file:
