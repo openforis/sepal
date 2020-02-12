@@ -12,4 +12,4 @@ rsa==3.4.2
 
 #
 git+git://github.com/openforis/earthengine-api.git@v0.1.171#egg=earthengine-api&subdirectory=python
-git+git://github.com/openforis/gee-gateway.git@1.1.1#egg=gee-gateway
+git+git://github.com/openforis/gee-gateway.git@856ba3edef7b82927ba072b53c2d71c4a10fa92f#egg=gee-gateway
