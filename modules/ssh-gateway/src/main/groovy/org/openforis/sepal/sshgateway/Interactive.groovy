@@ -142,7 +142,7 @@ class Interactive {
     }
 
     private void printInstanceTypeOption(Map type) {
-        print String.valueOf(type.tag).padLeft(6)
+        print String.valueOf(type.tag).padRight(6)
         println "$type.name, $type.description, $type.hourlyCost USD/h"
     }
 
@@ -283,8 +283,8 @@ class Interactive {
         info.instanceTypes.first().tag
     }
 
-    private boolean getSelectedInstanceType(Map info, String tag) {
-        info.instanceTypes.find {it.tag == tag}
+    private Map getSelectedInstanceType(Map info, String tag) {
+        info.instanceTypes.find {it.tag == tag} as Map
     }
 
     private boolean isTag(String tag) {
