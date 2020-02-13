@@ -25,6 +25,7 @@ class Interactive {
 
     void start() {
         def sandboxInfo = sepalClient.loadSandboxInfo()
+        sandboxInfo.instanceTypes = sandboxInfo.instanceTypes.findAll {it.tag}
 
         printUsageBudget(sandboxInfo)
         BudgetChecker.assertWithinBudget(sandboxInfo)
@@ -129,7 +130,7 @@ class Interactive {
                 '----------------------\n'
         def types = sandboxInfo.instanceTypes as List<Map>
         types.eachWithIndex { type, i ->
-            printInstanceTypeOption(i + 1, type)
+            printInstanceTypeOption(type)
         }
         if (sandboxInfo.sessions) {
             println()
@@ -140,13 +141,12 @@ class Interactive {
         readCreateSelection(sandboxInfo)
     }
 
-    private void printInstanceTypeOption(int option, Map type) {
-        print String.valueOf(option).padRight(6)
+    private void printInstanceTypeOption(Map type) {
+        print String.valueOf(type.tag).padLeft(6)
         println "$type.name, $type.description, $type.hourlyCost USD/h"
     }
 
     private void readCreateSelection(Map sandboxInfo) {
-        def instanceTypes = sandboxInfo.instanceTypes as List<Map>
         def defaultTag = getDefaultTag(sandboxInfo)
         def selection = readLine("Select (${defaultTag}): ")
         if (!selection)
@@ -280,7 +280,7 @@ class Interactive {
     }
 
     private String getDefaultTag(Map info) {
-        info.instanceTypes.findAll {it.tag}.first().tag
+        info.instanceTypes.first().tag
     }
 
     private boolean getSelectedInstanceType(Map info, String tag) {
