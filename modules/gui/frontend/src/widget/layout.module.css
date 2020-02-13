@@ -48,11 +48,10 @@
 
 .layout.horizontal > .content {
     width: 100%;
-    height: 100%;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
-    align-items: start; /* required */
+    align-items: center; /* required */
     margin-bottom: calc(-1 * var(--vertical-spacing));
 }
 
