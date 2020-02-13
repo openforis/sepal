@@ -14,11 +14,18 @@ class Local implements HostingServiceAdapter {
     final List<InstanceType> instanceTypes = [
         new InstanceType(
             id: 'local',
-            tag: 'l',
             name: 'Dummy instance',
+            tag: 'l',
             cpuCount: 2,
             ramGiB: 2,
-            hourlyCost: 0d
+            hourlyCost: 1d
+        ),
+        new InstanceType(
+            id: 'local_without_tag',
+            name: 'Dummy instance without tag',
+            cpuCount: 2,
+            ramGiB: 2,
+            hourlyCost: 1d
         )
     ].asImmutable()
 
