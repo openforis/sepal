@@ -116,7 +116,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
     }
 
     InstanceType getDefaultInstanceType() {
-        return instanceTypes.first()
+        return instanceTypes.findAll {it.tag}.first()
     }
 
     private static class WorkerSessionConfig {

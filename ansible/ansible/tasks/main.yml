@@ -1,7 +1,6 @@
 ---
 
-- name: "Adding ansible repository and running apt-get update"
-  apt_repository: repo="ppa:ansible/ansible"
-
 - name: "Install ansible"
-  apt:  name="ansible"
+  pip:
+    executable: pip3
+    name: ansible

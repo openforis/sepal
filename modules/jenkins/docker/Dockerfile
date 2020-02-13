@@ -23,8 +23,6 @@ RUN /init_image
 RUN /downloads
 RUN /usr/local/bin/plugins.sh /plugins.txt
 
-ADD config/settings.xml /etc/maven/settings.xml
-
 VOLUME /var/jenkins_home
 
 CMD ["/init_container"]

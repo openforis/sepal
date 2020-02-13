@@ -3,15 +3,15 @@
     path: "/data/docker/storage"
     state: directory
 
-- name: Install linux-image-extra-* packages to enable AuFS driver
-  apt:
-    name: "{{ item }}"
-    state: present
-    update_cache: yes
-  when: ansible_distribution_version is version_compare('14.04', '==')
-  loop:
-    - "linux-image-extra-{{ ansible_kernel }}"
-    - "linux-image-extra-virtual"
+#- name: Install linux-image-extra-* packages to enable AuFS driver
+#  apt:
+#    name: "{{ item }}"
+#    state: present
+#    update_cache: yes
+#  when: ansible_distribution_version is version_compare('14.04', '==')
+#  loop:
+#    - "linux-modules-extra-{{ ansible_kernel }}"
+#    - "linux-modules-extra-virtual"
 
 - name: Add docker user group
   group:
@@ -55,7 +55,7 @@
   lineinfile:
     dest: "/etc/default/docker"
     regexp: "^DOCKER_OPTS="
-    line: 'DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage --storage-driver=devicemapper --storage-opt dm.basesize=10G"'
+    line: 'DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage --storage-driver=devicemapper --storage-opt dm.basesize=20G"'
 
 - name: Install pip
   apt:

@@ -78,8 +78,6 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     python \
     python3 \
     python3-dev \
-    python-gdal \
-    python3-gdal \
     python-dev \
     python-opencv \
     python-pandas \
@@ -106,6 +104,10 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     wget \
     xml-twig-tools \
     zip
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
+    python-gdal \
+    python3-gdal \
 
 echo
 echo "************************************"

@@ -3,10 +3,14 @@ const session = require('express-session')
 const request = require('request')
 const urljoin = require('url-join')
 const randomColor = require('randomcolor')
+const swaggerUi = require('swagger-ui-express')
 
 const config = require('./config')
+const swaggerDocument = require('./swagger.json')
 
 const app = express()
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.use(session({
     secret: '343ji43j4n3jn4jk3n',
@@ -16,8 +20,8 @@ app.use(session({
 
 app.use(express.json())
 
-app.use(['/login', '/create-project', '/get-collected-data'], (req, res, next) => {
-    const {url, username, password, userId} = config.ceo
+app.use(['/login', '/create-project', '/get-collected-data', '/delete-project', '/get-project-stats'], (req, res, next) => {
+    const {ceo: {url, username, password, userId}} = config
     request.post({
         url: urljoin(url, 'login'),
         form: {
@@ -56,8 +60,8 @@ app.get('/login', (req, res, next) => {
 app.post('/create-project', (req, res, next) => {
     const {isLogged} = req
     if (!isLogged) res.status(500).send({error: 'Login failed!'})
-    const {cookie} = req.session
-    const {url, institutionId} = config.ceo
+    const {session: {cookie}} = req
+    const {ceo: {url, institutionId}} = config
     const {classes, plotSize, plots, title} = req.body
     if (!Array.isArray(classes) || classes.length === 0
         || typeof plotSize !== 'number' || plotSize < 0
@@ -166,9 +170,8 @@ app.post('/create-project', (req, res, next) => {
 app.get('/get-collected-data/:id', (req, res, next) => {
     const {isLogged} = req
     if (!isLogged) res.status(500).send({error: 'Login failed!'})
-    const {cookie} = req.session
-    const {url} = config.ceo
-    const {id} = req.params
+    const {session: {cookie}, params: {id}} = req
+    const {ceo: {url}} = config
     request.get({
         headers: {
             Cookie: cookie['0'],
@@ -216,6 +219,63 @@ app.get('/get-collected-data/:id', (req, res, next) => {
                 })
             }).on('error', err => {
                 next(err)
+            })
+        })
+    }).on('error', err => {
+        next(err)
+    })
+})
+
+app.get('/delete-project/:id', (req, res, next) => {
+    const {isLogged} = req
+    if (!isLogged) res.status(500).send({error: 'Login failed!'})
+    const {session: {cookie}, params: {id}} = req
+    const {ceo: {url}} = config
+    request.post({
+        headers: {
+            Cookie: cookie,
+        },
+        url: urljoin(url, 'archive-project'),
+        qs: {
+            projectId: id,
+        },
+    }).on('response', response => {
+        const {statusCode} = response
+        res.sendStatus(statusCode)
+    }).on('error', err => {
+        next(err)
+    })
+})
+
+app.get('/get-project-stats/:id', (req, res, next) => {
+    const {isLogged} = req
+    if (!isLogged) res.status(500).send({error: 'Login failed!'})
+    const {session: {cookie}, params: {id}} = req
+    const {ceo: {url}} = config
+    request.get({
+        headers: {
+            Cookie: cookie['0'],
+        },
+        url: urljoin(url, 'get-project-stats'),
+        qs: {
+            projectId: id,
+        },
+    }).on('response', response => {
+        const {statusCode} = response
+        if (statusCode !== 200) return res.sendStatus(statusCode)
+        response.on('data', data => {
+            const stats = JSON.parse(data.toString())
+            console.log(stats)
+            const {unanalyzedPlots, analyzedPlots, flaggedPlots} = stats
+            const totalPlotsReviewed = flaggedPlots + analyzedPlots
+            const completationPercentage = parseInt((totalPlotsReviewed / (flaggedPlots + analyzedPlots + unanalyzedPlots)) * 100)
+            res.send({
+                projectId: id,
+                unanalyzedPlots,
+                analyzedPlots,
+                flaggedPlots,
+                totalPlotsReviewed,
+                completationPercentage,
             })
         })
     }).on('error', err => {

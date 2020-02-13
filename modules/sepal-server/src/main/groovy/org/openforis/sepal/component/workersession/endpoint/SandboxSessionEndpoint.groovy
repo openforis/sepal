@@ -191,6 +191,7 @@ class SandboxSessionEndpoint {
                 id: instanceType.id,
                 path: "sessions/${forCurrentUser ? '' : "$username/"}instance-type/$instanceType.id",
                 name: instanceType.name,
+                tag: instanceType.tag,
                 description: instanceType.description,
                 hourlyCost: instanceType.hourlyCost
             ]

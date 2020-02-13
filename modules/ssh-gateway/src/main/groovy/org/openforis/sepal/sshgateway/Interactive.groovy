@@ -25,6 +25,7 @@ class Interactive {
 
     void start() {
         def sandboxInfo = sepalClient.loadSandboxInfo()
+        sandboxInfo.instanceTypes = sandboxInfo.instanceTypes.findAll {it.tag}
 
         printUsageBudget(sandboxInfo)
         BudgetChecker.assertWithinBudget(sandboxInfo)
@@ -129,7 +130,7 @@ class Interactive {
                 '----------------------\n'
         def types = sandboxInfo.instanceTypes as List<Map>
         types.eachWithIndex { type, i ->
-            printInstanceTypeOption(i + 1, type)
+            printInstanceTypeOption(type)
         }
         if (sandboxInfo.sessions) {
             println()
@@ -140,25 +141,24 @@ class Interactive {
         readCreateSelection(sandboxInfo)
     }
 
-    private void printInstanceTypeOption(int option, Map type) {
-        print String.valueOf(option).padRight(6)
+    private void printInstanceTypeOption(Map type) {
+        print String.valueOf(type.tag).padRight(6)
         println "$type.name, $type.description, $type.hourlyCost USD/h"
     }
 
     private void readCreateSelection(Map sandboxInfo) {
-        def instanceTypes = sandboxInfo.instanceTypes as List<Map>
-        def selection = readLine('Select (1): ')
+        def defaultTag = getDefaultTag(sandboxInfo)
+        def selection = readLine("Select (${defaultTag}): ")
         if (!selection)
-            selection = '1'
+            selection = defaultTag
 
-        if (selection.isNumber()) {
-            def selectedIndex = (selection as int) - 1
-            if (selectedIndex >= instanceTypes.size() || selectedIndex < 0) {
+        if (isTag(selection)) {
+            def selectedInstanceType = getSelectedInstanceType(sandboxInfo, selection)
+            if (!selectedInstanceType) {
                 println "  Invalid option: $selection"
                 readCreateSelection(sandboxInfo)
                 return
             }
-            def selectedInstanceType = instanceTypes[selectedIndex]
             def spendingLeft = sandboxInfo.spending.monthlyInstanceBudget - sandboxInfo.spending.monthlyInstanceSpending
             def hoursLeft = Math.floor(spendingLeft / selectedInstanceType.hourlyCost) as int
             if (hoursLeft <= 0) {
@@ -277,6 +277,18 @@ class Interactive {
         def result = br.readLine()
         println()
         return result?.trim()?.toLowerCase()
+    }
+
+    private String getDefaultTag(Map info) {
+        info.instanceTypes.first().tag
+    }
+
+    private Map getSelectedInstanceType(Map info, String tag) {
+        info.instanceTypes.find {it.tag == tag} as Map
+    }
+
+    private boolean isTag(String tag) {
+        tag && tag.length() > 1
     }
 
     static void main(String[] args) {
