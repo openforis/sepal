@@ -7,6 +7,8 @@ ADD script/init_image .
 ADD script/init_container .
 ADD script/jenkins.sh .
 ADD script/downloads .
+ADD script/plugins.sh /usr/local/bin/plugins.sh
+ADD config/plugins.txt .
 
 RUN mkdir -p /usr/share/jenkins/ref/
 ADD ref /usr/share/jenkins/ref/
@@ -19,6 +21,7 @@ ENV JAVA_HOME /usr/local/lib/sdkman/candidates/java/current
 RUN chmod +x /init_image; sync
 RUN /init_image
 RUN /downloads
+RUN /usr/local/bin/plugins.sh /plugins.txt
 
 VOLUME /var/jenkins_home
 

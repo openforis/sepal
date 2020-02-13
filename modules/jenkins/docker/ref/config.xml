@@ -4,6 +4,7 @@
     <string>jenkins.security.s2m.MasterKillSwitchWarning</string>
     <string>hudson.diagnosis.ReverseProxySetupMonitor</string>
     <string>hudsonHomeIsFull</string>
+    <string>jenkins.diagnostics.RootUrlNotSetMonitor</string>
   </disabledAdministrativeMonitors>
   <version>2.220</version>
   <installStateName>DOWNGRADE</installStateName>
