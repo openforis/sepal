@@ -91,7 +91,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
 
             set(name, value) {
                 const prevValue = this.state.values[name]
-                if (value !== prevValue && !_.isEqual(value, prevValue))
+                if (value !== prevValue && !_.isEqual(value, prevValue)) {
                     this.setState(prevState => {
                         const state = _.cloneDeep(prevState)
                         state.values[name] = value
@@ -105,6 +105,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         state.gotClean[name] = state.gotClean[name] || (!state.dirty && prevState.dirty)
                         return state
                     }, () => this.notifyOnChange(name, value))
+                }
                 return this
             }
 

@@ -22,6 +22,7 @@ const fields = {
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
     area: new Form.Field(),
     eeTable: new Form.Field()
+        .skip((value, {section}) => section !== 'EE_TABLE')
         .notBlank('process.mosaic.panel.areaOfInterest.form.eeTable.eeTable.required'),
     allowWholeEETable: new Form.Field(),
     eeTableRowSelection: new Form.Field(),
@@ -31,6 +32,7 @@ const fields = {
         .skip((value, {eeTable}) => !eeTable)
         .notBlank('process.mosaic.panel.areaOfInterest.form.eeTable.column.required'),
     eeTableRow: new Form.Field()
+        .skip((value, {section}) => section !== 'EE_TABLE')
         .skip((_, {eeTableRowSelection}) => eeTableRowSelection === 'INCLUDE_ALL')
         .skip((value, {eeTableColumn}) => !eeTableColumn)
         .notBlank('process.mosaic.panel.areaOfInterest.form.eeTable.row.required'),
