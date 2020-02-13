@@ -29,7 +29,7 @@ class NonInteractive {
             sessionCommand.write(activeSession)
             return
         }
-        def instanceType = sandboxInfo.instanceTypes.first() as Map
+        def instanceType = sandboxInfo.instanceTypes.findAll {it.tag}.first() as Map
         def session = sepalClient.createSession(instanceType)
         sessionCommand.write(session)
     }

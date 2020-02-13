@@ -12,13 +12,14 @@ class Vagrant implements HostingServiceAdapter {
     private final config = new VagrantConfig()
     private final double storageCostPerGbMonth = 0.33d
     final List<InstanceType> instanceTypes = [
-            new InstanceType(
-                    id: 'vagrant-box',
-                    name: 'Vagrant Box',
-                    cpuCount: 2,
-                    ramGiB: 2,
-                    hourlyCost: 0.1d
-            )
+        new InstanceType(
+            id: 'vagrant-box',
+            name: 'Vagrant Box',
+            tag: 'v',
+            cpuCount: 2,
+            ramGiB: 2,
+            hourlyCost: 0.1d
+        )
     ].asImmutable()
 
     HostingService getHostingService() {
@@ -26,7 +27,7 @@ class Vagrant implements HostingServiceAdapter {
     }
 
     InstanceProvider getInstanceProvider() {
-        return new VagrantInstanceProvider(config.host, instanceTypes.first())
+        return new VagrantInstanceProvider(config.host, instanceTypes.findAll {it.tag}.first())
     }
 
     InstanceProvisioner getInstanceProvisioner() {
