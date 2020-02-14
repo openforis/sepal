@@ -20,7 +20,4 @@ source $CONFIG_HOME/export_aws_keys.sh
 ansible-playbook deploy.yml \
     -i ../inventory/ec2.py \
     --private-key=$PRIVATE_KEY \
-    --extra-vars "\
-            version=$VERSION \
-            secret_vars_file=$CONFIG_HOME/secret.yml \
-            config_home=$CONFIG_HOME"
+    --extra-vars "version=$VERSION secret_vars_file=$CONFIG_HOME/secret.yml config_home=$CONFIG_HOME"

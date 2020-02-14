@@ -12,13 +12,21 @@ class Local implements HostingServiceAdapter {
     private final config = new LocalConfig()
     private final double storageCostPerGbMonth = 0d
     final List<InstanceType> instanceTypes = [
-            new InstanceType(
-                    id: 'local',
-                    name: 'Dummy instance',
-                    cpuCount: 2,
-                    ramGiB: 2,
-                    hourlyCost: 0d
-            )
+        new InstanceType(
+            id: 'local',
+            name: 'Dummy instance',
+            tag: 'l',
+            cpuCount: 2,
+            ramGiB: 2,
+            hourlyCost: 1d
+        ),
+        new InstanceType(
+            id: 'local_without_tag',
+            name: 'Dummy instance without tag',
+            cpuCount: 2,
+            ramGiB: 2,
+            hourlyCost: 1d
+        )
     ].asImmutable()
 
     HostingService getHostingService() {
@@ -26,7 +34,7 @@ class Local implements HostingServiceAdapter {
     }
 
     InstanceProvider getInstanceProvider() {
-        return new LocalInstanceProvider(config.host, instanceTypes.first())
+        return new LocalInstanceProvider(config.host, instanceTypes.findAll {it.tag}.first())
     }
 
     InstanceProvisioner getInstanceProvisioner() {

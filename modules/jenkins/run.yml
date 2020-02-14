@@ -16,6 +16,23 @@
     path: "/data/jenkins/"
     state: directory
 
+- name: "jenkins | Create jenkins keys folder"
+  file:
+    path: "/home/ec2-user/.ssh/jenkins"
+    state: directory
+
+- openssh_keypair:
+    path: "/home/ec2-user/.ssh/jenkins/id_rsa"
+
+- shell: cat "/home/ec2-user/.ssh/jenkins/id_rsa.pub"
+  register: jenkins_key
+
+- name: Add jenkins authorized key
+  authorized_key:
+    user: "ec2-user"
+    state: present
+    key: "{{ jenkins_key.stdout }}"
+
 - name: "jenkins | Start jenkins container"
   docker_container:
     api_version: "{{ api_version }}"
@@ -31,6 +48,7 @@
     volumes:
       - "/data/jenkins:/var/jenkins_home"
       - "/etc/sepal:/etc/sepal"
+      - "/home/ec2-user/.ssh/jenkins:/root/.ssh"
     env:
       JENKINS_PASSWD: "{{ jenkins_password }}"
       GITHUB_ACCOUNT_PASSWD: "{{ jenkins_github_user_password }}"

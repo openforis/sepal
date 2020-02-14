@@ -6,6 +6,7 @@ import groovy.transform.Immutable
 class InstanceType {
     String id
     String name
+    String tag
     int cpuCount
     double ramGiB
     double hourlyCost
