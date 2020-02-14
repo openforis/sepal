@@ -21,9 +21,10 @@ import styles from './userMessages.module.css'
 
 const mapStateToProps = state => {
     const currentUser = state.user.currentUser
+    const userMessages = state.user.userMessages
     return {
         isAdmin: currentUser.roles && currentUser.roles.includes('application_admin'),
-        userMessages: state.user.userMessages
+        userMessages
     }
 }
 
@@ -36,6 +37,9 @@ export const closePanel = () =>
     actionBuilder('USER_MESSAGES')
         .del('ui.userMessages')
         .dispatch()
+
+const unreadMessagesCount = userMessages =>
+    _.filter(userMessages, {state: 'UNREAD'}).length
 
 class _UserMessages extends React.Component {
     state = {
@@ -121,6 +125,11 @@ class _UserMessages extends React.Component {
         })
     }
 
+    isUnread() {
+        const {userMessages} = this.props
+        return unreadMessagesCount(userMessages)
+    }
+
     newMessage() {
         this.editMessage({})
     }
@@ -191,7 +200,8 @@ class _UserMessages extends React.Component {
 
     renderMessagesPanel() {
         const {isAdmin, activatable: {deactivate}} = this.props
-        const close = () => deactivate()
+        const isClosable = !this.isUnread() || isAdmin
+        const close = () => isClosable && deactivate()
         const add = () => this.newMessage()
         return (
             <Panel
@@ -205,7 +215,7 @@ class _UserMessages extends React.Component {
                 </Panel.Content>
                 <Panel.Buttons onEnter={close} onEscape={close}>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={close}/>
+                        <Panel.Buttons.Close onClick={close} disabled={!isClosable}/>
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
                         <Panel.Buttons.Add
@@ -296,7 +306,7 @@ class _UserMessagesButton extends React.Component {
 export const UserMessagesButton = compose(
     _UserMessagesButton,
     connect(state => ({
-        unreadUserMessages: _.filter(state.user.userMessages, {state: 'UNREAD'}).length
+        unreadUserMessages: unreadMessagesCount(state.user.userMessages)
     })),
     activator('userMessages')
 )
