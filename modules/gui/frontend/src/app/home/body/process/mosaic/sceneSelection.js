@@ -283,12 +283,19 @@ class Scene extends React.Component {
         )
     }
 
-    renderThumbnail() {
-        const {scene: {browseUrl}} = this.props
-        const thumbnailUrl = this.imageThumbnail(browseUrl)
+    renderImage(url) {
         return (
-            <div className={styles.thumbnail} style={{'backgroundImage': `url("${thumbnailUrl}")`}}>
-                {thumbnailUrl !== browseUrl ? <img src={browseUrl} alt=''/> : null}
+            <div className={styles.image} style={{'--image': `url("${url}")`}}></div>
+        )
+    }
+
+    renderThumbnail() {
+        const {scene: {browseUrl: imageUrl}} = this.props
+        const thumbnailUrl = this.imageThumbnail(imageUrl)
+        return (
+            <div className={styles.thumbnail}>
+                {this.renderImage(thumbnailUrl)}
+                {this.renderImage(imageUrl)}
             </div>
         )
     }
