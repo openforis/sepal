@@ -125,6 +125,10 @@
     position: relative;
 }
 
+.button > .contents {
+    display: flex;
+}
+
 /* spacing between icon and label */
 
 .button > .contents > * + * {

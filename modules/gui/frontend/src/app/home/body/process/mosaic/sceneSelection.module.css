@@ -110,6 +110,10 @@
     width: 4.5rem;
 }
 
+.info {
+    display: flex;
+}
+
 /* bar */
 
 .bar {

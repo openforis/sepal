@@ -296,7 +296,7 @@ class Scene extends React.Component {
     renderInfo(dataSet, date) {
         return (
             <div className={styles.date}>
-                <div className={styles.dataSet}>
+                <div className={[styles.info, styles.dataSet].join(' ')}>
                     <Icon name='satellite-dish'/>
                     {dataSetById[dataSet].shortName}
                 </div>
@@ -310,7 +310,7 @@ class Scene extends React.Component {
     renderCloudCover(cloudCover) {
         return (
             <div className={styles.cloudCover}>
-                <div className={styles.value}>
+                <div className={[styles.info, styles.value].join(' ')}>
                     <Icon name='cloud'/>
                     {format.integer(cloudCover)}%
                 </div>
@@ -326,7 +326,7 @@ class Scene extends React.Component {
                 daysFromTarget > 0 && styles.positive,
                 daysFromTarget < 0 && styles.negative
             ].join(' ')}>
-                <div className={styles.value}>
+                <div className={[styles.info, styles.value].join(' ')}>
                     <Icon name='calendar-check'/>
                     {daysFromTarget > 0 ? '+' : '-'}{Math.abs(daysFromTarget)}d
                 </div>
