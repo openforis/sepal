@@ -1,14 +1,14 @@
-import {Button} from 'widget/button'
-import {Form} from 'widget/form/form'
-import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
-import {msg} from 'translate'
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {msg} from 'translate'
+import {Button} from 'widget/button'
+import {Form} from 'widget/form/form'
+import {Panel} from 'widget/panel/panel'
 import SeasonSelect from 'widget/seasonSelect'
-import moment from 'moment'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -89,6 +89,7 @@ class Dates extends React.Component {
 
     setAdvanced(enabled) {
         const {inputs: {advanced}} = this.props
+        console.log('advanced.set', enabled)
         advanced.set(enabled)
     }
 
@@ -229,7 +230,7 @@ const modelToValues = (model = {}) => {
             || moment(model.seasonEnd).dayOfYear() !== 1
             || model.yearsBefore !== 0
             || model.yearsAfter !== 0
-            || moment(model.targetDate).dayOfYear() !== 183, // 2 July
+            || ![183, 184].includes(moment(model.targetDate).dayOfYear()), // 2 July
         targetYear: moment(model.targetDate).year(),
         targetDate: model.targetDate,
         seasonStart: model.seasonStart,
