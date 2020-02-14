@@ -283,12 +283,19 @@ class Scene extends React.Component {
         )
     }
 
-    renderThumbnail() {
-        const {scene: {browseUrl}} = this.props
-        const thumbnailUrl = this.imageThumbnail(browseUrl)
+    renderImage(url) {
         return (
-            <div className={styles.thumbnail} style={{'backgroundImage': `url("${thumbnailUrl}")`}}>
-                {thumbnailUrl !== browseUrl ? <img src={browseUrl} alt=''/> : null}
+            <div className={styles.image} style={{'--image': `url("${url}")`}}></div>
+        )
+    }
+
+    renderThumbnail() {
+        const {scene: {browseUrl: imageUrl}} = this.props
+        const thumbnailUrl = this.imageThumbnail(imageUrl)
+        return (
+            <div className={styles.thumbnail}>
+                {this.renderImage(thumbnailUrl)}
+                {this.renderImage(imageUrl)}
             </div>
         )
     }
@@ -296,7 +303,7 @@ class Scene extends React.Component {
     renderInfo(dataSet, date) {
         return (
             <div className={styles.date}>
-                <div className={styles.dataSet}>
+                <div className={[styles.info, styles.dataSet].join(' ')}>
                     <Icon name='satellite-dish'/>
                     {dataSetById[dataSet].shortName}
                 </div>
@@ -310,7 +317,7 @@ class Scene extends React.Component {
     renderCloudCover(cloudCover) {
         return (
             <div className={styles.cloudCover}>
-                <div className={styles.value}>
+                <div className={[styles.info, styles.value].join(' ')}>
                     <Icon name='cloud'/>
                     {format.integer(cloudCover)}%
                 </div>
@@ -326,7 +333,7 @@ class Scene extends React.Component {
                 daysFromTarget > 0 && styles.positive,
                 daysFromTarget < 0 && styles.negative
             ].join(' ')}>
-                <div className={styles.value}>
+                <div className={[styles.info, styles.value].join(' ')}>
                     <Icon name='calendar-check'/>
                     {daysFromTarget > 0 ? '+' : '-'}{Math.abs(daysFromTarget)}d
                 </div>

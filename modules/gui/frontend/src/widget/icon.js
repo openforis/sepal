@@ -2,14 +2,14 @@ import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
 import {fab} from '@fortawesome/free-brands-svg-icons'
 import {far} from '@fortawesome/free-regular-svg-icons'
 import {fas} from '@fortawesome/free-solid-svg-icons'
+import {library} from '@fortawesome/fontawesome-svg-core'
 import PropTypes from 'prop-types'
 import React from 'react'
-import fontawesome from '@fortawesome/fontawesome'
 import styles from './icon.module.css'
 
-fontawesome.library.add(fab)
-fontawesome.library.add(fas)
-fontawesome.library.add(far)
+library.add(fab)
+library.add(fas)
+library.add(far)
 
 const fontAwesomeCollection = type => {
     switch (type) {
