@@ -87,7 +87,7 @@ class Interactive {
             println("Enter ${highlight('Type')} of instance to start.")
             println()
             println("Example:")
-            println("  ${highlight('t1')} - start a t1 instance")
+            println("  ${highlight('t1')}    start a t1 instance")
         }
         println()
         readSelection(sandboxInfo)
