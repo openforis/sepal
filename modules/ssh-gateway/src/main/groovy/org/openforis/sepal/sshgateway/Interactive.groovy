@@ -75,8 +75,8 @@ class Interactive {
             rows.addAll(sessionRows(sandboxInfo.sessions))
         }
         print(new AsciiTable(rows))
+        println()
         if (sandboxInfo.sessions) {
-            println()
             println("Enter ${highlight('Type')}, ${highlight('ID')}, or ${highlight('ID')}+${highlight('s')}.")
             println()
             println("Examples:")
@@ -84,7 +84,7 @@ class Interactive {
             println("  ${highlight('1')}     join session #1")
             println("  ${highlight('1s')}    stop session #1")
         } else {
-            println("Start: ${highlight('Type')} of instance")
+            println("Enter ${highlight('Type')} of instance to start.")
             println()
             println("Example:")
             println("  ${highlight('t1')} - start a t1 instance")
