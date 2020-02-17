@@ -33,49 +33,6 @@ class Interactive {
 
         printUsageBudget(sandboxInfo)
         BudgetChecker.assertWithinBudget(sandboxInfo)
-
-        sandboxInfo.sessions = [
-            [
-                "id": "f049d5b6-0d80-43d4-a64b-3725d4814be6",
-                "path": "sessions/session/f049d5b6-0d80-43d4-a64b-3725d4814be6",
-                "username": "wiell",
-                "status": "ACTIVE",
-                "host": "35.166.231.224",
-                "earliestTimeoutHours": 0,
-                "instanceType": [
-                    "id": "T3aSmall",
-                    "path": "sessions/instance-type/T3aSmall",
-                    "name": "t3a.small",
-                    "tag": "t1",
-                    "cpuCount": 1,
-                    "ramGiB": 2,
-                    "description": "1 CPU / 2.0 GiB",
-                    "hourlyCost": 0.0204d
-                ],
-                "creationTime": "2020-02-17T13:17:21",
-                "costSinceCreation": 0
-            ],
-//            [
-//                "id": "f049d5b6-0d80-43d4-a64b-3725d4814be6",
-//                "path": "sessions/session/f049d5b6-0d80-43d4-a64b-3725d4814be6",
-//                "username": "wiell",
-//                "status": "ACTIVE",
-//                "host": "35.166.231.224",
-//                "earliestTimeoutHours": 0,
-//                "instanceType": [
-//                    "id": "T3aSmall",
-//                    "path": "sessions/instance-type/T3aSmall",
-//                    "name": "t3a.small",
-//                    "tag": "t1",
-//                    "cpuCount": 1,
-//                    "ramGiB": 2,
-//                    "description": "1 CPU / 2.0 GiB",
-//                    "hourlyCost": 0.0204d
-//                ],
-//                "creationTime": "2020-02-17T13:17:21",
-//                "costSinceCreation": 0
-//            ]
-        ]
         promptCreate(sandboxInfo)
     }
 
