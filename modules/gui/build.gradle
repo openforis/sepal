@@ -37,7 +37,7 @@ dependencies {
 }
 
 task buildFrontend(type: NpmTask) {
-    args = ['run', 'build']
+    args = ['run', 'build', '--scan']
 }
 
 task copyFrontend(type: Copy) {
