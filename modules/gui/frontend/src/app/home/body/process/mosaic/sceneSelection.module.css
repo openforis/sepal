@@ -191,10 +191,6 @@
 }
 
 @media only screen and (max-width: 500px) {
-    .panel {
-        /* --content-padding: 1.5rem .5rem; */
-    }
-
     .selectedScenes {
         margin-left: .5rem;
     }
