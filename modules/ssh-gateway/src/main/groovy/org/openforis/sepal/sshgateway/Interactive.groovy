@@ -8,6 +8,9 @@ import org.slf4j.LoggerFactory
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 
+import static org.openforis.sepal.sshgateway.AsciiTable.*
+import static org.openforis.sepal.sshgateway.Style.*
+
 class Interactive {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private static final int CONFIRM_WHEN_LESS_THAN_HOURS = 10
@@ -25,7 +28,7 @@ class Interactive {
 
     void start() {
         def sandboxInfo = sepalClient.loadSandboxInfo()
-        sandboxInfo.instanceTypes = sandboxInfo.instanceTypes.findAll {it.tag}
+        sandboxInfo.instanceTypes = sandboxInfo.instanceTypes.findAll { it.tag }
 
         printUsageBudget(sandboxInfo)
         BudgetChecker.assertWithinBudget(sandboxInfo)
@@ -37,9 +40,9 @@ class Interactive {
 
     private printUsageBudget(info) {
         println '\n' +
-                '------------------\n' +
-                '- Monthly budget -\n' +
-                '------------------\n'
+            '------------------\n' +
+            '- Monthly budget -\n' +
+            '------------------\n'
         println("Instance spending/budget:".padRight(26) + "${budget(info.spending.monthlyInstanceSpending, info.spending.monthlyInstanceBudget)} USD")
         println("Storage spending/budget:".padRight(26) + "${budget(info.spending.monthlyStorageSpending, info.spending.monthlyStorageBudget)} USD")
         println("Storage used/quota:".padRight(26) + "${budget(info.spending.storageUsed, info.spending.storageQuota)} GB")
@@ -52,9 +55,9 @@ class Interactive {
 
     private void promptJoin(Map sandboxInfo) {
         println '\n' +
-                '----------------\n' +
-                '- Join session -\n' +
-                '----------------\n'
+            '----------------\n' +
+            '- Join session -\n' +
+            '----------------\n'
         def sessionsByStatus = sandboxInfo.sessions.groupBy { it.status }
         def activeSessions = sessionsByStatus.ACTIVE as List<Map>
         def startingSessions = sessionsByStatus.STARTING as List<Map>
@@ -75,8 +78,8 @@ class Interactive {
             }
             println()
         }
-        println 'c'.padRight(6) + 'Create new session'
-        println 't'.padRight(6) + 'Terminate session'
+        println format('c', BLUE).padRight(6) + 'Create new session'
+        println format('t', BLUE).padRight(6) + 'Terminate session'
         println()
         readJoinSelection(sandboxInfo, sessions)
     }
@@ -88,7 +91,7 @@ class Interactive {
     }
 
     private void readJoinSelection(Map sandboxInfo, List<Map> sessions) {
-        def selection = readLine('Select (1): ')
+        def selection = readLine("Select (${format(1, BLUE)}): ")
         if (!selection)
             selection = '1'
 
@@ -125,30 +128,50 @@ class Interactive {
 
     private void promptCreate(Map sandboxInfo) {
         println '\n' +
-                '----------------------\n' +
-                '- Create new session -\n' +
-                '----------------------\n'
+            '----------------------\n' +
+            '- Create new session -\n' +
+            '----------------------\n'
         def types = sandboxInfo.instanceTypes as List<Map>
-        types.eachWithIndex { type, i ->
-            printInstanceTypeOption(type)
-        }
+        printInstanceTypes(types)
         if (sandboxInfo.sessions) {
+            println('Start session by entering an ID, or manage existing sessions:')
             println()
-            println 'j'.padRight(6) + 'Join existing session'
-            println 't'.padRight(6) + 'Terminate session'
+            println format('j', BLUE).padRight(6) + 'Join existing session'
+            println format('t', BLUE).padRight(6) + 'Terminate session'
+        } else {
+            println('Start session by entering an ID:')
         }
         println()
         readCreateSelection(sandboxInfo)
     }
 
-    private void printInstanceTypeOption(Map type) {
-        print String.valueOf(type.tag).padRight(6)
-        println "$type.name, $type.description, $type.hourlyCost USD/h"
+    private void printInstanceTypes(List<Map> types) {
+        def rows = [
+            hr([
+                td(value: 'Available instance types', colSpan: 4, styles: [BOLD, GREEN])
+            ]),
+            hr([
+                td(value: 'ID', width: 5, styles: [BOLD]),
+                td(value: 'CPU', width: 3, styles: [BOLD]),
+                td(value: 'GB RAM', width: 6, styles: [BOLD]),
+                td(value: 'USD/h', width: 5, styles: [BOLD])
+            ])
+        ]
+        def options = types.withIndex().collect { type, i ->
+            tr([
+                td(value: type.tag, styles: [BLUE]),
+                td(value: type.cpuCount),
+                td(value: type.ramGiB),
+                td(value: String.format('%.2f', type.hourlyCost), align: 'right')
+            ])
+        }
+        rows.addAll(options)
+        println(new AsciiTable(rows))
     }
 
     private void readCreateSelection(Map sandboxInfo) {
         def defaultTag = getDefaultTag(sandboxInfo)
-        def selection = readLine("Select (${defaultTag}): ")
+        def selection = readLine("Select (${format(defaultTag, BLUE)}): ")
         if (!selection)
             selection = defaultTag
 
@@ -163,14 +186,14 @@ class Interactive {
             def hoursLeft = Math.floor(spendingLeft / selectedInstanceType.hourlyCost) as int
             if (hoursLeft <= 0) {
                 println("You don't have enough resources to run this session. Please consider " +
-                        "reducing the size of your selected instance, or contact a SEPAL administrator to increase " +
-                        "your resource limits.\n\n")
+                    "reducing the size of your selected instance, or contact a SEPAL administrator to increase " +
+                    "your resource limits.\n\n")
                 promptCreate(sandboxInfo)
                 return
             }
             println("You can run this session for $hoursLeft hours. If you require more processing time, please consider " +
-                    "reducing the size of your selected instance, or contact a SEPAL administrator to increase " +
-                    "your resource limits.")
+                "reducing the size of your selected instance, or contact a SEPAL administrator to increase " +
+                "your resource limits.")
             if (hoursLeft <= CONFIRM_WHEN_LESS_THAN_HOURS)
                 confirmSessionCreation(sandboxInfo, selectedInstanceType)
             else {
@@ -207,22 +230,22 @@ class Interactive {
 
     private void promptTerminate(Map sandboxInfo) {
         println '\n' +
-                '---------------------\n' +
-                '- Terminate session -\n' +
-                '---------------------\n'
+            '---------------------\n' +
+            '- Terminate session -\n' +
+            '---------------------\n'
         def sessions = sandboxInfo.sessions as List<Map>
         sessions.eachWithIndex { session, i ->
             printSessionOptionLine(i + 1, session)
         }
         println()
-        println 'c'.padRight(6) + 'Create new session'
-        println 'j'.padRight(6) + 'Join existing session'
+        println format('c', BLUE).padRight(6) + 'Create new session'
+        println format('j', BLUE).padRight(6) + 'Join existing session'
         println()
         readTerminateSelection(sandboxInfo)
     }
 
     private void readTerminateSelection(Map sandboxInfo) {
-        def selection = readLine('Select (1): ')
+        def selection = readLine("Select (${format(1, BLUE)}): ")
         if (!selection)
             selection = '1'
 
@@ -261,12 +284,12 @@ class Interactive {
     private String timeSinceCreation(Map session) {
         def locale = Locale.getDefault()
         def prettyTime = new PrettyTime(units: [
-                new Second(locale),
-                new Minute(locale),
-                new Hour(locale),
-                new Day(locale),
-                new Week(locale),
-                new Month(locale)
+            new Second(locale),
+            new Minute(locale),
+            new Hour(locale),
+            new Day(locale),
+            new Week(locale),
+            new Month(locale)
         ])
         prettyTime.format(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(session.creationTime as String))
     }
@@ -284,7 +307,7 @@ class Interactive {
     }
 
     private Map getSelectedInstanceType(Map info, String tag) {
-        info.instanceTypes.find {it.tag == tag} as Map
+        info.instanceTypes.find { it.tag == tag } as Map
     }
 
     private boolean isTag(String tag) {
@@ -294,7 +317,7 @@ class Interactive {
     static void main(String[] args) {
         if (args.size() != 5)
             throw new IllegalArgumentException("Expects five arguments: username, sepal-server REST endpoint, " +
-                    "private key path, output path, and sepalAdmin password")
+                "private key path, output path, and sepalAdmin password")
         try {
             new Interactive(args[0], args[1], new File(args[2]), new File(args[3]), args[4]).start()
         } catch (Exception e) {
