@@ -133,7 +133,7 @@ class Interactive {
             tr([
                 td(value: type.tag, styles: [YELLOW_INTENSE]),
                 td(value: type.cpuCount),
-                td(value: type.ramGiB),
+                td(value: type.ramGiB as int),
                 td(value: String.format('%.2f', type.hourlyCost), align: 'right')
             ])
         }
