@@ -243,15 +243,6 @@ class Users extends React.Component {
         )
     }
 
-    renderSortingHandle(column, defaultSorting) {
-        const {sortingOrder, sortingDirection} = this.state
-        return sortingOrder === column
-            ? sortingDirection === defaultSorting
-                ? <Icon name={'sort-down'}/>
-                : <Icon name={'sort-up'}/>
-            : <Icon name={'sort'}/>
-    }
-
     getSortingHandleIcon(column, defaultSorting) {
         const {sortingOrder, sortingDirection} = this.state
         return sortingOrder === column

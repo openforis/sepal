@@ -32,8 +32,9 @@
 }
 
 .fileList li div {
+    display: flex;
+    align-items: center;
     position: relative;
-    width: 100%;
     cursor: pointer;
     border: none !important;
     padding-left: calc(var(--depth) * 1.5rem);

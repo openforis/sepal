@@ -39,10 +39,9 @@ class LandCoverBottomBar extends Component {
                 additionalClassName={styles.back}
                 look={'transparent'}
                 // onClick={() => console.log('Going back to composites')}
-            >
-                <Icon name='backward'/>
-                <span>Composite</span>
-            </Button>
+                icon='backward'
+                label='Composite'
+            />
         )
     }
 
@@ -96,10 +95,9 @@ class LandCoverBottomBar extends Component {
                 additionalClassName={styles.next}
                 look={'transparent'}
                 // onClick={() => console.log('Navigate to assemblage')}
-            >
-                <span>Assemblage</span>
-                <Icon name='forward'/>
-            </Button>
+                icon='forward'
+                label='Assemblage'
+            />
         )
     }
 
