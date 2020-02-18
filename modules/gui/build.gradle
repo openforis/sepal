@@ -36,8 +36,9 @@ dependencies {
     testCompile project(':sepal-server')
 }
 
-task buildFrontend(type: NpmTask) {
-    args = ['run', 'build', '--scan']
+task buildFrontend(type: Exec) {
+    workingDir "${projectDir}/frontend"
+    commandLine 'npm', 'run', 'build'
 }
 
 task copyFrontend(type: Copy) {
@@ -72,4 +73,3 @@ task runDev(type: JavaExec) {
     main = mainClassName
     systemProperties(System.getProperties())
 }
-//  ./gradlew :sepal-gui:runDev

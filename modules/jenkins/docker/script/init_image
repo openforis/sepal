@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+set -e
 
 # Needed for apt-add-repository command
 apt-get -y update && apt-get install -y software-properties-common sudo
 
-curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 apt-get install -y nodejs\
  bzip2
 
