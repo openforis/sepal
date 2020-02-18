@@ -12,7 +12,6 @@
         ldap_host: "{{ ec2_private_ip_address }}"
         sepal_http_ip: "{{ ec2_private_ip_address }}"
         sepal_ssh_ip: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
-        elk_host: "{{ elk_host }}"
         syslog_address: "unixgram:///dev/log"
         syslog_host: "{{ ec2_private_ip_address }}"
 

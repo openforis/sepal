@@ -1,16 +1,16 @@
 ---
 
-- name: "api-gateway | Determine if jar should be built"
-  script: "{{ module_dir }}/should-rebuild.sh {{ module_dir }}"
-  delegate_to: 127.0.0.1
-  become: no
-  register: should_rebuild
-  changed_when: should_rebuild.stdout_lines[0] == 'true'
-
-- name: "api-gateway | Build jar"
-  shell: "{{ module_dir }}/../../gradlew :sepal-api-gateway:clean :sepal-api-gateway:build -x test -p {{ module_dir }}/../.."
-  delegate_to: 127.0.0.1
-  become: no
-  when: should_rebuild.changed
+#- name: "api-gateway | Determine if jar should be built"
+#  script: "{{ module_dir }}/should-rebuild.sh {{ module_dir }}"
+#  delegate_to: 127.0.0.1
+#  become: no
+#  register: should_rebuild
+#  changed_when: should_rebuild.stdout_lines[0] == 'true'
+#
+#- name: "api-gateway | Build jar"
+#  shell: "{{ module_dir }}/../../gradlew :sepal-api-gateway:clean :sepal-api-gateway:build -x test -p {{ module_dir }}/../.."
+#  delegate_to: 127.0.0.1
+#  become: no
+#  when: should_rebuild.changed
 
 - include_tasks: "{{ build_image_task }}"

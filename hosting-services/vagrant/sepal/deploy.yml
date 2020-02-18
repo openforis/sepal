@@ -10,7 +10,6 @@
   pre_tasks:
     - set_fact:
         ldap_host: "{{ vagrant_ip }}"
-        elk_host: "{{ vagrant_ip }}"
         hosting_service: "vagrant"
         syslog_address: "unixgram:///dev/log"
         syslog_host: "172.17.0.1"
