@@ -11,10 +11,11 @@ class AsciiTable {
         udl: '┨',
         rdl: '┯',
         url: '┷',
-        ud: '│',
+        ud: '┃',
         rl: '━',
     ]
-    private static final VERTICAL = '│'
+    private static final VERTICAL_OUTER = '┃'
+    private static final VERTICAL_INNER = '│'
     private static final HORIZONTAL = '━'
 
     private final List<Row> rows
@@ -50,7 +51,7 @@ class AsciiTable {
     String border(int rowIndex, int columnIndex) {
         def up = rowIndex > 0 && !rows[rowIndex - 1].inSpan(columnIndex) ? 'u' : ''
         def right = columnIndex < columnCount ? 'r' : ''
-        def down = rowIndex < rows.size() - 1 && !rows[rowIndex].inSpan(columnIndex) ? 'd' : ''
+        def down = rowIndex < rows.size() && !rows[rowIndex].inSpan(columnIndex) ? 'd' : ''
         def left = columnIndex > 0 ? 'l' : ''
         return INTERSECTION[up + right + down + left]
 
@@ -71,10 +72,6 @@ class AsciiTable {
             this.isHeader = props.type == 'hr'
         }
 
-        boolean isFirst() { !i }
-
-        boolean isLast() { i >= rows.size() - 1 }
-
         Cell getCell(int columnIndex) {
             cells.collect {
                 [it] * it.colSpan
@@ -87,10 +84,10 @@ class AsciiTable {
         }
 
         String toString() {
-            (i == 0 ? lineSeparator(0) : '') +
-                VERTICAL + ' ' + cells.join(' ' + VERTICAL + ' ') + ' ' + VERTICAL + '\n' +
-                (isHeader ? lineSeparator(i + 1) : (i == rows.size() - 1 ? lineSeparator(i) : ''))
-
+            def top = (i == 0 || (isHeader && !rows[i - 1].isHeader)) ? lineSeparator(i) : ''
+            def line = VERTICAL_OUTER + ' ' + cells.join(' ' + VERTICAL_INNER + ' ') + ' ' + VERTICAL_OUTER + '\n'
+            def bottom = isHeader ? lineSeparator(i + 1) : (i == rows.size() - 1 ? lineSeparator(i + 1) : '')
+            return top + line + bottom
         }
 
     }
@@ -127,7 +124,7 @@ class AsciiTable {
         }
     }
 
-    static Map hr(List<Map> cells) {
+    static Map th(List<Map> cells) {
         [type: 'hr', cells: cells]
     }
 
@@ -136,19 +133,20 @@ class AsciiTable {
     }
 
     static Map td(Map props) {
-        props
+        props.width = props.width ?: props.value.toString().length()
+        return props
     }
 
     static void main(String[] args) {
         def table = new AsciiTable([
-            hr([
+            th([
                 td(value: 'Available instance types', colSpan: 4)
             ]),
-            hr([
-                td(value: 'ID', width: 5),
-                td(value: 'CPU', width: 3),
-                td(value: 'GB RAM', width: 6),
-                td(value: 'USD/h', width: 5)
+            th([
+                td(value: 'ID'),
+                td(value: 'CPU', align: 'right'),
+                td(value: 'GB RAM', align: 'right'),
+                td(value: 'USD/h', align: 'right')
             ]),
             tr([
                 td(value: 't1'),
