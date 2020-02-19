@@ -1,27 +1,27 @@
+import api from 'api'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import {objectEquals} from 'collections'
+import {compose} from 'compose'
+import format from 'format'
+import React from 'react'
+import {map} from 'rxjs/operators'
+import {dataSetById} from 'sources'
+import {selectFrom} from 'stateUtils'
+import {msg} from 'translate'
+import {activatable} from 'widget/activation/activatable'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {HoverDetector, HoverOverlay} from 'widget/hover'
-import {Padding} from 'widget/padding'
-import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
-import {activatable} from 'widget/activation/activatable'
-import {compose} from 'compose'
-import {dataSetById} from 'sources'
-import {map} from 'rxjs/operators'
-import {msg} from 'translate'
-import {objectEquals} from 'collections'
-import {selectFrom} from 'stateUtils'
-import {withRecipe} from 'app/home/body/process/recipeContext'
 import Icon from 'widget/icon'
 import Label from 'widget/label'
-import React from 'react'
-import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
-import api from 'api'
+import {Padding} from 'widget/padding'
+import {Panel} from 'widget/panel/panel'
+import {CenteredProgress} from 'widget/progress'
+import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import daysBetween from './daysBetween'
-import format from 'format'
 import styles from './sceneSelection.module.css'
 
 const fields = {
@@ -283,12 +283,19 @@ class Scene extends React.Component {
         )
     }
 
-    renderThumbnail() {
-        const {scene: {browseUrl}} = this.props
-        const thumbnailUrl = this.imageThumbnail(browseUrl)
+    renderImage(url) {
         return (
-            <div className={styles.thumbnail} style={{'backgroundImage': `url("${thumbnailUrl}")`}}>
-                {thumbnailUrl !== browseUrl ? <img src={browseUrl} alt=''/> : null}
+            <div className={styles.image} style={{'--image': `url("${url}")`}}></div>
+        )
+    }
+
+    renderThumbnail() {
+        const {scene: {browseUrl: imageUrl}} = this.props
+        const thumbnailUrl = this.imageThumbnail(imageUrl)
+        return (
+            <div className={styles.thumbnail}>
+                {this.renderImage(thumbnailUrl)}
+                {this.renderImage(imageUrl)}
             </div>
         )
     }
@@ -296,7 +303,7 @@ class Scene extends React.Component {
     renderInfo(dataSet, date) {
         return (
             <div className={styles.date}>
-                <div className={styles.dataSet}>
+                <div className={[styles.info, styles.dataSet].join(' ')}>
                     <Icon name='satellite-dish'/>
                     {dataSetById[dataSet].shortName}
                 </div>
@@ -310,7 +317,7 @@ class Scene extends React.Component {
     renderCloudCover(cloudCover) {
         return (
             <div className={styles.cloudCover}>
-                <div className={styles.value}>
+                <div className={[styles.info, styles.value].join(' ')}>
                     <Icon name='cloud'/>
                     {format.integer(cloudCover)}%
                 </div>
@@ -326,7 +333,7 @@ class Scene extends React.Component {
                 daysFromTarget > 0 && styles.positive,
                 daysFromTarget < 0 && styles.negative
             ].join(' ')}>
-                <div className={styles.value}>
+                <div className={[styles.info, styles.value].join(' ')}>
                     <Icon name='calendar-check'/>
                     {daysFromTarget > 0 ? '+' : '-'}{Math.abs(daysFromTarget)}d
                 </div>

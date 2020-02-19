@@ -1,11 +1,10 @@
-import {BottomBar} from 'widget/sectionLayout'
+import {compose} from 'compose'
+import PropTypes from 'prop-types'
+import React, {Component} from 'react'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
-import {compose} from 'compose'
-import Icon from 'widget/icon'
-import PropTypes from 'prop-types'
-import React, {Component} from 'react'
+import {BottomBar} from 'widget/sectionLayout'
 import styles from './landCoverBottomBar.module.css'
 
 const fields = {
@@ -39,10 +38,9 @@ class LandCoverBottomBar extends Component {
                 additionalClassName={styles.back}
                 look={'transparent'}
                 // onClick={() => console.log('Going back to composites')}
-            >
-                <Icon name='backward'/>
-                <span>Composite</span>
-            </Button>
+                icon='backward'
+                label='Composite'
+            />
         )
     }
 
@@ -96,10 +94,9 @@ class LandCoverBottomBar extends Component {
                 additionalClassName={styles.next}
                 look={'transparent'}
                 // onClick={() => console.log('Navigate to assemblage')}
-            >
-                <span>Assemblage</span>
-                <Icon name='forward'/>
-            </Button>
+                icon='forward'
+                label='Assemblage'
+            />
         )
     }
 

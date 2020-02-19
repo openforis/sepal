@@ -17,24 +17,6 @@ button.menu:hover {
     cursor: pointer;
 }
 
-.warning {
-    color: hsl(49, 79%, 53%) !important;
-}
-
-.menu:hover .warning {
-    color: hsl(49, 79%, 58%);
-}
-
-.list li.warning {
-    color: hsl(var(--selected-hue), 80%, 50%);
-}
-
-.list li.warning i {
-    font-size: 1rem;
-    margin-right: 0.5rem;
-    color: hsl(49, 79%, 53%);
-}
-
 .open {
     color: var(--look-default-hover-color);
     background-color: var(--wireframe-color);

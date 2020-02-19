@@ -1,26 +1,26 @@
-import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
+import api from 'api'
+import {compose} from 'compose'
+import format from 'format'
+import _ from 'lodash'
+import moment from 'moment'
+import React from 'react'
+import Highlight from 'react-highlighter'
+import {forkJoin} from 'rxjs'
+import {map, zip} from 'rxjs/operators'
+import {connect} from 'store'
+import lookStyles from 'style/look.module.css'
+import {msg} from 'translate'
 import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
+import Icon from 'widget/icon'
+import Label from 'widget/label'
 import {Layout} from 'widget/layout'
+import Notifications from 'widget/notifications'
 import {Pageable} from 'widget/pageable/pageable'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
-import {compose} from 'compose'
-import {connect} from 'store'
-import {forkJoin} from 'rxjs'
-import {map, zip} from 'rxjs/operators'
-import {msg} from 'translate'
-import Highlight from 'react-highlighter'
-import Icon from 'widget/icon'
-import Label from 'widget/label'
-import Notifications from 'widget/notifications'
-import React from 'react'
+import {BottomBar, Content, SectionLayout, TopBar} from 'widget/sectionLayout'
 import UserDetails from './user'
-import _ from 'lodash'
-import api from 'api'
-import format from 'format'
-import lookStyles from 'style/look.module.css'
-import moment from 'moment'
 import styles from './users.module.css'
 
 const getUserList$ = () => forkJoin(
@@ -241,15 +241,6 @@ class Users extends React.Component {
                 Notifications.error({message: msg('user.userDetails.update.error'), error})
             }
         )
-    }
-
-    renderSortingHandle(column, defaultSorting) {
-        const {sortingOrder, sortingDirection} = this.state
-        return sortingOrder === column
-            ? sortingDirection === defaultSorting
-                ? <Icon name={'sort-down'}/>
-                : <Icon name={'sort-up'}/>
-            : <Icon name={'sort'}/>
     }
 
     getSortingHandleIcon(column, defaultSorting) {

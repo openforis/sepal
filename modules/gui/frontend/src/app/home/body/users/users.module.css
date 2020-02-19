@@ -101,19 +101,19 @@
 .grid > .instanceBudget {
     grid-area: ib;
     border-bottom: 1px solid gray;
-    text-align: center;
+    justify-content: center;
 }
 
 .grid > .storageBudget {
     grid-area: sb;
     border-bottom: 1px solid gray;
-    text-align: center;
+    justify-content: center;
 }
 
 .grid > .storage {
     grid-area: st;
     border-bottom: 1px solid gray;
-    text-align: center;
+    justify-content: center;
 }
 
 .grid > .instanceBudgetQuota {

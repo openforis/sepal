@@ -1,10 +1,9 @@
-import {Button} from 'widget/button'
 import {compose} from 'compose'
-import {connect, select} from 'store'
-import Icon from 'widget/icon'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {connect, select} from 'store'
+import {Button} from 'widget/button'
+import Portal from 'widget/portal'
 import styles from './menu.module.css'
 
 const mapStateToProps = () => ({
@@ -37,7 +36,7 @@ class Menu extends React.Component {
     }
 
     render() {
-        const {warning, disabled, children} = this.props
+        const {disabled, children} = this.props
         const {open} = this.state
         return <React.Fragment>
             <span ref={this.button}>
@@ -47,7 +46,6 @@ class Menu extends React.Component {
                     size='large'
                     shape='circle'
                     icon='bars'
-                    additionalClassName={warning ? styles.warning : null}
                     disabled={disabled}
                     onClick={() => this.toggleOpen()}/>
             </span>
@@ -56,12 +54,6 @@ class Menu extends React.Component {
                     <MenuContext.Provider value={this}>
                         <div className={styles.captureClicks} onClick={() => this.toggleOpen()}/>
                         <ul className={styles.list} style={this.menuStyle()}>
-                            {warning ?
-                                <li className={styles.warning}>
-                                    <Icon name='exclamation-triangle'/>
-                                    {warning}
-                                </li>
-                                : null}
                             {children}
                         </ul>
                     </MenuContext.Provider>
@@ -76,7 +68,6 @@ Menu.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
-    warning: PropTypes.any,
     onClick: PropTypes.func
 }
 

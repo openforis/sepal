@@ -1,9 +1,9 @@
-import {map} from 'rxjs/operators'
-import {of} from 'rxjs'
-import {sepalMap} from './map'
-import _ from 'lodash'
-import ee from 'earthengine-api'
+import ee from '@google/earthengine'
 import guid from 'guid'
+import _ from 'lodash'
+import {of} from 'rxjs'
+import {map} from 'rxjs/operators'
+import {sepalMap} from './map'
 
 export default class EarthEngineLayer {
     constructor({layerIndex, bounds, mapId$, props, onProgress}) {

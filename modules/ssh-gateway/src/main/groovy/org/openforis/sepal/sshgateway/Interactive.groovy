@@ -1,5 +1,6 @@
 package org.openforis.sepal.sshgateway
 
+import com.ocpsoft.pretty.time.Duration
 import com.ocpsoft.pretty.time.PrettyTime
 import com.ocpsoft.pretty.time.units.*
 import org.slf4j.Logger
@@ -7,6 +8,9 @@ import org.slf4j.LoggerFactory
 
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
+
+import static org.openforis.sepal.sshgateway.AsciiTable.*
+import static org.openforis.sepal.sshgateway.Style.*
 
 class Interactive {
     private static final Logger LOG = LoggerFactory.getLogger(this)
@@ -25,91 +29,32 @@ class Interactive {
 
     void start() {
         def sandboxInfo = sepalClient.loadSandboxInfo()
-        sandboxInfo.instanceTypes = sandboxInfo.instanceTypes.findAll {it.tag}
+        sandboxInfo.instanceTypes = sandboxInfo.instanceTypes.findAll { it.tag }
 
         printUsageBudget(sandboxInfo)
         BudgetChecker.assertWithinBudget(sandboxInfo)
-        if (sandboxInfo.sessions)
-            promptJoin(sandboxInfo)
-        else
-            promptCreate(sandboxInfo)
+        promptCreate(sandboxInfo)
     }
 
     private printUsageBudget(info) {
-        println '\n' +
-                '------------------\n' +
-                '- Monthly budget -\n' +
-                '------------------\n'
-        println("Instance spending/budget:".padRight(26) + "${budget(info.spending.monthlyInstanceSpending, info.spending.monthlyInstanceBudget)} USD")
-        println("Storage spending/budget:".padRight(26) + "${budget(info.spending.monthlyStorageSpending, info.spending.monthlyStorageBudget)} USD")
-        println("Storage used/quota:".padRight(26) + "${budget(info.spending.storageUsed, info.spending.storageQuota)} GB")
+        println("Instance spending:".padRight(19) +
+            format("${budget(info.spending.monthlyInstanceSpending, info.spending.monthlyInstanceBudget)} USD", PURPLE_INTENSE))
+        println("Storage spending:".padRight(19) +
+            format("${budget(info.spending.monthlyStorageSpending, info.spending.monthlyStorageBudget)} USD", PURPLE_INTENSE))
+        println("Storage used:".padRight(19) +
+            format("${budget(info.spending.storageUsed, info.spending.storageQuota)} GB", PURPLE_INTENSE))
+        println()
     }
 
     private String budget(Number spending, Number budget) {
-        def format = new DecimalFormat('##,###.##')
-        return "${format.format(spending)}/${format.format(budget)}"
+        def percentage = Math.round(100 * spending / budget)
+        def decimalFormat = new DecimalFormat('##,###.##')
+        return "${percentage.toString().padLeft(3)}% of ${decimalFormat.format(budget)}"
     }
 
-    private void promptJoin(Map sandboxInfo) {
-        println '\n' +
-                '----------------\n' +
-                '- Join session -\n' +
-                '----------------\n'
-        def sessionsByStatus = sandboxInfo.sessions.groupBy { it.status }
-        def activeSessions = sessionsByStatus.ACTIVE as List<Map>
-        def startingSessions = sessionsByStatus.STARTING as List<Map>
-        def sessions = [] as List<Map>
-        if (activeSessions) {
-            println 'Active sessions:'
-            activeSessions.each {
-                sessions << it
-                printSessionOptionLine(sessions.size(), it)
-            }
-            println()
-        }
-        if (startingSessions) {
-            println 'Sessions starting up:'
-            startingSessions.each {
-                sessions << it
-                printSessionOptionLine(sessions.size(), it)
-            }
-            println()
-        }
-        println 'c'.padRight(6) + 'Create new session'
-        println 't'.padRight(6) + 'Terminate session'
-        println()
-        readJoinSelection(sandboxInfo, sessions)
-    }
-
-    private printSessionOptionLine(int option, Map session) {
-        print String.valueOf(option).padRight(6)
-        print timeSinceCreation(session).padRight(15)
-        println "(${session.instanceType.name}, ${session.instanceType.description}, ${session.instanceType.hourlyCost} USD/h)"
-    }
-
-    private void readJoinSelection(Map sandboxInfo, List<Map> sessions) {
-        def selection = readLine('Select (1): ')
-        if (!selection)
-            selection = '1'
-
-        if (selection.isNumber()) {
-            def selectedSessionIndex = (selection as int) - 1
-            if (selectedSessionIndex >= sessions.size() || selectedSessionIndex < 0) {
-                println "  Invalid option: $selection"
-                readJoinSelection(sandboxInfo, sessions)
-                return
-            }
-            joinSession(sessions[selectedSessionIndex])
-        } else {
-            if ('c' == selection)
-                promptCreate(sandboxInfo)
-            else if ('t' == selection)
-                promptTerminate(sandboxInfo)
-            else {
-                println "  Invalid option: $selection"
-                readJoinSelection(sandboxInfo, sessions)
-            }
-        }
+    private void joinSelected(Map sandboxInfo, selection) {
+        def selectedSessionIndex = (selection as int) - 1
+        joinSession(sandboxInfo.sessions[selectedSessionIndex])
     }
 
     private void joinSession(Map session) {
@@ -124,67 +69,121 @@ class Interactive {
     }
 
     private void promptCreate(Map sandboxInfo) {
-        println '\n' +
-                '----------------------\n' +
-                '- Create new session -\n' +
-                '----------------------\n'
         def types = sandboxInfo.instanceTypes as List<Map>
-        types.eachWithIndex { type, i ->
-            printInstanceTypeOption(type)
+        def rows = instanceTypeRows(types)
+        if (!sandboxInfo.sessions.empty) {
+            rows.addAll(sessionRows(sandboxInfo.sessions))
         }
+        print(new AsciiTable(rows))
+        println()
         if (sandboxInfo.sessions) {
+            println("Enter ${highlight('Type')}, ${highlight('ID')}, or ${highlight('ID')}+${highlight('s')}.")
             println()
-            println 'j'.padRight(6) + 'Join existing session'
-            println 't'.padRight(6) + 'Terminate session'
+            println("Examples:")
+            println("  ${highlight('t1')}    start a t1 instance")
+            println("  ${highlight('1')}     join session #1")
+            println("  ${highlight('1s')}    stop session #1")
+        } else {
+            println("Enter ${highlight('Type')} of instance to start.")
+            println()
+            println("Example:")
+            println("  ${highlight('t1')}    start a t1 instance")
         }
         println()
-        readCreateSelection(sandboxInfo)
+        readSelection(sandboxInfo)
     }
 
-    private void printInstanceTypeOption(Map type) {
-        print String.valueOf(type.tag).padRight(6)
-        println "$type.name, $type.description, $type.hourlyCost USD/h"
+    private List sessionRows(List<Map> sessions) {
+        def rows = [
+            th([
+                td(value: 'Active sessions', colSpan: 4, styles: [BOLD, GREEN])
+            ]),
+            th([
+                td(value: 'ID', styles: [BOLD], align: 'right'),
+                td(value: 'Type', styles: [BOLD]),
+                td(value: 'Time', styles: [BOLD], align: 'right'),
+                td(value: 'USD', styles: [BOLD], align: 'right')
+            ])
+        ]
+        def options = sessions.withIndex().collect { Map session, i ->
+            tr([
+                td(value: i + 1, styles: [YELLOW_INTENSE]),
+                td(value: session.instanceType.tag),
+                td(value: timeSinceCreation(session), align: 'right'),
+                td(value: totalCost(session), align: 'right')
+            ])
+        }
+        rows.addAll(options)
+        return rows
     }
 
-    private void readCreateSelection(Map sandboxInfo) {
-        def defaultTag = getDefaultTag(sandboxInfo)
-        def selection = readLine("Select (${defaultTag}): ")
+    private List instanceTypeRows(List<Map> types) {
+        def rows = [
+            th([
+                td(value: 'Available instance types', colSpan: 4, styles: [BOLD, GREEN])
+            ]),
+            th([
+                td(value: 'Type', styles: [BOLD]),
+                td(value: 'CPU', styles: [BOLD], align: 'right'),
+                td(value: 'GB RAM', styles: [BOLD], align: 'right'),
+                td(value: 'USD/h', styles: [BOLD], align: 'right')
+            ])
+        ]
+        def options = types.withIndex().collect { type, i ->
+            tr([
+                td(value: type.tag, styles: [YELLOW_INTENSE]),
+                td(value: type.cpuCount),
+                td(value: type.ramGiB as int),
+                td(value: String.format('%.2f', type.hourlyCost), align: 'right')
+            ])
+        }
+        rows.addAll(options)
+        return rows
+    }
+
+    private void readSelection(Map sandboxInfo) {
+        def defaultSelection = getDefaultSelection(sandboxInfo)
+        def selection = readLine("Select (${highlight(defaultSelection, YELLOW_INTENSE)}): ")
         if (!selection)
-            selection = defaultTag
+            selection = defaultSelection
 
-        if (isTag(selection)) {
-            def selectedInstanceType = getSelectedInstanceType(sandboxInfo, selection)
-            if (!selectedInstanceType) {
-                println "  Invalid option: $selection"
-                readCreateSelection(sandboxInfo)
-                return
-            }
-            def spendingLeft = sandboxInfo.spending.monthlyInstanceBudget - sandboxInfo.spending.monthlyInstanceSpending
-            def hoursLeft = Math.floor(spendingLeft / selectedInstanceType.hourlyCost) as int
-            if (hoursLeft <= 0) {
-                println("You don't have enough resources to run this session. Please consider " +
-                        "reducing the size of your selected instance, or contact a SEPAL administrator to increase " +
-                        "your resource limits.\n\n")
-                promptCreate(sandboxInfo)
-                return
-            }
-            println("You can run this session for $hoursLeft hours. If you require more processing time, please consider " +
-                    "reducing the size of your selected instance, or contact a SEPAL administrator to increase " +
-                    "your resource limits.")
-            if (hoursLeft <= CONFIRM_WHEN_LESS_THAN_HOURS)
-                confirmSessionCreation(sandboxInfo, selectedInstanceType)
-            else {
-                createSession(selectedInstanceType)
-            }
+        if (isStart(sandboxInfo, selection)) {
+            startSelected(sandboxInfo, selection)
+        } else if (isJoin(sandboxInfo, selection)) {
+            joinSelected(sandboxInfo, selection)
+        } else if (isStop(sandboxInfo, selection)) {
+            stopSelected(sandboxInfo, selection)
         } else {
-            if ('j' == selection && sandboxInfo.sessions)
-                promptJoin(sandboxInfo)
-            else if ('t' == selection && sandboxInfo.sessions)
-                promptTerminate(sandboxInfo)
-            else {
-                println "  Invalid option: $selection"
-                readCreateSelection(sandboxInfo)
-            }
+            println "  Invalid option: $selection"
+            println()
+            readSelection(sandboxInfo)
+        }
+    }
+
+    private void startSelected(sandboxInfo, selection) {
+        def selectedInstanceType = getSelectedInstanceType(sandboxInfo, selection)
+        if (!selectedInstanceType) {
+            println "  Invalid option: $selection"
+            println()
+            readSelection(sandboxInfo)
+            return
+        }
+        def spendingLeft = sandboxInfo.spending.monthlyInstanceBudget - sandboxInfo.spending.monthlyInstanceSpending
+        def hoursLeft = Math.floor(spendingLeft / selectedInstanceType.hourlyCost) as int
+        if (hoursLeft <= 0) {
+            println("You don't have enough resources to run this session. Please consider " +
+                "reducing the size of your selected instance, or contact a SEPAL administrator to increase " +
+                "your resource limits.\n\n")
+            promptCreate(sandboxInfo)
+            return
+        }
+        println("You can run this session for $hoursLeft hours. If you require more processing time, please consider " +
+            "reducing the size of your selected instance, or contact a SEPAL administrator to increase " +
+            "your resource limits.")
+        if (hoursLeft <= CONFIRM_WHEN_LESS_THAN_HOURS)
+            confirmSessionCreation(sandboxInfo, selectedInstanceType)
+        else {
+            createSession(selectedInstanceType)
         }
     }
 
@@ -205,50 +204,14 @@ class Interactive {
         sessionCommand.write(session)
     }
 
-    private void promptTerminate(Map sandboxInfo) {
-        println '\n' +
-                '---------------------\n' +
-                '- Terminate session -\n' +
-                '---------------------\n'
-        def sessions = sandboxInfo.sessions as List<Map>
-        sessions.eachWithIndex { session, i ->
-            printSessionOptionLine(i + 1, session)
-        }
-        println()
-        println 'c'.padRight(6) + 'Create new session'
-        println 'j'.padRight(6) + 'Join existing session'
-        println()
-        readTerminateSelection(sandboxInfo)
+    private String highlight(text, Style style = YELLOW_INTENSE) {
+        format(text, style)
     }
 
-    private void readTerminateSelection(Map sandboxInfo) {
-        def selection = readLine('Select (1): ')
-        if (!selection)
-            selection = '1'
-
-        def sessions = sandboxInfo.sessions as List<Map>
-        if (selection.isNumber()) {
-            def selectedSessionIndex = (selection as int) - 1
-            if (selectedSessionIndex >= sessions.size() || selectedSessionIndex < 0) {
-                println "  Invalid option: $selection"
-                readTerminateSelection(sandboxInfo)
-                return
-            }
-            terminate(sandboxInfo, selectedSessionIndex)
-            if (sandboxInfo.sessions)
-                promptTerminate(sandboxInfo)
-            else
-                promptCreate(sandboxInfo)
-        } else {
-            if ('c' == selection)
-                promptCreate(sandboxInfo)
-            else if ('j' == selection)
-                promptJoin(sandboxInfo)
-            else {
-                println "  Invalid option: $selection"
-                readTerminateSelection(sandboxInfo)
-            }
-        }
+    private void stopSelected(Map sandboxInfo, selection) {
+        def selectedSessionIndex = stopToSessionIndex(selection)
+        terminate(sandboxInfo, selectedSessionIndex)
+        promptCreate(sandboxInfo)
     }
 
     private void terminate(Map sandboxInfo, int indexOfSessionToTerminate) {
@@ -258,17 +221,40 @@ class Interactive {
         print '\nSession successfully terminated.\n'
     }
 
-    private String timeSinceCreation(Map session) {
+    private Duration getDuration(session) {
         def locale = Locale.getDefault()
-        def prettyTime = new PrettyTime(units: [
-                new Second(locale),
-                new Minute(locale),
-                new Hour(locale),
-                new Day(locale),
-                new Week(locale),
-                new Month(locale)
-        ])
-        prettyTime.format(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(session.creationTime as String))
+        def prettyTime = new PrettyTime([units: [
+            new Second(locale),
+            new Minute(locale),
+            new Hour(locale),
+            new Day(locale),
+            new Week(locale)
+        ]])
+        return prettyTime.approximateDuration(getSessionDate(session))
+    }
+
+    private Date getSessionDate(Map<?, ?> session) {
+        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(session.creationTime as String)
+    }
+
+    private String totalCost(Map session) {
+        def cost = session.instanceType.hourlyCost * ((getSessionDate(session) - new Date()).abs() * 24d)
+        String.format('%.2f', cost)
+    }
+
+    private String timeSinceCreation(Map session) {
+        def duration = getDuration(session)
+        return "${duration.quantity.abs()}${dateUnit(duration)}"
+    }
+
+    private String dateUnit(Duration duration) {
+        switch (duration.unit.name) {
+            case 'second': return 's'
+            case 'minute': return 'm'
+            case 'hour': return 'h'
+            case 'day': return 'd'
+            case 'week': return 'w'
+        }
     }
 
     private String readLine(String prompt) {
@@ -279,22 +265,46 @@ class Interactive {
         return result?.trim()?.toLowerCase()
     }
 
-    private String getDefaultTag(Map info) {
-        info.instanceTypes.first().tag
+    private String getDefaultSelection(Map info) {
+        info.sessions.empty
+            ? info.instanceTypes.first().tag
+            : '1'
     }
 
     private Map getSelectedInstanceType(Map info, String tag) {
-        info.instanceTypes.find {it.tag == tag} as Map
+        info.instanceTypes.find { it.tag == tag } as Map
     }
 
-    private boolean isTag(String tag) {
-        tag && tag.length() > 1
+    private boolean isStart(Map sandboxInfo, String selection) {
+        selection in sandboxInfo.instanceTypes.collect { it.tag }
+    }
+
+    private boolean isJoin(Map sandboxInfo, String selection) {
+        try {
+            return (selection as int) in sandboxInfo.sessions.withIndex().collect { _, i -> i + 1 }
+        } catch (Exception e) {
+            return false
+        }
+    }
+
+    private boolean isStop(Map sandboxInfo, String selection) {
+        try {
+            if (!selection.endsWith('s'))
+                return false
+            return stopToSessionIndex(selection) in sandboxInfo.sessions.withIndex().collect { _, i -> i }
+        } catch (Exception e) {
+            return false
+        }
+    }
+
+    private int stopToSessionIndex(selection) {
+        (selection.substring(0, selection.length() - 1) as int) - 1
     }
 
     static void main(String[] args) {
         if (args.size() != 5)
             throw new IllegalArgumentException("Expects five arguments: username, sepal-server REST endpoint, " +
-                    "private key path, output path, and sepalAdmin password")
+                "private key path, output path, and sepalAdmin password")
         try {
             new Interactive(args[0], args[1], new File(args[2]), new File(args[3]), args[4]).start()
         } catch (Exception e) {
