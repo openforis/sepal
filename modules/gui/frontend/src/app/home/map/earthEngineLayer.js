@@ -21,7 +21,7 @@ export default class EarthEngineLayer {
     addToMap(googleMap) {
         const layer = new ee.layers.ImageOverlay(
             new ee.layers.EarthEngineTileSource(
-                toMapId(this.mapId, this.token)
+                toMapId(this.mapId, this.token, this.urlTemplate)
             )
         )
 
@@ -79,12 +79,13 @@ export default class EarthEngineLayer {
     }
 
     initialize$() {
-        if (this.token)
+        if (this.mapId)
             return of(this)
         return this.mapId$.pipe(
-            map(({response: {token, mapId}}) => {
+            map(({response: {token, mapId, urlTemplate}}) => {
                 this.token = token
                 this.mapId = mapId
+                this.urlTemplate = urlTemplate
                 return this
             })
         )
@@ -93,17 +94,17 @@ export default class EarthEngineLayer {
 
 // Creates a ee.data.RawMapId.
 // https://github.com/google/earthengine-api/blob/1a3121aa7574ecf2d5432c047621081aed8e1b28/javascript/src/data.js#L2198
-const toMapId = (mapid, token) => {
-    const path = `https://earthengine.googleapis.com/map/${mapid}`
-    const suffix = `?token=${token}`
-    // Builds a URL of the form {tileBaseUrl}{path}/{z}/{x}/{y}{suffix}
+const toMapId = (mapid, token, urlTemplate) => {
     const formatTileUrl = (x, y, z) => {
         const width = Math.pow(2, z)
         x = x % width
         if (x < 0) {
             x += width
         }
-        return [path, z, x, y].join('/') + suffix
+        return urlTemplate
+            .replace('{x}', x)
+            .replace('{y}', y)
+            .replace('{z}', z)
     }
     return {mapid, token, formatTileUrl}
 }
