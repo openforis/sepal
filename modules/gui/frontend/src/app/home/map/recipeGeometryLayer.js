@@ -1,8 +1,8 @@
-import {map} from 'rxjs/operators'
-import {of} from 'rxjs'
-import {sepalMap} from './map'
-import EarthEngineLayer from './earthEngineLayer'
 import api from 'api'
+import {of} from 'rxjs'
+import {map} from 'rxjs/operators'
+import EarthEngineLayer from './earthEngineLayer'
+import {sepalMap} from './map'
 
 export const setRecipeGeometryLayer = (
     {
@@ -28,9 +28,10 @@ class RecipeGeometryLayer extends EarthEngineLayer {
         if (this.token)
             return of(this)
         return this.mapId$.pipe(
-            map(({token, mapId, bounds}) => {
+            map(({token, mapId, urlTemplate, bounds}) => {
                 this.token = token
                 this.mapId = mapId
+                this.urlTemplate = urlTemplate
                 this.bounds = bounds
                 return this
             })

@@ -47,6 +47,7 @@ def ee_map(table_id, column_name, column_value, color):
         return {
             'mapId': ee_map['mapid'],
             'token': ee_map['token'],
+            'urlTemplate': ee_map['tile_fetcher'].url_format,
             'bounds': bounds
         }
     except ee.ee_exception.EEException as e:

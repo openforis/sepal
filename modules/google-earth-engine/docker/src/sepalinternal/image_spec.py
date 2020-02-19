@@ -1,9 +1,10 @@
 import logging
 from abc import abstractmethod
-from .gee import get_info
-from sepal.ee.image import convert
 
 import ee
+from sepal.ee.image import convert
+
+from .gee import get_info
 
 
 class ImageSpec(object):
@@ -36,7 +37,8 @@ class ImageSpec(object):
         logging.debug('Got map id of ' + str(self) + ': ' + str(ee_preview))
         return {
             'mapId': ee_preview['mapid'],
-            'token': ee_preview['token']
+            'token': ee_preview['token'],
+            'urlTemplate': ee_preview['tile_fetcher'].url_format,
         }
 
     def geometry(self):
@@ -50,6 +52,7 @@ class ImageSpec(object):
         return {
             'mapId': mapId['mapid'],
             'token': mapId['token'],
+            'urlTemplate': mapId['tile_fetcher'].url_format,
             'bounds': bounds
         }
 
