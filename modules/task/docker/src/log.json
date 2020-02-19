@@ -3,7 +3,7 @@
     "categories": {
         "default": "info",
         "channel": "info",
-        "ee": "info",
+        "ee": "debug",
         "http": "info",
         "job": "info",
         "limiter": "info",

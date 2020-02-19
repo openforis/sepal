@@ -15,6 +15,8 @@ const cancelTask$ = cancelSubject$.pipe(share())
 const tasks = {
     'image.asset_export': require('./tasks/imageAssetExport'),
     'image.sepal_export': require('./tasks/imageSepalExport'),
+    'timeseries.download': require('./tasks/timeSeriesSepalExport'),
+
 }
 
 const submitTask = ({id, name, params}) => {
