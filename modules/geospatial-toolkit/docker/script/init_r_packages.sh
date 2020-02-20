@@ -1,98 +1,45 @@
 #!/bin/bash
 set -e
+export DEBIAN_FRONTEND=noninteractive
+export RPYTHON_PYTHON_VERSION=3
+
+echo
+echo "********************"
+echo "*** Installing R ***"
+echo "********************"
+
+echo "options(Ncpus = `nproc`)" > /root/.Rprofile
+
+apt-get install -y\
+ r-base\
+ r-base-dev
 
 echo
 echo "*****************************************"
 echo "*** Installing R packages ***"
 echo "*****************************************"
-set -e
 # libudunits2-dev required for udunits, needed by mapview
 apt-get install -y \
     libudunits2-dev \
     r-cran-rmpi \
     libopenmpi-dev \
     libgeos++-dev \
-    libmagick++-dev
-
-export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
-export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
-export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
-R CMD javareconf
+    libmagick++-dev \
+    libv8-dev \
+    libcgal-dev libglu1-mesa-dev libglu1-mesa-dev \
+    libnetcdf-dev \
+    libpq-dev
 
 R -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 R -e "install.packages('pacman', dependencies=TRUE, repos='http://cran.rstudio.com/')"
-R -e "install.packages('rgdal', version='1.3-9', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 R -e "devtools::install_github('appelmar/strucchange')"
-R -e "pacman::p_load_gh(\
-        'appelmar/bfast',\
-        'loicdtx/bfastSpatial',\
-        'jreiche/bayts'\
-    )"
 # jreiche/bayts is a dependency of Early Warning System for Canopy Disturbances in Ecuador (SATA)
-R -e "pacman::p_load(\
-        'corrplot',\
-        'dismo',\
-        'dplyr',\
-        'DT',\
-        'formatR',\
-        'Formula',\
-        'ggmap',\
-        'ggplot2',\
-        'Hmisc',\
-        'htmltools',\
-        'igraph',\
-        'keras',\
-        'knitr',\
-        'leaflet',\
-        'lubridate',\
-        'maptools',\
-        'mapview',\
-        'ncdf4',\
-        'parallel',\
-        'plyr',\
-        'random',\
-        'randomForest',\
-        'raster',\
-        'rclipboard',\
-        'RColorBrewer',\
-        'RCurl',\
-        'readxl',\
-        'reticulate',\
-        'rgeos',\
-        'rJava',\
-        'Rmpi',\
-        'rmarkdown',\
-        'rPython',\
-        'RSQLite',\
-        'RStoolbox',\
-        'sf',\
-        'shiny',\
-        'shinyBS',\
-        'shinycssloaders',\
-        'shinydashboard',\
-        'shinyFiles',\
-        'shinyjs',\
-        'snow',\
-        'sp',\
-        'sqldf',\
-        'stringr',\
-        'strucchange',\
-        'tictoc',\
-        'tidyr',\
-        'tidyverse',\
-        'xtable',\
-        'zoo'\
-    )"
-
-# OpenForis shiny apps
 R -e "pacman::p_load(\
         'abind',\
         'askpass',\
         'assertthat',\
         'backports',\
         'base64enc',\
-        'bfast',\
-        'bfastSpatial',\
         'BH',\
         'BiodiversityR',\
         'BIOMASS',\
@@ -121,12 +68,10 @@ R -e "pacman::p_load(\
         'dbplyr',\
         'desc',\
         'devtools',\
-        'dggridR',\
         'DiagrammeR',\
         'dichromat',\
         'digest',\
         'dismo',\
-        'doMC',\
         'doMC',\
         'doParallel',\
         'downloader',\
@@ -143,10 +88,11 @@ R -e "pacman::p_load(\
         'filehash',\
         'forcats',\
         'foreach',\
-        'foreach',\
         'forecast',\
         'foreign',\
+        'formatR',\
         'formattable',\
+        'Formula',\
         'fs',\
         'future',\
         'generics',\
@@ -205,7 +151,6 @@ R -e "pacman::p_load(\
         'mapproj',\
         'maps',\
         'maptools',\
-        'mapview',\
         'markdown',\
         'MASS',\
         'memoise',\
@@ -220,6 +165,7 @@ R -e "pacman::p_load(\
         'multcomp',\
         'multicore',\
         'munsell',\
+        'ncdf4',\
         'networkD3',\
         'nlme',\
         'nlstools',\
@@ -250,10 +196,12 @@ R -e "pacman::p_load(\
         'randomForest',\
         'raster',\
         'rasterVis',\
+        'rclipboard',\
         'RColorBrewer',\
         'Rcpp',\
         'RcppArmadillo',\
         'RcppEigen',\
+        'RCurl',\
         'readr',\
         'readxl',\
         'rematch',\
@@ -262,16 +210,15 @@ R -e "pacman::p_load(\
         'reprex',\
         'reshape',\
         'reshape2',\
+        'reticulate',\
         'rgbif',\
-        'rgbif',\
-        'rgdal',\
         'rgeos',\
         'rgexf',\
         'RgoogleMaps',\
         'rhandsontable',\
-        'rJava',\
         'rlang',\
         'rmarkdown',\
+        'Rmpi',\
         'Rook',\
         'rpart',\
         'rpart.plot',\
@@ -280,7 +227,6 @@ R -e "pacman::p_load(\
         'rPython',\
         'rsconnect',\
         'RSQLite',\
-        'RStoolbox',\
         'rstudioapi',\
         'rticles',\
         'RUnit',\
@@ -290,9 +236,9 @@ R -e "pacman::p_load(\
         'samplingbook',\
         'scales',\
         'selectr',\
-        'sf',\
         'shiny',\
         'shinyBS',\
+        'shinycssloaders',\
         'shinydashboard',\
         'shinyFiles',\
         'shinyjs',\
@@ -312,11 +258,11 @@ R -e "pacman::p_load(\
         'survival',\
         'sys',\
         'taxize',\
-        'taxize',\
         'Taxonstand',\
         'testit',\
         'testthat',\
         'tibble',\
+        'tictoc',\
         'tidyr',\
         'tidyselect',\
         'tidyverse',\
@@ -344,9 +290,6 @@ R -e "pacman::p_load(\
         'WorldFlora',\
         'writexl',\
         'xfun',\
-        'XLConnect',\
-        'xlsx',\
-        'xlsxjars',\
         'XML',\
         'xml2',\
         'xtable',\
@@ -355,3 +298,6 @@ R -e "pacman::p_load(\
         'zeallot',\
         'zoo'\
     )"
+
+apt-get -y clean
+apt-get -y autoremove
