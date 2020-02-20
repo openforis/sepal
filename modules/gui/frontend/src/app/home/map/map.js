@@ -13,7 +13,7 @@ import Notifications from 'widget/notifications'
 import Portal from 'widget/portal'
 import './map.module.css'
 
-const GOOGLE_MAPS_VERSION = '3.38'
+const GOOGLE_MAPS_VERSION = '3.39.6'
 
 export let sepalMap = null
 export let google = null

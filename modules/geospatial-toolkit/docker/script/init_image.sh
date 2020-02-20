@@ -113,6 +113,7 @@ echo
 echo "************************************"
 echo "*** Installing misc python tools ***"
 echo "************************************"
+pip2 install imageio==2.6.1
 pip2 install -r /config/requirements.txt
 pip2 install --upgrade pip
 
