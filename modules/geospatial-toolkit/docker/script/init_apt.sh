@@ -4,7 +4,7 @@ echo
 echo "**********************"
 echo "*** Setting up APT ***"
 echo "**********************"
-export MAKEFLAGS="-k -j`nproc`"
+#export MAKEFLAGS="-k -j`nproc`"
 export DEBIAN_FRONTEND=noninteractive
 
 # Needed for apt-add-repository command
