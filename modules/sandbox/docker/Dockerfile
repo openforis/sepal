@@ -22,7 +22,6 @@ RUN chmod u+x /script/init_jupyter.sh && sync && /script/init_jupyter.sh
 
 ADD .build/sepal-ee /usr/local/src/sepal-ee
 RUN pip3 install -e /usr/local/src/sepal-ee
-RUN pip2 install -e /usr/local/src/sepal-ee
 
 ADD script /script
 RUN chmod -R 500 /script
