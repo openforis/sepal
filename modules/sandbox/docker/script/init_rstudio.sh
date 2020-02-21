@@ -5,7 +5,7 @@ echo
 echo "*********************************"
 echo "*** Installing RStudio Server ***"
 echo "*********************************"
-rstudio=rstudio-server-1.2.1335-amd64.deb
+rstudio=rstudio-server-1.2.5033-amd64.deb
 wget -nv https://download2.rstudio.org/server/bionic/amd64/$rstudio
 gdebi -n $rstudio
 printf '%s\n' \
