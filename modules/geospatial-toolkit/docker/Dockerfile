@@ -24,7 +24,7 @@ RUN chmod u+x /script/init_additional_r_packages.sh && sync && /script/init_addi
 
 ADD config /config
 ADD config/OFGTMethod /usr/local/share/OFGTMethod
-RUN chmod +x /usr/local/bin/* && sync && chmod -R 400 /config && sync && mkdir /script
+RUN chmod +x /usr/local/bin/* && sync && chmod -R 400 /config && sync
 
 ADD script/init_oft.sh /script/
 RUN chmod u+x /script/init_oft.sh && sync && /script/init_oft.sh
