@@ -5,4 +5,4 @@
   shell: "set -o pipefail && docker build -t {{ image_name if image_name is defined else 'localhost/openforis/' + module }} {{workspace}}/modules/{{ module }}/docker | tee /var/log/sepal-build/{{ module }}.log"
 
 - name: "{{ module }} | Tagging Docker Image: {{ image_name if image_name is defined else 'localhost/openforis/' + module }}"
-  command: "set -o pipefail && docker tag {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:latest {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:{{ version }}"
+  shell: "set -o pipefail && docker tag {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:latest {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:{{ version }}"
