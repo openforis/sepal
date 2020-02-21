@@ -39,6 +39,7 @@ dependencies {
 task buildFrontend(type: Exec) {
     workingDir "${projectDir}/frontend"
     commandLine 'npm', 'run', 'build'
+    timeout = Duration.ofHours(9999)
 }
 
 task copyFrontend(type: Copy) {
