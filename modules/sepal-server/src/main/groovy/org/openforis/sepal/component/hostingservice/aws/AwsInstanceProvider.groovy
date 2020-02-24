@@ -206,6 +206,7 @@ final class AwsInstanceProvider implements InstanceProvider {
             !WorkerInstanceConfig.isOlderVersion(instanceVersion(it), currentSepalVersion)
         }
         terminateOldIdle(awsInstances)
+        terminateUntagged()
         return instancesWithValidVersion.collect { toWorkerInstance(it) }
     }
 
@@ -309,6 +310,14 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private String instanceType(Instance awsInstance) {
         InstanceType.fromValue(awsInstance.instanceType).name()
+    }
+
+    void terminateUntagged() {
+        def awsInstances = client.describeInstances(new DescribeInstancesRequest()).reservations
+            .collect { it.instances }.flatten() as List<Instance>
+        awsInstances
+            .findAll { it.tags.empty }
+            .forEach { terminate(it.instanceId) }
     }
 
     class UnableToGetImageId extends RuntimeException {
