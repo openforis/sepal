@@ -17,6 +17,5 @@ def create(spec, context):
         scale=image_spec.scale,
         crs='EPSG:4326',
         max_pixels=1e12,
-        shard_size=256,
         file_dimensions=4096
     )

@@ -47,24 +47,21 @@ const exportImageToSepal$ = (
         crs,
         crsTransform,
         maxPixels = 1e13,
-        shardSize,
         fileDimensions,
         skipEmptyTiles,
         fileFormat,
         formatOptions,
         retries
     }) => {
-    const fileNamePrefix = `ee_export/${description}_${moment().format('YYYY-MM-DD_HH:mm:SS')}/`
+    const fileNamePrefix = `ee_export/${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}/`
     return initUserBucket$().pipe(
         switchMap(bucket => {
                 const export$ = exportToCloudStorage$({
                     createTask: () => {
                         log.fatal({description, bucket, fileNamePrefix})
                         return ee.batch.Export.image.toCloudStorage(
-                            // image, 'test', 'admin-d2a3-localhost-3000', null,
-                            // null, null, 30
                             image, description, bucket, fileNamePrefix, dimensions, region, scale, crs,
-                            crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+                            crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
                         )
                     },
                     description: `exportImageToSepal(description: ${description})`,
