@@ -3,6 +3,7 @@ package org.openforis.sepal.component.hostingservice.aws
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model.*
+import groovy.time.TimeCategory
 import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
@@ -313,11 +314,20 @@ final class AwsInstanceProvider implements InstanceProvider {
     }
 
     void terminateUntagged() {
-        def awsInstances = client.describeInstances(new DescribeInstancesRequest()).reservations
-            .collect { it.instances }.flatten() as List<Instance>
-        awsInstances
-            .findAll { it.tags.empty }
-            .forEach { terminate(it.instanceId) }
+        use(TimeCategory) {
+            def request = new DescribeInstancesRequest().withFilters(
+                running()
+            )
+            def awsInstances = client.describeInstances(request).reservations
+                .collect { it.instances }.flatten() as List<Instance>
+            awsInstances
+                .findAll {
+                    def untagged = it.tags.empty
+                    def minutesSinceLaunched = (new Date() - it.launchTime).minutes
+                    untagged && minutesSinceLaunched > 1
+                }
+                .forEach { terminate(it.instanceId) }
+        }
     }
 
     class UnableToGetImageId extends RuntimeException {
