@@ -115,7 +115,6 @@ def create(spec, context):
         scale=spec.get('scale', 30),
         crs='EPSG:4326',
         max_pixels=1e12,
-        shard_size=16,
         file_dimensions=512,
         nodata_value=0,
         retries=2
