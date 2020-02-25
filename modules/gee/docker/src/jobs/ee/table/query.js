@@ -11,7 +11,8 @@ const worker$ = ({select, from, where = [], orderBy = []}) => {
 
     return ee.getInfo$(sorted
         .reduceColumns(ee.Reducer.toList(select.length), select)
-        .get('list')
+        .get('list'),
+        'query EE table'
     ).pipe(
         map(rows =>
             rows.map(row =>

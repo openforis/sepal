@@ -58,7 +58,6 @@ const exportImageToSepal$ = (
         switchMap(bucket => {
                 const export$ = exportToCloudStorage$({
                     createTask: () => {
-                        log.fatal({description, bucket, fileNamePrefix})
                         return ee.batch.Export.image.toCloudStorage(
                             image, description, bucket, fileNamePrefix, dimensions, region, scale, crs,
                             crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
@@ -113,7 +112,7 @@ const exportToAsset$ = ({createTask, description, assetId, retries}) => {
 
 
 const exportToCloudStorage$ = ({createTask, description, retries}) => {
-    log.warn('Exporting task', description)
+    log.debug('Earth Engine <to cloud storage>:', description)
     return export$({
         create$: () => {
             const task = createTask()

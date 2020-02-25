@@ -20,7 +20,8 @@ const worker$ = ({aoi, source}) => {
         ee.FeatureCollection(table.id)
             .filterBounds(geometry)
             .reduceColumns(ee.Reducer.toList(2), ['.geo', table.idColumn])
-            .get('list')
+            .get('list'),
+        'scene areas'
     ).pipe(
         map(sceneAreas =>
             sceneAreas.map(sceneArea => ({

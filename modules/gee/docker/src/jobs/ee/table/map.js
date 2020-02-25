@@ -10,7 +10,7 @@ const worker$ = ({tableId, columnName, columnValue, color = '#FFFFFF50', fillCol
     const geometry = table.geometry()
     const boundsPolygon = ee.List(geometry.bounds().coordinates().get(0))
     return forkJoin({
-        bounds: ee.getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)])),
+        bounds: ee.getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)]), 'get bounds'),
         eeMap: ee.getMap$(table.style({color, fillColor}))
     }).pipe(
         map(({bounds, eeMap}) => ({bounds, ...eeMap}))

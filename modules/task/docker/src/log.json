@@ -9,7 +9,7 @@
         "limiter": "info",
         "pool": "info",
         "service": "info",
-        "task": "info",
+        "task": "debug",
         "transport": "info",
         "worker": "info"
     }

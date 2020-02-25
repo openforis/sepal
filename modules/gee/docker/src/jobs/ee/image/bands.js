@@ -8,7 +8,7 @@ const worker$ = ({recipe}) => {
     const {getImage$} = ImageFactory(recipe)
     return getImage$().pipe(
         switchMap(image => {
-            return ee.getInfo$(image.bandNames())
+            return ee.getInfo$(image.bandNames(), 'band names')
         })
     )
 }

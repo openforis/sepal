@@ -24,7 +24,8 @@ const worker$ = ({tableId}) => {
         ee.FeatureCollection(tableId)
             .first()
             .propertyNames()
-            .sort()
+            .sort(),
+        'columns'
     ).pipe(
         catchError(handleError$)
     )

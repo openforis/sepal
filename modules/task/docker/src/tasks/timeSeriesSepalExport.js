@@ -10,7 +10,7 @@ const ee = require('ee')
 const {chunk} = require('sepal/utils/array')
 
 const TILE_DEGREES = 0.9
-const MAX_STACK_SIZE = 2
+const MAX_STACK_SIZE = 100
 
 module.exports = {
     submit$: (id, recipe) => {
@@ -80,14 +80,14 @@ module.exports = {
                 })
             }
 
-            return ee.getInfo$(timeSeries.bandNames()).pipe(
+            return ee.getInfo$(timeSeries.bandNames(), 'time-series band names').pipe(
                 switchMap(dates => from(chunk(dates, MAX_STACK_SIZE))),
                 mergeMap(exportChunk),
                 tap(log.error)
             )
         }
 
-        return ee.getInfo$(tiles.aggregate_array('system:index')).pipe(
+        return ee.getInfo$(tiles.aggregate_array('system:index'), 'time-series image ids').pipe(
             switchMap(tileIds => from(tileIds.map((tileId, tileIndex) => ({tileId, tileIndex})))),
             mergeMap(exportTile)
         )

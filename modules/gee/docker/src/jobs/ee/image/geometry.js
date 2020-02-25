@@ -12,7 +12,7 @@ const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
             const table = ee.FeatureCollection([ee.Feature(geometry)])
             const boundsPolygon = ee.List(geometry.bounds().coordinates().get(0))
             return forkJoin({
-                bounds: ee.getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)])),
+                bounds: ee.getInfo$(ee.List([boundsPolygon.get(0), boundsPolygon.get(2)]), 'get bounds'),
                 eeMap: ee.getMap$(table.style({color, fillColor}))
             }).pipe(
                 map(({bounds, eeMap}) => ({bounds, ...eeMap}))

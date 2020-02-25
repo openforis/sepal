@@ -7,7 +7,8 @@ const worker$ = ({tableId, columnName}) => {
         ee.FeatureCollection(tableId)
             .distinct(columnName)
             .sort(columnName)
-            .aggregate_array(columnName)
+            .aggregate_array(columnName),
+        'column values'
     )
 }
 
