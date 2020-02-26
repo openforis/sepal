@@ -1,17 +1,19 @@
-import './map.module.css'
-import {NEVER, Observable, Subject} from 'rxjs'
-import {compose} from 'compose'
-import {connect, select} from 'store'
-import {map, mergeMap, takeUntil} from 'rxjs/operators'
-import {msg} from 'translate'
-import GoogleMapsLoader from 'google-maps'
-import Notifications from 'widget/notifications'
-import Portal from 'widget/portal'
-import PropTypes from 'prop-types'
-import React from 'react'
-import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import {compose} from 'compose'
+import {Loader} from 'google-maps'
+import _ from 'lodash'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {NEVER, Observable, Subject} from 'rxjs'
+import {map, mergeMap, takeUntil} from 'rxjs/operators'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import Notifications from 'widget/notifications'
+import Portal from 'widget/portal'
+import './map.module.css'
+
+const GOOGLE_MAPS_VERSION = '3.39.6'
 
 export let sepalMap = null
 export let google = null
@@ -19,6 +21,7 @@ export let googleMap = null
 
 const contextById = {}
 let currentContextId
+let apiKey
 
 const initListeners = []
 const onInit = listener => {
@@ -34,11 +37,13 @@ export const initGoogleMapsApi$ = () => {
             map(({apiKey}) => apiKey)
         )
 
-    const loadGoogleMapsApi$ = apiKey => Observable.create(observer => {
-        GoogleMapsLoader.KEY = apiKey
-        GoogleMapsLoader.VERSION = '3.38'
-        GoogleMapsLoader.LIBRARIES = ['drawing']
-        GoogleMapsLoader.load(g => {
+    const loadGoogleMapsApi$ = key => Observable.create(observer => {
+        apiKey = key
+        const loader = new Loader(apiKey, {
+            version: GOOGLE_MAPS_VERSION,
+            libraries: ['drawing']
+        })
+        loader.load().then(g => {
             google = g
             initListeners.forEach(listener => listener(google))
             observer.next(apiKey)
@@ -48,7 +53,7 @@ export const initGoogleMapsApi$ = () => {
 
     return loadGoogleMapsApiKey$.pipe(
         mergeMap(loadGoogleMapsApi$),
-        map(apiKey => actionBuilder('SET_GOOGLE_MAPS_API_INITIALIZED', {apiKey: apiKey})
+        map(apiKey => actionBuilder('SET_GOOGLE_MAPS_API_INITIALIZED', {apiKey})
             .set('map.apiKey', apiKey)
             .build()
         )
@@ -105,7 +110,7 @@ const createMap = mapElement => {
 
     sepalMap = {
         getKey() {
-            return GoogleMapsLoader.KEY
+            return apiKey
         },
         getZoom() {
             return googleMap.getZoom()
@@ -489,6 +494,6 @@ onInit(google =>
         }
 
         show(shown) {
-            this.component.setState({shown: shown})
+            this.component.setState({shown})
         }
     })

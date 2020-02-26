@@ -80,15 +80,8 @@ abstract class AbstractWorkerInstanceTest extends Specification {
         releaseInstance(instance)
     }
 
-    final void sizeIdlePool(
-            Map<String, Integer> targetIdleCountByInstanceType,
-            int timeBeforeChargeToTerminate = 5,
-            TimeUnit timeUnit = MINUTES) {
-        component.submit(new SizeIdlePool(
-                targetIdleCountByInstanceType: targetIdleCountByInstanceType,
-                timeBeforeChargeToTerminate: timeBeforeChargeToTerminate,
-                timeUnit: timeUnit
-        ))
+    final void sizeIdlePool(Map<String, Integer> targetIdleCountByInstanceType) {
+        component.submit(new SizeIdlePool(targetIdleCountByInstanceType))
     }
 
     final <E extends Event> E published(Class<E> eventType) {

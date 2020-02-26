@@ -17,9 +17,9 @@ shadowJar {
 }
 
 task copyJar(type: Copy) {
-    from file("${libsDir}/${project.name}-${version}-all.jar")
+    from file("${buildDir}/libs/${project.name}-${version}.jar")
     into file("${projectDir}/docker/binary")
-    rename "${project.name}-${version}-all.jar", "${project.name}.jar"
+    rename "${project.name}-${version}.jar", "${project.name}.jar"
 }
 
 build.dependsOn(copyJar)
