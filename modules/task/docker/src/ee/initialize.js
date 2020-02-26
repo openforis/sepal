@@ -80,7 +80,10 @@ const initialize$ = () =>
                         ee.initialize(
                             null,
                             null,
-                            () => resolve(),
+                            () => {
+                                ee.data.setCloudApiEnabled(false)
+                                return resolve()
+                            },
                             error => reject(error)
                         )
                     )
