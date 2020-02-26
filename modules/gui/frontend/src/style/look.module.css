@@ -155,8 +155,6 @@
     --look-cancel-disabled-border-color: var(--look-default-disabled-border-color);
 
     /* global */
-
-    transition: all 100ms ease-in-out;
     border: 1px solid transparent;
 }
 
@@ -164,7 +162,11 @@
     cursor: pointer;
 }
 
-.look.noTransitions {
+.look:active {
+    transition: all 100ms ease-in-out 30ms;
+}
+
+.look.noTransitions:active {
     transition: none;
 }
 
