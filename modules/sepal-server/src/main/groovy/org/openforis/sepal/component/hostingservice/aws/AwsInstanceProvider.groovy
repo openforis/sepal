@@ -74,7 +74,7 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     void terminate(String instanceId) {
         LOG.info("Terminating instance " + instanceId)
-        retry(3) {
+        retry(10) {
             def request = new TerminateInstancesRequest()
                 .withInstanceIds(instanceId)
             client.terminateInstances(request)
@@ -253,7 +253,7 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private void tagInstance(String instanceId, Collection<Tag>... tagCollections) {
         try {
-            retry(3) {
+            retry(10) {
                 def tags = tagCollections.toList().flatten() as Tag[]
                 LOG.info("Tagging instance $instanceId with $tags")
                 def request = new CreateTagsRequest()
@@ -261,18 +261,18 @@ final class AwsInstanceProvider implements InstanceProvider {
                     .withTags(tags)
                 client.createTags(request)
             }
-        } catch (AmazonEC2Exception e) {
+        } catch (Exception e) {
             terminate()
             throw new FailedToTagInstance("Failed to tag instance $instanceId with $tags", e)
         }
     }
 
     private void retry(int tries, Closure<Void> operation) {
-        for (def retries = 0; retries - 1 < tries; retries++) {
+        for (int retries = 0; retries - 1 < tries; retries++) {
             try {
                 operation()
                 return
-            } catch (AmazonEC2Exception e) {
+            } catch (Exception e) {
                 if (retries - 1 < tries) {
                     backoff(retries)
                     LOG.warn("Retry #${retries + 1} after exception: ${e}")
@@ -283,7 +283,7 @@ final class AwsInstanceProvider implements InstanceProvider {
     }
 
     private int backoff(int retries) {
-        def millis = (long) Math.pow(2, retries) * 1000
+        def millis = (long) Math.pow(2, retries ?: 0) * 1000
         Thread.sleep(millis)
     }
 
