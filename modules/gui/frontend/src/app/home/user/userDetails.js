@@ -1,20 +1,19 @@
+import api from 'api'
+import {compose} from 'compose'
+import React from 'react'
+import {connect} from 'store'
+import {msg} from 'translate'
+import {activatable} from 'widget/activation/activatable'
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
-import {Panel} from 'widget/panel/panel'
-import {activatable} from 'widget/activation/activatable'
-import {compose} from 'compose'
-import {connect} from 'store'
-import {currentUser} from 'widget/user'
-import {msg} from 'translate'
-import {revokeGoogleAccess$, updateCurrentUserDetails$} from 'widget/user'
-import ChangePassword from './changePassword'
 import Notifications from 'widget/notifications'
-import React from 'react'
-import api from 'api'
+import {Panel} from 'widget/panel/panel'
+import {CenteredProgress} from 'widget/progress'
+import {currentUser, revokeGoogleAccess$, updateCurrentUserDetails$} from 'widget/user'
+import ChangePassword from './changePassword'
 import styles from './userDetails.module.css'
 
 const fields = {
@@ -39,7 +38,7 @@ const mapStateToProps = () => {
 class _UserDetails extends React.Component {
     useUserGoogleAccount(e) {
         e.preventDefault()
-        api.user.getGoogleAccessRequestUrl$(window.location.hostname)
+        api.user.getGoogleAccessRequestUrl$(window.location)
             .subscribe(({url}) => window.location = url)
     }
 

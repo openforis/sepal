@@ -8,7 +8,7 @@ echo "********************"
 echo "*** Installing R ***"
 echo "********************"
 
-echo "options(Ncpus = `nproc`)" > /root/.Rprofile
+#echo "options(Ncpus = `nproc`)" > /root/.Rprofile
 
 apt-get install -y\
  r-base\

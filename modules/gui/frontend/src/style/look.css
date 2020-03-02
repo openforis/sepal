@@ -1,4 +1,14 @@
 html {
+    /* hover */
+
+    --look-hover-background-l-offset: +3%;
+    --look-hover-border-l-offset: +5%;
+
+    /* active */
+
+    --look-active-background-l-offset: +1%;
+    --look-active-border-l-offset: +3%;
+
     /* default */
 
     --look-default-h: 40;

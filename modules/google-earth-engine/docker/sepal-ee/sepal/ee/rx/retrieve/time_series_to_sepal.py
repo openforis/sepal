@@ -16,7 +16,7 @@ from osgeo import gdal
 from rx import Observable, combine_latest, concat, defer, empty, from_callable, merge, of
 from rx.operators import flat_map, map, scan
 from sepal.drive.rx.path import create_folder_with_path, delete_file_with_path, download_path
-from sepal.ee.dates import add_days, map_days, split_range_by_year, to_date, to_ee_date
+from sepal.ee.dates import split_range_by_year, to_date
 from sepal.ee.image import set_precision
 from sepal.ee.rx.export import export_image_to_drive, export_table_to_drive
 from sepal.ee.rx.observables import execute
@@ -203,18 +203,27 @@ def time_series_to_sepal(
         )
 
     def _create_stack(geometry, start, end):
-        image_collection = image_collection_factory(geometry, start, end)
-
-        def create_daily_mosaic(d):
-            band_name = d.strftime('%Y-%m-%d')
-            return image_collection \
-                .filterDate(to_ee_date(d), to_ee_date(add_days(d, 1))) \
+        def to_daily_mosaic(image):
+            return ee.ImageCollection(ee.List(image.get('images'))) \
                 .median() \
-                .rename(band_name)
+                .rename(ee.Image(image).getString('date'))
 
-        daily_mosaics = map_days(start, end, create_daily_mosaic)
-        stack = ee.Image(daily_mosaics).clip(geometry)
+        image_collection = image_collection_factory(geometry, start, end) \
+            .map(lambda image: image.set('date', image.date().format('yyyy-MM-dd')))
+        distinct_date_images = image_collection.distinct('date')
+        daily_mosaics = ee.ImageCollection(
+            ee.Join.saveAll('images').apply(
+                primary=distinct_date_images,
+                secondary=image_collection,
+                condition=ee.Filter.equals(leftField='date', rightField='date')
+            ).map(to_daily_mosaic)
+        )
+        stack = daily_mosaics \
+            .toBands() \
+            .regexpRename('.*(.{10})', '$1') \
+            .clip(geometry)
         return set_precision(stack, precision) if precision else stack
+
 
     def _export_and_download_stack(stack, export_description, year_dir):
         stack_drive_description = 'stack_' + export_description

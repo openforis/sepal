@@ -3,6 +3,7 @@ package org.openforis.sepal.component.hostingservice.aws
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model.*
+import groovy.time.TimeCategory
 import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
@@ -73,7 +74,7 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     void terminate(String instanceId) {
         LOG.info("Terminating instance " + instanceId)
-        retry(3) {
+        retry(10) {
             def request = new TerminateInstancesRequest()
                 .withInstanceIds(instanceId)
             client.terminateInstances(request)
@@ -206,6 +207,7 @@ final class AwsInstanceProvider implements InstanceProvider {
             !WorkerInstanceConfig.isOlderVersion(instanceVersion(it), currentSepalVersion)
         }
         terminateOldIdle(awsInstances)
+        terminateUntagged()
         return instancesWithValidVersion.collect { toWorkerInstance(it) }
     }
 
@@ -251,7 +253,7 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private void tagInstance(String instanceId, Collection<Tag>... tagCollections) {
         try {
-            retry(3) {
+            retry(10) {
                 def tags = tagCollections.toList().flatten() as Tag[]
                 LOG.info("Tagging instance $instanceId with $tags")
                 def request = new CreateTagsRequest()
@@ -259,18 +261,18 @@ final class AwsInstanceProvider implements InstanceProvider {
                     .withTags(tags)
                 client.createTags(request)
             }
-        } catch (AmazonEC2Exception e) {
+        } catch (Exception e) {
             terminate()
             throw new FailedToTagInstance("Failed to tag instance $instanceId with $tags", e)
         }
     }
 
     private void retry(int tries, Closure<Void> operation) {
-        for (def retries = 0; retries - 1 < tries; retries++) {
+        for (int retries = 0; retries - 1 < tries; retries++) {
             try {
                 operation()
                 return
-            } catch (AmazonEC2Exception e) {
+            } catch (Exception e) {
                 if (retries - 1 < tries) {
                     backoff(retries)
                     LOG.warn("Retry #${retries + 1} after exception: ${e}")
@@ -281,7 +283,7 @@ final class AwsInstanceProvider implements InstanceProvider {
     }
 
     private int backoff(int retries) {
-        def millis = (long) Math.pow(2, retries) * 1000
+        def millis = (long) Math.pow(2, retries ?: 0) * 1000
         Thread.sleep(millis)
     }
 
@@ -309,6 +311,23 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private String instanceType(Instance awsInstance) {
         InstanceType.fromValue(awsInstance.instanceType).name()
+    }
+
+    void terminateUntagged() {
+        use(TimeCategory) {
+            def request = new DescribeInstancesRequest().withFilters(
+                running()
+            )
+            def awsInstances = client.describeInstances(request).reservations
+                .collect { it.instances }.flatten() as List<Instance>
+            awsInstances
+                .findAll {
+                    def untagged = it.tags.empty
+                    def minutesSinceLaunched = (new Date() - it.launchTime).minutes
+                    untagged && minutesSinceLaunched > 1
+                }
+                .forEach { terminate(it.instanceId) }
+        }
     }
 
     class UnableToGetImageId extends RuntimeException {

@@ -28,22 +28,22 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
     static WorkerInstanceComponent create(HostingServiceAdapter hostingServiceAdapter) {
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA))
         return new WorkerInstanceComponent(
-                connectionManager,
-                new AsynchronousEventDispatcher(),
-                hostingServiceAdapter.instanceProvider,
-                hostingServiceAdapter.instanceTypes,
-                hostingServiceAdapter.instanceProvisioner,
-                new SystemClock()
+            connectionManager,
+            new AsynchronousEventDispatcher(),
+            hostingServiceAdapter.instanceProvider,
+            hostingServiceAdapter.instanceTypes,
+            hostingServiceAdapter.instanceProvisioner,
+            new SystemClock()
         )
     }
 
     WorkerInstanceComponent(
-            SqlConnectionManager connectionManager,
-            HandlerRegistryEventDispatcher eventDispatcher,
-            InstanceProvider instanceProvider,
-            List<InstanceType> instanceTypes,
-            InstanceProvisioner instanceProvisioner,
-            Clock clock) {
+        SqlConnectionManager connectionManager,
+        HandlerRegistryEventDispatcher eventDispatcher,
+        InstanceProvider instanceProvider,
+        List<InstanceType> instanceTypes,
+        InstanceProvisioner instanceProvisioner,
+        Clock clock) {
         super(connectionManager, eventDispatcher)
         this.instanceProvider = instanceProvider
         this.instanceTypes = instanceTypes
@@ -63,8 +63,8 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
 
         on(InstancePendingProvisioning) {
             submit(new ProvisionInstance(
-                    username: it.instance.reservation.username,
-                    instance: it.instance))
+                username: it.instance.reservation.username,
+                instance: it.instance))
         }
     }
 
@@ -72,11 +72,7 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
         def targetIdleCountByInstanceType = instanceTypes.collectEntries {
             [(it.id): it.idleCount]
         }.findAll { it.value > 0 }
-        schedule(1, MINUTES,
-                new SizeIdlePool(
-                        targetIdleCountByInstanceType: targetIdleCountByInstanceType,
-                        timeBeforeChargeToTerminate: 5,
-                        timeUnit: MINUTES))
+        schedule(1, MINUTES, new SizeIdlePool(targetIdleCountByInstanceType))
         instanceProvider.start()
     }
 
