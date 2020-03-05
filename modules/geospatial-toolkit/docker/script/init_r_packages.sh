@@ -224,7 +224,6 @@ R -e "pacman::p_load(\
         'rpart.plot',\
         'RPostgreSQL',\
         'rprojroot',\
-        'rPython',\
         'rsconnect',\
         'RSQLite',\
         'rstudioapi',\

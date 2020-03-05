@@ -15,6 +15,7 @@ R -e "pacman::p_load(\
         'dggridR',\
         'mapview',\
         'rJava',\
+        'rPython',\
         'RStoolbox',\
         'sf',\
         'XLConnect',\
