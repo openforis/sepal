@@ -17,18 +17,27 @@
             from_port: 22
             to_port: 22
             cidr_ip: 168.202.0.0/16
+            rule_desc: 'FAO'
           - proto: tcp
             from_port: 80
             to_port: 80
             cidr_ip: 0.0.0.0/0
+            rule_desc: 'HTTP'
           - proto: tcp
             from_port: 443
             to_port: 443
             cidr_ip: 0.0.0.0/0
+            rule_desc: 'HTTPS'
           - proto: tcp
             from_port: 0
             to_port: 65535
             cidr_ip: 172.31.0.0/16
+            rule_desc: 'Subnet'
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: "{{ local_ip_address }}/32"
+            rule_desc: 'Deployer'
         rules_egress:
           - proto: all
             from_port: 0

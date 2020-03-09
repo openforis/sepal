@@ -4,10 +4,13 @@ set -e
 VERSION=$1
 CONFIG_HOME=$2
 PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
+LOCAL_IP_ADDRESS=`curl api.ipify.org`
 
 echo "Provisioning Sepal on AWS [\
 CONFIG_HOME: $CONFIG_HOME, \
-VERSION: $VERSION]"
+VERSION: $VERSION, \
+LOCAL_IP_ADDRESS: $LOCAL_IP_ADDRESS]
+"
 
 INVENTORY=../inventory/ec2.py
 export ANSIBLE_HOST_KEY_CHECKING=False
@@ -18,7 +21,7 @@ source $CONFIG_HOME/export_aws_keys.sh
 ansible-playbook provision.yml \
     -i $INVENTORY \
     --private-key=${PRIVATE_KEY}  \
-    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
+    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml local_ip_address=$LOCAL_IP_ADDRESS"
 
 # Refresh EC2 inventory cache, to make sure provisioned instance is included
 $INVENTORY --refresh-cache > /dev/null
@@ -26,7 +29,7 @@ $INVENTORY --refresh-cache > /dev/null
 ansible-playbook provision-security-groups.yml \
     -i $INVENTORY \
     --private-key=${PRIVATE_KEY}  \
-    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
+    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml local_ip_address=$LOCAL_IP_ADDRESS"
 
 ansible-playbook configure-efs.yml \
     -i $INVENTORY \
