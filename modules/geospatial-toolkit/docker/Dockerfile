@@ -19,9 +19,6 @@ RUN chmod u+x /script/init_apt_packages.sh && sync && /script/init_apt_packages.
 ADD script/init_java.sh /script/
 RUN chmod u+x /script/init_java.sh && sync && /script/init_java.sh
 
-ADD script/init_additional_r_packages.sh /script/
-RUN chmod u+x /script/init_additional_r_packages.sh && sync && /script/init_additional_r_packages.sh
-
 ADD config /config
 ADD config/OFGTMethod /usr/local/share/OFGTMethod
 RUN chmod +x /usr/local/bin/* && sync && chmod -R 400 /config && sync
@@ -49,6 +46,9 @@ RUN chmod u+x /script/init_node.sh && sync && /script/init_node.sh
 
 ADD script/init_python_packages.sh /script/
 RUN chmod u+x /script/init_python_packages.sh && sync && /script/init_python_packages.sh
+
+ADD script/init_additional_r_packages.sh /script/
+RUN chmod u+x /script/init_additional_r_packages.sh && sync && /script/init_additional_r_packages.sh
 
 ADD script/init_post.sh /script/
 RUN chmod u+x /script/init_post.sh && sync && /script/init_post.sh

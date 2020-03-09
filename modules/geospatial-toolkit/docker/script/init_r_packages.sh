@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 export DEBIAN_FRONTEND=noninteractive
-export RPYTHON_PYTHON_VERSION=3
 
 echo
 echo "********************"
