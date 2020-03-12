@@ -17,7 +17,6 @@ LOCAL_IP_ADDRESS: $LOCAL_IP_ADDRESS]
 INVENTORY=../inventory/ec2.py
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=../ansible.cfg
-export ANSIBLE_PYTHON_INTERPRETER=/usr/bin/python3
 
 source ../export-aws-keys.sh $CONFIG_HOME/secret.yml
 

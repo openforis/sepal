@@ -57,6 +57,7 @@ fi
 
 docker run \
   --rm \
+  -it \
   -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
   -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
   sepal-deploy \

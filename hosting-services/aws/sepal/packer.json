@@ -60,7 +60,8 @@
       "extra_arguments": [
         "--extra-vars",
         "config_home={{user `config_home`}} secret_vars_file={{user `config_home`}}/secret.yml efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}} availability_zone={{user `availability_zone`}}"
-      ]
+      ],
+      "user": "ec2-user"
     }
   ]
 }
