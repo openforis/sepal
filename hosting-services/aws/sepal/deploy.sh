@@ -4,6 +4,7 @@ set -e
 VERSION=$1
 CONFIG_HOME=$2
 PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
+cd "$( dirname "${BASH_SOURCE[0]}" )"
 
 echo "Deploying Sepal on AWS [\
 CONFIG_HOME: $CONFIG_HOME, \
@@ -11,8 +12,9 @@ VERSION: $VERSION]"
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=../ansible.cfg
+export ANSIBLE_PYTHON_INTERPRETER=/usr/bin/python3
 
-source $CONFIG_HOME/export_aws_keys.sh
+source ../export-aws-keys.sh $CONFIG_HOME/secret.yml
 
 # Refresh EC2 inventory cache, to make sure provisioned instance is included
 ../inventory/ec2.py --refresh-cache > /dev/null

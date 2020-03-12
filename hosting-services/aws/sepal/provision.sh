@@ -4,7 +4,9 @@ set -e
 VERSION=$1
 CONFIG_HOME=$2
 PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
-LOCAL_IP_ADDRESS=`curl api.ipify.org`
+LOCAL_IP_ADDRESS=`curl -s api.ipify.org`
+cd "$( dirname "${BASH_SOURCE[0]}" )"
+
 
 echo "Provisioning Sepal on AWS [\
 CONFIG_HOME: $CONFIG_HOME, \
@@ -15,8 +17,9 @@ LOCAL_IP_ADDRESS: $LOCAL_IP_ADDRESS]
 INVENTORY=../inventory/ec2.py
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=../ansible.cfg
+export ANSIBLE_PYTHON_INTERPRETER=/usr/bin/python3
 
-source $CONFIG_HOME/export_aws_keys.sh
+source ../export-aws-keys.sh $CONFIG_HOME/secret.yml
 
 ansible-playbook provision.yml \
     -i $INVENTORY \
@@ -37,7 +40,7 @@ ansible-playbook configure-efs.yml \
     --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml"
 
 jsonConfig=$(mktemp /tmp/sepal-json-config.XXXXXX)
-python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < $CONFIG_HOME/secret.yml > $jsonConfig
+python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < $CONFIG_HOME/secret.yml > $jsonConfig
 packer build \
     --var-file "$jsonConfig" \
     --var "version=$VERSION"  \

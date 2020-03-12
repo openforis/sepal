@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+PROJECT_DIR=$DIR/..
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -d|--data)
+    DATA_DIR="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -c|--config)
+    CONFIG_DIR="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    *)    # unknown option
+    POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+
+if [ ! -d "$CONFIG_DIR" ]; then
+    echo ""
+    echo "Config directory doesn't exist: $CONFIG_DIR"
+    echo ""
+    exit 1
+fi
+mkdir -p $DATA_DIR
+
+[ ! "$(docker ps -a | grep sepal-dev)" ] && \
+    docker run \
+      -dt \
+      -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
+      -v $DATA_DIR:/var/sepal:Z \
+      -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
+      -p 3000:3000 \
+      --name sepal-dev-env \
+      sepal-dev-env
+docker exec -u sepal -it sepal-dev-env bash

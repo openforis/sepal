@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+PROJECT_DIR=`dirname $DIR`
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -b|--build)
+    BUILD_NUMBER="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -c|--config)
+    CONFIG_DIR="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -s|--script)
+    SCRIPT_REL_PATH="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    *)    # unknown option
+    POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+SCRIPT_PATH=$PROJECT_DIR/hosting-services/$SCRIPT_REL_PATH
+
+if [ ! -d "$CONFIG_DIR" ]; then
+    echo ""
+    echo "Config directory doesn't exist: $CONFIG_DIR"
+    echo ""
+    exit 1
+fi
+if [ ! -n "$BUILD_NUMBER" ]; then
+    echo ""
+    echo "Build number not specified. Missing -b or --build option"
+    echo ""
+    exit 1
+fi
+if [ ! -f "$SCRIPT_PATH" ]; then
+    echo ""
+    echo "Deployment script doesn't exist: $SCRIPT_PATH"
+    echo ""
+    exit 1
+fi
+
+docker run \
+  --rm \
+  -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
+  -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
+  sepal-deploy \
+  bash -c "/usr/local/lib/sepal/hosting-services/$SCRIPT_REL_PATH $BUILD_NUMBER /etc/sepal/conf.d"
