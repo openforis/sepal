@@ -139,6 +139,10 @@
     - name: Install docker
       command: "amazon-linux-extras install docker"
 
+    - name: Install Development Tools
+      yum:
+        name: "@Development Tools"
+
     - name: Install pip
       yum:
         name: "python-pip"
