@@ -6,6 +6,7 @@ git+git://github.com/openforis/earthengine-api.git@v0.1.213#egg=earthengine-api&
 git+https://github.com/ESA-PhiLab/OpenSarToolkit.git
 awscli
 numpy
+pytesmo
 scikit-learn
 scipy
 shapely
