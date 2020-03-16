@@ -10,6 +10,7 @@ scikit-learn
 scipy
 shapely
 shapely-geojson
+GDAL==$GDAL_VERSION
 
 ######## Early Warning System for Canopy Disturbances in Ecuador (SATA) ########
 # dev
