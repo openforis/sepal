@@ -23,4 +23,4 @@ ADD ./sepal.sh /usr/local/bin/sepal
 ADD ./template.d /etc/sepal/template.d
 ENV SEPAL_HOME=/usr/local/lib/sepal
 # USER root
-CMD /usr/local/bin/sepal-setup
+# CMD /usr/local/bin/sepal-setup

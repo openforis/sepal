@@ -1,9 +1,15 @@
 #!/bin/bash
+
 set -e
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+IMAGE_NAME=sepal-dev-env
+CONTAINER_NAME=sepal-dev-env
 
-PROJECT_DIR=$DIR/..
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Default data directory
+DATA_DIR="$PROJECT_DIR/sepal-data"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -11,13 +17,13 @@ do
 key="$1"
 
 case $key in
-    -d|--data)
-    DATA_DIR="$2"
+    -c|--config)
+    CONFIG_DIR="$2"
     shift # past argument
     shift # past value
     ;;
-    -c|--config)
-    CONFIG_DIR="$2"
+    -d|--data)
+    DATA_DIR="$2"
     shift # past argument
     shift # past value
     ;;
@@ -29,22 +35,150 @@ esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
+COMMAND=$1
 
-if [ ! -d "$CONFIG_DIR" ]; then
+# Check directories
+
+function check_config_dir() {
+    [ -z "$CONFIG_DIR" ] && usage "Config directory is required"
+    [ ! -d "$CONFIG_DIR" ] && usage "Config directory doesn't exist: $CONFIG_DIR"
+    CONFIG_DIR=$(cd $CONFIG_DIR && pwd)
+    echo "Config directory: $CONFIG_DIR"
+}
+
+function check_data_dir() {
+    if [ ! -d "$DATA_DIR" ]; then
+        echo "Creating data dir: $DATA_DIR"
+        mkdir -p $DATA_DIR
+    fi
+    DATA_DIR=$(cd $DATA_DIR && pwd)
+    echo "Data directory: $DATA_DIR"
+}
+
+# Docker image
+
+function docker_image_exists() {
+    docker images --format "{{.Repository}}" --filter "reference=$IMAGE_NAME"
+}
+
+function build_docker_image() {
+    echo "Building Docker image..."
+    docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env
+}
+
+function remove_docker_image() {
+    docker rmi $IMAGE_NAME
+}
+
+function check_docker_image() {
+    [ "$(docker_image_exists)" ] || build_docker_image
+}
+
+# Docker container
+
+function docker_container_exists() {
+    docker ps -a --format "{{.Names}}" --filter "name=$CONTAINER_NAME"
+}
+
+function docker_container_running() {
+    docker ps -a --format "{{.Names}}" --filter "name=$CONTAINER_NAME" --filter "status=running"
+}
+
+function docker_container_stopped() {
+    docker ps -a --format "{{.Names}}" --filter "name=$CONTAINER_NAME" --filter "status=exited"
+}
+
+function start_docker_container() {
+    echo "Starting Docker container..."
+    docker start $IMAGE_NAME
+}
+
+function stop_docker_container() {
+    echo "Stopping Docker container..."
+    docker stop $IMAGE_NAME
+}
+
+function create_docker_container() {
+    echo "Running Docker container..."
+    docker run \
+        -dt \
+        -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
+        -v $DATA_DIR:/var/sepal:Z \
+        -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
+        -p 3000:3000 \
+        --name $CONTAINER_NAME \
+        $IMAGE_NAME
+    echo "Setting up Docker container..."
+    docker exec sepal-dev-env /usr/local/bin/sepal-setup
+}
+
+function remove_docker_container() {
+    docker rm $CONTAINER_NAME
+}
+
+function start_shell() {
+    docker exec -u sepal -it sepal-dev-env bash
+}
+
+# Main
+
+function start() {
+    [ "$(docker_container_stopped)" ] && start_docker_container
+    [ "$(docker_container_exists)" ] || create_docker_container
+}
+
+function stop() {
+    [ "$(docker_container_running)" ] && stop_docker_container
+}
+
+function cleanup() {
+    [ "$(docker_container_exists)" ] && remove_docker_container
+    [ "$(docker_image_exists)" ] && remove_docker_image
+}
+
+function usage() {
+    local ERROR=$1
+    if [ ! -z "$ERROR" ]; then
+        echo ""
+        echo "Error: $ERROR"
+    fi
     echo ""
-    echo "Config directory doesn't exist: $CONFIG_DIR"
+    echo "Usage:"
+    echo ""
+    echo "  $(basename $0) [OPTIONS] start      Build and start Docker container"
+    echo "  $(basename $0) stop                 Stop Docker container"
+    echo "  $(basename $0) cleanup              Remove Docker container and image"
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "  -c, --config    <config dir>    required"
+    echo "  -d, --data      <data dir>      optional (default ./sepal-data)"
     echo ""
     exit 1
-fi
-mkdir -p $DATA_DIR
+}
 
-[ ! "$(docker ps -a | grep sepal-dev)" ] && \
-    docker run \
-      -dt \
-      -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
-      -v $DATA_DIR:/var/sepal:Z \
-      -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
-      -p 3000:3000 \
-      --name sepal-dev-env \
-      sepal-dev-env
-docker exec -u sepal -it sepal-dev-env bash
+case "$COMMAND" in
+    start)
+        check_config_dir
+        check_data_dir
+        check_docker_image
+        start
+        start_shell
+        RETVAL=$?
+        ;;
+    stop)
+        stop
+        RETVAL=$?
+        ;;
+    cleanup)
+        stop
+        cleanup
+        RETVAL=$?
+        ;;
+    *)
+        usage
+        RETVAL=1
+        ;;
+esac
+
+exit $RETVAL

@@ -76,3 +76,6 @@ modules/peatlands/docker/env/
 /modules/user/out/
 /modules/user/out/production/classes/
 /modules/user/out/test/classes/
+
+# SEPAL data
+sepal-data/
