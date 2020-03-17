@@ -4,7 +4,7 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current \
     SDKMAN_DIR=/usr/local/lib/sdkman \
     GDAL_DATA=/usr/share/gdal \
-    VERSION=2020-03-05
+    VERSION=2020-03-16
 # VERSION used to force complete rebuild of image
 
 ADD script/init_apt.sh /script/
