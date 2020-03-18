@@ -27,5 +27,6 @@ R -e "pacman::p_load(\
 R -e "pacman::p_load_gh(\
         'appelmar/bfast',\
         'loicdtx/bfastSpatial',\
+        'yfinegold/gfcanalysis',\
         'jreiche/bayts'\
     )"

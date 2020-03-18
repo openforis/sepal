@@ -138,6 +138,7 @@ R -e "pacman::p_load(\
         'latticeExtra',\
         'lazyeval',\
         'leaflet',\
+        'leaflet.extras',\
         'lifecycle',\
         'listenv',\
         'littler',\
