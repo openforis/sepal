@@ -69,9 +69,22 @@ app.post('/create-project', (req, res, next) => {
         || typeof title !== 'string' || title.trim() === '') {
         return res.status(400).send('Bad Request')
     }
+    let csvHeader = Object.keys(plots.reduce((result, obj) => {
+        return Object.assign(result, obj);
+      }, {})).sort();
+    csvHeader.splice(csvHeader.indexOf('lon'), 1);
+    csvHeader.splice(csvHeader.indexOf('lat'), 1);
     const plotFile = plots.reduce((acc, curr, i) => {
-        return `${acc}\n${curr.lon},${curr.lat},${i+1}`
-    }, 'LON,LAT,PLOTID')
+        const {lon, lat, ...newCurr} = curr;
+        let csvRecord = `${acc}\n${lon},${lat},${i+1}`;
+        if (csvHeader.length !== 0) {
+            csvHeader.forEach(key => {
+                const value = newCurr[key] || '';
+                csvRecord = `${csvRecord},${value}`;
+            });
+        }
+        return csvRecord;
+    }, csvHeader.length !== 0 ? `LON,LAT,PLOTID,${csvHeader.join()}` : 'LON,LAT,PLOTID');
     const colors = randomColor({
         count: classes.length,
         hue: 'random',
