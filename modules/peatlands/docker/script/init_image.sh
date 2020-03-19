@@ -4,7 +4,8 @@ set -e
 apt-get -y update && apt-get install -y software-properties-common
 apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
 apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
- python-pip\
+ python3-pip\
+ python3-gdal \
  libssl-dev\
  libffi-dev\
  gettext\
@@ -12,10 +13,6 @@ apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
  supervisor\
  gdal-bin\
  libgdal-dev\
-
-DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
-    python-gdal \
-    python3-gdal
 
 curl -sL https://deb.nodesource.com/setup_8.x | bash -
 apt-get install -y nodejs
