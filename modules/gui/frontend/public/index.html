@@ -11,20 +11,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" type="text/css" href="reset.css">
+    <link rel="stylesheet" type="text/css" href="app.css">
     <!-- Web fonts -->
     <link href="https://fonts.googleapis.com/css?family=Ubuntu: 300,400,500,700,300italic,400italic,500italic,700italic" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro: 200,300,400,600,700,900,200italic,300italic,400italic,600italic,700italic,900italic" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Merriweather: 400,300,300italic,400italic,700,700italic,900,900italic" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono: 400,700" rel="stylesheet">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-55115982-2"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'UA-55115982-2');
-    </script>
 
     <title>S E P A L</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-55115982-2"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -134,6 +130,63 @@
             }
         }
 
+        #app {
+            position: absolute;
+            z-index: 0;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        #landing {
+            position: absolute;
+            z-index: 1;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem 5rem;
+            overflow: scroll;
+            background-color: #101010;
+            text-align: justify;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .launch {
+            border: 1px solid red;
+            border-radius: 10rem;
+            padding: .5rem 1rem;
+        }
+
+        .launch + .launch {
+            margin-left: 1rem;
+        }
+
+        img {
+            padding: 1rem;
+        }
+
+        .left {
+            float: left;
+            padding-left: 0;
+        }
+
+        .right {
+            float: right;
+            padding-right: 0;
+        }
+
+        .center {
+            clear: both;
+            display: block;
+            margin: auto;
+        }
     </style>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -141,15 +194,41 @@
         gtag('js', new Date());
         gtag('config', 'UA-55115982-2');
     </script>
+    <script>
+        const signUpUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSci4hopXNtMOQKJzsUybaJETrAPQp8j6TCqycSBQ0XO37jBwA/viewform?c=0&w=1'
+        const signUp = () => window.location = signUpUrl
+        const signIn = () => document.getElementById('landing').remove()
+    </script>
 </head>
 <body>
 <noscript>
     You need to enable JavaScript to use Sepal.
 </noscript>
-<div id="app">
-    <div class="app-loader">
-        <span></span>
-        <p>S E P A L</p>
+
+<div>
+    <div id="app"></div>
+    <div id="landing">
+        <div class="header">
+            <h1>SEPAL</h1>
+            <div>
+                <a class="launch" onclick="signUp()">Sign up</a>
+                <a class="launch" onclick="signIn()">Login</a>
+            </div>
+        </div>
+        <div>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent blandit, nulla quis accumsan posuere, diam lectus accumsan urna, pharetra laoreet est libero quis nulla. Nunc maximus ultrices dictum. Proin volutpat massa vehicula placerat rutrum. Vestibulum vitae purus molestie, euismod augue at, volutpat neque. Pellentesque in est ac libero euismod laoreet. Curabitur sit amet posuere nunc, aliquam laoreet mi. Praesent euismod tempor nunc et tincidunt. Sed tempus diam id sem feugiat, sit amet iaculis massa pharetra. Maecenas dignissim interdum luctus. Aliquam fermentum mattis risus non luctus. Cras ac nulla at leo dictum lobortis. Curabitur turpis mauris, luctus consectetur nulla maximus, vestibulum accumsan ex. Sed dignissim rutrum nisl quis aliquet. Integer odio ante, ultricies nec nulla et, maximus congue libero. Praesent gravida, mi nec laoreet tempor, erat tellus gravida leo, a aliquet quam eros eleifend quam. Sed malesuada vulputate turpis, eu pharetra lectus ultrices sed.</p>
+            <img class="right" src="http://placekitten.com/200/300">
+            <p>Mauris turpis magna, sollicitudin eu mattis sit amet, pulvinar eu quam. Suspendisse imperdiet commodo placerat. In nec fringilla felis. Aliquam libero quam, tincidunt vitae placerat sed, suscipit eget orci. Mauris sed cursus lacus, eu iaculis nunc. Sed volutpat lorem vitae magna hendrerit blandit. Maecenas laoreet, diam vel condimentum accumsan, felis magna vulputate justo, sit amet consectetur tortor tellus porttitor tellus. Nulla condimentum porta ligula, vitae rutrum odio vestibulum at. Proin fermentum elit sed lorem lobortis tincidunt. Nulla mollis imperdiet metus, vel volutpat augue gravida sed. Sed molestie vitae enim vitae interdum. Duis viverra id nisi eget dignissim. Duis consequat a nisi et rutrum. Duis vehicula sapien quam, ut pharetra orci laoreet at.</p>
+            <img class="left" src="http://placekitten.com/400/300">
+            <p>Aenean eros ipsum, hendrerit a sem blandit, ornare gravida tortor. Cras augue justo, vulputate ac finibus sit amet, euismod eget ante. Mauris augue magna, vehicula vitae ligula et, vulputate posuere massa. Ut dolor nunc, posuere sit amet placerat ut, dignissim id urna. Duis ultrices magna magna, non aliquet elit fermentum eu. Nunc sollicitudin hendrerit sapien, congue dapibus mi gravida ac. Sed a scelerisque dolor. Vivamus metus sapien, interdum sed sapien nec, ultrices aliquet tellus. Sed ex ligula, rhoncus quis diam et, volutpat pretium ante. Praesent sit amet leo quis justo finibus volutpat.</p>
+            <p>Interdum et malesuada fames ac ante ipsum primis in faucibus. In hac habitasse platea dictumst. Praesent lacus libero, tincidunt in ultricies ut, pretium et nulla. Suspendisse potenti. Sed ultrices ante vel finibus congue. Sed dignissim ex in convallis scelerisque. Morbi semper a dolor eget pellentesque. Nunc volutpat maximus malesuada. In nisl lorem, finibus ut velit ut, aliquet pretium mi. Aliquam sit amet erat vehicula, tempor mi a, pretium metus. Ut scelerisque elementum justo id finibus. Aliquam sed scelerisque dui. Phasellus dictum, lacus eget hendrerit egestas, neque tellus luctus quam, vel rhoncus neque nibh eu nunc. Curabitur eu volutpat augue, at finibus purus.</p>
+            <img class="center" src="http://placekitten.com/800/400">
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent blandit, nulla quis accumsan posuere, diam lectus accumsan urna, pharetra laoreet est libero quis nulla. Nunc maximus ultrices dictum. Proin volutpat massa vehicula placerat rutrum. Vestibulum vitae purus molestie, euismod augue at, volutpat neque. Pellentesque in est ac libero euismod laoreet. Curabitur sit amet posuere nunc, aliquam laoreet mi. Praesent euismod tempor nunc et tincidunt. Sed tempus diam id sem feugiat, sit amet iaculis massa pharetra. Maecenas dignissim interdum luctus. Aliquam fermentum mattis risus non luctus. Cras ac nulla at leo dictum lobortis. Curabitur turpis mauris, luctus consectetur nulla maximus, vestibulum accumsan ex. Sed dignissim rutrum nisl quis aliquet. Integer odio ante, ultricies nec nulla et, maximus congue libero. Praesent gravida, mi nec laoreet tempor, erat tellus gravida leo, a aliquet quam eros eleifend quam. Sed malesuada vulputate turpis, eu pharetra lectus ultrices sed.</p>
+            <p>Mauris turpis magna, sollicitudin eu mattis sit amet, pulvinar eu quam. Suspendisse imperdiet commodo placerat. In nec fringilla felis. Aliquam libero quam, tincidunt vitae placerat sed, suscipit eget orci. Mauris sed cursus lacus, eu iaculis nunc. Sed volutpat lorem vitae magna hendrerit blandit. Maecenas laoreet, diam vel condimentum accumsan, felis magna vulputate justo, sit amet consectetur tortor tellus porttitor tellus. Nulla condimentum porta ligula, vitae rutrum odio vestibulum at. Proin fermentum elit sed lorem lobortis tincidunt. Nulla mollis imperdiet metus, vel volutpat augue gravida sed. Sed molestie vitae enim vitae interdum. Duis viverra id nisi eget dignissim. Duis consequat a nisi et rutrum. Duis vehicula sapien quam, ut pharetra orci laoreet at.</p>
+            <img class="right" src="http://placekitten.com/400/400">
+            <p>Aenean eros ipsum, hendrerit a sem blandit, ornare gravida tortor. Cras augue justo, vulputate ac finibus sit amet, euismod eget ante. Mauris augue magna, vehicula vitae ligula et, vulputate posuere massa. Ut dolor nunc, posuere sit amet placerat ut, dignissim id urna. Duis ultrices magna magna, non aliquet elit fermentum eu. Nunc sollicitudin hendrerit sapien, congue dapibus mi gravida ac. Sed a scelerisque dolor. Vivamus metus sapien, interdum sed sapien nec, ultrices aliquet tellus. Sed ex ligula, rhoncus quis diam et, volutpat pretium ante. Praesent sit amet leo quis justo finibus volutpat.</p>
+            <p>Interdum et malesuada fames ac ante ipsum primis in faucibus. In hac habitasse platea dictumst. Praesent lacus libero, tincidunt in ultricies ut, pretium et nulla. Suspendisse potenti. Sed ultrices ante vel finibus congue. Sed dignissim ex in convallis scelerisque. Morbi semper a dolor eget pellentesque. Nunc volutpat maximus malesuada. In nisl lorem, finibus ut velit ut, aliquet pretium mi. Aliquam sit amet erat vehicula, tempor mi a, pretium metus. Ut scelerisque elementum justo id finibus. Aliquam sed scelerisque dui. Phasellus dictum, lacus eget hendrerit egestas, neque tellus luctus quam, vel rhoncus neque nibh eu nunc. Curabitur eu volutpat augue, at finibus purus.</p>
+        </div>
     </div>
 </div>
 </body>
