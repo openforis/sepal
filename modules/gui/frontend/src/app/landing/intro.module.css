@@ -1,13 +1,9 @@
-.intro {
-    background-color: hsla(0, 0%, 0%, .5);
-}
-
 .main {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
     grid-gap: 2rem;
-    margin: 12rem 8rem 16rem;
+    margin: 12rem 8rem 14rem;
 }
 
 .features {
