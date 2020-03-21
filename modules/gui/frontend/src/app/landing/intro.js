@@ -44,7 +44,7 @@ const Intro = ({onLaunch}) =>
                     <ButtonGroup layout='horizontal-nowrap'>
                         <Button
                             look='default'
-                            size='xx-large'
+                            size='x-large'
                             label={msg('landing.signup')}
                             tabIndex={1}
                             linkUrl={signupUrl}
@@ -53,7 +53,7 @@ const Intro = ({onLaunch}) =>
                         <Button
                             type='submit'
                             look='apply'
-                            size='xx-large'
+                            size='x-large'
                             icon={'sign-in-alt'}
                             label={msg('landing.launch')}
                             tabIndex={2}
