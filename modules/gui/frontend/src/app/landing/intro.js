@@ -2,7 +2,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
-import Feature from './feature'
+// import Feature from './feature'
 import React from 'react'
 import Tagline from './tagline'
 import Title from './title'
@@ -155,6 +155,35 @@ const Intro = ({onLaunch}) =>
                         <img src={partner_sig} alt=''/>
                         <img src={partner_wageningen} alt=''/>
                     </div>
+                </div>
+                <div className={styles.footer}>
+                    <Button
+                        chromeless
+                        look='transparent'
+                        shape='pill'
+                        size='x-large'
+                        linkUrl='http://www.openforis.org'
+                        linkTarget='openforis'
+                        label='Openforis'>
+                    </Button>
+                    <Button
+                        chromeless
+                        look='transparent'
+                        shape='pill'
+                        size='x-large'
+                        linkUrl='https://github.com/openforis/sepal'
+                        linkTarget='github-project'
+                        label='GitHub'>
+                    </Button>
+                    <Button
+                        chromeless
+                        look='transparent'
+                        shape='pill'
+                        size='x-large'
+                        linkUrl='/privacy-policy'
+                        linkTarget='privacy-policy'
+                        label={msg('landing.privacyPolicy')}>
+                    </Button>
                 </div>
             </div>
         </Scrollable>

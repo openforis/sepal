@@ -1,6 +1,7 @@
 .intro {
     /* padding: 2rem 5rem; */
     background-color: hsla(0, 0%, 0%, .5);
+    /* font-family: var(--header-font-family); */
 }
 
 .main {
@@ -70,9 +71,9 @@
 
 .block p {
     grid-area: text;
+    text-align: justify;
     font-size: 1.2rem;
     line-height: 1.8rem;
-    text-align: justify;
 }
 
 /* .features {
@@ -86,3 +87,11 @@
         transform: translateX(-100%);
     }
 } */
+
+.footer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    padding: 1rem 5rem;
+}
