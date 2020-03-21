@@ -9,7 +9,7 @@
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
     grid-gap: 2rem;
-    margin: 8rem 5rem 16rem;
+    margin: 12rem 8rem 16rem;
 }
 
 .features {
@@ -25,6 +25,7 @@
     grid-template-columns: 1fr 1fr;
     grid-gap: 2rem 5rem;
     padding: 3rem 5rem;
+    background-color: black;
 }
 
 .block.contrast {
