@@ -2,7 +2,6 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
-// import Feature from './feature'
 import React from 'react'
 import Tagline from './tagline'
 import Title from './title'
@@ -61,18 +60,12 @@ const Intro = ({onLaunch}) =>
                         />
                     </ButtonGroup>
                 </div>
-                {/* <div className={styles.features}>
-                    <Feature name='process' icon='globe'/>
-                    <Feature name='browse' icon='folder-open'/>
-                    <Feature name='apps' icon='wrench'/>
-                    <Feature name='terminal' icon='terminal'/>
-                </div> */}
-                <div className={[styles.block, styles.dark, styles.imageLeft].join(' ')}>
+                <div className={[styles.block, styles.dark, styles.imageLeft, styles.responsive].join(' ')}>
                     <div>EASE OF USE</div>
                     <img src={image_01} alt=""/>
                     <p>Allows users to query and process satellite data quickly and efficiently, tailor their products for local needs, and produce sophisticated and relevant geospatial analyses quickly.</p>
                 </div>
-                <div className={[styles.block, styles.dark, styles.imageRight].join(' ')}>
+                <div className={[styles.block, styles.dark, styles.imageRight, styles.responsive].join(' ')}>
                     <div>COMPUTING POWER</div>
                     <img src={image_02} alt=""/>
                     <p>Harnessing high performance cloud-based computing and modern geospatial data infrastructures.</p>
@@ -115,7 +108,7 @@ const Intro = ({onLaunch}) =>
                         or to your Sepal workspace, for further processing.
                     </p>
                 </div>
-                <div className={[styles.block, styles.dark, styles.imageLeft].join(' ')}>
+                <div className={[styles.block, styles.dark, styles.imageLeft, styles.responsive].join(' ')}>
                     <div>INTEGRATIONS</div>
                     <img src={image_03} alt=''/>
                     <p>
@@ -123,7 +116,7 @@ const Intro = ({onLaunch}) =>
                         for visual interpretation of images.
                     </p>
                 </div>
-                <div className={[styles.block, styles.dark, styles.imageRight].join(' ')}>
+                <div className={[styles.block, styles.dark, styles.imageRight, styles.responsive].join(' ')}>
                     <div>POWER USERS</div>
                     <img src={image_04} alt=''/>
                     <p>
