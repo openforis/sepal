@@ -67,17 +67,17 @@ const Intro = ({onLaunch}) =>
                     <Feature name='apps' icon='wrench'/>
                     <Feature name='terminal' icon='terminal'/>
                 </div> */}
-                <div className={[styles.block, styles.imageLeft].join(' ')}>
+                <div className={[styles.block, styles.dark, styles.imageLeft].join(' ')}>
                     <div>EASE OF USE</div>
                     <img src={image_01} alt=""/>
                     <p>Allows users to query and process satellite data quickly and efficiently, tailor their products for local needs, and produce sophisticated and relevant geospatial analyses quickly.</p>
                 </div>
-                <div className={[styles.block, styles.imageRight].join(' ')}>
+                <div className={[styles.block, styles.dark, styles.imageRight].join(' ')}>
                     <div>COMPUTING POWER</div>
                     <img src={image_02} alt=""/>
                     <p>Harnessing high performance cloud-based computing and modern geospatial data infrastructures.</p>
                 </div>
-                <div className={[styles.block, styles.contrast, styles.imageLeft].join(' ')}>
+                <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
                     <div>GOOGLE EARTH ENGINE</div>
                     <img src={image_gee} alt='' width={150}/>
                     <p>
@@ -86,7 +86,7 @@ const Intro = ({onLaunch}) =>
                         or to your Sepal workspace, for further processing.
                     </p>
                 </div>
-                <div className={[styles.block, styles.contrast, styles.imageRight].join(' ')}>
+                <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
                     <div>RSTUDIO SERVER</div>
                     <img src={image_rstudio} alt='' width={150}/>
                     <p>
@@ -96,7 +96,7 @@ const Intro = ({onLaunch}) =>
                         or to your Sepal workspace, for further processing.
                     </p>
                 </div>
-                <div className={[styles.block, styles.contrast, styles.imageLeft].join(' ')}>
+                <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
                     <div>JUPYTER NOTEBOOK</div>
                     <img src={image_jupyter} alt='' width={150}/>
                     <p>
@@ -105,7 +105,7 @@ const Intro = ({onLaunch}) =>
                         or to your Sepal workspace, for further processing.
                     </p>
                 </div>
-                <div className={[styles.block, styles.contrast, styles.imageRight].join(' ')}>
+                <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
                     <div>SHINY SERVER</div>
                     <img src={image_shiny} alt='' width={150}/>
                     <p>
@@ -115,7 +115,7 @@ const Intro = ({onLaunch}) =>
                         or to your Sepal workspace, for further processing.
                     </p>
                 </div>
-                <div className={[styles.block, styles.imageLeft].join(' ')}>
+                <div className={[styles.block, styles.dark, styles.imageLeft].join(' ')}>
                     <div>INTEGRATIONS</div>
                     <img src={image_03} alt=''/>
                     <p>
@@ -123,7 +123,7 @@ const Intro = ({onLaunch}) =>
                         for visual interpretation of images.
                     </p>
                 </div>
-                <div className={[styles.block, styles.imageRight].join(' ')}>
+                <div className={[styles.block, styles.dark, styles.imageRight].join(' ')}>
                     <div>POWER USERS</div>
                     <img src={image_04} alt=''/>
                     <p>
@@ -135,7 +135,7 @@ const Intro = ({onLaunch}) =>
                         ranging up to 128 core, 2TB instances.
                     </p>
                 </div>
-                <div className={[styles.block, styles.contrast, styles.imageLeft].join(' ')}>
+                <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
                     <div>PARTNERS</div>
                     <div className={styles.img}>
                         <img src={partner_ec} alt=''/>

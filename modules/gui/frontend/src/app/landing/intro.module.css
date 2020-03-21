@@ -1,7 +1,5 @@
 .intro {
-    /* padding: 2rem 5rem; */
     background-color: hsla(0, 0%, 0%, .5);
-    /* font-family: var(--header-font-family); */
 }
 
 .main {
@@ -25,10 +23,13 @@
     grid-template-columns: 1fr 1fr;
     grid-gap: 2rem 5rem;
     padding: 3rem 5rem;
+}
+
+.block.dark {
     background-color: black;
 }
 
-.block.contrast {
+.block.light {
     background-color: white;
     color: black;
 }
