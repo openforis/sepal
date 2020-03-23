@@ -93,10 +93,16 @@ class _Scrollable extends Component {
             scrollTo: this.scrollTo.bind(this),
             scrollToTop: this.scrollToTop.bind(this),
             scrollToBottom: this.scrollToBottom.bind(this),
-            scrollDown: this.scrollDown.bind(this),
+            scrollPage: this.scrollPage.bind(this),
             reset: this.reset.bind(this),
             centerElement: this.centerElement.bind(this),
             getElement: this.getScrollableElement.bind(this)
+        }
+        const keymap = {
+            ArrowUp: () => scrollable.scrollPage(-.2),
+            ArrowDown: () => scrollable.scrollPage(.2),
+            ' ': () => scrollable.scrollPage(1),
+            'Shift+ ': () => scrollable.scrollPage(-1)
         }
         return (
             <div
@@ -104,7 +110,7 @@ class _Scrollable extends Component {
                 ref={this.ref}
                 className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
                 <ScrollableContext.Provider value={scrollable}>
-                    <Keybinding keymap={{' ': scrollable.scrollDown}}>
+                    <Keybinding keymap={keymap}>
                         {_.isFunction(children) ? children(scrollableContainerHeight, scrollable) : children}
                     </Keybinding>
                 </ScrollableContext.Provider>
@@ -168,8 +174,8 @@ class _Scrollable extends Component {
         this.scrollTo(this.getScrollableHeight() - this.getClientHeight())
     }
 
-    scrollDown() {
-        this.scrollTo(this.getScrollableElement().scrollTop + this.getClientHeight())
+    scrollPage(pages) {
+        this.scrollTo(this.getScrollableElement().scrollTop + pages * this.getClientHeight())
     }
 
     centerElement(element) {
