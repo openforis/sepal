@@ -22,9 +22,17 @@
     background-color: black;
 }
 
+.block.dark + .block.dark {
+    padding-top: 0;
+}
+
 .block.light {
     background-color: white;
     color: black;
+}
+
+.block.light + .block.light {
+    padding-top: 0;
 }
 
 .block.imageLeft {
