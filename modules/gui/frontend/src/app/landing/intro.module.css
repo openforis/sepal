@@ -1,10 +1,17 @@
 .main {
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto 1fr auto;
     grid-gap: 2rem;
-    padding: 12rem 5% 14rem;
+    /* padding: 12rem 5% 14rem; */
+    padding: 12rem 2rem 5%;
     height: 100vh;
+}
+
+.nextpage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .button {
