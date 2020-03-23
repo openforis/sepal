@@ -60,6 +60,7 @@ Unscrollable.propTypes = {
 const ScrollableContext = React.createContext()
 
 const ANIMATION_SPEED = .2
+const PIXEL_PER_LINE = 45
 
 const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
@@ -94,15 +95,16 @@ class _Scrollable extends Component {
             scrollToTop: this.scrollToTop.bind(this),
             scrollToBottom: this.scrollToBottom.bind(this),
             scrollPage: this.scrollPage.bind(this),
+            scrollLine: this.scrollLine.bind(this),
             reset: this.reset.bind(this),
             centerElement: this.centerElement.bind(this),
             getElement: this.getScrollableElement.bind(this)
         }
         const keymap = {
-            ArrowUp: () => scrollable.scrollPage(-.2),
-            ArrowDown: () => scrollable.scrollPage(.2),
-            ' ': () => scrollable.scrollPage(1),
-            'Shift+ ': () => scrollable.scrollPage(-1)
+            ArrowUp: () => scrollable.scrollLine(-1),
+            ArrowDown: () => scrollable.scrollLine(1),
+            'Shift+ ': () => scrollable.scrollPage(-1),
+            ' ': () => scrollable.scrollPage(1)
         }
         return (
             <div
@@ -176,6 +178,10 @@ class _Scrollable extends Component {
 
     scrollPage(pages) {
         this.scrollTo(this.getScrollableElement().scrollTop + pages * this.getClientHeight())
+    }
+
+    scrollLine(lines) {
+        this.scrollTo(this.getScrollableElement().scrollTop + lines * PIXEL_PER_LINE)
     }
 
     centerElement(element) {
