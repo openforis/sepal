@@ -24,11 +24,13 @@ ButtonGroup.propTypes = {
     layout: PropTypes.oneOf([
         'horizontal-wrap',
         'horizontal-wrap-tight',
+        'horizontal-wrap-loose',
         'horizontal-wrap-spaced',
         'horizontal-wrap-fill', // it adds more vertical space too
         'horizontal-wrap-right',
         'horizontal-nowrap',
         'horizontal-nowrap-tight',
+        'horizontal-nowrap-loose',
         'horizontal-nowrap-spaced',
         'horizontal-nowrap-fill',
         'horizontal-nowrap-right',

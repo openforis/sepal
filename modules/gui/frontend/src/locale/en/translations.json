@@ -181,6 +181,8 @@
     }
   },
   "landing": {
+      "signup": "Signup",
+      "launch": "Launch",
     "features": {
       "apps": {
         "description": "Extend the features in Sepal with custom data processing applications",

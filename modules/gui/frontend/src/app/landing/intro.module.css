@@ -1,0 +1,149 @@
+.main {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto;
+    grid-gap: 2rem;
+    padding: 12rem 5% 2rem;
+    height: 100vh;
+}
+
+.nextpage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2000ms ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        opacity: .4;
+    }
+}
+
+.button {
+    padding: 0.75rem 3rem;
+}
+
+.block {
+    padding: 3rem 5%;
+    align-items: center;
+}
+
+.block.dark {
+    background-color: black;
+}
+
+.block.dark + .block.dark {
+    padding-top: 0;
+}
+
+.block.light {
+    background-color: white;
+    color: black;
+}
+
+.block.light + .block.light {
+    padding-top: 0;
+}
+
+.block.imageLeft {
+    display: grid;
+    grid-gap: 2rem 5%;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        'image text'
+        'image text';
+}
+
+.block.imageLeft.responsive {
+    grid-template-columns: 1.5fr 1fr;
+}
+
+.block.imageRight {
+    display: grid;
+    grid-gap: 2rem 5%;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: 
+        'title image'
+        'text image';
+}
+
+.block.imageRight.responsive {
+    grid-template-columns: 1fr 1.5fr;
+}
+
+.block.responsive {
+    grid-template-columns: 1fr 1fr;
+}
+
+.block > div {
+    grid-area: text;
+}
+
+.block div.title {
+    grid-area: title;
+    font-family: var(--header-font-family);
+    font-size: 2.6em;
+    font-weight: 300;
+    line-height: 3rem;
+    letter-spacing: .3rem;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+
+.block > img,
+.block > .img {
+    grid-area: image;
+}
+
+.block.responsive > img {
+    width: 100%;
+}
+
+.img > img {
+    max-width: 180px;
+    max-height: 100px;
+    padding: 1rem;
+}
+
+.img.partner {
+    text-align: center;
+}
+
+.img.partner > img {
+    max-width: 120px;
+    max-height: 80px;
+}
+
+.block p {
+    grid-area: text;
+    text-align: justify;
+    font-size: 1.2rem;
+    line-height: 1.8rem;
+}
+
+.block.imageRight .tool {
+    justify-self: right;
+    text-align: right;
+}
+
+.tool div, .tool p {
+    max-width: 40rem;
+}
+
+.footer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    padding: 1rem 5rem;
+    background-color: black;
+}

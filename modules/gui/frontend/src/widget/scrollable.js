@@ -2,6 +2,7 @@ import {EMPTY, Subject, animationFrameScheduler, fromEvent, interval} from 'rxjs
 import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs/operators'
 import {v4 as uuid} from 'uuid'
+import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
@@ -92,6 +93,7 @@ class _Scrollable extends Component {
             scrollTo: this.scrollTo.bind(this),
             scrollToTop: this.scrollToTop.bind(this),
             scrollToBottom: this.scrollToBottom.bind(this),
+            scrollDown: this.scrollDown.bind(this),
             reset: this.reset.bind(this),
             centerElement: this.centerElement.bind(this),
             getElement: this.getScrollableElement.bind(this)
@@ -102,7 +104,9 @@ class _Scrollable extends Component {
                 ref={this.ref}
                 className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
                 <ScrollableContext.Provider value={scrollable}>
-                    {_.isFunction(children) ? children(scrollableContainerHeight, scrollable) : children}
+                    <Keybinding keymap={{' ': scrollable.scrollDown}}>
+                        {_.isFunction(children) ? children(scrollableContainerHeight, scrollable) : children}
+                    </Keybinding>
                 </ScrollableContext.Provider>
             </div>
         )
@@ -162,6 +166,10 @@ class _Scrollable extends Component {
 
     scrollToBottom() {
         this.scrollTo(this.getScrollableHeight() - this.getClientHeight())
+    }
+
+    scrollDown() {
+        this.scrollTo(this.getScrollableElement().scrollTop + this.getClientHeight())
     }
 
     centerElement(element) {
