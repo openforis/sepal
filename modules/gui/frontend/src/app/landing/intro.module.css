@@ -98,6 +98,15 @@
     line-height: 1.8rem;
 }
 
+.block.imageRight .tool {
+    justify-self: right;
+    text-align: right;
+}
+
+.tool div, .tool p {
+    max-width: 40rem;
+}
+
 .footer {
     display: flex;
     flex-direction: row;

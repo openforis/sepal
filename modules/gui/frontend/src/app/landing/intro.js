@@ -75,58 +75,60 @@ const Intro = ({onLaunch}) =>
                     <img src={image_02} alt=""/>
                     <div>
                         <div className={styles.title}>COMPUTING POWER</div>
-                        <p>Harnessing high performance cloud-based computing and modern geospatial data infrastructures.</p>
+                        <p>
+                            Harness high performance cloud-based computing and modern 
+                            geospatial data infrastructures.                            
+                        </p>
                     </div>
                 </div>
                 <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
                     <img src={image_gee} alt='' width={150}/>
-                    <div>
+                    <div className={styles.tool}>
                         <div className={styles.title}>GOOGLE EARTH ENGINE</div>
                         <p>
-                            Produce global scale products with EE without writing scripts
-                            Connect your Google account, and export to your EE asset folder
-                            or to your Sepal workspace, for further processing.
+                            Get access to Earth Engine's multi-petabyte catalog of satellite 
+                            imagery and use their planetary-scale analysis capabilities. All
+                            without writing a single line of code. Just connect your Google 
+                            account to SEPAL.
+                        </p>
+                    </div>
+                </div>
+                <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
+                    <img src={image_jupyter} alt='' width={150}/>
+                    <div className={styles.tool}>
+                        <div className={styles.title}>JUPYTER NOTEBOOK</div>
+                        <p>
+                            Run any of the geospatial processing notebooks in SEPAL's 
+                            catalogue, or develop your own, in the hosted Jupyter server. 
+                            It comes with Python 3, R, and JavaScript kernels.
+                        </p>
+                    </div>
+                </div>
+                <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
+                    <img src={image_shiny} alt='' width={150}/>
+                    <div className={styles.tool}>
+                        <div className={styles.title}>SHINY SERVER</div>
+                        <p>
+                            Perform stratified area estimation, time-series analysis
+                            with BFAST, and other geospatial processing through the R Shiny 
+                            apps hosted in SEPAL.
                         </p>
                     </div>
                 </div>
                 <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
                     <img src={image_rstudio} alt='' width={150}/>
-                    <div>
+                    <div className={styles.tool}>
                         <div className={styles.title}>RSTUDIO SERVER</div>
                         <p>
-                            Sepal includes an RStudio Server installation.
-                            This makes it easy to develop and run your custom R scripts.
-                            Connect your Google account, and export to your EE asset folder
-                            or to your Sepal workspace, for further processing.
-                        </p>
-                    </div>
-                </div>
-                <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
-                    <img src={image_jupyter} alt='' width={150}/>
-                    <div>
-                        <div className={styles.title}>JUPYTER NOTEBOOK</div>
-                        <p>
-                            Produce global scale products with EE without writing scripts.
-                            Connect your Google account, and export to your EE asset folder
-                            or to your Sepal workspace, for further processing.
-                        </p>
-                    </div>
-                </div>
-                <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
-                    <img src={image_shiny} alt='' width={150}/>
-                    <div>
-                        <div className={styles.title}>SHINY SERVER</div>
-                        <p>
-                            Sepal includes an RStudio Server installation.
-                            This makes it easy to develop and run your custom R scripts.
-                            Connect your Google account, and export to your EE asset folder
-                            or to your Sepal workspace, for further processing.
+                            Develop your R scripts with RStudio, directly inside SEPAL. Use
+                            any of the many useful R packages already installed, and install 
+                            your own when you need to.
                         </p>
                     </div>
                 </div>
                 <div className={[styles.block, styles.dark, styles.imageLeft, styles.responsive].join(' ')}>
                     <img src={image_03} alt=''/>
-                    <div>
+                    <div className={styles.tool}>
                         <div className={styles.title}>INTEGRATIONS</div>
                         <p>
                             Sepal integrates with other system, including Collect Earth Online,
@@ -139,12 +141,11 @@ const Intro = ({onLaunch}) =>
                     <div>
                         <div className={styles.title}>POWER USERS</div>
                         <p>
-                            Get access to a full Linux terminal,
-                            with a host of progrmming languages and geospatial tools installed.
-                            Access the terminal over SSH, transfer files using rsync,
-                            scp, or connect an FPT client.
-                            Start sessions on different instance types,
-                            ranging up to 128 core, 2TB instances.
+                            Get access to dedicated Linux instances, with up to 128 CPU cores/2 TB RAM, 
+                            and with a host of development and geospatial tools installed. 
+                            Access it directly from within the browser, or an SSH client. 
+                            Transfer files to and from the instance with rsync, scp, or your favorite
+                            FTP client.
                         </p>
                     </div>
                 </div>
