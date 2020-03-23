@@ -34,10 +34,15 @@ import styles from './intro.module.css'
 
 const signupUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSci4hopXNtMOQKJzsUybaJETrAPQp8j6TCqycSBQ0XO37jBwA/viewform?c=0&w=1'
 
-const scrollToInfo = () =>
-    document.getElementById('info').scrollIntoView({
-        behavior: 'smooth'
-    })
+const Intro = ({onLaunch}) =>
+    <ScrollableContainer>
+        <Scrollable>
+            <div className={styles.intro}>
+                <Main onLaunch={onLaunch}/>
+                <Info/>
+            </div>
+        </Scrollable>
+    </ScrollableContainer>
 
 const Main = ({onLaunch}) =>
     <div id='main' className={styles.main}>
@@ -224,14 +229,10 @@ const Info = () =>
             </Button>
         </div>
     </div>
-const Intro = ({onLaunch}) =>
-    <ScrollableContainer>
-        <Scrollable>
-            <div className={styles.intro}>
-                <Main onLaunch={onLaunch}/>
-                <Info/>
-            </div>
-        </Scrollable>
-    </ScrollableContainer>
+
+const scrollToInfo = () =>
+    document.getElementById('info').scrollIntoView({
+        behavior: 'smooth'
+    })
 
 export default Intro
