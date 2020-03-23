@@ -76,8 +76,8 @@ const Intro = ({onLaunch}) =>
                     <div>
                         <div className={styles.title}>COMPUTING POWER</div>
                         <p>
-                            Harness high performance cloud-based computing and modern 
-                            geospatial data infrastructures.                            
+                            Harness high performance cloud-based computing and modern
+                            geospatial data infrastructures.
                         </p>
                     </div>
                 </div>
@@ -86,9 +86,9 @@ const Intro = ({onLaunch}) =>
                     <div className={styles.tool}>
                         <div className={styles.title}>GOOGLE EARTH ENGINE</div>
                         <p>
-                            Get access to Earth Engine's multi-petabyte catalog of satellite 
+                            Get access to Earth Engine's multi-petabyte catalog of satellite
                             imagery and use their planetary-scale analysis capabilities. All
-                            without writing a single line of code. Just connect your Google 
+                            without writing a single line of code. Just connect your Google
                             account to SEPAL.
                         </p>
                     </div>
@@ -98,8 +98,8 @@ const Intro = ({onLaunch}) =>
                     <div className={styles.tool}>
                         <div className={styles.title}>JUPYTER NOTEBOOK</div>
                         <p>
-                            Run any of the geospatial processing notebooks in SEPAL's 
-                            catalogue, or develop your own, in the hosted Jupyter server. 
+                            Run any of the geospatial processing notebooks in SEPAL's
+                            catalogue, or develop your own, in the hosted Jupyter server.
                             It comes with Python 3, R, and JavaScript kernels.
                         </p>
                     </div>
@@ -110,7 +110,7 @@ const Intro = ({onLaunch}) =>
                         <div className={styles.title}>SHINY SERVER</div>
                         <p>
                             Perform stratified area estimation, time-series analysis
-                            with BFAST, and other geospatial processing through the R Shiny 
+                            with BFAST, and other geospatial processing through the R Shiny
                             apps hosted in SEPAL.
                         </p>
                     </div>
@@ -121,7 +121,7 @@ const Intro = ({onLaunch}) =>
                         <div className={styles.title}>RSTUDIO SERVER</div>
                         <p>
                             Develop your R scripts with RStudio, directly inside SEPAL. Use
-                            any of the many useful R packages already installed, and install 
+                            any of the many useful R packages already installed, and install
                             your own when you need to.
                         </p>
                     </div>
@@ -141,29 +141,27 @@ const Intro = ({onLaunch}) =>
                     <div>
                         <div className={styles.title}>POWER USERS</div>
                         <p>
-                            Get access to dedicated Linux instances, with up to 128 CPU cores/2 TB RAM, 
-                            and with a host of development and geospatial tools installed. 
-                            Access it directly from within the browser, or an SSH client. 
+                            Get access to dedicated Linux instances, with up to 128 CPU cores/2 TB RAM,
+                            and with a host of development and geospatial tools installed.
+                            Access it directly from within the browser, or an SSH client.
                             Transfer files to and from the instance with rsync, scp, or your favorite
                             FTP client.
                         </p>
                     </div>
                 </div>
-                <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
+                <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
                     <div className={styles.img}>
                         <img src={partner_openforis} alt=''/>
                         <img src={partner_nicfi} alt=''/>
                     </div>
                     <div>
-                        <div className={styles.title}>PROJECT BY</div>
-                        <p>The Open Foris team in Forestry Department of the United Nations Food and Agriculture Organization (FAO), funded by the Government of Norway.</p>
+                        <div className={styles.title}>ABOUT</div>
+                        <p>SEPAL is an opensource project by the Open Foris team in Forestry Department of the United Nations Food and Agriculture Organization (FAO), funded by the Government of Norway.</p>
                     </div>
                 </div>
-                <div className={[styles.block, styles.light, styles.imageCenter].join(' ')}>
-                    <div>
-                        <div className={styles.title}>PARTNERS</div>
-                    </div>
-                    <div className={styles.img}>
+                <div className={[styles.block, styles.light].join(' ')}>
+                    <div className={styles.title}>PARTNERS</div>
+                    <div className={[styles.img, styles.partner].join(' ')}>
                         <img src={partner_ec} alt=''/>
                         <img src={partner_esa} alt=''/>
                         <img src={partner_eth} alt=''/>
