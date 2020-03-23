@@ -8,7 +8,7 @@ import Title from './title'
 import image_01 from './intro/bhutan.jpg'
 import image_02 from './intro/senegal.jpg'
 import image_03 from './intro/ethiopia.jpg'
-import image_04 from './intro/terminal.png'
+import image_04 from './intro/terminal.jpg'
 import image_gee from './intro/gee.png'
 import image_jupyter from './intro/jupyter.png'
 import image_rstudio from './intro/rstudio.png'
@@ -63,21 +63,21 @@ const Intro = ({onLaunch}) =>
                 <div className={[styles.block, styles.dark, styles.imageLeft, styles.responsive].join(' ')}>
                     <img src={image_01} alt=""/>
                     <div>
-                        <div class={styles.title}>EASE OF USE</div>
+                        <div className={styles.title}>EASE OF USE</div>
                         <p>Allows users to query and process satellite data quickly and efficiently, tailor their products for local needs, and produce sophisticated and relevant geospatial analyses quickly.</p>
                     </div>
                 </div>
                 <div className={[styles.block, styles.dark, styles.imageRight, styles.responsive].join(' ')}>
                     <img src={image_02} alt=""/>
                     <div>
-                        <div class={styles.title}>COMPUTING POWER</div>
+                        <div className={styles.title}>COMPUTING POWER</div>
                         <p>Harnessing high performance cloud-based computing and modern geospatial data infrastructures.</p>
                     </div>
                 </div>
                 <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
                     <img src={image_gee} alt='' width={150}/>
                     <div>
-                        <div class={styles.title}>GOOGLE EARTH ENGINE</div>
+                        <div className={styles.title}>GOOGLE EARTH ENGINE</div>
                         <p>
                             Produce global scale products with EE without writing scripts
                             Connect your Google account, and export to your EE asset folder
@@ -88,7 +88,7 @@ const Intro = ({onLaunch}) =>
                 <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
                     <img src={image_rstudio} alt='' width={150}/>
                     <div>
-                        <div class={styles.title}>RSTUDIO SERVER</div>
+                        <div className={styles.title}>RSTUDIO SERVER</div>
                         <p>
                             Sepal includes an RStudio Server installation.
                             This makes it easy to develop and run your custom R scripts.
@@ -100,7 +100,7 @@ const Intro = ({onLaunch}) =>
                 <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
                     <img src={image_jupyter} alt='' width={150}/>
                     <div>
-                        <div class={styles.title}>JUPYTER NOTEBOOK</div>
+                        <div className={styles.title}>JUPYTER NOTEBOOK</div>
                         <p>
                             Produce global scale products with EE without writing scripts.
                             Connect your Google account, and export to your EE asset folder
@@ -111,7 +111,7 @@ const Intro = ({onLaunch}) =>
                 <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
                     <img src={image_shiny} alt='' width={150}/>
                     <div>
-                        <div class={styles.title}>SHINY SERVER</div>
+                        <div className={styles.title}>SHINY SERVER</div>
                         <p>
                             Sepal includes an RStudio Server installation.
                             This makes it easy to develop and run your custom R scripts.
@@ -123,7 +123,7 @@ const Intro = ({onLaunch}) =>
                 <div className={[styles.block, styles.dark, styles.imageLeft, styles.responsive].join(' ')}>
                     <img src={image_03} alt=''/>
                     <div>
-                        <div class={styles.title}>INTEGRATIONS</div>
+                        <div className={styles.title}>INTEGRATIONS</div>
                         <p>
                             Sepal integrates with other system, including Collect Earth Online,
                             for visual interpretation of images.
@@ -133,7 +133,7 @@ const Intro = ({onLaunch}) =>
                 <div className={[styles.block, styles.dark, styles.imageRight, styles.responsive].join(' ')}>
                     <img src={image_04} alt=''/>
                     <div>
-                        <div class={styles.title}>POWER USERS</div>
+                        <div className={styles.title}>POWER USERS</div>
                         <p>
                             Get access to a full Linux terminal,
                             with a host of progrmming languages and geospatial tools installed.
@@ -163,7 +163,7 @@ const Intro = ({onLaunch}) =>
                         <img src={partner_sig} alt=''/>
                         <img src={partner_wageningen} alt=''/>
                     </div>
-                    <div class={styles.title}>PARTNERS</div>
+                    <div className={styles.title}>PARTNERS</div>
                 </div>
                 <div className={styles.footer}>
                     <Button
