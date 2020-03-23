@@ -93,6 +93,7 @@ class _Scrollable extends Component {
             scrollTo: this.scrollTo.bind(this),
             scrollToTop: this.scrollToTop.bind(this),
             scrollToBottom: this.scrollToBottom.bind(this),
+            scrollDown: this.scrollDown.bind(this),
             reset: this.reset.bind(this),
             centerElement: this.centerElement.bind(this),
             getElement: this.getScrollableElement.bind(this)
@@ -103,7 +104,7 @@ class _Scrollable extends Component {
                 ref={this.ref}
                 className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
                 <ScrollableContext.Provider value={scrollable}>
-                    <Keybinding keymap={{'Space': scrollable.scrollDown}}>
+                    <Keybinding keymap={{' ': () => scrollable.scrollDown()}}>
                         {_.isFunction(children) ? children(scrollableContainerHeight, scrollable) : children}
                     </Keybinding>
                 </ScrollableContext.Provider>
@@ -165,6 +166,10 @@ class _Scrollable extends Component {
 
     scrollToBottom() {
         this.scrollTo(this.getScrollableHeight() - this.getClientHeight())
+    }
+
+    scrollDown() {
+        this.scrollTo(this.getScrollableElement().scrollTop + this.getClientHeight())
     }
 
     centerElement(element) {
