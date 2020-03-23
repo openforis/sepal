@@ -30,6 +30,7 @@ ButtonGroup.propTypes = {
         'horizontal-wrap-right',
         'horizontal-nowrap',
         'horizontal-nowrap-tight',
+        'horizontal-nowrap-loose',
         'horizontal-nowrap-spaced',
         'horizontal-nowrap-fill',
         'horizontal-nowrap-right',
