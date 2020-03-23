@@ -82,8 +82,8 @@ const Main = ({onLaunch}) =>
         </div>
     </div>
 
-const Block = ({style, image, imagePosition, maxImageSize, textKey, responsive, classNames = []}) =>
-    <div className={[styles.block, styles[style], styles[imagePosition], responsive ? styles.responsive : null, ...classNames].join(' ')}>
+const Block = ({theme, image, imagePosition, maxImageSize, textKey, responsive, classNames = []}) =>
+    <div className={[styles.block, styles[theme], styles[imagePosition], responsive ? styles.responsive : null, ...classNames].join(' ')}>
         <img src={image} alt="" style={{maxWidth: maxImageSize}}/>
         <div>
             <div className={styles.title}>{msg(`${textKey}.title`)}</div>
@@ -94,56 +94,56 @@ const Block = ({style, image, imagePosition, maxImageSize, textKey, responsive, 
 const Info = () =>
     <div id='info'>
         <Block
-            style='dark'
+            theme='dark'
             image={image_01}
             imagePosition='left'
             textKey='landing.intro.easeOfUse'
             responsive
         />
         <Block
-            style='dark'
+            theme='dark'
             image={image_02}
             imagePosition='right'
             textKey='landing.intro.computingPower'
             responsive
         />
         <Block
-            style='light'
+            theme='light'
             image={image_gee}
             imagePosition='left'
             maxImageSize={150}
             textKey='landing.intro.googleEarthEngine'
         />
         <Block
-            style='light'
+            theme='light'
             image={image_jupyter}
             imagePosition='right'
             maxImageSize={150}
             textKey='landing.intro.jupyterNotebook'
         />
         <Block
-            style='light'
+            theme='light'
             image={image_shiny}
             imagePosition='left'
             maxImageSize={150}
             textKey='landing.intro.shiny'
         />
         <Block
-            style='light'
+            theme='light'
             image={image_rstudio}
             imagePosition='right'
             maxImageSize={150}
             textKey='landing.intro.rstudio'
         />
         <Block
-            style='dark'
+            theme='dark'
             image={image_03}
             imagePosition='left'
             textKey='landing.intro.integrations'
             responsive
         />
         <Block
-            style='dark'
+            theme='dark'
             image={image_04}
             imagePosition='right'
             textKey='landing.intro.powerUsers'
