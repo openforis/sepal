@@ -6,6 +6,11 @@
     margin: 12rem 5% 14rem;
 }
 
+.button {
+    padding: 0.75rem 3rem !important;
+    margin-right: 1rem;
+}
+
 .block {
     display: grid;
     grid-template-columns: 1fr 1fr;

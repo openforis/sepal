@@ -49,15 +49,16 @@ const Intro = ({onLaunch}) =>
                             tabIndex={1}
                             linkUrl={signupUrl}
                             linkTarget='_self'
+                            additionalClassName={styles.button}
                         />
                         <Button
                             type='submit'
                             look='apply'
                             size='x-large'
-                            icon={'sign-in-alt'}
                             label={msg('landing.launch')}
                             tabIndex={2}
                             onClick={onLaunch}
+                            additionalClassName={styles.button}
                         />
                     </ButtonGroup>
                 </div>
