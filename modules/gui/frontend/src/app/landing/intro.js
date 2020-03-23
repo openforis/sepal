@@ -99,8 +99,8 @@ const Intro = ({onLaunch}) =>
                         <div className={styles.title}>JUPYTER NOTEBOOK</div>
                         <p>
                             Run any of the geospatial processing notebooks in SEPAL's 
-                            catalogue, or develop your own, in the hosted Jupyter server. 
-                            It comes with Python 3, R, and JavaScript kernels.
+                            catalogue, or develop your own. The hosted Jupyter server
+                            comes with Python 3, R, and JavaScript kernels.
                         </p>
                     </div>
                 </div>
@@ -131,8 +131,9 @@ const Intro = ({onLaunch}) =>
                     <div className={styles.tool}>
                         <div className={styles.title}>INTEGRATIONS</div>
                         <p>
-                            Sepal integrates with other system, including Collect Earth Online,
-                            for visual interpretation of images.
+                            SEPAL doesn't want to reinvent the wheel. We rather use and integrate with
+                            existing solutions, such as Open Foris Collect Earth Online, for visual
+                            interpretation of satellite imagery.
                         </p>
                     </div>
                 </div>
