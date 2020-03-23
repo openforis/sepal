@@ -25,6 +25,7 @@ import partner_jica from './intro/partners/jica.png'
 import partner_kfw from './intro/partners/kfw.png'
 import partner_nasa from './intro/partners/nasa.png'
 import partner_nicfi from './intro/partners/nicfi.png'
+import partner_openforis from './intro/partners/openforis.png'
 import partner_sc from './intro/partners/sc.png'
 import partner_servir from './intro/partners/servir.png'
 import partner_sig from './intro/partners/sig.png'
@@ -146,6 +147,19 @@ const Intro = ({onLaunch}) =>
                 </div>
                 <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
                     <div className={styles.img}>
+                        <img src={partner_openforis} alt=''/>
+                        <img src={partner_nicfi} alt=''/>
+                    </div>
+                    <div>
+                        <div className={styles.title}>PROJECT BY</div>
+                        <p>The Open Foris team in Forestry Department of the United Nations Food and Agriculture Organization (FAO), funded by the Government of Norway.</p>
+                    </div>
+                </div>
+                <div className={[styles.block, styles.light, styles.imageCenter].join(' ')}>
+                    <div>
+                        <div className={styles.title}>PARTNERS</div>
+                    </div>
+                    <div className={styles.img}>
                         <img src={partner_ec} alt=''/>
                         <img src={partner_esa} alt=''/>
                         <img src={partner_eth} alt=''/>
@@ -157,13 +171,11 @@ const Intro = ({onLaunch}) =>
                         <img src={partner_jica} alt=''/>
                         <img src={partner_kfw} alt=''/>
                         <img src={partner_nasa} alt=''/>
-                        <img src={partner_nicfi} alt=''/>
                         <img src={partner_sc} alt=''/>
                         <img src={partner_servir} alt=''/>
                         <img src={partner_sig} alt=''/>
                         <img src={partner_wageningen} alt=''/>
                     </div>
-                    <div className={styles.title}>PARTNERS</div>
                 </div>
                 <div className={styles.footer}>
                     <Button

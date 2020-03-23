@@ -27,7 +27,7 @@
     grid-template-columns: auto 1fr;
     grid-template-rows: auto 1fr;
     grid-template-areas:
-        'image title'
+        'image text'
         'image text';
 }
 
@@ -39,12 +39,18 @@
     grid-template-columns: 1fr auto;
     grid-template-rows: auto 1fr;
     grid-template-areas: 
-        'text image'
+        'title image'
         'text image';
 }
 
 .block.imageRight.responsive {
     grid-template-columns: 1fr 1.5fr;
+}
+
+.block.imageCenter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .block.responsive {
