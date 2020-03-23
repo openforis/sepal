@@ -40,6 +40,7 @@ const Intro = ({onLaunch}) =>
             <div className={styles.intro}>
                 <Main onLaunch={onLaunch}/>
                 <Info/>
+                <Footer/>
             </div>
         </Scrollable>
     </ScrollableContainer>
@@ -81,153 +82,140 @@ const Main = ({onLaunch}) =>
         </div>
     </div>
 
+const Block = ({style, image, imagePosition, maxImageSize, textKey, responsive, classNames = []}) =>
+    <div className={[styles.block, styles[style], styles[imagePosition], responsive ? styles.responsive : null, ...classNames].join(' ')}>
+        <img src={image} alt="" style={{maxWidth: maxImageSize}}/>
+        <div>
+            <div className={styles.title}>{msg(`${textKey}.title`)}</div>
+            <p>{msg(`${textKey}.description`)}</p>
+        </div>
+    </div>
+
 const Info = () =>
     <div id='info'>
-        <div className={[styles.block, styles.dark, styles.imageLeft, styles.responsive].join(' ')}>
-            <img src={image_01} alt=""/>
-            <div>
-                <div className={styles.title}>EASE OF USE</div>
-                <p>Allows users to query and process satellite data quickly and efficiently, tailor their products for local needs, and produce sophisticated and relevant geospatial analyses quickly.</p>
-            </div>
+        <Block
+            style='dark'
+            image={image_01}
+            imagePosition='left'
+            textKey='landing.intro.easeOfUse'
+            responsive
+        />
+        <Block
+            style='dark'
+            image={image_02}
+            imagePosition='right'
+            textKey='landing.intro.computingPower'
+            responsive
+        />
+        <Block
+            style='light'
+            image={image_gee}
+            imagePosition='left'
+            maxImageSize={150}
+            textKey='landing.intro.googleEarthEngine'
+        />
+        <Block
+            style='light'
+            image={image_jupyter}
+            imagePosition='right'
+            maxImageSize={150}
+            textKey='landing.intro.jupyterNotebook'
+        />
+        <Block
+            style='light'
+            image={image_shiny}
+            imagePosition='left'
+            maxImageSize={150}
+            textKey='landing.intro.shiny'
+        />
+        <Block
+            style='light'
+            image={image_rstudio}
+            imagePosition='right'
+            maxImageSize={150}
+            textKey='landing.intro.rstudio'
+        />
+        <Block
+            style='dark'
+            image={image_03}
+            imagePosition='left'
+            textKey='landing.intro.integrations'
+            responsive
+        />
+        <Block
+            style='dark'
+            image={image_04}
+            imagePosition='right'
+            textKey='landing.intro.powerUsers'
+            responsive
+        />
+        <About/>
+        <Partners/>
+    </div>
+
+const About = () =>
+    <div className={[styles.block, styles.light, styles.right].join(' ')}>
+        <div className={styles.img}>
+            <img src={partner_openforis} alt=''/>
+            <img src={partner_nicfi} alt=''/>
         </div>
-        <div className={[styles.block, styles.dark, styles.imageRight, styles.responsive].join(' ')}>
-            <img src={image_02} alt=""/>
-            <div>
-                <div className={styles.title}>COMPUTING POWER</div>
-                <p>
-        Harness high performance cloud-based computing and modern
-        geospatial data infrastructures.
-                </p>
-            </div>
+        <div>
+            <div className={styles.title}>{msg('landing.intro.about.title')}</div>
+            <p>{msg('landing.intro.about.description')}</p>
         </div>
-        <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
-            <img src={image_gee} alt='' width={150}/>
-            <div className={styles.tool}>
-                <div className={styles.title}>GOOGLE EARTH ENGINE</div>
-                <p>
-        Get access to Earth Engine's multi-petabyte catalog of satellite
-        imagery and use their planetary-scale analysis capabilities. All
-        without writing a single line of code. Just connect your Google
-        account to SEPAL.
-                </p>
-            </div>
+    </div>
+
+const Partners = () =>
+    <div className={[styles.block, styles.light].join(' ')}>
+        <div className={styles.title}>{msg('landing.intro.partners.title')}</div>
+        <div className={[styles.img, styles.partner].join(' ')}>
+            <img src={partner_ec} alt=''/>
+            <img src={partner_esa} alt=''/>
+            <img src={partner_eth} alt=''/>
+            <img src={partner_formin} alt=''/>
+            <img src={partner_germany} alt=''/>
+            <img src={partner_gfoi} alt=''/>
+            <img src={partner_google} alt=''/>
+            <img src={partner_jaxa} alt=''/>
+            <img src={partner_jica} alt=''/>
+            <img src={partner_kfw} alt=''/>
+            <img src={partner_nasa} alt=''/>
+            <img src={partner_sc} alt=''/>
+            <img src={partner_servir} alt=''/>
+            <img src={partner_sig} alt=''/>
+            <img src={partner_wageningen} alt=''/>
         </div>
-        <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
-            <img src={image_jupyter} alt='' width={150}/>
-            <div className={styles.tool}>
-                <div className={styles.title}>JUPYTER NOTEBOOK</div>
-                <p>
-        Run any of the geospatial processing notebooks in SEPAL's
-        catalogue, or develop your own. The hosted Jupyter server
-        comes with Python 3, R, and JavaScript kernels.
-                </p>
-            </div>
-        </div>
-        <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
-            <img src={image_shiny} alt='' width={150}/>
-            <div className={styles.tool}>
-                <div className={styles.title}>SHINY SERVER</div>
-                <p>
-        Perform stratified area estimation, time-series analysis
-        with BFAST, and other geospatial processing through the R Shiny
-        apps hosted in SEPAL.
-                </p>
-            </div>
-        </div>
-        <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
-            <img src={image_rstudio} alt='' width={150}/>
-            <div className={styles.tool}>
-                <div className={styles.title}>RSTUDIO SERVER</div>
-                <p>
-        Develop your R scripts with RStudio, directly inside SEPAL. Use
-        any of the many useful R packages already installed, and install
-        your own when you need to.
-                </p>
-            </div>
-        </div>
-        <div className={[styles.block, styles.dark, styles.imageLeft, styles.responsive].join(' ')}>
-            <img src={image_03} alt=''/>
-            <div className={styles.tool}>
-                <div className={styles.title}>INTEGRATIONS</div>
-                <p>
-        SEPAL doesn't want to reinvent the wheel. We rather use and integrate with
-        existing solutions, such as Open Foris Collect Earth Online, for visual
-        interpretation of satellite imagery.
-                </p>
-            </div>
-        </div>
-        <div className={[styles.block, styles.dark, styles.imageRight, styles.responsive].join(' ')}>
-            <img src={image_04} alt=''/>
-            <div>
-                <div className={styles.title}>POWER USERS</div>
-                <p>
-        Get access to dedicated Linux instances, with up to 128 CPU cores, 2TB of RAM
-        and a host of development and geospatial tools installed.
-        Access it directly from within the browser, or through an SSH client.
-        Transfer files to and from the instance with rsync, scp, or your favorite
-        FTP client.
-                </p>
-            </div>
-        </div>
-        <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
-            <div className={styles.img}>
-                <img src={partner_openforis} alt=''/>
-                <img src={partner_nicfi} alt=''/>
-            </div>
-            <div>
-                <div className={styles.title}>ABOUT</div>
-                <p>SEPAL is an opensource project by the Open Foris team in Forestry Department of the United Nations Food and Agriculture Organization (FAO), funded by the Government of Norway.</p>
-            </div>
-        </div>
-        <div className={[styles.block, styles.light].join(' ')}>
-            <div className={styles.title}>PARTNERS</div>
-            <div className={[styles.img, styles.partner].join(' ')}>
-                <img src={partner_ec} alt=''/>
-                <img src={partner_esa} alt=''/>
-                <img src={partner_eth} alt=''/>
-                <img src={partner_formin} alt=''/>
-                <img src={partner_germany} alt=''/>
-                <img src={partner_gfoi} alt=''/>
-                <img src={partner_google} alt=''/>
-                <img src={partner_jaxa} alt=''/>
-                <img src={partner_jica} alt=''/>
-                <img src={partner_kfw} alt=''/>
-                <img src={partner_nasa} alt=''/>
-                <img src={partner_sc} alt=''/>
-                <img src={partner_servir} alt=''/>
-                <img src={partner_sig} alt=''/>
-                <img src={partner_wageningen} alt=''/>
-            </div>
-        </div>
-        <div className={styles.footer}>
-            <Button
-                chromeless
-                look='transparent'
-                shape='pill'
-                size='x-large'
-                linkUrl='http://www.openforis.org'
-                linkTarget='openforis'
-                label='Openforis'>
-            </Button>
-            <Button
-                chromeless
-                look='transparent'
-                shape='pill'
-                size='x-large'
-                linkUrl='https://github.com/openforis/sepal'
-                linkTarget='github-project'
-                label='GitHub'>
-            </Button>
-            <Button
-                chromeless
-                look='transparent'
-                shape='pill'
-                size='x-large'
-                linkUrl='/privacy-policy'
-                linkTarget='privacy-policy'
-                label={msg('landing.privacyPolicy')}>
-            </Button>
-        </div>
+    </div>
+
+const Footer = () =>
+    <div className={styles.footer}>
+        <Button
+            chromeless
+            look='transparent'
+            shape='pill'
+            size='x-large'
+            linkUrl='http://www.openforis.org'
+            linkTarget='openforis'
+            label='Openforis'>
+        </Button>
+        <Button
+            chromeless
+            look='transparent'
+            shape='pill'
+            size='x-large'
+            linkUrl='https://github.com/openforis/sepal'
+            linkTarget='github-project'
+            label='GitHub'>
+        </Button>
+        <Button
+            chromeless
+            look='transparent'
+            shape='pill'
+            size='x-large'
+            linkUrl='/privacy-policy'
+            linkTarget='privacy-policy'
+            label={msg('landing.privacyPolicy')}>
+        </Button>
     </div>
 
 const scrollToInfo = () =>

@@ -52,7 +52,7 @@
     padding-top: 0;
 }
 
-.block.imageLeft {
+.block.left {
     display: grid;
     grid-gap: 2rem 5%;
     grid-template-columns: auto 1fr;
@@ -62,11 +62,11 @@
         'image text';
 }
 
-.block.imageLeft.responsive {
+.block.left.responsive {
     grid-template-columns: 1.5fr 1fr;
 }
 
-.block.imageRight {
+.block.right {
     display: grid;
     grid-gap: 2rem 5%;
     grid-template-columns: 1fr auto;
@@ -76,7 +76,7 @@
         'text image';
 }
 
-.block.imageRight.responsive {
+.block.right.responsive {
     grid-template-columns: 1fr 1.5fr;
 }
 
@@ -130,7 +130,7 @@
     line-height: 1.8rem;
 }
 
-.block.imageRight .tool {
+.block.right .tool {
     justify-self: right;
     text-align: right;
 }

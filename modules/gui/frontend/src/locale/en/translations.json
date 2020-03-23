@@ -183,6 +183,47 @@
   "landing": {
       "signup": "Signup",
       "launch": "Launch",
+    "intro": {
+        "easeOfUse": {
+            "title": "Ease of use",
+            "description": "Allows users to query and process satellite data quickly and efficiently, tailor their products for local needs, and produce sophisticated and relevant geospatial analyses quickly."
+        },
+        "computingPower": {
+            "title": "Computing power",
+            "description": "Harness high performance cloud-based computing and modern geospatial data infrastructures."
+        },
+        "googleEarthEngine": {
+            "title": "Google Earth Engine",
+            "description": "Get access to Earth Engine's multi-petabyte catalog of satellite imagery and use their planetary-scale analysis capabilities. All without writing a single line of code. Just connect your Google account to SEPAL."
+        },
+        "jupyterNotebook": {
+            "title": "Jupyter Notebook",
+            "description": "Run any of the geospatial processing notebooks in SEPAL's catalogue, or develop your own. The hosted Jupyter server comes with Python 3, R, and JavaScript kernels."
+        },
+        "shiny": {
+            "title": "Shiny Server",
+            "description": "Perform stratified area estimation, time-series analysis with BFAST, and other geospatial processing through the R Shiny apps hosted in SEPAL."
+        },
+        "rstudio": {
+            "title": "RStudio Server",
+            "description": "Develop your R scripts with RStudio, directly inside SEPAL. Use any of the many useful R packages already installed, and install your own when you need to."
+        },
+        "integrations": {
+            "title": "Integrations",
+            "description": "SEPAL doesn't want to reinvent the wheel. We rather use and integrate with existing solutions, such as Open Foris Collect Earth Online, for visual interpretation of satellite imagery."
+        },
+        "powerUsers": {
+            "title": "Power Users",
+            "description": "Get access to dedicated Linux instances, with up to 128 CPU cores, 2TB of RAM and a host of development and geospatial tools installed. Access it directly from within the browser, or through an SSH client. Transfer files to and from the instance with rsync, scp, or your favorite FTP client."
+        },
+        "about": {
+            "title": "About",
+            "description": "SEPAL is an opensource project by the Open Foris team in Forestry Department of the United Nations Food and Agriculture Organization (FAO), funded by the Government of Norway."
+        },
+        "partners": {
+            "title": "Partners"
+        }
+    },
     "features": {
       "apps": {
         "description": "Extend the features in Sepal with custom data processing applications",
