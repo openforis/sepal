@@ -5,10 +5,10 @@ import {msg} from 'translate'
 import React from 'react'
 import Tagline from './tagline'
 import Title from './title'
-import image_01 from './intro/01.png'
-import image_02 from './intro/02.png'
-import image_03 from './intro/03.png'
-import image_04 from './intro/04.png'
+import image_01 from './intro/bhutan.jpg'
+import image_02 from './intro/senegal.jpg'
+import image_03 from './intro/ethiopia.jpg'
+import image_04 from './intro/terminal.png'
 import image_gee from './intro/gee.png'
 import image_jupyter from './intro/jupyter.png'
 import image_rstudio from './intro/rstudio.png'
@@ -61,75 +61,90 @@ const Intro = ({onLaunch}) =>
                     </ButtonGroup>
                 </div>
                 <div className={[styles.block, styles.dark, styles.imageLeft, styles.responsive].join(' ')}>
-                    <div>EASE OF USE</div>
                     <img src={image_01} alt=""/>
-                    <p>Allows users to query and process satellite data quickly and efficiently, tailor their products for local needs, and produce sophisticated and relevant geospatial analyses quickly.</p>
+                    <div>
+                        <div class={styles.title}>EASE OF USE</div>
+                        <p>Allows users to query and process satellite data quickly and efficiently, tailor their products for local needs, and produce sophisticated and relevant geospatial analyses quickly.</p>
+                    </div>
                 </div>
                 <div className={[styles.block, styles.dark, styles.imageRight, styles.responsive].join(' ')}>
-                    <div>COMPUTING POWER</div>
                     <img src={image_02} alt=""/>
-                    <p>Harnessing high performance cloud-based computing and modern geospatial data infrastructures.</p>
+                    <div>
+                        <div class={styles.title}>COMPUTING POWER</div>
+                        <p>Harnessing high performance cloud-based computing and modern geospatial data infrastructures.</p>
+                    </div>
                 </div>
                 <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
-                    <div>GOOGLE EARTH ENGINE</div>
                     <img src={image_gee} alt='' width={150}/>
-                    <p>
-                        Produce global scale products with EE without writing scripts
-                        Connect your Google account, and export to your EE asset folder
-                        or to your Sepal workspace, for further processing.
-                    </p>
+                    <div>
+                        <div class={styles.title}>GOOGLE EARTH ENGINE</div>
+                        <p>
+                            Produce global scale products with EE without writing scripts
+                            Connect your Google account, and export to your EE asset folder
+                            or to your Sepal workspace, for further processing.
+                        </p>
+                    </div>
                 </div>
                 <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
-                    <div>RSTUDIO SERVER</div>
                     <img src={image_rstudio} alt='' width={150}/>
-                    <p>
-                        Sepal includes an RStudio Server installation.
-                        This makes it easy to develop and run your custom R scripts.
-                        Connect your Google account, and export to your EE asset folder
-                        or to your Sepal workspace, for further processing.
-                    </p>
+                    <div>
+                        <div class={styles.title}>RSTUDIO SERVER</div>
+                        <p>
+                            Sepal includes an RStudio Server installation.
+                            This makes it easy to develop and run your custom R scripts.
+                            Connect your Google account, and export to your EE asset folder
+                            or to your Sepal workspace, for further processing.
+                        </p>
+                    </div>
                 </div>
                 <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
-                    <div>JUPYTER NOTEBOOK</div>
                     <img src={image_jupyter} alt='' width={150}/>
-                    <p>
-                        Produce global scale products with EE without writing scripts.
-                        Connect your Google account, and export to your EE asset folder
-                        or to your Sepal workspace, for further processing.
-                    </p>
+                    <div>
+                        <div class={styles.title}>JUPYTER NOTEBOOK</div>
+                        <p>
+                            Produce global scale products with EE without writing scripts.
+                            Connect your Google account, and export to your EE asset folder
+                            or to your Sepal workspace, for further processing.
+                        </p>
+                    </div>
                 </div>
                 <div className={[styles.block, styles.light, styles.imageRight].join(' ')}>
-                    <div>SHINY SERVER</div>
                     <img src={image_shiny} alt='' width={150}/>
-                    <p>
-                        Sepal includes an RStudio Server installation.
-                        This makes it easy to develop and run your custom R scripts.
-                        Connect your Google account, and export to your EE asset folder
-                        or to your Sepal workspace, for further processing.
-                    </p>
+                    <div>
+                        <div class={styles.title}>SHINY SERVER</div>
+                        <p>
+                            Sepal includes an RStudio Server installation.
+                            This makes it easy to develop and run your custom R scripts.
+                            Connect your Google account, and export to your EE asset folder
+                            or to your Sepal workspace, for further processing.
+                        </p>
+                    </div>
                 </div>
                 <div className={[styles.block, styles.dark, styles.imageLeft, styles.responsive].join(' ')}>
-                    <div>INTEGRATIONS</div>
                     <img src={image_03} alt=''/>
-                    <p>
-                        Sepal integrates with other system, including Collect Earth Online,
-                        for visual interpretation of images.
-                    </p>
+                    <div>
+                        <div class={styles.title}>INTEGRATIONS</div>
+                        <p>
+                            Sepal integrates with other system, including Collect Earth Online,
+                            for visual interpretation of images.
+                        </p>
+                    </div>
                 </div>
                 <div className={[styles.block, styles.dark, styles.imageRight, styles.responsive].join(' ')}>
-                    <div>POWER USERS</div>
                     <img src={image_04} alt=''/>
-                    <p>
-                        Get access to a full Linux terminal,
-                        with a host of progrmming languages and geospatial tools installed.
-                        Access the terminal over SSH, transfer files using rsync,
-                        scp, or connect an FPT client.
-                        Start sessions on different instance types,
-                        ranging up to 128 core, 2TB instances.
-                    </p>
+                    <div>
+                        <div class={styles.title}>POWER USERS</div>
+                        <p>
+                            Get access to a full Linux terminal,
+                            with a host of progrmming languages and geospatial tools installed.
+                            Access the terminal over SSH, transfer files using rsync,
+                            scp, or connect an FPT client.
+                            Start sessions on different instance types,
+                            ranging up to 128 core, 2TB instances.
+                        </p>
+                    </div>
                 </div>
                 <div className={[styles.block, styles.light, styles.imageLeft].join(' ')}>
-                    <div>PARTNERS</div>
                     <div className={styles.img}>
                         <img src={partner_ec} alt=''/>
                         <img src={partner_esa} alt=''/>
@@ -148,6 +163,7 @@ const Intro = ({onLaunch}) =>
                         <img src={partner_sig} alt=''/>
                         <img src={partner_wageningen} alt=''/>
                     </div>
+                    <div class={styles.title}>PARTNERS</div>
                 </div>
                 <div className={styles.footer}>
                     <Button
