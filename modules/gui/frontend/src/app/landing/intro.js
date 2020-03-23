@@ -39,7 +39,6 @@ const Intro = ({onLaunch}) =>
         <Scrollable>
             <div className={styles.intro}>
                 <div className={styles.main}>
-                    {/* <div className={styles.main} style={{height: '100vh'}}> */}
                     <Title className={styles.title}/>
                     <Tagline className={styles.tagline}/>
                     <ButtonGroup layout='horizontal-nowrap-loose'>
