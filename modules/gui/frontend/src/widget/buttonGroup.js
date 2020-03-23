@@ -24,6 +24,7 @@ ButtonGroup.propTypes = {
     layout: PropTypes.oneOf([
         'horizontal-wrap',
         'horizontal-wrap-tight',
+        'horizontal-wrap-loose',
         'horizontal-wrap-spaced',
         'horizontal-wrap-fill', // it adds more vertical space too
         'horizontal-wrap-right',

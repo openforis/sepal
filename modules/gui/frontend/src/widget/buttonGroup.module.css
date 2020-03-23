@@ -25,6 +25,10 @@
     --horizontal-spacing: 0rem;
 }
 
+.buttonGroup.horizontal.loose {
+    --horizontal-spacing: 1rem;
+}
+
 .buttonGroup.horizontal.spaced {
     justify-content: space-between;
 }
