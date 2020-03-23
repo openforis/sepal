@@ -3,7 +3,6 @@
     grid-template-columns: 1fr;
     grid-template-rows: auto auto 1fr auto;
     grid-gap: 2rem;
-    /* padding: 12rem 5% 14rem; */
     padding: 12rem 5% 2rem;
     height: 100vh;
 }
@@ -26,8 +25,6 @@
         opacity: .4;
     }
 }
-
-
 
 .button {
     padding: 0.75rem 3rem;
