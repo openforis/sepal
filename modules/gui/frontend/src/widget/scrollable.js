@@ -82,10 +82,11 @@ class _Scrollable extends Component {
         )
     }
 
-    renderScrollable(scrollableContainerHeight) {
+    renderScrollable(containerHeight) {
         const {className, direction, children} = this.props
         const {key} = this.state
         const scrollable = {
+            containerHeight,
             getOffset: (direction = 'y') => this.getOffset(direction),
             getContainerHeight: this.getContainerHeight.bind(this),
             getClientHeight: this.getClientHeight.bind(this),
@@ -113,7 +114,7 @@ class _Scrollable extends Component {
                 className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
                 <ScrollableContext.Provider value={scrollable}>
                     <Keybinding keymap={keymap}>
-                        {_.isFunction(children) ? children(scrollableContainerHeight, scrollable) : children}
+                        {_.isFunction(children) ? children(scrollable) : children}
                     </Keybinding>
                 </ScrollableContext.Provider>
             </div>

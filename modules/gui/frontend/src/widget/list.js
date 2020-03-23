@@ -24,10 +24,9 @@ class _ScrollableList extends React.Component {
                     <Scrollable
                         className={styles.options}
                         direction='xy'>
-                        {(scrollableContainerHeight, scrollable) =>
+                        {scrollable =>
                             <List
                                 {...props}
-                                scrollableContainerHeight={scrollableContainerHeight}
                                 scrollable={scrollable}
                             />}
                     </Scrollable>
@@ -86,7 +85,7 @@ class List extends React.Component {
     }
 
     render() {
-        const {scrollableContainerHeight, onCancel, keyboard} = this.props
+        const {scrollable: {containerHeight}, onCancel, keyboard} = this.props
         const keymap = {
             Escape: onCancel ? onCancel : null,
             Enter: () => this.selectHighlighted(),
@@ -99,18 +98,18 @@ class List extends React.Component {
         }
         return (
             <Keybinding keymap={keymap} disabled={keyboard === false}>
-                {this.renderList(scrollableContainerHeight)}
+                {this.renderList(containerHeight)}
             </Keybinding>
         )
     }
 
-    renderList(scrollableContainerHeight = 0) {
+    renderList(containerHeight = 0) {
         const {options, overScroll} = this.props
         return (
             <ul
                 ref={this.list}
                 style={{
-                    '--scrollable-container-height': overScroll ? scrollableContainerHeight : 0
+                    '--scrollable-container-height': overScroll ? containerHeight : 0
                 }}
                 onMouseLeave={() => autoCenter$.next(true)}
             >
