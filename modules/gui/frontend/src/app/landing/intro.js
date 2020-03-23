@@ -142,8 +142,8 @@ const Intro = ({onLaunch}) =>
                     <div>
                         <div className={styles.title}>POWER USERS</div>
                         <p>
-                            Get access to dedicated Linux instances, with up to 128 CPU cores/2 TB RAM,
-                            and with a host of development and geospatial tools installed.
+                            Get access to dedicated Linux instances, with up to 128 CPU cores, 2TB of RAM
+                            and a host of development and geospatial tools installed.
                             Access it directly from within the browser, or an SSH client.
                             Transfer files to and from the instance with rsync, scp, or your favorite
                             FTP client.

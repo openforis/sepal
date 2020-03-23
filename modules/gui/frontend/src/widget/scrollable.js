@@ -2,6 +2,7 @@ import {EMPTY, Subject, animationFrameScheduler, fromEvent, interval} from 'rxjs
 import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs/operators'
 import {v4 as uuid} from 'uuid'
+import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
@@ -102,7 +103,9 @@ class _Scrollable extends Component {
                 ref={this.ref}
                 className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
                 <ScrollableContext.Provider value={scrollable}>
-                    {_.isFunction(children) ? children(scrollableContainerHeight, scrollable) : children}
+                    <Keybinding keymap={{'Space': scrollable.scrollDown}}>
+                        {_.isFunction(children) ? children(scrollableContainerHeight, scrollable) : children}
+                    </Keybinding>
                 </ScrollableContext.Provider>
             </div>
         )
