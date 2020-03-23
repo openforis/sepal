@@ -104,7 +104,7 @@ class _Scrollable extends Component {
                 ref={this.ref}
                 className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
                 <ScrollableContext.Provider value={scrollable}>
-                    <Keybinding keymap={{' ': () => scrollable.scrollDown()}}>
+                    <Keybinding keymap={{' ': scrollable.scrollDown}}>
                         {_.isFunction(children) ? children(scrollableContainerHeight, scrollable) : children}
                     </Keybinding>
                 </ScrollableContext.Provider>
