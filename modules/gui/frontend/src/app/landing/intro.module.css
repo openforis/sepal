@@ -130,7 +130,7 @@
     line-height: 1.8rem;
 }
 
-.block.right .tool {
+.right.tool > div {
     justify-self: right;
     text-align: right;
 }

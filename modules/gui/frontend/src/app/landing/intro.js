@@ -113,6 +113,7 @@ const Info = () =>
             imagePosition='left'
             maxImageSize={150}
             textKey='landing.intro.googleEarthEngine'
+            classNames={[styles.tool]}
         />
         <Block
             theme='light'
@@ -120,6 +121,7 @@ const Info = () =>
             imagePosition='right'
             maxImageSize={150}
             textKey='landing.intro.jupyterNotebook'
+            classNames={[styles.tool]}
         />
         <Block
             theme='light'
@@ -127,6 +129,7 @@ const Info = () =>
             imagePosition='left'
             maxImageSize={150}
             textKey='landing.intro.shiny'
+            classNames={[styles.tool]}
         />
         <Block
             theme='light'
@@ -134,6 +137,7 @@ const Info = () =>
             imagePosition='right'
             maxImageSize={150}
             textKey='landing.intro.rstudio'
+            classNames={[styles.tool]}
         />
         <Block
             theme='dark'
