@@ -1,9 +1,10 @@
 .main {
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
+    grid-template-rows: auto auto auto 1fr;
     grid-gap: 2rem;
-    margin: 12rem 5% 14rem;
+    padding: 12rem 5% 14rem;
+    height: 100vh;
 }
 
 .button {
