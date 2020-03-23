@@ -41,10 +41,11 @@ const Intro = ({onLaunch}) =>
                 <div className={styles.main}>
                     <Title className={styles.title}/>
                     <Tagline className={styles.tagline}/>
-                    <ButtonGroup layout='horizontal-nowrap'>
+                    <ButtonGroup layout='horizontal-nowrap-loose'>
                         <Button
                             look='default'
                             size='x-large'
+                            air='more'
                             label={msg('landing.signup')}
                             tabIndex={1}
                             linkUrl={signupUrl}
@@ -55,6 +56,7 @@ const Intro = ({onLaunch}) =>
                             type='submit'
                             look='apply'
                             size='x-large'
+                            air='more'
                             label={msg('landing.launch')}
                             tabIndex={2}
                             onClick={onLaunch}
