@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
   packer \
   procps \
   python3 \
+  python3-gdal \
   python3-pip \
   gdal-bin \
   screen \
