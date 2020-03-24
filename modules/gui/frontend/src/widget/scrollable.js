@@ -83,7 +83,7 @@ class _Scrollable extends Component {
     }
 
     renderScrollable(containerHeight) {
-        const {className, direction, disableKeybindings, children} = this.props
+        const {className, direction, children} = this.props
         const {key} = this.state
         const scrollable = {
             containerHeight,
@@ -113,7 +113,7 @@ class _Scrollable extends Component {
                 ref={this.ref}
                 className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
                 <ScrollableContext.Provider value={scrollable}>
-                    <Keybinding keymap={keymap} disabled={disableKeybindings}>
+                    <Keybinding keymap={keymap}>
                         {_.isFunction(children) ? children(scrollable) : children}
                     </Keybinding>
                 </ScrollableContext.Provider>
@@ -273,7 +273,6 @@ Scrollable.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     direction: PropTypes.oneOf(['x', 'y', 'xy']),
-    disableKeybindings: PropTypes.any,
     onScroll: PropTypes.func
 }
 
