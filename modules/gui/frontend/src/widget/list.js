@@ -23,7 +23,8 @@ class _ScrollableList extends React.Component {
                 <ScrollableContainer className={className}>
                     <Scrollable
                         className={styles.options}
-                        direction='xy'>
+                        direction='xy'
+                        disableKeybindings>
                         {scrollable =>
                             <List
                                 {...props}
