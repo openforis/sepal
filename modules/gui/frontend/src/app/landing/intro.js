@@ -36,12 +36,10 @@ const signupUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSci4hopXNtMOQKJzsUyb
 
 const Intro = ({onLaunch}) =>
     <ScrollableContainer>
-        <Scrollable>
-            <div className={styles.intro}>
-                <Main onLaunch={onLaunch}/>
-                <Info/>
-                <Footer/>
-            </div>
+        <Scrollable className={styles.intro}>
+            <Main onLaunch={onLaunch}/>
+            <Info/>
+            <Footer/>
         </Scrollable>
     </ScrollableContainer>
 
@@ -49,7 +47,7 @@ const Main = ({onLaunch}) =>
     <div id='main' className={styles.main}>
         <Title className={styles.title}/>
         <Tagline className={styles.tagline}/>
-        <ButtonGroup layout='horizontal-nowrap-loose'>
+        <ButtonGroup layout='horizontal-nowrap' spacing='loose'>
             <Button
                 look='default'
                 size='x-large'
@@ -71,15 +69,16 @@ const Main = ({onLaunch}) =>
                 additionalClassName={styles.button}
             />
         </ButtonGroup>
-        <div className={styles.nextpage}>
+        <ButtonGroup layout='horizontal-nowrap' alignment='center'>
             <Button
                 look='transparent'
                 shape='circle'
                 size='xx-large'
                 icon='chevron-down'
                 onClick={scrollToInfo}
+                additionalClassName={styles.pulse}
             />
-        </div>
+        </ButtonGroup>
     </div>
 
 const Block = ({theme, image, imagePosition, maxImageSize, textKey, responsive, classNames = []}) =>
@@ -192,7 +191,10 @@ const Partners = () =>
     </div>
 
 const Footer = () =>
-    <div className={styles.footer}>
+    <ButtonGroup
+        className={styles.footer}
+        layout='horizontal-nowrap'
+        alignment='spaced'>
         <Button
             chromeless
             look='transparent'
@@ -220,7 +222,7 @@ const Footer = () =>
             linkTarget='privacy-policy'
             label={msg('landing.privacyPolicy')}>
         </Button>
-    </div>
+    </ButtonGroup>
 
 const scrollToInfo = () =>
     document.getElementById('info').scrollIntoView({

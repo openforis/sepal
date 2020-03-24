@@ -14,76 +14,62 @@
     margin: calc(var(--vertical-spacing) / 2) calc(var(--horizontal-spacing) / 2);
 }
 
-/* layout */
-
-.horizontal {
+.buttonGroup.horizontal {
+    --horizontal-spacing: .5rem;
     --vertical-spacing: .5rem;
     flex-direction: row;
     align-items: center;
 }
 
-.horizontal.nowrap {
+.buttonGroup.horizontal.tight {
+    --horizontal-spacing: 0rem;
+}
+
+.buttonGroup.horizontal.loose {
+    --horizontal-spacing: 1rem;
+}
+
+.buttonGroup.horizontal.spaced {
+    justify-content: space-between;
+}
+
+.buttonGroup.horizontal.centered {
+    justify-content: center;
+}
+
+.buttonGroup.horizontal.right {
+    justify-content: flex-end;
+}
+
+.buttonGroup.horizontal.nowrap {
     flex-wrap: nowrap;
 }
 
-.horizontal.wrap {
+.buttonGroup.horizontal.wrap {
     flex-wrap: wrap;
 }
 
-.vertical {
+.buttonGroup.horizontal.fill {
+    --horizontal-spacing: 1rem;
+    --vertical-spacing: 1rem;
+    flex-grow: 1;
+}
+
+.buttonGroup.horizontal.fill > * {
+    flex-grow: 1;
+}
+
+.buttonGroup.vertical {
     --horizontal-spacing: 0rem;
     --vertical-spacing: 1rem;
     flex-direction: column;
     flex-wrap: nowrap;
 }
 
-.vertical > * {
+.buttonGroup.vertical > * {
     width: 100%;
 }
 
-/* alignment */
-
-.horizontal.alignment-left {
-    justify-content: flex-start;
-}
-
-.horizontal.alignment-center {
-    justify-content: center;
-}
-
-.horizontal.alignment-right {
-    justify-content: flex-end;
-}
-
-.horizontal.alignment-spaced {
-    flex-grow: 1;
-    justify-content: space-between;
-}
-
-.horizontal.alignment-fill {
-    --horizontal-spacing: 1rem;
-    --vertical-spacing: 1rem;
-    flex-grow: 1;
-}
-
-.horizontal.alignment-fill > * {
-    flex-grow: 1;
-}
-
-/* spacing */
-
-.horizontal.spacing-normal {
-    --horizontal-spacing: .5rem;
-}
-
-.horizontal.spacing-tight {
-    --horizontal-spacing: 0rem;
-}
-
-.horizontal.spacing-loose {
-    --horizontal-spacing: 1rem;
-}
-
-.vertical.spacing-tight {
+.buttonGroup.vertical.tight {
     --vertical-spacing: .5rem;
 }

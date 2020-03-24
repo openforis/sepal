@@ -4,7 +4,7 @@ import React from 'react'
 
 export const FormButtons = (
     {
-        chromeless, look, shape, air, className, input, label, multiple, options, tooltip, tooltipPlacement, layout, disabled, onChange
+        chromeless, look, shape, air, className, input, label, multiple, options, tooltip, tooltipPlacement, layout, alignment, spacing, disabled, onChange
     }) =>
     <Buttons
         chromeless={chromeless}
@@ -23,10 +23,13 @@ export const FormButtons = (
         tooltip={tooltip}
         tooltipPlacement={tooltipPlacement}
         layout={layout}
+        alignment={alignment}
+        spacing={spacing}
         disabled={disabled}/>
 
 FormButtons.propTypes = {
     air: PropTypes.any,
+    alignment: PropTypes.string,
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,

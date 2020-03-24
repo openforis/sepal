@@ -7,10 +7,7 @@
     height: 100vh;
 }
 
-.nextpage {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.pulse:not(:hover) {
     animation: pulse 2000ms ease-out infinite;
 }
 

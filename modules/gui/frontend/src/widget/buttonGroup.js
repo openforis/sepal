@@ -5,14 +5,16 @@ import styles from './buttonGroup.module.css'
 const classNames = layout =>
     layout.split('-').map(className => styles[className])
 
-export const ButtonGroup = ({children, layout, className}) =>
+export const ButtonGroup = ({className, layout, alignment, spacing, children}) =>
     <div className={[
         styles.container,
         className
     ].join(' ')}>
         <div className={[
             styles.buttonGroup,
-            ...classNames(layout)
+            ...classNames(layout),
+            styles[`alignment-${alignment}`],
+            styles[`spacing-${spacing}`]
         ].join(' ')}>
             {children}
         </div>
@@ -20,25 +22,14 @@ export const ButtonGroup = ({children, layout, className}) =>
 
 ButtonGroup.propTypes = {
     children: PropTypes.any.isRequired,
+    alignment: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill']),
     className: PropTypes.string,
-    layout: PropTypes.oneOf([
-        'horizontal-wrap',
-        'horizontal-wrap-tight',
-        'horizontal-wrap-loose',
-        'horizontal-wrap-spaced',
-        'horizontal-wrap-fill', // it adds more vertical space too
-        'horizontal-wrap-right',
-        'horizontal-nowrap',
-        'horizontal-nowrap-tight',
-        'horizontal-nowrap-loose',
-        'horizontal-nowrap-spaced',
-        'horizontal-nowrap-fill',
-        'horizontal-nowrap-right',
-        'vertical',
-        'vertical-tight'
-    ])
+    layout: PropTypes.oneOf(['horizontal-wrap', 'horizontal-nowrap', 'vertical']),
+    spacing: PropTypes.oneOf(['normal', 'tight', 'loose'])
 }
 
 ButtonGroup.defaultProps = {
-    layout: 'horizontal-wrap'
+    alignment: 'left',
+    layout: 'horizontal-wrap',
+    spacing: 'normal'
 }

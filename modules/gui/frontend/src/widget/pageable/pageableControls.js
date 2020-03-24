@@ -6,7 +6,7 @@ import React from 'react'
 
 export const PageableControls = props => {
     const renderDefaultControls = pageable =>
-        <ButtonGroup layout='horizontal-nowrap-tight'>
+        <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
             <Button
                 chromeless
                 look='transparent'

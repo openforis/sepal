@@ -361,7 +361,8 @@ class Users extends React.Component {
         return (
             <Buttons
                 chromeless
-                layout='horizontal-nowrap-tight'
+                layout='horizontal-nowrap'
+                spacing='tight'
                 options={options}
                 selected={statusFilter}
                 onChange={statusFilter => this.setState({statusFilter})}
