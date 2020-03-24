@@ -4,7 +4,7 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current \
     SDKMAN_DIR=/usr/local/lib/sdkman \
     GDAL_DATA=/usr/share/gdal \
-    VERSION=2020-02-20
+    VERSION=2020-03-18
 # VERSION used to force complete rebuild of image
 
 ADD script/init_apt.sh /script/
@@ -18,9 +18,6 @@ RUN chmod u+x /script/init_apt_packages.sh && sync && /script/init_apt_packages.
 
 ADD script/init_java.sh /script/
 RUN chmod u+x /script/init_java.sh && sync && /script/init_java.sh
-
-ADD script/init_additional_r_packages.sh /script/
-RUN chmod u+x /script/init_additional_r_packages.sh && sync && /script/init_additional_r_packages.sh
 
 ADD config /config
 ADD config/OFGTMethod /usr/local/share/OFGTMethod
@@ -49,6 +46,9 @@ RUN chmod u+x /script/init_node.sh && sync && /script/init_node.sh
 
 ADD script/init_python_packages.sh /script/
 RUN chmod u+x /script/init_python_packages.sh && sync && /script/init_python_packages.sh
+
+ADD script/init_additional_r_packages.sh /script/
+RUN chmod u+x /script/init_additional_r_packages.sh && sync && /script/init_additional_r_packages.sh
 
 ADD script/init_post.sh /script/
 RUN chmod u+x /script/init_post.sh && sync && /script/init_post.sh

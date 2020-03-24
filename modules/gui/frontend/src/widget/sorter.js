@@ -15,14 +15,13 @@ export class Sorter extends React.Component {
     renderSortButtons() {
         const {sortOptions} = this.props
         return (
-            <ButtonGroup layout='horizontal-nowrap-tight'>
+            <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
                 {sortOptions.map(({column, label}) => this.renderSortButton(column, label))}
             </ButtonGroup>
         )
     }
 
     renderSortButton(column, label) {
-        const {sortingOrder} = this.state
         return (
             <Button
                 chromeless
@@ -35,20 +34,6 @@ export class Sorter extends React.Component {
                 icon={this.icon(column)}
                 iconPlacement='right'
             />
-            // <Button
-            //     chromeless
-            //     look='transparent'
-            //     shape='pill'
-            //     size='large'
-            //     additionalClassName='itemType'
-            //     onClick={() => this.setSorting(column)}>
-            //     <span className={[styles.sortable, sortingOrder === column ? styles.sorted : null].join(' ')}>
-            //         {label}
-            //     </span>
-            //     <span className={styles.sortingHandle}>
-            //         {this.renderSortingHandle(column)}
-            //     </span>
-            // </Button>
         )
     }
 

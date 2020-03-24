@@ -11,6 +11,8 @@
     --xx-large-font-size: 1.4rem;
     --min-size-factor: 2.2;
     --size: calc(var(--air-factor) * var(--font-size));
+    --horizontal-padding-factor: .8;
+    --vertical-padding-factor: .5;
     flex-shrink: 0;
     position: relative;
     cursor: pointer;
@@ -29,58 +31,58 @@
 
 /* alignment */
 
-.button.alignment-left {
+.alignment-left {
     justify-content: flex-start;
 }
 
-.button.alignment-center {
+.alignment-center {
     justify-content: center;
 }
 
-.button.alignment-right {
+.alignment-right {
     justify-content: flex-end;
 }
 
 /* size */
 
-.button.size-small {
+.size-small {
     --font-size: var(--small-font-size);
 }
 
-.button.size-normal {
+.size-normal {
     --font-size: var(--normal-font-size);
 }
 
-.button.size-large {
+.size-large {
     --font-size: var(--large-font-size);
 }
 
-.button.size-x-large {
+.size-x-large {
     --font-size: var(--x-large-font-size);
 }
 
-.button.size-xx-large {
+.size-xx-large {
     --font-size: var(--xx-large-font-size);
 }
 
 /* shape */
 
-.button.shape-rectangle {
+.shape-rectangle {
     border-radius: var(--button-border-radius);
-    padding: calc(var(--size) * .5) calc(var(--size) * .8);
+    padding: calc(var(--size) * var(--vertical-padding-factor)) calc(var(--size) * var(--horizontal-padding-factor));
 }
 
-.button.shape-pill {
+.shape-pill {
     border-radius: 500px;
     min-width: 3.5rem;
-    padding: calc(var(--size) * .5) calc(var(--size) * .8);
+    padding: calc(var(--size) * var(--vertical-padding-factor)) calc(var(--size) * var(--horizontal-padding-factor));
 }
 
-.button.shape-circle {
+.shape-circle {
     border-radius: 50%;
 }
 
-.button.shape-none {
+.shape-none {
     --air-factor: 0;
     padding: 0;
     border: none !important;
@@ -89,31 +91,31 @@
 
 /* width */
 
-.button.width-fit {
+.width-fit {
     width: fit-content;
 }
 
-.button.width-fill {
+.width-fill {
     width: 100%;
 }
 
 /* air */
 
-.button.air-normal {
+.air-normal {
     --air-factor: 1;
 }
 
-.button.air-more {
+.air-more {
     /* normal +20% */
     --air-factor: 1.2;
 }
 
-.button.air-less {
+.air-less {
     /* normal -20% */
     --air-factor: .8;
 }
 
-.button.air-none {
+.air-none {
     --air-factor: 0;
 }
 

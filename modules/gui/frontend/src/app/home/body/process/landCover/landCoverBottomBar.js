@@ -1,10 +1,10 @@
-import {compose} from 'compose'
-import PropTypes from 'prop-types'
-import React, {Component} from 'react'
+import {BottomBar} from 'widget/sectionLayout'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
-import {BottomBar} from 'widget/sectionLayout'
+import {compose} from 'compose'
+import PropTypes from 'prop-types'
+import React, {Component} from 'react'
 import styles from './landCoverBottomBar.module.css'
 
 const fields = {

@@ -1,0 +1,15 @@
+.title {
+    font-family: var(--header-font-family);
+    font-size: 3.5rem;
+    font-weight: 300;
+    line-height: 3.5rem;
+    letter-spacing: .3rem;
+    text-transform: uppercase;
+}
+
+.titleUnderline {
+    width: 4rem;
+    height: 1px;
+    margin: 1rem 0 0 0;
+    background-color: var(--primary-text-color);
+}

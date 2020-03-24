@@ -108,7 +108,7 @@ class SetPassword extends React.Component {
                         tabIndex={2}
                         errorMessage={[password2, 'passwordsMatch']}
                     />
-                    <ButtonGroup layout='horizontal-nowrap-right'>
+                    <ButtonGroup layout='horizontal-nowrap' alignment='right'>
                         <Button
                             type='submit'
                             look='apply'

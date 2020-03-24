@@ -2,6 +2,7 @@ import {EMPTY, Subject, animationFrameScheduler, fromEvent, interval} from 'rxjs
 import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged, map, mapTo, scan, switchMap, takeWhile, withLatestFrom} from 'rxjs/operators'
 import {v4 as uuid} from 'uuid'
+import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 import _ from 'lodash'
@@ -59,6 +60,7 @@ Unscrollable.propTypes = {
 const ScrollableContext = React.createContext()
 
 const ANIMATION_SPEED = .2
+const PIXEL_PER_LINE = 45
 
 const lerp = rate =>
     (value, targetValue) => value + (targetValue - value) * rate
@@ -80,10 +82,11 @@ class _Scrollable extends Component {
         )
     }
 
-    renderScrollable(scrollableContainerHeight) {
+    renderScrollable(containerHeight) {
         const {className, direction, children} = this.props
         const {key} = this.state
         const scrollable = {
+            containerHeight,
             getOffset: (direction = 'y') => this.getOffset(direction),
             getContainerHeight: this.getContainerHeight.bind(this),
             getClientHeight: this.getClientHeight.bind(this),
@@ -92,9 +95,17 @@ class _Scrollable extends Component {
             scrollTo: this.scrollTo.bind(this),
             scrollToTop: this.scrollToTop.bind(this),
             scrollToBottom: this.scrollToBottom.bind(this),
+            scrollPage: this.scrollPage.bind(this),
+            scrollLine: this.scrollLine.bind(this),
             reset: this.reset.bind(this),
             centerElement: this.centerElement.bind(this),
             getElement: this.getScrollableElement.bind(this)
+        }
+        const keymap = {
+            ArrowUp: () => scrollable.scrollLine(-1),
+            ArrowDown: () => scrollable.scrollLine(1),
+            'Shift+ ': () => scrollable.scrollPage(-1),
+            ' ': () => scrollable.scrollPage(1)
         }
         return (
             <div
@@ -102,7 +113,9 @@ class _Scrollable extends Component {
                 ref={this.ref}
                 className={[flexy.elastic, styles.scrollable, styles[direction], className].join(' ')}>
                 <ScrollableContext.Provider value={scrollable}>
-                    {_.isFunction(children) ? children(scrollableContainerHeight, scrollable) : children}
+                    <Keybinding keymap={keymap}>
+                        {_.isFunction(children) ? children(scrollable) : children}
+                    </Keybinding>
                 </ScrollableContext.Provider>
             </div>
         )
@@ -162,6 +175,14 @@ class _Scrollable extends Component {
 
     scrollToBottom() {
         this.scrollTo(this.getScrollableHeight() - this.getClientHeight())
+    }
+
+    scrollPage(pages) {
+        this.scrollTo(this.getScrollableElement().scrollTop + pages * this.getClientHeight())
+    }
+
+    scrollLine(lines) {
+        this.scrollTo(this.getScrollableElement().scrollTop + lines * PIXEL_PER_LINE)
     }
 
     centerElement(element) {

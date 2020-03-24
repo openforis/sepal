@@ -6,6 +6,7 @@ echo "****************************************"
 echo "*** Installing additional R packages ***"
 echo "****************************************"
 
+export RPYTHON_PYTHON_VERSION=3
 export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
 export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
 export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
@@ -15,6 +16,7 @@ R -e "pacman::p_load(\
         'dggridR',\
         'mapview',\
         'rJava',\
+        'rPython',\
         'RStoolbox',\
         'sf',\
         'XLConnect',\
@@ -25,5 +27,6 @@ R -e "pacman::p_load(\
 R -e "pacman::p_load_gh(\
         'appelmar/bfast',\
         'loicdtx/bfastSpatial',\
+        'yfinegold/gfcanalysis',\
         'jreiche/bayts'\
     )"

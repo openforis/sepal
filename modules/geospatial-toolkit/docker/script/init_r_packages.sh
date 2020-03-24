@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 export DEBIAN_FRONTEND=noninteractive
-export RPYTHON_PYTHON_VERSION=3
 
 echo
 echo "********************"
@@ -139,6 +138,7 @@ R -e "pacman::p_load(\
         'latticeExtra',\
         'lazyeval',\
         'leaflet',\
+        'leaflet.extras',\
         'lifecycle',\
         'listenv',\
         'littler',\
@@ -224,7 +224,6 @@ R -e "pacman::p_load(\
         'rpart.plot',\
         'RPostgreSQL',\
         'rprojroot',\
-        'rPython',\
         'rsconnect',\
         'RSQLite',\
         'rstudioapi',\
