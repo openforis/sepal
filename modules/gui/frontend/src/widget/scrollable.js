@@ -265,7 +265,9 @@ export const Scrollable = compose(
     withSubscriptions()
 )
 
-Scrollable.defaultProps = {direction: 'y'}
+Scrollable.defaultProps = {
+    direction: 'y'
+}
 
 Scrollable.propTypes = {
     children: PropTypes.any,

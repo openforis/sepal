@@ -11,13 +11,14 @@ import styles from './input.module.css'
 import withForwardedRef from 'ref'
 
 class _Input extends React.Component {
+    state = {
+        value: null,
+        focused: false
+    }
+
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
-    }
-
-    state = {
-        value: null
     }
 
     static getDerivedStateFromProps(props) {
@@ -68,31 +69,40 @@ class _Input extends React.Component {
             autoFocus, autoComplete, autoCorrect, autoCapitalize, spellCheck, disabled, readOnly,
             onBlur, onChange, onFocus
         } = this.props
+        const {focused} = this.state
         return (
             // [HACK] input is wrapped in a div for fixing Firefox input width in flex
-            <div className={styles.inputWrapper}>
-                <input
-                    ref={this.ref}
-                    className={readOnly ? styles.readOnly : null}
-                    type={this.isSearchInput() ? 'text' : type}
-                    name={name}
-                    value={value}
-                    defaultValue={defaultValue}
-                    placeholder={placeholder}
-                    maxLength={maxLength}
-                    tabIndex={tabIndex}
-                    autoFocus={autoFocus && !isMobile()}
-                    autoComplete={autoComplete ? 'on' : 'off'}
-                    autoCorrect={autoCorrect ? 'on' : 'off'}
-                    autoCapitalize={autoCapitalize ? 'on' : 'off'}
-                    spellCheck={spellCheck ? 'true' : 'false'}
-                    disabled={disabled}
-                    readOnly={readOnly ? 'readonly' : ''}
-                    onBlur={e => onBlur && onBlur(e)}
-                    onChange={e => onChange && onChange(e)}
-                    onFocus={e => onFocus && onFocus(e)}
-                />
-            </div>
+            <Keybinding keymap={{' ': null}} disabled={!focused}>
+                <div className={styles.inputWrapper}>
+                    <input
+                        ref={this.ref}
+                        className={readOnly ? styles.readOnly : null}
+                        type={this.isSearchInput() ? 'text' : type}
+                        name={name}
+                        value={value}
+                        defaultValue={defaultValue}
+                        placeholder={placeholder}
+                        maxLength={maxLength}
+                        tabIndex={tabIndex}
+                        autoFocus={autoFocus && !isMobile()}
+                        autoComplete={autoComplete ? 'on' : 'off'}
+                        autoCorrect={autoCorrect ? 'on' : 'off'}
+                        autoCapitalize={autoCapitalize ? 'on' : 'off'}
+                        spellCheck={spellCheck ? 'true' : 'false'}
+                        disabled={disabled}
+                        readOnly={readOnly ? 'readonly' : ''}
+                        onFocus={e => {
+                            this.setState({focused: true})
+                            onFocus && onFocus(e)
+                        }}
+                        onBlur={e => {
+                            this.setState({focused: false})
+                            onBlur && onBlur(e)
+                        }}
+                        onChange={e => onChange && onChange(e)}
+                    />
+                </div>
+            </Keybinding>
         )
     }
 
@@ -191,7 +201,7 @@ Input.defaultProps = {
 
 class _Textarea extends React.Component {
     state = {
-        textareaFocused: false
+        focused: false
     }
 
     constructor(props) {
@@ -220,10 +230,10 @@ class _Textarea extends React.Component {
     }
 
     renderTextArea() {
-        const {className, name, value, autoFocus, tabIndex, minRows, maxRows, onChange, onBlur} = this.props
-        const {textareaFocused} = this.state
+        const {className, name, value, autoFocus, tabIndex, minRows, maxRows, onChange, onBlur, onFocus} = this.props
+        const {focused} = this.state
         return (
-            <Keybinding keymap={{Enter: null}} disabled={!textareaFocused} priority>
+            <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused}>
                 <TextareaAutosize
                     ref={this.element}
                     className={className}
@@ -233,12 +243,15 @@ class _Textarea extends React.Component {
                     autoFocus={autoFocus && !isMobile()}
                     minRows={minRows}
                     maxRows={maxRows}
-                    onChange={e => onChange && onChange(e)}
-                    onFocus={() => this.setState({textareaFocused: true})}
+                    onFocus={e => {
+                        this.setState({focused: true})
+                        onFocus && onFocus(e)
+                    }}
                     onBlur={e => {
-                        this.setState({textareaFocused: false})
+                        this.setState({focused: false})
                         onBlur && onBlur(e)
                     }}
+                    onChange={e => onChange && onChange(e)}
                 />
             </Keybinding>
         )
@@ -266,7 +279,8 @@ Textarea.propTypes = {
     tooltipPlacement: PropTypes.any,
     value: PropTypes.any,
     onBlur: PropTypes.func,
-    onChange: PropTypes.func
+    onChange: PropTypes.func,
+    onFocuse: PropTypes.func
 }
 
 Textarea.defaultProps = {
