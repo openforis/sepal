@@ -19,6 +19,7 @@ RUN curl -s "https://get.sdkman.io" | bash
 RUN bash -c "source '/home/sepal/.sdkman/bin/sdkman-init.sh' && sdk install java 12.0.2.hs-adpt"
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 RUN bash -c "source /home/sepal/.nvm/nvm.sh && nvm install node 13"
+RUN bash -c "source /home/sepal/.nvm/nvm.sh && npm install -g nodemon"
 ADD ./sepal-setup.sh /usr/local/bin/sepal-setup
 ADD ./sepal.sh /usr/local/bin/sepal
 ADD ./template.d /etc/sepal/template.d
