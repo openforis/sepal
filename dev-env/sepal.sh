@@ -3,7 +3,7 @@ set -e
 
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
-SEPAL_MODULES="user sepal-server api-gateway task-executor gee gui"
+SEPAL_MODULES="user sepal-server api-gateway task gee gui"
 
 pidof () {
     screen -ls | grep "sepal:$1" | cut -d "." -f 1
@@ -157,9 +157,16 @@ run-api-gateway)
       -DconfigDir="$SEPAL_CONFIG/api-gateway"
     ;;
 run-gee)
+    cd $SEPAL/lib/js/shared
+    npm install
     cd $SEPAL/modules/gee/docker
     npm i
     SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh
+    ;;
+run-gui)
+    cd $SEPAL/modules/gui/frontend
+    npm install
+    npm start
     ;;
 run-sepal-server)
     $SEPAL/gradlew \
@@ -169,36 +176,19 @@ run-sepal-server)
       -DconfigDir="$SEPAL_CONFIG/sepal-server" 
           #-DskipSceneMetaDataUpdate
     ;;
-run-task-executor)
-    $SEPAL/gradlew \
-      -p $SEPAL \
-      --no-daemon \
-      :task-executor:runDev --args="$SEPAL_CONFIG/task-executor/task-executor.properties"
-  ;;
+run-task)
+    cd $SEPAL/lib/js/shared
+    npm install
+    cd $SEPAL/modules/task/docker
+    npm i
+    SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh
+    ;;
 run-user)
     $SEPAL/gradlew \
       -p $SEPAL \
       --no-daemon \
       :sepal-user:runDev \
       -DconfigDir="$SEPAL_CONFIG/user"
-    ;;
-run-gui)
-    cd $SEPAL/lib/js/shared
-    npm install
-    cd $SEPAL/modules/gui/frontend
-    npm install
-    npm start
-    # pip3 install -r $SEPAL/modules/google-earth-engine/docker/requirements.txt
-    # pip3 install -e $SEPAL/modules/google-earth-engine/docker/sepal-ee
-    # python3\
-    #     $SEPAL/modules/google-earth-engine/docker/src/test_server.py \
-    #     --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com \
-    #     --gee-key-path $SEPAL_CONFIG/google-earth-engine/gee-service-account.pem \
-    #     --sepal-host localhost:3000 \
-    #     --sepal-username "sepalAdmin" \
-    #     --sepal-password "the admin password" \
-    #     --home-dir $SEPAL_CONFIG/sepal-server/home/admin \
-    #     --username admin
     ;;
 *)
     usage
