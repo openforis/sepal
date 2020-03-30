@@ -91,7 +91,7 @@ def _google_earth_engine():
         lines = _read_lines()
         gee_json = json.loads(lines)
         config['google_earth_engine_account'] = gee_json['client_email']
-        config['google_earth_engine_private_key'] = gee_json['private_key'].replace('\n', '\\n').replace('\r' '')
+        config['google_earth_engine_private_key'] = gee_json['private_key'].replace('\n', '\\n').replace('\r', '')
     except ValueError:
         print ('Invalid JSON!')
         _google_earth_engine()
