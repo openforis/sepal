@@ -33,10 +33,18 @@ class Landing extends React.Component {
     }
 
     renderContent() {
+        const {location} = this.props
         const {launched} = this.state
-        return launched
-            ? this.renderAuth()
-            : <Intro onLaunch={() => this.setState({launched: true})}/>
+        const showIntro = location.pathname === '/' && !launched
+        return showIntro
+            ? this.renderIntro()
+            : this.renderAuth()
+    }
+
+    renderIntro() {
+        return (
+            <Intro onLaunch={() => this.setState({launched: true})}/>
+        )
     }
 
     renderAuth() {
