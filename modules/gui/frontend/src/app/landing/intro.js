@@ -2,6 +2,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
+import Keybinding from 'widget/keybinding'
 import React from 'react'
 import Tagline from './tagline'
 import Title from './title'
@@ -44,42 +45,44 @@ const Intro = ({onLaunch}) =>
     </ScrollableContainer>
 
 const Main = ({onLaunch}) =>
-    <div id='main' className={styles.main}>
-        <Title className={styles.title}/>
-        <Tagline className={styles.tagline}/>
-        <ButtonGroup layout='horizontal-nowrap' spacing='loose'>
-            <Button
-                look='default'
-                size='x-large'
-                air='more'
-                label={msg('landing.signup')}
-                tabIndex={1}
-                linkUrl={signupUrl}
-                linkTarget='_self'
-                additionalClassName={styles.button}
-            />
-            <Button
-                type='submit'
-                look='apply'
-                size='x-large'
-                air='more'
-                label={msg('landing.launch')}
-                tabIndex={2}
-                onClick={onLaunch}
-                additionalClassName={styles.button}
-            />
-        </ButtonGroup>
-        <ButtonGroup layout='horizontal-nowrap' alignment='center'>
-            <Button
-                look='transparent'
-                shape='circle'
-                size='xx-large'
-                icon='chevron-down'
-                onClick={scrollToInfo}
-                additionalClassName={styles.pulse}
-            />
-        </ButtonGroup>
-    </div>
+    <Keybinding keymap={{'Enter': onLaunch, 'Escape': onLaunch}}>
+        <div id='main' className={styles.main}>
+            <Title className={styles.title}/>
+            <Tagline className={styles.tagline}/>
+            <ButtonGroup layout='horizontal-nowrap' spacing='loose'>
+                <Button
+                    look='default'
+                    size='x-large'
+                    air='more'
+                    label={msg('landing.signup')}
+                    tabIndex={1}
+                    linkUrl={signupUrl}
+                    linkTarget='_self'
+                    additionalClassName={styles.button}
+                />
+                <Button
+                    type='submit'
+                    look='apply'
+                    size='x-large'
+                    air='more'
+                    label={msg('landing.launch')}
+                    tabIndex={2}
+                    onClick={onLaunch}
+                    additionalClassName={styles.button}
+                />
+            </ButtonGroup>
+            <ButtonGroup layout='horizontal-nowrap' alignment='center'>
+                <Button
+                    look='transparent'
+                    shape='circle'
+                    size='xx-large'
+                    icon='chevron-down'
+                    onClick={scrollToInfo}
+                    additionalClassName={styles.pulse}
+                />
+            </ButtonGroup>
+        </div>
+    </Keybinding>
 
 const Block = ({theme, image, imagePosition, maxImageSize, textKey, responsive, classNames = []}) =>
     <div className={[styles.block, styles[theme], styles[imagePosition], responsive ? styles.responsive : null, ...classNames].join(' ')}>
