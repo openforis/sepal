@@ -177,14 +177,6 @@
             'text';
     }
 
-    /* .block.tool.left {
-        grid-template-columns: 1.5fr 5fr;
-    }
-    
-    .block.tool.right {
-        grid-template-columns: 5fr 1.5fr;
-    } */
-
     .block.tool.left,
     .block.tool.right {
         grid-template-columns: 1fr;
@@ -194,16 +186,13 @@
             'text';
     }
 
-    .block.tool.left .text {
+    .block.tool.left .text,
+    .block.tool.right .text {
+        margin-left: 0;
         margin-right: 0;
         text-align: center;
     }
-    
-    .block.tool.right .text {
-        margin-left: 0;
-        text-align: center;
-    }
-    
+
     .block.about,
     .block.partners {
         grid-template-columns: 1fr;
@@ -218,13 +207,10 @@
         font-weight: 300;
         line-height: 3rem;
         letter-spacing: .3rem;
-        text-transform: uppercase;
         margin-bottom: 1rem;
     }
 
     .block .description {
-        grid-area: text;
-        text-align: justify;
         font-size: 1.0rem;
         line-height: 1.8rem;
     }
