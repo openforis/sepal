@@ -122,8 +122,7 @@
 
 .block.tool img {
     width: 100%;
-    /* min-width: 10rem; */
-    max-width: 25vw;
+    max-width: 20vw;
 }
 
 .block.tool.left .text {
@@ -167,7 +166,7 @@
 
 /* small screens */
 
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 700px) {
     .block.feature.left,
     .block.feature.right {
         grid-template-columns: 1fr;
