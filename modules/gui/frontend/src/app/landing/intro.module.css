@@ -125,13 +125,13 @@
 }
 
 .block.tool.left .text {
-    margin-right: 10vw;
+    margin-right: 25vw;
     justify-self: left;
     text-align: left;
 }
 
 .block.tool.right .text {
-    margin-left: 10vw;
+    margin-left: 25vw;
     justify-self: right;
     text-align: right;
 }
