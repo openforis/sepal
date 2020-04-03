@@ -122,6 +122,7 @@
 
 .block.tool img {
     width: 100%;
+    max-width: 25vw;
 }
 
 .block.tool.left .text {
@@ -175,12 +176,21 @@
             'text';
     }
 
-    .block.tool.left {
+    /* .block.tool.left {
         grid-template-columns: 1.5fr 5fr;
     }
     
     .block.tool.right {
         grid-template-columns: 5fr 1.5fr;
+    } */
+
+    .block.tool.left,
+    .block.tool.right {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        grid-template-areas:
+            'image'
+            'text';
     }
 
     .block.tool.left .text {
