@@ -166,9 +166,6 @@
 /* small screens */
 
 @media screen and (max-width: 800px) {
-    /* .block.left,
-    .block.right,
-    .block.center, */
     .block.feature.left,
     .block.feature.right {
         grid-template-columns: 1fr;
@@ -185,7 +182,7 @@
     .block.tool.right {
         grid-template-columns: 5fr 1.5fr;
     }
-    
+
     .block.tool.left .text {
         margin-right: 0;
     }
@@ -194,7 +191,7 @@
         margin-left: 0;
     }
     
-        .block.about,
+    .block.about,
     .block.partners {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr;
