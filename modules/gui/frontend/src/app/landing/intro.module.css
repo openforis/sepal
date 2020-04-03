@@ -186,7 +186,15 @@
         grid-template-columns: 5fr 1.5fr;
     }
     
-    .block.about,
+    .block.tool.left .text {
+        margin-right: 0;
+    }
+    
+    .block.tool.right .text {
+        margin-left: 0;
+    }
+    
+        .block.about,
     .block.partners {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr;
