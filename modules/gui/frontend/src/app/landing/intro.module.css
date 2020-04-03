@@ -166,7 +166,7 @@
 
 /* small screens */
 
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 800px) {
     .block.feature.left,
     .block.feature.right {
         grid-template-columns: 1fr;
