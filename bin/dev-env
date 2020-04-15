@@ -63,7 +63,7 @@ function docker_image_exists() {
 
 function build_docker_image() {
     echo "Building Docker image..."
-    docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env
+    docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env 1>/dev/null 
 }
 
 function remove_docker_image() {
@@ -90,12 +90,12 @@ function docker_container_stopped() {
 
 function start_docker_container() {
     echo "Starting Docker container..."
-    docker start $IMAGE_NAME
+    docker start $IMAGE_NAME 1>/dev/null 
 }
 
 function stop_docker_container() {
     echo "Stopping Docker container..."
-    docker stop $IMAGE_NAME
+    docker stop $IMAGE_NAME 1>/dev/null 
 }
 
 function create_docker_container() {
@@ -109,7 +109,7 @@ function create_docker_container() {
         -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
         -p 3000:3000 \
         --name $CONTAINER_NAME \
-        $IMAGE_NAME
+        $IMAGE_NAME 1>/dev/null 
     echo "Setting up Docker container..."
     docker exec sepal-dev-env /usr/local/lib/sepal/dev-env/sepal-setup.sh
 }
