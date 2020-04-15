@@ -20,6 +20,11 @@ if __name__ == '__main__':
     app.config['PLANET_API_KEY'] = args.planet_api_key
     app.config['SEPAL_HOST'] = args.sepal_host
 
+    app.config['EE_ACCOUNT'] = args.ee_account
+    app.config['EE_KEY_PATH'] = args.ee_key_path
+    app.config['EE_TOKEN_ENABLED'] = True
+
+
     logging.basicConfig(level=app.config['LOGGING_LEVEL'])
     logging.getLogger('flask_cors').level = app.config['LOGGING_LEVEL']
     logging.getLogger('ceo').level = app.config['LOGGING_LEVEL']

@@ -1,1 +1,1 @@
-import project, record, proxy
+from . import project, record, proxy

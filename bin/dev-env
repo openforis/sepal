@@ -109,7 +109,7 @@ function create_docker_container() {
         --name $CONTAINER_NAME \
         $IMAGE_NAME
     echo "Setting up Docker container..."
-    docker exec sepal-dev-env /usr/local/bin/sepal-setup
+    docker exec sepal-dev-env /usr/local/lib/sepal/dev-env/sepal-setup.sh
 }
 
 function remove_docker_container() {
@@ -133,7 +133,7 @@ function stop() {
 
 function cleanup() {
     [ "$(docker_container_exists)" ] && remove_docker_container
-    [ "$(docker_image_exists)" ] && remove_docker_image
+    # [ "$(docker_image_exists)" ] && remove_docker_image
 }
 
 function usage() {
@@ -161,7 +161,7 @@ case "$COMMAND" in
     start)
         check_config_dir
         check_data_dir
-        check_docker_image
+        build_docker_image
         start
         start_shell
         RETVAL=$?

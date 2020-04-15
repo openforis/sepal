@@ -549,7 +549,7 @@ def getLayersFromRequest(request):
         if overlay:
             overlay['layerName'] = layerName[i]
             overlay['type'] = layerType[i]
-            cleanOverlay = { k:v.strip() for k, v in overlay.iteritems() }
+            cleanOverlay = { k:v.strip() for k, v in iter(overlay.items()) }
             overlays.append(cleanOverlay)
     return overlays
 
