@@ -8,7 +8,7 @@
   "dependencies": {
     "bootstrap": "v4.0.0-alpha.6",
     "font-awesome": "4.7.0",
-    "highcharts": "^5.0.12",
+    "highcharts": "^6.1.0",
     "jquery": "~3.0.0"
   }
 }
