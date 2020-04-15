@@ -100,6 +100,8 @@ function stop_docker_container() {
 
 function create_docker_container() {
     echo "Running Docker container..."
+    check_config_dir
+    check_data_dir
     docker run \
         -dt \
         -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
@@ -151,7 +153,7 @@ function usage() {
     echo ""
     echo "Options:"
     echo ""
-    echo "  -c, --config    <config dir>    required"
+    echo "  -c, --config    <config dir>    required for first start"
     echo "  -d, --data      <data dir>      optional (default ./sepal-data)"
     echo ""
     exit 1
@@ -159,8 +161,6 @@ function usage() {
 
 case "$COMMAND" in
     start)
-        check_config_dir
-        check_data_dir
         build_docker_image
         start
         start_shell
