@@ -39,8 +39,6 @@ class SizeIdlePoolHandler implements CommandHandler<Void, SizeIdlePool> {
             .each { instanceType, idleInstances ->
                 def idleCount = idleInstances.size()
                 def targetCount = command.targetIdleCountByInstanceType[instanceType] ?: 0
-                println("idleCount: " + idleCount)
-                println("targetCount: " + targetCount)
                 if (idleCount < targetCount) {
                     def instances = instanceProvider.launchIdle(instanceType, targetCount - idleCount)
                     instanceRepository.launched(instances)
