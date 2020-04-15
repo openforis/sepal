@@ -36,6 +36,8 @@ sudo -i mkdir -p /etc/sepal/module.d
 sudo -i chown sepal /etc/sepal/module.d
 sudo -i mkdir -p /var/sepal
 sudo -i chown sepal /var/sepal
+sudo -i mkdir -p /var/log/sepal
+sudo -i chown sepal /var/log/sepal
 
 TEMPLATE_DIR=$PROJECT_DIR/dev-env/template.d
 cp -R $TEMPLATE_DIR/* /etc/sepal/module.d/
