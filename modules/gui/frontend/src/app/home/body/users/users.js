@@ -130,7 +130,7 @@ class Users extends React.Component {
         const updateLocalState = userDetails =>
             this.setState(({users}) => {
                 if (userDetails) {
-                    const index = users.findIndex(user => user.username === userDetails.username)
+                    const index = users.findIndex(({username}) => username === userDetails.username)
                     index === -1
                         ? users.push(userDetails)
                         : users[index] = userDetails
@@ -141,7 +141,7 @@ class Users extends React.Component {
         const removeFromLocalState = userDetails =>
             this.setState(({users}) => {
                 if (userDetails) {
-                    _.remove(users, user => user.username === userDetails.username)
+                    _.remove(users, ({username}) => username === userDetails.username)
                 }
                 return {users}
             })
