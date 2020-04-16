@@ -122,7 +122,7 @@ class _SuperButton extends React.Component {
                 <Highlight
                     search={highlight}
                     ignoreDiacritics={true}
-                    matchClass={highlightClassName}>
+                    matchClass={highlightClassName || styles.highlight}>
                     {content}
                 </Highlight>
             )
