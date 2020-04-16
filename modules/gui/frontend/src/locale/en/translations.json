@@ -1622,9 +1622,10 @@
         "title": "User messages"
     },
     "users": {
-        "count": "users {start}-{stop} of {count}",
-        "countNoFilter": "{count} {count, plural, one {user} other {users}}",
-        "countWithFilter": "{count} {count, plural, one {user} other {users}} out of {total}",
+        "count": {
+            "onePage": "{count} {count, plural, one {user} other {users}}",
+            "morePages": "{count} {count, plural, one {user} other {users}}, showing {start}-{stop}"
+        },
         "filter": {
             "status": {
                 "ignore": {
@@ -1635,13 +1636,8 @@
                 },
                 "active": {
                     "label": "Active"
-                }
-            },
-            "budget": {
-                "ignore": {
-                    "label": "All"
                 },
-                "over": {
+                "overbudget": {
                     "label": "Overbudget"
                 }
             },

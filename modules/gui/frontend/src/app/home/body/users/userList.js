@@ -215,7 +215,7 @@ export default class UserList extends React.Component {
             label: msg('users.filter.status.active.label'),
             value: 'ACTIVE'
         }, {
-            label: msg('users.filter.budget.over.label'),
+            label: msg('users.filter.status.overbudget.label'),
             value: 'OVERBUDGET'
         }]
         return (
@@ -231,12 +231,15 @@ export default class UserList extends React.Component {
     }
 
     renderInfo() {
-        const results = (count, start, stop) => msg('users.count', {count, start, stop})
+        const results = (count, start, stop, isSinglePage) =>
+            isSinglePage
+                ? msg('users.count.onePage', {count})
+                : msg('users.count.morePages', {count, start, stop})
         return (
             <Pageable.Info>
-                {({count, start, stop}) =>
+                {({count, start, stop, isSinglePage}) =>
                     <div className={styles.pageInfo}>
-                        {results(count, start, stop)}
+                        {results(count, start, stop, isSinglePage)}
                     </div>
                 }
             </Pageable.Info>
