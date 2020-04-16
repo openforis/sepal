@@ -3,54 +3,69 @@ set -e
 
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
-SEPAL_MODULES="user sepal-server api-gateway task-executor gee gui ceo mongo"
+SEPAL_MODULES=(user sepal-server api-gateway task-executor gee gui ceo mongo)
+LOG_DIR=/var/log/sepal
+
+is_module () {
+    local MODULE=$1
+    printf '%s\n' ${SEPAL_MODULES[@]} | grep -qP "^$MODULE$"
+}
 
 pidof () {
     local MODULE=$1
-    # screen -ls | grep "sepal:$1" | cut -d "." -f 1
-    # ps -ef |grep SCREEN|grep sepal:sepal-server|awk '{ print $2 }'
     ps -ef | grep bash | grep "sepal run $MODULE" | awk '{ print $2 }'
 }
 
 logfile () {
     local MODULE=$1
-    echo "/var/log/sepal/$MODULE.log"
+    echo "$LOG_DIR/$MODULE.log"
 }
 
 module_status () {
     local MODULE=$1
-    PID=$(pidof ${MODULE})
-    if [ -z "$PID" ]; then
-        echo "[STOPPED] ${MODULE}"
+    if is_module $MODULE; then
+        PID=$(pidof ${MODULE})
+        if [ -z "$PID" ]; then
+            echo "[STOPPED] ${MODULE}"
+        else
+            echo "[RUNNING] ${MODULE}"
+        fi
     else
-        echo "[RUNNING] ${MODULE}"
+        echo "[NON-EXISTING] ${MODULE}"
     fi
 }
 
 module_start () {
     local MODULE=$1
-    PID=$(pidof $MODULE)
-    if [ -z "$PID" ]; then
-        local LOG=$(logfile $MODULE)
-        [ -f "$LOG" ] && rm $LOG
-        nohup $0 run $MODULE >$LOG 2>&1 &
-        echo "[STARTING] $MODULE"
+    if is_module $MODULE; then
+        PID=$(pidof $MODULE)
+        if [ -z "$PID" ]; then
+            local LOG=$(logfile $MODULE)
+            nohup $0 run $MODULE >$LOG 2>&1 &
+            echo "[STARTING] $MODULE"
+        fi
+    else
+        echo "[NON-EXISTING] ${MODULE}"
     fi
 }
 
 module_stop () {
     local MODULE=$1
-    PID=$(pidof ${MODULE})
-    if [ ! -z "$PID" ]; then
-        pkill -P $PID
-        echo "[STOPPING] $MODULE"
+    if is_module $MODULE; then
+        PID=$(pidof ${MODULE})
+        if [ ! -z "$PID" ]; then
+            pkill -P $PID
+            echo "[STOPPING] $MODULE"
+        fi
+    else
+        echo "[NON-EXISTING] ${MODULE}"
     fi
 }
 
 status () {
     local MODULE=$1
     if [ "$MODULE" == "all" ]; then
-        for MODULE in $SEPAL_MODULES; do
+        for MODULE in "${SEPAL_MODULES[@]}"; do
             module_status $MODULE
         done
     else
@@ -61,7 +76,7 @@ status () {
 start () {
     local MODULE=$1
     if [ "$MODULE" == "all" ]; then
-        for MODULE in $SEPAL_MODULES; do
+        for MODULE in "${SEPAL_MODULES[@]}"; do
             module_start $MODULE
         done
     else
@@ -72,7 +87,7 @@ start () {
 stop () {
     local MODULE=$1
     if [ "$MODULE" == "all" ]; then
-        for MODULE in $SEPAL_MODULES; do
+        for MODULE in "${SEPAL_MODULES[@]}"; do
             module_stop $MODULE
         done
     else
@@ -86,21 +101,18 @@ restart () {
 }
 
 clean () {
+    stop all
     $SEPAL/gradlew clean -p $SEPAL
 }
 
 build () {
+    stop all
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL
 }
 
 build-debug () {
+    stop all
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL --stacktrace --debug
-}
-
-rebuild () {
-    stop $SEPAL_MODULES
-    build
-    start $SEPAL_MODULES
 }
 
 log () {
@@ -205,20 +217,21 @@ usage () {
     echo "Usage: $0 <command> [<arguments>]"
     echo ""
     echo "Commands:"
-    echo "  clean                      clean SEPAL"
-    echo "  build                      build SEPAL"
-    echo "  build-debug                build SEPAL w/debug enabled"
-    echo "  rebuild                    build SEPAL and restart"
-    echo "  start     <module> | all   start module(s)"
-    echo "  stop      <module> | all   stop module(s)"
-    echo "  kill      <module> | all   force stop module(s)"
-    echo "  status    <module> | all   check module(s)"
-    echo "  restart   <module> | all   restart module(s)"
-    echo "  run       <module>         run module interactively"
-    echo "  log       <module>         show module log"
+    echo ""
+    echo "   clean                      clean SEPAL"
+    echo "   build                      build SEPAL"
+    echo "   build-debug                build SEPAL w/debug enabled"
+    echo ""
+    echo "   start     <module> | all   start module(s)"
+    echo "   stop      <module> | all   stop module(s)"
+    echo "   kill      <module> | all   force stop module(s)"
+    echo "   status    <module> | all   check module(s)"
+    echo "   restart   <module> | all   restart module(s)"
+    echo "   run       <module>         run module interactively"
+    echo "   log       <module>         show module log"
 
     echo ""
-    echo "Modules: $SEPAL_MODULES"
+    echo "Modules: ${SEPAL_MODULES[@]}"
     echo ""
     exit 1
 }
@@ -227,7 +240,9 @@ missing_parameter () {
     usage "Missing parameter"
 }
 
-while [[ ! -z "$1" ]] && [[ "$RETVAL" -eq 0 ]] ; do
+[ -z "$1" ] && usage
+
+while [[ ! -z "$1" ]] && [[ "$RETVAL" -eq 0 ]]; do
     case "$1" in
         clean)
             clean
@@ -239,10 +254,6 @@ while [[ ! -z "$1" ]] && [[ "$RETVAL" -eq 0 ]] ; do
             ;;
         build-debug)
             build-debug
-            shift
-            ;;
-        rebuild)
-            rebuild
             shift
             ;;
         status)
