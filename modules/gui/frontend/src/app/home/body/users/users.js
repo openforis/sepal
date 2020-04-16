@@ -73,21 +73,19 @@ class Users extends React.Component {
         })
     }
 
+    setTextFilter(textFilterValues) {
+        this.setState({textFilterValues})
+    }
+
+    setStatusFilter(statusFilter) {
+        this.setState({statusFilter})
+    }
+
     getSortedUsers(users, sortingOrder = this.state.sortingOrder, sortingDirection = this.state.sortingDirection) {
         return _.orderBy(users, user => {
             const item = _.get(user, sortingOrder)
             return _.isString(item) ? item.toUpperCase() : item
         }, sortingDirection === 1 ? 'asc' : 'desc')
-    }
-
-    setTextFilter(textFilterValues) {
-        this.setState({
-            textFilterValues
-        })
-    }
-
-    setActiveFilter(activeFilter) {
-        this.setState({activeFilter})
     }
 
     userMatchesFilters(user) {
@@ -365,7 +363,7 @@ class Users extends React.Component {
                 spacing='tight'
                 options={options}
                 selected={statusFilter}
-                onChange={statusFilter => this.setState({statusFilter})}
+                onChange={statusFilter => this.setStatusFilter(statusFilter)}
             />
         )
     }
