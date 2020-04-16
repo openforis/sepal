@@ -27,7 +27,8 @@ class _Pageable extends React.Component {
             <Keybinding keymap={{
                 'Alt+Shift+ArrowLeft': () => this.firstPage(),
                 'Alt+ArrowLeft': () => this.previousPage(),
-                'Alt+ArrowRight': () => this.nextPage()
+                'Alt+ArrowRight': () => this.nextPage(),
+                'Alt+Shift+ArrowRight': () => this.lastPage()
             }}>
                 <Provider value={{
                     items: pageItems,
@@ -98,6 +99,19 @@ class _Pageable extends React.Component {
                 start: 0,
                 stop: undefined,
                 direction: 1
+            })
+        }
+    }
+
+    lastPage() {
+        const {items} = this.props
+        const count = items.length
+        if (!this.isLastPage()) {
+            this.setState({
+                pageItems: [],
+                start: undefined,
+                stop: count,
+                direction: -1
             })
         }
     }
