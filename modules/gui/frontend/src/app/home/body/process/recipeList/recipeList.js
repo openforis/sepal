@@ -38,9 +38,7 @@ class _RecipeList extends React.Component {
                     ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
                     : null
             }}>
-                <Pageable
-                    items={this.getSortedRecipes()}
-                    matcher={recipe => this.recipeMatchesFilter(recipe)}>
+                <Pageable items={this.getRecipes()}>
                     {children}
                 </Pageable>
             </Provider>
@@ -82,13 +80,16 @@ class _RecipeList extends React.Component {
         })
     }
 
-    getSortedRecipes() {
+    getRecipes() {
         const {recipes} = this.props
         const {sortingOrder, sortingDirection} = this.state
-        return _.orderBy(recipes, recipe => {
-            const item = _.get(recipe, sortingOrder)
-            return _.isString(item) ? item.toUpperCase() : item
-        }, sortingDirection === 1 ? 'asc' : 'desc')
+        return _.chain(recipes)
+            .filter(recipe => this.recipeMatchesFilter(recipe))
+            .orderBy(recipe => {
+                const item = _.get(recipe, sortingOrder)
+                return _.isString(item) ? item.toUpperCase() : item
+            }, sortingDirection === 1 ? 'asc' : 'desc')
+            .value()
     }
     
     recipeMatchesFilter(recipe) {
