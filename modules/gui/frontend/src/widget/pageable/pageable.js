@@ -65,7 +65,6 @@ class _Pageable extends React.Component {
 
     needsReset(prevProps) {
         return !_.isEqual(prevProps.items, this.props.items)
-            || !_.isEqual(prevProps.matcher, this.props.matcher)
     }
 
     needsRefresh(prevProps) {
@@ -135,11 +134,6 @@ class _Pageable extends React.Component {
         return !count || stop === count
     }
 
-    isMatching(item) {
-        const {matcher} = this.props
-        return !matcher || matcher(item)
-    }
-
     next(overflow) {
         const {items, fillFirstPage, fillLastPage} = this.props
         const {direction} = this.state
@@ -170,18 +164,15 @@ class _Pageable extends React.Component {
                         stop: count,
                         direction: fillLastPage ? - 1 : 0
                     }
-                } else if (stop === start) {
+                }
+                if (stop === start) {
                     return {
                         stop
                     }
-                } else {
-                    const item = items[stop - 1]
-                    if (this.isMatching(item)) {
-                        return {
-                            stop,
-                            pageItems: [...pageItems, item]
-                        }
-                    }
+                }
+                return {
+                    stop,
+                    pageItems: [...pageItems, items[stop - 1]]
                 }
             }
         }
@@ -203,18 +194,15 @@ class _Pageable extends React.Component {
                         start: 0,
                         direction: fillFirstPage ? 1 : 0
                     }
-                } else if (start === stop) {
+                }
+                if (start === stop) {
                     return {
                         start
                     }
-                } else {
-                    const item = items[start]
-                    if (this.isMatching(item)) {
-                        return {
-                            start,
-                            pageItems: [item, ...pageItems]
-                        }
-                    }
+                }
+                return {
+                    start,
+                    pageItems: [items[start], ...pageItems]
                 }
             }
         }
@@ -230,8 +218,7 @@ Pageable.propTypes = {
     children: PropTypes.any.isRequired,
     items: PropTypes.array.isRequired,
     fillFirstPage: PropTypes.bool,
-    fillLastPage: PropTypes.bool,
-    matcher: PropTypes.func
+    fillLastPage: PropTypes.bool
 }
 
 Pageable.defaultProps = {

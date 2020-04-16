@@ -32,6 +32,7 @@ export const PageableControls = props => {
                 onClick={() => pageable.nextPage()}
                 disabled={pageable.isLastPage}/>
         </ButtonGroup>
+        
     const renderCustomControls = pageable =>
         <React.Fragment>
             {props.children({...pageable, renderDefaultControls: () => renderDefaultControls(pageable)})}
