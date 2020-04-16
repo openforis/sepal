@@ -432,8 +432,7 @@ class UserList extends React.Component {
             ? new RegExp(`(?:${textFilterValues.join('|')})`, 'i')
             : ''
         return (
-            // [HACK] adding filter to key to force re-rendering
-            <Pageable.Data itemKey={user => `${user.username || user.id}|${highlightMatcher}`}>
+            <Pageable.Data itemKey={user => `${user.username || user.id}`}>
                 {user =>
                     <UserItem
                         user={user}
