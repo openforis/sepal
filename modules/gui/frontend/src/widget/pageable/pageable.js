@@ -141,11 +141,11 @@ class _Pageable extends React.Component {
             return
         }
         
-        this.setState(({pageItems, count, start, stop, direction}) => {
-            return direction === 1
+        this.setState(({pageItems, count, start, stop, direction}) =>
+            direction === 1
                 ? nextForwards({pageItems, overflow, start, stop, count})
                 : nextBackwards({pageItems, overflow, start, stop})
-        })
+        )
 
         const nextForwards = ({pageItems, overflow, start, stop, count}) => {
             if (overflow) {
@@ -155,25 +155,23 @@ class _Pageable extends React.Component {
                     pageItems: pageItems.slice(0, -1)
                 }
             }
-            for (;;) {
-                stop = stop === undefined
-                    ? start
-                    : stop + 1
-                if (stop > count) {
-                    return {
-                        stop: count,
-                        direction: fillLastPage ? - 1 : 0
-                    }
-                }
-                if (stop === start) {
-                    return {
-                        stop
-                    }
-                }
+            stop = stop === undefined
+                ? start
+                : stop + 1
+            if (stop > count) {
                 return {
-                    stop,
-                    pageItems: [...pageItems, items[stop - 1]]
+                    stop: count,
+                    direction: fillLastPage ? - 1 : 0
                 }
+            }
+            if (stop === start) {
+                return {
+                    stop
+                }
+            }
+            return {
+                stop,
+                pageItems: [...pageItems, items[stop - 1]]
             }
         }
 
@@ -185,25 +183,23 @@ class _Pageable extends React.Component {
                     pageItems: pageItems.slice(1)
                 }
             }
-            for (;;) {
-                start = start === undefined
-                    ? stop
-                    : start - 1
-                if (start < 0) {
-                    return {
-                        start: 0,
-                        direction: fillFirstPage ? 1 : 0
-                    }
-                }
-                if (start === stop) {
-                    return {
-                        start
-                    }
-                }
+            start = start === undefined
+                ? stop
+                : start - 1
+            if (start < 0) {
                 return {
-                    start,
-                    pageItems: [items[start], ...pageItems]
+                    start: 0,
+                    direction: fillFirstPage ? 1 : 0
                 }
+            }
+            if (start === stop) {
+                return {
+                    start
+                }
+            }
+            return {
+                start,
+                pageItems: [items[start], ...pageItems]
             }
         }
     }
