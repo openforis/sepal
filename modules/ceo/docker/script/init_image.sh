@@ -8,7 +8,8 @@ apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
  libffi-dev\
  gettext\
  git\
- supervisor
+ supervisor\
+ wget
 
 wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
 echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list  
