@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
-
-apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
+export DEBIAN_FRONTEND=noninteractive
+apt-get -y update && apt-get install -y\
  curl\
  python3\
  python3-pip\
