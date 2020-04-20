@@ -16,88 +16,113 @@ pidof () {
     ps -ef | grep bash | grep "sepal run $MODULE" | awk '{ print $2 }'
 }
 
+is_running () {
+    local MODULE=$1
+    PID=$(pidof ${MODULE})
+    [ ! -z "$PID" ]
+}
+
 logfile () {
     local MODULE=$1
     echo "$LOG_DIR/$MODULE.log"
 }
 
+message () {
+    local MESSAGE=$1
+    local MODULE=$2
+    local COLOR_NAME=$3
+    local NO_COLOR='\033[0m'
+    case "$COLOR_NAME" in
+    DARK_RED)
+        COLOR='\033[0;31m'
+        ;;
+    LIGHT_RED)
+        COLOR='\033[1;31m'
+        ;;
+    DARK_GREEN)
+        COLOR='\033[0;32m'
+        ;;
+    LIGHT_GREEN)
+        COLOR='\033[1;32m'
+        ;;
+    YELLOW)
+        COLOR='\033[1;33m'
+        ;;
+    GREY)
+        COLOR='\033[0;37m'
+        ;;
+    *)
+        COLOR=$NO_COLOR # No Color
+        ;;
+    esac
+    echo -e "[${COLOR}${MESSAGE}${NO_COLOR}] ${MODULE}"
+}
+
 module_status () {
-    local MODULE=$1
-    if is_module $MODULE; then
-        PID=$(pidof ${MODULE})
-        if [ -z "$PID" ]; then
-            echo "[STOPPED] ${MODULE}"
-        else
-            echo "[RUNNING] ${MODULE}"
-        fi
+    local MODULE=$1    
+    if is_running $MODULE; then
+        message "RUNNING" $MODULE DARK_GREEN
     else
-        echo "[NON-EXISTING] ${MODULE}"
+        message "NOT RUNNING" $MODULE DARK_RED
     fi
 }
 
 module_start () {
-    local MODULE=$1
-    if is_module $MODULE; then
-        PID=$(pidof $MODULE)
-        if [ -z "$PID" ]; then
-            local LOG=$(logfile $MODULE)
-            nohup $0 run $MODULE >$LOG 2>&1 &
-            echo "[STARTING] $MODULE"
-        fi
+    local MODULE=$1    
+    local PID=$(pidof ${MODULE})
+    if [[ -z "$PID" ]]; then
+        local LOG=$(logfile $MODULE)
+        message "STARTING" $MODULE LIGHT_GREEN
+        start-stop-daemon --start --oknodo --name $MODULE \
+            --exec /bin/bash -- $0 run $MODULE >$LOG 2>&1 &
     else
-        echo "[NON-EXISTING] ${MODULE}"
+        message "RUNNING" $MODULE GREY
     fi
 }
 
 module_stop () {
-    local MODULE=$1
-    if is_module $MODULE; then
-        PID=$(pidof ${MODULE})
-        if [ ! -z "$PID" ]; then
-            pkill -P $PID
-            echo "[STOPPING] $MODULE"
-        fi
+    local MODULE=$1    
+    local PID=$(pidof ${MODULE})
+    if [[ -z "$PID" ]]; then
+        message "NOT RUNNING" $MODULE GREY
     else
-        echo "[NON-EXISTING] ${MODULE}"
+        message "STOPPING" $MODULE LIGHT_RED
+        start-stop-daemon --stop --oknodo --retry 5 --ppid $PID
     fi
+}
+
+do_with_modules () {
+    local COMMAND=$1
+    shift
+    local MODULES=${@:-${SEPAL_MODULES[@]}}
+    for MODULE in $MODULES; do
+        if is_module $MODULE; then
+            $COMMAND $MODULE
+        else
+            message "IGNORED" $MODULE GREY
+        fi
+    done
 }
 
 status () {
-    local MODULE=$1
-    if [ "$MODULE" == "all" ]; then
-        for MODULE in "${SEPAL_MODULES[@]}"; do
-            module_status $MODULE
-        done
-    else
-        module_status $MODULE
-    fi
+    do_with_modules "module_status" $@
 }
 
 start () {
-    local MODULE=$1
-    if [ "$MODULE" == "all" ]; then
-        for MODULE in "${SEPAL_MODULES[@]}"; do
-            module_start $MODULE
-        done
-    else
-        module_start $MODULE
-    fi
+    do_with_modules "module_start" $@
 }
 
 stop () {
-    local MODULE=$1
-    if [ "$MODULE" == "all" ]; then
-        for MODULE in "${SEPAL_MODULES[@]}"; do
-            module_stop $MODULE
-        done
-    else
-        module_stop $MODULE
-    fi
+    do_with_modules "module_stop" $@
+}
+
+force_stop () {
+    do_with_modules "module_kill" $@
 }
 
 restart () {
-    stop $@
-    start $@
+    do_with_modules "module_stop" $@
+    do_with_modules "module_start" $@
 }
 
 clean () {
@@ -118,6 +143,19 @@ build-debug () {
 log () {
     local MODULE=$1
     less $(logfile $MODULE)
+}
+
+startlog () {
+    local MODULE=$1
+    module_start $1
+    less +F $(logfile $MODULE)
+}
+
+restartlog () {
+    local MODULE=$1
+    module_stop $1
+    module_start $1
+    less +F $(logfile $MODULE)
 }
 
 run () {
@@ -212,23 +250,24 @@ run () {
 
 usage () {
     if [ ! -z "$1" ]; then
-        echo -e "\nError: $1"
+        echo ""
+        echo "Error: $1"
     fi
+    echo ""
     echo "Usage: $0 <command> [<arguments>]"
     echo ""
     echo "Commands:"
-    echo ""
-    echo "   clean                      clean SEPAL"
-    echo "   build                      build SEPAL"
-    echo "   build-debug                build SEPAL w/debug enabled"
-    echo ""
-    echo "   start     <module> | all   start module(s)"
-    echo "   stop      <module> | all   stop module(s)"
-    echo "   kill      <module> | all   force stop module(s)"
-    echo "   status    <module> | all   check module(s)"
-    echo "   restart   <module> | all   restart module(s)"
-    echo "   run       <module>         run module interactively"
-    echo "   log       <module>         show module log"
+    echo "   clean                        clean SEPAL"
+    echo "   build                        build SEPAL"
+    echo "   build-debug                  build SEPAL w/debug enabled"
+    echo "   status      [<module>...]    check module(s)"
+    echo "   start       [<module>...]    start module(s)"
+    echo "   stop        [<module>...]    stop module(s)"
+    echo "   restart     [<module>...]    restart module(s)"
+    echo "   run         <module>         run module interactively"
+    echo "   log         <module>         show module log"
+    echo "   startlog    <module>         start a module and show log tail"
+    echo "   restartlog  <module>         restart a module and show log tail"
 
     echo ""
     echo "Modules: ${SEPAL_MODULES[@]}"
@@ -236,82 +275,74 @@ usage () {
     exit 1
 }
 
-missing_parameter () {
-    usage "Missing parameter"
+no_one_argument () {
+    usage "Too many arguments"
 }
 
 [ -z "$1" ] && usage
 
-while [[ ! -z "$1" ]] && [[ "$RETVAL" -eq 0 ]]; do
-    case "$1" in
-        clean)
-            clean
-            shift
-            ;;
-        build)
-            build
-            shift
-            ;;
-        build-debug)
-            build-debug
-            shift
-            ;;
-        status)
-            shift
-            if [ -z "$1" ]; then
-                missing_parameter
-            else
-                status $1
-                shift
-            fi
-            ;;
-        start)
-            shift
-            if [ -z "$1" ]; then
-                missing_parameter
-            else
-                start $1
-                shift
-            fi
-            ;;
-        restart)
-            shift
-            if [ -z "$1" ]; then
-                missing_parameter
-            else
-                restart $1
-                shift
-            fi
-            ;;
-        stop)
-            shift   
-            if [ -z "$1" ]; then
-                missing_parameter
-            else
-                stop $1
-                shift
-            fi
-            ;;
-        run)
-            shift
-            if [ -z "$1" ]; then
-                missing_parameter
-            else
-                run $1
-                shift
-            fi
-            ;;
-        log)
-            shift
-            if [ -z "$1" ]; then
-                missing_parameter
-            else
-                log $1
-                shift
-            fi
-            ;;
-        *)
-            usage
-            ;;
-    esac
-done
+case "$1" in
+    clean)
+        shift
+        clean
+        ;;
+    build)
+        shift
+        build
+        ;;
+    build-debug)
+        shift
+        build-debug
+        ;;
+    status)
+        shift
+        status $@
+        ;;
+    start)
+        shift
+        start $@
+        ;;
+    restart)
+        shift
+        restart $@
+        ;;
+    stop)
+        shift
+        stop $@
+        ;;
+    run)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            run $1
+        fi
+        ;;
+    log)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            log $1
+        fi
+        ;;
+    startlog)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            startlog $1
+        fi
+        ;;
+    restartlog)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            restartlog $1
+        fi
+        ;;
+    *)
+        usage
+        ;;
+esac
