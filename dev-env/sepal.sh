@@ -33,34 +33,37 @@ message () {
     local COLOR_NAME=$3
     local NO_COLOR='\033[0m'
     case "$COLOR_NAME" in
-    DARK_RED)
+    RED)
         COLOR='\033[0;31m'
         ;;
     LIGHT_RED)
         COLOR='\033[1;31m'
         ;;
-    DARK_GREEN)
+    GREEN)
         COLOR='\033[0;32m'
         ;;
     LIGHT_GREEN)
         COLOR='\033[1;32m'
         ;;
-    GREY)
-        COLOR='\033[0;37m'
+    YELLOW)
+        COLOR='\033[0;33m'
+        ;;
+    BLUE)
+        COLOR='\033[0;34m'
         ;;
     *)
         COLOR=$NO_COLOR # No Color
         ;;
     esac
-    echo -e "[${COLOR}${MESSAGE}${NO_COLOR}] ${MODULE}"
+    printf "${COLOR}%10s${NO_COLOR} ${MODULE}\n" "${MESSAGE}"
 }
 
 module_status () {
     local MODULE=$1    
     if is_running $MODULE; then
-        message "RUNNING" $MODULE DARK_GREEN
+        message "RUNNING" $MODULE GREEN
     else
-        message "NOT RUNNING" $MODULE DARK_RED
+        message "STOPPED" $MODULE RED
     fi
 }
 
@@ -73,7 +76,7 @@ module_start () {
         start-stop-daemon --start --oknodo --name $MODULE \
             --exec /bin/bash -- $0 run $MODULE >$LOG 2>&1 &
     else
-        message "RUNNING" $MODULE GREY
+        message "RUNNING" $MODULE BLUE
     fi
 }
 
@@ -81,7 +84,7 @@ module_stop () {
     local MODULE=$1    
     local PID=$(pidof ${MODULE})
     if [[ -z "$PID" ]]; then
-        message "NOT RUNNING" $MODULE GREY
+        message "STOPPED" $MODULE BLUE
     else
         message "STOPPING" $MODULE LIGHT_RED
         start-stop-daemon --stop --oknodo --retry 5 --ppid $PID
@@ -96,7 +99,7 @@ do_with_modules () {
         if is_module $MODULE; then
             $COMMAND $MODULE
         else
-            message "IGNORED" $MODULE GREY
+            message "IGNORED" $MODULE YELLOW
         fi
     done
 }
