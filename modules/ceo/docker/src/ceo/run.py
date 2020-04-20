@@ -24,7 +24,6 @@ if __name__ == '__main__':
     app.config['EE_KEY_PATH'] = args.ee_key_path
     app.config['EE_TOKEN_ENABLED'] = True
 
-
     logging.basicConfig(level=app.config['LOGGING_LEVEL'])
     logging.getLogger('flask_cors').level = app.config['LOGGING_LEVEL']
     logging.getLogger('ceo').level = app.config['LOGGING_LEVEL']

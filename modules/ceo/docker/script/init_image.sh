@@ -2,7 +2,7 @@
 set -e
 
 apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
- python-pip\
+ python3-pip\
  libssl-dev\
  libffi-dev\
  gettext\

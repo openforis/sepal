@@ -174,12 +174,13 @@ run () {
         ;;
     ceo)
         eval $(parse-yaml /etc/sepal/conf.d/secret.yml)
-        export sepal_host=`dig +short myip.opendns.com @resolver1.opendns.com`
+        export sepal_host="`dig +short myip.opendns.com @resolver1.opendns.com`:3000"
         export private_key_path=${HOME}/.ssh/google-earth-engine.key
         mkdir -p ${HOME}/.ssh/
         echo -e $google_earth_engine_private_key > $private_key_path
         pip3 install -r $SEPAL/modules/ceo/docker/requirements.txt
-        mkdir -p /var/sepal/ceo/cep
+        sudo mkdir -p /data/cep
+        sudo chmod a+rwx /data/cep
         cd $SEPAL/modules/ceo/docker/src/ceo/static
         yarn install
         gunicorn \

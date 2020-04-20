@@ -12,7 +12,6 @@ def build_app(gmaps_api_key='', digital_globe_api_key='', dgcs_connect_id='', pl
     app.config['EE_KEY_PATH'] = ee_key_path
     app.config['EE_TOKEN_ENABLED'] = True
 
-
     try:
         from gee_gateway import gee_gateway, gee_initialize
         gee_initialize(ee_account=ee_account, ee_key_path=ee_key_path)

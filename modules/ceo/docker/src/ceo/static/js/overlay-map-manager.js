@@ -58,7 +58,7 @@ let overlayMapManager = {
                     console.error(data, textStatus, jqXHR);
                 } else {
                     if (data.hasOwnProperty('mapid')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token, data.urlFormat);
+                        that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token, data.urlFormat);
                     }
                 }
                 callback();
@@ -90,7 +90,7 @@ let overlayMapManager = {
                     console.error(data, textStatus, jqXHR);
                 } else {
                     if (data.hasOwnProperty('mapid')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token, data.urlFormat);
+                        that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token, data.urlFormat);
                     }
                     callback();
                 }
@@ -221,7 +221,7 @@ let overlayMapManager = {
                     console.error(jqXHR, textStatus, errorThrown);
                 }).done(function(data, textStatus, jqXHR) {
                     if (data.hasOwnProperty('mapId')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapId, data.token, data.urlFormat);
+                        that.overlayMapTypes[index] = createEarthEngineLayer(data.mapId, data.token, data.urlTemplate);
                     }
                     callback();
                 });
