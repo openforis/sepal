@@ -18,7 +18,7 @@ pidof () {
 
 is_running () {
     local MODULE=$1
-    PID=$(pidof ${MODULE})
+    local PID=$(pidof ${MODULE})
     [ ! -z "$PID" ]
 }
 
@@ -44,9 +44,6 @@ message () {
         ;;
     LIGHT_GREEN)
         COLOR='\033[1;32m'
-        ;;
-    YELLOW)
-        COLOR='\033[1;33m'
         ;;
     GREY)
         COLOR='\033[0;37m'
