@@ -24,7 +24,7 @@ def beforeFirstRequest(*args, **kwargs):
     mongo.db.records.create_index('id')
     mongo.db.records.create_index('project_id')
     # imagery
-    with app.open_resource('../static/resources/imagery.json') as f:
+    with app.open_resource('../static/resources/imagery.json', mode='r') as f:
         imagery = json.load(f)
         for value in imagery:
             mongo.db.imagery.update({'id': value.get('id')}, {'$set': value}, upsert=True)
