@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y \
   dnsutils \
   git \
   gnupg \
+  htop \
   libssl-dev \
   libffi-dev \
   nano \
