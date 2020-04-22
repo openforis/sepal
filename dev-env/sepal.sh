@@ -142,20 +142,20 @@ build-debug () {
 
 log () {
     local MODULE=$1
-    less $(logfile $MODULE)
+    less -r $(logfile $MODULE)
 }
 
 startlog () {
     local MODULE=$1
     module_start $1
-    less +F $(logfile $MODULE)
+    less -r +F $(logfile $MODULE)
 }
 
 restartlog () {
     local MODULE=$1
     module_stop $1
     module_start $1
-    less +F $(logfile $MODULE)
+    less -r +F $(logfile $MODULE)
 }
 
 run () {
