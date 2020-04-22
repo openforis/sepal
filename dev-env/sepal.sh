@@ -126,17 +126,17 @@ restart () {
 }
 
 clean () {
-    stop all
+    stop
     $SEPAL/gradlew clean -p $SEPAL
 }
 
 build () {
-    stop all
+    stop
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL
 }
 
 build-debug () {
-    stop all
+    stop
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL --stacktrace --debug
 }
 
