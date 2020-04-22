@@ -1,5 +1,5 @@
 const ee = require('ee')
-const {EMPTY, interval, of, throwError} = require('rxjs')
+const {EMPTY, defer, interval, of, throwError} = require('rxjs')
 const {distinctUntilChanged, exhaustMap, filter, finalize, map, switchMap, takeWhile} = require('rxjs/operators')
 const log = require('sepal/log').getLogger('task')
 const progress = require('root/progress')
@@ -15,10 +15,14 @@ const executeTask$ = task =>
 
 const start$ = task =>
     ee.$('start task', (resolve, reject) =>
-        task.start(
-            () => resolve(),
-            error => reject(error)
-        )
+        ee.data.startProcessing(null, task.config_, ({taskId}, error) => {
+            if (error) {
+                reject(error)
+            } else {
+                task.id = taskId // [TODO] Solve this without mutation
+                resolve()
+            }
+        })
     )
 
 const monitor$ = task =>
@@ -36,7 +40,8 @@ const monitor$ = task =>
 const status$ = task =>
     ee.$('task status', (resolve, reject) =>
         ee.data.getTaskStatus(task.id,
-            (status, error) => error ? reject(error) : resolve(status)
+            (status, error) =>
+                error ? reject(error) : resolve(status)
         )
     ).pipe(
         map(([status]) => status)
@@ -61,25 +66,25 @@ const isRunning = state => [UNSUBMITTED, READY, RUNNING].includes(state)
 
 const progress$ = state => {
     switch (state) {
-        case UNSUBMITTED:
-            return of(progress({
-                defaultMessage: 'Submitting export task to Google Earth Engine...',
-                messageKey: 'tasks.ee.export.pending'
-            }))
-        case READY:
-            return of(progress({
-                defaultMessage: 'Waiting for Google Earth Engine to start export...',
-                messageKey: 'tasks.ee.export.ready'
-            }))
-        case RUNNING:
-            return of(progress({
-                defaultMessage: 'Google Earth Engine is exporting...',
-                messageKey: 'tasks.ee.export.running'
-            }))
-        case FAILED:
-            return throwError(new Error(''))
-        default:
-            return EMPTY
+    case UNSUBMITTED:
+        return of(progress({
+            defaultMessage: 'Submitting export task to Google Earth Engine...',
+            messageKey: 'tasks.ee.export.pending'
+        }))
+    case READY:
+        return of(progress({
+            defaultMessage: 'Waiting for Google Earth Engine to start export...',
+            messageKey: 'tasks.ee.export.ready'
+        }))
+    case RUNNING:
+        return of(progress({
+            defaultMessage: 'Google Earth Engine is exporting...',
+            messageKey: 'tasks.ee.export.running'
+        }))
+    case FAILED:
+        return throwError(new Error(''))
+    default:
+        return EMPTY
     }
 }
 

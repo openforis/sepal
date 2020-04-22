@@ -43,28 +43,28 @@ const loadCredentials$ = path =>
 
 const authenticateServiceAccount$ = serviceAccountCredentials =>
     ee.$('autenticate service account', (resolve, reject) => {
-            ee.sepal.setAuthType('SERVICE_ACCOUNT')
-            ee.data.authenticateViaPrivateKey(
-                serviceAccountCredentials,
-                () => resolve(),
-                error => reject(error)
-            )
-        }
+        ee.sepal.setAuthType('SERVICE_ACCOUNT')
+        ee.data.authenticateViaPrivateKey(
+            serviceAccountCredentials,
+            () => resolve(),
+            error => reject(error)
+        )
+    }
     )
 
 const authenticateUserAccount$ = userCredentials =>
     ee.$('authenticate user account', (resolve, reject) => {
-            ee.sepal.setAuthType('USER')
-            ee.data.setAuthToken(
-                null,
-                'Bearer',
-                userCredentials.accessToken,
-                secondsToExpiration(userCredentials.accessTokenExpiryDate),
-                null,
-                error => error ? reject(error) : resolve(),
-                false
-            )
-        }
+        ee.sepal.setAuthType('USER')
+        ee.data.setAuthToken(
+            null,
+            'Bearer',
+            userCredentials.accessToken,
+            secondsToExpiration(userCredentials.accessTokenExpiryDate),
+            null,
+            error => error ? reject(error) : resolve(),
+            false
+        )
+    }
     )
 
 const initialize$ = () =>
@@ -81,7 +81,6 @@ const initialize$ = () =>
                             null,
                             null,
                             () => {
-                                ee.data.setCloudApiEnabled(false)
                                 return resolve()
                             },
                             error => reject(error)
@@ -103,7 +102,6 @@ fs.watch(CREDENTIALS_DIR, (eventType, filename) => {
     if (filename === CREDENTIALS_FILENAME)
         initialize$().subscribe()
 })
-
 
 module.exports = initialize$
 
