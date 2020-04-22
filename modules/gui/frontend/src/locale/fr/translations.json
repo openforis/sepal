@@ -1295,8 +1295,10 @@
         "title": "Messages utilisateur"
     },
     "users": {
-        "countNoFilter": "Total utilisateurs: {count}",
-        "countWithFilter": "{count} utilisateur avec \"{filter}\"",
+        "count": {
+            "onePage": "{count} {count, plural, one {utilisateur} other {utilisateurs}}",
+            "morePages": "{count} {count, plural, one {utilisateur} other {utilisateurs}}, montrant {start}-{stop}"
+        },
         "filter": {
             "placeholder": "Chercher les utilisateurs"
         },

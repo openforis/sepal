@@ -63,7 +63,7 @@ function docker_image_exists() {
 
 function build_docker_image() {
     echo "Building Docker image..."
-    docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env
+    docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env 1>/dev/null 
 }
 
 function remove_docker_image() {
@@ -90,26 +90,29 @@ function docker_container_stopped() {
 
 function start_docker_container() {
     echo "Starting Docker container..."
-    docker start $IMAGE_NAME
+    docker start $IMAGE_NAME 1>/dev/null 
 }
 
 function stop_docker_container() {
     echo "Stopping Docker container..."
-    docker stop $IMAGE_NAME
+    docker stop $IMAGE_NAME 1>/dev/null 
 }
 
 function create_docker_container() {
     echo "Running Docker container..."
+    check_config_dir
+    check_data_dir
     docker run \
         -dt \
         -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
         -v $DATA_DIR:/var/sepal:Z \
         -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
         -p 3000:3000 \
+        -p 8001:8001 \
         --name $CONTAINER_NAME \
-        $IMAGE_NAME
+        $IMAGE_NAME 1>/dev/null 
     echo "Setting up Docker container..."
-    docker exec sepal-dev-env /usr/local/bin/sepal-setup
+    docker exec sepal-dev-env /usr/local/lib/sepal/dev-env/sepal-setup.sh
 }
 
 function remove_docker_container() {
@@ -133,7 +136,7 @@ function stop() {
 
 function cleanup() {
     [ "$(docker_container_exists)" ] && remove_docker_container
-    [ "$(docker_image_exists)" ] && remove_docker_image
+    # [ "$(docker_image_exists)" ] && remove_docker_image
 }
 
 function usage() {
@@ -151,7 +154,7 @@ function usage() {
     echo ""
     echo "Options:"
     echo ""
-    echo "  -c, --config    <config dir>    required"
+    echo "  -c, --config    <config dir>    required for first start"
     echo "  -d, --data      <data dir>      optional (default ./sepal-data)"
     echo ""
     exit 1
@@ -159,9 +162,7 @@ function usage() {
 
 case "$COMMAND" in
     start)
-        check_config_dir
-        check_data_dir
-        check_docker_image
+        build_docker_image
         start
         start_shell
         RETVAL=$?

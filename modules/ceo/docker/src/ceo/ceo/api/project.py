@@ -1,7 +1,7 @@
 import os, logging, requests, json, datetime, zipfile, shutil, csv
 import xml.etree.ElementTree as ET
 
-from flask import Response, session, request, redirect, url_for, jsonify, render_template, send_file, abort
+from flask import Response, session, request, redirect, url_for, jsonify, render_template, send_file, abort, url_for
 from flask_cors import cross_origin
 
 from .. import app
@@ -129,7 +129,7 @@ def projectAdd():
             'codeLists': codeLists
         })
     mongo.db.projects.insert(project)
-    return redirect(app.config['BASE'])
+    return redirect(request.url_root.replace('http://', 'https://') + 'ceo/')
 
 @app.route('/api/project/<id>', methods=['PUT'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
@@ -405,7 +405,7 @@ def saveFileFromRequest(file):
     csvFilePath = csvProperty.replace('${project_path}/', '')
     csvFileFullPath = os.path.join(extractDir, csvFilePath)
     if os.path.isfile(csvFileFullPath):
-        with open(csvFileFullPath, 'rb') as csvfile:
+        with open(csvFileFullPath, 'r') as csvfile:
             csvreader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             fieldnames = csvreader.fieldnames
             for row in csvreader:
@@ -549,7 +549,7 @@ def getLayersFromRequest(request):
         if overlay:
             overlay['layerName'] = layerName[i]
             overlay['type'] = layerType[i]
-            cleanOverlay = { k:v.strip() for k, v in overlay.iteritems() }
+            cleanOverlay = { k:v.strip() for k, v in iter(overlay.items()) }
             overlays.append(cleanOverlay)
     return overlays
 

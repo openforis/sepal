@@ -72,7 +72,7 @@ class _Input extends React.Component {
         const {focused} = this.state
         return (
             // [HACK] input is wrapped in a div for fixing Firefox input width in flex
-            <Keybinding keymap={{' ': null}} disabled={!focused}>
+            <Keybinding keymap={{' ': null}} disabled={!focused} priority>
                 <div className={styles.inputWrapper}>
                     <input
                         ref={this.ref}
@@ -233,7 +233,7 @@ class _Textarea extends React.Component {
         const {className, name, value, autoFocus, tabIndex, minRows, maxRows, onChange, onBlur, onFocus} = this.props
         const {focused} = this.state
         return (
-            <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused}>
+            <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused} priority>
                 <TextareaAutosize
                     ref={this.element}
                     className={className}

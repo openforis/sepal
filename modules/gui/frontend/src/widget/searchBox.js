@@ -2,7 +2,7 @@ import {Input} from 'widget/input'
 import {Shape} from 'widget/shape'
 import {Subject, merge} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, filter} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators'
 import Icon from 'widget/icon'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
@@ -59,12 +59,13 @@ class _SearchBox extends React.Component {
         const search$ = this.search$
         const debouncedSearch$ = merge(
             search$.pipe(
-                filter(value => !value)
+                filter(value => !value) // skip debouncing when empty
             ),
             search$.pipe(
-                filter(value => value),
                 debounceTime(debounce)
             )
+        ).pipe(
+            distinctUntilChanged()
         )
         addSubscription(
             debouncedSearch$.subscribe(

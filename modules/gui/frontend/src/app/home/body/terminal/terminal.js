@@ -13,6 +13,7 @@ import {msg} from 'translate'
 import {post$} from 'http-client'
 import {v4 as uuid} from 'uuid'
 import {withLatestFrom} from 'rxjs/operators'
+import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import styles from './terminal.module.css'
@@ -87,7 +88,9 @@ class _TerminalSession extends React.Component {
         return (
             <ElementResizeDetector onResize={() => this.fit$.next()}>
                 <ContentPadding menuPadding horizontalPadding verticalPadding>
-                    <div className={styles.terminal} ref={this.terminalContainer}></div>
+                    <Keybinding keymap={{' ': null}} priority>
+                        <div className={styles.terminal} ref={this.terminalContainer}></div>
+                    </Keybinding>
                 </ContentPadding>
             </ElementResizeDetector>
         )

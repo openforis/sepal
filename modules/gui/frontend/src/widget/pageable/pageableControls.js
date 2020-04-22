@@ -31,7 +31,16 @@ export const PageableControls = props => {
                 icon='forward'
                 onClick={() => pageable.nextPage()}
                 disabled={pageable.isLastPage}/>
+            <Button
+                chromeless
+                look='transparent'
+                size='large'
+                shape='pill'
+                icon='fast-forward'
+                onClick={() => pageable.lastPage()}
+                disabled={pageable.isLastPage}/>
         </ButtonGroup>
+        
     const renderCustomControls = pageable =>
         <React.Fragment>
             {props.children({...pageable, renderDefaultControls: () => renderDefaultControls(pageable)})}

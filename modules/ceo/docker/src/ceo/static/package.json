@@ -8,7 +8,7 @@
   "dependencies": {
     "jquery": "~3.0.0",
     "bootstrap": "v4.0.0-alpha.6",
-    "earthengine-api": "git+https://github.com/openforis/earthengine-api.git",
+    "@google/earthengine": "0.1.217",
     "font-awesome": "4.7.0",
     "leaflet": "1.0.3",
     "highcharts": "^5.0.12",

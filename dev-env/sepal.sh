@@ -3,194 +3,341 @@ set -e
 
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
-SEPAL_MODULES="user sepal-server api-gateway task gee gui"
+SEPAL_MODULES=(user sepal-server api-gateway task gee gui ceo mongo)
+LOG_DIR=/var/log/sepal
 
-pidof () {
-    screen -ls | grep "sepal:$1" | cut -d "." -f 1
+is_module () {
+    local MODULE=$1
+    printf '%s\n' ${SEPAL_MODULES[@]} | grep -qP "^$MODULE$"
 }
 
-status () {
-    for MODULE in "$@"
-    do
-        PID=$(pidof ${MODULE})
-        if [ -z "$PID" ]; then
-            echo "[STOPPED] ${MODULE}"
+pidof () {
+    local MODULE=$1
+    ps -ef | grep bash | grep "sepal run $MODULE" | awk '{ print $2 }'
+}
+
+is_running () {
+    local MODULE=$1
+    local PID=$(pidof ${MODULE})
+    [ ! -z "$PID" ]
+}
+
+logfile () {
+    local MODULE=$1
+    echo "$LOG_DIR/$MODULE.log"
+}
+
+message () {
+    local MESSAGE=$1
+    local MODULE=$2
+    local COLOR_NAME=$3
+    local NO_COLOR='\033[0m'
+    case "$COLOR_NAME" in
+    RED)
+        COLOR='\033[0;31m'
+        ;;
+    LIGHT_RED)
+        COLOR='\033[1;31m'
+        ;;
+    GREEN)
+        COLOR='\033[0;32m'
+        ;;
+    LIGHT_GREEN)
+        COLOR='\033[1;32m'
+        ;;
+    YELLOW)
+        COLOR='\033[0;33m'
+        ;;
+    BLUE)
+        COLOR='\033[0;34m'
+        ;;
+    *)
+        COLOR=$NO_COLOR # No Color
+        ;;
+    esac
+    printf "${COLOR}%10s${NO_COLOR} ${MODULE}\n" "${MESSAGE}"
+}
+
+module_status () {
+    local MODULE=$1    
+    if is_running $MODULE; then
+        message "RUNNING" $MODULE GREEN
+    else
+        message "STOPPED" $MODULE RED
+    fi
+}
+
+module_start () {
+    local MODULE=$1    
+    local PID=$(pidof ${MODULE})
+    if [[ -z "$PID" ]]; then
+        local LOG=$(logfile $MODULE)
+        message "STARTING" $MODULE LIGHT_GREEN
+        start-stop-daemon --start --oknodo --name $MODULE \
+            --exec /bin/bash -- $0 run $MODULE >$LOG 2>&1 &
+    else
+        message "RUNNING" $MODULE BLUE
+    fi
+}
+
+module_stop () {
+    local MODULE=$1    
+    local PID=$(pidof ${MODULE})
+    if [[ -z "$PID" ]]; then
+        message "STOPPED" $MODULE BLUE
+    else
+        message "STOPPING" $MODULE LIGHT_RED
+        start-stop-daemon --stop --oknodo --retry 5 --ppid $PID
+    fi
+}
+
+do_with_modules () {
+    local COMMAND=$1
+    shift
+    local MODULES=${@:-${SEPAL_MODULES[@]}}
+    for MODULE in $MODULES; do
+        if is_module $MODULE; then
+            $COMMAND $MODULE
         else
-            echo "[RUNNING] ${MODULE}"
+            message "IGNORED" $MODULE YELLOW
         fi
     done
 }
 
-stop () {
-    for MODULE in "$@"; do
-        PID=$(pidof ${MODULE})
-        [ ! -z "$PID" ] && pkill -P $PID
-    done
-    status ${SEPAL_MODULES}
+status () {
+    do_with_modules "module_status" $@
 }
 
 start () {
-    for MODULE in "$@"; do
-        PID=$(pidof ${MODULE})
-        [ -z "$PID" ] && screen -d -S sepal:${MODULE} -m $0 run-${MODULE}
-    done
-    status ${SEPAL_MODULES}
+    do_with_modules "module_start" $@
+}
+
+stop () {
+    do_with_modules "module_stop" $@
+}
+
+force_stop () {
+    do_with_modules "module_kill" $@
 }
 
 restart () {
-    stop $@
-    start $@
+    do_with_modules "module_stop" $@
+    do_with_modules "module_start" $@
 }
 
 clean () {
+    stop all
     $SEPAL/gradlew clean -p $SEPAL
 }
 
 build () {
+    stop all
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL
 }
 
 build-debug () {
+    stop all
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL --stacktrace --debug
 }
 
-rebuild () {
-    stop $SEPAL_MODULES
-    build
-    start $SEPAL_MODULES
+log () {
+    local MODULE=$1
+    less $(logfile $MODULE)
 }
 
-inspect () {
-    PID=$(pidof $1)
-    if [ -z "$PID" ]; then
-        echo "Not running $1"
-    else
-        screen -r sepal:$1
-    fi
+startlog () {
+    local MODULE=$1
+    module_start $1
+    less +F $(logfile $MODULE)
+}
+
+restartlog () {
+    local MODULE=$1
+    module_stop $1
+    module_start $1
+    less +F $(logfile $MODULE)
+}
+
+run () {
+    local MODULE=$1
+    case $MODULE in 
+    api-gateway)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-api-gateway:runDev \
+        -DconfigDir="$SEPAL_CONFIG/api-gateway"
+        ;;
+    mongo)
+        mkdir -p /var/sepal/ceo/db
+        mongod --dbpath /var/sepal/ceo/db
+        ;;
+    ceo)
+        eval $(parse-yaml /etc/sepal/conf.d/secret.yml)
+        export sepal_host="`dig +short myip.opendns.com @resolver1.opendns.com`:3000"
+        export private_key_path=${HOME}/.ssh/google-earth-engine.key
+        mkdir -p ${HOME}/.ssh/
+        echo -e $google_earth_engine_private_key > $private_key_path
+        pip3 install -r $SEPAL/modules/ceo/docker/requirements.txt
+        sudo mkdir -p /data/cep
+        sudo chmod a+rwx /data/cep
+        cd $SEPAL/modules/ceo/docker/src/ceo/static
+        yarn install
+        gunicorn \
+            --pythonpath $SEPAL/modules/ceo/docker/src/ceo \
+            --bind 0.0.0.0:7766 \
+            --workers 5 \
+            --timeout 3600 \
+            --threads 16 \
+            --backlog 64 \
+            --error-logfile - \
+            --log-file - \
+            --access-logfile - \
+            --log-level debug \
+            --capture-output "wsgi:build_app( \
+                gmaps_api_key='$google_maps_api_key', \
+                digital_globe_api_key='$digital_globe_api_key', \
+                dgcs_connect_id='$digital_globe_connect_id', \
+                planet_api_key='$planet_api_key', \
+                sepal_host='${sepal_host:-localhost}', \
+                ee_account='$google_earth_engine_account', \
+                ee_key_path='$private_key_path')" \
+        ;;
+    gee)
+        cd $SEPAL/lib/js/shared
+        npm install
+        cd $SEPAL/modules/gee/docker
+        npm i
+        SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh
+        ;;
+    gui)
+        cd $SEPAL/modules/gui/frontend
+        npm install
+        npm start
+        ;;
+    sepal-server)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-server:runDev \
+        -DconfigDir="$SEPAL_CONFIG/sepal-server" 
+            #-DskipSceneMetaDataUpdate
+        ;;
+    task)
+        cd $SEPAL/lib/js/shared
+        npm install
+        cd $SEPAL/modules/task/docker
+        npm i
+        SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh    
+        ;;
+    user)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-user:runDev \
+        -DconfigDir="$SEPAL_CONFIG/user"
+        ;;
+    *)
+        return 1
+        ;;
+    esac
 }
 
 usage () {
     if [ ! -z "$1" ]; then
+        echo ""
         echo "Error: $1"
     fi
+    echo ""
     echo "Usage: $0 <command> [<arguments>]"
     echo ""
     echo "Commands:"
-    echo "  clean                    clean SEPAL"
-    echo "  build                    build SEPAL"
-    echo "  build-debug              build SEPAL w/debug enabled"
-    echo "  rebuild                  build SEPAL and restart"
-    echo "  status [<module>...]     check services"
-    echo "  stop [<module>...]       stop services"
-    echo "  start [<module>...]      start services"
-    echo "  restart [<module>...]    restart services"
-    echo "  inspect <module>         recall service console"
+    echo "   clean                        clean SEPAL"
+    echo "   build                        build SEPAL"
+    echo "   build-debug                  build SEPAL w/debug enabled"
+    echo "   status      [<module>...]    check module(s)"
+    echo "   start       [<module>...]    start module(s)"
+    echo "   stop        [<module>...]    stop module(s)"
+    echo "   restart     [<module>...]    restart module(s)"
+    echo "   run         <module>         run module interactively"
+    echo "   log         <module>         show module log"
+    echo "   startlog    <module>         start a module and show log tail"
+    echo "   restartlog  <module>         restart a module and show log tail"
 
     echo ""
-    echo "Modules: $SEPAL_MODULES"
+    echo "Modules: ${SEPAL_MODULES[@]}"
     echo ""
     exit 1
 }
 
-missing_parameter () {
-    usage "Missing parameter"
+no_one_argument () {
+    usage "Too many arguments"
 }
 
-case $1 in
-clean)
-    clean
-    ;;
-build)
-    build
-    ;;
-build-debug)
-    build-debug
-    ;;
-rebuild)
-    rebuild
-    ;;
-status)
-    shift
-    if [ -z "$1" ]; then
-        status $SEPAL_MODULES
-    else
+[ -z "$1" ] && usage
+
+case "$1" in
+    clean)
+        shift
+        clean
+        ;;
+    build)
+        shift
+        build
+        ;;
+    build-debug)
+        shift
+        build-debug
+        ;;
+    status)
+        shift
         status $@
-    fi
-    ;;
-start)
-    shift
-    if [ -z "$1" ]; then
-        start $SEPAL_MODULES
-    else
+        ;;
+    start)
+        shift
         start $@
-    fi
-    ;;
-restart)
-    shift
-    if [ -z "$1" ]; then
-        restart $SEPAL_MODULES
-    else
+        ;;
+    restart)
+        shift
         restart $@
-    fi
-    ;;
-stop)
-    shift   
-    if [ -z "$1" ]; then
-        stop $SEPAL_MODULES
-    else
+        ;;
+    stop)
+        shift
         stop $@
-    fi
-    ;;
-inspect)
-    shift
-    if [ -z "$1" ]; then
-        missing_parameter
-    else
-        inspect $1
-    fi
-    ;;
-run-api-gateway)
-    $SEPAL/gradlew \
-      -p $SEPAL \
-      --no-daemon \
-      :sepal-api-gateway:runDev \
-      -DconfigDir="$SEPAL_CONFIG/api-gateway"
-    ;;
-run-gee)
-    cd $SEPAL/lib/js/shared
-    npm install
-    cd $SEPAL/modules/gee/docker
-    npm i
-    SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh
-    ;;
-run-gui)
-    cd $SEPAL/modules/gui/frontend
-    npm install
-    npm start
-    ;;
-run-sepal-server)
-    $SEPAL/gradlew \
-      -p $SEPAL \
-      --no-daemon \
-      :sepal-server:runDev \
-      -DconfigDir="$SEPAL_CONFIG/sepal-server" 
-          #-DskipSceneMetaDataUpdate
-    ;;
-run-task)
-    cd $SEPAL/lib/js/shared
-    npm install
-    cd $SEPAL/modules/task/docker
-    npm i
-    SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh
-    ;;
-run-user)
-    $SEPAL/gradlew \
-      -p $SEPAL \
-      --no-daemon \
-      :sepal-user:runDev \
-      -DconfigDir="$SEPAL_CONFIG/user"
-    ;;
-*)
-    usage
-    ;;
+        ;;
+    run)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            run $1
+        fi
+        ;;
+    log)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            log $1
+        fi
+        ;;
+    startlog)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            startlog $1
+        fi
+        ;;
+    restartlog)
+        shift
+        if [[ $# -ne 1 ]]; then
+            no_one_argument
+        else
+            restartlog $1
+        fi
+        ;;
+    *)
+        usage
+        ;;
 esac

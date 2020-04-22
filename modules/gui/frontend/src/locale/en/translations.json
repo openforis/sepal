@@ -193,8 +193,8 @@
                 "description": "Harness high performance cloud-based computing and modern geospatial data infrastructures."
             },
             "googleEarthEngine": {
-                "title": "Google Earth Engine",
-                "description": "Get access to Earth Engine's multi-petabyte catalog of satellite imagery and use their planetary-scale analysis capabilities. All without writing a single line of code. Just connect your Google account to SEPAL."
+                "title": "Earth Engine",
+                "description": "Get access to Google Earth Engine's multi-petabyte catalog of satellite imagery and use their planetary-scale analysis capabilities. All without writing a single line of code. Just connect your Google account to SEPAL."
             },
             "jupyterNotebook": {
                 "title": "Jupyter Notebook",
@@ -1637,9 +1637,10 @@
         "title": "User messages"
     },
     "users": {
-        "count": "users {start}-{stop} of {count}",
-        "countNoFilter": "{count} {count, plural, one {user} other {users}}",
-        "countWithFilter": "{count} {count, plural, one {user} other {users}} out of {total}",
+        "count": {
+            "onePage": "{count} {count, plural, one {user} other {users}}",
+            "morePages": "{count} {count, plural, one {user} other {users}}, showing {start}-{stop}"
+        },
         "filter": {
             "status": {
                 "ignore": {
@@ -1650,13 +1651,8 @@
                 },
                 "active": {
                     "label": "Active"
-                }
-            },
-            "budget": {
-                "ignore": {
-                    "label": "All"
                 },
-                "over": {
+                "overbudget": {
                     "label": "Overbudget"
                 }
             },

@@ -1,4 +1,4 @@
-git+git://github.com/openforis/earthengine-api.git@v0.1.213#egg=earthengine-api&subdirectory=python
+git+git://github.com/openforis/earthengine-api.git@v0.1.217#egg=earthengine-api&subdirectory=python
 git+git://github.com/Servir-Mekong/landcoverPackage#egg=servir-mekong-land-cover
 Flask>=0.12.2
 git+git://github.com/cdanielw/promise

@@ -135,5 +135,19 @@
     "rewriteRedirects": "true",
     "https": "false",
     "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/ceo/",
+    "target": "http://localhost:7766/",
+    "https": "false",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/ceo-gateway/",
+    "target": "http://localhost:8001/",
+    "https": "false",
+    "authenticate": "true"
   }
 ]

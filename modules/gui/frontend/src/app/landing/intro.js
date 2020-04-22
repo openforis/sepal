@@ -2,6 +2,7 @@ import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {Scrollable, ScrollableContainer} from 'widget/scrollable'
 import {msg} from 'translate'
+import Keybinding from 'widget/keybinding'
 import React from 'react'
 import Tagline from './tagline'
 import Title from './title'
@@ -44,150 +45,138 @@ const Intro = ({onLaunch}) =>
     </ScrollableContainer>
 
 const Main = ({onLaunch}) =>
-    <div id='main' className={styles.main}>
-        <Title className={styles.title}/>
-        <Tagline className={styles.tagline}/>
-        <ButtonGroup layout='horizontal-nowrap' spacing='loose'>
-            <Button
-                look='default'
-                size='x-large'
-                air='more'
-                label={msg('landing.signup')}
-                tabIndex={1}
-                linkUrl={signupUrl}
-                linkTarget='_self'
-                additionalClassName={styles.button}
-            />
-            <Button
-                type='submit'
-                look='apply'
-                size='x-large'
-                air='more'
-                label={msg('landing.launch')}
-                tabIndex={2}
-                onClick={onLaunch}
-                additionalClassName={styles.button}
-            />
-        </ButtonGroup>
-        <ButtonGroup layout='horizontal-nowrap' alignment='center'>
-            <Button
-                look='transparent'
-                shape='circle'
-                size='xx-large'
-                icon='chevron-down'
-                onClick={scrollToInfo}
-                additionalClassName={styles.pulse}
-            />
-        </ButtonGroup>
-    </div>
+    <Keybinding keymap={{'Enter': onLaunch, 'Escape': onLaunch}}>
+        <div id='main' className={styles.main}>
+            <Title className={styles.title}/>
+            <Tagline className={styles.tagline}/>
+            <ButtonGroup layout='horizontal-nowrap' spacing='loose'>
+                <Button
+                    look='default'
+                    size='x-large'
+                    air='more'
+                    label={msg('landing.signup')}
+                    tabIndex={1}
+                    linkUrl={signupUrl}
+                    linkTarget='_self'
+                    additionalClassName={styles.button}
+                />
+                <Button
+                    type='submit'
+                    look='apply'
+                    size='x-large'
+                    air='more'
+                    label={msg('landing.launch')}
+                    tabIndex={2}
+                    onClick={onLaunch}
+                    additionalClassName={styles.button}
+                />
+            </ButtonGroup>
+            <ButtonGroup layout='horizontal-nowrap' alignment='center'>
+                <Button
+                    look='transparent'
+                    shape='circle'
+                    size='xx-large'
+                    icon='chevron-down'
+                    onClick={scrollToInfo}
+                    additionalClassName={styles.pulse}
+                />
+            </ButtonGroup>
+        </div>
+    </Keybinding>
 
-const Block = ({theme, image, imagePosition, maxImageSize, textKey, responsive, classNames = []}) =>
-    <div className={[styles.block, styles[theme], styles[imagePosition], responsive ? styles.responsive : null, ...classNames].join(' ')}>
-        <img src={image} alt="" style={{maxWidth: maxImageSize}}/>
-        <div>
+const Block = ({theme, image, images, imagePosition, textKey, type}) =>
+    <div className={[styles.block, styles[theme], styles[imagePosition], styles[type]].join(' ')}>
+        <div className={styles.image}>
+            {image ? <img src={image} alt=""/> : null}
+            {images ? images.map((image, index) => <img key={index} src={image} alt=""/>) : null}
+        </div>
+        <div className={styles.text}>
             <div className={styles.title}>{msg(`${textKey}.title`)}</div>
-            <p>{msg(`${textKey}.description`)}</p>
+            <div className={styles.description}>{msg(`${textKey}.description`, {}, ' ')}</div>
         </div>
     </div>
 
 const Info = () =>
     <div id='info'>
         <Block
+            type='feature'
             theme='dark'
             image={image_01}
             imagePosition='left'
             textKey='landing.intro.easeOfUse'
-            responsive
         />
         <Block
+            type='feature'
             theme='dark'
             image={image_02}
             imagePosition='right'
             textKey='landing.intro.computingPower'
-            responsive
         />
         <Block
+            type='tool'
             theme='light'
             image={image_gee}
             imagePosition='left'
-            maxImageSize={150}
             textKey='landing.intro.googleEarthEngine'
-            classNames={[styles.tool]}
         />
         <Block
+            type='tool'
             theme='light'
             image={image_jupyter}
             imagePosition='right'
-            maxImageSize={150}
             textKey='landing.intro.jupyterNotebook'
-            classNames={[styles.tool]}
         />
         <Block
+            type='tool'
             theme='light'
             image={image_shiny}
             imagePosition='left'
-            maxImageSize={150}
             textKey='landing.intro.shiny'
-            classNames={[styles.tool]}
         />
         <Block
+            type='tool'
             theme='light'
             image={image_rstudio}
             imagePosition='right'
-            maxImageSize={150}
             textKey='landing.intro.rstudio'
-            classNames={[styles.tool]}
         />
         <Block
+            type='feature'
             theme='dark'
             image={image_03}
             imagePosition='left'
             textKey='landing.intro.integrations'
-            responsive
         />
         <Block
+            type='feature'
             theme='dark'
             image={image_04}
             imagePosition='right'
             textKey='landing.intro.powerUsers'
-            responsive
         />
-        <About/>
-        <Partners/>
-    </div>
-
-const About = () =>
-    <div className={[styles.block, styles.light, styles.right].join(' ')}>
-        <div className={styles.img}>
-            <img src={partner_openforis} alt=''/>
-            <img src={partner_nicfi} alt=''/>
-        </div>
-        <div>
-            <div className={styles.title}>{msg('landing.intro.about.title')}</div>
-            <p>{msg('landing.intro.about.description')}</p>
-        </div>
-    </div>
-
-const Partners = () =>
-    <div className={[styles.block, styles.light].join(' ')}>
-        <div className={styles.title}>{msg('landing.intro.partners.title')}</div>
-        <div className={[styles.img, styles.partner].join(' ')}>
-            <img src={partner_ec} alt=''/>
-            <img src={partner_esa} alt=''/>
-            <img src={partner_eth} alt=''/>
-            <img src={partner_formin} alt=''/>
-            <img src={partner_germany} alt=''/>
-            <img src={partner_gfoi} alt=''/>
-            <img src={partner_google} alt=''/>
-            <img src={partner_jaxa} alt=''/>
-            <img src={partner_jica} alt=''/>
-            <img src={partner_kfw} alt=''/>
-            <img src={partner_nasa} alt=''/>
-            <img src={partner_sc} alt=''/>
-            <img src={partner_servir} alt=''/>
-            <img src={partner_sig} alt=''/>
-            <img src={partner_wageningen} alt=''/>
-        </div>
+        <Block
+            type='about'
+            theme='light'
+            images={[partner_openforis, partner_nicfi]}
+            imagePosition='right'
+            textKey='landing.intro.about'
+        />
+        <Block
+            type='partners'
+            theme='light'
+            images={[
+                partner_ec, partner_esa,
+                partner_eth, partner_formin,
+                partner_germany, partner_gfoi,
+                partner_google, partner_jaxa,
+                partner_jica, partner_kfw,
+                partner_nasa, partner_sc,
+                partner_servir, partner_sig,
+                partner_wageningen
+            ]}
+            imagePosition='center'
+            textKey='landing.intro.partners'
+        />
     </div>
 
 const Footer = () =>

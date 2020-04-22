@@ -90,3 +90,9 @@ to prevent click-through from click-hold buttons */
 .dragHandle {
     cursor: grab;
 }
+
+.highlight {
+    font-weight: 500;
+    color: yellow;
+    background-color: transparent;
+}
