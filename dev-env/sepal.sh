@@ -207,7 +207,7 @@ run () {
         cd $SEPAL/lib/js/shared
         npm install
         cd $SEPAL/modules/gee/docker
-        npm i
+        npm install
         SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh
         ;;
     gui)
