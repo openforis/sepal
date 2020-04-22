@@ -56,24 +56,24 @@ const exportImageToSepal$ = (
     const fileNamePrefix = `ee_export/${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}/`
     return initUserBucket$().pipe(
         switchMap(bucket => {
-                const export$ = exportToCloudStorage$({
-                    createTask: () => {
-                        return ee.batch.Export.image.toCloudStorage(
-                            image, description, bucket, fileNamePrefix, dimensions, region, scale, crs,
-                            crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-                        )
-                    },
-                    description: `exportImageToSepal(description: ${description})`,
-                    retries
-                })
-                const download$ = downloadFromCloudStorage$({
-                    bucket,
-                    prefix: fileNamePrefix,
-                    downloadDir,
-                    deleteAfterDownload: false
-                })
-                return concat(export$, download$)
-            }
+            const export$ = exportToCloudStorage$({
+                createTask: () => {
+                    return ee.batch.Export.image.toCloudStorage(
+                        image, description, bucket, fileNamePrefix, dimensions, region, scale, crs,
+                        crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+                    )
+                },
+                description: `exportImageToSepal(description: ${description})`,
+                retries
+            })
+            const download$ = downloadFromCloudStorage$({
+                bucket,
+                prefix: fileNamePrefix,
+                downloadDir,
+                deleteAfterDownload: false
+            })
+            return concat(export$, download$)
+        }
         )
     )
 }
@@ -86,10 +86,10 @@ const assetDestination$ = (description, assetId) => {
         ? of({description, assetId})
         : assetRoots$().pipe(
             map(assetRoots => {
-                    if (!assetRoots || !assetRoots.length)
-                        throw new Error('EE account has no asset roots')
-                    return ({description, assetId: path.join(assetRoots[0], description)})
-                }
+                if (!assetRoots || !assetRoots.length)
+                    throw new Error('EE account has no asset roots')
+                return ({description, assetId: path.join(assetRoots[0], description)})
+            }
             )
         )
 }
@@ -110,7 +110,6 @@ const exportToAsset$ = ({createTask, description, assetId, retries}) => {
     })
 }
 
-
 const exportToCloudStorage$ = ({createTask, description, retries}) => {
     log.debug('Earth Engine <to cloud storage>:', description)
     return export$({
@@ -127,6 +126,5 @@ const exportToCloudStorage$ = ({createTask, description, retries}) => {
 
 const export$ = ({create$, description, retries}) =>
     create$() // TODO: Retries...
-
 
 module.exports = {exportImageToAsset$, exportImageToSepal$}

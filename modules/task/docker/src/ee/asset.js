@@ -1,6 +1,6 @@
 const ee = require('ee')
 const {EMPTY} = require('rxjs')
-const {switchMap} = require('rxjs/operators')
+const {catchError, switchMap} = require('rxjs/operators')
 const {progress} = require('root/rxjs/operators')
 
 const assetRoots$ = () =>
@@ -17,6 +17,7 @@ const assetRoots$ = () =>
 
 const deleteAsset$ = assetId =>
     ee.getAsset$(assetId).pipe(
+        catchError(() => EMPTY),
         switchMap(asset => asset ? delete$(assetId) : EMPTY)
     )
 
