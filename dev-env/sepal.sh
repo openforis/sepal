@@ -73,11 +73,19 @@ module_start () {
     if [[ -z "$PID" ]]; then
         local LOG=$(logfile $MODULE)
         message "STARTING" $MODULE LIGHT_GREEN
-        # start-stop-daemon --start --oknodo --name $MODULE --exec /bin/bash -- $0 run $MODULE >$LOG 2>&1 &
         setsid nohup /bin/bash $0 run $MODULE >$LOG 2>&1 &
     else
         message "RUNNING" $MODULE BLUE
     fi
+}
+
+group_processes_terminated () {
+    local PID=$1
+    local TIMEOUT=10
+    until [[ -z "$(pgrep -g $PID)" || "$((TIMEOUT--))" -eq 0 ]] ; do
+        sleep 1
+    done
+    [[ -z "$(pgrep -g $PID)" ]]
 }
 
 module_stop () {
@@ -87,10 +95,22 @@ module_stop () {
         message "STOPPED" $MODULE BLUE
     else
         message "STOPPING" $MODULE LIGHT_RED
-        # start-stop-daemon --stop --oknodo --retry 5 --ppid -$PID
-        kill -TERM -- -$PID
+        pkill -TERM -g $PID
+        group_processes_terminated $PID || pkill -KILL -g $PID
     fi
 }
+
+module_kill () {
+    local MODULE=$1    
+    local PID=$(pidof $MODULE)
+    if [[ -z "$PID" ]]; then
+        message "STOPPED" $MODULE BLUE
+    else
+        message "KILLING" $MODULE LIGHT_RED
+        pkill -KILL -g $PID
+    fi
+}
+
 do_with_modules () {
     local COMMAND=$1
     shift
