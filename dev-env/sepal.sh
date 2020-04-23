@@ -73,8 +73,8 @@ module_start () {
     if [[ -z "$PID" ]]; then
         local LOG=$(logfile $MODULE)
         message "STARTING" $MODULE LIGHT_GREEN
-        start-stop-daemon --start --oknodo --name $MODULE \
-            --exec /bin/bash -- $0 run $MODULE >$LOG 2>&1 &
+        # start-stop-daemon --start --oknodo --name $MODULE --exec /bin/bash -- $0 run $MODULE >$LOG 2>&1 &
+        setsid nohup /bin/bash $0 run $MODULE >$LOG 2>&1 &
     else
         message "RUNNING" $MODULE BLUE
     fi
@@ -82,15 +82,15 @@ module_start () {
 
 module_stop () {
     local MODULE=$1    
-    local PID=$(pidof ${MODULE})
+    local PID=$(pidof $MODULE)
     if [[ -z "$PID" ]]; then
         message "STOPPED" $MODULE BLUE
     else
         message "STOPPING" $MODULE LIGHT_RED
-        start-stop-daemon --stop --oknodo --retry 5 --ppid $PID
+        # start-stop-daemon --stop --oknodo --retry 5 --ppid -$PID
+        kill -TERM -- -$PID
     fi
 }
-
 do_with_modules () {
     local COMMAND=$1
     shift
