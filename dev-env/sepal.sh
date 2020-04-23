@@ -208,7 +208,7 @@ run () {
         npm install
         cd $SEPAL/modules/gee/docker
         npm install
-        SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh
+        SEPAL_CONFIG=$SEPAL_CONFIG npm run dev
         ;;
     gui)
         cd $SEPAL/modules/gui/frontend
