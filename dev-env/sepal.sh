@@ -48,9 +48,6 @@ message () {
     YELLOW)
         COLOR='\033[0;33m'
         ;;
-    BLUE)
-        COLOR='\033[0;34m'
-        ;;
     *)
         COLOR=$NO_COLOR # No Color
         ;;
@@ -61,7 +58,7 @@ message () {
 module_status () {
     local MODULE=$1    
     if is_running $MODULE; then
-        message "RUNNING" $MODULE GREEN
+        message "STARTED" $MODULE GREEN
     else
         message "STOPPED" $MODULE RED
     fi
@@ -75,7 +72,7 @@ module_start () {
         message "STARTING" $MODULE LIGHT_GREEN
         setsid nohup /bin/bash $0 run $MODULE >$LOG 2>&1 &
     else
-        message "RUNNING" $MODULE BLUE
+        message "STARTED" $MODULE GREEN
     fi
 }
 
@@ -92,7 +89,7 @@ module_stop () {
     local MODULE=$1    
     local PID=$(pidof $MODULE)
     if [[ -z "$PID" ]]; then
-        message "STOPPED" $MODULE BLUE
+        message "STOPPED" $MODULE RED
     else
         message "STOPPING" $MODULE LIGHT_RED
         pkill -TERM -g $PID
@@ -104,7 +101,7 @@ module_kill () {
     local MODULE=$1    
     local PID=$(pidof $MODULE)
     if [[ -z "$PID" ]]; then
-        message "STOPPED" $MODULE BLUE
+        message "STOPPED" $MODULE RED
     else
         message "KILLING" $MODULE LIGHT_RED
         pkill -KILL -g $PID
