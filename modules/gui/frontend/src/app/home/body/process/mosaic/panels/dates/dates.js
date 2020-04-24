@@ -1,14 +1,14 @@
-import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {compose} from 'compose'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {msg} from 'translate'
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {compose} from 'compose'
+import {msg} from 'translate'
+import PropTypes from 'prop-types'
+import React from 'react'
 import SeasonSelect from 'widget/seasonSelect'
+import moment from 'moment'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -89,7 +89,7 @@ class Dates extends React.Component {
 
     setAdvanced(enabled) {
         const {inputs: {advanced}} = this.props
-        console.log('advanced.set', enabled)
+        // console.log('advanced.set', enabled)
         advanced.set(enabled)
     }
 

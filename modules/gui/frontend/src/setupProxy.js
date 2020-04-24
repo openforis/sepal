@@ -1,4 +1,4 @@
-const { createProxyMiddleware } = require('http-proxy-middleware')
+const {createProxyMiddleware} = require('http-proxy-middleware')
 
 // eslint-disable-next-line no-undef
 module.exports = app => app

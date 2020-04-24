@@ -1,8 +1,8 @@
-import api from 'api'
-import {of} from 'rxjs'
 import {map} from 'rxjs/operators'
-import EarthEngineLayer from './earthEngineLayer'
+import {of} from 'rxjs'
 import {sepalMap} from './map'
+import EarthEngineLayer from './earthEngineLayer'
+import api from 'api'
 
 export const setRecipeGeometryLayer = (
     {

@@ -4,7 +4,6 @@ import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './sorter.module.css'
 
 export class Sorter extends React.Component {
     state = {
@@ -85,7 +84,6 @@ Sorter.propTypes = {
             label: PropTypes.string
         })
     ).isRequired,
-    // sortingOrder: PropTypes.string,
     onSort: PropTypes.func.isRequired,
     items: PropTypes.array
 }

@@ -1,12 +1,12 @@
-import App from 'app/app'
-import {createBrowserHistory} from 'history'
-import React from 'react'
-import ReactDOM from 'react-dom'
 import {Provider} from 'react-redux'
 import {Router} from 'react-router-dom'
 import {applyMiddleware, createStore} from 'redux'
-import {syncHistoryAndStore} from 'route'
+import {createBrowserHistory} from 'history'
 import {initStore} from 'store'
+import {syncHistoryAndStore} from 'route'
+import App from 'app/app'
+import React from 'react'
+import ReactDOM from 'react-dom'
 import TranslationProvider from 'translate'
 
 const rootReducer = (state = [], action) => {
