@@ -1,9 +1,9 @@
+import {Button} from 'widget/button'
 import {compose} from 'compose'
+import {connect, select} from 'store'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect, select} from 'store'
-import {Button} from 'widget/button'
-import Portal from 'widget/portal'
 import styles from './menu.module.css'
 
 const mapStateToProps = () => ({

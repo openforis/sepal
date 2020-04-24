@@ -3,7 +3,7 @@ import {Layout} from 'widget/layout'
 import {RecipeActions} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, distinctUntilChanged, filter, map, takeUntil, tap} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, filter, map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {sepalMap} from 'app/home/map/map'
@@ -127,7 +127,7 @@ class EETableSection extends React.Component {
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.column.placeholder.${columnState}`)}
                     options={(columns || []).map(column => ({value: column, label: column}))}
                     onChange={column => {
-                        console.log('eeTableColumn onChange')
+                        // console.log('eeTableColumn onChange')
                         eeTableRow.set('')
                         this.recipe.setEETableRows(null).dispatch()
                         this.eeTableColumnChanged$.next()
