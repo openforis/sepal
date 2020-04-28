@@ -7,7 +7,7 @@ const {sepalHost, sepalUsername, sepalPassword} = require('./config')
 const progress = require('root/progress')
 
 const HEARTBEAT_RATE = 60 * 1000
-const MAX_UPDATE_RATE = 60 * 1000
+const MAX_UPDATE_RATE = 1 * 1000
 
 const cancelSubject$ = new Subject()
 const cancelTask$ = cancelSubject$.pipe(share())
@@ -15,8 +15,7 @@ const cancelTask$ = cancelSubject$.pipe(share())
 const tasks = {
     'image.asset_export': require('./tasks/imageAssetExport'),
     'image.sepal_export': require('./tasks/imageSepalExport'),
-    'timeseries.download': require('./tasks/timeSeriesSepalExport'),
-
+    'timeseries.download': require('./tasks/timeSeriesSepalExport')
 }
 
 const submitTask = ({id, name, params}) => {
@@ -25,14 +24,14 @@ const submitTask = ({id, name, params}) => {
     if (!task)
         throw new Error(msg(id, `Doesn't exist: ${name}`))
 
+    const cancel$ = cancelTask$.pipe(
+        filter(taskId => taskId === id)
+    )
     const initialState$ = stateChanged$(id, 'ACTIVE', {
         messageKey: 'tasks.status.executing',
         defaultMessage: 'Executing...'
     })
     const task$ = task.submit$(id, params)
-    const cancel$ = cancelTask$.pipe(
-        filter(taskId => taskId === id)
-    )
     const progress$ = concat(initialState$, task$).pipe(
         tap(progress => log.info(msg(id, progress.defaultMessage))),
         lastInWindow(MAX_UPDATE_RATE),
@@ -46,45 +45,45 @@ const submitTask = ({id, name, params}) => {
 }
 
 const taskProgressed$ = (id, progress) => {
-    log.debug(msg(id, `Notifying Sepal server on progress ${progress}`))
+    log.debug(msg(id, `Notifying Sepal server on progress ${JSON.stringify(progress)}`))
     return http.post$(`https://${sepalHost}/api/tasks/active`, {
-        query: {progress: {[id]: progress.message}},
+        query: {progress: {[id]: progress}},
         username: sepalUsername,
         password: sepalPassword
     }).pipe(
-        tap(() => log.trace(msg(id, `Notified Sepal server of progress ${progress}`)))
+        tap(() => log.trace(msg(id, `Notified Sepal server of progress ${JSON.stringify(progress)}`)))
     )
 }
 
 const taskFailed = (id, error) => {
-    log.error(msg(id, `Failed: `), error)
+    log.error(msg(id, 'Failed: '), error)
     const message = progress({
         defaultMessage: 'Failed to execute task: ',
         messageKey: 'tasks.status.failed',
         messageArgs: {error: String(error)}
     })
     stateChanged$(id, 'FAILED', message).subscribe({
-        error: error => log.error(msg(id, `Failed to notify Sepal server on failed task`), error),
-        completed: () => log.info(msg(id, `Notified Sepal server of failed task`))
+        error: error => log.error(msg(id, 'Failed to notify Sepal server on failed task'), error),
+        completed: () => log.info(msg(id, 'Notified Sepal server of failed task'))
     })
 }
 
 const taskCompleted = id => {
-    log.info(msg(id, `Completed`))
+    log.info(msg(id, 'Completed'))
     const message = progress({
         defaultMessage: 'Completed!',
         messageKey: 'tasks.status.completed'
     })
     stateChanged$(id, 'COMPLETED', message).subscribe({
-        error: error => log.error(msg(id, `Failed to notify Sepal server on completed task`), error),
-        completed: () => log.info(msg(id, `Notified Sepal server of completed task`))
+        error: error => log.error(msg(id, 'Failed to notify Sepal server on completed task'), error),
+        completed: () => log.info(msg(id, 'Notified Sepal server of completed task'))
     })
 }
 
 const stateChanged$ = (id, state, message) => {
     return http.postForm$(`https://${sepalHost}/api/tasks/task/${id}/state-updated`, {
         body: {
-            state: state,
+            state,
             statusDescription: message
         },
         username: sepalUsername,
@@ -95,7 +94,7 @@ const stateChanged$ = (id, state, message) => {
 }
 
 const cancelTask = id => {
-    log.info(msg(id, `Canceling task`))
+    log.info(msg(id, 'Canceling task'))
     cancelTask$.next(id)
 }
 

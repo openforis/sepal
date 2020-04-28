@@ -1,6 +1,6 @@
 const ee = require('ee')
-const {EMPTY, defer, interval, of, throwError} = require('rxjs')
-const {distinctUntilChanged, exhaustMap, filter, finalize, map, switchMap, takeWhile} = require('rxjs/operators')
+const {EMPTY, interval, of, throwError} = require('rxjs')
+const {distinctUntilChanged, exhaustMap, filter, finalize, map, switchMap, take, takeWhile} = require('rxjs/operators')
 const log = require('sepal/log').getLogger('task')
 const progress = require('root/progress')
 
