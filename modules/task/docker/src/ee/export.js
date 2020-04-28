@@ -125,6 +125,6 @@ const exportToCloudStorage$ = ({createTask, description, retries}) => {
 }
 
 const export$ = ({create$, description, retries}) =>
-    create$() // TODO: Retries...
+    create$() // TODO: Retries?
 
 module.exports = {exportImageToAsset$, exportImageToSepal$}

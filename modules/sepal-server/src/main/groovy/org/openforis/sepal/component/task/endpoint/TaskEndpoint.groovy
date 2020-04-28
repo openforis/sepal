@@ -98,7 +98,7 @@ class TaskEndpoint {
                     submit(new UpdateTaskProgress(
                         taskId: taskId,
                         state: Task.State.ACTIVE,
-                        statusDescription: description,
+                        statusDescription: toJson(description),
                         username: currentUser.username
                     ))
                 }
