@@ -182,6 +182,7 @@ run () {
         $SEPAL/gradlew \
         -p $SEPAL \
         --no-daemon \
+        --stacktrace \
         :sepal-api-gateway:runDev \
         -DconfigDir="$SEPAL_CONFIG/api-gateway"
         ;;
@@ -236,6 +237,7 @@ run () {
         $SEPAL/gradlew \
         -p $SEPAL \
         --no-daemon \
+        --stacktrace \
         :sepal-server:runDev \
         -DconfigDir="$SEPAL_CONFIG/sepal-server" 
             #-DskipSceneMetaDataUpdate
@@ -251,6 +253,7 @@ run () {
         $SEPAL/gradlew \
         -p $SEPAL \
         --no-daemon \
+        --stacktrace \
         :sepal-user:runDev \
         -DconfigDir="$SEPAL_CONFIG/user"
         ;;
