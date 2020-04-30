@@ -1,0 +1,3 @@
+[submodule "lib/js/rxjs"]
+	path = lib/js/rxjs
+	url = git://github.com/ReactiveX/rxjs.git
