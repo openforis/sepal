@@ -53,7 +53,7 @@ const cancel = task =>
         switchMap(() => cancel$(task))
     ).subscribe({
         error: error => log.error('Failed to cancel task', error),
-        complete: () => log.debug('Cancelled task', task),
+        complete: () => log.debug('Cancelled task', task.id),
     })
 
 const cancel$ = task =>
