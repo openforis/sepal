@@ -1,6 +1,6 @@
 const ee = require('ee')
 const {EMPTY, interval, of, throwError} = require('rxjs')
-const {distinctUntilChanged, exhaustMap, filter, finalize, map, switchMap, take, takeWhile} = require('rxjs/operators')
+const {distinctUntilChanged, exhaustMap, first, finalize, map, switchMap, mapTo, takeWhile} = require('rxjs/operators')
 const log = require('sepal/log').getLogger('task')
 const progress = require('root/progress')
 
@@ -10,7 +10,7 @@ const {UNSUBMITTED, READY, RUNNING, FAILED} = ee.data.ExportState
 const executeTask$ = task =>
     start$(task).pipe(
         switchMap(() => monitor$(task)),
-        finalize(() => task.id && cancel(task))
+        finalize(() => task.id && cleanup(task))
     )
 
 const start$ = task =>
@@ -47,15 +47,22 @@ const status$ = task =>
         map(([status]) => status)
     )
 
-const cancel = task =>
+const cleanup = task => {
     status$(task).pipe(
-        filter(({state}) => isRunning(state)),
-        switchMap(() => cancel$(task))
+        map(({state}) => isRunning(state)),
+        switchMap(running => running
+            ? cancel$(task).pipe(
+                mapTo(true)
+            )
+            : of(false)
+        ),
+        first()
     ).subscribe({
-        error: error => log.error('Failed to cancel task', error),
-        complete: () => log.debug('Cancelled task', task.id),
+        next: wasRunning => log.debug(`Task ${task.id}: ${wasRunning ? 'cancelled' : 'complete'}`),
+        error: error => log.error('Failed to cancel task', error)
     })
-
+}
+    
 const cancel$ = task =>
     ee.$('cancel task', (resolve, reject) => {
         ee.data.cancelTask(task.id,
