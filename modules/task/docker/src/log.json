@@ -5,6 +5,7 @@
         "channel": "info",
         "ee": "debug",
         "http": "info",
+        "httpClient": "info",
         "job": "info",
         "limiter": "info",
         "pool": "info",
