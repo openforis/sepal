@@ -9,7 +9,7 @@ module.exports = {
     lastInWindow: time => {
         var cancel$ = new Subject()
         return pipe(
-            finalize(() => cancel$.next('finalize')),
+            finalize(() => cancel$.next()),
             windowTime(time),
             switchMap(window$ => concat(of(EMPTY_WINDOW), window$).pipe(last())),
             filter(value => value !== EMPTY_WINDOW),
@@ -20,7 +20,7 @@ module.exports = {
     repeating: (project, rate) => {
         var cancel$ = new Subject()
         return pipe(
-            finalize(() => cancel$.next('finalize')),
+            finalize(() => cancel$.next()),
             switchMap(item =>
                 concat(
                     defer(() => project(item)),
