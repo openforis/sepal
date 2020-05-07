@@ -1,16 +1,15 @@
 const {Subject, concat} = require('rxjs')
-const {filter, map, share, takeUntil, tap} = require('rxjs/operators')
+const {filter, map, takeUntil, tap} = require('rxjs/operators')
 const {lastInWindow, repeating} = require('./rxjs/operators')
 const log = require('sepal/log').getLogger('task')
 const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
 const progress = require('root/progress')
 
-const HEARTBEAT_RATE = 60 * 1000
-const MAX_UPDATE_RATE = 1 * 1000
+const MIN_UPDATE_PERIOD = 1 * 1000
+const MAX_UPDATE_PERIOD = 60 * 1000
 
-const cancelSubject$ = new Subject()
-const cancelTask$ = cancelSubject$.pipe(share())
+const cancel$ = new Subject()
 
 const tasks = {
     'image.asset_export': require('./tasks/imageAssetExport'),
@@ -24,7 +23,7 @@ const submitTask = ({id, name, params}) => {
     if (!task)
         throw new Error(msg(id, `Doesn't exist: ${name}`))
 
-    const cancel$ = cancelTask$.pipe(
+    const cancelTask$ = cancel$.pipe(
         filter(taskId => taskId === id)
     )
     const initialState$ = stateChanged$(id, 'ACTIVE', {
@@ -34,9 +33,9 @@ const submitTask = ({id, name, params}) => {
     const task$ = task.submit$(id, params)
     const progress$ = concat(initialState$, task$).pipe(
         tap(progress => log.info(msg(id, progress.defaultMessage))),
-        lastInWindow(MAX_UPDATE_RATE),
-        repeating(progress => taskProgressed$(id, progress), HEARTBEAT_RATE),
-        takeUntil(cancel$)
+        lastInWindow(MIN_UPDATE_PERIOD),
+        repeating(progress => taskProgressed$(id, progress), MAX_UPDATE_PERIOD),
+        takeUntil(cancelTask$)
     )
     progress$.subscribe({
         error: error => taskFailed(id, error),
@@ -95,7 +94,7 @@ const stateChanged$ = (id, state, message) => {
 
 const cancelTask = id => {
     log.info(msg(id, 'Canceling task'))
-    cancelTask$.next(id)
+    cancel$.next(id)
 }
 
 const msg = (id, msg) => `Task ${id}: ${msg}`
