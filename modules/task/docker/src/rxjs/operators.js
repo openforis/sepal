@@ -1,4 +1,4 @@
-const {Subject, concat, defer, interval, of, pipe} = require('rxjs')
+const {Subject, concat, of, pipe, timer} = require('rxjs')
 const {exhaustMap, filter, finalize, last, map, switchMap, takeUntil, windowTime} = require('rxjs/operators')
 const progress = require('root/progress')
 const log = require('sepal/log').getLogger('task')
@@ -17,16 +17,13 @@ module.exports = {
         )
     },
 
-    repeating: (project, rate) => {
+    repeating: (project$, rate) => {
         var cancel$ = new Subject()
         return pipe(
             finalize(() => cancel$.next()),
             switchMap(item =>
-                concat(
-                    defer(() => project(item)),
-                    interval(rate).pipe(
-                        exhaustMap(() => project(item)),
-                    )
+                timer(0, rate).pipe(
+                    exhaustMap(() => project$(item))
                 )
             ),
             takeUntil(cancel$)
