@@ -17,7 +17,7 @@ const tasks = {
     'image.sepal_export': require('./tasks/imageSepalExport'),
     'timeseries.download': require('./tasks/timeSeriesSepalExport')
 }
-
+  
 const submitTask = ({id, name, params}) => {
     log.info(msg(id, `Submitting ${name}`))
     const task = tasks[name]
