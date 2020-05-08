@@ -1,7 +1,9 @@
-FROM debian:buster
+FROM ubuntu:bionic
+env DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
   curl \
   dnsutils \
+  gettext \
   git \
   gnupg \
   htop \
@@ -15,10 +17,13 @@ RUN apt-get update && apt-get install -y \
   python3-pip \
   gdal-bin \
   screen \
+  software-properties-common \
   sudo \
   unzip \
   wget \
   zip
+RUN apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
+RUN apt-get update && apt-get install -y gdal-bin  
 RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
 RUN echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list  
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
