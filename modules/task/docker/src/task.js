@@ -1,6 +1,6 @@
 const {Subject, concat} = require('rxjs')
 const {filter, map, share, takeUntil, tap} = require('rxjs/operators')
-const {lastInWindow, repeating} = require('./rxjs/operators')
+const {lastInWindow, repeating} = require('sepal/operators')
 const log = require('sepal/log').getLogger('task')
 const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
