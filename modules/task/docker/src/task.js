@@ -1,6 +1,6 @@
 const {Subject, concat} = require('rxjs')
 const {filter, map, takeUntil, tap} = require('rxjs/operators')
-const {lastInWindow, repeating} = require('./rxjs/operators')
+const {lastInWindow, repeating} = require('sepal/operators')
 const log = require('sepal/log').getLogger('task')
 const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
@@ -16,7 +16,7 @@ const tasks = {
     'image.sepal_export': require('./tasks/imageSepalExport'),
     'timeseries.download': require('./tasks/timeSeriesSepalExport')
 }
-
+  
 const submitTask = ({id, name, params}) => {
     log.info(msg(id, `Submitting ${name}`))
     const task = tasks[name]

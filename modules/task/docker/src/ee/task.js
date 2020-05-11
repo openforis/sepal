@@ -4,7 +4,7 @@ const {distinctUntilChanged, exhaustMap, first, finalize, map, switchMap, mapTo,
 const log = require('sepal/log').getLogger('task')
 const progress = require('root/progress')
 
-const MONITORING_FREQUENCY = 1000
+const MONITORING_FREQUENCY = 10000
 const {UNSUBMITTED, READY, RUNNING, FAILED} = ee.data.ExportState
 
 const executeTask$ = task =>
