@@ -4,6 +4,7 @@
         "default": "info",
         "channel": "info",
         "ee": "debug",
+        "gdal": "debug",
         "http": "info",
         "httpClient": "info",
         "job": "info",
@@ -11,6 +12,7 @@
         "pool": "info",
         "service": "info",
         "task": "debug",
+        "terminal": "debug",
         "transport": "info",
         "worker": "info"
     }
