@@ -58,8 +58,8 @@ const cleanup = task => {
         ),
         first()
     ).subscribe({
-        next: wasRunning => log.debug(`Task ${task.id}: ${wasRunning ? 'cancelled' : 'complete'}`),
-        error: error => log.error('Failed to cancel task', error)
+        next: wasRunning => log.debug(`EE task ${task.id}: ${wasRunning ? 'cancelled' : 'complete'}`),
+        error: error => log.error('Failed to cancel EE task', error)
     })
 }
     
