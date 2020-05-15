@@ -1,5 +1,5 @@
-const {from, of, throwError, ReplaySubject, EMPTY, concat} = require('rxjs')
-const {catchError, map, switchMap, tap, scan, mergeMap, expand} = require('rxjs/operators')
+const {from, of, throwError, ReplaySubject, EMPTY, concat, pipe, timer} = require('rxjs')
+const {catchError, map, switchMap, tap, scan, mergeMap, expand, retryWhen, range, zip} = require('rxjs/operators')
 const {google} = require('googleapis')
 const {NotFoundException} = require('sepal/exception')
 const log = require('sepal/log').getLogger('task')
@@ -14,11 +14,28 @@ const do$ = (message, operation$) => {
     return operation$
 }
 
+const retry = maxRetries =>
+    pipe(
+        retryWhen(error$ =>
+            zip(
+                error$,
+                range(0, maxRetries + 1)
+            ).pipe(
+                mergeMap(
+                    ([error, retry]) => retry === maxRetries
+                        ? throwError(error)
+                        : timer(Math.pow(2, retry) * 400)
+                )
+            )
+        )
+    )
+
 const drive$ = (message, op$) =>
     auth$().pipe(
         tap(() => log.trace(msg(message))),
         map(auth => google.drive({version: 'v3', auth})),
         switchMap(drive => from(op$(drive))),
+        retry(3),
         map(({data}) => data)
     )
 
