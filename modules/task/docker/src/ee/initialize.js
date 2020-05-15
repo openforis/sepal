@@ -1,31 +1,9 @@
-const {Subject} = require('rxjs')
-const {first, map, switchMap, tap} = require('rxjs/operators')
-const path = require('path')
-const fs = require('fs')
+const {switchMap, filter, distinctUntilChanged} = require('rxjs/operators')
 const ee = require('ee')
 const config = require('root/config')
-
-const CREDENTIALS_DIR = `${config.homeDir}/.config/earthengine/`
-const CREDENTIALS_FILENAME = 'credentials'
-const CREDENTIALS_FILE = path.join(CREDENTIALS_DIR, CREDENTIALS_FILENAME)
-
-const readJsonFile$ = filePath => {
-    const data$ = new Subject()
-    fs.access(filePath, error => {
-        if (error) {
-            data$.next()
-        } else {
-            fs.readFile(filePath, 'utf8', (error, data) => {
-                if (error) {
-                    data$.error(error)
-                } else {
-                    data$.next(JSON.parse(data))
-                }
-            })
-        }
-    })
-    return data$
-}
+// const {credentials$, loadCredentials$} = require('root/credentials')
+const {credentials$} = require('root/credentials')
+const log = require('sepal/log').getLogger('task')
 
 const secondsToExpiration = expiration => {
     const millisecondsLeft = expiration - Date.now()
@@ -35,11 +13,8 @@ const secondsToExpiration = expiration => {
     return millisecondsLeft / 1000
 }
 
-const loadCredentials$ = path =>
-    readJsonFile$(path).pipe(
-        map(json => json && ({accessToken: json.access_token, accessTokenExpiryDate: json.access_token_expiry_date})
-        )
-    )
+// const CREDENTIALS_DIR = `${config.homeDir}/.config/earthengine`
+// const CREDENTIALS_FILE = 'credentials'
 
 const authenticateServiceAccount$ = serviceAccountCredentials =>
     ee.$('autenticate service account', (resolve, reject) => {
@@ -67,14 +42,17 @@ const authenticateUserAccount$ = userCredentials =>
     }
     )
 
-const initialize$ = () =>
-    loadCredentials$(CREDENTIALS_FILE).pipe(
+const initializeEE$ = () =>
+    // loadCredentials$().pipe(
+    credentials$.pipe(
+        filter(userCredentials => userCredentials),
         switchMap(userCredentials => {
+            log.warn('*** GOT NEW USER CREDENTIALS', userCredentials)
             const authenticate$ = userCredentials
                 ? authenticateUserAccount$(userCredentials)
                 : authenticateServiceAccount$(config.serviceAccountCredentials)
             return authenticate$.pipe(
-                tap(() => ee.data.setAuthTokenRefresher(authTokenRefresher)),
+                // tap(() => ee.data.setAuthTokenRefresher(authTokenRefresher)),
                 switchMap(() =>
                     ee.$('initalize', (resolve, reject) =>
                         ee.initialize(
@@ -88,20 +66,21 @@ const initialize$ = () =>
                     )
                 )
             )
-        })
+        }),
+        distinctUntilChanged()
     )
 
-const authTokenRefresher = (authArgs, callback) => {
-    initialize$().subscribe({
-        error: callback({error}),
-        complete: callback(ee.data.getAuthToken())
-    })
-}
+// const authTokenRefresher = (authArgs, callback) => {
+//     initializeEE$().subscribe({
+//         error: callback({error}),
+//         complete: callback(ee.data.getAuthToken())
+//     })
+// }
 
-fs.watch(CREDENTIALS_DIR, (eventType, filename) => {
-    if (filename === CREDENTIALS_FILENAME)
-        initialize$().subscribe()
-})
+// fs.watch(CREDENTIALS_DIR, (eventType, filename) => {
+//     if (filename === CREDENTIALS_FILE)
+//         initializeEE$().subscribe()
+// })
 
-module.exports = initialize$
+module.exports = {initializeEE$}
 
