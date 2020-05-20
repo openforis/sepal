@@ -47,11 +47,11 @@ const cleanup = task => {
         
 const start$ = task =>
     ee.$('start task', (resolve, reject) =>
-        ee.data.startProcessing(null, task.config_, ({taskId}, error) => {
+        ee.data.startProcessing(null, task.config_, (result, error) => {
             if (error) {
                 reject(error)
             } else {
-                task.id = taskId // [TODO] Solve this without mutation
+                task.id = result.taskId // [TODO] Solve this without mutation
                 resolve()
             }
         })
