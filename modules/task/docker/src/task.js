@@ -5,6 +5,7 @@ const log = require('sepal/log').getLogger('task')
 const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
 const progress = require('root/progress')
+const format = require('./format')
 
 const MIN_UPDATE_PERIOD = 1 * 1000
 const MAX_UPDATE_PERIOD = 60 * 1000
@@ -16,25 +17,34 @@ const tasks = {
     'image.sepal_export': require('./tasks/imageSepalExport'),
     'timeseries.download': require('./tasks/timeSeriesSepalExport')
 }
+
+const getTask = (id, name) => {
+    const task = tasks[name]
+    if (!task) {
+        throw new Error(msg(id, `Doesn't exist: ${name}`))
+    }
+    return task
+}
   
 const submitTask = ({id, name, params}) => {
     log.info(msg(id, `Submitting ${name}`))
-    const task = tasks[name]
-    if (!task)
-        throw new Error(msg(id, `Doesn't exist: ${name}`))
+
+    const task = getTask(id, name)
 
     const cancelTask$ = cancel$.pipe(
         filter(taskId => taskId === id)
     )
+
     const initialState$ = stateChanged$(id, 'ACTIVE', {
         messageKey: 'tasks.status.executing',
         defaultMessage: 'Executing...'
     })
+
     const task$ = task.submit$(id, params)
+    
     const progress$ = concat(initialState$, task$).pipe(
-        tap(progress => log.info(msg(id, progress.defaultMessage))),
         lastInWindow(MIN_UPDATE_PERIOD),
-        repeating(progress => taskProgressed$(id, progress), MAX_UPDATE_PERIOD),
+        repeating(state => taskProgressed$(id, state), MAX_UPDATE_PERIOD),
         takeUntil(cancelTask$)
     )
     progress$.subscribe({
@@ -43,14 +53,17 @@ const submitTask = ({id, name, params}) => {
     })
 }
 
-const taskProgressed$ = (id, progress) => {
-    log.debug(msg(id, `Notifying Sepal server on progress ${JSON.stringify(progress)}`))
+const taskProgressed$ = (id, state) => {
+    const progress = getProgress(state)
+    log.debug(() => msg(id, `Notifying progress update: ${progress.defaultMessage}`))
     return http.post$(`https://${sepalHost}/api/tasks/active`, {
         query: {progress: {[id]: progress}},
         username: sepalUsername,
         password: sepalPassword
     }).pipe(
-        tap(() => log.trace(msg(id, `Notified Sepal server of progress ${JSON.stringify(progress)}`)))
+        tap(() =>
+            log.trace(() => msg(id, `Notified progress update: ${state}`))
+        )
     )
 }
 
@@ -80,6 +93,7 @@ const taskCompleted = id => {
 }
 
 const stateChanged$ = (id, state, message) => {
+    log.debug(() => msg(id, `Notifying state change: ${state}`))
     return http.postForm$(`https://${sepalHost}/api/tasks/task/${id}/state-updated`, {
         body: {
             state,
@@ -88,8 +102,39 @@ const stateChanged$ = (id, state, message) => {
         username: sepalUsername,
         password: sepalPassword
     }).pipe(
-        map(() => message)
+        tap(() => log.trace(() => msg(id, `Notified state change: ${state}`))),
+        map(() => ({name: state}))
     )
+}
+
+const getProgress = ({name, data}) => {
+    switch(name) {
+    case 'ACTIVE':
+        return progress({
+            defaultMessage: 'Starting',
+            messageKey: 'tasks.status.executing'
+        })
+    case 'UNSUBMITTED':
+        return progress({
+            defaultMessage: 'Submitting export task to Google Earth Engine',
+            messageKey: 'tasks.ee.export.pending'
+        })
+    case 'READY':
+        return progress({
+            defaultMessage: 'Waiting for Google Earth Engine to start export',
+            messageKey: 'tasks.ee.export.ready'
+        })
+    case 'RUNNING':
+        return progress({
+            defaultMessage: 'Google Earth Engine is exporting',
+            messageKey: 'tasks.ee.export.running'
+        })
+    case 'DOWNLOADING':
+        return progress({
+            defaultMessage: `Downloading - ${data.files} files / ${format.fileSize(data.bytes)} left`,
+            messageKey: 'tasks.ee.export.running'
+        })
+    }
 }
 
 const cancelTask = id => {

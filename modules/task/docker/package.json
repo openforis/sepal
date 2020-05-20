@@ -33,6 +33,8 @@
         "link-module-alias": "^1.2.0"
     },
     "jest": {
-      "setupFilesAfterEnv": ["jest-expect-message"]
+        "setupFilesAfterEnv": [
+            "jest-expect-message"
+        ]
     }
 }

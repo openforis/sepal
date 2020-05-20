@@ -160,27 +160,38 @@ const scanDir$ = path =>
             : EMPTY
         ),
         switchMap(({files}) => of(...files)),
-        scan((totalSize, {size}) => totalSize + Number(size), 0)
+        scan(({bytes, files}, {size}) => ({bytes: bytes + Number(size), files: files + 1}), {bytes: 0, files: 0})
     )
 
 // [TODO] recurse subdirs
+// emits updated stats (remaining files and bytes)
 const downloadDir$ = (path, destinationPath, {concurrency, deleteAfterDownload = false}) =>
     do$(`download directory "${path}"`,
         concat(
             createLocalPath$(destinationPath).pipe(
                 switchMap(() =>
                     scanDir$(path).pipe(
-                        switchMap(totalSize =>
-                            getPathFiles$(path).pipe(
-                                expand(({nextPageToken}) => nextPageToken
-                                    ? getPathFiles$(path, {pageToken: nextPageToken})
-                                    : EMPTY
-                                ),
-                                switchMap(({files}) => of(...files)),
-                                mergeMap(file =>
-                                    downloadFile$(file.id, fs.createWriteStream(Path.join(destinationPath, file.name))).pipe(
-                                        map(downloaded => ({name: file.name, downloaded, totalSize}))
-                                    ), concurrency
+                        switchMap(({bytes, files}) =>
+                            concat(
+                                of({bytes, files}),
+                                getPathFiles$(path).pipe(
+                                    expand(({nextPageToken}) => nextPageToken
+                                        ? getPathFiles$(path, {pageToken: nextPageToken})
+                                        : EMPTY
+                                    ),
+                                    switchMap(({files}) => of(...files)),
+                                    mergeMap(file =>
+                                        concat(
+                                            downloadFile$(file.id, fs.createWriteStream(Path.join(destinationPath, file.name))).pipe(
+                                                map(downloaded => ({bytes: -downloaded})),
+                                            ),
+                                            of({files: -1})
+                                        ), concurrency
+                                    )
+                                )
+                            ).pipe(
+                                scan((acc, {bytes = 0, files = 0}) =>
+                                    ({bytes: acc.bytes + bytes, files: acc.files + files}), {bytes: 0, files: 0}
                                 )
                             )
                         )

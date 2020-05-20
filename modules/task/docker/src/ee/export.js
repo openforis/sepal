@@ -6,9 +6,11 @@ const {assetRoots$, deleteAsset$} = require('./asset')
 const Path = require('path')
 const moment = require('moment')
 // const {initUserBucket$} = require('root/cloudStorage')
-const {getPath$} = require('root/drive')
-const {download$: downloadFromDrive$} = require('root/downloadDrive')
+const drive = require('root/drive')
+// const {download$: downloadFromDrive$} = require('root/downloadDrive')
 const log = require('sepal/log').getLogger('ee')
+
+const CONCURRENT_FILE_DOWNLOAD = 3
 
 const exportImageToAsset$ = ({
     image,
@@ -91,7 +93,7 @@ const exportImageToSepal$ = ({
     const shardSize = undefined
 
     const ensureDrivePathExists$ = path =>
-        getPath$(path, {create: true})
+        drive.getPath$(path, {create: true})
 
     const exportToDrive$ = ({createTask, description, retries}) => {
         log.debug('Earth Engine <to Google Drive>:', description)
@@ -104,6 +106,14 @@ const exportImageToSepal$ = ({
             retries
         })
     }
+
+    const downloadFromDrive$ = ({path, downloadDir, deleteAfterDownload}) =>
+        drive.downloadDir$(path, downloadDir, {
+            concurrency: CONCURRENT_FILE_DOWNLOAD,
+            deleteAfterDownload
+        }).pipe(
+            map(stats => ({name: 'DOWNLOADING', data: stats}))
+        )
 
     return ensureDrivePathExists$(drivePath).pipe(
         switchMap(() =>

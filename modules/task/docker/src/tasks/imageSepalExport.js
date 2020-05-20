@@ -12,7 +12,7 @@ module.exports = {
         const downloadDir = `${config.homeDir}/downloads/${description}/`
         return concat(
             export$({description, downloadDir, recipe, bands, scale}),
-            postProcess$({description, downloadDir, bands})
+            // postProcess$({description, downloadDir, bands})
         )
     }
 }

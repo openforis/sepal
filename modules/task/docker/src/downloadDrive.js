@@ -1,21 +1,15 @@
-const fs = require('fs')
-const {of} = require('rxjs')
-const {mergeMap, scan, switchMap, tap} = require('rxjs/operators')
-const format = require('./format')
+const {map} = require('rxjs/operators')
 const drive = require('./drive')
-const log = require('sepal/log').getLogger('task')
-const {lastInWindow} = require('sepal/operators')
+// const log = require('sepal/log').getLogger('task')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
 
 const download$ = ({path, downloadDir, deleteAfterDownload}) =>
     drive.downloadDir$(path, downloadDir, {
         concurrency: CONCURRENT_FILE_DOWNLOAD,
-        deleteAfterDownload,
-        throttleUpdates: 1000
+        deleteAfterDownload
     }).pipe(
-        // tap(log.warn)
-        lastInWindow(1000)
+        map(stats => ({name: 'DOWNLOADING', data: stats}))
     )
 
 // const getProgress = ({
