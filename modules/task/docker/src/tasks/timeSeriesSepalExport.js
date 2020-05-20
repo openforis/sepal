@@ -104,22 +104,4 @@ const export$ = (downloadDir, recipe) => {
         switchMap(tileIds => from(tileIds.map((tileId, tileIndex) => ({tileId, tileIndex})))),
         mergeMap(exportTile)
     )
-
-    //
-    //     . evaluate(tileIds => {
-    //     tileIds
-    //         .forEach(tileId => {
-    //             const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
-    //             const timeSeries = timeSeriesForFeature(tile, images)
-    //             timeSeries.bandNames().evaluate(dates => {
-    //                 chunk(dates, MAX_STACK_SIZE).forEach(dateChunk => {
-    //                     const timeSeriesChunk = timeSeries.select(dateChunk)
-    //                     const description = 'time_series_' + tileId + '_' + dateChunk[0] + '_' + dateChunk[dateChunk.length - 1]
-    //                     exportTimeSeries(timeSeriesChunk, description)
-    //                 })
-    //             })
-    //         })
-    // })
-    //
-    // log.warn(collection.size().getInfo())
 }
