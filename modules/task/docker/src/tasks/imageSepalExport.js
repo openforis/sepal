@@ -10,7 +10,7 @@ module.exports = {
     submit$: (id, {image: {recipe, bands, scale}}) => {
         const description = recipe.title || recipe.placeholder
         const preferredDownloadDir = `${config.homeDir}/downloads/${description}/`
-        return mkdirSafe$(preferredDownloadDir).pipe(
+        return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
             switchMap(downloadDir => {
                 return concat(
                     export$({description, downloadDir, recipe, bands, scale}),
