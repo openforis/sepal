@@ -47,7 +47,6 @@ const initializeEE$ = () =>
     credentials$.pipe(
         filter(userCredentials => userCredentials),
         switchMap(userCredentials => {
-            log.warn('*** GOT NEW USER CREDENTIALS', userCredentials)
             const authenticate$ = userCredentials
                 ? authenticateUserAccount$(userCredentials)
                 : authenticateServiceAccount$(config.serviceAccountCredentials)
