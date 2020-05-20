@@ -5,7 +5,7 @@ const drive = require('./drive')
 const CONCURRENT_FILE_DOWNLOAD = 3
 
 const download$ = ({path, downloadDir, deleteAfterDownload}) =>
-    drive.downloadDir$(path, downloadDir, {
+    drive.downloadFolderByPath$(path, downloadDir, {
         concurrency: CONCURRENT_FILE_DOWNLOAD,
         deleteAfterDownload
     }).pipe(

@@ -92,7 +92,7 @@ const exportImageToSepal$ = ({
     const drivePath = `SEPAL/exports/${folder}`
 
     const ensureDrivePathExists$ = path =>
-        drive.getPath$(path, {create: true})
+        drive.getFolderByPath$({path, create: true})
 
     const exportToDrive$ = ({createTask, description, retries}) => {
         log.debug('Earth Engine <to Google Drive>:', description)
@@ -107,7 +107,7 @@ const exportImageToSepal$ = ({
     }
 
     const downloadFromDrive$ = ({path, downloadDir, deleteAfterDownload}) =>
-        drive.downloadDir$(path, downloadDir, {
+        drive.downloadFolderByPath$(path, downloadDir, {
             concurrency: CONCURRENT_FILE_DOWNLOAD,
             deleteAfterDownload
         }).pipe(
