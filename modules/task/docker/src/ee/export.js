@@ -107,7 +107,7 @@ const exportImageToSepal$ = ({
     }
 
     const downloadFromDrive$ = ({path, downloadDir, deleteAfterDownload}) =>
-        drive.downloadFolderByPath$(path, downloadDir, {
+        drive.downloadSingleFolderByPath$(path, downloadDir, {
             concurrency: CONCURRENT_FILE_DOWNLOAD,
             deleteAfterDownload
         }).pipe(

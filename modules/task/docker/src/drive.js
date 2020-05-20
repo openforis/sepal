@@ -1,5 +1,5 @@
 const {from, of, throwError, ReplaySubject, EMPTY, concat} = require('rxjs')
-const {catchError, map, switchMap, scan, mergeMap, expand, tap} = require('rxjs/operators')
+const {catchError, map, switchMap, scan, mergeMap, expand} = require('rxjs/operators')
 const {google} = require('googleapis')
 const {NotFoundException} = require('sepal/exception')
 const log = require('sepal/log').getLogger('drive')
@@ -7,6 +7,7 @@ const {auth$} = require('root/credentials')
 const fs = require('fs')
 const Path = require('path')
 const {retry} = require('sepal/operators')
+const {mkdir$} = require('./rxjs/fileSystem')
 
 const RETRIES = 3
 
@@ -82,24 +83,20 @@ const createFolderByName$ = ({name, parentId}) =>
  * Get a folder by name
  * @param {string} name Folder name
  * @param {string} parentId Optional parent folder id
- * @param {string} pageToken Optional page token
  * @return {Observable} Id of folder or error if not found
  */
-const getFolderByName$ = ({name, parentId, pageToken}) =>
+const getFolderByName$ = ({name, parentId}) =>
     drive$(`Get folder by name: ${name}`, drive =>
         drive.files.list({
             q: and(isParent(parentId), isName(name), IS_FOLDER, IS_NOT_THRASHED),
             fields: 'files(id, name), nextPageToken',
-            spaces: 'drive',
-            pageToken
+            spaces: 'drive'
         })
     ).pipe(
-        switchMap(({files, nextPageToken: pageToken}) =>
+        switchMap(({files}) =>
             files.length
                 ? of({id: files[0].id}) // handling the first match only
-                : pageToken
-                    ? getFolderByName$({name, parentId, pageToken}) // TODO implement recursion with expand
-                    : throwError(new NotFoundException(null, `Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`))
+                : throwError(new NotFoundException(null, `Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`))
         )
     )
 
@@ -133,7 +130,7 @@ const getNestedFolderByNames$ = ({names: [name, ...names], parentId, create}) =>
         getOrCreateFolderByName$({name, parentId, create}).pipe(
             switchMap(({id}) =>
                 names.length
-                    ? getNestedFolderByNames$({names, parentId: id, create}) // TODO replace recursion with expand?
+                    ? getNestedFolderByNames$({names, parentId: id, create})
                     : of({id})
             )
         )
@@ -195,7 +192,22 @@ const removeFolderByPath$ = ({path}) =>
         )
     )
 
-// EXPORTED
+/**
+ * Get number and total size of files in a folder by path
+ * @param {string} path Folder path
+ * @return {Observable} Emits {files, bytes} with totals
+ */
+const getFolderTotalsByPath$ = path =>
+    do$(`Get folder totals by path: ${path}`,
+        getFilesByPath({path}).pipe(
+            expand(({nextPageToken}) => nextPageToken
+                ? getFilesByPath({path, pageToken: nextPageToken})
+                : EMPTY
+            ),
+            switchMap(({files}) => of(...files)),
+            scan(({bytes, files}, {size}) => ({bytes: bytes + Number(size), files: files + 1}), {bytes: 0, files: 0})
+        )
+    )
 
 /**
  * Download a fild by id
@@ -220,42 +232,17 @@ const downloadFile$ = (id, destinationStream) =>
         })
     )
 
-// REPLACE WITH DANIEL'S!
-const createLocalPath$ = path =>
-    from(
-        fs.promises.mkdir(path, {recursive: true})
-    )
-
 /**
- * Get number and total size of files in a folder by path
- * @param {string} path Folder path
- * @return {Observable} Emits {files, bytes} with totals
- */
-const getFolderTotalsByPath$ = path =>
-    do$(`Get folder totals by path: ${path}`,
-        getFilesByPath({path}).pipe(
-            expand(({nextPageToken}) => nextPageToken
-                ? getFilesByPath({path, pageToken: nextPageToken})
-                : EMPTY
-            ),
-            switchMap(({files}) => of(...files)),
-            scan(({bytes, files}, {size}) => ({bytes: bytes + Number(size), files: files + 1}), {bytes: 0, files: 0})
-        )
-    )
-// [TODO] recurse subdirs
-// emits updated stats (remaining files and bytes)
-
-/**
- * Download a folder by path
+ * Download a folder by path (non-recursive, it ignores subfolders)
  * @param {string} path Folder path
  * @param {string} destinationPath Destination filesystem path
  * @param {number} concurrency Number of concurrent downloads
  * @param {boolean} deleteAfterDownload Remove the path after download
  */
-const downloadFolderByPath$ = (path, destinationPath, {concurrency, deleteAfterDownload}) =>
+const downloadSingleFolderByPath$ = (path, destinationPath, {concurrency, deleteAfterDownload}) =>
     do$(`Download folder files by path: ${path}`,
         concat(
-            createLocalPath$(destinationPath).pipe(
+            mkdir$(destinationPath, {recursive: true}).pipe(
                 switchMap(() =>
                     getFolderTotalsByPath$(path).pipe(
                         switchMap(({bytes, files}) =>
@@ -289,4 +276,4 @@ const downloadFolderByPath$ = (path, destinationPath, {concurrency, deleteAfterD
         )
     )
 
-module.exports = {getFolderByPath$, downloadFolderByPath$}
+module.exports = {getFolderByPath$, downloadSingleFolderByPath$}
