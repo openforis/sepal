@@ -16,7 +16,7 @@ describe('ls$()', () => {
 
     const basename = 'some_dir'
     stream('emits basenames when dir is non-empty',
-        () => mkdir$(Path.join(emptyDirPath, basename)).pipe(
+        (d) => mkdir$(Path.join(emptyDirPath, basename)).pipe(
             switchMap(() => ls$(emptyDirPath))
         ),
         emitsOne(files => {
@@ -58,19 +58,26 @@ describe('mkdirSafe$()', () => {
         emitsOne(dirPath => expect(dirPath).toEqual(preferredPath()))
     )
 
+    stream('emits preferredPath_1 when directory already exists and preferredPath ends with /',
+        () => mkdir$(preferredPath()).pipe(
+            switchMap(() => mkdirSafe$(preferredPath() + '/')) // Should fail - it already exists
+        ),
+        emitsOne(dirPath => expect(Path.basename(dirPath)).toEqual('some_dir_1'))
+    )
+
     stream('emits preferredPath_1 when directory already exists',
         () => mkdir$(preferredPath()).pipe(
             switchMap(() => mkdirSafe$(preferredPath())) // Should fail - it already exists
         ),
-        emitsOne(dirPath => expect(dirPath).toEqual(preferredPath() + '_1'))
+        emitsOne(dirPath => expect(Path.basename(dirPath)).toEqual('some_dir_1'))
     )
 
     stream('emits preferredPath_2 when directory and _1 already exists',
         () => mkdir$(preferredPath()).pipe(
-            switchMap(() => mkdir$(preferredPath() + '_1')), // _1 is taken
+            switchMap(() => mkdir$(Path.join(emptyDirPath, 'some_dir_1'))), // _1 is taken
             switchMap(() => mkdirSafe$(preferredPath())) // Should fail - it already exists
         ),
-        emitsOne(dirPath => expect(dirPath).toEqual(preferredPath() + '_2'))
+        emitsOne(dirPath => expect(Path.basename(dirPath)).toEqual('some_dir_2'))
     )
 })
 

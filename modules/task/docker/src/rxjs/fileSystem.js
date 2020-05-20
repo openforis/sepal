@@ -34,7 +34,7 @@ const mkdirSafe$ = (preferredPath, options = {}) => {
         ),
         map(postfixIndexes => Math.max(...postfixIndexes)),
         switchMap(postfixIndex =>
-            mkdir$(`${preferredPath}_${postfixIndex}`, options))
+            mkdir$(Path.join(parent, `${preferredName}_${postfixIndex}`), options))
     )
     return exists$(preferredPath).pipe(
         switchMap(exists => exists
