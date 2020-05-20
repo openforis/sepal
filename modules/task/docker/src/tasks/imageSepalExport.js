@@ -1,18 +1,22 @@
 const {concat} = require('rxjs')
 const {map, switchMap} = require('rxjs/operators')
+const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const ImageFactory = require('sepal/ee/imageFactory')
 const {createVrt$, setBandNames$} = require('sepal/gdal')
 const {exportImageToSepal$} = require('root/ee/export')
-const progress = require('root/progress')
 const config = require('root/config')
 
 module.exports = {
     submit$: (id, {image: {recipe, bands, scale}}) => {
         const description = recipe.title || recipe.placeholder
-        const downloadDir = `${config.homeDir}/downloads/${description}/`
-        return concat(
-            export$({description, downloadDir, recipe, bands, scale}),
-            // postProcess$({description, downloadDir, bands})
+        const preferredDownloadDir = `${config.homeDir}/downloads/${description}/`
+        return mkdirSafe$(preferredDownloadDir).pipe(
+            switchMap(downloadDir => {
+                return concat(
+                    export$({description, downloadDir, recipe, bands, scale}),
+                    postProcess$({description, downloadDir, bands})
+                )
+            })
         )
     }
 }

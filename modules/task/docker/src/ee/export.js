@@ -39,7 +39,7 @@ const exportImageToAsset$ = ({
                 })
             )
     }
-    
+
     const exportToAsset$ = ({createTask, description, assetId, retries}) => {
         if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
             throw new Error('Cannot export to asset using service account.')
@@ -55,7 +55,7 @@ const exportImageToAsset$ = ({
             retries
         })
     }
-    
+
     return assetDestination$(description, assetId).pipe(
         switchMap(({description, assetId}) =>
             exportToAsset$({
@@ -80,17 +80,16 @@ const exportImageToSepal$ = ({
     crs,
     crsTransform,
     maxPixels = 1e13,
+    shardSize,
     fileDimensions,
     skipEmptyTiles,
     fileFormat,
     formatOptions,
     retries
 }) => {
-    const prefix = `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`
-    const drivePath = `SEPAL/exports/${prefix}`
-    
-    // Size in pixels of the shards in which this image will be computed. Defaults to 256.
-    const shardSize = undefined
+    const folder = `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`
+    const prefix = description
+    const drivePath = `SEPAL/exports/${folder}`
 
     const ensureDrivePathExists$ = path =>
         drive.getPath$(path, {create: true})
@@ -119,22 +118,20 @@ const exportImageToSepal$ = ({
         switchMap(() =>
             concat(
                 exportToDrive$({
-                    createTask: () => {
-                    // NOTE: folder is the last path element only for two reasons:
-                    //    1) Drive treats "/" as a normal character
-                    //    2) Drive can resolve a path by the last portion if it exists
-                        const folder = prefix
-                        return ee.batch.Export.image.toDrive(
+                    createTask: () =>
+                        // NOTE: folder is the last path element only for two reasons:
+                        //    1) Drive treats "/" as a normal character
+                        //    2) Drive can resolve a path by the last portion if it exists
+                        ee.batch.Export.image.toDrive(
                             image, description, folder, prefix, dimensions, region, scale, crs,
                             crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-                        )
-                    },
+                        ),
                     description: `exportImageToSepal(description: ${description})`,
                     retries
                 }),
                 downloadFromDrive$({
                     path: drivePath,
-                    downloadDir: Path.join(downloadDir, prefix),
+                    downloadDir,
                     deleteAfterDownload: false
                 })
             )
@@ -172,7 +169,7 @@ const exportImageToSepal$ = ({
 //             retries
 //         })
 //     }
-    
+
 //     return initUserBucket$().pipe(
 //         switchMap(bucket => {
 //             const export$ = exportToCloudStorage$({
