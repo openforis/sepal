@@ -10,8 +10,15 @@ const ee = require('ee')
 const {chunk} = require('sepal/utils/array')
 const config = require('root/config')
 
-const TILE_DEGREES = 0.9
-const MAX_STACK_SIZE = 100
+const TILE_DEGREES = 0.1
+const MAX_STACK_SIZE = 5
+const EE_EXPORT_SHARD_SIZE = 256
+const EE_EXPORT_FILE_DIMENSIONS = 256
+
+// const TILE_DEGREES = 2
+// const MAX_STACK_SIZE = 100
+// const EE_EXPORT_SHARD_SIZE = 256
+// const EE_EXPORT_FILE_DIMENSIONS = 1024
 
 module.exports = {
     submit$: (id, recipe) => {
@@ -88,9 +95,15 @@ const export$ = (downloadDir, recipe) => {
             const lastDate = dates[dates.length - 1]
             const dateDescription = `${firstDate}_${lastDate}`
             const chunkDescription = `${description}_${tileIndex}_${dateDescription}`
-            const chunkDownloadDir = `${downloadDir}/${tileIndex}/${dateDescription}`
+            const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateDescription}`
             return exportImageToSepal$({
-                image, description: chunkDescription, downloadDir: chunkDownloadDir, scale, crs: 'EPSG:4326'
+                image,
+                description: chunkDescription,
+                downloadDir: chunkDownloadDir,
+                scale,
+                crs: 'EPSG:4326',
+                shardSize: EE_EXPORT_SHARD_SIZE,
+                fileDimensions: EE_EXPORT_FILE_DIMENSIONS
             })
         }
 
@@ -104,22 +117,4 @@ const export$ = (downloadDir, recipe) => {
         switchMap(tileIds => from(tileIds.map((tileId, tileIndex) => ({tileId, tileIndex})))),
         mergeMap(exportTile)
     )
-
-    //
-    //     . evaluate(tileIds => {
-    //     tileIds
-    //         .forEach(tileId => {
-    //             const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
-    //             const timeSeries = timeSeriesForFeature(tile, images)
-    //             timeSeries.bandNames().evaluate(dates => {
-    //                 chunk(dates, MAX_STACK_SIZE).forEach(dateChunk => {
-    //                     const timeSeriesChunk = timeSeries.select(dateChunk)
-    //                     const description = 'time_series_' + tileId + '_' + dateChunk[0] + '_' + dateChunk[dateChunk.length - 1]
-    //                     exportTimeSeries(timeSeriesChunk, description)
-    //                 })
-    //             })
-    //         })
-    // })
-    //
-    // log.warn(collection.size().getInfo())
 }

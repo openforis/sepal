@@ -37,9 +37,6 @@ const postProcess$ = ({description, downloadDir, bands}) => {
             inputPaths: `${downloadDir}/*.tif`,
             outputPath: vrtPath
         }),
-        setBandNames$({
-            path: vrtPath,
-            bandNames: bands.selection
-        })
+        setBandNames$(vrtPath, bands.selection)
     )
 }
