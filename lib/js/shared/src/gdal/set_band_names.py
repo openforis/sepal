@@ -5,18 +5,17 @@ from osgeo import gdal
 from osgeo.gdalconst import GA_Update
 
 
-def set_band_metadata(path, name, values):
+def set_band_names(path, names):
     for f in glob(path):
         ds = gdal.Open(f, GA_Update)
-        for i in range(0, len(values)):
+        for i in range(0, len(names)):
             band = ds.GetRasterBand(i + 1)
-            band.SetMetadata({name: values[i]})
+            band.SetDescription(names[i])
             ds.FlushCache()
 
 
 if __name__ == '__main__':
-    set_band_metadata(
+    set_band_names(
         path=sys.argv[1],
-        name=sys.argv[2],
-        values=sys.argv[3:]
+        names=sys.argv[2:]
     )
