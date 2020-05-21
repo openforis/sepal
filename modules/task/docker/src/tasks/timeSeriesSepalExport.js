@@ -3,17 +3,20 @@ const {allScenes} = require('sepal/ee/optical/collection')
 const {calculateIndex} = require('sepal/ee/optical/indexes')
 const tile = require('sepal/ee/tile')
 const {exportImageToSepal$} = require('root/ee/export')
-const {mkdirSafe$} = require('root/rxjs/fileSystem')
-const {concat, from} = require('rxjs')
+const {ls$, mkdirSafe$} = require('root/rxjs/fileSystem')
+const {concat, from, of} = require('rxjs')
+const Path = require('path')
 const {mergeMap, switchMap, tap} = require('rxjs/operators')
-const ee = require('ee')
+const {terminal$} = require('sepal/terminal')
 const {chunk} = require('sepal/utils/array')
+const ee = require('ee')
 const config = require('root/config')
 
 const TILE_DEGREES = 0.1
 const MAX_STACK_SIZE = 5
 const EE_EXPORT_SHARD_SIZE = 256
 const EE_EXPORT_FILE_DIMENSIONS = 256
+
 
 // const TILE_DEGREES = 2
 // const MAX_STACK_SIZE = 100
@@ -24,12 +27,11 @@ module.exports = {
     submit$: (id, recipe) => {
         const preferredDownloadDir = `${config.homeDir}/downloads/${recipe.description}/`
         return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-            switchMap(downloadDir => {
-                return concat(
+            switchMap(downloadDir =>
+                concat(
                     export$(downloadDir, recipe),
-                    // postProcess$({description, downloadDir, bands})
-                )
-            })
+                    postProcess$(downloadDir)
+                ))
         )
     },
 }
@@ -108,7 +110,7 @@ const export$ = (downloadDir, recipe) => {
         }
 
         return ee.getInfo$(timeSeries.bandNames(), 'time-series band names').pipe(
-            switchMap(dates => from(chunk(dates, MAX_STACK_SIZE))),
+            switchMap(dates => from(chunk(dates.sort(), MAX_STACK_SIZE))),
             mergeMap(exportChunk)
         )
     }
@@ -118,3 +120,8 @@ const export$ = (downloadDir, recipe) => {
         mergeMap(exportTile)
     )
 }
+
+const postProcess$ = downloadDir =>
+    terminal$('python3', [Path.join(__dirname, 'stack_time_series.py'), Path.join(downloadDir, '/*')])
+
+

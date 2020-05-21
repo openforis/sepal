@@ -15,8 +15,7 @@ tile_pattern = re.compile('.*-(\d{10}-\d{10}).tif')
 nodata_value = 0
 
 
-def stack_time_series(input_dir):
-    dir = os.path.abspath(input_dir)
+def stack_time_series(dir):
     chunk_dirs = glob(join(dir, 'chunk-*'))
     for chunk_dir in chunk_dirs:
         extract_chunk_bands(chunk_dir)
@@ -112,4 +111,6 @@ def create_dates_csv(dir, dates):
 
 
 if __name__ == '__main__':
-    stack_time_series(sys.argv[1])
+    dirs = sys.argv[1:]
+    for d in dirs:
+        stack_time_series(d)
