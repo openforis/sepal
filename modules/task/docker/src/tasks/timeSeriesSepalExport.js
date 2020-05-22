@@ -122,6 +122,6 @@ const export$ = (downloadDir, recipe) => {
 }
 
 const postProcess$ = downloadDir =>
-    terminal$('python3', [Path.join(__dirname, 'stack_time_series.py'), Path.join(downloadDir, '/*')])
+    terminal$('sepal-stack-time-series', [Path.join(downloadDir, '/*')])
 
 

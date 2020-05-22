@@ -18,6 +18,9 @@ sudo ln -sf $PROJECT_DIR/dev-env/sepal.sh /usr/local/bin/sepal
 sudo ln -sf $PROJECT_DIR/dev-env/parse-yaml.sh /usr/local/bin/parse-yaml
 sudo ln -sf $PROJECT_DIR/dev-env/template.d /etc/sepal/template.d
 
+sudo chmod +x $PROJECT_DIR/lib/python/shared/stack_time_series.py
+sudo ln -sf $PROJECT_DIR/lib/python/shared/stack_time_series.py /usr/local/bin/sepal-stack-time-series
+
 eval $(parse-yaml /etc/sepal/conf.d/secret.yml)
 
 export GOOGLE_MAPS_API_KEY=$google_maps_api_key

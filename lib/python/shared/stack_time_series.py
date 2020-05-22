@@ -45,7 +45,6 @@ def extract_chunk_tile_bands(tif_file):
         band_name = ds.GetRasterBand(band_index).GetDescription()
         band_file = join(tile_dir, band_name + '.vrt')
         gdal.SetConfigOption('VRT_SHARED_SOURCE', '0')
-        print('BAND INDEX {}'.format(band_index))
         vrt = gdal.BuildVRT(
             band_file, tif_file,
             bandList=[band_index],
