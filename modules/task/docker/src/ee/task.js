@@ -15,19 +15,39 @@ const executeTask$ = task =>
 const monitor$ = task =>
     interval(MONITORING_FREQUENCY).pipe(
         exhaustMap(() => status$(task)),
-        switchMap(({state, error_message: error}) => error
+        switchMap(({state, error_message: error}) => error || state === FAILED
             ? throwError(new Error(error))
             : of(state)
         ),
         distinctUntilChanged(),
         takeWhile(state => isRunning(state)),
-        map(state => {
-            if (state === FAILED) {
-                throw new Error()
-            }
-            return {name: state}
-        })
+        map(toProgress)
     )
+
+const toProgress = state => {
+    switch (state) {
+        case 'UNSUBMITTED':
+            return {
+                state,
+                defaultMessage: 'Submitting export task to Google Earth Engine',
+                messageKey: 'tasks.ee.export.pending'
+            }
+        case 'READY':
+            return {
+                state,
+                defaultMessage: 'Waiting for Google Earth Engine to start export',
+                messageKey: 'tasks.ee.export.ready'
+            }
+        case 'RUNNING':
+            return {
+                state,
+                defaultMessage: 'Google Earth Engine is exporting',
+                messageKey: 'tasks.ee.export.running'
+            }
+        default:
+            throw Error(`Unknown state: ${state}`)
+    }
+}
 
 const cleanup = task => {
     status$(task).pipe(
@@ -44,7 +64,7 @@ const cleanup = task => {
         error: error => log.error('Failed to cancel EE task', error)
     })
 }
-        
+
 const start$ = task =>
     ee.$('start task', (resolve, reject) =>
         ee.data.startProcessing(null, task.config_, (result, error) => {

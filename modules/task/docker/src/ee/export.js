@@ -110,9 +110,7 @@ const exportImageToSepal$ = ({
         drive.downloadSingleFolderByPath$(path, downloadDir, {
             concurrency: CONCURRENT_FILE_DOWNLOAD,
             deleteAfterDownload
-        }).pipe(
-            map(stats => ({name: 'DOWNLOADING', data: stats}))
-        )
+        })
 
     return ensureDrivePathExists$(drivePath).pipe(
         switchMap(() =>
