@@ -74,10 +74,10 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
         file.createReadStream({start, end})
             .on('error', error => chunk$.error(error))
             .on('response', response => {
-                const [contentRange, unit, start, end, length] = response.headers['content-range'].match('(.*) (.*)-(.*)/(.*)')
+                const [_contentRange, _unit, start, end, length] = response.headers['content-range'].match('(.*) (.*)-(.*)/(.*)')
                 next = {path: path.basename(toFilePath), start, end: Number(end), length: Number(length)}
             })
-            .on('finish', response => {
+            .on('finish', _response => {
                 chunk$.next({...next, time: new Date().getTime() - startTime})
                 chunk$.complete()
             })

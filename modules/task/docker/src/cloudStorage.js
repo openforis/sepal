@@ -14,7 +14,7 @@ const cloudStorage = new Storage({credentials: config.serviceAccountCredentials,
  */
 const getBucketName = ({username, email}) => {
     const emailHash = crypto.createHash('md5').update(email).digest('hex').substring(0, 4)
-    return `${username}-${emailHash}-${config.sepalHost}`.replace(/[^a-zA-Z0-9\-]/g, '-')
+    return `${username}-${emailHash}-${config.sepalHost}`.replace(/[^a-zA-Z0-9-]/g, '-')
 }
 
 const bucketExists$ = user =>

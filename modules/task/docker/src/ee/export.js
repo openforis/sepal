@@ -189,7 +189,7 @@ const exportImageToSepal$ = ({
 //     )
 // }
 
-const export$ = ({create$, description, retries}) =>
+const export$ = ({create$, _description, _retries}) =>
     create$() // TODO: Retries?
 
 module.exports = {exportImageToAsset$, exportImageToSepal$}

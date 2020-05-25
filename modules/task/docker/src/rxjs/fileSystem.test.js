@@ -16,7 +16,7 @@ describe('ls$()', () => {
 
     const basename = 'some_dir'
     stream('emits basenames when dir is non-empty',
-        (d) => mkdir$(Path.join(emptyDirPath, basename)).pipe(
+        () => mkdir$(Path.join(emptyDirPath, basename)).pipe(
             switchMap(() => ls$(emptyDirPath))
         ),
         emitsOne(files => {
@@ -25,12 +25,11 @@ describe('ls$()', () => {
     )
 
     stream('fails when dir does not exist',
-        () => ls$(emptyDirPath + '-non-existing'),
+        () => ls$(`${emptyDirPath}-non-existing`),
         emitsNothing(),
         throwsError()
     )
 })
-
 
 describe('mkdir$()', () => {
     const path = () => Path.join(emptyDirPath, 'some_dir')
@@ -49,7 +48,6 @@ describe('mkdir$()', () => {
     )
 })
 
-
 describe('mkdirSafe$()', () => {
     const preferredPath = () => Path.join(emptyDirPath, 'some_dir')
 
@@ -60,7 +58,7 @@ describe('mkdirSafe$()', () => {
 
     stream('emits preferredPath_1 when directory already exists and preferredPath ends with /',
         () => mkdir$(preferredPath()).pipe(
-            switchMap(() => mkdirSafe$(preferredPath() + '/')) // Should fail - it already exists
+            switchMap(() => mkdirSafe$(`${preferredPath()}/`)) // Should fail - it already exists
         ),
         emitsOne(dirPath => expect(Path.basename(dirPath)).toEqual('some_dir_1'))
     )
@@ -81,10 +79,8 @@ describe('mkdirSafe$()', () => {
     )
 })
 
-
 const mkTmpDir$ = () =>
     from(fs.promises.mkdtemp(Path.join(os.tmpdir(), 'test-')))
-
 
 beforeEach(() =>
     mkTmpDir$().pipe(

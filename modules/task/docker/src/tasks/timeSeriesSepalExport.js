@@ -18,7 +18,6 @@ const MAX_CHUNK_SIZE = 5
 const EE_EXPORT_SHARD_SIZE = 256
 const EE_EXPORT_FILE_DIMENSIONS = 256
 
-
 // const TILE_DEGREES = 2
 // const MAX_CHUNK_SIZE = 100
 // const EE_EXPORT_SHARD_SIZE = 256
@@ -101,17 +100,15 @@ const export$ = (downloadDir, recipe) => {
         )
     }
 
-
     const exportTile$ = ({tileId, tileIndex}) => {
         return concat(
             of({tileIndex}),
             chunk$({tileId, tileIndex}).pipe(
                 switchMap(chunks => exportChunks$(chunks))
             ),
-            postProcess$(Path.join(downloadDir, '' + tileIndex))
+            postProcess$(Path.join(downloadDir, `${tileIndex}`))
         )
     }
-
 
     const chunk$ = ({tileId, tileIndex}) => {
         const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
@@ -185,7 +182,7 @@ const toProgress = ({totalTiles, tileIndex, totalChunks, chunks}) => {
         totalTiles,
         tileIndex,
         defaultMessage: `Exported ${currentTilePercent}% of tile ${currentTile} out of ${totalTiles}.`,
-        messageKey: `task.export.timeSeriesSepalExport.progress`,
+        messageKey: 'task.export.timeSeriesSepalExport.progress',
         messageArgs: {currentTilePercent, currentTile, totalTiles}
     }
 }

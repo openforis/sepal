@@ -1,5 +1,5 @@
 const {from, of} = require('rxjs')
-const {catchError, concatAll, filter, map, switchMap, tap} = require('rxjs/operators')
+const {catchError, map, switchMap} = require('rxjs/operators')
 const fs = require('fs')
 const Path = require('path')
 

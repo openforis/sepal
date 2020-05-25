@@ -3,7 +3,7 @@ const ee = require('ee')
 const config = require('root/config')
 // const {credentials$, loadCredentials$} = require('root/credentials')
 const {credentials$} = require('root/credentials')
-const log = require('sepal/log').getLogger('task')
+// const log = require('sepal/log').getLogger('task')
 
 const secondsToExpiration = expiration => {
     const millisecondsLeft = expiration - Date.now()
@@ -24,8 +24,7 @@ const authenticateServiceAccount$ = serviceAccountCredentials =>
             () => resolve(),
             error => reject(error)
         )
-    }
-    )
+    })
 
 const authenticateUserAccount$ = userCredentials =>
     ee.$('authenticate user account', (resolve, reject) => {
@@ -39,8 +38,7 @@ const authenticateUserAccount$ = userCredentials =>
             error => error ? reject(error) : resolve(),
             false
         )
-    }
-    )
+    })
 
 const initializeEE$ = () =>
     // loadCredentials$().pipe(
@@ -82,4 +80,3 @@ const initializeEE$ = () =>
 // })
 
 module.exports = {initializeEE$}
-

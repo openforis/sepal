@@ -5,7 +5,6 @@ const log = require('sepal/log').getLogger('task')
 const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
 
-
 const MIN_TIME_BETWEEN_NOTIFICATIONS = 1 * 1000
 const MAX_TIME_BETWEEN_NOTIFICATIONS = 60 * 1000
 
@@ -71,7 +70,7 @@ const taskProgressed$ = (id, progress) => {
         password: sepalPassword
     }).pipe(
         tap(() =>
-            log.trace(() => msg(id, `Notified progress update: ${state}`))
+            log.trace(() => msg(id, `Notified progress update: ${progress.defaultMessage}`))
         )
     )
 }
