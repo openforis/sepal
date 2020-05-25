@@ -86,38 +86,38 @@ const export$ = (downloadDir, recipe) => {
             .clip(feature.geometry())
     }
 
-    const exportTiles$ = tileIds =>
-        concat(
-            of({totalTiles: tileIds.length}), from(
-                tileIds.map((tileId, tileIndex) => ({tileId, tileIndex}))
-            ).pipe(
-                mergeMap(({tileId, tileIndex}) =>
-                    exportTile$({totalTiles: tileIds.length, tileId, tileIndex}), 1
-                )
+    const exportTiles$ = tileIds => {
+        const totalTiles = tileIds.length
+        const tile$ = from(
+            tileIds.map((tileId, tileIndex) =>
+                ({tileId, tileIndex})
             )
         )
+        return concat(
+            of({totalTiles}),
+            tile$.pipe(
+                mergeMap(tile => exportTile$(tile), 1)
+            )
+        )
+    }
 
 
-    const exportTile$ = ({tileId, tileIndex}) =>
-        concat(
+    const exportTile$ = ({tileId, tileIndex}) => {
+        return concat(
+            of({tileIndex}),
             chunk$({tileId, tileIndex}).pipe(
-                switchMap(chunks =>
-                    concat(
-                        of({tileIndex, totalChunks: chunks.length, chunks: 0}),
-                        from(chunks).pipe(
-                            mergeMap(chunk => exportChunk$(chunk))
-                        )
-                    )
-                )
+                switchMap(chunks => exportChunks$(chunks))
             ),
             postProcess$(Path.join(downloadDir, '' + tileIndex))
         )
+    }
+
 
     const chunk$ = ({tileId, tileIndex}) => {
         const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
         const timeSeries = timeSeriesForFeature(tile, images)
-
-        return ee.getInfo$(timeSeries.bandNames(), 'time-series band names').pipe(
+        let dates$ = ee.getInfo$(timeSeries.bandNames(), 'time-series band names')
+        return dates$.pipe(
             map(dates =>
                 chunk(dates.sort(), MAX_CHUNK_SIZE)
                     .map(dates => ({image: timeSeries.select(dates), tileIndex, dates}))
@@ -125,6 +125,13 @@ const export$ = (downloadDir, recipe) => {
         )
     }
 
+    const exportChunks$ = chunks =>
+        concat(
+            of({totalChunks: chunks.length, chunks: 0}),
+            from(chunks).pipe(
+                mergeMap(chunk => exportChunk$(chunk))
+            )
+        )
 
     const exportChunk$ = ({image, tileIndex, dates}) => {
         const firstDate = dates[0]
@@ -148,7 +155,7 @@ const export$ = (downloadDir, recipe) => {
 
     const tileIds$ = ee.getInfo$(tiles.aggregate_array('system:index'), 'time-series image ids')
     return tileIds$.pipe(
-        switchMap(exportTiles$),
+        switchMap(tileIds => exportTiles$(tileIds)),
         scan(
             (acc, progress) => {
                 return ({
