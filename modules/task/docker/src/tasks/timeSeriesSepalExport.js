@@ -6,20 +6,21 @@ const {exportImageToSepal$} = require('root/ee/export')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {concat, from, of} = require('rxjs')
 const Path = require('path')
-const {mergeMap, switchMap, tap} = require('rxjs/operators')
+const {map, mergeMap, scan, switchMap} = require('rxjs/operators')
+const {swallow} = require('sepal/operators')
 const {terminal$} = require('sepal/terminal')
 const {chunk} = require('sepal/utils/array')
 const ee = require('ee')
 const config = require('root/config')
 
 const TILE_DEGREES = 0.1
-const MAX_STACK_SIZE = 5
+const MAX_CHUNK_SIZE = 5
 const EE_EXPORT_SHARD_SIZE = 256
 const EE_EXPORT_FILE_DIMENSIONS = 256
 
 
 // const TILE_DEGREES = 2
-// const MAX_STACK_SIZE = 100
+// const MAX_CHUNK_SIZE = 100
 // const EE_EXPORT_SHARD_SIZE = 256
 // const EE_EXPORT_FILE_DIMENSIONS = 1024
 
@@ -28,10 +29,8 @@ module.exports = {
         const preferredDownloadDir = `${config.homeDir}/downloads/${recipe.description}/`
         return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
             switchMap(downloadDir =>
-                concat(
-                    export$(downloadDir, recipe),
-                    postProcess$(downloadDir)
-                ))
+                export$(downloadDir, recipe)
+            )
         )
     },
 }
@@ -87,18 +86,54 @@ const export$ = (downloadDir, recipe) => {
             .clip(feature.geometry())
     }
 
-    const exportTile = ({tileId, tileIndex}) => {
+    const exportTiles$ = tileIds =>
+        concat(
+            of({totalTiles: tileIds.length}), from(
+                tileIds.map((tileId, tileIndex) => ({tileId, tileIndex}))
+            ).pipe(
+                mergeMap(({tileId, tileIndex}) =>
+                    exportTile$({totalTiles: tileIds.length, tileId, tileIndex}), 1
+                )
+            )
+        )
+
+
+    const exportTile$ = ({tileId, tileIndex}) =>
+        concat(
+            chunk$({tileId, tileIndex}).pipe(
+                switchMap(chunks =>
+                    concat(
+                        of({tileIndex, totalChunks: chunks.length, chunks: 0}),
+                        from(chunks).pipe(
+                            mergeMap(chunk => exportChunk$(chunk))
+                        )
+                    )
+                )
+            ),
+            postProcess$(Path.join(downloadDir, '' + tileIndex))
+        )
+
+    const chunk$ = ({tileId, tileIndex}) => {
         const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
         const timeSeries = timeSeriesForFeature(tile, images)
 
-        const exportChunk = dates => {
-            const image = timeSeries.select(dates)
-            const firstDate = dates[0]
-            const lastDate = dates[dates.length - 1]
-            const dateDescription = `${firstDate}_${lastDate}`
-            const chunkDescription = `${description}_${tileIndex}_${dateDescription}`
-            const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateDescription}`
-            return exportImageToSepal$({
+        return ee.getInfo$(timeSeries.bandNames(), 'time-series band names').pipe(
+            map(dates =>
+                chunk(dates.sort(), MAX_CHUNK_SIZE)
+                    .map(dates => ({image: timeSeries.select(dates), tileIndex, dates}))
+            )
+        )
+    }
+
+
+    const exportChunk$ = ({image, tileIndex, dates}) => {
+        const firstDate = dates[0]
+        const lastDate = dates[dates.length - 1]
+        const dateDescription = `${firstDate}_${lastDate}`
+        const chunkDescription = `${description}_${tileIndex}_${dateDescription}`
+        const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateDescription}`
+        return concat(
+            exportImageToSepal$({
                 image,
                 description: chunkDescription,
                 downloadDir: chunkDownloadDir,
@@ -106,22 +141,45 @@ const export$ = (downloadDir, recipe) => {
                 crs: 'EPSG:4326',
                 shardSize: EE_EXPORT_SHARD_SIZE,
                 fileDimensions: EE_EXPORT_FILE_DIMENSIONS
-            })
-        }
-
-        return ee.getInfo$(timeSeries.bandNames(), 'time-series band names').pipe(
-            switchMap(dates => from(chunk(dates.sort(), MAX_STACK_SIZE))),
-            mergeMap(exportChunk)
+            }).pipe(swallow()),
+            of({completedChunk: true})
         )
     }
 
-    return ee.getInfo$(tiles.aggregate_array('system:index'), 'time-series image ids').pipe(
-        switchMap(tileIds => from(tileIds.map((tileId, tileIndex) => ({tileId, tileIndex})))),
-        mergeMap(exportTile)
+    const tileIds$ = ee.getInfo$(tiles.aggregate_array('system:index'), 'time-series image ids')
+    return tileIds$.pipe(
+        switchMap(exportTiles$),
+        scan(
+            (acc, progress) => {
+                return ({
+                    ...acc,
+                    ...progress,
+                    chunks: progress.chunks === undefined
+                        ? acc.chunks + (progress.completedChunk ? 1 : 0)
+                        : progress.chunks
+                })
+            },
+            {tileIndex: 0, chunks: 0}
+        ),
+        map(toProgress)
     )
 }
 
 const postProcess$ = downloadDir =>
-    terminal$('sepal-stack-time-series', [Path.join(downloadDir, '/*')])
+    terminal$('sepal-stack-time-series', [downloadDir])
+        .pipe(swallow())
 
+const toProgress = ({totalTiles, tileIndex, totalChunks, chunks}) => {
+    const currentTilePercent = totalChunks ? Math.round(100 * chunks / totalChunks) : 0
+    const currentTile = tileIndex + 1
+    return {
+        totalChunks,
+        chunks,
+        totalTiles,
+        tileIndex,
+        defaultMessage: `Exported ${currentTilePercent}% of tile ${currentTile} out of ${totalTiles}.`,
+        messageKey: `task.export.timeSeriesSepalExport.progress`,
+        messageArgs: {currentTilePercent, currentTile, totalTiles}
+    }
+}
 
