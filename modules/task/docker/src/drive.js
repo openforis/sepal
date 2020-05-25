@@ -8,6 +8,7 @@ const fs = require('fs')
 const Path = require('path')
 const {retry} = require('sepal/operators')
 const {mkdir$} = require('./rxjs/fileSystem')
+const {limiter$} = require('./driveLimiter')
 
 const RETRIES = 3
 
@@ -37,11 +38,15 @@ const do$ = (message, operation$) => {
  */
 const drive$ = (message, op) => {
     log.debug(() => message)
-    return auth$().pipe(
-        map(auth => google.drive({version: 'v3', auth})),
-        switchMap(drive => from(op(drive))),
-        retry(RETRIES),
-        map(({data}) => data)
+    return limiter$(
+        auth$().pipe(
+            map(auth => google.drive({version: 'v3', auth})),
+            switchMap(drive =>
+                from(op(drive))
+            ),
+            retry(RETRIES),
+            map(({data}) => data)
+        )
     )
 }
 
