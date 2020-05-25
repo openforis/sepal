@@ -4,11 +4,10 @@ const {lastInWindow, repeating} = require('sepal/operators')
 const log = require('sepal/log').getLogger('task')
 const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
-const progress = require('root/progress')
-const format = require('./format')
 
-const MIN_UPDATE_PERIOD = 1 * 1000
-const MAX_UPDATE_PERIOD = 60 * 1000
+
+const MIN_TIME_BETWEEN_NOTIFICATIONS = 1 * 1000
+const MAX_TIME_BETWEEN_NOTIFICATIONS = 60 * 1000
 
 const cancel$ = new Subject()
 
@@ -25,7 +24,7 @@ const getTask = (id, name) => {
     }
     return task
 }
-  
+
 const submitTask = ({id, name, params}) => {
     log.info(msg(id, `Submitting ${name}`))
 
@@ -41,10 +40,14 @@ const submitTask = ({id, name, params}) => {
     })
 
     const task$ = task.submit$(id, params)
-    
+
     const progress$ = concat(initialState$, task$).pipe(
-        lastInWindow(MIN_UPDATE_PERIOD),
-        repeating(state => taskProgressed$(id, state), MAX_UPDATE_PERIOD),
+        // Prevent progress notification to Sepal more often than MIN_TIME_BETWEEN_NOTIFICATIONS millis
+        // This is to prevent flooding Sepal with too many updates
+        lastInWindow(MIN_TIME_BETWEEN_NOTIFICATIONS),
+        // Make sure progress notification to Sepal is sent at least every MAX_TIME_BETWEEN_NOTIFICATIONS millis
+        // This prevents Sepal from thinking something gone wrong. Essentially repeating the last message as heartbeats
+        repeating(progress => taskProgressed$(id, progress), MAX_TIME_BETWEEN_NOTIFICATIONS),
         takeUntil(cancelTask$)
     )
     progress$.subscribe({
@@ -53,8 +56,14 @@ const submitTask = ({id, name, params}) => {
     })
 }
 
-const taskProgressed$ = (id, state) => {
-    const progress = getProgress(state)
+const taskProgressed$ = (id, progress) => {
+    if (!progress.defaultMessage || !progress.messageKey) {
+        log.warn(msg(id, `Malformed progress. Must contain 'defaultMessage' and 'messageKey' properties: ${JSON.stringify(progress)}`))
+        progress = {
+            defaultMessage: 'Executing...',
+            messageKey: 'tasks.status.executing'
+        }
+    }
     log.debug(() => msg(id, `Notifying progress update: ${progress.defaultMessage}`))
     return http.post$(`https://${sepalHost}/api/tasks/active`, {
         query: {progress: {[id]: progress}},
@@ -69,11 +78,11 @@ const taskProgressed$ = (id, state) => {
 
 const taskFailed = (id, error) => {
     log.error(msg(id, 'Failed: '), error)
-    const message = progress({
+    const message = {
         defaultMessage: 'Failed to execute task: ',
         messageKey: 'tasks.status.failed',
         messageArgs: {error: String(error)}
-    })
+    }
     stateChanged$(id, 'FAILED', message).subscribe({
         error: error => log.error(msg(id, 'Failed to notify Sepal server on failed task'), error),
         completed: () => log.info(msg(id, 'Notified Sepal server of failed task'))
@@ -82,10 +91,10 @@ const taskFailed = (id, error) => {
 
 const taskCompleted = id => {
     log.info(msg(id, 'Completed'))
-    const message = progress({
+    const message = {
         defaultMessage: 'Completed!',
         messageKey: 'tasks.status.completed'
-    })
+    }
     stateChanged$(id, 'COMPLETED', message).subscribe({
         error: error => log.error(msg(id, 'Failed to notify Sepal server on completed task'), error),
         completed: () => log.info(msg(id, 'Notified Sepal server of completed task'))
@@ -103,38 +112,8 @@ const stateChanged$ = (id, state, message) => {
         password: sepalPassword
     }).pipe(
         tap(() => log.trace(() => msg(id, `Notified state change: ${state}`))),
-        map(() => ({name: state}))
+        map(() => ({state, ...message}))
     )
-}
-
-const getProgress = ({name, data}) => {
-    switch(name) {
-    case 'ACTIVE':
-        return progress({
-            defaultMessage: 'Starting',
-            messageKey: 'tasks.status.executing'
-        })
-    case 'UNSUBMITTED':
-        return progress({
-            defaultMessage: 'Submitting export task to Google Earth Engine',
-            messageKey: 'tasks.ee.export.pending'
-        })
-    case 'READY':
-        return progress({
-            defaultMessage: 'Waiting for Google Earth Engine to start export',
-            messageKey: 'tasks.ee.export.ready'
-        })
-    case 'RUNNING':
-        return progress({
-            defaultMessage: 'Google Earth Engine is exporting',
-            messageKey: 'tasks.ee.export.running'
-        })
-    case 'DOWNLOADING':
-        return progress({
-            defaultMessage: `Downloading - ${data.files} files / ${format.fileSize(data.bytes)} left`,
-            messageKey: 'tasks.ee.export.running'
-        })
-    }
 }
 
 const cancelTask = id => {

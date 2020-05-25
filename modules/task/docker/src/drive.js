@@ -1,5 +1,5 @@
-const {from, of, throwError, ReplaySubject, EMPTY, concat} = require('rxjs')
-const {catchError, map, switchMap, scan, mergeMap, expand} = require('rxjs/operators')
+const {EMPTY, ReplaySubject, concat, from, of, throwError} = require('rxjs')
+const {catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap} = require('rxjs/operators')
 const {google} = require('googleapis')
 const {NotFoundException} = require('sepal/exception')
 const log = require('sepal/log').getLogger('drive')
@@ -9,6 +9,7 @@ const Path = require('path')
 const {retry} = require('sepal/operators')
 const {mkdir$} = require('./rxjs/fileSystem')
 const {limiter$} = require('./driveLimiter')
+const format = require('./format')
 
 const RETRIES = 3
 
@@ -252,7 +253,7 @@ const downloadSingleFolderByPath$ = (path, destinationPath, {concurrency, delete
                     getFolderTotalsByPath$(path).pipe(
                         switchMap(({bytes, files}) =>
                             concat(
-                                of({bytes, files}),
+                                downloadProgress$({bytes, files}),
                                 getFilesByPath({path}).pipe(
                                     expand(({nextPageToken}) => nextPageToken
                                         ? getFilesByPath({path, pageToken: nextPageToken})
@@ -266,12 +267,15 @@ const downloadSingleFolderByPath$ = (path, destinationPath, {concurrency, delete
                                             ),
                                             of({files: -1})
                                         ), concurrency
-                                    )
+                                    ),
+                                    filter(({files}) => files > 0)
                                 )
                             ).pipe(
-                                scan((acc, {bytes = 0, files = 0}) =>
-                                    ({bytes: acc.bytes + bytes, files: acc.files + files}), {bytes: 0, files: 0}
-                                )
+                                mergeScan((acc, {bytes = 0, files = 0}) =>
+                                    downloadProgress$({bytes: acc.bytes + bytes, files: acc.files + files}), {
+                                    bytes: 0,
+                                    files: 0
+                                })
                             )
                         )
                     )
@@ -281,4 +285,13 @@ const downloadSingleFolderByPath$ = (path, destinationPath, {concurrency, delete
         )
     )
 
+const downloadProgress$ = ({bytes, files}) => {
+    return of({
+        bytes,
+        files,
+        defaultMessage: `Downloading - ${files} ${files > 1 ? 'files' : 'file'} / ${format.fileSize(bytes)} left`,
+        messageKey: 'tasks.ee.export.running',
+        messageArgs: {bytes, files}
+    })
+}
 module.exports = {getFolderByPath$, downloadSingleFolderByPath$}
