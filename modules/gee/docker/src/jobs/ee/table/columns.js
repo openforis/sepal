@@ -7,16 +7,37 @@ const worker$ = ({tableId}) => {
     const {throwError, of} = require('rxjs')
     const {switchMap, catchError} = require('rxjs/operators')
 
-    const handleError$ = cause =>
+    const handleError$ = error =>
         ee.getAsset$(tableId, 0).pipe(
             catchError(() => of(null)),
             switchMap(asset =>
                 throwError(
                     asset
                         ? asset.type === 'FeatureCollection'
-                            ? new EEException(cause, `Failed to load table columns from ${tableId}.`)
-                            : new Exception(cause, 'Not a table', 'gee.table.error.notATable', {tableId})
-                        : new NotFoundException(cause, 'Table not found', 'gee.table.error.notFound', {tableId})
+                            ? new EEException({
+                                error,
+                                userMessage: {
+                                    message: `Failed to load table columns from ${tableId}.`,
+                                    key: 'gee.error.earthEngineException',
+                                    args: {earthEngineMessage: error},
+                                }
+                            })
+                            : new Exception({
+                                error,
+                                userMessage: {
+                                    message: 'Not a table',
+                                    key: 'gee.table.error.notATable',
+                                    args: {tableId}
+                                }
+                            })
+                        : new NotFoundException({
+                            error,
+                            userMessage: {
+                                message: 'Table not found',
+                                key: 'gee.table.error.notFound',
+                                args: {tableId}
+                            }
+                        })
                 )
             )
         )

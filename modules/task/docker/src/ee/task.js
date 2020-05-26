@@ -67,7 +67,7 @@ const cleanup = task => {
 
 const start$ = task =>
     ee.$({
-        description: 'start task',
+        operation: 'start task',
         ee: (resolve, reject) =>
             ee.data.startProcessing(null, task.config_, (result, error) => {
                 if (error) {
@@ -81,7 +81,7 @@ const start$ = task =>
 
 const status$ = task =>
     ee.$({
-        description: 'get task status',
+        operation: 'get task status',
         ee: (resolve, reject) =>
             ee.data.getTaskStatus(task.id,
                 (status, error) => error ? reject(error) : resolve(status)
@@ -92,7 +92,7 @@ const status$ = task =>
 
 const cancel$ = task =>
     ee.$({
-        description: 'cancel task',
+        operation: 'cancel task',
         ee: (resolve, reject) =>
             ee.data.cancelTask(task.id,
                 (_canceled, error) => error ? reject(error) : resolve()

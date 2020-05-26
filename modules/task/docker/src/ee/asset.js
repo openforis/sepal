@@ -5,7 +5,7 @@ const {progress} = require('root/rxjs/operators')
 
 const assetRoots$ = () =>
     ee.$({
-        description: 'asset roots',
+        operation: 'get asset roots',
         ee: (resolve, reject) =>
             ee.data.getAssetRoots(
                 (assetRoots, error) => {
@@ -25,7 +25,7 @@ const deleteAsset$ = assetId =>
 
 const delete$ = assetId =>
     ee.$({
-        description: 'delete asset',
+        operation: 'delete asset',
         ee: (resolve, reject) =>
             ee.data.deleteAsset(assetId,
                 (_, error) => error ? reject(error) : resolve()

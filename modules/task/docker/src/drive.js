@@ -102,7 +102,11 @@ const getFolderByName$ = ({name, parentId}) =>
         switchMap(({files}) =>
             files.length
                 ? of({id: files[0].id}) // handling the first match only
-                : throwError(new NotFoundException(null, `Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`))
+                : throwError(
+                    new NotFoundException({
+                        error: `Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`
+                    })
+                )
         )
     )
 
@@ -167,7 +171,14 @@ const getFolderByPath$ = ({path, create} = {}) =>
         getNestedFolderByNames$({names: path.split('/'), create}).pipe(
             catchError(error =>
                 error instanceof NotFoundException
-                    ? throwError(new NotFoundException(error, `Path not found: '${path}'`))
+                    ? throwError(
+                        new NotFoundException({
+                            error,
+                            userMessage: {
+                                message: `Path not found: '${path}'`
+                            }
+                        })
+                    )
                     : throwError(error)
             )
         )

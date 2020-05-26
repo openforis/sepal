@@ -6,7 +6,7 @@ const worker$ = () => {
     const ee = require('ee')
 
     return ee.$({
-        description: 'initalize',
+        operation: 'initalize',
         ee: (resolve, reject) => ee.initialize(null, null, resolve, reject)
     }).pipe(
         swallow()

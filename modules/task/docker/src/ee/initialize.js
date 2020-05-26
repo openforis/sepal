@@ -18,7 +18,7 @@ const secondsToExpiration = expiration => {
 
 const authenticateServiceAccount$ = serviceAccountCredentials =>
     ee.$({
-        description: 'autenticate service account',
+        operation: 'autenticate service account',
         ee: (resolve, reject) => {
             ee.sepal.setAuthType('SERVICE_ACCOUNT')
             ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)
@@ -27,7 +27,7 @@ const authenticateServiceAccount$ = serviceAccountCredentials =>
 
 const authenticateUserAccount$ = userCredentials =>
     ee.$({
-        description: 'authenticate user account',
+        operation: 'authenticate user account',
         ee: (resolve, reject) => {
             ee.sepal.setAuthType('USER')
             ee.data.setAuthToken(
@@ -54,7 +54,7 @@ const initializeEE$ = () =>
                 // tap(() => ee.data.setAuthTokenRefresher(authTokenRefresher)),
                 switchMap(() =>
                     ee.$({
-                        description: 'initalize',
+                        operation: 'initalize',
                         ee: (resolve, reject) => ee.initialize(null, null, resolve, reject)
                     })
                 )

@@ -31,13 +31,13 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
 
     const authenticateServiceAccount$ = credentials =>
         ee.$({
-            description: 'autenticate service account',
+            operation: 'autenticate service account',
             ee: (resolve, reject) => ee.data.authenticateViaPrivateKey(credentials, resolve, reject)
         })
 
     const authenticateUserAccount$ = googleTokens =>
         ee.$({
-            description: 'authenticate user account',
+            operation: 'authenticate user account',
             ee: resolve =>
                 ee.data.setAuthToken(
                     null,
