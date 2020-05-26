@@ -2,18 +2,19 @@ const job = require('root/jobs/job')
 
 const worker$ = ({tableId}) => {
     const ee = require('ee')
-    const {Exception, SystemException, NotFoundException} = require('sepal/exception')
+    const {Exception, NotFoundException} = require('sepal/exception')
+    const {EEException} = require('sepal/ee/exception')
     const {throwError, of} = require('rxjs')
     const {switchMap, catchError} = require('rxjs/operators')
 
     const handleError$ = cause =>
-        ee.getAsset$(tableId).pipe(
+        ee.getAsset$(tableId, 0).pipe(
             catchError(() => of()),
             switchMap(asset =>
                 throwError(
                     asset
                         ? asset.type === 'FeatureCollection'
-                            ? new SystemException(cause, 'Failed to load table columns', {tableId})
+                            ? new EEException(cause, `Failed to load table columns from ${tableId}.`)
                             : new Exception(cause, 'Not a table', 'gee.table.error.notATable', {tableId})
                         : new NotFoundException(cause, 'Not found', 'gee.table.error.notFound', {tableId})
                 )
@@ -25,7 +26,8 @@ const worker$ = ({tableId}) => {
             .first()
             .propertyNames()
             .sort(),
-        'columns'
+        'columns',
+        0
     ).pipe(
         catchError(handleError$)
     )
