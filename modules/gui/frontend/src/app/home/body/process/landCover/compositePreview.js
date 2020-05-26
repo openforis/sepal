@@ -98,8 +98,8 @@ class CompositePreview extends React.Component {
     }
 
     onError(e) {
-        const message = e.response && e.response.code
-            ? msg(e.response.code, e.response.data)
+        const message = e.response && e.response.messageKey
+            ? msg(e.response.messageKey, e.response.messageArgs, e.response.defaultMessage)
             : msg('process.classification.preview.error')
         this.setState({
             error:

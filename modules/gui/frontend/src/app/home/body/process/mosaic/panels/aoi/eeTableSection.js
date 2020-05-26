@@ -156,7 +156,7 @@ class EETableSection extends React.Component {
             error =>
                 this.props.inputs.eeTable.setInvalid(
                     error.response
-                        ? msg(error.response.code, error.response.data)
+                        ? msg(error.response.messageKey, error.response.messageData, error.response.defaultMessage)
                         : msg('eeTable.failedToLoad')
                 )
         )

@@ -16,7 +16,7 @@ const worker$ = ({tableId}) => {
                         ? asset.type === 'FeatureCollection'
                             ? new EEException(cause, `Failed to load table columns from ${tableId}.`)
                             : new Exception(cause, 'Not a table', 'gee.table.error.notATable', {tableId})
-                        : new NotFoundException(cause, 'Not found', 'gee.table.error.notFound', {tableId})
+                        : new NotFoundException(cause, 'Table not found', 'gee.table.error.notFound', {tableId})
                 )
             )
         )

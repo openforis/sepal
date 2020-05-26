@@ -45,7 +45,7 @@ class TrainingData extends React.Component {
             },
             error => {
                 return this.props.inputs.eeTable.setInvalid(
-                    msg(error.response.code, error.response.data)
+                    msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
                 )
             }
         )
