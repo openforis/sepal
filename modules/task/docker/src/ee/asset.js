@@ -4,16 +4,18 @@ const {catchError, switchMap} = require('rxjs/operators')
 const {progress} = require('root/rxjs/operators')
 
 const assetRoots$ = () =>
-    ee.$('asset roots', (resolve, reject) =>
-        ee.data.getAssetRoots(
-            (assetRoots, error) => {
-                const rootPaths = assetRoots.map(({id}) => id)
-                return error
-                    ? reject(error)
-                    : resolve(rootPaths)
-            }
-        )
-    )
+    ee.$({
+        description: 'asset roots',
+        ee: (resolve, reject) =>
+            ee.data.getAssetRoots(
+                (assetRoots, error) => {
+                    const rootPaths = assetRoots.map(({id}) => id)
+                    return error
+                        ? reject(error)
+                        : resolve(rootPaths)
+                }
+            )
+    })
 
 const deleteAsset$ = assetId =>
     ee.getAsset$(assetId).pipe(
@@ -22,11 +24,13 @@ const deleteAsset$ = assetId =>
     )
 
 const delete$ = assetId =>
-    ee.$('delete asset', (resolve, reject) =>
-        ee.data.deleteAsset(assetId,
-            (deleted_, error) => error ? reject(error) : resolve()
-        )
-    ).pipe(
+    ee.$({
+        description: 'delete asset',
+        ee: (resolve, reject) =>
+            ee.data.deleteAsset(assetId,
+                (_, error) => error ? reject(error) : resolve()
+            )
+    }).pipe(
         progress({
             defaultMessage: `Deleted asset '${assetId}'`,
             messageKey: 'tasks.ee.export.asset.delete',

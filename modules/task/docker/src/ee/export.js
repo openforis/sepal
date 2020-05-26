@@ -1,16 +1,24 @@
 const ee = require('ee')
 const {concat, of} = require('rxjs')
 const {map, switchMap} = require('rxjs/operators')
+const {swallow} = require('sepal/rxjs/operators')
 const {executeTask$} = require('./task')
 const {assetRoots$, deleteAsset$} = require('./asset')
 const Path = require('path')
-const moment = require('moment')
 // const {initUserBucket$} = require('root/cloudStorage')
 const drive = require('root/drive')
 // const {download$: downloadFromDrive$} = require('root/downloadDrive')
 const log = require('sepal/log').getLogger('ee')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
+
+const drivePath = folder =>
+    `SEPAL/exports/${folder}`
+
+const createDriveFolder$ = folder =>
+    drive.getFolderByPath$({path: drivePath(folder), create: true}).pipe(
+        swallow()
+    )
 
 const exportImageToAsset$ = ({
     image,
@@ -71,6 +79,7 @@ const exportImageToAsset$ = ({
 }
 
 const exportImageToSepal$ = ({
+    folder,
     image,
     description,
     downloadDir,
@@ -87,12 +96,7 @@ const exportImageToSepal$ = ({
     formatOptions,
     retries
 }) => {
-    const folder = `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`
     const prefix = description
-    const drivePath = `SEPAL/exports/${folder}`
-
-    const ensureDrivePathExists$ = path =>
-        drive.getFolderByPath$({path, create: true})
 
     const exportToDrive$ = ({createTask, description, retries}) => {
         log.debug('Earth Engine <to Google Drive>:', description)
@@ -112,28 +116,24 @@ const exportImageToSepal$ = ({
             deleteAfterDownload
         })
 
-    return ensureDrivePathExists$(drivePath).pipe(
-        switchMap(() =>
-            concat(
-                exportToDrive$({
-                    createTask: () =>
-                        // NOTE: folder is the last path element only for two reasons:
-                        //    1) Drive treats "/" as a normal character
-                        //    2) Drive can resolve a path by the last portion if it exists
-                        ee.batch.Export.image.toDrive(
-                            image, description, folder, prefix, dimensions, region, scale, crs,
-                            crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-                        ),
-                    description: `exportImageToSepal(description: ${description})`,
-                    retries
-                }),
-                downloadFromDrive$({
-                    path: drivePath,
-                    downloadDir,
-                    deleteAfterDownload: false
-                })
-            )
-        )
+    return concat(
+        exportToDrive$({
+            createTask: () =>
+            // NOTE: folder is the last path element only for two reasons:
+            //    1) Drive treats "/" as a normal character
+            //    2) Drive can resolve a path by the last portion if it exists
+                ee.batch.Export.image.toDrive(
+                    image, description, folder, prefix, dimensions, region, scale, crs,
+                    crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+                ),
+            description: `exportImageToSepal(description: ${description})`,
+            retries
+        }),
+        downloadFromDrive$({
+            path: drivePath(folder), // TODO: can't we just pass the folder instead?
+            downloadDir,
+            deleteAfterDownload: false
+        })
     )
 }
 
@@ -192,4 +192,4 @@ const exportImageToSepal$ = ({
 const export$ = ({create$, _description, _retries}) =>
     create$() // TODO: Retries?
 
-module.exports = {exportImageToAsset$, exportImageToSepal$}
+module.exports = {exportImageToAsset$, createDriveFolder$, exportImageToSepal$}
