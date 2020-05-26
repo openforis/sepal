@@ -9,7 +9,7 @@ const worker$ = ({tableId}) => {
 
     const handleError$ = cause =>
         ee.getAsset$(tableId, 0).pipe(
-            catchError(() => of()),
+            catchError(() => of(null)),
             switchMap(asset =>
                 throwError(
                     asset

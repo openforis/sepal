@@ -2,19 +2,15 @@
     "port": 5102,
     "categories": {
         "default": "info",
-        "channel": "info",
-        "ee": "trace",
+        "ee": "debug",
         "drive": "info",
-        "gdal": "debug",
+        "gdal": "info",
         "http": "info",
         "httpClient": "info",
-        "job": "info",
-        "limiter": "debug",
+        "limiter": "info",
         "pool": "info",
         "service": "info",
         "task": "debug",
-        "terminal": "debug",
-        "transport": "info",
-        "worker": "info"
+        "terminal": "info"
     }
 }
