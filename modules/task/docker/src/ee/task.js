@@ -66,31 +66,37 @@ const cleanup = task => {
 }
 
 const start$ = task =>
-    ee.$('start task', (resolve, reject) =>
-        ee.data.startProcessing(null, task.config_, (result, error) => {
-            if (error) {
-                reject(error)
-            } else {
-                task.id = result.taskId // [TODO] Solve this without mutation
-                resolve()
-            }
-        })
-    )
+    ee.$({
+        description: 'start task',
+        ee: (resolve, reject) =>
+            ee.data.startProcessing(null, task.config_, (result, error) => {
+                if (error) {
+                    reject(error)
+                } else {
+                    task.id = result.taskId // [TODO] Solve this without mutation
+                    resolve()
+                }
+            })
+    })
 
 const status$ = task =>
-    ee.$('task status', (resolve, reject) =>
-        ee.data.getTaskStatus(task.id,
-            (status, error) =>
-                error ? reject(error) : resolve(status)
-        )
-    ).pipe(
+    ee.$({
+        description: 'task status',
+        ee: (resolve, reject) =>
+            ee.data.getTaskStatus(task.id,
+                (status, error) => error ? reject(error) : resolve(status)
+            )
+    }).pipe(
         map(([status]) => status)
     )
 
 const cancel$ = task =>
-    ee.$('cancel task', (resolve, reject) => {
-        ee.data.cancelTask(task.id,
-            (canceled_, error) => error ? reject(error) : resolve())
+    ee.$({
+        description: 'cancel task',
+        ee: (resolve, reject) =>
+            ee.data.cancelTask(task.id,
+                (_canceled, error) => error ? reject(error) : resolve()
+            )
     })
 
 const isRunning = state => [UNSUBMITTED, READY, RUNNING].includes(state)

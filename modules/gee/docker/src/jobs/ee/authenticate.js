@@ -18,8 +18,7 @@ const getCredentials = ctx => {
 }
 
 const worker$ = ({sepalUser, serviceAccountCredentials}) => {
-    const {EMPTY} = require('rxjs')
-    const {switchMapTo} = require('rxjs/operators')
+    const {swallow} = require('sepal/rxjs/operators')
     const ee = require('ee')
 
     const secondsToExpiration = expiration => {
@@ -31,26 +30,25 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
     }
 
     const authenticateServiceAccount$ = credentials =>
-        ee.$('autenticate service account', (resolve, reject) =>
-            ee.data.authenticateViaPrivateKey(
-                credentials,
-                () => resolve(),
-                error => reject(error)
-            )
-        )
+        ee.$({
+            description: 'autenticate service account',
+            ee: (resolve, reject) => ee.data.authenticateViaPrivateKey(credentials, resolve, reject)
+        })
 
     const authenticateUserAccount$ = googleTokens =>
-        ee.$('authenticate user account', resolve =>
-            ee.data.setAuthToken(
-                null,
-                'Bearer',
-                googleTokens.accessToken,
-                secondsToExpiration(googleTokens.accessTokenExpiryDate),
-                null,
-                () => resolve(),
-                false
-            )
-        )
+        ee.$({
+            description: 'authenticate user account',
+            ee: resolve =>
+                ee.data.setAuthToken(
+                    null,
+                    'Bearer',
+                    googleTokens.accessToken,
+                    secondsToExpiration(googleTokens.accessTokenExpiryDate),
+                    null,
+                    resolve,
+                    false
+                )
+        })
 
     const authenticate$ = ({sepalUser: {googleTokens}, serviceAccountCredentials}) =>
         googleTokens
@@ -58,7 +56,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
             : authenticateServiceAccount$(serviceAccountCredentials)
 
     return authenticate$({sepalUser, serviceAccountCredentials}).pipe(
-        switchMapTo(EMPTY)
+        swallow()
     )
 }
 

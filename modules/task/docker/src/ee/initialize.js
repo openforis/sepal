@@ -17,27 +17,29 @@ const secondsToExpiration = expiration => {
 // const CREDENTIALS_FILE = 'credentials'
 
 const authenticateServiceAccount$ = serviceAccountCredentials =>
-    ee.$('autenticate service account', (resolve, reject) => {
-        ee.sepal.setAuthType('SERVICE_ACCOUNT')
-        ee.data.authenticateViaPrivateKey(
-            serviceAccountCredentials,
-            () => resolve(),
-            error => reject(error)
-        )
+    ee.$({
+        description: 'autenticate service account',
+        ee: (resolve, reject) => {
+            ee.sepal.setAuthType('SERVICE_ACCOUNT')
+            ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)
+        }
     })
 
 const authenticateUserAccount$ = userCredentials =>
-    ee.$('authenticate user account', (resolve, reject) => {
-        ee.sepal.setAuthType('USER')
-        ee.data.setAuthToken(
-            null,
-            'Bearer',
-            userCredentials.accessToken,
-            secondsToExpiration(userCredentials.accessTokenExpiryDate),
-            null,
-            error => error ? reject(error) : resolve(),
-            false
-        )
+    ee.$({
+        description: 'authenticate user account',
+        ee: (resolve, reject) => {
+            ee.sepal.setAuthType('USER')
+            ee.data.setAuthToken(
+                null,
+                'Bearer',
+                userCredentials.accessToken,
+                secondsToExpiration(userCredentials.accessTokenExpiryDate),
+                null,
+                error => error ? reject(error) : resolve(),
+                false
+            )
+        }
     })
 
 const initializeEE$ = () =>
@@ -51,16 +53,10 @@ const initializeEE$ = () =>
             return authenticate$.pipe(
                 // tap(() => ee.data.setAuthTokenRefresher(authTokenRefresher)),
                 switchMap(() =>
-                    ee.$('initalize', (resolve, reject) =>
-                        ee.initialize(
-                            null,
-                            null,
-                            () => {
-                                return resolve()
-                            },
-                            error => reject(error)
-                        )
-                    )
+                    ee.$({
+                        description: 'initalize',
+                        ee: (resolve, reject) => ee.initialize(null, null, resolve, reject)
+                    })
                 )
             )
         }),
