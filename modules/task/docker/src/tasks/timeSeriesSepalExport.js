@@ -6,12 +6,13 @@ const {exportImageToSepal$} = require('root/ee/export')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {concat, from, of} = require('rxjs')
 const Path = require('path')
-const {map, mergeMap, scan, switchMap} = require('rxjs/operators')
-const {swallow} = require('sepal/operators')
+const {map, mergeMap, scan, switchMap, tap} = require('rxjs/operators')
+const {swallow} = require('sepal/rxjs/operators')
 const {terminal$} = require('sepal/terminal')
 const {chunk} = require('sepal/utils/array')
 const ee = require('ee')
 const config = require('root/config')
+const log = require('sepal/log').getLogger('task')
 
 const TILE_DEGREES = 0.1
 const MAX_CHUNK_SIZE = 5
@@ -102,7 +103,7 @@ const export$ = (downloadDir, recipe) => {
 
     const exportTile$ = ({tileId, tileIndex}) => {
         return concat(
-            of({tileIndex}),
+            of({tileIndex, chunks: 0}),
             chunk$({tileId, tileIndex}).pipe(
                 switchMap(chunks => exportChunks$(chunks))
             ),
@@ -124,7 +125,7 @@ const export$ = (downloadDir, recipe) => {
 
     const exportChunks$ = chunks =>
         concat(
-            of({totalChunks: chunks.length, chunks: 0}),
+            of({totalChunks: chunks.length}),
             from(chunks).pipe(
                 mergeMap(chunk => exportChunk$(chunk))
             )
@@ -153,6 +154,7 @@ const export$ = (downloadDir, recipe) => {
     const tileIds$ = ee.getInfo$(tiles.aggregate_array('system:index'), 'time-series image ids')
     return tileIds$.pipe(
         switchMap(tileIds => exportTiles$(tileIds)),
+        tap(progress => log.trace('time-series: ' + JSON.stringify(progress))),
         scan(
             (acc, progress) => {
                 return ({
@@ -173,7 +175,7 @@ const postProcess$ = downloadDir =>
     terminal$('sepal-stack-time-series', [downloadDir])
         .pipe(swallow())
 
-const toProgress = ({totalTiles, tileIndex, totalChunks, chunks}) => {
+const toProgress = ({totalTiles = 0, tileIndex = 0, totalChunks = 0, chunks = 0}) => {
     const currentTilePercent = totalChunks ? Math.round(100 * chunks / totalChunks) : 0
     const currentTile = tileIndex + 1
     return {

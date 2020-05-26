@@ -1,18 +1,19 @@
-const {from, of} = require('rxjs')
+const {of} = require('rxjs')
 const {catchError, map, switchMap} = require('rxjs/operators')
+const {fromPromise} = require('sepal/rxjs')
 const fs = require('fs')
 const Path = require('path')
 
 const ls$ = (path, options = {}) =>
-    from(fs.promises.readdir(path, options))
+    fromPromise(fs.promises.readdir(path, options))
 
 const mkdir$ = (path, options = {}) =>
-    from(fs.promises.mkdir(path, options)).pipe(
+    fromPromise(fs.promises.mkdir(path, options)).pipe(
         map(() => path)
     )
 
 const exists$ = path =>
-    from(fs.promises.stat(path)).pipe(
+    fromPromise(fs.promises.stat(path)).pipe(
         catchError(() => of(null)),
         map(stat => !!stat)
     )

@@ -1,9 +1,10 @@
 const {Subject, concat} = require('rxjs')
-const {filter, map, takeUntil, tap} = require('rxjs/operators')
-const {lastInWindow, repeating} = require('sepal/operators')
+const {distinctUntilChanged, filter, map, takeUntil, tap} = require('rxjs/operators')
+const {lastInWindow, repeating} = require('sepal/rxjs/operators')
 const log = require('sepal/log').getLogger('task')
 const http = require('sepal/httpClient')
 const {sepalHost, sepalUsername, sepalPassword} = require('./config')
+const _ = require('lodash')
 
 const MIN_TIME_BETWEEN_NOTIFICATIONS = 1 * 1000
 const MAX_TIME_BETWEEN_NOTIFICATIONS = 60 * 1000
@@ -41,6 +42,11 @@ const submitTask = ({id, name, params}) => {
     const task$ = task.submit$(id, params)
 
     const progress$ = concat(initialState$, task$).pipe(
+        distinctUntilChanged((p1, p2) => _.isEqual(
+            _.pick(p1, ['defaultMessage', 'messageKey', 'messageArgs']),
+            _.pick(p2, ['defaultMessage', 'messageKey', 'messageArgs'])
+        )),
+        tap(progress => log.info(msg(id, progress.defaultMessage))),
         // Prevent progress notification to Sepal more often than MIN_TIME_BETWEEN_NOTIFICATIONS millis
         // This is to prevent flooding Sepal with too many updates
         lastInWindow(MIN_TIME_BETWEEN_NOTIFICATIONS),
@@ -84,7 +90,7 @@ const taskFailed = (id, error) => {
     }
     stateChanged$(id, 'FAILED', message).subscribe({
         error: error => log.error(msg(id, 'Failed to notify Sepal server on failed task'), error),
-        completed: () => log.info(msg(id, 'Notified Sepal server of failed task'))
+        completed: () => log.debug(msg(id, 'Notified Sepal server of failed task'))
     })
 }
 
@@ -96,7 +102,7 @@ const taskCompleted = id => {
     }
     stateChanged$(id, 'COMPLETED', message).subscribe({
         error: error => log.error(msg(id, 'Failed to notify Sepal server on completed task'), error),
-        completed: () => log.info(msg(id, 'Notified Sepal server of completed task'))
+        completed: () => log.debug(msg(id, 'Notified Sepal server of completed task'))
     })
 }
 
