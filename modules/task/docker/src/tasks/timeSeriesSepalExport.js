@@ -2,7 +2,7 @@ const {toGeometry, toFeatureCollection} = require('sepal/ee/aoi')
 const {allScenes} = require('sepal/ee/optical/collection')
 const {calculateIndex} = require('sepal/ee/optical/indexes')
 const tile = require('sepal/ee/tile')
-const {exportImageToSepal$} = require('root/ee/export')
+const {createDriveFolder$, exportImageToSepal$} = require('root/ee/export')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {concat, from, of} = require('rxjs')
 const Path = require('path')
@@ -13,6 +13,7 @@ const {chunk} = require('sepal/utils/array')
 const ee = require('ee')
 const config = require('root/config')
 const log = require('sepal/log').getLogger('task')
+const moment = require('moment')
 
 const TILE_DEGREES = 0.1
 const MAX_CHUNK_SIZE = 5
@@ -65,6 +66,8 @@ const export$ = (downloadDir, recipe) => {
 
     const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES)
 
+    const folder = `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`
+
     const timeSeriesForFeature = (feature, images) => {
         const featureImages = images
             .filterBounds(feature.geometry())
@@ -94,6 +97,7 @@ const export$ = (downloadDir, recipe) => {
             )
         )
         return concat(
+            createDriveFolder$(folder),
             of({totalTiles}),
             tile$.pipe(
                 mergeMap(tile => exportTile$(tile), 1)
@@ -139,6 +143,7 @@ const export$ = (downloadDir, recipe) => {
         const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateDescription}`
         return concat(
             exportImageToSepal$({
+                folder,
                 image,
                 description: chunkDescription,
                 downloadDir: chunkDownloadDir,
@@ -152,9 +157,10 @@ const export$ = (downloadDir, recipe) => {
     }
 
     const tileIds$ = ee.getInfo$(tiles.aggregate_array('system:index'), 'time-series image ids')
+
     return tileIds$.pipe(
         switchMap(tileIds => exportTiles$(tileIds)),
-        tap(progress => log.trace('time-series: ' + JSON.stringify(progress))),
+        tap(progress => log.trace(`time-series: ${JSON.stringify(progress)}`)),
         scan(
             (acc, progress) => {
                 return ({
