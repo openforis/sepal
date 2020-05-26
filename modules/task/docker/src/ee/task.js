@@ -81,7 +81,7 @@ const start$ = task =>
 
 const status$ = task =>
     ee.$({
-        description: 'task status',
+        description: 'get task status',
         ee: (resolve, reject) =>
             ee.data.getTaskStatus(task.id,
                 (status, error) => error ? reject(error) : resolve(status)
