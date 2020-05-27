@@ -14,21 +14,24 @@ const worker$ = ({tableId}) => {
                 throwError(
                     asset
                         ? asset.type === 'FeatureCollection'
-                            ? new EEException(error, {
-                                userMessage: {
-                                    message: `Failed to load table columns from ${tableId}.`,
-                                    key: 'gee.error.earthEngineException',
-                                    args: {earthEngineMessage: error},
-                                }
-                            })
-                            : new ClientException(error, {
-                                userMessage: {
-                                    message: 'Not a table',
-                                    key: 'gee.table.error.notATable',
-                                    args: {tableId}
-                                }
-                            })
-                        : new NotFoundException(error, {
+                        ? new EEException(`Failed to load table columns from ${tableId}.`, {
+                            cause: error,
+                            userMessage: {
+                                message: 'Failed to load table',
+                                key: 'gee.error.earthEngineException',
+                                args: {earthEngineMessage: error},
+                            }
+                        })
+                        : new ClientException(`Asset ${tableId} is not a table`, {
+                            cause: error,
+                            userMessage: {
+                                message: 'Not a table',
+                                key: 'gee.table.error.notATable',
+                                args: {tableId}
+                            }
+                        })
+                        : new NotFoundException(`Table ${tableId} not found `, {
+                            cause: error,
                             userMessage: {
                                 message: 'Table not found',
                                 key: 'gee.table.error.notFound',
@@ -44,7 +47,7 @@ const worker$ = ({tableId}) => {
             .first()
             .propertyNames()
             .sort(),
-        'columns',
+        `load columns from ${tableId}`,
         0
     ).pipe(
         catchError(handleError$)
