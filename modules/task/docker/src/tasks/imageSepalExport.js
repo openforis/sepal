@@ -4,12 +4,11 @@ const moment = require('moment')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const ImageFactory = require('sepal/ee/imageFactory')
 const {createVrt$, setBandNames$} = require('sepal/gdal')
-const {createDriveFolder$, exportImageToSepal$} = require('root/ee/export')
+const {exportImageToSepal$} = require('root/ee/export')
 const config = require('root/config')
 
 module.exports = {
     submit$: (id, {image: {recipe, bands, scale}}) => {
-
         const description = recipe.title || recipe.placeholder
         const preferredDownloadDir = `${config.homeDir}/downloads/${description}/`
         return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
@@ -29,12 +28,9 @@ const export$ = ({description, downloadDir, recipe, bands, scale}) => {
 
     return getImage$().pipe(
         switchMap(image =>
-            concat(
-                createDriveFolder$(folder),
-                exportImageToSepal$({
-                    folder, image, description, downloadDir, scale, crs: 'EPSG:4326'
-                })
-            )
+            exportImageToSepal$({
+                folder, image, description, downloadDir, scale, crs: 'EPSG:4326'
+            })
         )
     )
 }

@@ -1,14 +1,14 @@
 const ee = require('ee')
-const {concat, of} = require('rxjs')
+const {concat, defer, of} = require('rxjs')
 const {map, switchMap} = require('rxjs/operators')
 const {swallow} = require('sepal/rxjs/operators')
 const {executeTask$} = require('./task')
 const {assetRoots$, deleteAsset$} = require('./asset')
 const Path = require('path')
 const {limiter$} = require('./eeExportLimiter')
-// const {initUserBucket$} = require('root/cloudStorage')
+const {Limiter} = require('sepal/service/limiter')
 const drive = require('root/drive')
-// const {download$: downloadFromDrive$} = require('root/downloadDrive')
+// const {initUserBucket$} = require('root/cloudStorage')
 const log = require('sepal/log').getLogger('ee')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
@@ -17,7 +17,9 @@ const drivePath = folder =>
     `SEPAL/exports/${folder}`
 
 const createDriveFolder$ = folder =>
-    drive.getFolderByPath$({path: drivePath(folder), create: true}).pipe(
+    defer(() => serialize$(
+        drive.getFolderByPath$({path: drivePath(folder), create: true})
+    )).pipe(
         swallow()
     )
 
@@ -99,22 +101,22 @@ const exportImageToSepal$ = ({
 }) => {
     const prefix = description
 
-    const exportToDrive$ = ({createTask, description, retries}) => {
+    const exportToDrive$ = ({createTask, description, folder, retries}) => {
         log.debug('Earth Engine <to Google Drive>:', description)
         return export$({
-            create$: () => {
-                const task = createTask()
-                return executeTask$(task, description)
-            },
+            create$: () => concat(
+                createDriveFolder$(folder),
+                executeTask$(createTask(), description)
+            ),
             description,
             retries
         })
     }
 
-    const downloadFromDrive$ = ({path, downloadDir, deleteAfterDownload}) =>
+    const downloadFromDrive$ = ({path, downloadDir}) =>
         drive.downloadSingleFolderByPath$(path, downloadDir, {
             concurrency: CONCURRENT_FILE_DOWNLOAD,
-            deleteAfterDownload
+            deleteAfterDownload: true
         })
 
     return concat(
@@ -128,12 +130,12 @@ const exportImageToSepal$ = ({
                     crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
                 ),
             description: `exportImageToSepal(description: ${description})`,
+            folder,
             retries
         }),
         downloadFromDrive$({
-            path: drivePath(folder), // TODO: can't we just pass the folder instead?
-            downloadDir,
-            deleteAfterDownload: false
+            path: drivePath(folder),
+            downloadDir
         })
     )
 }
@@ -190,9 +192,14 @@ const exportImageToSepal$ = ({
 //     )
 // }
 
+const {limiter$: serialize$} = Limiter({
+    name: 'Serializer',
+    maxConcurrency: 1
+})
+
 const export$ = ({create$, _description, _retries}) =>
     limiter$(
         create$()
     )
 
-module.exports = {exportImageToAsset$, createDriveFolder$, exportImageToSepal$}
+module.exports = {exportImageToAsset$, exportImageToSepal$}

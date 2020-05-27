@@ -1,4 +1,4 @@
-const {EMPTY, ReplaySubject, concat, from, of, throwError} = require('rxjs')
+const {EMPTY, ReplaySubject, concat, defer, from, of, throwError} = require('rxjs')
 const {catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap} = require('rxjs/operators')
 const {google} = require('googleapis')
 const {NotFoundException} = require('sepal/exception')
@@ -10,6 +10,7 @@ const {retry} = require('sepal/rxjs/operators')
 const {mkdir$} = require('./rxjs/fileSystem')
 const {limiter$} = require('./driveLimiter')
 const format = require('./format')
+
 
 const RETRIES = 3
 
@@ -26,10 +27,10 @@ const isParent = parentId =>
 const isName = name =>
     name && `name = "${name}"`
 
-const do$ = (message, operation$) => {
+const do$ = (message, operation$) => defer(() => {
     log.debug(() => message)
     return operation$
-}
+})
 
 /**
  * Google Drive wrapper: authenticate, execute (with autoretries) and unwrap result
@@ -103,7 +104,7 @@ const getFolderByName$ = ({name, parentId}) =>
             files.length
                 ? of({id: files[0].id}) // handling the first match only
                 : throwError(
-                    new NotFoundException(`Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`)
+                new NotFoundException(`Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`)
                 )
         )
     )
@@ -170,11 +171,11 @@ const getFolderByPath$ = ({path, create} = {}) =>
             catchError(error =>
                 error instanceof NotFoundException
                     ? throwError(
-                        new NotFoundException(error, {
-                            userMessage: {
-                                message: `Path not found: '${path}'`
-                            }
-                        })
+                    new NotFoundException(error, {
+                        userMessage: {
+                            message: `Path not found: '${path}'`
+                        }
+                    })
                     )
                     : throwError(error)
             )
@@ -289,7 +290,7 @@ const downloadSingleFolderByPath$ = (path, destinationPath, {concurrency, delete
                     )
                 )
             ),
-            deleteAfterDownload ? removeFolderByPath$(path) : EMPTY
+            deleteAfterDownload ? removeFolderByPath$({path}) : EMPTY
         )
     )
 

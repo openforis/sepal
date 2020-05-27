@@ -2,7 +2,7 @@ const {toGeometry, toFeatureCollection} = require('sepal/ee/aoi')
 const {allScenes} = require('sepal/ee/optical/collection')
 const {calculateIndex} = require('sepal/ee/optical/indexes')
 const tile = require('sepal/ee/tile')
-const {createDriveFolder$, exportImageToSepal$} = require('root/ee/export')
+const {exportImageToSepal$} = require('root/ee/export')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {concat, from, of} = require('rxjs')
 const Path = require('path')
@@ -16,7 +16,7 @@ const log = require('sepal/log').getLogger('task')
 const moment = require('moment')
 
 const TILE_DEGREES = 0.1
-const MAX_CHUNK_SIZE = 5
+const MAX_CHUNK_SIZE = 1
 const EE_EXPORT_SHARD_SIZE = 256
 const EE_EXPORT_FILE_DIMENSIONS = 256
 
@@ -66,8 +66,6 @@ const export$ = (downloadDir, recipe) => {
 
     const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES)
 
-    const folder = `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`
-
     const timeSeriesForFeature = (feature, images) => {
         const featureImages = images
             .filterBounds(feature.geometry())
@@ -97,7 +95,6 @@ const export$ = (downloadDir, recipe) => {
             )
         )
         return concat(
-            createDriveFolder$(folder),
             of({totalTiles}),
             tile$.pipe(
                 mergeMap(tile => exportTile$(tile), 1)
@@ -143,7 +140,7 @@ const export$ = (downloadDir, recipe) => {
         const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateDescription}`
         return concat(
             exportImageToSepal$({
-                folder,
+                folder: chunkDescription,
                 image,
                 description: chunkDescription,
                 downloadDir: chunkDownloadDir,
