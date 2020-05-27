@@ -5,6 +5,7 @@ const {swallow} = require('sepal/rxjs/operators')
 const {executeTask$} = require('./task')
 const {assetRoots$, deleteAsset$} = require('./asset')
 const Path = require('path')
+const {limiter$} = require('./eeExportLimiter')
 // const {initUserBucket$} = require('root/cloudStorage')
 const drive = require('root/drive')
 // const {download$: downloadFromDrive$} = require('root/downloadDrive')
@@ -190,6 +191,8 @@ const exportImageToSepal$ = ({
 // }
 
 const export$ = ({create$, _description, _retries}) =>
-    create$() // TODO: Retries?
+    limiter$(
+        create$()
+    )
 
 module.exports = {exportImageToAsset$, createDriveFolder$, exportImageToSepal$}
