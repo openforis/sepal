@@ -6,7 +6,7 @@ const log = require('sepal/log').getLogger('drive')
 const {auth$} = require('root/credentials')
 const fs = require('fs')
 const Path = require('path')
-const {retry} = require('sepal/rxjs/operators')
+const {retry, swallow} = require('sepal/rxjs/operators')
 const {mkdir$} = require('./rxjs/fileSystem')
 const {limiter$} = require('./driveLimiter')
 const format = require('./format')
@@ -155,7 +155,7 @@ const remove$ = ({id}) =>
         drive.files.delete({
             fileId: id
         })
-    )
+    ).pipe(swallow())
 
 // PATH FUNCTIONS
 
@@ -203,7 +203,7 @@ const getFilesByPath = ({path, pageToken}) =>
 const removeFolderByPath$ = ({path}) =>
     do$(`Remove folder by path: ${path}`,
         getFolderByPath$({path}).pipe(
-            switchMap(({id}) => remove$({id}))
+            switchMap(({id}) => remove$({id})),
         )
     )
 
