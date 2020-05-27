@@ -57,7 +57,7 @@ const exportImageToAsset$ = ({
                 const task = createTask()
                 return concat(
                     deleteAsset$(assetId),
-                    executeTask$(task)
+                    executeTask$(task, description)
                 )
             },
             description,
@@ -104,7 +104,7 @@ const exportImageToSepal$ = ({
         return export$({
             create$: () => {
                 const task = createTask()
-                return executeTask$(task)
+                return executeTask$(task, description)
             },
             description,
             retries
