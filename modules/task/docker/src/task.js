@@ -46,7 +46,17 @@ const submitTask = ({id, name, params}) => {
             _.pick(p1, ['defaultMessage', 'messageKey', 'messageArgs']),
             _.pick(p2, ['defaultMessage', 'messageKey', 'messageArgs'])
         )),
-        tap(progress => log.info(msg(id, progress.defaultMessage))),
+        map(progress => {
+            if (!progress.defaultMessage || !progress.messageKey) {
+                log.warn(msg(id, `Malformed progress. Must contain 'defaultMessage' and 'messageKey' properties: ${JSON.stringify(progress)}`))
+                progress = {
+                    defaultMessage: 'Executing...',
+                    messageKey: 'tasks.status.executing'
+                }
+            }
+            log.info(msg(id, progress.defaultMessage))
+            return progress
+        }),
         // Prevent progress notification to Sepal more often than MIN_TIME_BETWEEN_NOTIFICATIONS millis
         // This is to prevent flooding Sepal with too many updates
         lastInWindow(MIN_TIME_BETWEEN_NOTIFICATIONS),
@@ -62,13 +72,6 @@ const submitTask = ({id, name, params}) => {
 }
 
 const taskProgressed$ = (id, progress) => {
-    if (!progress.defaultMessage || !progress.messageKey) {
-        log.warn(msg(id, `Malformed progress. Must contain 'defaultMessage' and 'messageKey' properties: ${JSON.stringify(progress)}`))
-        progress = {
-            defaultMessage: 'Executing...',
-            messageKey: 'tasks.status.executing'
-        }
-    }
     log.debug(() => msg(id, `Notifying progress update: ${progress.defaultMessage}`))
     return http.post$(`https://${sepalHost}/api/tasks/active`, {
         query: {progress: {[id]: progress}},
