@@ -13,7 +13,6 @@ const {sequence} = require('sepal/utils/array')
 const ee = require('ee')
 const config = require('root/config')
 const log = require('sepal/log').getLogger('task')
-const moment = require('moment')
 
 const TILE_DEGREES = 2
 const EE_EXPORT_SHARD_SIZE = 256
