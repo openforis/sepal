@@ -17,6 +17,8 @@ const log = require('sepal/log').getLogger('task')
 const TILE_DEGREES = 2
 const EE_EXPORT_SHARD_SIZE = 256
 const EE_EXPORT_FILE_DIMENSIONS = 1024
+const DATE_DELTA = 2
+const DATE_DELTA_UNIT = 'months'
 
 module.exports = {
     submit$: (id, recipe) => {
@@ -71,13 +73,11 @@ const export$ = (downloadDir, recipe) => {
         const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
         const from = moment(fromDate)
         const to = moment(toDate)
-        const dateDelta = 2
-        const dateUnit = 'months'
-        const duration = to.diff(from, dateUnit)
-        const dateOffsets = sequence(0, duration, dateDelta)
+        const duration = to.diff(from, DATE_DELTA_UNIT)
+        const dateOffsets = sequence(0, duration, DATE_DELTA)
         const chunks$ = dateOffsets.map(dateOffset => {
-            const start = moment(from).add(dateOffset, dateUnit)
-            const end = moment.min(moment(start).add(dateDelta, dateUnit), to)
+            const start = moment(from).add(dateOffset, DATE_DELTA_UNIT)
+            const end = moment.min(moment(start).add(DATE_DELTA, DATE_DELTA_UNIT), to)
             const timeSeries = createTimeSeries(tile, start, end)
             const dateRange = `${start.format('YYYY-MM-DD')}_${end.format('YYYY-MM-DD')}`
             const notEmpty$ = hasImagery$(
