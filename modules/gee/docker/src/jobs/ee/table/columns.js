@@ -14,22 +14,22 @@ const worker$ = ({tableId}) => {
                 throwError(
                     asset
                         ? asset.type === 'FeatureCollection'
-                        ? new EEException(`Failed to load table columns from ${tableId}.`, {
-                            cause: error,
-                            userMessage: {
-                                message: 'Failed to load table',
-                                key: 'gee.error.earthEngineException',
-                                args: {earthEngineMessage: error},
-                            }
-                        })
-                        : new ClientException(`Asset ${tableId} is not a table`, {
-                            cause: error,
-                            userMessage: {
-                                message: 'Not a table',
-                                key: 'gee.table.error.notATable',
-                                args: {tableId}
-                            }
-                        })
+                            ? new EEException(`Failed to load table columns from ${tableId}.`, {
+                                cause: error,
+                                userMessage: {
+                                    message: 'Failed to load table',
+                                    key: 'gee.error.earthEngineException',
+                                    args: {earthEngineMessage: error},
+                                }
+                            })
+                            : new ClientException(`Asset ${tableId} is not a table`, {
+                                cause: error,
+                                userMessage: {
+                                    message: 'Not a table',
+                                    key: 'gee.table.error.notATable',
+                                    args: {tableId}
+                                }
+                            })
                         : new NotFoundException(`Table ${tableId} not found `, {
                             cause: error,
                             userMessage: {
