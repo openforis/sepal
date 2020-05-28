@@ -1,29 +1,23 @@
 const {toGeometry, toFeatureCollection} = require('sepal/ee/aoi')
-const {allScenes} = require('sepal/ee/optical/collection')
+const {allScenes, hasImagery} = require('sepal/ee/optical/collection')
 const {calculateIndex} = require('sepal/ee/optical/indexes')
 const tile = require('sepal/ee/tile')
 const {exportImageToSepal$} = require('root/ee/export')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
-const {concat, from, of} = require('rxjs')
+const {concat, forkJoin, from, of} = require('rxjs')
 const Path = require('path')
 const {map, mergeMap, scan, switchMap, tap} = require('rxjs/operators')
 const {swallow} = require('sepal/rxjs/operators')
 const {terminal$} = require('sepal/terminal')
-const {chunk} = require('sepal/utils/array')
+const {sequence} = require('sepal/utils/array')
 const ee = require('ee')
 const config = require('root/config')
 const log = require('sepal/log').getLogger('task')
 const moment = require('moment')
 
-const TILE_DEGREES = 0.1
-const MAX_CHUNK_SIZE = 1
+const TILE_DEGREES = 2
 const EE_EXPORT_SHARD_SIZE = 256
-const EE_EXPORT_FILE_DIMENSIONS = 256
-
-// const TILE_DEGREES = 2
-// const MAX_CHUNK_SIZE = 100
-// const EE_EXPORT_SHARD_SIZE = 256
-// const EE_EXPORT_FILE_DIMENSIONS = 1024
+const EE_EXPORT_FILE_DIMENSIONS = 1024
 
 module.exports = {
     submit$: (id, recipe) => {
@@ -48,44 +42,8 @@ const export$ = (downloadDir, recipe) => {
         seasonStart: fromDate,
         seasonEnd: toDate
     }
-    const images = allScenes({
-        geometry,
-        dataSets,
-        reflectance,
-        filters: [],
-        cloudMasking,
-        cloudBuffer,
-        snowMasking,
-        panSharpen: false,
-        calibrate,
-        brdfCorrect,
-        dates
-    }).map(image =>
-        calculateIndex(image, indicator)
-            .set('date', image.date().format('yyyy-MM-dd')))
 
     const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES)
-
-    const timeSeriesForFeature = (feature, images) => {
-        const featureImages = images
-            .filterBounds(feature.geometry())
-        const distinctDateImages = featureImages.distinct('date')
-        return ee.ImageCollection(ee.Join.saveAll('images')
-            .apply({
-                primary: distinctDateImages,
-                secondary: featureImages,
-                condition: ee.Filter.equals({
-                    leftField: 'date',
-                    rightField: 'date'
-                })
-            })
-            .map(image => ee.ImageCollection(ee.List(image.get('images')))
-                .median()
-                .rename(image.getString('date'))))
-            .toBands()
-            .regexpRename('.*(.{10})', '$1')
-            .clip(feature.geometry())
-    }
 
     const exportTiles$ = tileIds => {
         const totalTiles = tileIds.length
@@ -105,50 +63,109 @@ const export$ = (downloadDir, recipe) => {
     const exportTile$ = ({tileId, tileIndex}) => {
         return concat(
             of({tileIndex, chunks: 0}),
-            chunk$({tileId, tileIndex}).pipe(
-                switchMap(chunks => exportChunks$(chunks))
-            ),
+            exportChunks$(createChunks$({tileId, tileIndex})),
             postProcess$(Path.join(downloadDir, `${tileIndex}`))
         )
     }
 
-    const chunk$ = ({tileId, tileIndex}) => {
+    const createChunks$ = ({tileId, tileIndex}) => {
         const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
-        const timeSeries = timeSeriesForFeature(tile, images)
-        let dates$ = ee.getInfo$(timeSeries.bandNames(), 'time-series band names')
-        return dates$.pipe(
-            map(dates =>
-                chunk(dates.sort(), MAX_CHUNK_SIZE)
-                    .map(dates => ({image: timeSeries.select(dates), tileIndex, dates}))
+        const from = moment(fromDate)
+        const to = moment(toDate)
+        const dateDelta = 2
+        const dateUnit = 'months'
+        const duration = to.diff(from, dateUnit)
+        const dateOffsets = sequence(0, duration, dateDelta)
+        const chunks$ = dateOffsets.map(dateOffset => {
+            const start = moment(from).add(dateOffset, dateUnit)
+            const end = moment.min(moment(start).add(dateDelta, dateUnit), to)
+            const timeSeries = createTimeSeries(tile, start, end)
+            const dateRange = `${start.format('YYYY-MM-DD')}_${end.format('YYYY-MM-DD')}`
+            const notEmpty$ = hasImagery$(
+                ee.Date(start.format('YYYY-MM-DD')),
+                ee.Date(end.format('YYYY-MM-DD'))
             )
+            return notEmpty$.pipe(
+                map(notEmpty => ({tileIndex, timeSeries, dateRange, notEmpty}))
+            )
+        })
+        return forkJoin(chunks$)
+    }
+
+    const createTimeSeries = (feature, startDate, endDate) => {
+        const images = allScenes({
+            geometry: feature.geometry(),
+            dataSets,
+            reflectance,
+            filters: [],
+            cloudMasking,
+            cloudBuffer,
+            snowMasking,
+            panSharpen: false,
+            calibrate,
+            brdfCorrect,
+            dates: {
+                seasonStart: startDate.format('YYYY-MM-DD'),
+                seasonEnd: endDate.format('YYYY-MM-DD')
+            }
+        }).map(image =>
+            calculateIndex(image, indicator)
+                .set('date', image.date().format('yyyy-MM-dd'))
+        )
+        const distinctDateImages = images.distinct('date')
+        const timeSeries = ee.ImageCollection(ee.Join.saveAll('images')
+            .apply({
+                primary: distinctDateImages,
+                secondary: images,
+                condition: ee.Filter.equals({
+                    leftField: 'date',
+                    rightField: 'date'
+                })
+            })
+            .map(image => ee.ImageCollection(ee.List(image.get('images')))
+                .median()
+                .rename(image.getString('date'))
+            ))
+            .toBands()
+            .regexpRename('.*(.{10})', '$1')
+            .clip(feature.geometry())
+        return timeSeries.select(timeSeries.bandNames().sort())
+    }
+
+    const hasImagery$ = (startDate, endDate) =>
+        ee.getInfo$(hasImagery({dataSets, reflectance, geometry, startDate, endDate}), 'check if date range has imagery')
+
+    const exportChunks$ = chunks$ => {
+        return chunks$.pipe(
+            switchMap(chunks => {
+                const nonEmptyChunks = chunks.filter(({notEmpty}) => notEmpty)
+                const totalChunks = nonEmptyChunks.length
+                return concat(
+                        of({totalChunks}),
+                        from(nonEmptyChunks).pipe(
+                            mergeMap(chunk => exportChunk$(chunk))
+                        )
+                    )
+            })
         )
     }
 
-    const exportChunks$ = chunks =>
-        concat(
-            of({totalChunks: chunks.length}),
-            from(chunks).pipe(
-                mergeMap(chunk => exportChunk$(chunk))
-            )
-        )
 
-    const exportChunk$ = ({image, tileIndex, dates}) => {
-        const firstDate = dates[0]
-        const lastDate = dates[dates.length - 1]
-        const dateDescription = `${firstDate}_${lastDate}`
-        const chunkDescription = `${description}_${tileIndex}_${dateDescription}`
-        const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateDescription}`
+    const exportChunk$ = ({tileIndex, timeSeries, dateRange}) => {
+        const chunkDescription = `${description}_${tileIndex}_${dateRange}`
+        const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateRange}`
+        const export$ = exportImageToSepal$({
+            folder: chunkDescription,
+            image: timeSeries,
+            description: chunkDescription,
+            downloadDir: chunkDownloadDir,
+            scale,
+            crs: 'EPSG:4326',
+            shardSize: EE_EXPORT_SHARD_SIZE,
+            fileDimensions: EE_EXPORT_FILE_DIMENSIONS
+        }).pipe(swallow())
         return concat(
-            exportImageToSepal$({
-                folder: chunkDescription,
-                image,
-                description: chunkDescription,
-                downloadDir: chunkDownloadDir,
-                scale,
-                crs: 'EPSG:4326',
-                shardSize: EE_EXPORT_SHARD_SIZE,
-                fileDimensions: EE_EXPORT_FILE_DIMENSIONS
-            }).pipe(swallow()),
+            export$,
             of({completedChunk: true})
         )
     }

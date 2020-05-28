@@ -7,7 +7,7 @@ import subprocess
 import sys
 from glob import glob
 from os import listdir, pardir
-from os.path import abspath, join
+from os.path import abspath, exists, join
 from osgeo import gdal
 from osgeo.gdalconst import GA_ReadOnly
 
@@ -113,4 +113,5 @@ def create_dates_csv(dir, dates):
 if __name__ == '__main__':
     dirs = sys.argv[1:]
     for d in dirs:
-        stack_time_series(d)
+        if exists(d):
+            stack_time_series(d)
