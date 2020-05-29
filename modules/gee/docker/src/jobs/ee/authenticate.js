@@ -29,25 +29,30 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
         return millisecondsLeft / 1000
     }
 
-    const authenticateServiceAccount$ = credentials =>
+    const authenticateServiceAccount$ = serviceAccountCredentials =>
         ee.$({
             operation: 'autenticate service account',
-            ee: (resolve, reject) => ee.data.authenticateViaPrivateKey(credentials, resolve, reject)
+            ee: (resolve, reject) => {
+                ee.sepal.setAuthType('SERVICE_ACCOUNT')
+                ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)
+            }
         })
 
     const authenticateUserAccount$ = googleTokens =>
         ee.$({
             operation: 'authenticate user account',
-            ee: resolve =>
+            ee: (resolve, reject) => {
+                ee.sepal.setAuthType('USER')
                 ee.data.setAuthToken(
                     null,
                     'Bearer',
                     googleTokens.accessToken,
                     secondsToExpiration(googleTokens.accessTokenExpiryDate),
                     null,
-                    resolve,
+                    error => error ? reject(error) : resolve(),
                     false
                 )
+            }
         })
 
     const authenticate$ = ({sepalUser: {googleTokens}, serviceAccountCredentials}) =>
