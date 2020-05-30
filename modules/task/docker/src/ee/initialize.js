@@ -54,7 +54,7 @@ const initializeEE$ = () =>
                 // tap(() => ee.data.setAuthTokenRefresher(authTokenRefresher)),
                 switchMap(() =>
                     ee.$({
-                        operation: 'initalize',
+                        operation: 'initialize',
                         ee: (resolve, reject) => ee.initialize(null, null, resolve, reject)
                     })
                 )
