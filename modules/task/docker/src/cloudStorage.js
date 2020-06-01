@@ -1,5 +1,4 @@
-const fs = require('fs')
-const {Subject, of} = require('rxjs')
+const {of} = require('rxjs')
 const {first, map, switchMap} = require('rxjs/operators')
 const {fromPromise} = require('sepal/rxjs')
 const crypto = require('crypto')
@@ -7,9 +6,17 @@ const http = require('sepal/httpClient')
 const {Storage} = require('@google-cloud/storage')
 const config = require('root/config')
 const {credentials$} = require('root/credentials')
+const {retry} = require('sepal/rxjs/operators')
 
 const projectId = config.googleProjectId
 const cloudStorage = new Storage({credentials: config.serviceAccountCredentials, projectId})
+
+const RETRIES = 5
+
+const do$ = promise =>
+    fromPromise(promise).pipe(
+        retry(RETRIES)
+    )
 
 /**
  * Get bucket name for Sepal username and Google account email.
@@ -20,12 +27,12 @@ const getBucketName = ({username, email}) => {
 }
 
 const bucketExists$ = user =>
-    fromPromise(cloudStorage.bucket(user.bucketName).exists()).pipe(
+    do$(cloudStorage.bucket(user.bucketName).exists()).pipe(
         map(response => response[0])
     )
 
 const createBucket$ = user =>
-    fromPromise(cloudStorage.createBucket(user.bucketName, {
+    do$(cloudStorage.createBucket(user.bucketName, {
         location: 'EUROPE-WEST2', // TODO: Config
         storageClass: 'STANDARD',
         iamConfiguration: {
@@ -67,7 +74,7 @@ const setBucketPermissions$ = user => {
     ]
     const policy = {kind: 'storage#policy', bindings}
     const bucket = cloudStorage.bucket(user.bucketName)
-    return fromPromise(bucket.iam.setPolicy(policy))
+    return do$(bucket.iam.setPolicy(policy))
 }
 
 const createIfMissingBucket$ = user =>
@@ -85,24 +92,6 @@ const getEmail$ = accessToken => {
     }).pipe(
         map(response => JSON.parse(response.body).user.emailAddress)
     )
-}
-
-const readJsonFile$ = filePath => {
-    const data$ = new Subject()
-    fs.readFile(filePath, 'utf8', (error, data) => {
-        if (error) {
-            data$.error(error)
-        } else {
-            data$.next(JSON.parse(data))
-        }
-    })
-    return data$
-}
-
-const fileExist$ = path => {
-    const exists$ = new Subject()
-    fs.access(path, error => exists$.next(error ? null : path))
-    return exists$.pipe(first())
 }
 
 const getUser$ = credentials =>
@@ -128,7 +117,8 @@ const initUserBucket$ = () =>
             ? getUser$(credentials)
             : getServiceAccount$()
         ),
-        switchMap(user => createIfMissingBucket$(user))
+        switchMap(user => createIfMissingBucket$(user)),
+        first()
     )
 
 module.exports = {cloudStorage, initUserBucket$}

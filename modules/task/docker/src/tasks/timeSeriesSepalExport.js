@@ -204,7 +204,7 @@ const toProgress = ({totalTiles = 0, tileIndex = 0, totalChunks = 0, chunks = 0}
         totalTiles,
         tileIndex,
         defaultMessage: `Exported ${currentTilePercent}% of tile ${currentTile} out of ${totalTiles}.`,
-        messageKey: 'task.export.timeSeriesSepalExport.progress',
+        messageKey: 'tasks.retrieve.time_series_to_sepal.progress',
         messageArgs: {currentTilePercent, currentTile, totalTiles}
     }
 }

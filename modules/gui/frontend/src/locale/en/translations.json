@@ -1429,16 +1429,17 @@
             "failed": "{error}",
             "EEException": "Earth Engine: {error}"
         },
-        "drive": {
-            "download_folder": "Downloaded {downloaded_files} of {total_files} files ({downloaded} of {total})"
+        "ee": {
+           "export": {
+               "pending": "Submitting export task to Google Earth Engine",
+               "ready": "Waiting for Google Earth Engine to start export",
+               "running": "Google Earth Engine is exporting"
+           }
+        },
+        "download": {
+            "progress": "Downloaded {files} {files, plural, one {file} other {files}} / {bytes} left"
         },
         "retrieve": {
-            "image_to_sepal": {
-                "creating_drive_folder": "Creating Google Drive Folders...",
-                "building_vrt": "Building VRT...",
-                "setting_band_names": "Setting band names...",
-                "deleting_drive_folder": "Deleting Google Drive Folders..."
-            },
             "time_series_to_sepal": {
                 "creating_drive_folder": "Creating Google Drive Folders...",
                 "tiling": "Tiling AOI...",

@@ -11,7 +11,7 @@ const {mkdir$} = require('./rxjs/fileSystem')
 const {limiter$} = require('./driveLimiter')
 const format = require('./format')
 
-const RETRIES = 3
+const RETRIES = 5
 
 const IS_FILE = 'mimeType != "application/vnd.google-apps.folder"'
 const IS_FOLDER = 'mimeType = "application/vnd.google-apps.folder"'
@@ -294,12 +294,13 @@ const downloadSingleFolderByPath$ = (path, destinationPath, {concurrency, delete
     )
 
 const downloadProgress$ = ({bytes, files}) => {
+    const formattedBytes = format.fileSize(bytes)
     return of({
         bytes,
         files,
-        defaultMessage: `Downloading - ${files} ${files > 1 ? 'files' : 'file'} / ${format.fileSize(bytes)} left`,
-        messageKey: 'tasks.ee.export.running',
-        messageArgs: {bytes, files}
+        defaultMessage: `Downloading - ${files} ${files > 1 ? 'files' : 'file'} / ${formattedBytes} left`,
+        messageKey: 'tasks.download.progress',
+        messageArgs: {bytes: formattedBytes, files}
     })
 }
 module.exports = {getFolderByPath$, downloadSingleFolderByPath$}

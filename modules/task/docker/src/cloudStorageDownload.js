@@ -1,6 +1,7 @@
 const fs = require('fs')
 const {Subject, EMPTY, concat, defer, of} = require('rxjs')
 const {expand, finalize, map, mergeMap, scan, switchMap} = require('rxjs/operators')
+const {retry} = require('sepal/rxjs/operators')
 const {fromPromise} = require('sepal/rxjs')
 const {cloudStorage} = require('./cloudStorage')
 const path = require('path')
@@ -10,10 +11,16 @@ const log = require('sepal/log').getLogger('cloudStorage')
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1
 
+const RETRIES = 5
+
+const do$ = promise =>
+    fromPromise(promise).pipe(
+        retry(RETRIES)
+    )
 const downloadFromCloudStorage$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) => defer(() => {
     log.debug('Downloading from Cloud Storage:', {bucketPath, prefix, downloadDir, deleteAfterDownload})
     const bucket = cloudStorage.bucket(`gs://${bucketPath}`)
-    return fromPromise(bucket.getFiles({prefix, autoPaginate: true}))
+    return do$(bucket.getFiles({prefix, autoPaginate: true}))
         .pipe(
             map(response => response[0]),
             switchMap(files =>
@@ -32,21 +39,19 @@ const getProgress = ({
 }) => {
     const downloadedFiles = currentProgress.downloadedFiles + (isDownloaded(fileProgress) ? 1 : 0)
     const downloadedBytes = currentProgress.downloadedBytes + fileProgress.end - fileProgress.start + 1
-    const downloaded = formatFileSize(downloadedBytes)
     const totalFiles = files.length
     const totalBytes = files
         .map(file => Number(file.metadata.size))
         .reduce((total, bytes) => total + bytes, 0)
-    const total = formatFileSize(totalBytes)
+    const bytesLeft = formatFileSize(totalBytes - downloadedBytes)
     return {
-        defaultMessage: `Downloaded ${downloadedFiles} of ${totalFiles} files (${downloaded} of ${total})`,
-        messageKey: 'tasks.drive.download_folder',
         downloadedFiles,
         downloadedBytes,
-        downloaded,
         totalFiles,
         totalBytes,
-        total
+        defaultMessage: `Downloading - ${totalFiles} ${totalFiles > 1 ? 'files' : 'file'} / ${bytesLeft} left`,
+        messageKey: 'tasks.download.progress',
+        messageArgs: {bytes: bytesLeft, files: totalFiles}
     }
 }
 
@@ -71,18 +76,19 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
         : path.join(downloadDir, path.basename(prefix), relativePath)
     const downloadChunk$ = start => {
         const end = start + CHUNK_SIZE
-        const chunk$ = new Subject()
+        const chunkSubject$ = new Subject()
+        const chunk$ = chunkSubject$.pipe(retry(RETRIES))
         const startTime = new Date().getTime()
         let next
         file.createReadStream({start, end})
-            .on('error', error => chunk$.error(error))
+            .on('error', error => chunkSubject$.error(error))
             .on('response', response => {
                 const [_contentRange, _unit, start, end, length] = response.headers['content-range'].match('(.*) (.*)-(.*)/(.*)')
                 next = {path: path.basename(toFilePath), start, end: Number(end), length: Number(length)}
             })
             .on('finish', _response => {
-                chunk$.next({...next, time: new Date().getTime() - startTime})
-                chunk$.complete()
+                chunkSubject$.next({...next, time: new Date().getTime() - startTime})
+                chunkSubject$.complete()
             })
             .pipe(fs.createWriteStream(toFilePath, start ? {flags: 'a'} : {}))
         return deleteAfterDownload
@@ -93,22 +99,26 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
     return createDirs$(path.dirname(toFilePath)).pipe(
         switchMap(() =>
             downloadChunk$(0).pipe(
-                expand(({end, length}) => isDownloaded({end, length}) ? EMPTY : downloadChunk$(end + 1))
+                expand(({end, length}) => {
+                    let downloaded = isDownloaded({end, length})
+                    return downloaded ? EMPTY : downloadChunk$(end + 1)
+                })
             )
         )
     )
 }
 
 const deleteFile$ = file => {
-    return fromPromise(file.bucket.deleteFiles({prefix: file.name})).pipe(
+    return do$(file.bucket.deleteFiles({prefix: file.name})).pipe(
         switchMap(() => EMPTY)
     )
 }
 
 const createDirs$ = path =>
-    fromPromise(fs.promises.mkdir(path, {recursive: true}))
+    do$(fs.promises.mkdir(path, {recursive: true}))
 
-const isDownloaded = fileProgress => fileProgress.end >= fileProgress.length - 1
+const isDownloaded = fileProgress =>
+    fileProgress.end >= fileProgress.length - 1
 
 const formatFileSize = bytes =>
     format.fileSize(bytes)
