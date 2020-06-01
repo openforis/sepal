@@ -1426,7 +1426,7 @@
             "executing": "Executing...",
             "completed": "Completed!",
             "canceled": "Canceled",
-            "failed": "Failed: {error}",
+            "failed": "{error}",
             "EEException": "Earth Engine: {error}"
         },
         "drive": {

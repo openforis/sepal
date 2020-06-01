@@ -6,7 +6,6 @@ const http = require('sepal/httpClient')
 const {Storage} = require('@google-cloud/storage')
 const config = require('root/config')
 
-
 const projectId = config.googleProjectId
 const cloudStorage = new Storage({credentials: config.serviceAccountCredentials, projectId})
 
@@ -15,7 +14,7 @@ const cloudStorage = new Storage({credentials: config.serviceAccountCredentials,
  */
 const getBucketName = ({username, email}) => {
     const emailHash = crypto.createHash('md5').update(email).digest('hex').substring(0, 4)
-    return `${username}-${emailHash}-${config.sepalHost}`.replace(/[^a-zA-Z0-9\-]/g, '-')
+    return `${username}-${emailHash}-${config.sepalHost}`.replace(/[^a-zA-Z0-9-]/g, '-')
 }
 
 const bucketExists$ = user =>
@@ -46,12 +45,10 @@ const setBucketPermissions$ = user => {
     const userBindings = [{
         role: 'roles/storage.objectCreator',
         members: [`user:${user.email}`],
-    },
-        {
-            role: 'roles/storage.legacyBucketWriter',
-            members: [`user:${user.email}`],
-        },
-    ]
+    }, {
+        role: 'roles/storage.legacyBucketWriter',
+        members: [`user:${user.email}`],
+    }]
     const bindings = [
         {
             role: 'roles/storage.admin',
@@ -68,7 +65,6 @@ const setBucketPermissions$ = user => {
     return from(bucket.iam.setPolicy(policy))
 }
 
-
 const createIfMissingBucket$ = user =>
     bucketExists$(user).pipe(
         switchMap(exists => exists ? of(user.bucketName) : createBucket$(user))
@@ -76,13 +72,12 @@ const createIfMissingBucket$ = user =>
 
 const getEmail$ = accessToken => {
     return http.get$('https://www.googleapis.com/drive/v3/about?fields=user', {
-            retries: 0,
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
+        retries: 0,
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
         }
-    ).pipe(
+    }).pipe(
         map(response => JSON.parse(response.body).user.emailAddress)
     )
 }
@@ -133,6 +128,5 @@ const initUserBucket$ = () =>
         ),
         switchMap(user => createIfMissingBucket$(user))
     )
-
 
 module.exports = {cloudStorage, initUserBucket$}

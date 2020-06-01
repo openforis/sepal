@@ -178,7 +178,7 @@
         },
         "LANDSAT_7": {
             "reflectance": "TOA",
-            "dataSetName": "LANDSAT_5_T2",
+            "dataSetName": "LANDSAT_7",
             "collectionName": "LANDSAT/LE07/C01/T1_TOA",
             "maxZenith": 7.5,
             "calibrationCoefs": {

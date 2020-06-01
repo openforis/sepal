@@ -2,20 +2,42 @@ const job = require('root/jobs/job')
 
 const worker$ = ({tableId}) => {
     const ee = require('ee')
-    const {Exception, SystemException, NotFoundException} = require('sepal/exception')
+    const {ClientException, NotFoundException} = require('sepal/exception')
+    const {EEException} = require('sepal/ee/exception')
     const {throwError, of} = require('rxjs')
     const {switchMap, catchError} = require('rxjs/operators')
 
-    const handleError$ = cause =>
-        ee.getAsset$(tableId).pipe(
-            catchError(() => of()),
+    const handleError$ = error =>
+        ee.getAsset$(tableId, 0).pipe(
+            catchError(() => of(null)),
             switchMap(asset =>
                 throwError(
                     asset
                         ? asset.type === 'FeatureCollection'
-                            ? new SystemException(cause, 'Failed to load table columns', {tableId})
-                            : new Exception(cause, 'Not a table', 'gee.table.error.notATable', {tableId})
-                        : new NotFoundException(cause, 'Not found', 'gee.table.error.notFound', {tableId})
+                            ? new EEException(`Failed to load table columns from ${tableId}.`, {
+                                cause: error,
+                                userMessage: {
+                                    message: 'Failed to load table',
+                                    key: 'gee.error.earthEngineException',
+                                    args: {earthEngineMessage: error},
+                                }
+                            })
+                            : new ClientException(`Asset ${tableId} is not a table`, {
+                                cause: error,
+                                userMessage: {
+                                    message: 'Not a table',
+                                    key: 'gee.table.error.notATable',
+                                    args: {tableId}
+                                }
+                            })
+                        : new NotFoundException(`Table ${tableId} not found `, {
+                            cause: error,
+                            userMessage: {
+                                message: 'Table not found',
+                                key: 'gee.table.error.notFound',
+                                args: {tableId}
+                            }
+                        })
                 )
             )
         )
@@ -25,7 +47,8 @@ const worker$ = ({tableId}) => {
             .first()
             .propertyNames()
             .sort(),
-        'columns'
+        `load columns from ${tableId}`,
+        0
     ).pipe(
         catchError(handleError$)
     )

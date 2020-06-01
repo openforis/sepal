@@ -18,8 +18,7 @@ const getCredentials = ctx => {
 }
 
 const worker$ = ({sepalUser, serviceAccountCredentials}) => {
-    const {EMPTY} = require('rxjs')
-    const {switchMapTo} = require('rxjs/operators')
+    const {swallow} = require('sepal/rxjs/operators')
     const ee = require('ee')
 
     const secondsToExpiration = expiration => {
@@ -30,27 +29,31 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
         return millisecondsLeft / 1000
     }
 
-    const authenticateServiceAccount$ = credentials =>
-        ee.$('autenticate service account', (resolve, reject) =>
-            ee.data.authenticateViaPrivateKey(
-                credentials,
-                () => resolve(),
-                error => reject(error)
-            )
-        )
+    const authenticateServiceAccount$ = serviceAccountCredentials =>
+        ee.$({
+            operation: 'autenticate service account',
+            ee: (resolve, reject) => {
+                ee.sepal.setAuthType('SERVICE_ACCOUNT')
+                ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)
+            }
+        })
 
     const authenticateUserAccount$ = googleTokens =>
-        ee.$('authenticate user account', resolve =>
-            ee.data.setAuthToken(
-                null,
-                'Bearer',
-                googleTokens.accessToken,
-                secondsToExpiration(googleTokens.accessTokenExpiryDate),
-                null,
-                () => resolve(),
-                false
-            )
-        )
+        ee.$({
+            operation: 'authenticate user account',
+            ee: (resolve, reject) => {
+                ee.sepal.setAuthType('USER')
+                ee.data.setAuthToken(
+                    null,
+                    'Bearer',
+                    googleTokens.accessToken,
+                    secondsToExpiration(googleTokens.accessTokenExpiryDate),
+                    null,
+                    error => error ? reject(error) : resolve(),
+                    false
+                )
+            }
+        })
 
     const authenticate$ = ({sepalUser: {googleTokens}, serviceAccountCredentials}) =>
         googleTokens
@@ -58,7 +61,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
             : authenticateServiceAccount$(serviceAccountCredentials)
 
     return authenticate$({sepalUser, serviceAccountCredentials}).pipe(
-        switchMapTo(EMPTY)
+        swallow()
     )
 }
 

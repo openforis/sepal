@@ -14,7 +14,7 @@ const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, pref
     const magnitudes = ['p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
     // handle case when value is zero
     if (value === 0) {
-        return prefix + '0' + unitPadding + unit + suffix
+        return `${prefix}0${unitPadding}${unit}${suffix}`
     }
     // handle unsupported precision
     if (precisionDigits < 3) {

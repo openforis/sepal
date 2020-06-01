@@ -59,7 +59,7 @@ class ClassificationPreview extends React.Component {
         Notifications.error({
             title: msg('gee.error.title'),
             message: msg(`process.${LABEL}.preview.error`),
-            error: e.response ? msg(e.response.code, e.response.data) : null,
+            error: e.response ? msg(e.response.messageKey, e.response.messageArgs, e.response.defaultMessage) : null,
             timeout: 0,
             content: dismiss =>
                 <Button

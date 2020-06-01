@@ -1,32 +1,32 @@
 const fs = require('fs')
 const {Subject, EMPTY, concat, from, of} = require('rxjs')
 const {expand, finalize, map, mergeMap, scan, switchMap} = require('rxjs/operators')
-const {cloudStorage} = require('root/cloudStorage')
+const {cloudStorage} = require('./cloudStorage')
 const path = require('path')
-const format = require('root/format')
+const format = require('./format')
+// const log = require('sepal/log').getLogger('task')
 
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1
 
-const downloadFromCloudStorage$ = ({bucket, prefix, downloadDir, deleteAfterDownload}) => {
-    const bucketPath = cloudStorage.bucket(`gs://${bucket}`)
-    return from(bucketPath.getFiles({prefix, autoPaginate: true}))
+const download$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) => {
+    const bucket = cloudStorage.bucket(`gs://${bucketPath}`)
+    return from(bucket.getFiles({prefix, autoPaginate: true}))
         .pipe(
             map(response => response[0]),
             switchMap(files => concat(
                 of(getProgress({files})),
                 downloadFiles$({files, prefix, downloadDir, deleteAfterDownload})
             )),
-            finalize(() => deleteAfterDownload ? bucketPath.deleteFiles({prefix}): null)
+            finalize(() => deleteAfterDownload ? bucket.deleteFiles({prefix}) : null)
         )
 }
 
-const getProgress = (
-    {
-        files,
-        currentProgress = {downloadedFiles: 0, downloadedBytes: 0},
-        fileProgress = {start: 0, end: -1}
-    }) => {
+const getProgress = ({
+    files,
+    currentProgress = {downloadedFiles: 0, downloadedBytes: 0},
+    fileProgress = {start: 0, end: -1}
+}) => {
     const downloadedFiles = currentProgress.downloadedFiles + (isDownloaded(fileProgress) ? 1 : 0)
     const downloadedBytes = currentProgress.downloadedBytes + fileProgress.end - fileProgress.start + 1
     const downloaded = formatFileSize(downloadedBytes)
@@ -74,10 +74,10 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
         file.createReadStream({start, end})
             .on('error', error => chunk$.error(error))
             .on('response', response => {
-                const [contentRange, unit, start, end, length] = response.headers['content-range'].match('(.*) (.*)-(.*)/(.*)')
+                const [_contentRange, _unit, start, end, length] = response.headers['content-range'].match('(.*) (.*)-(.*)/(.*)')
                 next = {path: path.basename(toFilePath), start, end: Number(end), length: Number(length)}
             })
-            .on('finish', response => {
+            .on('finish', _response => {
                 chunk$.next({...next, time: new Date().getTime() - startTime})
                 chunk$.complete()
             })
@@ -110,4 +110,4 @@ const isDownloaded = fileProgress => fileProgress.end >= fileProgress.length - 1
 const formatFileSize = bytes =>
     format.fileSize(bytes)
 
-module.exports = {downloadFromCloudStorage$}
+module.exports = {download$}
