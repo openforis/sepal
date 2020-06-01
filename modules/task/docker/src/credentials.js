@@ -35,7 +35,10 @@ const loadCredentials = () =>
             })
             credentials$.next(credentials)
         })
-        .catch(error => log.error(error))
+        .catch(error => {
+            credentials$.next(null)
+            return log.info('No user credentials. Using service-account.')
+        })
 
 fs.watch(CREDENTIALS_DIR, (eventType, filename) => {
     if (filename === CREDENTIALS_FILE) {

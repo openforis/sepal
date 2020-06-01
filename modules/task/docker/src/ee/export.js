@@ -8,8 +8,10 @@ const Path = require('path')
 const {limiter$} = require('./eeExportLimiter')
 const {Limiter} = require('sepal/service/limiter')
 const drive = require('root/drive')
-// const {initUserBucket$} = require('root/cloudStorage')
+const {initUserBucket$} = require('root/cloudStorage')
+const {downloadFromCloudStorage$} = require('root/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
+const {credentials$} = require('root/credentials')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
 
@@ -101,96 +103,85 @@ const exportImageToSepal$ = ({
 }) => {
     const prefix = description
 
-    const exportToDrive$ = ({createTask, description, folder, retries}) => {
-        log.debug('Earth Engine <to Google Drive>:', description)
-        return export$({
-            create$: () => concat(
-                createDriveFolder$(folder),
-                executeTask$(createTask(), description)
-            ),
-            description,
-            retries
-        })
+    const throughCloudStorage$ = () => {
+        const exportToCloudStorage$ = ({createTask, description, retries}) => {
+            log.debug('Earth Engine <to cloud storage>:', description)
+            return export$({
+                create$: () => executeTask$(createTask(), description),
+                description,
+                retries
+            })
+        }
+
+        return initUserBucket$().pipe(
+            switchMap(bucketPath => {
+                return concat(
+                    exportToCloudStorage$({
+                        createTask: () => ee.batch.Export.image.toCloudStorage(
+                            image, description, bucketPath, `${folder}/${prefix}`, dimensions, region, scale, crs,
+                            crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+                        ),
+                        description: `export to Sepal through CS (${description})`,
+                        retries
+                    }),
+                    downloadFromCloudStorage$({
+                        bucketPath,
+                        prefix: `${folder}/`,
+                        downloadDir,
+                        deleteAfterDownload: true
+                    })
+                )
+            })
+        )
     }
 
-    const downloadFromDrive$ = ({path, downloadDir}) =>
-        drive.downloadSingleFolderByPath$(path, downloadDir, {
-            concurrency: CONCURRENT_FILE_DOWNLOAD,
-            deleteAfterDownload: true
-        })
-
-    return concat(
-        exportToDrive$({
-            createTask: () =>
-            // NOTE: folder is the last path element only for two reasons:
-            //    1) Drive treats "/" as a normal character
-            //    2) Drive can resolve a path by the last portion if it exists
-                ee.batch.Export.image.toDrive(
-                    image, description, folder, prefix, dimensions, region, scale, crs,
-                    crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+    const throughDrive$ = () => {
+        const exportToDrive$ = ({createTask, description, folder, retries}) => {
+            log.debug('Earth Engine <to Google Drive>:', description)
+            return export$({
+                create$: () => concat(
+                    createDriveFolder$(folder),
+                    executeTask$(createTask(), description)
                 ),
-            description: `exportImageToSepal(description: ${description})`,
-            folder,
-            retries
-        }),
-        downloadFromDrive$({
-            path: drivePath(folder),
-            downloadDir
-        })
+                description,
+                retries
+            })
+        }
+
+        const downloadFromDrive$ = ({path, downloadDir}) =>
+            drive.downloadSingleFolderByPath$(path, downloadDir, {
+                concurrency: CONCURRENT_FILE_DOWNLOAD,
+                deleteAfterDownload: true
+            })
+
+        return concat(
+            exportToDrive$({
+                createTask: () =>
+                // NOTE: folder is the last path element only for two reasons:
+                //    1) Drive treats "/" as a normal character
+                //    2) Drive can resolve a path by the last portion if it exists
+                    ee.batch.Export.image.toDrive(
+                        image, description, folder, prefix, dimensions, region, scale, crs,
+                        crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+                    ),
+                description: `export to Sepal through Drive (${description})`,
+                folder,
+                retries
+            }),
+            downloadFromDrive$({
+                path: drivePath(folder),
+                downloadDir
+            })
+        )
+    }
+
+    return credentials$.pipe(
+        switchMap(credentials => credentials
+            ? throughDrive$()
+            : throughCloudStorage$()
+        )
     )
 }
-
-// const exportImageToSepal$ = ({
-//     image,
-//     description,
-//     downloadDir,
-//     dimensions,
-//     region,
-//     scale,
-//     crs,
-//     crsTransform,
-//     maxPixels = 1e13,
-//     fileDimensions,
-//     skipEmptyTiles,
-//     fileFormat,
-//     formatOptions,
-//     retries
-// }) => {
-//     const fileNamePrefix = `ee_export/${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}/`
-//     const exportToCloudStorage$ = ({createTask, description, retries}) => {
-//         log.debug('Earth Engine <to cloud storage>:', description)
-//         return export$({
-//             create$: () => {
-//                 const task = createTask()
-//                 return concat(
-//                     executeTask$(task)
-//                 )
-//             },
-//             description,
-//             retries
-//         })
-//     }
-
-//     return initUserBucket$().pipe(
-//         switchMap(bucket => {
-//             const export$ = exportToCloudStorage$({
-//                 createTask: () => ee.batch.Export.image.toCloudStorage(
-//                     image, description, bucket, fileNamePrefix, dimensions, region, scale, crs,
-//                     crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-//                 ),
-//                 description: `exportImageToSepal(description: ${description})`,
-//                 retries
-//             })
-//             const download$ = downloadFromCloudStorage$({
-//                 bucket,
-//                 prefix: fileNamePrefix,
-//                 downloadDir,
-//                 deleteAfterDownload: false
-//             })
-//             return concat(export$, download$)
-//         })
-//     )
-// }
 
 const {limiter$: serialize$} = Limiter({
     name: 'Serializer',

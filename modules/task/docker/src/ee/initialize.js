@@ -45,7 +45,7 @@ const authenticateUserAccount$ = userCredentials =>
 const initializeEE$ = () =>
     // loadCredentials$().pipe(
     credentials$.pipe(
-        filter(userCredentials => userCredentials),
+        // filter(userCredentials => userCredentials),
         switchMap(userCredentials => {
             const authenticate$ = userCredentials
                 ? authenticateUserAccount$(userCredentials)

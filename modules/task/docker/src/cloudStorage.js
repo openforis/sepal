@@ -1,10 +1,12 @@
 const fs = require('fs')
-const {Subject, from, of} = require('rxjs')
+const {Subject, of} = require('rxjs')
 const {first, map, switchMap} = require('rxjs/operators')
+const {fromPromise} = require('sepal/rxjs')
 const crypto = require('crypto')
 const http = require('sepal/httpClient')
 const {Storage} = require('@google-cloud/storage')
 const config = require('root/config')
+const {credentials$} = require('root/credentials')
 
 const projectId = config.googleProjectId
 const cloudStorage = new Storage({credentials: config.serviceAccountCredentials, projectId})
@@ -18,12 +20,12 @@ const getBucketName = ({username, email}) => {
 }
 
 const bucketExists$ = user =>
-    from(cloudStorage.bucket(user.bucketName).exists()).pipe(
+    fromPromise(cloudStorage.bucket(user.bucketName).exists()).pipe(
         map(response => response[0])
     )
 
 const createBucket$ = user =>
-    from(cloudStorage.createBucket(user.bucketName, {
+    fromPromise(cloudStorage.createBucket(user.bucketName, {
         location: 'EUROPE-WEST2', // TODO: Config
         storageClass: 'STANDARD',
         iamConfiguration: {
@@ -42,13 +44,16 @@ const createBucket$ = user =>
     )
 
 const setBucketPermissions$ = user => {
-    const userBindings = [{
+    const userBindings = [
+        {
         role: 'roles/storage.objectCreator',
         members: [`user:${user.email}`],
-    }, {
+    },
+    {
         role: 'roles/storage.legacyBucketWriter',
         members: [`user:${user.email}`],
-    }]
+    }
+    ]
     const bindings = [
         {
             role: 'roles/storage.admin',
@@ -62,7 +67,7 @@ const setBucketPermissions$ = user => {
     ]
     const policy = {kind: 'storage#policy', bindings}
     const bucket = cloudStorage.bucket(user.bucketName)
-    return from(bucket.iam.setPolicy(policy))
+    return fromPromise(bucket.iam.setPolicy(policy))
 }
 
 const createIfMissingBucket$ = user =>
@@ -100,17 +105,14 @@ const fileExist$ = path => {
     return exists$.pipe(first())
 }
 
-const getUser$ = path =>
-    readJsonFile$(path).pipe(
-        map(credentials => credentials.access_token),
-        switchMap(accessToken => getEmail$(accessToken).pipe(
-            map(email => ({
-                username: config.username,
-                accessToken,
-                email,
-                bucketName: getBucketName({username: config.username, email})
-            }))
-        ))
+const getUser$ = credentials =>
+    getEmail$(credentials.access_token).pipe(
+        map(email => ({
+            username: config.username,
+            accessToken: credentials.access_token,
+            email,
+            bucketName: getBucketName({username: config.username, email})
+        }))
     )
 
 const getServiceAccount$ = () => {
@@ -121,9 +123,9 @@ const getServiceAccount$ = () => {
 }
 
 const initUserBucket$ = () =>
-    fileExist$(`${config.homeDir}/.config/earthengine/credentials`).pipe(
-        switchMap(path => path
-            ? getUser$(path)
+    credentials$.pipe(
+        switchMap(credentials => credentials
+            ? getUser$(credentials)
             : getServiceAccount$()
         ),
         switchMap(user => createIfMissingBucket$(user))

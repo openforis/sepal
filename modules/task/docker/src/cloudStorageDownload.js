@@ -1,26 +1,29 @@
 const fs = require('fs')
-const {Subject, EMPTY, concat, from, of} = require('rxjs')
+const {Subject, EMPTY, concat, defer, of} = require('rxjs')
 const {expand, finalize, map, mergeMap, scan, switchMap} = require('rxjs/operators')
+const {fromPromise} = require('sepal/rxjs')
 const {cloudStorage} = require('./cloudStorage')
 const path = require('path')
 const format = require('./format')
-// const log = require('sepal/log').getLogger('task')
+const log = require('sepal/log').getLogger('cloudStorage')
 
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1
 
-const download$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) => {
+const downloadFromCloudStorage$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) => defer(() => {
+    log.debug('Downloading from Cloud Storage:', {bucketPath, prefix, downloadDir, deleteAfterDownload})
     const bucket = cloudStorage.bucket(`gs://${bucketPath}`)
-    return from(bucket.getFiles({prefix, autoPaginate: true}))
+    return fromPromise(bucket.getFiles({prefix, autoPaginate: true}))
         .pipe(
             map(response => response[0]),
-            switchMap(files => concat(
-                of(getProgress({files})),
-                downloadFiles$({files, prefix, downloadDir, deleteAfterDownload})
-            )),
+            switchMap(files =>
+                concat(
+                    of(getProgress({files})),
+                    downloadFiles$({files, prefix, downloadDir, deleteAfterDownload})
+                )),
             finalize(() => deleteAfterDownload ? bucket.deleteFiles({prefix}) : null)
         )
-}
+})
 
 const getProgress = ({
     files,
@@ -97,17 +100,17 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
 }
 
 const deleteFile$ = file => {
-    return from(file.bucket.deleteFiles({prefix: file.name})).pipe(
+    return fromPromise(file.bucket.deleteFiles({prefix: file.name})).pipe(
         switchMap(() => EMPTY)
     )
 }
 
 const createDirs$ = path =>
-    from(fs.promises.mkdir(path, {recursive: true}))
+    fromPromise(fs.promises.mkdir(path, {recursive: true}))
 
 const isDownloaded = fileProgress => fileProgress.end >= fileProgress.length - 1
 
 const formatFileSize = bytes =>
     format.fileSize(bytes)
 
-module.exports = {download$}
+module.exports = {downloadFromCloudStorage$}
