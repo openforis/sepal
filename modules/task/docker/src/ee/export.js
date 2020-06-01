@@ -1,6 +1,6 @@
 const ee = require('ee')
 const {concat, defer, of} = require('rxjs')
-const {map, switchMap} = require('rxjs/operators')
+const {first, map, switchMap} = require('rxjs/operators')
 const {swallow} = require('sepal/rxjs/operators')
 const {executeTask$} = require('./task')
 const {assetRoots$, deleteAsset$} = require('./asset')
@@ -176,6 +176,7 @@ const exportImageToSepal$ = ({
     }
 
     return credentials$.pipe(
+        first(),
         switchMap(credentials => credentials
             ? throughDrive$()
             : throughCloudStorage$()

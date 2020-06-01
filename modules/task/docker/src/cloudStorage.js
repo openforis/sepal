@@ -113,6 +113,7 @@ const getServiceAccount$ = () => {
 
 const initUserBucket$ = () =>
     credentials$.pipe(
+        first(),
         switchMap(credentials => credentials
             ? getUser$(credentials)
             : getServiceAccount$()
