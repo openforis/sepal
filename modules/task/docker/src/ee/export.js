@@ -157,9 +157,9 @@ const exportImageToSepal$ = ({
         return concat(
             exportToDrive$({
                 createTask: () =>
-                // NOTE: folder is the last path element only for two reasons:
-                //    1) Drive treats "/" as a normal character
-                //    2) Drive can resolve a path by the last portion if it exists
+                    // NOTE: folder is the last path element only, for two reasons:
+                    //    1) Drive treats "/" as a normal character
+                    //    2) Drive can resolve a path by the last portion if it exists
                     ee.batch.Export.image.toDrive(
                         image, description, folder, prefix, dimensions, region, scale, crs,
                         crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions

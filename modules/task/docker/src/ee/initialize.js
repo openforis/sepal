@@ -1,8 +1,6 @@
-const {switchMap, filter, distinctUntilChanged} = require('rxjs/operators')
+const {switchMap, distinctUntilChanged} = require('rxjs/operators')
 const ee = require('ee')
-const config = require('root/config')
 const {credentials$} = require('root/credentials')
-// const log = require('sepal/log').getLogger('task')
 
 const secondsToExpiration = expiration => {
     const millisecondsLeft = expiration - Date.now()
@@ -11,9 +9,6 @@ const secondsToExpiration = expiration => {
     }
     return millisecondsLeft / 1000
 }
-
-// const CREDENTIALS_DIR = `${config.homeDir}/.config/earthengine`
-// const CREDENTIALS_FILE = 'credentials'
 
 const authenticateServiceAccount$ = serviceAccountCredentials =>
     ee.$({
@@ -45,10 +40,10 @@ const initializeEE$ = () =>
     // loadCredentials$().pipe(
     credentials$.pipe(
         // filter(userCredentials => userCredentials),
-        switchMap(({userCredentials}) => {
+        switchMap(({userCredentials, serviceAccountCredentials}) => {
             const authenticate$ = userCredentials
                 ? authenticateUserAccount$(userCredentials)
-                : authenticateServiceAccount$(config.serviceAccountCredentials)
+                : authenticateServiceAccount$(serviceAccountCredentials)
             return authenticate$.pipe(
                 // tap(() => ee.data.setAuthTokenRefresher(authTokenRefresher)),
                 switchMap(() =>

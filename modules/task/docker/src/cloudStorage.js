@@ -94,19 +94,19 @@ const getEmail$ = accessToken => {
     )
 }
 
-const getUser$ = credentials =>
-    getEmail$(credentials.access_token).pipe(
+const getUser$ = userCredentials =>
+    getEmail$(userCredentials.access_token).pipe(
         map(email => ({
             username: config.username,
-            accessToken: credentials.access_token,
+            accessToken: userCredentials.access_token,
             email,
             bucketName: getBucketName({username: config.username, email})
         }))
     )
 
-const getServiceAccount$ = () => {
+const getServiceAccount$ = serviceAccountCredentials => {
     const username = 'service-account'
-    const email = config.serviceAccountCredentials.client_email
+    const email = serviceAccountCredentials.client_email
     const bucketName = getBucketName({username, email})
     return of({username, email, bucketName, serviceAccount: true})
 }
@@ -114,9 +114,9 @@ const getServiceAccount$ = () => {
 const initUserBucket$ = () =>
     credentials$.pipe(
         first(),
-        switchMap(({userCredentials}) => userCredentials
+        switchMap(({userCredentials, serviceAccountCredentials}) => userCredentials
             ? getUser$(userCredentials)
-            : getServiceAccount$()
+            : getServiceAccount$(serviceAccountCredentials)
         ),
         switchMap(user => createIfMissingBucket$(user)),
         first()

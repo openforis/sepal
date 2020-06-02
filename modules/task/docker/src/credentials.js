@@ -31,28 +31,32 @@ const auth$ = () =>
         })
     )
 
-const loadCredentials = () =>
+const loadUserCredentials = () =>
     fsPromises.readFile(CREDENTIALS_PATH, {encoding: 'utf8'})
         .then(string => {
             const json = JSON.parse(string)
             // const credentials = json && ()
-            credentials$.next(credentials({
+            updateUserCredentials({
                 accessToken: json.access_token,
                 accessTokenExpiryDate: json.access_token_expiry_date
-            }))
+            })
         })
         .catch(() => {
-            credentials$.next(credentials())
+            updateUserCredentials()
             return log.info('No user credentials. Using service-account.')
         })
 
+const updateUserCredentials = userCredentials =>
+    credentials$.next(
+        credentials(userCredentials)
+    )
+    
 fs.watch(CREDENTIALS_DIR, (eventType, filename) => {
     if (filename === CREDENTIALS_FILE) {
-        loadCredentials()
+        loadUserCredentials()
     }
 })
     
-loadCredentials()
+loadUserCredentials()
     
-// module.exports = {loadCredentials$, credentials$, auth$}
 module.exports = {credentials$, auth$}
