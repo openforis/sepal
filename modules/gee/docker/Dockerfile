@@ -5,14 +5,14 @@ ENV GEE /usr/local/src/sepal/modules/gee/docker
 ENV RXJS /usr/local/src/sepal/lib/js/rxjs
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
-ADD .tmp/lib/js/rxjs ${RXJS}
+ADD build/lib/js/rxjs ${RXJS}
 WORKDIR ${RXJS}
 USER root
 RUN chown -R node: ${RXJS}
 USER node
 RUN npm install
 
-ADD .tmp/lib/js/shared ${SHARED}
+ADD build/lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
 USER root
 RUN chown -R node: ${SHARED}
