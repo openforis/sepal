@@ -7,8 +7,6 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     VERSION=2020-03-18
 # VERSION used to force complete rebuild of image
 
-ADD build/lib /usr/local/lib/sepal
-
 ADD script/init_apt.sh /script/
 RUN chmod u+x /script/init_apt.sh && sync && /script/init_apt.sh
 
@@ -57,5 +55,7 @@ RUN chmod u+x /script/init_post.sh && sync && /script/init_post.sh
 
 ADD script/install-dggrid.sh /usr/local/bin/install-dggrid
 RUN chmod +x /usr/local/bin/install-dggrid
+
+ADD build/lib /usr/local/lib/sepal
 
 CMD ["/bin/bash"]
