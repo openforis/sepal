@@ -133,8 +133,8 @@
     - { role: build-module, module: ceo }
     - { role: build-module, module: ceo-gateway }
     - { role: build-module, module: peatlands }
-    - { role: build-module, module: task-executor }
-    - { role: build-module, module: google-earth-engine }
+    - { role: build-module, module: task }
+    - { role: build-module, module: gee }
     - { role: build-module, module: zookeeper }
     - { role: build-module, module: kafka }
 
@@ -143,7 +143,7 @@
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
     - { role: run-module, module: mysql-backup }
-    - { role: run-module, module: google-earth-engine }
+    - { role: run-module, module: gee }
     - { role: run-module, module: user }
     - { role: run-module, module: sepal-server, container_name: sepal }
     - { role: run-module, module: gui }

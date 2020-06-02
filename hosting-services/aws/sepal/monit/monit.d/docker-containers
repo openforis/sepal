@@ -6,7 +6,7 @@ check program sepal with path /usr/local/bin/dockercheck-sepal
     depends on docker
     if status != 0 then alert
 
-check program google-earth-engine with path /usr/local/bin/dockercheck-google-earth-engine
+check program gee with path /usr/local/bin/dockercheck-gee
     depends on docker
     if status != 0 then alert
 

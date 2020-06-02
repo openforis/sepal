@@ -15,7 +15,6 @@ build
 .settings
 
 #Sepal binaries
-/modules/task-executor/docker/binary/task-executor.jar
 /modules/ssh-gateway/docker/binary/sepal-ssh-gateway.jar
 /modules/user/docker/binary/sepal-user.jar
 /modules/sepal-server/docker/binary/sepal.jar
