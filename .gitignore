@@ -1,5 +1,4 @@
 .build/
-.tmp/
 
 #Maven
 target
