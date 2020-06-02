@@ -1,11 +1,12 @@
 const {of, BehaviorSubject} = require('rxjs')
-const {first, switchMap} = require('rxjs/operators')
+const {filter, first, switchMap, tap} = require('rxjs/operators')
 const fs = require('fs')
 const fsPromises = require('fs/promises')
 const config = require('root/config')
 const path = require('path')
 const log = require('sepal/log').getLogger('task')
 const {google} = require('googleapis')
+const {exists$} = require('root/rxjs/fileSystem')
 
 const CREDENTIALS_DIR = `${config.homeDir}/.config/earthengine`
 const CREDENTIALS_FILE = 'credentials'
@@ -40,11 +41,14 @@ const loadCredentials = () =>
             return log.info('No user credentials. Using service-account.')
         })
 
-fs.watch(CREDENTIALS_DIR, (eventType, filename) => {
-    if (filename === CREDENTIALS_FILE) {
-        loadCredentials()
-    }
-})
+exists$(CREDENTIALS_DIR).pipe(
+    filter(exists => exists),
+    tap(() => fs.watch(CREDENTIALS_DIR, (eventType, filename) => {
+        if (filename === CREDENTIALS_FILE) {
+            loadCredentials()
+        }
+    }))
+)
     
 loadCredentials()
     

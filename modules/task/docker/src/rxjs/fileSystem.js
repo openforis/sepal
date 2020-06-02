@@ -45,4 +45,4 @@ const mkdirSafe$ = (preferredPath, options = {}) => {
     )
 }
 
-module.exports = {ls$, mkdir$, mkdirSafe$}
+module.exports = {exists$, ls$, mkdir$, mkdirSafe$}

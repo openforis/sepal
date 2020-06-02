@@ -7,15 +7,14 @@ const DEFAULT_PORT = 5001
 program
     .option('--gee-email <value>')
     .option('--gee-key-path <value>')
+    .option('--gee-key <value>')
     .option('--sepal-host <value>')
     .option('--sepal-username <value>')
     .option('--sepal-password <value>')
-    .option('--home-dir <value>')
-    .option('--username <value>')
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .parse(process.argv)
 
-const {geeEmail, geeKeyPath, sepalHost, sepalUsername, sepalPassword, homeDir, username, port} = program
+const {geeEmail, geeKey, geeKeyPath, sepalHost, sepalUsername, sepalPassword, port} = program
 
 const readFile = path => {
     try {
@@ -26,11 +25,9 @@ const readFile = path => {
     }
 }
 
-const geeKey = readFile(geeKeyPath)
-
 const serviceAccountCredentials = {
     client_email: geeEmail,
-    private_key: geeKey
+    private_key: geeKey || readFile(geeKeyPath)
 }
 
 log.info('Configuration loaded')
@@ -40,7 +37,5 @@ module.exports = {
     sepalHost,
     sepalUsername,
     sepalPassword,
-    homeDir,
-    username,
     port
 }

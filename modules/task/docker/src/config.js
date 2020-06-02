@@ -1,11 +1,13 @@
 const program = require('commander')
 const fs = require('fs')
 const log = require('sepal/log').getLogger()
+const _ = require('lodash')
 
 const DEFAULT_PORT = 1026
 
 program
     .option('--gee-email <value>')
+    .option('--gee-key <value>')
     .option('--gee-key-path <value>')
     .option('--google-project-id <value>')
     .option('--sepal-host <value>')
@@ -16,7 +18,7 @@ program
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .parse(process.argv)
 
-const {geeEmail, geeKeyPath, googleProjectId, sepalHost, sepalUsername, sepalPassword, homeDir, username, port} = program
+const {geeEmail, geeKey, geeKeyPath, googleProjectId, sepalHost, sepalUsername, sepalPassword, homeDir, username, port} = program
 
 const readFile = path => {
     try {
@@ -27,11 +29,11 @@ const readFile = path => {
     }
 }
 
-const geeKey = readFile(geeKeyPath)
-
 const serviceAccountCredentials = {
     client_email: geeEmail,
     private_key: geeKey
+        ? _.replace(geeKey, /\\n/g, '\n')
+        : readFile(geeKeyPath)
 }
 
 log.info('Configuration loaded')
