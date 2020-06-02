@@ -6,7 +6,7 @@
 - name: Copy sepal lib
   copy:
     src: "{{ project_dir }}/lib"
-    dest: "{{ module_dir }}/docker/.tmp"
+    dest: "{{ module_dir }}/docker/.tmp/"
 
 - include_tasks: "{{ build_image_task }}"
   vars:
