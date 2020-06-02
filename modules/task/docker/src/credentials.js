@@ -1,5 +1,5 @@
 const {of, BehaviorSubject} = require('rxjs')
-const {first, switchMap} = require('rxjs/operators')
+const {first, filter, switchMap} = require('rxjs/operators')
 const fs = require('fs')
 const fsPromises = require('fs/promises')
 const config = require('root/config')
@@ -11,15 +11,21 @@ const CREDENTIALS_DIR = `${config.homeDir}/.config/earthengine`
 const CREDENTIALS_FILE = 'credentials'
 const CREDENTIALS_PATH = path.join(CREDENTIALS_DIR, CREDENTIALS_FILE)
 
-const credentials$ = new BehaviorSubject()
+const credentials = userCredentials => ({
+    serviceAccountCredentials: config.serviceAccountCredentials,
+    userCredentials
+})
+
+const credentials$ = new BehaviorSubject(credentials())
 
 const auth$ = () =>
     credentials$.pipe(
         first(),
-        switchMap(credentials => {
+        filter(({userCredentials}) => userCredentials),
+        switchMap(({userCredentials}) => {
             const oAuth2Client = new google.auth.OAuth2()
             oAuth2Client.setCredentials({
-                access_token: credentials.accessToken
+                access_token: userCredentials.accessToken
             })
             return of(oAuth2Client)
         })
@@ -29,14 +35,14 @@ const loadCredentials = () =>
     fsPromises.readFile(CREDENTIALS_PATH, {encoding: 'utf8'})
         .then(string => {
             const json = JSON.parse(string)
-            const credentials = json && ({
+            // const credentials = json && ()
+            credentials$.next(credentials({
                 accessToken: json.access_token,
                 accessTokenExpiryDate: json.access_token_expiry_date
-            })
-            credentials$.next(credentials)
+            }))
         })
-        .catch(error => {
-            credentials$.next(null)
+        .catch(() => {
+            credentials$.next(credentials())
             return log.info('No user credentials. Using service-account.')
         })
 

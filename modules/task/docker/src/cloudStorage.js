@@ -53,13 +53,13 @@ const createBucket$ = user =>
 const setBucketPermissions$ = user => {
     const userBindings = [
         {
-        role: 'roles/storage.objectCreator',
-        members: [`user:${user.email}`],
-    },
-    {
-        role: 'roles/storage.legacyBucketWriter',
-        members: [`user:${user.email}`],
-    }
+            role: 'roles/storage.objectCreator',
+            members: [`user:${user.email}`],
+        },
+        {
+            role: 'roles/storage.legacyBucketWriter',
+            members: [`user:${user.email}`],
+        }
     ]
     const bindings = [
         {
@@ -114,8 +114,8 @@ const getServiceAccount$ = () => {
 const initUserBucket$ = () =>
     credentials$.pipe(
         first(),
-        switchMap(credentials => credentials
-            ? getUser$(credentials)
+        switchMap(({userCredentials}) => userCredentials
+            ? getUser$(userCredentials)
             : getServiceAccount$()
         ),
         switchMap(user => createIfMissingBucket$(user)),

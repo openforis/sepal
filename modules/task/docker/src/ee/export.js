@@ -177,7 +177,7 @@ const exportImageToSepal$ = ({
 
     return credentials$.pipe(
         first(),
-        switchMap(credentials => credentials
+        switchMap(({userCredentials}) => userCredentials
             ? throughDrive$()
             : throughCloudStorage$()
         )

@@ -1,7 +1,6 @@
 const {switchMap, filter, distinctUntilChanged} = require('rxjs/operators')
 const ee = require('ee')
 const config = require('root/config')
-// const {credentials$, loadCredentials$} = require('root/credentials')
 const {credentials$} = require('root/credentials')
 // const log = require('sepal/log').getLogger('task')
 
@@ -46,7 +45,7 @@ const initializeEE$ = () =>
     // loadCredentials$().pipe(
     credentials$.pipe(
         // filter(userCredentials => userCredentials),
-        switchMap(userCredentials => {
+        switchMap(({userCredentials}) => {
             const authenticate$ = userCredentials
                 ? authenticateUserAccount$(userCredentials)
                 : authenticateServiceAccount$(config.serviceAccountCredentials)
