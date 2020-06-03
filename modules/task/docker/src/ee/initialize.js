@@ -1,9 +1,7 @@
 const {switchMap, filter, distinctUntilChanged} = require('rxjs/operators')
 const ee = require('ee')
 const config = require('root/config')
-// const {credentials$, loadCredentials$} = require('root/credentials')
 const {credentials$} = require('root/credentials')
-// const log = require('sepal/log').getLogger('task')
 
 const secondsToExpiration = expiration => {
     const millisecondsLeft = expiration - Date.now()
@@ -18,7 +16,7 @@ const secondsToExpiration = expiration => {
 
 const authenticateServiceAccount$ = serviceAccountCredentials =>
     ee.$({
-        operation: 'autenticate service account',
+        operation: 'authenticate service account',
         ee: (resolve, reject) => {
             ee.sepal.setAuthType('SERVICE_ACCOUNT')
             ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)
@@ -45,7 +43,7 @@ const authenticateUserAccount$ = userCredentials =>
 const initializeEE$ = () =>
     // loadCredentials$().pipe(
     credentials$.pipe(
-        // filter(userCredentials => userCredentials),
+        filter(userCredentials => userCredentials !== undefined),
         switchMap(userCredentials => {
             const authenticate$ = userCredentials
                 ? authenticateUserAccount$(userCredentials)
