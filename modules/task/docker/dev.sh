@@ -9,6 +9,4 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --google-project-id 'openforis-sepal' \
     --sepal-host localhost:3000 \
     --sepal-username 'sepalAdmin' \
-    --sepal-password 'the admin password' \
-    --home-dir /var/sepal/sepal-server/home/admin \
-    --username admin
+    --sepal-password 'the admin password'

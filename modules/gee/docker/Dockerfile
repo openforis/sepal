@@ -2,15 +2,7 @@ FROM node:14-stretch
 EXPOSE 5001
 
 ENV GEE /usr/local/src/sepal/modules/gee/docker
-ENV RXJS /usr/local/src/sepal/lib/js/rxjs
 ENV SHARED /usr/local/src/sepal/lib/js/shared
-
-ADD build/lib/js/rxjs ${RXJS}
-WORKDIR ${RXJS}
-USER root
-RUN chown -R node: ${RXJS}
-USER node
-RUN npm install
 
 ADD build/lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
