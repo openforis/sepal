@@ -56,6 +56,4 @@ RUN chmod u+x /script/init_post.sh && sync && /script/init_post.sh
 ADD script/install-dggrid.sh /usr/local/bin/install-dggrid
 RUN chmod +x /usr/local/bin/install-dggrid
 
-ADD build/lib /usr/local/lib/sepal
-
 CMD ["/bin/bash"]

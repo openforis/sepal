@@ -23,4 +23,6 @@ RUN chmod u+x /script/init_jupyter.sh && sync && /script/init_jupyter.sh
 ADD script /script
 RUN chmod -R 500 /script
 
+ADD build/lib /usr/local/lib/sepal
+
 CMD ["/script/init_container.sh"]
