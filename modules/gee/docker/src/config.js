@@ -1,6 +1,7 @@
 const program = require('commander')
 const fs = require('fs')
 const log = require('sepal/log').getLogger()
+const _ = require('lodash')
 
 const DEFAULT_PORT = 5001
 
@@ -27,7 +28,9 @@ const readFile = path => {
 
 const serviceAccountCredentials = {
     client_email: geeEmail,
-    private_key: geeKey || readFile(geeKeyPath)
+    private_key: geeKey
+        ? _.replace(geeKey, /\\n/g, '\n')
+        : readFile(geeKeyPath)
 }
 
 log.info('Configuration loaded')
