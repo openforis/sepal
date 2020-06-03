@@ -17,9 +17,6 @@ printf '%s\n' \
     'SEPAL="true"' \
     >> /etc/environment
 
-chmod +x /usr/local/lib/sepal/python/shared/stack_time_series.py
-ln -s /usr/local/lib/sepal/python/shared/stack_time_series.py /usr/local/bin/sepal-stack-time-series
-
 # Remove redundant files
 rm -rf /var/lib/apt/lists/*
 rm -rf /tmp/*

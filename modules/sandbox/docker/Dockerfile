@@ -24,5 +24,8 @@ ADD script /script
 RUN chmod -R 500 /script
 
 ADD build/lib /usr/local/lib/sepal
+RUN chmod +x /usr/local/lib/sepal/python/shared/stack_time_series.py && \
+    ln -s /usr/local/lib/sepal/python/shared/stack_time_series.py /usr/local/bin/sepal-stack-time-series
+
 
 CMD ["/script/init_container.sh"]
