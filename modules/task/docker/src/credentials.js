@@ -51,6 +51,4 @@ exists$(CREDENTIALS_DIR).pipe(
 )
     
 loadCredentials()
-    
-// module.exports = {loadCredentials$, credentials$, auth$}
 module.exports = {credentials$, auth$}
