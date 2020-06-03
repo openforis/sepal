@@ -24,7 +24,7 @@
         "fast-crc32c": "^2.0.0",
         "googleapis": "^50.0.0",
         "moment": "^2.24.0",
-        "rxjs": "^7.0.0-beta.0",
+        "rxjs": "git+https://git@github.com/openforis/rxjs.git",
         "shared": "../../../lib/js/shared"
     },
     "devDependencies": {
