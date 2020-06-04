@@ -2,7 +2,6 @@ const {concat} = require('rxjs')
 const {switchMap} = require('rxjs/operators')
 const moment = require('moment')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
-const ImageFactory = require('sepal/ee/imageFactory')
 const {createVrt$, setBandNames$} = require('sepal/gdal')
 const {exportImageToSepal$} = require('root/ee/export')
 const config = require('root/config')
@@ -22,18 +21,12 @@ module.exports = {
     }
 }
 
-const export$ = ({description, downloadDir, recipe, bands, scale}) => {
-    const {getImage$} = ImageFactory(recipe, bands)
-    const folder = `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`
-
-    return getImage$().pipe(
-        switchMap(image =>
-            exportImageToSepal$({
-                folder, image, description, downloadDir, scale, crs: 'EPSG:4326'
-            })
-        )
-    )
-}
+const export$ = ({description, downloadDir, recipe, bands, scale}) =>
+    exportImageToSepal$({
+        imageDef: {recipe, bands},
+        folder: `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`,
+        description, downloadDir, scale, crs: 'EPSG:4326'
+    })
 
 const postProcess$ = ({description, downloadDir, bands}) => {
     const vrtPath = `${downloadDir}/${description}.vrt`

@@ -3,6 +3,8 @@ const {EMPTY} = require('rxjs')
 const {catchError, switchMap} = require('rxjs/operators')
 const {progress} = require('root/rxjs/operators')
 
+// REPLACED BY WORKER JOBS
+
 const assetRoots$ = () =>
     ee.$({
         operation: 'get asset roots',

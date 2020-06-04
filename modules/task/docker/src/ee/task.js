@@ -1,6 +1,6 @@
 const ee = require('ee')
 const {interval, of, throwError} = require('rxjs')
-const {distinctUntilChanged, exhaustMap, first, finalize, map, switchMap, mapTo, takeWhile, tap} = require('rxjs/operators')
+const {distinctUntilChanged, catchError, exhaustMap, first, finalize, map, switchMap, mapTo, takeWhile, tap} = require('rxjs/operators')
 const log = require('sepal/log').getLogger('ee')
 
 const MONITORING_FREQUENCY = 10000
@@ -47,6 +47,7 @@ const executeTask$ = (task, description) => {
     const cleanup = task => {
         status$(task).pipe(
             map(({state}) => isRunning(state)),
+            catchError(() => of(false)),
             switchMap(running => running
                 ? cancel$(task).pipe(
                     mapTo(true)

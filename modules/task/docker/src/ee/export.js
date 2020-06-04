@@ -2,8 +2,7 @@ const ee = require('ee')
 const {concat, defer, of} = require('rxjs')
 const {first, map, switchMap} = require('rxjs/operators')
 const {swallow} = require('sepal/rxjs/operators')
-const {executeTask$} = require('./task')
-const {assetRoots$, deleteAsset$} = require('./asset')
+
 const Path = require('path')
 const {limiter$} = require('./eeExportLimiter')
 const {Limiter} = require('sepal/service/limiter')
@@ -12,6 +11,10 @@ const {initUserBucket$} = require('root/cloudStorage')
 const {downloadFromCloudStorage$} = require('root/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
 const {credentials$} = require('root/credentials')
+
+const runTask$ = require('root/jobs/ee/task/runTask')
+const assetRoots$ = require('root/jobs/ee/asset/getAssetRoots')
+const deleteAsset$ = require('root/jobs/ee/asset/deleteAsset')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
 
@@ -26,7 +29,7 @@ const createDriveFolder$ = folder =>
     )
 
 const exportImageToAsset$ = ({
-    image,
+    imageDef,
     description,
     assetId,
     pyramidingPolicy,
@@ -44,7 +47,8 @@ const exportImageToAsset$ = ({
         description = description || Path.dirname(assetId)
         return assetId
             ? of({description, assetId})
-            : assetRoots$().pipe(
+            : assetRoots$({credentials$}).pipe(
+            // : assetRoots$().pipe(
                 map(assetRoots => {
                     if (!assetRoots || !assetRoots.length)
                         throw new Error('EE account has no asset roots')
@@ -53,28 +57,28 @@ const exportImageToAsset$ = ({
             )
     }
 
-    const exportToAsset$ = ({createTask, description, assetId, retries}) => {
+    const exportToAsset$ = ({taskDef, description, assetId, retries}) => {
         if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
             throw new Error('Cannot export to asset using service account.')
-        return export$({
-            create$: () => {
-                const task = createTask()
-                return concat(
-                    deleteAsset$(assetId),
-                    executeTask$(task, description)
-                )
-            },
-            description,
-            retries
-        })
+        return limiter$(
+            concat(
+                deleteAsset$({credentials$, assetId}).pipe(swallow()),
+                runTask$({credentials$, taskDef, description})
+            )
+        )
     }
 
     return assetDestination$(description, assetId).pipe(
         switchMap(({description, assetId}) =>
             exportToAsset$({
-                createTask: () => ee.batch.Export.image.toAsset(
-                    image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels
-                ),
+                taskDef: {
+                    imageDef,
+                    method: 'toAsset',
+                    args: [
+                        // image,
+                        description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels
+                    ]
+                },
                 description: `exportImageToAsset(assetId: ${assetId}, description: ${description})`,
                 assetId,
                 retries
@@ -84,8 +88,8 @@ const exportImageToAsset$ = ({
 }
 
 const exportImageToSepal$ = ({
+    imageDef,
     folder,
-    image,
     description,
     downloadDir,
     dimensions,
@@ -104,23 +108,26 @@ const exportImageToSepal$ = ({
     const prefix = description
 
     const throughCloudStorage$ = () => {
-        const exportToCloudStorage$ = ({createTask, description, retries}) => {
-            log.debug('Earth Engine <to cloud storage>:', description)
-            return export$({
-                create$: () => executeTask$(createTask(), description),
-                description,
-                retries
-            })
+        const exportToCloudStorage$ = ({taskDef, description, retries}) => {
+            log.debug('Earth Engine <to Cloud Storage>:', description)
+            return limiter$(
+                runTask$({credentials$, taskDef, description})
+            )
         }
 
         return initUserBucket$().pipe(
             switchMap(bucketPath => {
                 return concat(
                     exportToCloudStorage$({
-                        createTask: () => ee.batch.Export.image.toCloudStorage(
-                            image, description, bucketPath, `${folder}/${prefix}`, dimensions, region, scale, crs,
-                            crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-                        ),
+                        taskDef: {
+                            imageDef,
+                            method: 'toCloudStorage',
+                            args: [
+                                // image,
+                                description, bucketPath, `${folder}/${prefix}`, dimensions, region, scale, crs,
+                                crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+                            ]
+                        },
                         description: `export to Sepal through CS (${description})`,
                         retries
                     }),
@@ -136,16 +143,14 @@ const exportImageToSepal$ = ({
     }
 
     const throughDrive$ = () => {
-        const exportToDrive$ = ({createTask, description, folder, retries}) => {
+        const exportToDrive$ = ({taskDef, description, folder, retries}) => {
             log.debug('Earth Engine <to Google Drive>:', description)
-            return export$({
-                create$: () => concat(
+            return limiter$(
+                concat(
                     createDriveFolder$(folder),
-                    executeTask$(createTask(), description)
-                ),
-                description,
-                retries
-            })
+                    runTask$({credentials$, taskDef, description})
+                )
+            )
         }
 
         const downloadFromDrive$ = ({path, downloadDir}) =>
@@ -156,14 +161,15 @@ const exportImageToSepal$ = ({
 
         return concat(
             exportToDrive$({
-                createTask: () =>
-                    // NOTE: folder is the last path element only, for two reasons:
-                    //    1) Drive treats "/" as a normal character
-                    //    2) Drive can resolve a path by the last portion if it exists
-                    ee.batch.Export.image.toDrive(
-                        image, description, folder, prefix, dimensions, region, scale, crs,
+                taskDef: {
+                    imageDef,
+                    method: 'toDrive',
+                    args: [
+                        // image,
+                        description, folder, prefix, dimensions, region, scale, crs,
                         crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-                    ),
+                    ]
+                },
                 description: `export to Sepal through Drive (${description})`,
                 folder,
                 retries
@@ -188,10 +194,5 @@ const {limiter$: serialize$} = Limiter({
     name: 'Serializer',
     maxConcurrency: 1
 })
-
-const export$ = ({create$, _description, _retries}) =>
-    limiter$(
-        create$()
-    )
 
 module.exports = {exportImageToAsset$, exportImageToSepal$}

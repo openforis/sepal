@@ -11,6 +11,7 @@
         "pool": "info",
         "service": "info",
         "task": "debug",
-        "terminal": "info"
+        "terminal": "info",
+        "worker": "debug"
     }
 }
