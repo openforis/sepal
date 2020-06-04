@@ -3,7 +3,7 @@ const {switchMap} = require('rxjs/operators')
 const moment = require('moment')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {createVrt$, setBandNames$} = require('sepal/gdal')
-const {exportImageToSepal$} = require('root/ee/export')
+const {exportImageToSepal$} = require('root/ee/export/toSepal')
 const config = require('root/config')
 
 module.exports = {

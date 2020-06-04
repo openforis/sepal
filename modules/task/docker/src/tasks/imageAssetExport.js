@@ -1,4 +1,4 @@
-const {exportImageToAsset$} = require('root/ee/export')
+const {exportImageToAsset$} = require('root/ee/export/toAsset')
 
 module.exports = {
     submit$: (id, {image: {recipe, bands, scale}}) => {
