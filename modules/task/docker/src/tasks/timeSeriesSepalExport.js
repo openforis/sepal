@@ -2,7 +2,7 @@ const {toGeometry, toFeatureCollection} = require('sepal/ee/aoi')
 const {allScenes, hasImagery} = require('sepal/ee/optical/collection')
 const {calculateIndex} = require('sepal/ee/optical/indexes')
 const tile = require('sepal/ee/tile')
-const {exportImageToSepal$} = require('root/ee/export')
+const {exportImageToSepal$} = require('root/ee/export/toSepal')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {concat, forkJoin, from, of} = require('rxjs')
 const Path = require('path')
@@ -38,14 +38,15 @@ const export$ = (downloadDir, recipe) => {
         cloudBuffer, snowMasking, calibrate, brdfCorrect, fromDate, toDate, indicator,
         scale
     } = recipe
-    const geometry = toGeometry(aoi)
+    
+    const geometry = toGeometry(aoi) // synchronous EE
     const reflectance = surfaceReflectance ? 'SR' : 'TOA'
     const dates = {
         seasonStart: fromDate,
         seasonEnd: toDate
     }
 
-    const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES)
+    const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES) // synchronous EE
 
     const exportTiles$ = tileIds => {
         const totalTiles = tileIds.length
@@ -61,14 +62,12 @@ const export$ = (downloadDir, recipe) => {
             )
         )
     }
-
-    const exportTile$ = ({tileId, tileIndex}) => {
-        return concat(
+    const exportTile$ = ({tileId, tileIndex}) =>
+        concat(
             of({tileIndex, chunks: 0}),
             exportChunks$(createChunks$({tileId, tileIndex})),
             postProcess$(Path.join(downloadDir, `${tileIndex}`))
         )
-    }
 
     const createChunks$ = ({tileId, tileIndex}) => {
         const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
@@ -113,19 +112,20 @@ const export$ = (downloadDir, recipe) => {
                 .set('date', image.date().format('yyyy-MM-dd'))
         )
         const distinctDateImages = images.distinct('date')
-        const timeSeries = ee.ImageCollection(ee.Join.saveAll('images')
-            .apply({
-                primary: distinctDateImages,
-                secondary: images,
-                condition: ee.Filter.equals({
-                    leftField: 'date',
-                    rightField: 'date'
+        const timeSeries = ee.ImageCollection(
+            ee.Join.saveAll('images')
+                .apply({
+                    primary: distinctDateImages,
+                    secondary: images,
+                    condition: ee.Filter.equals({
+                        leftField: 'date',
+                        rightField: 'date'
+                    })
                 })
-            })
-            .map(image => ee.ImageCollection(ee.List(image.get('images')))
-                .median()
-                .rename(image.getString('date'))
-            ))
+                .map(image => ee.ImageCollection(ee.List(image.get('images')))
+                    .median()
+                    .rename(image.getString('date'))
+                ))
             .toBands()
             .regexpRename('.*(.{10})', '$1')
             .clip(feature.geometry())
@@ -135,28 +135,27 @@ const export$ = (downloadDir, recipe) => {
     const hasImagery$ = (startDate, endDate) =>
         ee.getInfo$(hasImagery({dataSets, reflectance, geometry, startDate, endDate}), 'check if date range has imagery')
 
-    const exportChunks$ = chunks$ => {
-        return chunks$.pipe(
+    const exportChunks$ = chunks$ =>
+        chunks$.pipe(
             switchMap(chunks => {
                 const nonEmptyChunks = chunks.filter(({notEmpty}) => notEmpty)
                 const totalChunks = nonEmptyChunks.length
                 return concat(
-                        of({totalChunks}),
-                        from(nonEmptyChunks).pipe(
-                            mergeMap(chunk => exportChunk$(chunk))
-                        )
+                    of({totalChunks}),
+                    from(nonEmptyChunks).pipe(
+                        mergeMap(chunk => exportChunk$(chunk))
                     )
+                )
             })
         )
-    }
-
 
     const exportChunk$ = ({tileIndex, timeSeries, dateRange}) => {
         const chunkDescription = `${description}_${tileIndex}_${dateRange}`
         const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateRange}`
         const export$ = exportImageToSepal$({
-            folder: chunkDescription,
+            // imageDef,
             image: timeSeries,
+            folder: chunkDescription,
             description: chunkDescription,
             downloadDir: chunkDownloadDir,
             scale,
@@ -208,4 +207,3 @@ const toProgress = ({totalTiles = 0, tileIndex = 0, totalChunks = 0, chunks = 0}
         messageArgs: {currentTilePercent, currentTile, totalTiles}
     }
 }
-

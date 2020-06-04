@@ -3,7 +3,7 @@ const {switchMap} = require('rxjs/operators')
 const moment = require('moment')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {createVrt$, setBandNames$} = require('sepal/gdal')
-const {exportImageToSepal$} = require('root/ee/export/toSepal')
+const {exportImageDefToSepal$} = require('root/ee/export/toSepal')
 const config = require('root/config')
 
 module.exports = {
@@ -22,7 +22,7 @@ module.exports = {
 }
 
 const export$ = ({description, downloadDir, recipe, bands, scale}) =>
-    exportImageToSepal$({
+    exportImageDefToSepal$({
         imageDef: {recipe, bands},
         folder: `${description}_${moment().format('YYYY-MM-DD_HH:mm:ss.SSS')}`,
         description, downloadDir, scale, crs: 'EPSG:4326'
