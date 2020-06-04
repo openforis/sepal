@@ -1,6 +1,6 @@
 const fs = require('fs')
-const {Subject, EMPTY, concat, defer, of} = require('rxjs')
-const {expand, finalize, map, mergeMap, scan, switchMap} = require('rxjs/operators')
+const {Subject, EMPTY, concat, defer, of} = require('rx')
+const {expand, finalize, map, mergeMap, scan, switchMap} = require('rx/operators')
 const {retry} = require('sepal/rxjs/operators')
 const {fromPromise} = require('sepal/rxjs')
 const {cloudStorage} = require('./cloudStorage')

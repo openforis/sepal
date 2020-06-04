@@ -1,6 +1,6 @@
 const ee = require('ee')
-const {concat, defer, of} = require('rxjs')
-const {first, map, switchMap} = require('rxjs/operators')
+const {concat, defer, of} = require('rx')
+const {first, map, switchMap} = require('rx/operators')
 const {swallow} = require('sepal/rxjs/operators')
 const {executeTask$} = require('./task')
 const {assetRoots$, deleteAsset$} = require('./asset')

@@ -1,5 +1,5 @@
-const {of} = require('rxjs')
-const {first, map, switchMap} = require('rxjs/operators')
+const {of} = require('rx')
+const {first, map, switchMap} = require('rx/operators')
 const {fromPromise} = require('sepal/rxjs')
 const crypto = require('crypto')
 const http = require('sepal/httpClient')

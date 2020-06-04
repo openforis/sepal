@@ -1,4 +1,4 @@
-const {switchMap} = require('rxjs/operators')
+const {switchMap} = require('rx/operators')
 const ImageFactory = require('sepal/ee/imageFactory')
 const {exportImageToAsset$} = require('root/ee/export')
 

@@ -3,8 +3,8 @@ const job = require('root/jobs/job')
 const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     const ee = require('ee')
     const ImageFactory = require('sepal/ee/imageFactory')
-    const {forkJoin} = require('rxjs')
-    const {map, switchMap} = require('rxjs/operators')
+    const {forkJoin} = require('rx')
+    const {map, switchMap} = require('rx/operators')
 
     const {getGeometry$} = ImageFactory(recipe)
     return getGeometry$().pipe(

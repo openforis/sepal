@@ -12,7 +12,8 @@
     },
     "_moduleAliases": {
         "sepal": "src",
-        "ee": "src/ee"
+        "rx": "src/reexport/rx",
+        "ee": "src/reexport/ee"
     },
     "dependencies": {
         "@google/earthengine": "0.1.218",

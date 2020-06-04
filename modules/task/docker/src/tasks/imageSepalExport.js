@@ -1,5 +1,5 @@
-const {concat} = require('rxjs')
-const {switchMap} = require('rxjs/operators')
+const {concat} = require('rx')
+const {switchMap} = require('rx/operators')
 const moment = require('moment')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const ImageFactory = require('sepal/ee/imageFactory')

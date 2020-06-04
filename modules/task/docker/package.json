@@ -16,7 +16,8 @@
     "_moduleAliases": {
         "root": "src",
         "sepal": "node_modules/shared/src",
-        "ee": "node_modules/shared/src/ee"
+        "ee": "node_modules/shared/src/reexport/ee",
+        "rx": "node_modules/shared/src/reexport/rx"
     },
     "dependencies": {
         "@google-cloud/storage": "^4.2.0",
@@ -24,7 +25,6 @@
         "fast-crc32c": "^2.0.0",
         "googleapis": "^50.0.0",
         "moment": "^2.24.0",
-        "rxjs": "git+https://git@github.com/openforis/rxjs.git",
         "shared": "../../../lib/js/shared"
     },
     "devDependencies": {

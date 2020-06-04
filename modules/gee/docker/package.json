@@ -14,14 +14,14 @@
     "_moduleAliases": {
         "root": "src",
         "sepal": "node_modules/shared/src",
-        "ee": "node_modules/shared/src/ee"
+        "ee": "node_modules/shared/src/reexport/ee",
+        "rx": "node_modules/shared/src/reexport/rx"
     },
     "dependencies": {
         "commander": "^4.1.1",
         "lodash": "^4.17.15",
         "log4js": "^6.1.1",
         "moment": "^2.24.0",
-        "rxjs": "git+https://git@github.com/openforis/rxjs.git",
         "shared": "../../../lib/js/shared",
         "uuid": "^3.4.0"
     },

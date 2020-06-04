@@ -5,8 +5,8 @@ const worker$ = ({recipe, bands}) => {
 
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
-    const {zip} = require('rxjs')
-    const {switchMap} = require('rxjs/operators')
+    const {zip} = require('rx')
+    const {switchMap} = require('rx/operators')
 
     const {getImage$, getVisParams$} = ImageFactory(recipe, bands)
     return zip(getImage$(), getVisParams$()).pipe(

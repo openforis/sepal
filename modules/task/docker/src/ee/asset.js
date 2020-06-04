@@ -1,6 +1,6 @@
 const ee = require('ee')
-const {EMPTY} = require('rxjs')
-const {catchError, switchMap} = require('rxjs/operators')
+const {EMPTY} = require('rx')
+const {catchError, switchMap} = require('rx/operators')
 const {progress} = require('root/rxjs/operators')
 
 const assetRoots$ = () =>

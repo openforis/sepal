@@ -1,6 +1,6 @@
 const ee = require('ee')
-const {interval, of, throwError} = require('rxjs')
-const {distinctUntilChanged, exhaustMap, first, finalize, map, switchMap, mapTo, takeWhile, tap} = require('rxjs/operators')
+const {interval, of, throwError} = require('rx')
+const {distinctUntilChanged, exhaustMap, first, finalize, map, switchMap, mapTo, takeWhile, tap} = require('rx/operators')
 const log = require('sepal/log').getLogger('ee')
 
 const MONITORING_FREQUENCY = 10000

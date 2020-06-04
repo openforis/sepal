@@ -1,5 +1,5 @@
-const {of, BehaviorSubject} = require('rxjs')
-const {filter, first, switchMap, tap} = require('rxjs/operators')
+const {of, BehaviorSubject} = require('rx')
+const {filter, first, switchMap, tap} = require('rx/operators')
 const fs = require('fs')
 const fsPromises = require('fs/promises')
 const config = require('root/config')

@@ -1,4 +1,4 @@
-const {switchMap, filter, distinctUntilChanged} = require('rxjs/operators')
+const {switchMap, filter, distinctUntilChanged} = require('rx/operators')
 const ee = require('ee')
 const config = require('root/config')
 const {credentials$} = require('root/credentials')
