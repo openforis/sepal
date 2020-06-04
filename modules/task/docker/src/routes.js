@@ -1,10 +1,4 @@
-const {stream} = require('sepal/httpServer')
-
 const {submitTask, cancelTask} = require('./task')
-
-const testHttp$ = require('root/jobs/test/http')
-const testHttpDirect$ = require('root/jobs/test/http/test')
-const testWs$ = require('root/jobs/test/ws')
 
 module.exports = router =>
     router
@@ -24,9 +18,3 @@ module.exports = router =>
             cancelTask(taskId)
             ctx.status = 204
         })
-
-        .get('/test/worker/:min/:max/:errorProbability', stream(ctx => testHttp$(ctx)))
-        .get('/test/direct/:min/:max/:errorProbability', stream(
-            ({params: {min, max, errorProbability}}) => testHttpDirect$(parseInt(min), parseInt(max), parseInt(errorProbability))
-        ))
-        .get('/ws/:name', stream(ctx => testWs$(ctx)))
