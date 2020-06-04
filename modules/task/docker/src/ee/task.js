@@ -82,14 +82,15 @@ const runTask$ = (task, description) => {
     const cleanup = taskId =>
         status$(taskId).pipe(
             map(({state}) => isRunning(state)),
-            catchError(() => of(false)),
-            switchMap(running => running
-                ? cancel$(taskId).pipe(
-                    mapTo(true)
-                )
-                : of(false)
+            switchMap(running =>
+                running
+                    ? cancel$(taskId).pipe(
+                        mapTo(true)
+                    )
+                    : of(false)
             ),
-            first()
+            first(),
+            catchError(() => of(false))
         ).subscribe({
             next: wasRunning => log.info(`EE task ${taskId}: ${wasRunning ? 'Cancelled' : 'Completed'} (${description})`),
             error: error => log.error('Failed to cancel EE task', error)
