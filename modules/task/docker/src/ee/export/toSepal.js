@@ -1,6 +1,6 @@
 const ee = require('ee')
-const {concat, defer} = require('rxjs')
-const {first, switchMap} = require('rxjs/operators')
+const {concat, defer} = require('rx')
+const {first, switchMap} = require('rx/operators')
 const {swallow} = require('sepal/rxjs/operators')
 
 const {limiter$} = require('./limiter')

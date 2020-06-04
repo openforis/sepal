@@ -3,7 +3,7 @@ const job = require('root/jobs/job')
 const worker$ = (taskDef, description) => {
     const ee = require('ee')
     const ImageFactory = require('sepal/ee/imageFactory')
-    const {map, switchMap} = require('rxjs/operators')
+    const {map, switchMap} = require('rx/operators')
     const runTask$ = require('../../../ee/task')
 
     const getImage$ = ({recipe, bands}) =>

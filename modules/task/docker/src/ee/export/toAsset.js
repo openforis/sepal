@@ -1,6 +1,6 @@
 const ee = require('ee')
-const {concat, of} = require('rxjs')
-const {map, switchMap} = require('rxjs/operators')
+const {concat, of} = require('rx')
+const {map, switchMap} = require('rx/operators')
 const {swallow} = require('sepal/rxjs/operators')
 
 const Path = require('path')

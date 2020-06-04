@@ -2,8 +2,8 @@ const job = require('root/jobs/job')
 
 const worker$ = assetId => {
     const ee = require('ee')
-    const {EMPTY} = require('rxjs')
-    const {catchError} = require('rxjs/operators')
+    const {EMPTY} = require('rx')
+    const {catchError} = require('rx/operators')
     const {progress} = require('root/rxjs/operators')
 
     return ee.deleteAsset$(assetId).pipe(
