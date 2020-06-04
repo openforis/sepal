@@ -31,7 +31,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
 
     const authenticateServiceAccount$ = serviceAccountCredentials =>
         ee.$({
-            operation: 'autenticate service account',
+            operation: 'authenticate service account',
             ee: (resolve, reject) => {
                 ee.sepal.setAuthType('SERVICE_ACCOUNT')
                 ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)

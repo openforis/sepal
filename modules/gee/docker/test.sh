@@ -7,6 +7,4 @@ node \
     --gee-key-path $SEPAL_CONFIG/google-earth-engine/gee-service-account.pem \
     --sepal-host localhost:3000 \
     --sepal-username 'sepalAdmin' \
-    --sepal-password 'the admin password' \
-    --home-dir $SEPAL_CONFIG/sepal-server/home/admin \
-    --username admin
+    --sepal-password 'the admin password'

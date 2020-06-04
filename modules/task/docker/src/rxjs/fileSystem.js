@@ -1,5 +1,5 @@
-const {of} = require('rxjs')
-const {catchError, map, switchMap} = require('rxjs/operators')
+const {of} = require('rx')
+const {catchError, map, switchMap} = require('rx/operators')
 const {fromPromise} = require('sepal/rxjs')
 const fs = require('fs')
 const Path = require('path')
@@ -45,4 +45,4 @@ const mkdirSafe$ = (preferredPath, options = {}) => {
     )
 }
 
-module.exports = {ls$, mkdir$, mkdirSafe$}
+module.exports = {exists$, ls$, mkdir$, mkdirSafe$}

@@ -189,7 +189,7 @@
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
     - { role: run-module, module: mysql-backup }
-    - { role: run-module, module: google-earth-engine}
+    - { role: run-module, module: gee}
     - { role: run-module, module: user }
     - { role: run-module, module: sepal-server, container_name: sepal }
     - { role: run-module, module: gui }

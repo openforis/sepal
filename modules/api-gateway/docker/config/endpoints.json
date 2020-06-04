@@ -2,7 +2,7 @@
   {
     "prefix": "true",
     "path": "/api/gee/",
-    "target": "http://google-earth-engine:5001/",
+    "target": "http://gee:5001/",
     "https": "false",
     "authenticate": "true"
   },

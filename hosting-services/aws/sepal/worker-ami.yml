@@ -139,11 +139,11 @@
     - name: Pull sandbox
       command: "docker pull {{ docker_repository_host }}/openforis/sandbox:{{ version }}"
 
-    - name: Pull google-earth-engine
-      command: "docker pull {{ docker_repository_host }}/openforis/google-earth-engine:{{ version }}"
+    - name: Pull gee
+      command: "docker pull {{ docker_repository_host }}/openforis/gee:{{ version }}"
 
-    - name: Pull task-executor
-      command: "docker pull {{ docker_repository_host }}/openforis/task-executor:{{ version }}"
+    - name: Pull task
+      command: "docker pull {{ docker_repository_host }}/openforis/task:{{ version }}"
 
     - name: Logout from docker registry
       command: "docker logout {{ docker_repository_host }}"

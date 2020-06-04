@@ -2,6 +2,8 @@ const {submitTask, cancelTask} = require('./task')
 
 module.exports = router =>
     router
+        .get('/healthcheck', ctx => ctx.status = 200)
+
         .post('/api/tasks', ctx => {
             const {id, operation, params} = ctx.request.body
             // TODO: Look at the header - should contain the user

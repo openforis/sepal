@@ -1,5 +1,5 @@
-const {Subject, concat} = require('rxjs')
-const {distinctUntilChanged, filter, map, takeUntil, tap} = require('rxjs/operators')
+const {Subject, concat} = require('rx')
+const {distinctUntilChanged, filter, map, takeUntil, tap} = require('rx/operators')
 const {lastInWindow, repeating} = require('sepal/rxjs/operators')
 const log = require('sepal/log').getLogger('task')
 const http = require('sepal/httpClient')

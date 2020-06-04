@@ -23,8 +23,8 @@
     - { role: build-module, module: ssh-gateway }
     - { role: build-module, module: geospatial-toolkit }
     - { role: build-module, module: sandbox }
-    - { role: build-module, module: task-executor }
-    - { role: build-module, module: google-earth-engine }
+    - { role: build-module, module: task }
+    - { role: build-module, module: gee }
     - { role: build-module, module: user }
     - { role: build-module, module: gui }
     - { role: build-module, module: ceo }

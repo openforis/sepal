@@ -3,8 +3,8 @@ const job = require('root/jobs/job')
 const worker$ = ({tableId, columnName, columnValue, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     const ee = require('ee')
     const {filterTable} = require('sepal/ee/table')
-    const {forkJoin} = require('rxjs')
-    const {map} = require('rxjs/operators')
+    const {forkJoin} = require('rx')
+    const {map} = require('rx/operators')
 
     const table = filterTable({tableId, columnName, columnValue})
     const geometry = table.geometry()

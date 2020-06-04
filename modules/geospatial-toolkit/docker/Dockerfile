@@ -7,8 +7,6 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     VERSION=2020-03-18
 # VERSION used to force complete rebuild of image
 
-ADD .tmp/lib /usr/local/lib/sepal
-
 ADD script/init_apt.sh /script/
 RUN chmod u+x /script/init_apt.sh && sync && /script/init_apt.sh
 

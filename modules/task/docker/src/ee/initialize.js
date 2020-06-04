@@ -1,4 +1,4 @@
-const {switchMap, distinctUntilChanged} = require('rxjs/operators')
+const {switchMap, distinctUntilChanged} = require('rx/operators')
 const ee = require('ee')
 const {credentials$} = require('root/credentials')
 
@@ -12,7 +12,7 @@ const secondsToExpiration = expiration => {
 
 const authenticateServiceAccount$ = serviceAccountCredentials =>
     ee.$({
-        operation: 'autenticate service account',
+        operation: 'authenticate service account',
         ee: (resolve, reject) => {
             ee.sepal.setAuthType('SERVICE_ACCOUNT')
             ee.data.authenticateViaPrivateKey(serviceAccountCredentials, resolve, reject)

@@ -3,7 +3,7 @@ const job = require('root/jobs/job')
 const worker$ = ({aoi, source}) => {
     const ee = require('ee')
     const {toGeometry} = require('sepal/ee/aoi')
-    const {map} = require('rxjs/operators')
+    const {map} = require('rx/operators')
 
     const geometry = toGeometry(aoi)
     const table = {

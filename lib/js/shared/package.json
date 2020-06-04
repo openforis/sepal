@@ -12,7 +12,8 @@
     },
     "_moduleAliases": {
         "sepal": "src",
-        "ee": "src/ee"
+        "rx": "src/reexport/rx",
+        "ee": "src/reexport/ee"
     },
     "dependencies": {
         "@google/earthengine": "0.1.218",
@@ -25,7 +26,7 @@
         "log4js": "^6.1.1",
         "moment": "^2.24.0",
         "request": "^2.88.0",
-        "rxjs": "../rxjs",
+        "rxjs": "git+https://git@github.com/openforis/rxjs.git",
         "serialize-error": "^5.0.0",
         "uuid": "^3.4.0"
     },

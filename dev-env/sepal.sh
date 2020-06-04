@@ -239,8 +239,8 @@ run () {
         --no-daemon \
         --stacktrace \
         :sepal-server:runDev \
-        -DconfigDir="$SEPAL_CONFIG/sepal-server" 
-            #-DskipSceneMetaDataUpdate
+        -DconfigDir="$SEPAL_CONFIG/sepal-server"
+#        -DskipSceneMetaDataUpdate
         ;;
     task)
         cd $SEPAL/lib/js/shared
