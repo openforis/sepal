@@ -7,6 +7,7 @@ ENV SHARED /usr/local/src/sepal/lib/js/shared
 RUN apt-get update && apt-get install -y \
   curl \
   gettext \
+  git \
   python3 \
   python3-gdal \
   python3-pip \
@@ -22,19 +23,13 @@ RUN apt-get update && apt-get install -y \
 
 ADD build/lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
-USER root
-RUN chown -R node: ${SHARED}
-USER node
 RUN npm install
 
 ADD package.json ${TASK}/
 WORKDIR ${TASK}
-USER root
-RUN mkdir src && chown -R node: ${TASK}
-USER node
+RUN mkdir src
 RUN npm install
 
-USER root
 ADD src ${TASK}/src
 ADD script /script
 RUN chmod -R 500 /script && sync
