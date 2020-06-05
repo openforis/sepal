@@ -7,6 +7,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --gee-email google-earth-engine@openforis-sepal.iam.gserviceaccount.com \
     --gee-key-path $SEPAL_CONFIG/google-earth-engine/gee-service-account.pem \
     --google-project-id 'openforis-sepal' \
+    --google-region 'EUROPE-WEST2' \
     --sepal-host localhost:3000 \
     --sepal-username 'sepalAdmin' \
     --sepal-password 'the admin password' \
