@@ -1,12 +1,12 @@
 const job = require('root/jobs/job')
 
-const worker$ = (name, args$) => {
+const worker$ = (name, {args$, initArgs}) => {
     const {timer, merge, of} = require('rx')
     const {map, take, mergeMap, delay} = require('rx/operators')
 
     return merge(
         timer(0, 3000).pipe(
-            map(value => `Hello ${name}! Value: ${value}`),
+            map(value => `${initArgs} ${name}! Value: ${value}`),
             take(10)
         ),
         args$.pipe(
@@ -22,6 +22,7 @@ const worker$ = (name, args$) => {
 module.exports = job({
     jobName: 'Websocket demo',
     jobPath: __filename,
+    initArgs: () => 'Hello from websocket demo',
     args: ({params: {name}}) => [name],
     worker$
 })

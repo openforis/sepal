@@ -1,8 +1,10 @@
 const job = require('root/jobs/job')
+const log = require('sepal/log').getLogger('worker')
 
 module.exports = job({
     jobName: 'Test1',
     jobPath: __filename,
+    initArgs: () => 'Test',
     maxConcurrency: 200,
     minIdleCount: 5,
     maxIdleMilliseconds: 2000,
