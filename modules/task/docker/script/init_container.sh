@@ -6,8 +6,8 @@ EE_PRIVATE_KEY=${EE_PRIVATE_KEY_SEPAL_ENV//-----LINE BREAK-----/\\n}
 if id "$USERNAME_SEPAL_ENV" >/dev/null 2>&1; then
     echo "User already exists: $USERNAME_SEPAL_ENV"
 else
-    GROUP_ID=`stat -c '%u' $HOME_DIR`
-    USER_ID=`stat -c '%g' $HOME_DIR`
+    GROUP_ID=`stat -c '%g' $HOME_DIR`
+    USER_ID=`stat -c '%u' $HOME_DIR`
     echo "Creating user and group: $USERNAME_SEPAL_ENV. HOME_DIR=$HOME_DIR, GROUP_ID=$GROUP_ID, USER_ID=$USER_ID"
     groupadd -g $GROUP_ID $USERNAME_SEPAL_ENV
     useradd -u $USER_ID -g $GROUP_ID $USERNAME_SEPAL_ENV
