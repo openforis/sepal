@@ -33,7 +33,7 @@ const bucketExists$ = user =>
 
 const createBucket$ = user =>
     do$(cloudStorage.createBucket(user.bucketName, {
-        location: 'EUROPE-WEST2', // TODO: Config
+        location: config.googleRegion,
         storageClass: 'STANDARD',
         iamConfiguration: {
             uniformBucketLevelAccess: {enabled: true}

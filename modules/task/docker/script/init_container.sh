@@ -17,6 +17,8 @@ exec sudo -Eu $USERNAME_SEPAL_ENV "PATH=$PATH" node \
     src/main.js \
     --gee-email "$EE_ACCOUNT_SEPAL_ENV" \
     --gee-key "$EE_PRIVATE_KEY" \
+    --google-project-id "$GOOGLE_PROJECT_ID_SEPAL_KEY" \
+    --google-region "$GOOGLE_REGION_SEPAL_KEY" \
     --sepal-host "$SEPAL_HOST_SEPAL_ENV" \
     --sepal-username "sepalAdmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD_SEPAL_ENV" \
