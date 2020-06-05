@@ -4,7 +4,9 @@ EXPOSE 1026
 ENV TASK /usr/local/src/sepal/modules/task/docker
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
-RUN apt-get update && apt-get install -y sudo
+RUN apt-get update && apt-get install -y \
+    sudo \
+    gdal-bin
 
 ADD build/lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
