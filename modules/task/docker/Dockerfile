@@ -21,15 +21,24 @@ RUN apt-get update && apt-get install -y \
     gdal-bin \
     nodejs
 
+RUN groupadd --gid 1000 node && \
+    useradd --uid 1000 --gid node --shell /bin/bash --create-home node
+
 ADD build/lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
+USER root
+RUN chown -R node: ${SHARED}
+USER node
 RUN npm install
 
 ADD package.json ${TASK}/
 WORKDIR ${TASK}
-RUN mkdir src
+USER root
+RUN mkdir src && chown -R node: ${TASK}
+USER node
 RUN npm install
 
+USER root
 ADD src ${TASK}/src
 ADD script /script
 RUN chmod -R 500 /script && sync
