@@ -10,6 +10,7 @@ program
     .option('--gee-key <value>')
     .option('--gee-key-path <value>')
     .option('--google-project-id <value>')
+    .option('--google-region <value>')
     .option('--sepal-host <value>')
     .option('--sepal-username <value>')
     .option('--sepal-password <value>')
@@ -18,7 +19,7 @@ program
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .parse(process.argv)
 
-const {geeEmail, geeKey, geeKeyPath, googleProjectId, sepalHost, sepalUsername, sepalPassword, homeDir, username, port} = program
+const {geeEmail, geeKey, geeKeyPath, googleProjectId, googleRegion, sepalHost, sepalUsername, sepalPassword, homeDir, username, port} = program
 
 const readFile = path => {
     try {
@@ -40,6 +41,7 @@ log.info('Configuration loaded')
 
 module.exports = {
     googleProjectId,
+    googleRegion,
     serviceAccountCredentials,
     sepalHost,
     sepalUsername,

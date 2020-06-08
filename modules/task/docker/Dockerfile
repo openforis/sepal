@@ -1,10 +1,28 @@
-FROM node:14-stretch
+FROM ubuntu:bionic
 EXPOSE 1026
 
+ENV DEBIAN_FRONTEND=noninteractive
 ENV TASK /usr/local/src/sepal/modules/task/docker
 ENV SHARED /usr/local/src/sepal/lib/js/shared
+RUN apt-get update && apt-get install -y \
+  curl \
+  gettext \
+  git \
+  python3 \
+  python3-gdal \
+  python3-pip \
+  gdal-bin \
+  software-properties-common \
+  sudo \
+  zip
+RUN apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y && \
+    curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt-get update && apt-get install -y \
+    gdal-bin \
+    nodejs
 
-RUN apt-get update && apt-get install -y sudo
+RUN groupadd --gid 1000 node && \
+    useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
 ADD build/lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared

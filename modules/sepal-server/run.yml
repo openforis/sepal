@@ -42,6 +42,8 @@
       DEPLOY_ENVIRONMENT_SEPAL_ENV: "{{ deploy_environment }}"
       SEPAL_VERSION_SEPAL_ENV: "{{ version }}"
       HOSTING_SERVICE_SEPAL_ENV: "{{ hosting_service }}"
+      GOOGLE_PROJECT_ID_SEPAL_KEY: "{{ google_project_id }}"
+      GOOGLE_REGION_SEPAL_KEY: "{{ google_region }}"
       EE_ACCOUNT_SEPAL_ENV: "{{ google_earth_engine_account }}"
       EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"
       GOOGLE_MAPS_API_KEY_SEPAL_ENV: "{{ google_maps_api_key }}"

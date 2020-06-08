@@ -37,6 +37,8 @@ final class WorkerTypes {
                             (userTmp) : ["/tmp", "/home/${username}/tmp"]
                     ],
                     environment: [
+                            GOOGLE_PROJECT_ID_SEPAL_KEY   : config.googleProjectId,
+                            GOOGLE_REGION_SEPAL_KEY       : config.googleRegion,
                             EE_ACCOUNT_SEPAL_ENV          : config.googleEarthEngineAccount,
                             EE_PRIVATE_KEY_SEPAL_ENV      : eePrivateKey,
                             SEPAL_HOST_SEPAL_ENV          : config.sepalHost,
