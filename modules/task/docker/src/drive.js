@@ -1,9 +1,9 @@
 const {EMPTY, ReplaySubject, concat, defer, from, of, throwError} = require('rx')
-const {catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap} = require('rx/operators')
+const {catchError, expand, filter, first, map, mergeMap, mergeScan, scan, switchMap} = require('rx/operators')
 const {google} = require('googleapis')
 const {NotFoundException} = require('sepal/exception')
 const log = require('sepal/log').getLogger('drive')
-const {auth$} = require('root/credentials')
+const {credentials$} = require('root/credentials')
 const fs = require('fs')
 const Path = require('path')
 const {retry, swallow} = require('sepal/rxjs/operators')
@@ -30,6 +30,19 @@ const do$ = (message, operation$) => defer(() => {
     log.debug(() => message)
     return operation$
 })
+
+const auth$ = () =>
+    credentials$.pipe(
+        first(),
+        filter(({userCredentials}) => userCredentials),
+        switchMap(({userCredentials}) => {
+            const oAuth2Client = new google.auth.OAuth2()
+            oAuth2Client.setCredentials({
+                access_token: userCredentials['access_token']
+            })
+            return of(oAuth2Client)
+        })
+    )
 
 /**
  * Google Drive wrapper: authenticate, execute (with autoretries) and unwrap result

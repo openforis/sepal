@@ -1,64 +1,103 @@
-const {of, BehaviorSubject} = require('rx')
-const {first, filter, switchMap} = require('rx/operators')
+const {BehaviorSubject} = require('rx')
 const fs = require('fs')
-const fsPromises = require('fs/promises')
-const config = require('root/config')
+// const fsPromises = require('fs/promises')
 const path = require('path')
 const log = require('sepal/log').getLogger('task')
-const {google} = require('googleapis')
-const {exists$} = require('root/rxjs/fileSystem')
+// const {google} = require('googleapis')
+// const {exists$} = require('root/rxjs/fileSystem')
+const config = require('./config')
 
-const CREDENTIALS_DIR = `${config.homeDir}/.config/earthengine`
 const CREDENTIALS_FILE = 'credentials'
-const CREDENTIALS_PATH = path.join(CREDENTIALS_DIR, CREDENTIALS_FILE)
+
+// const credentialsDir = () => `${config.homeDir}/.config/earthengine`
+// const credentialsPath = () => path.join(credentialsDir(), CREDENTIALS_FILE)
+
+// const loadUserCredentials = () =>
+//     fsPromises.readFile(credentialsPath(), {encoding: 'utf8'})
+//         .then(string => {
+//             const json = JSON.parse(string)
+//             // const credentials = json && ()
+//             updateUserCredentials({
+//                 accessToken: json.access_token,
+//                 accessTokenExpiryDate: json.access_token_expiry_date
+//             })
+//         })
+//         .catch(() => {
+//             updateUserCredentials()
+//             return log.info('No user credentials. Using service-account.')
+//         })
+
+// const updateUserCredentials = userCredentials =>
+//     credentials$.next(
+//         credentials(userCredentials)
+//     )
+    
+// fs.watch(credentialsDir, (eventType, filename) => {
+//     if (filename === CREDENTIALS_FILE) {
+//         loadUserCredentials()
+//     }
+// })
+    
+// loadUserCredentials()
+
+// *******************
+
+const data = {
+    userCredentialsFile: null,
+    config: null
+}
 
 const credentials = userCredentials => ({
-    serviceAccountCredentials: config.serviceAccountCredentials,
-    userCredentials
+    serviceAccountCredentials: data.config.serviceAccountCredentials,
+    userCredentials,
+    config: data.config
 })
 
-const credentials$ = new BehaviorSubject(credentials())
+const credentials$ = new BehaviorSubject()
 
-const auth$ = () =>
-    credentials$.pipe(
-        first(),
-        filter(({userCredentials}) => userCredentials),
-        switchMap(({userCredentials}) => {
-            const oAuth2Client = new google.auth.OAuth2()
-            oAuth2Client.setCredentials({
-                access_token: userCredentials.accessToken
-            })
-            return of(oAuth2Client)
-        })
-    )
+const credentialsDir = () =>
+    `${data.config.homeDir}/.config/earthengine`
 
-const loadUserCredentials = () =>
-    fsPromises.readFile(CREDENTIALS_PATH, {encoding: 'utf8'})
-        .then(string => {
-            const json = JSON.parse(string)
-            // const credentials = json && ()
-            updateUserCredentials({
-                accessToken: json.access_token,
-                accessTokenExpiryDate: json.access_token_expiry_date
-            })
-        })
-        .catch(() => {
-            updateUserCredentials()
-            return log.info('No user credentials. Using service-account.')
-        })
+const credentialsPath = () =>
+    path.join(credentialsDir(), CREDENTIALS_FILE)
 
-const updateUserCredentials = userCredentials =>
-    credentials$.next(
-        credentials(userCredentials)
-    )
-    
-fs.watch(CREDENTIALS_DIR, (eventType, filename) => {
-    if (filename === CREDENTIALS_FILE) {
-        loadUserCredentials()
+const unmonitorUserCredentials = () => {
+    if (data.userCredentialsFile) {
+        fs.unwatchFile(data.userCredentialsFile)
     }
-})
+}
+
+const monitorUserCredentials = () => {
+    fs.watch(credentialsDir(), (_eventType, filename) => {
+        if (filename === CREDENTIALS_FILE) {
+            loadUserCredentialsSync()
+        }
+    })
+}
     
-loadUserCredentials()
+const loadUserCredentialsSync = () => {
+    try {
+        const rawUserCredentials = fs.readFileSync(credentialsPath(), {encoding: 'utf8'})
+        const userCredentials = JSON.parse(rawUserCredentials)
+        data.userCredentials = userCredentials
+        credentials$.next(credentials(userCredentials))
+    } catch (error) {
+        credentials$.next(credentials())
+    }
+}
+
+const setConfig = config => {
+    unmonitorUserCredentials()
+    data.config = config
+    credentials$.next(credentials())
+    monitorUserCredentials()
+    loadUserCredentialsSync()
+}
+
+const getConfig = () =>
+    data.config
+
+setConfig(config)
     
 // =======
 // exists$(CREDENTIALS_DIR).pipe(
@@ -72,4 +111,5 @@ loadUserCredentials()
     
 // loadCredentials()
 // >>>>>>> 90957f1d9d221e5a31ab810aae53c4704519f49a
-module.exports = {credentials$, auth$}
+module.exports = {setConfig, credentials$, getConfig}
+// module.exports = {credentials$, auth$}

@@ -1,16 +1,29 @@
 const ee = require('ee')
-const {concat, of} = require('rx')
-const {map, switchMap} = require('rx/operators')
+const {EMPTY, concat, of} = require('rx')
+const {catchError, map, switchMap} = require('rx/operators')
 const {swallow} = require('sepal/rxjs/operators')
 
 const Path = require('path')
 const {limiter$} = require('./limiter')
 const {credentials$} = require('root/credentials')
 
-const runTask$ = require('root/jobs/ee/task/runTask')
-const runTaskImmediate$ = require('root/ee/task')
-const assetRoots$ = require('root/jobs/ee/asset/getAssetRoots')
-const deleteAsset$ = require('root/jobs/ee/asset/deleteAsset')
+const task$ = require('root/ee/task')
+
+const {progress} = require('root/rxjs/operators')
+const log = require('sepal/log').getLogger('task')
+
+const deleteAsset$ = assetId =>
+    ee.deleteAsset$(assetId).pipe(
+        progress({
+            defaultMessage: `Deleted asset '${assetId}'`,
+            messageKey: 'tasks.ee.export.asset.delete',
+            messageArgs: {assetId}
+        }),
+        catchError(error => {
+            log.fatal('Got error:', error)
+            return EMPTY
+        })
+    )
 
 const assetDestination$ = (description, assetId) => {
     if (!assetId && !description)
@@ -18,8 +31,7 @@ const assetDestination$ = (description, assetId) => {
     description = description || Path.dirname(assetId)
     return assetId
         ? of({description, assetId})
-        : assetRoots$({credentials$}).pipe(
-        // : assetRoots$().pipe(
+        : ee.getAssetRoots$().pipe(
             map(assetRoots => {
                 if (!assetRoots || !assetRoots.length)
                     throw new Error('EE account has no asset roots')
@@ -45,8 +57,8 @@ const exportImageToAsset$ = ({
             throw new Error('Cannot export to asset using service account.')
         return limiter$(
             concat(
-                deleteAsset$({credentials$, assetId}).pipe(swallow()),
-                runTaskImmediate$(task, description)
+                deleteAsset$(assetId).pipe(swallow()),
+                task$(task, description)
             )
         )
     }
@@ -63,46 +75,4 @@ const exportImageToAsset$ = ({
     )
 }
 
-const exportImageDefToAsset$ = ({
-    imageDef,
-    description,
-    assetId,
-    pyramidingPolicy,
-    dimensions,
-    region,
-    scale,
-    crs,
-    crsTransform,
-    maxPixels = 1e13,
-    retries = 0
-}) => {
-    const exportToAsset$ = ({taskDef, description, assetId, retries}) => {
-        if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
-            throw new Error('Cannot export to asset using service account.')
-        return limiter$(
-            concat(
-                deleteAsset$({credentials$, assetId}).pipe(swallow()),
-                runTask$({credentials$, taskDef, description})
-            )
-        )
-    }
-
-    return assetDestination$(description, assetId).pipe(
-        switchMap(({description, assetId}) =>
-            exportToAsset$({
-                taskDef: {
-                    imageDef,
-                    method: 'toAsset',
-                    args: [
-                        description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels
-                    ]
-                },
-                description: `exportImageToAsset(assetId: ${assetId}, description: ${description})`,
-                assetId,
-                retries
-            })
-        )
-    )
-}
-
-module.exports = {exportImageToAsset$, exportImageDefToAsset$}
+module.exports = {exportImageToAsset$}

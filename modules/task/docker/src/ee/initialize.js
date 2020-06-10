@@ -27,8 +27,10 @@ const authenticateUserAccount$ = userCredentials =>
             ee.data.setAuthToken(
                 null,
                 'Bearer',
-                userCredentials.accessToken,
-                secondsToExpiration(userCredentials.accessTokenExpiryDate),
+                userCredentials['access_token'],
+                secondsToExpiration(userCredentials['access_token_expiry_date']),
+                // userCredentials.accessToken,
+                // secondsToExpiration(userCredentials.accessTokenExpiryDate),
                 null,
                 error => error ? reject(error) : resolve(),
                 false

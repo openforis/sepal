@@ -1,14 +1,20 @@
-const {exportImageDefToAsset$} = require('root/ee/export/toAsset')
+const ImageFactory = require('sepal/ee/imageFactory')
+const {switchMap} = require('rx/operators')
+const {exportImageToAsset$} = require('root/ee/export/toAsset')
+// const log = require('sepal/log').getLogger('task')
 
 module.exports = {
     submit$: (id, {image: {recipe, bands, scale}}) => {
         const description = recipe.title || recipe.placeholder
-        const imageDef = {recipe, bands}
-        return export$({imageDef, description, scale})
+        return export$({description, recipe, bands, scale})
     }
 }
 
-const export$ = ({imageDef, description, scale}) =>
-    exportImageDefToAsset$({
-        imageDef, description, scale, crs: 'EPSG:4326', maxPixels: 1e13
-    })
+const export$ = ({description, recipe, bands, scale}) =>
+    ImageFactory(recipe, bands).getImage$().pipe(
+        switchMap(image =>
+            exportImageToAsset$({
+                image, description, scale, crs: 'EPSG:4326', maxPixels: 1e13
+            })
+        )
+    )
