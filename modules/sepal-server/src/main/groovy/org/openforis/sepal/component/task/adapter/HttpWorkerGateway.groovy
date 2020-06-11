@@ -24,7 +24,7 @@ class HttpWorkerGateway implements WorkerGateway {
     }
 
     void execute(Task task, WorkerSession session) {
-        LOG.debug("Executing task. {defaultUrl: http://$session.host:$workerPort/api/, path: tasks, task: $task")
+        LOG.debug("Executing task. {defaultUrl: http://$session.host:$workerPort/api/, path: tasks, task: $task}")
         client(session).post(
             path: 'tasks',
             requestContentType: URLENC,
@@ -38,7 +38,7 @@ class HttpWorkerGateway implements WorkerGateway {
     }
 
     void cancel(String taskId, WorkerSession session) {
-        LOG.debug("Canceling task. {defaultUrl: http://$session.host:$workerPort/api/, path: tasks, task: $task")
+        LOG.debug("Canceling task. {defaultUrl: http://$session.host:$workerPort/api/, path: tasks/$taskId}")
         client(session).delete(path: "tasks/$taskId")
     }
 
