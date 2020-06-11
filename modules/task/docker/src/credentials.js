@@ -1,4 +1,5 @@
 const {BehaviorSubject} = require('rx')
+const {tap} = require('rx/operators')
 const fs = require('fs')
 // const fsPromises = require('fs/promises')
 const path = require('path')
@@ -69,7 +70,7 @@ const unmonitorUserCredentials = () => {
 }
 
 const monitorUserCredentials = () => {
-    mkdir$(CREDENTIALS_DIR, {recursive: true}).pipe( // Make sure the dir is there, it can be watched
+    mkdir$(credentialsDir(), {recursive: true}).pipe( // Make sure the dir is there, it can be watched
         tap(() =>
             fs.watch(credentialsDir(), (_eventType, filename) => {
                 if (filename === CREDENTIALS_FILE) {
