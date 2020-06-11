@@ -146,3 +146,15 @@ const executeTask$ = ({id, name, params}) => {
 }
 
 module.exports = {executeTask$}
+
+// const job = require('root/jobs/job')
+
+// module.exports = job({
+//     jobName: 'execute task',
+//     jobPath: __filename,
+//     initArgs: () => ({config: require('root/config')}),
+//     before: [require('root/jobs/setConfig'), require('root/jobs/ee/initialize')],
+//     services: [require('../driveLimiter').limiter],
+//     args: ctx => [ctx], // TODO make it more flexible by allowing multiple params
+//     executeTask$
+// })
