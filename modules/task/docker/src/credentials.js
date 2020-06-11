@@ -2,10 +2,11 @@ const {BehaviorSubject} = require('rx')
 const fs = require('fs')
 // const fsPromises = require('fs/promises')
 const path = require('path')
-const log = require('sepal/log').getLogger('task')
+// const log = require('sepal/log').getLogger('task')
 // const {google} = require('googleapis')
 // const {exists$} = require('root/rxjs/fileSystem')
 const config = require('./config')
+const {mkdir$} = require('root/rxjs/fileSystem')
 
 const CREDENTIALS_FILE = 'credentials'
 
@@ -68,11 +69,15 @@ const unmonitorUserCredentials = () => {
 }
 
 const monitorUserCredentials = () => {
-    fs.watch(credentialsDir(), (_eventType, filename) => {
-        if (filename === CREDENTIALS_FILE) {
-            loadUserCredentialsSync()
-        }
-    })
+    mkdir$(CREDENTIALS_DIR, {recursive: true}).pipe( // Make sure the dir is there, it can be watched
+        tap(() =>
+            fs.watch(credentialsDir(), (_eventType, filename) => {
+                if (filename === CREDENTIALS_FILE) {
+                    loadUserCredentialsSync()
+                }
+            })
+        )
+    ).subscribe()
 }
     
 const loadUserCredentialsSync = () => {
