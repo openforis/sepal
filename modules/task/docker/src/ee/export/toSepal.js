@@ -11,7 +11,7 @@ const {downloadFromCloudStorage$} = require('root/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
 const {credentials$} = require('root/credentials')
 
-const runTaskImmediate$ = require('root/ee/task')
+const task$ = require('root/ee/task')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
 
@@ -49,7 +49,7 @@ const exportImageToSepal$ = ({
         const exportToCloudStorage$ = ({task, description, retries}) => {
             log.debug('Earth Engine <to Cloud Storage>:', description)
             return limiter$(
-                runTaskImmediate$(task, description)
+                task$(task, description)
             )
         }
 
@@ -81,7 +81,7 @@ const exportImageToSepal$ = ({
             return limiter$(
                 concat(
                     createDriveFolder$(folder),
-                    runTaskImmediate$(task, description)
+                    task$(task, description)
                 )
             )
         }
