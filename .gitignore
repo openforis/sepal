@@ -1,4 +1,6 @@
 .build/
+.docker-sync
+*.tmp
 
 #Maven
 target
