@@ -108,6 +108,10 @@ module_kill () {
     fi
 }
 
+module_log () {
+    local MODULE=$1
+    less -r +F $(logfile $MODULE)
+}
 
 module_clean () {
     local MODULE=$1
@@ -157,14 +161,15 @@ module_clean () {
     esac
 }
 
-
 do_with_modules () {
-    local COMMAND=$1
+    local COMMANDS=$1
     shift
     local MODULES=${@:-${SEPAL_MODULES[@]}}
     for MODULE in $MODULES; do
         if is_module $MODULE; then
-            $COMMAND $MODULE
+            for COMMAND in $COMMANDS; do
+                $COMMAND $MODULE
+            done
         else
             message "IGNORED" $MODULE YELLOW
         fi
@@ -207,22 +212,19 @@ build-debug () {
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL --stacktrace --debug
 }
 
-log () {
+log() {
     local MODULE=$1
-    less -r $(logfile $MODULE)
+    do_with_modules "module_log" $MODULE 
 }
 
 startlog () {
     local MODULE=$1
-    module_start $1
-    less -r +F $(logfile $MODULE)
+    do_with_modules "module_start module_log" $MODULE 
 }
 
 restartlog () {
     local MODULE=$1
-    module_stop $1
-    module_start $1
-    less -r +F $(logfile $MODULE)
+    do_with_modules "module_stop module_start module_log" $MODULE 
 }
 
 run () {
@@ -290,7 +292,7 @@ run () {
         --stacktrace \
         :sepal-server:runDev \
         -DconfigDir="$SEPAL_CONFIG/sepal-server"
-#        -DskipSceneMetaDataUpdate
+        -DskipSceneMetaDataUpdate
         ;;
     task)
         cd $SEPAL/lib/js/shared
@@ -330,7 +332,7 @@ usage () {
     echo "   stop        [<module>...]    stop module(s)"
     echo "   restart     [<module>...]    restart module(s)"
     echo "   run         <module>         run module interactively"
-    echo "   log         <module>         show module log"
+    echo "   log         <module>         show module log tail"
     echo "   startlog    <module>         start a module and show log tail"
     echo "   restartlog  <module>         restart a module and show log tail"
 
