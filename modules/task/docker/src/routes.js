@@ -1,4 +1,4 @@
-const {submitTask, cancelTask} = require('./task')
+const {submitTask, cancelTask} = require('./taskManager')
 
 module.exports = router =>
     router
