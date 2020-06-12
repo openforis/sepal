@@ -1,0 +1,28 @@
+version: "2"
+
+options:
+  verbose: true
+syncs:
+  project-sync:
+    src: "${PROJECT_DIR}"
+    sync_args:
+      - "-ignore='Name .git'"
+      - "-ignore='Name .gradle'"
+      - "-ignore='Name .idea'"
+      - "-ignore='Name *.iml'"
+      - "-ignore='Name classes'"
+      - "-ignore='Name .build'"
+      - "-ignore='Name build'"
+      - "-ignore='Name node_modules'"
+      - "-ignore='Name out'"
+      - "-ignore='Name target'"
+      - "-ignore='Name .vagrant'"
+      - "-ignore='Name *.retry'"
+      - "-ignore='Name *.log'"
+      - "-ignore='Name *.pyc'"
+      - "-ignore='Name venv'"
+      - "-ignore='Name .vscode'"
+#  data-sync:
+#    src: "${DATA_DIR}"
+  config-sync:
+    src: "${CONFIG_DIR}"

@@ -102,17 +102,26 @@ function create_docker_container() {
     echo "Running Docker container..."
     check_config_dir
     check_data_dir
-    docker run \
-        -dt \
-        -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
-        -v $DATA_DIR:/var/sepal:Z \
-        -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
-        -p 3000:3000 \
-        -p 8001:8001 \
-        --name $CONTAINER_NAME \
-        $IMAGE_NAME 1>/dev/null 
+
+
+    cd $PROJECT_DIR/dev-env
+    IMAGE_NAME=$IMAGE_NAME CONTAINER_NAME=$CONTAINER_NAME PROJECT_DIR=$PROJECT_DIR DATA_DIR=$DATA_DIR CONFIG_DIR=$CONFIG_DIR docker-sync start
+    IMAGE_NAME=$IMAGE_NAME CONTAINER_NAME=$CONTAINER_NAME PROJECT_DIR=$PROJECT_DIR DATA_DIR=$DATA_DIR CONFIG_DIR=$CONFIG_DIR docker-compose up -d
+
+
+#    docker run \
+#        -dt \
+#        -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
+#        -v $DATA_DIR:/var/sepal:Z \
+#        -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
+#        -p 3000:3000 \
+#        -p 8001:8001 \
+#        --name $CONTAINER_NAME \
+#        $IMAGE_NAME 1>/dev/null
+
     echo "Setting up Docker container..."
     docker exec sepal-dev-env /usr/local/lib/sepal/dev-env/sepal-setup.sh
+#    docker exec sepal-dev-env bash
 }
 
 function remove_docker_container() {

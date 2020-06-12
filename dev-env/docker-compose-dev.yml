@@ -1,0 +1,17 @@
+version: "2"
+services:
+  sepal-dev-env:
+    image: $IMAGE_NAME
+    container_name: $CONTAINER_NAME
+    volumes:
+      - project-sync:/usr/local/lib/sepal:nocopy
+#      - data-sync:/var/sepal:nocopy
+      - config-sync:/etc/sepal/conf.d:nocopy
+
+volumes:
+  project-sync:
+    external: true
+#  data-sync:
+#    external: true
+  config-sync:
+    external: true

@@ -1,0 +1,25 @@
+version: "2"
+services:
+  sepal-dev-env:
+    image: $IMAGE_NAME
+    container_name: $CONTAINER_NAME
+    ports:
+      - "3000:3000"
+      - "8001:8001"
+    command: bash
+    tty: true
+    volumes:
+      - project-sync:/usr/local/lib/sepal:nocopy
+      - $DATA_DIR:/var/sepal:Z
+      - config-sync:/etc/sepal/conf.d:nocopy
+
+volumes:
+  project-sync:
+    external: true
+#  data-sync:
+#    external: true
+#  data:
+#    driver_opts:
+#      device: $DATA_DIR
+  config-sync:
+    external: true
