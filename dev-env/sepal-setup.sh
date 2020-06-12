@@ -18,7 +18,7 @@ sudo ln -sf $PROJECT_DIR/dev-env/sepal.sh /usr/local/bin/sepal
 sudo ln -sf $PROJECT_DIR/dev-env/parse-yaml.sh /usr/local/bin/parse-yaml
 sudo ln -sf $PROJECT_DIR/dev-env/template.d /etc/sepal/template.d
 
-sudo chmod +x $PROJECT_DIR/lib/python/shared/stack_time_series.py
+chmod +x $PROJECT_DIR/lib/python/shared/stack_time_series.py
 sudo ln -sf $PROJECT_DIR/lib/python/shared/stack_time_series.py /usr/local/bin/sepal-stack-time-series
 
 eval $(parse-yaml /etc/sepal/conf.d/secret.yml)
@@ -35,12 +35,12 @@ export SMTP_USERNAME=$smtp_username
 export SMTP_PASSWORD=$smtp_password
 export SEPAL_HOST=`dig +short myip.opendns.com @resolver1.opendns.com`
 
-sudo -i mkdir -p /etc/sepal/module.d
-sudo -i chown sepal /etc/sepal/module.d
-sudo -i mkdir -p /var/sepal
-sudo -i chown sepal /var/sepal
-sudo -i mkdir -p /var/log/sepal
-sudo -i chown sepal /var/log/sepal
+sudo mkdir -p /etc/sepal/module.d
+sudo chown sepal /etc/sepal/module.d
+sudo mkdir -p /var/sepal
+sudo chown sepal /var/sepal
+sudo mkdir -p /var/log/sepal
+sudo chown sepal /var/log/sepal
 
 TEMPLATE_DIR=$PROJECT_DIR/dev-env/template.d
 cp -R $TEMPLATE_DIR/* /etc/sepal/module.d/

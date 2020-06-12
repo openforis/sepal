@@ -2,14 +2,14 @@
 
 set -e
 
-IMAGE_NAME=sepal-dev-env
-CONTAINER_NAME=sepal-dev-env
+export IMAGE_NAME=sepal-dev-env
+export CONTAINER_NAME=sepal-dev-env
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+export PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Default data directory
-DATA_DIR="$PROJECT_DIR/sepal-data"
+export DATA_DIR="$PROJECT_DIR/sepal-data"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -18,12 +18,12 @@ key="$1"
 
 case $key in
     -c|--config)
-    CONFIG_DIR="$2"
+    export CONFIG_DIR="$2"
     shift # past argument
     shift # past value
     ;;
     -d|--data)
-    DATA_DIR="$2"
+    export DATA_DIR="$2"
     shift # past argument
     shift # past value
     ;;
@@ -42,7 +42,7 @@ COMMAND=$1
 function check_config_dir() {
     [ -z "$CONFIG_DIR" ] && usage "Config directory is required"
     [ ! -d "$CONFIG_DIR" ] && usage "Config directory doesn't exist: $CONFIG_DIR"
-    CONFIG_DIR=$(cd $CONFIG_DIR && pwd)
+    export CONFIG_DIR=$(cd $CONFIG_DIR && pwd)
     echo "Config directory: $CONFIG_DIR"
 }
 
@@ -51,7 +51,7 @@ function check_data_dir() {
         echo "Creating data dir: $DATA_DIR"
         mkdir -p $DATA_DIR
     fi
-    DATA_DIR=$(cd $DATA_DIR && pwd)
+    export DATA_DIR=$(cd $DATA_DIR && pwd)
     echo "Data directory: $DATA_DIR"
 }
 
@@ -103,11 +103,10 @@ function create_docker_container() {
     check_config_dir
     check_data_dir
 
-
     cd $PROJECT_DIR/dev-env
-    IMAGE_NAME=$IMAGE_NAME CONTAINER_NAME=$CONTAINER_NAME PROJECT_DIR=$PROJECT_DIR DATA_DIR=$DATA_DIR CONFIG_DIR=$CONFIG_DIR docker-sync start
-    IMAGE_NAME=$IMAGE_NAME CONTAINER_NAME=$CONTAINER_NAME PROJECT_DIR=$PROJECT_DIR DATA_DIR=$DATA_DIR CONFIG_DIR=$CONFIG_DIR docker-compose up -d
-
+    docker-sync start
+    docker-compose up -d
+    cd -
 
 #    docker run \
 #        -dt \

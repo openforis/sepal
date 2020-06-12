@@ -5,6 +5,8 @@ options:
 syncs:
   project-sync:
     src: "${PROJECT_DIR}"
+    sync_userid: "1000"
+    sync_groupid: "1000"
     sync_args:
       - "-ignore='Name .git'"
       - "-ignore='Name .gradle'"
@@ -26,3 +28,5 @@ syncs:
 #    src: "${DATA_DIR}"
   config-sync:
     src: "${CONFIG_DIR}"
+    sync_userid: "1000"
+    sync_groupid: "1000"
