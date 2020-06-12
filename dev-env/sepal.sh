@@ -108,6 +108,56 @@ module_kill () {
     fi
 }
 
+
+module_clean () {
+    local MODULE=$1
+    message "CLEANING" $MODULE YELLOW
+    case $MODULE in
+    api-gateway)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-api-gateway:clean &>/dev/null
+        ;;
+    mongo)
+        ;;
+    ceo)
+        ;;
+    gee)
+        cd $SEPAL/lib/js/shared
+        rm -rf node_modules package-lock.json
+        cd $SEPAL/modules/gee/docker
+        rm -rf node_modules package-lock.json
+        ;;
+    gui)
+        cd $SEPAL/modules/gui/frontend
+        rm -rf node_modules package-lock.json
+        ;;
+    sepal-server)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-server:clean &>/dev/null
+        ;;
+    task)
+        cd $SEPAL/lib/js/shared
+        rm -rf node_modules package-lock.json
+        cd $SEPAL/modules/task/docker
+        rm -rf node_modules package-lock.json
+        ;;
+    user)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-user:clean &>/dev/null
+        ;;
+    *)
+        return 1
+        ;;
+    esac
+}
+
+
 do_with_modules () {
     local COMMAND=$1
     shift
@@ -143,8 +193,8 @@ restart () {
 }
 
 clean () {
-    stop
-    $SEPAL/gradlew clean -p $SEPAL
+  do_with_modules "module_stop" $@
+  do_with_modules "module_clean" $@
 }
 
 build () {
@@ -272,7 +322,7 @@ usage () {
     echo "Usage: $0 <command> [<arguments>]"
     echo ""
     echo "Commands:"
-    echo "   clean                        clean SEPAL"
+    echo "   clean       [<module>...]    clean module(s)"
     echo "   build                        build SEPAL"
     echo "   build-debug                  build SEPAL w/debug enabled"
     echo "   status      [<module>...]    check module(s)"
@@ -299,7 +349,7 @@ no_one_argument () {
 case "$1" in
     clean)
         shift
-        clean
+        clean $@
         ;;
     build)
         shift
