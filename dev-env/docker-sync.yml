@@ -8,6 +8,7 @@ syncs:
     sync_userid: "1000"
     sync_groupid: "1000"
     sync_args:
+      - "-ignore='Name .DS_Store'"
       - "-ignore='Name .git'"
       - "-ignore='Name .gradle'"
       - "-ignore='Name .idea'"
