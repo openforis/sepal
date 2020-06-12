@@ -5,12 +5,11 @@ const {swallow} = require('sepal/rxjs/operators')
 
 const Path = require('path')
 const {limiter$} = require('./limiter')
-const {credentials$} = require('root/credentials')
 
 const task$ = require('root/ee/task')
 
 const {progress} = require('root/rxjs/operators')
-const log = require('sepal/log').getLogger('task')
+// const log = require('sepal/log').getLogger('task')
 
 const deleteAsset$ = assetId =>
     ee.deleteAsset$(assetId).pipe(
@@ -19,10 +18,7 @@ const deleteAsset$ = assetId =>
             messageKey: 'tasks.ee.export.asset.delete',
             messageArgs: {assetId}
         }),
-        catchError(error => {
-            log.fatal('Got error:', error)
-            return EMPTY
-        })
+        catchError(() => EMPTY)
     )
 
 const assetDestination$ = (description, assetId) => {
@@ -52,7 +48,7 @@ const exportImageToAsset$ = ({
     maxPixels = 1e13,
     retries = 0
 }) => {
-    const exportToAsset$ = ({task, description, assetId, retries}) => {
+    const exportToAsset$ = ({task, description, assetId, _retries}) => {
         if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
             throw new Error('Cannot export to asset using service account.')
         return limiter$(
