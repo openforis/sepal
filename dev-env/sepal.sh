@@ -3,17 +3,39 @@ set -e
 
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
-SEPAL_MODULES=(user sepal-server api-gateway task gee gui ceo mongo)
+SEPAL_MODULES=(user sepal-server sepal-server-noindex api-gateway task gee gui ceo mongo)
+SEPAL_GROUPS=(all dev)
+SEPAL_DEFAULT_GROUP=dev
 LOG_DIR=/var/log/sepal
 
 is_module () {
-    local MODULE=$1
-    printf '%s\n' ${SEPAL_MODULES[@]} | grep -qP "^$MODULE$"
+    local NAME=$1
+    printf '%s\n' ${SEPAL_MODULES[@]} | grep -qP "^$NAME$"
+}
+
+is_group () {
+    local NAME=$1
+    printf '%s\n' ${SEPAL_GROUPS[@]} | grep -qP "^$NAME$"
+}
+
+group () {
+    local GROUP=$1
+    case $GROUP in
+    all)
+        echo "${SEPAL_MODULES[@]}"
+        ;;
+    dev)
+        echo "user sepal-server-noindex api-gateway task gee gui"
+        ;;
+    *)
+        return 1
+        ;;
+    esac
 }
 
 pidof () {
     local MODULE=$1
-    ps -ef | grep bash | grep "sepal run $MODULE" | awk '{ print $2 }'
+    ps -ef | grep bash | egrep "sepal run ${MODULE}$" | awk '{ print $2 }'
 }
 
 is_running () {
@@ -65,7 +87,7 @@ module_status () {
 }
 
 module_start () {
-    local MODULE=$1    
+    local MODULE=$1
     local PID=$(pidof ${MODULE})
     if [[ -z "$PID" ]]; then
         local LOG=$(logfile $MODULE)
@@ -164,42 +186,48 @@ module_clean () {
 do_with_modules () {
     local COMMANDS=$1
     shift
-    local MODULES=${@:-${SEPAL_MODULES[@]}}
-    for MODULE in $MODULES; do
-        if is_module $MODULE; then
+    local NAMES=$@
+    # local NAMES=${@:-dev}
+    for NAME in $NAMES; do
+        if is_group $NAME; then
+            local GROUP=$NAME
+            local MODULES="$(group $GROUP)"
+            do_with_modules "$COMMANDS" $MODULES
+        elif is_module $NAME; then
+            local MODULE=$NAME
             for COMMAND in $COMMANDS; do
                 $COMMAND $MODULE
             done
         else
-            message "IGNORED" $MODULE YELLOW
+            message "IGNORED" $NAME YELLOW
         fi
     done
 }
 
 status () {
-    do_with_modules "module_status" $@
+    do_with_modules "module_status" ${@:-all}
 }
 
 start () {
-    do_with_modules "module_start" $@
+    do_with_modules "module_start" ${@:-$SEPAL_DEFAULT_GROUP}
 }
 
 stop () {
-    do_with_modules "module_stop" $@
+    do_with_modules "module_stop" ${@:-all}
 }
 
 force_stop () {
-    do_with_modules "module_kill" $@
+    do_with_modules "module_kill" ${@:-all}
 }
 
 restart () {
-    do_with_modules "module_stop" $@
-    do_with_modules "module_start" $@
+    do_with_modules "module_stop" ${@:-all}
+    do_with_modules "module_start" ${@:-SEPAL_DEFAULT_GROUP}
 }
 
 clean () {
-  do_with_modules "module_stop" $@
-  do_with_modules "module_clean" $@
+  do_with_modules "module_stop" ${@:-all}
+  do_with_modules "module_clean" ${@:-all}
 }
 
 build () {
@@ -292,6 +320,14 @@ run () {
         --stacktrace \
         :sepal-server:runDev \
         -DconfigDir="$SEPAL_CONFIG/sepal-server"
+        ;;
+    sepal-server-noindex)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        --stacktrace \
+        :sepal-server:runDev \
+        -DconfigDir="$SEPAL_CONFIG/sepal-server"
         -DskipSceneMetaDataUpdate
         ;;
     task)
@@ -324,13 +360,13 @@ usage () {
     echo "Usage: $0 <command> [<arguments>]"
     echo ""
     echo "Commands:"
-    echo "   clean       [<module>...]    clean module(s)"
     echo "   build                        build SEPAL"
     echo "   build-debug                  build SEPAL w/debug enabled"
-    echo "   status      [<module>...]    check module(s)"
-    echo "   start       [<module>...]    start module(s)"
-    echo "   stop        [<module>...]    stop module(s)"
-    echo "   restart     [<module>...]    restart module(s)"
+    echo "   clean       [<module>...]    clean module(s)/group(s)"
+    echo "   status      [<module>...]    check module(s)/group(s)"
+    echo "   start       [<module>...]    start module(s)/group(s)"
+    echo "   stop        [<module>...]    stop module(s)/group(s)"
+    echo "   restart     [<module>...]    restart module(s)/group(s)"
     echo "   run         <module>         run module interactively"
     echo "   log         <module>         show module log tail"
     echo "   startlog    <module>         start a module and show log tail"
@@ -338,6 +374,7 @@ usage () {
 
     echo ""
     echo "Modules: ${SEPAL_MODULES[@]}"
+    echo "Groups: ${SEPAL_GROUPS[@]}"
     echo ""
     exit 1
 }
