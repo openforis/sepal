@@ -25,6 +25,7 @@ syncs:
       - "-ignore='Name *.pyc'"
       - "-ignore='Name venv'"
       - "-ignore='Name .vscode'"
+      - "-ignore='Name sepal-data'"
 #  data-sync:
 #    src: "${DATA_DIR}"
   config-sync:
