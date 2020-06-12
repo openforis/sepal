@@ -46,7 +46,7 @@ class AbstractUserTest extends Specification {
             eventDispatcher,
             googleOAuthClient,
             googleEarthEngineWhitelistChecker,
-            new GoogleAccessTokenFileGateway(homeDirectory.absolutePath),
+            new FakeGoogleAccessTokenFileGateway(homeDirectory.absolutePath),
             changeListener,
             clock
     )
