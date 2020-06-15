@@ -222,7 +222,7 @@ do_with_modules () {
                                 $COMMAND $MODULE "${ARGS[@]}"
                             done
                         else
-                            message "IGNORED" $NAME YELLOW
+                            message "IGNORED" $CURRENT_NAME YELLOW
                         fi
                     fi
                     CURRENT_NAME=$NAME
