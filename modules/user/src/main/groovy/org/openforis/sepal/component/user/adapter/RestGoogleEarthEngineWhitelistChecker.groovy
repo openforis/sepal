@@ -19,7 +19,7 @@ class RestGoogleEarthEngineWhitelistChecker implements GoogleEarthEngineWhitelis
                     headers: ['sepal-user': new User(username: username, googleTokens: tokens).jsonString()]
             )
             return true
-        } catch (Exception e) {
+        } catch (Exception ignore) {
             return false
         }
     }
