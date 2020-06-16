@@ -42,9 +42,12 @@ class GoogleAccessTokenFileGatewayImpl implements GoogleAccessTokenFileGateway {
                 access_token_expiry_date: tokens.accessTokenExpiryDate
         ]))
         def gid = Files.getAttribute(Path.of(homeDirectory, username), 'unix:gid', LinkOption.NOFOLLOW_LINKS)
-        Terminal.execute(file.parentFile.parentFile, 'sudo', 'chown', '-R', "root:$gid", '.')
+        Terminal.execute(file.parentFile.parentFile, 'sudo', 'chown', "root:$gid", '.')
         Terminal.execute(file.parentFile.parentFile, 'sudo', 'chmod', "1775", '.')
+        Terminal.execute(file.parentFile, 'sudo', 'chown', "root:$gid", '.')
         Terminal.execute(file.parentFile, 'sudo', 'chmod', "1775", '.')
+        Terminal.execute(file, 'sudo', 'chown', "root:$gid", '.')
+        Terminal.execute(lockFile, 'sudo', 'chown', "root:$gid", '.')
     }
 
     void delete(String username) {
