@@ -3,8 +3,8 @@ set -e
 
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
-SEPAL_MODULES=(user sepal-server sepal-server-noindex api-gateway task gee gui ceo mongo)
-SEPAL_GROUPS=(all dev)
+SEPAL_MODULES=(user sepal-server api-gateway task gee gui ceo mongo)
+SEPAL_GROUPS=(all dev test)
 SEPAL_DEFAULT_GROUP=dev
 LOG_DIR=/var/log/sepal
 
@@ -25,7 +25,10 @@ group () {
         echo "${SEPAL_MODULES[@]}"
         ;;
     dev)
-        echo "user sepal-server-noindex api-gateway task gee gui"
+        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) api-gateway task gee gui ceo mongo"
+        ;;
+    test)
+        echo "user gee"
         ;;
     *)
         return 1
@@ -35,7 +38,8 @@ group () {
 
 pidof () {
     local MODULE=$1
-    ps -ef | grep bash | egrep "sepal run ${MODULE}$" | awk '{ print $2 }'
+    # ps -ef | grep bash | egrep "sepal run ${MODULE}[$\s]" | awk '{ print $2 }'
+    ps -ef | grep bash | grep "sepal run ${MODULE}" | awk '{ print $2 }'
 }
 
 is_running () {
@@ -88,11 +92,13 @@ module_status () {
 
 module_start () {
     local MODULE=$1
+    shift
+    local ARGS=$@
     local PID=$(pidof ${MODULE})
     if [[ -z "$PID" ]]; then
         local LOG=$(logfile $MODULE)
-        message "STARTING" $MODULE LIGHT_GREEN
-        setsid nohup /bin/bash $0 run $MODULE >$LOG 2>&1 &
+        message "STARTING" "$MODULE $ARGS" LIGHT_GREEN
+        setsid nohup /bin/bash $0 run $MODULE $ARGS >$LOG 2>&1 &
     else
         message "STARTED" $MODULE GREEN
     fi
@@ -187,19 +193,42 @@ do_with_modules () {
     local COMMANDS=$1
     shift
     local NAMES=$@
-    # local NAMES=${@:-dev}
+
+    local ARGS_START="("
+    local ARGS_STOP=")"
+    local CURRENT_NAME
+    local IS_ARG=false
+    local ARGS
+
+    NAMES+=" -"
     for NAME in $NAMES; do
-        if is_group $NAME; then
-            local GROUP=$NAME
-            local MODULES="$(group $GROUP)"
-            do_with_modules "$COMMANDS" $MODULES
-        elif is_module $NAME; then
-            local MODULE=$NAME
-            for COMMAND in $COMMANDS; do
-                $COMMAND $MODULE
-            done
+        if [[ $NAME == $ARGS_START ]]; then 
+            IS_ARG=true
+        elif [[ $NAME == $ARGS_STOP ]]; then
+            IS_ARG=false
         else
-            message "IGNORED" $NAME YELLOW
+            if ($IS_ARG); then
+                ARGS+=($NAME)
+            else
+                if [[ $NAME != $CURRENT_NAME ]]; then
+                    if [[ $CURRENT_NAME != "" ]]; then
+                        if is_group $CURRENT_NAME; then
+                            local GROUP=$CURRENT_NAME
+                            local MODULES="$(group $GROUP)"
+                            do_with_modules "$COMMANDS" $MODULES
+                        elif is_module $CURRENT_NAME; then
+                            local MODULE=$CURRENT_NAME
+                            for COMMAND in $COMMANDS; do
+                                $COMMAND $MODULE "${ARGS[@]}"
+                            done
+                        else
+                            message "IGNORED" $CURRENT_NAME YELLOW
+                        fi
+                    fi
+                    CURRENT_NAME=$NAME
+                    ARGS=()
+                fi
+            fi
         fi
     done
 }
@@ -257,6 +286,8 @@ restartlog () {
 
 run () {
     local MODULE=$1
+    shift
+    local ARGS=$@
     case $MODULE in 
     api-gateway)
         $SEPAL/gradlew \
@@ -264,7 +295,8 @@ run () {
         --no-daemon \
         --stacktrace \
         :sepal-api-gateway:runDev \
-        -DconfigDir="$SEPAL_CONFIG/api-gateway"
+        -DconfigDir="$SEPAL_CONFIG/api-gateway" \
+        $ARGS
         ;;
     mongo)
         mkdir -p /var/sepal/ceo/db
@@ -300,6 +332,7 @@ run () {
                 sepal_host='${sepal_host:-localhost}', \
                 ee_account='$google_earth_engine_account', \
                 ee_key_path='$private_key_path')" \
+            $ARGS
         ;;
     gee)
         cd $SEPAL/lib/js/shared
@@ -319,23 +352,15 @@ run () {
         --no-daemon \
         --stacktrace \
         :sepal-server:runDev \
-        -DconfigDir="$SEPAL_CONFIG/sepal-server"
-        ;;
-    sepal-server-noindex)
-        $SEPAL/gradlew \
-        -p $SEPAL \
-        --no-daemon \
-        --stacktrace \
-        :sepal-server:runDev \
-        -DconfigDir="$SEPAL_CONFIG/sepal-server"
-        -DskipSceneMetaDataUpdate
+        -DconfigDir="$SEPAL_CONFIG/sepal-server" \
+        $ARGS
         ;;
     task)
         cd $SEPAL/lib/js/shared
         npm install
         cd $SEPAL/modules/task/docker
         npm i
-        SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh    
+        SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh
         ;;
     user)
         $SEPAL/gradlew \
@@ -343,7 +368,8 @@ run () {
         --no-daemon \
         --stacktrace \
         :sepal-user:runDev \
-        -DconfigDir="$SEPAL_CONFIG/user"
+        -DconfigDir="$SEPAL_CONFIG/user" \
+        $ARGS
         ;;
     *)
         return 1
@@ -371,7 +397,10 @@ usage () {
     echo "   log         <module>         show module log tail"
     echo "   startlog    <module>         start a module and show log tail"
     echo "   restartlog  <module>         restart a module and show log tail"
-
+    echo ""
+    echo "Definitions:"
+    echo "   <module>: <module_name> [<module_args>]"
+    echo "   <module_args>: ( <module_arg>... )"
     echo ""
     echo "Modules: ${SEPAL_MODULES[@]}"
     echo "Groups: ${SEPAL_GROUPS[@]}"
@@ -416,11 +445,7 @@ case "$1" in
         ;;
     run)
         shift
-        if [[ $# -ne 1 ]]; then
-            no_one_argument
-        else
-            run $1
-        fi
+        run $@
         ;;
     log)
         shift
