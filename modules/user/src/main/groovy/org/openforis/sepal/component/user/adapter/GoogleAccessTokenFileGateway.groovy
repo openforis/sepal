@@ -3,6 +3,8 @@ package org.openforis.sepal.component.user.adapter
 import groovy.json.JsonOutput
 import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.util.Terminal
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -18,6 +20,7 @@ interface GoogleAccessTokenFileGateway {
 }
 
 class GoogleAccessTokenFileGatewayImpl implements GoogleAccessTokenFileGateway {
+    private final Logger LOG = LoggerFactory.getLogger(GoogleAccessTokenFileGatewayImpl)
     private final String homeDirectory
 
     GoogleAccessTokenFileGatewayImpl(String homeDirectory) {
@@ -26,9 +29,11 @@ class GoogleAccessTokenFileGatewayImpl implements GoogleAccessTokenFileGateway {
 
     void save(String username, GoogleTokens tokens) {
         if (!tokens) {
+            LOG.info("Deleting token file for user $username")
             delete(username)
             return
         }
+        LOG.info("Saving token file for user $username. Expiration: $tokens.accessTokenExpiryDate")
         def file = credentialsFile(username)
         if (!file.exists()) {
             file.parentFile.mkdirs()
