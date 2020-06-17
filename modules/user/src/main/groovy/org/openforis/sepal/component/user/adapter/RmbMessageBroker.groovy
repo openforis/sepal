@@ -11,6 +11,8 @@ import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageConsumer
 import org.openforis.sepal.messagebroker.MessageQueue
 import org.openforis.sepal.sql.SqlConnectionManager
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.sql.Connection
 import java.sql.SQLException
@@ -19,6 +21,7 @@ import static java.util.concurrent.TimeUnit.MINUTES
 import static org.openforis.rmb.spi.ThrottlingStrategy.ExponentialBackoff.upTo
 
 class RmbMessageBroker implements MessageBroker {
+    private static Logger LOG = LoggerFactory.getLogger(RmbMessageBroker)
     private org.openforis.rmb.MessageBroker messageBroker
 
     RmbMessageBroker(SqlConnectionManager connectionManager) {
@@ -45,6 +48,7 @@ class RmbMessageBroker implements MessageBroker {
                     try {
                         return consumer.consume(it)
                     } catch (Exception e) {
+                        LOG.error("[$queueName] Failed to handle message: $it", e)
                         throw (e instanceof RuntimeException ? e : new RuntimeException(e))
                     }
                 } as MessageHandler<M>).retryUntilSuccess(upTo(1, MINUTES))
