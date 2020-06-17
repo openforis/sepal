@@ -41,10 +41,14 @@ class RmbMessageBroker implements MessageBroker {
 
     def <M> MessageQueue<M> createMessageQueue(String queueName, Class<M> messageType, MessageConsumer<M> consumer) {
         def queue = this.messageBroker.queueBuilder(queueName, messageType)
-                .consumer(org.openforis.rmb.MessageConsumer.builder("$queueName consumer",
-                { consumer.consume(it) } as MessageHandler<M>)
-                .retryUntilSuccess(upTo(1, MINUTES))
-        ).build()
+                .consumer(org.openforis.rmb.MessageConsumer.builder("$queueName consumer", {
+                    try {
+                        return consumer.consume(it)
+                    } catch (e) {
+                        throw (e instanceof RuntimeException ? e : new RuntimeException(e))
+                    }
+                } as MessageHandler<M>).retryUntilSuccess(upTo(1, MINUTES))
+                ).build()
         return new RmbMessageQueue<M>(queue)
     }
 
