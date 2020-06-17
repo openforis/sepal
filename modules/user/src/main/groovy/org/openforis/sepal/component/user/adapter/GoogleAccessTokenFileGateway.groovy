@@ -29,11 +29,11 @@ class GoogleAccessTokenFileGatewayImpl implements GoogleAccessTokenFileGateway {
 
     void save(String username, GoogleTokens tokens) {
         if (!tokens) {
-            LOG.info("Deleting token file for user $username")
+            LOG.debug("Deleting token file for user $username")
             delete(username)
             return
         }
-        LOG.info("Saving token file for user $username. Expiration: $tokens.accessTokenExpiryDate")
+        LOG.debug("Saving token file for user $username. Expiration: $tokens.accessTokenExpiryDate")
         def file = credentialsFile(username)
         if (!file.exists()) {
             file.parentFile.mkdirs()
@@ -51,8 +51,8 @@ class GoogleAccessTokenFileGatewayImpl implements GoogleAccessTokenFileGateway {
         Terminal.execute(file.parentFile.parentFile, 'sudo', 'chmod', "1775", '.')
         Terminal.execute(file.parentFile, 'sudo', 'chown', "root:$gid", '.')
         Terminal.execute(file.parentFile, 'sudo', 'chmod', "1775", '.')
-        Terminal.execute(file, 'sudo', 'chown', "root:$gid", '.')
-        Terminal.execute(lockFile, 'sudo', 'chown', "root:$gid", '.')
+        Terminal.execute(file.parentFile, 'sudo', 'chown', "root:$gid", file.name)
+        Terminal.execute(file.parentFile, 'sudo', 'chown', "root:$gid", lockFile.name)
     }
 
     void delete(String username) {

@@ -44,7 +44,7 @@ class RmbMessageBroker implements MessageBroker {
                 .consumer(org.openforis.rmb.MessageConsumer.builder("$queueName consumer", {
                     try {
                         return consumer.consume(it)
-                    } catch (e) {
+                    } catch (Exception e) {
                         throw (e instanceof RuntimeException ? e : new RuntimeException(e))
                     }
                 } as MessageHandler<M>).retryUntilSuccess(upTo(1, MINUTES))
