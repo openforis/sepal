@@ -81,7 +81,7 @@ const exportImageToSepal$ = ({
             return limiter$(
                 concat(
                     createDriveFolder$(folder),
-                    // task$(task, description)
+                    task$(task, description)
                 )
             )
         }
