@@ -42,11 +42,11 @@ class RmbMessageBroker implements MessageBroker {
         messageBroker?.stop()
     }
 
-    def <M> MessageQueue<M> createMessageQueue(String queueName, Class<M> messageType, MessageConsumer<M> consumer) {
+    def <M> MessageQueue<M> createMessageQueue(String queueName, Class<M> messageType, Closure consumer) {
         def queue = this.messageBroker.queueBuilder(queueName, messageType)
                 .consumer(org.openforis.rmb.MessageConsumer.builder("$queueName consumer", {
                     try {
-                        return consumer.consume(it)
+                        return consumer.call(it)
                     } catch (Exception e) {
                         LOG.error("[$queueName] Failed to handle message: $it", e)
                         throw (e instanceof RuntimeException ? e : new RuntimeException(e))
