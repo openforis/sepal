@@ -4,6 +4,62 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 PROJECT_DIR=`dirname $DIR`
+IMAGE_NAME=sepal-deploy
+
+
+function usage() {
+    local ERROR=$1
+    if [ -n "$ERROR" ]; then
+        echo ""
+        echo "Error: $ERROR"
+    fi
+    echo ""
+    echo "Usage:"
+    echo ""
+    echo "  $(basename $0) [options]    Execute specified deployment script"
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "  -b, --build       build number to use."
+    echo "  -c, --config      configuration dir to use."
+    echo "  -p, --platform    platform to execute on (default aws). Cannot be used with --script."
+    echo "  -o, --operation   operation to execute (provision|deploy|rollout). Cannot be used with --script."
+    echo "  -s, --script      project/hosting-services relative path to script to execute. Cannot be used with --operation or --platform."
+    echo "  -h, --help        print this usage."
+    echo ""
+    if [ ! -z "$ERROR" ]; then
+        exit 1
+    fi
+    exit 0
+}
+
+absolute() {
+  echo "$(cd "$(dirname "$1")"; pwd -P)/$(basename "$1")"
+}
+
+function build_docker_image() {
+    echo "Building Docker image..."
+    docker build -t $IMAGE_NAME $PROJECT_DIR/deploy 1>/dev/null
+}
+
+function run_docker_image() {
+  echo "Running Docker image..."
+
+  echo "BUILD_NUMBER: $BUILD_NUMBER"
+  echo "CONFIG_DIR: $CONFIG_DIR"
+  echo "PLATFORM: $PLATFORM"
+  echo "OPERATION: $OPERATION"
+  echo "SCRIPT_PATH: $SCRIPT_PATH"
+
+  docker run \
+    --rm \
+    -it \
+    -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
+    -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
+    sepal-deploy \
+    bash -c "/usr/local/lib/sepal/hosting-services/$SCRIPT_PATH $BUILD_NUMBER /etc/sepal/conf.d"
+}
+
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -17,14 +73,27 @@ case $key in
     shift # past value
     ;;
     -c|--config)
-    CONFIG_DIR="$2"
+    CONFIG_DIR=$(absolute "$2")
+    shift # past argument
+    shift # past value
+    ;;
+    -p|--platform)
+    PLATFORM="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -o|--operation)
+    OPERATION="$2"
     shift # past argument
     shift # past value
     ;;
     -s|--script)
-    SCRIPT_REL_PATH="$2"
+    SCRIPT_PATH="$2"
     shift # past argument
     shift # past value
+    ;;
+    -h|--help)
+    usage
     ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
@@ -34,31 +103,26 @@ esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
-SCRIPT_PATH=$PROJECT_DIR/hosting-services/$SCRIPT_REL_PATH
+if [ ! -n "$PLATFORM" ]; then
+    PLATFORM=aws
+fi
 
 if [ ! -d "$CONFIG_DIR" ]; then
-    echo ""
-    echo "Config directory doesn't exist: $CONFIG_DIR"
-    echo ""
-    exit 1
+    usage "Config directory doesn't exist: $CONFIG_DIR"
 fi
-if [ ! -n "$BUILD_NUMBER" ]; then
-    echo ""
-    echo "Build number not specified. Missing -b or --build option"
-    echo ""
-    exit 1
+if [ -z "$BUILD_NUMBER" ]; then
+    usage "Build number not specified. Missing -b or --build option"
 fi
-if [ ! -f "$SCRIPT_PATH" ]; then
-    echo ""
-    echo "Deployment script doesn't exist: $SCRIPT_PATH"
-    echo ""
-    exit 1
+if [[ (-z "$SCRIPT_PATH") && (-z "$OPERATION") ]]; then
+    usage "Either specify --script, or --operation: $SCRIPT_PATH"
+fi
+if [ -z "$SCRIPT_PATH" ]; then
+    SCRIPT_PATH="$PLATFORM/sepal/$OPERATION.sh"
+fi
+ABSOLUTE_SCRIPT_PATH=$PROJECT_DIR/hosting-services/$SCRIPT_PATH
+if [ ! -f "$ABSOLUTE_SCRIPT_PATH" ]; then
+    usage "Deployment script doesn't exist: $ABSOLUTE_SCRIPT_PATH"
 fi
 
-docker run \
-  --rm \
-  -it \
-  -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
-  -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
-  sepal-deploy \
-  bash -c "/usr/local/lib/sepal/hosting-services/$SCRIPT_REL_PATH $BUILD_NUMBER /etc/sepal/conf.d"
+build_docker_image
+run_docker_image
