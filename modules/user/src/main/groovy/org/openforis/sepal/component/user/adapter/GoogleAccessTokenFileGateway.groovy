@@ -35,8 +35,10 @@ class GoogleAccessTokenFileGatewayImpl implements GoogleAccessTokenFileGateway {
         }
         LOG.debug("Saving token file for user $username. Expiration: $tokens.accessTokenExpiryDate")
         def file = credentialsFile(username)
+        def earthEngineDir = file.parentFile
+        def configDir = earthEngineDir.parentFile
         if (!file.exists()) {
-            file.parentFile.mkdirs()
+            earthEngineDir.mkdirs()
             file.createNewFile()
         }
         def lockFile = new File("${file.parent}/.lock")
@@ -47,12 +49,13 @@ class GoogleAccessTokenFileGatewayImpl implements GoogleAccessTokenFileGateway {
                 access_token_expiry_date: tokens.accessTokenExpiryDate
         ]))
         def gid = Files.getAttribute(Path.of(homeDirectory, username), 'unix:gid', LinkOption.NOFOLLOW_LINKS)
-        Terminal.execute(file.parentFile.parentFile, 'sudo', 'chown', "root:$gid", '.')
-        Terminal.execute(file.parentFile.parentFile, 'sudo', 'chmod', "1775", '.')
-        Terminal.execute(file.parentFile, 'sudo', 'chown', "root:$gid", '.')
-        Terminal.execute(file.parentFile, 'sudo', 'chmod', "1775", '.')
-        Terminal.execute(file.parentFile, 'sudo', 'chown', "root:$gid", file.name)
-        Terminal.execute(file.parentFile, 'sudo', 'chown', "root:$gid", lockFile.name)
+        Terminal.execute(configDir, 'chown', "root:$gid", configDir.absolutePath)
+        Terminal.execute(configDir, 'chmod', "1775", configDir.absolutePath)
+        Terminal.execute(configDir, 'chown', "root:$gid", earthEngineDir.absolutePath)
+        Terminal.execute(configDir, 'chmod', "1775", earthEngineDir.absolutePath)
+        Terminal.execute(configDir, 'chown', "root:$gid", file.absolutePath)
+        Terminal.execute(configDir, 'chmod', "644", file.absolutePath)
+        Terminal.execute(configDir, 'chown', "root:$gid", lockFile.absolutePath)
     }
 
     void delete(String username) {
