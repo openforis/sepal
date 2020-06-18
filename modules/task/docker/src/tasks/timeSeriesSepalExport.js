@@ -12,7 +12,7 @@ const {terminal$} = require('sepal/terminal')
 const {sequence} = require('sepal/utils/array')
 const moment = require('moment')
 const ee = require('ee')
-const config = require('root/config')
+const {getConfig} = require('root/context')
 const log = require('sepal/log').getLogger('task')
 
 const TILE_DEGREES = 2
@@ -20,6 +20,8 @@ const EE_EXPORT_SHARD_SIZE = 256
 const EE_EXPORT_FILE_DIMENSIONS = 1024
 const DATE_DELTA = 2
 const DATE_DELTA_UNIT = 'months'
+
+const config = getConfig()
 
 module.exports = {
     submit$: (id, recipe) => {

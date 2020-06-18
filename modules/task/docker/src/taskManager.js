@@ -4,10 +4,12 @@ const log = require('sepal/log').getLogger('task')
 const {executeTask$} = require('./taskRunner')
 const {lastInWindow, repeating} = require('sepal/rxjs/operators')
 const http = require('sepal/httpClient')
-const {sepalHost, sepalUsername, sepalPassword} = require('./config')
+const {getConfig} = require('./context')
 
 const MIN_TIME_BETWEEN_NOTIFICATIONS = 1 * 1000
 const MAX_TIME_BETWEEN_NOTIFICATIONS = 60 * 1000
+
+const {sepalHost, sepalUsername, sepalPassword} = getConfig()
 
 const task$ = new Subject()
 const cancel$ = new Subject()

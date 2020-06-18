@@ -73,5 +73,5 @@ module.exports = {executeTask$}
 //     before: [require('root/jobs/setConfig'), require('root/jobs/ee/initialize')],
 //     services: [require('./driveLimiter').limiter],
 //     args: ctx => [ctx], // TODO make it more flexible by allowing multiple params
-//     executeTask$
+//     worker$: executeTask$
 // })

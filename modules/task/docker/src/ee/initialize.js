@@ -1,10 +1,13 @@
 const {switchMap, distinctUntilChanged} = require('rx/operators')
 const ee = require('ee')
-const {credentials$} = require('root/credentials')
+const {getCredentials} = require('root/context')
+const log = require('sepal/log').getLogger('ee')
+const moment = require('moment')
 
 const secondsToExpiration = expiration => {
-    const millisecondsLeft = expiration - Date.now()
-    if (!millisecondsLeft < 0) {
+    const now = Date.now()
+    const millisecondsLeft = expiration - now
+    if (millisecondsLeft < 0) {
         throw new Error('Token expired')
     }
     return millisecondsLeft / 1000
@@ -38,26 +41,23 @@ const authenticateUserAccount$ = userCredentials =>
         }
     })
 
-const initializeEE$ = () =>
-    // loadCredentials$().pipe(
-    credentials$.pipe(
-        // filter(userCredentials => userCredentials),
-        switchMap(({userCredentials, serviceAccountCredentials}) => {
-            const authenticate$ = userCredentials
-                ? authenticateUserAccount$(userCredentials)
-                : authenticateServiceAccount$(serviceAccountCredentials)
-            return authenticate$.pipe(
-                // tap(() => ee.data.setAuthTokenRefresher(authTokenRefresher)),
-                switchMap(() =>
-                    ee.$({
-                        operation: 'initialize',
-                        ee: (resolve, reject) => ee.initialize(null, null, resolve, reject)
-                    })
-                )
-            )
-        }),
-        distinctUntilChanged()
+const initialize$ = () =>
+    ee.$({
+        operation: 'initialize',
+        ee: (resolve, reject) => ee.initialize(null, null, resolve, reject)
+    })
+
+const initializeEE$ = () => {
+    const {userCredentials, serviceAccountCredentials} = getCredentials()
+    const authenticate$ = userCredentials
+        ? authenticateUserAccount$(userCredentials)
+        : authenticateServiceAccount$(serviceAccountCredentials)
+    return authenticate$.pipe(
+        // tap(() => ee.data.setAuthTokenRefresher(authTokenRefresher)),
+        switchMap(() => initialize$()),
+        distinctUntilChanged() // ????
     )
+}
 
 // const authTokenRefresher = (authArgs, callback) => {
 //     initializeEE$().subscribe({

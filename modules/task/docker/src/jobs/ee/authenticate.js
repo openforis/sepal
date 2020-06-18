@@ -1,8 +1,11 @@
 const job = require('root/jobs/job')
 
-const worker$ = ({userCredentials, serviceAccountCredentials}) => {
+const worker$ = () => {
     const {swallow} = require('sepal/rxjs/operators')
     const ee = require('ee')
+    const {getCredentials} = require('root/context')
+
+    const credentials = getCredentials()
 
     const secondsToExpiration = expiration => {
         const millisecondsLeft = expiration - Date.now()
@@ -45,13 +48,12 @@ const worker$ = ({userCredentials, serviceAccountCredentials}) => {
             ? authenticateUserAccount$(userCredentials)
             : authenticateServiceAccount$(serviceAccountCredentials)
 
-    return authenticate$({userCredentials, serviceAccountCredentials}).pipe(
+    return authenticate$(credentials).pipe(
         swallow()
     )
 }
 
 module.exports = job({
     jobName: 'EE Authentication',
-    worker$,
-    args: ({credentials$}) => [credentials$.getValue()]
+    worker$
 })

@@ -9,7 +9,7 @@ const drive = require('root/drive')
 const {initUserBucket$} = require('root/cloudStorage')
 const {downloadFromCloudStorage$} = require('root/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
-const {credentials$} = require('root/credentials')
+const {getCredentials} = require('root/context')
 
 const task$ = require('root/ee/task')
 
@@ -63,7 +63,7 @@ const exportImageToSepal$ = ({
                         ),
                         description: `export to Sepal through CS (${description})`,
                         retries
-                    }),
+                    }), 
                     downloadFromCloudStorage$({
                         bucketPath,
                         prefix: `${folder}/`,
@@ -81,7 +81,7 @@ const exportImageToSepal$ = ({
             return limiter$(
                 concat(
                     createDriveFolder$(folder),
-                    task$(task, description)
+                    // task$(task, description)
                 )
             )
         }
@@ -109,13 +109,10 @@ const exportImageToSepal$ = ({
         )
     }
 
-    return credentials$.pipe(
-        first(),
-        switchMap(({userCredentials}) => userCredentials
-            ? throughDrive$()
-            : throughCloudStorage$()
-        )
-    )
+    const {userCredentials} = getCredentials()
+    return userCredentials
+        ? throughDrive$()
+        : throughCloudStorage$()
 }
 
 const {limiter$: serialize$} = Limiter({

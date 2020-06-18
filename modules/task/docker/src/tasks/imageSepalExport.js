@@ -6,7 +6,9 @@ const {createVrt$, setBandNames$} = require('sepal/gdal')
 const {exportImageToSepal$} = require('root/ee/export/toSepal')
 const ImageFactory = require('sepal/ee/imageFactory')
 // const log = require('sepal/log').getLogger('task')
-const config = require('root/config')
+const {getConfig} = require('root/context')
+
+const config = getConfig()
 
 module.exports = {
     submit$: (id, {image: {recipe, bands, scale}}) => {

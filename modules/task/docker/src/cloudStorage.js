@@ -4,9 +4,10 @@ const {fromPromise} = require('sepal/rxjs')
 const crypto = require('crypto')
 const http = require('sepal/httpClient')
 const {Storage} = require('@google-cloud/storage')
-const config = require('root/config')
-const {credentials$} = require('root/credentials')
+const {getCredentials, getConfig} = require('root/context')
 const {retry} = require('sepal/rxjs/operators')
+
+const config = getConfig()
 
 const projectId = config.googleProjectId
 const cloudStorage = new Storage({credentials: config.serviceAccountCredentials, projectId})
@@ -31,8 +32,8 @@ const bucketExists$ = user =>
         map(response => response[0])
     )
 
-const createBucket$ = user =>
-    do$(cloudStorage.createBucket(user.bucketName, {
+const createBucket$ = bucket =>
+    do$(cloudStorage.createBucket(bucket.bucketName, {
         location: config.googleRegion,
         storageClass: 'STANDARD',
         iamConfiguration: {
@@ -46,8 +47,8 @@ const createBucket$ = user =>
             }]
         }
     })).pipe(
-        switchMap(() => setBucketPermissions$(user)),
-        map(() => user.bucketName)
+        switchMap(() => setBucketPermissions$(bucket)),
+        mapTo(bucket)
     )
 
 const setBucketPermissions$ = user => {
@@ -77,13 +78,17 @@ const setBucketPermissions$ = user => {
     return do$(bucket.iam.setPolicy(policy))
 }
 
-const createIfMissingBucket$ = user =>
-    bucketExists$(user).pipe(
-        switchMap(exists => exists ? of(user.bucketName) : createBucket$(user))
+const createIfMissingBucket$ = bucket =>
+    bucketExists$(bucket).pipe(
+        switchMap(exists => 
+            exists 
+                ? of(bucket) 
+                : createBucket$(bucket)
+        )
     )
 
-const getEmail$ = accessToken => {
-    return http.get$('https://www.googleapis.com/drive/v3/about?fields=user', {
+const getEmail$ = accessToken =>
+    http.get$('https://www.googleapis.com/drive/v3/about?fields=user', {
         retries: 0,
         headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -92,9 +97,8 @@ const getEmail$ = accessToken => {
     }).pipe(
         map(response => JSON.parse(response.body).user.emailAddress)
     )
-}
 
-const getUser$ = userCredentials =>
+const getUserBucket$ = userCredentials =>
     getEmail$(userCredentials.access_token).pipe(
         map(email => ({
             username: config.username,
@@ -104,21 +108,23 @@ const getUser$ = userCredentials =>
         }))
     )
 
-const getServiceAccount$ = serviceAccountCredentials => {
-    const username = 'service-account'
-    const email = serviceAccountCredentials.client_email
-    const bucketName = getBucketName({username, email})
-    return of({username, email, bucketName, serviceAccount: true})
-}
+const getServiceAccountBucket$ = serviceAccountCredentials =>
+    of({
+        username: 'service-account', 
+        email: serviceAccountCredentials.client_email, 
+        bucketName: getBucketName({username, email}), 
+        serviceAccount: true
+    })
+
+const getBucket$ = ({userCredentials, serviceAccountCredentials}) =>
+    userCredentials
+        ? getUserBucket$(userCredentials)
+        : getServiceAccountBucket$(serviceAccountCredentials)
 
 const initUserBucket$ = () =>
-    credentials$.pipe(
-        first(),
-        switchMap(({userCredentials, serviceAccountCredentials}) => userCredentials
-            ? getUser$(userCredentials)
-            : getServiceAccount$(serviceAccountCredentials)
-        ),
-        switchMap(user => createIfMissingBucket$(user)),
+    getBucket$(getCredentials()).pipe(
+        switchMap(bucket => createIfMissingBucket$(bucket)),
+        map(({bucketName}) => bucketName),
         first()
     )
 
