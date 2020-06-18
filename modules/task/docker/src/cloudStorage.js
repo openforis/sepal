@@ -108,13 +108,16 @@ const getUserBucket$ = userCredentials =>
         }))
     )
 
-const getServiceAccountBucket$ = serviceAccountCredentials =>
-    of({
-        username: 'service-account', 
-        email: serviceAccountCredentials.client_email, 
-        bucketName: getBucketName({username, email}), 
+const getServiceAccountBucket$ = serviceAccountCredentials => {
+    const username = 'service-account'
+    const email = serviceAccountCredentials.client_email
+    return of({
+        username,
+        email,
+        bucketName: getBucketName({username, email}),
         serviceAccount: true
-    })
+    });
+}
 
 const getBucket$ = ({userCredentials, serviceAccountCredentials}) =>
     userCredentials
