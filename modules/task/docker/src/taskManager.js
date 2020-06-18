@@ -5,6 +5,7 @@ const {executeTask$} = require('./taskRunner')
 const {lastInWindow, repeating} = require('sepal/rxjs/operators')
 const http = require('sepal/httpClient')
 const {getConfig} = require('./context')
+const {errorReport} = require('sepal/exception')
 
 const MIN_TIME_BETWEEN_NOTIFICATIONS = 1 * 1000
 const MAX_TIME_BETWEEN_NOTIFICATIONS = 60 * 1000
@@ -65,12 +66,14 @@ const taskProgressed$ = (id, progress) => {
     )
 }
 
-const taskFailed$ = (id, error) =>
-    taskStateChanged$(id, 'FAILED', {
+const taskFailed$ = (id, error) => {
+    log.error(msg(id, errorReport(error)))
+    return taskStateChanged$(id, 'FAILED', {
         defaultMessage: 'Failed to execute task: ',
         messageKey: 'tasks.status.failed',
         messageArgs: {error: String(error)}
-    })
+    });
+}
 
 const taskCompleted$ = id =>
     taskStateChanged$(id, 'COMPLETED', {
