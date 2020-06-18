@@ -120,8 +120,8 @@ module_stop () {
         message "STOPPED" $MODULE RED
     else
         message "STOPPING" $MODULE LIGHT_RED
-        pkill -TERM -g $PID
-        group_processes_terminated $PID || pkill -KILL -g $PID
+        sudo pkill -TERM -g $PID
+        group_processes_terminated $PID || sudo pkill -KILL -g $PID
     fi
 }
 
@@ -132,7 +132,7 @@ module_kill () {
         message "STOPPED" $MODULE RED
     else
         message "KILLING" $MODULE LIGHT_RED
-        pkill -KILL -g $PID
+        sudo pkill -KILL -g $PID
     fi
 }
 
@@ -146,6 +146,10 @@ module_clean () {
     message "CLEANING" $MODULE YELLOW
     case $MODULE in
     api-gateway)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-common:clean &>/dev/null
         $SEPAL/gradlew \
         -p $SEPAL \
         --no-daemon \
@@ -169,6 +173,10 @@ module_clean () {
         $SEPAL/gradlew \
         -p $SEPAL \
         --no-daemon \
+        :sepal-common:clean &>/dev/null
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
         :sepal-server:clean &>/dev/null
         ;;
     task)
@@ -178,6 +186,10 @@ module_clean () {
         rm -rf node_modules package-lock.json
         ;;
     user)
+        $SEPAL/gradlew \
+        -p $SEPAL \
+        --no-daemon \
+        :sepal-common:clean &>/dev/null
         $SEPAL/gradlew \
         -p $SEPAL \
         --no-daemon \
@@ -363,7 +375,7 @@ run () {
         SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh
         ;;
     user)
-        $SEPAL/gradlew \
+        sudo $SEPAL/gradlew \
         -p $SEPAL \
         --no-daemon \
         --stacktrace \
