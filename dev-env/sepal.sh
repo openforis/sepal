@@ -4,7 +4,7 @@ set -e
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
 SEPAL_MODULES=(user sepal-server api-gateway task gee gui ceo mongo)
-SEPAL_GROUPS=(all dev test)
+SEPAL_GROUPS=(all dev)
 SEPAL_DEFAULT_GROUP=dev
 LOG_DIR=/var/log/sepal
 
@@ -26,9 +26,6 @@ group () {
         ;;
     dev)
         echo "user sepal-server ( -DskipSceneMetaDataUpdate ) api-gateway task gee gui ceo mongo"
-        ;;
-    test)
-        echo "user gee"
         ;;
     *)
         return 1
@@ -281,6 +278,24 @@ build-debug () {
     $SEPAL/gradlew build -x test -x :sepal-gui:build -p $SEPAL --stacktrace --debug
 }
 
+tail() {
+    if [[ $# -gt 0 ]]; then
+        local MODULES=$@
+        local LOGFILES=()
+        for MODULE in $MODULES; do
+            if is_module $MODULE; then
+                LOGFILES+=($(logfile $MODULE))
+            else
+                message "UNKNOWN" $MODULE YELLOW
+                return
+            fi
+        done
+        multitail ${LOGFILES[@]}
+    else
+        multitail $LOG_DIR/*.log
+    fi
+}
+
 log() {
     local MODULE=$1
     do_with_modules "module_log" $MODULE 
@@ -405,8 +420,9 @@ usage () {
     echo "   start       [<module>...]    start module(s)/group(s)"
     echo "   stop        [<module>...]    stop module(s)/group(s)"
     echo "   restart     [<module>...]    restart module(s)/group(s)"
+    echo "   tail        [<module>...]    show combined module(s) log tail"
+    echo "   log         <module>         show module log (tail)"
     echo "   run         <module>         run module interactively"
-    echo "   log         <module>         show module log tail"
     echo "   startlog    <module>         start a module and show log tail"
     echo "   restartlog  <module>         restart a module and show log tail"
     echo ""
@@ -458,6 +474,10 @@ case "$1" in
     run)
         shift
         run $@
+        ;;
+    tail)
+        shift
+        tail $@
         ;;
     log)
         shift

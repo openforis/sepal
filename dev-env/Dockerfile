@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
   htop \
   libssl-dev \
   libffi-dev \
+  multitail \
   nano \
   packer \
   procps \
