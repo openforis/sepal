@@ -75,7 +75,7 @@ const export$ = (downloadDir, recipe) => {
         const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
         const from = moment(fromDate)
         const to = moment(toDate)
-        const duration = to.diff(from, DATE_DELTA_UNIT)
+        const duration = moment(to).subtract(1, 'day').diff(from, DATE_DELTA_UNIT)
         const dateOffsets = sequence(0, duration, DATE_DELTA)
         const chunks$ = dateOffsets.map(dateOffset => {
             const start = moment(from).add(dateOffset, DATE_DELTA_UNIT)
