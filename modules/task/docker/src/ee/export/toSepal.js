@@ -1,6 +1,6 @@
 const ee = require('ee')
 const {concat, defer} = require('rx')
-const {first, switchMap} = require('rx/operators')
+const {switchMap} = require('rx/operators')
 const {swallow} = require('sepal/rxjs/operators')
 
 const {limiter$} = require('./limiter')
@@ -46,7 +46,7 @@ const exportImageToSepal$ = ({
     const prefix = description
 
     const throughCloudStorage$ = () => {
-        const exportToCloudStorage$ = ({task, description, retries}) => {
+        const exportToCloudStorage$ = ({task, description, _retries}) => {
             log.debug('Earth Engine <to Cloud Storage>:', description)
             return limiter$(
                 task$(task, description)
@@ -63,7 +63,7 @@ const exportImageToSepal$ = ({
                         ),
                         description: `export to Sepal through CS (${description})`,
                         retries
-                    }), 
+                    }),
                     downloadFromCloudStorage$({
                         bucketPath,
                         prefix: `${folder}/`,
@@ -76,7 +76,7 @@ const exportImageToSepal$ = ({
     }
 
     const throughDrive$ = () => {
-        const exportToDrive$ = ({task, description, folder, retries}) => {
+        const exportToDrive$ = ({task, description, folder, _retries}) => {
             log.debug('Earth Engine <to Google Drive>:', description)
             return limiter$(
                 concat(
