@@ -1,6 +1,6 @@
 const program = require('commander')
 const fs = require('fs')
-const log = require('sepal/log').getLogger()
+const log = require('sepal/log').getLogger('task')
 const _ = require('lodash')
 
 const DEFAULT_PORT = 1026
