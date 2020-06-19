@@ -1,7 +1,7 @@
 const {Subject, EMPTY, of} = require('rx')
-const {mergeMap, takeUntil, filter, tap, map, switchMap, catchError, switchMapTo} = require('rx/operators')
+const {mergeMap, takeUntil, filter, tap, switchMap, catchError, switchMapTo} = require('rx/operators')
 const log = require('sepal/log').getLogger('task')
-const {executeTask$} = require('./taskRunner')
+const executeTask$ = require('./taskRunner')
 const {lastInWindow, repeating} = require('sepal/rxjs/operators')
 const http = require('sepal/httpClient')
 const {getConfig} = require('./context')
@@ -72,7 +72,7 @@ const taskFailed$ = (id, error) => {
         defaultMessage: 'Failed to execute task: ',
         messageKey: 'tasks.status.failed',
         messageArgs: {error: String(error)}
-    });
+    })
 }
 
 const taskCompleted$ = id =>
