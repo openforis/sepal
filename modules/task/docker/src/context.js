@@ -1,7 +1,6 @@
 const {tap} = require('rx/operators')
 const fs = require('fs')
 const path = require('path')
-const config = require('./config')
 const {mkdir$} = require('root/rxjs/fileSystem')
 const log = require('sepal/log').getLogger('task')
 
@@ -14,8 +13,9 @@ const data = {
 
 const setConfig = config => {
     if (data.config) {
-        log.error('Configuration already set')
+        log.warn('Configuration already set, ignored')
     } else {
+        log.debug('Setting configuration')
         data.config = config
         monitorUserCredentials()
         loadUserCredentialsSync()
@@ -24,7 +24,7 @@ const setConfig = config => {
 
 const setUserCredentials = userCredentials => {
     if (userCredentials && userCredentials['access_token_expiry_date'] < Date.now()) {
-        log.error('Received expired user credentials', userCredentials['access_token_expiry_date'] - Date.now())
+        log.warn('Received expired user credentials, ignored')
     } else {
         data.userCredentials = userCredentials
     }
@@ -54,7 +54,7 @@ const loadUserCredentialsSync = () => {
     try {
         const rawUserCredentials = fs.readFileSync(userCredentialsPath, {encoding: 'utf8'})
         const userCredentials = JSON.parse(rawUserCredentials)
-        log.debug(`User credentials updated`)
+        log.debug('User credentials updated')
         setUserCredentials(userCredentials)
     } catch (error) {
         log.debug('Failed to update credentials')
@@ -75,6 +75,4 @@ const getCredentials = () => {
     }
 }
     
-setConfig(config)
-
 module.exports = {setConfig, getConfig, getCredentials}

@@ -1,6 +1,7 @@
 require('sepal/log').configureServer(require('./log.json'))
-const server = require('sepal/httpServer')
 const config = require('./config')
+require('./context').setConfig(config)
+const server = require('sepal/httpServer')
 const routes = require('./routes')
 const {initializeEE$} = require('./ee/initialize')
 
