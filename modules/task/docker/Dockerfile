@@ -28,13 +28,12 @@ RUN groupadd --gid 1000 node && \
 ADD build/lib/js/shared ${JS_SHARED}
 WORKDIR ${JS_SHARED}/js/shared
 USER root
-RUN chown -R node: ${JS_SHARED}
-USER node
-RUN npm install
-
 ADD build/lib/python/shared ${PYTHON_SHARED}
 RUN chmod +x ${PYTHON_SHARED}/stack_time_series.py && \
     ln -s ${PYTHON_SHARED}/stack_time_series.py /usr/local/bin/sepal-stack-time-series
+RUN chown -R node: ${JS_SHARED}
+USER node
+RUN npm install
 
 ADD package.json ${TASK}/
 WORKDIR ${TASK}
