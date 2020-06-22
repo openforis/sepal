@@ -3,7 +3,8 @@ EXPOSE 1026
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TASK /usr/local/src/sepal/modules/task/docker
-ENV SHARED /usr/local/src/sepal/lib/js/shared
+ENV JS_SHARED /usr/local/src/sepal/lib/js/shared
+ENV PYTHON_SHARED /usr/local/src/sepal/lib/python/shared
 RUN apt-get update && apt-get install -y \
   curl \
   gettext \
@@ -24,10 +25,13 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd --gid 1000 node && \
     useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
-ADD build/lib/js/shared ${SHARED}
-WORKDIR ${SHARED}/js/shared
+ADD build/lib/js/shared ${JS_SHARED}
+WORKDIR ${JS_SHARED}/js/shared
 USER root
-RUN chown -R node: ${SHARED}
+ADD build/lib/python/shared ${PYTHON_SHARED}
+RUN chmod +x ${PYTHON_SHARED}/stack_time_series.py && \
+    ln -s ${PYTHON_SHARED}/stack_time_series.py /usr/local/bin/sepal-stack-time-series
+RUN chown -R node: ${JS_SHARED}
 USER node
 RUN npm install
 
