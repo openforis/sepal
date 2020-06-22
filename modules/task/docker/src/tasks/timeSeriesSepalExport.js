@@ -43,10 +43,6 @@ const export$ = (downloadDir, recipe) => {
     
     const geometry = toGeometry(aoi) // synchronous EE
     const reflectance = surfaceReflectance ? 'SR' : 'TOA'
-    const dates = {
-        seasonStart: fromDate,
-        seasonEnd: toDate
-    }
 
     const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES) // synchronous EE
 
