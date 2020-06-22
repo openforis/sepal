@@ -1,15 +1,17 @@
 {
     "port": 5102,
     "categories": {
+        "config": "debug",
+        "context": "debug",
         "default": "info",
         "ee": "debug",
-        "drive": "info",
+        "drive": "debug",
         "gdal": "info",
         "http": "info",
         "httpClient": "info",
         "limiter": "info",
         "pool": "info",
-        "service": "info",
+        "service": "debug",
         "task": "debug",
         "terminal": "info",
         "worker": "debug"
