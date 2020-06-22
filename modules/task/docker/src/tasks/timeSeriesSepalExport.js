@@ -193,7 +193,7 @@ const export$ = (downloadDir, recipe) => {
 }
 
 const postProcess$ = downloadDir =>
-    terminal$('sepal-stack-time-series', [downloadDir])
+    terminal$('sepal-stack-time-series', [Path.join(downloadDir, '*')])
         .pipe(swallow())
 
 const toProgress = ({totalTiles = 0, tileIndex = 0, totalChunks = 0, chunks = 0}) => {
