@@ -43,10 +43,6 @@ const export$ = (downloadDir, recipe) => {
     
     const geometry = toGeometry(aoi) // synchronous EE
     const reflectance = surfaceReflectance ? 'SR' : 'TOA'
-    const dates = {
-        seasonStart: fromDate,
-        seasonEnd: toDate
-    }
 
     const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES) // synchronous EE
 
@@ -193,7 +189,7 @@ const export$ = (downloadDir, recipe) => {
 }
 
 const postProcess$ = downloadDir =>
-    terminal$('sepal-stack-time-series', [downloadDir])
+    terminal$('sepal-stack-time-series', [Path.join(downloadDir, '*')])
         .pipe(swallow())
 
 const toProgress = ({totalTiles = 0, tileIndex = 0, totalChunks = 0, chunks = 0}) => {
