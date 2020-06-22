@@ -1,8 +1,9 @@
-const {switchMap, distinctUntilChanged} = require('rx/operators')
+const {Subject} = require('rx')
+const {switchMap, first} = require('rx/operators')
 const ee = require('ee')
-const {getCredentials} = require('root/context')
-const log = require('sepal/log').getLogger('ee')
-const moment = require('moment')
+const {getCredentials$} = require('root/context')
+// const log = require('sepal/log').getLogger('ee')
+// const moment = require('moment')
 
 const secondsToExpiration = expiration => {
     const now = Date.now()
@@ -48,27 +49,19 @@ const initialize$ = () =>
     })
 
 const initializeEE$ = () => {
-    const {userCredentials, serviceAccountCredentials} = getCredentials()
-    const authenticate$ = userCredentials
-        ? authenticateUserAccount$(userCredentials)
-        : authenticateServiceAccount$(serviceAccountCredentials)
-    return authenticate$.pipe(
-        // tap(() => ee.data.setAuthTokenRefresher(authTokenRefresher)),
-        switchMap(() => initialize$()),
-        distinctUntilChanged() // ????
+    const initialized$ = new Subject()
+    getCredentials$().pipe(
+        switchMap(({userCredentials, serviceAccountCredentials}) =>
+            userCredentials
+                ? authenticateUserAccount$(userCredentials)
+                : authenticateServiceAccount$(serviceAccountCredentials)
+        ),
+        switchMap(() => initialize$())
+    ).subscribe(
+        () => initialized$.next()
     )
+    
+    return initialized$.pipe(first())
 }
-
-// const authTokenRefresher = (authArgs, callback) => {
-//     initializeEE$().subscribe({
-//         error: callback({error}),
-//         complete: callback(ee.data.getAuthToken())
-//     })
-// }
-
-// fs.watch(CREDENTIALS_DIR, (eventType, filename) => {
-//     if (filename === CREDENTIALS_FILE)
-//         initializeEE$().subscribe()
-// })
 
 module.exports = {initializeEE$}
