@@ -189,8 +189,14 @@ const export$ = (downloadDir, recipe) => {
 }
 
 const postProcess$ = downloadDir =>
-    terminal$('sepal-stack-time-series', [Path.join(downloadDir, '*')])
-        .pipe(swallow())
+    terminal$('sepal-stack-time-series', [downloadDir])
+        .pipe(
+            tap(({stream, value}) => {
+                if (value)
+                    stream === 'stdout' ? log.info(value) : log.warn(value)
+            }),
+            swallow()
+        )
 
 const toProgress = ({totalTiles = 0, tileIndex = 0, totalChunks = 0, chunks = 0}) => {
     const currentTilePercent = totalChunks ? Math.round(100 * chunks / totalChunks) : 0

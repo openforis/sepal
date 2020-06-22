@@ -17,14 +17,21 @@ nodata_value = 0
 
 def stack_time_series(dir):
     chunk_dirs = glob(join(dir, 'chunk-*'))
+    if not chunk_dirs:
+        print('    Skipping. No chunk-* directories')
+        return
     for chunk_dir in chunk_dirs:
         extract_chunk_bands(chunk_dir)
     tile_dirs = glob(join(dir, 'tile-*'))
     dates = None
     for tile_dir in tile_dirs:
         dates = create_tile_stack(tile_dir)
+    if not dates:
+        print('    Skipping. No data')
+        return
     create_stack(dir, dates)
     create_dates_csv(dir, dates)
+    print('    Done.')
 
 
 def extract_chunk_bands(chunk_dir):
@@ -114,4 +121,7 @@ if __name__ == '__main__':
     dirs = sys.argv[1:]
     for d in dirs:
         if exists(d):
+            print('Stacking time-series in {}'.format(d))
             stack_time_series(d)
+        else:
+            print('Not found: {}'.format(d))
