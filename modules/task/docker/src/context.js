@@ -1,9 +1,10 @@
-const {BehaviorSubject} = require('rx')
-const {filter, tap} = require('rx/operators')
+const {BehaviorSubject, timer} = require('rx')
+const {filter, switchMap, tap} = require('rx/operators')
 const fs = require('fs')
 const path = require('path')
 const {mkdir$} = require('root/rxjs/fileSystem')
 const log = require('sepal/log').getLogger('context')
+const _ = require('lodash')
 
 const CREDENTIALS_FILE = 'credentials'
 
@@ -27,14 +28,17 @@ const setCredentials = userCredentials => {
     if (userCredentials) {
         const tokenExpiration = userCredentials['access_token_expiry_date'] || 0
         const timeLeftMs = tokenExpiration - Date.now()
-        if (timeLeftMs > 0) {
+        const currentCredentials = credentials$.getValue()
+        if (timeLeftMs > 0 && (!currentCredentials || !_.isEqual(userCredentials, currentCredentials.userCredentials))) {
             log.debug(`User credentials updated, expiring in ${Math.round(timeLeftMs / 1000)} seconds`)
             credentials$.next({
                 userCredentials,
                 serviceAccountCredentials: data.config && data.config.serviceAccountCredentials
             })
-        } else {
+        } else if (timeLeftMs <= 0) {
             log.warn('Received expired user credentials, ignored')
+        } else {
+            log.debug('User credentials unchanged')
         }
     } else {
         log.warn('Received empty user credentials, ignored')
@@ -51,14 +55,11 @@ const monitorUserCredentials = () => {
     const userCredentialsPath = credentialsPath()
     log.debug(`Monitoring user credentials in ${userCredentialsPath}`)
     mkdir$(credentialsDir(), {recursive: true}).pipe(
-        tap(() => {
-            loadUserCredentials()
-            fs.watch(credentialsDir(), (_eventType, filename) => {
-                if (filename === CREDENTIALS_FILE) {
-                    loadUserCredentials()
-                }
-            })
-        })
+        switchMap(() =>
+            timer(0, 1000 * 60).pipe(
+                tap(() => loadUserCredentials())
+            )
+        )
     ).subscribe()
 }
     
