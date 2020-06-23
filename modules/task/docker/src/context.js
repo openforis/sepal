@@ -1,5 +1,5 @@
-const {BehaviorSubject, timer} = require('rx')
-const {filter, switchMap, tap} = require('rx/operators')
+const {BehaviorSubject, timer, of} = require('rx')
+const {filter, switchMap, tap, first} = require('rx/operators')
 const fs = require('fs')
 const path = require('path')
 const {mkdir$} = require('root/rxjs/fileSystem')
@@ -91,4 +91,13 @@ const getCredentials$ = () =>
         filter(credentials => credentials)
     )
     
-module.exports = {setConfig, getConfig, getCredentials, getCredentials$}
+const getCurrentCredentials$ = () => {
+    const credentials = credentials$.getValue()
+    return credentials
+        ? of(credentials)
+        : getCredentials$().pipe(
+            first()
+        )
+}
+    
+module.exports = {setConfig, getConfig, getCredentials, getCredentials$, getCurrentCredentials$}

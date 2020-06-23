@@ -3,7 +3,7 @@ const {catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap} = 
 const {google} = require('googleapis')
 const {NotFoundException} = require('sepal/exception')
 const log = require('sepal/log').getLogger('drive')
-const {getCredentials} = require('root/context')
+const {getCurrentCredentials$} = require('root/context')
 const fs = require('fs')
 const Path = require('path')
 const {retry, swallow} = require('sepal/rxjs/operators')
@@ -31,14 +31,16 @@ const do$ = (message, operation$) => defer(() => {
     return operation$
 })
 
-const auth$ = () => {
-    const {userCredentials} = getCredentials()
-    const oAuth2Client = new google.auth.OAuth2()
-    oAuth2Client.setCredentials({
-        access_token: userCredentials['access_token']
-    })
-    return of(oAuth2Client)
-}
+const auth$ = () =>
+    getCurrentCredentials$().pipe(
+        switchMap(({userCredentials}) => {
+            const oAuth2Client = new google.auth.OAuth2()
+            oAuth2Client.setCredentials({
+                access_token: userCredentials['access_token']
+            })
+            return of(oAuth2Client)
+        })
+    )
 
 /**
  * Google Drive wrapper: authenticate, execute (with autoretries) and unwrap result
