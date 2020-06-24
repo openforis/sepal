@@ -62,17 +62,16 @@ const executeTask$ = ({id, name, params}) => {
     )
 }
 
-module.exports = executeTask$
+// Execute in main-thread
+// module.exports = executeTask$
 
-// const job = require('root/jobs/job')
-
-// module.exports = job({
-//     jobName: 'execute task',
-//     jobPath: __filename,
-//     initArgs: () => ({config: require('root/config')}),
-//     before: [require('root/jobs/setConfig'), require('root/jobs/ee/initialize')],
-//     services: [require('./driveLimiter').limiter],
-//     // services: [require('./driveLimiter').limiter, require('root/ee/export/serializer').limiter, require('root/ee/export/limiter').limiter],
-//     args: ctx => [ctx], // TODO make it more flexible by allowing multiple params
-//     worker$: executeTask$
-// })
+// Execute in worker
+module.exports = require('root/jobs/job')({
+    jobName: 'execute task',
+    jobPath: __filename,
+    initArgs: () => ({config: require('root/config')}),
+    before: [require('root/jobs/setConfig'), require('root/jobs/ee/initialize')],
+    services: [require('./driveLimiter').limiter, require('root/ee/export/serializer').limiter, require('root/ee/export/limiter').limiter],
+    args: ctx => [ctx],
+    worker$: executeTask$
+})

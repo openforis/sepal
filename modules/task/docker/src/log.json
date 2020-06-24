@@ -10,8 +10,9 @@
         "http": "info",
         "httpClient": "info",
         "limiter": "info",
+        "scheduler": "info",
         "pool": "info",
-        "service": "debug",
+        "service": "info",
         "task": "debug",
         "terminal": "info",
         "worker": "debug"
