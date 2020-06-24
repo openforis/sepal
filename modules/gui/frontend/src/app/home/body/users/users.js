@@ -73,13 +73,14 @@ class Users extends React.Component {
     }
 
     editUser(user) {
-        const {username, name, email, organization, report: {budget}} = user
+        const {username, name, email, organization, admin, report: {budget}} = user
         this.setState({
             userDetails: {
                 username,
                 name,
                 email,
                 organization,
+                admin,
                 monthlyBudgetInstanceSpending: budget.instanceSpending,
                 monthlyBudgetStorageSpending: budget.storageSpending,
                 monthlyBudgetStorageQuota: budget.storageQuota
@@ -110,10 +111,10 @@ class Users extends React.Component {
                 }))
             )
 
-        const updateUserDetails$ = ({newUser, username, name, email, organization}) =>
+        const updateUserDetails$ = ({newUser, username, name, email, organization, admin}) =>
             newUser
-                ? api.user.inviteUser$({username, name, email, organization})
-                : api.user.updateUser$({username, name, email, organization})
+                ? api.user.inviteUser$({username, name, email, organization, admin})
+                : api.user.updateUser$({username, name, email, organization, admin})
 
         const updateUserBudget$ = ({
             username,

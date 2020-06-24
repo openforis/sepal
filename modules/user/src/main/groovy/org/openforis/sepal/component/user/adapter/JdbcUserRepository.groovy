@@ -32,8 +32,8 @@ class JdbcUserRepository implements UserRepository {
 
     void updateUserDetails(User user) {
         sql.executeUpdate('''
-                UPDATE sepal_user SET name = ?, email = ?, organization = ?, update_time = ? 
-                WHERE username = ?''', [user.name, user.email, user.organization, user.updateTime, user.username])
+                UPDATE sepal_user SET name = ?, email = ?, organization = ?, admin = ?, update_time = ? 
+                WHERE username = ?''', [user.name, user.email, user.organization, user.admin, user.updateTime, user.username])
     }
 
     void deleteUser(String username) {

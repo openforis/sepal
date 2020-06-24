@@ -18,6 +18,7 @@ const fields = {
         .email('user.userDetails.form.email.required'),
     organization: new Form.Field()
         .notBlank('user.userDetails.form.organization.required'),
+    admin: new Form.Field(),
     monthlyBudgetInstanceSpending: new Form.Field()
         .notBlank('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
         .int('user.userDetails.form.monthlyBudget.instanceSpending.atLeast1')
@@ -41,6 +42,7 @@ const mapStateToProps = (state, ownProps) => {
             name: userDetails.name,
             email: userDetails.email,
             organization: userDetails.organization,
+            admin: userDetails.admin || false,
             monthlyBudgetInstanceSpending: userDetails.monthlyBudgetInstanceSpending,
             monthlyBudgetStorageSpending: userDetails.monthlyBudgetStorageSpending,
             monthlyBudgetStorageQuota: userDetails.monthlyBudgetStorageQuota
@@ -59,9 +61,10 @@ class UserDetails extends React.Component {
 
     render() {
         const {form,
-            inputs: {username, name, email, organization, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota}
+            inputs: {username, name, email, organization, admin, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota}
         } = this.props
         const newUser = !this.props.userDetails.username
+        console.log('**** ADMIN: ', admin.value)
         return (
             <Form.Panel
                 className={[styles.panel, newUser ? styles.newUser : styles.existingUser].join(' ')}
@@ -101,6 +104,21 @@ class UserDetails extends React.Component {
                             input={organization}
                             spellCheck={false}
                             errorMessage
+                        />
+                        <Form.Buttons
+                            label={msg('user.userDetails.form.role.label')}
+                            input={admin}
+                            multiple={false}
+                            options={[
+                                {
+                                    value: false,
+                                    label: msg('user.userDetails.form.user.label')
+                                },
+                                {
+                                    value: true,
+                                    label: msg('user.userDetails.form.admin.label')
+                                }
+                            ]}
                         />
                         <Form.FieldSet
                             className={styles.monthlyLimits}

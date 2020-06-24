@@ -1535,6 +1535,15 @@
                     "label": "Organization",
                     "required": "Organization is required"
                 },
+                "role": {
+                    "label": "role"
+                },
+                "user": {
+                    "label": "User"
+                },
+                "admin": {
+                    "label": "Admin"
+                },
                 "status": {
                     "ACTIVE": "Active",
                     "LOCKED": "Locked",

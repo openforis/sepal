@@ -18,6 +18,7 @@ class UpdateUserDetails extends AbstractCommand<User> {
     String name
     String email
     String organization
+    boolean admin
 }
 
 class UpdateUserDetailsHandler implements CommandHandler<User, UpdateUserDetails> {
@@ -26,10 +27,10 @@ class UpdateUserDetailsHandler implements CommandHandler<User, UpdateUserDetails
     private final Clock clock
 
     UpdateUserDetailsHandler(
-        UserRepository userRepository,
-        MessageBroker messageBroker,
-        UserChangeListener changeListener,
-        Clock clock) {
+            UserRepository userRepository,
+            MessageBroker messageBroker,
+            UserChangeListener changeListener,
+            Clock clock) {
         this.userRepository = userRepository
         this.messageQueue = messageBroker.createMessageQueue('user.update_user_details', Map) {
             def user = it.user
@@ -39,12 +40,15 @@ class UpdateUserDetailsHandler implements CommandHandler<User, UpdateUserDetails
     }
 
     User execute(UpdateUserDetails command) {
-        def user = userRepository.lookupUser(command.usernameToUpdate)
-            .withDetails(
-            command.name,
-            command.email,
-            command.organization
-        ).withUpdateTime(clock.now())
+        def user = userRepository
+                .lookupUser(command.usernameToUpdate)
+                .withDetails(
+                        command.name,
+                        command.email,
+                        command.organization,
+                        command.admin
+                )
+                .withUpdateTime(clock.now())
         userRepository.updateUserDetails(user)
         messageQueue.publish(user: user)
         return user
