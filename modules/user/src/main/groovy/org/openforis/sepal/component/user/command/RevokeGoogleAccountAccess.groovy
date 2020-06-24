@@ -30,20 +30,22 @@ class RevokeGoogleAccountAccessHandler implements CommandHandler<Void, RevokeGoo
     private final MessageQueue<Map> messageQueue
 
     RevokeGoogleAccountAccessHandler(
-        GoogleOAuthClient oAuthClient,
-        UserRepository userRepository,
-        GoogleAccessTokenFileGateway googleAccessTokenFileGateway,
-        MessageBroker messageBroker,
-        UserChangeListener changeListener) {
+            GoogleOAuthClient oAuthClient,
+            UserRepository userRepository,
+            GoogleAccessTokenFileGateway googleAccessTokenFileGateway,
+            MessageBroker messageBroker,
+            UserChangeListener changeListener) {
         this.oAuthClient = oAuthClient
         this.userRepository = userRepository
         this.googleAccessTokenFileGateway = googleAccessTokenFileGateway
         this.messageQueue = messageBroker.createMessageQueue('user.revoke_google_access_token', Map) {
             def user = it.user
-            try {
-                oAuthClient.revokeTokens(user.username, it.tokens)
-            } catch (InvalidToken e) {
-                LOG.info("Failed to revoke token with Google. user: $user, error: $e.message")
+            if (it.tokens) {
+                try {
+                    oAuthClient.revokeTokens(user.username, it.tokens)
+                } catch (InvalidToken e) {
+                    LOG.info("Failed to revoke token with Google. user: $user, error: $e.message")
+                }
             }
             googleAccessTokenFileGateway.delete(user.username)
             changeListener.changed(user.username, user.toMap())
