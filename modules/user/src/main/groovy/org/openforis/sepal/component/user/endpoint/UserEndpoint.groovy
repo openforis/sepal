@@ -246,6 +246,7 @@ class UserEndpoint {
                 username: user.username,
                 email: user.email,
                 organization: user.organization,
+                googleTokens: user.googleTokens,
                 status: user.status,
                 roles: user.roles,
                 systemUser: user.systemUser,
