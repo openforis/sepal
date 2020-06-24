@@ -16,7 +16,7 @@ const credentials$ = new BehaviorSubject()
 
 const setConfig = config => {
     if (data.config) {
-        log.warn('Configuration already set, ignored')
+        log.debug('Configuration already set, ignored')
     } else {
         log.debug('Setting configuration')
         data.config = config
