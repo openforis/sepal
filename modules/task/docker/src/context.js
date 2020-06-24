@@ -38,7 +38,7 @@ const setCredentials = userCredentials => {
         } else if (timeLeftMs <= 0) {
             log.warn('Received expired user credentials, ignored')
         } else {
-            log.debug('User credentials unchanged')
+            log.trace('User credentials unchanged')
         }
     } else {
         log.warn('Received empty user credentials, ignored')
@@ -93,6 +93,7 @@ const getCredentials$ = () =>
     
 const getCurrentCredentials$ = () => defer(() => {
     const credentials = credentials$.getValue()
+    // return of(credentials)
     return credentials
         ? of(credentials)
         : getCredentials$().pipe(
