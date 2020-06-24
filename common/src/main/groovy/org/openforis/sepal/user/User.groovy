@@ -49,7 +49,7 @@ class User implements groovymvc.security.User {
             updateTime: updateTime)
     }
 
-    User withDetails(String name, String email, String organization) {
+    User withDetails(String name, String email, String organization, boolean admin) {
         new User(
             id: id,
             name: name,
@@ -57,7 +57,7 @@ class User implements groovymvc.security.User {
             email: email,
             organization: organization,
             status: status,
-            roles: roles,
+            roles: admin ? [Roles.ADMIN] : [],
             creationTime: creationTime,
             updateTime: updateTime)
     }
