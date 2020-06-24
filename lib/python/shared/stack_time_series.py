@@ -7,7 +7,7 @@ import subprocess
 import sys
 from glob import glob
 from os import listdir, pardir
-from os.path import abspath, exists, join
+from os.path import abspath, exists, join, relpath
 from osgeo import gdal
 from osgeo.gdalconst import GA_ReadOnly
 
@@ -47,18 +47,23 @@ def extract_chunk_bands(chunk_dir):
 def extract_chunk_tile_bands(tif_file):
     tile_dir = get_tile_dir(tif_file)
     create_tile_dir(tile_dir)
-    ds = gdal.Open(tif_file, GA_ReadOnly)
+    os.chdir(tile_dir)
+    rel_tif_file = relpath(tif_file, tile_dir)
+    ds = gdal.Open(rel_tif_file, GA_ReadOnly)
     for band_index in range(1, ds.RasterCount + 1):
         band_name = ds.GetRasterBand(band_index).GetDescription()
         band_file = join(tile_dir, band_name + '.vrt')
+        print('band_file {}'.format(band_file))
+
         gdal.SetConfigOption('VRT_SHARED_SOURCE', '0')
         vrt = gdal.BuildVRT(
-            band_file, tif_file,
+            band_file, rel_tif_file,
             bandList=[band_index],
             VRTNodata=nodata_value
         )
         vrt.GetRasterBand(1).SetDescription(band_name)
         vrt.FlushCache()
+        make_relative_to_vrt(band_file)
 
 
 def get_tile_dir(tif_file):
@@ -117,11 +122,19 @@ def create_dates_csv(dir, dates):
             f.write(d + '\n')
 
 
+def make_relative_to_vrt(vrt_file):
+    with open(vrt_file, 'r') as file :
+      text = file.read()
+    text = text.replace('relativeToVRT="0"', 'relativeToVRT="1"')
+    with open(vrt_file, 'w') as file:
+      file.write(text)
+
+
 if __name__ == '__main__':
     dirs = sys.argv[1:]
     for d in dirs:
         if exists(d):
             print('Stacking time-series in {}'.format(d))
-            stack_time_series(d)
+            stack_time_series(abspath(d))
         else:
             print('Not found: {}'.format(d))
