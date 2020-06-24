@@ -1,4 +1,4 @@
-const {BehaviorSubject, timer, of} = require('rx')
+const {BehaviorSubject, defer, timer, of} = require('rx')
 const {filter, switchMap, tap, first} = require('rx/operators')
 const fs = require('fs')
 const path = require('path')
@@ -91,13 +91,13 @@ const getCredentials$ = () =>
         filter(credentials => credentials)
     )
     
-const getCurrentCredentials$ = () => {
+const getCurrentCredentials$ = () => defer(() => {
     const credentials = credentials$.getValue()
     return credentials
         ? of(credentials)
         : getCredentials$().pipe(
             first()
         )
-}
+})
     
 module.exports = {setConfig, getConfig, getCredentials, getCredentials$, getCurrentCredentials$}
