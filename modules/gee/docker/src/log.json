@@ -9,7 +9,7 @@
         "http": "debug",
         "limiter": "debug",
         "logger": "debug",
-        "manager": "debug",
+        "scheduler": "debug",
         "pool": "debug",
         "service": "debug",
         "transport": "debug",
