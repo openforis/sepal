@@ -26,10 +26,10 @@ const isParent = parentId =>
 const isName = name =>
     name && `name = "${name}"`
 
-const do$ = (message, operation$) => defer(() => {
+const do$ = (message, operation$) => {
     log.debug(() => message)
     return operation$
-})
+}
 
 const auth$ = () =>
     getCurrentCredentials$().pipe(
