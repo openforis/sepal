@@ -4,7 +4,7 @@ const worker$ = () => {
     const {switchMap} = require('rxjs/operators')
     const {swallow} = require('sepal/rxjs/operators')
     const ee = require('ee')
-    const {getCurrentCredentials$} = require('root/context')
+    const {getCurrentCredentials$} = require('root/jobs/credentials')
 
     const secondsToExpiration = expiration => {
         const millisecondsLeft = expiration - Date.now()

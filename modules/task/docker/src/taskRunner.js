@@ -71,7 +71,7 @@ module.exports = require('root/jobs/job')({
     jobPath: __filename,
     initArgs: () => ({config: require('root/config')}),
     before: [require('root/jobs/setConfig'), require('root/jobs/ee/initialize')],
-    services: [require('./driveLimiter').limiter, require('root/ee/export/serializer').limiter, require('root/ee/export/limiter').limiter],
+    services: [require('root/jobs/credentials').credentialsService, require('./driveLimiter').limiter, require('root/ee/export/serializer').limiter, require('root/ee/export/limiter').limiter],
     args: ctx => [ctx],
     worker$: executeTask$
 })

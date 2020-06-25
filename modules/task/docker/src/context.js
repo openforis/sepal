@@ -25,23 +25,21 @@ const setConfig = config => {
 }
 
 const setCredentials = userCredentials => {
+    const serviceAccountCredentials = data.config && data.config.serviceAccountCredentials
     if (userCredentials) {
         const tokenExpiration = userCredentials['access_token_expiry_date'] || 0
         const timeLeftMs = tokenExpiration - Date.now()
         const currentCredentials = credentials$.getValue()
         if (timeLeftMs > 0 && (!currentCredentials || !_.isEqual(userCredentials, currentCredentials.userCredentials))) {
             log.debug(`User credentials updated, expiring in ${Math.round(timeLeftMs / 1000)} seconds`)
-            credentials$.next({
-                userCredentials,
-                serviceAccountCredentials: data.config && data.config.serviceAccountCredentials
-            })
+            credentials$.next({userCredentials, serviceAccountCredentials})
         } else if (timeLeftMs <= 0) {
             log.warn('Received expired user credentials, ignored')
         } else {
             log.trace('User credentials unchanged')
         }
     } else {
-        log.warn('Received empty user credentials, ignored')
+        credentials$.next({serviceAccountCredentials})
     }
 }
 
@@ -71,7 +69,7 @@ const loadUserCredentials = () => {
             setCredentials(userCredentials)
         })
         .catch(() => {
-            log.debug('Failed to update credentials')
+            log.trace('Missing of invalid user credentials file')
             setCredentials()
         })
 }
@@ -91,14 +89,14 @@ const getCredentials$ = () =>
         filter(credentials => credentials)
     )
     
-const getCurrentCredentials$ = () => defer(() => {
-    const credentials = credentials$.getValue()
-    // return of(credentials)
-    return credentials
-        ? of(credentials)
-        : getCredentials$().pipe(
-            first()
-        )
-})
+const getCurrentCredentials$ = () =>
+    defer(() => {
+        const credentials = credentials$.getValue()
+        return credentials
+            ? of(credentials)
+            : getCredentials$().pipe(
+                first()
+            )
+    })
     
 module.exports = {setConfig, getConfig, getCredentials, getCredentials$, getCurrentCredentials$}
