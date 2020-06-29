@@ -1,31 +1,34 @@
-const {of} = require('rx')
+const {defer, of} = require('rx')
 const {catchError, map, switchMap} = require('rx/operators')
 const {fromPromise} = require('sepal/rxjs')
 const fs = require('fs')
 const Path = require('path')
 
-const ls$ = (path, options = {}) =>
+const ls$ = (path, options = {}) => defer(() =>
     fromPromise(fs.promises.readdir(path, options))
+)
 
-const mkdir$ = (path, options = {}) =>
+const mkdir$ = (path, options = {}) => defer(() =>
     fromPromise(fs.promises.mkdir(path, options)).pipe(
         map(() => path)
     )
+)
 
-const exists$ = path =>
+const exists$ = path => defer(() =>
     fromPromise(fs.promises.stat(path)).pipe(
         catchError(() => of(null)),
         map(stat => !!stat)
     )
+)
 
-const getPostfixIndex = (name, preferredName) => {
+const getPostfixIndex = (name, preferredName) => defer(() => {
     const match = name.match(new RegExp(`^${preferredName}_(\\d)$`))
     return match && match[1]
         ? parseInt(match[1]) + 1
         : 1
-}
+})
 
-const mkdirSafe$ = (preferredPath, options = {}) => {
+const mkdirSafe$ = (preferredPath, options = {}) => defer(() => {
     const preferredName = Path.basename(preferredPath)
     const parent = Path.dirname(preferredPath)
     const mkdirPostfix$ = () => ls$(parent).pipe(
@@ -43,6 +46,6 @@ const mkdirSafe$ = (preferredPath, options = {}) => {
             : mkdir$(preferredPath, options)
         )
     )
-}
+})
 
 module.exports = {exists$, ls$, mkdir$, mkdirSafe$}
