@@ -2,7 +2,7 @@ const {toGeometry, toFeatureCollection} = require('sepal/ee/aoi')
 const {allScenes, hasImagery} = require('sepal/ee/optical/collection')
 const {calculateIndex} = require('sepal/ee/optical/indexes')
 const tile = require('sepal/ee/tile')
-const {exportImageToSepal$} = require('root/ee/export/toSepal')
+const {exportImageToSepal$} = require('../jobs/export/toSepal')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {concat, forkJoin, from, of} = require('rx')
 const Path = require('path')
@@ -12,7 +12,7 @@ const {terminal$} = require('sepal/terminal')
 const {sequence} = require('sepal/utils/array')
 const moment = require('moment')
 const ee = require('ee')
-const {getConfig} = require('root/context')
+const {getContext$} = require('root/jobs/service/context')
 const log = require('sepal/log').getLogger('task')
 
 const TILE_DEGREES = 2
@@ -21,17 +21,18 @@ const EE_EXPORT_FILE_DIMENSIONS = 1024
 const DATE_DELTA = 2
 const DATE_DELTA_UNIT = 'months'
 
-const config = getConfig()
-
 module.exports = {
-    submit$: (id, recipe) => {
-        const preferredDownloadDir = `${config.homeDir}/downloads/${recipe.description}/`
-        return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-            switchMap(downloadDir =>
-                export$(downloadDir, recipe)
-            )
+    submit$: (id, recipe) =>
+        getContext$().pipe(
+            switchMap(({config}) => {
+                const preferredDownloadDir = `${config.homeDir}/downloads/${recipe.description}/`
+                return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
+                    switchMap(downloadDir =>
+                        export$(downloadDir, recipe)
+                    )
+                )
+            })
         )
-    },
 }
 
 const export$ = (downloadDir, recipe) => {

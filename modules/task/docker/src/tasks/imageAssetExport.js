@@ -1,7 +1,6 @@
 const ImageFactory = require('sepal/ee/imageFactory')
 const {switchMap} = require('rx/operators')
-const {exportImageToAsset$} = require('root/ee/export/toAsset')
-// const log = require('sepal/log').getLogger('task')
+const {exportImageToAsset$} = require('../jobs/export/toAsset')
 
 module.exports = {
     submit$: (id, {image: {recipe, bands, scale}}) => {

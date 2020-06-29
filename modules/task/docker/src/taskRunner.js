@@ -69,16 +69,14 @@ const executeTask$ = ({id, name, params}) => {
 module.exports = require('root/jobs/job')({
     jobName: 'execute task',
     jobPath: __filename,
-    initArgs: () => ({config: require('root/config')}),
     before: [
-        require('root/jobs/setConfig'),
         require('root/jobs/ee/initialize')
     ],
     services: [
-        require('root/jobs/credentials').credentialsService,
-        require('root/driveLimiter').limiter,
-        require('root/ee/export/exportLimiter').limiter,
-        require('root/ee/export/serializer').limiter
+        require('root/jobs/service/context').contextService,
+        require('root/jobs/service/exportLimiter').limiter,
+        require('root/jobs/service/driveLimiter').limiter,
+        require('root/jobs/service/driveSerializer').limiter
     ],
     args: ctx => [ctx],
     worker$: executeTask$

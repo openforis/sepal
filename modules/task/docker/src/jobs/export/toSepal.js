@@ -2,16 +2,13 @@ const ee = require('ee')
 const {concat, defer} = require('rx')
 const {switchMap} = require('rx/operators')
 const {swallow} = require('sepal/rxjs/operators')
-
-const {limiter$: exportLimiter$} = require('./exportLimiter')
-// const {Limiter} = require('sepal/service/limiter')
+const {limiter$: exportLimiter$} = require('root/jobs/service/exportLimiter')
 const drive = require('root/drive')
 const {initUserBucket$} = require('root/cloudStorage')
 const {downloadFromCloudStorage$} = require('root/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
-const {getCredentials} = require('root/context')
-const {limiter$: serialize$} = require('./serializer')
-
+const {getContext$} = require('root/jobs/service/context')
+const {limiter$: driveSerializer$} = require('root/jobs/service/driveSerializer')
 const task$ = require('root/ee/task')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
@@ -20,7 +17,7 @@ const drivePath = folder =>
     `SEPAL/exports/${folder}`
 
 const createDriveFolder$ = folder =>
-    defer(() => serialize$(
+    defer(() => driveSerializer$(
         drive.getFolderByPath$({path: drivePath(folder), create: true})
     )).pipe(
         swallow()
@@ -110,15 +107,13 @@ const exportImageToSepal$ = ({
         )
     }
 
-    const {userCredentials} = getCredentials()
-    return userCredentials
-        ? throughDrive$()
-        : throughCloudStorage$()
+    return getContext$().pipe(
+        switchMap(({userCredentials}) =>
+            userCredentials
+                ? throughDrive$()
+                : throughCloudStorage$()
+        )
+    )
 }
-
-// const {limiter$: serialize$} = Limiter({
-//     name: 'Serializer',
-//     maxConcurrency: 1
-// })
 
 module.exports = {exportImageToSepal$}

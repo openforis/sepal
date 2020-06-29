@@ -5,46 +5,33 @@ const path = require('path')
 const {mkdir$} = require('root/rxjs/fileSystem')
 const log = require('sepal/log').getLogger('context')
 const _ = require('lodash')
+const config = require('./config')
 
 const CREDENTIALS_FILE = 'credentials'
 
-const data = {
-    config: null
-}
-
-const credentials$ = new BehaviorSubject()
-
-const setConfig = config => {
-    if (data.config) {
-        log.debug('Configuration already set, ignored')
-    } else {
-        log.debug('Setting configuration')
-        data.config = config
-        monitorUserCredentials()
-    }
-}
+const context$ = new BehaviorSubject()
 
 const setCredentials = userCredentials => {
-    const serviceAccountCredentials = data.config && data.config.serviceAccountCredentials
+    const serviceAccountCredentials = config && config.serviceAccountCredentials
     if (userCredentials) {
         const tokenExpiration = userCredentials['access_token_expiry_date'] || 0
         const timeLeftMs = tokenExpiration - Date.now()
-        const currentCredentials = credentials$.getValue()
+        const currentCredentials = context$.getValue()
         if (timeLeftMs > 0 && (!currentCredentials || !_.isEqual(userCredentials, currentCredentials.userCredentials))) {
             log.debug(`User credentials updated, expiring in ${Math.round(timeLeftMs / 1000)} seconds`)
-            credentials$.next({userCredentials, serviceAccountCredentials})
+            context$.next({config, userCredentials, serviceAccountCredentials})
         } else if (timeLeftMs <= 0) {
             log.warn('Received expired user credentials, ignored')
         } else {
             log.trace('User credentials unchanged')
         }
     } else {
-        credentials$.next({serviceAccountCredentials})
+        context$.next({config, serviceAccountCredentials})
     }
 }
 
 const credentialsDir = () =>
-    `${data.config.homeDir}/.config/earthengine`
+    `${config.homeDir}/.config/earthengine`
 
 const credentialsPath = () =>
     path.join(credentialsDir(), CREDENTIALS_FILE)
@@ -75,28 +62,19 @@ const loadUserCredentials = () => {
 }
 
 const getConfig = () =>
-    data.config
+    config
 
-const getCredentials = () => {
-    if (!data.config) {
-        throw new Error('Cannot get credentials before setting config')
-    }
-    return credentials$.getValue()
-}
-
-const getCredentials$ = () =>
-    credentials$.pipe(
-        filter(credentials => credentials)
-    )
-    
-const getCurrentCredentials$ = () =>
+const getContext$ = () =>
     defer(() => {
-        const credentials = credentials$.getValue()
-        return credentials
-            ? of(credentials)
-            : getCredentials$().pipe(
+        const context = context$.getValue()
+        return context
+            ? of(context)
+            : context$.pipe(
+                filter(context => context),
                 first()
             )
     })
-    
-module.exports = {setConfig, getConfig, getCredentials, getCredentials$, getCurrentCredentials$}
+
+monitorUserCredentials()
+
+module.exports = {getConfig, getContext$}

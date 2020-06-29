@@ -1,6 +1,7 @@
 {
     "port": 5102,
     "categories": {
+        "channel": "info",
         "config": "debug",
         "context": "debug",
         "default": "info",

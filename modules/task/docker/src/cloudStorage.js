@@ -1,89 +1,101 @@
-const {of} = require('rx')
-const {first, map, switchMap} = require('rx/operators')
-const {fromPromise} = require('sepal/rxjs')
+const {from, of} = require('rx')
+const {first, map, switchMap, mapTo} = require('rx/operators')
 const crypto = require('crypto')
 const http = require('sepal/httpClient')
 const {Storage} = require('@google-cloud/storage')
-const {getCredentials, getConfig} = require('root/context')
+const {getContext$} = require('root/jobs/service/context')
 const {retry} = require('sepal/rxjs/operators')
-
-const config = getConfig()
-
-const projectId = config.googleProjectId
-const cloudStorage = new Storage({credentials: config.serviceAccountCredentials, projectId})
+const log = require('sepal/log').getLogger('cloudstorage')
 
 const RETRIES = 5
 
-const do$ = promise =>
-    fromPromise(promise).pipe(
+const cloudStorage$ = (message, op) => {
+    log.debug(() => message)
+    return getContext$().pipe(
+        map(({config}) => new Storage({
+            credentials: config.serviceAccountCredentials,
+            projectId: config.googleProjectId
+        })),
+        switchMap(cloudStorage =>
+            from(op(cloudStorage)),
+        ),
         retry(RETRIES)
     )
+}
 
 /**
  * Get bucket name for Sepal username and Google account email.
  */
-const getBucketName = ({username, email}) => {
+const getBucketName = ({username, email, host}) => {
     const emailHash = crypto.createHash('md5').update(email).digest('hex').substring(0, 4)
-    return `${username}-${emailHash}-${config.sepalHost}`.replace(/[^a-zA-Z0-9-]/g, '-')
+    return `${username}-${emailHash}-${host}`.replace(/[^a-zA-Z0-9-]/g, '-')
 }
 
 const bucketExists$ = user =>
-    do$(cloudStorage.bucket(user.bucketName).exists()).pipe(
-        map(response => response[0])
+    cloudStorage$(`Check if bucket ${user.bucketName} exists`,
+        cloudStorage => cloudStorage.bucket(user.bucketName).exists().pipe(
+            map(response => response[0])
+        )
     )
 
-const createBucket$ = bucket =>
-    do$(cloudStorage.createBucket(bucket.bucketName, {
-        location: config.googleRegion,
-        storageClass: 'STANDARD',
-        iamConfiguration: {
-            uniformBucketLevelAccess: {enabled: true}
-        },
-        labels: {type: 'user'},
-        lifecycle: {
-            rule: [{
-                action: {type: 'Delete'},
-                condition: {age: 1}
-            }]
-        }
-    })).pipe(
-        switchMap(() => setBucketPermissions$(bucket)),
+const createBucket$ = (config, bucket) =>
+    cloudStorage$(`Create bucket ${bucket.bucketName}`,
+        cloudStorage => cloudStorage.createBucket(bucket.bucketName, {
+            location: config.googleRegion,
+            storageClass: 'STANDARD',
+            iamConfiguration: {
+                uniformBucketLevelAccess: {enabled: true}
+            },
+            labels: {type: 'user'},
+            lifecycle: {
+                rule: [{
+                    action: {type: 'Delete'},
+                    condition: {age: 1}
+                }]
+            }
+        })
+    ).pipe(
+        switchMap(() => setBucketPermissions$(config, bucket)),
         mapTo(bucket)
     )
 
-const setBucketPermissions$ = user => {
-    const userBindings = [
-        {
-            role: 'roles/storage.objectCreator',
-            members: [`user:${user.email}`],
-        },
-        {
-            role: 'roles/storage.legacyBucketWriter',
-            members: [`user:${user.email}`],
+const setBucketPermissions$ = (config, user) =>
+    cloudStorage$('Set bucket permissions',
+        cloudStorage => {
+            const userBindings = [
+                {
+                    role: 'roles/storage.objectCreator',
+                    members: [`user:${user.email}`],
+                },
+                {
+                    role: 'roles/storage.legacyBucketWriter',
+                    members: [`user:${user.email}`],
+                }
+            ]
+            const projectId = config.googleProjectId
+            const bindings = [
+                {
+                    role: 'roles/storage.admin',
+                    members: [
+                        `projectEditor:${projectId}`,
+                        `projectOwner:${projectId}`,
+                        `serviceAccount:${config.serviceAccountCredentials.client_email}`
+                    ],
+                },
+                ...user.serviceAccount ? [] : userBindings
+            ]
+            const policy = {kind: 'storage#policy', bindings}
+            const bucket = cloudStorage.bucket(user.bucketName)
+            return bucket.iam.setPolicy(policy)
         }
-    ]
-    const bindings = [
-        {
-            role: 'roles/storage.admin',
-            members: [
-                `projectEditor:${projectId}`,
-                `projectOwner:${projectId}`,
-                `serviceAccount:${config.serviceAccountCredentials.client_email}`
-            ],
-        },
-        ...user.serviceAccount ? [] : userBindings
-    ]
-    const policy = {kind: 'storage#policy', bindings}
-    const bucket = cloudStorage.bucket(user.bucketName)
-    return do$(bucket.iam.setPolicy(policy))
-}
+    )
 
-const createIfMissingBucket$ = bucket =>
+const ensureBucketExists$ = (config, bucket) =>
     bucketExists$(bucket).pipe(
-        switchMap(exists => 
-            exists 
-                ? of(bucket) 
-                : createBucket$(bucket)
+        switchMap(exists =>
+            exists
+                ? of(bucket)
+                : createBucket$(config, bucket)
         )
     )
 
@@ -98,37 +110,39 @@ const getEmail$ = accessToken =>
         map(response => JSON.parse(response.body).user.emailAddress)
     )
 
-const getUserBucket$ = userCredentials =>
+const getUserBucket$ = (config, userCredentials) =>
     getEmail$(userCredentials.access_token).pipe(
         map(email => ({
             username: config.username,
             accessToken: userCredentials.access_token,
             email,
-            bucketName: getBucketName({username: config.username, email})
+            bucketName: getBucketName({username: config.username, email, host: config.sepalHost})
         }))
     )
 
-const getServiceAccountBucket$ = serviceAccountCredentials => {
+const getServiceAccountBucket$ = (config, serviceAccountCredentials) => {
     const username = 'service-account'
     const email = serviceAccountCredentials.client_email
     return of({
         username,
         email,
-        bucketName: getBucketName({username, email}),
+        bucketName: getBucketName({username, email, host: config.sepalHost}),
         serviceAccount: true
-    });
+    })
 }
 
-const getBucket$ = ({userCredentials, serviceAccountCredentials}) =>
+const getBucket$ = ({config, userCredentials, serviceAccountCredentials}) =>
     userCredentials
-        ? getUserBucket$(userCredentials)
-        : getServiceAccountBucket$(serviceAccountCredentials)
+        ? getUserBucket$(config, userCredentials)
+        : getServiceAccountBucket$(config, serviceAccountCredentials)
 
 const initUserBucket$ = () =>
-    getBucket$(getCredentials()).pipe(
-        switchMap(bucket => createIfMissingBucket$(bucket)),
+    getContext$().pipe(
+        switchMap(context => getBucket$(context).pipe(
+            switchMap(bucket => ensureBucketExists$(context.config, bucket)),
+        )),
         map(({bucketName}) => bucketName),
         first()
     )
 
-module.exports = {cloudStorage, initUserBucket$}
+module.exports = {cloudStorage$, initUserBucket$}

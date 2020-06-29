@@ -1,14 +1,14 @@
-const {EMPTY, ReplaySubject, concat, defer, from, of, throwError} = require('rx')
+const {EMPTY, ReplaySubject, concat, from, of, throwError} = require('rx')
 const {catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap} = require('rx/operators')
 const {google} = require('googleapis')
 const {NotFoundException} = require('sepal/exception')
 const log = require('sepal/log').getLogger('drive')
-const {getCurrentCredentials$} = require('root/jobs/credentials')
+const {getContext$} = require('root/jobs/service/context')
 const fs = require('fs')
 const Path = require('path')
 const {retry, swallow} = require('sepal/rxjs/operators')
 const {mkdir$} = require('./rxjs/fileSystem')
-const {limiter$: driveLimiter$} = require('./driveLimiter')
+const {limiter$: driveLimiter$} = require('./jobs/service/driveLimiter')
 const format = require('./format')
 
 const RETRIES = 5
@@ -32,7 +32,7 @@ const do$ = (message, operation$) => {
 }
 
 const auth$ = () =>
-    getCurrentCredentials$().pipe(
+    getContext$().pipe(
         switchMap(({userCredentials}) => {
             const oAuth2Client = new google.auth.OAuth2()
             oAuth2Client.setCredentials({
@@ -52,7 +52,9 @@ const drive$ = (message, op) => {
     log.debug(() => message)
     return driveLimiter$(
         auth$().pipe(
-            map(auth => google.drive({version: 'v3', auth})),
+            map(auth =>
+                google.drive({version: 'v3', auth})
+            ),
             switchMap(drive =>
                 from(op(drive))
             ),

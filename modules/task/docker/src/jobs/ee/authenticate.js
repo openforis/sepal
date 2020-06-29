@@ -4,7 +4,7 @@ const worker$ = () => {
     const {switchMap} = require('rxjs/operators')
     const {swallow} = require('sepal/rxjs/operators')
     const ee = require('ee')
-    const {getCurrentCredentials$} = require('root/jobs/credentials')
+    const {getContext$} = require('root/jobs/service/context')
 
     const secondsToExpiration = expiration => {
         const millisecondsLeft = expiration - Date.now()
@@ -47,8 +47,8 @@ const worker$ = () => {
             ? authenticateUserAccount$(userCredentials)
             : authenticateServiceAccount$(serviceAccountCredentials)
 
-    return getCurrentCredentials$().pipe(
-        switchMap(credentials => authenticate$(credentials)),
+    return getContext$().pipe(
+        switchMap(context => authenticate$(context)),
         swallow()
     )
 }

@@ -3,26 +3,26 @@ const {switchMap} = require('rx/operators')
 const moment = require('moment')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {createVrt$, setBandNames$} = require('sepal/gdal')
-const {exportImageToSepal$} = require('root/ee/export/toSepal')
+const {exportImageToSepal$} = require('../jobs/export/toSepal')
 const ImageFactory = require('sepal/ee/imageFactory')
-// const log = require('sepal/log').getLogger('task')
-const {getConfig} = require('root/context')
-
-const config = getConfig()
+const {getContext$} = require('root/jobs/service/context')
 
 module.exports = {
-    submit$: (id, {image: {recipe, bands, scale}}) => {
-        const description = recipe.title || recipe.placeholder
-        const preferredDownloadDir = `${config.homeDir}/downloads/${description}/`
-        return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
-            switchMap(downloadDir =>
-                concat(
-                    export$({description, downloadDir, recipe, bands, scale}),
-                    postProcess$({description, downloadDir, bands})
+    submit$: (id, {image: {recipe, bands, scale}}) =>
+        getContext$().pipe(
+            switchMap(({config}) => {
+                const description = recipe.title || recipe.placeholder
+                const preferredDownloadDir = `${config.homeDir}/downloads/${description}/`
+                return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
+                    switchMap(downloadDir =>
+                        concat(
+                            export$({description, downloadDir, recipe, bands, scale}),
+                            postProcess$({description, downloadDir, bands})
+                        )
+                    )
                 )
-            )
+            })
         )
-    }
 }
 
 const export$ = ({description, downloadDir, recipe, bands, scale}) =>
