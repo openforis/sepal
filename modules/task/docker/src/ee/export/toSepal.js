@@ -4,12 +4,13 @@ const {switchMap} = require('rx/operators')
 const {swallow} = require('sepal/rxjs/operators')
 
 const {limiter$: exportLimiter$} = require('./exportLimiter')
-const {Limiter} = require('sepal/service/limiter')
+// const {Limiter} = require('sepal/service/limiter')
 const drive = require('root/drive')
 const {initUserBucket$} = require('root/cloudStorage')
 const {downloadFromCloudStorage$} = require('root/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
 const {getCredentials} = require('root/context')
+const {limiter$: serialize$} = require('./serializer')
 
 const task$ = require('root/ee/task')
 
@@ -115,9 +116,9 @@ const exportImageToSepal$ = ({
         : throughCloudStorage$()
 }
 
-const {limiter$: serialize$} = Limiter({
-    name: 'Serializer',
-    maxConcurrency: 1
-})
+// const {limiter$: serialize$} = Limiter({
+//     name: 'Serializer',
+//     maxConcurrency: 1
+// })
 
 module.exports = {exportImageToSepal$}
