@@ -15,6 +15,7 @@
         "service": "info",
         "task": "debug",
         "terminal": "info",
+        "transport": "info",
         "worker": "debug"
     }
 }

@@ -3,13 +3,14 @@ const {concat, defer} = require('rx')
 const {switchMap} = require('rx/operators')
 const {swallow} = require('sepal/rxjs/operators')
 
-const {limiter$} = require('./limiter')
-const {Limiter} = require('sepal/service/limiter')
+const {limiter$: exportLimiter$} = require('./exportLimiter')
+// const {Limiter} = require('sepal/service/limiter')
 const drive = require('root/drive')
 const {initUserBucket$} = require('root/cloudStorage')
 const {downloadFromCloudStorage$} = require('root/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
 const {getCredentials} = require('root/context')
+const {limiter$: serialize$} = require('./serializer')
 
 const task$ = require('root/ee/task')
 
@@ -48,7 +49,7 @@ const exportImageToSepal$ = ({
     const throughCloudStorage$ = () => {
         const exportToCloudStorage$ = ({task, description, _retries}) => {
             log.debug('Earth Engine <to Cloud Storage>:', description)
-            return limiter$(
+            return exportLimiter$(
                 task$(task, description)
             )
         }
@@ -78,7 +79,7 @@ const exportImageToSepal$ = ({
     const throughDrive$ = () => {
         const exportToDrive$ = ({task, description, folder, _retries}) => {
             log.debug('Earth Engine <to Google Drive>:', description)
-            return limiter$(
+            return exportLimiter$(
                 concat(
                     createDriveFolder$(folder),
                     task$(task, description)
@@ -115,9 +116,9 @@ const exportImageToSepal$ = ({
         : throughCloudStorage$()
 }
 
-const {limiter$: serialize$} = Limiter({
-    name: 'Serializer',
-    maxConcurrency: 1
-})
+// const {limiter$: serialize$} = Limiter({
+//     name: 'Serializer',
+//     maxConcurrency: 1
+// })
 
 module.exports = {exportImageToSepal$}
