@@ -4,7 +4,7 @@ const {catchError, map, switchMap} = require('rx/operators')
 const {swallow} = require('sepal/rxjs/operators')
 
 const Path = require('path')
-const {limiter$} = require('./limiter')
+const {limiter$: exportLimiter$} = require('./exportLimiter')
 
 const task$ = require('root/ee/task')
 
@@ -51,7 +51,7 @@ const exportImageToAsset$ = ({
     const exportToAsset$ = ({task, description, assetId, _retries}) => {
         if (ee.sepal.getAuthType() === 'SERVICE_ACCOUNT')
             throw new Error('Cannot export to asset using service account.')
-        return limiter$(
+        return exportLimiter$(
             concat(
                 deleteAsset$(assetId).pipe(swallow()),
                 task$(task, description)
