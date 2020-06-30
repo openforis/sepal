@@ -2,6 +2,7 @@
     "port": 5102,
     "categories": {
         "channel": "info",
+        "cloudStorage": "debug",
         "config": "debug",
         "context": "debug",
         "default": "info",

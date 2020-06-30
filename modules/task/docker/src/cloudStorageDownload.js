@@ -1,44 +1,49 @@
 const fs = require('fs')
-const {Subject, EMPTY, concat, of} = require('rx')
+const {Subject, EMPTY, concat, defer, of} = require('rx')
 const {expand, finalize, map, mergeMap, scan, switchMap} = require('rx/operators')
 const {retry} = require('sepal/rxjs/operators')
 const {fromPromise} = require('sepal/rxjs')
 const {cloudStorage$} = require('./cloudStorage')
 const path = require('path')
 const format = require('./format')
+const log = require('sepal/log').getLogger('cloudStorage')
 
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1
 
 const RETRIES = 5
 
-const do$ = promise =>
-    fromPromise(promise).pipe(
+const do$ = (description, promise) => defer(() => {
+    log.debug(description)
+    return fromPromise(promise).pipe(
         retry(RETRIES)
-    )
+    );
+})
 
 const downloadFromCloudStorage$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
-    cloudStorage$(`Downloading from Cloud Storage: ${{bucketPath, prefix, downloadDir, deleteAfterDownload}}`,
-        cloudStorage => {
-            const bucket = cloudStorage.bucket(`gs://${bucketPath}`)
-            return do$(bucket.getFiles({prefix, autoPaginate: true}))
-                .pipe(
-                    map(response => response[0]),
-                    switchMap(files =>
-                        concat(
-                            of(getProgress({files})),
-                            downloadFiles$({files, prefix, downloadDir, deleteAfterDownload})
-                        )),
-                    finalize(() => deleteAfterDownload ? bucket.deleteFiles({prefix}) : null)
-                )
-        }
+    cloudStorage$().pipe(
+        map(cloudStorage => cloudStorage.bucket(`gs://${bucketPath}`)),
+        switchMap(bucket =>
+            do$(
+                `download: ${JSON.stringify({bucketPath, prefix, downloadDir, deleteAfterDownload})}`,
+                bucket.getFiles({prefix, autoPaginate: true})
+            ).pipe(
+                map(response => response[0]),
+                switchMap(files => concat(
+                    of(getProgress({files})),
+                    downloadFiles$({files, prefix, downloadDir, deleteAfterDownload})
+                )),
+                finalize(() => deleteAfterDownload ? bucket.deleteFiles({prefix}) : null)
+            )
+        ),
     )
+
 
 const getProgress = ({
     files,
     currentProgress = {downloadedFiles: 0, downloadedBytes: 0},
     fileProgress = {start: 0, end: -1}
-}) => {
+ }) => {
     const downloadedFiles = currentProgress.downloadedFiles + (isDownloaded(fileProgress) ? 1 : 0)
     const downloadedBytes = currentProgress.downloadedBytes + fileProgress.end - fileProgress.start + 1
     const totalFiles = files.length
@@ -111,13 +116,13 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
 }
 
 const deleteFile$ = file => {
-    return do$(file.bucket.deleteFiles({prefix: file.name})).pipe(
+    return do$(`delete file ${file.name}`, file.bucket.deleteFiles({prefix: file.name})).pipe(
         switchMap(() => EMPTY)
     )
 }
 
 const createDirs$ = path =>
-    do$(fs.promises.mkdir(path, {recursive: true}))
+    do$(`create path ${path}`, fs.promises.mkdir(path, {recursive: true}))
 
 const isDownloaded = fileProgress =>
     fileProgress.end >= fileProgress.length - 1
