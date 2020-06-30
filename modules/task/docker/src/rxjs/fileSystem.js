@@ -21,12 +21,12 @@ const exists$ = path => defer(() =>
     )
 )
 
-const getPostfixIndex = (name, preferredName) => defer(() => {
+const getPostfixIndex = (name, preferredName) => {
     const match = name.match(new RegExp(`^${preferredName}_(\\d)$`))
     return match && match[1]
         ? parseInt(match[1]) + 1
         : 1
-})
+}
 
 const mkdirSafe$ = (preferredPath, options = {}) => defer(() => {
     const preferredName = Path.basename(preferredPath)
