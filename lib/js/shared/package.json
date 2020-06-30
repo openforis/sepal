@@ -16,7 +16,7 @@
         "ee": "src/reexport/ee"
     },
     "dependencies": {
-        "@google/earthengine": "0.1.218",
+        "@google/earthengine": "0.1.226",
         "base-64": "^0.1.0",
         "koa-bodyparser": "^4.2.1",
         "koa-easy-ws": "^1.1.3",
