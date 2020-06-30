@@ -4,6 +4,7 @@ const crypto = require('crypto')
 const http = require('sepal/httpClient')
 const {Storage} = require('@google-cloud/storage')
 const {getContext$} = require('root/jobs/service/context')
+const {fromPromise} = require('sepal/rxjs')
 const {retry} = require('sepal/rxjs/operators')
 const log = require('sepal/log').getLogger('cloudstorage')
 
@@ -33,7 +34,7 @@ const getBucketName = ({username, email, host}) => {
 
 const bucketExists$ = user =>
     cloudStorage$(`Check if bucket ${user.bucketName} exists`,
-        cloudStorage => cloudStorage.bucket(user.bucketName).exists().pipe(
+        cloudStorage => fromPromise(cloudStorage.bucket(user.bucketName).exists()).pipe(
             map(response => response[0])
         )
     )

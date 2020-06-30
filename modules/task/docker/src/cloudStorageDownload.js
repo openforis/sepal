@@ -1,12 +1,11 @@
 const fs = require('fs')
-const {Subject, EMPTY, concat, defer, of} = require('rx')
+const {Subject, EMPTY, concat, of} = require('rx')
 const {expand, finalize, map, mergeMap, scan, switchMap} = require('rx/operators')
 const {retry} = require('sepal/rxjs/operators')
 const {fromPromise} = require('sepal/rxjs')
-const {cloudStorage} = require('./cloudStorage')
+const {cloudStorage$} = require('./cloudStorage')
 const path = require('path')
 const format = require('./format')
-const log = require('sepal/log').getLogger('cloudStorage')
 
 const CHUNK_SIZE = 10 * 1024 * 1024
 const CONCURRENT_FILE_DOWNLOAD = 1
@@ -17,20 +16,23 @@ const do$ = promise =>
     fromPromise(promise).pipe(
         retry(RETRIES)
     )
-const downloadFromCloudStorage$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) => defer(() => {
-    log.debug('Downloading from Cloud Storage:', {bucketPath, prefix, downloadDir, deleteAfterDownload})
-    const bucket = cloudStorage.bucket(`gs://${bucketPath}`)
-    return do$(bucket.getFiles({prefix, autoPaginate: true}))
-        .pipe(
-            map(response => response[0]),
-            switchMap(files =>
-                concat(
-                    of(getProgress({files})),
-                    downloadFiles$({files, prefix, downloadDir, deleteAfterDownload})
-                )),
-            finalize(() => deleteAfterDownload ? bucket.deleteFiles({prefix}) : null)
-        )
-})
+
+const downloadFromCloudStorage$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
+    cloudStorage$(`Downloading from Cloud Storage: ${{bucketPath, prefix, downloadDir, deleteAfterDownload}}`,
+        cloudStorage => {
+            const bucket = cloudStorage.bucket(`gs://${bucketPath}`)
+            return do$(bucket.getFiles({prefix, autoPaginate: true}))
+                .pipe(
+                    map(response => response[0]),
+                    switchMap(files =>
+                        concat(
+                            of(getProgress({files})),
+                            downloadFiles$({files, prefix, downloadDir, deleteAfterDownload})
+                        )),
+                    finalize(() => deleteAfterDownload ? bucket.deleteFiles({prefix}) : null)
+                )
+        }
+    )
 
 const getProgress = ({
     files,
