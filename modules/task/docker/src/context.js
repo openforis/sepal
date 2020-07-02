@@ -1,5 +1,5 @@
 const {BehaviorSubject, defer, timer, of} = require('rx')
-const {filter, switchMap, tap, first} = require('rx/operators')
+const {filter, switchMap, tap, first, map, pairwise} = require('rx/operators')
 const fs = require('fs')
 const path = require('path')
 const {mkdir$} = require('root/rxjs/fileSystem')
@@ -19,14 +19,14 @@ const setCredentials = userCredentials => {
         const currentCredentials = context$.getValue()
         if (timeLeftMs > 0 && (!currentCredentials || !_.isEqual(userCredentials, currentCredentials.userCredentials))) {
             log.debug(`User credentials updated, expiring in ${Math.round(timeLeftMs / 1000)} seconds`)
-            context$.next({config, userCredentials, serviceAccountCredentials})
+            context$.next({config, userCredentials, serviceAccountCredentials, isUserAccount: true})
         } else if (timeLeftMs <= 0) {
             log.warn('Received expired user credentials, ignored')
         } else {
             log.trace('User credentials unchanged')
         }
     } else {
-        context$.next({config, serviceAccountCredentials})
+        context$.next({config, serviceAccountCredentials, isUserAccount: false})
     }
 }
 
@@ -75,6 +75,15 @@ const getContext$ = () =>
             )
     })
 
+const switchedToServiceAccount$ =
+    context$.pipe(
+        filter(credentials => credentials),
+        pairwise(),
+        map(([previous, current]) => previous.isUserAccount && !current.isUserAccount),
+        filter(switchedToServiceAccount => switchedToServiceAccount),
+        tap(() => log.debug('Switched to service account'))
+    )
+
 monitorUserCredentials()
 
-module.exports = {getConfig, getContext$}
+module.exports = {getConfig, getContext$, switchedToServiceAccount$}

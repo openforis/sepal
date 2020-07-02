@@ -4,7 +4,7 @@ const log = require('sepal/log').getLogger('task')
 const executeTask$ = require('./taskRunner')
 const {lastInWindow, repeating} = require('sepal/rxjs/operators')
 const http = require('sepal/httpClient')
-const {getConfig} = require('./context')
+const {getConfig, switchedToServiceAccount$} = require('./context')
 const {errorReport} = require('sepal/exception')
 
 const MIN_TIME_BETWEEN_NOTIFICATIONS = 1 * 1000
@@ -86,7 +86,10 @@ task$.pipe(
         executeTask$(task).pipe(
             takeUntil(cancel$.pipe(
                 filter(id => id === task.id),
-                tap(() => log.debug(msg(task.id, 'cancelled'))),
+                tap(() => log.debug(msg(task.id, 'cancelled by user'))),
+            )),
+            takeUntil(switchedToServiceAccount$.pipe(
+                tap(() => log.debug(msg(task.id, 'cancelled by switching to service account'))),
             )),
             switchMap(progress =>
                 progress.state === 'COMPLETED'
