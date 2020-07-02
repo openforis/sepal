@@ -1,11 +1,11 @@
 const ee = require('ee')
 const {concat, defer} = require('rx')
-const {switchMap} = require('rx/operators')
+const {finalize, switchMap} = require('rx/operators')
 const {swallow} = require('sepal/rxjs/operators')
 const {limiter$: exportLimiter$} = require('root/jobs/service/exportLimiter')
 const drive = require('root/drive')
 const {initUserBucket$} = require('root/cloudStorageBucket')
-const {downloadFromCloudStorage$} = require('root/cloudStorageDownload')
+const cloudStorage = require('root/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
 const {getContext$} = require('root/jobs/service/context')
 const {limiter$: driveSerializer$} = require('root/jobs/service/driveSerializer')
@@ -50,7 +50,7 @@ const exportImageToSepal$ = ({
                 task$(task, description)
             )
         }
-
+        const cloudStoragePrefix = `${folder}/`
         return initUserBucket$().pipe(
             switchMap(bucketPath => {
                 return concat(
@@ -62,12 +62,14 @@ const exportImageToSepal$ = ({
                         description: `export to Sepal through CS (${description})`,
                         retries
                     }),
-                    downloadFromCloudStorage$({
+                    cloudStorage.download$({
                         bucketPath,
-                        prefix: `${folder}/`,
+                        prefix: cloudStoragePrefix,
                         downloadDir,
                         deleteAfterDownload: true
                     })
+                ).pipe(
+                    finalize(() => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}).subscribe())
                 )
             })
         )
@@ -80,6 +82,8 @@ const exportImageToSepal$ = ({
                 concat(
                     createDriveFolder$(folder),
                     task$(task, description)
+                ).pipe(
+                    finalize(() => drive.removeFolderByPath$({path: drivePath(folder)}).subscribe())
                 )
             )
         }

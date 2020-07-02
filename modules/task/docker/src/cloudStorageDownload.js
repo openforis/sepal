@@ -17,10 +17,9 @@ const do$ = (description, promise) => defer(() => {
     log.debug(description)
     return fromPromise(promise).pipe(
         retry(RETRIES)
-    );
+    )
 })
-
-const downloadFromCloudStorage$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
+const download$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
     cloudStorage$().pipe(
         map(cloudStorage => cloudStorage.bucket(`gs://${bucketPath}`)),
         switchMap(bucket =>
@@ -39,11 +38,20 @@ const downloadFromCloudStorage$ = ({bucketPath, prefix, downloadDir, deleteAfter
     )
 
 
+const delete$ = ({bucketPath, prefix}) => {
+    log.error('deleting', bucketPath, prefix)
+    return cloudStorage$().pipe(
+        map(cloudStorage => cloudStorage.bucket(`gs://${bucketPath}`)),
+        switchMap(bucket => bucket.deleteFiles({prefix}))
+    );
+}
+
+
 const getProgress = ({
-    files,
-    currentProgress = {downloadedFiles: 0, downloadedBytes: 0},
-    fileProgress = {start: 0, end: -1}
- }) => {
+                         files,
+                         currentProgress = {downloadedFiles: 0, downloadedBytes: 0},
+                         fileProgress = {start: 0, end: -1}
+                     }) => {
     const downloadedFiles = currentProgress.downloadedFiles + (isDownloaded(fileProgress) ? 1 : 0)
     const downloadedBytes = currentProgress.downloadedBytes + fileProgress.end - fileProgress.start + 1
     const totalFiles = files.length
@@ -90,8 +98,14 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
         file.createReadStream({start, end})
             .on('error', error => chunkSubject$.error(error))
             .on('response', response => {
-                const [_contentRange, _unit, start, end, length] = response.headers['content-range'].match('(.*) (.*)-(.*)/(.*)')
-                next = {path: path.basename(toFilePath), start, end: Number(end), length: Number(length)}
+                const contentRange = response.headers['content-range']
+                if (contentRange) {
+                    const [, , start, end, length] = contentRange.match('(.*) (.*)-(.*)/(.*)')
+                    next = {path: path.basename(toFilePath), start, end: Number(end), length: Number(length)}
+                } else {
+                    log.error('Invalid Cloud Storage response', response)
+                    chunkSubject$.error(new Error('Invalid Cloud Storage response'))
+                }
             })
             .on('finish', _response => {
                 chunkSubject$.next({...next, time: new Date().getTime() - startTime})
@@ -130,4 +144,4 @@ const isDownloaded = fileProgress =>
 const formatFileSize = bytes =>
     format.fileSize(bytes)
 
-module.exports = {downloadFromCloudStorage$}
+module.exports = {download$, delete$}
