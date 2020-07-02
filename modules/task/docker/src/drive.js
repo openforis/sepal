@@ -316,4 +316,4 @@ const downloadProgress$ = ({bytes, files}) => {
         messageArgs: {bytes: formattedBytes, files}
     })
 }
-module.exports = {getFolderByPath$, downloadSingleFolderByPath$}
+module.exports = {getFolderByPath$, removeFolderByPath$, downloadSingleFolderByPath$}
