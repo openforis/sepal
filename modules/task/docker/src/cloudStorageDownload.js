@@ -38,13 +38,11 @@ const download$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
     )
 
 
-const delete$ = ({bucketPath, prefix}) => {
-    log.error('deleting', bucketPath, prefix)
-    return cloudStorage$().pipe(
+const delete$ = ({bucketPath, prefix}) =>
+    cloudStorage$().pipe(
         map(cloudStorage => cloudStorage.bucket(`gs://${bucketPath}`)),
         switchMap(bucket => bucket.deleteFiles({prefix}))
-    );
-}
+    )
 
 
 const getProgress = ({
