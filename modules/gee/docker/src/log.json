@@ -4,7 +4,8 @@
     },
     "availableCategories": {
         "default": "debug",
-        "channel": "debug",
+        "channel-forward": "debug",
+        "channel-reverse": "debug",
         "ee": "debug",
         "http": "debug",
         "limiter": "debug",
