@@ -82,8 +82,6 @@ const exportImageToSepal$ = ({
                 concat(
                     createDriveFolder$(folder),
                     task$(task, description)
-                ).pipe(
-                    finalize(() => drive.removeFolderByPath$({path: drivePath(folder)}).subscribe())
                 )
             )
         }
@@ -108,6 +106,8 @@ const exportImageToSepal$ = ({
                 path: drivePath(folder),
                 downloadDir
             })
+        ).pipe(
+            finalize(() => drive.removeFolderByPath$({path: drivePath(folder)}).subscribe())
         )
     }
 

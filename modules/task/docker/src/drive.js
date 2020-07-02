@@ -215,7 +215,19 @@ const getFilesByPath = ({path, pageToken}) =>
 const removeFolderByPath$ = ({path}) =>
     do$(`Remove folder by path: ${path}`,
         getFolderByPath$({path}).pipe(
+            catchError(e => {
+                if (e instanceof NotFoundException) {
+                    return EMPTY
+                } else {
+                    throwError(e)
+                }
+            }),
             switchMap(({id}) => remove$({id})),
+            catchError(e => {
+                log.warn(`Failed to remove ${path}`, e)
+                return EMPTY
+            }),
+            swallow()
         )
     )
 
