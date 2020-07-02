@@ -30,7 +30,7 @@ const initUserBucket$ = () =>
                 return of({
                     username,
                     email,
-                    bucketName: getBucketName({username, email}),
+                    bucketName: getBucketName({username, email, prefix: `-${config.username}`}),
                     serviceAccount: true
                 })
             }
@@ -43,9 +43,9 @@ const initUserBucket$ = () =>
             /**
              * Get bucket name for Sepal username and Google account email.
              */
-            const getBucketName = ({username, email}) => {
+            const getBucketName = ({username, email, prefix = ''}) => {
                 const emailHash = crypto.createHash('md5').update(email).digest('hex').substring(0, 4)
-                return `${username}-${emailHash}-${config.sepalHost}`.replace(/[^a-zA-Z0-9-]/g, '-')
+                return `${username}-${emailHash}-${config.sepalHost}${prefix}`.replace(/[^a-zA-Z0-9-]/g, '-')
             }
 
             const createBucket$ = user =>
