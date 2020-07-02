@@ -1,8 +1,8 @@
 {
     "port": 5102,
     "categories": {
-        "channel-forward": "debug",
-        "channel-reverse": "debug",
+        "channel-forward": "info",
+        "channel-reverse": "info",
         "cloudStorage": "debug",
         "config": "debug",
         "context": "debug",
