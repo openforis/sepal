@@ -1,5 +1,6 @@
 const {concat, of} = require('rx')
 const {distinctUntilChanged, map} = require('rx/operators')
+const {finalize$} = require('sepal/rxjs')
 const log = require('sepal/log').getLogger('task')
 const _ = require('lodash')
 
@@ -58,6 +59,7 @@ const executeTask$ = ({id, name, params}) => {
     return concat(
         initialState$,
         progressState$,
+        finalize$,
         finalState$
     )
 }

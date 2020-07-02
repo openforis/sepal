@@ -1,6 +1,7 @@
 const ee = require('ee')
 const {interval, of, throwError} = require('rx')
-const {map, switchMap, finalize, catchError, mapTo, first, exhaustMap, distinctUntilChanged, takeWhile} = require('rx/operators')
+const {map, switchMap, catchError, mapTo, first, exhaustMap, distinctUntilChanged, takeWhile} = require('rx/operators')
+const {finalize} = require('sepal/rxjs/operators')
 const MONITORING_FREQUENCY = 10000
 const {UNSUBMITTED, READY, RUNNING, FAILED} = ee.data.ExportState
 const log = require('sepal/log').getLogger('ee')
