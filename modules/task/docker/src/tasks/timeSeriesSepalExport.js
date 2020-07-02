@@ -12,7 +12,7 @@ const {terminal$} = require('sepal/terminal')
 const {sequence} = require('sepal/utils/array')
 const moment = require('moment')
 const ee = require('ee')
-const {getContext$} = require('root/jobs/service/context')
+const {getCurrentContext$} = require('root/jobs/service/context')
 const log = require('sepal/log').getLogger('task')
 
 const TILE_DEGREES = 2
@@ -23,7 +23,7 @@ const DATE_DELTA_UNIT = 'months'
 
 module.exports = {
     submit$: (id, recipe) =>
-        getContext$().pipe(
+        getCurrentContext$().pipe(
             switchMap(({config}) => {
                 const preferredDownloadDir = `${config.homeDir}/downloads/${recipe.description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(

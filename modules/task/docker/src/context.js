@@ -1,5 +1,5 @@
-const {BehaviorSubject, defer, timer, of} = require('rx')
-const {filter, switchMap, tap, first, map, pairwise} = require('rx/operators')
+const {BehaviorSubject, defer, timer} = require('rx')
+const {filter, switchMap, tap, map, pairwise} = require('rx/operators')
 const fs = require('fs')
 const path = require('path')
 const {mkdir$} = require('root/rxjs/fileSystem')
@@ -65,19 +65,24 @@ const getConfig = () =>
     config
 
 const getContext$ = () =>
-    defer(() => {
-        const context = context$.getValue()
-        return context
-            ? of(context)
-            : context$.pipe(
-                filter(context => context),
-                first()
-            )
-    })
+    context$.pipe(
+        filter(context => context),
+        // distinctUntilChanged()
+    )
+
+// defer(() => {
+//     const context = context$.getValue()
+//     return context
+//         ? of(context)
+//         : context$.pipe(
+//             filter(context => context),
+//             first()
+//         )
+// })
 
 const switchedToServiceAccount$ =
     context$.pipe(
-        filter(credentials => credentials),
+        filter(context => context),
         pairwise(),
         map(([previous, current]) => previous.isUserAccount && !current.isUserAccount),
         filter(switchedToServiceAccount => switchedToServiceAccount),

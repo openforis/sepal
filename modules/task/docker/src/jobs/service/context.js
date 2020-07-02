@@ -9,5 +9,6 @@ const contextService = {
 
 module.exports = {
     contextService,
-    getContext$: () => service.submit$(contextService).pipe(first())
+    getContext$: () => service.submit$(contextService),
+    getCurrentContext$: () => service.submit$(contextService).pipe(first())
 }

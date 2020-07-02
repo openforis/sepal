@@ -4,15 +4,14 @@ const {fromPromise} = require('sepal/rxjs')
 const crypto = require('crypto')
 const http = require('sepal/httpClient')
 const {retry} = require('sepal/rxjs/operators')
-const {getContext$} = require('root/jobs/service/context')
+const {getCurrentContext$} = require('root/jobs/service/context')
 const {cloudStorage$} = require('./cloudStorage')
 const log = require('sepal/log').getLogger('cloudStorage')
 
 const RETRIES = 5
 
-
 const initUserBucket$ = () =>
-    getContext$().pipe(
+    getCurrentContext$().pipe(
         switchMap(({config}) => {
             const getUser$ = userCredentials =>
                 getEmail$(userCredentials.access_token).pipe(
@@ -112,7 +111,6 @@ const initUserBucket$ = () =>
                     )
                 )
 
-
             return getBucketUser$(config).pipe(
                 switchMap(user => createIfMissingBucket$(user)),
                 map(({bucketName}) => bucketName),
@@ -120,7 +118,6 @@ const initUserBucket$ = () =>
             )
         })
     )
-
 
 const bucketExists$ = user =>
     cloudStorage$().pipe(
@@ -130,7 +127,6 @@ const bucketExists$ = user =>
         ),
         map(response => response[0])
     )
-
 
 const getEmail$ = accessToken =>
     http.get$('https://www.googleapis.com/drive/v3/about?fields=user', {
@@ -143,13 +139,11 @@ const getEmail$ = accessToken =>
         map(response => JSON.parse(response.body).user.emailAddress)
     )
 
-
 const do$ = (description, promise) => defer(() => {
     log.debug(description)
     return fromPromise(promise).pipe(
         retry(RETRIES, {description})
     )
 })
-
 
 module.exports = {initUserBucket$}

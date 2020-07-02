@@ -5,11 +5,11 @@ const {mkdirSafe$} = require('root/rxjs/fileSystem')
 const {createVrt$, setBandNames$} = require('sepal/gdal')
 const {exportImageToSepal$} = require('../jobs/export/toSepal')
 const ImageFactory = require('sepal/ee/imageFactory')
-const {getContext$} = require('root/jobs/service/context')
+const {getCurrentContext$} = require('root/jobs/service/context')
 
 module.exports = {
     submit$: (id, {image: {recipe, bands, scale}}) =>
-        getContext$().pipe(
+        getCurrentContext$().pipe(
             switchMap(({config}) => {
                 const description = recipe.title || recipe.placeholder
                 const preferredDownloadDir = `${config.homeDir}/downloads/${description}/`

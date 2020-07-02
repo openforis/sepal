@@ -7,7 +7,7 @@ const drive = require('root/drive')
 const {initUserBucket$} = require('root/cloudStorageBucket')
 const cloudStorage = require('root/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
-const {getContext$} = require('root/jobs/service/context')
+const {getCurrentContext$} = require('root/jobs/service/context')
 const {limiter$: driveSerializer$} = require('root/jobs/service/driveSerializer')
 const task$ = require('root/ee/task')
 
@@ -111,9 +111,9 @@ const exportImageToSepal$ = ({
         )
     }
 
-    return getContext$().pipe(
-        switchMap(({userCredentials}) =>
-            userCredentials
+    return getCurrentContext$().pipe(
+        switchMap(({isUserAccount}) =>
+            isUserAccount
                 ? throughDrive$()
                 : throughCloudStorage$()
         )

@@ -1,9 +1,9 @@
 const {map} = require('rx/operators')
 const {Storage} = require('@google-cloud/storage')
-const {getContext$} = require('root/jobs/service/context')
+const {getCurrentContext$} = require('root/jobs/service/context')
 
 const cloudStorage$ = () =>
-    getContext$().pipe(
+    getCurrentContext$().pipe(
         map(({config}) =>
             new Storage({
                 credentials: config.serviceAccountCredentials,
