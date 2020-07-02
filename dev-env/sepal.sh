@@ -135,7 +135,7 @@ module_kill () {
 
 module_log () {
     local MODULE=$1
-    less -r +F $(logfile $MODULE)
+    less -R +F $(logfile $MODULE)
 }
 
 module_clean () {
