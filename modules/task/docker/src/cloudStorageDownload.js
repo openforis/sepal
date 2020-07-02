@@ -1,7 +1,7 @@
 const fs = require('fs')
 const {Subject, EMPTY, concat, defer, of} = require('rx')
-const {expand, finalize, map, mergeMap, scan, switchMap} = require('rx/operators')
-const {retry} = require('sepal/rxjs/operators')
+const {catchError, expand, finalize, map, mergeMap, scan, switchMap} = require('rx/operators')
+const {retry, swallow} = require('sepal/rxjs/operators')
 const {fromPromise} = require('sepal/rxjs')
 const {cloudStorage$} = require('./cloudStorage')
 const path = require('path')
@@ -31,18 +31,24 @@ const download$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
                 switchMap(files => concat(
                     of(getProgress({files})),
                     downloadFiles$({files, prefix, downloadDir, deleteAfterDownload})
-                )),
-                finalize(() => deleteAfterDownload ? bucket.deleteFiles({prefix}) : null)
+                ))
             )
         ),
     )
 
 
-const delete$ = ({bucketPath, prefix}) =>
-    cloudStorage$().pipe(
+const delete$ = ({bucketPath, prefix}) => {
+    log.debug(`delete files ${bucketPath}:${prefix}`)
+    return cloudStorage$().pipe(
         map(cloudStorage => cloudStorage.bucket(`gs://${bucketPath}`)),
-        switchMap(bucket => bucket.deleteFiles({prefix}))
+        switchMap(bucket => bucket.deleteFiles({prefix})),
+        catchError(error => {
+            log.debug(`Failed to delete ${bucketPath}:${prefix}`, error)
+            return EMPTY
+        }),
+        swallow()
     )
+}
 
 
 const getProgress = ({
@@ -101,17 +107,16 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
                     const [, , start, end, length] = contentRange.match('(.*) (.*)-(.*)/(.*)')
                     next = {path: path.basename(toFilePath), start, end: Number(end), length: Number(length)}
                 } else {
-                    log.error('Invalid Cloud Storage response', response)
-                    chunkSubject$.error(new Error('Invalid Cloud Storage response'))
+                    next = null
                 }
             })
             .on('finish', _response => {
-                chunkSubject$.next({...next, time: new Date().getTime() - startTime})
+                next && chunkSubject$.next({...next, time: new Date().getTime() - startTime})
                 chunkSubject$.complete()
             })
             .pipe(fs.createWriteStream(toFilePath, start ? {flags: 'a'} : {}))
         return deleteAfterDownload
-            ? concat(chunk$, deleteFile$(file))
+            ? chunk$.pipe(finalize(() => deleteFile$(file).subscribe()))
             : chunk$
     }
 
