@@ -1,6 +1,6 @@
 const ee = require('ee')
 const {interval, of, throwError} = require('rx')
-const {map, switchMap, catchError, mapTo, first, exhaustMap, distinctUntilChanged, takeWhile} = require('rx/operators')
+const {catchError, distinctUntilChanged, first, map, mapTo, exhaustMap, switchMap, takeWhile, tap} = require('rx/operators')
 const {finalize} = require('sepal/rxjs/operators')
 const MONITORING_FREQUENCY = 10000
 const {UNSUBMITTED, READY, RUNNING, FAILED} = ee.data.ExportState
@@ -80,7 +80,7 @@ const runTask$ = (task, description) => {
         }
     }
 
-    const cleanup = taskId =>
+    const cleanup$ = taskId =>
         status$(taskId).pipe(
             map(({state}) => isRunning(state)),
             switchMap(running =>
@@ -90,19 +90,19 @@ const runTask$ = (task, description) => {
                     )
                     : of(false)
             ),
+            tap(wasRunning =>
+                log.info(`EE task ${taskId}: ${wasRunning ? 'Cancelled' : 'Completed'} (${description})`)
+            ),
             first(),
             catchError(() => of(false))
-        ).subscribe({
-            next: wasRunning => log.info(`EE task ${taskId}: ${wasRunning ? 'Cancelled' : 'Completed'} (${description})`),
-            error: error => log.error('Failed to cancel EE task', error)
-        })
+        )
 
     const isRunning = state => [UNSUBMITTED, READY, RUNNING].includes(state)
 
     return of(task).pipe(
         switchMap(task => start$(task)),
         switchMap(taskId => monitor$(taskId).pipe(
-            finalize(() => cleanup(taskId))
+            finalize(() => cleanup$(taskId))
         ))
     )
 }
