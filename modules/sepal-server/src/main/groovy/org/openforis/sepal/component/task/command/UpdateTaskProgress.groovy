@@ -37,11 +37,12 @@ class UpdateTaskProgressHandler implements AfterCommitCommandHandler<Task, Updat
 
     Task execute(UpdateTaskProgress command) {
         def task = taskRepository.getTask(command.taskId)
+        LOG.debug("Progress update for task $task requested: $command")
         if (command.state == CANCELED && ![PENDING, ACTIVE, CANCELING].contains(task.state)) {
             LOG.info("Cannot cancel unless PENDING, ACTIVE, or CANCELING. $task, $command")
             return null
         } else if (command.state == ACTIVE && task.state == CANCELING) {
-            cancelTaskHandler.execute(new CancelTask(taskId: command.taskId, username: command.username))
+            cancelTaskHandler.execute(new CancelTask(taskId: command.taskId, username: task.username))
             return null
         } else if (command.state != CANCELED && ![PENDING, ACTIVE].contains(task.state)) {
             LOG.info("Cannot update state unless PENDING or ACTIVE. $task, $command")
@@ -51,10 +52,6 @@ class UpdateTaskProgressHandler implements AfterCommitCommandHandler<Task, Updat
         def updatedTask = task.update(command.state, command.statusDescription)
         taskRepository.update(updatedTask)
         return updatedTask
-    }
-
-    private cancelTask(command) {
-
     }
 
     void afterCommit(UpdateTaskProgress command, Task updatedTask) {
