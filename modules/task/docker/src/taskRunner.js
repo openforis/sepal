@@ -12,7 +12,7 @@ const tasks = {
 
 const msg = (id, msg) => `Task ${id.substr(-4)}: ${msg}`
 
-const executeTask$ = ({id, name, params}) => {
+const executeTask$ = ({id, name, params}, {cmd$}) => {
 
     const getTask = (id, name) => {
         const task = tasks[name]
@@ -80,6 +80,6 @@ module.exports = require('root/jobs/job')({
         require('root/jobs/service/driveLimiter').limiter,
         require('root/jobs/service/driveSerializer').limiter
     ],
-    args: ctx => [ctx],
+    args: ({task}) => [task],
     worker$: executeTask$
 })

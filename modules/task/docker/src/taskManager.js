@@ -81,9 +81,11 @@ const taskCompleted$ = id =>
         messageKey: 'tasks.status.completed'
     })
 
+const cmd$ = new Subject()
+
 task$.pipe(
     mergeMap(task =>
-        executeTask$(task).pipe(
+        executeTask$({task, cmd$}).pipe(
             takeUntil(cancel$.pipe(
                 filter(id => id === task.id),
                 tap(() => log.debug(msg(task.id, 'cancelled by user'))),
