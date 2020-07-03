@@ -81,6 +81,13 @@ const taskCompleted$ = id =>
         messageKey: 'tasks.status.completed'
     })
 
+
+const taskCanceled$ = id =>
+    taskStateChanged$(id, 'CANCELED', {
+        defaultMessage: 'Stopped',
+        messageKey: 'tasks.status.canceled'
+    })
+
 task$.pipe(
     mergeMap(task => {
         const taskCancellation$ = merge(
@@ -98,6 +105,8 @@ task$.pipe(
             switchMap(progress =>
                 progress.state === 'COMPLETED'
                     ? taskCompleted$(task.id)
+                    : progress.state === 'CANCELED'
+                    ? taskCanceled$(task.id)
                     : of(progress)
             ),
             catchError(error =>
