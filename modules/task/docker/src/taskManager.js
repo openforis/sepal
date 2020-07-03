@@ -1,4 +1,4 @@
-const {Subject, EMPTY, of} = require('rx')
+const {ReplaySubject, Subject, EMPTY, of} = require('rx')
 const {mergeMap, takeUntil, filter, tap, switchMap, catchError, switchMapTo} = require('rx/operators')
 const log = require('sepal/log').getLogger('task')
 const executeTask$ = require('./taskRunner')
@@ -81,7 +81,7 @@ const taskCompleted$ = id =>
         messageKey: 'tasks.status.completed'
     })
 
-const cmd$ = new Subject()
+const cmd$ = new ReplaySubject()
 
 task$.pipe(
     mergeMap(task =>
