@@ -69,7 +69,7 @@ const exportImageToSepal$ = ({
                         deleteAfterDownload: true
                     })
                 ).pipe(
-                    finalize(() => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}).subscribe())
+                    finalize(() => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}))
                 )
             })
         )
@@ -107,7 +107,7 @@ const exportImageToSepal$ = ({
                 downloadDir
             })
         ).pipe(
-            finalize(() => drive.removeFolderByPath$({path: drivePath(folder)}).subscribe())
+            finalize(() => drive.removeFolderByPath$({path: drivePath(folder)}))
         )
     }
 
