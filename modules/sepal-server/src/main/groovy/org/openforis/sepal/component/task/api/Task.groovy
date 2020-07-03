@@ -42,8 +42,12 @@ class Task {
         state == CANCELED
     }
 
-    Task cancel() {
+    Task canceled() {
         update(CANCELED)
+    }
+
+    Task canceling() {
+        update(CANCELING)
     }
 
     boolean isFailed() {
@@ -86,6 +90,7 @@ class Task {
         PENDING([defaultMessage: 'Initializing...', messageKey: 'tasks.status.initializing', messageArgs: [:]]),
         ACTIVE([defaultMessage: 'Executing...', messageKey: 'tasks.status.executing', messageArgs: [:]]),
         COMPLETED([defaultMessage: 'Completed!', messageKey: 'tasks.status.completed', messageArgs: [:]]),
+        CANCELING([defaultMessage: 'Canceling.', messageKey: 'tasks.status.canceling', messageArgs: [:]]),
         CANCELED([defaultMessage: 'Canceled.', messageKey: 'tasks.status.canceled', messageArgs: [:]]),
         FAILED([defaultMessage: 'Failed: Internal Error', messageKey: 'tasks.status.failed', messageArgs: [error: 'Internal Error']])
 

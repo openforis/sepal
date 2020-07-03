@@ -39,7 +39,7 @@ class Tasks extends React.Component {
                             label={msg('button.remove')}
                             onClick={() => this.removeTask(task)}/>
                     </ButtonGroup>
-                ) : task.status === 'ACTIVE' ?
+                ) : ['PENDING', 'ACTIVE'].includes(task.status) ?
                     <Button
                         className={styles.stop}
                         icon='stop'

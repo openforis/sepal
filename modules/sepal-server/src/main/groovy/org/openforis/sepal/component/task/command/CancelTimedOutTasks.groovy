@@ -27,8 +27,13 @@ class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutT
     Void execute(CancelTimedOutTasks command) {
         def timedOutTasks = taskRepository.timedOutTasks()
         timedOutTasks.each {
-            LOG.warn("Updating state of timed out task to failed: ${it}")
-            taskRepository.update(it.fail())
+            if (it.state != Task.State.CANCELING) {
+                LOG.warn("Updating state of timed out task to failed: ${it}")
+                taskRepository.update(it.fail())
+            } else {
+                LOG.warn("Canceling task timed out: ${it}")
+                taskRepository.update(it.canceled())
+            }
         }
         def sessionById = timedOutTasks.findAll { it.sessionId }.unique().collectEntries() {
             [(it.sessionId): sessionManager.findSessionById(it.sessionId)]
@@ -36,7 +41,7 @@ class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutT
 
         timedOutTasks
             .findAll { it.active }
-            .each { cancelTask(it, sessionById[it.sessionId]) }
+            .each { cancelTaskInWorker(it, sessionById[it.sessionId]) }
 
         sessionById.keySet().each {
             def tasksInSession = taskRepository.pendingOrActiveTasksInSession(it)
@@ -46,11 +51,11 @@ class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutT
         return null
     }
 
-    private cancelTask(Task task, WorkerSession session) {
+    private cancelTaskInWorker(Task task, WorkerSession session) {
         try {
             workerGateway.cancel(task.id, session)
         } catch (Exception e) {
-            LOG.warn("Failed to cancel task: $task", e)
+            LOG.warn("Failed to cancel task in worker: $task", e)
         }
     }
 }

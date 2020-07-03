@@ -1425,7 +1425,8 @@
             "initializing": "Initializing...",
             "executing": "Executing...",
             "completed": "Completed!",
-            "canceled": "Canceled",
+            "canceling": "Stopping",
+            "canceled": "Stopped",
             "failed": "{error}",
             "EEException": "Earth Engine: {error}"
         },

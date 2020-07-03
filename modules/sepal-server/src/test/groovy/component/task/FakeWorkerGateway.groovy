@@ -14,7 +14,7 @@ class FakeWorkerGateway implements WorkerGateway {
     }
 
     void cancel(String taskId, WorkerSession session) {
-        def removed = requestByTaskId.remove(taskId)
+        def removed = requestByTaskId.remove(taskId) ?: new ExecutionRequest(new Task(id: taskId), session)
         canceledRequests << removed
         assert removed, "No execution request for task $taskId"
         assert session.id == removed.session.id, "Session of execution request and cancel request does not match: " +
