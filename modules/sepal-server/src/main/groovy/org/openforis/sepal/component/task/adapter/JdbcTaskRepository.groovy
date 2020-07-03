@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 import java.sql.Clob
 
 import static org.openforis.sepal.component.task.api.Task.State.ACTIVE
+import static org.openforis.sepal.component.task.api.Task.State.CANCELING
 import static org.openforis.sepal.component.task.api.Task.State.PENDING
 
 class JdbcTaskRepository implements TaskRepository {
@@ -79,9 +80,11 @@ class JdbcTaskRepository implements TaskRepository {
                 FROM task
                 WHERE (state = ? AND update_time < ?)
                 OR (state = ? AND update_time < ?)
+                OR (state = ? AND update_time < ?)
             ''', [
             PENDING.name(), Timeout.PENDING.lastValidUpdate(now),
-            ACTIVE.name(), Timeout.ACTIVE.lastValidUpdate(now)
+            ACTIVE.name(), Timeout.ACTIVE.lastValidUpdate(now),
+            CANCELING.name(), Timeout.CANCELING.lastValidUpdate(now)
         ]) { tasks << toTask(it) }
         return tasks
     }

@@ -65,9 +65,15 @@ abstract class AbstractTaskTest extends Specification {
         return task
     }
 
+    final Task cancelingTask(Map args = [:]) {
+        def task = pendingTask().canceling()
+        updateTaskProgress(task, args)
+        return task
+    }
+
     final Task canceledTask(Map args = [:]) {
-        def task = activeTask(args)
-        cancelTask(task, args)
+        def task = activeTask(args).canceled()
+        updateTaskProgress(task, args)
         return task
     }
 
@@ -95,7 +101,7 @@ abstract class AbstractTaskTest extends Specification {
         component.submit(new UserTasks(username: username(args)))
     }
 
-    final void cancelTask(Task task, Map args = [:]) {
+    final Task cancelTask(Task task, Map args = [:]) {
         component.submit(new CancelTask(username: username(args), taskId: task.id))
     }
 

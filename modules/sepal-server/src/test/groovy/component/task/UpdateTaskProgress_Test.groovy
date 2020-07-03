@@ -1,5 +1,8 @@
 package component.task
 
+import org.openforis.sepal.component.task.api.Task
+import org.openforis.sepal.component.task.api.WorkerSession
+
 class UpdateTaskProgress_Test extends AbstractTaskTest {
     def 'Given an active task, when updating progress, session heartbeat is sent'() {
         def task = activeTask()
@@ -84,5 +87,26 @@ class UpdateTaskProgress_Test extends AbstractTaskTest {
 
         then:
         sessionManager.closedOne()
+    }
+
+    def 'Given a canceling task, when updating progress to canceled, session is closed'() {
+        def task = cancelingTask()
+
+        when:
+        updateTaskProgress(task.canceled())
+
+        then:
+        sessionManager.closedOne()
+    }
+
+    def 'Given a canceling task, when updating progress to active, task is canceling, work is canceled, and session is not closed'() {
+        def task = cancelTask(pendingTask())
+
+        when:
+        updateTaskProgress(task.activate())
+
+        then:
+        workerGateway.canceledOne()
+        sessionManager.closedNone()
     }
 }
