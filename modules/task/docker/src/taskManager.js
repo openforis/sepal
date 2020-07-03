@@ -1,5 +1,5 @@
-const {Subject, EMPTY, of} = require('rx')
-const {mergeMap, takeUntil, filter, tap, switchMap, catchError, switchMapTo} = require('rx/operators')
+const {Subject, EMPTY, merge, of} = require('rx')
+const {mergeMap, filter, tap, shareReplay, switchMap, catchError, switchMapTo} = require('rx/operators')
 const log = require('sepal/log').getLogger('task')
 const executeTask$ = require('./taskRunner')
 const {lastInWindow, repeating} = require('sepal/rxjs/operators')
@@ -81,33 +81,36 @@ const taskCompleted$ = id =>
         messageKey: 'tasks.status.completed'
     })
 
-const cmd$ = new Subject()
-
 task$.pipe(
-    mergeMap(task =>
-        executeTask$({task, cmd$}).pipe(
-            takeUntil(cancel$.pipe(
-                filter(id => id === task.id),
-                tap(() => log.debug(msg(task.id, 'cancelled by user'))),
-            )),
-            takeUntil(switchedToServiceAccount$.pipe(
-                tap(() => log.debug(msg(task.id, 'cancelled by switching to service account'))),
-            )),
-            switchMap(progress =>
-                progress.state === 'COMPLETED'
-                    ? taskCompleted$(task.id)
-                    : of(progress)
-            ),
-            catchError(error =>
-                taskFailed$(task.id, error)
-            ),
-            // Prevent progress notification to Sepal more often than MIN_TIME_BETWEEN_NOTIFICATIONS millis
-            // This is to prevent flooding Sepal with too many updates
-            lastInWindow(MIN_TIME_BETWEEN_NOTIFICATIONS),
-            // Make sure progress notification to Sepal is sent at least every MAX_TIME_BETWEEN_NOTIFICATIONS millis
-            // This prevents Sepal from thinking something gone wrong. Essentially repeating the last message as heartbeats
-            repeating(progress => taskProgressed$(task.id, progress), MAX_TIME_BETWEEN_NOTIFICATIONS),
-        )
+    mergeMap(task => {
+            const taskCancellation$ = merge(
+                cancel$.pipe(
+                    filter(id => id === task.id),
+                    tap(() => log.debug(msg(task.id, 'cancelled by user'))),
+                ),
+                switchedToServiceAccount$.pipe(
+                    tap(() => log.debug(msg(task.id, 'cancelled by switching to service account'))),
+                )
+            ).pipe(
+                shareReplay()
+            )
+            return executeTask$({task, cmd$: taskCancellation$}).pipe(
+                switchMap(progress =>
+                    progress.state === 'COMPLETED'
+                        ? taskCompleted$(task.id)
+                        : of(progress)
+                ),
+                catchError(error =>
+                    taskFailed$(task.id, error)
+                ),
+                // Prevent progress notification to Sepal more often than MIN_TIME_BETWEEN_NOTIFICATIONS millis
+                // This is to prevent flooding Sepal with too many updates
+                lastInWindow(MIN_TIME_BETWEEN_NOTIFICATIONS),
+                // Make sure progress notification to Sepal is sent at least every MAX_TIME_BETWEEN_NOTIFICATIONS millis
+                // This prevents Sepal from thinking something gone wrong. Essentially repeating the last message as heartbeats
+                repeating(progress => taskProgressed$(task.id, progress), MAX_TIME_BETWEEN_NOTIFICATIONS),
+            );
+        }
     )
 ).subscribe({
     // next: v => log.fatal('*** STATE', v),

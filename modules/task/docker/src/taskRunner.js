@@ -1,5 +1,5 @@
-const {concat, of} = require('rx')
-const {distinctUntilChanged, map} = require('rx/operators')
+const {BehaviorSubject, concat, of, throwError} = require('rx')
+const {catchError, distinctUntilChanged, map, takeUntil, tap} = require('rx/operators')
 const {finalize$} = require('sepal/rxjs')
 const log = require('sepal/log').getLogger('task')
 const _ = require('lodash')
@@ -13,6 +13,7 @@ const tasks = {
 const msg = (id, msg) => `Task ${id.substr(-4)}: ${msg}`
 
 const executeTask$ = ({id, name, params}, {cmd$}) => {
+    const cancel$ = cmd$
 
     const getTask = (id, name) => {
         const task = tasks[name]
@@ -26,11 +27,23 @@ const executeTask$ = ({id, name, params}, {cmd$}) => {
     
     const task = getTask(id, name)
 
-    const initialState$ = of({
+    const initialState = {
         state: 'ACTIVE',
         defaultMessage: 'Executing...',
         messageKey: 'tasks.status.executing'
-    })
+    }
+
+    const cancelState = {
+        state: 'CANCELED',
+        defaultMessage: 'Canceled!',
+        messageKey: 'tasks.status.canceled'
+    }
+
+    const completedState = {
+        state: 'COMPLETED',
+        defaultMessage: 'Completed!',
+        messageKey: 'tasks.status.completed'
+    }
 
     const progressState$ = task.submit$(id, params).pipe(
         distinctUntilChanged((p1, p2) => _.isEqual(
@@ -50,15 +63,16 @@ const executeTask$ = ({id, name, params}, {cmd$}) => {
         })
     )
 
-    const finalState$ = of({
-        state: 'COMPLETED',
-        defaultMessage: 'Completed!',
-        messageKey: 'tasks.status.completed'
-    })
+    const finalState$ = new BehaviorSubject(completedState)
 
     return concat(
-        initialState$,
-        progressState$,
+        of(initialState),
+        progressState$.pipe(
+            takeUntil(cancel$.pipe(
+                tap(() => finalState$.next(cancelState))
+            )),
+            catchError(e => concat(finalize$, throwError(e)))
+        ),
         finalize$,
         finalState$
     )
