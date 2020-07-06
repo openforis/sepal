@@ -1444,8 +1444,9 @@
             "time_series_to_sepal": {
                 "creating_drive_folder": "Creating Google Drive Folders...",
                 "tiling": "Tiling AOI...",
-                "progress": "Exported {exported}%, Downloaded {downloaded}% ({downloaded_bytes}), Processed {processed}%",
-                "deleting_drive_folder": "Deleting Google Drive Folder."
+                "progress": "Exported {currentTilePercent}% of tile {currentTile} out of {totalTiles}.",
+                "deleting_drive_folder": "Deleting Google Drive Folder.",
+                "assembling": "Assembling tile {currentTile} out of {totalTiles}..."
             }
         }
     },

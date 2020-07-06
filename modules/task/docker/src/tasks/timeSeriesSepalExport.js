@@ -202,13 +202,23 @@ const postProcess$ = downloadDir =>
 const toProgress = ({totalTiles = 0, tileIndex = 0, totalChunks = 0, chunks = 0}) => {
     const currentTilePercent = totalChunks ? Math.round(100 * chunks / totalChunks) : 0
     const currentTile = tileIndex + 1
-    return {
-        totalChunks,
-        chunks,
-        totalTiles,
-        tileIndex,
-        defaultMessage: `Exported ${currentTilePercent}% of tile ${currentTile} out of ${totalTiles}.`,
-        messageKey: 'tasks.retrieve.time_series_to_sepal.progress',
-        messageArgs: {currentTilePercent, currentTile, totalTiles}
-    }
+    return currentTilePercent < 100
+        ? {
+            totalChunks,
+            chunks,
+            totalTiles,
+            tileIndex,
+            defaultMessage: `Exported ${currentTilePercent}% of tile ${currentTile} out of ${totalTiles}.`,
+            messageKey: 'tasks.retrieve.time_series_to_sepal.progress',
+            messageArgs: {currentTilePercent, currentTile, totalTiles}
+        }
+        : {
+            totalChunks,
+            chunks,
+            totalTiles,
+            tileIndex,
+            defaultMessage: `Assembling tile ${currentTile} out of ${totalTiles}...`,
+            messageKey: 'tasks.retrieve.time_series_to_sepal.assembling',
+            messageArgs: {currentTile, totalTiles}
+        }
 }
