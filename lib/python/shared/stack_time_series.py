@@ -20,10 +20,14 @@ def stack_time_series(dir):
     if not chunk_dirs:
         print('    Skipping. No chunk-* directories')
         return
+    print('    Assembling tiles...', end='', flush=True)
     for chunk_dir in chunk_dirs:
+        print('.', end='', flush=True)
         extract_chunk_bands(chunk_dir)
+    print('')
     tile_dirs = glob(join(dir, 'tile-*'))
     dates = None
+    print('    Assembling final stack...')
     for tile_dir in tile_dirs:
         dates = create_tile_stack(tile_dir)
     if not dates:
@@ -63,6 +67,7 @@ def extract_chunk_tile_bands(tif_file):
         vrt.GetRasterBand(1).SetDescription(band_name)
         vrt.FlushCache()
         make_relative_to_vrt(band_file)
+    print('.', end='', flush=True)
 
 
 def get_tile_dir(tif_file):
@@ -122,11 +127,12 @@ def create_dates_csv(dir, dates):
 
 
 def make_relative_to_vrt(vrt_file):
-    with open(vrt_file, 'r') as file :
-      text = file.read()
-    text = text.replace('relativeToVRT="0"', 'relativeToVRT="1"')
-    with open(vrt_file, 'w') as file:
-      file.write(text)
+    subprocess.check_call(['sed', '-i', 's/relativeToVRT="0"/relativeToVRT="1"/g', vrt_file])
+#     with open(vrt_file, 'r') as file :
+#       text = file.read()
+#     text = text.replace('relativeToVRT="0"', 'relativeToVRT="1"')
+#     with open(vrt_file, 'w') as file:
+#       file.write(text)
 
 
 if __name__ == '__main__':
