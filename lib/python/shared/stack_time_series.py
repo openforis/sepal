@@ -128,11 +128,6 @@ def create_dates_csv(dir, dates):
 
 def make_relative_to_vrt(vrt_file):
     subprocess.check_call(['sed', '-i', 's/relativeToVRT="0"/relativeToVRT="1"/g', vrt_file])
-#     with open(vrt_file, 'r') as file :
-#       text = file.read()
-#     text = text.replace('relativeToVRT="0"', 'relativeToVRT="1"')
-#     with open(vrt_file, 'w') as file:
-#       file.write(text)
 
 
 if __name__ == '__main__':
