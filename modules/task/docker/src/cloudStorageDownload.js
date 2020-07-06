@@ -43,7 +43,7 @@ const delete$ = ({bucketPath, prefix}) => {
         map(cloudStorage => cloudStorage.bucket(`gs://${bucketPath}`)),
         switchMap(bucket => bucket.deleteFiles({prefix})),
         catchError(error => {
-            log.debug(`Failed to delete ${bucketPath}:${prefix}`, error)
+            log.debug(`Failed to delete ${bucketPath}:${prefix}`, error.message)
             return EMPTY
         }),
         swallow()
