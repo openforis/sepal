@@ -1,4 +1,4 @@
-const {BehaviorSubject, concat, of, throwError} = require('rx')
+const {EMPTY, BehaviorSubject, concat, defer, of, throwError} = require('rx')
 const {catchError, distinctUntilChanged, first, map, takeUntil, tap} = require('rx/operators')
 const {finalize$} = require('sepal/rxjs')
 const log = require('sepal/log').getLogger('task')
@@ -69,11 +69,18 @@ const executeTask$ = ({id, name, params}, {cmd$}) => {
         of(initialState),
         progressState$.pipe(
             takeUntil(cancel$.pipe(
-                tap(() => finalState$.next(cancelState))
+                tap(() => {
+                    log.error('Setting finalState$ to CANCEL')
+                    return finalState$.next(cancelState)
+                })
             )),
             catchError(e => concat(finalize$, throwError(e)))
         ),
         finalize$,
+        defer(() => {
+            log.error('finalize$ done')
+            return EMPTY
+        }),
         finalState$.pipe(first())
     )
 }

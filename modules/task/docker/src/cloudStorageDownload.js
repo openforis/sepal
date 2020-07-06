@@ -116,7 +116,7 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
             })
             .pipe(fs.createWriteStream(toFilePath, start ? {flags: 'a'} : {}))
         return deleteAfterDownload
-            ? chunk$.pipe(finalize(() => deleteFile$(file).subscribe()))
+            ? chunk$.pipe(finalize(() => deleteFile$(file), `Delete after download: ${file}`))
             : chunk$
     }
 

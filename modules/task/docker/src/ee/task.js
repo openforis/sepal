@@ -102,7 +102,7 @@ const runTask$ = (task, description) => {
     return of(task).pipe(
         switchMap(task => start$(task)),
         switchMap(taskId => monitor$(taskId).pipe(
-            finalize(() => cleanup$(taskId))
+            finalize(() => cleanup$(taskId), `Cleanup EE task ${taskId}`)
         ))
     )
 }
