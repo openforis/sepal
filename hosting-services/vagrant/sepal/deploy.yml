@@ -132,7 +132,6 @@
     - { role: build-module, module: gui }
     - { role: build-module, module: ceo }
     - { role: build-module, module: ceo-gateway }
-    - { role: build-module, module: peatlands }
     - { role: build-module, module: task }
     - { role: build-module, module: gee }
     - { role: build-module, module: zookeeper }
@@ -147,7 +146,6 @@
     - { role: run-module, module: user }
     - { role: run-module, module: sepal-server, container_name: sepal }
     - { role: run-module, module: gui }
-    - { role: run-module, module: peatlands }
     - { role: run-module, module: ceo }
     - { role: run-module, module: ceo-gateway }
     - { role: run-module, module: ssh-gateway }

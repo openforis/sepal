@@ -22,13 +22,6 @@
   },
   {
     "prefix": "true",
-    "path": "/peatlands/",
-    "target": "http://peatlands:7767/",
-    "https": "false",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
     "path": "/api/terminal/",
     "target": "http://terminal:8000/",
     "https": "false",
