@@ -17,6 +17,7 @@ R -e "pacman::p_load(\
         'gfcanalysis',\
         'mapview',\
         'rJava',\
+        'rknn',\
         'rPython',\
         'RStoolbox',\
         'sf',\
