@@ -13,7 +13,7 @@ mv $otb.run /usr/local/lib
 cd /usr/local/lib
 ./$otb.run
 rm $otb.run
-ln -s $otb orfeo
+ln -sf $otb orfeo
 chmod o+rx orfeo/*.sh
 chmod o+rx orfeo/otbenv.profile
 cd -
