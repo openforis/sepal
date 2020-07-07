@@ -41,7 +41,7 @@ const export$ = (downloadDir, recipe) => {
         cloudBuffer, snowMasking, calibrate, brdfCorrect, fromDate, toDate, indicator,
         scale
     } = recipe
-    
+
     const geometry = toGeometry(aoi) // synchronous EE
     const reflectance = surfaceReflectance ? 'SR' : 'TOA'
 
@@ -93,7 +93,7 @@ const export$ = (downloadDir, recipe) => {
     const createTimeSeries = (feature, startDate, endDate) => {
         const images = allScenes({
             geometry: feature.geometry(),
-            dataSets,
+            dataSets: extractDataSets(dataSets),
             reflectance,
             filters: [],
             cloudMasking,
@@ -132,7 +132,7 @@ const export$ = (downloadDir, recipe) => {
     }
 
     const hasImagery$ = (startDate, endDate) =>
-        ee.getInfo$(hasImagery({dataSets, reflectance, geometry, startDate, endDate}), 'check if date range has imagery')
+        ee.getInfo$(hasImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate}), 'check if date range has imagery')
 
     const exportChunks$ = chunks$ =>
         chunks$.pipe(
@@ -152,7 +152,6 @@ const export$ = (downloadDir, recipe) => {
         const chunkDescription = `${description}_${tileIndex}_${dateRange}`
         const chunkDownloadDir = `${downloadDir}/${tileIndex}/chunk-${dateRange}`
         const export$ = exportImageToSepal$({
-            // imageDef,
             image: timeSeries,
             folder: chunkDescription,
             description: chunkDescription,
@@ -222,3 +221,15 @@ const toProgress = ({totalTiles = 0, tileIndex = 0, totalChunks = 0, chunks = 0}
             messageArgs: {currentTile, totalTiles}
         }
 }
+
+const extractDataSets = sources =>
+    Object.values(sources)
+        .flat()
+        .map(dataSet =>
+            dataSet === 'LANDSAT_TM'
+                ? ['LANDSAT_4', 'LANDSAT_5']
+                : dataSet === 'LANDSAT_TM_T2'
+                ? ['LANDSAT_4_T2', 'LANDSAT_5_T2']
+                : dataSet
+        )
+        .flat()
