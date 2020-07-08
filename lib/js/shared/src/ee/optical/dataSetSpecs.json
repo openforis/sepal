@@ -406,6 +406,7 @@
             "collectionName": "COPERNICUS/S2",
             "scaled": false,
             "maxZenith": 10.3,
+            "calibrationCoefs": {"slopes": [1], "intercepts": [0]},
             "bands": {
                 "aerosol": {
                     "name": "B1",
