@@ -1,6 +1,6 @@
 const ee = require('ee')
 const {interval, of, throwError} = require('rx')
-const {catchError, distinctUntilChanged, first, map, mapTo, exhaustMap, switchMap, takeWhile, tap} = require('rx/operators')
+const {catchError, distinctUntilChanged, map, mapTo, exhaustMap, switchMap, takeWhile, tap} = require('rx/operators')
 const {finalize} = require('sepal/rxjs/operators')
 const MONITORING_FREQUENCY = 10000
 const {UNSUBMITTED, READY, RUNNING, FAILED} = ee.data.ExportState
@@ -21,7 +21,7 @@ const runTask$ = (task, description) => {
 
     const status$ = taskId =>
         ee.$({
-            operation: `get task status (${description})`,
+            operation: `get task status (${description}, ${taskId})`,
             ee: (resolve, reject) =>
                 ee.data.getTaskStatus(taskId,
                     (status, error) => error
@@ -34,7 +34,7 @@ const runTask$ = (task, description) => {
 
     const cancel$ = taskId =>
         ee.$({
-            operation: `cancel task (${description})`,
+            operation: `cancel task (${description}, ${taskId})`,
             ee: (resolve, reject) =>
                 ee.data.cancelTask(taskId,
                     (_canceled, error) => error
@@ -76,26 +76,30 @@ const runTask$ = (task, description) => {
                 messageKey: 'tasks.ee.export.running'
             }
         default:
-            throw Error(`Unknown state: ${state}`)
+            throw Error(`Unknown state (${description}): ${state}`)
         }
     }
 
-    const cleanup$ = taskId =>
-        status$(taskId).pipe(
+    const cleanup$ = taskId => {
+        log.debug(`EE task cleanup starting (${description}, ${taskId})`)
+        return status$(taskId).pipe(
             map(({state}) => isRunning(state)),
             switchMap(running =>
                 running
                     ? cancel$(taskId).pipe(
-                        mapTo(true)
+                    mapTo(true)
                     )
                     : of(false)
             ),
             tap(wasRunning =>
-                log.info(`EE task ${taskId}: ${wasRunning ? 'Cancelled' : 'Completed'} (${description})`)
+                log.info(`EE task ${wasRunning ? 'cancelled' : 'completed'} (${description}, ${taskId})`)
             ),
-            first(),
-            catchError(() => of(false))
-        )
+            catchError(error => {
+                log.error(`EE task failed to cancel. Trying again, without loading status first (${description}, ${taskId})`, error)
+                return cancel$(taskId)
+            })
+        );
+    }
 
     const isRunning = state => [UNSUBMITTED, READY, RUNNING].includes(state)
 
