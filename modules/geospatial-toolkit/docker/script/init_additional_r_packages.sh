@@ -14,7 +14,6 @@ R CMD javareconf
 R -e "install.packages('rgdal', version='1.3-9', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 R -e "pacman::p_load(\
         'dggridR',\
-        'gfcanalysis',\
         'mapview',\
         'rJava',\
         'rknn',\
@@ -28,6 +27,7 @@ R -e "pacman::p_load(\
     )"
 R -e "pacman::p_load_gh(\
         'appelmar/bfast',\
+        'azvoleff/gfcanalysis',\
         'loicdtx/bfastSpatial',\
         'jreiche/bayts'\
     )"
