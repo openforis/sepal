@@ -1,7 +1,6 @@
 const ee = require('ee')
 const {concat, defer} = require('rx')
 const {switchMap} = require('rx/operators')
-const {finalize$} = require('sepal/rxjs')
 const {finalize, swallow} = require('sepal/rxjs/operators')
 const {limiter$: exportLimiter$} = require('root/jobs/service/exportLimiter')
 const drive = require('root/drive')
@@ -52,48 +51,27 @@ const exportImageToSepal$ = ({
             )
         }
         const cloudStoragePrefix = `${folder}/`
-        
         return initUserBucket$().pipe(
             switchMap(bucketPath =>
-                finalize$(
-                    concat(
-                        exportToCloudStorage$({
-                            task: ee.batch.Export.image.toCloudStorage(
-                                image, description, bucketPath, `${folder}/${prefix}`, dimensions, region, scale, crs,
-                                crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-                            ),
-                            description: `export to Sepal through CS (${description})`,
-                            retries
-                        }),
-                        cloudStorage.download$({
-                            bucketPath,
-                            prefix: cloudStoragePrefix,
-                            downloadDir,
-                            deleteAfterDownload: true
-                        })
-                    ),
-                    () => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}),
-                    `Delete Cloud Storage files: ${bucketPath}:${cloudStoragePrefix}`
+                concat(
+                    exportToCloudStorage$({
+                        task: ee.batch.Export.image.toCloudStorage(
+                            image, description, bucketPath, `${folder}/${prefix}`, dimensions, region, scale, crs,
+                            crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+                        ),
+                        description: `export to Sepal through CS (${description})`,
+                        retries
+                    }),
+                    cloudStorage.download$({
+                        bucketPath,
+                        prefix: cloudStoragePrefix,
+                        downloadDir,
+                        deleteAfterDownload: true
+                    })
+                ).pipe(
+                    finalize(() => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}),
+                        `Delete Cloud Storage files: ${bucketPath}:${cloudStoragePrefix}`)
                 )
-                // concat(
-                //     exportToCloudStorage$({
-                //         task: ee.batch.Export.image.toCloudStorage(
-                //             image, description, bucketPath, `${folder}/${prefix}`, dimensions, region, scale, crs,
-                //             crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-                //         ),
-                //         description: `export to Sepal through CS (${description})`,
-                //         retries
-                //     }),
-                //     cloudStorage.download$({
-                //         bucketPath,
-                //         prefix: cloudStoragePrefix,
-                //         downloadDir,
-                //         deleteAfterDownload: true
-                //     })
-                // ).pipe(
-                //     finalize(() => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}),
-                //         `Delete Cloud Storage files: ${bucketPath}:${cloudStoragePrefix}`)
-                // )
             )
         )
     }
@@ -115,42 +93,23 @@ const exportImageToSepal$ = ({
                 deleteAfterDownload: true
             })
 
-        return finalize$(
-            concat(
-                exportToDrive$({
-                    task: ee.batch.Export.image.toDrive(
-                        image, description, folder, prefix, dimensions, region, scale, crs,
-                        crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-                    ),
-                    description: `export to Sepal through Drive (${description})`,
-                    folder,
-                    retries
-                }),
-                downloadFromDrive$({
-                    path: drivePath(folder),
-                    downloadDir
-                })
-            ),
-            () => drive.removeFolderByPath$({path: drivePath(folder)}),
-            `Delete drive folder: ${folder}`
+        return concat(
+            exportToDrive$({
+                task: ee.batch.Export.image.toDrive(
+                    image, description, folder, prefix, dimensions, region, scale, crs,
+                    crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+                ),
+                description: `export to Sepal through Drive (${description})`,
+                folder,
+                retries
+            }),
+            downloadFromDrive$({
+                path: drivePath(folder),
+                downloadDir
+            })
+        ).pipe(
+            finalize(() => drive.removeFolderByPath$({path: drivePath(folder)}), `Delete drive folder: ${folder}`)
         )
-        // return concat(
-        //     exportToDrive$({
-        //         task: ee.batch.Export.image.toDrive(
-        //             image, description, folder, prefix, dimensions, region, scale, crs,
-        //             crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-        //         ),
-        //         description: `export to Sepal through Drive (${description})`,
-        //         folder,
-        //         retries
-        //     }),
-        //     downloadFromDrive$({
-        //         path: drivePath(folder),
-        //         downloadDir
-        //     })
-        // ).pipe(
-        //     finalize(() => drive.removeFolderByPath$({path: drivePath(folder)}), `Delete drive folder: ${folder}`)
-        // )
     }
 
     return getCurrentContext$().pipe(
