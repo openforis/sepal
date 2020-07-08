@@ -2,7 +2,7 @@ const fs = require('fs')
 const {Subject, EMPTY, concat, defer, of} = require('rx')
 const {catchError, expand, map, mergeMap, scan, switchMap} = require('rx/operators')
 const {finalize, retry, swallow} = require('sepal/rxjs/operators')
-const {fromPromise} = require('sepal/rxjs')
+const {fromPromise, finalize$} = require('sepal/rxjs')
 const {cloudStorage$} = require('./cloudStorage')
 const path = require('path')
 const format = require('./format')
@@ -36,7 +36,6 @@ const download$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
         ),
     )
 
-
 const delete$ = ({bucketPath, prefix}) => {
     log.debug(`delete files ${bucketPath}:${prefix}`)
     return cloudStorage$().pipe(
@@ -50,12 +49,11 @@ const delete$ = ({bucketPath, prefix}) => {
     )
 }
 
-
 const getProgress = ({
-                         files,
-                         currentProgress = {downloadedFiles: 0, downloadedBytes: 0},
-                         fileProgress = {start: 0, end: -1}
-                     }) => {
+    files,
+    currentProgress = {downloadedFiles: 0, downloadedBytes: 0},
+    fileProgress = {start: 0, end: -1}
+}) => {
     const downloadedFiles = currentProgress.downloadedFiles + (isDownloaded(fileProgress) ? 1 : 0)
     const downloadedBytes = currentProgress.downloadedBytes + fileProgress.end - fileProgress.start + 1
     const totalFiles = files.length
@@ -116,7 +114,15 @@ const downloadFile$ = ({file, prefix, downloadDir, deleteAfterDownload}) => {
             })
             .pipe(fs.createWriteStream(toFilePath, start ? {flags: 'a'} : {}))
         return deleteAfterDownload
-            ? chunk$.pipe(finalize(() => deleteFile$(file), `Delete after download: ${file}`))
+            ? finalize$(
+                chunk$,
+                () => deleteFile$(file),
+                `Delete after download: ${file}`
+            )
+            // ? chunk$.pipe(finalize(
+            //     () => deleteFile$(file),
+            //     `Delete after download: ${file}`
+            // ))
             : chunk$
     }
 
