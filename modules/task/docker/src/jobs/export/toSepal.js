@@ -52,8 +52,8 @@ const exportImageToSepal$ = ({
         }
         const cloudStoragePrefix = `${folder}/`
         return initUserBucket$().pipe(
-            switchMap(bucketPath => {
-                return concat(
+            switchMap(bucketPath =>
+                concat(
                     exportToCloudStorage$({
                         task: ee.batch.Export.image.toCloudStorage(
                             image, description, bucketPath, `${folder}/${prefix}`, dimensions, region, scale, crs,
@@ -72,7 +72,7 @@ const exportImageToSepal$ = ({
                     finalize(() => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}),
                         `Delete Cloud Storage files: ${bucketPath}:${cloudStoragePrefix}`)
                 )
-            })
+            )
         )
     }
 
