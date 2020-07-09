@@ -132,7 +132,10 @@ const export$ = (downloadDir, recipe) => {
     }
 
     const hasImagery$ = (startDate, endDate) =>
-        ee.getInfo$(hasImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate}), 'check if date range has imagery')
+        ee.getInfo$(
+            hasImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate}),
+            `check if date range ${startDate}-${endDate} has imagery (${description})`
+        )
 
     const exportChunks$ = chunks$ =>
         chunks$.pipe(
@@ -167,7 +170,7 @@ const export$ = (downloadDir, recipe) => {
         )
     }
 
-    const tileIds$ = ee.getInfo$(tiles.aggregate_array('system:index'), 'time-series image ids')
+    const tileIds$ = ee.getInfo$(tiles.aggregate_array('system:index'), `time-series image ids ${description}`)
 
     return tileIds$.pipe(
         switchMap(tileIds => exportTiles$(tileIds)),
