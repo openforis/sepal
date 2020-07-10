@@ -1,5 +1,5 @@
 .panel {
-    width: 20rem;
+    width: 25rem;
 }
 
 .message {
@@ -7,6 +7,5 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    word-break: break-all;
     font-size: .9rem;
 }
