@@ -134,7 +134,7 @@ class MosaicPreview extends React.Component {
         const selection = selectFrom(recipe, 'ui.bands.selection')
         return {
             recipe: _.omit(recipe, ['ui']),
-            bands: selection && selection.split(', ')
+            bands: {selection: selection && selection.split(', ')}
         }
     }
 }
