@@ -1569,7 +1569,9 @@
             },
             "useSepalGoogleAccount": {
                 "label": "Use Sepal's Google account",
-                "tooltip": "Revoke Sepal's permission to use your Google drive and manage your Earth Engine assets. Some features like exporting to Earth Engine assets will not be available."
+                "tooltip": "Revoke Sepal's permission to use your Google drive and manage your Earth Engine assets. Some features like exporting to Earth Engine assets will not be available.",
+                "warning": "Warning! Switching to SEPAL Google account would cause termination of any task started while using your own Google account. Tasks running: {taskCount}.",
+                "success": "Now using SEPAL Google account."
             },
             "useUserGoogleAccount": {
                 "label": "Use my own Google account",

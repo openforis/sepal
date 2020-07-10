@@ -2,7 +2,7 @@ import {EMPTY, Subject, timer} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {history} from 'route'
-import {map, switchMap} from 'rxjs/operators'
+import {map, switchMap, tap} from 'rxjs/operators'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -36,6 +36,11 @@ export const resetInvalidCredentials = () =>
 export const revokeGoogleAccess$ = () =>
     api.user.revokeGoogleAccess$().pipe(
         map(() => loadUser$.next())
+    )
+
+export const requestUserAccess$ = () =>
+    api.user.getGoogleAccessRequestUrl$(window.location).pipe(
+        tap(({url}) => window.location = url)
     )
 
 export const requestPasswordReset$ = email =>

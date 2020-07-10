@@ -1,19 +1,18 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
-import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import SafetyButton from 'widget/safetyButton'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {currentUser, revokeGoogleAccess$, updateCurrentUserDetails$} from 'widget/user'
+import {currentUser, requestUserAccess$, revokeGoogleAccess$, updateCurrentUserDetails$} from 'widget/user'
 import {msg} from 'translate'
 import ChangePassword from './changePassword'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import api from 'api'
 import styles from './userDetails.module.css'
 
 const fields = {
@@ -23,7 +22,8 @@ const fields = {
         .notBlank('user.userDetails.form.email.required'),
     organization: new Form.Field()
 }
-const mapStateToProps = () => {
+
+const mapStateToProps = state => {
     const user = currentUser()
     return {
         user,
@@ -31,20 +31,24 @@ const mapStateToProps = () => {
             name: user.name,
             email: user.email,
             organization: user.organization
-        }
+        },
+        tasks: state.tasks
     }
 }
 
 class _UserDetails extends React.Component {
+
     useUserGoogleAccount(e) {
-        e.preventDefault()
-        api.user.getGoogleAccessRequestUrl$(window.location)
-            .subscribe(({url}) => window.location = url)
+        // e.preventDefault()
+        this.props.stream('USE_USER_GOOGLE_ACCOUNT', requestUserAccess$())
     }
 
     useSepalGoogleAccount(e) {
-        e.preventDefault()
-        this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT', revokeGoogleAccess$())
+        // e.preventDefault()
+        this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT', 
+            revokeGoogleAccess$(),
+            () => Notifications.success({message: msg('user.userDetails.useSepalGoogleAccount.success')})
+        )   
     }
 
     updateUserDetails(userDetails) {
@@ -54,35 +58,58 @@ class _UserDetails extends React.Component {
         )
     }
 
+    getTaskCount() {
+        const {tasks} = this.props
+        return tasks
+            ? tasks.filter(task => task.status === "ACTIVE").length
+            : 0
+    }
+
+    renderUserGoogleAccountButton() {
+        const {form} = this.props
+        const useUserGoogleAccount = this.props.stream('USE_USER_GOOGLE_ACCOUNT')
+        return (
+            <Button
+                label={msg('user.userDetails.useUserGoogleAccount.label')}
+                icon='google'
+                iconType='brands'
+                tooltip={msg('user.userDetails.useUserGoogleAccount.tooltip')}
+                disabled={form.isDirty()}
+                busy={useUserGoogleAccount.active || useUserGoogleAccount.completed}
+                onClick={e => this.useUserGoogleAccount(e)}
+            />
+        )
+    }
+
+    renderSepalGoogleAccountButton() {
+        const {form} = this.props
+        const taskCount = this.getTaskCount()
+        return (
+            <SafetyButton
+                label={msg('user.userDetails.useSepalGoogleAccount.label')}
+                icon='google'
+                iconType='brands'
+                tooltip={msg('user.userDetails.useSepalGoogleAccount.tooltip')}
+                message={msg('user.userDetails.useSepalGoogleAccount.warning', {taskCount})}
+                disabled={form.isDirty()}
+                skipConfirmation={!taskCount}
+                busy={this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT').active}
+                onConfirm={() => this.useSepalGoogleAccount()}
+            />
+        )
+    }
+
     renderGoogleAccountButton() {
-        const {user, form} = this.props
+        const {user} = this.props
         return user.googleTokens
-            ? (
-                <Button
-                    label={msg('user.userDetails.useSepalGoogleAccount.label')}
-                    icon='google'
-                    iconType='brands'
-                    tooltip={msg('user.userDetails.useSepalGoogleAccount.tooltip')}
-                    disabled={form.isDirty()}
-                    onClick={e => this.useSepalGoogleAccount(e)}
-                />
-            ) : (
-                <Button
-                    label={msg('user.userDetails.useUserGoogleAccount.label')}
-                    icon='google'
-                    iconType='brands'
-                    tooltip={msg('user.userDetails.useUserGoogleAccount.tooltip')}
-                    disabled={form.isDirty()}
-                    onClick={e => this.useUserGoogleAccount(e)}
-                />
-            )
+            ? this.renderSepalGoogleAccountButton() 
+            : this.renderUserGoogleAccountButton()
     }
 
     renderPanel() {
         const {form, inputs: {name, email, organization}} = this.props
-        return this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT').active
-            ? <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>
-            : <React.Fragment>
+        return (
+            <React.Fragment>
                 <Panel.Content>
                     <Layout>
                         <Form.Input
@@ -122,7 +149,16 @@ class _UserDetails extends React.Component {
                     </Activator>
                 </Form.PanelButtons>
             </React.Fragment>
+        )
     }
+
+    // renderProgress() {
+    //     return this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT').active
+    //         ? <Modal>
+    //             <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>
+    //         </Modal>
+    //         : null
+    // }
 
     render() {
         const {form, activatable: {deactivate}} = this.props
@@ -138,6 +174,7 @@ class _UserDetails extends React.Component {
                     icon='user'
                     title={msg('user.userDetails.title')}/>
                 {this.renderPanel()}
+                {/* {this.renderProgress()} */}
             </Form.Panel>
         )
     }
