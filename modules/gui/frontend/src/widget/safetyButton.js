@@ -21,8 +21,8 @@ export default class SafetyButton extends React.Component {
                 message={message}
                 label={confirmLabel || msg('widget.safetyButton.label')}
                 onConfirm={() => {
-                    this.askConfirmation(false)
                     onConfirm()
+                    this.askConfirmation(false)
                 }}
                 onCancel={() => this.askConfirmation(false)}>
                 {children}
