@@ -14,12 +14,12 @@ export default class SafetyButton extends React.Component {
     }
 
     renderConfirm() {
-        const {title, message, label, onConfirm, children} = this.props
+        const {title, message, confirmLabel, onConfirm, children} = this.props
         return (
             <Confirm
                 title={title}
                 message={message}
-                label={label || msg('widget.safetyButton.label')}
+                label={confirmLabel || msg('widget.safetyButton.label')}
                 onConfirm={() => {
                     this.askConfirmation(false)
                     onConfirm()
@@ -31,17 +31,14 @@ export default class SafetyButton extends React.Component {
     }
 
     render() {
-        const {chromeless, shape, icon, skip, onConfirm, ...otherProps} = this.props
+        const {skipConfirmation, onConfirm, onClick, onClickHold, ...otherProps} = this.props
         const {askConfirmation} = this.state
         return (
             <React.Fragment>
                 <Button
-                    chromeless={chromeless}
-                    shape={shape}
-                    icon={icon}
-                    {...otherProps}
-                    onClick={() => skip ? onConfirm() : this.askConfirmation(true)}
+                    onClick={() => skipConfirmation ? onConfirm() : this.askConfirmation(true)}
                     onClickHold={() => onConfirm()}
+                    {...otherProps}
                 />
                 {askConfirmation ? this.renderConfirm() : null}
             </React.Fragment>
@@ -52,10 +49,7 @@ export default class SafetyButton extends React.Component {
 SafetyButton.propTypes = {
     message: PropTypes.string.isRequired,
     onConfirm: PropTypes.func.isRequired,
-}
-
-SafetyButton.defaultProps = {
-    chromeless: true,
-    shape: 'circle',
-    icon: 'trash'
+    confirmLabel: PropTypes.string,
+    title: PropTypes.string,
+    skipConfirmation: PropTypes.bool
 }
