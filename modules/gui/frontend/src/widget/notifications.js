@@ -12,7 +12,8 @@ import styles from './notifications.module.css'
 import withSubscriptions from 'subscription'
 
 const PATH = 'Notifications'
-const DISMISS_DELAY_MS = 500
+const PUBLISH_ANIMATION_DURATION_MS = 250
+const DISMISS_ANIMATION_DURATION_MS = 250
 
 const publish$ = new Subject()
 const manualDismiss$ = new Subject()
@@ -26,7 +27,7 @@ const autoDismiss$ = publish$
         )
     )
 const dismiss$ = merge(manualDismiss$, autoDismiss$)
-const remove$ = dismiss$.pipe(delay(DISMISS_DELAY_MS))
+const remove$ = dismiss$.pipe(delay(DISMISS_ANIMATION_DURATION_MS))
 
 const group = ({group = false, id, ...notification}) =>
     group === false
@@ -110,6 +111,12 @@ class _Notifications extends React.Component {
         )
     }
 
+    renderAutoDismissIndicator(timeout) {
+        return (
+            <div className={styles.autoDismiss} style={{'--auto-dismiss-timeout-s': `${timeout}s`}}/>
+        )
+    }
+
     renderNotification({id, level, title, message, error, content, timeout, dismissable, dismissing}) {
         const dismiss = () => manualDismiss$.next(id)
         return id
@@ -122,7 +129,10 @@ class _Notifications extends React.Component {
                         dismissable ? styles.dismissable : null,
                         dismissing ? styles.dismissing : null
                     ].join(' ')}
-                    style={{'--dismiss-time-ms': `${DISMISS_DELAY_MS}ms`}}
+                    style={{
+                        '--publish-animation-duration-ms': `${PUBLISH_ANIMATION_DURATION_MS}ms`,
+                        '--dismiss-animation-duration-ms': `${DISMISS_ANIMATION_DURATION_MS}ms`
+                    }}
                     onClick={() => dismissable && dismiss()}
                 >
                     {title ? this.renderTitle(title) : null}
@@ -130,6 +140,7 @@ class _Notifications extends React.Component {
                     {error ? this.renderError(error) : null}
                     {content ? this.renderContent(content, dismiss) : null}
                     {this.renderDismissMessage(timeout)}
+                    {this.renderAutoDismissIndicator(timeout)}
                 </div>
             )
             : null

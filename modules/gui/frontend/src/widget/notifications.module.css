@@ -32,7 +32,7 @@
 }
 
 .notification:not(.dismissing) {
-    animation: add 250ms ease-in-out normal forwards;
+    animation: add var(--publish-animation-duration-ms) ease-in-out normal forwards;
 }
 
 @keyframes add {
@@ -43,7 +43,7 @@
 }
 
 .notification.dismissing {
-    animation: remove 250ms ease-in-out reverse forwards;
+    animation: remove var(--dismiss-animation-duration-ms) ease-in-out reverse forwards;
 }
 
 @keyframes remove {
@@ -82,6 +82,32 @@
     text-align: center;
     font-size: .8rem;
     color: gray;
+}
+
+.notification .autoDismiss {
+    position: relative;
+    height: 1px;
+    background-color: #303030;
+}
+
+.notification .autoDismiss::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    background-color: #606060;
+    animation: autoDismiss var(--auto-dismiss-timeout-s) linear;
+}
+
+@keyframes autoDismiss {
+    0% {
+        right: 100%;
+    }
+    100% {
+        right: 0%;
+    }
 }
 
 .notification .title {
