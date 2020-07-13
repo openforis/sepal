@@ -87,7 +87,7 @@ const runTask$ = (task, description) => {
             switchMap(running =>
                 running
                     ? cancel$(taskId).pipe(
-                    mapTo(true)
+                        mapTo(true)
                     )
                     : of(false)
             ),
@@ -98,7 +98,7 @@ const runTask$ = (task, description) => {
                 log.error(`EE task failed to cancel. Trying again, without loading status first (${description}, ${taskId})`, error)
                 return cancel$(taskId)
             })
-        );
+        )
     }
 
     const isRunning = state => [UNSUBMITTED, READY, RUNNING].includes(state)

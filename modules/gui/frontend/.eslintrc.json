@@ -21,7 +21,7 @@
     },
     "plugins": [
         "react",
-        // "import",
+        "import",
         "sort-imports-es6-autofix"
     ],
     "settings": {

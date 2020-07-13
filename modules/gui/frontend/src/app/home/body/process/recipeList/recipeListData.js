@@ -105,6 +105,7 @@ export class RecipeListData extends React.Component {
     }
 
     getHandleIcon({column, sortingOrder, sortingDirection}) {
+        
         const sorted = sortingOrder === column
         return sorted
             ? sortingDirection === 1

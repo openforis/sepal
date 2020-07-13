@@ -4,7 +4,6 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import SafetyButton from 'widget/safetyButton'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -13,6 +12,7 @@ import {msg} from 'translate'
 import ChangePassword from './changePassword'
 import Notifications from 'widget/notifications'
 import React from 'react'
+import SafetyButton from 'widget/safetyButton'
 import styles from './userDetails.module.css'
 
 const fields = {
@@ -38,17 +38,17 @@ const mapStateToProps = state => {
 
 class _UserDetails extends React.Component {
 
-    useUserGoogleAccount(e) {
+    useUserGoogleAccount() {
         // e.preventDefault()
         this.props.stream('USE_USER_GOOGLE_ACCOUNT', requestUserAccess$())
     }
 
-    useSepalGoogleAccount(e) {
+    useSepalGoogleAccount() {
         // e.preventDefault()
-        this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT', 
+        this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT',
             revokeGoogleAccess$(),
             () => Notifications.success({message: msg('user.userDetails.useSepalGoogleAccount.success')})
-        )   
+        )
     }
 
     updateUserDetails(userDetails) {
@@ -61,7 +61,7 @@ class _UserDetails extends React.Component {
     getTaskCount() {
         const {tasks} = this.props
         return tasks
-            ? tasks.filter(task => task.status === "ACTIVE").length
+            ? tasks.filter(task => task.status === 'ACTIVE').length
             : 0
     }
 
@@ -102,7 +102,7 @@ class _UserDetails extends React.Component {
     renderGoogleAccountButton() {
         const {user} = this.props
         return user.googleTokens
-            ? this.renderSepalGoogleAccountButton() 
+            ? this.renderSepalGoogleAccountButton()
             : this.renderUserGoogleAccountButton()
     }
 

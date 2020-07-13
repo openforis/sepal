@@ -81,7 +81,6 @@ const taskCompleted$ = id =>
         messageKey: 'tasks.status.completed'
     })
 
-
 const taskCanceled$ = id =>
     taskStateChanged$(id, 'CANCELED', {
         defaultMessage: 'Stopped',
@@ -106,8 +105,8 @@ task$.pipe(
                 progress.state === 'COMPLETED'
                     ? taskCompleted$(task.id)
                     : progress.state === 'CANCELED'
-                    ? taskCanceled$(task.id)
-                    : of(progress)
+                        ? taskCanceled$(task.id)
+                        : of(progress)
             ),
             catchError(error =>
                 taskFailed$(task.id, error)

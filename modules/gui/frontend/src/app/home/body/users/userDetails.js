@@ -64,7 +64,6 @@ class UserDetails extends React.Component {
             inputs: {username, name, email, organization, admin, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota}
         } = this.props
         const newUser = !this.props.userDetails.username
-        console.log('**** ADMIN: ', admin.value)
         return (
             <Form.Panel
                 className={[styles.panel, newUser ? styles.newUser : styles.existingUser].join(' ')}

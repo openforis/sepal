@@ -1,4 +1,4 @@
-const {BehaviorSubject, defer, timer} = require('rx')
+const {BehaviorSubject, timer} = require('rx')
 const {filter, switchMap, tap, map, pairwise} = require('rx/operators')
 const fs = require('fs')
 const path = require('path')

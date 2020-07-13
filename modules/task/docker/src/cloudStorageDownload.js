@@ -36,7 +36,6 @@ const download$ = ({bucketPath, prefix, downloadDir, deleteAfterDownload}) =>
         ),
     )
 
-
 const delete$ = ({bucketPath, prefix}) => {
     log.debug(`delete files ${bucketPath}:${prefix}`)
     return cloudStorage$().pipe(
@@ -50,12 +49,11 @@ const delete$ = ({bucketPath, prefix}) => {
     )
 }
 
-
 const getProgress = ({
-                         files,
-                         currentProgress = {downloadedFiles: 0, downloadedBytes: 0},
-                         fileProgress = {start: 0, end: -1}
-                     }) => {
+    files,
+    currentProgress = {downloadedFiles: 0, downloadedBytes: 0},
+    fileProgress = {start: 0, end: -1}
+}) => {
     const downloadedFiles = currentProgress.downloadedFiles + (isDownloaded(fileProgress) ? 1 : 0)
     const downloadedBytes = currentProgress.downloadedBytes + fileProgress.end - fileProgress.start + 1
     const totalFiles = files.length

@@ -1,5 +1,4 @@
 const job = require('root/jobs/job')
-const log = require('sepal/log').getLogger('worker')
 
 module.exports = job({
     jobName: 'Test1',
