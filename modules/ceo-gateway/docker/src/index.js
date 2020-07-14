@@ -106,7 +106,7 @@ app.post('/create-project', (req, res, next) => {
         componentType: 'button',
     }]
     const data = {
-        ...imageryId && {imageryId},
+        ...(imageryId !== undefined && {imageryId}),
         description: title,
         institutionId,
         lonMin: '',
