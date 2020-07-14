@@ -6,6 +6,8 @@ const worker$ = () => {
     const {switchMap} = require('rx/operators')
     const ee = require('ee')
     const {getContext$} = require('root/jobs/service/context')
+    
+    const DEFAULT_MAX_RETRIES = 10
 
     const secondsToExpiration = expiration => {
         const millisecondsLeft = expiration - Date.now()
@@ -51,7 +53,10 @@ const worker$ = () => {
     const initialize$ = () =>
         ee.$({
             operation: 'initialize',
-            ee: (resolve, reject) => ee.initialize(null, null, resolve, reject)
+            ee: (resolve, reject) => {
+                ee.setMaxRetries(DEFAULT_MAX_RETRIES)
+                ee.initialize(null, null, resolve, reject)
+            }
         })
 
     const ready$ = new ReplaySubject()

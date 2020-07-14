@@ -5,9 +5,14 @@ const worker$ = () => {
     const {swallow} = require('sepal/rxjs/operators')
     const ee = require('ee')
 
+    DEFAULT_MAX_RETRIES = 3
+
     return ee.$({
         operation: 'initialize',
-        ee: (resolve, reject) => ee.initialize(null, null, resolve, reject)
+        ee: (resolve, reject) => {
+            ee.setMaxRetries(DEFAULT_MAX_RETRIES)
+            ee.initialize(null, null, resolve, reject)
+        }
     }).pipe(
         swallow()
     )
