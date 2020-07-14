@@ -22,6 +22,6 @@ export MONGODB=mongodb-linux-x86_64-2.6.10
 wget https://fastdl.mongodb.org/linux/$MONGODB.tgz
 tar -xvf $MONGODB.tgz
 rm $MONGODB.tgz
-ln -sf mongodb $MONGODB
-ln -sf mongodb/bin/* /usr/local/bin
+ln -sf $MONGODB mongodb
+cp -f mongodb/bin/* /usr/local/bin/
 cd -
