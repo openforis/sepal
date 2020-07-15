@@ -14,7 +14,7 @@ export default class AssetSection extends React.Component {
                 placeholder={msg('process.classification.panel.inputImagery.form.asset.placeholder')}
                 spellCheck={false}
                 errorMessage
-                onBlur={e => onChange(e.target.value)}
+                onChangeDebounced={value => onChange(value)}
             />
         )
     }
