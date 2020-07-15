@@ -56,7 +56,7 @@ class Aws implements HostingServiceAdapter {
             new InstanceType(id: 'R44xlarge', name: 'r4.4xlarge', hourlyCost: 1.186, cpuCount: 16, ramGiB: 122),
             new InstanceType(id: 'R48xlarge', name: 'r4.8xlarge', hourlyCost: 2.371, cpuCount: 32, ramGiB: 244),
             new InstanceType(id: 'R416xlarge', name: 'r4.16xlarge', hourlyCost: 4.742, cpuCount: 64, ramGiB: 488),
-            new InstanceType(id: 'G4dn2xlarge', name: 'g4dn.2xlarge', hourlyCost: 0.838, cpuCount: 8, ramGiB: 32),
+            new InstanceType(id: 'G4dn2xlarge', name: 'g4dn.2xlarge', tag: 'g8', hourlyCost: 0.838, cpuCount: 8, ramGiB: 32),
     ].asImmutable()
 
 
