@@ -1,11 +1,30 @@
 import {Input, Textarea} from 'widget/input'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
+import {debounceTime, distinctUntilChanged} from 'rxjs/operators'
 import {getErrorMessage} from 'widget/form/error'
 import {withFormContext} from 'widget/form/context'
 import PropTypes from 'prop-types'
 import React from 'react'
+import withSubscriptions from 'subscription'
+
+const DEBOUNCE_TIME_MS = 750
 
 class _FormInput extends React.Component {
+    constructor(props) {
+        super(props)
+        const {addSubscription, onChangeDebounced} = props
+        this.change$ = new Subject()
+        addSubscription(
+            this.change$.pipe(
+                debounceTime(DEBOUNCE_TIME_MS),
+                distinctUntilChanged()
+            ).subscribe(
+                value => onChangeDebounced && onChangeDebounced(value)
+            )
+        )
+    }
+
     render() {
         const {textArea} = this.props
         return textArea ? this.renderTextArea() : this.renderInput()
@@ -28,6 +47,7 @@ class _FormInput extends React.Component {
                 tabIndex={tabIndex}
                 onChange={e => {
                     input.handleChange(e)
+                    this.change$.next(e.target.value)
                     onChange && onChange(e)
                     validate === 'onChange' && input.validate()
                 }}
@@ -67,7 +87,8 @@ class _FormInput extends React.Component {
 }
 export const FormInput = compose(
     _FormInput,
-    withFormContext()
+    withFormContext(),
+    withSubscriptions()
 )
 
 FormInput.propTypes = {
@@ -91,7 +112,8 @@ FormInput.propTypes = {
     type: PropTypes.string,
     validate: PropTypes.oneOf(['onChange', 'onBlur']),
     onBlur: PropTypes.func,
-    onChange: PropTypes.func
+    onChange: PropTypes.func,
+    onChangeDebounced: PropTypes.func
 }
 
 FormInput.defaultProps = {
