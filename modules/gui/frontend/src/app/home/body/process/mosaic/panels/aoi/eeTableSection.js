@@ -3,7 +3,7 @@ import {Layout} from 'widget/layout'
 import {RecipeActions} from '../../mosaicRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {debounceTime, distinctUntilChanged, filter, map, takeUntil} from 'rxjs/operators'
+import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {sepalMap} from 'app/home/map/map'
@@ -11,7 +11,6 @@ import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
 import api from 'api'
-import withSubscriptions from 'subscription'
 
 const mapRecipeToProps = recipe => {
     return {
@@ -24,22 +23,10 @@ const mapRecipeToProps = recipe => {
 class EETableSection extends React.Component {
     constructor(props) {
         super(props)
-        const {addSubscription, recipeId} = props
+        const {recipeId} = props
         this.eeTableChanged$ = new Subject()
         this.eeTableColumnChanged$ = new Subject()
-        this.loadColumns$ = new Subject()
         this.recipe = RecipeActions(recipeId)
-
-        addSubscription(
-            this.loadColumns$.pipe(
-                debounceTime(750),
-                distinctUntilChanged(),
-                // tap(() => this.reset()),
-                filter(tableId => tableId)
-            ).subscribe(
-                tableId => this.loadColumns(tableId)
-            )
-        )
     }
 
     reset() {
@@ -62,7 +49,7 @@ class EETableSection extends React.Component {
                     input={eeTable}
                     placeholder={msg('process.mosaic.panel.areaOfInterest.form.eeTable.eeTable.placeholder')}
                     spellCheck={false}
-                    onChange={e => this.loadColumns$.next(e.target.value)}
+                    onChangeDebounced={tableId => tableId && this.loadColumns(tableId)}
                     errorMessage
                     busyMessage={this.props.stream('LOAD_EE_TABLE_COLUMNS').active && msg('widget.loading')}
                 />
@@ -184,7 +171,7 @@ class EETableSection extends React.Component {
     componentDidMount() {
         const {inputs: {eeTable, eeTableColumn}} = this.props
         if (eeTable.value)
-            this.loadColumns$.next(eeTable.value)
+            this.loadColumns(eeTable.value)
         if (eeTableColumn.value)
             this.loadDistinctColumnValues(eeTableColumn.value)
         this.update()
@@ -218,6 +205,5 @@ class EETableSection extends React.Component {
 
 export default compose(
     EETableSection,
-    withRecipe(mapRecipeToProps),
-    withSubscriptions()
+    withRecipe(mapRecipeToProps)
 )
