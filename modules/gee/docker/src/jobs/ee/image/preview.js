@@ -41,7 +41,7 @@ const hsvToRgb = (image, visParams) => {
 }
 
 module.exports = job({
-    jobName: 'EE Image preview',
+    jobName: 'Preview',
     jobPath: __filename,
     before: [require('root/jobs/ee/initialize')],
     args: ctx => [ctx.request.body],

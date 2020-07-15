@@ -22,7 +22,7 @@ const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
 }
 
 module.exports = job({
-    jobName: 'EE geometry',
+    jobName: 'Geometry',
     jobPath: __filename,
     before: [require('root/jobs/ee/initialize')],
     args: ctx => [ctx.request.body],
