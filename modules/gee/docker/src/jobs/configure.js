@@ -12,7 +12,7 @@ const worker$ = () => {
 }
 
 module.exports = job({
-    jobName: 'Configure',
+    jobName: 'Configure shared library',
     before: [],
     services: [require('root/jobs/service/context').contextService],
     worker$
