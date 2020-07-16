@@ -105,6 +105,7 @@ class _SuperButton extends React.Component {
                         {this.renderTimestamp()}
                         {this.renderExtraButtons()}
                         {/* {this.renderDragButton()} */}
+                        {this.renderInfoButton()}
                         {this.renderEditButton()}
                         {this.renderDuplicateButton()}
                         {this.renderRemoveButton()}
