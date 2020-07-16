@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const {first} = require('rx/operators')
 const service = require('sepal/service')
 
 const contextService = {
@@ -11,5 +12,5 @@ const contextService = {
 
 module.exports = {
     contextService,
-    getContext$: () => service.submit$(contextService)
+    getContext$: () => service.submit$(contextService).pipe(first())
 }
