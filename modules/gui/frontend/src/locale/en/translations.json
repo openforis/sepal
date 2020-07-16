@@ -454,7 +454,7 @@
                         "title": "Saved Sepal recipe"
                     },
                     "remove": {
-                        "confirmationMessage": "Are you sure you want to remove '{name}' from your classification?",
+                        "confirmationMessage": "Are you sure you want to remove {name} from your classification?",
                         "tooltip": "Remove image from classification"
                     },
                     "retrieve": {
@@ -1643,7 +1643,7 @@
         "noMessages": "There are no messages",
         "post": "Post message",
         "remove": "Remove message",
-        "removeConfirmation": "Remove message '{subject}'?",
+        "removeConfirmation": "Remove message {subject}?",
         "state": {
             "READ": "Mark as unread",
             "UNREAD": "Mark as read"
