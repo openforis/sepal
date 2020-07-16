@@ -8,7 +8,7 @@ const task$ = require('root/ee/task')
 const {progress} = require('root/rxjs/operators')
 
 const deleteAsset$ = assetId =>
-    ee.deleteAsset$(assetId).pipe(
+    ee.deleteAsset$(assetId, 3).pipe(
         progress({
             defaultMessage: `Deleted asset '${assetId}'`,
             messageKey: 'tasks.ee.export.asset.delete',
