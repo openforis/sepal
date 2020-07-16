@@ -1,8 +1,6 @@
-const job = require('root/jobs/job')
+const {job} = require('root/jobs/job')
 
 const worker$ = ({recipe, bands}) => {
-    // const log = require('sepal/log').getLogger('ee')
-
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
     const {zip} = require('rx')
@@ -43,7 +41,5 @@ const hsvToRgb = (image, visParams) => {
 module.exports = job({
     jobName: 'Preview',
     jobPath: __filename,
-    before: [require('root/jobs/ee/initialize')],
-    args: ctx => [ctx.request.body],
     worker$
 })

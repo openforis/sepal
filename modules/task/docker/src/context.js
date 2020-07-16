@@ -67,18 +67,7 @@ const getConfig = () =>
 const getContext$ = () =>
     context$.pipe(
         filter(context => context),
-        // distinctUntilChanged()
     )
-
-// defer(() => {
-//     const context = context$.getValue()
-//     return context
-//         ? of(context)
-//         : context$.pipe(
-//             filter(context => context),
-//             first()
-//         )
-// })
 
 const switchedToServiceAccount$ =
     context$.pipe(

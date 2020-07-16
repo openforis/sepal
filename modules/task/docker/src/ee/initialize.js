@@ -2,8 +2,6 @@ const {Subject} = require('rx')
 const {switchMap, first} = require('rx/operators')
 const ee = require('ee')
 const {getCredentials$} = require('root/context')
-// const log = require('sepal/log').getLogger('ee')
-// const moment = require('moment')
 
 const secondsToExpiration = expiration => {
     const now = Date.now()

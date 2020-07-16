@@ -1,4 +1,4 @@
-const job = require('root/jobs/job')
+const {job} = require('root/jobs/job')
 
 const worker$ = () => {
 
@@ -13,7 +13,5 @@ const worker$ = () => {
 module.exports = job({
     jobName: 'EE check',
     jobPath: __filename,
-    before: [require('root/jobs/ee/initialize')],
-    args: ctx => [ctx.request.body],
     worker$
 })

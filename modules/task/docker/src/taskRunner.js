@@ -1,6 +1,7 @@
 const {BehaviorSubject, concat, of, throwError} = require('rx')
 const {catchError, distinctUntilChanged, first, map, takeUntil, tap} = require('rx/operators')
 const {finalize$} = require('sepal/rxjs')
+const {job} = require('root/jobs/job')
 const log = require('sepal/log').getLogger('task')
 const _ = require('lodash')
 
@@ -82,12 +83,10 @@ const executeTask$ = ({id, name, params}, {cmd$}) => {
 // module.exports = executeTask$
 
 // Execute in worker
-module.exports = require('root/jobs/job')({
+module.exports = job({
     jobName: 'execute task',
     jobPath: __filename,
-    before: [
-        require('root/jobs/ee/initialize')
-    ],
+    before: [require('root/jobs/configure'), require('root/jobs/ee/initialize')],
     services: [
         require('root/jobs/service/context').contextService,
         require('root/jobs/service/exportLimiter').limiter,

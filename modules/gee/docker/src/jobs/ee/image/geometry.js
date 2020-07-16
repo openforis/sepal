@@ -1,4 +1,4 @@
-const job = require('root/jobs/job')
+const {job} = require('root/jobs/job')
 
 const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
     const ee = require('ee')
@@ -24,7 +24,5 @@ const worker$ = ({recipe, color = '#FFFFFF50', fillColor = '#FFFFFF08'}) => {
 module.exports = job({
     jobName: 'Geometry',
     jobPath: __filename,
-    before: [require('root/jobs/ee/initialize')],
-    args: ctx => [ctx.request.body],
     worker$
 })

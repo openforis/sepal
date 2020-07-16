@@ -1,4 +1,4 @@
-const job = require('root/jobs/job')
+const {job} = require('root/jobs/job')
 
 const worker$ = ({tableId, columnName}) => {
     const ee = require('ee')
@@ -15,7 +15,6 @@ const worker$ = ({tableId, columnName}) => {
 module.exports = job({
     jobName: 'Get EE Table column values',
     jobPath: __filename,
-    before: [require('root/jobs/ee/initialize')],
     args: ctx => [ctx.request.query],
     worker$
 })

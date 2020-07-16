@@ -1,4 +1,4 @@
-const job = require('root/jobs/job')
+const {job} = require('root/jobs/job')
 
 module.exports = job({
     jobName: 'Test1',

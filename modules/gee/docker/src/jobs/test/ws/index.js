@@ -1,4 +1,4 @@
-const job = require('root/jobs/job')
+const {job} = require('root/jobs/job')
 
 const worker$ = (name, {args$, initArgs}) => {
     const {timer, merge, of} = require('rx')
@@ -22,6 +22,7 @@ const worker$ = (name, {args$, initArgs}) => {
 module.exports = job({
     jobName: 'Websocket demo',
     jobPath: __filename,
+    before: [],
     initArgs: () => 'Hello from websocket demo',
     args: ({params: {name}}) => [name],
     worker$

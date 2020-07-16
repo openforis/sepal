@@ -1,23 +1,21 @@
-const job = require('root/jobs/job')
+const {job} = require('root/jobs/job')
 
 const worker$ = ({recipe}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
-    const {switchMap, tap} = require('rx/operators')
-    const log = require('sepal/log').getLogger('temp')
+    const {switchMap} = require('rx/operators')
 
     const {getImage$} = ImageFactory(recipe)
     return getImage$().pipe(
         switchMap(image =>
-            ee.getInfo$(image.bandNames(), 'band names')
-        )
+            ee.getInfo$(image.bandNames(), 'band names').pipe(
+                tap(bandNames => log.warn('bandNames', bandNames))
+            ))
     )
 }
 
 module.exports = job({
-    jobName: 'Bands',
+    jobName: 'EE image bands',
     jobPath: __filename,
-    before: [require('root/jobs/ee/initialize')],
-    args: ctx => [ctx.request.body],
     worker$
 })

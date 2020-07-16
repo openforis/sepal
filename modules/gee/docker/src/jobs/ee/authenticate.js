@@ -1,4 +1,4 @@
-const job = require('root/jobs/job')
+const {job} = require('root/jobs/job')
 
 const getSepalUser = ctx => {
     const sepalUser = ctx.request.headers['sepal-user']
@@ -8,7 +8,7 @@ const getSepalUser = ctx => {
 }
 
 const getCredentials = ctx => {
-    const config = require('../../config')
+    const config = require('root/config')
     const sepalUser = getSepalUser(ctx)
     const serviceAccountCredentials = config.serviceAccountCredentials
     return {
@@ -67,6 +67,7 @@ const worker$ = ({sepalUser, serviceAccountCredentials}) => {
 
 module.exports = job({
     jobName: 'EE Authentication',
-    worker$,
-    args: ctx => [getCredentials(ctx)]
+    before: [require('root/jobs/configure')],
+    args: ctx => [getCredentials(ctx)],
+    worker$
 })
