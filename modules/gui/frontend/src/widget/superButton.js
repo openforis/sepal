@@ -158,7 +158,7 @@ class _SuperButton extends React.Component {
     }
 
     renderEditButton() {
-        const {onEdit, editTooltip, tooltipPlacement} = this.props
+        const {editDisabled, onEdit, editTooltip, tooltipPlacement} = this.props
         return onEdit
             ? (
                 <Button
@@ -168,6 +168,7 @@ class _SuperButton extends React.Component {
                     icon='edit'
                     tooltip={editTooltip}
                     tooltipPlacement={tooltipPlacement}
+                    editDisabled={editDisabled}
                     onClick={() => onEdit()}
                 />
             )
@@ -175,7 +176,7 @@ class _SuperButton extends React.Component {
     }
 
     renderDuplicateButton() {
-        const {onDuplicate, duplicateTooltip, tooltipPlacement} = this.props
+        const {duplicateDisabled, onDuplicate, duplicateTooltip, tooltipPlacement} = this.props
         return onDuplicate
             ? (
                 <Button
@@ -185,6 +186,7 @@ class _SuperButton extends React.Component {
                     icon='clone'
                     tooltip={duplicateTooltip}
                     tooltipPlacement={tooltipPlacement}
+                    disabled={duplicateDisabled}
                     onClick={() => onDuplicate()}/>
             )
             : null
@@ -206,7 +208,7 @@ class _SuperButton extends React.Component {
     }
 
     renderInfoButton() {
-        const {onInfo, infoTooltip, tooltipPlacement} = this.props
+        const {infoDisabled, onInfo, infoTooltip, tooltipPlacement} = this.props
         return onInfo
             ? (
                 <Button
@@ -216,6 +218,7 @@ class _SuperButton extends React.Component {
                     icon='info-circle'
                     tooltip={infoTooltip}
                     tooltipPlacement={tooltipPlacement}
+                    disabled={infoDisabled}
                     onClick={() => onInfo()}/>
             )
             : null
@@ -349,11 +352,14 @@ SuperButton.propTypes = {
     drag$: PropTypes.object,
     dragTooltip: PropTypes.string,
     dragValue: PropTypes.any,
+    duplicateDisabled: PropTypes.any,
     duplicateTooltip: PropTypes.string,
+    editDisabled: PropTypes.any,
     editTooltip: PropTypes.string,
     expanded: PropTypes.any,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
+    infoDisabled: PropTypes.any,
     infoTooltip: PropTypes.string,
     inlineComponents: PropTypes.any,
     removeDisabled: PropTypes.any,
