@@ -31,8 +31,8 @@ class _SuperButton extends React.Component {
     }
 
     isInteractive() {
-        const {onClick, expanded} = this.props
-        return onClick || (this.isExpandable() && !expanded) || this.isDraggable()
+        const {disabled, onClick, expanded} = this.props
+        return !disabled && (onClick || (this.isExpandable() && !expanded) || this.isDraggable())
     }
 
     isInternallySelected() {
@@ -50,31 +50,40 @@ class _SuperButton extends React.Component {
     }
 
     isDraggable() {
-        const {drag$, onDragStart, onDrag, onDragEnd} = this.props
-        return drag$ || onDragStart || onDrag || onDragEnd
+        const {disabled, drag$, onDragStart, onDrag, onDragEnd} = this.props
+        return !disabled && (drag$ || onDragStart || onDrag || onDragEnd)
     }
 
     isDragging() {
-        const {dragging} = this.state
-        return dragging
+        const {disabled, dragging} = this.state
+        return !disabled && dragging
+    }
+
+    onClick() {
+        const {onClick} = this.props
+        onClick && onClick()
+    }
+
+    clickToExpand() {
+        const {onExpand} = this.props
+        this.setState(
+            ({expanded}) => ({expanded: !expanded}),
+            () => {
+                const {expanded} = this.state
+                onExpand && onExpand(expanded)
+                this.expand$.next(expanded)
+            }
+        )
     }
 
     handleClick() {
-        const {onClick, onExpand} = this.props
-        if (onClick) {
-            onClick && onClick()
-            return
-        }
-        if (this.isExpandable()) {
-            this.setState(
-                ({expanded}) => ({expanded: !expanded}),
-                () => {
-                    const {expanded} = this.state
-                    expanded && onExpand && onExpand()
-                    this.expand$.next(expanded)
-                }
-            )
-            return
+        const {disabled, onClick} = this.props
+        if (!disabled) {
+            if (onClick) {
+                this.onClick()
+            } else if (this.isExpandable()) {
+                this.clickToExpand()
+            }
         }
     }
 
@@ -336,6 +345,7 @@ SuperButton.propTypes = {
     className: PropTypes.string,
     clickToExpand: PropTypes.any,
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    disabled: PropTypes.any,
     drag$: PropTypes.object,
     dragTooltip: PropTypes.string,
     dragValue: PropTypes.any,
