@@ -98,23 +98,27 @@ export class AppListData extends React.Component {
     //     )
     // }
 
-    renderAppImage({image, alt, style}, disabled) {
-        return image
+    renderLogo(logoUrl) {
+        return logoUrl
             ? <img
-                src={image}
-                alt={alt}
-                className={disabled ? styles.disabled : null}
-                height={100}
-                style={style}/>
+                src={logoUrl}
+                className={styles.logo}
+                style={{
+                    backgroundColor: 'white'
+                }}
+            />
             : null
     }
 
     renderApp(app, highlightMatcher) {
         const {onSelect} = this.props
+        const imageUrl = app.logoRef
+            ? `/api/apps/image/${app.logoRef}`
+            : null
         return (
             <SuperButton
                 title={app.label}
-                description={app.description}
+                description={app.tagline}
                 highlight={highlightMatcher}
                 infoTooltip={msg('apps.info')}
                 tooltipPlacement='left'
@@ -124,12 +128,9 @@ export class AppListData extends React.Component {
                 infoDisabled={true}
                 onInfo={() => this.showInfo(app)} // [TODO] implement it
                 onClick={() => onSelect(app)}
+                image={this.renderLogo(imageUrl)}
             />
         )
-    }
-
-    showInfo(app) {
-
     }
 }
 

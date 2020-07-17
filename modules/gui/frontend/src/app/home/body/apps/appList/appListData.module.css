@@ -6,8 +6,8 @@
     flex-shrink: 1;
 }
 
-/* .highlight {
-    font-weight: 500;
-    color: yellow;
-    background-color: transparent;
-} */
+.logo {
+    height: 3rem;
+    border-radius: 50%;
+    background-size: cover;
+}
