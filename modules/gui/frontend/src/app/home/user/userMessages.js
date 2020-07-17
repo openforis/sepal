@@ -188,7 +188,7 @@ class _UserMessages extends React.Component {
                 onExpandDelayed={() => this.setReadState(userMessage, 'READ')}
                 onEdit={isAdmin ? () => this.editMessage(message) : null}
                 onRemove={isAdmin ? () => this.removeMessage(message) : null}
-                extraButtons={[
+                inlineComponents={[
                     this.renderStatusButton(userMessage)
                 ]}
                 clickToExpand

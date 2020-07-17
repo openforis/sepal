@@ -103,7 +103,7 @@ class _SuperButton extends React.Component {
                         layout='horizontal-nowrap'
                         className={styles.buttons}>
                         {this.renderTimestamp()}
-                        {this.renderExtraButtons()}
+                        {this.renderInlineComponents()}
                         {/* {this.renderDragButton()} */}
                         {this.renderInfoButton()}
                         {this.renderEditButton()}
@@ -141,10 +141,10 @@ class _SuperButton extends React.Component {
             : null
     }
 
-    renderExtraButtons() {
-        const {extraButtons} = this.props
-        return extraButtons
-            ? extraButtons
+    renderInlineComponents() {
+        const {inlineComponents} = this.props
+        return inlineComponents
+            ? inlineComponents
             : null
     }
 
@@ -342,10 +342,10 @@ SuperButton.propTypes = {
     duplicateTooltip: PropTypes.string,
     editTooltip: PropTypes.string,
     expanded: PropTypes.any,
-    extraButtons: PropTypes.arrayOf(PropTypes.object),
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
     infoTooltip: PropTypes.string,
+    inlineComponents: PropTypes.any,
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
     removeTooltip: PropTypes.string,
