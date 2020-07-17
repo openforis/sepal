@@ -62,7 +62,7 @@ class AppsEndpoint {
         switch (extension) {
             case '.png': return 'image/png'
             case '.jpg': return 'image/jpeg'
-            case '.svg': return 'svg+xml'
+            case '.svg': return 'image/svg+xml'
             default: throw new IllegalArgumentException('Unsupported image extension: ' + extension)
         }
     }
