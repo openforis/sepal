@@ -31,8 +31,8 @@ class _SuperButton extends React.Component {
     }
 
     isInteractive() {
-        const {onClick, expanded} = this.props
-        return onClick || (this.isExpandable() && !expanded) || this.isDraggable()
+        const {disabled, onClick, expanded} = this.props
+        return !disabled && (onClick || (this.isExpandable() && !expanded) || this.isDraggable())
     }
 
     isInternallySelected() {
@@ -50,31 +50,40 @@ class _SuperButton extends React.Component {
     }
 
     isDraggable() {
-        const {drag$, onDragStart, onDrag, onDragEnd} = this.props
-        return drag$ || onDragStart || onDrag || onDragEnd
+        const {disabled, drag$, onDragStart, onDrag, onDragEnd} = this.props
+        return !disabled && (drag$ || onDragStart || onDrag || onDragEnd)
     }
 
     isDragging() {
-        const {dragging} = this.state
-        return dragging
+        const {disabled, dragging} = this.state
+        return !disabled && dragging
+    }
+
+    onClick() {
+        const {onClick} = this.props
+        onClick && onClick()
+    }
+
+    clickToExpand() {
+        const {onExpand} = this.props
+        this.setState(
+            ({expanded}) => ({expanded: !expanded}),
+            () => {
+                const {expanded} = this.state
+                onExpand && onExpand(expanded)
+                this.expand$.next(expanded)
+            }
+        )
     }
 
     handleClick() {
-        const {onClick, onExpand} = this.props
-        if (onClick) {
-            onClick && onClick()
-            return
-        }
-        if (this.isExpandable()) {
-            this.setState(
-                ({expanded}) => ({expanded: !expanded}),
-                () => {
-                    const {expanded} = this.state
-                    expanded && onExpand && onExpand()
-                    this.expand$.next(expanded)
-                }
-            )
-            return
+        const {disabled, onClick} = this.props
+        if (!disabled) {
+            if (onClick) {
+                this.onClick()
+            } else if (this.isExpandable()) {
+                this.clickToExpand()
+            }
         }
     }
 
@@ -103,8 +112,9 @@ class _SuperButton extends React.Component {
                         layout='horizontal-nowrap'
                         className={styles.buttons}>
                         {this.renderTimestamp()}
-                        {this.renderExtraButtons()}
+                        {this.renderInlineComponents()}
                         {/* {this.renderDragButton()} */}
+                        {this.renderInfoButton()}
                         {this.renderEditButton()}
                         {this.renderDuplicateButton()}
                         {this.renderRemoveButton()}
@@ -140,15 +150,15 @@ class _SuperButton extends React.Component {
             : null
     }
 
-    renderExtraButtons() {
-        const {extraButtons} = this.props
-        return extraButtons
-            ? extraButtons
+    renderInlineComponents() {
+        const {inlineComponents} = this.props
+        return inlineComponents
+            ? inlineComponents
             : null
     }
 
     renderEditButton() {
-        const {onEdit, editTooltip, tooltipPlacement} = this.props
+        const {editDisabled, onEdit, editTooltip, tooltipPlacement} = this.props
         return onEdit
             ? (
                 <Button
@@ -158,6 +168,7 @@ class _SuperButton extends React.Component {
                     icon='edit'
                     tooltip={editTooltip}
                     tooltipPlacement={tooltipPlacement}
+                    editDisabled={editDisabled}
                     onClick={() => onEdit()}
                 />
             )
@@ -165,7 +176,7 @@ class _SuperButton extends React.Component {
     }
 
     renderDuplicateButton() {
-        const {onDuplicate, duplicateTooltip, tooltipPlacement} = this.props
+        const {duplicateDisabled, onDuplicate, duplicateTooltip, tooltipPlacement} = this.props
         return onDuplicate
             ? (
                 <Button
@@ -175,6 +186,7 @@ class _SuperButton extends React.Component {
                     icon='clone'
                     tooltip={duplicateTooltip}
                     tooltipPlacement={tooltipPlacement}
+                    disabled={duplicateDisabled}
                     onClick={() => onDuplicate()}/>
             )
             : null
@@ -196,7 +208,7 @@ class _SuperButton extends React.Component {
     }
 
     renderInfoButton() {
-        const {onInfo, infoTooltip, tooltipPlacement} = this.props
+        const {infoDisabled, onInfo, infoTooltip, tooltipPlacement} = this.props
         return onInfo
             ? (
                 <Button
@@ -206,6 +218,7 @@ class _SuperButton extends React.Component {
                     icon='info-circle'
                     tooltip={infoTooltip}
                     tooltipPlacement={tooltipPlacement}
+                    disabled={infoDisabled}
                     onClick={() => onInfo()}/>
             )
             : null
@@ -335,16 +348,20 @@ SuperButton.propTypes = {
     className: PropTypes.string,
     clickToExpand: PropTypes.any,
     description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    disabled: PropTypes.any,
     drag$: PropTypes.object,
     dragTooltip: PropTypes.string,
     dragValue: PropTypes.any,
+    duplicateDisabled: PropTypes.any,
     duplicateTooltip: PropTypes.string,
+    editDisabled: PropTypes.any,
     editTooltip: PropTypes.string,
     expanded: PropTypes.any,
-    extraButtons: PropTypes.arrayOf(PropTypes.object),
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
+    infoDisabled: PropTypes.any,
     infoTooltip: PropTypes.string,
+    inlineComponents: PropTypes.any,
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
     removeTooltip: PropTypes.string,

@@ -40,6 +40,17 @@
         },
         "run": {
             "error": "Failed to run {label}"
+        },
+        "info": "Show information about this app",
+        "filter": {
+            "tag": {
+                "ignore.label": "All",
+                "tools.label": "Tools",
+                "pinned.label": "Pinned"
+            },
+            "search": {
+                "placeholder": "Search apps"
+            }
         }
     },
     "bands": {
