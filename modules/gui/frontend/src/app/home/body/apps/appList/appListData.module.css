@@ -1,0 +1,13 @@
+.header {
+    margin-bottom: 1rem;
+}
+
+.apps {
+    flex-shrink: 1;
+}
+
+/* .highlight {
+    font-weight: 500;
+    color: yellow;
+    background-color: transparent;
+} */
