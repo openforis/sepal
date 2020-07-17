@@ -4,9 +4,6 @@ import {select} from 'store'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
-// import jupyterLabIcon from 'app/home/body/apps/logo/jupyter-lab.png'
-// import jupyterNotebookIcon from 'app/home/body/apps/logo/jupyter-notebook.png'
-// import rstudioIcon from 'app/home/body/apps/logo/r-studio.png'
 
 export const appList = () =>
     select('apps.list') || []
