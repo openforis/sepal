@@ -19,7 +19,7 @@ class ListAppsHandler implements QueryHandler<List<Map>, ListApps> {
         if (!appsFile.exists())
             return []
         def apps = new JsonSlurper(type: JsonParserType.LAX).parse(appsFile) as List<Map>
-        validate(apps)
+        // validate(apps)
         return apps
     }
 
