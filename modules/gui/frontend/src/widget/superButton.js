@@ -88,7 +88,7 @@ class _SuperButton extends React.Component {
     }
 
     render() {
-        const {className, title, description} = this.props
+        const {className, title, description, image} = this.props
         const classNames = _.flatten([
             styles.container,
             lookStyles.look,
@@ -104,13 +104,16 @@ class _SuperButton extends React.Component {
             <div className={classNames} ref={this.ref}>
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
+                    <div className={styles.image}>
+                        {image}
+                    </div>
                     <div className={styles.info}>
                         <div className='itemType'>{this.renderHighlight(title)}</div>
                         <div className={styles.description}>{this.renderHighlight(description)}</div>
                     </div>
                     <ButtonGroup
                         layout='horizontal-nowrap'
-                        className={styles.buttons}>
+                        className={styles.inline}>
                         {this.renderTimestamp()}
                         {this.renderInlineComponents()}
                         {/* {this.renderDragButton()} */}
@@ -119,8 +122,10 @@ class _SuperButton extends React.Component {
                         {this.renderDuplicateButton()}
                         {this.renderRemoveButton()}
                     </ButtonGroup>
+                    <div className={styles.content}>
+                        {this.renderChildren()}
+                    </div>
                 </div>
-                {this.renderChildren()}
             </div>
         )
     }
@@ -359,6 +364,7 @@ SuperButton.propTypes = {
     expanded: PropTypes.any,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
+    image: PropTypes.any,
     infoDisabled: PropTypes.any,
     infoTooltip: PropTypes.string,
     inlineComponents: PropTypes.any,

@@ -13,9 +13,14 @@
 
 .main {
     position: relative;
-    display: flex;
     align-items: center;
-    justify-content: space-between;
+    padding: .25rem;
+    display: grid;
+    column-gap: .5rem;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+        'image info inline'
+        'content content content';
 }
 
 /* absolutely positioned click target is needed
@@ -29,8 +34,13 @@ to prevent click-through from click-hold buttons */
     border-radius: var(--button-border-radius);
 }
 
+.image {
+    grid-area: image;
+}
+
 .info {
-    padding: .25rem .5rem;
+    grid-area: info;
+    /* padding: .25rem .5rem; */
     pointer-events: none; /* avoid interfering with click target */
     overflow: hidden;
 }
@@ -39,6 +49,16 @@ to prevent click-through from click-hold buttons */
     white-space: normal;
     word-break: break-word;
     overflow: hidden;
+}
+
+.inline {
+    grid-area: inline;
+    flex-shrink: 0;
+    /* padding: .25rem .5rem; */
+}
+
+.content {
+    grid-area: content;
 }
 
 .expanded .info > * {
@@ -64,11 +84,6 @@ to prevent click-through from click-hold buttons */
         margin-right: .5rem;
         color: gray;
     }
-}
-
-.buttons {
-    flex-shrink: 0;
-    padding: .25rem .5rem;
 }
 
 .extra {
