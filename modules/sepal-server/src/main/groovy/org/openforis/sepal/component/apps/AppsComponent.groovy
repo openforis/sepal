@@ -8,11 +8,14 @@ import org.openforis.sepal.component.files.ListAppsHandler
 import org.openforis.sepal.endpoint.EndpointRegistry
 
 class AppsComponent extends NonTransactionalComponent implements EndpointRegistry {
+    private final File appsFile
+
     AppsComponent(File appsFile) {
+        this.appsFile = appsFile
         query(ListApps, new ListAppsHandler(appsFile))
     }
 
     void registerEndpointsWith(Controller controller) {
-        new AppsEndpoint(this).registerWith(controller)
+        new AppsEndpoint(this, appsFile).registerWith(controller)
     }
 }
