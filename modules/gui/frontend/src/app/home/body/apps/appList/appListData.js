@@ -1,7 +1,9 @@
+import {AppDetails} from './appDetails'
 import {CenteredProgress} from 'widget/progress'
 import {Consumer} from './appListContext'
 import {Layout} from 'widget/layout'
 import {Pageable} from 'widget/pageable/pageable'
+import {Panel} from 'widget/panel/panel'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {SuperButton} from 'widget/superButton'
@@ -11,15 +13,31 @@ import React from 'react'
 import styles from './appListData.module.css'
 
 export class AppListData extends React.Component {
+    state = {
+        app: null
+    }
+
     render() {
+        const {app} = this.state
         return (
-            <Consumer>
-                {({isLoading}) => {
-                    return isLoading()
-                        ? this.renderProgress()
-                        : this.renderData()
-                }}
-            </Consumer>
+            <React.Fragment>
+                <Consumer>
+                    {({isLoading}) => {
+                        return isLoading()
+                            ? this.renderProgress()
+                            : this.renderData()
+                    }}
+                </Consumer>
+                {app ? this.renderDetails() : null}
+            </React.Fragment>
+        )
+    }
+
+    renderDetails() {
+        const {app} = this.state
+        const close = () => this.setState({app: null})
+        return (
+            <AppDetails app={app} onClose={close}/>
         )
     }
 
@@ -125,12 +143,16 @@ export class AppListData extends React.Component {
                 // inlineComponents={[
                 //     // <div className="itemType">RUNNING</div>
                 // ]}
-                infoDisabled={true}
+                infoDisabled={false}
                 onInfo={() => this.showInfo(app)} // [TODO] implement it
                 onClick={() => onSelect(app)}
                 image={this.renderLogo(imageUrl)}
             />
         )
+    }
+
+    showInfo(app) {
+        this.setState({app})
     }
 }
 
