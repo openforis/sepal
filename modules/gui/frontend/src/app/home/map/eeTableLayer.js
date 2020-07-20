@@ -12,7 +12,7 @@ export const setEETableLayer = (
         onInitialized
     }) => {
     const watchedProps = {tableId, columnName, columnValue}
-    const layer = columnValue
+    const layer = tableId
         ? new RecipeGeometryLayer({
             mapId$: api.gee.eeTableMap$({tableId, columnName, columnValue, color: '#FFFFFF50', fillColor: '#FFFFFF08'}),
             layerIndex,
@@ -28,6 +28,7 @@ class RecipeGeometryLayer extends EarthEngineLayer {
     }
 
     initialize$() {
+        console.log(this)
         if (this.token)
             return of(this)
         return this.mapId$.pipe(
