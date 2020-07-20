@@ -7,7 +7,8 @@
 }
 
 .logo {
-    height: 3rem;
+    margin: 0 .2rem 0 .3rem;
+    height: 2.7rem;
     border-radius: 50%;
     background-size: cover;
 }
