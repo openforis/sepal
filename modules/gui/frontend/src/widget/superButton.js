@@ -1,16 +1,15 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {Item} from 'widget/item'
 import {Subject, animationFrameScheduler, fromEvent, interval, timer} from 'rxjs'
 import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs/operators'
 import Hammer from 'hammerjs'
-import Highlight from 'react-highlighter'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
-import moment from 'moment'
 import styles from './superButton.module.css'
 import withSubscriptions from 'subscription'
 
@@ -87,8 +86,48 @@ class _SuperButton extends React.Component {
         }
     }
 
+    renderDefaultContent() {
+        const {title, description, image, timestamp, highlight, highlightClassName, highlightTitle, highlightDescription} = this.props
+        return (
+            <Item
+                className={styles.content}
+                title={title}
+                description={description}
+                image={image}
+                timestamp={timestamp}
+                highlight={highlight}
+                highlightClassName={highlightClassName}
+                highlightTitle={highlightTitle}
+                highlightDescription={highlightDescription}
+            />
+        )
+    }
+
+    renderContent() {
+        const {content} = this.props
+        return content
+            ? <div className={styles.content}>{content}</div>
+            : this.renderDefaultContent()
+    }
+
+    renderButtons() {
+        return (
+            <ButtonGroup
+                layout='horizontal-nowrap'
+                className={styles.inline}
+            >
+                {this.renderInlineComponents()}
+                {/* {this.renderDragButton()} */}
+                {this.renderInfoButton()}
+                {this.renderEditButton()}
+                {this.renderDuplicateButton()}
+                {this.renderRemoveButton()}
+            </ButtonGroup>
+        )
+    }
+
     render() {
-        const {className, title, description, image} = this.props
+        const {className} = this.props
         const classNames = _.flatten([
             styles.container,
             lookStyles.look,
@@ -104,55 +143,12 @@ class _SuperButton extends React.Component {
             <div className={classNames} ref={this.ref}>
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
-                    <div className={styles.image}>
-                        {image}
-                    </div>
-                    <div className={styles.info}>
-                        <div className='itemType'>{this.renderHighlight(title)}</div>
-                        <div className={styles.description}>{this.renderHighlight(description)}</div>
-                    </div>
-                    <ButtonGroup
-                        layout='horizontal-nowrap'
-                        className={styles.inline}>
-                        {this.renderTimestamp()}
-                        {this.renderInlineComponents()}
-                        {/* {this.renderDragButton()} */}
-                        {this.renderInfoButton()}
-                        {this.renderEditButton()}
-                        {this.renderDuplicateButton()}
-                        {this.renderRemoveButton()}
-                    </ButtonGroup>
-                    <div className={styles.content}>
-                        {this.renderChildren()}
-                    </div>
+                    {this.renderContent()}
+                    {this.renderButtons()}
+                    {this.renderChildren()}
                 </div>
             </div>
         )
-    }
-
-    renderHighlight(content) {
-        const {highlight, highlightClassName} = this.props
-        return highlight
-            ? (
-                <Highlight
-                    search={highlight}
-                    ignoreDiacritics={true}
-                    matchClass={highlightClassName || styles.highlight}>
-                    {content}
-                </Highlight>
-            )
-            : content
-    }
-
-    renderTimestamp() {
-        const {timestamp} = this.props
-        return timestamp
-            ? (
-                <div className={styles.timestamp}>
-                    {moment(timestamp).fromNow()}
-                </div>
-            )
-            : null
     }
 
     renderInlineComponents() {
@@ -251,7 +247,7 @@ class _SuperButton extends React.Component {
         const {children} = this.props
         return children && this.isSelected() !== false
             ? (
-                <div className={styles.extra}>
+                <div className={styles.expand}>
                     {children}
                 </div>
             )
@@ -352,7 +348,8 @@ SuperButton.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     clickToExpand: PropTypes.any,
-    description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    content: PropTypes.any,
+    description: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     disabled: PropTypes.any,
     drag$: PropTypes.object,
     dragTooltip: PropTypes.string,
@@ -364,6 +361,8 @@ SuperButton.propTypes = {
     expanded: PropTypes.any,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
+    highlightDescription: PropTypes.any,
+    highlightTitle: PropTypes.any,
     image: PropTypes.any,
     infoDisabled: PropTypes.any,
     infoTooltip: PropTypes.string,
@@ -371,8 +370,7 @@ SuperButton.propTypes = {
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
     removeTooltip: PropTypes.string,
-    timestamp: PropTypes.any,
-    title: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     tooltipPlacement: PropTypes.string,
     unsafeRemove: PropTypes.any,
     onClick: PropTypes.func,
