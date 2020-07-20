@@ -65,7 +65,10 @@ export default {get$, post$, postJson$, delete$}
 
 const toQueryString = object =>
     object && Object.keys(object)
-        .map(key => `${key}=${encodeURIComponent(object[key])}`)
+        .map(key => {
+            const value = object[key]
+            return `${key}=${value === null || value === undefined ? '' : encodeURIComponent(value)}`
+        })
         .join('&')
 
 const validateResponse = (response, validStatuses) =>
