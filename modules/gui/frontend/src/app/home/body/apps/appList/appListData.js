@@ -1,9 +1,9 @@
 import {AppDetails} from './appDetails'
+import {AppItem} from './appItem'
 import {CenteredProgress} from 'widget/progress'
 import {Consumer} from './appListContext'
 import {Layout} from 'widget/layout'
 import {Pageable} from 'widget/pageable/pageable'
-import {Panel} from 'widget/panel/panel'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {SuperButton} from 'widget/superButton'
@@ -116,28 +116,19 @@ export class AppListData extends React.Component {
     //     )
     // }
 
-    renderLogo(logoUrl) {
-        return logoUrl
-            ? <img
-                src={logoUrl}
-                className={styles.logo}
-                style={{
-                    backgroundColor: 'white'
-                }}
-            />
-            : null
-    }
-
     renderApp(app, highlightMatcher) {
         const {onSelect} = this.props
-        const imageUrl = app.logoRef
-            ? `/api/apps/image/${app.logoRef}`
-            : null
+        // const imageUrl = app.logoRef
+        //     ? `/api/apps/image/${app.logoRef}`
+        //     : null
         return (
             <SuperButton
-                title={app.label}
-                description={app.tagline}
-                highlight={highlightMatcher}
+                content={
+                    <AppItem
+                        app={app}
+                        highlight={highlightMatcher}
+                    />
+                }
                 infoTooltip={msg('apps.info')}
                 tooltipPlacement='left'
                 // inlineComponents={[
@@ -146,7 +137,6 @@ export class AppListData extends React.Component {
                 infoDisabled={false}
                 onInfo={() => this.showInfo(app)} // [TODO] implement it
                 onClick={() => onSelect(app)}
-                image={this.renderLogo(imageUrl)}
             />
         )
     }

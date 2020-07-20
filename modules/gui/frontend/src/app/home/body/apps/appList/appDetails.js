@@ -1,3 +1,4 @@
+import {AppItem} from './appItem'
 import {Panel} from 'widget/panel/panel'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -7,12 +8,11 @@ export const AppDetails = props => {
     const {app, onClose} = props
     return (
         <Panel className={styles.panel} type='modal'>
-            <Panel.Header
-                icon='layer-group'
-                title={app.label}/>
+            <Panel.Header>
+                <AppItem app={app}/>
+            </Panel.Header>
             <Panel.Content
-                scrollable={true}
-                noVerticalPadding
+                scrollable
                 className={styles.panelContent}>
                 <div>
                     {app.description}

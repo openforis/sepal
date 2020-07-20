@@ -5,9 +5,3 @@
 .apps {
     flex-shrink: 1;
 }
-
-.logo {
-    height: 3rem;
-    border-radius: 50%;
-    background-size: cover;
-}

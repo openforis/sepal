@@ -86,7 +86,7 @@ class _AppList extends React.Component {
     appMatchesFilter(app) {
         const {filterValues} = this.state
         const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
-        const searchProperties = ['label']
+        const searchProperties = ['label', 'tagline']
         return filterValues
             ? _.every(searchMatchers, matcher =>
                 _.find(searchProperties, property =>
