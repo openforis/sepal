@@ -123,6 +123,7 @@ export class RecipeListData extends React.Component {
                 description={recipe.name}
                 timestamp={recipe.updateTime}
                 highlight={highlightMatcher}
+                highlightTitle={false}
                 duplicateTooltip={msg('process.menu.duplicateRecipe')}
                 removeMessage={msg('process.menu.removeRecipe.message', {recipe: recipe.name})}
                 removeTooltip={msg('process.menu.removeRecipe.tooltip')}
