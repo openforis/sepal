@@ -95,8 +95,6 @@ export class AppListData extends React.Component {
     }
 
     renderTagFilter(tags) {
-        const {tagFilter} = this.state
-
         const toOption = ({label, value}) => ({
             label: label[getLanguage()]
                 || label['en']
