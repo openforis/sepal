@@ -44,9 +44,7 @@
         "info": "Show information about this app",
         "filter": {
             "tag": {
-                "ignore.label": "All",
-                "tools.label": "Tools",
-                "pinned.label": "Pinned"
+                "ignore.label": "All"
             },
             "search": {
                 "placeholder": "Search apps"
