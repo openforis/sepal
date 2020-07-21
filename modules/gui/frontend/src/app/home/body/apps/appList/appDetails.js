@@ -1,10 +1,10 @@
 import {AppItem} from './appItem'
 import {Markdown} from 'widget/markdown'
 import {Panel} from 'widget/panel/panel'
+import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './appDetails.module.css'
-import {msg} from 'translate'
 
 export const AppDetails = props => {
     const {app, onClose} = props
@@ -36,10 +36,9 @@ const Author = ({app}) =>
         {msg('apps.developedBy', {author: app.author})}
     </div>
 
-
 const ProjectLink = ({app}) =>
     <div className={styles.projectLink}>
-       <a href={app.projectLink} target='_blank'>{app.projectLink}</a>
+        <a href={app.projectLink} rel="noopener noreferrer" target='_blank'>{app.projectLink}</a>
     </div>
 
 AppDetails.propTypes = {
