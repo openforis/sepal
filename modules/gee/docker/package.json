@@ -18,15 +18,15 @@
         "rx": "node_modules/shared/src/reexport/rx"
     },
     "dependencies": {
-        "commander": "^4.1.1",
-        "lodash": "^4.17.15",
-        "log4js": "^6.1.1",
-        "moment": "^2.24.0",
+        "commander": "^6.0.0",
+        "lodash": "^4.17.19",
+        "log4js": "^6.3.0",
+        "moment": "^2.27.0",
         "shared": "../../../lib/js/shared",
-        "uuid": "^3.4.0"
+        "uuid": "^8.2.0"
     },
     "devDependencies": {
-        "eslint": "^6.8.0",
+        "eslint": "^7.5.0",
         "link-module-alias": "^1.2.0"
     }
 }
