@@ -62,11 +62,12 @@ app.post('/create-project', (req, res, next) => {
     if (!isLogged) res.status(500).send({error: 'Login failed!'})
     const {session: {cookie}} = req
     const {ceo: {url, institutionId}} = config
-    const {classes, plotSize, plots, title} = req.body
+    const {classes, plotSize, plots, title, imageryId} = req.body
     if (!Array.isArray(classes) || classes.length === 0
         || typeof plotSize !== 'number' || plotSize < 0
         || !Array.isArray(plots) || plots.length === 0
-        || typeof title !== 'string' || title.trim() === '') {
+        || typeof title !== 'string' || title.trim() === ''
+        || (imageryId !== undefined && typeof imageryId !== 'number')) {
         return res.status(400).send('Bad Request')
     }
     let csvHeader = Object.keys(plots.reduce((result, obj) => {
@@ -105,7 +106,7 @@ app.post('/create-project', (req, res, next) => {
         componentType: 'button',
     }]
     const data = {
-        baseMapSource: 'DigitalGlobeRecentImagery',
+        ...(imageryId !== undefined && {imageryId}),
         description: title,
         institutionId,
         lonMin: '',

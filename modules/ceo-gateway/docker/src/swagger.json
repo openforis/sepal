@@ -20,7 +20,7 @@
   "paths": {
     "/login": {
       "get": {
-        "summary": "Performs a login using server side configured credentials",
+        "summary": "Performs login using server side configured credentials",
         "description": "",
         "produces": [
           "text/plain"
@@ -151,6 +151,12 @@
   "definitions": {
     "CreateProjectRequest": {
       "type": "object",
+      "required": [
+        "classes",
+        "plots",
+        "title",
+        "plotSize"
+      ],
       "properties": {
         "classes": {
           "type": "array",
@@ -178,6 +184,10 @@
           "type": "string"
         },
         "plotSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "imageryId": {
           "type": "integer",
           "format": "int32"
         }
