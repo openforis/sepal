@@ -26,13 +26,15 @@ class _AppList extends React.Component {
 
     render() {
         const {tags, onSelect} = this.props
-        const {filterValues} = this.state
+        const {filterValues, tagFilter} = this.state
         return (
             <Provider value={{
                 isLoading: this.isLoading.bind(this),
                 hasData: this.hasData.bind(this),
                 tags,
                 setFilter: this.setFilter.bind(this),
+                setTagFilter: this.setTagFilter.bind(this),
+                tagFilter,
                 highlightMatcher: filterValues.length
                     ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
                     : null
@@ -78,14 +80,29 @@ class _AppList extends React.Component {
         })
     }
 
+    setTagFilter(tagFilter) {
+        this.setState({
+            tagFilter
+        })
+    }
+
     getApps() {
         const {apps} = this.props
         return _.chain(apps)
-            .filter(app => this.appMatchesFilter(app))
+            .filter(app => this.appMatchesFilters(app))
             .value()
     }
+
+    appMatchesFilters(app) {
+        return this.appMatchesFilterValues(app) && this.appMatchesTagFilter(app)
+    }
+
+    appMatchesTagFilter(app) {
+        const {tagFilter} = this.state
+        return !tagFilter || app.tags.includes(tagFilter)
+    }
     
-    appMatchesFilter(app) {
+    appMatchesFilterValues(app) {
         const {filterValues} = this.state
         const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
         const searchProperties = ['label', 'tagline']

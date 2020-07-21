@@ -1,5 +1,6 @@
 import {AppDetails} from './appDetails'
 import {AppItem} from './appItem'
+import {Buttons} from 'widget/buttons'
 import {CenteredProgress} from 'widget/progress'
 import {Consumer} from './appListContext'
 import {Layout} from 'widget/layout'
@@ -7,12 +8,11 @@ import {Pageable} from 'widget/pageable/pageable'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {SuperButton} from 'widget/superButton'
-import {Buttons} from 'widget/buttons'
+import {getLanguage} from 'translate'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './appListData.module.css'
-import {getLanguage} from 'translate'
 
 export class AppListData extends React.Component {
     state = {
@@ -111,22 +111,23 @@ export class AppListData extends React.Component {
             ...tags.map(toOption)
         ]
         return (
-            <Buttons
-                chromeless
-                layout='horizontal-nowrap'
-                spacing='tight'
-                options={options}
-                selected={tagFilter}
-                onChange={tagFilter => this.setTagFilter(tagFilter)}
-            />
+            <Consumer>
+                {({tagFilter, setTagFilter}) => (
+                    <Buttons
+                        chromeless
+                        layout='horizontal-nowrap'
+                        spacing='tight'
+                        options={options}
+                        selected={tagFilter}
+                        onChange={tagFilter => setTagFilter(tagFilter)}
+                    />
+                )}
+            </Consumer>
         )
     }
 
     renderApp(app, highlightMatcher) {
         const {onSelect} = this.props
-        // const imageUrl = app.logoRef
-        //     ? `/api/apps/image/${app.logoRef}`
-        //     : null
         return (
             <SuperButton
                 content={
