@@ -90,7 +90,7 @@
                 "tooltip": "Supprimer les éléments sélectionnés"
             },
             "showDotFiles": {
-                "tooltip": "Afficher les fichiers commençant par ."
+                "tooltip": "Afficher les fichiers commençant par . (dotfiles)"
             }
         },
         "info": {
