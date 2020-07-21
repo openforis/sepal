@@ -115,7 +115,7 @@ export class AppListData extends React.Component {
                 {({tagFilter, setTagFilter}) => (
                     <Buttons
                         chromeless
-                        layout='horizontal-nowrap'
+                        layout='horizontal-wrap'
                         spacing='tight'
                         options={options}
                         selected={tagFilter}
