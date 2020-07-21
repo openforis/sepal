@@ -96,7 +96,7 @@
                 "tooltip": "Remove selected items"
             },
             "showDotFiles": {
-                "tooltip": "Show files beginning with ."
+                "tooltip": "Show files beginning with . (dotfiles)"
             }
         },
         "info": {
