@@ -51,7 +51,8 @@
             "search": {
                 "placeholder": "Search apps"
             }
-        }
+        },
+        "developedBy": "Developed by {author}"
     },
     "bands": {
         "aerosol": "Aerosol",

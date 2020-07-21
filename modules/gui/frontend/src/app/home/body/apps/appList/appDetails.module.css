@@ -1,0 +1,20 @@
+.panel {
+    width: 50rem;
+}
+
+.panelContent {
+    font-size: 0.8rem;
+    font-weight: lighter;
+}
+
+.footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-top: .5rem;
+    color: var(--link-default-color);
+}
+
+.projectLink a {
+    font-size: .8rem;
+}

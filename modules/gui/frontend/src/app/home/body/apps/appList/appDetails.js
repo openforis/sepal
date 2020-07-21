@@ -4,6 +4,7 @@ import {Panel} from 'widget/panel/panel'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './appDetails.module.css'
+import {msg} from 'translate'
 
 export const AppDetails = props => {
     const {app, onClose} = props
@@ -16,6 +17,10 @@ export const AppDetails = props => {
                 scrollable
                 className={styles.panelContent}>
                 <Markdown source={app.description}/>
+                <div className={styles.footer}>
+                    {app.author ? <Author app={app}/> : null}
+                    {app.projectLink ? <ProjectLink app={app}/> : null}
+                </div>
             </Panel.Content>
             <Panel.Buttons onEnter={onClose} onEscape={onClose}>
                 <Panel.Buttons.Main>
@@ -25,6 +30,17 @@ export const AppDetails = props => {
         </Panel>
     )
 }
+
+const Author = ({app}) =>
+    <div className={styles.author}>
+        {msg('apps.developedBy', {author: app.author})}
+    </div>
+
+
+const ProjectLink = ({app}) =>
+    <div className={styles.projectLink}>
+       <a href={app.projectLink} target='_blank'>{app.projectLink}</a>
+    </div>
 
 AppDetails.propTypes = {
     app: PropTypes.object.isRequired,
