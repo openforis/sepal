@@ -67,7 +67,7 @@ function dispatchLocationChange(historyLocation) {
 
 export function syncHistoryAndStore(history, store) {
     historyInstance = history
-    historyInstance.listen(dispatchLocationChange)
+    historyInstance.listen(({location}) => dispatchLocationChange(location))
     dispatchLocationChange(history.location)
     store.subscribe(() => {
         const historyOperation = state().historyOperation
