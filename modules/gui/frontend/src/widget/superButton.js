@@ -145,8 +145,8 @@ class _SuperButton extends React.Component {
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
                     {this.renderContent()}
                     {this.renderButtons()}
-                    {this.renderChildren()}
                 </div>
+                {this.renderChildren()}
             </div>
         )
     }
