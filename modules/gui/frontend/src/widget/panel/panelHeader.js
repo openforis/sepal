@@ -1,4 +1,3 @@
-import {icon} from '@fortawesome/fontawesome-svg-core'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
