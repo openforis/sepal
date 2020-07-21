@@ -13,7 +13,8 @@ import _ from 'lodash'
 import styles from './appList.module.css'
 
 const mapStateToProps = () => ({
-    apps: select('apps.list')
+    apps: select('apps.list'),
+    tags: select('apps.tags'),
 })
 
 class _AppList extends React.Component {
@@ -24,12 +25,13 @@ class _AppList extends React.Component {
     }
 
     render() {
-        const {onSelect} = this.props
+        const {tags, onSelect} = this.props
         const {filterValues} = this.state
         return (
             <Provider value={{
                 isLoading: this.isLoading.bind(this),
                 hasData: this.hasData.bind(this),
+                tags,
                 setFilter: this.setFilter.bind(this),
                 highlightMatcher: filterValues.length
                     ? new RegExp(`(?:${filterValues.join('|')})`, 'i')

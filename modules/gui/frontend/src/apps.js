@@ -10,8 +10,9 @@ export const appList = () =>
 
 export const loadApps$ = () =>
     api.apps.loadAll$().pipe(
-        map(apps => actionBuilder('SET_APPS')
-            .set('apps.list', _.orderBy(apps, ['pinned', 'label'], ['desc', 'asc']))
+        map(appsSpec => actionBuilder('SET_APPS')
+            .set('apps.list', _.orderBy(appsSpec.apps, ['pinned', 'label'], ['desc', 'asc']))
+            .set('apps.tags', _.orderBy(appsSpec.tags, ['label'], ['asc']))
             .dispatch()
         )
     )

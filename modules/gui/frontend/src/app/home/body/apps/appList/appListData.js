@@ -7,10 +7,12 @@ import {Pageable} from 'widget/pageable/pageable'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {SuperButton} from 'widget/superButton'
+import {Buttons} from 'widget/buttons'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './appListData.module.css'
+import {getLanguage} from 'translate'
 
 export class AppListData extends React.Component {
     state = {
@@ -48,12 +50,12 @@ export class AppListData extends React.Component {
     renderData() {
         return (
             <Consumer>
-                {({hasData, highlightMatcher}) => {
+                {({tags, hasData, highlightMatcher}) => {
                     return hasData()
                         ? (
                             <ScrollableContainer>
                                 <Unscrollable>
-                                    {this.renderSearchAndFilter()}
+                                    {this.renderSearchAndFilter(tags)}
                                 </Unscrollable>
                                 <Unscrollable className={styles.apps}>
                                     <Pageable.Data
@@ -69,12 +71,12 @@ export class AppListData extends React.Component {
         )
     }
 
-    renderSearchAndFilter() {
+    renderSearchAndFilter(tags) {
         return (
             <div className={styles.header}>
                 <Layout type='horizontal' spacing='compact'>
                     {this.renderSearch()}
-                    {/* {this.renderTagFilter()} */}
+                    {this.renderTagFilter(tags)}
                 </Layout>
             </div>
         )
@@ -92,29 +94,33 @@ export class AppListData extends React.Component {
         )
     }
 
-    // renderTagFilter() {
-    //     const {tagFilter} = this.state
-    //     const options = [{
-    //         label: msg('apps.filter.tag.ignore.label'),
-    //         value: null
-    //     }, {
-    //         label: msg('apps.filter.tag.tools.label'),
-    //         value: 'TOOLS'
-    //     }, {
-    //         label: msg('apps.filter.tag.pinned.label'),
-    //         value: 'PINNED'
-    //     }]
-    //     return (
-    //         <Buttons
-    //             chromeless
-    //             layout='horizontal-nowrap'
-    //             spacing='tight'
-    //             options={options}
-    //             selected={tagFilter}
-    //             onChange={tagFilter => this.setTagFilter(tagFilter)}
-    //         />
-    //     )
-    // }
+    renderTagFilter(tags) {
+        const {tagFilter} = this.state
+
+        const toOption = ({label, value}) => ({
+            label: label[getLanguage()]
+                || label['en']
+                || Object.values(label)[0],
+            value
+        })
+        const options = [
+            {
+                label: msg('apps.filter.tag.ignore.label'),
+                value: null
+            },
+            ...tags.map(toOption)
+        ]
+        return (
+            <Buttons
+                chromeless
+                layout='horizontal-nowrap'
+                spacing='tight'
+                options={options}
+                selected={tagFilter}
+                onChange={tagFilter => this.setTagFilter(tagFilter)}
+            />
+        )
+    }
 
     renderApp(app, highlightMatcher) {
         const {onSelect} = this.props
