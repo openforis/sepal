@@ -141,7 +141,7 @@ class _Button extends React.Component {
         const {linkUrl, linkTarget} = this.props
         return this.active() && linkUrl
             ? (
-                <a href={linkUrl} target={linkTarget} onMouseDown={e => e.preventDefault()}>
+                <a href={linkUrl} rel='noopener noreferrer' target={linkTarget} onMouseDown={e => e.preventDefault()}>
                     {contents}
                 </a>
             )

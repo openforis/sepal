@@ -38,7 +38,7 @@ const Author = ({app}) =>
 
 const ProjectLink = ({app}) =>
     <div className={styles.projectLink}>
-        <a href={app.projectLink} rel="noopener noreferrer" target='_blank'>{app.projectLink}</a>
+        <a href={app.projectLink} rel='noopener noreferrer' target='_blank'>{app.projectLink}</a>
     </div>
 
 AppDetails.propTypes = {

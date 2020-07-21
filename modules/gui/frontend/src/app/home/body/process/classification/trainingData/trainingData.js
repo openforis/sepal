@@ -103,7 +103,7 @@ class TrainingData extends React.Component {
                     options={columns || []}
                 />
                 <p>
-                    <a href='/ceo' target='_blank'><Msg
+                    <a href='/ceo' rel='noopener noreferrer' target='_blank'><Msg
                         id='process.classification.panel.trainingData.form.openCeo'/></a>
                 </p>
             </Layout>
