@@ -3,7 +3,7 @@ set -e
 
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
-SEPAL_MODULES=(user sepal-server api-gateway task gee gui ceo mongo)
+SEPAL_MODULES=(user sepal-server api-gateway task gee gui ceo mongo user-storage)
 SEPAL_GROUPS=(all dev)
 SEPAL_DEFAULT_GROUP=dev
 LOG_DIR=/var/log/sepal
@@ -25,7 +25,7 @@ group () {
         echo "${SEPAL_MODULES[@]}"
         ;;
     dev)
-        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) api-gateway task gee gui ceo mongo"
+        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) api-gateway task gee gui ceo mongo user-storage"
         ;;
     *)
         return 1
@@ -191,6 +191,12 @@ module_clean () {
         -p $SEPAL \
         --no-daemon \
         :sepal-user:clean &>/dev/null
+        ;;
+    user-storage)
+        cd $SEPAL/lib/js/shared
+        rm -rf node_modules package-lock.json
+        cd $SEPAL/modules/user-storage/docker
+        rm -rf node_modules package-lock.json
         ;;
     *)
         return 1
@@ -397,6 +403,13 @@ run () {
         :sepal-user:runDev \
         -DconfigDir="$SEPAL_CONFIG/user" \
         $ARGS
+        ;;
+    user-storage)
+        cd $SEPAL/lib/js/shared
+        npm install
+        cd $SEPAL/modules/user-storage/docker
+        npm install
+        SEPAL_CONFIG=$SEPAL_CONFIG npm run dev
         ;;
     *)
         return 1

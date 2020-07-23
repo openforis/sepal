@@ -1,0 +1,33 @@
+{
+    "name": "user-storage",
+    "version": "1.0.0",
+    "description": "",
+    "main": "main.js",
+    "scripts": {
+        "dev": "bash dev.sh",
+        "test": "bash test.sh",
+        "postinstall": "link-module-alias",
+        "preinstall": "command -v link-module-alias && link-module-alias clean || true"
+    },
+    "author": "",
+    "license": "ISC",
+    "_moduleAliases": {
+        "root": "src",
+        "sepal": "node_modules/shared/src",
+        "ee": "node_modules/shared/src/reexport/ee",
+        "rx": "node_modules/shared/src/reexport/rx"
+    },
+    "dependencies": {
+        "amqplib": "^0.6.0",
+        "commander": "^6.0.0",
+        "lodash": "^4.17.19",
+        "log4js": "^6.3.0",
+        "moment": "^2.27.0",
+        "shared": "../../../lib/js/shared",
+        "uuid": "^8.2.0"
+    },
+    "devDependencies": {
+        "eslint": "^7.5.0",
+        "link-module-alias": "^1.2.0"
+    }
+}

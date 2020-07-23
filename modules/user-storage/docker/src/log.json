@@ -1,0 +1,8 @@
+{
+    "port": 5103,
+    "categories": {
+    },
+    "availableCategories": {
+        "default": "debug"
+    }
+}
