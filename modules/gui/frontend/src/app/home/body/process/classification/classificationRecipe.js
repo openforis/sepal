@@ -48,7 +48,6 @@ const submitRetrieveRecipeTask = recipe => {
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.classification.panel.retrieve.form.task', destination], {name})
-    const bands = recipe.ui.retrieveOptions.bands
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
@@ -56,7 +55,7 @@ const submitRetrieveRecipeTask = recipe => {
                 title: taskTitle,
                 description: name,
                 image: {
-                    recipe: _.omit(recipe, ['ui']), bands: {selection: bands},
+                    recipe: _.omit(recipe, ['ui']), bands: {selection: ['class']},
                     scale
                 }
             }
