@@ -58,4 +58,5 @@ RUN bash -c "source /home/sepal/.nvm/nvm.sh && nvm install node 13 && npm instal
 ENV SEPAL_HOME=/usr/local/lib/sepal
 RUN echo 'PATH="$HOME/.local/bin:$PATH"' >> /home/sepal/.bashrc
 
+# rabbitmqctl alias via docker
 RUN echo 'alias rabbitmqctl="sudo docker exec -it rabbitmq rabbitmqctl"' >> /home/sepal/.bash_aliases
