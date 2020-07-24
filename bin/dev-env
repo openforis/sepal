@@ -64,10 +64,6 @@ function docker_container_exists() {
     docker ps -a --format "{{.Names}}" --filter "name=$CONTAINER_NAME"
 }
 
-function docker_container_running() {
-    docker ps -a --format "{{.Names}}" --filter "name=$CONTAINER_NAME" --filter "status=running"
-}
-
 function stop_docker_containers() {
     echo "Stopping Docker containers..."
     (cd $PROJECT_DIR/dev-env; \
@@ -106,7 +102,7 @@ function start() {
 }
 
 function stop() {
-    if [ "$(docker_container_running)" ]; then
+    if [ "$(docker_container_exists)" ]; then
         stop_docker_containers
     else
         echo "Already stopped"
