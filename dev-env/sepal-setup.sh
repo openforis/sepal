@@ -54,5 +54,3 @@ cp /etc/sepal/conf.d/certificates/gee-service-account.pem /etc/sepal/module.d/go
 
 mkdir -p etc/sepal/module.d/api-gateway
 cp /etc/sepal/conf.d/certificates/sepal-https.* /etc/sepal/module.d/api-gateway
-
-/bin/bash

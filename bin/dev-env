@@ -55,26 +55,10 @@ function check_data_dir() {
     echo "Data directory: $DATA_DIR"
 }
 
-# Docker image
-
-function docker_image_exists() {
-    docker images --format "{{.Repository}}" --filter "reference=$IMAGE_NAME"
-}
-
 function build_docker_image() {
     echo "Building Docker image..."
     docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env 1>/dev/null 
 }
-
-function remove_docker_image() {
-    docker rmi $IMAGE_NAME
-}
-
-function check_docker_image() {
-    [ "$(docker_image_exists)" ] || build_docker_image
-}
-
-# Docker container
 
 function docker_container_exists() {
     docker ps -a --format "{{.Names}}" --filter "name=$CONTAINER_NAME"
@@ -84,47 +68,26 @@ function docker_container_running() {
     docker ps -a --format "{{.Names}}" --filter "name=$CONTAINER_NAME" --filter "status=running"
 }
 
-function docker_container_stopped() {
-    docker ps -a --format "{{.Names}}" --filter "name=$CONTAINER_NAME" --filter "status=exited"
+function stop_docker_containers() {
+    echo "Stopping Docker containers..."
+    (cd $PROJECT_DIR/dev-env; \
+        docker-compose down; \
+        docker-sync stop \
+    )
 }
 
-function start_docker_container() {
-    echo "Starting Docker container..."
-    docker start $IMAGE_NAME 1>/dev/null 
-}
-
-function stop_docker_container() {
-    echo "Stopping Docker container..."
-    docker stop $IMAGE_NAME 1>/dev/null 
-}
-
-function create_docker_container() {
-    echo "Running Docker container..."
+function start_docker_containers() {
+    echo "Starting Docker containers..."
     check_config_dir
     check_data_dir
 
-    cd $PROJECT_DIR/dev-env
-    docker-sync start
-    docker-compose up -d
-    cd -
-
-#    docker run \
-#        -dt \
-#        -v $PROJECT_DIR:/usr/local/lib/sepal:Z \
-#        -v $DATA_DIR:/var/sepal:Z \
-#        -v $CONFIG_DIR:/etc/sepal/conf.d:Z \
-#        -p 3000:3000 \
-#        -p 8001:8001 \
-#        --name $CONTAINER_NAME \
-#        $IMAGE_NAME 1>/dev/null
+    (cd $PROJECT_DIR/dev-env; \
+        docker-sync start; \
+        docker-compose up -d \
+    )
 
     echo "Setting up Docker container..."
     docker exec sepal-dev-env /usr/local/lib/sepal/dev-env/sepal-setup.sh
-#    docker exec sepal-dev-env bash
-}
-
-function remove_docker_container() {
-    docker rm $CONTAINER_NAME
 }
 
 function start_shell() {
@@ -134,17 +97,20 @@ function start_shell() {
 # Main
 
 function start() {
-    [ "$(docker_container_stopped)" ] && start_docker_container
-    [ "$(docker_container_exists)" ] || create_docker_container
+    if [ ! "$(docker_container_exists)" ]; then
+        build_docker_image
+        start_docker_containers
+    else
+        echo "Already started"
+    fi
 }
 
 function stop() {
-    [ "$(docker_container_running)" ] && stop_docker_container
-}
-
-function cleanup() {
-    [ "$(docker_container_exists)" ] && remove_docker_container
-    # [ "$(docker_image_exists)" ] && remove_docker_image
+    if [ "$(docker_container_running)" ]; then
+        stop_docker_containers
+    else
+        echo "Already stopped"
+    fi
 }
 
 function usage() {
@@ -156,9 +122,8 @@ function usage() {
     echo ""
     echo "Usage:"
     echo ""
-    echo "  $(basename $0) [OPTIONS] start      Build and start Docker container"
-    echo "  $(basename $0) stop                 Stop Docker container"
-    echo "  $(basename $0) cleanup              Remove Docker container and image"
+    echo "  $(basename $0) [OPTIONS] start      Build and start Docker containers"
+    echo "  $(basename $0) stop                 Stop Docker containers"
     echo ""
     echo "Options:"
     echo ""
@@ -170,18 +135,12 @@ function usage() {
 
 case "$COMMAND" in
     start)
-        build_docker_image
         start
         start_shell
         RETVAL=$?
         ;;
     stop)
         stop
-        RETVAL=$?
-        ;;
-    cleanup)
-        stop
-        cleanup
         RETVAL=$?
         ;;
     *)

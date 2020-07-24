@@ -9,9 +9,13 @@ services:
     command: bash
     tty: true
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - project-sync:/usr/local/lib/sepal:nocopy
       - $DATA_DIR:/var/sepal:Z
       - config-sync:/etc/sepal/conf.d:nocopy
+  rabbitmq:
+      image: rabbitmq:3
+      container_name: rabbitmq
 
 volumes:
   project-sync:
