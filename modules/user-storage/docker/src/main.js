@@ -7,7 +7,7 @@ const {homeDir} = require('./config')
 
 const {initMessageQueue} = require('./messageQueue')
 const {scheduleRescan} = require('./jobQueue')
-const {setActive, setInactive} = require('./workerSession')
+const {setSessionActive, setSessionInactive, getUserStorage} = require('./persistence')
 
 const fullScan = async path => {
     log.debug('Starting rescan of all users')
@@ -15,7 +15,12 @@ const fullScan = async path => {
     for await (const dirent of dir) {
         if (dirent.isDirectory()) {
             const username = dirent.name
-            await scheduleRescan({username, priority: 4, delay: 5000})
+            const size = await getUserStorage(username)
+            if (size) {
+                await scheduleRescan({username, type: 'periodic'})
+            } else {
+                await scheduleRescan({username, type: 'initial'})
+            }
         }
     }
 }
@@ -26,18 +31,18 @@ const main = async () => {
 
     const handlers = {
         workerSession: {
-            'WorkerSessionActivated': username => {
-                setActive(username)
-                scheduleRescan({username, priority: 3, delay: 0})
+            'WorkerSessionActivated': ({username}) => {
+                setSessionActive(username)
+                scheduleRescan({username, type: 'sessionActivated'})
             },
-            'WorkerSessionClosed': username => {
-                setInactive(username)
-                scheduleRescan({username, priority: 2, delay: 0})
+            'WorkerSessionClosed': ({username}) => {
+                setSessionInactive(username)
+                scheduleRescan({username, type: 'sessionDeactivated'})
             }
         },
         files: {
-            'FilesDeleted': username =>
-                scheduleRescan({username, priority: 1, delay: 0})
+            'FilesDeleted': ({username}) =>
+                scheduleRescan({username, type: 'fileDeleted'})
         }
     }
 
@@ -47,14 +52,14 @@ const main = async () => {
     }
 
     await topicSubscriber({
-        exchange: 'sepal',
+        exchange: 'sepal.topic',
         queue: 'sepal-userStorage-workerSession',
         topic: 'workerSession.#',
         handler
     })
     
     await topicSubscriber({
-        exchange: 'sepal',
+        exchange: 'sepal.topic',
         queue: 'sepal-userStorage-files',
         topic: 'files.#',
         handler

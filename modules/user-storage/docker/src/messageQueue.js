@@ -23,8 +23,8 @@ const topicSubscriber = async (connection, {exchange, queue, topic, handler}) =>
     channel.bindQueue(queue, exchange, topic)
     channel.consume(queue, msg => {
         const key = msg.fields.routingKey
-        const content = msg.content.toString()
-        log.debug(`Received message with key ${key}: ${content}`)
+        const content = JSON.parse(msg.content.toString())
+        log.debug(`Received message with key ${key}:`, content)
         Promise.resolve(handler(key, content))
             .then(() => channel.ack(msg))
             .catch(() => channel.nack(msg))
@@ -36,7 +36,7 @@ const topicPublisher = async (connection, {exchange}) => {
     const channel = await connection.createChannel()
     channel.assertExchange(exchange, 'topic')
     return {
-        publish: (key, msg) => channel.publish(exchange, key, Buffer.from(msg))
+        publish: (key, msg) => channel.publish(exchange, key, Buffer.from(JSON.stringify(msg)))
     }
 }
 
