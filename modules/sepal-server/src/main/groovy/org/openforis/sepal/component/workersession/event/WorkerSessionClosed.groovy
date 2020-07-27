@@ -4,6 +4,6 @@ import groovy.transform.Immutable
 import org.openforis.sepal.event.Event
 
 @Immutable
-class SessionClosed implements Event {
+class WorkerSessionClosed implements Event {
     String sessionId
 }

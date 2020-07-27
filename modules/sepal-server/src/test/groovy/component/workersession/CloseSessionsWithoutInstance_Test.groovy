@@ -1,6 +1,6 @@
 package component.workersession
 
-import org.openforis.sepal.component.workersession.event.SessionClosed
+import org.openforis.sepal.component.workersession.event.WorkerSessionClosed
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.CLOSED
@@ -15,7 +15,7 @@ class CloseSessionsWithoutInstance_Test extends AbstractWorkerSessionTest {
 
         then:
         oneSessionIs CLOSED
-        published SessionClosed
+        published WorkerSessionClosed
     }
 
     def 'Given an active session with instance, when executing, session is not closed'() {
