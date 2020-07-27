@@ -14,8 +14,10 @@ services:
       - $DATA_DIR:/var/sepal:Z
       - config-sync:/etc/sepal/conf.d:nocopy
   rabbitmq:
-      image: rabbitmq:3
+      image: rabbitmq:3-management
       container_name: rabbitmq
+      ports:
+        - "15671-15672:15671-15672"
 
 volumes:
   project-sync:
