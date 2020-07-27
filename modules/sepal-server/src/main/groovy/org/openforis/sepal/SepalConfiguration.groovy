@@ -96,6 +96,15 @@ class SepalConfiguration {
         ]
     }
 
+    String getRabbitMQHost() {
+        getValue('rabbitMQHost')
+    }
+
+    int getRabbitMQPort() {
+        Integer.parseInt(getValue('rabbitMQPort'))
+    }
+
+
     @SuppressWarnings("GroovyAssignabilityCheck")
     void setEnv() {
         Set<String> keySet = properties.keySet()

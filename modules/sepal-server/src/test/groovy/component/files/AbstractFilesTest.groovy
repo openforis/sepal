@@ -1,5 +1,6 @@
 package component.files
 
+import fake.FakeTopic
 import org.openforis.sepal.component.files.FilesComponent
 import org.openforis.sepal.component.files.api.UserFile
 import org.openforis.sepal.component.files.command.DeleteFile
@@ -10,7 +11,7 @@ import spock.lang.Specification
 
 abstract class AbstractFilesTest extends Specification {
     final File homeDir = File.createTempDir()
-    final component = new FilesComponent(homeDir)
+    final component = new FilesComponent(homeDir, new FakeTopic())
     final String testUsername = System.getProperty('user.name')
     final File testUserHomeDir = createUserHome(testUsername)
 

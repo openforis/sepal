@@ -55,9 +55,17 @@ class NonTransactionalComponent implements Component {
         throw new UnsupportedOperationException("Component doesn't submit events")
     }
 
-    final void start() {}
+    final void start() {
+        onStart()
+    }
 
-    final void stop() {}
+    final void stop() {
+        onStop()
+    }
+
+    void onStart() {}
+
+    void onStop() {}
 
     final <R, Q extends Query<R>> NonTransactionalComponent query(Class<Q> queryType, QueryHandler<R, Q> handler) {
         queryDispatcher.register(queryType, handler)

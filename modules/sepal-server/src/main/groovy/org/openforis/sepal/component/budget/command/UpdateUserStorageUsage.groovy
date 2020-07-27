@@ -9,7 +9,7 @@ import org.openforis.sepal.component.budget.internal.StorageUseService
 @EqualsAndHashCode(callSuper = true)
 @Canonical
 class UpdateUserStorageUsage extends AbstractCommand<Void> {
-    String usernameToUpdate
+    String userToUpdate
     double gbUsed
 }
 
@@ -21,7 +21,7 @@ class UpdateUserStorageUsageHandler implements CommandHandler<Void, UpdateUserSt
     }
 
     Void execute(UpdateUserStorageUsage command) {
-        storageUseService.updateStorageUseForThisMonth(command.usernameToUpdate, command.gbUsed)
+        storageUseService.updateStorageUseForThisMonth(command.userToUpdate, command.gbUsed)
         return null
     }
 }

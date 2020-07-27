@@ -12,7 +12,6 @@ import org.openforis.sepal.component.budget.api.UserSpendingReport
 import org.openforis.sepal.component.budget.api.UserStorageUse
 import org.openforis.sepal.component.budget.command.CheckUserInstanceSpending
 import org.openforis.sepal.component.budget.command.CheckUserStorageUse
-import org.openforis.sepal.component.budget.command.DetermineUserStorageUsage
 import org.openforis.sepal.component.budget.command.UpdateBudget
 import org.openforis.sepal.component.budget.command.UpdateUserStorageUsage
 import org.openforis.sepal.component.budget.query.FindUsersExceedingBudget
@@ -122,7 +121,7 @@ abstract class AbstractBudgetTest extends Specification {
 
     final void updateStorageUsage(Map args) {
         component.submit(new UpdateUserStorageUsage(
-                usernameToUpdate: username(args),
+                userToUpdate: username(args),
                 gbUsed: args.gbUsed as Double ?: 0d
         ))
     }

@@ -14,6 +14,7 @@ import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.endpoint.Server
+import org.openforis.sepal.event.RabbitMQTopic
 import org.openforis.sepal.security.PathRestrictionsFactory
 import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
@@ -33,7 +34,7 @@ class Main {
 
         def processingRecipeComponent = start ProcessingRecipeComponent.create()
         def workerInstanceComponent = start WorkerInstanceComponent.create(hostingServiceAdapter)
-        def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir))
+        def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir), new RabbitMQTopic('files', config.rabbitMQHost, config.rabbitMQPort))
         def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, filesComponent, connectionManager)
         def workerSessionComponent = start WorkerSessionComponent.create(
                 budgetComponent,

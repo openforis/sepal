@@ -29,7 +29,9 @@ import org.openforis.sepal.util.SystemClock
 import static java.util.concurrent.TimeUnit.HOURS
 
 class BudgetComponent extends DataSourceBackedComponent implements EndpointRegistry {
+    static final COMPONENT_NAME = 'budget'
     private final Topic userTopic
+    private final Topic userStorageTopic
 
     static BudgetComponent create(HostingServiceAdapter hostingServiceAdapter, FilesComponent filesComponent,
                                   SqlConnectionManager connectionManager) {
@@ -40,9 +42,10 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
                 new RestUserRepository(config.userEndpoint, config.userEndpointUser),
                 new FilesComponentBackedUserFiles(filesComponent),
                 new TopicEventDispatcher(
-                        new RabbitMQTopic('budget', config.rabbitMQHost, config.rabbitMQPort)
+                        new RabbitMQTopic(COMPONENT_NAME, config.rabbitMQHost, config.rabbitMQPort)
                 ),
                 new RabbitMQTopic('user', config.rabbitMQHost, config.rabbitMQPort),
+                new RabbitMQTopic('userStorage', config.rabbitMQHost, config.rabbitMQPort),
                 new SystemClock()
         )
     }
@@ -54,9 +57,11 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
             UserFiles userFiles,
             HandlerRegistryEventDispatcher eventDispatcher,
             Topic userTopic,
+            Topic userStorageTopic,
             Clock clock) {
         super(connectionManager, eventDispatcher)
         this.userTopic = userTopic
+        this.userStorageTopic = userStorageTopic
         def budgetRepository = new JdbcBudgetRepository(connectionManager, clock)
         def instanceSpendingService = new InstanceSpendingService(budgetRepository, hostingService, clock)
         def storageUseService = new StorageUseService(budgetRepository, userFiles, hostingService, clock)
@@ -82,9 +87,17 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
 
     void onStart() {
         schedule(1, HOURS, new UpdateSpendingReport())
-        subscribe('budget', userTopic) { message, type ->
+        subscribe(COMPONENT_NAME, userTopic) { message, type ->
             submit(new UpdateUserSpendingReport(userToUpdate: message.username as String))
         }
+        subscribe(COMPONENT_NAME, userStorageTopic) { message, type ->
+            submit(new UpdateUserStorageUsage(userToUpdate: message.username as String, gbUsed: message.gbUsed))
+        }
+    }
+
+    void onStop() {
+        userTopic.close()
+        userStorageTopic.close()
     }
 
     void registerEndpointsWith(Controller controller) {
