@@ -128,7 +128,7 @@
     - { role: build-module, module: geospatial-toolkit }
     - { role: build-module, module: sandbox }
     - { role: build-module, module: user }
-    - { role: build-module, module: userStorage }
+    - { role: build-module, module: user-storage }
     - { role: build-module, module: sepal-server }
     - { role: build-module, module: gui }
     - { role: build-module, module: ceo }
@@ -144,7 +144,7 @@
     - { role: run-module, module: mysql-backup }
     - { role: run-module, module: gee }
     - { role: run-module, module: user }
-    - { role: run-module, module: userStorage }
+    - { role: run-module, module: user-storage }
     - { role: run-module, module: sepal-server, container_name: sepal }
     - { role: run-module, module: gui }
     - { role: run-module, module: ceo }

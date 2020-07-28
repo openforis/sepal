@@ -5,6 +5,7 @@ import component.workersession.FakeGoogleOAuthGateway
 import component.workersession.FakeInstanceManager
 import fake.Database
 import fake.FakeClock
+import fake.FakeTopic
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.budget.api.Budget
 import org.openforis.sepal.component.budget.api.UserInstanceSpending
@@ -58,6 +59,8 @@ abstract class AbstractBudgetTest extends Specification {
             userRepository,
             userFiles,
             eventDispatcher,
+            new FakeTopic(),
+            new FakeTopic(),
             clock
     )
     final sessionComponent = new WorkerSessionComponent(
