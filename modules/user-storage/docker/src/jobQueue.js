@@ -1,13 +1,13 @@
 const {calculateUserStorage} = require('./filesystem')
-const {redisUri, minDelayMilliseconds, maxDelayMilliseconds, delayIncreaseFactor, concurrency} = require('./config')
+const {redisUri, minDelayMilliseconds, maxDelayMilliseconds, delayIncreaseFactor, concurrency, maxRetries, initialRetryDelayMilliseconds} = require('./config')
 const {getSessionStatus, getSetUserStorage} = require('./persistence')
 const Bull = require('bull')
 const {v4: uuid} = require('uuid')
 const {formatDistanceToNow} = require('date-fns')
 const log = require('sepal/log').getLogger('jobQueue')
 
-const SPREAD = .2
-
+const DELAY_SPREAD = .2
+log.fatal(maxRetries, initialRetryDelayMilliseconds)
 const queue = new Bull('scan-queue', redisUri)
 
 const scanCompleteListeners = []
@@ -16,7 +16,7 @@ const rescanJobId = (username, jobId = uuid()) =>
     `rescan-${username}-${jobId}`
 
 const spreadDelay = delay =>
-    Math.floor(delay * (1 + (Math.random() - .5) * 2 * SPREAD))
+    Math.floor(delay * (1 + (Math.random() - .5) * 2 * DELAY_SPREAD))
 
 const increasingDelay = delay =>
     Math.min(delay * delayIncreaseFactor, maxDelayMilliseconds)
@@ -29,6 +29,11 @@ queue.process(concurrency, async job => {
     return {
         size: await calculateUserStorage(username)
     }
+})
+
+queue.on('failed', async (job, error) => {
+    const {username} = job.data
+    log.error(`Rescanning user ${username} failed:`, error)
 })
 
 queue.on('completed', async (job, {size}) => {
@@ -78,7 +83,13 @@ const scan = async ({username, delay: nominalDelay = maxDelayMilliseconds, prior
         jobId: rescanJobId(username),
         priority,
         delay,
-        removeOnComplete: 10
+        attempts: maxRetries,
+        backoff: {
+            type: 'exponential',
+            delay: initialRetryDelayMilliseconds
+        },
+        removeOnComplete: 10,
+        removeOnFail: 10
     })
 }
 

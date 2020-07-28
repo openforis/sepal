@@ -3,6 +3,7 @@ FROM node:14-stretch
 ENV MODULE /usr/local/src/sepal/modules/user-storage/docker
 ENV SHARED /usr/local/src/sepal/lib/js/shared
 
+# Install diskus
 RUN wget -q https://github.com/sharkdp/diskus/releases/download/v0.6.0/diskus_0.6.0_amd64.deb
 RUN dpkg -i diskus_0.6.0_amd64.deb && rm diskus_0.6.0_amd64.deb
 
@@ -35,4 +36,6 @@ CMD node \
     --min-delay-seconds ${MIN_DELAY_SECONDS} \
     --max-delay-seconds ${MAX_DELAY_SECONDS} \
     --delay-increase-factor ${DELAY_INCREASE_FACTOR} \
-    --concurrency ${CONCURRENCY}
+    --concurrency ${CONCURRENCY} \
+    --max-retries ${MAX_RETRIES} \
+    --initial-retry-delay-seconds ${INITIAL_RETRY_DELAY_SECONDS}
