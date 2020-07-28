@@ -1,5 +1,6 @@
 const {toGeometry, toFeatureCollection} = require('sepal/ee/aoi')
-const {allScenes, hasImagery} = require('sepal/ee/optical/collection')
+const {allScenes: createOpticalCollection, hasImagery: hasOpticalImagery} = require('sepal/ee/optical/collection')
+const {createCollection: createRadarCollection, hasImagery: hasRadarImagery} = require('sepal/ee/radar/collection')
 const {calculateIndex} = require('sepal/ee/optical/indexes')
 const tile = require('sepal/ee/tile')
 const {exportImageToSepal$} = require('../jobs/export/toSepal')
@@ -37,9 +38,9 @@ module.exports = {
 
 const export$ = (downloadDir, recipe) => {
     const {
-        description, aoi, dataSets, surfaceReflectance, cloudMasking,
-        cloudBuffer, snowMasking, calibrate, brdfCorrect, fromDate, toDate, indicator,
-        scale
+        description, aoi, dataSets, fromDate, toDate, indicator, scale,
+        surfaceReflectance, cloudMasking, cloudBuffer, snowMasking, calibrate, brdfCorrect, // Optical
+        orbits, geometricCorrection, speckleFilter, outlierRemoval // Radar
     } = recipe
 
     const geometry = toGeometry(aoi) // synchronous EE
@@ -90,9 +91,9 @@ const export$ = (downloadDir, recipe) => {
         return forkJoin(chunks$)
     }
 
-    const createTimeSeries = (feature, startDate, endDate) => {
-        const images = allScenes({
-            geometry: feature.geometry(),
+    const opticalImages = (geometry, startDate, endDate) =>
+        createOpticalCollection({
+            geometry,
             dataSets: extractDataSets(dataSets),
             reflectance,
             filters: [],
@@ -110,6 +111,31 @@ const export$ = (downloadDir, recipe) => {
             calculateIndex(image, indicator)
                 .set('date', image.date().format('yyyy-MM-dd'))
         )
+
+
+    const radarImages = (geometry, startDate, endDate) =>
+        createRadarCollection({
+            startDate: startDate.format('YYYY-MM-DD'),
+            endDate: endDate.format('YYYY-MM-DD'),
+            targetDate: startDate.format('YYYY-MM-DD'),
+            geometry,
+            orbits,
+            geometricCorrection,
+            speckleFilter,
+            outlierRemoval
+        }).map(image =>
+            (indicator === 'VV/VH'
+                    ? image.select('VV').divide(image.select('VH')).rename('VV/VH')
+                    : image.select(indicator)
+            ).set('date', image.date().format('yyyy-MM-dd'))
+        )
+
+    const isRadar = () => dataSets.length === 1 && dataSets[0] === 'SENTINEL_1'
+
+    const createTimeSeries = (feature, startDate, endDate) => {
+        const images = isRadar()
+            ? radarImages(feature.geometry(), startDate, endDate)
+            : opticalImages(feature.geometry(), startDate, endDate)
         const distinctDateImages = images.distinct('date')
         const timeSeries = ee.ImageCollection(
             ee.Join.saveAll('images')
@@ -133,7 +159,9 @@ const export$ = (downloadDir, recipe) => {
 
     const hasImagery$ = (startDate, endDate) =>
         ee.getInfo$(
-            hasImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate}),
+            isRadar()
+                ? hasRadarImagery({geometry, startDate, endDate})
+                : hasOpticalImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate}),
             `check if date range ${startDate}-${endDate} has imagery (${description})`
         )
 
@@ -232,7 +260,7 @@ const extractDataSets = sources =>
             dataSet === 'LANDSAT_TM'
                 ? ['LANDSAT_4', 'LANDSAT_5']
                 : dataSet === 'LANDSAT_TM_T2'
-                    ? ['LANDSAT_4_T2', 'LANDSAT_5_T2']
-                    : dataSet
+                ? ['LANDSAT_4_T2', 'LANDSAT_5_T2']
+                : dataSet
         )
         .flat()
