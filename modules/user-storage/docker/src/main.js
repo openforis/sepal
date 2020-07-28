@@ -1,36 +1,18 @@
 require('sepal/log').configureServer(require('./log.json'))
 
-const fs = require('fs')
 const _ = require('lodash')
-const log = require('sepal/log').getLogger('main')
-const {homeDir} = require('./config')
 
 const {initMessageQueue} = require('./messageQueue')
-const {scheduleRescan, onRescanComplete} = require('./jobQueue')
-const {setSessionActive, setSessionInactive, getUserStorage} = require('./persistence')
-
-const fullScan = async path => {
-    log.debug('Starting rescan of all users')
-    const dir = await fs.promises.opendir(path)
-    for await (const dirent of dir) {
-        if (dirent.isDirectory()) {
-            const username = dirent.name
-            const size = await getUserStorage(username)
-            if (size) {
-                await scheduleRescan({username, type: 'periodic'})
-            } else {
-                await scheduleRescan({username, type: 'initial'})
-            }
-        }
-    }
-}
+const {scheduleFullScan, scheduleRescan} = require('./scan')
+const {onScanComplete} = require('./jobQueue')
+const {setSessionActive, setSessionInactive} = require('./persistence')
 
 const main = async () => {
     const {topicSubscriber, topicPublisher} = await initMessageQueue()
 
     const publisher = await topicPublisher()
 
-    onRescanComplete(
+    onScanComplete(
         ({username, size}) => publisher.publish('userStorage.size', {username, size})
     )
 
@@ -68,7 +50,7 @@ const main = async () => {
         handler
     })
     
-    await fullScan(homeDir)
+    await scheduleFullScan()
 }
 
 main()

@@ -1,15 +1,16 @@
-const {calculateUserStorage} = require('./userStorage')
-const {redisUri, minDelayMilliseconds, maxDelayMilliseconds, concurrency} = require('./config')
+const {calculateUserStorage} = require('./filesystem')
+const {redisUri, minDelayMilliseconds, maxDelayMilliseconds, delayIncreaseFactor, concurrency} = require('./config')
 const {getSessionStatus, getSetUserStorage} = require('./persistence')
 const Bull = require('bull')
 const {v4: uuid} = require('uuid')
+const {formatDistanceToNow} = require('date-fns')
 const log = require('sepal/log').getLogger('jobQueue')
 
-const SPREAD = .3
+const SPREAD = .2
 
 const queue = new Bull('scan-queue', redisUri)
 
-const rescanCompleteListeners = []
+const scanCompleteListeners = []
 
 const rescanJobId = (username, jobId = uuid()) =>
     `rescan-${username}-${jobId}`
@@ -17,19 +18,11 @@ const rescanJobId = (username, jobId = uuid()) =>
 const spreadDelay = delay =>
     Math.floor(delay * (1 + (Math.random() - .5) * 2 * SPREAD))
 
-const scheduleRescan = async ({username, delay: nominalDelay = maxDelayMilliseconds, priority = 1}) => {
-    const delay = spreadDelay(nominalDelay)
-    delay
-        ? log.debug(`Submitting delayed rescan for user ${username} with priority ${priority} in ${Math.round(delay / 1000)}s`)
-        : log.debug(`Submitting immediate rescan for user ${username} with priority ${priority}`)
-    await queue.removeJobs(rescanJobId(username, '*'))
-    return await queue.add({username}, {
-        jobId: rescanJobId(username),
-        priority,
-        delay,
-        removeOnComplete: true
-    })
-}
+const increasingDelay = delay =>
+    Math.min(delay * delayIncreaseFactor, maxDelayMilliseconds)
+
+const timeDistance = delay =>
+    formatDistanceToNow(Date.now() + delay)
 
 queue.process(concurrency, async job => {
     const {username} = job.data
@@ -38,15 +31,12 @@ queue.process(concurrency, async job => {
     }
 })
 
-const increasingDelay = delay =>
-    Math.min(delay * 2, maxDelayMilliseconds)
-
 queue.on('completed', async (job, {size}) => {
     const {username} = job.data
     const workerSession = await getSessionStatus(username)
     const previousSize = await getSetUserStorage(username, size)
     const reschedule = ({priority, delay}) =>
-        scheduleRescan({
+        scan({
             username,
             priority,
             delay
@@ -74,23 +64,26 @@ queue.on('completed', async (job, {size}) => {
             delay: maxDelayMilliseconds
         })
     }
-    rescanCompleteListeners.forEach(callback => callback({username, size}))
+
+    scanCompleteListeners.forEach(
+        callback => callback({username, size})
+    )
 })
 
-const scheduleMap = {
-    'fileDeleted': {priority: 1, delay: 0},
-    'sessionDeactivated': {priority: 2, delay: 0},
-    'sessionActivated': {priority: 3, delay: 0},
-    'initial': {priority: 6, delay: minDelayMilliseconds},
-    'periodic': {priority: 6, delay: maxDelayMilliseconds}
+const scan = async ({username, delay: nominalDelay = maxDelayMilliseconds, priority = 1}) => {
+    const delay = spreadDelay(nominalDelay)
+    log.debug(`Rescanning user ${username} with priority ${priority} ${delay ? `in ${timeDistance(delay)}` : 'now'}`)
+    await queue.removeJobs(rescanJobId(username, '*'))
+    return await queue.add({username}, {
+        jobId: rescanJobId(username),
+        priority,
+        delay,
+        removeOnComplete: 10
+    })
 }
 
-module.exports = {
-    scheduleRescan: async ({username, type}) => {
-        const {priority, delay} = scheduleMap[type]
-        return await scheduleRescan({username, priority, delay})
-    },
-    onRescanComplete: callback => {
-        rescanCompleteListeners.push(callback)
-    }
+const onScanComplete = callback => {
+    scanCompleteListeners.push(callback)
 }
+
+module.exports = {scan, onScanComplete}

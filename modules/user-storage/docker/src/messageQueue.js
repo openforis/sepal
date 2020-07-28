@@ -7,6 +7,7 @@ const EXCHANGE = 'sepal.topic'
 const initMessageQueue = async () => {
     log.debug(`Connecting to broker: ${amqpUri}`)
     const connection = await amqp.connect(amqpUri)
+    log.info(`Connected to message broker: ${amqpUri}`)
     return {
         topicSubscriber: async options => await topicSubscriber(connection, options),
         topicPublisher: async options => await topicPublisher(connection, options)
@@ -22,7 +23,7 @@ const topicSubscriber = async (connection, {queue, topic, handler}) => {
     channel.consume(queue, msg => {
         const key = msg.fields.routingKey
         const content = JSON.parse(msg.content.toString())
-        log.debug(`Received message with key ${key}:`, content)
+        log.debug(`Received message with key [${key}]:`, content)
         Promise.resolve(handler(key, content))
             .then(() => channel.ack(msg))
             .catch(() => channel.nack(msg))
@@ -34,7 +35,10 @@ const topicPublisher = async connection => {
     const channel = await connection.createChannel()
     channel.assertExchange(EXCHANGE, 'topic')
     return {
-        publish: (key, msg) => channel.publish(EXCHANGE, key, Buffer.from(JSON.stringify(msg)))
+        publish: (key, msg) => {
+            log.debug(`Sending message with key [${key}]:`, msg)
+            channel.publish(EXCHANGE, key, Buffer.from(JSON.stringify(msg)))
+        }
     }
 }
 

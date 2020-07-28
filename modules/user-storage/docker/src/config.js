@@ -8,10 +8,11 @@ program
     .option('--home-dir <value>', 'Base directory of user homes')
     .option('--min-delay-seconds <number>', 'Minimum delay in seconds before rescheduling', parseInt)
     .option('--max-delay-seconds <number>', 'Maximum delay in seconds before rescheduling', parseInt)
+    .option('--delay-increase-factor <number>', 'Auto-rescheduling delay increase factor', parseInt)
     .option('--concurrency <number>', 'Concurrent rescan jobs', parseInt)
     .parse(process.argv)
     
-const {amqpUri, redisUri, homeDir, minDelaySeconds, maxDelaySeconds, concurrency} = program
+const {amqpUri, redisUri, homeDir, minDelaySeconds, maxDelaySeconds, delayIncreaseFactor, concurrency} = program
     
 log.info('Configuration loaded')
 
@@ -21,5 +22,6 @@ module.exports = {
     homeDir,
     minDelayMilliseconds: minDelaySeconds * 1000,
     maxDelayMilliseconds: maxDelaySeconds * 1000,
+    delayIncreaseFactor,
     concurrency
 }

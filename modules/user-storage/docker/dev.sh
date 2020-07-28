@@ -11,4 +11,5 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --home-dir /var/sepal/sepal-server/home \
     --min-delay-seconds 60 \
     --max-delay-seconds 86400 \
+    --delay-increase-factor 2 \
     --concurrency 5

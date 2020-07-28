@@ -1,7 +1,8 @@
 const {spawn} = require('child_process')
 const {homeDir} = require('./config')
 const path = require('path')
-const log = require('sepal/log').getLogger('userStorage')
+const fs = require('fs')
+const log = require('sepal/log').getLogger('filesystem')
 
 const diskUsage = path =>
     new Promise((resolve, reject) => {
@@ -37,6 +38,16 @@ const calculateUserStorage = async username => {
     return size
 }
 
+const scanUserHomes = async callback => {
+    const dir = await fs.promises.opendir(homeDir)
+    for await (const dirent of dir) {
+        if (dirent.isDirectory()) {
+            const username = dirent.name
+            await callback(username)
+        }
+    }
+}
+
 module.exports = {
-    calculateUserStorage
+    calculateUserStorage, scanUserHomes
 }
