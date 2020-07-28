@@ -128,14 +128,14 @@
     - { role: build-module, module: geospatial-toolkit }
     - { role: build-module, module: sandbox }
     - { role: build-module, module: user }
+    - { role: build-module, module: userStorage }
     - { role: build-module, module: sepal-server }
     - { role: build-module, module: gui }
     - { role: build-module, module: ceo }
     - { role: build-module, module: ceo-gateway }
     - { role: build-module, module: task }
     - { role: build-module, module: gee }
-    - { role: build-module, module: zookeeper }
-    - { role: build-module, module: kafka }
+    - { role: build-module, module: rabbitmq }
 
     - { role: run-module, module: backup }
     - { role: run-module, module: ldap }
@@ -144,6 +144,7 @@
     - { role: run-module, module: mysql-backup }
     - { role: run-module, module: gee }
     - { role: run-module, module: user }
+    - { role: run-module, module: userStorage }
     - { role: run-module, module: sepal-server, container_name: sepal }
     - { role: run-module, module: gui }
     - { role: run-module, module: ceo }
@@ -153,4 +154,4 @@
     - { role: run-module, module: api-gateway }
     - { role: run-module, module: letsencrypt }
     - { role: run-module, module: haproxy }
-    - { role: run-module, module: kafka }
+    - { role: run-module, module: rabbitmq }

@@ -1,5 +1,5 @@
 ---
-- name: "user-storage | Start container"
+- name: "rabbitmq | Start container"
   docker_container:
     api_version: "{{ api_version }}"
     name: "{{ name }}"
@@ -11,8 +11,8 @@
     log_driver: syslog
     log_opt:
       syslog-address: "{{ syslog_address }}"
-      tag: "user-storage"
+      tag: "rabbitmq"
     networks:
       - name: 'sepal'
     volumes:
-      - "/data/user/home:/sepalUsers" # Users home directories with ssh keys
+      - "/data/rabbitmq:/var/lib/rabbitmq"

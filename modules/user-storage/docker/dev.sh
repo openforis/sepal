@@ -9,6 +9,6 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --amqp-uri amqp://rabbitmq \
     --redis-uri redis://user-storage-redis \
     --home-dir /var/sepal/sepal-server/home \
-    --min-delay-seconds 3 \
+    --min-delay-seconds 60 \
     --max-delay-seconds 86400 \
     --concurrency 5
