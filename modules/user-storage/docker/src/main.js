@@ -6,7 +6,7 @@ const log = require('sepal/log').getLogger('main')
 const {homeDir} = require('./config')
 
 const {initMessageQueue} = require('./messageQueue')
-const {scheduleRescan} = require('./jobQueue')
+const {scheduleRescan, onRescanComplete} = require('./jobQueue')
 const {setSessionActive, setSessionInactive, getUserStorage} = require('./persistence')
 
 const fullScan = async path => {
@@ -26,23 +26,28 @@ const fullScan = async path => {
 }
 
 const main = async () => {
-    // const {topicSubscriber, topicPublisher} = await initMessageQueue()
-    const {topicSubscriber} = await initMessageQueue()
+    const {topicSubscriber, topicPublisher} = await initMessageQueue()
+
+    const publisher = await topicPublisher()
+
+    onRescanComplete(
+        ({username, size}) => publisher.publish('userStorage.size', {username, size})
+    )
 
     const handlers = {
         workerSession: {
-            'WorkerSessionActivated': ({username}) => {
-                setSessionActive(username)
-                scheduleRescan({username, type: 'sessionActivated'})
+            'WorkerSessionActivated': async ({username}) => {
+                await setSessionActive(username)
+                await scheduleRescan({username, type: 'sessionActivated'})
             },
-            'WorkerSessionClosed': ({username}) => {
-                setSessionInactive(username)
-                scheduleRescan({username, type: 'sessionDeactivated'})
+            'WorkerSessionClosed': async ({username}) => {
+                await setSessionInactive(username)
+                await scheduleRescan({username, type: 'sessionDeactivated'})
             }
         },
         files: {
-            'FilesDeleted': ({username}) =>
-                scheduleRescan({username, type: 'fileDeleted'})
+            'FilesDeleted': async ({username}) =>
+                await scheduleRescan({username, type: 'fileDeleted'})
         }
     }
 
@@ -52,30 +57,17 @@ const main = async () => {
     }
 
     await topicSubscriber({
-        exchange: 'sepal.topic',
-        queue: 'sepal-userStorage-workerSession',
+        queue: 'userStorage.workerSession',
         topic: 'workerSession.#',
         handler
     })
     
     await topicSubscriber({
-        exchange: 'sepal.topic',
-        queue: 'sepal-userStorage-files',
+        queue: 'userStorage.files',
         topic: 'files.#',
         handler
     })
     
-    // const publisher = await topicPublisher({
-    //     exchange: 'sepal'
-    // })
-
-    // emulate events
-    // setTimeout(() => publisher.publish('workerSession.WorkerSessionActivated', 'admin'), 2000)
-    // setTimeout(() => publisher.publish('files.FilesDeleted', 'admin'), 10000)
-    // setTimeout(() => publisher.publish('workerSession.WorkerSessionClosed', 'admin'), 20000)
-    // setTimeout(() => publisher.publish('workerSession.WorkerSessionActivated', 'admin'), 30000)
-    // setTimeout(() => publisher.publish('workerSession.WorkerSessionClosed', 'admin'), 40000)
-
     await fullScan(homeDir)
 }
 

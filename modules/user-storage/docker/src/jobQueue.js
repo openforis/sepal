@@ -9,6 +9,8 @@ const SPREAD = .3
 
 const queue = new Bull('scan-queue', redisUri)
 
+const rescanCompleteListeners = []
+
 const rescanJobId = (username, jobId = uuid()) =>
     `rescan-${username}-${jobId}`
 
@@ -72,6 +74,7 @@ queue.on('completed', async (job, {size}) => {
             delay: maxDelayMilliseconds
         })
     }
+    rescanCompleteListeners.forEach(callback => callback({username, size}))
 })
 
 const scheduleMap = {
@@ -86,5 +89,8 @@ module.exports = {
     scheduleRescan: async ({username, type}) => {
         const {priority, delay} = scheduleMap[type]
         return await scheduleRescan({username, priority, delay})
+    },
+    onRescanComplete: callback => {
+        rescanCompleteListeners.push(callback)
     }
 }

@@ -2,6 +2,8 @@ const amqp = require('amqplib')
 const {amqpUri} = require('./config')
 const log = require('sepal/log').getLogger('messageQueue')
 
+const EXCHANGE = 'sepal.topic'
+
 const initMessageQueue = async () => {
     log.debug(`Connecting to broker: ${amqpUri}`)
     const connection = await amqp.connect(amqpUri)
@@ -11,16 +13,12 @@ const initMessageQueue = async () => {
     }
 }
 
-// workerSession.WorkerSessionActivated
-// workerSession.WorkerSessionClosed
-// files.FilesDeleted
-
-const topicSubscriber = async (connection, {exchange, queue, topic, handler}) => {
-    log.info(`Initializing subscriber: ${amqpUri}/${exchange}/${topic}`)
+const topicSubscriber = async (connection, {queue, topic, handler}) => {
+    log.info(`Initializing subscriber: ${amqpUri}/${EXCHANGE}/${topic}`)
     const channel = await connection.createChannel()
     await channel.assertQueue(queue, {durable: true})
-    channel.assertExchange(exchange, 'topic')
-    channel.bindQueue(queue, exchange, topic)
+    channel.assertExchange(EXCHANGE, 'topic')
+    channel.bindQueue(queue, EXCHANGE, topic)
     channel.consume(queue, msg => {
         const key = msg.fields.routingKey
         const content = JSON.parse(msg.content.toString())
@@ -31,12 +29,12 @@ const topicSubscriber = async (connection, {exchange, queue, topic, handler}) =>
     })
 }
 
-const topicPublisher = async (connection, {exchange}) => {
-    log.info(`Initializing publisher: ${amqpUri}/${exchange}`)
+const topicPublisher = async connection => {
+    log.info(`Initializing publisher: ${amqpUri}/${EXCHANGE}`)
     const channel = await connection.createChannel()
-    channel.assertExchange(exchange, 'topic')
+    channel.assertExchange(EXCHANGE, 'topic')
     return {
-        publish: (key, msg) => channel.publish(exchange, key, Buffer.from(JSON.stringify(msg)))
+        publish: (key, msg) => channel.publish(EXCHANGE, key, Buffer.from(JSON.stringify(msg)))
     }
 }
 
