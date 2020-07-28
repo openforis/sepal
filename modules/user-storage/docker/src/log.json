@@ -1,8 +1,10 @@
 {
     "port": 5103,
     "categories": {
-    },
-    "availableCategories": {
-        "default": "debug"
+        "main": "debug",
+        "jobQueue": "debug",
+        "userStorage": "debug",
+        "messageQueue": "debug",
+        "persistence": "info"
     }
 }
