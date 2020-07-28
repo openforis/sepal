@@ -6,6 +6,12 @@ ENV SHARED /usr/local/src/sepal/lib/js/shared
 RUN wget -q https://github.com/sharkdp/diskus/releases/download/v0.6.0/diskus_0.6.0_amd64.deb
 RUN dpkg -i diskus_0.6.0_amd64.deb && rm diskus_0.6.0_amd64.deb
 
+# RUN groupadd --gid 9999 sepal && adduser node sepal
+RUN apt update && \
+    apt install sudo && \
+    adduser node sudo && \
+    echo 'node ALL = (root) NOPASSWD: /usr/bin/diskus' >> /etc/sudoers
+
 ADD build/lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
 USER root

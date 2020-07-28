@@ -7,7 +7,7 @@ const log = require('sepal/log').getLogger('filesystem')
 const diskUsage = path =>
     new Promise((resolve, reject) => {
         log.trace(`Calulating size of path ${path}`)
-        const cmd = spawn('diskus', [path])
+        const cmd = spawn('sudo', ['diskus', path])
 
         let result = ''
     
