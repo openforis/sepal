@@ -15,4 +15,11 @@
     networks:
       - name: 'sepal'
     volumes:
-      - "/data/user/home:/sepalUsers" # Users home directories with ssh keys
+      - "/data/sepal/home:/sepalUsers"
+    env:
+      - RABBITMQ_HOST: {{ rabbitmq_host }}
+      - RABBITMQ_PORT: {{ rabbitmq_port }}
+      - MIN_DELAY_SECONDS: 60
+      - MAX_DELAY_SECONDS: 86400
+      - DELAY_INCREASE_FACTOR: 2
+      - CONCURRENCY: 5

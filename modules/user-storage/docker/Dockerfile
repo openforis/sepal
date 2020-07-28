@@ -1,8 +1,10 @@
 FROM node:14-stretch
-# EXPOSE 5001
 
 ENV MODULE /usr/local/src/sepal/modules/user-storage/docker
 ENV SHARED /usr/local/src/sepal/lib/js/shared
+
+RUN wget -q https://github.com/sharkdp/diskus/releases/download/v0.6.0/diskus_0.6.0_amd64.deb
+RUN dpkg -i diskus_0.6.0_amd64.deb && rm diskus_0.6.0_amd64.deb
 
 ADD build/lib/js/shared ${SHARED}
 WORKDIR ${SHARED}/js/shared
@@ -20,9 +22,11 @@ RUN npm install
 
 ADD src ${MODULE}/src
 CMD node \
-    src/main.js
-# --gee-email "$EE_ACCOUNT_SEPAL_ENV" \
-# --gee-key "$EE_PRIVATE_KEY_SEPAL_ENV" \
-# --sepal-host "$SEPAL_HOST_SEPAL_ENV" \
-# --sepal-username "sepalAdmin" \
-# --sepal-password "$SEPAL_ADMIN_PASSWORD_SEPAL_ENV"
+    src/main.js \
+    --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
+    --redis-uri redis://user-storage-redis \
+    --home-dir /sepalUsers \
+    --min-delay-seconds ${MIN_DELAY_SECONDS} \
+    --max-delay-seconds ${MAX_DELAY_SECONDS} \
+    --delay-increase-factor ${DELAY_INCREASE_FACTOR} \
+    --concurrency ${CONCURRENCY}
