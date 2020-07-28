@@ -25,7 +25,7 @@ services:
       container_name: user-storage-redis
       hostname: user-storage-redis
       volumes:
-        - /var/lib/redis/user-storage:/data
+        - $DATA_DIR/user-storage-redis:/data
 
 volumes:
   project-sync:
