@@ -33,9 +33,9 @@ export default class Icon extends React.Component {
     }
 
     classNames() {
-        const {className, style, pulse} = this.props
+        const {className, variant, pulse} = this.props
         return [
-            styles[`style-${style}`],
+            styles[`variant-${variant}`],
             pulse ? styles.pulse : null,
             className
         ].join(' ')
@@ -86,15 +86,15 @@ Icon.propTypes = {
     pulse: PropTypes.any,
     size: PropTypes.string,
     spin: PropTypes.any,
-    style: PropTypes.oneOf(['normal', 'error', 'info', 'success', 'warning']),
     tooltip: PropTypes.any,
     tooltipDisabled: PropTypes.any,
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
-    type: PropTypes.oneOf(['solid', 'regular', 'brands'])
+    type: PropTypes.oneOf(['solid', 'regular', 'brands']),
+    variant: PropTypes.oneOf(['normal', 'error', 'info', 'success', 'warning'])
 }
 
 Icon.defaultProps = {
     fixedWidth: false,
-    style: 'normal',
-    type: 'solid'
+    type: 'solid',
+    variant: 'normal'
 }

@@ -6,19 +6,19 @@ i.icon {
 
 /* style */
 
-.style-error {
+.variant-error {
     color: var(--error-color);
 }
 
-.style-info {
+.variant-info {
     color: var(--info-color);
 }
 
-.style-success {
+.variant-success {
     color: var(--success-color);
 }
 
-.style-warning {
+.variant-warning {
     color: var(--warning-color);
 }
 
