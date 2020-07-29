@@ -15,4 +15,3 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --concurrency 5 \
     --max-retries 3 \
     --initial-retry-delay-seconds 5
-

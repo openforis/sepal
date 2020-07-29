@@ -7,7 +7,7 @@ const {formatDistanceToNow} = require('date-fns')
 const log = require('sepal/log').getLogger('jobQueue')
 
 const DELAY_SPREAD = .2
-log.fatal(maxRetries, initialRetryDelayMilliseconds)
+
 const queue = new Bull('scan-queue', redisUri)
 
 const scanCompleteListeners = []
