@@ -2,7 +2,7 @@
     "port": 5103,
     "categories": {
         "filesystem": "debug",
-        "jobQueue": "debug",
+        "jobQueue": "trace",
         "messageQueue": "info",
         "persistence": "info",
         "scan": "debug"

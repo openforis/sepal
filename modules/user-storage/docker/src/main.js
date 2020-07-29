@@ -4,7 +4,7 @@ const _ = require('lodash')
 
 const {initMessageQueue} = require('./messageQueue')
 const {scheduleFullScan, scheduleRescan} = require('./scan')
-const {onScanComplete} = require('./jobQueue')
+const {onScanComplete, logStats} = require('./jobQueue')
 const {setSessionActive, setSessionInactive} = require('./persistence')
 
 const main = async () => {
@@ -51,6 +51,7 @@ const main = async () => {
     })
     
     await scheduleFullScan()
+    await logStats()
 }
 
 main()

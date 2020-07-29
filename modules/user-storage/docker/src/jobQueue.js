@@ -24,6 +24,14 @@ const increasingDelay = delay =>
 const timeDistance = delay =>
     formatDistanceToNow(Date.now() + delay)
 
+const logStats = async () =>
+    log.isTrace() && log.trace('Stats:', [
+        `active: ${await queue.getActiveCount()}`,
+        `waiting: ${await queue.getWaitingCount()}`,
+        `delayed: ${await queue.getDelayedCount()}`,
+        `failed: ${await queue.getFailedCount()}`,
+    ].join(', '))
+
 queue.process(concurrency, async job => {
     const {username} = job.data
     return {
@@ -31,10 +39,19 @@ queue.process(concurrency, async job => {
     }
 })
 
+queue.on('error', error => log.error(error))
+
 queue.on('failed', async (job, error) => {
     const {username} = job.data
     log.error(`Rescanning user ${username} failed:`, error)
 })
+
+queue.on('stalled', job => {
+    const {username} = job.data
+    log.warn(`Job stalled while rescanning user ${username}`, job)
+})
+
+queue.on('drained', async () => await logStats())
 
 queue.on('completed', async (job, {size}) => {
     const {username} = job.data
@@ -97,4 +114,4 @@ const onScanComplete = callback => {
     scanCompleteListeners.push(callback)
 }
 
-module.exports = {scan, onScanComplete}
+module.exports = {scan, onScanComplete, logStats}
