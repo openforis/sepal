@@ -16,6 +16,7 @@
 
     --look-default-disabled-color: hsla(0, 0%, 35%, 1);
     --look-default-disabled-background-color: hsla(var(--look-default-h), calc(var(--look-default-s) * .3), calc(var(--look-default-l) * .8), var(--look-default-a));
+    --look-default-disabled-overlay-color: hsla(var(--look-default-h), calc(var(--look-default-s) * .3), calc(var(--look-default-l) * .8), var(--look-overlay-a));
     --look-default-disabled-border-color: hsla(var(--look-default-h), calc(var(--look-default-s) * .3), calc(var(--look-default-l) * .8), var(--look-default-a));
 
     /* highlight */
@@ -34,6 +35,7 @@
 
     --look-highlight-disabled-color: hsla(0, 0%, 60%, 1);
     --look-highlight-disabled-background-color: hsla(var(--look-highlight-h), calc(var(--look-highlight-s) * .3), calc(var(--look-highlight-l) * .8), var(--look-highlight-a));
+    --look-highlight-disabled-overlay-color: hsla(var(--look-highlight-h), calc(var(--look-highlight-s) * .3), calc(var(--look-highlight-l) * .8), var(--look-overlay-a));
     --look-highlight-disabled-border-color: hsla(var(--look-highlight-h), calc(var(--look-highlight-s) * .3), calc(var(--look-highlight-l) * .8), var(--look-highlight-a));
 
     /* selected */
@@ -52,6 +54,7 @@
 
     --look-selected-disabled-color: hsla(0, 0%, 60%, 1);
     --look-selected-disabled-background-color: hsla(var(--look-selected-h), calc(var(--look-selected-s) * .3), calc(var(--look-selected-l) * .8), var(--look-selected-a));
+    --look-selected-disabled-overlay-color: hsla(var(--look-selected-h), calc(var(--look-selected-s) * .3), calc(var(--look-selected-l) * .8), var(--look-overlay-a));
     --look-selected-disabled-border-color: hsla(var(--look-selected-h), calc(var(--look-selected-s) * .3), calc(var(--look-selected-l) * .8), var(--look-selected-a));
 
     /* transparent */
@@ -70,6 +73,7 @@
 
     --look-transparent-disabled-color: hsla(0, 0%, 35%, 1);
     --look-transparent-disabled-background-color: hsla(var(--look-transparent-h), calc(var(--look-transparent-s) * .5), calc(var(--look-transparent-l) * .9), var(--look-transparent-a));
+    --look-transparent-disabled-overlay-color: hsla(var(--look-transparent-h), calc(var(--look-transparent-s) * .5), calc(var(--look-transparent-l) * .9), var(--look-overlay-a));
     --look-transparent-disabled-border-color: hsla(var(--look-transparent-h), calc(var(--look-transparent-s) * .5), calc(var(--look-transparent-l) * .9), var(--look-transparent-a));
 
     /* add */
@@ -88,6 +92,7 @@
 
     --look-add-disabled-color: var(--look-default-disabled-color);
     --look-add-disabled-background-color: var(--look-default-disabled-background-color);
+    --look-add-disabled-overlay-color: var(--look-default-disabled-overlay-color);
     --look-add-disabled-border-color: var(--look-default-disabled-border-color);
 
     /* apply */
@@ -106,6 +111,7 @@
 
     --look-apply-disabled-color: hsla(0, 0%, 50%, 1);
     --look-apply-disabled-background-color: hsla(var(--look-apply-h), calc(var(--look-apply-s) * .5), calc(var(--look-apply-l) * .6), var(--look-apply-a));
+    --look-apply-disabled-overlay-color: hsla(var(--look-apply-h), calc(var(--look-apply-s) * .5), calc(var(--look-apply-l) * .6), var(--look-overlay-a));
     --look-apply-disabled-border-color: hsla(var(--look-apply-h), calc(var(--look-apply-s) * .5), calc(var(--look-apply-l) * .6), var(--look-apply-a));
 
     /* cancel */
@@ -124,6 +130,7 @@
 
     --look-cancel-disabled-color: var(--look-default-disabled-color);
     --look-cancel-disabled-background-color: var(--look-default-disabled-background-color);
+    --look-cancel-disabled-overlay-color: var(--look-default-disabled-overlay-color);
     --look-cancel-disabled-border-color: var(--look-default-disabled-border-color);
 
     /* global */
@@ -132,6 +139,7 @@
 
 .look {
     cursor: pointer;
+    position: relative;
 }
 
 .look:active {
@@ -154,12 +162,25 @@
 
 .look:disabled,
 .look.nonInteractive {
-    cursor: default;
-    pointer-events: none;
+    cursor: default !important;
+    pointer-events: none !important;
 }
 
 .look.nonInteractive > * {
     pointer-events: all;
+}
+
+/* nonInteractive */
+
+.look:not(.chromeless).nonInteractive::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    border-radius: inherit;
 }
 
 /* default */
@@ -192,6 +213,10 @@
     border-color: var(--look-default-disabled-border-color);
 }
 
+.look.default:not(.chromeless).nonInteractive::before {
+    background-color: var(--look-default-disabled-overlay-color);
+}
+
 /* transparent */
 
 .look.transparent:not(.chromeless) {
@@ -220,6 +245,10 @@
 .look.transparent:not(.chromeless):disabled {
     background-color: var(--look-transparent-disabled-background-color);
     border-color: var(--look-transparent-disabled-border-color);
+}
+
+.look.transparent:not(.chromeless).nonInteractive::before {
+    background-color: var(--look-transparent-disabled-overlay-color);
 }
 
 /* highlight */
@@ -252,6 +281,10 @@
     border-color: var(--look-highlight-disabled-border-color);
 }
 
+.look.highlight:not(.chromeless).nonInteractive::before {
+    background-color: var(--look-highlight-disabled-overlay-color);
+}
+
 /* selected */
 
 .look.selected:not(.chromeless) {
@@ -282,6 +315,10 @@
     border-color: var(--look-selected-disabled-border-color);
 }
 
+.look.selected:not(.chromeless).nonInteractive::before {
+    background-color: var(--look-selected-disabled-overlay-color);
+}
+
 /* add */
 
 .look.add:not(.chromeless) {
@@ -310,6 +347,10 @@
 .look.add:not(.chromeless):disabled {
     background-color: var(--look-add-disabled-background-color);
     border-color: var(--look-add-disabled-border-color);
+}
+
+.look.add:not(.chromeless).nonInteractive::before {
+    background-color: var(--look-add-disabled-overlay-color);
 }
 
 /* apply */
@@ -344,6 +385,10 @@
     border-color: var(--look-apply-disabled-border-color);
 }
 
+.look.apply:not(.chromeless).nonInteractive::before {
+    background-color: var(--look-apply-disabled-overlay-color);
+}
+
 /* cancel */
 
 .look.cancel:not(.chromeless) {
@@ -372,4 +417,8 @@
 .look.cancel:not(.chromeless):disabled {
     background-color: var(--look-cancel-disabled-background-color);
     border-color: var(--look-cancel-disabled-border-color);
+}
+
+.look.cancel:not(.chromeless).nonInteractive::before {
+    background-color: var(--look-cancel-disabled-overlay-color);
 }
