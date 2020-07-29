@@ -1,5 +1,6 @@
 import {AppDetails} from './appDetails'
 import {AppItem} from './appItem'
+import {Button} from 'widget/button'
 import {Buttons} from 'widget/buttons'
 import {CenteredProgress} from 'widget/progress'
 import {Consumer} from './appListContext'
@@ -8,19 +9,27 @@ import {Pageable} from 'widget/pageable/pageable'
 import {ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {SearchBox} from 'widget/searchBox'
 import {SuperButton} from 'widget/superButton'
+import {compose} from 'compose'
+import {connect} from 'store'
+import {currentUser} from 'widget/user'
 import {getLanguage} from 'translate'
 import {msg} from 'translate'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import styles from './appListData.module.css'
 
-export class AppListData extends React.Component {
+const mapStateToProps = () => ({
+    user: currentUser()
+})
+
+class _AppListData extends React.Component {
     state = {
         app: null
     }
 
     render() {
-        const {app} = this.state
         return (
             <React.Fragment>
                 <Consumer>
@@ -30,17 +39,20 @@ export class AppListData extends React.Component {
                             : this.renderData()
                     }}
                 </Consumer>
-                {app ? this.renderDetails() : null}
+                {this.renderAppDetails()}
             </React.Fragment>
         )
     }
 
-    renderDetails() {
+    closeAppDetails() {
+        this.setState({app: null})
+    }
+
+    renderAppDetails() {
         const {app} = this.state
-        const close = () => this.setState({app: null})
-        return (
-            <AppDetails app={app} onClose={close}/>
-        )
+        return app
+            ? <AppDetails app={app} onClose={() => this.closeAppDetails()}/>
+            : null
     }
 
     renderProgress() {
@@ -51,6 +63,7 @@ export class AppListData extends React.Component {
         return (
             <Consumer>
                 {({tags, hasData, highlightMatcher}) => {
+                    const key = app => _.compact([app.label, highlightMatcher]).join('|')
                     return hasData()
                         ? (
                             <ScrollableContainer>
@@ -58,8 +71,7 @@ export class AppListData extends React.Component {
                                     {this.renderSearchAndFilter(tags)}
                                 </Unscrollable>
                                 <Unscrollable className={styles.apps}>
-                                    <Pageable.Data
-                                        itemKey={app => `${app.label}|${highlightMatcher}`}>
+                                    <Pageable.Data itemKey={app => key(app)}>
                                         {app => this.renderApp(app, highlightMatcher)}
                                     </Pageable.Data>
                                 </Unscrollable>
@@ -124,8 +136,58 @@ export class AppListData extends React.Component {
         )
     }
 
+    renderGoogleAccountRequiredButton({googleAccountRequired}) {
+        return googleAccountRequired
+            ? (
+                <Button
+                    chromeless
+                    shape='circle'
+                    icon='google'
+                    iconType='brands'
+                    iconStyle='warning'
+                    tooltip={msg('apps.googleAccountRequired')}
+                    tooltipPlacement='left'
+                    onClick={() => null}
+                />
+            )
+            : null
+    }
+
+    renderAppRunningIcon() {
+        return (
+            <Icon
+                name='circle'
+                size='xs'
+                pulse
+                variant='success'
+                tooltip={msg('apps.running')}
+                tooltipPlacement='left'
+            />
+        )
+    }
+
+    renderAppStoppedIcon() {
+        return (
+            <Icon
+                name='circle'
+                type='regular'
+                size='xs'
+                variant='error'
+                tooltip={msg('apps.notRunning')}
+                tooltipPlacement='left'
+            />
+        )
+    }
+
+    renderStatusIcon(app) {
+        return app.running
+            ? this.renderAppRunningIcon()
+            : this.renderAppStoppedIcon()
+    }
+
     renderApp(app, highlightMatcher) {
         const {onSelect} = this.props
+        const unavailable = this.isDisabled(app) || this.isDisallowed(app)
         return (
             <SuperButton
                 content={
@@ -134,22 +196,42 @@ export class AppListData extends React.Component {
                         highlight={highlightMatcher}
                     />
                 }
+                disabled={unavailable}
                 infoTooltip={msg('apps.info')}
                 tooltipPlacement='left'
-                // inlineComponents={[
-                //     // <div className="itemType">RUNNING</div>
-                // ]}
+                inlineComponents={[
+                    this.renderGoogleAccountRequiredButton(app),
+                    this.renderStatusIcon(app)
+                ]}
                 infoDisabled={false}
-                onInfo={() => this.showInfo(app)} // [TODO] implement it
+                onInfo={() => this.showInfo(app)}
                 onClick={() => onSelect(app)}
             />
         )
+    }
+
+    isDisabled(app) {
+        return app.disabled
+    }
+
+    isDisallowed(app) {
+        return app.googleAccountRequired && this.isUsingServiceAccount()
+    }
+
+    isUsingServiceAccount() {
+        const {user} = this.props
+        return !user.googleTokens
     }
 
     showInfo(app) {
         this.setState({app})
     }
 }
+
+export const AppListData = compose(
+    _AppListData,
+    connect(mapStateToProps)
+)
 
 AppListData.propTypes = {
     onSelect: PropTypes.func.isRequired
