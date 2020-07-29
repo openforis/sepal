@@ -3,3 +3,34 @@ i.icon {
     align-items: center;
     justify-content: center;
 }
+
+/* style */
+
+.variant-error {
+    color: var(--error-color);
+}
+
+.variant-info {
+    color: var(--info-color);
+}
+
+.variant-success {
+    color: var(--success-color);
+}
+
+.variant-warning {
+    color: var(--warning-color);
+}
+
+.pulse {
+    animation: pulse 1250ms ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: .2;
+    }
+}

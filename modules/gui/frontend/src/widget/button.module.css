@@ -29,6 +29,12 @@
     align-items: center;
 }
 
+/* style */
+
+.style-alert {
+    color: red;
+}
+
 /* alignment */
 
 .alignment-left {

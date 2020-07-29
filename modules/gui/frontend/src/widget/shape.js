@@ -10,7 +10,7 @@ import withForwardedRef from 'ref'
 class _Shape extends React.Component {
     classNames() {
         const {chromeless, className, additionalClassName, look, size, shape, air,
-            alignment, width, disableTransitions} = this.props
+            alignment, width, disableHover, disableTransitions} = this.props
         return className ? className : [
             styles.shape,
             styles[`size-${size}`],
@@ -22,7 +22,7 @@ class _Shape extends React.Component {
             lookStyles[look],
             chromeless ? lookStyles.chromeless : null,
             disableTransitions ? lookStyles.noTransitions : null,
-            lookStyles.nonInteractive,
+            disableHover ? lookStyles.noHover : null,
             additionalClassName
         ].join(' ')
     }
@@ -104,6 +104,7 @@ Shape.propTypes = {
     className: PropTypes.string,
     content: PropTypes.any,
     disabled: PropTypes.any,
+    disableHover: PropTypes.any,
     disableTransitions: PropTypes.any,
     icon: PropTypes.string,
     iconFlipHorizontal: PropTypes.any,

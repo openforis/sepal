@@ -188,15 +188,18 @@ class _Button extends React.Component {
     }
 
     renderIcon() {
-        const {busy, icon, iconType, iconFlipHorizontal, iconFlipVertical, iconFixedWidth} = this.props
+        const {busy, icon, iconType, iconVariant, iconSpin, iconFlipHorizontal, iconFlipVertical, iconFixedWidth} = this.props
         return busy
             ? <Icon
                 name='spinner'
+                variant={iconVariant}
                 spin
             />
             : <Icon
                 name={icon}
                 type={iconType}
+                variant={iconVariant}
+                spin={iconSpin}
                 fixedWidth={iconFixedWidth}
                 flipHorizontal={iconFlipHorizontal}
                 flipVertical={iconFlipVertical}
@@ -325,7 +328,9 @@ Button.propTypes = {
     iconFlipHorizontal: PropTypes.any,
     iconFlipVertical: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
+    iconSpin: PropTypes.any,
     iconType: PropTypes.string,
+    iconVariant: PropTypes.string,
     label: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.array]),
     linkTarget: PropTypes.string,
     linkUrl: PropTypes.string,
@@ -352,6 +357,7 @@ Button.defaultProps = {
     air: 'normal',
     alignment: 'center',
     iconPlacement: 'left',
+    iconVariant: 'normal',
     content: 'default',
     linkTarget: '_blank',
     look: 'default',
