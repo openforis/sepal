@@ -70,7 +70,7 @@ Icon.propTypes = {
     flipVertical: PropTypes.any,
     size: PropTypes.string,
     spin: PropTypes.any,
-    style: PropTypes.oneOf(['normal', 'alert']),
+    style: PropTypes.oneOf(['normal', 'error', 'info', 'success', 'warning']),
     type: PropTypes.oneOf(['solid', 'regular', 'brands'])
 }
 

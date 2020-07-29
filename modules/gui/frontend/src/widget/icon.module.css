@@ -6,6 +6,18 @@ i.icon {
 
 /* style */
 
-.style-alert {
-    color: red;
+.style-error {
+    color: var(--error-color);
+}
+
+.style-info {
+    color: var(--info-color);
+}
+
+.style-success {
+    color: var(--success-color);
+}
+
+.style-warning {
+    color: var(--warning-color);
 }
