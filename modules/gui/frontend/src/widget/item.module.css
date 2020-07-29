@@ -3,6 +3,7 @@
     position: relative;
     align-items: center;
     display: flex;
+    flex-grow: 1;
 }
 
 .item > :not(:first-child) {
