@@ -3,3 +3,9 @@ i.icon {
     align-items: center;
     justify-content: center;
 }
+
+/* style */
+
+.style-alert {
+    color: red;
+}
