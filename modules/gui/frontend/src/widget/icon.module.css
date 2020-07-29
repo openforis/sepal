@@ -21,3 +21,16 @@ i.icon {
 .style-warning {
     color: var(--warning-color);
 }
+
+.pulse {
+    animation: pulse 1250ms ease-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: .2;
+    }
+}
