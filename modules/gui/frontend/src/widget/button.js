@@ -188,7 +188,7 @@ class _Button extends React.Component {
     }
 
     renderIcon() {
-        const {busy, icon, iconType, iconStyle, iconFlipHorizontal, iconFlipVertical, iconFixedWidth} = this.props
+        const {busy, icon, iconType, iconStyle, iconSpin, iconFlipHorizontal, iconFlipVertical, iconFixedWidth} = this.props
         return busy
             ? <Icon
                 name='spinner'
@@ -199,6 +199,7 @@ class _Button extends React.Component {
                 name={icon}
                 type={iconType}
                 style={iconStyle}
+                spin={iconSpin}
                 fixedWidth={iconFixedWidth}
                 flipHorizontal={iconFlipHorizontal}
                 flipVertical={iconFlipVertical}
@@ -327,6 +328,7 @@ Button.propTypes = {
     iconFlipHorizontal: PropTypes.any,
     iconFlipVertical: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
+    iconSpin: PropTypes.any,
     iconStyle: PropTypes.string,
     iconType: PropTypes.string,
     label: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.array]),
