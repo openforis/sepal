@@ -29,7 +29,12 @@ class _SuperButton extends React.Component {
         return clickToExpand && children
     }
 
-    isInteractive() {
+    isDisabled() {
+        const {disabled} = this.props
+        return disabled
+    }
+
+    isClickable() {
         const {disabled, onClick, expanded} = this.props
         return !disabled && (onClick || (this.isExpandable() && !expanded) || this.isDraggable())
     }
@@ -134,9 +139,10 @@ class _SuperButton extends React.Component {
             lookStyles.transparent,
             lookStyles.noTransitions,
             this.isSelected() === true ? [lookStyles.hover, styles.expanded] : null,
-            this.isInteractive() ? null : lookStyles.nonInteractive,
+            this.isDisabled() ? lookStyles.nonInteractive : null,
             this.isDraggable() ? styles.draggable : null,
             this.isDragging() ? styles.dragging : null,
+            this.isClickable() ? null : styles.unclickable,
             className
         ]).join(' ')
         return (
