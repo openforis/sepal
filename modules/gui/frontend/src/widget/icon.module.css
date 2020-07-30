@@ -17,7 +17,7 @@
 }
 
 .pulse {
-    animation: pulse 1250ms ease-out infinite;
+    animation: pulse 500ms cubic-bezier(1, 0, 0, 1) 2;
 }
 
 @keyframes pulse {
