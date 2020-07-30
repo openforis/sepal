@@ -44,6 +44,22 @@
     justify-content: center;
     align-items: center;
     color: hsl(0, 0%, 25%, .2);
+    /* animation: rotate 1.5s ease-in-out infinite; */
+    /* animation: rotate 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; */
+    /* animation: rotate 1.5s cubic-bezier(0.785, 0.135, 0.15, 0.86) infinite; */
+    /* animation: rotate 1.5s cubic-bezier(0.645, 0.045, 0.355, 1) infinite; */
+    /* animation: rotate 1.5s cubic-bezier(1, 0, 0, 1) infinite; */
+    /* animation: rotate 1.5s cubic-bezier(0.445, 0.05, 0.55, 0.95) infinite; */
+    animation: rotate 1.5s .5s cubic-bezier(0.39, 0.575, 0.565, 1) infinite;
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotateZ(360deg);
+    }
 }
 
 .status {
