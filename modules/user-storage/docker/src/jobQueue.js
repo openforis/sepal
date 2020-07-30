@@ -57,31 +57,31 @@ queue.on('completed', async (job, {size}) => {
     const {username} = job.data
     const workerSession = await getSessionStatus(username)
     const previousSize = await getSetUserStorage(username, size)
-    const reschedule = ({priority, delay}) =>
-        scan({
+    const reschedule = async ({priority, delay}) =>
+        await scan({
             username,
             priority,
             delay
         })
     if (workerSession) {
-        reschedule({
+        await reschedule({
             priority: 3,
             delay: minDelayMilliseconds
         })
     } else if (job.opts.delay < maxDelayMilliseconds && job.opts.priority !== 6) {
         if (size !== previousSize) {
-            reschedule({
+            await reschedule({
                 priority: 4,
                 delay: minDelayMilliseconds
             })
         } else {
-            reschedule({
+            await reschedule({
                 priority: 5,
                 delay: increasingDelay(job.opts.delay)
             })
         }
     } else {
-        reschedule({
+        await reschedule({
             priority: 6,
             delay: maxDelayMilliseconds
         })
