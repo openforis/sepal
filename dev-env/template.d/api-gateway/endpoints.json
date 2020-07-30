@@ -149,12 +149,5 @@
     "target": "http://localhost:8001/",
     "https": "false",
     "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/rabbitmq",
-    "target": "http://rabbitmq:15672/",
-    "https": "false",
-    "authenticate": "true"
   }
 ]
