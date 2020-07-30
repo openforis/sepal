@@ -33,7 +33,7 @@ class CloseTimedOutSessionsHandler implements CommandHandler<Void, CloseTimedOut
         def timedOutSessions = repository.timedOutSessions()
         timedOutSessions.each { repository.update(it.close()) }
         timedOutSessions.each { instanceManager.releaseInstance(it.instance.id) }
-        timedOutSessions.each { eventDispatcher.publish(new WorkerSessionClosed(it.id)) }
+        timedOutSessions.each { eventDispatcher.publish(new WorkerSessionClosed(it.username, it.id)) }
         return null
     }
 }

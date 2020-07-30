@@ -41,7 +41,7 @@ class CloseSessionHandler implements CommandHandler<Void, CloseSession> {
             return null
         repository.update(session.close())
         instanceManager.releaseInstance(session.instance.id)
-        eventDispatcher.publish(new WorkerSessionClosed(session.id))
+        eventDispatcher.publish(new WorkerSessionClosed(session.username, session.id))
         return null
     }
 }

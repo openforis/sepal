@@ -5,5 +5,6 @@ import org.openforis.sepal.event.Event
 
 @Immutable
 class WorkerSessionClosed implements Event {
+    String username
     String sessionId
 }
