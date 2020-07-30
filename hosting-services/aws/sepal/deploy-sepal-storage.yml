@@ -12,137 +12,137 @@
         syslog_address: "unixgram:///dev/log"
         syslog_host: "{{ ec2_private_ip_address }}"
 
-#    # bash prompt
-#    - name: Set bash prompt
-#      blockinfile:
-#        path: /etc/profile
-#        block: |
-#          # Bash prompt
-#          PS1='{{bash_prompt_storage}}'
-#
-#    # set locale
-#    - name: Set locale
-#      lineinfile:
-#        path: /etc/environment
-#        line: "{{ item }}"
-#      with_items:
-#        - "LANG=en_US.utf-8"
-#        - "LC_ALL=en_US.utf-8"
-#
-#    - file: path="/data/sepal/etc" state=directory
-#    - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
-#
-#    # rsyslog
-#    - name: Copy rsyslog.conf
-#      template: src="rsyslog.conf" dest=/etc/rsyslog.conf
-#
-#    - name: Copy rsyslog.d
-#      copy:
-#        src: "rsyslog.d/"
-#        dest: "/etc/rsyslog.d/"
-#        owner: "root"
-#        group: "root"
-#        mode: "0644"
-#
-#    - name: Start rsyslog
-#      service: name=rsyslog state=started
-#
-#    # logrotate
-#    - name: Copy worker-instances logrotate configuration
-#      copy:
-#        src: "logrotate.d/"
-#        dest: "/etc/logrotate.d/"
-#        owner: "root"
-#        group: "root"
-#        mode: "0644"
-#
-#    # docker
-#    - name: Create filesystem on Docker volume
-#      filesystem:
-#        fstype: xfs
-#        dev: /dev/xvdb
-#
-#    - name: Mount Docker volume
-#      mount:
-#        path: /var/lib/docker
-#        src: /dev/xvdb
-#        fstype: xfs
-#        state: mounted
-#
-#    - name: Create docker-registry certificate dir
-#      file:
-#        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
-#        state: directory
-#
-#    - name: Copy docker-registry certificate
-#      copy:
-#        src: "{{ config_home }}/certificates/docker-registry.crt"
-#        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
-#
-#    - name: Install docker
-#      command: "amazon-linux-extras install docker"
-#
-#    - name: Install Development Tools
-#      yum:
-#        name: "@Development Tools"
-#
-#    - name: Install pip
-#      yum:
-#        name: python-pip
-#
-#    - name: Install docker-compose
-#      pip:
-#        name: docker-compose
-#
-#    - name: Create /etc/docker
-#      file:
-#        path: "/etc/docker"
-#        state: directory
-#
-#    - name: Copy /etc/docker/daemon.json
-#      copy: src=docker/storage-daemon.json dest=/etc/docker/daemon.json
-#
-#    - name: Add ec2-user to docker group
-#      user:
-#        name: ec2-user
-#        groups: docker
-#
-#    - name: Enable docker
-#      systemd:
-#        name: docker
-#        state: started
-#        enabled: yes
-#        masked: no
-#
-#    # EFS
-#    - name: Install amazon-efs-utils
-#      yum:
-#        name: "amazon-efs-utils"
-#
-#    - name: Create /data
-#      file:
-#        path: "/data"
-#        state: directory
-#
-#    - name: Create /data/sepal
-#      file:
-#        path: "/data/sepal"
-#        state: directory
-#
-#    - name: Create /data/sepal/home
-#      file:
-#        path: "/data/sepal/home"
-#        state: directory
-#
-#    - name: Mount EFS user home dirs
-#      mount:
-#        name: "/data/sepal/home"
-#        fstype: "efs"
-#        state: "mounted"
-#        src: "{{ efs_id }}:/data/sepal/home"
-#        opts: "defaults,_netdev"
-#        dump: 0
-#        passno: 0
+    # bash prompt
+    - name: Set bash prompt
+      blockinfile:
+        path: /etc/profile
+        block: |
+          # Bash prompt
+          PS1='{{bash_prompt_storage}}'
+
+    # set locale
+    - name: Set locale
+      lineinfile:
+        path: /etc/environment
+        line: "{{ item }}"
+      with_items:
+        - "LANG=en_US.utf-8"
+        - "LC_ALL=en_US.utf-8"
+
+    - file: path="/data/sepal/etc" state=directory
+    - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
+
+    # rsyslog
+    - name: Copy rsyslog.conf
+      template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+
+    - name: Copy rsyslog.d
+      copy:
+        src: "rsyslog.d/"
+        dest: "/etc/rsyslog.d/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: Start rsyslog
+      service: name=rsyslog state=started
+
+    # logrotate
+    - name: Copy worker-instances logrotate configuration
+      copy:
+        src: "logrotate.d/"
+        dest: "/etc/logrotate.d/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    # docker
+    - name: Create filesystem on Docker volume
+      filesystem:
+        fstype: xfs
+        dev: /dev/xvdb
+
+    - name: Mount Docker volume
+      mount:
+        path: /var/lib/docker
+        src: /dev/xvdb
+        fstype: xfs
+        state: mounted
+
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        state: directory
+
+    - name: Copy docker-registry certificate
+      copy:
+        src: "{{ config_home }}/certificates/docker-registry.crt"
+        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+
+    - name: Install docker
+      command: "amazon-linux-extras install docker"
+
+    - name: Install Development Tools
+      yum:
+        name: "@Development Tools"
+
+    - name: Install pip
+      yum:
+        name: python-pip
+
+    - name: Install docker-compose
+      pip:
+        name: docker-compose
+
+    - name: Create /etc/docker
+      file:
+        path: "/etc/docker"
+        state: directory
+
+    - name: Copy /etc/docker/daemon.json
+      copy: src=docker/storage-daemon.json dest=/etc/docker/daemon.json
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+
+    - name: Enable docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+        masked: no
+
+    # EFS
+    - name: Install amazon-efs-utils
+      yum:
+        name: "amazon-efs-utils"
+
+    - name: Create /data
+      file:
+        path: "/data"
+        state: directory
+
+    - name: Create /data/sepal
+      file:
+        path: "/data/sepal"
+        state: directory
+
+    - name: Create /data/sepal/home
+      file:
+        path: "/data/sepal/home"
+        state: directory
+
+    - name: Mount EFS user home dirs
+      mount:
+        name: "/data/sepal/home"
+        fstype: "efs"
+        state: "mounted"
+        src: "{{ efs_id }}:/data/sepal/home"
+        opts: "defaults,_netdev"
+        dump: 0
+        passno: 0
 
   roles:
     - { role: docker-login }
