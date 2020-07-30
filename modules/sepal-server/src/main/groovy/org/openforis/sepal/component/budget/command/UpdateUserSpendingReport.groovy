@@ -4,7 +4,6 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.NonTransactionalCommandHandler
 import org.openforis.sepal.component.budget.api.BudgetRepository
 import org.openforis.sepal.component.budget.api.UserSpendingReport
-import org.openforis.sepal.component.budget.query.GenerateSpendingReportHandler
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReportHandler
 import org.openforis.sepal.transaction.TransactionManager
