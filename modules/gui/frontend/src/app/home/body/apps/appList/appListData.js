@@ -160,7 +160,7 @@ class _AppListData extends React.Component {
                 key={'statusIcon'}
                 name='circle'
                 size='xs'
-                pulse
+                // pulse
                 variant='info'
                 tooltip={msg('apps.running')}
                 tooltipPlacement='left'
