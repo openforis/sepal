@@ -152,13 +152,6 @@
   },
   {
     "prefix": "true",
-    "path": "/rabbitmq",
-    "target": "http://rabbitmq:15672/",
-    "https": "false",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
     "path": "/",
     "target": "http://gui:7667/",
     "https": "false",
