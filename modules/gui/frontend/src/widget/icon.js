@@ -1,5 +1,5 @@
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {fab} from '@fortawesome/free-brands-svg-icons'
+import {faGoogle} from '@fortawesome/free-brands-svg-icons'
 import {far} from '@fortawesome/free-regular-svg-icons'
 import {fas} from '@fortawesome/free-solid-svg-icons'
 import {library} from '@fortawesome/fontawesome-svg-core'
@@ -8,9 +8,9 @@ import React from 'react'
 import Tooltip from 'widget/tooltip'
 import styles from './icon.module.css'
 
-library.add(fab)
-library.add(fas)
+library.add(faGoogle)
 library.add(far)
+library.add(fas)
 
 const fontAwesomeCollection = type => {
     switch (type) {
@@ -62,17 +62,14 @@ export default class Icon extends React.Component {
                 ? 'vertical'
                 : null
         return (
-            <i className={styles.icon}>
-                <FontAwesomeIcon
-                    tag='i'
-                    icon={[fontAwesomeCollection(type), name]}
-                    fixedWidth={fixedWidth}
-                    spin={spin || name === 'spinner'}
-                    flip={flip}
-                    size={size}
-                    className={this.classNames()}
-                />
-            </i>
+            <FontAwesomeIcon
+                icon={[fontAwesomeCollection(type), name]}
+                fixedWidth={fixedWidth}
+                spin={spin || name === 'spinner'}
+                flip={flip}
+                size={size}
+                className={this.classNames()}
+            />
         )
     }
 }

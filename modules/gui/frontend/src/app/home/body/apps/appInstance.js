@@ -47,8 +47,8 @@ class AppInstance extends React.Component {
                 menuPadding
                 className={styles.appInstance}>
                 <div className={styles.content}>
-                    <Autofit className={styles.spinner} maxScale={3}>
-                        <Icon name='circle-notch' size='5x' spin/>
+                    <Autofit className={styles.spinner} maxScale={16}>
+                        <Icon name='circle-notch'/>
                     </Autofit>
                     <div className={styles.backdrop}>
                         {label || alt}
