@@ -29,7 +29,7 @@ class UpdateUserSpendingReportHandler implements NonTransactionalCommandHandler<
     UserSpendingReport execute(UpdateUserSpendingReport command) {
         def username = command.userToUpdate
         def report = generateUserSpendingReportHandler.execute(new GenerateUserSpendingReport(username: username))
-        budgetRepository.saveSpendingReport([(username): report])
+        budgetRepository.updateSpendingReport(username, report)
         return report
     }
 }

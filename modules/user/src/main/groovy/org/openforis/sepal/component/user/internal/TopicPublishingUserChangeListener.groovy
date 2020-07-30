@@ -1,7 +1,6 @@
 package org.openforis.sepal.component.user.internal
 
 
-import groovy.json.JsonOutput
 import org.openforis.sepal.event.Topic
 
 class TopicPublishingUserChangeListener implements UserChangeListener {
@@ -12,7 +11,6 @@ class TopicPublishingUserChangeListener implements UserChangeListener {
     }
 
     void changed(String username, Map user) {
-        def userJson = user == null ? null : JsonOutput.toJson(user)
         topic.publish(user, 'UserUpdated')
     }
 

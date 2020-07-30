@@ -137,6 +137,13 @@ class JdbcBudgetRepository implements BudgetRepository {
         }
     }
 
+    void updateSpendingReport(String username, UserSpendingReport report) {
+        sql.executeUpdate('''
+            UPDATE user_spending 
+            SET instance_spending = ?, storage_spending = ?, storage_usage = ? 
+            WHERE username = ?''', [report.instanceSpending, report.storageSpending, report.storageUsage, username])
+    }
+
     Map<String, UserSpendingReport> spendingReport() {
         def report = [:]
         sql.rows('''

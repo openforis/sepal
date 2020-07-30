@@ -65,6 +65,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
             Clock clock
     ) {
         super(connectionManager, eventDispatcher)
+        this.changeListener = changeListener
         this.messageBroker = messageBroker
         def userRepository = new JdbcUserRepository(connectionManager, clock)
         def tokenManager = new TokenManager(userRepository, clock)
@@ -91,7 +92,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
 
     void onStop() {
         messageBroker?.stop()
-        changeListener.close()
+        changeListener?.close()
     }
 
     void registerEndpointsWith(Controller controller) {
