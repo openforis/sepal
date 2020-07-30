@@ -62,17 +62,14 @@ export default class Icon extends React.Component {
                 ? 'vertical'
                 : null
         return (
-            <i className={styles.icon}>
-                <FontAwesomeIcon
-                    tag='i'
-                    icon={[fontAwesomeCollection(type), name]}
-                    fixedWidth={fixedWidth}
-                    spin={spin || name === 'spinner'}
-                    flip={flip}
-                    size={size}
-                    className={this.classNames()}
-                />
-            </i>
+            <FontAwesomeIcon
+                icon={[fontAwesomeCollection(type), name]}
+                fixedWidth={fixedWidth}
+                spin={spin || name === 'spinner'}
+                flip={flip}
+                size={size}
+                className={this.classNames()}
+            />
         )
     }
 }
