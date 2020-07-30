@@ -140,6 +140,7 @@ class _AppListData extends React.Component {
         return googleAccountRequired
             ? (
                 <Button
+                    key={'renderGoogleAccountRequiredButton'}
                     chromeless
                     shape='circle'
                     icon='google'
@@ -156,6 +157,7 @@ class _AppListData extends React.Component {
     renderAppRunningIcon() {
         return (
             <Icon
+                key={'statusIcon'}
                 name='circle'
                 size='xs'
                 pulse
@@ -169,6 +171,7 @@ class _AppListData extends React.Component {
     renderAppStoppedIcon() {
         return (
             <Icon
+                key={'statusIcon'}
                 name='circle'
                 type='regular'
                 size='xs'
