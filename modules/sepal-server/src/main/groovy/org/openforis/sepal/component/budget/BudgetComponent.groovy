@@ -92,6 +92,7 @@ class BudgetComponent extends DataSourceBackedComponent implements EndpointRegis
         }
         subscribe(COMPONENT_NAME, userStorageTopic) { message, type ->
             submit(new UpdateUserStorageUsage(userToUpdate: message.username as String, gbUsed: message.size/1000/1000/1000))
+            submit(new UpdateUserSpendingReport(userToUpdate: message.username as String))
         }
     }
 
