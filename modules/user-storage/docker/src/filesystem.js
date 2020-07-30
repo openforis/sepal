@@ -43,7 +43,11 @@ const scanUserHomes = async callback => {
     for await (const dirent of dir) {
         if (dirent.isDirectory()) {
             const username = dirent.name
-            await callback(username)
+            if (username) {
+                await callback(username)
+            } else {
+                log.error('Directory entry unexpectedly doesn\'t have a name', dirent)
+            }
         }
     }
 }

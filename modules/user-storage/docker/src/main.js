@@ -3,9 +3,9 @@ require('sepal/log').configureServer(require('./log.json'))
 const _ = require('lodash')
 
 const {initMessageQueue} = require('./messageQueue')
-const {scheduleFullScan, scheduleRescan} = require('./scan')
+const {scheduleFullScan} = require('./scan')
 const {onScanComplete, logStats} = require('./jobQueue')
-const {setSessionActive, setSessionInactive} = require('./persistence')
+const {messageHandler} = require('./messageHandler')
 
 const main = async () => {
     const {topicSubscriber, topicPublisher} = await initMessageQueue()
@@ -16,38 +16,16 @@ const main = async () => {
         ({username, size}) => publisher.publish('userStorage.size', {username, size})
     )
 
-    const handlers = {
-        workerSession: {
-            'WorkerSessionActivated': async ({username}) => {
-                await setSessionActive(username)
-                await scheduleRescan({username, type: 'sessionActivated'})
-            },
-            'WorkerSessionClosed': async ({username}) => {
-                await setSessionInactive(username)
-                await scheduleRescan({username, type: 'sessionDeactivated'})
-            }
-        },
-        files: {
-            'FilesDeleted': async ({username}) =>
-                await scheduleRescan({username, type: 'fileDeleted'})
-        }
-    }
-
-    const handler = async (key, msg) => {
-        const handler = _.get(handlers, key)
-        return handler && await handler(msg)
-    }
-
     await topicSubscriber({
         queue: 'userStorage.workerSession',
         topic: 'workerSession.#',
-        handler
+        handler: messageHandler
     })
     
     await topicSubscriber({
         queue: 'userStorage.files',
         topic: 'files.#',
-        handler
+        handler: messageHandler
     })
     
     await scheduleFullScan()
