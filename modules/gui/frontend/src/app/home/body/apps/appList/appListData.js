@@ -161,7 +161,7 @@ class _AppListData extends React.Component {
                 name='circle'
                 size='xs'
                 pulse
-                variant='success'
+                variant='info'
                 tooltip={msg('apps.running')}
                 tooltipPlacement='left'
             />
@@ -175,7 +175,7 @@ class _AppListData extends React.Component {
                 name='circle'
                 type='regular'
                 size='xs'
-                variant='error'
+                variant='info'
                 tooltip={msg('apps.notRunning')}
                 tooltipPlacement='left'
             />
