@@ -30,7 +30,7 @@ class CloseSessionsWithoutInstanceHandler implements CommandHandler<Void, CloseS
         def sessions = repository.sessions([ACTIVE])
         def sessionsToClose = instanceManager.sessionsWithoutInstance(sessions)
         sessionsToClose.each { repository.update(it.close()) }
-        sessionsToClose.each { eventDispatcher.publish(new WorkerSessionClosed(it.id)) }
+        sessionsToClose.each { eventDispatcher.publish(new WorkerSessionClosed(it.username, it.id)) }
         return null
     }
 }
