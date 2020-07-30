@@ -14,5 +14,7 @@
       tag: "rabbitmq"
     networks:
       - name: 'sepal'
+    ports:
+      - "{{ sepal_http_ip }}:5672:5672"
     volumes:
       - "/data/rabbitmq:/var/lib/rabbitmq"
