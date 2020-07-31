@@ -8,16 +8,14 @@ const {debounceTime, groupBy, mergeMap, switchMap} = require('rxjs/operators')
 const logError = (key, msg) =>
     log.error('Incoming message doesn\'t match expected shape', {key, msg})
 
-const filesDeleted$ = new Subject()
+const event$ = new Subject()
 
-filesDeleted$.pipe(
-    groupBy(username => username),
+event$.pipe(
+    groupBy(event => JSON.stringify(event)),
     mergeMap(group$ =>
         group$.pipe(
             debounceTime(1000),
-            switchMap(username =>
-                scheduleRescan({username, type: 'fileDeleted'})
-            )
+            switchMap(event => scheduleRescan(event))
         )
     )
 ).subscribe()
@@ -27,7 +25,7 @@ const handlers = {
         const {username} = msg
         if (username) {
             await setSessionActive(username)
-            await scheduleRescan({username, type: 'sessionActivated'})
+            event$.next({username, type: 'sessionActivated'})
         } else {
             logError(key, msg)
         }
@@ -36,7 +34,7 @@ const handlers = {
         const {username} = msg
         if (username) {
             await setSessionInactive(username)
-            await scheduleRescan({username, type: 'sessionDeactivated'})
+            event$.next({username, type: 'sessionDeactivated'})
         } else {
             logError(key, msg)
         }
@@ -44,7 +42,7 @@ const handlers = {
     'files.FilesDeleted': async (key, msg) => {
         const {username} = msg
         if (username) {
-            filesDeleted$.next(username)
+            event$.next({username, type: 'filesDeleted'})
         } else {
             logError(key, msg)
         }
