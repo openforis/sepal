@@ -31,7 +31,6 @@ class _SearchBox extends React.Component {
                     look='transparent'
                     size='large'
                     shape='pill'
-                    disabled
                 >
                     <Input
                         className={styles.search}

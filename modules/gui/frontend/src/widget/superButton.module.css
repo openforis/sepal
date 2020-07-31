@@ -88,3 +88,7 @@ to prevent click-through from click-hold buttons */
 .dragHandle {
     cursor: grab;
 }
+
+.unclickable {
+    cursor: default;
+}

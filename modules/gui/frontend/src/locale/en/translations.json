@@ -50,7 +50,10 @@
                 "placeholder": "Search apps"
             }
         },
-        "developedBy": "Developed by {author}"
+        "developedBy": "Developed by {author}",
+        "googleAccountRequired": "SEPAL needs to be connected to your Google Account to use this app",
+        "running": "App is running",
+        "notRunning": "App is not running"
     },
     "bands": {
         "aerosol": "Aerosol",

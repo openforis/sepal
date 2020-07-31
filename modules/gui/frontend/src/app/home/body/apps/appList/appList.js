@@ -15,6 +15,7 @@ import styles from './appList.module.css'
 const mapStateToProps = () => ({
     apps: select('apps.list'),
     tags: select('apps.tags'),
+    tabs: select('apps.tabs')
 })
 
 class _AppList extends React.Component {
@@ -69,6 +70,11 @@ class _AppList extends React.Component {
         return !apps && !action('LOAD_APPS').dispatched
     }
 
+    isRunning(app) {
+        const {tabs} = this.props
+        return _.find(tabs, tab => tab.path === app.path)
+    }
+
     hasData() {
         const {apps} = this.props
         return apps && apps.length
@@ -90,6 +96,7 @@ class _AppList extends React.Component {
         const {apps} = this.props
         return _.chain(apps)
             .filter(app => this.appMatchesFilters(app))
+            .map(app => ({...app, running: this.isRunning(app)}))
             .value()
     }
 

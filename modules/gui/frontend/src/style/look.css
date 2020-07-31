@@ -9,6 +9,10 @@ html {
     --look-active-background-l-offset: +1%;
     --look-active-border-l-offset: +3%;
 
+    /* overlay */
+
+    --look-overlay-a: .5;
+
     /* default */
 
     --look-default-h: 40;

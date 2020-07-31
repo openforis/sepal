@@ -1,11 +1,9 @@
-import {Autofit} from 'widget/autofit'
 import {ContentPadding} from 'widget/sectionLayout'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {forkJoin, timer} from 'rxjs'
 import {msg} from 'translate'
 import {runApp$} from 'apps'
-import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -47,12 +45,10 @@ class AppInstance extends React.Component {
                 menuPadding
                 className={styles.appInstance}>
                 <div className={styles.content}>
-                    <Autofit className={styles.spinner} maxScale={3}>
-                        <Icon name='circle-notch' size='5x' spin/>
-                    </Autofit>
                     <div className={styles.backdrop}>
                         {label || alt}
                     </div>
+                    <div className={styles.loading}/>
                     <div className={styles.status}>
                         {this.renderStatus()}
                     </div>

@@ -1,5 +1,30 @@
-i.icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* style */
+
+.variant-error {
+    color: var(--error-color);
+}
+
+.variant-info {
+    color: var(--info-color);
+}
+
+.variant-success {
+    color: var(--success-color);
+}
+
+.variant-warning {
+    color: var(--warning-color);
+}
+
+.pulse {
+    animation: pulse 500ms cubic-bezier(1, 0, 0, 1) 2;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: .2;
+    }
 }
