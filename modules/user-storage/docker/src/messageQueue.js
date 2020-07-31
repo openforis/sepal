@@ -25,8 +25,14 @@ const topicSubscriber = async (connection, {queue, topic, handler}) => {
         const content = JSON.parse(msg.content.toString())
         log.debug(`Received message with key [${key}]:`, content)
         Promise.resolve(handler(key, content))
-            .then(() => channel.ack(msg))
-            .catch(() => channel.nack(msg))
+            .then(() => {
+                channel.ack(msg)
+                log.trace(() => 'Message acknowledged:', msg)
+            })
+            .catch(() => {
+                channel.nack(msg)
+                log.trace(() => 'Message not acknowledged:', msg)
+            })
     })
 }
 
