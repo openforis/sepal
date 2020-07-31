@@ -1,8 +1,8 @@
 import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {forkJoin} from 'rxjs'
-import {map, zip} from 'rxjs/operators'
+import {forkJoin, zip} from 'rxjs'
+import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -101,8 +101,10 @@ class Users extends React.Component {
 
     updateUser(userDetails) {
         const update$ = userDetails =>
-            updateUserDetails$(userDetails).pipe(
-                zip(updateUserBudget$(userDetails)),
+            zip(
+                updateUserDetails$(userDetails),
+                updateUserBudget$(userDetails)
+            ).pipe(
                 map(([userDetails, userBudget]) => ({
                     ...userDetails,
                     report: {
@@ -117,11 +119,11 @@ class Users extends React.Component {
                 : api.user.updateUser$({username, name, email, organization, admin})
 
         const updateUserBudget$ = ({
-            username,
-            monthlyBudgetInstanceSpending: instanceSpending,
-            monthlyBudgetStorageSpending: storageSpending,
-            monthlyBudgetStorageQuota: storageQuota
-        }) => api.user.updateUserBudget$({
+                                       username,
+                                       monthlyBudgetInstanceSpending: instanceSpending,
+                                       monthlyBudgetStorageSpending: storageSpending,
+                                       monthlyBudgetStorageQuota: storageQuota
+                                   }) => api.user.updateUserBudget$({
             username,
             instanceSpending,
             storageSpending,
@@ -132,9 +134,17 @@ class Users extends React.Component {
             this.setState(({users}) => {
                 if (userDetails) {
                     const index = users.findIndex(({username}) => username === userDetails.username)
+                    if (index > -1) {
+                        console.log('users[index]', users[index])
+                        console.log('userDetails', userDetails)
+                    }
                     index === -1
                         ? users.push(userDetails)
-                        : users[index] = userDetails
+                        : users[index] = {
+                            ...userDetails,
+                            // Make sure current spending is taken from previous details if not provided in the update.
+                            report: _.merge(users[index].report, userDetails.report)
+                        }
                 }
                 return {users}
             })
