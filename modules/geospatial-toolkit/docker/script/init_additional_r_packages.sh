@@ -13,6 +13,7 @@ export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
 R CMD javareconf
 R -e "install.packages('rgdal', version='1.3-9', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 R -e "pacman::p_load(\
+        'BIOMASS',\
         'dggridR',\
         'mapview',\
         'rJava',\
