@@ -4,7 +4,7 @@ import React from 'react'
 import styles from './appItem.module.css'
 
 const imageUrl = logoRef => logoRef
-    ? `/api/apps/image/${logoRef}`
+    ? `/api/apps/images/${logoRef}`
     : null
 
 const renderLogo = logoRef =>
