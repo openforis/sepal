@@ -2,16 +2,30 @@ const _ = require('lodash')
 const log = require('sepal/log').getLogger('messageQueue')
 const {scheduleRescan} = require('./scan')
 const {setSessionActive, setSessionInactive} = require('./persistence')
+const {Subject} = require('rxjs')
+const {debounceTime, groupBy, mergeMap, switchMap} = require('rxjs/operators')
 
 const logError = (key, msg) =>
     log.error('Incoming message doesn\'t match expected shape', {key, msg})
+
+const event$ = new Subject()
+
+event$.pipe(
+    groupBy(event => JSON.stringify(event)),
+    mergeMap(group$ =>
+        group$.pipe(
+            debounceTime(1000),
+            switchMap(event => scheduleRescan(event))
+        )
+    )
+).subscribe()
 
 const handlers = {
     'workerSession.WorkerSessionActivated': async (key, msg) => {
         const {username} = msg
         if (username) {
             await setSessionActive(username)
-            await scheduleRescan({username, type: 'sessionActivated'})
+            event$.next({username, type: 'sessionActivated'})
         } else {
             logError(key, msg)
         }
@@ -20,7 +34,7 @@ const handlers = {
         const {username} = msg
         if (username) {
             await setSessionInactive(username)
-            await scheduleRescan({username, type: 'sessionDeactivated'})
+            event$.next({username, type: 'sessionDeactivated'})
         } else {
             logError(key, msg)
         }
@@ -28,7 +42,7 @@ const handlers = {
     'files.FilesDeleted': async (key, msg) => {
         const {username} = msg
         if (username) {
-            await scheduleRescan({username, type: 'fileDeleted'})
+            event$.next({username, type: 'filesDeleted'})
         } else {
             logError(key, msg)
         }

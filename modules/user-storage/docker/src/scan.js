@@ -5,7 +5,7 @@ const {scan} = require('./jobQueue')
 const log = require('sepal/log').getLogger('scan')
 
 const scheduleMap = {
-    'fileDeleted': {priority: 1, delay: 0},
+    'filesDeleted': {priority: 1, delay: 0},
     'sessionDeactivated': {priority: 2, delay: 0},
     'sessionActivated': {priority: 3, delay: 0},
     'initial': {priority: 6, delay: minDelayMilliseconds},
