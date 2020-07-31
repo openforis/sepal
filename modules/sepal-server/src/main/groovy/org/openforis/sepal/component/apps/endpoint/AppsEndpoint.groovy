@@ -49,6 +49,7 @@ class AppsEndpoint {
         def lastModifiedDate = new Date(file.lastModified())
         def lastModified = format.format(lastModifiedDate)
         response.addHeader('Last-Modified', lastModified)
+        response.addHeader('Cache-Control', 'max-age=10, must-revalidate')
         def ifModifiedSince = request.getHeader('If-Modified-Since')
         if (ifModifiedSince && !lastModifiedDate.after(format.parse(ifModifiedSince))) {
             response.status = 304
