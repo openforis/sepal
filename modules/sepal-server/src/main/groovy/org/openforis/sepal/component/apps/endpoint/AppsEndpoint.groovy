@@ -20,12 +20,12 @@ class AppsEndpoint {
 
     void registerWith(Controller controller) {
         controller.with {
-            get('/apps') {
+            get('/apps/list') {
                 response.contentType = "application/json"
                 sendFile(appsFile, request, response)
             }
 
-            get('/apps/image/{filename}') {
+            get('/apps/images/{filename}') {
                 def filename = params.required('filename', String)
                 def image = new File(new File(appsFile.parent, 'images'), filename)
                 if (image.exists()) {
