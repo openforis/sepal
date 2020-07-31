@@ -19,7 +19,7 @@ const spreadDelay = delay =>
     Math.floor(delay * (1 + (Math.random() - .5) * 2 * DELAY_SPREAD))
 
 const increasingDelay = delay =>
-    Math.min(delay * delayIncreaseFactor, maxDelayMilliseconds)
+    Math.max(Math.min(delay * delayIncreaseFactor, maxDelayMilliseconds), minDelayMilliseconds)
 
 const timeDistance = delay =>
     formatDistanceToNow(Date.now() + delay)
