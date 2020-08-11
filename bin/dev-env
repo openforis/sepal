@@ -67,7 +67,7 @@ function docker_container_exists() {
 function stop_docker_containers() {
     echo "Stopping Docker containers..."
     (cd $PROJECT_DIR/dev-env; \
-        docker-compose down; \
+        docker-compose down --remove-orphans; \
         docker-sync stop \
     )
 }
@@ -79,7 +79,7 @@ function start_docker_containers() {
 
     (cd $PROJECT_DIR/dev-env; \
         docker-sync start; \
-        docker-compose up -d \
+        docker-compose up -d --remove-orphans \
     )
 
     echo "Setting up Docker container..."
