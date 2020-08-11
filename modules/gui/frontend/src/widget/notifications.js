@@ -112,9 +112,11 @@ class _Notifications extends React.Component {
     }
 
     renderAutoDismissIndicator(timeout) {
-        return (
-            <div className={styles.autoDismiss} style={{'--auto-dismiss-timeout-s': `${timeout}s`}}/>
-        )
+        return timeout
+            ? (
+                <div className={styles.autoDismiss} style={{'--auto-dismiss-timeout-s': `${timeout}s`}}/>
+            )
+            : null
     }
 
     renderNotification({id, level, title, message, error, content, timeout, dismissable, dismissing}) {
