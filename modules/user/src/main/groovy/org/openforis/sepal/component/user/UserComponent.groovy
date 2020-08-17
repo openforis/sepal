@@ -9,13 +9,14 @@ import org.openforis.sepal.component.user.api.ExternalUserDataGateway
 import org.openforis.sepal.component.user.api.GoogleEarthEngineWhitelistChecker
 import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.endpoint.UserEndpoint
-import org.openforis.sepal.component.user.internal.KafkaPublishingUserChangeListener
 import org.openforis.sepal.component.user.internal.TokenManager
+import org.openforis.sepal.component.user.internal.TopicPublishingUserChangeListener
 import org.openforis.sepal.component.user.internal.UserChangeListener
 import org.openforis.sepal.component.user.query.*
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.event.RabbitMQTopic
 import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
@@ -26,11 +27,12 @@ import org.openforis.sepal.util.SystemClock
 class UserComponent extends DataSourceBackedComponent implements EndpointRegistry {
     public static final String SCHEMA = 'sepal_user'
     private final MessageBroker messageBroker
+    private final UserChangeListener changeListener
 
     static UserComponent create(
-        UsernamePasswordVerifier usernamePasswordVerifier,
-        ExternalUserDataGateway externalUserDataGateway,
-        ServerConfig serverConfig) {
+            UsernamePasswordVerifier usernamePasswordVerifier,
+            ExternalUserDataGateway externalUserDataGateway,
+            ServerConfig serverConfig) {
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA))
         return new UserComponent(
                 connectionManager,
@@ -43,7 +45,9 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
                         serverConfig.host, serverConfig.googleOAuthClientId, serverConfig.googleOAuthClientSecret),
                 new RestGoogleEarthEngineWhitelistChecker(serverConfig.googleEarthEngineEndpoint),
                 new GoogleAccessTokenFileGatewayImpl(serverConfig.homeDirectory),
-                new KafkaPublishingUserChangeListener(),
+                new TopicPublishingUserChangeListener(
+                        new RabbitMQTopic('user', serverConfig.rabbitMQHost, serverConfig.rabbitMQPort)
+                ),
                 new SystemClock())
     }
 
@@ -61,6 +65,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
             Clock clock
     ) {
         super(connectionManager, eventDispatcher)
+        this.changeListener = changeListener
         this.messageBroker = messageBroker
         def userRepository = new JdbcUserRepository(connectionManager, clock)
         def tokenManager = new TokenManager(userRepository, clock)
@@ -87,6 +92,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
 
     void onStop() {
         messageBroker?.stop()
+        changeListener?.close()
     }
 
     void registerEndpointsWith(Controller controller) {

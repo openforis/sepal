@@ -5,6 +5,7 @@ import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workersession.api.WorkerInstance
+import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
 import org.openforis.sepal.component.workersession.event.WorkerSessionActivated
 import org.openforis.sepal.event.EventDispatcher
@@ -27,13 +28,13 @@ class ActivatePendingSessionOnInstanceHandler implements CommandHandler<Void, Ac
     }
 
     Void execute(ActivatePendingSessionOnInstance command) {
-        def session = sessionRepository.sessionOnInstance(command.instance.id, [PENDING])
+        def session = sessionRepository.sessionOnInstance(command.instance.id, [PENDING] as List<WorkerSession.State>)
         if (!session)
             return null // No pending session
 
         def activatedSession = session.activate()
         sessionRepository.update(activatedSession)
-        eventDispatcher.publish(new WorkerSessionActivated(activatedSession))
+        eventDispatcher.publish(new WorkerSessionActivated(activatedSession.username, activatedSession))
         return null
     }
 }

@@ -7,7 +7,7 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.command.Unauthorized
 import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
-import org.openforis.sepal.component.workersession.event.SessionClosed
+import org.openforis.sepal.component.workersession.event.WorkerSessionClosed
 import org.openforis.sepal.event.EventDispatcher
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
@@ -41,7 +41,7 @@ class CloseSessionHandler implements CommandHandler<Void, CloseSession> {
             return null
         repository.update(session.close())
         instanceManager.releaseInstance(session.instance.id)
-        eventDispatcher.publish(new SessionClosed(session.id))
+        eventDispatcher.publish(new WorkerSessionClosed(session.username, session.id))
         return null
     }
 }

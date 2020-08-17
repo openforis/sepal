@@ -4,7 +4,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
-import org.openforis.sepal.component.workersession.event.SessionClosed
+import org.openforis.sepal.component.workersession.event.WorkerSessionClosed
 import org.openforis.sepal.event.EventDispatcher
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
@@ -30,7 +30,7 @@ class CloseSessionsWithoutInstanceHandler implements CommandHandler<Void, CloseS
         def sessions = repository.sessions([ACTIVE])
         def sessionsToClose = instanceManager.sessionsWithoutInstance(sessions)
         sessionsToClose.each { repository.update(it.close()) }
-        sessionsToClose.each { eventDispatcher.publish(new SessionClosed(it.id)) }
+        sessionsToClose.each { eventDispatcher.publish(new WorkerSessionClosed(it.username, it.id)) }
         return null
     }
 }

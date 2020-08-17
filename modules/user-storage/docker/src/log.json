@@ -1,8 +1,11 @@
 {
     "port": 5103,
     "categories": {
-    },
-    "availableCategories": {
-        "default": "debug"
+        "filesystem": "debug",
+        "jobQueue": "trace",
+        "messageHanlder": "info",
+        "messageQueue": "info",
+        "persistence": "info",
+        "scan": "debug"
     }
 }

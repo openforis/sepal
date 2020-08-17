@@ -7,7 +7,7 @@ import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSessionManager
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.command.Heartbeat
 import org.openforis.sepal.component.workersession.command.RequestSession
-import org.openforis.sepal.component.workersession.event.SessionClosed
+import org.openforis.sepal.component.workersession.event.WorkerSessionClosed
 import org.openforis.sepal.component.workersession.query.FindSessionById
 import org.openforis.sepal.component.workersession.query.UserWorkerSessions
 
@@ -71,7 +71,7 @@ class WorkerSessionComponentAdapter implements SandboxSessionManager {
     }
 
     void onSessionClosed(Closure listener) {
-        component.on(SessionClosed) {
+        component.on(WorkerSessionClosed) {
             listener(it.sessionId)
         }
     }

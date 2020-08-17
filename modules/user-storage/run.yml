@@ -1,4 +1,22 @@
 ---
+- name: "user-storage-redis | Start container"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "user-storage-redis"
+    pull: "{{ pull }}"
+    image: "redis:6"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      tag: "user-storage-redis"
+    networks:
+      - name: 'sepal'
+    volumes:
+      - "/data/user-storage-redis:/data"
+
 - name: "user-storage | Start container"
   docker_container:
     api_version: "{{ api_version }}"
@@ -15,9 +33,14 @@
     networks:
       - name: 'sepal'
     volumes:
-    - "/data/user/home:/sepalUsers" # Users home directories with ssh keys
-    # env:
-    #   SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
-    #   SEPAL_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
-    #   EE_ACCOUNT_SEPAL_ENV: "{{ google_earth_engine_account }}"
-    #   EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"
+      - "/data/sepal/home:/sepalUsers"
+    env:
+      RABBITMQ_HOST: "{{ sepal_host }}"
+      RABBITMQ_PORT: "5672"
+      MIN_DELAY_SECONDS: "60"
+      MAX_DELAY_SECONDS: "86400"
+      DELAY_INCREASE_FACTOR: "2"
+      CONCURRENCY: "5"
+      MAX_RETRIES: "10"
+      INITIAL_RETRY_DELAY_SECONDS: "30"
+  

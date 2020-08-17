@@ -21,8 +21,7 @@ final class StorageUseService {
         this.clock = clock
     }
 
-    StorageUse updateStorageUseForThisMonth(String username) {
-        def gbUsed = userFiles.gbUsed(username)
+    StorageUse updateStorageUseForThisMonth(String username, double gbUsed) {
         def lastStorageUse = budgetRepository.lastUserStorageUse(username)
         def storageUseThisMonth = determineCurrentStorageUse(lastStorageUse, gbUsed)
         budgetRepository.updateUserStorageUse(username, storageUseThisMonth)

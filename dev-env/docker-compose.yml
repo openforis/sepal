@@ -3,6 +3,7 @@ services:
   sepal-dev-env:
     image: $IMAGE_NAME
     container_name: $CONTAINER_NAME
+    hostname: sepal-dev-env
     ports:
       - "3000:3000"
       - "8001:8001"
@@ -18,6 +19,13 @@ services:
       container_name: rabbitmq
       ports:
         - "15671-15672:15671-15672"
+      hostname: rabbitmq
+  user-storage-redis:
+      image: redis:6
+      container_name: user-storage-redis
+      hostname: user-storage-redis
+      volumes:
+        - $DATA_DIR/user-storage-redis:/data
 
 volumes:
   project-sync:

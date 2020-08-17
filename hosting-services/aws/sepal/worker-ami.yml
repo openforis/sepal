@@ -20,7 +20,10 @@
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
     - name: Upgrade yum packages
-      yum: name=* state=latest
+      yum:
+        name: "*"
+        state: "latest"
+        lock_timeout: "600"
 
     - name: Install nfs-utils
       yum:

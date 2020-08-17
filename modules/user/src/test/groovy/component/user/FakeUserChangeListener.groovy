@@ -18,4 +18,6 @@ class FakeUserChangeListener implements UserChangeListener {
         def changes = this.changes[username]
         return changes?.last()
     }
+
+    void close() {}
 }

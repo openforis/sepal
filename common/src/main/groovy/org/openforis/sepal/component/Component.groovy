@@ -6,6 +6,7 @@ import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.EventHandler
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.event.Topic
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
@@ -15,7 +16,6 @@ import org.openforis.sepal.util.ExecutorServiceBasedJobScheduler
 import org.openforis.sepal.util.JobScheduler
 import org.openforis.sepal.util.NamedThreadFactory
 import org.openforis.sepal.util.lifecycle.Lifecycle
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.util.concurrent.Executors
@@ -55,9 +55,17 @@ class NonTransactionalComponent implements Component {
         throw new UnsupportedOperationException("Component doesn't submit events")
     }
 
-    final void start() {}
+    final void start() {
+        onStart()
+    }
 
-    final void stop() {}
+    final void stop() {
+        onStop()
+    }
+
+    void onStart() {}
+
+    void onStop() {}
 
     final <R, Q extends Query<R>> NonTransactionalComponent query(Class<Q> queryType, QueryHandler<R, Q> handler) {
         queryDispatcher.register(queryType, handler)
@@ -71,7 +79,6 @@ class NonTransactionalComponent implements Component {
 }
 
 abstract class DataSourceBackedComponent implements Component {
-    private static final Logger LOG = LoggerFactory.getLogger(this)
     private final HandlerRegistryEventDispatcher eventDispatcher
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
@@ -125,6 +132,15 @@ abstract class DataSourceBackedComponent implements Component {
                     LOG.error("Error executing scheduled command: $command", e)
                 }
             }
+        }
+    }
+
+    final void subscribe(String subscriberName, Topic topic, Closure callback) {
+        topic.subscribe(subscriberName) { message, type, ack ->
+            connectionManager.withTransaction {
+                connectionManager.registerAfterCommitCallback { ack() }
+            }
+            callback(message, type)
         }
     }
 

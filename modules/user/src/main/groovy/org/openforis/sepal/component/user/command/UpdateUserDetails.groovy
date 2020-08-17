@@ -10,6 +10,8 @@ import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageQueue
 import org.openforis.sepal.user.User
 import org.openforis.sepal.util.Clock
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @EqualsAndHashCode(callSuper = true)
 @Canonical
@@ -22,6 +24,7 @@ class UpdateUserDetails extends AbstractCommand<User> {
 }
 
 class UpdateUserDetailsHandler implements CommandHandler<User, UpdateUserDetails> {
+    private static final Logger LOG = LoggerFactory.getLogger(this)
     private final UserRepository userRepository
     private final MessageQueue<Map> messageQueue
     private final Clock clock
@@ -33,7 +36,8 @@ class UpdateUserDetailsHandler implements CommandHandler<User, UpdateUserDetails
             Clock clock) {
         this.userRepository = userRepository
         this.messageQueue = messageBroker.createMessageQueue('user.update_user_details', Map) {
-            def user = it.user
+            def user = it.user as User
+            LOG.debug("Updated user details and notifies change listener: ${user}")
             changeListener.changed(user.username, user.toMap())
         }
         this.clock = clock

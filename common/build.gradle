@@ -26,4 +26,5 @@ dependencies {
     compile group: 'com.sun.xml.bind', name: 'jaxb-core', version: '2.2.11'
     compile group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '2.2.11'
     compile group: 'javax.activation', name: 'activation', version: '1.1.1'
+    compile group: 'com.rabbitmq', name: 'amqp-client', version: '5.9.0'
 }

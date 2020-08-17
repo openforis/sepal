@@ -6,7 +6,7 @@ import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.Heartbeat
 import org.openforis.sepal.component.workersession.command.RequestSession
-import org.openforis.sepal.component.workersession.event.SessionClosed
+import org.openforis.sepal.component.workersession.event.WorkerSessionClosed
 import org.openforis.sepal.component.workersession.event.WorkerSessionActivated
 import org.openforis.sepal.component.workersession.query.FindPendingOrActiveSession
 import org.openforis.sepal.component.workersession.query.FindSessionById
@@ -61,7 +61,7 @@ class SessionComponentAdapter implements WorkerSessionManager {
     }
 
     SessionComponentAdapter onSessionClosed(Closure listener) {
-        sessionComponent.on(SessionClosed) {
+        sessionComponent.on(WorkerSessionClosed) {
             listener(it.sessionId)
         }
         return this

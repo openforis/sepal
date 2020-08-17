@@ -14,11 +14,7 @@ check program ldap with path /usr/local/bin/dockercheck-ldap
     depends on docker
     if status != 0 then alert
 
-check program kafka with path /usr/local/bin/dockercheck-kafka
-    depends on docker
-    if status != 0 then alert
-
-check program zookeeper with path /usr/local/bin/dockercheck-zookeeper
+check program rabbitmq with path /usr/local/bin/dockercheck-rabbitmq
     depends on docker
     if status != 0 then alert
 

@@ -12,6 +12,8 @@ import org.openforis.sepal.component.workerinstance.query.FindMissingInstances
 import org.openforis.sepal.component.workerinstance.query.FindMissingInstancesHandler
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.event.RabbitMQTopic
+import org.openforis.sepal.event.TopicEventDispatcher
 import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
@@ -26,10 +28,13 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
     private final List<InstanceType> instanceTypes
 
     static WorkerInstanceComponent create(HostingServiceAdapter hostingServiceAdapter) {
+        def config = new WorkerInstanceConfig()
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA))
         return new WorkerInstanceComponent(
             connectionManager,
-            new AsynchronousEventDispatcher(),
+            new TopicEventDispatcher(
+                    new RabbitMQTopic('workerInstance', config.rabbitMQHost, config.rabbitMQPort)
+            ),
             hostingServiceAdapter.instanceProvider,
             hostingServiceAdapter.instanceTypes,
             hostingServiceAdapter.instanceProvisioner,
