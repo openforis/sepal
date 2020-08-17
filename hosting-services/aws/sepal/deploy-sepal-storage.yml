@@ -146,4 +146,5 @@
 
   roles:
     - { role: docker-login }
+    - { role: run-module, module: user-storage-backup }
     - { role: run-module, module: user-storage }
