@@ -93,7 +93,9 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         "tag": "{{.Name}}",
                     ]
                 ],
-                Devices: instanceType.devices ?: []
+                Devices: (instanceType.devices ?: []).collect {
+                    [PathOnHost: it, PathInContainer: it, CgroupPermissions: "mrw"]
+                }
             ],
             ExposedPorts: image.exposedPorts.collectEntries {
                 ["$it/tcp", [:]]
