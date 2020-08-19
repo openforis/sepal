@@ -60,6 +60,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void createContainer(WorkerInstance instance, Image image) {
+        def instanceType = instanceTypeById[instance.type]
         def body = toJson(
             Image: "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
             Tty: true,
@@ -81,7 +82,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         "Type": "tmpfs",
                         "Target": "/ram",
                         "TmpfsOptions": [
-                            "SizeBytes": (long) instanceTypeById[instance.type].ramBytes / 2
+                            "SizeBytes": (long) instanceType.ramBytes / 2
                         ]
                     ]
                 ],
@@ -91,7 +92,8 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         "syslog-address": "tcp://${syslogHost}:514",
                         "tag": "{{.Name}}",
                     ]
-                ]
+                ],
+                Devices: instanceType.devices ?: []
             ],
             ExposedPorts: image.exposedPorts.collectEntries {
                 ["$it/tcp", [:]]

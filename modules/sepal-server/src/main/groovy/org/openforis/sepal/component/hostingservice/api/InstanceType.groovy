@@ -11,6 +11,7 @@ class InstanceType {
     double ramGiB
     double hourlyCost
     int idleCount
+    List<String> devices
 
     String getDescription() {
         return "$cpuCount CPU / $ramGiB GiB"
