@@ -18,6 +18,7 @@ scipy
 shapely
 shapely-geojson
 tqdm
+xarray-leaflet
 GDAL==$GDAL_VERSION
 
 ######## Early Warning System for Canopy Disturbances in Ecuador (SATA) ########
