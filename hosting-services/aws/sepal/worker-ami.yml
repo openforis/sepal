@@ -16,43 +16,9 @@
         state: "latest"
         lock_timeout: "600"
 
-    - name: Copy GPU drivers init script
-      copy:
-        src: "gpu/init-gpu-drivers.sh"
-        dest: "/usr/local/bin/init-gpu-drivers.sh"
-
-    - name: Copy GPU drivers init service
-      copy:
-        src: "gpu/init-gpu-drivers.service"
-        dest: "/etc/systemd/system/init-gpu-drivers.service"
-
-    - name: Install GPU drivers
-      script: "gpu/install-gpu-drivers.sh"
-      environment:
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
-
-
-
-
-
-    - name: Create docker-registry certificate dir
-      file:
-        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
-        state: directory
-
-    - name: Copy docker-registry certificate
-      copy:
-        src: "{{ config_home }}/certificates/docker-registry.crt"
-        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
-
     - name: Install nfs-utils
       yum:
         name: "nfs-utils"
-
-    - name: Install lvm
-      yum:
-        name: "lvm2"
 
     - name: Create /data/sepal
       file:
@@ -118,14 +84,27 @@
        src: "{{ config_home }}/certificates/ldap-ca.crt.pem"
        dest: "/data/sepal/certificates/ldap-ca.crt.pem"
 
-    - name: Create Docker LVM Volume Group
-      lvg: vg=vg-docker pvs=/dev/xvdf
+    - name: Create filesystem on Docker volume
+      filesystem:
+        fstype: xfs
+        dev: /dev/xvdf
 
-    - name: Create Docker LVM Data Volume
-      lvol: vg=vg-docker lv=data size=20g
+    - name: Mount Docker volume
+      mount:
+        path: /var/lib/docker
+        src: /dev/xvdf
+        fstype: xfs
+        state: mounted
 
-    - name: Create Docker LVM Metadata Volume
-      lvol: vg=vg-docker lv=metadata size=100%FREE
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        state: directory
+
+    - name: Copy docker-registry certificate
+      copy:
+        src: "{{ config_home }}/certificates/docker-registry.crt"
+        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
     - name: Install docker
       command: "amazon-linux-extras install docker"
@@ -168,3 +147,19 @@
 
     - name: Logout from docker registry
       command: "docker logout {{ docker_repository_host }}"
+
+    - name: Copy GPU drivers init script
+      copy:
+        src: "gpu/init-gpu-drivers.sh"
+        dest: "/usr/local/bin/init-gpu-drivers.sh"
+
+    - name: Copy GPU drivers init service
+      copy:
+        src: "gpu/init-gpu-drivers.service"
+        dest: "/etc/systemd/system/init-gpu-drivers.service"
+
+    - name: Install GPU drivers
+      script: "gpu/install-gpu-drivers.sh"
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"

@@ -34,7 +34,7 @@
       ec2:
         key_name: "{{ region }}"
         group: "Sepal-Storage"
-        instance_type: t3a.small
+        instance_type: m5a.large
         image: "{{ ami }}"
         region: "{{ region }}"
         zone: "{{ availability_zone }}"
