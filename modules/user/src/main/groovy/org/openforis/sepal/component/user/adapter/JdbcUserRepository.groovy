@@ -51,6 +51,16 @@ class JdbcUserRepository implements UserRepository {
         }
     }
 
+    void setLastLoginTime(String username, Date loginTime) {
+        sql.executeUpdate('''
+                UPDATE sepal_user 
+                SET last_login_time = ?
+                WHERE username = ?''', [
+                loginTime,
+                username
+        ])
+    }
+
     User lookupUser(String username) {
         def row = sql.firstRow('''
                 SELECT id, username, name, email, organization, admin, system_user, status, 

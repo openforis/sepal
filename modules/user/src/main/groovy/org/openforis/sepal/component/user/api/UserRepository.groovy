@@ -12,6 +12,8 @@ interface UserRepository {
 
     List<User> listUsers()
 
+    void setLastLoginTime(String username, Date loginTime)
+
     User lookupUser(String username)
 
     User findUserByEmail(String email)
