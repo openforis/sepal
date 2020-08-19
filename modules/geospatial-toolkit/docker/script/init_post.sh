@@ -21,6 +21,7 @@ printf '%s\n' \
 rm -rf /var/lib/apt/lists/*
 rm -rf /tmp/*
 
+sed -i '/.*"PDF".*/d' /etc/ImageMagick-6/policy.xml
 
 echo
 echo "*************************"
