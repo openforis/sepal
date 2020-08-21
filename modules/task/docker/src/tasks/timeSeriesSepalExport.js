@@ -81,6 +81,7 @@ const export$ = (downloadDir, recipe) => {
             const timeSeries = createTimeSeries(tile, start, end)
             const dateRange = `${start.format('YYYY-MM-DD')}_${end.format('YYYY-MM-DD')}`
             const notEmpty$ = hasImagery$(
+                tile.geometry(),
                 ee.Date(start.format('YYYY-MM-DD')),
                 ee.Date(end.format('YYYY-MM-DD'))
             )
@@ -157,13 +158,14 @@ const export$ = (downloadDir, recipe) => {
         return timeSeries.select(timeSeries.bandNames().sort())
     }
 
-    const hasImagery$ = (startDate, endDate) =>
-        ee.getInfo$(
+    const hasImagery$ = (geometry, startDate, endDate) => {
+        return ee.getInfo$(
             isRadar()
                 ? hasRadarImagery({geometry, startDate, endDate})
                 : hasOpticalImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate}),
-            `check if date range ${startDate}-${endDate} has imagery (${description})`
+            `check if date range has imagery (${description})`
         )
+    }
 
     const exportChunks$ = chunks$ =>
         chunks$.pipe(
