@@ -2,16 +2,16 @@ const {toGeometry} = require('sepal/ee/aoi')
 const {allScenes: createOpticalCollection} = require('sepal/ee/optical/collection')
 const {createCollection: createRadarCollection} = require('sepal/ee/radar/collection')
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
-const {calculateIndex} = require('sepal/ee/optical/indexes')
+const {calculateIndex, supportedIndexes} = require('sepal/ee/optical/indexes')
 const ee = require('ee')
+const log = require('sepal/log').getLogger('task')
 
 module.exports = {
-    // TODO: There is no indicator. There will be breakpointBands and bands to include. tmaskBands?
     // TODO: Pass CCDC parameters
     submit$: (
         id,
         {
-            description, aoi, dataSets, fromDate, toDate, indicator, scale,
+            description, aoi, dataSets, breakpointBands, bands, fromDate, toDate, scale,
             surfaceReflectance, cloudMasking, cloudBuffer, snowMasking, calibrate, brdfCorrect, // Optical
             orbits, geometricCorrection, speckleFilter, outlierRemoval // Radar
         }
@@ -24,11 +24,12 @@ module.exports = {
             const collection = isRadar()
                 ? radarImages()
                 : opticalImages()
+            log.error({scale})
             return ee.Algorithms.TemporalSegmentation.Ccdc({
                 collection,
-                breakpointBands: [indicator] // TODO: Should come with configuration
+                breakpointBands
                 // TODO: Include other CCDC parameters provided in recipe
-            })
+            }).clip(geometry)
         }
 
 
@@ -48,10 +49,17 @@ module.exports = {
                     seasonStart: fromDate,
                     seasonEnd: toDate
                 }
-            }).map(image =>
-                // TODO: Not the way to do this. Calculate indexes requested in breakpoint bands, select requested bands
-                calculateIndex(image, indicator)
-                    .set('date', image.date().format('yyyy-MM-dd'))
+            }).map(image => {
+                    const indexes = ee.Image(
+                        bands
+                            .filter(band => supportedIndexes().includes(band))
+                            .map(indexName => calculateIndex(image, indexName))
+                    )
+                    return image
+                        .addBands(indexes)
+                        .select(bands)
+                        .clip(geometry)
+                }
             )
 
 
@@ -95,7 +103,8 @@ module.exports = {
                 description,
                 pyramidingPolicy: {'.default': 'sample'},
                 scale,
-                crs: 'EPSG:4326'
+                crs: 'EPSG:4326',
+                maxPixels: 1e13
             })
 
         const timeSeries = createTimeSeries()

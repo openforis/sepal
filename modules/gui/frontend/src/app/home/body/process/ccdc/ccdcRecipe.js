@@ -12,7 +12,10 @@ export const defaultModel = {
         endDate: moment().format(DATE_FORMAT)
     },
     sources: {
-        LANDSAT: ['LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
+        dataSets: {
+            LANDSAT: ['LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
+        },
+        breakpointBands: ['ndfi']
     },
     options: {
         corrections: [],
@@ -20,7 +23,7 @@ export const defaultModel = {
         orbits: ['ASCENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
-        outlierRemoval: 'NONE',
+        outlierRemoval: 'NONE'
     }
 }
 
@@ -32,7 +35,7 @@ export const RecipeActions = id => {
             return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
                 .setAll({
                     'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions,
+                    'ui.retrieveOptions': retrieveOptions
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
@@ -43,6 +46,8 @@ export const RecipeActions = id => {
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const options = {...recipe.model.options, ...recipe.model.preProcessingOptions}
+    const breakpointBands = recipe.model.sources.breakpointBands
+    const bands = [...new Set([...breakpointBands, ...recipe.ui.retrieveOptions.bands])]
     const task = {
         'operation': 'ccdc.asset_export',
         'params':
@@ -51,14 +56,16 @@ const submitRetrieveRecipeTask = recipe => {
                 description: name,
                 indicator: recipe.ui.retrieveOptions.indicator,
                 scale: recipe.ui.retrieveOptions.scale,
-                dataSets: _.flatten(Object.values(recipe.model.sources)),
+                bands,
+                breakpointBands,
+                dataSets: _.flatten(Object.values(recipe.model.sources.dataSets)),
                 aoi: recipe.model.aoi,
                 fromDate: recipe.model.dates.startDate,
                 toDate: recipe.model.dates.endDate,
                 maskSnow: options.mask.includes('SNOW'),
                 brdfCorrect: options.corrections.includes('BRDF'),
                 surfaceReflectance: options.corrections.includes('SR'),
-                ...options,
+                ...options
             }
     }
     return api.tasks.submit$(task).subscribe()

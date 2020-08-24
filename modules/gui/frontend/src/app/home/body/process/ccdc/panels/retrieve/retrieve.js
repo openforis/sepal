@@ -6,15 +6,15 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {opticalBandOptions, radarBandOptions} from '../../bandOptions'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './retrieve.module.css'
 
 const fields = {
-    indicator: new Form.Field()
-        .notEmpty('process.ccdc.panel.retrieve.form.indicator.required'),
-    scale: new Form.Field(),
+    bands: new Form.Field(),
+    scale: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
@@ -31,31 +31,18 @@ class Retrieve extends React.Component {
     }
 
     renderContent() {
-        const {sources, inputs: {indicator, scale}} = this.props
-        const indicatorOptions = _.isEmpty(sources['SENTINEL_1'])
-            ? [
-                {value: 'ndvi', label: 'NDVI', tooltip: '(nir - red) / (nir + red)'},
-                {value: 'ndmi', label: 'NDMI', tooltip: '(nir - swir1) / (nir + swir1)'},
-                {value: 'ndwi', label: 'NDWI', tooltip: '(green - nir) / (green + nir)'},
-                {value: 'ndfi', label: 'NDFI', tooltip: 'Normalized Difference Fraction Index'},
-                {value: 'nbr', label: 'NBR', tooltip: '(nir - swir2) / (nir + swir2)'},
-                {value: 'evi', label: 'EVI', tooltip: '2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1)'},
-                {value: 'evi2', label: 'EVI2', tooltip: '2.5 * (nir - red) / (nir + 2.4 * red + 1)'},
-                {value: 'savi', label: 'SAVI', tooltip: '(1.5 * (nir - red) / (nir + red + 0.5)'}
-            ]
-            : [
-                {value: 'VV', label: 'VV'},
-                {value: 'VH', label: 'VH'},
-                {value: 'VV/VH', label: 'VV/VH'}
-            ]
+        const {sources: {dataSets, breakpointBands}, inputs: {bands, scale}} = this.props
+        const options = (_.isEmpty(dataSets['SENTINEL_1'])
+            ? opticalBandOptions({dataSets, alwaysSelected: breakpointBands})
+            : radarBandOptions({alwaysSelected: breakpointBands}))
 
         return (
             <Layout>
                 <Form.Buttons
-                    label={msg('process.ccdc.panel.retrieve.form.indicator.label')}
-                    input={indicator}
-                    multiple={false}
-                    options={indicatorOptions}/>
+                    label={msg('process.ccdc.panel.retrieve.form.bands.label')}
+                    input={bands}
+                    multiple
+                    options={options}/>
                 <Form.Slider
                     label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
                     info={scale => msg('process.ccdc.panel.retrieve.form.scale.info', {scale})}

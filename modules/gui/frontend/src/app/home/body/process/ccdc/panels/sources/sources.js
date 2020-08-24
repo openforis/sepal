@@ -13,6 +13,7 @@ import _ from 'lodash'
 import moment from 'moment'
 import styles from './sources.module.css'
 import updateDataSets from './updateDataSets'
+import {filterOpticalBands, filterRadarBands, opticalBandOptions, radarBandOptions} from '../../bandOptions'
 
 const fields = {
     opticalDataSets: new Form.Field()
@@ -20,7 +21,13 @@ const fields = {
         .notEmpty('process.ccdc.panel.sources.form.required'),
     radarDataSets: new Form.Field()
         .skip((value, {opticalDataSets}) => !_.isEmpty(opticalDataSets))
-        .notEmpty('process.ccdc.panel.sources.form.required')
+        .notEmpty('process.ccdc.panel.sources.form.required'),
+    opticalBreakpointBands: new Form.Field()
+        .skip((value, {radarDataSets}) => !_.isEmpty(radarDataSets))
+        .predicate(bands => bands && bands.length, 'process.ccdc.panel.source.form.breakpointBands.atLeastOne'),
+    radarBreakpointBands: new Form.Field()
+        .skip((value, {opticalDataSets}) => !_.isEmpty(opticalDataSets))
+        .predicate(bands => bands && bands.length, 'process.ccdc.panel.source.form.breakpointBands.atLeastOne')
 }
 
 const mapRecipeToProps = recipe => ({
@@ -31,6 +38,32 @@ class Sources extends React.Component {
     lookupDataSetNames(sourceValue) {
         return sourceValue ? imageSourceById[sourceValue].dataSets : null
     }
+
+    render() {
+        const {inputs: {radarDataSets}} = this.props
+        return (
+            <RecipeFormPanel
+                className={styles.panel}
+                placement='bottom-right'>
+                <Panel.Header
+                    icon='cog'
+                    title={msg('process.ccdc.panel.sources.title')}/>
+                <Panel.Content  className={styles.content}>
+                    <Layout>
+                        {this.renderOpticalDataSets()}
+                        {this.renderRadarDataSets()}
+                        {_.isEmpty(radarDataSets.value)
+                            ? this.renderOpticalBreakpointBands()
+                            : this.renderRadarBreakpointBands()
+                        }
+
+                    </Layout>
+                </Panel.Content>
+                <Form.PanelButtons/>
+            </RecipeFormPanel>
+        )
+    }
+
 
     renderOpticalDataSets() {
         const {dates, inputs: {opticalDataSets, radarDataSets}} = this.props
@@ -47,7 +80,6 @@ class Sources extends React.Component {
         )
         return (
             <Form.Buttons
-                className={styles.dataSets}
                 label={msg('process.ccdc.panel.sources.form.dataSets.optical.label')}
                 input={opticalDataSets}
                 options={options}
@@ -67,7 +99,6 @@ class Sources extends React.Component {
         }]
         return (
             <Form.Buttons
-                className={styles.dataSets}
                 label={msg('process.ccdc.panel.sources.form.dataSets.radar.label')}
                 input={radarDataSets}
                 options={options}
@@ -77,27 +108,33 @@ class Sources extends React.Component {
         )
     }
 
-    render() {
+    renderOpticalBreakpointBands() {
+        const {inputs: {opticalBreakpointBands, opticalDataSets}} = this.props
         return (
-            <RecipeFormPanel
-                className={styles.panel}
-                placement='bottom-right'>
-                <Panel.Header
-                    icon='cog'
-                    title={msg('process.ccdc.panel.sources.title')}/>
-                <Panel.Content>
-                    <Layout>
-                        {this.renderOpticalDataSets()}
-                        {this.renderRadarDataSets()}
-                    </Layout>
-                </Panel.Content>
-                <Form.PanelButtons/>
-            </RecipeFormPanel>
+            <Form.Buttons
+                label={msg('process.ccdc.panel.sources.form.breakpointBands.label')}
+                input={opticalBreakpointBands}
+                options={opticalBandOptions({dataSets: opticalDataSets.value})}
+                multiple
+            />
         )
     }
 
-    componentDidUpdate() {
+    renderRadarBreakpointBands() {
+        const {inputs: {radarBreakpointBands}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.sources.form.breakpointBands.label')}
+                input={radarBreakpointBands}
+                options={radarBandOptions({})}
+                multiple
+            />
+        )
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
         this.deselectOutOfRange()
+        this.deselectNonAvailableBands()
     }
 
     deselectOutOfRange() {
@@ -109,6 +146,16 @@ class Sources extends React.Component {
             radarDataSets.set([])
     }
 
+    deselectNonAvailableBands = () => {
+        const {inputs: {opticalDataSets, opticalBreakpointBands, radarBreakpointBands}} = this.props
+        opticalBreakpointBands.set(
+            filterOpticalBands(opticalBreakpointBands.value, opticalDataSets.value)
+        )
+        radarBreakpointBands.set(
+            filterRadarBands(radarBreakpointBands.value)
+        )
+    }
+
     s1OutOfRange() {
         const {dates} = this.props
         const [from] = dateRange(dates)
@@ -116,22 +163,27 @@ class Sources extends React.Component {
     }
 }
 
+
 Sources.propTypes = {}
 
 const valuesToModel = values => {
+    console.log({values})
     return {
-        LANDSAT: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('LANDSAT')) : null,
-        SENTINEL_2: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('SENTINEL_2')) : null,
-        SENTINEL_1: values.radarDataSets ? values.radarDataSets.filter(dataSetId => dataSetId.startsWith('SENTINEL_1')) : null
+        dataSets: {
+            LANDSAT: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('LANDSAT')) : null,
+            SENTINEL_2: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('SENTINEL_2')) : null,
+            SENTINEL_1: values.radarDataSets ? values.radarDataSets.filter(dataSetId => dataSetId.startsWith('SENTINEL_1')) : null
+        },
+        breakpointBands: _.isEmpty(values.opticalDataSets) ? values.radarBreakpointBands : values.opticalBreakpointBands
     }
 }
 
-const modelToValues = model => {
-    return {
-        opticalDataSets: (model['LANDSAT'] || []).concat(model['SENTINEL_2'] || []),
-        radarDataSets: model['SENTINEL_1'] || []
-    }
-}
+const modelToValues = ({dataSets, breakpointBands}) => ({
+    opticalDataSets: (dataSets['LANDSAT'] || []).concat(dataSets['SENTINEL_2'] || []),
+    radarDataSets: dataSets['SENTINEL_1'] || [],
+    opticalBreakpointBands: _.isEmpty(dataSets['SENTINEL_1']) ? breakpointBands : [],
+    radarBreakpointBands: _.isEmpty(dataSets['SENTINEL_1']) ? [] : breakpointBands
+})
 
 export default compose(
     Sources,

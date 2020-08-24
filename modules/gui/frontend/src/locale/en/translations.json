@@ -1497,9 +1497,9 @@
                 "retrieve": {
                     "apply": "Retrieve",
                     "form": {
-                        "indicator": {
-                            "label": "Indicator",
-                            "required": "You must select an indicator"
+                        "bands": {
+                            "bands": "Bands",
+                            "atLeastOne": "Select at least one ban"
                         },
                         "scale": {
                             "label": "Scale",
@@ -1554,6 +1554,10 @@
                                     "tooltip": "Sentinel 2 A+B"
                                 }
                             }
+                        },
+                        "breakpointBands": {
+                            "label": "Breakpoint bands",
+                            "atLeastOne": "Select at least one ban"
                         },
                         "required": "A data source must be selected"
                     },

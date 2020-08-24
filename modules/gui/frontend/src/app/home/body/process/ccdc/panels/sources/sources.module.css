@@ -1,7 +1,12 @@
 .panel {
-    max-width: 27rem;
+    max-width: 33rem;
+    /*height: 34rem;*/
 }
 
 .oneDataSet {
     font-style: italic;
+}
+
+.content {
+    height: 28rem;
 }
