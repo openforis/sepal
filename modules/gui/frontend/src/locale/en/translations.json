@@ -1421,6 +1421,146 @@
                     "tooltip": "Select image source"
                 }
             }
+        },
+        "ccdc": {
+            "create": "CCDC",
+            "tabPlaceholder": "CCDC",
+            "description": "Create CCDC time series.",
+            "mapToolbar": {
+                "centerMap": {
+                    "tooltip": "Zoom to area of interest"
+                },
+                "labels": {
+                    "hide": {
+                        "tooltip": "Hide labels"
+                    },
+                    "show": {
+                        "tooltip": "Show labels"
+                    }
+                },
+                "zoom": {
+                    "tooltip": "Zoom to area"
+                },
+                "zoomIn": {
+                    "tooltip": "Zoom in"
+                },
+                "zoomOut": {
+                    "tooltip": "Zoom out"
+                }
+            },
+            "panel": {
+                "dates": {
+                    "button": "DAT",
+                    "form": {
+                        "endDate": {
+                            "label": "End date",
+                            "malformed": "Invalid date",
+                            "required": "Date is required",
+                            "tooltip": "The last date of the time-series, exclusive."
+                        },
+                        "startDate": {
+                            "beforeEnd": "Must be before end",
+                            "label": "Start date",
+                            "malformed": "Invalid date",
+                            "required": "Date is required",
+                            "tooltip": "The first date of the time-series, inclusive."
+                        }
+                    },
+                    "title": "Dates",
+                    "tooltip": "Specify date range"
+                },
+                "preprocess": {
+                    "button": "PRC",
+                    "form": {
+                        "corrections": {
+                            "brdf": {
+                                "label": "BRDF correction",
+                                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+                            },
+                            "label": "Corrections",
+                            "surfaceReflectance": {
+                                "label": "Surface reflectance",
+                                "tooltip": "Use scenes atmospherically corrected surface reflectance."
+                            }
+                        },
+                        "mask": {
+                            "label": "Mask",
+                            "snow": {
+                                "label": "Snow",
+                                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
+                            }
+                        }
+                    },
+                    "title": "Pre-process",
+                    "tooltip": "Configure scene pre-processing"
+                },
+                "retrieve": {
+                    "apply": "Retrieve",
+                    "form": {
+                        "indicator": {
+                            "label": "Indicator",
+                            "required": "You must select an indicator"
+                        },
+                        "scale": {
+                            "label": "Scale",
+                            "info": "{scale} meters"
+                        }
+                    },
+                    "task": "Retrieve {name} to Sepal workspace",
+                    "title": "Retrieve",
+                    "tooltip": "Retrieve time-series"
+                },
+                "sources": {
+                    "button": "SRC",
+                    "form": {
+                        "dataSets": {
+                            "optical": {
+                                "label": "Optical"
+                            },
+                            "radar": {
+                                "label": "Radar"
+                            },
+                            "options": {
+                                "LANDSAT_7": {
+                                    "label": "L7",
+                                    "tooltip": "Landsat 7"
+                                },
+                                "LANDSAT_7_T2": {
+                                    "label": "L7 T2",
+                                    "tooltip": "Landsat 7 Tier 2"
+                                },
+                                "LANDSAT_8": {
+                                    "label": "L8",
+                                    "tooltip": "Landsat 8"
+                                },
+                                "LANDSAT_8_T2": {
+                                    "label": "L8 T2",
+                                    "tooltip": "Landsat 8 Tier 2"
+                                },
+                                "LANDSAT_TM": {
+                                    "label": "L4-5",
+                                    "tooltip": "Landsat 4-5"
+                                },
+                                "LANDSAT_TM_T2": {
+                                    "label": "L4-5 T2",
+                                    "tooltip": "Landsat 4-5 Tier 2"
+                                },
+                                "SENTINEL_1": {
+                                    "label": "S1",
+                                    "tooltip": "Sentinel 1 A+B"
+                                },
+                                "SENTINEL_2": {
+                                    "label": "S2",
+                                    "tooltip": "Sentinel 2 A+B"
+                                }
+                            }
+                        },
+                        "required": "A data source must be selected"
+                    },
+                    "title": "Sources",
+                    "tooltip": "Select image source"
+                }
+            }
         }
     },
     "footer": {

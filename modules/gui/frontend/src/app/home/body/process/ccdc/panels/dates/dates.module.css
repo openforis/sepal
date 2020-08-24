@@ -1,0 +1,10 @@
+.panel {
+    max-width: 20rem;
+    min-height: 15rem;
+}
+
+
+.form {
+    display: flex;
+    justify-content: space-between;
+}
