@@ -28,7 +28,6 @@ class RecipeGeometryLayer extends EarthEngineLayer {
     }
 
     initialize$() {
-        console.log(this)
         if (this.token)
             return of(this)
         return this.mapId$.pipe(
