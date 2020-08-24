@@ -1506,7 +1506,7 @@
                             "info": "{scale} meters"
                         }
                     },
-                    "task": "Retrieve {name} to Sepal workspace",
+                    "task": "Retrieve {name} as a Google Earth Engine asset",
                     "title": "Retrieve",
                     "tooltip": "Retrieve time-series"
                 },

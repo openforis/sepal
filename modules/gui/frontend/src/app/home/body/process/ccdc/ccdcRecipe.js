@@ -44,7 +44,7 @@ const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const options = {...recipe.model.options, ...recipe.model.preProcessingOptions}
     const task = {
-        'operation': 'ccdc.download',
+        'operation': 'ccdc.asset_export',
         'params':
             {
                 title: msg(['process.ccdc.panel.retrieve.task'], {name}),
