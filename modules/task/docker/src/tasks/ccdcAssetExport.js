@@ -6,7 +6,6 @@ const {calculateIndex, supportedIndexes} = require('sepal/ee/optical/indexes')
 const {throwError} = require('rx')
 const {switchMap} = require('rx/operators')
 const ee = require('ee')
-const log = require('sepal/log').getLogger('task')
 
 module.exports = {
     submit$: (

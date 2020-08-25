@@ -89,7 +89,6 @@ class Dates extends React.Component {
 
     setAdvanced(enabled) {
         const {inputs: {advanced}} = this.props
-        // console.log('advanced.set', enabled)
         advanced.set(enabled)
     }
 
