@@ -13,7 +13,7 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
 
-const GOOGLE_MAPS_VERSION = '3.39.6'
+const GOOGLE_MAPS_VERSION = '3.42'
 
 export let sepalMap = null
 export let google = null
@@ -291,6 +291,21 @@ const createMap = mapElement => {
                         this.pauseDrawingMode()
                         this._drawingPolygon = null
                     },
+                    onOneClick(listener) {
+                        googleMap.setOptions({draggableCursor: 'pointer'})
+                        const instances = [googleMap, ...Object.values(layerById).map(({layer}) => layer)]
+                        instances.forEach(instance => {
+                            google.maps.event.addListener(instance, 'click', ({latLng}) => {
+                                this.clearClickListeners()
+                                listener({lat: latLng.lat(), lng: latLng.lng()})
+                            })
+                        })
+                    },
+                    clearClickListeners() {
+                        googleMap.setOptions({draggableCursor: null})
+                        const instances = [googleMap, ...Object.values(layerById).map(({layer}) => layer)]
+                        instances.forEach(instance => google.maps.event.clearListeners(instance, 'click'))
+                    }
                 }
                 contextById[contextId] = context
             }

@@ -58,6 +58,13 @@ export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
 
     return {
+        setChartPixel(latLng) {
+            return actionBuilder('SET_CHART_PIXEL', latLng)
+                .set('ui.chartPixel', latLng)
+                .build()
+                .dispatch()
+        },
+
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
                 .setAll({

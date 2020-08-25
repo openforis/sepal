@@ -1446,6 +1446,10 @@
                 },
                 "zoomOut": {
                     "tooltip": "Zoom out"
+                },
+                "chartPixel": {
+                    "start.tooltip": "Chart time-series for pixel",
+                    "cancel.tooltip": "Cancel time-series charting"
                 }
             },
             "panel": {

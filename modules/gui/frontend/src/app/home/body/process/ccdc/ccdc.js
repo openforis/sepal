@@ -10,6 +10,8 @@ import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import CCDCToolbar from './panels/ccdcToolbar'
 import styles from './ccdc.module.css'
+import ChartPixelButton from './panels/chartPixelButton'
+import ChartPixel from './panels/chartPixel'
 
 const mapStateToProps = state => {
     return {
@@ -27,8 +29,11 @@ class _CCDC extends React.Component {
         const {recipeId, recipePath} = this.props
         return (
             <div className={styles.ccdc}>
-                <MapToolbar statePath={`${recipePath}.ui`} mapContext={recipeId} labelLayerIndex={1}/>
+                <MapToolbar statePath={`${recipePath}.ui`} mapContext={recipeId} labelLayerIndex={1}>
+                    <ChartPixelButton/>
+                </MapToolbar>
                 <CCDCToolbar/>
+                <ChartPixel/>
             </div>
         )
     }
