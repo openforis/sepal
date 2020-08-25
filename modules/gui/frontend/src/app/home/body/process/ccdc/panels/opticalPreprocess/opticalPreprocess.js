@@ -6,7 +6,7 @@ import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeForm
 import {compose} from 'compose'
 import {msg} from 'translate'
 import React from 'react'
-import styles from './preProcessingOptions.module.css'
+import styles from './opticalPreprocess.module.css'
 
 const fields = {
     corrections: new Form.Field(),
@@ -18,7 +18,7 @@ const fields = {
     compose: new Form.Field()
 }
 
-class PreProcessingOptions extends React.Component {
+class OpticalPreprocess extends React.Component {
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
@@ -73,7 +73,7 @@ class PreProcessingOptions extends React.Component {
     }
 }
 
-PreProcessingOptions.propTypes = {}
+OpticalPreprocess.propTypes = {}
 
 const valuesToModel = values => ({
     corrections: values.corrections,
@@ -88,6 +88,6 @@ const modelToValues = model => {
 }
 
 export default compose(
-    PreProcessingOptions,
+    OpticalPreprocess,
     recipeFormPanel({id: 'options', fields, modelToValues, valuesToModel})
 )

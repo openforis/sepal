@@ -1352,7 +1352,7 @@
                         }
                     },
                     "title": "Pre-process",
-                    "tooltip": "Configure scene pre-processing"
+                    "tooltip": "Configure imagery pre-processing"
                 },
                 "retrieve": {
                     "apply": "Retrieve",
@@ -1492,7 +1492,34 @@
                         }
                     },
                     "title": "Pre-process",
-                    "tooltip": "Configure scene pre-processing"
+                    "tooltip": "Configure imagery pre-processing"
+                },
+                "options": {
+                    "button": "OPT",
+                    "form": {
+                        "breakDetection": {
+                            "label": "Break detection",
+                            "conservative": {
+                                "label": "Conservative",
+                                "tooltip": "Be conservative in detecting breaks in the time-series. It might miss more subtle breaks or breaks where there is bad data availability"
+                            },
+                            "moderate": {
+                                "label": "Moderate",
+                                "tooltip": "Be moderate in detecting breaks in the time-series."
+                            },
+                            "aggressive": {
+                                "label": "Aggressive",
+                                "tooltip": "Be aggressive in detecting breaks in the time-series. It might detect breaks where there are none."
+                            }
+                        },
+                        "minObservations": "Min observations",
+                        "chiSquareProbability": "Chi square probability",
+                        "minNumOfYearsScaler": "min number of years scaler",
+                        "lambda":  "Lambda",
+                        "maxIterations": "Max iterations"
+                    },
+                    "title": "Pre-process",
+                    "tooltip": "Configure CCDC options"
                 },
                 "retrieve": {
                     "apply": "Retrieve",

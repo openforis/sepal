@@ -6,6 +6,32 @@ import moment from 'moment'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
+export const breakDetectionOptions = {
+    conservative: {
+        minObservations: 6,
+        chiSquareProbability: 0.99,
+        minNumOfYearsScaler: 1.33,
+        lambda: 20,
+        maxIterations: 25000
+    },
+
+    moderate: {
+        minObservations: 4,
+        chiSquareProbability: 0.9,
+        minNumOfYearsScaler: 1.33,
+        lambda: 20,
+        maxIterations: 25000
+    },
+
+    aggressive: {
+        minObservations: 3,
+        chiSquareProbability: 0.75,
+        minNumOfYearsScaler: 1.33,
+        lambda: 20,
+        maxIterations: 25000
+    }
+}
+
 export const defaultModel = {
     dates: {
         startDate: '2000-01-01',
@@ -17,14 +43,15 @@ export const defaultModel = {
         },
         breakpointBands: ['ndfi']
     },
-    options: {
+    preprocess: {
         corrections: [],
         mask: ['SNOW'],
         orbits: ['ASCENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
         outlierRemoval: 'NONE'
-    }
+    },
+    options: breakDetectionOptions.moderate
 }
 
 export const RecipeActions = id => {
@@ -45,7 +72,8 @@ export const RecipeActions = id => {
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
-    const options = {...recipe.model.options, ...recipe.model.preProcessingOptions}
+    const preprocess = {...recipe.model.options, ...recipe.model.preProcessingOptions}
+    const ccdcOptions = recipe.model.ccdcOptions
     const breakpointBands = recipe.model.sources.breakpointBands
     const bands = [...new Set([...breakpointBands, ...recipe.ui.retrieveOptions.bands])]
     const task = {
@@ -62,10 +90,11 @@ const submitRetrieveRecipeTask = recipe => {
                 aoi: recipe.model.aoi,
                 fromDate: recipe.model.dates.startDate,
                 toDate: recipe.model.dates.endDate,
-                maskSnow: options.mask.includes('SNOW'),
-                brdfCorrect: options.corrections.includes('BRDF'),
-                surfaceReflectance: options.corrections.includes('SR'),
-                ...options
+                maskSnow: preprocess.mask.includes('SNOW'),
+                brdfCorrect: preprocess.corrections.includes('BRDF'),
+                surfaceReflectance: preprocess.corrections.includes('SR'),
+                ...preprocess,
+                ...ccdcOptions
             }
     }
     return api.tasks.submit$(task).subscribe()

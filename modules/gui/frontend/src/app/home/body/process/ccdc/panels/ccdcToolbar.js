@@ -6,9 +6,10 @@ import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
 import Dates from 'app/home/body/process/ccdc/panels/dates/dates'
-import Options from 'app/home/body/process/radarMosaic/options/options'
 import PanelWizard from 'widget/panelWizard'
-import PreProcessingOptions from 'app/home/body/process/ccdc/panels/preProcessingOptions/preProcessingOptions'
+import RadarPreprocess from 'app/home/body/process/radarMosaic/options/options'
+import OpticalPreprocess from './opticalPreprocess/opticalPreprocess'
+import Options from './options/options'
 import React from 'react'
 import Retrieve from 'app/home/body/process/ccdc/panels/retrieve/retrieve'
 import Sources from 'app/home/body/process/ccdc/panels/sources/sources'
@@ -34,10 +35,11 @@ class CcdcToolbar extends React.Component {
                 <Aoi allowWholeEETable={true}/>
                 <Dates/>
                 <Sources/>
-                {_.isEmpty(sources['SENTINEL_1'])
-                    ? <PreProcessingOptions/>
-                    : <Options/>
+                {_.isEmpty(sources.dataSets['SENTINEL_1'])
+                    ? <OpticalPreprocess/>
+                    : <RadarPreprocess/>
                 }
+                <Options/>
 
                 <Toolbar
                     vertical
@@ -70,6 +72,10 @@ class CcdcToolbar extends React.Component {
                         id='options'
                         label={msg('process.ccdc.panel.preprocess.button')}
                         tooltip={msg('process.ccdc.panel.preprocess.tooltip')}/>
+                    <Toolbar.ActivationButton
+                        id='ccdcOptions'
+                        label={msg('process.ccdc.panel.options.button')}
+                        tooltip={msg('process.ccdc.panel.options.tooltip')}/>
                 </Toolbar>
             </PanelWizard>
         )
