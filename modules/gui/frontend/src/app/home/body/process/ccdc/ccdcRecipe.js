@@ -3,6 +3,7 @@ import {recipeActionBuilder} from '../recipe'
 import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
+import {radarBandOptions} from './bandOptions'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -77,32 +78,43 @@ export const RecipeActions = id => {
     }
 }
 
-const submitRetrieveRecipeTask = recipe => {
+
+function toBackendRecipe({recipe, bands}) {
     const name = recipe.title || recipe.placeholder
     const preprocess = {...recipe.model.options, ...recipe.model.preProcessingOptions}
     const ccdcOptions = recipe.model.ccdcOptions
     const breakpointBands = recipe.model.sources.breakpointBands
-    const bands = [...new Set([...breakpointBands, ...recipe.ui.retrieveOptions.bands])]
+    return {
+        title: msg(['process.ccdc.panel.retrieve.task'], {name}),
+        description: name,
+        bands,
+        breakpointBands,
+        dataSets: _.flatten(Object.values(recipe.model.sources.dataSets)),
+        aoi: recipe.model.aoi,
+        fromDate: recipe.model.dates.startDate,
+        toDate: recipe.model.dates.endDate,
+        maskSnow: preprocess.mask.includes('SNOW'),
+        brdfCorrect: preprocess.corrections.includes('BRDF'),
+        surfaceReflectance: preprocess.corrections.includes('SR'),
+        ...preprocess,
+        ...ccdcOptions
+    }
+}
+
+export const loadCCDCTimeSeries$ = ({recipe, latLng}) =>
+    api.gee.loadCCDCTimeSeries$({recipe: toBackendRecipe({recipe, bands: recipe.model.sources.breakpointBands}), latLng})
+
+const submitRetrieveRecipeTask = recipe => {
+    const breakpointBands = recipe.model.sources.breakpointBands
     const task = {
         'operation': 'ccdc.asset_export',
-        'params':
-            {
-                title: msg(['process.ccdc.panel.retrieve.task'], {name}),
-                description: name,
-                indicator: recipe.ui.retrieveOptions.indicator,
-                scale: recipe.ui.retrieveOptions.scale,
-                bands,
-                breakpointBands,
-                dataSets: _.flatten(Object.values(recipe.model.sources.dataSets)),
-                aoi: recipe.model.aoi,
-                fromDate: recipe.model.dates.startDate,
-                toDate: recipe.model.dates.endDate,
-                maskSnow: preprocess.mask.includes('SNOW'),
-                brdfCorrect: preprocess.corrections.includes('BRDF'),
-                surfaceReflectance: preprocess.corrections.includes('SR'),
-                ...preprocess,
-                ...ccdcOptions
-            }
+        'params': {
+            ...toBackendRecipe({
+                recipe,
+                bands: [...new Set([...breakpointBands, ...recipe.ui.retrieveOptions.bands])]
+            }),
+            scale: recipe.ui.retrieveOptions.scale
+        }
     }
     return api.tasks.submit$(task).subscribe()
 }

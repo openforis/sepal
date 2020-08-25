@@ -167,7 +167,6 @@ class Sources extends React.Component {
 Sources.propTypes = {}
 
 const valuesToModel = values => {
-    console.log({values})
     return {
         dataSets: {
             LANDSAT: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('LANDSAT')) : null,

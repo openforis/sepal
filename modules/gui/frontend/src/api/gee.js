@@ -44,6 +44,8 @@ export default {
         postJson$('/api/gee/table/query',
             {body: {select, from, where, orderBy}}
         ).pipe(toResponse),
+    loadCCDCTimeSeries$: ({recipe, latLng}) =>
+        postJson$('/api/gee/loadCCDCTimeSeries', {body: {recipe, latLng}, retries: 0})
 }
 
 const toResponse = map(e => e.response)

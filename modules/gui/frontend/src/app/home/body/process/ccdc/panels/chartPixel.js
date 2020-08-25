@@ -1,21 +1,25 @@
 import React from 'react'
-import {RecipeActions} from '../ccdcRecipe'
+import {RecipeActions, loadCCDCTimeSeries$} from '../ccdcRecipe'
 import styles from './chartPixel.module.css'
+import {tap} from 'rxjs/operators'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
 import {withRecipe} from '../../recipeContext'
 import {selectFrom} from 'stateUtils'
 import {Layout} from '../../../../../../widget/layout'
 import Keybinding from '../../../../../../widget/keybinding'
+import _ from 'lodash'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
-    latLng: selectFrom(recipe, 'ui.chartPixel')
+    latLng: selectFrom(recipe, 'ui.chartPixel'),
+    recipe
 })
 
 class ChartPixel extends React.Component {
     constructor(props) {
         super(props)
+        this.stat = {chart: null}
         this.recipeActions = RecipeActions(props.recipeId)
     }
 
@@ -28,8 +32,8 @@ class ChartPixel extends React.Component {
     }
 
     renderPanel() {
-        const {latLng, action} = this.props
-        const loading = !action('LOAD_CHART').dispatched
+        const {latLng, stream} = this.props
+        const loading = !stream('LOAD_CHART').completed
         return (
             <Panel
                 className={styles.panel}
@@ -42,7 +46,7 @@ class ChartPixel extends React.Component {
                                scrollable={false}
                                noVerticalPadding>
                     <Layout>
-                        Contents
+                        {loading ? this.renderSpinner() : this.renderChart()}
                     </Layout>
                 </Panel.Content>
 
@@ -55,6 +59,29 @@ class ChartPixel extends React.Component {
                 </Panel.Buttons>
             </Panel>
         )
+    }
+
+    renderSpinner() {
+        return <div>Spinner</div>
+    }
+
+    renderChart() {
+        const {timeSeries} = this.state
+        console.log(timeSeries)
+        return <div>{JSON.stringify(timeSeries)}</div>
+    }
+
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        const {recipe, latLng} = this.props
+        if (latLng && !_.isEqual([recipe.model, latLng], [prevProps.recipe.model, prevProps.latLng])) {
+            console.log('Loading chart')
+            this.props.stream('LOAD_CHART',
+                loadCCDCTimeSeries$({recipe, latLng}).pipe(
+                    tap(timeSeries => this.setState({timeSeries}))
+                )
+            )
+        }
     }
 
     close() {
