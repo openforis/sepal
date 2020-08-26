@@ -24,7 +24,7 @@ ButtonGroup.propTypes = {
     children: PropTypes.any.isRequired,
     alignment: PropTypes.oneOf(['left', 'center', 'right', 'spaced', 'fill']),
     className: PropTypes.string,
-    layout: PropTypes.oneOf(['horizontal-wrap', 'horizontal-nowrap', 'vertical']),
+    layout: PropTypes.oneOf(['horizontal-wrap', 'horizontal-nowrap', 'horizontal-nowrap-scroll', 'vertical']),
     spacing: PropTypes.oneOf(['normal', 'tight', 'loose'])
 }
 

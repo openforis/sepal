@@ -26,6 +26,11 @@
     flex-wrap: nowrap;
 }
 
+
+.horizontal.nowrap.scroll {
+    overflow-x: auto;
+}
+
 .horizontal.wrap {
     flex-wrap: wrap;
 }
