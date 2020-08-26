@@ -1,3 +1,7 @@
 .panel {
-    min-height: 50rem;
+    height: 30rem;
+}
+
+.chart {
+    flex-grow: 1;
 }

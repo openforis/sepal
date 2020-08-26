@@ -84,9 +84,9 @@ export const radarBandOptions = ({alwaysSelected = []}) => ([
 
 export const filterOpticalBands = (bands, dataSets) => {
     const availableBands = opticalBandOptions({dataSets})
-            .map(({options}) => options)
-            .flat()
-            .map(({value}) => value)
+        .map(({options}) => options)
+        .flat()
+        .map(({value}) => value)
     return _.intersection(availableBands, bands)
 }
 
