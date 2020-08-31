@@ -1,4 +1,4 @@
-import {createSegments} from './segments'
+import {fitSegments} from './segments'
 
 const timeSeries = {
     "changeProb": [1, 1, 1, 0],
@@ -17,5 +17,5 @@ const timeSeries = {
 }
 
 it('can get segment count', () => {
-    expect(createSegments(timeSeries)).toEqual(123)
+    expect(fitSegments(timeSeries)).toEqual(123)
 })

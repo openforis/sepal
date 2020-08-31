@@ -1,16 +1,18 @@
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
 const {switchMap} = require('rx/operators')
-const {getTimeSeries$} = require('sepal/ee/ccdc/ccdc')
+const {getCollection$} = require('sepal/ee/timeSeries/collection')
+const {getSegments$} = require('sepal/ee/timeSeries/ccdc')
 
 module.exports = {
     submit$: (id, recipe) => {
         const description = recipe.description
         const scale = recipe.scale
-
-        return getTimeSeries$(recipe).pipe(
-            switchMap(image =>
+        const collectionBands = [...new Set([...recipe.bands, ...recipe.breakpointBands])]
+        return getCollection$({...recipe, bands: collectionBands}).pipe(
+            switchMap(collection => getSegments$({...recipe, collection})),
+            switchMap(segments =>
                 exportImageToAsset$({
-                    image,
+                    image: segments,
                     description,
                     pyramidingPolicy: {'.default': 'sample'},
                     scale,

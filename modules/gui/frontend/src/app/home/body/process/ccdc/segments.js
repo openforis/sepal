@@ -8,7 +8,7 @@ const POINTS = 100
 const SCALE = 10000
 // TODO: Make sure all bands are scaled by 10000
 
-export const createSegments = ({timeSeries, band, dateFormat = J_DAYS}) => {
+export const fitSegments = ({segments, band, dateFormat = J_DAYS}) => {
     // Create segment
     // Output chartable data
     // Start and end date of each segment should be included
@@ -20,20 +20,20 @@ export const createSegments = ({timeSeries, band, dateFormat = J_DAYS}) => {
     //  - data formatting
 
     // List with date and value pairs for each segment
-    const startDate = moment(fromT(timeSeries.tStart[0]))
-    const endDate = moment(fromT(timeSeries.tEnd[timeSeries.tEnd.length - 1]))
+    const startDate = moment(fromT(segments.tStart[0]))
+    const endDate = moment(fromT(segments.tEnd[segments.tEnd.length - 1]))
     const totalDays = endDate.diff(startDate, 'days')
     const daysPerPoint = totalDays / POINTS
 
-    return timeSeries.tStart.map((_, i) => createSegment({
-        tStart: timeSeries.tStart[i],
-        tEnd: timeSeries.tEnd[i],
-        tBreak: timeSeries.tBreak[i],
-        numObs: timeSeries.numObs[i],
-        changeProb: timeSeries.changeProb[i],
-        coefs: timeSeries[`${band}_coefs`][i],
-        rmse: timeSeries[`${band}_rmse`][i],
-        magnitude: timeSeries[`${band}_magnitude`][i],
+    return segments.tStart.map((_, i) => fitSegment({
+        tStart: segments.tStart[i],
+        tEnd: segments.tEnd[i],
+        tBreak: segments.tBreak[i],
+        numObs: segments.numObs[i],
+        changeProb: segments.changeProb[i],
+        coefs: segments[`${band}_coefs`][i],
+        rmse: segments[`${band}_rmse`][i],
+        magnitude: segments[`${band}_magnitude`][i],
         daysPerPoint,
         dateFormat
     }))
@@ -61,7 +61,7 @@ export const createSegments = ({timeSeries, band, dateFormat = J_DAYS}) => {
     // ]
 }
 
-const createSegment = ({tStart, tEnd, tBreak, numObs, changeProb, coefs, rmse, magnitude, daysPerPoint, dateFormat}) => {
+const fitSegment = ({tStart, tEnd, tBreak, numObs, changeProb, coefs, rmse, magnitude, daysPerPoint, dateFormat}) => {
     const startDate = moment(fromT(tStart))
     const endDate = moment(fromT(tEnd))
     const days = endDate.diff(startDate, 'days')

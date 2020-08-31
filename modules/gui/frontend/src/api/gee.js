@@ -8,14 +8,17 @@ export default {
         postJson$('/api/gee/bands', {body: {recipe, ...params}, retries: 0})
             .pipe(toResponse),
     sceneAreas$: ({aoi, source}) =>
-        postJson$('/api/gee/sceneareas', {body: {
-            aoi,
-            source
-        }}).pipe(toResponse),
+        postJson$('/api/gee/sceneareas', {
+            body: {
+                aoi,
+                source
+            }
+        }).pipe(toResponse),
     scenesInSceneArea$: ({sceneAreaId, dates, sources, sceneSelectionOptions}) =>
         get$(`/api/data/sceneareas/${sceneAreaId}`, {
             query: {
-                query: JSON.stringify({dates, sources, sceneSelectionOptions})}
+                query: JSON.stringify({dates, sources, sceneSelectionOptions})
+            }
         }).pipe(toResponse),
     autoSelectScenes$: ({sceneAreaIds, sources, dates, sceneSelectionOptions, sceneCount, cloudCoverTarget}) =>
         postForm$('/api/data/best-scenes', {
@@ -45,7 +48,9 @@ export default {
             {body: {select, from, where, orderBy}}
         ).pipe(toResponse),
     loadCCDCTimeSeries$: ({recipe, latLng}) =>
-        postJson$('/api/gee/loadCCDCTimeSeries', {body: {recipe, latLng}, retries: 0})
+        postJson$('/api/gee/loadCCDCTimeSeries',
+            {body: {recipe, latLng}, retries: 0}
+        ).pipe(toResponse)
 }
 
 const toResponse = map(e => e.response)

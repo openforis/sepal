@@ -31,10 +31,10 @@ class Retrieve extends React.Component {
     }
 
     renderContent() {
-        const {sources: {dataSets, breakpointBands}, inputs: {bands, scale}} = this.props
+        const {sources: {dataSets}, inputs: {bands, scale}} = this.props
         const options = (_.isEmpty(dataSets['SENTINEL_1'])
-            ? opticalBandOptions({dataSets, alwaysSelected: breakpointBands})
-            : radarBandOptions({alwaysSelected: breakpointBands}))
+            ? opticalBandOptions({dataSets})
+            : radarBandOptions({}))
 
         return (
             <Layout>
@@ -75,6 +75,13 @@ class Retrieve extends React.Component {
                     applyLabel={msg('process.ccdc.panel.retrieve.apply')}/>
             </RecipeFormPanel>
         )
+    }
+
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        const {sources: {breakpointBands}, inputs: {bands}} = this.props
+        if (!bands.value)
+            bands.set(breakpointBands)
     }
 }
 

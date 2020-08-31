@@ -3,7 +3,6 @@ import {recipeActionBuilder} from '../recipe'
 import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
-import {radarBandOptions} from './bandOptions'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -101,17 +100,19 @@ function toBackendRecipe({recipe, bands}) {
     }
 }
 
-export const loadCCDCTimeSeries$ = ({recipe, latLng}) =>
-    api.gee.loadCCDCTimeSeries$({recipe: toBackendRecipe({recipe, bands: recipe.model.sources.breakpointBands}), latLng})
+export const loadCCDCTimeSeries$ = ({recipe, latLng, bands}) =>
+    api.gee.loadCCDCTimeSeries$({recipe: toBackendRecipe({
+            recipe,
+            bands
+    }), latLng})
 
 const submitRetrieveRecipeTask = recipe => {
-    const breakpointBands = recipe.model.sources.breakpointBands
     const task = {
         'operation': 'ccdc.asset_export',
         'params': {
             ...toBackendRecipe({
                 recipe,
-                bands: [...new Set([...breakpointBands, ...recipe.ui.retrieveOptions.bands])]
+                bands: recipe.ui.retrieveOptions.bands
             }),
             scale: recipe.ui.retrieveOptions.scale
         }
