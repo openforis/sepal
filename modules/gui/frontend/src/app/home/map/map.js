@@ -296,8 +296,8 @@ const createMap = mapElement => {
                         const instances = [googleMap, ...Object.values(layerById).map(({layer}) => layer)]
                         instances.forEach(instance => {
                             google.maps.event.addListener(instance, 'click', ({latLng}) => {
-                                this.clearClickListeners()
                                 listener({lat: latLng.lat(), lng: latLng.lng()})
+                                this.clearClickListeners()
                             })
                         })
                     },

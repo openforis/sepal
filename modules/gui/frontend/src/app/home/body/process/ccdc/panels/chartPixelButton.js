@@ -6,6 +6,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import {sepalMap} from '../../../../map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
+import GoogleSatelliteLayer from 'app/home/map/googleSatelliteLayer'
 
 const mapRecipeToProps = recipe => {
     return {
@@ -37,13 +38,20 @@ class ChartPixelButton extends React.Component {
     startSelecting() {
         const {recipeId} = this.props
         this.setState({isSelecting: true})
-        sepalMap.getContext(recipeId).onOneClick(latLng => this.setChartPixel(latLng))
+        const context = sepalMap.getContext(recipeId)
+        context.onOneClick(latLng => {
+            context.removeLayer('googleSatellite')
+            this.setChartPixel(latLng)
+        })
+        context.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer(0)})
     }
 
     cancelSelecting() {
         const {recipeId} = this.props
         this.setState({isSelecting: false})
-        sepalMap.getContext(recipeId).clearClickListeners()
+        const context = sepalMap.getContext(recipeId)
+        context.removeLayer('googleSatellite')
+        context.clearClickListeners()
     }
 
     setChartPixel(latLng) {

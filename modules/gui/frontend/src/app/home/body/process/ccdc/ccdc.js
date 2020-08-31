@@ -29,7 +29,7 @@ class _CCDC extends React.Component {
         const {recipeId, recipePath} = this.props
         return (
             <div className={styles.ccdc}>
-                <MapToolbar statePath={`${recipePath}.ui`} mapContext={recipeId} labelLayerIndex={1}>
+                <MapToolbar statePath={`${recipePath}.ui`} mapContext={recipeId} labelLayerIndex={2}>
                     <ChartPixelButton/>
                 </MapToolbar>
                 <CCDCToolbar/>
@@ -49,7 +49,8 @@ class _CCDC extends React.Component {
                     sepalMap.setContext(recipeId)
                     sepalMap.getContext(recipeId).fitLayer('aoi')
                 }
-            }
+            },
+            layerIndex: 1
         })
     }
 }

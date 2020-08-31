@@ -2,7 +2,7 @@ import React from 'react'
 import {loadCCDCTimeSeries$, RecipeActions} from '../ccdcRecipe'
 import styles from './chartPixel.module.css'
 import {Subject} from 'rxjs'
-import {finalize, takeUntil, tap} from 'rxjs/operators'
+import {takeUntil, tap} from 'rxjs/operators'
 import {Panel} from 'widget/panel/panel'
 import {compose} from 'compose'
 import {withRecipe} from '../../recipeContext'
@@ -30,7 +30,6 @@ const mapRecipeToProps = recipe => ({
 class ChartPixel extends React.Component {
     constructor(props) {
         super(props)
-        console.log('Constructor')
         this.cancel$ = new Subject()
         this.state = {
             chart: null,
@@ -166,7 +165,6 @@ class ChartPixel extends React.Component {
             [recipe.model, latLng, bands.value],
             [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.bands.value])
         ) {
-            console.log('Trying to cancel')
             this.cancel$.next(true)
             this.props.stream('LOAD_CHART',
                 loadCCDCTimeSeries$({recipe, latLng, bands: [bands.value]}).pipe(
@@ -180,8 +178,7 @@ class ChartPixel extends React.Component {
                             timeSeries
                         })
                     }),
-                    takeUntil(this.cancel$),
-                    finalize(() => console.log('Finalized'))
+                    takeUntil(this.cancel$)
                 )
             )
         }
