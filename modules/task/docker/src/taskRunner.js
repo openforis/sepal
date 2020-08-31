@@ -8,7 +8,8 @@ const _ = require('lodash')
 const tasks = {
     'image.asset_export': () => require('./tasks/imageAssetExport'),
     'image.sepal_export': () => require('./tasks/imageSepalExport'),
-    'timeseries.download': () => require('./tasks/timeSeriesSepalExport')
+    'timeseries.download': () => require('./tasks/timeSeriesSepalExport'),
+    'ccdc.asset_export': () => require('./tasks/ccdcAssetExport')
 }
 
 const msg = (id, msg) => `Task ${id.substr(-4)}: ${msg}`

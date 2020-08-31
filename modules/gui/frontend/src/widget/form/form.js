@@ -301,7 +301,7 @@ export class Form extends React.Component {
 
 Form.propTypes = {
     children: PropTypes.any.isRequired,
-    onSubmit: PropTypes.func.isRequired,
+    onSubmit: PropTypes.func,
     className: PropTypes.string
 }
 

@@ -1,0 +1,15 @@
+.panel {
+    /*height: 30rem;*/
+}
+
+.chart {
+    flex-grow: 1;
+}
+
+.scrollableContainer {
+    display: flex;
+}
+
+.chart {
+    height: 20rem;
+}
