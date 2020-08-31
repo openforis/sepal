@@ -6,7 +6,6 @@ const UNIX_TIME_MILLIS = 2
 
 const POINTS = 100
 const SCALE = 10000
-// TODO: Make sure all bands are scaled by 10000
 
 export const fitSegments = ({segments, band, dateFormat = J_DAYS}) => {
     if (!segments.tStart)
@@ -19,18 +18,13 @@ export const fitSegments = ({segments, band, dateFormat = J_DAYS}) => {
     return segments.tStart.map((_, i) => fitSegment({
         tStart: segments.tStart[i],
         tEnd: segments.tEnd[i],
-        tBreak: segments.tBreak[i],
-        numObs: segments.numObs[i],
-        changeProb: segments.changeProb[i],
         coefs: segments[`${band}_coefs`][i],
-        rmse: segments[`${band}_rmse`][i],
-        magnitude: segments[`${band}_magnitude`][i],
         daysPerPoint,
         dateFormat
     }))
 }
 
-const fitSegment = ({tStart, tEnd, tBreak, numObs, changeProb, coefs, rmse, magnitude, daysPerPoint, dateFormat}) => {
+const fitSegment = ({tStart, tEnd, coefs, daysPerPoint, dateFormat}) => {
     const startDate = moment(fromT(tStart))
     const endDate = moment(fromT(tEnd))
     const days = endDate.diff(startDate, 'days')
@@ -76,8 +70,8 @@ const fromT = (t, dateFormat = J_DAYS) => {
         //     const daysInYear = firstOfNextYear.difference(firstOfYear, 'day')
         //     const dayOfYear = daysInYear.multiply(t.mod(1)).floor()
         //     return firstOfYear.advance(dayOfYear, 'day')
-        // case UNIX_TIME_MILLIS:
-        //     return ee.Date(t)
+        case UNIX_TIME_MILLIS:
+            return new Date(t)
         default:
             throw Error('Only dateFormat 0 (jdate), 1 (fractional years), and 2 (unix seconds) is supported')
     }
