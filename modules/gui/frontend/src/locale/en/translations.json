@@ -1595,6 +1595,9 @@
                     "title": "Sources",
                     "tooltip": "Select image source"
                 }
+            },
+            "chartPixel": {
+                "loadFailed": "Failed to load chart: {error}"
             }
         }
     },

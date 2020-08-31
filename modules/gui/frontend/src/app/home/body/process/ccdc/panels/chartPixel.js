@@ -14,8 +14,11 @@ import Chartist from 'chartist'
 import './chart.css'
 import moment from 'moment'
 import {fitSegments} from '../segments'
-import {opticalBandOptions, radarBandOptions} from '../bandOptions'
+import {filterBands, opticalBandOptions, radarBandOptions} from '../bandOptions'
 import {form, Form} from 'widget/form/form'
+import Icon from '../../../../../../widget/icon'
+import Notifications from '../../../../../../widget/notifications'
+import {msg} from '../../../../../../translate'
 
 const fields = {
     bands: new Form.Field()
@@ -30,12 +33,9 @@ const mapRecipeToProps = recipe => ({
 class ChartPixel extends React.Component {
     constructor(props) {
         super(props)
+        console.log('constructor')
         this.cancel$ = new Subject()
-        this.state = {
-            chart: null,
-            segments: null,
-            timeSeries: null
-        }
+        this.state = {}
         this.recipeActions = RecipeActions(props.recipeId)
     }
 
@@ -48,8 +48,9 @@ class ChartPixel extends React.Component {
     }
 
     renderPanel() {
-        const {latLng, stream} = this.props
-        const loading = !stream('LOAD_CHART').completed
+        const {latLng} = this.props
+        const {timeSeries} = this.state
+        const loading = !timeSeries
         return (
             <Panel
                 className={styles.panel}
@@ -61,7 +62,7 @@ class ChartPixel extends React.Component {
                 <Panel.Content className={loading ? styles.loading : null}
                                scrollable={false}
                                noVerticalPadding>
-                    <Form>
+                    <Form className={styles.form}>
                         {this.renderChart()}
                         {this.renderBandOptions()}
                     </Form>
@@ -79,7 +80,11 @@ class ChartPixel extends React.Component {
     }
 
     renderSpinner() {
-        return <div>Spinner</div>
+        return (
+            <div className={styles.spinner}>
+                <Icon name={'spinner'} size={'2x'}/>
+            </div>
+        )
     }
 
     renderBandOptions() {
@@ -100,12 +105,11 @@ class ChartPixel extends React.Component {
     }
 
     renderChart() {
-        const {stream} = this.props
-        const loading = !stream('LOAD_CHART').completed
+        const {segments = [], timeSeries} = this.state
+        const loading = !timeSeries
         if (loading)
             return this.renderSpinner()
 
-        const {segments = [], timeSeries} = this.state
         const segmentsData = segments.map((segment, i) => ({
             name: `segment-${i + 1}`,
             data: segment.map(({date, value}) => ({x: date, y: value}))
@@ -158,33 +162,48 @@ class ChartPixel extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         const {recipe, latLng, inputs: {bands}} = this.props
-        if (!bands.value) {
-            bands.set(recipe.model.sources.breakpointBands[0])
-        }
+        const {model: {sources: {dataSets}}} = recipe
+        const filteredBands = filterBands([bands.value], dataSets)
+        bands.set(
+            filteredBands.length
+                ? filteredBands[0]
+                : recipe.model.sources.breakpointBands[0]
+        )
+
         if (latLng && bands.value && !_.isEqual(
             [recipe.model, latLng, bands.value],
             [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.bands.value])
         ) {
             this.cancel$.next(true)
-            this.props.stream('LOAD_CHART',
-                loadCCDCTimeSeries$({recipe, latLng, bands: [bands.value]}).pipe(
-                    tap(({segments, timeSeries}) => {
-                        this.setState({
-                            segments: fitSegments({
-                                segments,
-                                band: bands.value,
-                                dateFormat: 0
-                            }),
-                            timeSeries
-                        })
-                    }),
-                    takeUntil(this.cancel$)
-                )
+            this.setState({segments: undefined, timeSeries: undefined})
+            console.log('bands.value', bands.value)
+            const load$ = loadCCDCTimeSeries$({recipe, latLng, bands: [bands.value]}).pipe(
+                tap(({segments, timeSeries}) => {
+                    this.setState({
+                        segments: fitSegments({
+                            segments,
+                            band: bands.value,
+                            dateFormat: 0
+                        }),
+                        timeSeries
+                    })
+                }),
+                takeUntil(this.cancel$)
             )
+            const onSuccess = () => null
+            const onError = error => {
+                this.close()
+                Notifications.error({
+                    message: msg('process.ccdc.chartPixel.loadFailed', {error})
+                })
+            }
+            this.props.stream('LOAD_CHART', load$, onSuccess, onError)
         }
     }
 
     close() {
+        this.cancel$.next(true)
+        this.setState({segments: undefined, timeSeries: undefined})
         this.recipeActions.setChartPixel(null)
     }
 }

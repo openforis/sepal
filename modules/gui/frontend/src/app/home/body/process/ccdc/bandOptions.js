@@ -81,6 +81,10 @@ export const radarBandOptions = ({alwaysSelected = []}) => ([
     {value: 'VV/VH', label: 'VV/VH'}
 ]).map(option => ({...option, alwaysSelected: alwaysSelected.includes(option.value)}))
 
+export const filterBands = (bands, dataSets) =>
+    _.isEmpty(dataSets['SENTINEL_1'])
+        ? filterOpticalBands(bands, dataSets)
+        : filterRadarBands(bands)
 
 export const filterOpticalBands = (bands, dataSets) => {
     const availableBands = opticalBandOptions({dataSets})
