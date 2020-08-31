@@ -43,7 +43,7 @@ export const defaultModel = {
         },
         breakpointBands: ['ndfi']
     },
-    preprocess: {
+    options: {
         corrections: [],
         mask: ['SNOW'],
         orbits: ['ASCENDING'],
@@ -51,7 +51,7 @@ export const defaultModel = {
         speckleFilter: 'NONE',
         outlierRemoval: 'NONE'
     },
-    options: breakDetectionOptions.moderate
+    ccdcOptions: breakDetectionOptions.moderate
 }
 
 export const RecipeActions = id => {
@@ -80,7 +80,7 @@ export const RecipeActions = id => {
 
 function toBackendRecipe({recipe, bands}) {
     const name = recipe.title || recipe.placeholder
-    const preprocess = {...recipe.model.options, ...recipe.model.preProcessingOptions}
+    const preprocess = recipe.model.options
     const ccdcOptions = recipe.model.ccdcOptions
     const breakpointBands = recipe.model.sources.breakpointBands
     return {
