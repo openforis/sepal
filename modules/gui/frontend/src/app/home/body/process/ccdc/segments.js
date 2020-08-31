@@ -9,17 +9,8 @@ const SCALE = 10000
 // TODO: Make sure all bands are scaled by 10000
 
 export const fitSegments = ({segments, band, dateFormat = J_DAYS}) => {
-    // Create segment
-    // Output chartable data
-    // Start and end date of each segment should be included
-    // Configurable number of data points, spread semi-equallvalue across time-series
-
-    // Separate pieces
-    //  - determine dates to include
-    //  - get fit for a band given a date
-    //  - data formatting
-
-    // List with date and value pairs for each segment
+    if (!segments.tStart)
+        return undefined
     const startDate = moment(fromT(segments.tStart[0]))
     const endDate = moment(fromT(segments.tEnd[segments.tEnd.length - 1]))
     const totalDays = endDate.diff(startDate, 'days')
@@ -37,28 +28,6 @@ export const fitSegments = ({segments, band, dateFormat = J_DAYS}) => {
         daysPerPoint,
         dateFormat
     }))
-
-    //
-    //
-    // return [
-    //     [
-    //         {date: new Date(143134652600), value: 53},
-    //         {date: new Date(143234652600), value: 40},
-    //         {date: new Date(143340052600), value: 45},
-    //         {date: new Date(143366652600), value: 40},
-    //         {date: new Date(143410652600), value: 20},
-    //         {date: new Date(143508652600), value: 32},
-    //         {date: new Date(143569652600), value: 18},
-    //         {date: new Date(143579652600), value: 11}
-    //     ],
-    //     [
-    //         {date: new Date(143134652600), value: 53},
-    //         {date: new Date(143234652600), value: 35},
-    //         {date: new Date(143334652600), value: 30},
-    //         {date: new Date(143384652600), value: 30},
-    //         {date: new Date(143568652600), value: 10}
-    //     ]
-    // ]
 }
 
 const fitSegment = ({tStart, tEnd, tBreak, numObs, changeProb, coefs, rmse, magnitude, daysPerPoint, dateFormat}) => {

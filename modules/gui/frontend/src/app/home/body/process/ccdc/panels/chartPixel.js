@@ -106,7 +106,7 @@ class ChartPixel extends React.Component {
         if (loading)
             return this.renderSpinner()
 
-        const {segments, timeSeries} = this.state
+        const {segments = [], timeSeries} = this.state
         const segmentsData = segments.map((segment, i) => ({
             name: `segment-${i + 1}`,
             data: segment.map(({date, value}) => ({x: date, y: value}))
