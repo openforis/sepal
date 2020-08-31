@@ -33,7 +33,6 @@ const mapRecipeToProps = recipe => ({
 class ChartPixel extends React.Component {
     constructor(props) {
         super(props)
-        console.log('constructor')
         this.cancel$ = new Subject()
         this.state = {}
         this.recipeActions = RecipeActions(props.recipeId)
@@ -176,7 +175,6 @@ class ChartPixel extends React.Component {
         ) {
             this.cancel$.next(true)
             this.setState({segments: undefined, timeSeries: undefined})
-            console.log('bands.value', bands.value)
             const load$ = loadCCDCTimeSeries$({recipe, latLng, bands: [bands.value]}).pipe(
                 tap(({segments, timeSeries}) => {
                     this.setState({
