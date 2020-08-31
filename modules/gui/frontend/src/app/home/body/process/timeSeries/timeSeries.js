@@ -44,7 +44,8 @@ class _TimeSeries extends React.Component {
                     sepalMap.setContext(recipeId)
                     sepalMap.getContext(recipeId).fitLayer('aoi')
                 }
-            }
+            },
+            layerIndex: 0
         })
     }
 }

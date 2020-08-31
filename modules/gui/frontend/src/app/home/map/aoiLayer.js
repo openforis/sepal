@@ -19,11 +19,11 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized, laye
                 id: layerId,
                 tableId: countryEETable,
                 columnName: 'id',
-                columnValue: aoi.areaCode || aoi.countryCode
+                columnValue: aoi.areaCode || aoi.countryCode,
+                layerIndex
             },
             destroy$,
-            onInitialized,
-            layerIndex
+            onInitialized
         })
     case 'EE_TABLE':
         return setEETableLayer({
@@ -32,11 +32,11 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized, laye
                 id: layerId,
                 tableId: aoi.id,
                 columnName: aoi.keyColumn,
-                columnValue: aoi.key
+                columnValue: aoi.key,
+                layerIndex
             },
             destroy$,
-            onInitialized,
-            layerIndex
+            onInitialized
         })
     case 'POLYGON':
         return setPolygonLayer({

@@ -187,7 +187,7 @@ class EETableSection extends React.Component {
     }
 
     update() {
-        const {recipeId, inputs: {eeTable, eeTableColumn, eeTableRow}, componentWillUnmount$} = this.props
+        const {recipeId, inputs: {eeTable, eeTableColumn, eeTableRow}, componentWillUnmount$, layerIndex} = this.props
         setAoiLayer({
             contextId: recipeId,
             aoi: {
@@ -198,7 +198,8 @@ class EETableSection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi')
+            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi'),
+            layerIndex
         })
     }
 }

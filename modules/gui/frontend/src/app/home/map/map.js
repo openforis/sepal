@@ -293,7 +293,12 @@ const createMap = mapElement => {
                     },
                     onOneClick(listener) {
                         googleMap.setOptions({draggableCursor: 'pointer'})
-                        const instances = [googleMap, ...Object.values(layerById).map(({layer}) => layer)]
+                        const instances = [
+                            googleMap,
+                            ...Object.values(layerById)
+                                .filter(({type}) => type === 'PolygonLayer')
+                                .map(({layer}) => layer)
+                        ]
                         instances.forEach(instance => {
                             google.maps.event.addListener(instance, 'click', ({latLng}) => {
                                 listener({lat: latLng.lat(), lng: latLng.lng()})
@@ -303,7 +308,12 @@ const createMap = mapElement => {
                     },
                     clearClickListeners() {
                         googleMap.setOptions({draggableCursor: null})
-                        const instances = [googleMap, ...Object.values(layerById).map(({layer}) => layer)]
+                        const instances = [
+                            googleMap,
+                            ...Object.values(layerById)
+                                .filter(({type}) => type === 'PolygonLayer')
+                                .map(({layer}) => layer)
+                        ]
                         instances.forEach(instance => google.maps.event.clearListeners(instance, 'click'))
                     }
                 }

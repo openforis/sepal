@@ -50,14 +50,14 @@ class Aoi extends React.Component {
     }
 
     render() {
-        const {recipeId, allowWholeEETable, inputs} = this.props
+        const {recipeId, allowWholeEETable, inputs, layerIndex = 0} = this.props
         const sections = [{
             component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
         }, {
             value: 'COUNTRY',
             label: msg('process.mosaic.panel.areaOfInterest.form.country.title'),
             title: 'COUNTRY/PROVINCE',
-            component: <CountrySection recipeId={recipeId} inputs={inputs}/>
+            component: <CountrySection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
         }, {
             value: 'EE_TABLE',
             label: msg('process.mosaic.panel.areaOfInterest.form.eeTable.title'),
@@ -65,7 +65,8 @@ class Aoi extends React.Component {
             component: <EETableSection
                 recipeId={recipeId}
                 inputs={inputs}
-                allowWholeEETable={allowWholeEETable}/>
+                allowWholeEETable={allowWholeEETable}
+                layerIndex={layerIndex}/>
         }, {
             value: 'POLYGON',
             label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title'),
@@ -124,6 +125,7 @@ class Aoi extends React.Component {
             contextId: recipeId,
             aoi: model,
             fill: false,
+            layerIndex: 0
         })
     }
 }

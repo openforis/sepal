@@ -12,6 +12,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import SectionSelection from './sectionSelection'
 
 const loadCountries$ = () => {
     return api.gee.queryEETable$({
@@ -143,7 +144,7 @@ class CountrySection extends React.Component {
     }
 
     update() {
-        const {recipeId, countries, stream, inputs: {country, area}} = this.props
+        const {recipeId, countries, stream, inputs: {country, area}, layerIndex} = this.props
         if (!countries && !stream('LOAD_COUNTRIES').active && !stream('LOAD_COUNTRIES').failed) {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),
@@ -162,14 +163,16 @@ class CountrySection extends React.Component {
                 areaCode: area.value
             },
             // destroy$: componentWillUnmount$,
-            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi')
+            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi'),
+            layerIndex
         })
     }
 }
 
 CountrySection.propTypes = {
     inputs: PropTypes.object.isRequired,
-    recipeId: PropTypes.string.isRequired
+    recipeId: PropTypes.string.isRequired,
+    layerIndex: PropTypes.number
 }
 
 export default compose(

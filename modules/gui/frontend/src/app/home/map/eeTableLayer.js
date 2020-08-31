@@ -9,7 +9,7 @@ export const setEETableLayer = (
         contextId,
         layerSpec: {id, tableId, columnName, columnValue, layerIndex = 0},
         destroy$,
-        onInitialized
+        onInitialized,
     }) => {
     const watchedProps = {tableId, columnName, columnValue}
     const layer = tableId

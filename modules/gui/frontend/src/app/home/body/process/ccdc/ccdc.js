@@ -50,7 +50,7 @@ class _CCDC extends React.Component {
                     sepalMap.getContext(recipeId).fitLayer('aoi')
                 }
             },
-            layerIndex: 1
+            layerIndex: 0
         })
     }
 }
