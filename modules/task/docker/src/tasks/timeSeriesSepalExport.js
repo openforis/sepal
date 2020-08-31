@@ -110,6 +110,8 @@ const export$ = (downloadDir, recipe) => {
             }
         }).map(image =>
             calculateIndex(image, indicator)
+                .multiply(10000)
+                .int16()
                 .set('date', image.date().format('yyyy-MM-dd'))
         )
 
