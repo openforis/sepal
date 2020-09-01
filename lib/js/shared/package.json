@@ -18,16 +18,17 @@
     "dependencies": {
         "@google/earthengine": "0.1.227",
         "base-64": "^0.1.0",
+        "koa": "^2.13.0",
         "koa-bodyparser": "^4.3.0",
         "koa-easy-ws": "^1.2.0",
         "koa-router": "^9.1.0",
-        "koa": "^2.13.0",
         "lodash": "^4.17.19",
         "log4js": "^6.3.0",
         "moment": "^2.27.0",
         "request": "^2.88.2",
         "rxjs": "^7.0.0-beta.1",
         "serialize-error": "^7.0.1",
+        "short-unique-id": "^3.0.4",
         "uuid": "^8.2.0"
     },
     "devDependencies": {
