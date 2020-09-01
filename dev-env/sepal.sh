@@ -450,7 +450,7 @@ usage () {
 }
 
 no_one_argument () {
-    usage "Too many arguments"
+    usage "Wrong number of arguments"
 }
 
 [ -z "$1" ] && usage
