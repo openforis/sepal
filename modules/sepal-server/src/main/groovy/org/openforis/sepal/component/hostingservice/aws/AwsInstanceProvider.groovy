@@ -31,7 +31,7 @@ final class AwsInstanceProvider implements InstanceProvider {
         this.jobScheduler = jobScheduler
         currentSepalVersion = config.sepalVersion
         region = config.region
-        availabilityZone = config.region
+        availabilityZone = config.availabilityZone
         environment = config.environment
         def credentials = new BasicAWSCredentials(config.accessKey, config.secretKey)
         client = new AmazonEC2Client(credentials)
