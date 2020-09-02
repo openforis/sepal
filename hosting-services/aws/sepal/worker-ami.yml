@@ -9,12 +9,21 @@
     - "{{ secret_vars_file }}"
 
   tasks:
+    - name: Copy GPU drivers init script
+      copy:
+        src: "gpu/init-gpu-drivers.sh"
+        dest: "/usr/local/bin/init-gpu-drivers.sh"
 
-    - name: Upgrade yum packages
-      yum:
-        name: "*"
-        state: "latest"
-        lock_timeout: "600"
+    - name: Copy GPU drivers init service
+      copy:
+        src: "gpu/init-gpu-drivers.service"
+        dest: "/etc/systemd/system/init-gpu-drivers.service"
+
+    - name: Install GPU drivers
+      script: "gpu/install-gpu-drivers.sh"
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
 
     - name: Install nfs-utils
       yum:
@@ -147,19 +156,3 @@
 
     - name: Logout from docker registry
       command: "docker logout {{ docker_repository_host }}"
-
-    - name: Copy GPU drivers init script
-      copy:
-        src: "gpu/init-gpu-drivers.sh"
-        dest: "/usr/local/bin/init-gpu-drivers.sh"
-
-    - name: Copy GPU drivers init service
-      copy:
-        src: "gpu/init-gpu-drivers.service"
-        dest: "/etc/systemd/system/init-gpu-drivers.service"
-
-    - name: Install GPU drivers
-      script: "gpu/install-gpu-drivers.sh"
-      environment:
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
