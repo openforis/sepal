@@ -2,7 +2,7 @@ package component.budget
 
 import org.openforis.sepal.component.budget.api.Budget
 import org.openforis.sepal.component.budget.event.UserInstanceBudgetExceeded
-import org.openforis.sepal.component.budget.event.UserInstanceBudgetNotExceeded
+import org.openforis.sepal.component.budget.event.UserStorageSpendingExceeded
 
 class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
 
@@ -28,8 +28,7 @@ class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
         def spending = checkUserInstanceSpending()
 
         then:
-        def event = published UserInstanceBudgetNotExceeded
-        event.userInstanceSpending == spending
+        notPublished UserInstanceBudgetExceeded
         spending.spending == 100
         spending.budget == 100
     }
@@ -39,8 +38,7 @@ class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
         def spending = checkUserInstanceSpending()
 
         then:
-        def event = published UserInstanceBudgetNotExceeded
-        event.userInstanceSpending == spending
+        events.isEmpty()
         spending.spending == 0
         spending.budget == defaultBudget.instanceSpending
     }
