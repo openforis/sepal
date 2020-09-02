@@ -5,7 +5,7 @@ const worker$ = () => {
     const {swallow} = require('sepal/rxjs/operators')
     const ee = require('ee')
 
-    DEFAULT_MAX_RETRIES = 3
+    const DEFAULT_MAX_RETRIES = 3
 
     return ee.$({
         operation: 'initialize',

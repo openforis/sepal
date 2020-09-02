@@ -14,6 +14,7 @@
         "pool": "debug",
         "service": "debug",
         "transport": "debug",
-        "worker": "debug"
+        "worker": "debug",
+        "job:<jobName>": "debug"
     }
 }
