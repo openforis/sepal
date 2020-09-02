@@ -92,6 +92,7 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     List<WorkerInstance> idleInstances(String instanceType) {
         findInstances(
+                true,
                 taggedWith('State', 'idle'),
                 ofInstanceType(instanceType)
         )
@@ -99,18 +100,20 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     List<WorkerInstance> idleInstances() {
         findInstances(
+                true,
                 taggedWith('State', 'idle')
         )
     }
 
     List<WorkerInstance> reservedInstances() {
         findInstances(
-                taggedWith('State', 'reserved')
+                false,
+                taggedWith('State', 'reserved'),
         )
     }
 
     WorkerInstance getInstance(String instanceId) {
-        def instances = findInstances(new DescribeInstancesRequest()
+        def instances = findInstances(false, new DescribeInstancesRequest()
                 .withInstanceIds(instanceId)
         )
         if (instances.size() != 1)
@@ -133,7 +136,7 @@ final class AwsInstanceProvider implements InstanceProvider {
     }
 
     private void notifyAboutStartedInstance() {
-        def instances = findInstances(running(), taggedWith('Starting', 'true'))
+        def instances = findInstances(false, running(), taggedWith('Starting', 'true'))
         instances.findAll {
             it.running
         }.each {
@@ -191,8 +194,8 @@ final class AwsInstanceProvider implements InstanceProvider {
         new Filter('instance-type', [(instanceType as InstanceType).toString()])
     }
 
-    private List<WorkerInstance> findInstances(Filter... filters) {
-        findInstances(new DescribeInstancesRequest().withFilters(
+    private List<WorkerInstance> findInstances(boolean onlyCorrectVersion, Filter... filters) {
+        findInstances(onlyCorrectVersion, new DescribeInstancesRequest().withFilters(
                 filters.toList() + [
                         taggedWith('Type', 'Worker'),
                         taggedWith('Environment', environment),
@@ -200,12 +203,12 @@ final class AwsInstanceProvider implements InstanceProvider {
                 ]))
     }
 
-    private List<WorkerInstance> findInstances(DescribeInstancesRequest request) {
+    private List<WorkerInstance> findInstances(boolean onlyCorrectVersion, DescribeInstancesRequest request) {
         def awsInstances = client.describeInstances(request).reservations
                 .collect { it.instances }.flatten() as List<Instance>
-        def instancesWithValidVersion = awsInstances.findAll {
+        def instancesWithValidVersion = onlyCorrectVersion ? awsInstances.findAll {
             !WorkerInstanceConfig.isOlderVersion(instanceVersion(it), currentSepalVersion)
-        }
+        } : awsInstances
         terminateOldIdle(awsInstances)
         terminateUntagged()
         return instancesWithValidVersion.collect { toWorkerInstance(it) }
