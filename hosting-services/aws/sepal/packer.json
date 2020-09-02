@@ -19,7 +19,8 @@
       "ssh_username": "ec2-user",
       "ami_name": "Sandbox({{user  `region`}}) - {{user `version`}}",
       "tags": {
-        "Version": "{{user `version`}}"
+        "Version": "{{user `version`}}",
+        "Region": "{{user `region`}}"
       },
       "ami_block_device_mappings": [
         {
