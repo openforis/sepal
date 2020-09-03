@@ -6,8 +6,7 @@
     "region": "",
     "version": "",
     "userHome": "",
-    "efs_id": "",
-    "availability_zone": ""
+    "efs_id": ""
   },
   "builders": [
     {
@@ -17,12 +16,11 @@
       "region": "{{user `region`}}",
       "source_ami": "{{user `worker_instance_ami`}}",
       "instance_type": "g4dn.xlarge",
-      "availability_zone": "{{user  `availability_zone`}}",
       "ssh_username": "ec2-user",
-      "ami_name": "Sandbox({{user  `availability_zone`}}) - {{user `version`}}",
+      "ami_name": "Sandbox({{user  `region`}}) - {{user `version`}}",
       "tags": {
         "Version": "{{user `version`}}",
-        "AvailabilityZone": "{{user  `availability_zone`}}"
+        "Region": "{{user `region`}}"
       },
       "ami_block_device_mappings": [
         {
@@ -60,7 +58,7 @@
       "playbook_file": "worker-ami.yml",
       "extra_arguments": [
         "--extra-vars",
-        "config_home={{user `config_home`}} secret_vars_file={{user `config_home`}}/secret.yml efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}} availability_zone={{user `availability_zone`}}"
+        "config_home={{user `config_home`}} secret_vars_file={{user `config_home`}}/secret.yml efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}}"
       ],
       "user": "ec2-user"
     }

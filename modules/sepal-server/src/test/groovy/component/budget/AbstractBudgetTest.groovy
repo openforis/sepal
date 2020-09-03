@@ -87,9 +87,14 @@ abstract class AbstractBudgetTest extends Specification {
     }
 
     final <E extends Event> E published(Class<E> eventType) {
-        def recievedEvent = events.find { it.class.isAssignableFrom(eventType) }
-        assert recievedEvent, "Expected to event of type $eventType to have been published. Actually published $events"
-        recievedEvent as E
+        def receivedEvent = events.find { it.class.isAssignableFrom(eventType) }
+        assert receivedEvent, "Expected to event of type $eventType to have been published. Actually published $events"
+        receivedEvent as E
+    }
+
+    final <E extends Event> void notPublished(Class<E> eventType) {
+        def receivedEvent = events.find { it.class.isAssignableFrom(eventType) }
+        assert !receivedEvent, "Expected no event of type $eventType to have been published. Found $receivedEvent"
     }
 
     final UserInstanceSpending checkUserInstanceSpending(Map args = [:]) {

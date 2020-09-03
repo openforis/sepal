@@ -7,9 +7,7 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.budget.api.BudgetRepository
 import org.openforis.sepal.component.budget.api.UserStorageUse
 import org.openforis.sepal.component.budget.event.UserStorageQuotaExceeded
-import org.openforis.sepal.component.budget.event.UserStorageQuotaNotExceeded
 import org.openforis.sepal.component.budget.event.UserStorageSpendingExceeded
-import org.openforis.sepal.component.budget.event.UserStorageSpendingNotExceeded
 import org.openforis.sepal.component.budget.internal.StorageUseService
 import org.openforis.sepal.event.EventDispatcher
 
@@ -24,9 +22,9 @@ class CheckUserStorageUseHandler implements CommandHandler<UserStorageUse, Check
     private final EventDispatcher eventDispatcher
 
     CheckUserStorageUseHandler(
-        StorageUseService storageUseService,
-        BudgetRepository budgetRepository,
-        EventDispatcher eventDispatcher) {
+            StorageUseService storageUseService,
+            BudgetRepository budgetRepository,
+            EventDispatcher eventDispatcher) {
         this.storageUseService = storageUseService
         this.budgetRepository = budgetRepository
         this.eventDispatcher = eventDispatcher
@@ -38,21 +36,16 @@ class CheckUserStorageUseHandler implements CommandHandler<UserStorageUse, Check
         def spending = storageUseService.calculateSpending(storageUse)
         def budget = budgetRepository.userBudget(command.username)
         def userStorageUse = new UserStorageUse(
-            username: command.username,
-            spending: spending,
-            use: storageUse.gb,
-            budget: budget.storageSpending,
-            quota: budget.storageQuota
+                username: command.username,
+                spending: spending,
+                use: storageUse.gb,
+                budget: budget.storageSpending,
+                quota: budget.storageQuota
         )
-        def spendingEvent = spending > budget.storageSpending ?
-            new UserStorageSpendingExceeded(userStorageUse) :
-            new UserStorageSpendingNotExceeded(userStorageUse)
-        eventDispatcher.publish(spendingEvent)
-
-        def budgetEvent = storageUse.gb > budget.storageQuota ?
-            new UserStorageQuotaExceeded(userStorageUse) :
-            new UserStorageQuotaNotExceeded(userStorageUse)
-        eventDispatcher.publish(budgetEvent)
+        if (spending > budget.storageSpending)
+            eventDispatcher.publish(new UserStorageSpendingExceeded(userStorageUse))
+        if (storageUse.gb > budget.storageQuota)
+            eventDispatcher.publish(new UserStorageQuotaExceeded(userStorageUse))
 
         return userStorageUse
     }

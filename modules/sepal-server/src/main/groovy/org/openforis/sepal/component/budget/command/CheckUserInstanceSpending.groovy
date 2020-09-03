@@ -7,7 +7,6 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.budget.api.BudgetRepository
 import org.openforis.sepal.component.budget.api.UserInstanceSpending
 import org.openforis.sepal.component.budget.event.UserInstanceBudgetExceeded
-import org.openforis.sepal.component.budget.event.UserInstanceBudgetNotExceeded
 import org.openforis.sepal.component.budget.internal.InstanceSpendingService
 import org.openforis.sepal.event.EventDispatcher
 
@@ -22,9 +21,9 @@ class CheckUserInstanceSpendingHandler implements CommandHandler<UserInstanceSpe
     private final EventDispatcher eventDispatcher
 
     CheckUserInstanceSpendingHandler(
-        InstanceSpendingService instanceSpendingService,
-        BudgetRepository budgetRepository,
-        EventDispatcher eventDispatcher) {
+            InstanceSpendingService instanceSpendingService,
+            BudgetRepository budgetRepository,
+            EventDispatcher eventDispatcher) {
         this.instanceSpendingService = instanceSpendingService
         this.budgetRepository = budgetRepository
         this.eventDispatcher = eventDispatcher
@@ -34,15 +33,12 @@ class CheckUserInstanceSpendingHandler implements CommandHandler<UserInstanceSpe
         def instanceSpending = instanceSpendingService.instanceSpending(command.username)
         def budget = budgetRepository.userBudget(command.username)
         def userInstanceSpending = new UserInstanceSpending(
-            username: command.username,
-            spending: instanceSpending,
-            budget: budget.instanceSpending
+                username: command.username,
+                spending: instanceSpending,
+                budget: budget.instanceSpending
         )
-        //noinspection GroovyConditionalWithIdenticalBranches - TODO: Remove when IDEA-152085 is resolved
-        def event = instanceSpending > budget.instanceSpending ?
-            new UserInstanceBudgetExceeded(userInstanceSpending) :
-            new UserInstanceBudgetNotExceeded(userInstanceSpending)
-        eventDispatcher.publish(event)
+        if (instanceSpending > budget.instanceSpending)
+            eventDispatcher.publish(new UserInstanceBudgetExceeded(userInstanceSpending))
         return userInstanceSpending
     }
 }
