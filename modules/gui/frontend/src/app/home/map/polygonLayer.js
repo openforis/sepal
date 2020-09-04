@@ -12,12 +12,13 @@ export const setPolygonLayer = (
         onInitialized
     }) => {
     const layer = path ? new PolygonLayer(path) : null
-    sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized, type: 'PolygonLayer'})
+    sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
     return layer
 }
 
 class PolygonLayer {
     constructor(path, fill) {
+        this.type = 'PolygonLayer'
         this.polygonPath = path
         this.fill = fill
         this.layer = new google.maps.Polygon({
