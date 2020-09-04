@@ -296,10 +296,7 @@ const createMap = mapElement => {
                         const instances = [
                             googleMap,
                             ...Object.values(layerById)
-                                .filter((instance) => {
-                                    console.log({instance})
-                                    return instance.type === 'PolygonLayer'
-                                })
+                                .filter((instance) => instance.type === 'PolygonLayer')
                                 .map(({layer}) => layer)
                         ]
                         instances.forEach(instance => {
