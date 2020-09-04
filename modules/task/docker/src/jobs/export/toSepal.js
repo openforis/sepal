@@ -24,23 +24,23 @@ const createDriveFolder$ = folder =>
     )
 
 const exportImageToSepal$ = ({
-    image,
-    folder,
-    description,
-    downloadDir,
-    dimensions,
-    region,
-    scale,
-    crs,
-    crsTransform,
-    maxPixels = 1e13,
-    shardSize,
-    fileDimensions,
-    skipEmptyTiles,
-    fileFormat,
-    formatOptions,
-    retries
-}) => {
+                                 image,
+                                 folder,
+                                 description,
+                                 downloadDir,
+                                 dimensions,
+                                 region,
+                                 scale,
+                                 crs,
+                                 crsTransform,
+                                 maxPixels = 1e13,
+                                 shardSize,
+                                 fileDimensions,
+                                 skipEmptyTiles,
+                                 fileFormat,
+                                 formatOptions,
+                                 retries
+                             }) => {
     const prefix = description
 
     const throughCloudStorage$ = () => {
@@ -51,7 +51,11 @@ const exportImageToSepal$ = ({
             )
         }
         const cloudStoragePrefix = `${folder}/`
-        return initUserBucket$().pipe(
+        return defer(() =>
+            driveSerializer$(
+                initUserBucket$()
+            )
+        ).pipe(
             switchMap(bucketPath =>
                 concat(
                     exportToCloudStorage$({

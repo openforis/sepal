@@ -92,7 +92,8 @@ module.exports = job({
         require('root/jobs/service/context').contextService,
         require('root/jobs/service/exportLimiter').limiter,
         require('root/jobs/service/driveLimiter').limiter,
-        require('root/jobs/service/driveSerializer').limiter
+        require('root/jobs/service/driveSerializer').limiter,
+        require('root/jobs/service/gcsSerializer').limiter,
     ],
     args: ({task}) => [task],
     worker$: executeTask$
