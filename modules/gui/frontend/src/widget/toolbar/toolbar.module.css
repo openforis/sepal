@@ -89,6 +89,18 @@
     z-index: 2;
 }
 
+.toolbar.horizontal button.activationButton.selected {
+    background-color: var(--look-default-disabled-background-color);
+    height: calc(var(--toolbar-button-size) + var(--button-panel-margin));
+    margin-bottom: calc(-1 * var(--button-panel-margin));
+    padding-bottom: calc(var(--button-panel-margin) + var(--selected-panel-border-width));
+    border: 1px solid var(--wireframe-color);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none;
+    z-index: 2;
+}
+
 .toolbar button:disabled {
     color: var(--look-default-disabled-color);
     background-color: var(--look-default-disabled-background-color);
