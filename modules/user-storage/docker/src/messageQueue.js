@@ -1,17 +1,46 @@
 const amqp = require('amqplib')
 const {amqpUri} = require('./config')
 const log = require('sepal/log').getLogger('messageQueue')
+const {defer, pipe, timer, Subject} = require('rxjs')
+const {retryWhen, mergeMap} = require('rxjs/operators')
 
 const EXCHANGE = 'sepal.topic'
+const RETRY_DELAY_MS = 10000
 
-const initMessageQueue = async () => {
-    log.debug(`Connecting to broker: ${amqpUri}`)
-    const connection = await amqp.connect(amqpUri)
-    log.info(`Connected to message broker: ${amqpUri}`)
-    return {
-        topicSubscriber: async options => await topicSubscriber(connection, options),
-        topicPublisher: async options => await topicPublisher(connection, options)
+const retry = delay => pipe(
+    retryWhen(error$ =>
+        error$.pipe(
+            mergeMap(
+                error => {
+                    log.warn(`Reconnecting in ${delay}ms after error: ${error}`)
+                    return timer(delay)
+                }
+            )
+        )
+    )
+)
+
+const connect$ = () => {
+    const connection$ = new Subject()
+    const connect = () => {
+        defer(async () => await amqp.connect(amqpUri)).pipe(
+            retry(RETRY_DELAY_MS)
+        ).subscribe(
+            connection => {
+                log.info(`Connected to message broker: ${amqpUri}`)
+                connection.on('close', err => {
+                    log.warn(`Disconnected from message broker: ${amqpUri}`, err)
+                    connect()
+                })
+                connection$.next({
+                    topicPublisher: async () => await topicPublisher(connection),
+                    topicSubscriber: async options => await topicSubscriber(connection, options)
+                })
+            }
+        )
     }
+    connect()
+    return connection$
 }
 
 const topicSubscriber = async (connection, {queue, topic, handler}) => {
@@ -49,5 +78,5 @@ const topicPublisher = async connection => {
 }
 
 module.exports = {
-    initMessageQueue
+    connect$
 }
