@@ -4,10 +4,10 @@ import React from 'react'
 import styles from './layersMenu.module.css'
 import Labels from './labels'
 import {Menu} from './menu'
-import {connect, select} from '../../../store'
+import {connect, select} from 'store'
 import PropTypes from 'prop-types'
 import {changeBaseLayer} from './baseLayer'
-import Icon from '../../../widget/icon'
+import Icon from 'widget/icon'
 import {msg} from 'translate'
 
 const mapStateToProps = (state, ownProps) => ({
