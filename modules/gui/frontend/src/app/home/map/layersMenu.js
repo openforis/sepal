@@ -8,6 +8,7 @@ import {connect, select} from '../../../store'
 import PropTypes from 'prop-types'
 import {changeBaseLayer} from './baseLayer'
 import Icon from '../../../widget/icon'
+import {msg} from 'translate'
 
 const mapStateToProps = (state, ownProps) => ({
     labelsShown: select([ownProps.statePath, 'labelsShown']),
@@ -24,21 +25,21 @@ class _LayersMenu extends React.Component {
                 close={deactivate}>
                 <Menu.Select
                     id={'BASE_LAYER'}
-                    label={'Base layer'}
+                    label={msg('process.mosaic.mapToolbar.layersMenu.baseLayer')}
                     onSelect={type => changeBaseLayer({type, mapContext, statePath})}
                     selected={baseLayer || 'SEPAL'}>
                     <Menu.Option
                         id={'SEPAL'}
-                        label={'Sepal'}
-                    description={'Simple dark default Sepal layer'}/>
+                        label={msg('process.mosaic.mapToolbar.layersMenu.SEPAL.label')}
+                        description={msg('process.mosaic.mapToolbar.layersMenu.SEPAL.description')}/>
                     <Menu.Option
                         id={'GOOGLE_SATELLITE'}
-                        label={'Google Satellite'}
-                        description={'Google Maps high-resolution satellite layer'}/>
+                        label={msg('process.mosaic.mapToolbar.layersMenu.GOOGLE_SATELLITE.label')}
+                        description={msg('process.mosaic.mapToolbar.layersMenu.GOOGLE_SATELLITE.description')}/>
                     <Menu.Option
                         id={'SENTINEL_2'}
-                        label={'Sentinel 2'}
-                        description={'Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2019)'}
+                        label={msg('process.mosaic.mapToolbar.layersMenu.SENTINEL_2.label')}
+                        description={msg('process.mosaic.mapToolbar.layersMenu.SENTINEL_2.description')}
                         right={
                             <a target={'_blank'} href={'https://s2maps.eu/'}>
                                 <Icon name={'external-link-alt'}/>
@@ -48,8 +49,8 @@ class _LayersMenu extends React.Component {
                 <Menu.Separator/>
                 <Menu.Toggle
                     id={'SHOW_LABELS'}
-                    label={'Show Labels'}
-                    description={'Show map labels, roads and points of interest'}
+                    label={msg('process.mosaic.mapToolbar.layersMenu.labels.label')}
+                    description={msg('process.mosaic.mapToolbar.layersMenu.labels.description')}
                     selected={labelsShown}
                     onChange={shown =>
                         Labels.showLabelsAction({
