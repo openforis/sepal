@@ -1,0 +1,9 @@
+{
+    "port": 5104,
+    "categories": {
+        "email": "trace",
+        "emailQueue": "trace",
+        "messageHanlder": "trace",
+        "messageQueue": "trace"
+    }
+}

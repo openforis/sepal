@@ -3,7 +3,7 @@ set -e
 
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
-SEPAL_MODULES=(user sepal-server api-gateway task gee gui ceo mongo user-storage)
+SEPAL_MODULES=(user sepal-server api-gateway task gee gui ceo mongo user-storage email)
 SEPAL_GROUPS=(all dev)
 SEPAL_DEFAULT_GROUP=dev
 LOG_DIR=/var/log/sepal
@@ -190,9 +190,9 @@ module_clean () {
         (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
         (cd $SEPAL/modules/user-storage/docker && rm -rf node_modules package-lock.json)
         ;;
-    email-notifications)
+    email)
         (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
-        (cd $SEPAL/modules/email-notifications/docker && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/email/docker && rm -rf node_modules package-lock.json)
         ;;
     *)
         return 1
@@ -395,6 +395,10 @@ run () {
     user-storage)
         (cd $SEPAL/lib/js/shared && npm install)
         (cd $SEPAL/modules/user-storage/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
+        ;;
+    email)
+        (cd $SEPAL/lib/js/shared && npm install)
+        (cd $SEPAL/modules/email/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     *)
         return 1

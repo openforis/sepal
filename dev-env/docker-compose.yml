@@ -26,6 +26,12 @@ services:
       hostname: user-storage-redis
       volumes:
         - $DATA_DIR/user-storage-redis:/data
+  email-redis:
+      image: redis:6
+      container_name: email-redis
+      hostname: email-redis
+      volumes:
+        - $DATA_DIR/email-redis:/data
 
 volumes:
   project-sync:

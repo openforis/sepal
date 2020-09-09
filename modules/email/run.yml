@@ -1,0 +1,43 @@
+---
+- name: "email-redis | Start container"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "email-redis"
+    pull: "{{ pull }}"
+    image: "redis:6"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      tag: "email-redis"
+    networks:
+      - name: 'sepal'
+    volumes:
+      - "/data/email-redis:/data"
+
+- name: "email | Start container"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      tag: "email"
+    networks:
+      - name: 'sepal'
+    env:
+      RABBITMQ_HOST: "{{ sepal_host }}"
+      RABBITMQ_PORT: "5672"
+      SMTP_FROM: "{{ smtp_from }}"
+      SMTP_HOST: "{{ smtp_host }}"
+      SMTP_PORT: "{{ smtp_port }}"
+      SMTP_SECURE: false`
+      SMTP_USER: "{{ smtp_username }}"
+      SMTP_PASSWORD: "{{ smtp_password }}"
