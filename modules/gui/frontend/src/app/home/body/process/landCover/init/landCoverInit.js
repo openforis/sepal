@@ -26,7 +26,7 @@
 //                     <MapToolbar
 //                         statePath={statePath + '.ui'}
 //                         mapContext={recipeId}
-//                         labelLayerIndex={1}/>
+//                         labelLayerIndex={2}/>
 
 //                     <InitToolbar recipeId={recipeId}/>
 //                 </W.Content>

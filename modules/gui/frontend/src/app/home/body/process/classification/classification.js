@@ -27,9 +27,9 @@ class _Classification extends React.Component {
         return (
             <React.Fragment>
                 <MapToolbar
-                    statePath={`${recipePath}.ui`}
+                    statePath={[recipePath, 'ui']}
                     mapContext={recipeId}
-                    labelLayerIndex={2}/>
+                    labelLayerIndex={3}/>
                 <ClassificationToolbar/>
 
                 {initialized
@@ -51,7 +51,7 @@ class _Classification extends React.Component {
         const {recipeId, images, componentWillUnmount$} = this.props
         setRecipeGeometryLayer({
             contextId: recipeId,
-            layerSpec: {id: 'aoi', layerIndex: 0, recipe: images && images.length > 0 ? images[0] : null},
+            layerSpec: {id: 'aoi', layerIndex: 1, recipe: images && images.length > 0 ? images[0] : null},
             destroy$: componentWillUnmount$,
             onInitialized: () => {
                 if (this.props.tabCount === 1) {

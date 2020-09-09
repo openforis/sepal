@@ -24,10 +24,10 @@ const mapRecipeToProps = recipe => ({
 
 class _TimeSeries extends React.Component {
     render() {
-        const {recipeId, recipePath} = this.props
+        const {recipeId, recipeContext: {statePath}} = this.props
         return (
             <div className={styles.timeSeries}>
-                <MapToolbar statePath={`${recipePath}.ui`} mapContext={recipeId} labelLayerIndex={1}/>
+                <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={2}/>
                 <TimeSeriesToolbar/>
             </div>
         )
@@ -45,7 +45,7 @@ class _TimeSeries extends React.Component {
                     sepalMap.getContext(recipeId).fitLayer('aoi')
                 }
             },
-            layerIndex: 0
+            layerIndex: 1
         })
     }
 }

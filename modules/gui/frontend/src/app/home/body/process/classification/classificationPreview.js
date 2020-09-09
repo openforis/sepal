@@ -101,7 +101,7 @@ class ClassificationPreview extends React.Component {
         const {recipe, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            layerIndex: 1,
+            layerIndex: 2,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
             onProgress: tiles => this.onProgress(tiles)

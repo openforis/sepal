@@ -9,7 +9,7 @@ export const removeAoiLayer = contextId => {
     sepalMap.getContext(contextId).removeLayer('aoi')
 }
 
-export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized, layerIndex = 0}) => {
+export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized, layerIndex = 1}) => {
     const layerId = 'aoi'
     switch (aoi && aoi.type) {
     case 'COUNTRY':

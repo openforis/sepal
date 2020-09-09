@@ -4,10 +4,10 @@ import {connect, select} from 'store'
 import {msg} from 'translate'
 import {sepalMap} from './map'
 import Keybinding from 'widget/keybinding'
-import Labels from 'app/home/map/labels'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './mapToolbar.module.css'
+import {LayersMenu} from './layersMenu'
 
 const mapStateToProps = (state, ownProps) => ({
     labelsShown: select([ownProps.statePath, 'labelsShown']),
@@ -19,10 +19,11 @@ const mapStateToProps = (state, ownProps) => ({
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, mapContext, isZooming, labelsShown, labelLayerIndex, hasBounds, metersPerPixel, children} = this.props
+        const {statePath, mapContext, isZooming, labelLayerIndex, hasBounds, metersPerPixel, children} = this.props
         const context = sepalMap.getContext(mapContext)
         return (
             <React.Fragment>
+                <LayersMenu statePath={statePath} labelLayerIndex={labelLayerIndex} mapContext={mapContext}/>
                 <Toolbar
                     className={styles.mapToolbar}
                     horizontal
@@ -48,16 +49,11 @@ class MapToolbar extends React.Component {
                         onClick={() => sepalMap.getContext(mapContext).fitLayer('aoi')}
                         icon={'bullseye'}
                         tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>
-                    <Toolbar.ToolbarButton
-                        selected={labelsShown}
-                        onClick={() => Labels.showLabelsAction({
-                            shown: !labelsShown,
-                            layerIndex: labelLayerIndex,
-                            statePath,
-                            mapContext
-                        }).dispatch()}
-                        icon={'map-marker-alt'}
-                        tooltip={msg(`process.mosaic.mapToolbar.labels.${labelsShown ? 'hide' : 'show'}.tooltip`)}/>
+
+                    <Toolbar.ActivationButton
+                        id='layersMenu'
+                        icon='layer-group'
+                        tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}/>
                     {children}
                 </Toolbar>
                 <div className={styles.metersPerPixel}>
@@ -69,10 +65,24 @@ class MapToolbar extends React.Component {
     }
 }
 
+// const LayersMenu = () => {
+//     return (
+//         <Menu>
+//             <MenuItem onSelect={() => console.log('first')}>
+//                 {<Msg id='First'/>}
+//             </MenuItem>
+//             <MenuItem onSelect={() => console.log('second')}>
+//                 {<Msg id='Second'/>}
+//             </MenuItem>
+//         </Menu>
+//     )
+// }
+
+
 MapToolbar.propTypes = {
     labelLayerIndex: PropTypes.any.isRequired,
     mapContext: PropTypes.string.isRequired,
-    statePath: PropTypes.string.isRequired,
+    statePath: PropTypes.any.isRequired,
     children: PropTypes.any
 }
 

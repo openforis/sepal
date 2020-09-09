@@ -7,7 +7,7 @@ import api from 'api'
 export const setRecipeGeometryLayer = (
     {
         contextId,
-        layerSpec: {id, recipe, layerIndex = 0},
+        layerSpec: {id, recipe, layerIndex = 1},
         destroy$,
         onInitialized
     }) => {

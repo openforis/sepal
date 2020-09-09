@@ -32,7 +32,7 @@ class CcdcToolbar extends React.Component {
                 onDone={() => setInitialized(recipeId)}>
 
                 <Retrieve/>
-                <Aoi allowWholeEETable={true} layerIndex={1}/>
+                <Aoi allowWholeEETable={true} layerIndex={2}/>
                 <Dates/>
                 <Sources/>
                 {_.isEmpty(sources.dataSets['SENTINEL_1'])

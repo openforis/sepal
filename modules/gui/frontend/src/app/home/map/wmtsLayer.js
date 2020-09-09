@@ -1,25 +1,28 @@
 import {of} from 'rxjs'
 import {google} from 'app/home/map/map'
 
-export default class GoogleSatelliteLayer {
-    constructor(layerIndex) {
+export default class WMTSLayer {
+    constructor({layerIndex, urlTemplate}) {
         this.layerIndex = layerIndex
-        this.type = 'GoogleSatelliteLayer'
+        this.urlTemplate = urlTemplate
     }
 
     equals(o) {
-        return this.type === o.type
+        return this.urlTemplate === o.urlTemplate
     }
 
     addToMap(googleMap) {
-        const subdomain = 'mt0'
-        const getTileUrl = ({x, y}, z) => `http://${subdomain}.google.com/vt/lyrs=s&x=${x}&y=${y}&z=${z}`
+        const getTileUrl = ({x, y}, z) => this.urlTemplate
+            .replace('{x}', x)
+            .replace('{y}', y)
+            .replace('{z}', z)
         const layer = new google.maps.ImageMapType({
             getTileUrl: getTileUrl,
             name: "googleSatellite",
             minZoom: 3,
-            maxZoom: 17,
-        });
+            maxZoom: 17
+        })
+        console.log('Setting WMTS on ', this.layerIndex, layer)
         googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
     }
 

@@ -43,7 +43,7 @@ class ChartPixelButton extends React.Component {
             context.removeLayer('googleSatellite')
             this.setChartPixel(latLng)
         })
-        context.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer(0)})
+        context.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer(1)})
     }
 
     cancelSelecting() {

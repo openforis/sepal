@@ -1,0 +1,49 @@
+.menu, .group ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.item {
+    display: flex;
+    /*font-size: 0.8rem;*/
+    padding: 1rem;
+    cursor: pointer;
+}
+
+.item:hover {
+    background-color: hsl(var(--selected-hue), var(--selected-sat), 26%) !important;
+}
+
+.left {
+    width: 2rem;
+    flex-shrink: 0;
+}
+
+.center {
+    flex-grow: 1;
+}
+
+.description {
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+.right {
+    width: 2rem;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.groupLabel {
+    color: gray;
+    margin-top: 1rem;
+    margin-left: 3rem;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    text-transform: uppercase;
+}
+
+.separator {
+    background-color: var(--wireframe-color);
+    height: 2px;
+}

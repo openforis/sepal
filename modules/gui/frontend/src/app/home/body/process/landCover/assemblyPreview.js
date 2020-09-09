@@ -95,7 +95,7 @@ class AssemblyPreview extends React.Component {
         const {recipeId, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            layerIndex: 0,
+            layerIndex: 1,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
             onProgress: tiles => this.onProgress(tiles)

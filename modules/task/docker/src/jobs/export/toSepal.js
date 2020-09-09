@@ -9,6 +9,7 @@ const cloudStorage = require('root/cloudStorageDownload')
 const log = require('sepal/log').getLogger('ee')
 const {getCurrentContext$} = require('root/jobs/service/context')
 const {limiter$: driveSerializer$} = require('root/jobs/service/driveSerializer')
+const {limiter$: gcsSerializer$} = require('root/jobs/service/gcsSerializer')
 const task$ = require('root/ee/task')
 
 const CONCURRENT_FILE_DOWNLOAD = 3
@@ -52,7 +53,7 @@ const exportImageToSepal$ = ({
         }
         const cloudStoragePrefix = `${folder}/`
         return defer(() =>
-            driveSerializer$(
+            gcsSerializer$(
                 initUserBucket$()
             )
         ).pipe(
