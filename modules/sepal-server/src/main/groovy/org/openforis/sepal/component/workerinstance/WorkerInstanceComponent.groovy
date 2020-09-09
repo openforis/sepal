@@ -56,7 +56,7 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
         command(RequestInstance, new RequestInstanceHandler(instanceRepository, instanceProvider, eventDispatcher, clock))
         command(ReleaseInstance, new ReleaseInstanceHandler(instanceRepository, instanceProvider, instanceProvisioner, eventDispatcher))
         command(ProvisionInstance, new ProvisionInstanceHandler(instanceProvisioner, eventDispatcher))
-        command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceRepository, instanceProvider, instanceProvisioner, eventDispatcher, clock))
+        command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceRepository, instanceProvider, instanceProvisioner, eventDispatcher, connectionManager, clock))
         command(SizeIdlePool, new SizeIdlePoolHandler(instanceRepository, instanceProvider, eventDispatcher, clock))
 
         query(FindMissingInstances, new FindMissingInstancesHandler(instanceProvisioner))

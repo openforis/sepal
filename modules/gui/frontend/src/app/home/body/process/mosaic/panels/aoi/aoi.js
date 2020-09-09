@@ -50,7 +50,7 @@ class Aoi extends React.Component {
     }
 
     render() {
-        const {recipeId, allowWholeEETable, inputs, layerIndex = 0} = this.props
+        const {recipeId, allowWholeEETable, inputs, layerIndex = 1} = this.props
         const sections = [{
             component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
         }, {
@@ -125,7 +125,7 @@ class Aoi extends React.Component {
             contextId: recipeId,
             aoi: model,
             fill: false,
-            layerIndex: 0
+            layerIndex: 1
         })
     }
 }

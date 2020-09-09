@@ -60,12 +60,14 @@
     - name: Create filesystem on Docker volume
       filesystem:
         fstype: xfs
-        dev: /dev/xvdb
+        dev: /dev/sdb
+#        dev: /dev/xvdb
 
     - name: Mount Docker volume
       mount:
         path: /var/lib/docker
-        src: /dev/xvdb
+        src: /dev/sdb
+#        src: /dev/xvdb
         fstype: xfs
         state: mounted
 

@@ -25,9 +25,9 @@ class LandCoverComposites extends React.Component {
             <W.Step>
                 <W.Content>
                     <MapToolbar
-                        statePath={`${recipePath}.ui`}
+                        statePath={[recipePath, 'ui']}
                         mapContext={recipeId}
-                        labelLayerIndex={1}/>
+                        labelLayerIndex={2}/>
 
                     <CompositesToolbar recipeId={recipeId}/>
                 </W.Content>

@@ -7,7 +7,7 @@ import api from 'api'
 export const setEETableLayer = (
     {
         contextId,
-        layerSpec: {id, tableId, columnName, columnValue, layerIndex = 0},
+        layerSpec: {id, tableId, columnName, columnValue, layerIndex = 1},
         destroy$,
         onInitialized,
     }) => {

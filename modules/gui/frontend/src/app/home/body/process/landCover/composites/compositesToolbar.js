@@ -11,7 +11,7 @@ import styles from './compositesToolbar.module.css'
 class CompositesToolbar extends React.Component {
     render() {
         const {recipeId, recipePath} = this.props
-        const statePath = `${recipePath}.ui`
+        const statePath = [recipePath, 'ui']
         return (
             <PanelWizard
                 panels={['areaOfInterest', 'period', 'typology']}

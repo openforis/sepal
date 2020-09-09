@@ -38,7 +38,7 @@ class _Mosaic extends React.Component {
             <SectionLayout>
                 <Content>
                     <div className={styles.mosaic}>
-                        <MapToolbar statePath={`${statePath}.ui`} mapContext={recipeId} labelLayerIndex={2}>
+                        <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}>
                             <ShowSceneAreaToggle/>
                         </MapToolbar>
                         <MosaicToolbar/>

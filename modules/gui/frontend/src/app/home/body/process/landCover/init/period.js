@@ -46,7 +46,7 @@ class Period extends React.Component {
                 className={styles.panel}
                 form={form}
                 placement='bottom-right'
-                statePath={`${recipePath}.ui`}
+                statePath={[recipePath, 'ui']}
                 onApply={values => this.recipeActions.setPeriod({
                     values,
                     model: valuesToModel(values)

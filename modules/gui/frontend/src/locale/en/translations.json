@@ -690,14 +690,6 @@
                 "centerMap": {
                     "tooltip": "Zoom to area of interest"
                 },
-                "labels": {
-                    "hide": {
-                        "tooltip": "Hide labels"
-                    },
-                    "show": {
-                        "tooltip": "Show labels"
-                    }
-                },
                 "layers": {
                     "tooltip": "Select layers to show"
                 },
@@ -717,6 +709,25 @@
                 },
                 "zoomOut": {
                     "tooltip": "Zoom out"
+                },
+                "layersMenu": {
+                    "baseLayer": "Base layer",
+                    "labels": {
+                        "label": "Show Labels",
+                        "description": "Show map labels, roads and points of interest"
+                    },
+                    "SEPAL": {
+                        "label": "Sepal",
+                        "description": "Minimal dark Sepal default layer"
+                    },
+                    "GOOGLE_SATELLITE": {
+                        "label": "Google Satellite",
+                        "description": "Google Maps high-resolution satellite layer"
+                    },
+                    "SENTINEL_2": {
+                        "label": "Sentinel 2",
+                        "description": "Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2019)"
+                    }
                 }
             },
             "panel": {

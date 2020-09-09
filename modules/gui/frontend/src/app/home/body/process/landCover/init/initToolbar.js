@@ -16,7 +16,7 @@ const recipeToProps = recipe => {
 class InitToolbar extends React.Component {
     render() {
         const {recipeContext: {statePath}} = this.props
-        const uiStatePath = `${statePath}.ui`
+        const uiStatePath = [statePath, 'ui']
 
         return (
             <Toolbar

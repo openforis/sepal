@@ -23,7 +23,7 @@ class Typology extends React.Component {
             <Form.Panel
                 className={styles.panel}
                 form={form}
-                statePath={`${recipePath}.ui`}
+                statePath={[recipePath, 'ui']}
                 onApply={values => this.recipeActions.setTypology({
                     values,
                     model: valuesToModel(values)
