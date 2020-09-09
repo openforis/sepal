@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e 
+set -e
 
 SEPAL_CONFIG=/etc/sepal/module.d
 SEPAL=/usr/local/lib/sepal
@@ -33,15 +33,14 @@ group () {
     esac
 }
 
-pidof () {
+gpidof () {
     local MODULE=$1
-    # ps -ef | grep bash | egrep "sepal run ${MODULE}[$\s]" | awk '{ print $2 }'
-    ps -ef | grep bash | grep "sepal run ${MODULE}" | awk '{ print $2 }'
+    ps axho pgid,args | grep -E "/bin/bash" | grep -E "$0 run ${MODULE}(\s|$)" | head -n 1 | awk '{ print $1 }'
 }
 
 is_running () {
     local MODULE=$1
-    local PID=$(pidof ${MODULE})
+    local PID=$(gpidof ${MODULE})
     [ ! -z "$PID" ]
 }
 
@@ -91,7 +90,7 @@ module_start () {
     local MODULE=$1
     shift
     local ARGS=$@
-    local PID=$(pidof ${MODULE})
+    local PID=$(gpidof ${MODULE})
     if [[ -z "$PID" ]]; then
         local LOG=$(logfile $MODULE)
         message "STARTING" "$MODULE $ARGS" LIGHT_GREEN
@@ -112,7 +111,7 @@ group_processes_terminated () {
 
 module_stop () {
     local MODULE=$1    
-    local PID=$(pidof $MODULE)
+    local PID=$(gpidof $MODULE)
     if [[ -z "$PID" ]]; then
         message "STOPPED" $MODULE RED
     else
@@ -124,7 +123,7 @@ module_stop () {
 
 module_kill () {
     local MODULE=$1    
-    local PID=$(pidof $MODULE)
+    local PID=$(gpidof $MODULE)
     if [[ -z "$PID" ]]; then
         message "STOPPED" $MODULE RED
     else
@@ -157,14 +156,11 @@ module_clean () {
     ceo)
         ;;
     gee)
-        cd $SEPAL/lib/js/shared
-        rm -rf node_modules package-lock.json
-        cd $SEPAL/modules/gee/docker
-        rm -rf node_modules package-lock.json
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/gee/docker && rm -rf node_modules package-lock.json)
         ;;
     gui)
-        cd $SEPAL/modules/gui/frontend
-        rm -rf node_modules package-lock.json
+        (cd $SEPAL/modules/gui/frontend && rm -rf node_modules package-lock.json)
         ;;
     sepal-server)
         $SEPAL/gradlew \
@@ -177,10 +173,8 @@ module_clean () {
         :sepal-server:clean &>/dev/null
         ;;
     task)
-        cd $SEPAL/lib/js/shared
-        rm -rf node_modules package-lock.json
-        cd $SEPAL/modules/task/docker
-        rm -rf node_modules package-lock.json
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/task/docker && rm -rf node_modules package-lock.json)
         ;;
     user)
         $SEPAL/gradlew \
@@ -193,10 +187,12 @@ module_clean () {
         :sepal-user:clean &>/dev/null
         ;;
     user-storage)
-        cd $SEPAL/lib/js/shared
-        rm -rf node_modules package-lock.json
-        cd $SEPAL/modules/user-storage/docker
-        rm -rf node_modules package-lock.json
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/user-storage/docker && rm -rf node_modules package-lock.json)
+        ;;
+    email-notifications)
+        (cd $SEPAL/lib/js/shared && rm -rf node_modules package-lock.json)
+        (cd $SEPAL/modules/email-notifications/docker && rm -rf node_modules package-lock.json)
         ;;
     *)
         return 1
@@ -368,16 +364,11 @@ run () {
             $ARGS
         ;;
     gee)
-        cd $SEPAL/lib/js/shared
-        npm install
-        cd $SEPAL/modules/gee/docker
-        npm install
-        SEPAL_CONFIG=$SEPAL_CONFIG npm run dev
+        (cd $SEPAL/lib/js/shared && npm install)
+        (cd $SEPAL/modules/gee/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     gui)
-        cd $SEPAL/modules/gui/frontend
-        npm install
-        npm start
+        (cd $SEPAL/modules/gui/frontend && npm install && npm start)
         ;;
     sepal-server)
         $SEPAL/gradlew \
@@ -389,11 +380,8 @@ run () {
         $ARGS
         ;;
     task)
-        cd $SEPAL/lib/js/shared
-        npm install
-        cd $SEPAL/modules/task/docker
-        npm i
-        SEPAL_CONFIG=$SEPAL_CONFIG source ./dev.sh
+        (cd $SEPAL/lib/js/shared && npm install)
+        (cd $SEPAL/modules/task/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     user)
         sudo $SEPAL/gradlew \
@@ -405,11 +393,8 @@ run () {
         $ARGS
         ;;
     user-storage)
-        cd $SEPAL/lib/js/shared
-        npm install
-        cd $SEPAL/modules/user-storage/docker
-        npm install
-        SEPAL_CONFIG=$SEPAL_CONFIG npm run dev
+        (cd $SEPAL/lib/js/shared && npm install)
+        (cd $SEPAL/modules/user-storage/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     *)
         return 1
