@@ -2,14 +2,12 @@ require('sepal/log').configureServer(require('./log.json'))
 
 const _ = require('lodash')
 
-const {initMessageQueue} = require('./messageQueue')
+const {connect$} = require('./messageQueue')
 const {scheduleFullScan} = require('./scan')
 const {onScanComplete, logStats} = require('./jobQueue')
 const {messageHandler} = require('./messageHandler')
 
-const main = async () => {
-    const {topicSubscriber, topicPublisher} = await initMessageQueue()
-
+const initialize = async ({topicSubscriber, topicPublisher}) => {
     const publisher = await topicPublisher()
 
     onScanComplete(
@@ -32,4 +30,6 @@ const main = async () => {
     await logStats()
 }
 
-main()
+connect$().subscribe(
+    connection => initialize(connection)
+)
