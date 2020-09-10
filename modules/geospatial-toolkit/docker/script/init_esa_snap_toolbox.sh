@@ -5,9 +5,10 @@ echo
 echo "***********************************"
 echo "*** Installing ESA SNAP Toolbox ***"
 echo "***********************************"
-wget -nv http://step.esa.int/downloads/6.0/installers/esa-snap_sentinel_unix_6_0.sh
-sh esa-snap_sentinel_unix_6_0.sh -q -overwrite
-rm -f esa-snap_sentinel_unix_6_0.sh
+INSTALL_SCRIPT=esa-snap_all_unix_7_0
+wget -nv http://step.esa.int/downloads/7.0/installers/$INSTALL_SCRIPT
+sh $INSTALL_SCRIPT -q -overwrite
+rm -f $INSTALL_SCRIPT
 
 echo ' Creating a simplified SNAP command line execution file with non-default runtime parameters'
 echo '#!/bin/bash' > /usr/local/snap/bin/gpt.sepal
