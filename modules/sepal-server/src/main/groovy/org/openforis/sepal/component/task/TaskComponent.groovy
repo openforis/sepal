@@ -47,7 +47,7 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
         command(ExecuteTasksInSession, new ExecuteTasksInSessionHandler(taskRepository, sessionManager, workerGateway))
         def cancelTaskHandler = new CancelTaskHandler(taskRepository, sessionManager, workerGateway)
         command(CancelTask, cancelTaskHandler)
-        command(CancelTimedOutTasks, new CancelTimedOutTasksHandler(taskRepository, sessionManager, workerGateway))
+        command(CancelTimedOutTasks, new CancelTimedOutTasksHandler(taskRepository, sessionManager, workerGateway, connectionManager))
         command(CancelUserTasks, new CancelUserTasksHandler(taskRepository, cancelTaskHandler))
         command(UpdateTaskProgress, new UpdateTaskProgressHandler(taskRepository, sessionManager, cancelTaskHandler))
         command(RemoveTask, new RemoveTaskHandler(taskRepository))
