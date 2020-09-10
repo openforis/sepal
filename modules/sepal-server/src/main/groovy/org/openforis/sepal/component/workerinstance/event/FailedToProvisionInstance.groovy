@@ -7,5 +7,5 @@ import org.openforis.sepal.event.Event
 @Immutable(knownImmutables = ['exception'])
 class FailedToProvisionInstance implements Event {
     WorkerInstance instance
-    Exception exception
+    String error
 }

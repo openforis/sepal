@@ -7,5 +7,5 @@ import org.openforis.sepal.event.Event
 class FailedToRequestInstance implements Event {
     String workerType
     String instanceType
-    Exception exception
+    String exception
 }

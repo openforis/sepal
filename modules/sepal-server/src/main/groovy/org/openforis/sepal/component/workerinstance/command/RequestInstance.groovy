@@ -45,7 +45,7 @@ class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestIn
                 return reserveIdle(idleInstance, reservation, command)
             return launchInstance(reservation, command)
         } catch (Exception e) {
-            eventDispatcher.publish(new FailedToRequestInstance(command.workerType, command.instanceType, e))
+            eventDispatcher.publish(new FailedToRequestInstance(command.workerType, command.instanceType, e.toString()))
             throw e
         }
     }
