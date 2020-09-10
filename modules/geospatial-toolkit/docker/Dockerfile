@@ -29,9 +29,6 @@ RUN chmod u+x /script/init_oft.sh && sync && /script/init_oft.sh
 ADD script/init_esa_snap_toolbox.sh /script/
 RUN chmod u+x /script/init_esa_snap_toolbox.sh && sync && /script/init_esa_snap_toolbox.sh
 
-ADD script/init_osk.sh /script/
-RUN chmod u+x /script/init_osk.sh && sync && /script/init_osk.sh
-
 ADD script/init_orfeo.sh /script/
 RUN chmod u+x /script/init_orfeo.sh && sync && /script/init_orfeo.sh
 
