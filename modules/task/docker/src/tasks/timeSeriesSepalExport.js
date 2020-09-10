@@ -18,7 +18,7 @@ const log = require('sepal/log').getLogger('task')
 
 const TILE_DEGREES = 2
 const EE_EXPORT_SHARD_SIZE = 256
-const EE_EXPORT_FILE_DIMENSIONS = 2048
+const EE_EXPORT_FILE_DIMENSIONS = 512
 const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
