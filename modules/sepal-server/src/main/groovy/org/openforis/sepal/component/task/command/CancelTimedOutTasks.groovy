@@ -3,8 +3,9 @@ package org.openforis.sepal.component.task.command
 import groovy.transform.Canonical
 import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
-import org.openforis.sepal.command.CommandHandler
+import org.openforis.sepal.command.NonTransactionalCommandHandler
 import org.openforis.sepal.component.task.api.*
+import org.openforis.sepal.transaction.TransactionManager
 import org.slf4j.LoggerFactory
 
 @EqualsAndHashCode(callSuper = true)
@@ -12,16 +13,18 @@ import org.slf4j.LoggerFactory
 class CancelTimedOutTasks extends AbstractCommand<Void> {
 }
 
-class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutTasks> {
+class CancelTimedOutTasksHandler implements NonTransactionalCommandHandler<Void, CancelTimedOutTasks> {
     private static final LOG = LoggerFactory.getLogger(this)
     private final TaskRepository taskRepository
     private final WorkerSessionManager sessionManager
     private final WorkerGateway workerGateway
+    private final TransactionManager transactionManager
 
-    CancelTimedOutTasksHandler(TaskRepository taskRepository, WorkerSessionManager sessionManager, WorkerGateway workerGateway) {
+    CancelTimedOutTasksHandler(TaskRepository taskRepository, WorkerSessionManager sessionManager, WorkerGateway workerGateway, TransactionManager transactionManager) {
         this.taskRepository = taskRepository
         this.sessionManager = sessionManager
         this.workerGateway = workerGateway
+        this.transactionManager = transactionManager
     }
 
     Void execute(CancelTimedOutTasks command) {
@@ -40,13 +43,19 @@ class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutT
         } as Map<String, WorkerSession>
 
         timedOutTasks
-            .findAll { it.active }
-            .each { cancelTaskInWorker(it, sessionById[it.sessionId]) }
+                .findAll { it.active }
+                .each { Task task ->
+                    transactionManager.withTransaction {
+                        cancelTaskInWorker(task, sessionById[task.sessionId])
+                    }
+                }
 
-        sessionById.keySet().each {
-            def tasksInSession = taskRepository.pendingOrActiveTasksInSession(it)
+        sessionById.keySet().each { String sessionId ->
+            def tasksInSession = taskRepository.pendingOrActiveTasksInSession(sessionId)
             if (!tasksInSession)
-                sessionManager.closeSession(it)
+                transactionManager.withTransaction {
+                    sessionManager.closeSession(sessionId)
+                }
         }
         return null
     }

@@ -3,11 +3,13 @@ package org.openforis.sepal.component.workersession.command
 import groovy.transform.Canonical
 import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
-import org.openforis.sepal.command.CommandHandler
+import org.openforis.sepal.command.NonTransactionalCommandHandler
 import org.openforis.sepal.component.workersession.api.InstanceManager
+import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
 import org.openforis.sepal.component.workersession.event.WorkerSessionClosed
 import org.openforis.sepal.event.EventDispatcher
+import org.openforis.sepal.transaction.TransactionManager
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
@@ -18,25 +20,32 @@ class CloseUserSessions extends AbstractCommand<Void> {
 
 }
 
-class CloseUserSessionsHandler implements CommandHandler<Void, CloseUserSessions> {
+class CloseUserSessionsHandler implements NonTransactionalCommandHandler<Void, CloseUserSessions> {
     private final WorkerSessionRepository repository
     private final InstanceManager instanceManager
+    private final TransactionManager transactionManager
     private final EventDispatcher eventDispatcher
 
     CloseUserSessionsHandler(
-        WorkerSessionRepository repository,
-        InstanceManager instanceManager,
-        EventDispatcher eventDispatcher) {
+            WorkerSessionRepository repository,
+            InstanceManager instanceManager,
+            TransactionManager transactionManager,
+            EventDispatcher eventDispatcher) {
         this.repository = repository
         this.instanceManager = instanceManager
+        this.transactionManager = transactionManager
         this.eventDispatcher = eventDispatcher
     }
 
     Void execute(CloseUserSessions command) {
         def sessions = repository.userSessions(command.username, [PENDING, ACTIVE])
-        sessions.each { repository.update(it.close()) }
-        sessions.each { instanceManager.releaseInstance(it.instance.id) }
-        sessions.each { eventDispatcher.publish(new WorkerSessionClosed(it.username, it.id)) }
+        sessions.each { WorkerSession session ->
+            transactionManager.withTransaction {
+                repository.update(session.close())
+                instanceManager.releaseInstance(session.instance.id)
+                eventDispatcher.publish(new WorkerSessionClosed(session.username, session.id))
+            }
+        }
         return null
     }
 }
