@@ -19,6 +19,7 @@ import static groovyx.net.http.ContentType.JSON
 @ToString
 class DockerInstanceProvisioner implements InstanceProvisioner {
     private static final Logger LOG = LoggerFactory.getLogger(this)
+    private static final double MIN_HOST_RAM_GiB = 0.03
     private final WorkerInstanceConfig config
     private final Map<String, InstanceType> instanceTypeById
     private final String syslogHost
@@ -60,55 +61,59 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void createContainer(WorkerInstance instance, Image image) {
+        def memoryBytes = instanceTypeById[instance.type].ramGiB * Math.pow(10, 9) - MIN_HOST_RAM_GiB * Math.pow(10, 9)
         def instanceType = instanceTypeById[instance.type]
         def body = toJson(
-            Image: "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
-            Tty: true,
-            Cmd: image.runCommand,
-            HostConfig: [
-                Binds: image.volumes.collect { hostDir, mountedDirs ->
-                    if (!(mountedDirs instanceof List))
-                        mountedDirs = [mountedDirs]
-                    return mountedDirs.collect {
-                        "$hostDir:$it"
-                    }
-                }.flatten(),
-                PortBindings: image.publishedPorts.collectEntries { publishedPort, exposedPort ->
-                    ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
+                Image: "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
+                Tty: true,
+                Cmd: image.runCommand,
+                HostConfig: [
+                        Binds: image.volumes.collect { hostDir, mountedDirs ->
+                            if (!(mountedDirs instanceof List))
+                                mountedDirs = [mountedDirs]
+                            return mountedDirs.collect {
+                                "$hostDir:$it"
+                            }
+                        }.flatten(),
+                        PortBindings: image.publishedPorts.collectEntries { publishedPort, exposedPort ->
+                            ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
+                        },
+                        Links: image.links.collect { "$it.key:$it.value" },
+                        Mounts: [
+                                [
+                                        "Type": "tmpfs",
+                                        "Target": "/ram",
+                                        "TmpfsOptions": [
+                                                "SizeBytes": (long) instanceType.ramBytes / 2
+                                        ]
+                                ]
+                        ],
+                        LogConfig: [
+                                "Type": "syslog",
+                                "Config": [
+                                        "syslog-address": "tcp://${syslogHost}:514",
+                                        "tag": "{{.Name}}",
+                                ]
+                        ],
+                        Devices: (instanceType.devices ?: []).collect {
+                            [PathOnHost: it, PathInContainer: it, CgroupPermissions: "mrw"]
+                        },
+                        Memory: memoryBytes,
+                        MemorySwap: memoryBytes,
+                        KernelMemory: memoryBytes
+                ],
+                ExposedPorts: image.exposedPorts.collectEntries {
+                    ["$it/tcp", [:]]
                 },
-                Links: image.links.collect { "$it.key:$it.value" },
-                Mounts: [
-                    [
-                        "Type": "tmpfs",
-                        "Target": "/ram",
-                        "TmpfsOptions": [
-                            "SizeBytes": (long) instanceType.ramBytes / 2
-                        ]
-                    ]
-                ],
-                LogConfig: [
-                    "Type": "syslog",
-                    "Config": [
-                        "syslog-address": "tcp://${syslogHost}:514",
-                        "tag": "{{.Name}}",
-                    ]
-                ],
-                Devices: (instanceType.devices ?: []).collect {
-                    [PathOnHost: it, PathInContainer: it, CgroupPermissions: "mrw"]
+                Env: image.environment.collect {
+                    "$it.key=$it.value"
                 }
-            ],
-            ExposedPorts: image.exposedPorts.collectEntries {
-                ["$it/tcp", [:]]
-            },
-            Env: image.environment.collect {
-                "$it.key=$it.value"
-            }
         )
         def request = [
-            path: "containers/create",
-            query: [name: image.containerName(instance)],
-            body: body,
-            requestContentType: JSON
+                path: "containers/create",
+                query: [name: image.containerName(instance)],
+                body: body,
+                requestContentType: JSON
         ]
         LOG.debug("Creating container from image $image on instance $instance with request $request")
         withClient(instance) {
@@ -121,8 +126,8 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
 
     private void startContainer(WorkerInstance instance, Image image) {
         def request = [
-            path: "containers/${image.containerName(instance)}/start",
-            requestContentType: JSON
+                path: "containers/${image.containerName(instance)}/start",
+                requestContentType: JSON
         ]
         LOG.debug("Starting container from image $image on instance $instance with request $request")
         withClient(instance) {
@@ -135,21 +140,21 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         LOG.debug("Waiting until container initialized: Image $image on instance $instance")
         withClient(instance) {
             def response = post(
-                path: "containers/${image.containerName(instance)}/exec",
-                body: new JsonOutput().toJson([
-                    AttachStdin: false,
-                    AttachStdout: true,
-                    AttachStderr: true,
-                    Tty: false,
-                    Cmd: image.waitCommand
-                ]),
-                requestContentType: JSON
+                    path: "containers/${image.containerName(instance)}/exec",
+                    body: new JsonOutput().toJson([
+                            AttachStdin: false,
+                            AttachStdout: true,
+                            AttachStderr: true,
+                            Tty: false,
+                            Cmd: image.waitCommand
+                    ]),
+                    requestContentType: JSON
             )
             def execId = response.data.Id
             def startResponse = post(
-                path: "exec/$execId/start",
-                body: new JsonOutput().toJson([Detach: false, Tty: true]),
-                requestContentType: JSON
+                    path: "exec/$execId/start",
+                    body: new JsonOutput().toJson([Detach: false, Tty: true]),
+                    requestContentType: JSON
             )
             LOG.debug("Waiting output:\n${startResponse.data}")
             LOG.debug("Container initialized: Image $image on instance $instance")
@@ -189,7 +194,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                 LOG.debug("Failed to connect to Docker on instance $instance")
                 Thread.sleep(1000)
             }
-        throw new InstanceProvisioner.Failed(instance, "Unable to connect to docker on instance: $instance")
+        throw new Failed(instance, "Unable to connect to docker on instance: $instance")
     }
 
     @SuppressWarnings("GrDeprecatedAPIUsage")
@@ -210,8 +215,8 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private <T> T withClient(
-        WorkerInstance instance,
-        @DelegatesTo(RESTClient) Closure<T> callback) {
+            WorkerInstance instance,
+            @DelegatesTo(RESTClient) Closure<T> callback) {
         withClient(instance.host, callback)
     }
 
