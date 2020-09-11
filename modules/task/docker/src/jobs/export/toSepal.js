@@ -25,23 +25,23 @@ const createDriveFolder$ = folder =>
     )
 
 const exportImageToSepal$ = ({
-                                 image,
-                                 folder,
-                                 description,
-                                 downloadDir,
-                                 dimensions,
-                                 region,
-                                 scale,
-                                 crs,
-                                 crsTransform,
-                                 maxPixels = 1e13,
-                                 shardSize,
-                                 fileDimensions,
-                                 skipEmptyTiles,
-                                 fileFormat,
-                                 formatOptions,
-                                 retries
-                             }) => {
+    image,
+    folder,
+    description,
+    downloadDir,
+    dimensions,
+    region,
+    scale,
+    crs,
+    crsTransform,
+    maxPixels = 1e13,
+    shardSize,
+    fileDimensions,
+    skipEmptyTiles,
+    fileFormat,
+    formatOptions,
+    retries
+}) => {
     const prefix = description
 
     const throughCloudStorage$ = () => {
@@ -71,7 +71,7 @@ const exportImageToSepal$ = ({
                         bucketPath,
                         prefix: cloudStoragePrefix,
                         downloadDir,
-                        deleteAfterDownload: true
+                        deleteAfterDownload: false
                     })
                 ).pipe(
                     finalize(() => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}),
