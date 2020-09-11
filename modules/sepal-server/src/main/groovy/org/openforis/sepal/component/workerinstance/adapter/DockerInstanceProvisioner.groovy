@@ -19,7 +19,7 @@ import static groovyx.net.http.ContentType.JSON
 @ToString
 class DockerInstanceProvisioner implements InstanceProvisioner {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private static final double MIN_HOST_RAM_GiB = 0.5
+    private static final double MIN_HOST_RAM_GiB = 0.3
     private final WorkerInstanceConfig config
     private final Map<String, InstanceType> instanceTypeById
     private final String syslogHost
