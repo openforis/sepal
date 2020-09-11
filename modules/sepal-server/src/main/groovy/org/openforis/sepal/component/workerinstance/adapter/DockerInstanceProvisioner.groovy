@@ -61,7 +61,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void createContainer(WorkerInstance instance, Image image) {
-        def memoryBytes = instanceTypeById[instance.type].ramGiB * Math.pow(10, 9) - MIN_HOST_RAM_GiB * Math.pow(10, 9)
+        def memoryBytes = (instanceTypeById[instance.type].ramGiB * Math.pow(10, 9) - MIN_HOST_RAM_GiB * Math.pow(10, 9)) as double
         def instanceType = instanceTypeById[instance.type]
         def body = toJson(
                 Image: "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
