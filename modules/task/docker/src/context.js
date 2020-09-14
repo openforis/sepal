@@ -1,5 +1,5 @@
-const {BehaviorSubject, timer} = require('rx')
-const {filter, switchMap, tap, map, pairwise} = require('rx/operators')
+const {BehaviorSubject, timer, EMPTY} = require('rx')
+const {catchError, filter, switchMap, tap, map, pairwise} = require('rx/operators')
 const fs = require('fs')
 const path = require('path')
 const {mkdir$} = require('root/rxjs/fileSystem')
@@ -40,6 +40,7 @@ const monitorUserCredentials = () => {
     const userCredentialsPath = credentialsPath()
     log.debug(`Monitoring user credentials in ${userCredentialsPath}`)
     mkdir$(credentialsDir(), {recursive: true}).pipe(
+        catchError(() => EMPTY),
         switchMap(() =>
             timer(0, 1000 * 60).pipe(
                 tap(() => loadUserCredentials())
