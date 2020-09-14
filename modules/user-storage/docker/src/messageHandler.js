@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const log = require('sepal/log').getLogger('messageQueue')
+const log = require('sepal/log').getLogger('messageHandler')
 const {scheduleRescan} = require('./scan')
 const {setSessionActive, setSessionInactive} = require('./persistence')
 const {Subject} = require('rxjs')
