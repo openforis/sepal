@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Using fake SMTP Etherreal: https://ethereal.email/
+
 LIBS=../../../lib/js
 NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --watch src \
