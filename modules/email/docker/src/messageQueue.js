@@ -51,17 +51,25 @@ const topicSubscriber = async (connection, {queue, topic, handler}) => {
     channel.bindQueue(queue, EXCHANGE, topic)
     channel.consume(queue, msg => {
         const key = msg.fields.routingKey
-        const content = JSON.parse(msg.content.toString())
-        log.debug(`Received message with key [${key}]:`, content)
-        Promise.resolve(handler(key, content))
-            .then(() => {
-                channel.ack(msg)
-                log.trace(() => 'Message acknowledged:', msg)
-            })
-            .catch(() => {
-                channel.nack(msg)
-                log.trace(() => 'Message not acknowledged:', msg)
-            })
+        const message = msg.content.toString()
+        try {
+            const content = JSON.parse(message)
+            log.isTrace()
+                ? log.trace(`Received message with key <${key}>:`, content)
+                : log.debug(`Received message with key <${key}>`)
+            Promise.resolve(handler(key, content))
+                .then(() => {
+                    log.trace(() => 'Message acknowledged:', msg)
+                    channel.ack(msg)
+                })
+                .catch(() => {
+                    log.trace(() => 'Message not acknowledged:', msg)
+                    channel.nack(msg)
+                })
+        } catch (error) {
+            log.error('Received message doesn\'t match expected JSON format:', message)
+            channel.ack(msg)
+        }
     })
 }
 
@@ -80,3 +88,4 @@ const topicPublisher = async connection => {
 module.exports = {
     connect$
 }
+

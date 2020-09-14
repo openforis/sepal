@@ -1,9 +1,11 @@
 {
     "port": 5104,
     "categories": {
-        "email": "trace",
-        "emailQueue": "trace",
-        "messageHanlder": "trace",
-        "messageQueue": "trace"
+        "config": "info",
+        "email": "debug",
+        "emailQueue": "debug",
+        "main": "info",
+        "messageHanlder": "debug",
+        "messageQueue": "debug"
     }
 }

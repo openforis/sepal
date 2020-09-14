@@ -14,8 +14,8 @@ const main = async () => {
             topic: 'email.send',
             handler: messageHandler
         })
-        
         await logStats()
+        log.info('Initialized')
     }
     
     await connect$().subscribe(

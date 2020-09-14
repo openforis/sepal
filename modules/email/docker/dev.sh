@@ -11,5 +11,5 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --smtp-host=smtp.ethereal.email \
     --smtp-port=587 \
     --smtp-user=derrick.goodwin@ethereal.email \
-    --smtp-password=DFVFth6hNJ5Y7c1mjt
+    --smtp-password=DFVFth6hNJ5Y7c1mjt \
     --smtp-from=samplefrom@sepal.io
