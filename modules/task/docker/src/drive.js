@@ -1,4 +1,4 @@
-const {EMPTY, ReplaySubject, concat, from, of, throwError} = require('rx')
+const {defer, EMPTY, ReplaySubject, concat, from, of, throwError} = require('rx')
 const {catchError, expand, filter, map, mergeMap, mergeScan, scan, switchMap} = require('rx/operators')
 const {google} = require('googleapis')
 const {NotFoundException} = require('sepal/exception')
@@ -10,6 +10,7 @@ const {retry, swallow} = require('sepal/rxjs/operators')
 const {mkdir$} = require('./rxjs/fileSystem')
 const {limiter$: driveLimiter$} = require('./jobs/service/driveLimiter')
 const format = require('./format')
+const moment = require('moment')
 
 const RETRIES = 5
 
@@ -32,9 +33,11 @@ const do$ = (message, operation$) => {
 }
 
 const auth$ = () =>
-    getCurrentContext$().pipe(
+    defer(getCurrentContext$).pipe(
         switchMap(({userCredentials}) => {
             const oAuth2Client = new google.auth.OAuth2()
+            const expiration = moment(userCredentials['access_token_expiry_date'])
+            log.debug(`Authenticating with token expiring ${expiration.fromNow()} (${expiration})`)
             oAuth2Client.setCredentials({
                 access_token: userCredentials['access_token']
             })
