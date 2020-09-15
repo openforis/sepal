@@ -47,6 +47,7 @@ class SaveRecipe extends React.Component {
                         label={msg('process.saveRecipe.form.name.label')}
                         autoFocus
                         input={name}
+                        transform={value => value.replace(/[^\w-.]/g, '_')}
                         errorMessage
                     />
                 </Layout>
