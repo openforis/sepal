@@ -25,7 +25,7 @@ group () {
         echo "${SEPAL_MODULES[@]}"
         ;;
     dev)
-        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) api-gateway task gee gui ceo mongo user-storage"
+        echo "user sepal-server ( -DskipSceneMetaDataUpdate ) api-gateway task gee gui ceo mongo user-storage email"
         ;;
     *)
         return 1
