@@ -9,10 +9,11 @@ import React from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 import styles from './input.module.css'
 import withForwardedRef from 'ref'
+import _ from 'lodash'
 
 class _Input extends React.Component {
     state = {
-        value: null,
+        value: '',
         focused: false
     }
 
@@ -21,10 +22,15 @@ class _Input extends React.Component {
         this.ref = props.forwardedRef || React.createRef()
     }
 
-    static getDerivedStateFromProps(props) {
-        const {value} = props
-        return {
-            value
+    componentDidMount() {
+        const {value} = this.props
+        this.setState({value})
+    }
+
+    componentDidUpdate(prevProps) {
+        const {value} = this.props
+        if (!_.isEqual(value, prevProps.value)) {
+            this.setState({value})
         }
     }
 
@@ -65,11 +71,11 @@ class _Input extends React.Component {
 
     renderInput() {
         const {
-            type, name, value, defaultValue, placeholder, maxLength, tabIndex,
-            autoFocus, autoComplete, autoCorrect, autoCapitalize, spellCheck, disabled, readOnly,
+            type, name, defaultValue, placeholder, maxLength, tabIndex,
+            autoFocus, autoComplete, autoCorrect, autoCapitalize, spellCheck, disabled, readOnly, transform,
             onBlur, onChange, onFocus
         } = this.props
-        const {focused} = this.state
+        const {focused, value} = this.state
         return (
             // [HACK] input is wrapped in a div for fixing Firefox input width in flex
             <Keybinding keymap={{' ': null}} disabled={!focused} priority>
@@ -99,7 +105,16 @@ class _Input extends React.Component {
                             this.setState({focused: false})
                             onBlur && onBlur(e)
                         }}
-                        onChange={e => onChange && onChange(e)}
+                        onChange={e => {
+                            if (transform) {
+                                const value = transform(e.target.value)
+                                e.target.value = value
+                                onChange && onChange(e)
+                                this.setState({value})
+                            } else {
+                                onChange && onChange(e)
+                            }
+                        }}
                     />
                 </div>
             </Keybinding>
@@ -180,6 +195,7 @@ Input.propTypes = {
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
+    transform: PropTypes.func,
     type: PropTypes.string,
     value: PropTypes.any,
     onBlur: PropTypes.func,
