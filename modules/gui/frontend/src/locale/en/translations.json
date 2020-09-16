@@ -1533,7 +1533,7 @@
                         "lambda":  "Lambda",
                         "maxIterations": "Max iterations"
                     },
-                    "title": "Pre-process",
+                    "title": "CCDC options",
                     "tooltip": "Configure CCDC options"
                 },
                 "retrieve": {
