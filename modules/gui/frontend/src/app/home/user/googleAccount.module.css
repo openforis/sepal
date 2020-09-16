@@ -2,6 +2,10 @@
     width: 22rem;
 }
 
+.info {
+    color: #a0a0a0;
+}
+
 .connected {
     color: var(--success-color);
 }

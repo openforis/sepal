@@ -96,7 +96,7 @@ class GoogleAccount extends React.Component {
                         {msg('user.googleAccount.connected.title')}
                     </div>
                 </Layout>
-                <div>
+                <div className={styles.info}>
                     {msg('user.googleAccount.connected.info')}
                 </div>
                 {this.renderDisconnectButton()}
@@ -113,7 +113,7 @@ class GoogleAccount extends React.Component {
                         {msg('user.googleAccount.disconnected.title')}
                     </div>
                 </Layout>
-                <div>
+                <div className={styles.info}>
                     {msg('user.googleAccount.disconnected.info')}
                 </div>
                 {this.renderConnectButton()}
