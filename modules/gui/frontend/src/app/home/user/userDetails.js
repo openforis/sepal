@@ -10,10 +10,10 @@ import {currentUser, updateCurrentUserDetails$} from 'widget/user'
 import {msg} from 'translate'
 import ChangePassword from './changePassword'
 import GoogleAccount from './googleAccount'
+import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import styles from './userDetails.module.css'
-import Icon from 'widget/icon'
 
 const fields = {
     name: new Form.Field()
@@ -132,7 +132,7 @@ class _UserDetails extends React.Component {
         const connected = this.isUserGoogleAccount()
         return (
             <Layout type='horizontal-nowrap' spacing='compact'>
-                <Icon name='google' type='brands'/>                
+                <Icon name='google' type='brands'/>
                 <div className={connected ? styles.connected : styles.disconnected}>
                     {msg(connected ? 'user.googleAccount.connected.label' : 'user.googleAccount.disconnected.label')}
                 </div>

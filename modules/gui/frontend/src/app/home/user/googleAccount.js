@@ -1,19 +1,17 @@
-import {EMPTY, throwError} from 'rxjs'
-import {Form, form} from 'widget/form/form'
+import {Button} from 'widget/button'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {connect} from 'store'
+import {currentUser, requestUserAccess$, revokeGoogleAccess$} from 'widget/user'
 import {msg} from 'translate'
+import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import styles from './googleAccount.module.css'
-import {currentUser, requestUserAccess$, revokeGoogleAccess$, updateCurrentUserDetails$} from 'widget/user'
-import {Button} from 'widget/button'
 import SafetyButton from 'widget/safetyButton'
-import {connect} from 'store'
-import Icon from 'widget/icon'
+import styles from './googleAccount.module.css'
 
 const mapStateToProps = state => {
     const user = currentUser()
@@ -56,7 +54,6 @@ class GoogleAccount extends React.Component {
     }
 
     renderConnectButton() {
-        const {user} = this.props
         const useUserGoogleAccount = this.props.stream('USE_USER_GOOGLE_ACCOUNT')
         return (
             <Button
@@ -78,7 +75,8 @@ class GoogleAccount extends React.Component {
                 icon='google'
                 iconType='brands'
                 label={msg('user.googleAccount.disconnect.label')}
-                message={msg('user.googleAccount.disconnect.warning', {taskCount})}
+                title={msg('user.googleAccount.disconnect.warning.title')}
+                message={msg('user.googleAccount.disconnect.warning.message', {taskCount})}
                 width='fill'
                 skipConfirmation={!taskCount}
                 busy={this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT').active}
@@ -128,21 +126,24 @@ class GoogleAccount extends React.Component {
     }
 
     render() {
-        const {form} = this.props
         return (
-            <Form.Panel
+            <Panel
                 className={styles.panel}
-                isActionForm={true}
                 modal
-                close={() => this.close()}>
+                onClose={() => this.close()}>
                 <Panel.Header
                     icon='key'
-                    title={msg('user.googleAccount.title')}/>
+                    title={msg('user.googleAccount.title')}
+                />
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Form.PanelButtons/>
-            </Form.Panel>
+                <Panel.Buttons>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Close onClick={() => this.close()}/>
+                    </Panel.Buttons.Main>
+                </Panel.Buttons>
+            </Panel>
         )
     }
 }

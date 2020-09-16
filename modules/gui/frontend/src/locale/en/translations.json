@@ -1680,7 +1680,10 @@
             },
             "disconnect": {
                 "label": "Disconnect your Google account",
-                "warning": "Warning! Switching to SEPAL Google account would cause termination of any task started while using your own Google account. Tasks running: {taskCount}."
+                "warning": {
+                    "title": "Warning",
+                    "message": "Disconnecting your Google account would cause termination of any task started while connected. Tasks currently running: {taskCount}."
+                }
             }
         },
         "changePassword": {
