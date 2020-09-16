@@ -216,6 +216,7 @@ class _SliderDynamics extends React.Component {
 
     initialize({handleRef, clickableAreaRef}) {
         const {addSubscription} = this.props
+        
         this.setHandlePositionByValue()
 
         const handle = new Hammer(handleRef)
@@ -265,14 +266,20 @@ class _SliderDynamics extends React.Component {
             })
         )
 
+        const handleDragging$ = merge(
+            panStart$.pipe(mapTo(true)),
+            panEnd$.pipe(mapTo(false)),
+        )
+
         const targetPosition$ = merge(clickPosition$, dragPosition$)
 
         const handlePosition$ = targetPosition$.pipe(
-            switchMap(targetPosition => {
+            withLatestFrom(handleDragging$),
+            switchMap(([targetPosition, dragging]) => {
                 const {position} = this.state
                 return animationFrame$.pipe(
                     map(() => targetPosition),
-                    scan(lerp(.1), position),
+                    scan(lerp(dragging ? .25 : .1), position),
                     map(position => Math.round(position)),
                     distinctUntilChanged()
                 )
@@ -282,11 +289,6 @@ class _SliderDynamics extends React.Component {
         const handleMoving$ = combineLatest(handlePosition$, targetPosition$).pipe(
             map(([currentPosition, targetPosition]) => currentPosition !== targetPosition),
             distinctUntilChanged()
-        )
-
-        const handleDragging$ = merge(
-            panStart$.pipe(mapTo(true)),
-            panEnd$.pipe(mapTo(false)),
         )
 
         const previewPosition$ = merge(targetPosition$, hoverPosition$).pipe(
