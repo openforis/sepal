@@ -91,7 +91,7 @@ class ChangePassword extends React.Component {
                 onApply={userPasswords => this.changePassword$(userPasswords)}
                 close={() => this.close()}>
                 <Panel.Header
-                    iscon='key'
+                    icon='key'
                     title={msg('user.changePassword.title')}/>
                 <Panel.Content>
                     {this.renderForm()}

@@ -1,9 +1,9 @@
 .panel {
-    width: 26rem;
+    width: 22rem;
 }
 
-.googleAccount {
-    margin-top: 1rem;
+.info {
+    color: #a0a0a0;
 }
 
 .connected {

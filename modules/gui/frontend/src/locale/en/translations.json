@@ -1661,6 +1661,28 @@
         "warning": "You are not logged in. Perhaps you have been inactive too long?"
     },
     "user": {
+        "googleAccount": {
+            "label": "Google account",
+            "title": "Google account",
+            "connected": {
+                "label": "Connected",
+                "title": "Your SEPAL account is connected to your Google account",
+                "info": "You have full access SEPAL. If you disconnect your Google account from SEPAL, some features (like exporting to Earth Engine assest) will not be available."
+            },
+            "disconnected": {
+                "label": "Disconnected",
+                "title": "Your SEPAL account is not connected to your Google account",
+                "info": "You have limited access to SEPAL. If you connect your Google account to SEPAL, all features (including exporting to Earth Engine assest) will be available.",
+                "success": "SEPAL is now disconnected from your Google account."
+            },
+            "connect": {
+                "label": "Connect your Google account"
+            },
+            "disconnect": {
+                "label": "Disconnect your Google account",
+                "warning": "Warning! Switching to SEPAL Google account would cause termination of any task started while using your own Google account. Tasks running: {taskCount}."
+            }
+        },
         "changePassword": {
             "form": {
                 "confirmPassword": {
@@ -1680,6 +1702,7 @@
                 }
             },
             "success": "Password has been changed.",
+            "label": "Password",
             "title": "Change password",
             "updating": "Updating..."
         },
@@ -1761,6 +1784,12 @@
                     "format": "Username should start with a letter",
                     "label": "Username",
                     "required": "Username is required"
+                },
+                "emailNotifications": {
+                    "label": "Email notifications",
+                    "tooltip": "Enable or disable optional email notifications (e.g. task completed, task failed, etc.)",
+                    "enabled.label": "Enabled",
+                    "disabled.label": "Disabled"
                 }
             },
             "switchingToSepalGoogleAccount": "Switching to Sepal's Google Account",
@@ -1768,16 +1797,6 @@
             "update": {
                 "error": "Could not update user details.",
                 "success": "User details have been updated."
-            },
-            "useSepalGoogleAccount": {
-                "label": "Use Sepal's Google account",
-                "tooltip": "Revoke Sepal's permission to use your Google drive and manage your Earth Engine assets. Some features like exporting to Earth Engine assets will not be available.",
-                "warning": "Warning! Switching to SEPAL Google account would cause termination of any task started while using your own Google account. Tasks running: {taskCount}.",
-                "success": "Now using SEPAL Google account."
-            },
-            "useUserGoogleAccount": {
-                "label": "Use my own Google account",
-                "tooltip": "Give Sepal permission to use your Google drive and manage your Earth Engine assets. This gives you full access to Sepal's functionality."
             }
         },
         "userSession": {
