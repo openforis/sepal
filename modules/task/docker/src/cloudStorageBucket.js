@@ -141,7 +141,8 @@ const getEmail$ = accessToken =>
 
 const do$ = (description, promise) => defer(() => {
     log.debug(description)
-    return fromPromise(promise).pipe(
+    return of(true).pipe(
+        switchMap(() => fromPromise(promise)),
         retry(RETRIES, {description})
     )
 })

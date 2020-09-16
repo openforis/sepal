@@ -53,17 +53,20 @@ const auth$ = () =>
  */
 const drive$ = (message, op) => {
     log.debug(() => message)
-    return driveLimiter$(
-        auth$().pipe(
-            map(auth =>
-                google.drive({version: 'v3', auth})
-            ),
-            switchMap(drive =>
-                from(op(drive))
-            ),
-            retry(RETRIES),
-            map(({data}) => data)
-        )
+    return of(true).pipe(
+        switchMap(() =>
+            driveLimiter$(
+                auth$().pipe(
+                    map(auth =>
+                        google.drive({version: 'v3', auth})
+                    ),
+                    switchMap(drive =>
+                        from(op(drive))
+                    ),
+                    map(({data}) => data)
+                )
+            )),
+        retry(RETRIES)
     )
 }
 
@@ -119,7 +122,7 @@ const getFolderByName$ = ({name, parentId}) =>
             files.length
                 ? of({id: files[0].id}) // handling the first match only
                 : throwError(
-                    new NotFoundException(`Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`)
+                new NotFoundException(`Directory "${name}" not found ${parentId ? `in parent ${parentId}` : ''}`)
                 )
         )
     )
@@ -186,11 +189,11 @@ const getFolderByPath$ = ({path, create} = {}) =>
             catchError(error =>
                 error instanceof NotFoundException
                     ? throwError(
-                        new NotFoundException(error, {
-                            userMessage: {
-                                message: `Path not found: '${path}'`
-                            }
-                        })
+                    new NotFoundException(error, {
+                        userMessage: {
+                            message: `Path not found: '${path}'`
+                        }
+                    })
                     )
                     : throwError(error)
             )
@@ -299,7 +302,7 @@ const downloadSingleFolderByPath$ = (path, destinationPath, {concurrency, delete
                                     mergeMap(file =>
                                         concat(
                                             downloadFile$(file.id, fs.createWriteStream(Path.join(destinationPath, file.name))).pipe(
-                                                map(downloaded => ({bytes: -downloaded})),
+                                                map(downloaded => ({bytes: -downloaded}))
                                             ),
                                             of({files: -1})
                                         ), concurrency
