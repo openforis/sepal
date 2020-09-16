@@ -16,7 +16,10 @@ import styles from './datePicker.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
-export const momentDate = date => _.isString(date) ? moment(date, DATE_FORMAT) : moment(date)
+export const momentDate = date =>
+    _.isString(date)
+        ? moment(date, DATE_FORMAT, true)
+        : moment(date)
 
 const pickDate = (date1, date2, func) => {
     date1 = momentDate(date1)
@@ -61,7 +64,8 @@ export class FormDatePicker extends React.Component {
                         <div className={styles.input}>
                             <Input
                                 ref={this.inputElement}
-                                defaultValue={input.value}
+                                value={input.value}
+                                type='text'
                                 maxLength={10}
                                 autoFocus={autoFocus}
                                 className={styles.input}
@@ -86,10 +90,12 @@ export class FormDatePicker extends React.Component {
     setInput(value) {
         const {input, startDate, endDate} = this.props
         const date = momentDate(value)
+        // if (date.isValid()) {
         const formattedDate = date.isValid()
             ? constrainDate(date, startDate, endDate).format(DATE_FORMAT)
             : momentDate(startDate).format(DATE_FORMAT)
         input.set(formattedDate)
+        // }
     }
 }
 
