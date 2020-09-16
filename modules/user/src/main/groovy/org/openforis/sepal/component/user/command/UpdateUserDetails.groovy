@@ -20,6 +20,7 @@ class UpdateUserDetails extends AbstractCommand<User> {
     String name
     String email
     String organization
+    boolean emailNotificationsEnabled
     boolean admin
 }
 
@@ -50,6 +51,7 @@ class UpdateUserDetailsHandler implements CommandHandler<User, UpdateUserDetails
                         command.name,
                         command.email,
                         command.organization,
+                        command.emailNotificationsEnabled,
                         command.admin
                 )
                 .withUpdateTime(clock.now())

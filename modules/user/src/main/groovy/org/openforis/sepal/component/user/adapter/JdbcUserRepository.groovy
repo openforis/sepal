@@ -22,18 +22,18 @@ class JdbcUserRepository implements UserRepository {
 
     User insertUser(User user, String token) {
         def result = sql.executeInsert('''
-                INSERT INTO sepal_user (username, name, email, organization, token, admin, system_user, status, 
+                INSERT INTO sepal_user (username, name, email, organization, email_notifications_enabled, token, admin, system_user, status, 
                             creation_time, update_time) 
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                [user.username, user.name, user.email, user.organization, token, user.admin, user.systemUser,
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                [user.username, user.name, user.email, user.organization, user.emailNotificationsEnabled, token, user.admin, user.systemUser,
                  User.Status.PENDING.name(), user.creationTime, user.updateTime])
         return user.withId(result[0][0] as long)
     }
 
     void updateUserDetails(User user) {
         sql.executeUpdate('''
-                UPDATE sepal_user SET name = ?, email = ?, organization = ?, admin = ?, update_time = ? 
-                WHERE username = ?''', [user.name, user.email, user.organization, user.admin, user.updateTime, user.username])
+                UPDATE sepal_user SET name = ?, email = ?, organization = ?, email_notifications_enabled = ?, admin = ?, update_time = ? 
+                WHERE username = ?''', [user.name, user.email, user.organization, user.emailNotificationsEnabled, user.admin, user.updateTime, user.username])
     }
 
     void deleteUser(String username) {
@@ -42,7 +42,7 @@ class JdbcUserRepository implements UserRepository {
 
     List<User> listUsers() {
         sql.rows('''
-                SELECT id, username, name, email, organization, admin, system_user, status, 
+                SELECT id, username, name, email, organization, email_notifications_enabled, admin, system_user, status, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time
                 FROM sepal_user 
@@ -63,7 +63,7 @@ class JdbcUserRepository implements UserRepository {
 
     User lookupUser(String username) {
         def row = sql.firstRow('''
-                SELECT id, username, name, email, organization, admin, system_user, status, 
+                SELECT id, username, name, email, organization, email_notifications_enabled, admin, system_user, status, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time
                 FROM sepal_user 
@@ -75,12 +75,20 @@ class JdbcUserRepository implements UserRepository {
 
     User findUserByEmail(String email) {
         def row = sql.firstRow('''
-                SELECT id, username, name, email, organization, admin, system_user, status, 
+                SELECT id, username, name, email, organization, email_notifications_enabled, admin, system_user, status, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time
                 FROM sepal_user 
                 WHERE email = ?''', [email])
         return row ? createUser(row) : null
+    }
+
+    boolean emailNotificationsEnabled(String email) {
+        sql.firstRow('''
+                SELECT email_notifications_enabled
+                FROM sepal_user 
+                WHERE email = ?''', [email]
+        )?.email_notifications_enabled
     }
 
     void updateToken(String username, String token, Date tokenGenerationTime) {
@@ -91,7 +99,7 @@ class JdbcUserRepository implements UserRepository {
 
     Map tokenStatus(String token) {
         def row = sql.firstRow('''
-                SELECT id, username, name, email, organization, admin, status, system_user, token_generation_time, 
+                SELECT id, username, name, email, organization, email_notifications_enabled, admin, status, system_user, token_generation_time, 
                        google_refresh_token,  google_access_token, google_access_token_expiration, 
                        creation_time, update_time 
                 FROM sepal_user 
@@ -99,7 +107,7 @@ class JdbcUserRepository implements UserRepository {
 
         return row ? [
                 generationTime: row.token_generation_time,
-                user          : createUser(row)
+                user: createUser(row)
         ] : null
     }
 
@@ -134,6 +142,7 @@ class JdbcUserRepository implements UserRepository {
                 username: row.username,
                 email: row.email,
                 organization: row.organization,
+                emailNotificationsEnabled: row.email_notifications_enabled,
                 roles: (row.admin ? [Roles.ADMIN] : []).toSet(),
                 systemUser: row.system_user,
                 googleTokens: row.google_refresh_token ? new GoogleTokens(
@@ -141,8 +150,8 @@ class JdbcUserRepository implements UserRepository {
                         accessToken: row.google_access_token,
                         accessTokenExpiryDate: row.google_access_token_expiration.time) : null,
                 status: row.status as User.Status,
-            creationTime: toDate(row.creation_time),
-            updateTime: toDate(row.update_time),
+                creationTime: toDate(row.creation_time),
+                updateTime: toDate(row.update_time),
         )
         return user
     }
@@ -154,5 +163,4 @@ class JdbcUserRepository implements UserRepository {
     private Sql getSql() {
         connectionProvider.sql
     }
-
 }

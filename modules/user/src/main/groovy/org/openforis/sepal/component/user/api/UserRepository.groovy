@@ -18,6 +18,8 @@ interface UserRepository {
 
     User findUserByEmail(String email)
 
+    boolean emailNotificationsEnabled(String email)
+
     void updateToken(String username, String token, Date tokenGenerationTime)
 
     Map tokenStatus(String token)

@@ -3,6 +3,7 @@ package org.openforis.sepal.component.user.endpoint
 import groovymvc.Controller
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.user.command.*
+import org.openforis.sepal.component.user.query.EmailNotificationsEnabled
 import org.openforis.sepal.component.user.query.GoogleAccessRequestUrl
 import org.openforis.sepal.component.user.query.ListUsers
 import org.openforis.sepal.component.user.query.LoadUser
@@ -178,6 +179,14 @@ class UserEndpoint {
                 send toJson(users.collect { userToMap(it) })
             }
 
+            get('/email-notifications-enabled/{email}', [ADMIN]) {
+                response.contentType = 'application/json'
+                def emailNotificationsEnabled = component.submit(
+                        new EmailNotificationsEnabled(email: params.required('email', String))
+                )
+                send toJson([emailNotificationsEnabled: emailNotificationsEnabled])
+            }
+
             post('/invite', [ADMIN]) {
                 response.contentType = 'application/json'
                 def command = new InviteUser(invitedUsername: params.username?.toLowerCase())
@@ -245,6 +254,7 @@ class UserEndpoint {
                 email: user.email,
                 organization: user.organization,
                 googleTokens: user.googleTokens,
+                emailNotificationsEnabled: user.emailNotificationsEnabled,
                 status: user.status,
                 roles: user.roles,
                 systemUser: user.systemUser,

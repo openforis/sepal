@@ -14,6 +14,7 @@ class User implements groovymvc.security.User {
     String email
     String organization
     GoogleTokens googleTokens
+    boolean emailNotificationsEnabled
     Status status
     Set<String> roles
     boolean systemUser
@@ -38,74 +39,107 @@ class User implements groovymvc.security.User {
 
     User withId(long id) {
         new User(
-            id: id,
-            name: name,
-            username: username,
-            email: email,
-            organization: organization,
-            status: status,
-            roles: roles,
-            creationTime: creationTime,
-            updateTime: updateTime)
+                id: id,
+                name: name,
+                username: username,
+                email: email,
+                organization: organization,
+                emailNotificationsEnabled: emailNotificationsEnabled,
+                status: status,
+                roles: roles,
+                creationTime: creationTime,
+                updateTime: updateTime)
     }
 
-    User withDetails(String name, String email, String organization, boolean admin) {
+    User withDetails(String name, String email, String organization, boolean emailNotificationsEnabled, boolean admin) {
         new User(
-            id: id,
-            name: name,
-            username: username,
-            email: email,
-            organization: organization,
-            status: status,
-            roles: admin ? [Roles.ADMIN] : [],
-            creationTime: creationTime,
-            updateTime: updateTime)
+                id: id,
+                name: name,
+                username: username,
+                email: email,
+                organization: organization,
+                emailNotificationsEnabled: emailNotificationsEnabled,
+                status: status,
+                roles: admin ? [Roles.ADMIN] : [],
+                creationTime: creationTime,
+                updateTime: updateTime)
+    }
+
+    User enableEmailNotifications() {
+        new User(
+                id: id,
+                name: name,
+                username: username,
+                email: email,
+                organization: organization,
+                emailNotificationsEnabled: true,
+                status: status,
+                roles: admin ? [Roles.ADMIN] : [],
+                creationTime: creationTime,
+                updateTime: updateTime)
+    }
+
+    User disableEmailNotifications() {
+        new User(
+                id: id,
+                name: name,
+                username: username,
+                email: email,
+                organization: organization,
+                emailNotificationsEnabled: false,
+                status: status,
+                roles: admin ? [Roles.ADMIN] : [],
+                creationTime: creationTime,
+                updateTime: updateTime)
     }
 
     User withUpdateTime(Date updateTime) {
         new User(
-            id: id,
-            name: name,
-            username: username,
-            email: email,
-            organization: organization,
-            status: status,
-            roles: roles,
-            creationTime: creationTime,
-            updateTime: updateTime)
+                id: id,
+                name: name,
+                username: username,
+                email: email,
+                organization: organization,
+                emailNotificationsEnabled: emailNotificationsEnabled,
+                status: status,
+                roles: roles,
+                creationTime: creationTime,
+                updateTime: updateTime)
     }
 
     User active() {
         new User(
-            id: id,
-            name: name,
-            username: username,
-            email: email,
-            organization: organization,
-            status: ACTIVE,
-            roles: roles,
-            creationTime: creationTime,
-            updateTime: updateTime)
+                id: id,
+                name: name,
+                username: username,
+                email: email,
+                organization: organization,
+                emailNotificationsEnabled: emailNotificationsEnabled,
+                status: ACTIVE,
+                roles: roles,
+                creationTime: creationTime,
+                updateTime: updateTime)
     }
 
     Map toMap() {
         [
-            id: id,
-            name: name,
-            username: username,
-            email: email,
-            organization: organization,
-            googleTokens: googleTokens ? [
-                accessToken: googleTokens.accessToken,
-                accessTokenExpiryDate: googleTokens.accessTokenExpiryDate,
-                refreshToken: googleTokens.refreshToken
+                id: id,
+                name: name,
+                username: username,
+                email: email,
+                organization: organization,
+                googleTokens: googleTokens ? [
+                        accessToken: googleTokens.accessToken,
+                        accessTokenExpiryDate: googleTokens.accessTokenExpiryDate,
+                        refreshToken: googleTokens.refreshToken
 
-            ] : null,
-            status: status.name(),
-            roles: roles,
-            systemUser: systemUser,
-            creationTime: creationTime,
-            updateTime: updateTime
+                ] : null,
+                emailNotificationsEnabled: emailNotificationsEnabled,
+                status: status.name(),
+                roles: roles,
+                systemUser: systemUser,
+                creationTime: creationTime,
+                updateTime: updateTime
         ]
     }
 
