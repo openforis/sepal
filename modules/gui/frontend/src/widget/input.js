@@ -7,9 +7,9 @@ import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
+import _ from 'lodash'
 import styles from './input.module.css'
 import withForwardedRef from 'ref'
-import _ from 'lodash'
 
 class _Input extends React.Component {
     state = {
@@ -85,8 +85,8 @@ class _Input extends React.Component {
                         className={readOnly ? styles.readOnly : null}
                         type={this.isSearchInput() ? 'text' : type}
                         name={name}
-                        value={value}
-                        defaultValue={defaultValue}
+                        // value={value}
+                        defaultValue={value || defaultValue}
                         placeholder={placeholder}
                         maxLength={maxLength}
                         tabIndex={tabIndex}
