@@ -129,7 +129,7 @@ class GoogleAccount extends React.Component {
         return (
             <Panel
                 className={styles.panel}
-                modal
+                type='modal'
                 onClose={() => this.close()}>
                 <Panel.Header
                     icon='key'
