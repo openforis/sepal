@@ -53,9 +53,9 @@ export default {
             body: {token, password}
         }),
 
-    updateCurrentUserDetails$: ({name, email, organization}) =>
+    updateCurrentUserDetails$: ({name, email, organization, emailNotificationsEnabled}) =>
         post$('/api/user/current/details', {
-            body: {name, email, organization}
+            body: {name, email, organization, emailNotificationsEnabled}
         }).pipe(toResponse),
 
     changePassword$: ({oldPassword, newPassword}) =>

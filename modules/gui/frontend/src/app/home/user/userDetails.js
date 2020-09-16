@@ -20,7 +20,8 @@ const fields = {
         .notBlank('user.userDetails.form.name.required'),
     email: new Form.Field()
         .notBlank('user.userDetails.form.email.required'),
-    organization: new Form.Field()
+    organization: new Form.Field(),
+    emailNotificationsEnabled: new Form.Field()
 }
 
 const mapStateToProps = state => {
@@ -30,7 +31,8 @@ const mapStateToProps = state => {
         values: {
             name: user.name,
             email: user.email,
-            organization: user.organization
+            organization: user.organization,
+            emailNotificationsEnabled: user.emailNotificationsEnabled
         },
         tasks: state.tasks
     }
@@ -107,7 +109,7 @@ class _UserDetails extends React.Component {
     }
 
     renderPanel() {
-        const {form, inputs: {name, email, organization}} = this.props
+        const {inputs: {name, email, organization, emailNotificationsEnabled}} = this.props
         return (
             <React.Fragment>
                 <Panel.Content>
@@ -130,11 +132,22 @@ class _UserDetails extends React.Component {
                             input={organization}
                             spellCheck={false}
                         />
-                        <div className={styles.googleAccount}>
-                            <ButtonGroup>
-                                {this.renderGoogleAccountButton()}
-                            </ButtonGroup>
-                        </div>
+                        <Form.Buttons
+                            label={msg('user.userDetails.form.emailNotifications.label')}
+                            tooltip={msg('user.userDetails.form.emailNotifications.tooltip')}
+                            input={emailNotificationsEnabled}
+                            multiple={false}
+                            options={[{
+                                value: true,
+                                label: msg('user.userDetails.form.emailNotifications.enabled.label'),
+                                tooltip: msg('user.userDetails.form.emailNotifications.enabled.tooltip')
+                            }, {
+                                value: false,
+                                label: msg('user.userDetails.form.emailNotifications.disabled.label'),
+                                tooltip: msg('user.userDetails.form.emailNotifications.disabled.tooltip')
+                            }]}
+                            type='horizontal-nowrap'
+                        />
                     </Layout>
                 </Panel.Content>
                 <Form.PanelButtons>

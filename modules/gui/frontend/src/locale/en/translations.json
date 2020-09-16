@@ -1761,6 +1761,12 @@
                     "format": "Username should start with a letter",
                     "label": "Username",
                     "required": "Username is required"
+                },
+                "emailNotifications": {
+                    "label": "Email notifications",
+                    "tooltip": "Enable or disable optional email notifications (e.g. task completed, task failed, etc.)",
+                    "enabled.label": "Enabled",
+                    "disabled.label": "Disabled"
                 }
             },
             "switchingToSepalGoogleAccount": "Switching to Sepal's Google Account",

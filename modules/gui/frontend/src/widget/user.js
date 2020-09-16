@@ -57,13 +57,14 @@ export const validateToken$ = token =>
         })
     )
 
-export const updateCurrentUserDetails$ = ({name, email, organization}) =>
-    api.user.updateCurrentUserDetails$({name, email, organization}).pipe(
+export const updateCurrentUserDetails$ = ({name, email, organization, emailNotificationsEnabled}) =>
+    api.user.updateCurrentUserDetails$({name, email, organization, emailNotificationsEnabled}).pipe(
         map(({name, email, organization}) =>
             actionBuilder('UPDATE_USER_DETAILS', {name, email, organization})
                 .set('user.currentUser.name', name)
                 .set('user.currentUser.email', email)
                 .set('user.currentUser.organization', organization)
+                .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
                 .dispatch()
         )
     )
