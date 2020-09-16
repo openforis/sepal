@@ -25,12 +25,14 @@ class _Input extends React.Component {
     componentDidMount() {
         const {value} = this.props
         this.setState({value})
+        this.ref.current.value = value
     }
 
     componentDidUpdate(prevProps) {
         const {value} = this.props
         if (!_.isEqual(value, prevProps.value)) {
             this.setState({value})
+            this.ref.current.value = value
         }
     }
 
@@ -71,7 +73,7 @@ class _Input extends React.Component {
 
     renderInput() {
         const {
-            type, name, defaultValue, placeholder, maxLength, tabIndex,
+            type, name, placeholder, maxLength, tabIndex,
             autoFocus, autoComplete, autoCorrect, autoCapitalize, spellCheck, disabled, readOnly, transform,
             onBlur, onChange, onFocus
         } = this.props
@@ -85,8 +87,7 @@ class _Input extends React.Component {
                         className={readOnly ? styles.readOnly : null}
                         type={this.isSearchInput() ? 'text' : type}
                         name={name}
-                        // value={value}
-                        defaultValue={value || defaultValue}
+                        defaultValue={value}
                         placeholder={placeholder}
                         maxLength={maxLength}
                         tabIndex={tabIndex}
@@ -180,7 +181,6 @@ Input.propTypes = {
     border: PropTypes.any,
     busyMessage: PropTypes.string,
     className: PropTypes.string,
-    defaultValue: PropTypes.any,
     disabled: PropTypes.any,
     errorMessage: PropTypes.string,
     fadeOverflow: PropTypes.any,
