@@ -90,12 +90,14 @@ export class FormDatePicker extends React.Component {
     setInput(value) {
         const {input, startDate, endDate} = this.props
         const date = momentDate(value)
-        // if (date.isValid()) {
-        const formattedDate = date.isValid()
-            ? constrainDate(date, startDate, endDate).format(DATE_FORMAT)
-            : momentDate(startDate).format(DATE_FORMAT)
-        input.set(formattedDate)
-        // }
+        // const formattedDate = date.isValid()
+        //     ? constrainDate(date, startDate, endDate).format(DATE_FORMAT)
+        //     : momentDate(startDate).format(DATE_FORMAT)
+        // input.set(formattedDate)
+        if (date.isValid()) {
+            const formattedDate = constrainDate(date, startDate, endDate).format(DATE_FORMAT)
+            input.set(formattedDate)
+        }
     }
 }
 
