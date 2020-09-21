@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 enum Timeout {
     PENDING(10, TimeUnit.MINUTES),
-    ACTIVE(2, TimeUnit.MINUTES),
+    ACTIVE(5, TimeUnit.MINUTES),
     CANCELING(2, TimeUnit.MINUTES)
 
     final int time
