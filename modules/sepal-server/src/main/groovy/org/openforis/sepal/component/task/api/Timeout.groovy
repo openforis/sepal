@@ -32,4 +32,3 @@ enum Timeout {
         new Date(date.time + timeoutInMillis + 1)
     }
 }
-
