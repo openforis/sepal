@@ -44,6 +44,22 @@ ln -sf /config/ldap.conf /etc/ldap/ldap.conf
 
 echo "$ldap_host ldap" >> /etc/hosts
 
+
+TOT_MEM=$(free -m | awk '"'NR==2'"' | awk '"'{print "'$2'"}'"')
+if [[ TOT_MEM -gt 10000 ]] ;then
+  GPT_MAX_MEM=8192
+  GPT_MIN_MEM=8192
+else
+  GPT_MAX_MEM=2048
+  GPT_MIN_MEM=2024
+fi
+printf '%s\n' \
+    "-Xmx${GPT_MAX_MEM}m" \
+    "-Xms${GPT_MIN_MEM}m" \
+    "-XX:+AggressiveOpts" \
+    "-Xverify:none" \
+    >> /usr/local/snap/bin/gpt.vmoption
+
 userHome=/home/$sandbox_user
 cp /etc/skel/.bashrc "$userHome"
 cp /etc/skel/.profile "$userHome"
