@@ -28,7 +28,7 @@ const tag = ({from, to, cc, bcc, subject}) =>
         `subject: "${subject}"`
     ].filter(attr => attr).join(', ')
 
-const send = async ({id, email: {to, cc, bcc, subject, body}}) => {
+const send = async ({id, email: {to, cc, bcc, subject = '', body = ''}}) => {
     await transport.verify()
     const context = {
         subject,
