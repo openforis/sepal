@@ -138,7 +138,8 @@ class GoogleAccount extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Panel.Buttons>
+                <Panel.Buttons
+                    onEscape={() => this.close()}>
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close onClick={() => this.close()}/>
                     </Panel.Buttons.Main>
