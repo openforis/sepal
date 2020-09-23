@@ -59,7 +59,7 @@ printf '%s\n' \
     "-XX:+AggressiveOpts" \
     "-Xverify:none" \
     "-Dsnap.log.level=ERROR" \
-    >> /usr/local/snap/bin/gpt.vmoption
+    >> /usr/local/snap/bin/gpt.vmoptions
 
 userHome=/home/$sandbox_user
 cp /etc/skel/.bashrc "$userHome"
