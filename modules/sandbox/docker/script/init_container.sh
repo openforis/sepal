@@ -68,9 +68,4 @@ cp /etc/skel/.bash_logout "$userHome"
 
 exportEnvironment
 source /home/$sandbox_user/.bashrc
-source /usr/lib/R/etc/ldpaths
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.
-printf '%s\n' \]
-    "LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH\"" \
-    >> /etc/environment
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
