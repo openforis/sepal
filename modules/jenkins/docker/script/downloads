@@ -17,7 +17,7 @@ apt-get update && apt-get install -y \
 export SDKMAN_DIR=/usr/local/lib/sdkman
 curl -s get.sdkman.io | bash
 source "$SDKMAN_DIR/bin/sdkman-init.sh"
-yes | sdk install java 11.0.6.hs-adpt
+yes | sdk install java 11.0.8.hs-adpt
 sdk install groovy
 sdk install maven
 sdk install gradle
@@ -25,9 +25,11 @@ echo 'source "$SDKMAN_DIR/bin/sdkman-init.sh"' >> /etc/profile
 echo "JAVA_HOME=\"/usr/local/lib/sdkman/candidates/java/current\"" >> /etc/environment
 
 #install ansible and jenkins
-sudo apt-add-repository ppa:ansible/ansible
-wget -q -O - https://jenkins-ci.org/debian/jenkins-ci.org.key | apt-key add -
-sh -c 'echo deb http://pkg.jenkins-ci.org/debian binary/ > /etc/apt/sources.list.d/jenkins.list'
+wget -qO - https://pkg.jenkins.io/debian-stable/jenkins.io.key | apt-key add -
+sudo apt-add-repository -y ppa:ansible/ansible
+sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+#wget -q -O - https://jenkins-ci.org/debian/jenkins-ci.org.key | apt-key add -
+#sh -c 'echo deb http://pkg.jenkins-ci.org/debian binary/ > /etc/apt/sources.list.d/jenkins.list'
 
 apt-get update && apt-get install -y jenkins ansible
 
