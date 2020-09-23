@@ -20,6 +20,9 @@ try {
         .requiredOption('--smtp-user <value>', 'SMTP user')
         .requiredOption('--smtp-password <value>', 'SMTP password')
         .option('--smtp-from <value>', 'SMTP from')
+        .requiredOption('--sepal-host <value>')
+        .requiredOption('--sepal-username <value>')
+        .requiredOption('--sepal-password <value>')
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
@@ -34,7 +37,10 @@ const {
     smtpSecure = false,
     smtpUser,
     smtpPassword,
-    smtpFrom
+    smtpFrom,
+    sepalHost,
+    sepalUsername,
+    sepalPassword
 } = program
 
 log.info('Configuration loaded')
@@ -48,5 +54,8 @@ module.exports = {
     smtpSecure,
     smtpUser,
     smtpPassword,
-    smtpFrom
+    smtpFrom,
+    sepalHost,
+    sepalUsername,
+    sepalPassword
 }

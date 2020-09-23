@@ -14,4 +14,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     --smtp-port=587 \
     --smtp-user=derrick.goodwin@ethereal.email \
     --smtp-password=DFVFth6hNJ5Y7c1mjt \
-    --smtp-from=samplefrom@sepal.io
+    --smtp-from=samplefrom@sepal.io \
+    --sepal-host localhost:3000 \
+    --sepal-username 'sepalAdmin' \
+    --sepal-password 'the admin password'

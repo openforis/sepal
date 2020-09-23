@@ -1,5 +1,6 @@
 const {send, tag} = require('./email')
 const {redisUri, concurrency} = require('./config')
+const {filterEmailNotificationsEnabled} = require('./user')
 const Bull = require('bull')
 const log = require('sepal/log').getLogger('emailQueue')
 const {default: ShortUniqueId} = require('short-unique-id')
@@ -10,7 +11,17 @@ const queue = new Bull('email-queue', redisUri)
 queue.process(concurrency, async job => {
     const id = job.id
     const email = job.data
-    return await send({id, email})
+    const {to: originalTo, cc: originalCc, bcc: originalBcc, ...props} = email
+
+    const to = await filterEmailNotificationsEnabled(originalTo)
+    const cc = await filterEmailNotificationsEnabled(originalCc)
+    const bcc = await filterEmailNotificationsEnabled(originalBcc)
+
+    if (to.length || cc.length || bcc.length) {
+        return await send({id, email: {to, cc, bcc, ...props}})
+    } else {
+        log.debug('Email discarded due as no recipient is enabled to receive email notifications')
+    }
 })
 
 queue.on('error', error => {
@@ -19,7 +30,11 @@ queue.on('error', error => {
 
 queue.on('failed', (job, error) => {
     const email = job.data
-    log.error(`Could not send email to ${email.to}:`, error)
+    if (job.finishedOn) {
+        log.error(`Could not send email to ${email.to}:`, error)
+    } else {
+        log.debug(`Cannot send email to ${email.to}, will retry:`, error)
+    }
 })
 
 queue.on('stalled', job => {
@@ -29,8 +44,7 @@ queue.on('stalled', job => {
 
 queue.on('drained', async () => await logStats())
 
-const enqueue = async (message, {priority = 1} = {}) => {
-    const id = uid()
+const enqueue = async (message, {id = uid(), priority = 1} = {}) => {
     log.debug(`<${id}> Enqueuing email ${tag(message)} with priority ${priority}`)
     return await queue.add(message, {
         jobId: id,
@@ -38,7 +52,7 @@ const enqueue = async (message, {priority = 1} = {}) => {
         attempts: 10,
         backoff: {
             type: 'exponential',
-            delay: 60000
+            delay: 10000
         },
         removeOnComplete: 10,
         removeOnFail: 10

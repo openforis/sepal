@@ -30,4 +30,7 @@ CMD node \
     --smtp-port ${SMTP_PORT} \
     --smtp-secure ${SMTP_SECURE} \
     --smtp-user ${SMTP_USER} \
-    --smtp-password ${SMTP_PASSWORD}
+    --smtp-password ${SMTP_PASSWORD} \
+    --sepal-host "$SEPAL_HOST_SEPAL_ENV" \
+    --sepal-username "sepalAdmin" \
+    --sepal-password "$SEPAL_ADMIN_PASSWORD_SEPAL_ENV"
