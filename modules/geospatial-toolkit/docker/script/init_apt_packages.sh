@@ -4,7 +4,7 @@ echo
 echo "*********************************"
 echo "*** Installing misc utilities ***"
 echo "*********************************"
-apt-get install -y --fix-missing \
+apt-get update -y && apt-get install -y --fix-missing \
     aria2 \
     bc \
     dbview \
@@ -53,4 +53,4 @@ apt-get install -y --fix-missing \
     tree \
     tmux \
     unrar-free \
-    xml-twig-tools \
+    xml-twig-tools
