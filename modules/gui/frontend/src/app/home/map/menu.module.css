@@ -30,7 +30,8 @@
 }
 
 .right {
-    width: 2rem;
+    display: flex;
+    min-width: 2rem;
     flex-shrink: 0;
     align-self: center;
 }

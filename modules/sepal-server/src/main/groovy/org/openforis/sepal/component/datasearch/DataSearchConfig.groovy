@@ -8,12 +8,14 @@ import org.openforis.sepal.util.Config
 class DataSearchConfig {
     final String googleEarthEngineEndpoint
     final String googleMapsApiKey
+    final String norwayPlanetApiKey
     final String downloadWorkingDirectory
 
     DataSearchConfig() {
         def c = new Config('dataSearch.properties')
         googleEarthEngineEndpoint = c.googleEarthEngineEndpoint
         googleMapsApiKey = c.googleMapsApiKey
+        norwayPlanetApiKey = c.norwayPlanetApiKey
         downloadWorkingDirectory = c.downloadWorkingDirectory
     }
 }

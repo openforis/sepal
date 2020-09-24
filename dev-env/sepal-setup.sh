@@ -23,6 +23,7 @@ sudo ln -sf $PROJECT_DIR/lib/python/shared/stack_time_series.py /usr/local/bin/s
 
 eval $(parse-yaml /etc/sepal/conf.d/secret.yml)
 
+export NORWAY_PLANET_API_KEY=$norway_planet_api_key
 export GOOGLE_MAPS_API_KEY=$google_maps_api_key
 export GOOGLE_EARTH_ENGINE_ACCOUNT=$google_earth_engine_account
 export GOOGLE_EARTH_ENGINE_PRIVATE_KEY=$google_earth_engine_private_key

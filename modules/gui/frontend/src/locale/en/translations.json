@@ -724,9 +724,9 @@
                         "label": "Google Satellite",
                         "description": "Google Maps high-resolution satellite layer"
                     },
-                    "SENTINEL_2": {
-                        "label": "Sentinel 2",
-                        "description": "Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2019)"
+                    "PLANET": {
+                        "label": "Planet",
+                        "description": "Planet monthly composites"
                     }
                 }
             },

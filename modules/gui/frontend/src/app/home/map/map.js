@@ -22,6 +22,7 @@ export let googleMap = null
 const contextById = {}
 let currentContextId
 let apiKey
+let norwayPlanetApiKey
 
 const initListeners = []
 const onInit = listener => {
@@ -31,10 +32,15 @@ const onInit = listener => {
         initListeners.push(listener)
 }
 
+export const getNorwayPlanetApiKey = () => norwayPlanetApiKey
+
 export const initGoogleMapsApi$ = () => {
     const loadGoogleMapsApiKey$ =
-        api.map.loadApiKey$().pipe(
-            map(({apiKey}) => apiKey)
+        api.map.loadApiKeys$().pipe(
+            map(({google, norwayPlanet}) => {
+                norwayPlanetApiKey = norwayPlanet
+                return google
+            })
         )
 
     const loadGoogleMapsApi$ = key => Observable.create(observer => {

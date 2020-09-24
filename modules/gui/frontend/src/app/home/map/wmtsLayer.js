@@ -22,7 +22,6 @@ export default class WMTSLayer {
             minZoom: 3,
             maxZoom: 17
         })
-        console.log('Setting WMTS on ', this.layerIndex, layer)
         googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
     }
 

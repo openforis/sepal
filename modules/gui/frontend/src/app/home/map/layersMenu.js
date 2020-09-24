@@ -4,20 +4,68 @@ import React from 'react'
 import styles from './layersMenu.module.css'
 import Labels from './labels'
 import {Menu} from './menu'
-import {connect, select} from 'store'
+import {select} from 'store'
 import PropTypes from 'prop-types'
 import {changeBaseLayer} from './baseLayer'
-import Icon from 'widget/icon'
 import {msg} from 'translate'
+import ButtonSelect from 'widget/buttonSelect'
+import {Form, form} from 'widget/form/form'
+import moment from 'moment'
+import {getNorwayPlanetApiKey} from './map'
+
+const fields = {
+    year: new Form.Field(),
+    month: new Form.Field()
+}
 
 const mapStateToProps = (state, ownProps) => ({
     labelsShown: select([ownProps.statePath, 'labelsShown']),
-    baseLayer: select([ownProps.statePath, 'baseLayer'])
+    baseLayer: select([ownProps.statePath, 'baseLayer']),
+    year: select([ownProps.statePath, 'options.year']),
+    month: select([ownProps.statePath, 'options.month'])
 })
 
 class _LayersMenu extends React.Component {
+
+    getPlanetDateOptions() {
+        const {inputs: {year}} = this.props
+        const startDate = moment('2018-08-01')
+        const endDate = moment().subtract(1, 'months')
+
+        const yearOptions = sequence(startDate.year(), moment().year())
+            .map(year => ({value: `${year}`, label: `${year}`}))
+
+        const allMonthOptions = moment.monthsShort()
+            .map((label, i) => ({value: `${i + 1}`.padStart(2, '0'), label}))
+
+        const monthOptions = year.value === `${startDate.year()}`
+            ? allMonthOptions.slice(startDate.month() + 1)
+            : year.value === `${endDate.year()}`
+                ? allMonthOptions.slice(0, endDate.month() + 1)
+                : allMonthOptions
+        return {yearOptions, monthOptions}
+    }
+
+    changeLayer(type, year, month) {
+        const {statePath, mapContext} = this.props
+        const planetApiKey = getNorwayPlanetApiKey()
+        changeBaseLayer({
+            type,
+            mapContext,
+            statePath,
+            options: {year: year.value, month: month.value, planetApiKey}
+        })
+    }
+
+
     render() {
-        const {activatable: {deactivate}, labelsShown, baseLayer, labelLayerIndex, statePath, mapContext} = this.props
+        const {inputs: {year, month}, activatable: {deactivate}, labelsShown, baseLayer, labelLayerIndex, statePath, mapContext} = this.props
+
+
+        const {yearOptions, monthOptions} = this.getPlanetDateOptions()
+
+        const yearOption = yearOptions.find(({value}) => year.value === value)
+        const monthOption = monthOptions.find(({value}) => month.value === value)
         return (
             <Menu
                 position='top-right'
@@ -26,7 +74,7 @@ class _LayersMenu extends React.Component {
                 <Menu.Select
                     id={'BASE_LAYER'}
                     label={msg('process.mosaic.mapToolbar.layersMenu.baseLayer')}
-                    onSelect={type => changeBaseLayer({type, mapContext, statePath})}
+                    onSelect={type => this.changeLayer(type, year, month)}
                     selected={baseLayer || 'SEPAL'}>
                     <Menu.Option
                         id={'SEPAL'}
@@ -37,13 +85,30 @@ class _LayersMenu extends React.Component {
                         label={msg('process.mosaic.mapToolbar.layersMenu.GOOGLE_SATELLITE.label')}
                         description={msg('process.mosaic.mapToolbar.layersMenu.GOOGLE_SATELLITE.description')}/>
                     <Menu.Option
-                        id={'SENTINEL_2'}
-                        label={msg('process.mosaic.mapToolbar.layersMenu.SENTINEL_2.label')}
-                        description={msg('process.mosaic.mapToolbar.layersMenu.SENTINEL_2.description')}
+                        id={'PLANET'}
+                        label={msg('process.mosaic.mapToolbar.layersMenu.PLANET.label')}
+                        description={msg('process.mosaic.mapToolbar.layersMenu.PLANET.description')}
                         right={
-                            <a target={'_blank'} href={'https://s2maps.eu/'}>
-                                <Icon name={'external-link-alt'}/>
-                            </a>
+                            <div className={styles.layerOptions}>
+                                <ButtonSelect
+                                    placement='below'
+                                    alignment='left'
+                                    input={year}
+                                    tooltipPlacement='bottom'
+                                    options={yearOptions}
+                                    label={yearOption && yearOption.label}
+                                    onSelect={year => this.changeLayer('PLANET', year, this.props.inputs.month)}
+                                />
+                                <ButtonSelect
+                                    placement='below'
+                                    alignment='left'
+                                    input={month}
+                                    tooltipPlacement='bottom'
+                                    options={monthOptions}
+                                    label={monthOption && monthOption.label}
+                                    onSelect={month => this.changeLayer('PLANET', this.props.inputs.year, month)}
+                                />
+                            </div>
                         }/>
                 </Menu.Select>
                 <Menu.Separator/>
@@ -62,6 +127,22 @@ class _LayersMenu extends React.Component {
             </Menu>
         )
     }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        const {inputs: {year, month}} = this.props
+        if (!year.value)
+            year.set(this.props.year || moment().format('YYYY'))
+        if (!month.value)
+            month.set(this.props.month || moment().subtract(1, 'months').format('MM'))
+        else {
+            const {monthOptions} = this.getPlanetDateOptions()
+            if (!monthOptions.find(({value}) => month.value === value)) {
+                const monthOption = monthOptions[0]
+                month.set(monthOption.value)
+                this.changeLayer('PLANET', year, monthOption)
+            }
+        }
+    }
 }
 
 const policy = () => ({
@@ -69,9 +150,14 @@ const policy = () => ({
 })
 export const LayersMenu = compose(
     _LayersMenu,
-    connect(mapStateToProps),
+    form({fields, mapStateToProps}),
     activatable({id: 'layersMenu', policy})
 )
+
+const sequence = (start, end, step = 1) =>
+    Array.apply(null, {length: Math.floor((end - start) / step) + 1})
+        .map((_, i) => i * step + start)
+
 
 LayersMenu.propTypes = {
     labelLayerIndex: PropTypes.any.isRequired,
