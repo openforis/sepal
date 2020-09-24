@@ -1,9 +1,10 @@
 require('sepal/log').configureServer(require('./log.json'))
 const log = require('sepal/log').getLogger('main')
+const {amqpUri} = require('./config')
 
 const _ = require('lodash')
 
-const {connect$} = require('./messageQueue')
+const {messageQueue$} = require('sepal/messageQueue')
 const {scheduleFullScan} = require('./scan')
 const {onScanComplete, logStats} = require('./jobQueue')
 const {messageHandler} = require('./messageHandler')
@@ -33,7 +34,7 @@ const main = async () => {
         log.info('Initialized')
     }
     
-    await connect$().subscribe(
+    await messageQueue$(amqpUri).subscribe(
         connection => initialize(connection)
     )
 }

@@ -14,11 +14,9 @@
     "_moduleAliases": {
         "root": "src",
         "sepal": "node_modules/shared/src",
-        "ee": "node_modules/shared/src/reexport/ee",
         "rx": "node_modules/shared/src/reexport/rx"
     },
     "dependencies": {
-        "amqplib": "^0.6.0",
         "bull": "^3.16.0",
         "commander": "^6.0.0",
         "date-fns": "^2.15.0",
@@ -26,7 +24,6 @@
         "lodash": "^4.17.19",
         "log4js": "^6.3.0",
         "moment": "^2.27.0",
-        "rxjs": "^6.6.2",
         "shared": "../../../lib/js/shared",
         "uuid": "^8.2.0"
     },

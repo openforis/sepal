@@ -2,8 +2,8 @@ const _ = require('lodash')
 const log = require('sepal/log').getLogger('messageQueue')
 const {scheduleRescan} = require('./scan')
 const {setSessionActive, setSessionInactive} = require('./persistence')
-const {Subject} = require('rxjs')
-const {debounceTime, groupBy, mergeMap, switchMap} = require('rxjs/operators')
+const {Subject} = require('rx')
+const {debounceTime, groupBy, mergeMap, switchMap} = require('rx/operators')
 
 const logError = (key, msg) =>
     log.error('Incoming message doesn\'t match expected shape', {key, msg})

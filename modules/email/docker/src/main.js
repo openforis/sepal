@@ -1,12 +1,10 @@
 require('sepal/log').configureServer(require('./log.json'))
 const log = require('sepal/log').getLogger('main')
-
+const {amqpUri} = require('./config')
 const _ = require('lodash')
-
-const {connect$} = require('./messageQueue')
+const {messageQueue$} = require('sepal/messageQueue')
 const {logStats} = require('./emailQueue')
 const {messageHandler} = require('./messageHandler')
-const email = require('./email')
 
 const main = async () => {
     const initialize = async ({topicSubscriber}) => {
@@ -24,7 +22,7 @@ const main = async () => {
         log.info('Initialized')
     }
     
-    await connect$().subscribe(
+    await messageQueue$(amqpUri).subscribe(
         connection => initialize(connection)
     )
 }
