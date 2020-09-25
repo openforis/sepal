@@ -18,6 +18,7 @@ import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.event.RabbitMQTopic
 import org.openforis.sepal.messagebroker.MessageBroker
+import org.openforis.sepal.messagebroker.RmbMessageBroker
 import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock

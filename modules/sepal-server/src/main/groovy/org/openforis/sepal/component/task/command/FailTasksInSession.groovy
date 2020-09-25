@@ -4,7 +4,7 @@ import groovy.transform.Canonical
 import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
-import org.openforis.sepal.component.task.api.TaskRepository
+import org.openforis.sepal.component.task.internal.TaskGateway
 import org.slf4j.LoggerFactory
 
 @EqualsAndHashCode(callSuper = true)
@@ -16,17 +16,17 @@ class FailTasksInSession extends AbstractCommand<Void> {
 
 class FailTasksInSessionHandler implements CommandHandler<Void, FailTasksInSession> {
     private static final LOG = LoggerFactory.getLogger(this)
-    private final TaskRepository taskRepository
+    private final TaskGateway taskGateway
 
-    FailTasksInSessionHandler(TaskRepository taskRepository) {
-        this.taskRepository = taskRepository
+    FailTasksInSessionHandler(TaskGateway taskGateway) {
+        this.taskGateway = taskGateway
     }
 
     Void execute(FailTasksInSession command) {
-        def tasks = taskRepository.pendingOrActiveTasksInSession(command.sessionId)
+        def tasks = taskGateway.pendingOrActiveTasksInSession(command.sessionId)
         tasks.each {
             LOG.warn("Updating state to failed: ${it}, description: $command.description")
-            taskRepository.update(it.fail(command.description))
+            taskGateway.update(it.fail(command.description))
         }
         return null
     }

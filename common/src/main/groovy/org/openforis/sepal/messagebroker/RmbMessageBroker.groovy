@@ -1,15 +1,13 @@
-package org.openforis.sepal.component.user.adapter
+package org.openforis.sepal.messagebroker
 
 import org.openforis.rmb.MessageHandler
 import org.openforis.rmb.RepositoryMessageBroker
 import org.openforis.rmb.jdbc.JdbcConnectionManager
 import org.openforis.rmb.jdbc.JdbcMessageRepository
 import org.openforis.rmb.slf4j.Slf4jLoggingMonitor
+import org.openforis.rmb.spi.ThrottlingStrategy
 import org.openforis.rmb.spi.TransactionSynchronizer
 import org.openforis.rmb.xstream.XStreamMessageSerializer
-import org.openforis.sepal.messagebroker.MessageBroker
-import org.openforis.sepal.messagebroker.MessageConsumer
-import org.openforis.sepal.messagebroker.MessageQueue
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -18,7 +16,6 @@ import java.sql.Connection
 import java.sql.SQLException
 
 import static java.util.concurrent.TimeUnit.MINUTES
-import static org.openforis.rmb.spi.ThrottlingStrategy.ExponentialBackoff.upTo
 
 class RmbMessageBroker implements MessageBroker {
     private static Logger LOG = LoggerFactory.getLogger(RmbMessageBroker)
@@ -51,7 +48,7 @@ class RmbMessageBroker implements MessageBroker {
                         LOG.error("[$queueName] Failed to handle message: $it", e)
                         throw (e instanceof RuntimeException ? e : new RuntimeException(e))
                     }
-                } as MessageHandler<M>).retryUntilSuccess(upTo(1, MINUTES))
+                } as MessageHandler<M>).retryUntilSuccess(ThrottlingStrategy.ExponentialBackoff.upTo(1, MINUTES))
                 ).build()
         return new RmbMessageQueue<M>(queue)
     }
@@ -67,7 +64,7 @@ class RmbMessageBroker implements MessageBroker {
             connectionManager.transactionRunning
         }
 
-        void notifyOnCommit(TransactionSynchronizer.CommitListener listener) {
+        void notifyOnCommit(CommitListener listener) {
             connectionManager.registerAfterCommitCallback {
                 listener.committed()
             }
