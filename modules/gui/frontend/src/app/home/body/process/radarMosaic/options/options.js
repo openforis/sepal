@@ -8,6 +8,7 @@ import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './options.module.css'
+import Icon from '../../../../../../widget/icon'
 
 const fields = {
     orbits: new Form.Field()
@@ -64,10 +65,17 @@ class Options extends React.Component {
                         value: 'NONE',
                         label: msg('process.radarMosaic.panel.options.form.speckleFilter.none.label'),
                         tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.none.tooltip')
-                    // }, {
-                    //     value: 'BOXCAR',
-                    //     label: msg('process.radarMosaic.panel.options.form.speckleFilter.boxcar.label'),
-                    //     tooltip: msg('process.radarMosaic.panel.options.form.speckleFilter.boxcar.tooltip')
+                    }, {
+                        value: 'QUEGAN',
+                        label: msg('process.radarMosaic.panel.options.form.speckleFilter.quegan.label'),
+                        tooltip: <React.Fragment>
+                            {msg('process.radarMosaic.panel.options.form.speckleFilter.quegan.tooltip')}
+                            &nbsp;
+                            <a target="_blank" href={'https://ieeexplore.ieee.org/document/842003'}>
+                                <Icon name={'external-link-alt'}/>
+                                &nbsp;Article
+                            </a>
+                        </React.Fragment>
                     }, {
                         value: 'SNIC',
                         label: msg('process.radarMosaic.panel.options.form.speckleFilter.snic.label'),
