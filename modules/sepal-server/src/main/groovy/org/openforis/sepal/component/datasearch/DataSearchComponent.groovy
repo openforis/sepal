@@ -89,7 +89,6 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     void registerEndpointsWith(Controller controller) {
         new DataSearchEndpoint(
             this,
-            taskComponent,
             geeGateway,
             googleMapsApiKey,
             norwayPlanetApiKey,
