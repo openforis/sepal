@@ -2,11 +2,6 @@ const program = require('commander')
 const log = require('sepal/log').getLogger('config')
 const _ = require('lodash')
 
-const fatalError = error => {
-    log.fatal(error)
-    process.exit(1)
-}
-
 program.exitOverride()
 
 try {
@@ -25,7 +20,8 @@ try {
         .requiredOption('--sepal-password <value>')
         .parse(process.argv)
 } catch (error) {
-    fatalError(error)
+    log.fatal(error)
+    process.exit(1)
 }
 
 const {
