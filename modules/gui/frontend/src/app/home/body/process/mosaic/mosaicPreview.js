@@ -105,6 +105,9 @@ class MosaicPreview extends React.Component {
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
             layerIndex: 2,
+            toggleable: true,
+            label: msg('process.mosaic.preview.label'),
+            description: msg('process.mosaic.preview.description'),
             bounds: previewRequest.recipe.model.aoi.bounds,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
@@ -126,7 +129,7 @@ class MosaicPreview extends React.Component {
 
     isHidden() {
         const {recipe} = this.props
-        return recipe.ui.hidePreview
+        return recipe.ui.hidePreview || recipe.ui.overlayIndex === -1
     }
 
     toPreviewRequest(recipe) {

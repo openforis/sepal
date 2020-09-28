@@ -23,13 +23,10 @@ const mapRecipeToProps = recipe => ({
 
 class _Classification extends React.Component {
     render() {
-        const {recipeId, recipePath, initialized} = this.props
+        const {recipeId, recipeContext: {statePath}, initialized} = this.props
         return (
             <React.Fragment>
-                <MapToolbar
-                    statePath={[recipePath, 'ui']}
-                    mapContext={recipeId}
-                    labelLayerIndex={3}/>
+                <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}/>
                 <ClassificationToolbar/>
 
                 {initialized

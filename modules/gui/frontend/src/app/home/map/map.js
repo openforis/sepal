@@ -221,6 +221,13 @@ const createMap = mapElement => {
                     hasLayer(id) {
                         return !!layerById[id]
                     },
+                    toggleableLayers() {
+                        return _.orderBy(
+                            Object.values(layerById)
+                                .filter(layer => layer.toggleable),
+                            ['layerIndex']
+                        )
+                    },
                     fitLayer(id) {
                         const layer = layerById[id]
                         if (layer && layer.bounds && currentContextId === contextId) {

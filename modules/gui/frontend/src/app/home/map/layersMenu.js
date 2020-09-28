@@ -10,8 +10,10 @@ import {changeBaseLayer} from './baseLayer'
 import {msg} from 'translate'
 import ButtonSelect from 'widget/buttonSelect'
 import {Form, form} from 'widget/form/form'
+import {googleMap, sepalMap} from 'app/home/map/map'
 import moment from 'moment'
 import {getNorwayPlanetApiKey} from './map'
+import actionBuilder from '../../../action-builder'
 
 const fields = {
     year: new Form.Field(),
@@ -21,6 +23,7 @@ const fields = {
 const mapStateToProps = (state, ownProps) => ({
     labelsShown: select([ownProps.statePath, 'labelsShown']),
     baseLayer: select([ownProps.statePath, 'baseLayer']),
+    overlayIndex: select([ownProps.statePath, 'overlayIndex']),
     year: select([ownProps.statePath, 'options.year']),
     month: select([ownProps.statePath, 'options.month'])
 })
@@ -46,7 +49,28 @@ class _LayersMenu extends React.Component {
         return {yearOptions, monthOptions}
     }
 
-    changeLayer(type, year, month) {
+    toggleOverlay = ({selectedOverlayIndex, mapContext, statePath}) => {
+        const context = sepalMap.getContext(mapContext)
+        const overlays = context.toggleableLayers()
+
+        const prevOverlayIndex = this.selectedOverlayIndex()
+        if (selectedOverlayIndex !== prevOverlayIndex) {
+            const prevOverlay = overlays.find(layer => layer.layerIndex === prevOverlayIndex)
+            prevOverlay && prevOverlay.hide(googleMap, true)
+        }
+
+        const selectedOverlay = overlays.find(layer => layer.layerIndex === selectedOverlayIndex)
+        const hide = prevOverlayIndex === selectedOverlayIndex
+        selectedOverlay && selectedOverlay.hide(googleMap, hide)
+        const nextOverlayIndex = hide ? -1 : selectedOverlayIndex
+
+        actionBuilder('SET_OVERLAY', {nextOverlayIndex})
+            .set([statePath, 'overlayIndex'], nextOverlayIndex)
+            .build()
+            .dispatch()
+    }
+
+    changeBaseLayer(type, year, month) {
         const {statePath, mapContext} = this.props
         const planetApiKey = getNorwayPlanetApiKey()
         changeBaseLayer({
@@ -57,11 +81,34 @@ class _LayersMenu extends React.Component {
         })
     }
 
+    selectedOverlayIndex() {
+        const {overlayIndex, mapContext} = this.props
+        if (overlayIndex === undefined) {
+            const context = sepalMap.getContext(mapContext)
+            const overlays = context.toggleableLayers()
+            const firstOverlayIndex = overlays.length
+                ? overlays.map(layer => layer.layerIndex)[0]
+                : -1
+            return firstOverlayIndex
+        } else {
+            return overlayIndex
+        }
+    }
 
     render() {
-        const {inputs: {year, month}, activatable: {deactivate}, labelsShown, baseLayer, labelLayerIndex, statePath, mapContext} = this.props
-
-
+        const {
+            inputs: {year, month},
+            activatable: {deactivate},
+            labelsShown, baseLayer, labelLayerIndex, statePath, mapContext
+        } = this.props
+        const context = sepalMap.getContext(mapContext)
+        const overlays = context.toggleableLayers()
+        const toggleableOptions = overlays.map(layer =>
+            <Menu.Option
+                key={layer.layerIndex}
+                id={layer.layerIndex}
+                label={layer.label}
+                description={layer.description}/>)
         const {yearOptions, monthOptions} = this.getPlanetDateOptions()
 
         const yearOption = yearOptions.find(({value}) => year.value === value)
@@ -74,7 +121,7 @@ class _LayersMenu extends React.Component {
                 <Menu.Select
                     id={'BASE_LAYER'}
                     label={msg('process.mosaic.mapToolbar.layersMenu.baseLayer')}
-                    onSelect={type => this.changeLayer(type, year, month)}
+                    onSelect={type => this.changeBaseLayer(type, year, month)}
                     selected={baseLayer || 'SEPAL'}>
                     <Menu.Option
                         id={'SEPAL'}
@@ -97,7 +144,7 @@ class _LayersMenu extends React.Component {
                                     tooltipPlacement='bottom'
                                     options={yearOptions}
                                     label={yearOption && yearOption.label}
-                                    onSelect={year => this.changeLayer('PLANET', year, this.props.inputs.month)}
+                                    onSelect={year => this.changeBaseLayer('PLANET', year, this.props.inputs.month)}
                                 />
                                 <ButtonSelect
                                     placement='below'
@@ -106,12 +153,19 @@ class _LayersMenu extends React.Component {
                                     tooltipPlacement='bottom'
                                     options={monthOptions}
                                     label={monthOption && monthOption.label}
-                                    onSelect={month => this.changeLayer('PLANET', this.props.inputs.year, month)}
+                                    onSelect={month => this.changeBaseLayer('PLANET', this.props.inputs.year, month)}
                                 />
                             </div>
                         }/>
                 </Menu.Select>
                 <Menu.Separator/>
+                <Menu.Select
+                    id={'OVERLAYS'}
+                    label={msg('process.mosaic.mapToolbar.layersMenu.overlay')}
+                    onSelect={selectedOverlayIndex => this.toggleOverlay({selectedOverlayIndex, mapContext, statePath})}
+                    selected={this.selectedOverlayIndex()}>
+                    {toggleableOptions}
+                </Menu.Select>
                 <Menu.Toggle
                     id={'SHOW_LABELS'}
                     label={msg('process.mosaic.mapToolbar.layersMenu.labels.label')}
@@ -139,7 +193,7 @@ class _LayersMenu extends React.Component {
             if (!monthOptions.find(({value}) => month.value === value)) {
                 const monthOption = monthOptions[0]
                 month.set(monthOption.value)
-                this.changeLayer('PLANET', year, monthOption)
+                this.changeBaseLayer('PLANET', year, monthOption)
             }
         }
     }

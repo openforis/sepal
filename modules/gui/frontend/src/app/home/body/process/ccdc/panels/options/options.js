@@ -134,7 +134,6 @@ const valuesToModel = values => {
 
 const modelToValues = model => {
     const breakDetection = modelToBreakDetection(model)
-    console.log({breakDetection, model})
     return ({
         advanced: !breakDetection,
         breakDetection,

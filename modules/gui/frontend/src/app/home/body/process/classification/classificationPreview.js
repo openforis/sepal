@@ -102,6 +102,9 @@ class ClassificationPreview extends React.Component {
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
             layerIndex: 2,
+            toggleable: true,
+            label: msg('process.classification.preview.label'),
+            description: msg('process.classification.preview.description'),
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
             onProgress: tiles => this.onProgress(tiles)
@@ -122,7 +125,7 @@ class ClassificationPreview extends React.Component {
 
     isHidden() {
         const {recipe} = this.props
-        return recipe.ui.hidePreview
+        return recipe.ui.hidePreview || recipe.ui.overlayIndex === -1
     }
 
     toPreviewRequest(recipe) {
