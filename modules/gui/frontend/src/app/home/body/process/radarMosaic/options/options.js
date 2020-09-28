@@ -5,10 +5,10 @@ import {RecipeActions} from '../radarMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import Icon from '../../../../../../widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './options.module.css'
-import Icon from '../../../../../../widget/icon'
 
 const fields = {
     orbits: new Form.Field()
@@ -71,7 +71,7 @@ class Options extends React.Component {
                         tooltip: <React.Fragment>
                             {msg('process.radarMosaic.panel.options.form.speckleFilter.quegan.tooltip')}
                             &nbsp;
-                            <a target="_blank" href={'https://ieeexplore.ieee.org/document/842003'}>
+                            <a target="_blank" rel="noopener noreferrer" href={'https://ieeexplore.ieee.org/document/842003'}>
                                 <Icon name={'external-link-alt'}/>
                                 &nbsp;Article
                             </a>

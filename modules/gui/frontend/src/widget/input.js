@@ -7,7 +7,6 @@ import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
-import _ from 'lodash'
 import styles from './input.module.css'
 import withForwardedRef from 'ref'
 
@@ -26,14 +25,13 @@ class _Input extends React.Component {
         const {value} = this.props
         const start = value.length
         const end = value.length
-        this.setState({value, start, end})
+        this.setState({start, end})
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const {value, start, end} = this.state
-        if (prevState.value !== value) {
-            this.ref.current.value = value
-        }
+        const {value} = this.props
+        const {start, end} = this.state
+        this.ref.current.value = value
         if (prevState.start !== start) {
             this.ref.current.selectionStart = start
         }
@@ -95,7 +93,8 @@ class _Input extends React.Component {
             autoFocus, autoComplete, autoCorrect, autoCapitalize, spellCheck, disabled, readOnly, transform,
             onBlur, onChange, onFocus
         } = this.props
-        const {focused, value} = this.state
+        const {focused} = this.state
+        const {value} = this.props
         return (
             // [HACK] input is wrapped in a div for fixing Firefox input width in flex
             <Keybinding keymap={{' ': null}} disabled={!focused} priority>
@@ -130,8 +129,9 @@ class _Input extends React.Component {
                                 : e.target.value
                             const start = e.target.selectionStart
                             const end = e.target.selectionEnd
+                            e.target.value = value
                             onChange && onChange(e)
-                            this.setState({value, start, end})
+                            this.setState({start, end})
                         }}
                     />
                 </div>
@@ -234,7 +234,9 @@ Input.defaultProps = {
 
 class _Textarea extends React.Component {
     state = {
-        focused: false
+        focused: false,
+        start: null,
+        end: null
     }
 
     constructor(props) {

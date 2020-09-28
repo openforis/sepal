@@ -12,7 +12,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import api from 'api'
-import SectionSelection from './sectionSelection'
 
 const loadCountries$ = () => {
     return api.gee.queryEETable$({
