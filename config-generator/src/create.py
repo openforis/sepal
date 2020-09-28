@@ -138,6 +138,7 @@ def _config_sepal():
 
     _google_earth_engine()
 
+    _text('norway_planet_api_key', 'Google Maps API key')
     _text('google_maps_api_key', 'Google Maps API key')
     _text('smtp_from', 'Sepal email address (used as from when sending emails)')
     _text('smtp_host', 'SMTP server host')

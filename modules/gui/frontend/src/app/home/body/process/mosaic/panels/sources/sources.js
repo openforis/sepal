@@ -92,6 +92,21 @@ class Sources extends React.Component {
         const {recipeId} = this.props
         RecipeActions(recipeId).hidePreview().dispatch()
     }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        this.removeOutOfDateRangeSelection()
+    }
+
+    removeOutOfDateRangeSelection() {
+        const {dates, inputs} = this.props
+        const [from, to] = dateRange(dates)
+        Object.values(inputs)
+            .filter(({value}) => value)
+            .forEach(input =>
+                input.set(
+                    input.value.filter(dataSet => isDataSetInDateRange(dataSet, from, to))
+                ))
+    }
 }
 
 Sources.propTypes = {

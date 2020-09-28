@@ -8,11 +8,14 @@ import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.endpoint.TaskEndpoint
+import org.openforis.sepal.component.task.internal.TaskGateway
 import org.openforis.sepal.component.task.query.*
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.messagebroker.MessageBroker
+import org.openforis.sepal.messagebroker.RmbMessageBroker
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
@@ -20,6 +23,8 @@ import org.openforis.sepal.util.SystemClock
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class TaskComponent extends DataSourceBackedComponent implements EndpointRegistry {
+    private final MessageBroker messageBroker
+
     TaskComponent(
             WorkerSessionComponent workerSessionComponent,
             WorkerGateway workerGateway,
@@ -29,6 +34,7 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
                 new AsynchronousEventDispatcher(),
                 new SessionComponentAdapter(workerSessionComponent),
                 workerGateway,
+                new RmbMessageBroker(connectionManager),
                 new SystemClock()
         )
     }
@@ -38,21 +44,24 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
             HandlerRegistryEventDispatcher eventDispatcher,
             WorkerSessionManager sessionManager,
             WorkerGateway workerGateway,
+            MessageBroker messageBroker,
             Clock clock) {
         super(connectionManager, eventDispatcher)
+        this.messageBroker = messageBroker
         def taskRepository = new JdbcTaskRepository(connectionManager, clock)
+        def taskGateway = new TaskGateway(taskRepository, connectionManager, messageBroker)
 
         command(SubmitTask, new SubmitTaskHandler(taskRepository, sessionManager, workerGateway, clock))
         command(ResubmitTask, new ResubmitTaskHandler(taskRepository, sessionManager, workerGateway, clock))
-        command(ExecuteTasksInSession, new ExecuteTasksInSessionHandler(taskRepository, sessionManager, workerGateway))
-        def cancelTaskHandler = new CancelTaskHandler(taskRepository, sessionManager, workerGateway)
+        command(ExecuteTasksInSession, new ExecuteTasksInSessionHandler(taskGateway, sessionManager, workerGateway))
+        def cancelTaskHandler = new CancelTaskHandler(taskGateway, sessionManager, workerGateway)
         command(CancelTask, cancelTaskHandler)
-        command(CancelTimedOutTasks, new CancelTimedOutTasksHandler(taskRepository, sessionManager, workerGateway, connectionManager))
+        command(CancelTimedOutTasks, new CancelTimedOutTasksHandler(taskGateway, sessionManager, workerGateway, connectionManager))
         command(CancelUserTasks, new CancelUserTasksHandler(taskRepository, cancelTaskHandler))
-        command(UpdateTaskProgress, new UpdateTaskProgressHandler(taskRepository, sessionManager, cancelTaskHandler))
+        command(UpdateTaskProgress, new UpdateTaskProgressHandler(taskGateway, sessionManager, cancelTaskHandler))
         command(RemoveTask, new RemoveTaskHandler(taskRepository))
         command(RemoveUserTasks, new RemoveUserTasksHandler(taskRepository))
-        command(FailTasksInSession, new FailTasksInSessionHandler(taskRepository))
+        command(FailTasksInSession, new FailTasksInSessionHandler(taskGateway))
 
         query(UserTasks, new UserTasksHandler(taskRepository))
         query(GetTask, new GetTaskHandler(taskRepository))
@@ -67,6 +76,12 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
     }
 
     void onStart() {
+        messageBroker.start()
         schedule(1, MINUTES, new CancelTimedOutTasks())
     }
+
+    void onStop() {
+        messageBroker?.stop()
+    }
+
 }

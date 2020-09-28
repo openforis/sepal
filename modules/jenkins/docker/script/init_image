@@ -2,9 +2,12 @@
 set -e
 
 # Needed for apt-add-repository command
-apt-get -y update && apt-get install -y software-properties-common sudo
+apt-get -y update && apt-get install -y \
+  curl \
+  software-properties-common \
+  sudo
 
-curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_14.x | bash -
 apt-get install -y nodejs\
  bzip2
 

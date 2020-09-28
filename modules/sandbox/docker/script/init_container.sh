@@ -44,21 +44,37 @@ ln -sf /config/ldap.conf /etc/ldap/ldap.conf
 
 echo "$ldap_host ldap" >> /etc/hosts
 
-
-TOT_MEM=$(free -m | awk '"'NR==2'"' | awk '"'{print "'$2'"}'"')
-if [[ TOT_MEM -gt 10000 ]] ;then
+TOT_MEM=$(awk '/MemFree/ { printf "%i\n", $2/1024 }' /proc/meminfo)
+if [[ (TOT_MEM -lt 3000) ]] ;then
+  GPT_MAX_MEM=1024
+  GPT_MIN_MEM=1024
+elif [[ (TOT_MEM -ge 3000) && (TOT_MEM -lt 10000) ]] ;then
+  GPT_MAX_MEM=2048
+  GPT_MIN_MEM=2048
+elif [[ (TOT_MEM -ge 10000) && (TOT_MEM -lt 20000) ]] ;then
   GPT_MAX_MEM=8192
   GPT_MIN_MEM=8192
+elif [[ (TOT_MEM -ge 20000) ]] ;then
+  GPT_MAX_MEM=16384
+  GPT_MIN_MEM=16384
 else
-  GPT_MAX_MEM=2048
-  GPT_MIN_MEM=2024
+  GPT_MAX_MEM=1024
+  GPT_MIN_MEM=1024
 fi
 printf '%s\n' \
     "-Xmx${GPT_MAX_MEM}m" \
     "-Xms${GPT_MIN_MEM}m" \
     "-XX:+AggressiveOpts" \
     "-Xverify:none" \
-    >> /usr/local/snap/bin/gpt.vmoption
+    "-Dsnap.log.level=ERROR"
+
+printf '%s\n' \
+    "-Xmx${GPT_MAX_MEM}m" \
+    "-Xms${GPT_MIN_MEM}m" \
+    "-XX:+AggressiveOpts" \
+    "-Xverify:none" \
+    "-Dsnap.log.level=ERROR" \
+    > /usr/local/snap/bin/gpt.vmoptions
 
 userHome=/home/$sandbox_user
 cp /etc/skel/.bashrc "$userHome"
@@ -67,5 +83,4 @@ cp /etc/skel/.bash_logout "$userHome"
 
 exportEnvironment
 source /home/$sandbox_user/.bashrc
-
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

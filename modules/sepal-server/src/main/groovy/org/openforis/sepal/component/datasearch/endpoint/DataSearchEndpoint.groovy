@@ -19,25 +19,25 @@ import static org.openforis.sepal.util.DateTime.*
 
 class DataSearchEndpoint {
     private final Component component
-    private final Component taskComponent
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
+    private final String norwayPlanetApiKey
 
     DataSearchEndpoint(Component component,
-                       Component taskComponent,
                        GoogleEarthEngineGateway geeGateway,
-                       String googleMapsApiKey) {
+                       String googleMapsApiKey,
+                       String norwayPlanetApiKey) {
         this.component = component
-        this.taskComponent = taskComponent
         this.googleMapsApiKey = googleMapsApiKey
+        this.norwayPlanetApiKey = norwayPlanetApiKey
         this.geeGateway = geeGateway
     }
 
     void registerWith(Controller controller) {
         controller.with {
-            get('/data/google-maps-api-key') {
+            get('/data/map-api-keys') {
                 response.contentType = "application/json"
-                send toJson(apiKey: googleMapsApiKey)
+                send toJson(google: googleMapsApiKey, norwayPlanet: norwayPlanetApiKey)
             }
             post('/data/sceneareas') {
                 response.contentType = "application/json"
@@ -69,22 +69,6 @@ class DataSearchEndpoint {
                 ))
             }
 
-            post('/data/classification/retrieve') {
-                def name = params.required('name')
-                taskComponent.submit(new SubmitTask(
-                    operation: params.destination == 'gee' ? 'sepal.image.asset_export' : 'sepal.image.sepal_export',
-                    params: [
-                        title: params.destination == 'gee'
-                            ? "Export classification '$name' to Earth Engine"
-                            : "Retrieve classification '$name' to Sepal",
-                        description: name,
-                        image: toClassificationMap(params)
-                    ],
-                    username: currentUser.username
-                ))
-                send toJson([status: 'OK'])
-            }
-
             post('/data/change-detection/preview') {
                 def mapLayer = geeGateway.preview(toChangeDetectionMap(params), sepalUser)
 
@@ -92,22 +76,6 @@ class DataSearchEndpoint {
                     mapId: mapLayer.id,
                     token: mapLayer.token
                 ))
-            }
-
-            post('/data/change-detection/retrieve') {
-                def name = params.required('name')
-                taskComponent.submit(new SubmitTask(
-                    operation: params.destination == 'gee' ? 'sepal.image.asset_export' : 'sepal.image.sepal_export',
-                    params: [
-                        title: params.destination == 'gee'
-                            ? "Export change-detection '$name' to Earth Engine"
-                            : "Retrieve change-detection '$name' to Sepal",
-                        description: name,
-                        image: toChangeDetectionMap(params)
-                    ],
-                    username: currentUser.username
-                ))
-                send toJson([status: 'OK'])
             }
 
             post('/data/best-scenes') {
@@ -147,20 +115,6 @@ class DataSearchEndpoint {
                 def scenes = component.submit(new FindScenesForSceneArea(query))
                 def data = scenes.collect { sceneData(it, query.targetDayOfYear) }
                 send(toJson(data))
-            }
-
-            post('/data/scenes/retrieve') {
-                response.contentType = "application/json"
-                def sceneIds = fromJson(params.required('sceneIds', String)) as List<String>
-                taskComponent.submit(new SubmitTask(
-                    operation: 'landsat-scene-download',
-                    params: [
-                        source: params.required('source', String),
-                        sceneIds: sceneIds
-                    ],
-                    username: currentUser.username
-                ))
-                send toJson([status: 'OK'])
             }
 
         }

@@ -724,9 +724,9 @@
                         "label": "Google Satellite",
                         "description": "Google Maps high-resolution satellite layer"
                     },
-                    "SENTINEL_2": {
-                        "label": "Sentinel 2",
-                        "description": "Sentinel-2 cloudless - https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2019)"
+                    "PLANET": {
+                        "label": "Planet",
+                        "description": "Planet monthly composites"
                     }
                 }
             },
@@ -1178,61 +1178,61 @@
                         "geometricCorrection": {
                             "ellipsoid": {
                                 "label": "Ellipsoid",
-                                "tooltip": "Ellipsoid correction (gamma0 correction) is applied"
+                                "tooltip": "Ellipsoid correction (gamma0 correction) is applied."
                             },
                             "label": "Geometric correction",
                             "none": {
                                 "label": "None",
-                                "tooltip": "No geometric correction is applied"
+                                "tooltip": "No geometric correction is applied."
                             },
                             "terrain": {
                                 "label": "Terrain",
-                                "tooltip": "Terrain correction is applied"
+                                "tooltip": "Terrain correction is applied."
                             }
                         },
                         "orbits": {
                             "ascending": {
                                 "label": "Ascending",
-                                "tooltip": "Include scenes from ascending orbits"
+                                "tooltip": "Include scenes from ascending orbits."
                             },
                             "descending": {
                                 "label": "Descending",
-                                "tooltip": "Include scenes from descending orbits"
+                                "tooltip": "Include scenes from descending orbits."
                             },
                             "label": "Orbits"
                         },
                         "outlierRemoval": {
                             "aggressive": {
                                 "label": "Aggressive",
-                                "tooltip": "Remove more outliers"
+                                "tooltip": "Remove more outliers."
                             },
                             "label": "Outlier removal",
                             "moderate": {
                                 "label": "Moderate",
-                                "tooltip": "Remove outliers"
+                                "tooltip": "Remove outliers."
                             },
                             "none": {
                                 "label": "None",
-                                "tooltip": "Don't remove outliers"
+                                "tooltip": "Don't remove outliers."
                             }
                         },
                         "speckleFilter": {
-                            "boxcar": {
-                                "label": "Boxcar",
-                                "tooltip": "30x30m boxcar filtering is applied"
+                            "quegan": {
+                                "label": "Quegan",
+                                "tooltip": "Quegan MT Filter is applied."
                             },
                             "label": "Speckle filter",
                             "none": {
                                 "label": "None",
-                                "tooltip": "Don't apply any speckle filter"
+                                "tooltip": "Don't apply any speckle filter."
                             },
                             "refinedLee": {
                                 "label": "Refined Lee",
-                                "tooltip": "Refined Lee filtering is applied. This can be very slow, but often gives good results"
+                                "tooltip": "Refined Lee filtering is applied. This can be very slow, but often gives good results."
                             },
                             "snic": {
                                 "label": "SNIC",
-                                "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle"
+                                "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle."
                             }
                         }
                     },

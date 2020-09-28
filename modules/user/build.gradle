@@ -8,8 +8,6 @@ mainClassName = 'org.openforis.sepal.component.user.Main'
 
 dependencies {
     compile project(':sepal-common')
-    compile group: 'org.openforis.rmb', name: 'repository-message-broker-xstream', version: '0.1.3'
-    compile group: 'org.openforis.rmb', name: 'repository-message-broker-slf4j', version: '0.1.3'
     testCompile project(':sepal-common-test')
 }
 

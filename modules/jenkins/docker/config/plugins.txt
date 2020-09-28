@@ -1,3 +1,6 @@
-github:1.29.5
-gradle-plugin:1.36
-git-client:3.1.1
+bouncycastle-api:2.18
+command-launcher:1.4
+github:1.31.0
+gradle:1.36
+jaxb:2.3.0.1
+jdk-tool:1.4
