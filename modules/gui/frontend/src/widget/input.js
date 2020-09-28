@@ -24,15 +24,33 @@ class _Input extends React.Component {
 
     componentDidMount() {
         const {value} = this.props
-        this.setState({value})
-        this.ref.current.value = value
+        const start = value.length
+        const end = value.length
+        this.setState({value, start, end})
     }
 
-    componentDidUpdate(prevProps) {
-        const {value} = this.props
-        if (!_.isEqual(value, prevProps.value)) {
-            this.setState({value})
+    componentDidUpdate(prevProps, prevState) {
+        const {value, start, end} = this.state
+        if (prevState.value !== value) {
             this.ref.current.value = value
+        }
+        if (prevState.start !== start) {
+            this.ref.current.selectionStart = start
+        }
+        if (prevState.end !== end) {
+            this.ref.current.selectionEnd = end
+        }
+    }
+
+    moveCursorToEnd() {
+        const el = this.ref.current
+        if (typeof el.selectionStart == 'number') {
+            el.selectionStart = el.selectionEnd = el.value.length
+        } else if (typeof el.createTextRange != 'undefined') {
+            el.focus()
+            var range = el.createTextRange()
+            range.collapse(false)
+            range.select()
         }
     }
 
@@ -107,14 +125,13 @@ class _Input extends React.Component {
                             onBlur && onBlur(e)
                         }}
                         onChange={e => {
-                            if (transform) {
-                                const value = transform(e.target.value)
-                                e.target.value = value
-                                onChange && onChange(e)
-                                this.setState({value})
-                            } else {
-                                onChange && onChange(e)
-                            }
+                            const value = transform
+                                ? transform(e.target.value)
+                                : e.target.value
+                            const start = e.target.selectionStart
+                            const end = e.target.selectionEnd
+                            onChange && onChange(e)
+                            this.setState({value, start, end})
                         }}
                     />
                 </div>
