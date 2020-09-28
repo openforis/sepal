@@ -6,8 +6,11 @@ import ee from '@google/earthengine'
 import guid from 'guid'
 
 export default class EarthEngineLayer {
-    constructor({layerIndex, bounds, mapId$, props, onProgress}) {
+    constructor({layerIndex, toggleable, label, description, bounds, mapId$, props, onProgress}) {
         this.layerIndex = layerIndex
+        this.toggleable = toggleable
+        this.label = label
+        this.description = description
         this.bounds = bounds
         this.mapId$ = mapId$
         this.props = props
@@ -74,6 +77,7 @@ export default class EarthEngineLayer {
     }
 
     hide(googleMap, hidden) {
+        console.log({hidden})
         const layer = googleMap.overlayMapTypes.getAt(this.layerIndex)
         layer && layer.setOpacity(hidden ? 0 : 1)
     }
