@@ -203,7 +203,6 @@ const createMap = mapElement => {
                     },
                     hideLayer(id, hidden) {
                         const layer = layerById[id]
-                        console.log('HIDING LAYER FROM SEPAL_MAP')
                         if (layer)
                             layer.hide(googleMap, hidden)
                     },

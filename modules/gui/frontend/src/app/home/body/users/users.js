@@ -134,10 +134,6 @@ class Users extends React.Component {
             this.setState(({users}) => {
                 if (userDetails) {
                     const index = users.findIndex(({username}) => username === userDetails.username)
-                    if (index > -1) {
-                        console.log('users[index]', users[index])
-                        console.log('userDetails', userDetails)
-                    }
                     index === -1
                         ? users.push(userDetails)
                         : users[index] = {

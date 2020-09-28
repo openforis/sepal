@@ -77,7 +77,6 @@ export default class EarthEngineLayer {
     }
 
     hide(googleMap, hidden) {
-        console.log({hidden})
         const layer = googleMap.overlayMapTypes.getAt(this.layerIndex)
         layer && layer.setOpacity(hidden ? 0 : 1)
     }

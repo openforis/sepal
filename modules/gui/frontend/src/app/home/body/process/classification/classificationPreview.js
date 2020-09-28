@@ -125,7 +125,6 @@ class ClassificationPreview extends React.Component {
 
     isHidden() {
         const {recipe} = this.props
-        console.log('isHidden', recipe.ui.overlayIndex, recipe.ui)
         return recipe.ui.hidePreview || recipe.ui.overlayIndex === -1
     }
 
