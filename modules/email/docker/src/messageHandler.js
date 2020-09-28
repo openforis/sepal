@@ -8,9 +8,9 @@ const logError = (key, msg) =>
 
 const handlers = {
     'email.send': async (key, msg) => {
-        const {to, cc, bcc, subject, body} = msg
-        if ((to || cc || bcc) && (subject || body)) {
-            await enqueue({to, cc, bcc, subject, body})
+        const {from, to, cc, bcc, subject, content, contentType} = msg
+        if ((to || cc || bcc) && (subject || content)) {
+            await enqueue({from, to, cc, bcc, subject, content, contentType})
         } else {
             logError(key, msg)
         }

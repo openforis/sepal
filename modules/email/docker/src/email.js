@@ -28,20 +28,34 @@ const tag = ({from, to, cc, bcc, subject}) =>
         `subject: "${subject}"`
     ].filter(attr => attr).join(', ')
 
-const send = async ({id, email: {to, cc, bcc, subject = '', body = ''}}) => {
-    await transport.verify()
-    const context = {
-        subject,
-        body: marked(body)
+const getBody = (content, contentType) => {
+    switch (contentType) {
+    case 'text/plain':
+        return content
+    case 'text/markdown':
+        return marked(content)
+    case 'text/html':
+        return new Handlebars.SafeString(content)
+    default:
+        throw new Error(`Unknown content-type: ${contentType}`)
     }
-    const html = template(context)
-    const from = smtpFrom
-    const email = {from, to, cc, bcc, subject, html}
-    log.isTrace()
-        ? log.trace(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}\n`, body)
-        : log.debug(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}`)
-    const status = await transport.sendMail(email)
-    log.debug(`<${id}> Email status:`, status)
+}
+
+const send = async ({id, email: {from = smtpFrom, to, cc, bcc, subject = '', content = '', contentType = 'text/plain'}}) => {
+    await transport.verify()
+    try {
+        const body = getBody(content, contentType)
+        const context = {subject, body}
+        const html = template(context)
+        const email = {from, to, cc, bcc, subject, html}
+        log.isTrace()
+            ? log.trace(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}\n`, body)
+            : log.debug(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}`)
+        const status = await transport.sendMail(email)
+        log.debug(`<${id}> Email status:`, status)
+    } catch (error) {
+        log.warn(`<${id}> Ignoring email ${tag({from, to, cc, bcc, subject})}`, error)
+    }
 }
 
 module.exports = {send, tag}
