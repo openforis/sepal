@@ -4,13 +4,14 @@ const {getSessionStatus, getSetUserStorage} = require('./persistence')
 const Bull = require('bull')
 const {v4: uuid} = require('uuid')
 const {formatDistanceToNow} = require('date-fns')
+const {Subject} = require('rx')
 const log = require('sepal/log').getLogger('jobQueue')
 
 const DELAY_SPREAD = .2
 
 const queue = new Bull('scan-queue', redisUri)
 
-const scanCompleteListeners = []
+const scanComplete$ = new Subject()
 
 const rescanJobId = (username, jobId = uuid()) =>
     `rescan-${username}-${jobId}`
@@ -87,9 +88,7 @@ queue.on('completed', async (job, {size}) => {
         })
     }
 
-    scanCompleteListeners.forEach(
-        callback => callback({username, size})
-    )
+    scanComplete$.next({username, size})
 })
 
 const scan = async ({username, delay: nominalDelay = maxDelayMilliseconds, priority = 1}) => {
@@ -110,8 +109,4 @@ const scan = async ({username, delay: nominalDelay = maxDelayMilliseconds, prior
     })
 }
 
-const onScanComplete = callback => {
-    scanCompleteListeners.push(callback)
-}
-
-module.exports = {scan, onScanComplete, logStats}
+module.exports = {scan, scanComplete$, logStats}

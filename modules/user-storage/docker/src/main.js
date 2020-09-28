@@ -1,42 +1,24 @@
 require('sepal/log').configureServer(require('./log.json'))
 const log = require('sepal/log').getLogger('main')
-const {amqpUri} = require('./config')
 
 const _ = require('lodash')
 
-const {messageQueue$} = require('sepal/messageQueue')
+const {messageQueue} = require('sepal/messageQueue')
+const {amqpUri} = require('./config')
 const {scheduleFullScan} = require('./scan')
-const {onScanComplete, logStats} = require('./jobQueue')
+const {scanComplete$, logStats} = require('./jobQueue')
 const {messageHandler} = require('./messageHandler')
 
 const main = async () => {
-    const initialize = async ({topicSubscriber, topicPublisher}) => {
-        const publisher = await topicPublisher()
-    
-        onScanComplete(
-            ({username, size}) => publisher.publish('userStorage.size', {username, size})
-        )
-    
-        await topicSubscriber({
-            queue: 'userStorage.workerSession',
-            topic: 'workerSession.#',
-            handler: messageHandler
-        })
-        
-        await topicSubscriber({
-            queue: 'userStorage.files',
-            topic: 'files.#',
-            handler: messageHandler
-        })
-        
-        await scheduleFullScan()
-        await logStats()
-        log.info('Initialized')
-    }
-    
-    await messageQueue$(amqpUri).subscribe(
-        connection => initialize(connection)
-    )
+    messageQueue(amqpUri, ({addPublisher, addSubscriber}) => {
+        addPublisher('userStorage.size', scanComplete$)
+        addSubscriber('userStorage.workerSession', 'workerSession.#', messageHandler)
+        addSubscriber('userStorage.files', 'files.#', messageHandler)
+    })
+
+    await scheduleFullScan()
+    await logStats()
+    log.info('Initialized')
 }
 
-main().catch(log.error)
+main().catch(log.fatal)
