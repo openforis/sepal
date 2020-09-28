@@ -7,7 +7,6 @@ import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
-import _ from 'lodash'
 import styles from './input.module.css'
 import withForwardedRef from 'ref'
 
