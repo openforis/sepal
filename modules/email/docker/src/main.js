@@ -18,4 +18,7 @@ const main = async () => {
     log.info('Initialized')
 }
 
-main().catch(log.fatal)
+main().catch(error => {
+    log.fatal(error)
+    process.exit(1)
+})
