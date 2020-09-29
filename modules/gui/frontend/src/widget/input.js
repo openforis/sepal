@@ -30,14 +30,22 @@ class _Input extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         const {value} = this.props
-        const {start, end} = this.state
-        this.ref.current.value = value
-        if (prevState.start !== start) {
-            this.ref.current.selectionStart = start
+        const input = this.ref.current
+        input.value = value
+        if (this.isSelectionAllowed()) {
+            const {start, end} = this.state
+            if (prevState.start !== start) {
+                input.selectionStart = start
+            }
+            if (prevState.end !== end) {
+                input.selectionEnd = end
+            }
         }
-        if (prevState.end !== end) {
-            this.ref.current.selectionEnd = end
-        }
+    }
+
+    isSelectionAllowed() {
+        const input = this.ref.current
+        return input && /text|search|password|tel|url/.test(input.type)
     }
 
     moveCursorToEnd() {
@@ -127,11 +135,14 @@ class _Input extends React.Component {
                             const value = transform
                                 ? transform(e.target.value)
                                 : e.target.value
-                            const start = e.target.selectionStart
-                            const end = e.target.selectionEnd
+
+                            if (this.isSelectionAllowed()) {
+                                const start = e.target.selectionStart
+                                const end = e.target.selectionEnd
+                                this.setState({start, end})
+                            }
                             e.target.value = value
                             onChange && onChange(e)
-                            this.setState({start, end})
                         }}
                     />
                 </div>
