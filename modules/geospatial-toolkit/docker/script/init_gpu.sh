@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+UPDATE_DATE='2020-09-30'
 
 apt-get update -y
 apt-get install -y nvidia-cuda-toolkit
