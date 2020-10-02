@@ -137,6 +137,7 @@ R -e "pacman::p_load(\
         'lattice',\
         'latticeExtra',\
         'lazyeval',\
+        'leafem',\
         'leaflet',\
         'leaflet.extras',\
         'lifecycle',\
