@@ -1,19 +1,20 @@
-import {compose} from 'compose'
-import {activatable} from 'widget/activation/activatable'
-import React from 'react'
-import styles from './layersMenu.module.css'
-import Labels from './labels'
-import {Menu} from './menu'
-import {select} from 'store'
-import PropTypes from 'prop-types'
-import {changeBaseLayer} from './baseLayer'
-import {msg} from 'translate'
-import ButtonSelect from 'widget/buttonSelect'
 import {Form, form} from 'widget/form/form'
-import {googleMap, sepalMap} from 'app/home/map/map'
-import moment from 'moment'
+// import {Menu} from './menu'
+import {Menu} from 'widget/menu/menu'
+import {activatable} from 'widget/activation/activatable'
+import {changeBaseLayer} from './baseLayer'
+import {compose} from 'compose'
 import {getNorwayPlanetApiKey} from './map'
+import {googleMap, sepalMap} from 'app/home/map/map'
+import {msg} from 'translate'
+import {select} from 'store'
+import ButtonSelect from 'widget/buttonSelect'
+import Labels from './labels'
+import PropTypes from 'prop-types'
+import React from 'react'
 import actionBuilder from '../../../action-builder'
+import moment from 'moment'
+import styles from './layersMenu.module.css'
 
 const fields = {
     year: new Form.Field(),
@@ -144,7 +145,7 @@ class _LayersMenu extends React.Component {
                                     tooltipPlacement='bottom'
                                     options={yearOptions}
                                     label={yearOption && yearOption.label}
-                                    onSelect={year => this.changeBaseLayer('PLANET', year, this.props.inputs.month)}
+                                    onSelect={year => this.changeBaseLayer('PLANET', year, month)}
                                 />
                                 <ButtonSelect
                                     placement='below'
@@ -153,7 +154,7 @@ class _LayersMenu extends React.Component {
                                     tooltipPlacement='bottom'
                                     options={monthOptions}
                                     label={monthOption && monthOption.label}
-                                    onSelect={month => this.changeBaseLayer('PLANET', this.props.inputs.year, month)}
+                                    onSelect={month => this.changeBaseLayer('PLANET', year, month)}
                                 />
                             </div>
                         }/>
@@ -202,6 +203,7 @@ class _LayersMenu extends React.Component {
 const policy = () => ({
     _: 'allow'
 })
+
 export const LayersMenu = compose(
     _LayersMenu,
     form({fields, mapStateToProps}),
@@ -211,7 +213,6 @@ export const LayersMenu = compose(
 const sequence = (start, end, step = 1) =>
     Array.apply(null, {length: Math.floor((end - start) / step) + 1})
         .map((_, i) => i * step + start)
-
 
 LayersMenu.propTypes = {
     labelLayerIndex: PropTypes.any.isRequired,

@@ -1,8 +1,9 @@
-import React from 'react'
-import Icon from 'widget/icon'
 import {Panel} from 'widget/panel/panel'
+import React from 'react'
 import styles from './menu.module.css'
 
+const {MenuItem} = require('./menuItem')
+const MenuContext = require('./menuContext')
 
 export const Menu = ({position, close, className, children}) =>
     <Panel
@@ -15,42 +16,12 @@ export const Menu = ({position, close, className, children}) =>
         </MenuContext.Provider>
     </Panel>
 
-
-const MenuContext = React.createContext()
-
-
 const Separator = () =>
     <div className={styles.separator}/>
+
 Menu.Separator = Separator
 
-
-const Item = ({selected, label, description, right, onClick}) =>
-    <MenuContext.Consumer>
-        {({close}) => {
-            return (
-                <li className={styles.item} onClick={() => {
-                    close && close()
-                    onClick()
-                }}>
-                    <div className={styles.left}>
-                        {selected
-                            ? <Icon name={'check'}/>
-                            : null
-                        }
-                    </div>
-                    <div className={styles.center}>
-                        <div className={styles.label}>{label}</div>
-                        <div className={styles.description}>{description}</div>
-                    </div>
-                    <div className={styles.right}>
-                        {right}
-                    </div>
-                </li>
-            )
-        }}
-    </MenuContext.Consumer>
-Menu.Item = Item
-
+Menu.Item = MenuItem
 
 const Toggle = ({label, description, onChange, selected = false, right}) => {
     return (
@@ -61,17 +32,17 @@ const Toggle = ({label, description, onChange, selected = false, right}) => {
             right={right}
             onClick={() => onChange(!selected)}/>)
 }
+
 Menu.Toggle = Toggle
 
-
 const SelectContext = React.createContext()
+
 const Select = ({label, selected, children, onSelect}) => {
     return (
-        <SelectContext.Provider value={({
-                selected,
-                select: selected => onSelect(selected)
-            }
-        )}>
+        <SelectContext.Provider value={{
+            selected,
+            select: selected => onSelect(selected)
+        }}>
             <div className={styles.group}>
                 <li className={styles.groupLabel}>{label}</li>
                 <ul>
@@ -81,8 +52,8 @@ const Select = ({label, selected, children, onSelect}) => {
         </SelectContext.Provider>
     )
 }
-Menu.Select = Select
 
+Menu.Select = Select
 
 const Option = ({id, label, description, right}) =>
     <SelectContext.Consumer>
@@ -95,4 +66,5 @@ const Option = ({id, label, description, right}) =>
                 onClick={() => select(id)}/>
         }
     </SelectContext.Consumer>
+
 Menu.Option = Option
