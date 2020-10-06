@@ -9,6 +9,7 @@ numpy>=1.16.2
 pyasn1>=0.4.8
 pyasn1-modules>=0.2.8
 rsa>=4.0
+six>=1.13.0
 
 git+git://github.com/openforis/earthengine-api.git@v0.1.234#egg=earthengine-api&subdirectory=python
 git+git://github.com/openforis/gee-gateway.git@42753c9195e4a2087f92e41463aed150d0ce561c#egg=gee-gateway
