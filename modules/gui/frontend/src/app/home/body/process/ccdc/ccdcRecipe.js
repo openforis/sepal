@@ -16,7 +16,7 @@ export const breakDetectionOptions = {
     },
 
     moderate: {
-        minObservations: 4,
+        minObservations: 6,
         chiSquareProbability: 0.9,
         minNumOfYearsScaler: 1.33,
         lambda: 20,
@@ -24,7 +24,7 @@ export const breakDetectionOptions = {
     },
 
     aggressive: {
-        minObservations: 3,
+        minObservations: 4,
         chiSquareProbability: 0.75,
         minNumOfYearsScaler: 1.33,
         lambda: 20,
