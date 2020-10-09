@@ -121,11 +121,11 @@ Options.propTypes = {}
 const valuesToModel = values => {
     if (values.advanced) {
         return {
-            minObservations: values.minObservations,
-            chiSquareProbability: values.chiSquareProbability,
-            minNumOfYearsScaler: values.minNumOfYearsScaler,
-            lambda: values.lambda,
-            maxIterations: values.maxIterations
+            minObservations: parseInt(values.minObservations),
+            chiSquareProbability: parseFloat(values.chiSquareProbability),
+            minNumOfYearsScaler: parseFloat(values.minNumOfYearsScaler),
+            lambda: parseInt(values.lambda),
+            maxIterations: parseInt(values.maxIterations)
         }
     } else {
         return breakDetectionOptions[values.breakDetection]
