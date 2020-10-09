@@ -95,6 +95,7 @@ function toBackendRecipe({recipe, bands}) {
         maskSnow: preprocess.mask.includes('SNOW'),
         brdfCorrect: preprocess.corrections.includes('BRDF'),
         surfaceReflectance: preprocess.corrections.includes('SR'),
+        calibrate: true,
         ...preprocess,
         ...ccdcOptions
     }
