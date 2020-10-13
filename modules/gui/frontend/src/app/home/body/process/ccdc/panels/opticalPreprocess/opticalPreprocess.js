@@ -10,50 +10,14 @@ import styles from './opticalPreprocess.module.css'
 
 const fields = {
     corrections: new Form.Field(),
-    shadowPercentile: new Form.Field(),
-    hazePercentile: new Form.Field(),
-    ndviPercentile: new Form.Field(),
-    dayOfYearPercentile: new Form.Field(),
-    mask: new Form.Field(),
-    compose: new Form.Field()
+    cloudMasking: new Form.Field(),
+    snowMasking: new Form.Field()
 }
 
 class OpticalPreprocess extends React.Component {
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
-    }
-
-    renderContent() {
-        const {inputs: {corrections, mask}} = this.props
-        return (
-            <Layout>
-                <Form.Buttons
-                    label={msg('process.ccdc.panel.preprocess.form.corrections.label')}
-                    input={corrections}
-                    multiple={true}
-                    options={[{
-                        value: 'SR',
-                        label: msg('process.ccdc.panel.preprocess.form.corrections.surfaceReflectance.label'),
-                        tooltip: msg('process.ccdc.panel.preprocess.form.corrections.surfaceReflectance.tooltip')
-                    }, {
-                        value: 'BRDF',
-                        label: msg('process.ccdc.panel.preprocess.form.corrections.brdf.label'),
-                        tooltip: msg('process.ccdc.panel.preprocess.form.corrections.brdf.tooltip')
-                    }]}
-                />
-                <Form.Buttons
-                    label={msg('process.ccdc.panel.preprocess.form.mask.label')}
-                    input={mask}
-                    multiple={true}
-                    options={[{
-                        value: 'SNOW',
-                        label: msg('process.ccdc.panel.preprocess.form.mask.snow.label'),
-                        tooltip: msg('process.ccdc.panel.preprocess.form.mask.snow.tooltip')
-                    }]}
-                />
-            </Layout>
-        )
     }
 
     render() {
@@ -65,10 +29,74 @@ class OpticalPreprocess extends React.Component {
                     icon='cog'
                     title={msg('process.ccdc.panel.preprocess.title')}/>
                 <Panel.Content>
-                    {this.renderContent()}
+                    <Layout>
+                        {this.renderCorrectionsOptions()}
+                        {this.renderCloudMaskingOptions()}
+                        {this.renderSnowMaskingOptions()}
+                    </Layout>
                 </Panel.Content>
                 <Form.PanelButtons/>
             </RecipeFormPanel>
+        )
+    }
+
+    renderCorrectionsOptions() {
+        const {inputs: {corrections}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.preprocess.form.corrections.label')}
+                input={corrections}
+                multiple={true}
+                options={[{
+                    value: 'SR',
+                    label: msg('process.ccdc.panel.preprocess.form.corrections.surfaceReflectance.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.corrections.surfaceReflectance.tooltip')
+                }, {
+                    value: 'BRDF',
+                    label: msg('process.ccdc.panel.preprocess.form.corrections.brdf.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.corrections.brdf.tooltip')
+                }]}
+            />
+        )
+    }
+
+    renderCloudMaskingOptions() {
+        const {inputs: {cloudMasking}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.preprocess.form.cloudMasking.label')}
+                input={cloudMasking}
+                options={[{
+                    value: 'MODERATE',
+                    label: msg('process.ccdc.panel.preprocess.form.cloudMasking.moderate.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.cloudMasking.moderate.tooltip')
+                }, {
+                    value: 'AGGRESSIVE',
+                    label: msg('process.ccdc.panel.preprocess.form.cloudMasking.aggressive.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.cloudMasking.aggressive.tooltip')
+                }]}
+                type='horizontal-wrap'
+            />
+        )
+    }
+
+    renderSnowMaskingOptions() {
+        const {inputs: {snowMasking}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.preprocess.form.snowMasking.label')}
+                input={snowMasking}
+                options={[{
+                    value: 'OFF',
+                    label: msg('process.ccdc.panel.preprocess.form.snowMasking.off.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.snowMasking.off.tooltip')
+                }, {
+                    value: 'ON',
+                    label: msg('process.ccdc.panel.preprocess.form.snowMasking.on.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.snowMasking.on.tooltip')
+                }]}
+                type='horizontal-nowrap'
+            />
         )
     }
 }
@@ -77,13 +105,15 @@ OpticalPreprocess.propTypes = {}
 
 const valuesToModel = values => ({
     corrections: values.corrections,
-    mask: values.mask
+    cloudMasking: values.cloudMasking,
+    snowMasking: values.snowMasking,
 })
 
 const modelToValues = model => {
     return ({
         corrections: model.corrections,
-        mask: model.mask
+        cloudMasking: model.cloudMasking,
+        snowMasking: model.snowMasking
     })
 }
 

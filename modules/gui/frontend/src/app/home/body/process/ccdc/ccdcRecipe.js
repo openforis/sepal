@@ -45,8 +45,9 @@ export const defaultModel = {
     },
     options: {
         corrections: [],
-        mask: ['SNOW'],
-        orbits: ['ASCENDING'],
+        cloudMasking: 'AGGRESSIVE',
+        snowMasking: 'OFF',
+        orbits: ['ASCENDING', 'DESCENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
         outlierRemoval: 'NONE'
@@ -92,7 +93,6 @@ function toBackendRecipe({recipe, bands}) {
         aoi: recipe.model.aoi,
         fromDate: recipe.model.dates.startDate,
         toDate: recipe.model.dates.endDate,
-        maskSnow: preprocess.mask.includes('SNOW'),
         brdfCorrect: preprocess.corrections.includes('BRDF'),
         surfaceReflectance: preprocess.corrections.includes('SR'),
         calibrate: true,
