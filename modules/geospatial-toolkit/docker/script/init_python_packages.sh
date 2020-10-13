@@ -5,6 +5,7 @@ echo
 echo "************************************"
 echo "*** Installing misc python tools ***"
 echo "************************************"
+# VERSION=2020-10-13
 export GDAL_VERSION=`pip3 show GDAL|grep 'Version: ' | cut -c10-`
 
 function template {
