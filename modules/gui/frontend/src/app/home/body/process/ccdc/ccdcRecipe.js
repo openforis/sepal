@@ -46,7 +46,7 @@ export const defaultModel = {
     options: {
         corrections: [],
         cloudMasking: 'AGGRESSIVE',
-        snowMasking: 'OFF',
+        snowMasking: 'ON',
         orbits: ['ASCENDING', 'DESCENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',

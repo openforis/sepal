@@ -915,7 +915,7 @@
             "snowMasking": {
               "off": {
                 "label": "Off",
-                "tooltip": "Don't mask snow."
+                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
               },
               "label": "Snow masking",
               "on": {
@@ -1366,7 +1366,7 @@
             "snowMasking": {
               "off": {
                 "label": "Off",
-                "tooltip": "Don't mask snow."
+                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
               },
               "label": "Snow masking",
               "on": {
@@ -1464,7 +1464,7 @@
     "ccdc": {
       "create": "CCDC",
       "tabPlaceholder": "CCDC",
-      "description": "Create CCDC time series.",
+      "description": "Create a CCDC asset from a time-series.",
       "mapToolbar": {
         "centerMap": {
           "tooltip": "Zoom to area of interest"
@@ -1526,10 +1526,21 @@
                 "tooltip": "Use scenes atmospherically corrected surface reflectance."
               }
             },
+            "shadowMasking": {
+              "off": {
+                "label": "Off",
+                "tooltip": "Don't apply aggressive shadow masking."
+              },
+              "label": "Shadow masking",
+              "on": {
+                "label": "On",
+                "tooltip": "Apply aggressive shadow masking. This can inadvertently remove some dynamics and lead to missing changes"
+              }
+            },
             "snowMasking": {
               "off": {
                 "label": "Off",
-                "tooltip": "Don't mask snow."
+                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
               },
               "label": "Snow masking",
               "on": {
@@ -1588,7 +1599,7 @@
           "form": {
             "bands": {
               "bands": "Bands",
-              "atLeastOne": "Select at least one ban"
+              "atLeastOne": "Select at least one band"
             },
             "scale": {
               "label": "Scale",
@@ -1646,7 +1657,7 @@
             },
             "breakpointBands": {
               "label": "Breakpoint bands",
-              "atLeastOne": "Select at least one ban"
+              "atLeastOne": "Select at least one band"
             },
             "required": "A data source must be selected"
           },

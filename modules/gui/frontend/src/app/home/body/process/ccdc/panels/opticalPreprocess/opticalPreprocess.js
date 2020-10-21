@@ -11,6 +11,7 @@ import styles from './opticalPreprocess.module.css'
 const fields = {
     corrections: new Form.Field(),
     cloudMasking: new Form.Field(),
+    shadowMasking: new Form.Field(),
     snowMasking: new Form.Field()
 }
 
@@ -32,6 +33,7 @@ class OpticalPreprocess extends React.Component {
                     <Layout>
                         {this.renderCorrectionsOptions()}
                         {this.renderCloudMaskingOptions()}
+                        {this.renderShadowMaskingOptions()}
                         {this.renderSnowMaskingOptions()}
                     </Layout>
                 </Panel.Content>
@@ -80,6 +82,26 @@ class OpticalPreprocess extends React.Component {
         )
     }
 
+    renderShadowMaskingOptions() {
+        const {inputs: {shadowMasking}} = this.props
+        return (
+            <Form.Buttons
+                label={msg('process.ccdc.panel.preprocess.form.shadowMasking.label')}
+                input={shadowMasking}
+                options={[{
+                    value: 'OFF',
+                    label: msg('process.ccdc.panel.preprocess.form.shadowMasking.off.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.shadowMasking.off.tooltip')
+                }, {
+                    value: 'ON',
+                    label: msg('process.ccdc.panel.preprocess.form.shadowMasking.on.label'),
+                    tooltip: msg('process.ccdc.panel.preprocess.form.shadowMasking.on.tooltip')
+                }]}
+                type='horizontal-nowrap'
+            />
+        )
+    }
+
     renderSnowMaskingOptions() {
         const {inputs: {snowMasking}} = this.props
         return (
@@ -106,6 +128,7 @@ OpticalPreprocess.propTypes = {}
 const valuesToModel = values => ({
     corrections: values.corrections,
     cloudMasking: values.cloudMasking,
+    shadowMasking: values.shadowMasking,
     snowMasking: values.snowMasking,
 })
 
@@ -113,6 +136,7 @@ const modelToValues = model => {
     return ({
         corrections: model.corrections,
         cloudMasking: model.cloudMasking,
+        shadowMasking: model.shadowMasking,
         snowMasking: model.snowMasking
     })
 }
