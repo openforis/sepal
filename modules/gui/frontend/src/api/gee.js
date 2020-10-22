@@ -4,8 +4,8 @@ import {map} from 'rxjs/operators'
 export default {
     preview$: ({recipe, ...params}) =>
         postJson$('/api/gee/preview', {body: {recipe, ...params}, retries: 0}),
-    bands$: ({recipe, ...params}) =>
-        postJson$('/api/gee/bands', {body: {recipe, ...params}, retries: 0})
+    bands$: ({asset, recipe, ...params}) =>
+        postJson$('/api/gee/bands', {body: {asset, recipe, ...params}, retries: 0})
             .pipe(toResponse),
     sceneAreas$: ({aoi, source}) =>
         postJson$('/api/gee/sceneareas', {

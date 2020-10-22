@@ -1668,6 +1668,185 @@
       "chartPixel": {
         "loadFailed": "Failed to load chart: {error}"
       }
+    },
+
+    "ccdcSlice": {
+      "create": "CCDC slice",
+      "tabPlaceholder": "CCDC slice",
+      "description": "Create a slice of a CCDC asset, for a specific date.",
+      "mapToolbar": {
+        "centerMap": {
+          "tooltip": "Zoom to area of interest"
+        },
+        "labels": {
+          "hide": {
+            "tooltip": "Hide labels"
+          },
+          "show": {
+            "tooltip": "Show labels"
+          }
+        },
+        "zoom": {
+          "tooltip": "Zoom to area"
+        },
+        "zoomIn": {
+          "tooltip": "Zoom in"
+        },
+        "zoomOut": {
+          "tooltip": "Zoom out"
+        }
+      },
+      "panel": {
+        "date": {
+          "button": "DAT",
+          "form": {
+            "date": {
+              "label": "Date of slice",
+              "malformed": "Invalid date",
+              "required": "Date is required",
+              "tooltip": "The date of the slice"
+            }
+          },
+          "title": "Date",
+          "tooltip": "Specify date of the slice"
+        },
+        "options": {
+          "button": "OPT",
+          "form": {
+            "harmonics": {
+              "label": "Harmonics",
+              "tooltip": "Specify how many harmonics from the CCDC regression model to use when creating the slice"
+            },
+            "gapStrategy": {
+              "label": "Gap strategy",
+              "tooltip": "Decide which strategy to use for pixels where there is no CCDC segment. There will be gaps during detected breaks or for dates before and after the CCDC date range.",
+              "interpolate": {
+                "label": "Interpolate",
+                "tooltip": "Generate a new model based on surrounding segments. If there isn't any segment before or after, the pixel will be masked."
+              },
+              "extrapolate": {
+                "label": "Extrapolate",
+                "tooltip": "Generate a new model based on the segment before or after the gap."
+              },
+              "mask": {
+                "label": "Mask",
+                "tooltip": "Mask all pixels that fall on a gap."
+              }
+            },
+            "extrapolateSegment": {
+              "label": "Segment to extrapolate",
+              "closest": {
+                "label": "Closest",
+                "tooltip": "Extrapolate the segment closest to the date"
+              },
+              "previous": {
+                "label": "Previous",
+                "tooltip": "Extrapolate the segment before the date"
+              },
+              "next": {
+                "label": "Next",
+                "tooltip": "Back-extrapolate the segment after the date"
+              }
+            },
+            "extrapolateMaxDays": {
+              "label": "Max days to extrapolate",
+              "unlimited": "all"
+            }
+          },
+          "title": "CCDC slice options",
+          "tooltip": "Configure how the CCDC slice is made"
+        },
+        "retrieve": {
+          "apply": "Retrieve",
+          "form": {
+            "baseBands": {
+              "label": "Base bands",
+              "atLeastOne": "At least one base band must be selected"
+            },
+            "bandTypes": {
+              "label": "Band types",
+              "atLeastOne": "At least one band type must be selected",
+              "value": {
+                "label": "Value",
+                "tooltip": "The evaluated value of the harmonic models for the specified date"
+              },
+              "rmse": {
+                "label": "RMSE",
+                "tooltip": "RMSE of the harmonic models"
+              },
+              "intercept": {
+                "label": "Intercept",
+                "tooltip": "The intercept of the model's linear component"
+              },
+              "slope": {
+                "label": "Slope",
+                "tooltip": "The slope of the model's linear component"
+              },
+              "phase1": {
+                "label": "Phase 1",
+                "tooltip": "The phase of the model's first order harmonic"
+              },
+              "phase2": {
+                "label": "Phase 2",
+                "tooltip": "The phase of the model's second order harmonic"
+              },
+              "phase3": {
+                "label": "Phase 3",
+                "tooltip": "The phase of the model's third order harmonic"
+              },
+              "amplitude1": {
+                "label": "Amplitude 1",
+                "tooltip": "The amplitude of the model's first order harmonic"
+              },
+              "amplitude2": {
+                "label": "Amplitude 2",
+                "tooltip": "The amplitude of the model's second order harmonic"
+              },
+              "amplitude3": {
+                "label": "Amplitude 4",
+                "tooltip": "The amplitude of the model's third order harmonic"
+              }
+            },
+            "scale": {
+              "label": "Scale",
+              "info": "{scale} meters"
+            },
+            "destination": {
+              "label": "Destination",
+              "GEE": "Google Earth Engine asset",
+              "SEPAL": "Sepal workspace",
+              "required": "A destination must be selected"
+            }
+          },
+          "task": {
+            "GEE": "Export {name} as a Google Earth Engine asset",
+            "SEPAL": "Retrieve {name} to Sepal workspace"
+          },
+          "title": "Retrieve",
+          "tooltip": "Retrieve time-series"
+        },
+        "source": {
+          "button": "SRC",
+          "form": {
+            "asset": {
+              "label": "CCDC asset",
+              "placeholder": "Enter CCDC asset ID",
+              "required": "An asset ID must be specified",
+              "invalid": "Asset must be an exported CCDC asset"
+            }
+          },
+          "title": "Source",
+          "tooltip": "Select EE asset with CCDC segments to slice"
+        }
+      },
+      "preview": {
+        "label": "CCDC slice",
+        "description": "Preview of a CCDC slice, generated on the fly by EE.",
+        "initializing": "Loading preview...",
+        "loading": "Loaded {loaded} of {count} tiles",
+        "tilesFailed": "{failed} failed",
+        "error": "Failed to generate preview"
+      }
     }
   },
   "footer": {

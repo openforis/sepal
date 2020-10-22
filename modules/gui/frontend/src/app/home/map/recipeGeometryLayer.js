@@ -11,7 +11,6 @@ export const setRecipeGeometryLayer = (
         destroy$,
         onInitialized
     }) => {
-
     const layer = recipe
         ? new RecipeGeometryLayer({mapId$: api.gee.recipeGeometry$(recipe), layerIndex, recipe})
         : null
