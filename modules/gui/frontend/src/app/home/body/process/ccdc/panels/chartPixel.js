@@ -168,7 +168,6 @@ class ChartPixel extends React.Component {
                 ? filteredBands[0]
                 : recipe.model.sources.breakpointBands[0]
         )
-
         if (latLng && bands.value && !_.isEqual(
             [recipe.model, latLng, bands.value],
             [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.bands.value])
@@ -181,7 +180,7 @@ class ChartPixel extends React.Component {
                         segments: segmentsSlice({
                             segments,
                             band: bands.value,
-                            dateFormat: 0
+                            dateFormat: recipe.model.ccdcOptions.dateFormat
                         }),
                         timeSeries
                     })
