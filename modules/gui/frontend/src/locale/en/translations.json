@@ -729,7 +729,7 @@
           },
           "PLANET": {
             "label": "Planet",
-            "description": "Planet monthly composites"
+            "description": "Planet composites"
           }
         }
       },
