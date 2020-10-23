@@ -7,6 +7,8 @@ import {msg} from 'translate'
 import React from 'react'
 import styles from './options.module.css'
 
+const EXTRAPOLATE_MAX_DAYS = 800
+
 const fields = {
     harmonics: new Form.Field(),
     gapStrategy: new Form.Field(),
@@ -119,7 +121,7 @@ class Options extends React.Component {
                     multiple={false}
                     minValue={1}
                     ticks={[1, 3, 7, 14, 30, 60, 90, 180, 365, {
-                        value: 800,
+                        value: EXTRAPOLATE_MAX_DAYS,
                         label: msg('process.ccdcSlice.panel.options.form.extrapolateMaxDays.unlimited')
                     }]}
                     snap
@@ -133,8 +135,19 @@ class Options extends React.Component {
 
 Options.propTypes = {}
 
+const valuesToModel = values => ({
+    ...values,
+    extrapolateMaxDays: values.extrapolateMaxDays > 365 ? Number.MAX_SAFE_INTEGER : values.extrapolateMaxDays
+})
+
+const modelToValues = model => {
+    return ({
+        ...model,
+        extrapolateMaxDays: model.extrapolateMaxDays > 365 ? EXTRAPOLATE_MAX_DAYS : model.extrapolateMaxDays
+    })
+}
 
 export default compose(
     Options,
-    recipeFormPanel({id: 'options', fields})
+    recipeFormPanel({id: 'options', fields, valuesToModel, modelToValues})
 )

@@ -112,8 +112,6 @@ class ChartPixel extends React.Component {
             }))
         }
 
-        console.log(data)
-
         const options = {
             axisX: {
                 // type: Chartist.FixedScaleAxis,
@@ -165,7 +163,8 @@ class ChartPixel extends React.Component {
                         segments: segmentsSlice({
                             segments,
                             band: selectedBand.value,
-                            dateFormat: recipe.model.source.dateFormat || 0
+                            dateFormat: recipe.model.source.dateFormat || 0,
+                            harmonics: recipe.model.options.harmonics
                         })
                     })
                 }),

@@ -7,7 +7,7 @@ const UNIX_TIME_MILLIS = 2
 const POINTS = 100
 const SCALE = 10000
 
-export const segmentsSlice = ({segments, band, dateFormat}) => {
+export const segmentsSlice = ({segments, band, dateFormat, harmonics = 3}) => {
     if (!segments.tStart)
         return undefined
     const startDate = moment(fromT(segments.tStart[0], dateFormat))
@@ -19,30 +19,33 @@ export const segmentsSlice = ({segments, band, dateFormat}) => {
         tEnd: segments.tEnd[i],
         coefs: segments[`${band}_coefs`][i],
         daysPerPoint,
-        dateFormat
+        dateFormat,
+        harmonics
     }))
 }
 
-const sliceSegment = ({tStart, tEnd, coefs, daysPerPoint, dateFormat}) => {
+const sliceSegment = ({tStart, tEnd, coefs, daysPerPoint, dateFormat, harmonics}) => {
     const startDate = moment(fromT(tStart, dateFormat))
     const endDate = moment(fromT(tEnd, dateFormat))
     const days = endDate.diff(startDate, 'days')
     return sequence(0, days, daysPerPoint).map(dateOffset => {
             const date = moment(startDate).add(dateOffset, 'days').toDate()
-            const value = fit(coefs, date, dateFormat) / SCALE
+            const value = slice({coefs, date, dateFormat, harmonics}) / SCALE
             return {date, value}
         }
     )
 }
 
-const fit = (coefs, date, dateFormat) => {
+const slice = ({coefs, date, dateFormat, harmonics}) => {
     const t = toT(date, dateFormat)
     const omega = getOmega(dateFormat)
 
-    return coefs[0] + (coefs[1] * t) +
-        coefs[2] * Math.cos(t * omega) + coefs[3] * Math.sin(t * omega) +
-        coefs[4] * Math.cos(t * omega * 2) + coefs[5] * Math.sin(t * omega * 2) +
+    return [
+        coefs[0] + (coefs[1] * t),
+        coefs[2] * Math.cos(t * omega) + coefs[3] * Math.sin(t * omega),
+        coefs[4] * Math.cos(t * omega * 2) + coefs[5] * Math.sin(t * omega * 2),
         coefs[6] * Math.cos(t * omega * 3) + coefs[7] * Math.sin(t * omega * 3)
+    ].slice(0, harmonics + 1).reduce((acc, value) => acc + value, 0)
 }
 
 const getOmega = (dateFormat) => {
