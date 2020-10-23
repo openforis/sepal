@@ -26,6 +26,12 @@ export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
 
     return {
+        setChartPixel(latLng) {
+            return actionBuilder('SET_CHART_PIXEL', latLng)
+                .set('ui.chartPixel', latLng)
+                .build()
+                .dispatch()
+        },
 
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_CCDC_SLICE_RETRIEVAL', {retrieveOptions})
@@ -38,6 +44,9 @@ export const RecipeActions = id => {
         }
     }
 }
+
+export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
+    api.gee.loadCCDCSegments$({asset: recipe.model.source.asset, latLng, bands})
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder

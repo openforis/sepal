@@ -53,6 +53,10 @@ export default {
     loadCCDCTimeSeries$: ({recipe, latLng}) =>
         postJson$('/api/gee/loadCCDCTimeSeries',
             {body: {recipe, latLng}, retries: 0}
+        ).pipe(toResponse),
+    loadCCDCSegments$: ({asset, latLng}) =>
+        postJson$('/api/gee/loadCCDCSegments',
+            {body: {asset, latLng}, retries: 0}
         ).pipe(toResponse)
 }
 

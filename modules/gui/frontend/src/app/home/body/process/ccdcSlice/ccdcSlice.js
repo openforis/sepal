@@ -1,6 +1,6 @@
 import {compose} from 'compose'
 import {connect} from 'store'
-import {defaultModel} from './ccdcSliceRecipe'
+import {defaultModel, RecipeActions} from './ccdcSliceRecipe'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
@@ -10,8 +10,10 @@ import React from 'react'
 import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
 import CCDCSlicePreview from './ccdcSlicePreview'
 import BandSelection from './bandSelection'
-import {setRecipeGeometryLayer} from '../../../map/recipeGeometryLayer'
+import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import _ from 'lodash'
+import ChartPixelButton from '../ccdc/panels/chartPixelButton'
+import ChartPixel from './panels/chartPixel'
 
 const mapStateToProps = state => {
     return {
@@ -25,17 +27,25 @@ const mapRecipeToProps = recipe => ({
     recipe: _.omit(recipe, 'ui')
 })
 
-class _CCDC extends React.Component {
+class _CCDCSlice extends React.Component {
+    constructor(props) {
+        super(props)
+        this.recipeActions = RecipeActions(props.recipeId)
+    }
+
     render() {
         const {recipeId, recipeContext: {statePath}, initialized} = this.props
         return (
             <div>
-                <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}/>
+                <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}>
+                    <ChartPixelButton onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
+                </MapToolbar>
                 <CCDCSliceToolbar/>
                 {initialized
                     ? <React.Fragment>
                         <CCDCSlicePreview/>
                         <BandSelection/>
+                        <ChartPixel/>
                     </React.Fragment>
                     : null}
             </div>
@@ -67,7 +77,7 @@ class _CCDC extends React.Component {
 }
 
 const CcdcSlice = compose(
-    _CCDC,
+    _CCDCSlice,
     connect(mapStateToProps),
     recipe({defaultModel, mapRecipeToProps})
 )
@@ -77,7 +87,7 @@ export default () => ({
     labels: {
         name: msg('process.ccdcSlice.create'),
         creationDescription: msg('process.ccdcSlice.description'),
-        tabPlaceholder: msg('process.ccdcSlice.tabPlaceholder'),
+        tabPlaceholder: msg('process.ccdcSlice.tabPlaceholder')
     },
     components: {
         recipe: CcdcSlice

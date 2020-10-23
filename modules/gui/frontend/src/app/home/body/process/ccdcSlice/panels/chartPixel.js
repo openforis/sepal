@@ -1,5 +1,5 @@
 import React from 'react'
-import {loadCCDCTimeSeries$, RecipeActions} from '../ccdcRecipe'
+import {loadCCDCSegments$, RecipeActions} from '../ccdcSliceRecipe'
 import styles from './chartPixel.module.css'
 import {Subject} from 'rxjs'
 import {takeUntil, tap} from 'rxjs/operators'
@@ -11,17 +11,16 @@ import Keybinding from 'widget/keybinding'
 import _ from 'lodash'
 import ChartistGraph from 'react-chartist'
 import Chartist from 'chartist'
-import './chart.css'
+import '../../ccdc/panels/chart.css'
 import moment from 'moment'
-import {segmentsSlice} from '../segments'
-import {filterBands, opticalBandOptions, radarBandOptions} from '../bandOptions'
+import {segmentsSlice} from '../../ccdc/segments'
 import {form, Form} from 'widget/form/form'
-import Icon from '../../../../../../widget/icon'
-import Notifications from '../../../../../../widget/notifications'
-import {msg} from '../../../../../../translate'
+import Icon from 'widget/icon'
+import Notifications from 'widget/notifications'
+import {msg} from 'translate'
 
 const fields = {
-    bands: new Form.Field()
+    selectedBand: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
@@ -48,8 +47,8 @@ class ChartPixel extends React.Component {
 
     renderPanel() {
         const {latLng} = this.props
-        const {timeSeries} = this.state
-        const loading = !timeSeries
+        const {segments} = this.state
+        const loading = !segments || !segments.length
         return (
             <Panel
                 className={styles.panel}
@@ -87,16 +86,13 @@ class ChartPixel extends React.Component {
     }
 
     renderBandOptions() {
-        const {recipe: {model: {sources: {dataSets}}}, inputs: {bands}} = this.props
-
-        const options = (_.isEmpty(dataSets['SENTINEL_1'])
-            ? opticalBandOptions({dataSets}).map(o => o.options).flat()
-            : radarBandOptions({}))
+        const {recipe: {model: {source: {bands: sourceBands}}}, inputs: {selectedBand}} = this.props
+        const options = sourceBands.map(band => ({value: band, label: band.toUpperCase()}))
         return (
             <Form.Buttons
                 className={styles.buttons}
                 layout='horizontal-nowrap-scroll'
-                input={bands}
+                input={selectedBand}
                 multiple={false}
                 options={options}/>
         )
@@ -104,27 +100,19 @@ class ChartPixel extends React.Component {
     }
 
     renderChart() {
-        const {segments = [], timeSeries} = this.state
-        const loading = !timeSeries
+        const {segments = []} = this.state
+        const loading = !segments || !segments.length
         if (loading)
             return this.renderSpinner()
 
-        const segmentsData = segments.map((segment, i) => ({
-            name: `segment-${i + 1}`,
-            data: segment.map(({date, value}) => ({x: date, y: value}))
-        }))
-
-        const timeSeriesData = {
-            name: 'time-series',
-            data: timeSeries.map(({date, value}) => ({x: new Date(date), y: value / 10000}))
-        }
-
         const data = {
-            series: [
-                ...segmentsData,
-                timeSeriesData
-            ]
+            series: segments.map((segment, i) => ({
+                name: `segment-${i + 1}`,
+                data: segment.map(({date, value}) => ({x: date, y: value}))
+            }))
         }
+
+        console.log(data)
 
         const options = {
             axisX: {
@@ -143,7 +131,7 @@ class ChartPixel extends React.Component {
                     series[`segment-${i + 1}`] = {showPoint: false}
                     return series
                 },
-                {'time-series': {showLine: false}}
+                {}
             )
         }
 
@@ -160,30 +148,25 @@ class ChartPixel extends React.Component {
 
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        const {recipe, latLng, inputs: {bands}} = this.props
-        const {model: {sources: {dataSets}}} = recipe
-        const filteredBands = filterBands([bands.value], dataSets)
-        bands.set(
-            filteredBands.length
-                ? filteredBands[0]
-                : recipe.model.sources.breakpointBands[0]
-        )
+        const {recipe, latLng, inputs: {selectedBand}} = this.props
 
-        if (latLng && bands.value && !_.isEqual(
-            [recipe.model, latLng, bands.value],
-            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.bands.value])
+        if (!selectedBand.value)
+            selectedBand.set(recipe.model.source.bands[0])
+
+        if (latLng && selectedBand.value && !_.isEqual(
+            [recipe.model, latLng, selectedBand.value],
+            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value])
         ) {
             this.cancel$.next(true)
-            this.setState({segments: undefined, timeSeries: undefined})
-            const load$ = loadCCDCTimeSeries$({recipe, latLng, bands: [bands.value]}).pipe(
-                tap(({segments, timeSeries}) => {
+            this.setState({segments: undefined})
+            const load$ = loadCCDCSegments$({recipe, latLng}).pipe(
+                tap(segments => {
                     this.setState({
                         segments: segmentsSlice({
                             segments,
-                            band: bands.value,
-                            dateFormat: 0
-                        }),
-                        timeSeries
+                            band: selectedBand.value,
+                            dateFormat: recipe.model.source.dateFormat || 0
+                        })
                     })
                 }),
                 takeUntil(this.cancel$)
@@ -201,7 +184,7 @@ class ChartPixel extends React.Component {
 
     close() {
         this.cancel$.next(true)
-        this.setState({segments: undefined, timeSeries: undefined})
+        this.setState({segments: undefined})
         this.recipeActions.setChartPixel(null)
     }
 }
