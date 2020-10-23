@@ -9,7 +9,6 @@ const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
     date: {
-        date: moment().format(DATE_FORMAT)
     },
     source: {
         asset: ''

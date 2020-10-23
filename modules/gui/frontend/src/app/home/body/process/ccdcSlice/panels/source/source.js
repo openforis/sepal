@@ -17,8 +17,8 @@ const fields = {
     bands: new Form.Field()
         .notEmpty('process.ccdcSlice.panel.source.form.bands.required'),
     dateFormat: new Form.Field(),
-    fromDate: new Form.Field(),
-    toDate: new Form.Field(),
+    startDate: new Form.Field(),
+    endDate: new Form.Field(),
     surfaceReflectance: new Form.Field()
 }
 
@@ -87,12 +87,12 @@ class Source extends React.Component {
                 .filter(band => band)
             )
         )
-        const {inputs: {asset, bands, dateFormat, fromDate, toDate, surfaceReflectance}} = this.props
+        const {inputs: {asset, bands, dateFormat, startDate, endDate, surfaceReflectance}} = this.props
         if (assetBands) {
             bands.set(assetBands)
             dateFormat.set(metadata.dateFormat)
-            fromDate.set(metadata.endDate)
-            toDate.set(metadata.startDate)
+            startDate.set(metadata.startDate)
+            endDate.set(metadata.endDate)
             surfaceReflectance.set(metadata.surfaceReflectance)
         } else {
             asset.setInvalid(msg('process.ccdcSlice.panel.source.form.asset.notCCDC'))

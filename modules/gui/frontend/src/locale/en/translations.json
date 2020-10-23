@@ -1721,7 +1721,8 @@
               "label": "Date of slice",
               "malformed": "Invalid date",
               "required": "Date is required",
-              "tooltip": "The date of the slice"
+              "tooltip": "The date of the slice",
+              "range": "The CCDC asset was created with data from {startDate} to {endDate}"
             }
           },
           "title": "Date",
