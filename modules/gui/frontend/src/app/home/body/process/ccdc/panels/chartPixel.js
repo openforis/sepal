@@ -13,7 +13,7 @@ import ChartistGraph from 'react-chartist'
 import Chartist from 'chartist'
 import './chart.css'
 import moment from 'moment'
-import {segmentsSlice} from '../segments'
+import {evaluateSegments} from '../segments'
 import {filterBands, opticalBandOptions, radarBandOptions} from '../bandOptions'
 import {form, Form} from 'widget/form/form'
 import Icon from '../../../../../../widget/icon'
@@ -177,7 +177,7 @@ class ChartPixel extends React.Component {
             const load$ = loadCCDCTimeSeries$({recipe, latLng, bands: [bands.value]}).pipe(
                 tap(({segments, timeSeries}) => {
                     this.setState({
-                        segments: segmentsSlice({
+                        segments: evaluateSegments({
                             segments,
                             band: bands.value,
                             dateFormat: recipe.model.ccdcOptions.dateFormat

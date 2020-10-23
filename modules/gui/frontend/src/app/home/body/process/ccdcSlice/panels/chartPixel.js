@@ -13,7 +13,7 @@ import ChartistGraph from 'react-chartist'
 import Chartist from 'chartist'
 import '../../ccdc/panels/chart.css'
 import moment from 'moment'
-import {segmentsSlice} from '../../ccdc/segments'
+import {evaluateSegments} from '../../ccdc/segments'
 import {form, Form} from 'widget/form/form'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
@@ -160,7 +160,7 @@ class ChartPixel extends React.Component {
             const load$ = loadCCDCSegments$({recipe, latLng}).pipe(
                 tap(segments => {
                     this.setState({
-                        segments: segmentsSlice({
+                        segments: evaluateSegments({
                             segments,
                             band: selectedBand.value,
                             dateFormat: recipe.model.source.dateFormat || 0,

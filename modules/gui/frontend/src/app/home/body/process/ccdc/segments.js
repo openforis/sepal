@@ -7,7 +7,7 @@ const UNIX_TIME_MILLIS = 2
 const POINTS = 100
 const SCALE = 10000
 
-export const segmentsSlice = ({segments, band, dateFormat, harmonics = 3}) => {
+export const evaluateSegments = ({segments, band, dateFormat, harmonics = 3}) => {
     if (!segments.tStart)
         return undefined
     const startDate = moment(fromT(segments.tStart[0], dateFormat))
