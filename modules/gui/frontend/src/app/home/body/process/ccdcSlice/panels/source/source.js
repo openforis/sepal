@@ -15,7 +15,11 @@ const fields = {
     asset: new Form.Field()
         .notEmpty('process.ccdcSlice.panel.source.form.asset.required'),
     bands: new Form.Field()
-        .notEmpty('process.ccdcSlice.panel.source.form.bands.required')
+        .notEmpty('process.ccdcSlice.panel.source.form.bands.required'),
+    dateFormat: new Form.Field(),
+    fromDate: new Form.Field(),
+    toDate: new Form.Field(),
+    surfaceReflectance: new Form.Field()
 }
 
 class Source extends React.Component {
@@ -53,20 +57,19 @@ class Source extends React.Component {
                 placeholder={msg('process.ccdcSlice.panel.source.form.asset.placeholder')}
                 spellCheck={false}
                 onChange={() => bands.set(null)}
-                onChangeDebounced={asset => asset && this.loadBands(asset)}
+                onChangeDebounced={asset => asset && this.loadMetadata(asset)}
                 errorMessage
-                busyMessage={this.props.stream('LOAD_BANDS').active && msg('widget.loading')}
+                busyMessage={this.props.stream('LOAD_ASSET_METADATA').active && msg('widget.loading')}
             />
         )
     }
 
-    loadBands(asset) {
-        this.props.stream('LOAD_BANDS',
-            api.gee.bands$({asset}).pipe(
+    loadMetadata(asset) {
+        this.props.stream('LOAD_ASSET_METADATA',
+            api.gee.imageMetadata$({asset}).pipe(
                 takeUntil(this.assetChanged$)),
-            assetBand => this.extractBands(assetBand),
+            metadata => this.updateMetadata(metadata),
             error => {
-                console.log('ERROR', error)
                 this.props.inputs.asset.setInvalid(
                     error.response
                         ? msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
@@ -76,18 +79,23 @@ class Source extends React.Component {
         )
     }
 
-    extractBands(assetBand) {
-        const bands = _.intersection(...['coefs', 'magnitude', 'rmse']
-            .map(postfix => assetBand
+    updateMetadata(metadata) {
+        const assetBands = _.intersection(...['coefs', 'magnitude', 'rmse']
+            .map(postfix => metadata.bands
                 .map(assetBand => assetBand.match('(.*)_' + postfix))
                 .map(match => match && match[1])
                 .filter(band => band)
             )
         )
-        if (bands) {
-            this.props.inputs.bands.set(bands)
+        const {inputs: {asset, bands, dateFormat, fromDate, toDate, surfaceReflectance}} = this.props
+        if (assetBands) {
+            bands.set(assetBands)
+            dateFormat.set(metadata.dateFormat)
+            fromDate.set(metadata.endDate)
+            toDate.set(metadata.startDate)
+            surfaceReflectance.set(metadata.surfaceReflectance)
         } else {
-            this.props.inputs.asset.setInvalid(msg('process.ccdcSlice.panel.source.form.asset.notCCDC'))
+            asset.setInvalid(msg('process.ccdcSlice.panel.source.form.asset.notCCDC'))
         }
 
     }

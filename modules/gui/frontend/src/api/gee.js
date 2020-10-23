@@ -7,6 +7,9 @@ export default {
     bands$: ({asset, recipe, ...params}) =>
         postJson$('/api/gee/bands', {body: {asset, recipe, ...params}, retries: 0})
             .pipe(toResponse),
+    imageMetadata$: ({asset, recipe}) =>
+        postJson$('/api/gee/imageMetadata', {body: {asset, recipe}, retries: 0})
+            .pipe(toResponse),
     sceneAreas$: ({aoi, source}) =>
         postJson$('/api/gee/sceneareas', {
             body: {

@@ -1495,6 +1495,19 @@
         "dates": {
           "button": "DAT",
           "form": {
+            "dateFormat": {
+              "label": "Date format",
+              "required": "Date format must be specified",
+              "jDays": {
+                "label": "Julian days"
+              },
+              "fractionalYears": {
+                "label": "Fractional years"
+              },
+              "unixTimeMillis": {
+                "label": "Unix time millis"
+              }
+            },
             "endDate": {
               "label": "End date",
               "malformed": "Invalid date",
@@ -1585,6 +1598,10 @@
                 "tooltip": "Be aggressive in detecting breaks in the time-series. It might detect breaks where there are none."
               }
             },
+            "tmaskBands": {
+              "label": "TMask bands",
+              "noneOrTwo": "Exactly two bands must be selected or none"
+            },
             "minObservations": "Min observations",
             "chiSquareProbability": "Chi square probability",
             "minNumOfYearsScaler": "min number of years scaler",
@@ -1598,7 +1615,7 @@
           "apply": "Retrieve",
           "form": {
             "bands": {
-              "bands": "Bands",
+              "label": "Bands",
               "atLeastOne": "Select at least one band"
             },
             "scale": {

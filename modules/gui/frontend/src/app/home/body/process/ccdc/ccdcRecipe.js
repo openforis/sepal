@@ -8,6 +8,7 @@ const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const breakDetectionOptions = {
     conservative: {
+        dateFormat: 1,
         minObservations: 6,
         chiSquareProbability: 0.99,
         minNumOfYearsScaler: 1.33,
@@ -16,6 +17,7 @@ export const breakDetectionOptions = {
     },
 
     moderate: {
+        dateFormat: 1,
         minObservations: 6,
         chiSquareProbability: 0.9,
         minNumOfYearsScaler: 1.33,
@@ -24,6 +26,7 @@ export const breakDetectionOptions = {
     },
 
     aggressive: {
+        dateFormat: 1,
         minObservations: 4,
         chiSquareProbability: 0.75,
         minNumOfYearsScaler: 1.33,
@@ -46,6 +49,7 @@ export const defaultModel = {
     options: {
         corrections: [],
         cloudMasking: 'AGGRESSIVE',
+        shadowMasking: 'OFF',
         snowMasking: 'ON',
         orbits: ['ASCENDING', 'DESCENDING'],
         geometricCorrection: 'ELLIPSOID',

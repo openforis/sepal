@@ -13,7 +13,8 @@ import _ from 'lodash'
 import styles from './retrieve.module.css'
 
 const fields = {
-    bands: new Form.Field(),
+    bands: new Form.Field()
+        .predicate(selection => selection && selection.length, 'process.ccdc.panel.retrieve.form.bands.atLeastOne'),
     scale: new Form.Field()
 }
 
