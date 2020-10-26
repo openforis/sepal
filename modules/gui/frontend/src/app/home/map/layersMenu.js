@@ -60,8 +60,8 @@ class _LayersMenu extends React.Component {
             {value: '2018-12_2019-05', label: 'Dec 2018 (6 months)'},
             {value: '2019-06_2019-11', label: 'Jun 2019 (6 months)'},
             {value: '2019-12_2020-05', label: 'Dec 2019 (6 months)'},
-            {value: '2020-06_2020-08', label: 'Jun 2019 (3 months)'},
-            {value: '2020-09', label: 'Sep 2019 (1 month)'},
+            {value: '2020-06_2020-08', label: 'Jun 2020 (3 months)'},
+            {value: '2020-09', label: 'Sep 2020 (1 month)'},
         ]
         return {procOptions, dateRangeOptions}
     }
