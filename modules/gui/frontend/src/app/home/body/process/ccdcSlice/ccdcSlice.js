@@ -56,8 +56,11 @@ class _CCDCSlice extends React.Component {
         this.setAoiLayer(true)
     }
 
-    componentDidUpdate() {
-        this.setAoiLayer(false)
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        const prevAsset = prevProps.recipe.model.source.asset
+        const asset = this.props.recipe.model.source.asset
+        console.log(prevAsset, asset)
+        this.setAoiLayer(prevAsset !== asset)
     }
 
     setAoiLayer(fitLayer) {
