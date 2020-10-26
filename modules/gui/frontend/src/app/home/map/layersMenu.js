@@ -26,8 +26,8 @@ const mapStateToProps = (state, ownProps) => ({
     labelsShown: select([ownProps.statePath, 'labelsShown']),
     baseLayer: select([ownProps.statePath, 'baseLayer']),
     overlayIndex: select([ownProps.statePath, 'overlayIndex']),
-    dateRange: select([ownProps.statePath, 'options.dateRange']),
-    proc: select([ownProps.statePath, 'options.proc'])
+    dateRange: select([ownProps.statePath, 'mapLayer.dateRange']),
+    proc: select([ownProps.statePath, 'mapLayer.proc'])
     // year: select([ownProps.statePath, 'options.year']),
     // month: select([ownProps.statePath, 'options.month'])
 })
@@ -240,12 +240,12 @@ class _LayersMenu extends React.Component {
             //     this.changeBaseLayer('PLANET', year, monthOption, )
             // }
         // }
-        const {inputs: {dateRange, proc}} = this.props
+        const {dateRange: prevDateRange, proc: prevProc, inputs: {dateRange, proc}} = this.props
         console.log(dateRange.value, proc.value)
         if (!proc.value)
-            proc.set('rgb')
+            proc.set(prevProc || 'rgb')
         if (!dateRange.value)
-            dateRange.set('2020-09')
+            dateRange.set(prevDateRange || '2020-09')
     }
 }
 

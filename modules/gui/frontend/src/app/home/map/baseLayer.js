@@ -8,7 +8,7 @@ import moment from 'moment'
 export const changeBaseLayer = ({type, mapContext, statePath, options}) => {
     actionBuilder('SET_BASE_LAYER', {type})
         .set([statePath, 'baseLayer'], type)
-        .set([statePath, 'options'], options)
+        .set([statePath, 'mapLayer'], options)
         .sideEffect(() => {
             const layer = createLayer(type, options)
             const context = sepalMap.getContext(mapContext)
