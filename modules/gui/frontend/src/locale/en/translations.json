@@ -1821,7 +1821,7 @@
                 "tooltip": "The amplitude of the model's second order harmonic"
               },
               "amplitude3": {
-                "label": "Amplitude 4",
+                "label": "Amplitude 3",
                 "tooltip": "The amplitude of the model's third order harmonic"
               }
             },
