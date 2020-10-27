@@ -1,4 +1,3 @@
-import {RecipeActions} from '../ccdcRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -20,7 +19,6 @@ class ChartPixelButton extends React.Component {
     constructor(props) {
         super(props)
         this.state = {}
-        this.recipeActions = RecipeActions(props.recipeId)
     }
 
     render() {
@@ -36,30 +34,34 @@ class ChartPixelButton extends React.Component {
     }
 
     startSelecting() {
-        const {mapContext: {sepalMap, google, googleMap}} = this.props
+        const {mapContext: {sepalMap, google, googleMap}, showGoogleSatellite, onPixelSelected} = this.props
         this.setState({isSelecting: true})
         sepalMap.onOneClick(latLng => {
-            sepalMap.removeLayer('googleSatellite')
-            this.setChartPixel(latLng)
+            if (showGoogleSatellite) {
+                sepalMap.removeLayer('googleSatellite')
+            }
+            this.setState({isSelecting: false})
+            onPixelSelected(latLng)
         })
-        sepalMap.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer({google, googleMap, layerIndex: 1})})
+        if (showGoogleSatellite) {
+            sepalMap.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer({google, googleMap, layerIndex: 1})})
+        }
     }
 
     cancelSelecting() {
-        const {mapContext: {sepalMap}} = this.props
+        const {mapContext: {sepalMap}, showGoogleSatellite} = this.props
         this.setState({isSelecting: false})
-        sepalMap.removeLayer('googleSatellite')
+        if (showGoogleSatellite) {
+            sepalMap.removeLayer('googleSatellite')
+        }
         sepalMap.clearClickListeners()
-    }
-
-    setChartPixel(latLng) {
-        this.setState({isSelecting: false})
-        this.recipeActions.setChartPixel(latLng)
     }
 }
 
 ChartPixelButton.propTypes = {
-    mapContext: PropTypes.object.isRequired
+    mapContext: PropTypes.object.isRequired,
+    onPixelSelected: PropTypes.func.isRequired,
+    showGoogleSatellite: PropTypes.any
 }
 
 export default compose(

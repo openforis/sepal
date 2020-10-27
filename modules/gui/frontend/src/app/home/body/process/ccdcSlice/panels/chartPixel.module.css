@@ -1,0 +1,25 @@
+.panel {
+    /*height: 30rem;*/
+}
+
+.form {
+    height: 23rem;
+}
+
+.spinner {
+    flex-grow: 1;
+    display: flex;
+    align-self: center;
+    justify-content: space-around;
+    flex-direction: column;
+    color: #ccc;
+}
+
+.buttons button {
+    margin-bottom: 1rem;
+}
+
+.chart {
+    flex-grow: 1;
+    height: 20rem;
+}

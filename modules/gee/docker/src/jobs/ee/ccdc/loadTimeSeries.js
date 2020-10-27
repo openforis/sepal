@@ -59,7 +59,7 @@ const worker$ = ({recipe, latLng}) => {
 }
 
 module.exports = job({
-    jobName: 'LoadCCDCChart',
+    jobName: 'LoadCCDCTimeSeries',
     jobPath: __filename,
     worker$
 })

@@ -729,7 +729,7 @@
           },
           "PLANET": {
             "label": "Planet",
-            "description": "Planet monthly composites"
+            "description": "Planet composites"
           }
         }
       },
@@ -915,7 +915,7 @@
             "snowMasking": {
               "off": {
                 "label": "Off",
-                "tooltip": "Don't mask snow."
+                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
               },
               "label": "Snow masking",
               "on": {
@@ -1363,11 +1363,30 @@
                 "tooltip": "Use scenes atmospherically corrected surface reflectance."
               }
             },
-            "mask": {
-              "label": "Mask",
-              "snow": {
-                "label": "Snow",
-                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
+            "snowMasking": {
+              "off": {
+                "label": "Off",
+                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
+              },
+              "label": "Snow masking",
+              "on": {
+                "label": "On",
+                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
+              }
+            },
+            "cloudMasking": {
+              "label": "Cloud masking",
+              "none": {
+                "label": "Off",
+                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
+              },
+              "moderate": {
+                "label": "Moderate",
+                "tooltip": "Rely only on image source QA bands for cloud masking"
+              },
+              "aggressive": {
+                "label": "Aggressive",
+                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
               }
             }
           },
@@ -1445,7 +1464,7 @@
     "ccdc": {
       "create": "CCDC",
       "tabPlaceholder": "CCDC",
-      "description": "Create CCDC time series.",
+      "description": "Create a CCDC asset from a time-series.",
       "mapToolbar": {
         "centerMap": {
           "tooltip": "Zoom to area of interest"
@@ -1476,6 +1495,19 @@
         "dates": {
           "button": "DAT",
           "form": {
+            "dateFormat": {
+              "label": "Date format",
+              "required": "Date format must be specified",
+              "jDays": {
+                "label": "Julian days"
+              },
+              "fractionalYears": {
+                "label": "Fractional years"
+              },
+              "unixTimeMillis": {
+                "label": "Unix time millis"
+              }
+            },
             "endDate": {
               "label": "End date",
               "malformed": "Invalid date",
@@ -1507,11 +1539,41 @@
                 "tooltip": "Use scenes atmospherically corrected surface reflectance."
               }
             },
-            "mask": {
-              "label": "Mask",
-              "snow": {
-                "label": "Snow",
-                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
+            "shadowMasking": {
+              "off": {
+                "label": "Off",
+                "tooltip": "Don't apply aggressive shadow masking."
+              },
+              "label": "Shadow masking",
+              "on": {
+                "label": "On",
+                "tooltip": "Apply aggressive shadow masking. This can inadvertently remove some dynamics and lead to missing changes"
+              }
+            },
+            "snowMasking": {
+              "off": {
+                "label": "Off",
+                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
+              },
+              "label": "Snow masking",
+              "on": {
+                "label": "On",
+                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
+              }
+            },
+            "cloudMasking": {
+              "label": "Cloud masking",
+              "none": {
+                "label": "Off",
+                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
+              },
+              "moderate": {
+                "label": "Moderate",
+                "tooltip": "Rely only on image source QA bands for cloud masking"
+              },
+              "aggressive": {
+                "label": "Aggressive",
+                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
               }
             }
           },
@@ -1536,6 +1598,10 @@
                 "tooltip": "Be aggressive in detecting breaks in the time-series. It might detect breaks where there are none."
               }
             },
+            "tmaskBands": {
+              "label": "TMask bands",
+              "noneOrTwo": "Exactly two bands must be selected or none"
+            },
             "minObservations": "Min observations",
             "chiSquareProbability": "Chi square probability",
             "minNumOfYearsScaler": "min number of years scaler",
@@ -1549,8 +1615,8 @@
           "apply": "Retrieve",
           "form": {
             "bands": {
-              "bands": "Bands",
-              "atLeastOne": "Select at least one ban"
+              "label": "Bands",
+              "atLeastOne": "Select at least one band"
             },
             "scale": {
               "label": "Scale",
@@ -1608,7 +1674,7 @@
             },
             "breakpointBands": {
               "label": "Breakpoint bands",
-              "atLeastOne": "Select at least one ban"
+              "atLeastOne": "Select at least one band"
             },
             "required": "A data source must be selected"
           },
@@ -1618,6 +1684,186 @@
       },
       "chartPixel": {
         "loadFailed": "Failed to load chart: {error}"
+      }
+    },
+
+    "ccdcSlice": {
+      "create": "CCDC slice",
+      "tabPlaceholder": "CCDC slice",
+      "description": "Create a slice of a CCDC asset, for a specific date.",
+      "mapToolbar": {
+        "centerMap": {
+          "tooltip": "Zoom to area of interest"
+        },
+        "labels": {
+          "hide": {
+            "tooltip": "Hide labels"
+          },
+          "show": {
+            "tooltip": "Show labels"
+          }
+        },
+        "zoom": {
+          "tooltip": "Zoom to area"
+        },
+        "zoomIn": {
+          "tooltip": "Zoom in"
+        },
+        "zoomOut": {
+          "tooltip": "Zoom out"
+        }
+      },
+      "panel": {
+        "date": {
+          "button": "DAT",
+          "form": {
+            "date": {
+              "label": "Date of slice",
+              "malformed": "Invalid date",
+              "required": "Date is required",
+              "tooltip": "The date of the slice",
+              "range": "The CCDC asset was created with data from {startDate} to {endDate}"
+            }
+          },
+          "title": "Date",
+          "tooltip": "Specify date of the slice"
+        },
+        "options": {
+          "button": "OPT",
+          "form": {
+            "harmonics": {
+              "label": "Harmonics",
+              "tooltip": "Specify how many harmonics from the CCDC regression model to use when creating the slice"
+            },
+            "gapStrategy": {
+              "label": "Gap strategy",
+              "tooltip": "Decide which strategy to use for pixels where there is no CCDC segment. There will be gaps during detected breaks or for dates before and after the CCDC date range.",
+              "interpolate": {
+                "label": "Interpolate",
+                "tooltip": "Generate a new model based on surrounding segments. If there isn't any segment before or after, the pixel will be masked."
+              },
+              "extrapolate": {
+                "label": "Extrapolate",
+                "tooltip": "Generate a new model based on the segment before or after the gap."
+              },
+              "mask": {
+                "label": "Mask",
+                "tooltip": "Mask all pixels that fall on a gap."
+              }
+            },
+            "extrapolateSegment": {
+              "label": "Segment to extrapolate",
+              "closest": {
+                "label": "Closest",
+                "tooltip": "Extrapolate the segment closest to the date"
+              },
+              "previous": {
+                "label": "Previous",
+                "tooltip": "Extrapolate the segment before the date"
+              },
+              "next": {
+                "label": "Next",
+                "tooltip": "Back-extrapolate the segment after the date"
+              }
+            },
+            "extrapolateMaxDays": {
+              "label": "Max days to extrapolate",
+              "unlimited": "all"
+            }
+          },
+          "title": "CCDC slice options",
+          "tooltip": "Configure how the CCDC slice is made"
+        },
+        "retrieve": {
+          "apply": "Retrieve",
+          "form": {
+            "baseBands": {
+              "label": "Base bands",
+              "atLeastOne": "At least one base band must be selected"
+            },
+            "bandTypes": {
+              "label": "Band types",
+              "atLeastOne": "At least one band type must be selected",
+              "value": {
+                "label": "Value",
+                "tooltip": "The evaluated value of the harmonic models for the specified date"
+              },
+              "rmse": {
+                "label": "RMSE",
+                "tooltip": "RMSE of the harmonic models"
+              },
+              "intercept": {
+                "label": "Intercept",
+                "tooltip": "The intercept of the model's linear component"
+              },
+              "slope": {
+                "label": "Slope",
+                "tooltip": "The slope of the model's linear component"
+              },
+              "phase1": {
+                "label": "Phase 1",
+                "tooltip": "The phase of the model's first order harmonic"
+              },
+              "phase2": {
+                "label": "Phase 2",
+                "tooltip": "The phase of the model's second order harmonic"
+              },
+              "phase3": {
+                "label": "Phase 3",
+                "tooltip": "The phase of the model's third order harmonic"
+              },
+              "amplitude1": {
+                "label": "Amplitude 1",
+                "tooltip": "The amplitude of the model's first order harmonic"
+              },
+              "amplitude2": {
+                "label": "Amplitude 2",
+                "tooltip": "The amplitude of the model's second order harmonic"
+              },
+              "amplitude3": {
+                "label": "Amplitude 3",
+                "tooltip": "The amplitude of the model's third order harmonic"
+              }
+            },
+            "scale": {
+              "label": "Scale",
+              "info": "{scale} meters"
+            },
+            "destination": {
+              "label": "Destination",
+              "GEE": "Google Earth Engine asset",
+              "SEPAL": "Sepal workspace",
+              "required": "A destination must be selected"
+            }
+          },
+          "task": {
+            "GEE": "Export {name} as a Google Earth Engine asset",
+            "SEPAL": "Retrieve {name} to Sepal workspace"
+          },
+          "title": "Retrieve",
+          "tooltip": "Retrieve time-series"
+        },
+        "source": {
+          "button": "SRC",
+          "form": {
+            "asset": {
+              "label": "CCDC asset",
+              "placeholder": "Enter CCDC asset ID",
+              "required": "An asset ID must be specified",
+              "invalid": "Asset must be an exported CCDC asset"
+            }
+          },
+          "title": "Source",
+          "tooltip": "Select EE asset with CCDC segments to slice"
+        }
+      },
+      "preview": {
+        "label": "CCDC slice",
+        "description": "Preview of a CCDC slice, generated on the fly by EE.",
+        "initializing": "Loading preview...",
+        "loading": "Loaded {loaded} of {count} tiles",
+        "tilesFailed": "{failed} failed",
+        "error": "Failed to generate preview"
       }
     }
   },

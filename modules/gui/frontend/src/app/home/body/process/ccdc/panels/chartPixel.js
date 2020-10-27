@@ -13,7 +13,7 @@ import ChartistGraph from 'react-chartist'
 import Chartist from 'chartist'
 import './chart.css'
 import moment from 'moment'
-import {fitSegments} from '../segments'
+import {evaluateSegments} from '../segments'
 import {filterBands, opticalBandOptions, radarBandOptions} from '../bandOptions'
 import {form, Form} from 'widget/form/form'
 import Icon from '../../../../../../widget/icon'
@@ -168,7 +168,6 @@ class ChartPixel extends React.Component {
                 ? filteredBands[0]
                 : recipe.model.sources.breakpointBands[0]
         )
-
         if (latLng && bands.value && !_.isEqual(
             [recipe.model, latLng, bands.value],
             [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.bands.value])
@@ -178,10 +177,10 @@ class ChartPixel extends React.Component {
             const load$ = loadCCDCTimeSeries$({recipe, latLng, bands: [bands.value]}).pipe(
                 tap(({segments, timeSeries}) => {
                     this.setState({
-                        segments: fitSegments({
+                        segments: evaluateSegments({
                             segments,
                             band: bands.value,
-                            dateFormat: 0
+                            dateFormat: recipe.model.ccdcOptions.dateFormat
                         }),
                         timeSeries
                     })
