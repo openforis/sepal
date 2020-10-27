@@ -39,10 +39,12 @@ export const constrainDate = (date, min, max) => maxDate(minDate(date, max), min
 export class FormDatePicker extends React.Component {
     id = `DatePicker-${guid()}`
     inputElement = React.createRef()
+    state = {value: ''}
 
     render() {
         const {input, startDate, endDate, label, autoFocus, tooltip, tooltipPlacement} = this.props
-        const date = moment(input.value, DATE_FORMAT)
+        const {value} = this.state
+        const date = moment(value, DATE_FORMAT)
         return (
             <Activator id={this.id}>
                 {panel =>
@@ -57,20 +59,26 @@ export class FormDatePicker extends React.Component {
                             startDate={momentDate(startDate)}
                             endDate={momentDate(endDate)}
                             onSelect={date => {
-                                const dateString = date.format(DATE_FORMAT)
-                                this.inputElement.current.value = dateString
-                                input.set(dateString)
+                                const value = date.format(DATE_FORMAT)
+                                this.setState({value})
+                                input.set(value)
                             }}/>
                         <div className={styles.input}>
                             <Input
                                 ref={this.inputElement}
-                                value={input.value}
+                                value={value}
                                 type='text'
                                 maxLength={10}
                                 autoFocus={autoFocus}
                                 className={styles.input}
-                                onChange={e => this.setInput(e.target.value)}
-                                onBlur={() => this.inputElement.current.value = input.value}
+                                onChange={e => this.updateValue(e.target.value)}
+                                onBlur={() => {
+                                    const date = momentDate(value)
+                                    const formattedDate = date.isValid()
+                                        ? constrainDate(date, startDate, endDate).format(DATE_FORMAT)
+                                        : this.state.lastValidValue
+                                    this.updateValue(formattedDate)
+                                }}
                             />
                             <Button
                                 additionalClassName={styles.panelTrigger}
@@ -87,16 +95,21 @@ export class FormDatePicker extends React.Component {
         )
     }
 
-    setInput(value) {
+    componentDidMount() {
+        const value = this.props.input.value
+        this.setState({value, lastValidValue: value})
+    }
+
+    updateValue(value) {
         const {input, startDate, endDate} = this.props
         const date = momentDate(value)
-        // const formattedDate = date.isValid()
-        //     ? constrainDate(date, startDate, endDate).format(DATE_FORMAT)
-        //     : momentDate(startDate).format(DATE_FORMAT)
-        // input.set(formattedDate)
-        if (date.isValid()) {
-            const formattedDate = constrainDate(date, startDate, endDate).format(DATE_FORMAT)
-            input.set(formattedDate)
+        const validDate = date.isValid() && constrainDate(date, startDate, endDate).isSame(date)
+        if (validDate) {
+            input.set(date.format(DATE_FORMAT))
+            this.setState({value, lastValidValue: value})
+        } else {
+            input.set('')
+            this.setState({value})
         }
     }
 }
