@@ -225,7 +225,7 @@ class _DatePickerPanel extends React.Component {
     }
 
     renderWeekDaysLabels() {
-        return moment.weekdaysShort().map(weekday =>
+        return moment.weekdaysShort(true).map(weekday =>
             <Label key={weekday} msg={weekday}/>
         )
     }
@@ -240,7 +240,12 @@ class _DatePickerPanel extends React.Component {
         const lastDate = date.isSame(endDate, 'month') ? endDate : lastOfMonth
         const lastDay = lastDate.date()
         const lastToRender = moment(lastOfMonth).endOf('week')
-        const indexOffset = firstOfMonth.day() - 1
+        const indexOffset = firstOfMonth.weekday() - 1
+        console.log({
+            firstToRender: firstToRender.format(DATE_FORMAT),
+            firstOfMonth: firstOfMonth.format(DATE_FORMAT),
+            indexOffset
+        })
         const daysToRender = lastToRender.diff(firstToRender, 'days') + 1
         const firstIndex = firstDay + indexOffset
         const lastIndex = lastDay + indexOffset
