@@ -4,8 +4,6 @@ import {Menu} from 'widget/menu/menu'
 import {activatable} from 'widget/activation/activatable'
 import {changeBaseLayer} from './baseLayer'
 import {compose} from 'compose'
-import {getNorwayPlanetApiKey} from './map'
-import {googleMap, sepalMap} from 'app/home/map/map'
 import {msg} from 'translate'
 import {select} from 'store'
 import ButtonSelect from 'widget/buttonSelect'
@@ -13,7 +11,7 @@ import Labels from './labels'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from '../../../action-builder'
-import moment from 'moment'
+// import moment from 'moment'
 import styles from './layersMenu.module.css'
 
 const fields = {
@@ -67,9 +65,9 @@ class _LayersMenu extends React.Component {
         return {procOptions, dateRangeOptions}
     }
 
-    toggleOverlay = ({selectedOverlayIndex, mapContext, statePath}) => {
-        const context = sepalMap.getContext(mapContext)
-        const overlays = context.toggleableLayers()
+    toggleOverlay = selectedOverlayIndex => {
+        const {mapContext: {sepalMap, googleMap}, statePath} = this.props
+        const overlays = sepalMap.toggleableLayers()
 
         const prevOverlayIndex = this.selectedOverlayIndex()
         if (selectedOverlayIndex !== prevOverlayIndex) {
@@ -90,9 +88,9 @@ class _LayersMenu extends React.Component {
 
     // changeBaseLayer(type, year, month, proc) {
     changeBaseLayer(type, dateRange, proc) {
-        console.log('changeBaseLayer', dateRange.value, proc.value)
+        // console.log('changeBaseLayer', dateRange.value, proc.value)
         const {statePath, mapContext} = this.props
-        const planetApiKey = getNorwayPlanetApiKey()
+        const planetApiKey = mapContext.norwayPlanetApiKey
         changeBaseLayer({
             type,
             mapContext,
@@ -103,10 +101,9 @@ class _LayersMenu extends React.Component {
     }
 
     selectedOverlayIndex() {
-        const {overlayIndex, mapContext} = this.props
+        const {overlayIndex, mapContext: {sepalMap}} = this.props
         if (overlayIndex === undefined) {
-            const context = sepalMap.getContext(mapContext)
-            const overlays = context.toggleableLayers()
+            const overlays = sepalMap.toggleableLayers()
             const firstOverlayIndex = overlays.length
                 ? overlays.map(layer => layer.layerIndex)[0]
                 : -1
@@ -123,8 +120,7 @@ class _LayersMenu extends React.Component {
             activatable: {deactivate},
             labelsShown, baseLayer, labelLayerIndex, statePath, mapContext
         } = this.props
-        const context = sepalMap.getContext(mapContext)
-        const overlays = context.toggleableLayers()
+        const overlays = mapContext.sepalMap.toggleableLayers()
         const toggleableOptions = overlays.map(layer =>
             <Menu.Option
                 key={layer.layerIndex}
@@ -207,7 +203,7 @@ class _LayersMenu extends React.Component {
                 <Menu.Select
                     id={'OVERLAYS'}
                     label={msg('process.mosaic.mapToolbar.layersMenu.overlay')}
-                    onSelect={selectedOverlayIndex => this.toggleOverlay({selectedOverlayIndex, mapContext, statePath})}
+                    onSelect={selectedOverlayIndex => this.toggleOverlay(selectedOverlayIndex)}
                     selected={this.selectedOverlayIndex()}>
                     {toggleableOptions}
                 </Menu.Select>
@@ -218,10 +214,10 @@ class _LayersMenu extends React.Component {
                     selected={labelsShown}
                     onChange={shown =>
                         Labels.showLabelsAction({
+                            mapContext,
                             shown,
                             layerIndex: labelLayerIndex,
-                            statePath,
-                            mapContext
+                            statePath
                         }).dispatch()}/>
             </Menu>
         )
@@ -242,7 +238,7 @@ class _LayersMenu extends React.Component {
         // }
         // }
         const {dateRange: prevDateRange, proc: prevProc, inputs: {dateRange, proc}} = this.props
-        console.log(dateRange.value, proc.value)
+        // console.log(dateRange.value, proc.value)
         if (!proc.value)
             proc.set(prevProc || 'rgb')
         if (!dateRange.value)
@@ -266,6 +262,6 @@ const sequence = (start, end, step = 1) =>
 
 LayersMenu.propTypes = {
     labelLayerIndex: PropTypes.any.isRequired,
-    mapContext: PropTypes.string.isRequired,
+    mapContext: PropTypes.object.isRequired,
     statePath: PropTypes.any.isRequired
 }

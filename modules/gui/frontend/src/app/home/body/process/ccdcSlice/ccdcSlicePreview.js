@@ -2,7 +2,6 @@ import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {sepalMap} from 'app/home/map/map'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
@@ -77,9 +76,8 @@ class CCDCSlicePreview extends React.Component {
     }
 
     reload() {
-        const {recipe} = this.props
-        const context = sepalMap.getContext(recipe.id)
-        context.removeLayer('preview')
+        const {mapContext: {sepalMap}, recipe} = this.props
+        sepalMap.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
@@ -88,20 +86,22 @@ class CCDCSlicePreview extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {recipe} = this.props
+        const {mapContext: {sepalMap}, recipe} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
-        if (layerChanged)
+        if (layerChanged) {
             this.updateLayer(previewRequest)
+        }
         sepalMap.getContext(recipe.id).hideLayer('preview', this.isHidden(recipe))
     }
 
     // common code above
 
     updateLayer(previewRequest) {
-        if (this.isHidden())
+        if (this.isHidden()) {
             return
-        const {recipe, componentWillUnmount$} = this.props
+        }
+        const {mapContext: {sepalMap}, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
             layerIndex: 2,
@@ -113,8 +113,7 @@ class CCDCSlicePreview extends React.Component {
             props: previewRequest,
             onProgress: tiles => this.onProgress(tiles)
         })
-        const context = sepalMap.getContext(recipe.id)
-        const changed = context.setLayer({
+        const changed = sepalMap.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,

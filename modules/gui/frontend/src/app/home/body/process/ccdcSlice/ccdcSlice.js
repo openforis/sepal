@@ -1,19 +1,18 @@
+import {RecipeActions, defaultModel} from './ccdcSliceRecipe'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {defaultModel, RecipeActions} from './ccdcSliceRecipe'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import {sepalMap} from 'app/home/map/map'
+import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
+import BandSelection from './bandSelection'
+import CCDCSlicePreview from './ccdcSlicePreview'
+import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
+import ChartPixel from './panels/chartPixel'
+import ChartPixelButton from '../ccdc/panels/chartPixelButton'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
-import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
-import CCDCSlicePreview from './ccdcSlicePreview'
-import BandSelection from './bandSelection'
-import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import _ from 'lodash'
-import ChartPixelButton from '../ccdc/panels/chartPixelButton'
-import ChartPixel from './panels/chartPixel'
 
 const mapStateToProps = state => {
     return {
@@ -56,25 +55,20 @@ class _CCDCSlice extends React.Component {
         this.setAoiLayer(true)
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps, _prevState, _snapshot) {
         const prevAsset = prevProps.recipe.model.source.asset
         const asset = this.props.recipe.model.source.asset
-        console.log(prevAsset, asset)
+        // console.log(prevAsset, asset)
         this.setAoiLayer(prevAsset !== asset)
     }
 
     setAoiLayer(fitLayer) {
-        const {recipeId, recipe, componentWillUnmount$} = this.props
+        const {mapContext, recipe, componentWillUnmount$} = this.props
         setRecipeGeometryLayer({
-            contextId: recipeId,
+            mapContext,
             layerSpec: {id: 'aoi', layerIndex: 1, recipe},
             destroy$: componentWillUnmount$,
-            onInitialized: () => {
-                if (fitLayer && this.props.tabCount === 1) {
-                    sepalMap.setContext(recipeId)
-                    sepalMap.getContext(recipeId).fitLayer('aoi')
-                }
-            }
+            onInitialized: () => fitLayer && mapContext.sepalMap.fitLayer('aoi')
         })
     }
 }
