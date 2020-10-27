@@ -3,9 +3,10 @@ import {compose} from 'compose'
 import {connect, select} from 'store'
 import {recipeActionBuilder} from './recipe'
 import {toPathList} from 'stateUtils'
+import {withContext} from 'context'
+import {withMapContext} from '../../map/mapContext'
 import React from 'react'
 import actionBuilder from 'action-builder'
-import withContext from 'context'
 
 const Context = React.createContext()
 
@@ -21,10 +22,11 @@ export const RecipeContext = ({rootStatePath = 'process.tabs', recipeId, childre
             </Context.Provider>
         )
         : null
+
+const withRecipeContext = withContext(Context, 'recipeContext')
     
 export const withRecipe = mapRecipeToProps =>
     WrappedComponent => {
-        const withRecipeContext = withContext(Context, 'recipeContext')
         const mapStateToProps = (state, ownProps) => {
             const {recipeContext: {statePath}} = ownProps
             const recipe = {...select(statePath)}
@@ -36,7 +38,8 @@ export const withRecipe = mapRecipeToProps =>
         return compose(
             WrappedComponent,
             connect(mapStateToProps),
-            withRecipeContext()
+            withRecipeContext(),
+            withMapContext()
         )
     }
     

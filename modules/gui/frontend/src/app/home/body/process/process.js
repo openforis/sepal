@@ -7,6 +7,7 @@ import {getRecipeType} from './recipeTypes'
 import {msg} from 'translate'
 import {saveRecipe} from './recipe'
 import CloseRecipe from './closeRecipe'
+import Map from '../../map/map'
 import ProcessMenu from './processMenu'
 import React from 'react'
 import Revisions from 'app/home/body/process/revisions'
@@ -56,7 +57,9 @@ class Process extends React.Component {
                     onClose={(recipe, close) => this.onCloseTab(recipe, close)}>
                     {({id, type}) =>
                         <RecipeContext recipeId={id}>
-                            {this.renderRecipe(id, type)}
+                            <Map>
+                                {this.renderRecipe(id, type)}
+                            </Map>
                         </RecipeContext>
                     }
                 </Tabs>

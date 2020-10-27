@@ -1,19 +1,19 @@
 import {NEVER, of} from 'rxjs'
-import {google, sepalMap} from 'app/home/map/map'
 import actionBuilder from 'action-builder'
 
 export default class Labels {
-    static showLabelsAction({layerIndex = 2, shown, statePath, mapContext}) {
+    static showLabelsAction({mapContext: {google, googleMap, sepalMap}, layerIndex = 2, shown, statePath}) {
         return actionBuilder('SET_LABELS_SHOWN', {shown})
             .set([statePath, 'labelsShown'], shown)
             .sideEffect(() => {
-                const layer = shown ? new Labels(layerIndex) : null
-                sepalMap.getContext(mapContext).setLayer({id: 'labels', layer, destroy$: NEVER})
+                const layer = shown ? new Labels({google, googleMap, layerIndex}) : null
+                sepalMap.setLayer({id: 'labels', layer, destroy$: NEVER})
             })
             .build()
     }
 
-    constructor(layerIndex) {
+    constructor({google, googleMap, layerIndex}) {
+        this.googleMap = googleMap
         this.layer = new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
         this.bounds = new google.maps.LatLngBounds(
             new google.maps.LatLng(90, -180),
@@ -26,14 +26,14 @@ export default class Labels {
         return o === this || o instanceof Labels
     }
 
-    addToMap(googleMap) {
-        googleMap.overlayMapTypes.setAt(this.layerIndex, this.layer)
+    addToMap() {
+        this.googleMap.overlayMapTypes.setAt(this.layerIndex, this.layer)
     }
 
-    removeFromMap(googleMap) {
+    removeFromMap() {
         // [HACK] Prevent Google Maps locking up the GUI when zooming
-        googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
-        googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
+        this.googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
+        this.googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
     }
 
     initialize$() {

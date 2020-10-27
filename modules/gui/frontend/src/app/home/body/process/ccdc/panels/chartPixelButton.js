@@ -1,17 +1,17 @@
 import {RecipeActions} from '../ccdcRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
-import {msg} from 'translate'
 import {compose} from 'compose'
+import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import {sepalMap} from '../../../../map/map'
+import GoogleSatelliteLayer from 'app/home/map/googleSatelliteLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import GoogleSatelliteLayer from 'app/home/map/googleSatelliteLayer'
 
-const mapRecipeToProps = recipe => {
+const mapRecipeToProps = (recipe, ownProps) => {
+    const {mapContext: {sepalMap}} = ownProps
     return {
         recipeId: recipe.id,
-        isZooming: sepalMap.getContext(recipe.id).isZooming(),
+        isZooming: sepalMap.isZooming(),
     }
 }
 
@@ -36,22 +36,20 @@ class ChartPixelButton extends React.Component {
     }
 
     startSelecting() {
-        const {recipeId} = this.props
+        const {mapContext: {sepalMap, google, googleMap}} = this.props
         this.setState({isSelecting: true})
-        const context = sepalMap.getContext(recipeId)
-        context.onOneClick(latLng => {
-            context.removeLayer('googleSatellite')
+        sepalMap.onOneClick(latLng => {
+            sepalMap.removeLayer('googleSatellite')
             this.setChartPixel(latLng)
         })
-        context.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer(1)})
+        sepalMap.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer({google, googleMap, layerIndex: 1})})
     }
 
     cancelSelecting() {
-        const {recipeId} = this.props
+        const {mapContext: {sepalMap}} = this.props
         this.setState({isSelecting: false})
-        const context = sepalMap.getContext(recipeId)
-        context.removeLayer('googleSatellite')
-        context.clearClickListeners()
+        sepalMap.removeLayer('googleSatellite')
+        sepalMap.clearClickListeners()
     }
 
     setChartPixel(latLng) {
@@ -61,7 +59,7 @@ class ChartPixelButton extends React.Component {
 }
 
 ChartPixelButton.propTypes = {
-    recipeId: PropTypes.string.isRequired
+    mapContext: PropTypes.object.isRequired
 }
 
 export default compose(

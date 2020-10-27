@@ -1,13 +1,16 @@
-import {MapObject, google, googleMap} from 'app/home/map/map'
+import {MapObject} from 'app/home/map/map'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {compose} from 'compose'
 import {isEqualIgnoreFunctions} from 'collections'
+import {withMapContext} from 'app/home/map/mapContext'
+import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './sceneAreas.module.css'
 
-export default class SceneAreaMarker extends React.Component {
+class _SceneAreaMarker extends React.Component {
     constructor(props) {
         super(props)
-        const {recipeId, polygon} = props
+        const {mapContext: {google}, recipeId, polygon} = props
         this.recipeActions = RecipeActions(recipeId)
         const gPolygon = new google.maps.Polygon({
             paths: polygon.map(([lat, lng]) =>
@@ -27,14 +30,15 @@ export default class SceneAreaMarker extends React.Component {
         this.center = bounds.getCenter()
     }
 
-    renderSceneAreaCount(zoom, fontSize, count) {
+    renderSceneAreaCount(fontSize) {
+        const {zoom, selectedSceneCount} = this.props
         return zoom > 4
-            ? <text x={0} y={0} fontSize={fontSize} textAnchor='middle' dominantBaseline='middle'>{count}</text>
+            ? <text x={0} y={0} fontSize={fontSize} textAnchor='middle' dominantBaseline='middle'>{selectedSceneCount}</text>
             : null
     }
 
     render() {
-        const {zoom, sceneAreaId, selectedSceneCount, loading} = this.props
+        const {mapContext: {googleMap}, zoom, loading} = this.props
         const scale = Math.min(1, Math.pow(zoom, 2.5) / Math.pow(8, 2.5))
         const size = `${1.5 * 4 * scale}em`
         return (
@@ -50,22 +54,34 @@ export default class SceneAreaMarker extends React.Component {
                     viewBox={'-100 -100 200 200'}
                     onMouseOver={() => !loading && this.polygon.setMap(googleMap)}
                     onMouseLeave={() => this.polygon.setMap(null)}
-                    onClick={() => loading ? null : this.selectScenes(sceneAreaId)}>
+                    onClick={() => loading ? null : this.selectScenes()}>
                     <circle cx={0} cy={0} r={80}/>
-                    {this.renderSceneAreaCount(zoom, 20 + 20 / scale, selectedSceneCount)}
+                    {this.renderSceneAreaCount(20 + 20 / scale)}
                 </svg>
             </MapObject>
         )
     }
 
-    shouldComponentUpdate(nextProps) {
-        return !isEqualIgnoreFunctions(nextProps, this.props)
-    }
+    // shouldComponentUpdate(nextProps) {
+    //     return !isEqualIgnoreFunctions(nextProps, this.props)
+    // }
 
-    selectScenes(sceneAreaId) {
-        const {sceneSelection} = this.props
+    selectScenes() {
+        const {sceneAreaId, sceneSelection} = this.props
         this.recipeActions.setSceneSelection(sceneAreaId).dispatch()
         sceneSelection.activate()
     }
+}
 
+export const SceneAreaMarker = compose(
+    _SceneAreaMarker,
+    withMapContext()
+)
+
+SceneAreaMarker.propTypes = {
+    polygon: PropTypes.array,
+    recipeId: PropTypes.string,
+    sceneAreaId: PropTypes.string,
+    sceneSelection: PropTypes.object,
+    selectedSceneCount: PropTypes.number
 }

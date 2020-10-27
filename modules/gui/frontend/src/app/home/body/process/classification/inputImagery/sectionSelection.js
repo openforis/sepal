@@ -3,7 +3,7 @@ import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-export default class SectionSelection extends React.Component {
+export class SectionSelection extends React.Component {
     render() {
         const {section} = this.props
         const options = [

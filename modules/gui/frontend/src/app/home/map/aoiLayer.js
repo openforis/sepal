@@ -1,20 +1,18 @@
-import './map.module.css'
-import {sepalMap} from './map'
 import {setEETableLayer} from './eeTableLayer'
 import {setPolygonLayer} from './polygonLayer'
 
 export const countryEETable = 'users/wiell/SepalResources/countries'
 
-export const removeAoiLayer = contextId => {
-    sepalMap.getContext(contextId).removeLayer('aoi')
+export const removeAoiLayer = sepalMap => {
+    sepalMap.removeLayer('aoi')
 }
 
-export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized, layerIndex = 1}) => {
+export const setAoiLayer = ({mapContext, aoi, fill, destroy$, onInitialized, layerIndex = 1}) => {
     const layerId = 'aoi'
     switch (aoi && aoi.type) {
     case 'COUNTRY':
         return setEETableLayer({
-            contextId,
+            mapContext,
             layerSpec: {
                 id: layerId,
                 tableId: countryEETable,
@@ -27,7 +25,7 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized, laye
         })
     case 'EE_TABLE':
         return setEETableLayer({
-            contextId,
+            mapContext,
             layerSpec: {
                 id: layerId,
                 tableId: aoi.id,
@@ -40,7 +38,7 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized, laye
         })
     case 'POLYGON':
         return setPolygonLayer({
-            contextId,
+            mapContext,
             layerSpec: {
                 id: layerId,
                 path: aoi.path
@@ -51,6 +49,6 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized, laye
         })
 
     default:
-        removeAoiLayer(contextId)
+        removeAoiLayer(mapContext.sepalMap)
     }
 }

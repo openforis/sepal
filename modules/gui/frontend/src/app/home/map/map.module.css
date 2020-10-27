@@ -1,8 +1,27 @@
-/* [HACK] Removes "Sorry, we have no imagery here." from Google Maps labels layer */
-/*:global .gm-style > div > div > div > div > div > div > div:not(:empty) {*/
-    /*display: none;*/
-/*}*/
+.map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: all;
+    z-index: 0;
+}
 
-/*:global .gm-style > div > div > div > div > div > div > div[id] {*/
-    /*display: inline;*/
-/*}*/
+.map::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    bottom: 0;
+    width: 100%;
+    height: var(--map-overlay-height);
+    background-color: hsla(0, 0%, 0%, .4);
+}
+
+.content {
+    position: absolute;
+    top: 0;
+    bottom: var(--map-overlay-height);
+    left: 0;
+    right: 0;
+}

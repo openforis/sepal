@@ -1,35 +1,27 @@
 import {compose} from 'compose'
-import {connect} from 'store'
 import {defaultModel} from './ccdcRecipe'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
+import CCDCToolbar from './panels/ccdcToolbar'
+import ChartPixel from './panels/chartPixel'
+import ChartPixelButton from './panels/chartPixelButton'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
-import CCDCToolbar from './panels/ccdcToolbar'
 import styles from './ccdc.module.css'
-import ChartPixelButton from './panels/chartPixelButton'
-import ChartPixel from './panels/chartPixel'
 
-const mapStateToProps = state => {
-    return {
-        tabCount: selectFrom(state, 'process.tabs').length
-    }
-}
 const mapRecipeToProps = recipe => ({
-    recipeId: selectFrom(recipe, 'id'),
     initialized: selectFrom(recipe, 'ui.initialized'),
     aoi: selectFrom(recipe, 'model.aoi'),
 })
 
 class _CCDC extends React.Component {
     render() {
-        const {recipeId, recipeContext: {statePath}} = this.props
+        const {recipeContext: {statePath}} = this.props
         return (
             <div className={styles.ccdc}>
-                <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}>
+                <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}>
                     <ChartPixelButton/>
                 </MapToolbar>
                 <CCDCToolbar/>
@@ -39,17 +31,12 @@ class _CCDC extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId, aoi, tabCount, componentWillUnmount$} = this.props
+        const {aoi, mapContext, componentWillUnmount$} = this.props
         setAoiLayer({
-            contextId: recipeId,
+            mapContext,
             aoi,
             destroy$: componentWillUnmount$,
-            onInitialized: () => {
-                if (tabCount === 1) {
-                    sepalMap.setContext(recipeId)
-                    sepalMap.getContext(recipeId).fitLayer('aoi')
-                }
-            },
+            onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
             layerIndex: 1
         })
     }
@@ -57,7 +44,6 @@ class _CCDC extends React.Component {
 
 const CCDC = compose(
     _CCDC,
-    connect(mapStateToProps),
     recipe({defaultModel, mapRecipeToProps})
 )
 

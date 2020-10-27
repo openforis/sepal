@@ -3,7 +3,7 @@ import {RecipeState} from 'app/home/body/process/classification/classificationRe
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
-import {sepalMap} from 'app/home/map/map'
+import {withMapContext} from 'app/home/map/mapContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
 import PropTypes from 'prop-types'
@@ -27,13 +27,13 @@ class PrimitivePreview extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {recipe} = this.props
+        const {recipe, mapContext: {sepalMap}} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
-        if (layerChanged)
+        if (layerChanged) {
             this.updateLayer(previewRequest)
-        const context = sepalMap.getContext(recipe.id)
-        context.hideLayer('preview', this.isHidden(recipe))
+        }
+        sepalMap.hideLayer('preview', this.isHidden(recipe))
     }
 
     render() {
@@ -60,16 +60,16 @@ class PrimitivePreview extends React.Component {
     }
 
     updateLayer(previewRequest) {
-        const {recipeId, componentWillUnmount$} = this.props
+        const {mapContext, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
+            mapContext,
             layerIndex: 1,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
             onProgress: tiles => this.onProgress(tiles)
         })
-        const context = sepalMap.getContext(recipeId)
-        const changed = context.setLayer({
+        const changed = mapContext.sepalMap.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
@@ -82,9 +82,8 @@ class PrimitivePreview extends React.Component {
     }
 
     reload() {
-        const {recipe} = this.props
-        const context = sepalMap.getContext(recipe.id)
-        context.removeLayer('preview')
+        const {recipe, mapContext: {sepalMap}} = this.props
+        sepalMap.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
@@ -140,5 +139,6 @@ PrimitivePreview.propTypes = {
 
 export default compose(
     PrimitivePreview,
-    connect(mapStateToProps)
+    connect(mapStateToProps),
+    withMapContext()
 )

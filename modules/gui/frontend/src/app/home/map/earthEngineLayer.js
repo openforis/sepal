@@ -1,12 +1,12 @@
 import {map} from 'rxjs/operators'
 import {of} from 'rxjs'
-import {sepalMap} from './map'
 import _ from 'lodash'
 import ee from '@google/earthengine'
 import guid from 'guid'
 
 export default class EarthEngineLayer {
-    constructor({layerIndex, toggleable, label, description, bounds, mapId$, props, onProgress}) {
+    constructor({mapContext, layerIndex, toggleable, label, description, bounds, mapId$, props, onProgress}) {
+        this.mapContext = mapContext
         this.layerIndex = layerIndex
         this.toggleable = toggleable
         this.label = label
@@ -21,7 +21,7 @@ export default class EarthEngineLayer {
         return _.isEqual(o && o.props, this.props)
     }
 
-    addToMap(googleMap) {
+    addToMap() {
         const layer = new ee.layers.ImageOverlay(
             new ee.layers.EarthEngineTileSource(
                 toMapId(this.mapId, this.token, this.urlTemplate)
@@ -34,12 +34,12 @@ export default class EarthEngineLayer {
         // This workaround uses unique tile ids. Hopefully this doesn't lead to any memory leaks.
         layer.getUniqueTileId_ = () => guid()
 
-        googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
+        this.mapContext.googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
 
         const notifyOnProgress = () => {
             // Manually calculate stats, since GEE returns stats from multiple zoom-levels
             const tileStatuses = layer.tilesById.getValues()
-                .filter(tile => tile.zoom === googleMap.getZoom())
+                .filter(tile => tile.zoom === this.mapContext.googleMap.getZoom())
                 .map(tile => tile.getStatus())
             const Status = ee.layers.AbstractTile.Status
 
@@ -63,21 +63,21 @@ export default class EarthEngineLayer {
             else
                 setTimeout(notifyOnProgress, 100)
         }
-        this.boundsChangedListener = sepalMap.onBoundsChanged(notifyOnProgress)
+        this.boundsChangedListener = this.mapContext.sepalMap.onBoundsChanged(notifyOnProgress)
         notifyOnProgress()
         layer.addEventListener('tile-load', notifyOnProgress)
         layer.addEventListener('tile-fail', notifyOnProgress)
     }
 
-    removeFromMap(googleMap) {
-        sepalMap.removeListener(this.boundsChangedListener)
+    removeFromMap() {
+        this.mapContext.sepalMap.removeListener(this.boundsChangedListener)
         // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
-        googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
-        googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
+        this.mapContext.googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
+        this.mapContext.googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
     }
 
-    hide(googleMap, hidden) {
-        const layer = googleMap.overlayMapTypes.getAt(this.layerIndex)
+    hide(hidden) {
+        const layer = this.mapContext.googleMap.overlayMapTypes.getAt(this.layerIndex)
         layer && layer.setOpacity(hidden ? 0 : 1)
     }
 

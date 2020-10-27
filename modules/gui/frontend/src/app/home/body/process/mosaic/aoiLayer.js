@@ -1,14 +1,8 @@
 import {compose} from 'compose'
-import {connect} from 'store'
 import {selectFrom} from 'stateUtils'
-import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import React from 'react'
-
-const mapStateToProps = state => ({
-    tabCount: state.process.tabs.length
-})
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
@@ -21,25 +15,17 @@ class AoiLayer extends React.Component {
     }
 
     componentDidMount() {
-        // const {recipeId, aoi, tabCount, componentWillUnmount$} = this.props
-        const {recipeId, aoi, tabCount} = this.props
+        const {mapContext, aoi} = this.props
         setAoiLayer({
-            contextId: recipeId,
+            mapContext,
             aoi,
             // destroy$: componentWillUnmount$,
-            onInitialized: () => {
-                // console.log('onInitialized')
-                if (tabCount === 1) {
-                    sepalMap.setContext(recipeId)
-                    sepalMap.getContext(recipeId).fitLayer('aoi')
-                }
-            }
+            onInitialized: () => mapContext.sepalMap.fitLayer('aoi')
         })
     }
 }
 
 export default compose(
     AoiLayer,
-    connect(mapStateToProps),
     withRecipe(mapRecipeToProps)
 )

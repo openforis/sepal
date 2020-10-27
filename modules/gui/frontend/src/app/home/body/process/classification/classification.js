@@ -1,19 +1,13 @@
 import {compose} from 'compose'
-import {connect} from 'store'
 import {defaultModel} from './classificationRecipe'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import {sepalMap} from 'app/home/map/map'
 import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import ClassificationPreview from './classificationPreview'
 import ClassificationToolbar from './classificationToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
-
-const mapStateToProps = state => ({
-    tabCount: state.process.tabs.length
-})
 
 const mapRecipeToProps = recipe => ({
     recipeId: selectFrom(recipe, 'id'),
@@ -23,10 +17,10 @@ const mapRecipeToProps = recipe => ({
 
 class _Classification extends React.Component {
     render() {
-        const {recipeId, recipeContext: {statePath}, initialized} = this.props
+        const {recipeContext: {statePath}, initialized} = this.props
         return (
             <React.Fragment>
-                <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}/>
+                <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
                 <ClassificationToolbar/>
 
                 {initialized
@@ -45,24 +39,18 @@ class _Classification extends React.Component {
     }
 
     setAoiLayer() {
-        const {recipeId, images, componentWillUnmount$} = this.props
+        const {images, mapContext, componentWillUnmount$} = this.props
         setRecipeGeometryLayer({
-            contextId: recipeId,
+            mapContext,
             layerSpec: {id: 'aoi', layerIndex: 1, recipe: images && images.length > 0 ? images[0] : null},
             destroy$: componentWillUnmount$,
-            onInitialized: () => {
-                if (this.props.tabCount === 1) {
-                    sepalMap.setContext(recipeId)
-                    sepalMap.getContext(recipeId).fitLayer('aoi')
-                }
-            }
+            onInitialized: () => mapContext.sepalMap.fitLayer('aoi')
         })
     }
 }
 
 const Classification = compose(
     _Classification,
-    connect(mapStateToProps),
     recipe({defaultModel, mapRecipeToProps})
 )
 

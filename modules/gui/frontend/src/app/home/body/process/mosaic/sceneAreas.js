@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
-import {MapLayer, googleMap, sepalMap} from 'app/home/map/map'
+import {MapLayer} from 'app/home/map/map'
 import {RecipeActions, SceneSelectionType, getSource} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {SceneAreaMarker} from './sceneAreaMarker'
 import {Subject, of} from 'rxjs'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
@@ -15,11 +16,11 @@ import MapStatus from 'widget/mapStatus'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SceneAreaMarker from './sceneAreaMarker'
 import api from 'api'
 import styles from './sceneAreas.module.css'
 
-const mapRecipeToProps = recipe => {
+const mapRecipeToProps = (recipe, ownProps) => {
+    const {mapContext: {googleMap}} = ownProps
     const sceneSelectionType = selectFrom(recipe, 'model.sceneSelectionOptions.type')
     const manualSelection = sceneSelectionType === SceneSelectionType.SELECT
     return {
@@ -32,6 +33,7 @@ const mapRecipeToProps = recipe => {
         selectedScenes: selectFrom(recipe, ['model.scenes']) || [],
         loading: selectFrom(recipe, 'ui.autoSelectingScenes'),
         zoom: select('map.zoom') || googleMap.getZoom(),
+        // zoom: googleMap.getZoom(),
         manualSelection
     }
 }
@@ -66,7 +68,7 @@ class SceneAreas extends React.Component {
                 key={sceneArea.id}
                 recipeId={recipeId}
                 sceneAreaId={sceneArea.id}
-                center={sceneArea.center}
+                // center={sceneArea.center}
                 polygon={sceneArea.polygon}
                 selectedSceneCount={selectedSceneCount}
                 zoom={zoom}
@@ -89,13 +91,23 @@ class SceneAreas extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {recipeId, aoi, source} = this.props
+        const {aoi, source} = this.props
         const loadSceneAreas = !objectEquals(this.props, prevProps, ['aoi', 'source'])
         if (loadSceneAreas)
             this.loadSceneAreas(aoi, source)
-        setSceneAreaLayer({recipeId, component: this})
+        this.setSceneAreaLayer()
     }
 
+    setSceneAreaLayer() {
+        const {mapContext: {sepalMap}, componentWillUnmount$} = this.props
+        const layer = new SceneAreaLayer(this)
+        sepalMap.setLayer({
+            id: 'sceneAreas',
+            layer,
+            destroy$: componentWillUnmount$
+        })
+    }
+    
     loadSceneAreas(aoi, source) {
         this.loadSceneArea$.next()
         this.recipeActions.setSceneAreas(null).dispatch()
@@ -136,15 +148,6 @@ export default compose(
     activator('sceneSelection'),
     withRecipe(mapRecipeToProps)
 )
-
-const setSceneAreaLayer = ({recipeId, component}) => {
-    const layer = new SceneAreaLayer(component)
-    sepalMap.getContext(recipeId).setLayer({
-        id: 'sceneAreas',
-        layer,
-        destroy$: component.props.componentWillUnmount$
-    })
-}
 
 class SceneAreaLayer {
     constructor(component) {

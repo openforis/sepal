@@ -1,10 +1,12 @@
 import {Form} from 'widget/form/form'
+import {compose} from 'compose'
 import {msg} from 'translate'
 import {removeAoiLayer} from 'app/home/map/aoiLayer'
+import {withMapContext} from 'app/home/map/mapContext'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-export default class SectionSelection extends React.Component {
+class _SectionSelection extends React.Component {
     render() {
         const {inputs: {section}} = this.props
         const options = [
@@ -33,10 +35,15 @@ export default class SectionSelection extends React.Component {
     }
 
     componentDidUpdate() {
-        const {recipeId} = this.props
-        removeAoiLayer(recipeId)
+        const {mapContext: {sepalMap}} = this.props
+        removeAoiLayer(sepalMap)
     }
 }
+
+export const SectionSelection = compose(
+    _SectionSelection,
+    withMapContext()
+)
 
 SectionSelection.propTypes = {
     inputs: PropTypes.object.isRequired,

@@ -1,7 +1,7 @@
 import * as PropTypes from 'prop-types'
+import {withContext} from 'context'
 import React, {Component} from 'react'
 import actionBuilder from 'action-builder'
-import withContext from 'context'
 
 const Context = React.createContext()
 

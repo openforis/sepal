@@ -1,8 +1,9 @@
 import {of} from 'rxjs'
-import {google} from 'app/home/map/map'
 
 export default class GoogleSatelliteLayer {
-    constructor(layerIndex) {
+    constructor({google, googleMap, layerIndex}) {
+        this.google = google
+        this.googleMap = googleMap
         this.layerIndex = layerIndex
         this.type = 'GoogleSatelliteLayer'
     }
@@ -11,26 +12,26 @@ export default class GoogleSatelliteLayer {
         return this.type === o.type
     }
 
-    addToMap(googleMap) {
+    addToMap() {
         const subdomain = 'mt0'
         const getTileUrl = ({x, y}, z) => `http://${subdomain}.google.com/vt/lyrs=s&x=${x}&y=${y}&z=${z}`
-        const layer = new google.maps.ImageMapType({
-            getTileUrl: getTileUrl,
-            name: "googleSatellite",
+        const layer = new this.google.maps.ImageMapType({
+            getTileUrl,
+            name: 'googleSatellite',
             minZoom: 3,
             maxZoom: 17,
-        });
-        googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
+        })
+        this.googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
     }
 
-    removeFromMap(googleMap) {
+    removeFromMap() {
         // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
-        googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
-        googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
+        this.googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
+        this.googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
     }
 
-    hide(googleMap, hidden) {
-        hidden ? this.removeFromMap(googleMap) : this.addToMap(googleMap)
+    hide(hidden) {
+        hidden ? this.removeFromMap() : this.addToMap()
     }
 
     initialize$() {

@@ -6,7 +6,7 @@ import {connect, select} from 'store'
 import {countryEETable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
-import {sepalMap} from 'app/home/map/map'
+import {withMapContext} from 'app/home/map/mapContext'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -61,7 +61,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-class CountrySection extends React.Component {
+class _CountrySection extends React.Component {
     constructor(props) {
         super(props)
         this.aoiChanged$ = new Subject()
@@ -143,7 +143,7 @@ class CountrySection extends React.Component {
     }
 
     update() {
-        const {recipeId, countries, stream, inputs: {country, area}, layerIndex} = this.props
+        const {mapContext, countries, stream, inputs: {country, area}, layerIndex} = this.props
         if (!countries && !stream('LOAD_COUNTRIES').active && !stream('LOAD_COUNTRIES').failed) {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),
@@ -155,26 +155,27 @@ class CountrySection extends React.Component {
             )
         }
         setAoiLayer({
-            contextId: recipeId,
+            mapContext,
             aoi: {
                 type: 'COUNTRY',
                 countryCode: country.value,
                 areaCode: area.value
             },
             // destroy$: componentWillUnmount$,
-            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi'),
+            onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
             layerIndex
         })
     }
 }
+
+export const CountrySection = compose(
+    _CountrySection,
+    connect(mapStateToProps),
+    withMapContext()
+)
 
 CountrySection.propTypes = {
     inputs: PropTypes.object.isRequired,
     recipeId: PropTypes.string.isRequired,
     layerIndex: PropTypes.number
 }
-
-export default compose(
-    CountrySection,
-    connect(mapStateToProps)
-)

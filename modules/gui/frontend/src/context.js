@@ -1,6 +1,6 @@
 import React from 'react'
 
-const withContext = (Context, prop, required = false) =>
+export const withContext = (Context, prop, required = false) =>
     () => // wrapped with apparently useless function for consistency with other "with*" wrappers
         WrappedComponent =>
             class HigherOrderComponent extends React.Component {
@@ -21,5 +21,3 @@ const withContext = (Context, prop, required = false) =>
                     )
                 }
             }
-
-export default withContext

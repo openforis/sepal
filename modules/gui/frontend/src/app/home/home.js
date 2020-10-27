@@ -7,7 +7,6 @@ import {isFloating} from './menu/menuMode'
 import {timer} from 'rxjs'
 import Body from './body/body'
 import Footer from './footer/footer'
-import Map from './map/map'
 import Menu from './menu/menu'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -97,11 +96,9 @@ class Home extends React.Component {
                     floatingMenu && styles.floatingMenu,
                     floatingFooter && styles.floatingFooter
                 ].join(' ')}>
-                    <Map className={styles.map}/>
                     <Menu className={styles.menu}/>
                     <div className={styles.main}>
                         <Body className={styles.body}/>
-                        <div className={styles.google}></div>
                         <Footer className={styles.footer}/>
                     </div>
                     <PortalContainer/>

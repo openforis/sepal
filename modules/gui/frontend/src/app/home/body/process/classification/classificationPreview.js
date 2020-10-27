@@ -1,7 +1,6 @@
 import {Button} from 'widget/button'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {sepalMap} from 'app/home/map/map'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
@@ -76,9 +75,8 @@ class ClassificationPreview extends React.Component {
     }
 
     reload() {
-        const {recipe} = this.props
-        const context = sepalMap.getContext(recipe.id)
-        context.removeLayer('preview')
+        const {recipe, mapContext: {sepalMap}} = this.props
+        sepalMap.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
@@ -87,20 +85,21 @@ class ClassificationPreview extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {recipe} = this.props
+        const {recipe, mapContext: {sepalMap}} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
         if (layerChanged)
             this.updateLayer(previewRequest)
-        sepalMap.getContext(recipe.id).hideLayer('preview', this.isHidden(recipe))
+        sepalMap.hideLayer('preview', this.isHidden(recipe))
     }
 
     // common code above
 
     updateLayer(previewRequest) {
-        const {recipe, componentWillUnmount$} = this.props
+        const {mapContext, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
+            mapContext,
             layerIndex: 2,
             toggleable: true,
             label: msg('process.classification.preview.label'),
@@ -109,8 +108,7 @@ class ClassificationPreview extends React.Component {
             props: previewRequest,
             onProgress: tiles => this.onProgress(tiles)
         })
-        const context = sepalMap.getContext(recipe.id)
-        const changed = context.setLayer({
+        const changed = mapContext.sepalMap.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,

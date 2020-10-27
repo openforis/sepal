@@ -33,12 +33,12 @@ class _Mosaic extends React.Component {
     }
 
     render() {
-        const {recipeId, recipeContext: {statePath}, initialized} = this.props
+        const {recipeContext: {statePath}, initialized} = this.props
         return (
             <SectionLayout>
                 <Content>
                     <div className={styles.mosaic}>
-                        <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}>
+                        <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}>
                             <ShowSceneAreaToggle/>
                         </MapToolbar>
                         <MosaicToolbar/>

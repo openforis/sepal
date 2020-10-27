@@ -1,7 +1,6 @@
 import {Enabled, connect} from 'store'
 import {PortalContainer, PortalContext} from 'widget/portal'
 import {compose} from 'compose'
-import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './tabContent.module.css'
@@ -26,33 +25,6 @@ class _TabContent extends React.PureComponent {
                 </div>
             </PortalContext>
         )
-    }
-
-    componentDidMount() {
-        const {id} = this.props
-        this.props.onEnable(() => {
-            if (this.props.selected)
-                sepalMap.setContext(id)
-        })
-        this.props.onDisable(() => {
-            sepalMap.clearContext(id)
-        })
-        sepalMap.setContext(id)
-    }
-
-    componentDidUpdate(prevProps) {
-        const {id, selected} = this.props
-        const gotDeselected = prevProps.selected && !selected
-        if (gotDeselected)
-            sepalMap.clearContext(id)
-        const gotSelected = !prevProps.selected && selected
-        if (gotSelected)
-            sepalMap.setContext(id)
-    }
-
-    componentWillUnmount() {
-        const {id} = this.props
-        sepalMap.removeContext(id)
     }
 }
 

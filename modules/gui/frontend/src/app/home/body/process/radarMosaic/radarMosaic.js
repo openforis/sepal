@@ -19,12 +19,12 @@ const mapRecipeToProps = recipe => ({
 
 class _RadarMosaic extends React.Component {
     render() {
-        const {recipeId, recipeContext: {statePath}, initialized} = this.props
+        const {recipeContext: {statePath}, initialized} = this.props
         return (
             <SectionLayout>
                 <Content>
                     <div className={styles.radarMosaic}>
-                        <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}/>
+                        <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
                         <RadarMosaicToolbar/>
                         <AoiLayer/>
                         {initialized

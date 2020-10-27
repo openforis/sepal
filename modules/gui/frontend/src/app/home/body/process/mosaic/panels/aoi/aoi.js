@@ -1,17 +1,16 @@
+import {CountrySection} from './countrySection'
+import {EETableSection} from './eeTableSection'
 import {Form} from 'widget/form/form'
+import {PolygonSection} from './polygonSection'
 import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {SectionSelection} from './sectionSelection'
 import {compose} from 'compose'
 import {countryEETable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {msg} from 'translate'
-import {sepalMap} from 'app/home/map/map'
-import CountrySection from './countrySection'
-import EETableSection from './eeTableSection'
 import PanelSections from 'widget/panelSections'
-import PolygonSection from './polygonSection'
 import PropTypes from 'prop-types'
 import React from 'react'
-import SectionSelection from './sectionSelection'
 import styles from './aoi.module.css'
 
 const fields = {
@@ -45,6 +44,7 @@ const fields = {
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
+        const {mapContext: {sepalMap}} = props
         this.initialBounds = sepalMap.getBounds()
         this.initialZoom = sepalMap.getZoom()
     }
@@ -112,7 +112,7 @@ class Aoi extends React.Component {
     }
 
     onCancel() {
-        const {model} = this.props
+        const {model, mapContext: {sepalMap}} = this.props
         this.showPreview()
         this.updateLayer(model)
         sepalMap.fitBounds(this.initialBounds)
@@ -120,9 +120,9 @@ class Aoi extends React.Component {
     }
 
     updateLayer(model) {
-        const {recipeId} = this.props
+        const {mapContext} = this.props
         setAoiLayer({
-            contextId: recipeId,
+            mapContext,
             aoi: model,
             fill: false,
             layerIndex: 1

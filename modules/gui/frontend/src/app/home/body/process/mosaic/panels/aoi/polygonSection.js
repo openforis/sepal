@@ -3,7 +3,6 @@ import {compose} from 'compose'
 import {isRecipeOpen} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {sepalMap} from '../../../../../map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
@@ -17,7 +16,7 @@ const mapRecipeToProps = recipe => {
     }
 }
 
-class PolygonSection extends React.Component {
+class _PolygonSection extends React.Component {
     constructor(props) {
         super(props)
         this.wereLabelsShown = props.labelsShown
@@ -25,23 +24,24 @@ class PolygonSection extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId, inputs: {polygon}} = this.props
+        const {mapContext: {sepalMap}, inputs: {polygon}} = this.props
 
-        this.recipeActions.setLabelsShown(true).dispatch()
-        sepalMap.getContext(recipeId).drawPolygon('aoi', drawnPolygon => {
+        this.recipeActions.setLabelsShown(sepalMap, true).dispatch()
+        sepalMap.drawPolygon('aoi', drawnPolygon => {
             polygon.set(drawnPolygon)
         })
     }
 
     componentWillUnmount() {
+        const {mapContext: {sepalMap}} = this.props
         this.disableDrawingMode()
         if (isRecipeOpen(this.props.recipeId))
-            this.recipeActions.setLabelsShown(this.wereLabelsShown).dispatch()
+            this.recipeActions.setLabelsShown(sepalMap, this.wereLabelsShown).dispatch()
     }
 
     disableDrawingMode() {
-        const {recipeId} = this.props
-        sepalMap.getContext(recipeId).disableDrawingMode()
+        const {mapContext: {sepalMap}} = this.props
+        sepalMap.disableDrawingMode()
     }
 
     render() {
@@ -53,31 +53,32 @@ class PolygonSection extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (prevProps.inputs === this.props.inputs)
+        if (prevProps.inputs === this.props.inputs) {
             return
+        }
 
-        const {recipeId, inputs: {polygon}, componentWillUnmount$} = this.props
+        const {mapContext, inputs: {polygon}, componentWillUnmount$} = this.props
         setAoiLayer({
-            contextId: recipeId,
+            mapContext,
             aoi: {
                 type: 'POLYGON',
                 path: polygon.value
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi')
+            onInitialized: () => mapContext.sepalMap.fitLayer('aoi')
         })
     }
 
 }
+
+export const PolygonSection = compose(
+    _PolygonSection,
+    withRecipe(mapRecipeToProps)
+)
 
 PolygonSection.propTypes = {
     inputs: PropTypes.object.isRequired,
     recipeId: PropTypes.string.isRequired,
     labelsShown: PropTypes.any
 }
-
-export default compose(
-    PolygonSection,
-    withRecipe(mapRecipeToProps)
-)

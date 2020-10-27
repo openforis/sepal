@@ -6,9 +6,9 @@ import {compose} from 'compose'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {sepalMap} from 'app/home/map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
 
@@ -20,7 +20,7 @@ const mapRecipeToProps = recipe => {
     }
 }
 
-class EETableSection extends React.Component {
+class _EETableSection extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
@@ -187,9 +187,9 @@ class EETableSection extends React.Component {
     }
 
     update() {
-        const {recipeId, inputs: {eeTable, eeTableColumn, eeTableRow}, componentWillUnmount$, layerIndex} = this.props
+        const {mapContext, inputs: {eeTable, eeTableColumn, eeTableRow}, componentWillUnmount$, layerIndex} = this.props
         setAoiLayer({
-            contextId: recipeId,
+            mapContext,
             aoi: {
                 type: 'EE_TABLE',
                 id: eeTable.value,
@@ -198,13 +198,20 @@ class EETableSection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: () => sepalMap.getContext(recipeId).fitLayer('aoi'),
+            onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
             layerIndex
         })
     }
 }
 
-export default compose(
-    EETableSection,
+export const EETableSection = compose(
+    _EETableSection,
     withRecipe(mapRecipeToProps)
 )
+
+EETableSection.propTypes = {
+    inputs: PropTypes.object.isRequired,
+    recipeId: PropTypes.string.isRequired,
+    allowWholeEETable: PropTypes.any,
+    layerIndex: PropTypes.number
+}

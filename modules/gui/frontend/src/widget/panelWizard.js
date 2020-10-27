@@ -1,9 +1,9 @@
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
+import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import withContext from 'context'
 
 class PanelWizard extends React.Component {
     constructor(props) {
