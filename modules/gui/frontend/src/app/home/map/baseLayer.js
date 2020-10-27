@@ -3,11 +3,12 @@ import {sepalMap} from 'app/home/map/map'
 import actionBuilder from 'action-builder'
 import GoogleSatelliteLayer from './googleSatelliteLayer'
 import WMTSLayer from './wmtsLayer'
+import moment from 'moment'
 
 export const changeBaseLayer = ({type, mapContext, statePath, options}) => {
     actionBuilder('SET_BASE_LAYER', {type})
         .set([statePath, 'baseLayer'], type)
-        .set([statePath, 'options'], options)
+        .set([statePath, 'mapLayer'], options)
         .sideEffect(() => {
             const layer = createLayer(type, options)
             const context = sepalMap.getContext(mapContext)
@@ -27,11 +28,12 @@ const createLayer = (type, options) => {
         case 'GOOGLE_SATELLITE':
             return new GoogleSatelliteLayer(0)
         case 'PLANET':
-            const {year, month, planetApiKey} = options
+            // const {proc, year, month, planetApiKey} = options
+            const {proc, dateRange, planetApiKey} = options
             return new WMTSLayer({
                 layerIndex: 0,
-                urlTemplate: `https://tiles.planet.com/basemaps/v1/planet-tiles/global_monthly_${year}_${month}_mosaic/gmap/{z}/{x}/{y}.png?api_key=${planetApiKey}`,
-                // urlTemplate: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2019_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg',
+                urlTemplate: `https://tiles0.planet.com/basemaps/v1/planet-tiles/planet_medres_normalized_analytic_${dateRange}_mosaic/gmap/{z}/{x}/{y}.png?api_key=${planetApiKey}&proc=${proc}&color=auto`,
+                // urlTemplate: `https://tiles.planet.com/basemaps/v1/planet-tiles/global_monthly_${year}_${month}_mosaic/gmap/{z}/{x}/{y}.png?api_key=${planetApiKey}`,
                 attribution: 'Planet monthly composite'
             })
         default:

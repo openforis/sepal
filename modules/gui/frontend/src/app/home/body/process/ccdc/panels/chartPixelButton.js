@@ -1,9 +1,8 @@
-import {RecipeActions} from '../ccdcRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {msg} from 'translate'
 import {compose} from 'compose'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import {sepalMap} from '../../../../map/map'
+import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
 import GoogleSatelliteLayer from 'app/home/map/googleSatelliteLayer'
@@ -20,7 +19,6 @@ class ChartPixelButton extends React.Component {
     constructor(props) {
         super(props)
         this.state = {}
-        this.recipeActions = RecipeActions(props.recipeId)
     }
 
     render() {
@@ -36,32 +34,34 @@ class ChartPixelButton extends React.Component {
     }
 
     startSelecting() {
-        const {recipeId} = this.props
+        const {recipeId, showGoogleSatellite, onPixelSelected} = this.props
         this.setState({isSelecting: true})
         const context = sepalMap.getContext(recipeId)
         context.onOneClick(latLng => {
-            context.removeLayer('googleSatellite')
-            this.setChartPixel(latLng)
+            if (showGoogleSatellite)
+                context.removeLayer('googleSatellite')
+
+            this.setState({isSelecting: false})
+            onPixelSelected(latLng)
         })
-        context.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer(1)})
+        if (showGoogleSatellite)
+            context.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer(1)})
     }
 
     cancelSelecting() {
-        const {recipeId} = this.props
+        const {recipeId, showGoogleSatellite} = this.props
         this.setState({isSelecting: false})
         const context = sepalMap.getContext(recipeId)
-        context.removeLayer('googleSatellite')
+        if (showGoogleSatellite)
+            context.removeLayer('googleSatellite')
         context.clearClickListeners()
-    }
-
-    setChartPixel(latLng) {
-        this.setState({isSelecting: false})
-        this.recipeActions.setChartPixel(latLng)
     }
 }
 
 ChartPixelButton.propTypes = {
-    recipeId: PropTypes.string.isRequired
+    recipeId: PropTypes.string.isRequired,
+    showGoogleSatellite: PropTypes.any,
+    onPixelSelected: PropTypes.func.isRequired
 }
 
 export default compose(

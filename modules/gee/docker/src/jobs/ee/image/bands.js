@@ -1,16 +1,28 @@
 const {job} = require('root/jobs/job')
 
-const worker$ = ({recipe}) => {
+const worker$ = ({asset, recipe}) => {
     const ImageFactory = require('sepal/ee/imageFactory')
     const ee = require('ee')
-    const {switchMap} = require('rx/operators')
+    if (asset) {
+        return assetBands()
+    } else {
+        return recipeBands()
+    }
 
-    const {getImage$} = ImageFactory(recipe)
-    return getImage$().pipe(
-        switchMap(image =>
-            ee.getInfo$(image.bandNames(), 'band names')
+    function assetBands() {
+        return ee.getInfo$(ee.Image(asset).bandNames(), 'asset band names')
+    }
+
+    function recipeBands() {
+        const {switchMap} = require('rx/operators')
+
+        const {getImage$} = ImageFactory(recipe)
+        return getImage$().pipe(
+            switchMap(image =>
+                ee.getInfo$(image.bandNames(), 'recipe band names')
+            )
         )
-    )
+    }
 }
 
 module.exports = job({

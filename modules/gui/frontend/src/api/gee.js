@@ -4,8 +4,11 @@ import {map} from 'rxjs/operators'
 export default {
     preview$: ({recipe, ...params}) =>
         postJson$('/api/gee/preview', {body: {recipe, ...params}, retries: 0}),
-    bands$: ({recipe, ...params}) =>
-        postJson$('/api/gee/bands', {body: {recipe, ...params}, retries: 0})
+    bands$: ({asset, recipe, ...params}) =>
+        postJson$('/api/gee/bands', {body: {asset, recipe, ...params}, retries: 0})
+            .pipe(toResponse),
+    imageMetadata$: ({asset, recipe}) =>
+        postJson$('/api/gee/imageMetadata', {body: {asset, recipe}, retries: 0})
             .pipe(toResponse),
     sceneAreas$: ({aoi, source}) =>
         postJson$('/api/gee/sceneareas', {
@@ -50,6 +53,10 @@ export default {
     loadCCDCTimeSeries$: ({recipe, latLng}) =>
         postJson$('/api/gee/loadCCDCTimeSeries',
             {body: {recipe, latLng}, retries: 0}
+        ).pipe(toResponse),
+    loadCCDCSegments$: ({asset, latLng}) =>
+        postJson$('/api/gee/loadCCDCSegments',
+            {body: {asset, latLng}, retries: 0}
         ).pipe(toResponse)
 }
 

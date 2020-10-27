@@ -12,7 +12,11 @@ module.exports = {
             switchMap(collection => getSegments$({...recipe, collection})),
             switchMap(segments =>
                 exportImageToAsset$({
-                    image: segments,
+                    image: segments
+                        .set('startDate', recipe.fromDate)
+                        .set('endDate', recipe.toDate)
+                        .set('dateFormat', recipe.dateFormat)
+                        .set('surfaceReflectance', recipe.surfaceReflectance && 1),
                     description,
                     pyramidingPolicy: {'.default': 'sample'},
                     scale,
