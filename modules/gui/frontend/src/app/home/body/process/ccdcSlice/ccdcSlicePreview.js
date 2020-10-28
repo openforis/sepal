@@ -92,7 +92,7 @@ class CCDCSlicePreview extends React.Component {
         if (layerChanged) {
             this.updateLayer(previewRequest)
         }
-        sepalMap.getContext(recipe.id).hideLayer('preview', this.isHidden(recipe))
+        sepalMap.hideLayer('preview', this.isHidden(recipe))
     }
 
     // common code above

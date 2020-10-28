@@ -24,19 +24,19 @@ class _PolygonSection extends React.Component {
     }
 
     componentDidMount() {
-        const {mapContext: {sepalMap}, inputs: {polygon}} = this.props
+        const {mapContext, inputs: {polygon}} = this.props
 
-        this.recipeActions.setLabelsShown(sepalMap, true).dispatch()
-        sepalMap.drawPolygon('aoi', drawnPolygon => {
+        this.recipeActions.setLabelsShown(mapContext, true).dispatch()
+        mapContext.sepalMap.drawPolygon('aoi', drawnPolygon => {
             polygon.set(drawnPolygon)
         })
     }
 
     componentWillUnmount() {
-        const {mapContext: {sepalMap}} = this.props
+        const {mapContext} = this.props
         this.disableDrawingMode()
         if (isRecipeOpen(this.props.recipeId))
-            this.recipeActions.setLabelsShown(sepalMap, this.wereLabelsShown).dispatch()
+            this.recipeActions.setLabelsShown(mapContext, this.wereLabelsShown).dispatch()
     }
 
     disableDrawingMode() {

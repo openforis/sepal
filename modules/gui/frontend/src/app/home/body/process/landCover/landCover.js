@@ -67,7 +67,7 @@ export default compose(
 //             onInitialized: () => {
 //                 if (this.props.tabCount === 1) {
 //                     sepalMap.setContext(recipeId)
-//                     sepalMap.getContext(recipeId).fitLayer('aoi')
+//                     sepalMap.fitLayer('aoi')
 //                 }
 //             }
 //         })

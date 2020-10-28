@@ -8,7 +8,7 @@ export const setPolygonLayer = ({
     destroy$,
     onInitialized
 }) => {
-    const layer = path ? new PolygonLayer(mapContext, path) : null
+    const layer = path ? new PolygonLayer({mapContext, path}) : null
     mapContext.sepalMap.setLayer({id, layer, destroy$, onInitialized})
     return layer
 }
