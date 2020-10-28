@@ -82,7 +82,6 @@ export const RecipeActions = id => {
     }
 }
 
-
 function toBackendRecipe({recipe, bands}) {
     const name = recipe.title || recipe.placeholder
     const preprocess = recipe.model.options
@@ -107,8 +106,8 @@ function toBackendRecipe({recipe, bands}) {
 
 export const loadCCDCTimeSeries$ = ({recipe, latLng, bands}) =>
     api.gee.loadCCDCTimeSeries$({recipe: toBackendRecipe({
-            recipe,
-            bands
+        recipe,
+        bands
     }), latLng})
 
 const submitRetrieveRecipeTask = recipe => {
