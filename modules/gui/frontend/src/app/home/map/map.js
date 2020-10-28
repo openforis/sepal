@@ -26,7 +26,7 @@ export const polygonOptions = fill => ({
     strokeWeight: 1
 })
 
-class Map extends React.Component {
+class _Map extends React.Component {
     state = {
         googleMap: null,
         zooming: false,
@@ -93,15 +93,15 @@ class Map extends React.Component {
        
 }
 
+export const Map = compose(
+    _Map,
+    withMapsContext()
+)
+
 Map.propTypes = {
     children: PropTypes.object,
     className: PropTypes.string
 }
-
-export default compose(
-    Map,
-    withMapsContext()
-)
 
 class _MapLayer extends React.Component {
     state = {
