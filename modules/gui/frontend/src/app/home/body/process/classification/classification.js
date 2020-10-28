@@ -10,7 +10,6 @@ import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 
 const mapRecipeToProps = recipe => ({
-    recipeId: selectFrom(recipe, 'id'),
     initialized: selectFrom(recipe, 'ui.initialized'),
     images: selectFrom(recipe, 'model.inputImagery.images')
 })

@@ -14,13 +14,9 @@ import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import _ from 'lodash'
 
-const mapStateToProps = state => {
-    return {
-        tabCount: selectFrom(state, 'process.tabs').length
-    }
-}
+const mapStateToProps = _state => ({})
+
 const mapRecipeToProps = recipe => ({
-    recipeId: selectFrom(recipe, 'id'),
     initialized: selectFrom(recipe, 'ui.initialized'),
     aoi: selectFrom(recipe, 'model.aoi'),
     recipe: _.omit(recipe, 'ui')

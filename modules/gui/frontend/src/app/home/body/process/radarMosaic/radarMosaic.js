@@ -13,7 +13,6 @@ import React from 'react'
 import styles from './radarMosaic.module.css'
 
 const mapRecipeToProps = recipe => ({
-    recipeId: selectFrom(recipe, 'id'),
     initialized: selectFrom(recipe, 'ui.initialized'),
 })
 

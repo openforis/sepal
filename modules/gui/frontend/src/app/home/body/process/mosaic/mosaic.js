@@ -18,7 +18,6 @@ import ShowSceneAreaToggle from 'app/home/body/process/mosaic/showSceneAreaToggl
 import styles from './mosaic.module.css'
 
 const mapRecipeToProps = recipe => ({
-    recipeId: selectFrom(recipe, 'id'),
     initialized: selectFrom(recipe, 'ui.initialized'),
 })
 
