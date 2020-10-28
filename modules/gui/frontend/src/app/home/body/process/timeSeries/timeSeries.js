@@ -10,8 +10,6 @@ import TimeSeriesToolbar from './panels/timeSeriesToolbar'
 import styles from './timeSeries.module.css'
 
 const mapRecipeToProps = recipe => ({
-    // recipeId: selectFrom(recipe, 'id'),
-    // initialized: selectFrom(recipe, 'ui.initialized'),
     aoi: selectFrom(recipe, 'model.aoi'),
 })
 
