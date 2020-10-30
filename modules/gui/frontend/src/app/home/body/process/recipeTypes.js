@@ -1,7 +1,7 @@
 import ccdc from './recipe/ccdc/ccdc'
 import ccdcSlice from './recipe/ccdcSlice/ccdcSlice'
 import classification from './recipe/classification/classification'
-import opticalMosaic from './recipe/mosaic/mosaic'
+import opticalMosaic from './recipe/opticalMosaic/opticalMosaic'
 import radarMosaic from './recipe/radarMosaic/radarMosaic'
 import timeSeries from './recipe/timeSeries/timeSeries'
 
