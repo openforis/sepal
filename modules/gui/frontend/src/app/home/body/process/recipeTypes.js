@@ -1,9 +1,9 @@
-import ccdc from './ccdc/ccdc'
-import ccdcSlice from './ccdcSlice/ccdcSlice'
-import classification from './classification/classification'
-import opticalMosaic from './mosaic/mosaic'
-import radarMosaic from './radarMosaic/radarMosaic'
-import timeSeries from './timeSeries/timeSeries'
+import ccdc from './recipe/ccdc/ccdc'
+import ccdcSlice from './recipe/ccdcSlice/ccdcSlice'
+import classification from './recipe/classification/classification'
+import opticalMosaic from './recipe/mosaic/mosaic'
+import radarMosaic from './recipe/radarMosaic/radarMosaic'
+import timeSeries from './recipe/timeSeries/timeSeries'
 
 export const listRecipeTypes = () => ([
     opticalMosaic(), radarMosaic(), classification(), timeSeries(), ccdc(), ccdcSlice()
