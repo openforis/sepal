@@ -1,8 +1,8 @@
 import {compose} from 'compose'
 import {defaultModel} from './landCoverRecipe2'
 import {recipe} from 'app/home/body/process/recipeContext'
-import LandCoverComposites from 'app/home/body/process/recipe/landCover/composites/landCoverComposites'
-import LandCoverInit from 'app/home/body/process/recipe/landCover/init/landCoverInit'
+import LandCoverComposites from 'app/home/body/process/recipe/_landCover/composites/landCoverComposites'
+import LandCoverInit from 'app/home/body/process/recipe/_landCover/init/landCoverInit'
 import React from 'react'
 import Workflow from 'widget/workflow'
 
