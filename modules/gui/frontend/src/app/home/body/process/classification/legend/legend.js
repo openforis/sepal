@@ -40,7 +40,7 @@ class Legend extends React.Component {
                 className={styles.panel}
                 onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
                 <Panel.Header
-                    icon='cog'
+                    icon='list'
                     title={msg('process.classification.panel.legend.title')}/>
 
                 <Panel.Content>
