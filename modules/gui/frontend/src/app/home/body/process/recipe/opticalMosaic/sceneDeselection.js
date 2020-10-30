@@ -1,4 +1,4 @@
-import {RecipeActions, SceneSelectionType, inDateRange} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+import {RecipeActions, SceneSelectionType, inDateRange} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 // setSelectedScenes
 import {compose} from 'compose'
 import {objectEquals} from 'collections'

@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {SceneSelectionType} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+import {SceneSelectionType} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {compose} from 'compose'
 import {enabled} from 'widget/enableWhen'
 import {msg} from 'translate'

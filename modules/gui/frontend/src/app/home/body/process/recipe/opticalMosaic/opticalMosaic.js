@@ -1,5 +1,5 @@
 import {Content, SectionLayout} from 'widget/sectionLayout'
-import {RecipeActions, defaultModel} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+import {RecipeActions, defaultModel} from './opticalMosaicRecipe'
 // setSceneAreasShown, setBands, setAutoSelectSceneCount
 import {compose} from 'compose'
 import {msg} from 'translate'

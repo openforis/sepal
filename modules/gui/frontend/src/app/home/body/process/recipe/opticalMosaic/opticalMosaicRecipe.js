@@ -1,7 +1,6 @@
 import {msg} from 'translate'
-import {recipeActionBuilder, recipePath} from '../../recipe'
+import {recipeActionBuilder} from '../../recipe'
 import {selectFrom} from 'stateUtils'
-import Labels from '../../../../map/labels'
 import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
@@ -52,9 +51,6 @@ export const RecipeActions = id => {
             .build()
 
     return {
-        setLabelsShown(mapContext, shown) {
-            return Labels.showLabelsAction({mapContext, shown, statePath: recipePath(id, 'ui'), layerIndex: 3})
-        },
         setSceneAreasShown(shown) {
             return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})
         },
@@ -67,12 +63,6 @@ export const RecipeActions = id => {
             return setAll('SET_PAN_SHARPEN', {
                 'ui.bands.panSharpen': enabled
             }, {enabled})
-        },
-        setEETableColumns(columns) {
-            return set('SET_EE_TABLE_COLUMNS', 'ui.eeTable.columns', columns, {columns})
-        },
-        setEETableRows(rows) {
-            return set('SET_EE_TABLE_ROWS', 'ui.eeTable.rows', rows, {rows})
         },
         setSceneAreas(sceneAreas) {
             return set('SET_SCENE_AREAS', 'ui.sceneAreas', sceneAreas, {sceneAreas})

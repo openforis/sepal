@@ -1,4 +1,4 @@
-import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 // setAutoSelectScenesState, setSelectedScenes
 import {Subject} from 'rxjs'
 import {compose} from 'compose'

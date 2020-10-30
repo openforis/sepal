@@ -1,5 +1,5 @@
 import {Form, form} from 'widget/form/form'
-import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 // setBands, setPanSharpen
 import {compose} from 'compose'
 import {msg} from 'translate'
