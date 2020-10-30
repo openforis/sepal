@@ -2,7 +2,6 @@ import {Form} from 'widget/form/form'
 import {Msg, msg} from 'translate'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-// setSelectedScenes
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import React from 'react'

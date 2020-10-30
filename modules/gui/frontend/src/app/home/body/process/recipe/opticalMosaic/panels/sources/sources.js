@@ -3,7 +3,6 @@ import {Layout} from 'widget/layout'
 import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, dateRange} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-// enableBandCalibration, useAllScenes
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {imageSourceById, isDataSetInDateRange, sources} from 'sources'

@@ -3,7 +3,6 @@ import {Form, form} from 'widget/form/form'
 import {Padding} from 'widget/padding'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-// setSelectedScenesInSceneArea, setSceneSelection, setSceneToPreview
 import {Scene} from './scene'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {activatable} from 'widget/activation/activatable'

@@ -1,6 +1,5 @@
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-// setSceneToPreview
 import {compose} from 'compose'
 import {dataSetById} from 'sources'
 import {msg} from 'translate'

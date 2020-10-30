@@ -1,5 +1,4 @@
 import {RecipeActions, SceneSelectionType, inDateRange} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-// setSelectedScenes
 import {compose} from 'compose'
 import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
