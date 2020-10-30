@@ -1,7 +1,7 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions, dateRange} from '../../mosaicRecipe'
+import {RecipeActions, dateRange} from '../../../mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {imageSourceById, isDataSetInDateRange, sources} from 'sources'

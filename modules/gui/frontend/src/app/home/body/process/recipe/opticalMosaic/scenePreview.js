@@ -8,7 +8,7 @@ import {withRecipe} from 'app/home/body/process/recipeContext'
 import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import React from 'react'
-import daysBetween from './daysBetween'
+import daysBetween from '../mosaic/daysBetween'
 import styles from './scenePreview.module.css'
 
 const mapRecipeToProps = recipe => ({
