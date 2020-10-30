@@ -1,4 +1,5 @@
 import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// setSceneAreasShown
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'

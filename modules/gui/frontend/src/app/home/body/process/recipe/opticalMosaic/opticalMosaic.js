@@ -1,5 +1,6 @@
 import {Content, SectionLayout} from 'widget/sectionLayout'
 import {RecipeActions, defaultModel} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// setSceneAreasShown, setBands, setAutoSelectSceneCount
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
@@ -25,10 +26,10 @@ class _Mosaic extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
-        const actions = RecipeActions(recipeId)
-        actions.setSceneAreasShown(true).dispatch()
-        actions.setBands('red, green, blue').dispatch()
-        actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
+        const recipeActions = RecipeActions(recipeId)
+        recipeActions.setSceneAreasShown(true).dispatch()
+        recipeActions.setBands('red, green, blue').dispatch()
+        recipeActions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
     }
 
     render() {

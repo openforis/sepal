@@ -1,7 +1,5 @@
 import {Button} from 'widget/button'
-import {SceneSelectionType} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
 import {compose} from 'compose'
-import {enabled} from 'widget/enableWhen'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -141,21 +139,9 @@ class MosaicPreview extends React.Component {
     }
 }
 
-const hasScenes = ({recipe}) => {
-    const type = selectFrom(recipe, 'model.sceneSelectionOptions.type')
-    const scenes = selectFrom(recipe, 'model.scenes') || {}
-    return type !== SceneSelectionType.SELECT || Object.values(scenes)
-        .find(scenes => scenes.length)
-}
-
-const removeLayer = ({mapContext: {sepalMap}}) => {
-    sepalMap.removeLayer('preview')
-}
-
 MosaicPreview.propTypes = {}
 
 export default compose(
     MosaicPreview,
-    enabled({when: hasScenes, onDisable: removeLayer}),
     withRecipe(mapRecipeToProps)
 )

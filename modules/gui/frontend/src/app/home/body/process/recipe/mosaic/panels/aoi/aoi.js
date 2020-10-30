@@ -3,7 +3,6 @@ import {EETableSection} from './eeTableSection'
 import {Form} from 'widget/form/form'
 import {MosaicPreview} from '../../mosaicPreview'
 import {PolygonSection} from './polygonSection'
-import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {SectionSelection} from './sectionSelection'
 import {compose} from 'compose'
@@ -94,8 +93,7 @@ class Aoi extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).hidePreview().dispatch()
+        this.preview.hide()
     }
 
     componentDidUpdate() {

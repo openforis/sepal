@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-key */
 import {Form, form} from 'widget/form/form'
-import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+import {RecipeActions} from 'app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
+// setBands
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -133,10 +134,12 @@ class BandSelection extends React.PureComponent {
                 <div className={styles.container}>
                     {this.state.showSelector
                         ? <BandSelector
-                            recipeActions={this.recipeActions}
                             selection={selection}
                             options={options}
-                            onChange={() => this.setSelectorShown(false)}
+                            onChange={option => {
+                                this.setSelectorShown(false)
+                                this.recipeActions.setBands(option.value).dispatch()
+                            }}
                             onCancel={() => this.setSelectorShown(false)}/>
                         : <SelectedBands
                             selectedOption={this.optionByValue[selection.value]}
@@ -177,7 +180,7 @@ class BandSelection extends React.PureComponent {
     }
 }
 
-const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =>
+const BandSelector = ({selection, options, onChange, onCancel}) =>
     <form>
         <Form.Combo
             className={styles.combo}
@@ -187,10 +190,7 @@ const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =
             autoFocus
             placement='above'
             standalone
-            onChange={option => {
-                recipeActions.setBands(option.value).dispatch()
-                onChange()
-            }}
+            onChange={option => onChange(option)}
             onCancel={onCancel}/>
     </form>
 

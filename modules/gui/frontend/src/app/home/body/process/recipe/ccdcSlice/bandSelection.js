@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-key */
 import {Form, form} from 'widget/form/form'
 import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// setBands
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -59,10 +60,12 @@ class BandSelection extends React.PureComponent {
                 <div className={styles.container}>
                     {showSelector
                         ? <BandSelector
-                            recipeActions={this.recipeActions}
                             selection={selection}
                             options={bandOptions}
-                            onChange={() => this.setSelectorShown(false)}
+                            onChange={option => {
+                                this.recipeActions.setBands(option.value).dispatch()
+                                this.setSelectorShown(false)
+                            }}
                             onCancel={() => this.setSelectorShown(false)}/>
                         : <SelectedBands
                             selectedOption={optionByValue[selection.value]}
@@ -77,7 +80,7 @@ class BandSelection extends React.PureComponent {
         this.updateBandOptions()
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps) {
         const {assetBands, inputs: {selection}} = this.props
         const assetBandsChanged = !_.isEqual(prevProps.assetBands, assetBands)
         const {bandOptions, optionByValue} = assetBandsChanged
@@ -130,7 +133,7 @@ class BandSelection extends React.PureComponent {
     }
 }
 
-const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =>
+const BandSelector = ({selection, options, onChange, onCancel}) =>
     <form>
         <Form.Combo
             className={styles.combo}
@@ -140,10 +143,7 @@ const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =
             autoFocus
             placement='above'
             standalone
-            onChange={option => {
-                recipeActions.setBands(option.value).dispatch()
-                onChange()
-            }}
+            onChange={option => onChange(option)}
             onCancel={onCancel}/>
     </form>
 

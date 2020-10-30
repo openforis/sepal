@@ -1,6 +1,7 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {RecipeActions} from '../../mosaicRecipe'
+// setEE*
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {map, takeUntil} from 'rxjs/operators'
@@ -26,15 +27,15 @@ class _EETableSection extends React.Component {
         const {recipeId} = props
         this.eeTableChanged$ = new Subject()
         this.eeTableColumnChanged$ = new Subject()
-        this.recipe = RecipeActions(recipeId)
+        this.recipeActions = RecipeActions(recipeId)
     }
 
     reset() {
         const {inputs: {eeTableColumn, eeTableRow}} = this.props
         eeTableColumn.set('')
         eeTableRow.set('')
-        this.recipe.setEETableColumns(null).dispatch()
-        this.recipe.setEETableRows(null).dispatch()
+        this.recipeActions.setEETableColumns(null).dispatch()
+        this.recipeActions.setEETableRows(null).dispatch()
         this.eeTableChanged$.next()
         this.eeTableColumnChanged$.next()
     }
@@ -116,7 +117,7 @@ class _EETableSection extends React.Component {
                     onChange={column => {
                         // console.log('eeTableColumn onChange')
                         eeTableRow.set('')
-                        this.recipe.setEETableRows(null).dispatch()
+                        this.recipeActions.setEETableRows(null).dispatch()
                         this.eeTableColumnChanged$.next()
                         this.loadDistinctColumnValues(column.value)
                     }}
@@ -139,7 +140,7 @@ class _EETableSection extends React.Component {
         this.props.stream('LOAD_EE_TABLE_COLUMNS',
             api.gee.loadEETableColumns$(eeTableId).pipe(
                 takeUntil(this.eeTableChanged$)),
-            columns => this.recipe.setEETableColumns(columns).dispatch(),
+            columns => this.recipeActions.setEETableColumns(columns).dispatch(),
             error =>
                 this.props.inputs.eeTable.setInvalid(
                     error.response
@@ -153,7 +154,7 @@ class _EETableSection extends React.Component {
         this.props.stream('LOAD_EE_TABLE_ROWS',
             api.gee.loadEETableColumnValues$(this.props.inputs.eeTable.value, column).pipe(
                 map(values => {
-                    this.recipe.setEETableRows(values)
+                    this.recipeActions.setEETableRows(values)
                         .dispatch()
                 }
                 ),

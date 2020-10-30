@@ -1,4 +1,5 @@
 import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// setAutoSelectScenesState, setSelectedScenes
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {map, takeUntil} from 'rxjs/operators'

@@ -1,5 +1,6 @@
 import {Form, form} from 'widget/form/form'
 import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// setBands, setPanSharpen
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -63,33 +64,46 @@ class BandSelection extends React.Component {
     }
 
     render() {
-        const {sources, surfaceReflectance, median, inputs: {selection, panSharpen}} = this.props
-        const canPanSharpen = sources.LANDSAT
-            && !surfaceReflectance
-            && ['red, green, blue', 'nir, red, green'].includes(selection.value)
-        const options = median
-            ? this.options[0].options
-            : this.options
         return (
             <div className={styles.wrapper}>
                 <div className={styles.container}>
                     {this.state.showSelector
-                        ? <BandSelector
-                            recipeActions={this.recipeActions}
-                            selection={selection}
-                            options={options}
-                            onChange={() => this.setSelectorShown(false)}
-                            onCancel={() => this.setSelectorShown(false)}/>
-                        : <SelectedBands
-                            recipeActions={this.recipeActions}
-                            selectedOption={this.optionByValue[selection.value]}
-                            canPanSharpen={canPanSharpen}
-                            panSharpen={panSharpen}
-                            onClick={() => this.setSelectorShown(true)}/>
+                        ? this.renderBandSelector()
+                        : this.renderSelectedBands()
                     }
                 </div>
             </div>
         )
+    }
+
+    renderBandSelector() {
+        const {median, inputs: {selection}} = this.props
+        const options = median
+            ? this.options[0].options
+            : this.options
+        return (
+            <BandSelector
+                selection={selection}
+                options={options}
+                onChange={option => {
+                    this.recipeActions.setBands(option.value).dispatch()
+                    this.setSelectorShown(false)
+                }}
+                onCancel={() => this.setSelectorShown(false)}/>)
+    }
+
+    renderSelectedBands() {
+        const {sources, surfaceReflectance, inputs: {selection, panSharpen}} = this.props
+        const canPanSharpen = sources.LANDSAT
+            && !surfaceReflectance
+            && ['red, green, blue', 'nir, red, green'].includes(selection.value)
+        return (
+            <SelectedBands
+                selectedOption={this.optionByValue[selection.value]}
+                canPanSharpen={canPanSharpen}
+                panSharpen={panSharpen}
+                onPanSharpen={enabled => this.recipeActions.setPanSharpen(enabled).dispatch()}
+                onClick={() => this.setSelectorShown(true)}/>)
     }
 
     setSelectorShown(showSelector) {
@@ -97,7 +111,7 @@ class BandSelection extends React.Component {
     }
 }
 
-const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =>
+const BandSelector = ({selection, options, onChange, onCancel}) =>
     <form>
         <Form.Combo
             className={styles.combo}
@@ -107,14 +121,11 @@ const BandSelector = ({recipeActions, selection, options, onChange, onCancel}) =
             autoFocus
             placement='above'
             standalone
-            onChange={option => {
-                recipeActions.setBands(option.value).dispatch()
-                onChange()
-            }}
+            onChange={option => onChange(option)}
             onCancel={onCancel}/>
     </form>
 
-const SelectedBands = ({recipeActions, selectedOption, canPanSharpen, panSharpen, onClick}) => {
+const SelectedBands = ({selectedOption, canPanSharpen, panSharpen, onPanSharpen, onClick}) => {
     const selection = selectedOption.label
     if (!selection)
         return null
@@ -137,9 +148,11 @@ const SelectedBands = ({recipeActions, selectedOption, canPanSharpen, panSharpen
             {canPanSharpen
                 ?
                 <div className={styles.panSharpen}>
-                    <Form.Checkbox label={msg('process.mosaic.bands.panSharpen')} input={panSharpen} onChange={enabled =>
-                        recipeActions.setPanSharpen(enabled).dispatch()
-                    }/>
+                    <Form.Checkbox
+                        label={msg('process.mosaic.bands.panSharpen')}
+                        input={panSharpen}
+                        onChange={enabled => onPanSharpen(enabled)}
+                    />
                 </div>
                 : null
             }

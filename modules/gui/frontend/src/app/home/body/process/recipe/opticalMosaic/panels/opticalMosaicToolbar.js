@@ -1,4 +1,4 @@
-import {SceneSelectionType} from '../../mosaic/mosaicRecipe'
+import {SceneSelectionType} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'

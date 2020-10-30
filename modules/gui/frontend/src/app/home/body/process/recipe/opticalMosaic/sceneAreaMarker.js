@@ -1,5 +1,6 @@
 import {MapObject} from 'app/home/map/map'
 import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// setSceneSelection
 import {compose} from 'compose'
 import {isEqualIgnoreFunctions} from 'collections'
 import {withMapContext} from 'app/home/map/mapContext'

@@ -1,4 +1,5 @@
 import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// setLabelsShown
 import {compose} from 'compose'
 import {isRecipeOpen} from 'app/home/body/process/recipe'
 import {msg} from 'translate'
@@ -25,7 +26,6 @@ class _PolygonSection extends React.Component {
 
     componentDidMount() {
         const {mapContext, inputs: {polygon}} = this.props
-
         this.recipeActions.setLabelsShown(mapContext, true).dispatch()
         mapContext.sepalMap.drawPolygon('aoi', drawnPolygon => {
             polygon.set(drawnPolygon)
@@ -35,8 +35,9 @@ class _PolygonSection extends React.Component {
     componentWillUnmount() {
         const {mapContext} = this.props
         this.disableDrawingMode()
-        if (isRecipeOpen(this.props.recipeId))
+        if (isRecipeOpen(this.props.recipeId)) {
             this.recipeActions.setLabelsShown(mapContext, this.wereLabelsShown).dispatch()
+        }
     }
 
     disableDrawingMode() {

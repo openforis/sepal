@@ -1,7 +1,8 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../../../mosaic/mosaicRecipe'
+import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// retrieve
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {currentUser} from 'widget/user'
@@ -37,6 +38,8 @@ const mapRecipeToProps = recipe => {
 class Retrieve extends React.Component {
     constructor(props) {
         super(props)
+        const {recipeId} = props
+        this.recipeActions = RecipeActions(recipeId)
         this.allBandOptions = [
             {
                 options: [
@@ -84,13 +87,12 @@ class Retrieve extends React.Component {
     }
 
     render() {
-        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 isActionForm
                 placement='top-right'
-                onApply={values => RecipeActions(recipeId).retrieve(values).dispatch()}>
+                onApply={values => this.recipeActions.retrieve(values).dispatch()}>
                 <Panel.Header
                     icon='cloud-download-alt'
                     title={msg('process.mosaic.panel.retrieve.title')}/>

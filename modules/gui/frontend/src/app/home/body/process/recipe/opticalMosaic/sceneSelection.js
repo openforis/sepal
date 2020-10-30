@@ -1,27 +1,22 @@
-import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
 import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
-import {HoverDetector, HoverOverlay} from 'widget/hover'
 import {Padding} from 'widget/padding'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// setSelectedScenesInSceneArea, setSceneSelection, setSceneToPreview
+import {Scene} from './scene'
 import {Scrollable, ScrollableContainer, Unscrollable} from 'widget/scrollable'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
-import {dataSetById} from 'sources'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Icon from 'widget/icon'
 import Label from 'widget/label'
 import React from 'react'
 import ScenePreview from 'app/home/body/process/recipe/opticalMosaic/scenePreview'
 import api from 'api'
-import daysBetween from './daysBetween'
-import format from 'format'
 import styles from './sceneSelection.module.css'
 
 const fields = {
@@ -44,10 +39,11 @@ const mapRecipeToProps = recipe => {
 class SceneSelection extends React.Component {
     constructor(props) {
         super(props)
+        const {recipeId} = props
         this.state = {
             scenes: []
         }
-        this.recipeActions = RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(recipeId)
     }
 
     getAvailableScenes() {
@@ -158,7 +154,8 @@ class SceneSelection extends React.Component {
                 selected={selected}
                 onAdd={() => this.addScene(scene)}
                 onRemove={() => this.removeScene(scene)}
-                recipeActions={this.recipeActions}/>
+                onPreview={(() => this.previewScene(scene))}
+            />
         )
     }
 
@@ -208,6 +205,10 @@ class SceneSelection extends React.Component {
         selectedScenes.set(selectedScenes.value.filter(scene => scene.id !== sceneToRemove.id))
     }
 
+    previewScene(scene) {
+        this.recipeActions.setSceneToPreview(scene).dispatch()
+    }
+
     setScenes(scenes) {
         this.setState(prevState => {
             const scenesById = {}
@@ -234,147 +235,3 @@ export default compose(
     withRecipe(mapRecipeToProps),
     activatable({id: 'sceneSelection', policy})
 )
-
-class Scene extends React.Component {
-    imageThumbnail(url) {
-        return url.replace('https://earthexplorer.usgs.gov/browse/', 'https://earthexplorer.usgs.gov/browse/thumbnails/')
-    }
-
-    renderSceneOverlay() {
-        const {selected} = this.props
-        return selected
-            ? this.renderSelectedSceneOverlay()
-            : this.renderAvailableSceneOverlay()
-    }
-
-    renderAvailableSceneOverlay() {
-        const {scene, onAdd, recipeActions} = this.props
-        return (
-            <ButtonGroup
-                className={styles.overlayControls}
-                layout='horizontal-wrap'
-                alignment='fill'>
-                <Button
-                    look='add'
-                    icon='plus'
-                    label={msg('button.add')}
-                    onClick={() => onAdd(scene)}/>
-                <Button
-                    look='default'
-                    icon='eye'
-                    label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-                    onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
-            </ButtonGroup>
-        )
-    }
-
-    renderSelectedSceneOverlay() {
-        const {scene, onRemove, recipeActions} = this.props
-        return (
-            <ButtonGroup
-                className={styles.overlayControls}
-                layout='horizontal-wrap'
-                alignment='fill'>
-                <Button
-                    look='cancel'
-                    icon='minus'
-                    label={msg('button.remove')}
-                    onClick={() => onRemove(scene)}/>
-                <Button
-                    look='default'
-                    icon='eye'
-                    label={msg('process.mosaic.panel.sceneSelection.preview.label')}
-                    onClick={() => recipeActions.setSceneToPreview(scene).dispatch()}/>
-            </ButtonGroup>
-        )
-    }
-
-    renderImage(url) {
-        return (
-            <div className={styles.image} style={{'--image': `url("${url}")`}}></div>
-        )
-    }
-
-    renderThumbnail() {
-        const {scene: {browseUrl: imageUrl}} = this.props
-        const thumbnailUrl = this.imageThumbnail(imageUrl)
-        return (
-            <div className={styles.thumbnail}>
-                {this.renderImage(thumbnailUrl)}
-                {this.renderImage(imageUrl)}
-            </div>
-        )
-    }
-
-    renderInfo(dataSet, date) {
-        return (
-            <div className={styles.date}>
-                <div className={[styles.info, styles.dataSet].join(' ')}>
-                    <Icon name='satellite-dish'/>
-                    {dataSetById[dataSet].shortName}
-                </div>
-                <div>
-                    {date}
-                </div>
-            </div>
-        )
-    }
-
-    renderCloudCover(cloudCover) {
-        return (
-            <div className={styles.cloudCover}>
-                <div className={[styles.info, styles.value].join(' ')}>
-                    <Icon name='cloud'/>
-                    {format.integer(cloudCover)}%
-                </div>
-                <div className={styles.bar}/>
-            </div>
-        )
-    }
-
-    renderDaysFromTarget(daysFromTarget) {
-        return (
-            <div className={[
-                styles.daysFromTarget,
-                daysFromTarget > 0 && styles.positive,
-                daysFromTarget < 0 && styles.negative
-            ].join(' ')}>
-                <div className={[styles.info, styles.value].join(' ')}>
-                    <Icon name='calendar-check'/>
-                    {daysFromTarget > 0 ? '+' : '-'}{Math.abs(daysFromTarget)}d
-                </div>
-                <div className={styles.bar}/>
-            </div>
-        )
-    }
-
-    renderDetails() {
-        const {scene: {dataSet, date, cloudCover}, targetDate} = this.props
-        const daysFromTarget = daysBetween(targetDate, date)
-        return (
-            <div
-                className={styles.details}
-                style={{
-                    '--percent-from-target': `${daysFromTarget / 3.65}`,
-                    '--percent-cloud-cover': `${cloudCover}`
-                }}>
-                {this.renderInfo(dataSet, date)}
-                {this.renderCloudCover(cloudCover)}
-                {this.renderDaysFromTarget(daysFromTarget)}
-            </div>
-        )
-    }
-
-    render() {
-        const {className} = this.props
-        return (
-            <HoverDetector className={[styles.scene, className].join(' ')}>
-                {this.renderThumbnail()}
-                {this.renderDetails()}
-                <HoverOverlay>
-                    {this.renderSceneOverlay()}
-                </HoverOverlay>
-            </HoverDetector>
-        )
-    }
-}

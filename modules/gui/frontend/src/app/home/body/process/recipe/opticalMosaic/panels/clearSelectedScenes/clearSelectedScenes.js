@@ -1,7 +1,8 @@
 import {Form} from 'widget/form/form'
 import {Msg, msg} from 'translate'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../../../mosaic/mosaicRecipe'
+import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// setSelectedScenes
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import React from 'react'
@@ -10,14 +11,19 @@ import styles from './clearSelectedScenes.module.css'
 const fields = {}
 
 class ClearSelectedScenes extends React.Component {
+    constructor(props) {
+        super(props)
+        const {recipeId} = props
+        this.recipeActions = RecipeActions(recipeId)
+    }
+
     render() {
-        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 isActionForm
                 placement='top-right'
-                onApply={() => RecipeActions(recipeId).setSelectedScenes({}).dispatch()}>
+                onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}>
                 <Panel.Header
                     icon='trash'
                     title={msg('process.mosaic.panel.clearSelectedScenes.title')}/>

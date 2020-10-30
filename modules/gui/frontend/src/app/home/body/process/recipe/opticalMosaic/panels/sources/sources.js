@@ -2,7 +2,9 @@ import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions, dateRange} from '../../../mosaic/mosaicRecipe'
+import {RecipeActions, dateRange} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+
+// enableBandCalibration, useAllScenes
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {imageSourceById, isDataSetInDateRange, sources} from 'sources'
@@ -33,6 +35,7 @@ class Sources extends React.Component {
         super(props)
         const {recipeId} = props
         this.preview = MosaicPreview(recipeId)
+        this.recipeActions = RecipeActions(recipeId)
     }
 
     lookupDataSetNames(sourceValue) {
@@ -40,15 +43,14 @@ class Sources extends React.Component {
     }
 
     render() {
-        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'
                 onApply={(values, model) => {
                     if (Object.keys(model).length > 1) {
-                        RecipeActions(recipeId).enableBandCalibration().dispatch()
-                        RecipeActions(recipeId).useAllScenes().dispatch()
+                        this.recipeActions.enableBandCalibration().dispatch()
+                        this.recipeActions.useAllScenes().dispatch()
                     }
                 }}
                 onClose={() => this.preview.show()}>

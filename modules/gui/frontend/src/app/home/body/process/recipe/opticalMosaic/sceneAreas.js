@@ -1,6 +1,7 @@
 import {Button} from 'widget/button'
 import {MapLayer} from 'app/home/map/map'
 import {RecipeActions, SceneSelectionType, getSource} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// setSceneAreas
 import {SceneAreaMarker} from './sceneAreaMarker'
 import {Subject, of} from 'rxjs'
 import {activator} from 'widget/activation/activator'

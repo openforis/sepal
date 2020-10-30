@@ -2,6 +2,7 @@ import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
+// autoSelectScenes
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -14,14 +15,19 @@ const fields = {
 }
 
 class AutoSelectScenes extends React.Component {
+    constructor(props) {
+        super(props)
+        const {recipeId} = props
+        this.recipeActions = RecipeActions(recipeId)
+    }
+
     render() {
-        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 isActionForm
                 placement='top-right'
-                onApply={values => RecipeActions(recipeId).autoSelectScenes(values).dispatch()}>
+                onApply={values => this.recipeActions.autoSelectScenes(values).dispatch()}>
                 <Panel.Header
                     icon='magic'
                     title={msg('process.mosaic.panel.autoSelectScenes.title')}/>
