@@ -24,6 +24,7 @@ class Options extends React.Component {
         const {recipeId} = props
         this.preview = MosaicPreview(recipeId)
     }
+    
     render() {
         return (
             <RecipeFormPanel
@@ -130,7 +131,7 @@ class Options extends React.Component {
     }
 
     componentDidMount() {
-        this.preview.show()
+        this.preview.hide()
     }
 }
 
