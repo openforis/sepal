@@ -1,7 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {RecipeActions} from '../../mosaicRecipe'
-// setEE*
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {map, takeUntil} from 'rxjs/operators'

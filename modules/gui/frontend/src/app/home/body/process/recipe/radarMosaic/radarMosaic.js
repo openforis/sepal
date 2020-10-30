@@ -4,7 +4,7 @@ import {defaultModel} from './radarMosaicRecipe'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import AoiLayer from '../mosaic/aoiLayer'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
 import BandSelection from './bandSelection'
 import MapToolbar from 'app/home/map/mapToolbar'
 import MosaicPreview from './radarMosaicPreview'
@@ -14,6 +14,7 @@ import styles from './radarMosaic.module.css'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
+    aoi: selectFrom(recipe, 'model.aoi')
 })
 
 class _RadarMosaic extends React.Component {
@@ -25,7 +26,6 @@ class _RadarMosaic extends React.Component {
                     <div className={styles.radarMosaic}>
                         <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
                         <RadarMosaicToolbar/>
-                        <AoiLayer/>
                         {initialized
                             ? <React.Fragment>
                                 <MosaicPreview/>
@@ -36,6 +36,16 @@ class _RadarMosaic extends React.Component {
                 </Content>
             </SectionLayout>
         )
+    }
+
+    componentDidMount() {
+        const {mapContext, aoi} = this.props
+        setAoiLayer({
+            mapContext,
+            aoi,
+            // destroy$: componentWillUnmount$, [TODO] check
+            onInitialized: () => mapContext.sepalMap.fitLayer('aoi')
+        })
     }
 }
 

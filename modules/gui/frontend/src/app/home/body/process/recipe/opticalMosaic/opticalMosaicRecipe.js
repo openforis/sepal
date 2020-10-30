@@ -55,6 +55,7 @@ export const RecipeActions = id => {
             return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})
         },
         setBands(bands) {
+            // this is also available in mosaicRecipe
             return setAll('SET_BANDS', {
                 'ui.bands.selection': bands
             }, {bands})

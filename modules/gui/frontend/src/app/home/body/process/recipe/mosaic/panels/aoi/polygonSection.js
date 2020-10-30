@@ -1,5 +1,4 @@
 import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
-// setLabelsShown
 import {compose} from 'compose'
 import {isRecipeOpen} from 'app/home/body/process/recipe'
 import {msg} from 'translate'

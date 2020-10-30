@@ -4,7 +4,7 @@ import {compose} from 'compose'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
-import AoiLayer from '../mosaic/aoiLayer'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
 import AutoSelectScenes from './autoSelectScenes'
 import BandSelection from './bandSelection'
 import MapToolbar from 'app/home/map/mapToolbar'
@@ -19,6 +19,7 @@ import styles from './opticalMosaic.module.css'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
+    aoi: selectFrom(recipe, 'model.aoi')
 })
 
 class _Mosaic extends React.Component {
@@ -41,7 +42,6 @@ class _Mosaic extends React.Component {
                             <ShowSceneAreaToggle/>
                         </MapToolbar>
                         <MosaicToolbar/>
-                        <AoiLayer/>
                         {initialized
                             ? <React.Fragment>
                                 <MosaicPreview/>
@@ -56,6 +56,16 @@ class _Mosaic extends React.Component {
                 </Content>
             </SectionLayout>
         )
+    }
+
+    componentDidMount() {
+        const {mapContext, aoi} = this.props
+        setAoiLayer({
+            mapContext,
+            aoi,
+            // destroy$: componentWillUnmount$, [TODO] check
+            onInitialized: () => mapContext.sepalMap.fitLayer('aoi')
+        })
     }
 }
 
