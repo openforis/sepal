@@ -6,6 +6,7 @@ import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import AuxiliaryImagery from './auxiliaryImagery/auxiliaryImagery'
 import InputImagery from './inputImagery/inputImagery'
+import Legend from './legend/legend'
 import PanelWizard from 'widget/panelWizard'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -29,6 +30,7 @@ class ClassificationToolbar extends React.Component {
 
                 <Retrieve/>
                 <InputImagery/>
+                <Legend/>
                 <TrainingData/>
                 <AuxiliaryImagery/>
 
@@ -52,6 +54,11 @@ class ClassificationToolbar extends React.Component {
                         id='inputImagery'
                         label={msg('process.classification.panel.inputImagery.button')}
                         tooltip={msg('process.classification.panel.inputImagery.tooltip')}/>
+
+                    <Toolbar.ActivationButton
+                        id='legend'
+                        label={msg('process.classification.panel.legend.button')}
+                        tooltip={msg('process.classification.panel.legend.tooltip')}/>
 
                     <Toolbar.ActivationButton
                         id='trainingData'

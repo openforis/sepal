@@ -487,6 +487,11 @@
             "RECIPE_REF": "Sepal recipe"
           }
         },
+        "legend": {
+          "button": "LGD",
+          "title": "Legend",
+          "tooltip": "Setup legend for classification"
+        },
         "retrieve": {
           "apply": "Retrieve",
           "form": {
@@ -1686,7 +1691,6 @@
         "loadFailed": "Failed to load chart: {error}"
       }
     },
-
     "ccdcSlice": {
       "create": "CCDC slice",
       "tabPlaceholder": "CCDC slice",
