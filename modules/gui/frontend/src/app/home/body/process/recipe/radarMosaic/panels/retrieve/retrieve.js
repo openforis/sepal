@@ -1,7 +1,7 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../radarMosaicRecipe'
+import {RecipeActions} from '../../radarMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {currentUser} from 'widget/user'

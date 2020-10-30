@@ -22,10 +22,10 @@ export const defaultModel = {
 export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
 
-    const set = (name, prop, value, otherProps) =>
-        actionBuilder(name, otherProps)
-            .set(prop, value)
-            .build()
+    // const set = (name, prop, value, otherProps) =>
+    //     actionBuilder(name, otherProps)
+    //         .set(prop, value)
+    //         .build()
 
     const setAll = (name, values, otherProps) =>
         actionBuilder(name, otherProps)
@@ -37,12 +37,6 @@ export const RecipeActions = id => {
             return setAll('SET_BANDS', {
                 'ui.bands.selection': bands
             }, {bands})
-        },
-        hidePreview() {
-            return set('HIDE_PREVIEW', 'ui.hidePreview', true)
-        },
-        showPreview() {
-            return set('SHOW_PREVIEW', 'ui.hidePreview', false)
         },
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_RADAR_MOSAIC_RETRIEVAL', {retrieveOptions})

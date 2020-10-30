@@ -9,6 +9,7 @@ const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi')
 })
 
+// Used by opticalMosaic and radarMosaic
 class AoiLayer extends React.Component {
     render() {
         return null

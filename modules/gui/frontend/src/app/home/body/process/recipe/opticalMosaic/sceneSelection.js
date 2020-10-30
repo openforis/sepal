@@ -20,7 +20,7 @@ import Label from 'widget/label'
 import React from 'react'
 import ScenePreview from 'app/home/body/process/recipe/opticalMosaic/scenePreview'
 import api from 'api'
-import daysBetween from '../mosaic/daysBetween'
+import daysBetween from './daysBetween'
 import format from 'format'
 import styles from './sceneSelection.module.css'
 

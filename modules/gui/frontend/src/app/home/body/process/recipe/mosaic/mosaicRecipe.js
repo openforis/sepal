@@ -124,13 +124,7 @@ export const RecipeActions = id => {
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
-        },
-        hidePreview() {
-            return set('HIDE_PREVIEW', 'ui.hidePreview', true)
-        },
-        showPreview() {
-            return set('SHOW_PREVIEW', 'ui.hidePreview', false)
-        },
+        }
     }
 }
 

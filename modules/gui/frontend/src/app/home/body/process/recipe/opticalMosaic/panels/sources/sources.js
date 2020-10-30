@@ -1,5 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions, dateRange} from '../../../mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -28,6 +29,12 @@ const mapRecipeToProps = recipe => ({
 })
 
 class Sources extends React.Component {
+    constructor(props) {
+        super(props)
+        const {recipeId} = props
+        this.preview = MosaicPreview(recipeId)
+    }
+
     lookupDataSetNames(sourceValue) {
         return sourceValue ? imageSourceById[sourceValue].dataSets : null
     }
@@ -44,7 +51,7 @@ class Sources extends React.Component {
                         RecipeActions(recipeId).useAllScenes().dispatch()
                     }
                 }}
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                onClose={() => this.preview.show()}>
                 <Panel.Header
                     icon='satellite-dish'
                     title={msg('process.mosaic.panel.sources.title')}/>
@@ -89,8 +96,7 @@ class Sources extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).hidePreview().dispatch()
+        this.preview.hide()
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {

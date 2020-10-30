@@ -1,6 +1,7 @@
 import {CountrySection} from './countrySection'
 import {EETableSection} from './eeTableSection'
 import {Form} from 'widget/form/form'
+import {MosaicPreview} from '../../mosaicPreview'
 import {PolygonSection} from './polygonSection'
 import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
@@ -44,7 +45,8 @@ const fields = {
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
-        const {mapContext: {sepalMap}} = props
+        const {recipeId, mapContext: {sepalMap}} = props
+        this.preview = MosaicPreview(recipeId)
         this.initialBounds = sepalMap.getBounds()
         this.initialZoom = sepalMap.getZoom()
     }
@@ -101,19 +103,14 @@ class Aoi extends React.Component {
         inputs.allowWholeEETable.set(allowWholeEETable)
     }
 
-    showPreview() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).showPreview().dispatch()
-    }
-
     onApply(values, model) {
-        this.showPreview()
+        this.preview.show()
         this.updateLayer(model)
     }
 
     onCancel() {
         const {model, mapContext: {sepalMap}} = this.props
-        this.showPreview()
+        this.preview.show()
         this.updateLayer(model)
         sepalMap.fitBounds(this.initialBounds)
         sepalMap.setZoom(this.initialZoom)

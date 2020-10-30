@@ -1,7 +1,7 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../../ccdcRecipe'
+// import {RecipeActions} from '../../ccdcRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -16,10 +16,10 @@ const fields = {
 }
 
 class OpticalPreprocess extends React.Component {
-    constructor(props) {
-        super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
-    }
+    // constructor(props) {
+    //     super(props)
+    //     this.recipeActions = RecipeActions(props.recipeId)
+    // }
 
     render() {
         return (

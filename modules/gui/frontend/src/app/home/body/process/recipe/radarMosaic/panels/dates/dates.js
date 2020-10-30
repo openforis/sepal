@@ -1,7 +1,7 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {maxDate, minDate, momentDate} from 'widget/form/datePicker'
@@ -23,6 +23,12 @@ const fields = {
 }
 
 class Dates extends React.Component {
+    constructor(props) {
+        super(props)
+        const {recipeId} = props
+        this.preview = MosaicPreview(recipeId)
+    }
+
     renderYearlyTimeScan() {
         const {inputs: {year}} = this.props
         return (
@@ -97,12 +103,11 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                onClose={() => this.preview.show()}>
                 <Panel.Header
                     icon='calendar-alt'
                     title={msg('process.radarMosaic.panel.dates.title')}/>
@@ -118,8 +123,7 @@ class Dates extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).hidePreview().dispatch()
+        this.preview.hide()
     }
 }
 

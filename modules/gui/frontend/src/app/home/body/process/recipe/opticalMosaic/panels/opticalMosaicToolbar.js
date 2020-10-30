@@ -16,7 +16,7 @@ import Retrieve from 'app/home/body/process/recipe/opticalMosaic/panels/retrieve
 import SceneSelectionOptions from 'app/home/body/process/recipe/opticalMosaic/panels/sceneSelectionOptions/sceneSelectionOptions'
 import Sources from 'app/home/body/process/recipe/opticalMosaic/panels/sources/sources'
 import _ from 'lodash'
-import styles from './mosaicToolbar.module.css'
+import styles from './opticalMosaicToolbar.module.css'
 
 const mapRecipeToProps = recipe => {
     const sceneAreas = selectFrom(recipe, 'ui.sceneAreas')

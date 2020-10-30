@@ -8,7 +8,7 @@ import AoiLayer from '../mosaic/aoiLayer'
 import BandSelection from './bandSelection'
 import MapToolbar from 'app/home/map/mapToolbar'
 import MosaicPreview from './radarMosaicPreview'
-import RadarMosaicToolbar from './radarMosaicToolbar'
+import RadarMosaicToolbar from './panels/radarMosaicToolbar'
 import React from 'react'
 import styles from './radarMosaic.module.css'
 

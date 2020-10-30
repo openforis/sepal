@@ -2,7 +2,7 @@ import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Msg, msg} from 'translate'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../classificationRecipe'
+import {RecipeActions} from '../../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
@@ -52,12 +52,11 @@ class TrainingData extends React.Component {
     }
 
     render() {
-        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 placement='bottom-right'
                 className={styles.panel}
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                onClose={() => this.preview.show()}>
                 <Panel.Header
                     icon='cog'
                     title={msg('process.classification.panel.trainingData.title')}/>
@@ -111,10 +110,11 @@ class TrainingData extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId, inputs: {eeTable}} = this.props
-        if (eeTable.value)
+        const {inputs: {eeTable}} = this.props
+        if (eeTable.value) {
             this.loadEETableColumns(eeTable.value)
-        RecipeActions(recipeId).hidePreview().dispatch()
+        }
+        this.preview.hide()
     }
 }
 

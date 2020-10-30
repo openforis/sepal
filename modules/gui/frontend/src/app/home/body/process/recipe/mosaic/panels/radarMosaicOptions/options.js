@@ -1,11 +1,11 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {MosaicPreview} from '../../mosaicPreview'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../radarMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import Icon from '../../../../../../../widget/icon'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './options.module.css'
@@ -19,6 +19,28 @@ const fields = {
 }
 
 class Options extends React.Component {
+    constructor(props) {
+        super(props)
+        const {recipeId} = props
+        this.preview = MosaicPreview(recipeId)
+    }
+    render() {
+        return (
+            <RecipeFormPanel
+                className={styles.panel}
+                placement='bottom-right'
+                onClose={() => this.preview.show()}>
+                <Panel.Header
+                    icon='layer-group'
+                    title={msg('process.radarMosaic.panel.options.title')}/>
+                <Panel.Content>
+                    {this.renderContent()}
+                </Panel.Content>
+                <Form.PanelButtons/>
+            </RecipeFormPanel>
+        )
+    }
+
     renderContent() {
         const {
             inputs: {
@@ -107,27 +129,8 @@ class Options extends React.Component {
         )
     }
 
-    render() {
-        const {recipeId} = this.props
-        return (
-            <RecipeFormPanel
-                className={styles.panel}
-                placement='bottom-right'
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <Panel.Header
-                    icon='layer-group'
-                    title={msg('process.radarMosaic.panel.options.title')}/>
-                <Panel.Content>
-                    {this.renderContent()}
-                </Panel.Content>
-                <Form.PanelButtons/>
-            </RecipeFormPanel>
-        )
-    }
-
     componentDidMount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).hidePreview().dispatch()
+        this.preview.show()
     }
 }
 

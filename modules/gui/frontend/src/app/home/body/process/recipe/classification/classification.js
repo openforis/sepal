@@ -5,7 +5,7 @@ import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import ClassificationPreview from './classificationPreview'
-import ClassificationToolbar from './classificationToolbar'
+import ClassificationToolbar from './panels/classificationToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 

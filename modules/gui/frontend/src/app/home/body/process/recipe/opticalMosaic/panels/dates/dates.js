@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {Form} from 'widget/form/form'
+import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -65,7 +65,8 @@ const fields = {
 class Dates extends React.Component {
     constructor(props) {
         super(props)
-        const {inputs: {targetYear, targetDate}} = props
+        const {recipeId, inputs: {targetYear, targetDate}} = props
+        this.preview = MosaicPreview(recipeId)
         targetYear.onChange(yearString => this.handleYearChange(yearString))
         targetDate.onChange(dateString => this.handleDateChange(dateString))
     }
@@ -93,12 +94,12 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {recipeId, inputs: {advanced}} = this.props
+        const {inputs: {advanced}} = this.props
         return (
             <RecipeFormPanel
                 className={advanced.value ? styles.advanced : styles.simple}
                 placement='bottom-right'
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                onClose={() => this.preview.show()}>
                 <Panel.Header
                     icon='calendar-alt'
                     title={msg('process.mosaic.panel.dates.title')}/>
@@ -187,8 +188,7 @@ class Dates extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).hidePreview().dispatch()
+        this.preview.hide()
     }
 }
 
