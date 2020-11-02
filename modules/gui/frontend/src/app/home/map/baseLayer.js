@@ -27,6 +27,8 @@ const createLayer = ({google, googleMap, type, options}) => {
         return new GoogleSatelliteLayer({google, googleMap, layerIndex: 0})
     case 'PLANET':
         return new WMTSLayer({
+            google,
+            googleMap,
             layerIndex: 0,
             urlTemplate: `https://tiles0.planet.com/basemaps/v1/planet-tiles/planet_medres_normalized_analytic_${dateRange}_mosaic/gmap/{z}/{x}/{y}.png?api_key=${planetApiKey}&proc=${proc}&color=auto`,
             // urlTemplate: `https://tiles.planet.com/basemaps/v1/planet-tiles/global_monthly_${year}_${month}_mosaic/gmap/{z}/{x}/{y}.png?api_key=${planetApiKey}`,
