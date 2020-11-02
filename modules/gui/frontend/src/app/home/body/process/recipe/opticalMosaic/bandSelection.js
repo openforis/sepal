@@ -53,12 +53,14 @@ class BandSelection extends React.Component {
 
     constructor(props) {
         super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
+        const {recipeId} = props
+        this.recipeActions = RecipeActions(recipeId)
         this.options.forEach(option => {
-            if (option.options)
+            if (option.options) {
                 option.options.forEach(option => this.optionByValue[option.value] = option)
-            else
+            } else {
                 this.optionByValue[option.value] = option
+            }
         })
     }
 
@@ -93,6 +95,8 @@ class BandSelection extends React.Component {
 
     renderSelectedBands() {
         const {sources, surfaceReflectance, inputs: {selection, panSharpen}} = this.props
+        if (!selection.value)
+            return null
         const canPanSharpen = sources.LANDSAT
             && !surfaceReflectance
             && ['red, green, blue', 'nir, red, green'].includes(selection.value)

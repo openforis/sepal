@@ -1,7 +1,6 @@
 /* eslint-disable react/jsx-key */
 import {Form, form} from 'widget/form/form'
 import {RecipeActions} from 'app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
-// setBands
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -119,6 +118,22 @@ class BandSelection extends React.PureComponent {
     }
 
     render() {
+        const {inputs: {selection}} = this.props
+        return selection.value
+            ? (
+                <div className={styles.wrapper}>
+                    <div className={styles.container}>
+                        {this.state.showSelector
+                            ? this.renderBandSelector()
+                            : this.renderSelectedBands()
+                        }
+                    </div>
+                </div>
+            )
+            : null
+    }
+
+    renderBandSelector() {
         const {timeScan, inputs: {selection}} = this.props
         if (!selection.value)
             return null
@@ -130,23 +145,25 @@ class BandSelection extends React.PureComponent {
                 {label: msg('process.mosaic.bands.metadata'), options: this.metaDataOptions},
             ]
         return (
-            <div className={styles.wrapper}>
-                <div className={styles.container}>
-                    {this.state.showSelector
-                        ? <BandSelector
-                            selection={selection}
-                            options={options}
-                            onChange={option => {
-                                this.setSelectorShown(false)
-                                this.recipeActions.setBands(option.value).dispatch()
-                            }}
-                            onCancel={() => this.setSelectorShown(false)}/>
-                        : <SelectedBands
-                            selectedOption={this.optionByValue[selection.value]}
-                            onClick={() => this.setSelectorShown(true)}/>
-                    }
-                </div>
-            </div>
+            <BandSelector
+                selection={selection}
+                options={options}
+                onChange={option => {
+                    this.setSelectorShown(false)
+                    this.recipeActions.setBands(option.value).dispatch()
+                }}
+                onCancel={() => this.setSelectorShown(false)}/>
+        )
+    }
+
+    renderSelectedBands() {
+        const {inputs: {selection}} = this.props
+        if (!selection.value)
+            return null
+        return (
+            <SelectedBands
+                selectedOption={this.optionByValue[selection.value]}
+                onClick={() => this.setSelectorShown(true)}/>
         )
     }
 
