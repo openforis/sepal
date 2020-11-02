@@ -15,10 +15,7 @@ class _TabContent extends React.PureComponent {
                     styles.tabContent,
                     selected && styles.selected
                 ].join(' ')}>
-                    <Enabled
-                        value={selected}
-                        enabledClassName={styles.enabled}
-                        disabledClassName={styles.disabled}>
+                    <Enabled value={selected}>
                         <PortalContainer id={portalContainerId}/>
                         {children({id, type})}
                     </Enabled>
