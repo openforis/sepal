@@ -145,11 +145,26 @@ export class PanelButtons extends React.Component {
         )
     }
 
-    renderButtonGroup(buttons) {
+    render() {
+        const {className, shown = true, onEnter, onEscape, children} = this.props
+        return shown ? (
+            <div className={[styles.buttons, className].join(' ')}>
+                <Keybinding keymap={{
+                    Enter: onEnter,
+                    Escape: onEscape
+                }}>
+                    {children ? children : this.renderButtons()}
+                </Keybinding>
+            </div>
+        ) : null
+    }
+
+    renderButtons() {
         return (
-            <ButtonGroup>
-                {buttons.map((button, index) => PanelButtons.renderButton(button, index))}
-            </ButtonGroup>
+            <React.Component>
+                {this.renderExtraButtons()}
+                {this.renderMainButtons()}
+            </React.Component>
         )
     }
 
@@ -163,27 +178,12 @@ export class PanelButtons extends React.Component {
         return this.renderButtonGroup(extraButtons || [])
     }
 
-    renderButtons() {
+    renderButtonGroup(buttons) {
         return (
-            <React.Component>
-                {this.renderExtraButtons()}
-                {this.renderMainButtons()}
-            </React.Component>
+            <ButtonGroup>
+                {buttons.map((button, index) => PanelButtons.renderButton(button, index))}
+            </ButtonGroup>
         )
-    }
-
-    render() {
-        const {className, shown = true, onEnter, onEscape, children} = this.props
-        return shown ? (
-            <div className={[styles.buttons, className].join(' ')}>
-                <Keybinding keymap={{
-                    Enter: onEnter,
-                    Escape: onEscape
-                }}>
-                    {children ? children : this.renderButtons()}
-                </Keybinding>
-            </div>
-        ) : null
     }
 }
 

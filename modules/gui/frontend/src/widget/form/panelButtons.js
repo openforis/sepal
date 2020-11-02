@@ -4,13 +4,16 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 export class FormPanelButtons extends React.Component {
-    renderExtraButtons() {
-        const {children} = this.props
-        return children ? (
-            <Panel.Buttons.Extra>
-                {children}
-            </Panel.Buttons.Extra>
-        ) : null
+    render() {
+        return (
+            <FormPanelContext.Consumer>
+                {props => {
+                    const inWizard = props.wizard && props.wizard.includes(props.id)
+                    const renderProps = {...props, ...this.props}
+                    return inWizard ? this.renderWizard(renderProps) : this.renderForm(renderProps)
+                }}
+            </FormPanelContext.Consumer>
+        )
     }
 
     renderForm({isActionForm, dirty, invalid, onOk, onCancel}) {
@@ -74,16 +77,13 @@ export class FormPanelButtons extends React.Component {
         )
     }
 
-    render() {
-        return (
-            <FormPanelContext.Consumer>
-                {props => {
-                    const inWizard = props.wizard && props.wizard.includes(props.id)
-                    const renderProps = {...props, ...this.props}
-                    return inWizard ? this.renderWizard(renderProps) : this.renderForm(renderProps)
-                }}
-            </FormPanelContext.Consumer>
-        )
+    renderExtraButtons() {
+        const {children} = this.props
+        return children ? (
+            <Panel.Buttons.Extra>
+                {children}
+            </Panel.Buttons.Extra>
+        ) : null
     }
 }
 
