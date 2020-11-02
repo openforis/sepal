@@ -1,0 +1,49 @@
+import {Form} from 'widget/form/form'
+import {msg} from 'translate'
+import PropTypes from 'prop-types'
+import React from 'react'
+import ImageForm from '../inputImagery/imageForm'
+import RecipeSection from '../inputImagery/recipeSection'
+import AssetSection from '../inputImagery/assetSection'
+
+export default class SectionSelection extends React.Component {
+    render() {
+        const {section} = this.props
+
+        const options = [
+            {
+                value: 'EE_TABLE',
+                label: msg('process.classification.panel.trainingData.type.EE_TABLE.label'),
+                tooltip: msg('process.classification.panel.trainingData.type.EE_TABLE.tooltip'),
+            },
+            {
+                value: 'CSV_UPLOAD',
+                label: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.label'),
+                tooltip: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.tooltip'),
+            },
+            {
+                value: 'SAMPLE_CLASSIFICATION',
+                label: msg('process.classification.panel.trainingData.type.SAMPLE_CLASSIFICATION.label'),
+                tooltip: msg('process.classification.panel.trainingData.type.SAMPLE_CLASSIFICATION.tooltip'),
+            },
+            {
+                value: 'RECIPE',
+                label: msg('process.classification.panel.trainingData.type.RECIPE.label'),
+                tooltip: msg('process.classification.panel.trainingData.type.RECIPE.tooltip'),
+            }
+        ]
+        return (
+            <Form.Buttons
+                look='transparent'
+                shape='pill'
+                layout='vertical'
+                air='more'
+                input={section}
+                options={options}/>
+        )
+    }
+}
+
+SectionSelection.propTypes = {
+    section: PropTypes.object.isRequired
+}

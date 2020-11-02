@@ -515,26 +515,35 @@
         },
         "trainingData": {
           "button": "TRN",
-          "form": {
-            "eeTable": {
-              "invalid": "Invalid EE Table ID",
-              "label": "EE table",
-              "placeholder": "Enter a EE Table ID",
-              "required": "EE Table must be specified"
-            },
-            "eeTableColumn": {
-              "label": "Class column",
-              "placeholder": {
-                "loaded": "Select a column...",
-                "loading": "Loading columns...",
-                "noEETable": "Enter an EE Table ID first"
-              },
-              "required": "A column must be selected"
-            },
-            "openCeo": "Open training data collection tool"
-          },
           "title": "Training data",
-          "tooltip": "Configure training data source"
+          "tooltip": "Configure training data source",
+          "noDataSet": "No training data set added",
+          "remove": {
+            "confirmationMessage": "Are you sure you want to remove {name} from your training data?",
+            "tooltip": "Remove training data set"
+          },
+          "type": {
+            "EE_TABLE": {
+              "label": "Earth Engine Table",
+              "tooltip": "Load reference data from an EE table.",
+              "title": "EE TABLE"
+            },
+            "CSV_UPLOAD": {
+              "label": "CSV file",
+              "tooltip": "Upload a CSV file.",
+              "title": "CSV UPLOAD"
+            },
+            "SAMPLE_CLASSIFICATION": {
+              "label": "Sample classification",
+              "tooltip": "Sample a pre-existing classification.",
+              "title": "SAMPLE CLASSIFICATION"
+            },
+            "RECIPE": {
+              "label": "Saved Sepal recipe",
+              "tooltip": "Use training data from a saved Sepal recipe.",
+              "title": "SEPAL RECIPE"
+            }
+          }
         }
       },
       "preview": {

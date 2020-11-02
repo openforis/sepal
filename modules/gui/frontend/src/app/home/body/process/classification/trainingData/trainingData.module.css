@@ -1,5 +1,6 @@
 .panel {
-    max-width: 20rem;
+    min-height: 15rem;
+    max-width: 34rem;
 }
 
 .panel p {

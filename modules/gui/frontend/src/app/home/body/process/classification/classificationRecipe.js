@@ -38,7 +38,12 @@ export const RecipeActions = id => {
                 .del(['model.inputImagery.images', {id: imageToRemove.id}])
                 .del(['ui.inputImagery.images', {id: imageToRemove.id}])
                 .dispatch()
-
+        },
+        removeTrainingDataSet(dataSetToRemove) {
+            actionBuilder('REMOVE_TRAINING_DATA_SET', {dataSetToRemove})
+                .del(['model.trainingData.dataSets', {dataSetId: dataSetToRemove.dataSetId}])
+                .del(['ui.trainingData.dataSets', {dataSetId: dataSetToRemove.dataSetId}])
+                .dispatch()
         }
     }
 }

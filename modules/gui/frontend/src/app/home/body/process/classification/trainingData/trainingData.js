@@ -1,128 +1,114 @@
 import {Form} from 'widget/form/form'
-import {Layout} from 'widget/layout'
-import {Msg, msg} from 'translate'
+import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {Subject} from 'rxjs'
+import {SuperButton} from 'widget/superButton'
+import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
-import {map, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import PropTypes from 'prop-types'
 import React from 'react'
-import api from 'api'
+import guid from 'guid'
+import TrainingDataSet from './trainingDataSet'
 import styles from './trainingData.module.css'
 
-const fields = {
-    eeTable: new Form.Field()
-        .notBlank('process.classification.panel.trainingData.form.eeTable.required'),
-    eeTableColumn: new Form.Field()
-        .notBlank('process.classification.panel.trainingData.form.eeTableColumn.required')
-}
-
 const mapRecipeToProps = recipe => ({
-    columns: selectFrom(recipe, 'ui.eeTable.columns')
+    dataSets: selectFrom(recipe, 'model.trainingData.dataSets') || []
 })
 
+
 class TrainingData extends React.Component {
-    constructor(props) {
-        super(props)
-        this.eeTableChanged$ = new Subject()
-        this.recipeActions = RecipeActions(props.recipeId)
-    }
-
-    loadEETableColumns(eeTableId) {
-        const {stream, inputs: {eeTableColumn}} = this.props
-        stream('LOAD_EE_TABLE_COLUMNS',
-            api.gee.loadEETableColumns$(eeTableId).pipe(
-                map(columns => columns.map(name => ({value: name, label: name}))),
-                takeUntil(this.eeTableChanged$)),
-            columns => {
-                const defaultColumn = columns.length === 1 ? columns[0] : columns.find(column => column.value === 'class')
-                if (defaultColumn)
-                    eeTableColumn.set(defaultColumn.value)
-                this.recipeActions.setEETableColumns(columns).dispatch()
-            },
-            error => {
-                return this.props.inputs.eeTable.setInvalid(
-                    msg(error.response.messageKey, error.response.messageArgs, error.response.defaultMessage)
-                )
-            }
-        )
-    }
-
     render() {
-        const {recipeId} = this.props
+        const {recipeId, dataSets} = this.props
         return (
-            <RecipeFormPanel
-                placement='bottom-right'
-                className={styles.panel}
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
-                <Panel.Header
-                    icon='cog'
-                    title={msg('process.classification.panel.trainingData.title')}/>
-
-                <Panel.Content>
-                    {this.renderContent()}
-                </Panel.Content>
-
-                <Form.PanelButtons/>
-            </RecipeFormPanel>
+            <React.Fragment>
+                <RecipeFormPanel
+                    className={styles.panel}
+                    placement='bottom-right'
+                    onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                    <Panel.Header
+                        icon='table'
+                        title={msg('process.classification.panel.trainingData.title')}/>
+                    <Panel.Content>
+                        {this.renderContent()}
+                    </Panel.Content>
+                    <Form.PanelButtons invalid={!dataSets.length}>
+                        <Panel.Buttons.Add onClick={() => this.addDataSet()}/>
+                    </Form.PanelButtons>
+                </RecipeFormPanel>
+                <TrainingDataSet/>
+            </React.Fragment>
         )
     }
 
     renderContent() {
-        const {action, columns, inputs: {eeTable, eeTableColumn}} = this.props
-        const columnState = action('LOAD_EE_TABLE_COLUMNS').dispatching
-            ? 'loading'
-            : columns && columns.length > 0
-                ? 'loaded'
-                : 'noEETable'
+        const {dataSets = []} = this.props
+        return dataSets.length
+            ? this.renderDataSets(dataSets)
+            : this.renderNoDataSetMessage()
+    }
+
+    renderDataSets(dataSets) {
+        console.log(dataSets)
+        return dataSets
+            .filter(dataSet => dataSet)
+            .map(dataSet => this.renderDataSet(dataSet))
+    }
+
+    renderDataSet(dataSet) {
+        const name = dataSet.name
+        if (!name)
+            return null
         return (
-            <Layout>
-                <Form.Input
-                    label={msg('process.classification.panel.trainingData.form.eeTable.label')}
-                    autoFocus
-                    input={eeTable}
-                    placeholder={msg('process.classification.panel.trainingData.form.eeTable.placeholder')}
-                    spellCheck={false}
-                    onChange={e => {
-                        eeTableColumn.set('')
-                        this.recipeActions.setEETableColumns(null).dispatch()
-                        this.eeTableChanged$.next()
-                        this.loadEETableColumns(e.target.value)
-                    }}
-                    errorMessage
-                />
-                <Form.Combo
-                    label={msg('process.classification.panel.trainingData.form.eeTableColumn.label')}
-                    input={eeTableColumn}
-                    busy={action('LOAD_EE_TABLE_COLUMNS').dispatching}
-                    disabled={!columns || columns.length === 0}
-                    placeholder={msg(`process.classification.panel.trainingData.form.eeTableColumn.placeholder.${columnState}`)}
-                    options={columns || []}
-                />
-                <p>
-                    <a href='/ceo' rel='noopener noreferrer' target='_blank'><Msg
-                        id='process.classification.panel.trainingData.form.openCeo'/></a>
-                </p>
-            </Layout>
+            <SuperButton
+                key={`${dataSet.type}-${dataSet.id}`}
+                title={msg(`process.classification.panel.trainingData.type.${dataSet.type}.label`)}
+                description={name}
+                removeMessage={msg('process.classification.panel.trainingData.remove.confirmationMessage', {name})}
+                removeTooltip={msg('process.classification.panel.trainingData.remove.tooltip')}
+                onClick={() => this.editDataSet(dataSet)}
+                onRemove={() => this.removeDataSet(dataSet)}
+            />
         )
     }
 
+    renderNoDataSetMessage() {
+        return (
+            <NoData message={msg('process.classification.panel.trainingData.noDataSet')}/>
+        )
+    }
+
+    addDataSet() {
+        const {activator: {activatables: {trainingDataSet}}} = this.props
+        trainingDataSet.activate({dataSetId: guid()})
+    }
+
+    editDataSet(dataSet) {
+        const {activator: {activatables: {trainingDataSet}}} = this.props
+        trainingDataSet.activate({dataSetId: dataSet.dataSetId})
+    }
+
     componentDidMount() {
-        const {recipeId, inputs: {eeTable}} = this.props
-        if (eeTable.value)
-            this.loadEETableColumns(eeTable.value)
+        const {recipeId} = this.props
         RecipeActions(recipeId).hidePreview().dispatch()
+    }
+
+    removeDataSet(dataSetToRemove) {
+        const {recipeId} = this.props
+        RecipeActions(recipeId).removeTrainingDataSet(dataSetToRemove)
     }
 }
 
-TrainingData.propTypes = {
-    recipeId: PropTypes.string
-}
+TrainingData.propTypes = {}
+
+const additionalPolicy = () => ({_: 'allow'})
+// [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected data sets from
+// being overridden.
+const valuesToModel = null
 
 export default compose(
     TrainingData,
-    recipeFormPanel({id: 'trainingData', fields, mapRecipeToProps})
+    recipeFormPanel({id: 'trainingData', mapRecipeToProps, valuesToModel, additionalPolicy}),
+    activator('trainingDataSet')
 )
