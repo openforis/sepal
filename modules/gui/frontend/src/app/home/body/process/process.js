@@ -14,15 +14,15 @@ import Revisions from 'app/home/body/process/revisions'
 import SaveRecipe from './saveRecipe'
 
 class Process extends React.Component {
-    renderRecipeByType(type) {
-        return React.createElement(
-            getRecipeType(type).components.recipe
-        )
+    renderRecipeByType(recipeId, type) {
+        const component = getRecipeType(type).components.recipe
+        const props = {recipeId}
+        return React.createElement(component, props)
     }
 
     renderRecipe(recipeId, type) {
         return type
-            ? this.renderRecipeByType(type)
+            ? this.renderRecipeByType(recipeId, type)
             : <RecipeHome recipeId={recipeId}/>
     }
 

@@ -26,6 +26,69 @@ export const polygonOptions = fill => ({
     strokeWeight: 1
 })
 
+const createGoogleMap = (google, mapElement) => {
+    const mapOptions = {
+        zoom: 3,
+        minZoom: 3,
+        maxZoom: 17,
+        center: new google.maps.LatLng(16.7794913, 9.6771556),
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        zoomControl: false,
+        mapTypeControl: false,
+        scaleControl: false,
+        streetViewControl: false,
+        rotateControl: false,
+        fullscreenControl: false,
+        backgroundColor: '#131314',
+        gestureHandling: 'greedy'
+    }
+
+    // https://developers.google.com/maps/documentation/javascript/style-reference
+    const sepalStyle = new google.maps.StyledMapType([
+        {stylers: [{visibility: 'simplified'}]},
+        {stylers: [{color: '#131314'}]},
+        {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
+        {featureType: 'poi', stylers: [{visibility: 'off'}]},
+        {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
+        {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
+    ], {name: 'sepalMap'})
+
+    const googleMap = new google.maps.Map(mapElement, mapOptions)
+
+    googleMap.mapTypes.set('sepalStyle', sepalStyle)
+    googleMap.setMapTypeId('sepalStyle')
+
+    return googleMap
+}
+
+class _StaticMap extends React.Component {
+    map = React.createRef()
+
+    render() {
+        const {children} = this.props
+        return (
+            <React.Fragment>
+                <div ref={this.map} className={styles.map}/>
+                <div className={styles.content}>
+                    {children}
+                </div>
+            </React.Fragment>
+        )
+    }
+
+    componentDidMount() {
+        const {mapsContext: {google}} = this.props
+        createGoogleMap(google, this.map.current)
+    }
+}
+
+export const StaticMap = compose(
+    _StaticMap,
+    withMapsContext()
+)
+
+StaticMap.propTypes = {}
+
 class _Map extends React.Component {
     state = {
         googleMap: null,
@@ -51,46 +114,10 @@ class _Map extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {google, googleMapsApiKey, norwayPlanetApiKey}} = this.props
-        const googleMap = this.createGoogleMap(google, this.map.current)
+        const googleMap = createGoogleMap(google, this.map.current)
         const sepalMap = new SepalMap({google, googleMapsApiKey, googleMap})
         this.setState({mapContext: {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}})
     }
-
-    createGoogleMap(google, mapElement) {
-        const mapOptions = {
-            zoom: 3,
-            minZoom: 3,
-            maxZoom: 17,
-            center: new google.maps.LatLng(16.7794913, 9.6771556),
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
-            zoomControl: false,
-            mapTypeControl: false,
-            scaleControl: false,
-            streetViewControl: false,
-            rotateControl: false,
-            fullscreenControl: false,
-            backgroundColor: '#131314',
-            gestureHandling: 'greedy'
-        }
-    
-        // https://developers.google.com/maps/documentation/javascript/style-reference
-        const sepalStyle = new google.maps.StyledMapType([
-            {stylers: [{visibility: 'simplified'}]},
-            {stylers: [{color: '#131314'}]},
-            {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
-            {featureType: 'poi', stylers: [{visibility: 'off'}]},
-            {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
-            {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
-        ], {name: 'sepalMap'})
-
-        const googleMap = new google.maps.Map(mapElement, mapOptions)
-    
-        googleMap.mapTypes.set('sepalStyle', sepalStyle)
-        googleMap.setMapTypeId('sepalStyle')
-
-        return googleMap
-    }
-       
 }
 
 export const Map = compose(
