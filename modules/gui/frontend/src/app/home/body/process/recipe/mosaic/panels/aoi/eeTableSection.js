@@ -152,10 +152,8 @@ class _EETableSection extends React.Component {
     loadDistinctColumnValues(column) {
         this.props.stream('LOAD_EE_TABLE_ROWS',
             api.gee.loadEETableColumnValues$(this.props.inputs.eeTable.value, column).pipe(
-                map(values => {
-                    this.recipeActions.setEETableRows(values)
-                        .dispatch()
-                }
+                map(values =>
+                    this.recipeActions.setEETableRows(values).dispatch()
                 ),
                 takeUntil(this.eeTableColumnChanged$),
                 takeUntil(this.eeTableChanged$)
@@ -170,17 +168,20 @@ class _EETableSection extends React.Component {
 
     componentDidMount() {
         const {inputs: {eeTable, eeTableColumn}} = this.props
-        if (eeTable.value)
+        if (eeTable.value) {
             this.loadColumns(eeTable.value)
-        if (eeTableColumn.value)
+        }
+        if (eeTableColumn.value) {
             this.loadDistinctColumnValues(eeTableColumn.value)
+        }
         this.update()
     }
 
     componentDidUpdate(prevProps) {
         const {inputs: {eeTableRowSelection}} = this.props
-        if (!prevProps || prevProps.inputs !== this.props.inputs)
+        if (!prevProps || prevProps.inputs !== this.props.inputs) {
             this.update()
+        }
         if (!eeTableRowSelection.value) {
             eeTableRowSelection.set('FILTER')
         }
