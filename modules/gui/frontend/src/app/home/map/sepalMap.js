@@ -24,10 +24,6 @@ export class SepalMap {
         }
     }
 
-    getKey() {
-        return this.googleMapsApiKey
-    }
-
     getZoom() {
         return this.googleMap.getZoom()
     }
