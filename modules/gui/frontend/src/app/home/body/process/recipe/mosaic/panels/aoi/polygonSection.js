@@ -57,7 +57,7 @@ class _PolygonSection extends React.Component {
             return
         }
 
-        const {mapContext, inputs: {polygon}, componentWillUnmount$} = this.props
+        const {mapContext, inputs: {polygon}, layerIndex, componentWillUnmount$} = this.props
         setAoiLayer({
             mapContext,
             aoi: {
@@ -66,7 +66,8 @@ class _PolygonSection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: () => mapContext.sepalMap.fitLayer('aoi')
+            onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
+            layerIndex
         })
     }
 

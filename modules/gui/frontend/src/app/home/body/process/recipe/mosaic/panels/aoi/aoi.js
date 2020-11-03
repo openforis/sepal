@@ -72,7 +72,7 @@ class Aoi extends React.Component {
             value: 'POLYGON',
             label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title'),
             title: 'POLYGON',
-            component: <PolygonSection recipeId={recipeId} inputs={inputs}/>
+            component: <PolygonSection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
         }]
         return (
             <RecipeFormPanel

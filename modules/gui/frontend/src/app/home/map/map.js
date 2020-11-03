@@ -18,14 +18,6 @@ export const fromGoogleBounds = googleBounds => {
     ]
 }
 
-export const polygonOptions = fill => ({
-    fillColor: '#FBFAF2',
-    fillOpacity: fill ? 0.07 : 0.000000000000000000000000000001,
-    strokeColor: '#FBFAF2',
-    strokeOpacity: 0.5,
-    strokeWeight: 1
-})
-
 const createGoogleMap = (google, mapElement) => {
     const mapOptions = {
         zoom: 3,

@@ -65,7 +65,8 @@ export class SepalMap {
             {lng: bounds[0][0], lat: bounds[0][1]},
             {lng: bounds[1][0], lat: bounds[1][1]}
         )
-        const boundsChanged = !this.googleMap.getBounds().equals(googleBounds)
+        const currentGoogleBounds = this.googleMap.getBounds()
+        const boundsChanged = !currentGoogleBounds || !currentGoogleBounds.equals(googleBounds)
         if (boundsChanged) {
             this.googleMap.fitBounds(googleBounds)
         }

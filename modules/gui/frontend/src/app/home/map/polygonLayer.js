@@ -1,5 +1,13 @@
-import {fromGoogleBounds, polygonOptions} from './map'
+import {fromGoogleBounds} from './map'
 import {of} from 'rxjs'
+
+export const polygonOptions = fill => ({
+    fillColor: '#FBFAF2',
+    fillOpacity: fill ? 0.07 : 0.000000000000000000000000000001,
+    strokeColor: '#FBFAF2',
+    strokeOpacity: 0.5,
+    strokeWeight: 1
+})
 
 export const setPolygonLayer = ({
     mapContext,
@@ -14,8 +22,8 @@ export const setPolygonLayer = ({
 }
 
 class PolygonLayer {
-    constructor({mapContext: {google, googleMaps}, path, fill}) {
-        this.googleMap = googleMaps
+    constructor({mapContext: {google, googleMap}, path, fill}) {
+        this.googleMap = googleMap
         this.type = 'PolygonLayer'
         this.polygonPath = path
         this.fill = fill
