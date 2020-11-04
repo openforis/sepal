@@ -313,8 +313,10 @@ class _Combo extends React.Component {
         const filteredOptions = getFilteredOptions(options)
         const flattenedOptions = getFlattenedOptions(filteredOptions)
 
-        const getInputOption = () =>
-            input && flattenedOptions && flattenedOptions.find(option => option.value === this.props.value)
+        const getInputOption = () => {
+            const {value} = this.props
+            return flattenedOptions && flattenedOptions.find(option => option.value === value)
+        }
 
         const getSelectedOption = selectedOption => {
             const validatedSelectedOption = selectedOption && flattenedOptions.find(option => option.value === selectedOption.value)
@@ -336,8 +338,8 @@ export const Combo = compose(
 )
 
 Combo.propTypes = {
-    value: PropTypes.any.isRequired,
     options: PropTypes.any.isRequired,
+    value: PropTypes.any,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
