@@ -54,7 +54,6 @@ class _CCDCSlice extends React.Component {
     componentDidUpdate(prevProps, _prevState, _snapshot) {
         const prevAsset = prevProps.recipe.model.source.asset
         const asset = this.props.recipe.model.source.asset
-        // console.log(prevAsset, asset)
         this.setAoiLayer(prevAsset !== asset)
     }
 

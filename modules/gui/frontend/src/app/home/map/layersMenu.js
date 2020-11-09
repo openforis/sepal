@@ -223,7 +223,7 @@ class _LayersMenu extends React.Component {
         )
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate() {
         // const {inputs: {year, month, proc}} = this.props
         // if (!year.value)
         // year.set(this.props.year || moment().format('YYYY'))
@@ -256,9 +256,9 @@ export const LayersMenu = compose(
     activatable({id: 'layersMenu', policy})
 )
 
-const sequence = (start, end, step = 1) =>
-    Array.apply(null, {length: Math.floor((end - start) / step) + 1})
-        .map((_, i) => i * step + start)
+// const sequence = (start, end, step = 1) =>
+//     Array.apply(null, {length: Math.floor((end - start) / step) + 1})
+//         .map((_, i) => i * step + start)
 
 LayersMenu.propTypes = {
     labelLayerIndex: PropTypes.any.isRequired,
