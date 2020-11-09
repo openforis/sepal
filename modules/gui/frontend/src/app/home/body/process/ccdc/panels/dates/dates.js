@@ -17,7 +17,7 @@ const fields = {
 
     endDate: new Form.Field()
         .notBlank('process.ccdc.panel.dates.form.endDate.required')
-        .date(DATE_FORMAT, 'process.ccdc.panel.dates.form.endDate.malformed')
+        .date(DATE_FORMAT, 'process.ccdc.panel.dates.form.endDate.malformed'),
 }
 
 const constraints = {
@@ -29,33 +29,6 @@ const constraints = {
 }
 
 class Dates extends React.Component {
-    renderContent() {
-        const {inputs: {startDate, endDate}} = this.props
-        return (
-            <Form.FieldSet
-                layout='horizontal'
-                errorMessage={[startDate, endDate, 'startBeforeEnd']}>
-                <Form.DatePicker
-                    label={msg('process.ccdc.panel.dates.form.startDate.label')}
-                    tooltip={msg('process.ccdc.panel.dates.form.startDate.tooltip')}
-                    tooltipPlacement='top'
-                    input={startDate}
-                    startDate='1982-08-22'
-                    endDate={moment()}
-                />
-                <Form.DatePicker
-                    label={msg('process.ccdc.panel.dates.form.endDate.label')}
-                    tooltip={msg('process.ccdc.panel.dates.form.endDate.tooltip')}
-                    tooltipPlacement='top'
-                    input={endDate}
-                    startDate={startDate.isInvalid()
-                        ? '1982-08-23'
-                        : moment(startDate.value, DATE_FORMAT).add(1, 'days')}
-                    endDate={moment()}
-                />
-            </Form.FieldSet>
-        )
-    }
 
     render() {
         return (
@@ -66,12 +39,40 @@ class Dates extends React.Component {
                     icon='cog'
                     title={msg('process.ccdc.panel.dates.title')}/>
                 <Panel.Content>
-                    <Layout>
-                        {this.renderContent()}
-                    </Layout>
+                    {this.renderContent()}
                 </Panel.Content>
                 <Form.PanelButtons/>
             </RecipeFormPanel>
+        )
+    }
+
+    renderContent() {
+        const {inputs: {dateFormat, startDate, endDate}} = this.props
+        return (
+            <Layout>
+                <Form.FieldSet
+                    layout='horizontal'
+                    errorMessage={[startDate, endDate, 'startBeforeEnd']}>
+                    <Form.DatePicker
+                        label={msg('process.ccdc.panel.dates.form.startDate.label')}
+                        tooltip={msg('process.ccdc.panel.dates.form.startDate.tooltip')}
+                        tooltipPlacement='top'
+                        input={startDate}
+                        startDate='1982-08-22'
+                        endDate={moment()}
+                    />
+                    <Form.DatePicker
+                        label={msg('process.ccdc.panel.dates.form.endDate.label')}
+                        tooltip={msg('process.ccdc.panel.dates.form.endDate.tooltip')}
+                        tooltipPlacement='top'
+                        input={endDate}
+                        startDate={startDate.isInvalid()
+                            ? '1982-08-23'
+                            : moment(startDate.value, DATE_FORMAT).add(1, 'days')}
+                        endDate={moment()}
+                    />
+                </Form.FieldSet>
+            </Layout>
         )
     }
 }

@@ -207,7 +207,7 @@ Input.propTypes = {
     autoCorrect: PropTypes.any,
     autoFocus: PropTypes.any,
     border: PropTypes.any,
-    busyMessage: PropTypes.string,
+    busyMessage: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     errorMessage: PropTypes.string,

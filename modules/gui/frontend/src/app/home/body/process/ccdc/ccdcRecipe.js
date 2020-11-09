@@ -8,6 +8,7 @@ const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const breakDetectionOptions = {
     conservative: {
+        dateFormat: 1,
         minObservations: 6,
         chiSquareProbability: 0.99,
         minNumOfYearsScaler: 1.33,
@@ -16,7 +17,8 @@ export const breakDetectionOptions = {
     },
 
     moderate: {
-        minObservations: 4,
+        dateFormat: 1,
+        minObservations: 6,
         chiSquareProbability: 0.9,
         minNumOfYearsScaler: 1.33,
         lambda: 20,
@@ -24,7 +26,8 @@ export const breakDetectionOptions = {
     },
 
     aggressive: {
-        minObservations: 3,
+        dateFormat: 1,
+        minObservations: 4,
         chiSquareProbability: 0.75,
         minNumOfYearsScaler: 1.33,
         lambda: 20,
@@ -45,8 +48,10 @@ export const defaultModel = {
     },
     options: {
         corrections: [],
-        mask: ['SNOW'],
-        orbits: ['ASCENDING'],
+        cloudMasking: 'AGGRESSIVE',
+        shadowMasking: 'OFF',
+        snowMasking: 'ON',
+        orbits: ['ASCENDING', 'DESCENDING'],
         geometricCorrection: 'ELLIPSOID',
         speckleFilter: 'NONE',
         outlierRemoval: 'NONE'
@@ -92,9 +97,9 @@ function toBackendRecipe({recipe, bands}) {
         aoi: recipe.model.aoi,
         fromDate: recipe.model.dates.startDate,
         toDate: recipe.model.dates.endDate,
-        maskSnow: preprocess.mask.includes('SNOW'),
         brdfCorrect: preprocess.corrections.includes('BRDF'),
         surfaceReflectance: preprocess.corrections.includes('SR'),
+        calibrate: true,
         ...preprocess,
         ...ccdcOptions
     }

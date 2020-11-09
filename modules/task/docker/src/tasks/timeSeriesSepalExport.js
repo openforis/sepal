@@ -127,8 +127,8 @@ const export$ = (downloadDir, recipe) => {
             speckleFilter,
             outlierRemoval
         }).map(image =>
-            (indicator === 'VV/VH'
-                    ? image.select('VV').divide(image.select('VH')).rename('VV/VH')
+            (indicator === 'ratio_VV_VH'
+                    ? image.select('VV').divide(image.select('VH')).rename('ratio_VV_VH')
                     : image.select(indicator)
             ).set('date', image.date().format('yyyy-MM-dd'))
         )

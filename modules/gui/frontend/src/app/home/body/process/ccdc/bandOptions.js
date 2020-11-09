@@ -78,7 +78,7 @@ export const opticalBandOptions = ({dataSets, alwaysSelected = []}) => {
 export const radarBandOptions = ({alwaysSelected = []}) => ([
     {value: 'VV', label: 'VV'},
     {value: 'VH', label: 'VH'},
-    {value: 'VV/VH', label: 'VV/VH'}
+    {value: 'ratio_VV_VH', label: 'VV/VH'}
 ]).map(option => ({...option, alwaysSelected: alwaysSelected.includes(option.value)}))
 
 export const filterBands = (bands, dataSets) =>
