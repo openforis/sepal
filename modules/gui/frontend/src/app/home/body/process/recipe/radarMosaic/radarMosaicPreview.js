@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -9,6 +10,7 @@ import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
+import withSubscriptions from 'subscription'
 
 const LABEL = 'mosaic'
 
@@ -18,6 +20,17 @@ class MosaicPreview extends React.Component {
     state = {
         initializing: false,
         failed: false
+    }
+
+    constructor(props) {
+        super(props)
+        this.progress$ = new Subject()
+        const {addSubscription} = props
+        addSubscription(
+            this.progress$.subscribe(
+                tiles => this.setState({tiles, initializing: false})
+            )
+        )
     }
 
     renderInitializing() {
@@ -48,10 +61,6 @@ class MosaicPreview extends React.Component {
             return this.renderLoading()
         }
         return null
-    }
-
-    onProgress(tiles) {
-        this.setState({tiles, initializing: false})
     }
 
     onError(e) {
@@ -111,7 +120,7 @@ class MosaicPreview extends React.Component {
             bounds: previewRequest.recipe.model.aoi.bounds,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
-            onProgress: tiles => this.onProgress(tiles)
+            progress$: this.progress$
         })
         const changed = mapContext.sepalMap.setLayer({
             id: 'preview',
@@ -143,5 +152,6 @@ MosaicPreview.propTypes = {}
 
 export default compose(
     MosaicPreview,
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    withSubscriptions()
 )

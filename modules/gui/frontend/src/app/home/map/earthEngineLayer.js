@@ -1,11 +1,11 @@
-import {map} from 'rxjs/operators'
+import {mapTo, tap} from 'rxjs/operators'
 import {of} from 'rxjs'
 import _ from 'lodash'
 import ee from '@google/earthengine'
 import guid from 'guid'
 
 export default class EarthEngineLayer {
-    constructor({mapContext, layerIndex, toggleable, label, description, bounds, mapId$, props, onProgress}) {
+    constructor({mapContext, layerIndex, toggleable, label, description, bounds, mapId$, props, progress$}) {
         this.mapContext = mapContext
         this.layerIndex = layerIndex
         this.toggleable = toggleable
@@ -14,7 +14,7 @@ export default class EarthEngineLayer {
         this.bounds = bounds
         this.mapId$ = mapId$
         this.props = props
-        this.onProgress = onProgress
+        this.progress$ = progress$
     }
 
     equals(o) {
@@ -58,19 +58,20 @@ export default class EarthEngineLayer {
             }
             tileStats.complete = tileStats.count === tileStats.loaded + tileStats.failed
 
-            if (this.onProgress && tileStats.count > 0)
-                this.onProgress(tileStats)
-            else
+            if (this.progress$ && tileStats.count > 0) {
+                this.progress$.next(tileStats)
+            } else {
                 setTimeout(notifyOnProgress, 100)
+            }
         }
-        this.boundsChangedListener = this.mapContext.sepalMap.onBoundsChanged(notifyOnProgress)
+        this.boundsChanged = this.mapContext.sepalMap.onBoundsChanged(notifyOnProgress)
         notifyOnProgress()
         layer.addEventListener('tile-load', notifyOnProgress)
         layer.addEventListener('tile-fail', notifyOnProgress)
     }
 
     removeFromMap() {
-        this.mapContext.sepalMap.removeListener(this.boundsChangedListener)
+        this.boundsChanged.removeListener()
         // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
         this.mapContext.googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
         this.mapContext.googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
@@ -82,16 +83,16 @@ export default class EarthEngineLayer {
     }
 
     initialize$() {
-        if (this.mapId)
-            return of(this)
-        return this.mapId$.pipe(
-            map(({response: {token, mapId, urlTemplate}}) => {
-                this.token = token
-                this.mapId = mapId
-                this.urlTemplate = urlTemplate
-                return this
-            })
-        )
+        return this.mapId
+            ? of(this)
+            : this.mapId$.pipe(
+                tap(({response: {token, mapId, urlTemplate}}) => {
+                    this.token = token
+                    this.mapId = mapId
+                    this.urlTemplate = urlTemplate
+                }),
+                mapTo(this)
+            )
     }
 }
 

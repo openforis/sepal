@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -8,6 +9,7 @@ import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
+import withSubscriptions from 'subscription'
 
 const LABEL = 'classification'
 
@@ -17,6 +19,17 @@ class ClassificationPreview extends React.Component {
     state = {
         initializing: false,
         failed: false
+    }
+
+    constructor(props) {
+        super(props)
+        this.progress$ = new Subject()
+        const {addSubscription} = props
+        addSubscription(
+            this.progress$.subscribe(
+                tiles => this.setState({tiles, initializing: false})
+            )
+        )
     }
 
     renderInitializing() {
@@ -47,10 +60,6 @@ class ClassificationPreview extends React.Component {
             return this.renderLoading()
         }
         return null
-    }
-
-    onProgress(tiles) {
-        this.setState({tiles, initializing: false})
     }
 
     onError(e) {
@@ -106,7 +115,8 @@ class ClassificationPreview extends React.Component {
             description: msg('process.classification.preview.description'),
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
-            onProgress: tiles => this.onProgress(tiles)
+            progress$: this.progress$
+            
         })
         const changed = mapContext.sepalMap.setLayer({
             id: 'preview',
@@ -137,5 +147,6 @@ ClassificationPreview.propTypes = {}
 
 export default compose(
     ClassificationPreview,
-    withRecipe(mapRecipeToProps)
+    withRecipe(mapRecipeToProps),
+    withSubscriptions()
 )

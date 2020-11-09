@@ -1,5 +1,6 @@
 import {Button} from 'widget/button'
 import {RecipeState, getPrimitiveTypes} from './landCoverRecipe'
+import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -12,6 +13,7 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 import styles from 'app/home/body/process/classification/classificationPreview.module.css'
+import withSubscriptions from 'subscription'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -22,6 +24,17 @@ const mapStateToProps = (state, ownProps) => {
 
 class AssemblyPreview extends React.Component {
     state = {}
+
+    constructor(props) {
+        super(props)
+        this.progress$ = new Subject()
+        const {addSubscription} = props
+        addSubscription(
+            this.progress$.subscribe(
+                tiles => this.setState({tiles, initializing: false})
+            )
+        )
+    }
 
     componentDidMount() {
         // RecipeActions(this.props.recipeId).setTypology({
@@ -99,7 +112,7 @@ class AssemblyPreview extends React.Component {
             layerIndex: 1,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
-            onProgress: tiles => this.onProgress(tiles)
+            progress$: this.progress$
         })
         const changed = mapContext.sepalMap.setLayer({
             id: 'preview',
@@ -122,10 +135,6 @@ class AssemblyPreview extends React.Component {
     isHidden() {
         const {recipe} = this.props
         return !!recipe.ui.selectedPanel
-    }
-
-    onProgress(tiles) {
-        this.setState({tiles, initializing: false})
     }
 
     onError(e) {
@@ -192,5 +201,6 @@ AssemblyPreview.propTypes = {
 export default compose(
     AssemblyPreview,
     connect(mapStateToProps),
-    withMapContext()
+    withMapContext(),
+    withSubscriptions()
 )
