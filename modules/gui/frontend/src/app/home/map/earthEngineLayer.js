@@ -71,7 +71,7 @@ export default class EarthEngineLayer {
     }
 
     removeFromMap() {
-        this.boundsChanged.removeListener()
+        this.boundsChanged && this.boundsChanged.removeListener()
         // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
         this.mapContext.googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
         this.mapContext.googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)

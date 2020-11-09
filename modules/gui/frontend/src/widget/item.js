@@ -98,7 +98,7 @@ export class Item extends React.Component {
 
 Item.propTypes = {
     children: PropTypes.any,
-    description: PropTypes.string,
+    description: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
     highlightDescription: PropTypes.any,
