@@ -1,7 +1,6 @@
 import {NEVER, Subject} from 'rxjs'
-import {fromGoogleBounds} from './map'
+import {filter, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
-import {takeUntil} from 'rxjs/operators'
 import Notifications from 'widget/notifications'
 import _ from 'lodash'
 
@@ -22,7 +21,10 @@ export class SepalMap {
             editable: false,
             zIndex: 1
         }
+        this.removeLayer$ = new Subject()
     }
+
+    // Zoom
 
     getZoom() {
         return this.googleMap.getZoom()
@@ -40,14 +42,6 @@ export class SepalMap {
         this.googleMap.setZoom(this.googleMap.getZoom() - 1)
     }
 
-    getMetersPerPixel() {
-        const latitude = this.googleMap.getCenter().lat()
-        const zoom = this.googleMap.getZoom()
-        return Math.round(
-            156543.03392 * Math.cos(latitude * Math.PI / 180) / Math.pow(2, zoom)
-        )
-    }
-
     isMaxZoom() {
         return this.googleMap.getZoom() === this.googleMap.maxZoom
     }
@@ -56,113 +50,131 @@ export class SepalMap {
         return this.googleMap.getZoom() === this.googleMap.minZoom
     }
 
-    fitBounds(bounds) {
-        const googleBounds = new this.google.maps.LatLngBounds(
+    getMetersPerPixel() {
+        const latitude = this.googleMap.getCenter().lat()
+        const zoom = this.googleMap.getZoom()
+        return Math.round(
+            156543.03392 * Math.cos(latitude * Math.PI / 180) / Math.pow(2, zoom)
+        )
+    }
+
+    // Bounds
+
+    // user by polygonLayer
+    fromGoogleBounds(googleBounds) {
+        const sw = googleBounds.getSouthWest()
+        const ne = googleBounds.getNorthEast()
+        return [
+            [sw.lng(), sw.lat()],
+            [ne.lng(), ne.lat()]
+        ]
+    }
+
+    // used here
+    toGoogleBounds(bounds) {
+        return new this.google.maps.LatLngBounds(
             {lng: bounds[0][0], lat: bounds[0][1]},
             {lng: bounds[1][0], lat: bounds[1][1]}
         )
-        const currentGoogleBounds = this.googleMap.getBounds()
-        const boundsChanged = !currentGoogleBounds || !currentGoogleBounds.equals(googleBounds)
+    }
+
+    // used by aoi
+    fitBounds(bounds) {
+        const nextBounds = this.toGoogleBounds(bounds)
+        const currentBounds = this.googleMap.getBounds()
+        const boundsChanged = !currentBounds || !currentBounds.equals(nextBounds)
         if (boundsChanged) {
-            this.googleMap.fitBounds(googleBounds)
+            this.googleMap.fitBounds(nextBounds)
         }
     }
 
+    // user by aoi
     getBounds() {
-        return fromGoogleBounds(this.googleMap.getBounds())
+        return this.fromGoogleBounds(this.googleMap.getBounds())
     }
 
+    // used by earthEngineLayer
     onBoundsChanged(listener) {
-        return this.googleMap.addListener('bounds_changed', listener)
-    }
-
-    addListener(mapObject, event, listener) {
-        return this.google.maps.event.addListener(mapObject, event, listener)
-    }
-
-    removeListener(listener) {
-        if (listener) {
-            this.google.maps.event.removeListener(listener)
+        const listenerId = this.googleMap.addListener('bounds_changed', listener)
+        return {
+            removeListener: () => this.google.maps.event.removeListener(listenerId)
         }
     }
 
+    // Layers
+
+    getLayer(id) {
+        return this.layerById[id]
+    }
+
+    // used by MANY
     setLayer({id, layer, destroy$ = NEVER, onInitialized, onError}) {
-        const existingLayer = this.layerById[id]
+        const existingLayer = this.getLayer(id)
         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
         if (unchanged) {
             return false
+
         }
         this.removeLayer(id)
         if (layer) {
             this.layerById[id] = layer
-            layer.__removed$ = new Subject()
-            layer.initialize$()
-                .pipe(
-                    takeUntil(destroy$),
-                    takeUntil(layer.__removed$)
-                )
-                .subscribe(
-                    () => {
-                        layer.__initialized__ = true
-                        layer.addToMap()
-                        onInitialized && onInitialized(layer)
-                    },
-                    error => onError
-                        ? onError(error)
-                        : Notifications.error({message: msg('map.layer.error'), error})
-                )
+            layer.initialize$().pipe(
+                takeUntil(destroy$),
+                takeUntil(this.removeLayer$.pipe(
+                    filter(layerId => layerId === id),
+                ))
+            ).subscribe(
+                () => {
+                    layer.__initialized__ = true
+                    layer.addToMap()
+                    onInitialized && onInitialized(layer)
+                },
+                error => onError
+                    ? onError(error)
+                    : Notifications.error({message: msg('map.layer.error'), error})
+            )
         }
         return true
     }
 
+    // used by MANY
     hideLayer(id, hidden) {
-        const layer = this.layerById[id]
+        const layer = this.getLayer(id)
         if (layer) {
             layer.hide(hidden)
         }
     }
 
+    // used by MANY
     removeLayer(id) {
-        const layer = this.layerById[id]
+        const layer = this.getLayer(id)
         if (layer) {
-            layer.__removed$.next()
+            this.removeLayer$.next(id)
             layer.removeFromMap()
-            delete this.layerById[id]
+            delete this.getLayer(id)
         }
     }
 
+    // used by mapToolbar
     isLayerInitialized(id) {
-        return !!(this.hasLayer(id) && this.layerById[id].__initialized__)
+        const layer = this.getLayer(id)
+        return !!(layer && layer.__initialized__)
     }
 
-    hasLayer(id) {
-        return !!this.layerById[id]
-    }
-
+    // used by layersMenu
     toggleableLayers() {
         return _.orderBy(Object.values(this.layerById).filter(layer => layer.toggleable), ['layerIndex'])
     }
 
+    // used by MANY
     fitLayer(id) {
-        const layer = this.layerById[id]
+        const layer = this.getLayer(id)
         if (layer && layer.bounds) {
-            const bounds = layer.bounds
-            this.fitBounds(bounds)
+            this.fitBounds(layer.bounds)
         }
     }
 
-    addToMap() {
-        Object.keys(this.layerById).forEach(id => {
-            const layer = this.layerById[id]
-            if (layer.__initialized__)
-                layer.addToMap()
-        })
-    }
-
-    removeFromMap() {
-        Object.keys(this.layerById).forEach(id => this.layerById[id].removeFromMap())
-    }
-
+    // used by mapToolbar
     zoomArea() {
         // setZooming(true)
         this.zooming = true
@@ -182,16 +194,19 @@ export class SepalMap {
 
     }
 
+    // used by mapToolbar
     cancelZoomArea() {
         // setZooming(false)
         this.zooming = false
         this.disableDrawingMode()
     }
 
+    // used by mapToolbar, chartPixelButton
     isZooming() {
         return this.zooming
     }
 
+    // used by polygonSection
     drawPolygon(id, callback) {
         this._drawingPolygon = {id, callback}
         this._drawingManager = this._drawingManager || new this.google.maps.drawing.DrawingManager({
@@ -217,18 +232,16 @@ export class SepalMap {
         this._drawingManager.setMap(this.googleMap)
     }
 
-    pauseDrawingMode() {
+    // used by polygonSection
+    disableDrawingMode() {
         if (this._drawingManager) {
             this._drawingManager.setMap(null)
             this.google.maps.event.clearListeners(this._drawingManager, 'overlaycomplete')
+            this._drawingPolygon = null
         }
     }
 
-    disableDrawingMode() {
-        this.pauseDrawingMode()
-        this._drawingPolygon = null
-    }
-
+    // used by chartPixelButton
     onOneClick(listener) {
         this.googleMap.setOptions({draggableCursor: 'pointer'})
         const instances = [
@@ -245,6 +258,7 @@ export class SepalMap {
         })
     }
 
+    // used by chartPixelButton
     clearClickListeners() {
         this.googleMap.setOptions({draggableCursor: null})
         const instances = [

@@ -8,8 +8,8 @@ import {setAoiLayer} from 'app/home/map/aoiLayer'
 import AutoSelectScenes from './autoSelectScenes'
 import BandSelection from './bandSelection'
 import MapToolbar from 'app/home/map/mapToolbar'
-import MosaicPreview from './opticalMosaicPreview'
 import MosaicToolbar from './panels/opticalMosaicToolbar'
+import OpticalMosaicPreview from './opticalMosaicPreview'
 import React from 'react'
 import SceneAreas from './sceneAreas'
 import SceneDeselection from './sceneDeselection'
@@ -44,7 +44,7 @@ class _Mosaic extends React.Component {
                         <MosaicToolbar/>
                         {initialized
                             ? <React.Fragment>
-                                <MosaicPreview/>
+                                <OpticalMosaicPreview/>
                                 <SceneAreas/>
                                 <AutoSelectScenes/>
                                 <SceneSelection/>

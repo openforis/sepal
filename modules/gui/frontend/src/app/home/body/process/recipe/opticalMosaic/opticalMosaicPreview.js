@@ -16,7 +16,7 @@ const LABEL = 'mosaic'
 
 const mapRecipeToProps = recipe => ({recipe})
 
-class MosaicPreview extends React.Component {
+class OpticalMosaicPreview extends React.Component {
     state = {
         initializing: false,
         failed: false
@@ -152,10 +152,10 @@ const removeLayer = ({mapContext: {sepalMap}}) => {
     sepalMap.removeLayer('preview')
 }
 
-MosaicPreview.propTypes = {}
+OpticalMosaicPreview.propTypes = {}
 
 export default compose(
-    MosaicPreview,
+    OpticalMosaicPreview,
     enabled({when: hasScenes, onDisable: removeLayer}),
     withRecipe(mapRecipeToProps)
 )

@@ -1,7 +1,6 @@
-import {fromGoogleBounds} from './map'
 import {of} from 'rxjs'
 
-export const polygonOptions = fill => ({
+const polygonOptions = fill => ({
     fillColor: '#FBFAF2',
     fillOpacity: fill ? 0.07 : 0.000000000000000000000000000001,
     strokeColor: '#FBFAF2',
@@ -22,7 +21,7 @@ export const setPolygonLayer = ({
 }
 
 class PolygonLayer {
-    constructor({mapContext: {google, googleMap}, path, fill}) {
+    constructor({mapContext: {google, googleMap, sepalMap}, path, fill}) {
         this.googleMap = googleMap
         this.type = 'PolygonLayer'
         this.polygonPath = path
@@ -36,7 +35,7 @@ class PolygonLayer {
             path.getArray().forEach(latLng =>
                 googleBounds.extend(latLng)
             ))
-        this.bounds = fromGoogleBounds(googleBounds)
+        this.bounds = sepalMap.fromGoogleBounds(googleBounds)
     }
 
     equals(o) {

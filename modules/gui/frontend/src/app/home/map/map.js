@@ -9,15 +9,6 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './map.module.css'
 
-export const fromGoogleBounds = googleBounds => {
-    const sw = googleBounds.getSouthWest()
-    const ne = googleBounds.getNorthEast()
-    return [
-        [sw.lng(), sw.lat()],
-        [ne.lng(), ne.lat()]
-    ]
-}
-
 const createGoogleMap = (google, mapElement) => {
     const mapOptions = {
         zoom: 3,
