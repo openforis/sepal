@@ -17,7 +17,6 @@ import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import styles from './terminal.module.css'
-import withSubscriptions from 'subscription'
 
 export default class Terminal extends React.Component {
     render() {
@@ -152,6 +151,5 @@ class _TerminalSession extends React.Component {
 
 const TerminalSession = compose(
     _TerminalSession,
-    connect(),
-    withSubscriptions()
+    connect()
 )
