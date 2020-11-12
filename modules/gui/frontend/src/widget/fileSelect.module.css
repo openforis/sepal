@@ -1,0 +1,21 @@
+.dropZone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: hsl(0, 0%, 50%);
+    background-color: var(--look-default-background-color);
+    border-style: dashed;
+    outline: none;
+    cursor: pointer;
+    padding: 2rem;
+}
+
+.dropZone:hover, .dragAccept {
+    cursor: pointer;
+    color: hsl(0, 0%, 70%);
+    background-color: var(--look-default-active-background-color);
+}
+
+.dragReject {
+    color: var(--error-color);
+}
