@@ -86,7 +86,6 @@ class Aoi extends React.Component {
                     icon='globe'
                     label={msg('process.mosaic.panel.areaOfInterest.title')}
                 />
-                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }

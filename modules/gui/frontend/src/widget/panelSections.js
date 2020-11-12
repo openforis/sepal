@@ -3,17 +3,25 @@ import {Panel} from 'widget/panel/panel'
 import ButtonSelect from 'widget/buttonSelect'
 import React from 'react'
 import _ from 'lodash'
+import {Form} from './form/form'
 
 export default class PanelSections extends React.Component {
     render() {
-        const {icon} = this.props
+        const {icon, step} = this.props
         const section = this.findSection()
+        const component = section.steps && step
+            ? section.steps[step.value]
+            : section.component
         return (
             <React.Fragment>
                 <Panel.Header icon={icon} title={this.renderSelect()}/>
-                <Panel.Content>
-                    {section && section.component}
-                </Panel.Content>
+                {component
+                    ? <Panel.Content>
+                        {component}
+                    </Panel.Content>
+                    : null
+                }
+                {this.renderButtons()}
             </React.Fragment>
         )
     }
@@ -24,7 +32,7 @@ export default class PanelSections extends React.Component {
             .filter(section => section.value)
             .map(section => ({
                 ...section,
-                buttonLabel: section.title,
+                buttonLabel: section.title
             }))
             .value()
         return (
@@ -41,12 +49,36 @@ export default class PanelSections extends React.Component {
         )
     }
 
+    renderButtons() {
+        const {step, defaultButtons} = this.props
+        const section = this.findSection()
+        if (!section.steps) {
+            return section.buttons || defaultButtons
+        } else {
+            const last = this.isLastStep()
+            const first = this.isFirstStep()
+            return (
+                <Form.PanelButtons
+                    id={'panelSections'}
+                    closable
+                    wizard={['panelSections']}
+                    first={first}
+                    last={last}
+                    onBack={() => step.set(step.value - 1)}
+                    onNext={() => step.set(step.value + 1)}
+                />
+            )
+        }
+    }
+
+
     shouldComponentUpdate(nextProps) {
         return nextProps.inputs !== this.props.inputs
     }
 
     componentDidMount() {
-        const {inputs, selected} = this.props
+        const {step, inputs, selected} = this.props
+        step && step.set(0)
         if (this.isSelectionSection())
             Object.keys(inputs)
                 .filter(name => name !== selected.name)
@@ -63,12 +95,29 @@ export default class PanelSections extends React.Component {
         const {sections, selected} = this.props
         return sections.find(({value}) => selected.value === value) || sections.find(({value}) => !value)
     }
+
+    isFirstStep() {
+        const {step} = this.props
+        return step && step.value === 0
+    }
+
+    isLastStep() {
+        const {step} = this.props
+        const section = this.findSection()
+        return step && section.steps && step.value === section.steps.length - 1
+    }
 }
 
 PanelSections.propTypes = {
-    selected: PropTypes.any.isRequired,
+    sections: PropTypes.array.isRequired,
+    inputs: PropTypes.any.isRequired,
+    selected: PropTypes.any.isRequired, // input field
+    step: PropTypes.any, // input field
     icon: PropTypes.string,
-    inputs: PropTypes.any,
     label: PropTypes.string,
-    section: PropTypes.any
+    defaultButtons: PropTypes.any
+}
+
+PanelSections.defaultProps = {
+    defaultButtons: <Form.PanelButtons/>
 }

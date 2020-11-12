@@ -41,7 +41,7 @@ class PanelWizard extends React.Component {
 
         const done = () => {
             this.setState({initialized: true})
-            currentActivatable.deactivate()
+            currentActivatable && currentActivatable.deactivate()
             onDone && onDone()
         }
         return (

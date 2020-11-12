@@ -30,8 +30,8 @@ const fields = {
         .notEmpty('process.classification.panel.inputImagery.form.bands.required'),
     bandSetSpecs: new Form.Field()
         .predicate((bandSetSpecs, {bands}) =>
-            bandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands)),
-        'process.classification.panel.inputImagery.form.bandSetSpecs.required')
+                bandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands)),
+            'process.classification.panel.inputImagery.form.bandSetSpecs.required')
 }
 
 const mapRecipeToProps = recipe => ({
@@ -66,20 +66,22 @@ class InputImage extends React.Component {
                     selected={inputs.section}
                     icon='image'
                     label={msg('IMAGE TO CLASSIFY')}
+                    defaultButtons={
+                        <Form.PanelButtons>
+                            <ButtonSelect
+                                label={msg('process.classification.panel.inputImagery.derivedBands.label')}
+                                tooltip={msg('process.classification.panel.inputImagery.derivedBands.tooltip')}
+                                look='add'
+                                icon='plus'
+                                placement='above'
+                                tooltipPlacement='bottom'
+                                disabled={!inputs.section.value || !inputs.bands.value || !inputs.bands.value.length}
+                                options={this.derivedBandsOptions()}
+                                onSelect={option => this.updateBandSetSpecs(option)}
+                            />
+                        </Form.PanelButtons>
+                    }
                 />
-                <Form.PanelButtons>
-                    <ButtonSelect
-                        label={msg('process.classification.panel.inputImagery.derivedBands.label')}
-                        tooltip={msg('process.classification.panel.inputImagery.derivedBands.tooltip')}
-                        look='add'
-                        icon='plus'
-                        placement='above'
-                        tooltipPlacement='bottom'
-                        disabled={!inputs.section.value || !inputs.bands.value || !inputs.bands.value.length}
-                        options={this.derivedBandsOptions()}
-                        onSelect={option => this.updateBandSetSpecs(option)}
-                    />
-                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
@@ -94,7 +96,7 @@ class InputImage extends React.Component {
         const {inputs, activatable: {imageId}} = this.props
         inputs.imageId.set(imageId)
     }
-
+umberOfSamplesValue
     addImage() {
         const {onAdd, activatable: {deactivate}} = this.props
         onAdd(this.getSelectedImage())
@@ -104,18 +106,18 @@ class InputImage extends React.Component {
     getSelectedImage() {
         const {inputs: {section, recipe, asset}} = this.props
         switch (section.value) {
-        case 'ASSET':
-            return {
-                type: 'ASSET',
-                id: asset.value
-            }
-        case 'RECIPE_REF':
-            return {
-                type: 'RECIPE_REF',
-                id: recipe.value
-            }
-        default:
-            throw Error(`Unexpected image section: ${section.value}`)
+            case 'ASSET':
+                return {
+                    type: 'ASSET',
+                    id: asset.value
+                }
+            case 'RECIPE_REF':
+                return {
+                    type: 'RECIPE_REF',
+                    id: recipe.value
+                }
+            default:
+                throw Error(`Unexpected image section: ${section.value}`)
         }
     }
 
@@ -124,18 +126,18 @@ class InputImage extends React.Component {
 
         const getSpecs = () => {
             switch (option.type) {
-            case 'PROFILE':
-                return getProfileBandSetSpecs(option.value, bands.value)
-            case 'PAIR_WISE_EXPRESSION':
-                return bandSetSpecs.value.concat(
-                    {id: guid(), type: 'PAIR_WISE_EXPRESSION', operation: option.value, included: []}
-                )
-            case 'INDEXES':
-                return bandSetSpecs.value.concat(
-                    {id: guid(), type: 'INDEXES', included: []}
-                )
-            default:
-                throw Error(`Unsupported type: ${JSON.stringify(option)}`)
+                case 'PROFILE':
+                    return getProfileBandSetSpecs(option.value, bands.value)
+                case 'PAIR_WISE_EXPRESSION':
+                    return bandSetSpecs.value.concat(
+                        {id: guid(), type: 'PAIR_WISE_EXPRESSION', operation: option.value, included: []}
+                    )
+                case 'INDEXES':
+                    return bandSetSpecs.value.concat(
+                        {id: guid(), type: 'INDEXES', included: []}
+                    )
+                default:
+                    throw Error(`Unsupported type: ${JSON.stringify(option)}`)
             }
         }
 
@@ -193,12 +195,12 @@ const modelToValues = model => {
         bandSetSpecs: model.bandSetSpecs
     }
     switch (model.type) {
-    case 'RECIPE_REF':
-        return {...values, recipe: model.id}
-    case 'ASSET':
-        return {...values, asset: model.id}
-    default:
-        return values
+        case 'RECIPE_REF':
+            return {...values, recipe: model.id}
+        case 'ASSET':
+            return {...values, asset: model.id}
+        default:
+            return values
     }
 }
 
@@ -210,12 +212,12 @@ const valuesToModel = values => {
         bandSetSpecs: values.bandSetSpecs
     }
     switch (values.section) {
-    case 'RECIPE_REF':
-        return {...model, id: values.recipe}
-    case 'ASSET':
-        return {...model, id: values.asset}
-    default:
-        return null
+        case 'RECIPE_REF':
+            return {...model, id: values.recipe}
+        case 'ASSET':
+            return {...model, id: values.asset}
+        default:
+            return null
     }
 }
 
