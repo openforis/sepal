@@ -46,8 +46,13 @@ class EETableSection extends Component {
             ),
             featureCollection => {
                 name.set(tableId.substring(tableId.lastIndexOf('/') + 1))
-                inputData.set(this.toInputData(featureCollection))
-                columns.set(Object.keys(featureCollection.columns))
+                const loadedInputData = this.toInputData(featureCollection)
+                inputData.set(loadedInputData)
+                const loadedColumns = Object.keys(featureCollection.columns)
+                columns.set(loadedInputData[0]['.geo']
+                    ? [...loadedColumns, '.geo']
+                    : loadedColumns
+                )
             },
             error => {
                 const {response: {defaultMessage, messageKey, messageArgs} = {}} = error
@@ -61,11 +66,10 @@ class EETableSection extends Component {
     }
 
     toInputData(featureCollection) {
-        return featureCollection.features.map(feature => {
-            return feature.geometry && feature.geometry.coordinates && feature.geometry.coordinates.length
+        return featureCollection.features.map(feature =>
+            feature.geometry && feature.geometry.coordinates && feature.geometry.coordinates.length
                 ? {'.geo': feature.geometry, ...feature.properties}
-                : feature.properties
-        })
+                : feature.properties)
     }
 }
 
