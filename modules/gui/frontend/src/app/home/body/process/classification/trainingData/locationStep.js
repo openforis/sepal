@@ -86,18 +86,18 @@ class ReferenceDataStep extends Component {
         const {inputs: {locationType, geoJsonColumn, xColumn, yColumn}} = this.props
         if (locationType.value)
             return // Already initialized
-        if (this.containsColumns('.geo')) {
+        if (this.containsColumns('.geo')) { // Earth Engine
             locationType.set('GEO_JSON')
             geoJsonColumn.set('.geo')
-        } else if (this.containsColumns('CENTER_LON', 'CENTER_LAT')) {
+        } else if (this.containsColumns('CENTER_LON', 'CENTER_LAT')) { // Collect Earth Online
             locationType.set('XY_COLUMNS')
             xColumn.set('CENTER_LON')
             yColumn.set('CENTER_LAT')
-        } else if (this.containsColumns('XCoordinate', 'YCoordinate')) {
+        } else if (this.containsColumns('XCoordinate', 'YCoordinate')) { // Collect
             locationType.set('XY_COLUMNS')
             xColumn.set('XCoordinate')
             yColumn.set('YCoordinate')
-        } else if (this.containsColumns('location_x', 'location_y')) {
+        } else if (this.containsColumns('location_x', 'location_y')) { // Collect Earth
             locationType.set('XY_COLUMNS')
             xColumn.set('location_x')
             yColumn.set('location_y')
