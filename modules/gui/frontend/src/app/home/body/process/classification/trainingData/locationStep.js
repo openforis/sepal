@@ -97,6 +97,10 @@ class ReferenceDataStep extends Component {
             locationType.set('XY_COLUMNS')
             xColumn.set('XCoordinate')
             yColumn.set('YCoordinate')
+        } else if (this.containsColumns('location_x', 'location_y')) {
+            locationType.set('XY_COLUMNS')
+            xColumn.set('location_x')
+            yColumn.set('location_y')
         } else {
             locationType.set('XY_COLUMNS')
         }

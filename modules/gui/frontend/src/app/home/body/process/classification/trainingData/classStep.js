@@ -100,12 +100,16 @@ class ClassStep extends Component {
         const {inputs: {columns, classColumnFormat, filterExpression, valueColumn}} = this.props
         if (classColumnFormat.value)
             return // Already initialized
-        if (this.containsColumns('FLAGGED', 'CENTER_LON', 'CENTER_LAT') && columns.value.find(column => column.indexOf(':'))) {
+        if (this.containsColumns('FLAGGED', 'CENTER_LON', 'CENTER_LAT')
+            && columns.value.find(column => column.indexOf(':'))) { // Collect Earth Online
             classColumnFormat.set('MULTIPLE_COLUMNS')
             filterExpression.set(`!FLAGGED && ANALYSES`)
         } else if (columns.value.includes('class')) {
             classColumnFormat.set('SINGLE_COLUMN')
             valueColumn.set('class')
+        } else if (columns.value.includes('land_use_category')) { // Collect Earth
+            classColumnFormat.set('SINGLE_COLUMN')
+            valueColumn.set('land_use_category')
         } else {
             classColumnFormat.set('SINGLE_COLUMN')
         }
