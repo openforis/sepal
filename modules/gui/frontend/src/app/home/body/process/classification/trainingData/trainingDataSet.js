@@ -17,9 +17,9 @@ import SampleClassificationSection from './sampleClassificationSection'
 
 const fields = {
     dataSetId: new Form.Field()
-        .notEmpty('process.classification.panel.trainingData.form.dataSetId.required'),
+        .notBlank('process.classification.panel.trainingData.form.dataSetId.required'),
     name: new Form.Field()
-        .notEmpty('process.classification.panel.trainingData.form.name.required'),
+        .notBlank('process.classification.panel.trainingData.form.name.required'),
     type: new Form.Field()
         .notBlank('process.classification.panel.trainingData.form.section.required'),
     wizardStep: new Form.Field(),
@@ -32,7 +32,7 @@ const fields = {
 
     recipe: new Form.Field()
         .skip((value, {type}) => type !== 'RECIPE')
-        .notEmpty('process.classification.panel.trainingData.form.recipe.required'),
+        .notBlank('process.classification.panel.trainingData.form.recipe.required'),
 
     eeTable: new Form.Field()
         .skip((value, {type}) => type !== 'EE_TABLE')
@@ -51,19 +51,19 @@ const fields = {
     locationType: new Form.Field()
         .skip((value, {type}) => type === 'RECIPE')
         .skip((value, {wizardStep}) => wizardStep !== 1)
-        .notEmpty('process.classification.panel.trainingData.form.location.locationType.required'),
+        .notBlank('process.classification.panel.trainingData.form.location.locationType.required'),
     geoJsonColumn: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 1)
         .skip((value, {locationType}) => locationType !== 'GEO_JSON')
-        .notEmpty('process.classification.panel.trainingData.form.location.geoJsonColumn.required'),
+        .notBlank('process.classification.panel.trainingData.form.location.geoJsonColumn.required'),
     xColumn: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 1)
         .skip((value, {locationType}) => locationType === 'GEO_JSON')
-        .notEmpty('process.classification.panel.trainingData.form.location.xColumn.required'),
+        .notBlank('process.classification.panel.trainingData.form.location.xColumn.required'),
     yColumn: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 1)
         .skip((value, {locationType}) => locationType === 'GEO_JSON')
-        .notEmpty('process.classification.panel.trainingData.form.location.yColumn.required'),
+        .notBlank('process.classification.panel.trainingData.form.location.yColumn.required'),
 
     // TODO: CRS
 
@@ -73,11 +73,11 @@ const fields = {
         .predicate(invalid => !invalid, 'process.classification.panel.trainingData.form.class.filterExpression.invalid'),
     classColumnFormat: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 2)
-        .notEmpty('process.classification.panel.trainingData.form.class.classColumnFormat.required'),
+        .notBlank('process.classification.panel.trainingData.form.class.classColumnFormat.required'),
     valueColumn: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 2)
-        .skip((value, {classMappingType}) => classMappingType !== 'SINGLE_COLUMN')
-        .notEmpty('process.classification.panel.trainingData.form.class.valueColumn.required'),
+        .skip((value, {classColumnFormat}) => classColumnFormat !== 'SINGLE_COLUMN')
+        .notBlank('process.classification.panel.trainingData.form.class.valueColumn.required'),
     valueMapping: new Form.Field(),
     columnMapping: new Form.Field(),
     customMapping: new Form.Field(),
