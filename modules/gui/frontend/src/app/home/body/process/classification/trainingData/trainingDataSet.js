@@ -7,12 +7,85 @@ import PanelSections from 'widget/panelSections'
 import React from 'react'
 import styles from './trainingDataSet.module.css'
 import SectionSelection from './sectionSelection'
-import TestForm from './testForm'
+import CsvUploadSection from './csvUploadSection'
+import RecipeSection from './recipeSection'
+import ClassStep from './classStep'
+import ClassMappingStep from './classMappingStep'
+import LocationStep from './locationStep'
+import EETableSection from './eeTableSection'
+import SampleClassificationSection from './sampleClassificationSection'
 
 const fields = {
-    dataSetId: new Form.Field(),
+    dataSetId: new Form.Field()
+        .notEmpty('process.classification.panel.trainingData.form.dataSetId.required'),
+    name: new Form.Field()
+        .notEmpty('process.classification.panel.trainingData.form.name.required'),
     type: new Form.Field()
-        .notBlank('process.classification.panel.trainingData.form.section.required')
+        .notBlank('process.classification.panel.trainingData.form.section.required'),
+    wizardStep: new Form.Field(),
+    inputData: new Form.Field()
+        .skip((value, {type}) => type === 'RECIPE')
+        .notEmpty('process.classification.panel.trainingData.form.inputData.required'),
+    columns: new Form.Field()
+        .skip((value, {type}) => type === 'RECIPE')
+        .notEmpty('process.classification.panel.trainingData.form.inputData.required'),
+
+    recipe: new Form.Field()
+        .skip((value, {type}) => type !== 'RECIPE')
+        .notEmpty('process.classification.panel.trainingData.form.recipe.required'),
+
+    eeTable: new Form.Field()
+        .skip((value, {type}) => type !== 'EE_TABLE')
+        .notBlank('process.classification.panel.trainingData.form.eeTable.required'),
+
+    assetToSample: new Form.Field()
+        .skip((value, {type}) => type !== 'SAMPLE_CLASSIFICATION')
+        .notBlank('process.classification.panel.trainingData.form.sampleClassification.assetToSample.required'),
+    samplesPerClass: new Form.Field()
+        .skip((value, {type}) => type !== 'SAMPLE_CLASSIFICATION')
+        .notBlank('process.classification.panel.trainingData.form.sampleClassification.numberOfSamples.required'),
+    sampleScale: new Form.Field()
+        .skip((value, {type}) => type !== 'SAMPLE_CLASSIFICATION')
+        .notBlank('process.classification.panel.trainingData.form.sampleClassification.sampleScale.required'),
+
+    locationType: new Form.Field()
+        .skip((value, {type}) => type === 'RECIPE')
+        .skip((value, {wizardStep}) => wizardStep !== 1)
+        .notEmpty('process.classification.panel.trainingData.form.location.locationType.required'),
+    geoJsonColumn: new Form.Field()
+        .skip((value, {wizardStep}) => wizardStep !== 1)
+        .skip((value, {locationType}) => locationType !== 'GEO_JSON')
+        .notEmpty('process.classification.panel.trainingData.form.location.geoJsonColumn.required'),
+    xColumn: new Form.Field()
+        .skip((value, {wizardStep}) => wizardStep !== 1)
+        .skip((value, {locationType}) => locationType === 'GEO_JSON')
+        .notEmpty('process.classification.panel.trainingData.form.location.xColumn.required'),
+    yColumn: new Form.Field()
+        .skip((value, {wizardStep}) => wizardStep !== 1)
+        .skip((value, {locationType}) => locationType === 'GEO_JSON')
+        .notEmpty('process.classification.panel.trainingData.form.location.yColumn.required'),
+
+    // TODO: CRS
+
+    filterExpression: new Form.Field(),
+    invalidFilterExpression: new Form.Field()
+        .skip((value, {wizardStep}) => wizardStep !== 2)
+        .predicate(invalid => !invalid, 'process.classification.panel.trainingData.form.class.filterExpression.invalid'),
+    classColumnFormat: new Form.Field()
+        .skip((value, {wizardStep}) => wizardStep !== 2)
+        .notEmpty('process.classification.panel.trainingData.form.class.classColumnFormat.required'),
+    valueColumn: new Form.Field()
+        .skip((value, {wizardStep}) => wizardStep !== 2)
+        .skip((value, {classMappingType}) => classMappingType !== 'SINGLE_COLUMN')
+        .notEmpty('process.classification.panel.trainingData.form.class.valueColumn.required'),
+    valueMapping: new Form.Field(),
+    columnMapping: new Form.Field(),
+    customMapping: new Form.Field(),
+    defaultValue: new Form.Field(),
+
+    referenceData: new Form.Field()
+        .skip((value, {wizardStep}) => wizardStep !== 3)
+        .notEmpty('process.classification.panel.trainingData.form.referenceData.required'),
 }
 
 const mapRecipeToProps = recipe => ({
@@ -31,10 +104,10 @@ class TrainingDataSet extends React.Component {
                     inputs={inputs}
                     sections={this.getSectionOptions()}
                     selected={inputs.type}
+                    step={inputs.wizardStep}
                     icon='table'
-                    label={msg('TRAINING DATA SET')}
+                    label={msg('process.classification.panel.trainingData.sectionSelection.title')}
                 />
-                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
@@ -46,32 +119,47 @@ class TrainingDataSet extends React.Component {
                 component: <SectionSelection section={inputs.type}/>
             },
             {
-                value: 'EE_TABLE',
-                label: msg('process.classification.panel.trainingData.type.EE_TABLE.label'),
-                tooltip: msg('process.classification.panel.trainingData.type.EE_TABLE.tooltip'),
-                title: msg('process.classification.panel.trainingData.type.EE_TABLE.title'),
-                component: <TestForm ${...this.props}/>
-            },
-            {
                 value: 'CSV_UPLOAD',
                 label: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.label'),
                 tooltip: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.title'),
-                component: <TestForm ${...this.props}/>
+                steps: [
+                    <CsvUploadSection ${...this.props}/>,
+                    <LocationStep ${...this.props}/>,
+                    <ClassStep ${...this.props}/>,
+                    <ClassMappingStep ${...this.props}/>
+                ]
+            },
+            {
+                value: 'EE_TABLE',
+                label: msg('process.classification.panel.trainingData.type.EE_TABLE.label'),
+                tooltip: msg('process.classification.panel.trainingData.type.EE_TABLE.tooltip'),
+                title: msg('process.classification.panel.trainingData.type.EE_TABLE.title'),
+                steps: [
+                    <EETableSection ${...this.props}/>,
+                    <LocationStep ${...this.props}/>,
+                    <ClassStep ${...this.props}/>,
+                    <ClassMappingStep ${...this.props}/>
+                ]
             },
             {
                 value: 'SAMPLE_CLASSIFICATION',
                 label: msg('process.classification.panel.trainingData.type.SAMPLE_CLASSIFICATION.label'),
                 tooltip: msg('process.classification.panel.trainingData.type.SAMPLE_CLASSIFICATION.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.SAMPLE_CLASSIFICATION.title'),
-                component: <TestForm ${...this.props}/>
+                steps: [
+                    <SampleClassificationSection ${...this.props}/>,
+                    <LocationStep ${...this.props}/>,
+                    <ClassStep ${...this.props}/>,
+                    <ClassMappingStep ${...this.props}/>
+                ]
             },
             {
                 value: 'RECIPE',
                 label: msg('process.classification.panel.trainingData.type.RECIPE.label'),
                 tooltip: msg('process.classification.panel.trainingData.type.RECIPE.tooltip'),
                 title: msg('process.classification.panel.trainingData.type.RECIPE.title'),
-                component: <TestForm ${...this.props}/>
+                component: <RecipeSection ${...this.props}/>
             }
         ]
     }
@@ -114,28 +202,37 @@ class TrainingDataSet extends React.Component {
 }
 
 const modelToValues = model => {
-    return {...model}
-    // const values = {
-    //     imageId: model.imageId,
-    //     section: model.type || 'SELECTION',
-    //     bands: model.bands,
-    //     bandSetSpecs: model.bandSetSpecs
-    // }
-    //
-    // // TODO: Update...
-    // switch (model.type) {
-    //     case 'RECIPE_REF':
-    //         return {...values, recipe: model.id}
-    //     case 'ASSET':
-    //         return {...values, asset: model.id}
-    //     default:
-    //         return values
-    // }
-
+    return {
+        dataSetId: model.dataSetId,
+        name: model.name,
+        type: model.type,
+        inputData: model.inputData,
+        columns: model.columns,
+        eeTable: model.eeTable,
+        assetToSample: model.assetToSample,
+        samplesPerClass: model.samplesPerClass,
+        sampleScale: model.sampleScale,
+        recipe: model.recipe,
+        locationType: model.locationType,
+        geoJsonColumn: model.geoJsonColumn,
+        xColumn: model.xColumn,
+        yColumn: model.yColumn,
+        filterExpression: model.filterExpression,
+        classColumnFormat: model.classColumnFormat,
+        valueColumn: model.valueColumn,
+        valueMapping: model.valueMapping,
+        columnMapping: model.columnMapping,
+        customMapping: model.customMapping,
+        defaultValue: model.defaultValue
+    }
 }
 
 const valuesToModel = values => {
-    return {...values, name: values.dataSetId + '-the-name'}
+    return {
+        ...values,
+        inputData: values.type === 'CSV_UPLOAD' ? values.inputData : undefined,
+        referenceData: values.referenceData.referenceData
+    }
     // const model = {
     //     imageId: values.imageId,
     //     type: values.section,

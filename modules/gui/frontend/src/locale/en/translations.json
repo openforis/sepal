@@ -153,6 +153,11 @@
     "notFound": "EE Table not found",
     "unauthorized": "You don't have access to this EE Table"
   },
+  "asset": {
+    "failedToLoad": "Failed to load EE asset",
+    "notFound": "Asset not found",
+    "unauthorized": "You don't have access to this asset"
+  },
   "gee": {
     "classification": {
       "error": {
@@ -488,7 +493,7 @@
           }
         },
         "legend": {
-          "button": "LGD",
+          "button": "LEG",
           "title": "Legend",
           "tooltip": "Setup legend for classification"
         },
@@ -522,6 +527,9 @@
             "confirmationMessage": "Are you sure you want to remove {name} from your training data?",
             "tooltip": "Remove training data set"
           },
+          "sectionSelection": {
+            "title": "Training data set"
+          },
           "type": {
             "EE_TABLE": {
               "label": "Earth Engine Table",
@@ -542,6 +550,91 @@
               "label": "Saved Sepal recipe",
               "tooltip": "Use training data from a saved Sepal recipe.",
               "title": "SEPAL RECIPE"
+            }
+          },
+          "form": {
+            "csvUpload": {
+              "file": {
+                "label": "CSV file"
+              }
+            },
+            "eeTable": {
+              "label": "EE table asset ID",
+              "placeholder": "Enter an asset ID...",
+              "required": "You must enter an asset ID"
+            },
+            "sampleClassification": {
+              "assetToSample": {
+                "label": "EE asset ID of classification",
+                "placeholder": "Enter an asset ID...",
+                "required": "You must enter an asset ID"
+              },
+              "samplesPerClass": {
+                "label": "Samples per class",
+                "info": "{count} samples",
+                "required": "You must specify the number of samples to collect for each class"
+              },
+              "sampleScale": {
+                "label": "Scale to sample in (m)",
+                "info": "{scale} meters",
+                "required": "You must specify the scale to sample in"
+              },
+              "valueColumn": {
+                "label": "Class band",
+                "tooltip": "Select band containing class",
+                "placeholder": "Select band containing class..."
+              }
+            },
+            "location": {
+              "locationType": {
+                "label": "Location type",
+                "tooltip": "Select how location of reference data is represented",
+                "GEO_JSON": {
+                  "label": "GeoJSON column",
+                  "tooltip": "Location is in a single GeoJSON column"
+                },
+                "XY_COLUMNS": {
+                  "label": "X/Y coordinate columns",
+                  "tooltip": "Location is in two X/Y coordinate columns"
+                }
+              },
+              "geoJson": {
+                "label": "GeoJSON column",
+                "placeholder": "Select column"
+              },
+              "xColumn": {
+                "label": "X coordinate column",
+                "placeholder": "Select column"
+              },
+              "yColumn": {
+                "label": "Y coordinate column",
+                "placeholder": "Select column"
+              }
+            },
+            "class": {
+              "classColumnFormat": {
+                "label": "Class format",
+                "options": {
+                  "SINGLE_COLUMN": {
+                    "label": "Single column",
+                    "tooltip": "The classes are in a single column"
+                  },
+                  "MULTIPLE_COLUMNS": {
+                    "label": "Column per class",
+                    "tooltip": "The classes are in separate columns"
+                  },
+                  "OTHER_FORMAT": {
+                    "label": "Other format",
+                    "tooltip": "Reference data has a different format"
+                  }
+                }
+              },
+              "valueColumn": {
+                "label": "Class column",
+                "tooltip": "Select column containing class values",
+                "placeholder": "Select column containing class values...",
+                "required": "A column must be selected"
+              }
             }
           }
         }
@@ -2179,6 +2272,19 @@
     },
     "confirm": {
       "title": "Confirmation required"
+    },
+    "fileSelect": {
+      "multiple": {
+        "dropOrClick": "Drop file(s) here, or click to select file(s)",
+        "drop": "Drop file(s) here.",
+        "reject": "Cannot drop file(s). Wrong file type?"
+      },
+      "single": {
+        "dropOrClick": "Drop file here, or click to select file",
+        "drop": "Drop file here",
+        "reject": "Cannot drop file. Wrong file type?",
+        "tooMany": "Can only drop a single file."
+      }
     },
     "list": {
       "noResults": "No results"

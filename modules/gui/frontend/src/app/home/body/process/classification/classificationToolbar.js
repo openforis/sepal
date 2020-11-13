@@ -24,7 +24,7 @@ class ClassificationToolbar extends React.Component {
         const {recipeId, initialized} = this.props
         return (
             <PanelWizard
-                panels={['inputImagery', 'trainingData']}
+                panels={['inputImagery', 'legend', 'trainingData']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 

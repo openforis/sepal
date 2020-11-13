@@ -1,0 +1,69 @@
+.mapping {
+    margin-top: 1rem;
+}
+
+.entry {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-gap: 1rem;
+    color: #ccc;
+}
+
+.color {
+    --color: black; /* To be overridden */
+    background-color: var(--color);
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+.value {
+    width: 2rem;
+}
+
+.label {
+}
+
+.input {
+    margin-top: 1rem;
+}
+
+.valueMapping {
+
+}
+
+.mappedValue {
+    background-color: blue;
+    border-radius: 1rem;
+    padding: 0.1rem 1rem;
+}
+
+.noData {
+    color: gray;
+    font-size: .9rem;
+}
+
+.valueSelectionRow {
+    position: relative;
+    height: 2rem;
+}
+
+.valueSelectionCombo {
+    position: absolute;
+    right: 0;
+    left: 0;
+    background-color: var(--modal-background);
+}
+
+.count {
+    color: #ccc;
+    font-size: 0.9rem;;
+}
+
+.expression {
+    flex-grow: 1;
+}
+
+.expressionRow {
+    display: flex;
+    flex-direction: row;
+}

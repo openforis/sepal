@@ -50,7 +50,6 @@ class TrainingData extends React.Component {
     }
 
     renderDataSets(dataSets) {
-        console.log(dataSets)
         return dataSets
             .filter(dataSet => dataSet)
             .map(dataSet => this.renderDataSet(dataSet))
@@ -62,7 +61,7 @@ class TrainingData extends React.Component {
             return null
         return (
             <SuperButton
-                key={`${dataSet.type}-${dataSet.id}`}
+                key={`${dataSet.type}-${dataSet.dataSetId}`}
                 title={msg(`process.classification.panel.trainingData.type.${dataSet.type}.label`)}
                 description={name}
                 removeMessage={msg('process.classification.panel.trainingData.remove.confirmationMessage', {name})}
@@ -102,7 +101,7 @@ class TrainingData extends React.Component {
 
 TrainingData.propTypes = {}
 
-const additionalPolicy = () => ({_: 'allow'})
+const additionalPolicy = () => ({'trainingDataSet': 'allow'})
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected data sets from
 // being overridden.
 const valuesToModel = null

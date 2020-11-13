@@ -18,18 +18,19 @@ const mapStateToProps = state => ({
 const mapRecipeToProps = recipe => ({
     recipeId: selectFrom(recipe, 'id'),
     initialized: selectFrom(recipe, 'ui.initialized'),
-    images: selectFrom(recipe, 'model.inputImagery.images')
+    images: selectFrom(recipe, 'model.inputImagery.images'),
+    trainingData: selectFrom(recipe, 'model.trainingData')
 })
 
 class _Classification extends React.Component {
     render() {
-        const {recipeId, recipeContext: {statePath}, initialized} = this.props
+        const {recipeId, recipeContext: {statePath}, trainingData, initialized} = this.props
         return (
             <React.Fragment>
                 <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}/>
                 <ClassificationToolbar/>
 
-                {initialized
+                {initialized && trainingData.dataSets.length
                     ? <ClassificationPreview/>
                     : null}
             </React.Fragment>

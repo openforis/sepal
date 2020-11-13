@@ -12,14 +12,14 @@ export default class SectionSelection extends React.Component {
 
         const options = [
             {
-                value: 'EE_TABLE',
-                label: msg('process.classification.panel.trainingData.type.EE_TABLE.label'),
-                tooltip: msg('process.classification.panel.trainingData.type.EE_TABLE.tooltip'),
-            },
-            {
                 value: 'CSV_UPLOAD',
                 label: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.label'),
                 tooltip: msg('process.classification.panel.trainingData.type.CSV_UPLOAD.tooltip'),
+            },
+            {
+                value: 'EE_TABLE',
+                label: msg('process.classification.panel.trainingData.type.EE_TABLE.label'),
+                tooltip: msg('process.classification.panel.trainingData.type.EE_TABLE.tooltip'),
             },
             {
                 value: 'SAMPLE_CLASSIFICATION',
