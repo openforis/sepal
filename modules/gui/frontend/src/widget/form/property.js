@@ -1,5 +1,6 @@
 import {msg} from 'translate'
 import moment from 'moment'
+import _ from 'lodash'
 
 class FormProperty {
     static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape
@@ -18,41 +19,81 @@ class FormProperty {
     }
 
     match(regex, messageId, messageArgs) {
-        return this.predicate(value => regex.test(value), messageId, messageArgs)
-    }
-
-    notEmpty(messageId, messageArgs) {
-        return this.predicate(value => {
-            if (Array.isArray(value))
-                return value.length > 0
-            else if (value === Object(value))
-                return Object.keys(value).length > 0
-            else
-                return !!value
-        },
-        messageId,
-        messageArgs
+        return this.predicate(
+            value => regex.test(value),
+            messageId || 'fieldValidation.match',
+            messageId ? messageArgs : () => ({regex})
         )
     }
 
-    notBlank(messageId, messageArgs) {
+    notEmpty(messageId = 'fieldValidation.notEmpty', messageArgs) {
+        return this.predicate(value => {
+                if (Array.isArray(value))
+                    return value.length > 0
+                else if (value === Object(value))
+                    return Object.keys(value).length > 0
+                else
+                    return !!value
+            },
+            messageId,
+            messageArgs
+        )
+    }
+
+    notBlank(messageId = 'fieldValidation.notBlank', messageArgs) {
         return this.predicate(value => !!value, messageId, messageArgs)
     }
 
-    email(messageId, messageArgs) {
+    email(messageId = 'fieldValidation.email', messageArgs) {
         return this.match(FormConstraint._EMAIL_REGEX, messageId, messageArgs)
     }
 
-    date(format, messageId, messageArgs) {
+    date(format, messageId = 'fieldValidation.date', messageArgs) {
         return this.predicate(value => moment(value, format).isValid(), messageId, messageArgs)
     }
 
-    int(messageId, messageArgs) {
+    int(messageId = 'fieldValidation.int', messageArgs) {
         return this.predicate(value => String(value).match(/^\d+$/), messageId, messageArgs)
     }
 
+    number(messageId = 'fieldValidation.number', messageArgs) {
+        return this.predicate(
+            value => _.isFinite(value) || (!isNaN(value) && !isNaN(parseFloat(value))),
+            messageId,
+            messageArgs
+        )
+    }
+
     min(minValue, messageId, messageArgs) {
-        return this.predicate(value => value >= minValue, messageId, messageArgs)
+        return this.predicate(
+            value => value >= minValue,
+            messageId || 'fieldValidation.min',
+            messageId ? messageArgs : () => ({minValue})
+        )
+    }
+
+    greaterThan(minValue, messageId, messageArgs) {
+        return this.predicate(
+            value => value > minValue,
+            messageId || 'fieldValidation.greaterThan',
+            messageId ? messageArgs : () => ({minValue})
+        )
+    }
+
+    max(maxValue, messageId, messageArgs) {
+        return this.predicate(
+            value => value <= maxValue,
+            messageId || 'fieldValidation.max',
+            messageId ? messageArgs : () => ({maxValue})
+        )
+    }
+
+    lessThan(maxValue, messageId, messageArgs) {
+        return this.predicate(
+            value => value < maxValue,
+            messageId || 'fieldValidation.lessThan',
+            messageId ? messageArgs : () => ({maxValue})
+        )
     }
 
     check(name, values) {
