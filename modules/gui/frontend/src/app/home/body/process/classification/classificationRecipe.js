@@ -4,7 +4,30 @@ import _ from 'lodash'
 import api from 'api'
 
 export const defaultModel = {
-    auxiliaryImagery: []
+    auxiliaryImagery: [],
+    classifier: {
+        type: 'RANDOM_FOREST',
+        numberOfTrees: 25,
+        variablesPerSplit: null,
+        minLeafPopulation: 1,
+        bagFraction: 0.5,
+        maxNodes: null,
+        seed: 0,
+
+        lambda: 0.000001,
+
+        decisionProcedure: 'Voting',
+        svmType: 'C_SVC',
+        kernelType: 'LINEAR',
+        shrinking: true,
+        degree: null,
+        gamma: null,
+        coef0: 0,
+        cost: 1,
+        nu: 0.5,
+
+        metric: 'euclidean'
+    }
 }
 
 export const RecipeActions = id => {

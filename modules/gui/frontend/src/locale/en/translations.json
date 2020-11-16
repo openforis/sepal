@@ -371,6 +371,174 @@
           "title": "Auxiliary sources",
           "tooltip": "Include Auxiliary image sources in classification"
         },
+        "classifier": {
+          "button": "CLS",
+          "form": {
+            "type": {
+              "label": "Type"
+            },
+            "randomForest": {
+              "label": "Random Forest",
+              "config": {
+                "numberOfTrees": {
+                  "label": "Number of trees",
+                  "tooltip": "The number of decision trees to create",
+                  "placeholder": "Number of trees..."
+                },
+                "variablesPerSplit": {
+                  "label": "Variables per split",
+                  "tooltip": "The number of variables per split. If unspecified, uses the square root of the number of variables.",
+                  "placeholder": "Variables per split..."
+                },
+                "minLeafPopulation": {
+                  "label": "Min leaf population",
+                  "tooltip": "Only create nodes whose training set contains at least this many points",
+                  "placeholder": "Min leaf population..."
+                },
+                "bagFraction": {
+                  "label": "Bag fraction",
+                  "tooltip": "The fraction of input to bag per tree",
+                  "placeholder": "Bag fraction..."
+                },
+                "maxNodes": {
+                  "label": "Max nodes",
+                  "tooltip": "The maximum number of leaf nodes in each tree. If unspecified, defaults to no limit",
+                  "placeholder": "Max nodes..."
+                },
+                "seed": {
+                  "label": "Seed",
+                  "tooltip": "The randomization seed",
+                  "placeholder": "Seed..."
+                }
+              }
+            },
+            "cart": {
+              "label": "Cart"
+            },
+            "naiveBayes": {
+              "label": "Naive bayes",
+              "config": {
+                "lambda": {
+                  "label": "Lambda",
+                  "tooltip": "A smoothing lambda. Used to avoid assigning zero probability to classes not seen during training, instead using lambda / (lambda * nFeatures)",
+                  "placeholder": "Lambda..."
+                }
+              }
+            },
+            "svm": {
+              "label": "SVM",
+              "config": {
+                "decisionProcedure": {
+                  "label": "Decision procedure",
+                  "options": {
+                    "Voting.label": "Voting",
+                    "Margin.label": "Margin"
+                  }
+                },
+                "svmType": {
+                  "label": "SVM type",
+                  "tooltip": "The decision procedure to use for classification",
+                  "options": {
+                    "C_SVC": {
+                      "label": "C-SVC",
+                      "tooltip": "Default type"
+                    },
+                    "NU_SVC": {
+                      "label": "NU-SVC",
+                      "tooltip": "More flexible type"
+                    },
+                    "ONE_CLASS": {
+                      "label": "ONE-CLASS",
+                      "tooltip": "Train on a single class, using outliers as negative examples"
+                    }
+                  }
+                },
+                "kernelType": {
+                  "label": "Kernel type",
+                  "tooltip": "The type of kernel function",
+                  "options": {
+                    "LINEAR": {
+                      "label": "Linear",
+                      "tooltip": "u′×v (work well with large training data sets)"
+                    },
+                    "POLY": {
+                      "label": "Polynomial",
+                      "tooltip": "(γ×u′×v + coef₀)ᵈᵉᵍʳᵉᵉ"
+                    },
+                    "RBF": {
+                      "label": "Gaussian RBD",
+                      "tooltip": "exp(-γ×|u-v|²) (Handles non-linear problems well)"
+                    },
+                    "SIGMOID": {
+                      "label": "Sigmoid",
+                      "tooltip": "tanh(γ×u′×v + coef₀)"
+                    }
+                  }
+                },
+                "shrinking": {
+                  "label": "Shrinking",
+                  "tooltip": "Whether to use shrinking heuristics",
+                  "options": {
+                    "yes.label": "Yes",
+                    "no.label": "No"
+                  }
+                },
+                "degree": {
+                  "label": "Degree of polynomial",
+                  "placeholder": "Degree..."
+                },
+                "gamma": {
+                  "label": "Gamma",
+                  "tooltip": "The gamma value in the kernel function. Defaults to the reciprocal of the number of features",
+                  "placeholder": "Gamma..."
+                },
+                "coef0": {
+                  "label": "coef₀",
+                  "tooltip": "The coef₀ value in the kernel function",
+                  "placeholder": "coef₀..."
+                },
+                "cost": {
+                  "label": "Cost",
+                  "tooltip": "The cost (C) parameter",
+                  "placeholder": "Cost..."
+                },
+                "nu": {
+                  "label": "nu",
+                  "tooltip": "The nu parameter",
+                  "placeholder": "nu parameter..."
+                },
+                "oneClass": {
+                  "label": "Class to train on",
+                  "placeholder": "Class to train on..."
+                }
+              }
+            },
+            "minimumDistance": {
+              "label": "Min distance",
+              "config": {
+                "metric": {
+                  "label": "Metric",
+                  "options": {
+                    "euclidean": {
+                      "label": "Euclidean",
+                      "tooltip": "Euclidean distance from the un-normalized class mean"
+                    },
+                    "cosine": {
+                      "label": "Spectral angle",
+                      "tooltip": "Spectral angle from the un-normalized class mean"
+                    },
+                    "mahalanobis": {
+                      "label": "Mahalanobis",
+                      "tooltip": "Mahalanobis distance from the class mean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "title": "Classifier configuration",
+          "tooltip": "Configure the classifier"
+        },
         "inputImagery": {
           "asset": {
             "title": "Earth Engine asset"
@@ -2315,5 +2483,18 @@
   },
   "error": {
     "internal": "Internal error"
+  },
+  "fieldValidation": {
+    "match": "Must match {regex}",
+    "notEmpty": "Cannot be empty",
+    "notBlank": "Cannot be blank",
+    "email": "Must be an email",
+    "date": "Must be a date",
+    "int": "Must be an integer",
+    "number": "Must be a number",
+    "min": "Min value is {minValue}",
+    "greaterThan": "Must be greater than {minValue}",
+    "max": "Max value is {maxValue}",
+    "lessThan": "Must be less than {maxValue}"
   }
 }

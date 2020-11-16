@@ -13,6 +13,7 @@ import React from 'react'
 import Retrieve from './retrieve/retrieve'
 import TrainingData from './trainingData/trainingData'
 import styles from './classificationToolbar.module.css'
+import Classifier from './classifier/classifier'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
@@ -33,6 +34,7 @@ class ClassificationToolbar extends React.Component {
                 <Legend/>
                 <TrainingData/>
                 <AuxiliaryImagery/>
+                <Classifier/>
 
                 <Toolbar
                     vertical
@@ -69,6 +71,11 @@ class ClassificationToolbar extends React.Component {
                         id='auxiliaryImagery'
                         label={msg('process.classification.panel.auxiliaryImagery.button')}
                         tooltip={msg('process.classification.panel.auxiliaryImagery.tooltip')}/>
+
+                    <Toolbar.ActivationButton
+                        id='classifier'
+                        label={msg('process.classification.panel.classifier.button')}
+                        tooltip={msg('process.classification.panel.classifier.tooltip')}/>
                 </Toolbar>
             </PanelWizard>
         )
