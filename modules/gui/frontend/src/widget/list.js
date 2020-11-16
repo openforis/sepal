@@ -152,7 +152,7 @@ class List extends React.Component {
                     look='transparent'
                     air={air}
                     additionalClassName={styles.group}
-                    label={option.label}
+                    label={option.render ? option.render() : option.label}
                     width='fill'
                     alignment={alignment}
                     disabled
@@ -169,7 +169,7 @@ class List extends React.Component {
                     chromeless
                     look='transparent'
                     air={air}
-                    label={option.label}
+                    label={option.render ? option.render() : option.label}
                     width='fill'
                     alignment={alignment}
                     disabled
@@ -200,7 +200,7 @@ class List extends React.Component {
                     chromeless={!selected}
                     look={selected ? 'selected' : 'highlight'}
                     air={air}
-                    label={option.label}
+                    label={option.render ? option.render() : option.label}
                     tooltip={option.tooltip}
                     tooltipPlacement={tooltipPlacement}
                     hover={hover}
