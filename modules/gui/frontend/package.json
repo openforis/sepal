@@ -34,7 +34,7 @@
     "react-dropzone": "^11.2.4",
     "react-hammerjs": "^1.0.1",
     "react-highlighter": "^0.4.3",
-    "react-intl": "5.3.2",
+    "react-intl": "5.10.1",
     "react-markdown": "^4.3.1",
     "react-number-format": "^4.4.1",
     "react-redux": "7.2.0",
