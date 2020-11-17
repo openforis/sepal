@@ -86,7 +86,10 @@ const fields = {
         .skip((value, {svmType}) => svmType !== 'ONE_CLASS')
         .notBlank(),
     metric: new Form.Field()
-        .skip((value, {type}) => type !== 'MINIMUM_DISTANCE')
+        .skip((value, {type}) => type !== 'MINIMUM_DISTANCE'),
+    decisionTree: new Form.Field()
+        .skip((value, {type}) => type !== 'DECISION_TREE')
+        .notBlank()
 }
 
 class Classifier extends React.Component {
@@ -134,6 +137,8 @@ class Classifier extends React.Component {
                     return renderSvm()
                 case 'MINIMUM_DISTANCE':
                     return renderMinimumDistance()
+                case 'DECISION_TREE':
+                    return renderDecisionTree()
                 default:
                     return
             }
@@ -160,6 +165,9 @@ class Classifier extends React.Component {
         const renderMinimumDistance = () =>
             this.renderMetric()
 
+        const renderDecisionTree = () =>
+            this.renderDecisionTree()
+
         return (
             <Layout>
                 {this.renderType()}
@@ -167,6 +175,7 @@ class Classifier extends React.Component {
             </Layout>
         )
     }
+
 
     renderAdvanced() {
         const {inputs: {type, svmType, kernelType}} = this.props
@@ -183,6 +192,8 @@ class Classifier extends React.Component {
                     return renderSvm()
                 case 'MINIMUM_DISTANCE':
                     return renderMinimumDistance()
+                case 'DECISION_TREE':
+                    return renderDecisionTree()
                 default:
                     return
             }
@@ -232,6 +243,9 @@ class Classifier extends React.Component {
                 {this.renderMetric()}
             </div>
 
+        const renderDecisionTree = () =>
+            this.renderDecisionTree()
+
         return (
             <Layout>
                 {this.renderType()}
@@ -250,7 +264,8 @@ class Classifier extends React.Component {
             {
                 value: 'MINIMUM_DISTANCE',
                 label: msg('process.classification.panel.classifier.form.minimumDistance.label')
-            }
+            },
+            {value: 'DECISION_TREE', label: msg('process.classification.panel.classifier.form.decisionTree.label')},
         ]
         return (
             <Form.Buttons
@@ -617,6 +632,23 @@ class Classifier extends React.Component {
         )
     }
 
+    renderDecisionTree() {
+        const {inputs: {type, decisionTree}} = this.props
+        if (type.value !== 'DECISION_TREE')
+            return
+
+        return (
+            <Form.Input
+                label={msg('process.classification.panel.classifier.form.decisionTree.label')}
+                tooltip={msg('process.classification.panel.classifier.form.decisionTree.tooltip')}
+                placeholder={msg('process.classification.panel.classifier.form.decisionTree.placeholder')}
+                input={decisionTree}
+                textArea
+                errorMessage
+            />
+        )
+    }
+
     componentDidMount() {
         const {recipeId, form, inputs: {advanced}} = this.props
         RecipeActions(recipeId).hidePreview().dispatch()
@@ -651,7 +683,8 @@ const valuesToModel = values => ({
     cost: toFloat(values.cost),
     nu: toFloat(values.nu),
     oneClass: toInt(values.oneClass),
-    metric: values.metric
+    metric: values.metric,
+    decisionTree: values.decisionTree
 })
 
 const LegendEntry = ({entry: {value, color, label}}) =>

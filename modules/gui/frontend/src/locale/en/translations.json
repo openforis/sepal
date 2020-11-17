@@ -534,6 +534,11 @@
                   }
                 }
               }
+            },
+            "decisionTree": {
+              "label": "Decision tree",
+              "tooltip": "Paste or drop file with the decision tree",
+              "placeholder": "Paste or drop file with the decision tree..."
             }
           },
           "title": "Classifier configuration",
