@@ -276,7 +276,7 @@ class _Textarea extends React.Component {
     }
 
     renderTextArea() {
-        const {className, name, value, autoFocus, tabIndex, minRows, maxRows, onChange, onBlur, onFocus} = this.props
+        const {className, name, value, placeholder, autoFocus, tabIndex, minRows, maxRows, onChange, onBlur, onFocus} = this.props
         const {focused} = this.state
         return (
             <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused} priority>
@@ -285,6 +285,7 @@ class _Textarea extends React.Component {
                     className={className}
                     name={name}
                     value={value || ''}
+                    placeholder={placeholder}
                     tabIndex={tabIndex}
                     autoFocus={autoFocus && !isMobile()}
                     minRows={minRows}
