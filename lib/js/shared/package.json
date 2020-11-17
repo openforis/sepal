@@ -16,7 +16,7 @@
         "ee": "src/reexport/ee"
     },
     "dependencies": {
-        "@google/earthengine": "0.1.227",
+        "@google/earthengine": "0.1.242",
         "amqplib": "^0.6.0",
         "base-64": "^0.1.0",
         "koa": "^2.13.0",
