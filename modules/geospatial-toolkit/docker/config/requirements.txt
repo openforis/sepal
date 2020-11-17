@@ -5,7 +5,7 @@ pyCrypto
 oauth2client
 geemap
 google-api-python-client
-git+git://github.com/openforis/earthengine-api.git@v0.1.234#egg=earthengine-api&subdirectory=python
+git+git://github.com/openforis/earthengine-api.git@v0.1.242#egg=earthengine-api&subdirectory=python
 awscli
 bqplot
 haversine
