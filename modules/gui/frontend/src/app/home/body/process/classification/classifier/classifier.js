@@ -1,7 +1,7 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions, defaultModel} from '../classificationRecipe'
+import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -11,6 +11,7 @@ import styles from './classifier.module.css'
 import {Button} from 'widget/button'
 import {selectFrom} from 'stateUtils'
 import _ from 'lodash'
+import {FileSelect} from '../../../../../../widget/fileSelect'
 
 const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend')
@@ -265,7 +266,7 @@ class Classifier extends React.Component {
                 value: 'MINIMUM_DISTANCE',
                 label: msg('process.classification.panel.classifier.form.minimumDistance.label')
             },
-            {value: 'DECISION_TREE', label: msg('process.classification.panel.classifier.form.decisionTree.label')},
+            {value: 'DECISION_TREE', label: msg('process.classification.panel.classifier.form.decisionTree.label')}
         ]
         return (
             <Form.Buttons
@@ -638,19 +639,25 @@ class Classifier extends React.Component {
             return
 
         return (
-            <Form.Input
-                label={msg('process.classification.panel.classifier.form.decisionTree.label')}
-                tooltip={msg('process.classification.panel.classifier.form.decisionTree.tooltip')}
-                placeholder={msg('process.classification.panel.classifier.form.decisionTree.placeholder')}
-                input={decisionTree}
-                textArea
-                errorMessage
-            />
+            <React.Fragment>
+                <Form.Input
+                    label={msg('process.classification.panel.classifier.form.decisionTree.label')}
+                    tooltip={msg('process.classification.panel.classifier.form.decisionTree.tooltip')}
+                    placeholder={msg('process.classification.panel.classifier.form.decisionTree.placeholder')}
+                    input={decisionTree}
+                    textArea
+                    errorMessage
+                />
+                <FileSelect
+                    single
+                    onSelect={file => file.text().then(text => decisionTree.set(text))}
+                />
+            </React.Fragment>
         )
     }
 
     componentDidMount() {
-        const {recipeId, form, inputs: {advanced}} = this.props
+        const {recipeId} = this.props
         RecipeActions(recipeId).hidePreview().dispatch()
     }
 
@@ -710,3 +717,4 @@ export default compose(
     Classifier,
     recipeFormPanel({id: 'classifier', fields, valuesToModel, mapRecipeToProps})
 )
+
