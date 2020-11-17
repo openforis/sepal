@@ -8,7 +8,7 @@ export const FileSelect = ({multiple, single, accept, onSelect, children}) => {
     const {getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject, draggedFiles} = useDropzone({
         multiple: multiple || !single,
         accept,
-        onDrop: onSelect
+        onDrop: files => onSelect(single ? files[0] : files)
     })
     const reject = isDragReject || (isDragActive && !isDragAccept)
 

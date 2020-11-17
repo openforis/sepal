@@ -18,7 +18,7 @@ export default class CsvUploadSection extends Component {
                 <Label>{msg('process.classification.panel.trainingData.form.csvUpload.file.label')}</Label>
                 <FileSelect
                     single
-                    onSelect={files => this.onSelect(files)}>
+                    onSelect={file => this.onSelect(file)}>
                     {name.value
                         ? <div className={styles.name}>
                             {stream('LOAD_CSV_ROWS').active
@@ -34,14 +34,12 @@ export default class CsvUploadSection extends Component {
     }
 
 
-    onSelect(files) {
-        if (!files || !files.length)
-            return
+    onSelect(file) {
         const {stream, inputs: {name, inputData, columns}} = this.props
-        name.set(files[0].name)
+        name.set(file.name)
         inputData.set(null)
         columns.set(null)
-        const {row$, columns$} = this.parse(files)
+        const {row$, columns$} = this.parse(file)
         stream('LOAD_CSV_ROWS',
             zip(
                 row$.pipe(toArray()),
@@ -55,31 +53,26 @@ export default class CsvUploadSection extends Component {
     }
 
 
-    parse(files) {
+    parse(file) {
         const row$ = new Subject()
         const columns$ = new Subject()
         let first = true
-        if (files.length) {
-            const file = files[0]
-            Papa.parse(file, {
-                worker: true,
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: 'greedy',
-                step: ({data, meta: {fields}}) => {
-                    // if (Object.keys(data).length === fields.length)
-                    row$.next(data)
-                    if (first) {
-                        columns$.next(fields)
-                        columns$.complete()
-                        first = false
-                    }
-                },
-                complete: () => row$.complete()
-            })
-        } else {
-            row$.complete()
-        }
+        Papa.parse(file, {
+            worker: true,
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: 'greedy',
+            step: ({data, meta: {fields}}) => {
+                // if (Object.keys(data).length === fields.length)
+                row$.next(data)
+                if (first) {
+                    columns$.next(fields)
+                    columns$.complete()
+                    first = false
+                }
+            },
+            complete: () => row$.complete()
+        })
         return {row$, columns$}
     }
 
