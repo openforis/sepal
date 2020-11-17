@@ -32,6 +32,8 @@ psycopg2-binary
 imageio
 rtree
 retrying
+Cython
+pyproj==2.6.1 # Require proj update before 3.0.0 can be installed
 
 ######## Early Warning System for Canopy Disturbances in Ecuador (SATA) ########
 # dev
