@@ -1,7 +1,7 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../classificationRecipe'
+import {getBandOptions, RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {currentUser} from 'widget/user'
@@ -12,6 +12,8 @@ import React from 'react'
 import styles from './retrieve.module.css'
 
 const fields = {
+    bands: new Form.Field()
+        .predicate(bands => bands && bands.length, 'process.classification.panel.retrieve.form.bands.atLeastOne'),
     scale: new Form.Field(),
     destination: new Form.Field()
         .notEmpty('process.classification.panel.retrieve.form.destination.required')
@@ -22,47 +24,14 @@ const mapRecipeToProps = recipe => {
     if (!selectFrom(recipe, 'ui.retrieve.scale')) {
         props.values = {scale: 30}
     }
-    return props
+    return {
+        ...props,
+        legend: selectFrom(recipe, 'model.legend') || {},
+        classifierType: selectFrom(recipe, 'model.classifier.type')
+    }
 }
 
 class Retrieve extends React.Component {
-    renderContent() {
-        const {inputs: {scale, destination}} = this.props
-        const user = currentUser()
-        const destinationOptions = [
-            {
-                value: 'SEPAL',
-                label: msg('process.mosaic.panel.retrieve.form.destination.SEPAL'),
-                disabled: !user.googleTokens
-            },
-            {
-                value: 'GEE',
-                label: msg('process.mosaic.panel.retrieve.form.destination.GEE')
-            }
-        ].filter(({value}) => user.googleTokens || value !== 'GEE')
-
-        return (
-            <Layout>
-                <Form.Slider
-                    label={msg('process.classification.panel.retrieve.form.scale.label')}
-                    info={scale => msg('process.classification.panel.retrieve.form.scale.info', {scale})}
-                    input={scale}
-                    minValue={10}
-                    maxValue={100}
-                    scale={'log'}
-                    ticks={[10, 15, 20, 30, 60, 100]}
-                    snap
-                    range='none'
-                />
-                <Form.Buttons
-                    label={msg('process.classification.panel.retrieve.form.destination.label')}
-                    input={destination}
-                    multiple={false}
-                    options={destinationOptions}/>
-            </Layout>
-        )
-    }
-
     render() {
         const {recipeId} = this.props
         return (
@@ -82,6 +51,50 @@ class Retrieve extends React.Component {
                 <Form.PanelButtons
                     applyLabel={msg('process.classification.panel.retrieve.apply')}/>
             </RecipeFormPanel>
+        )
+    }
+
+    renderContent() {
+        const {legend, classifierType, inputs: {bands, scale, destination}} = this.props
+        const user = currentUser()
+        const destinationOptions = [
+            {
+                value: 'SEPAL',
+                label: msg('process.mosaic.panel.retrieve.form.destination.SEPAL'),
+                disabled: !user.googleTokens
+            },
+            {
+                value: 'GEE',
+                label: msg('process.mosaic.panel.retrieve.form.destination.GEE')
+            }
+        ].filter(({value}) => user.googleTokens || value !== 'GEE')
+
+        const bandOptions = getBandOptions(legend, classifierType)
+
+        return (
+            <Layout>
+                <Form.Buttons
+                    label={msg('process.classification.panel.retrieve.form.bands.label')}
+                    input={bands}
+                    multiple={true}
+                    options={bandOptions}/>
+                <Form.Slider
+                    label={msg('process.classification.panel.retrieve.form.scale.label')}
+                    info={scale => msg('process.classification.panel.retrieve.form.scale.info', {scale})}
+                    input={scale}
+                    minValue={10}
+                    maxValue={100}
+                    scale={'log'}
+                    ticks={[10, 15, 20, 30, 60, 100]}
+                    snap
+                    range='none'
+                />
+                <Form.Buttons
+                    label={msg('process.classification.panel.retrieve.form.destination.label')}
+                    input={destination}
+                    multiple={false}
+                    options={destinationOptions}/>
+            </Layout>
         )
     }
 

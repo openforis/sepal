@@ -42,7 +42,7 @@ export const RecipeActions = id => {
             return actionBuilder('REQUEST_CLASSIFICATION_RETRIEVAL', {retrieveOptions})
                 .setAll({
                     'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions,
+                    'ui.retrieveOptions': retrieveOptions
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
@@ -71,8 +71,36 @@ export const RecipeActions = id => {
     }
 }
 
+export const getBandOptions = (legend, classifierType) =>
+    [
+        {
+            value: 'class',
+            label: msg('process.classification.bands.class')
+        },
+        supportRegression(classifierType) && {
+            value: 'regression',
+            label: msg('process.classification.bands.regression')
+        },
+        supportProbability(classifierType) && {
+            value: 'class_probability',
+            label: msg('process.classification.bands.classProbability')
+        },
+        ...legend.entries.map(({value, label}) => supportProbability(classifierType) && {
+            value: `probability_${value}`,
+            label: msg('process.classification.bands.probability', {class: label})
+        })
+    ].filter(option => option)
+
+
+const supportRegression = classifierType =>
+    ['RANDOM_FOREST', 'CART'].includes(classifierType)
+
+const supportProbability = classifierType =>
+    ['RANDOM_FOREST', 'CART'].includes(classifierType)
+
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
+    const bands = recipe.ui.retrieveOptions.bands
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.classification.panel.retrieve.form.task', destination], {name})
@@ -83,7 +111,8 @@ const submitRetrieveRecipeTask = recipe => {
                 title: taskTitle,
                 description: name,
                 image: {
-                    recipe: _.omit(recipe, ['ui']), bands: {selection: ['class']},
+                    recipe: _.omit(recipe, ['ui']),
+                    bands: {selection: bands},
                     scale
                 }
             }

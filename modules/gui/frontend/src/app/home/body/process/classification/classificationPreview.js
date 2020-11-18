@@ -9,6 +9,7 @@ import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
+import {selectFrom} from '../../../../../stateUtils'
 
 const LABEL = 'classification'
 
@@ -99,6 +100,9 @@ class ClassificationPreview extends React.Component {
 
     updateLayer(previewRequest) {
         const {recipe, componentWillUnmount$} = this.props
+        if (!selectFrom(recipe, 'ui.bands.selection'))
+            return
+
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
             layerIndex: 2,
@@ -129,8 +133,11 @@ class ClassificationPreview extends React.Component {
     }
 
     toPreviewRequest(recipe) {
+        const selection = selectFrom(recipe, 'ui.bands.selection')
         return {
-            recipe: _.omit(recipe, ['ui'])
+            recipe: _.omit(recipe, ['ui']),
+            bands: {selection: [selection]}
+
         }
     }
 }

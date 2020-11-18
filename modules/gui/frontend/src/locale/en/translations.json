@@ -673,6 +673,10 @@
         "retrieve": {
           "apply": "Retrieve",
           "form": {
+            "bands": {
+              "atLeastOne": "At least one band must be retrieved",
+              "label": "Bands to retrieve"
+            },
             "destination": {
               "GEE": "Google Earth Engine asset",
               "SEPAL": "Sepal workspace",
@@ -819,6 +823,12 @@
         "initializing": "Loading preview...",
         "loading": "Loaded {loaded} of {count} tiles",
         "tilesFailed": "{failed} failed"
+      },
+      "bands": {
+        "class": "Class",
+        "regression": "Regression",
+        "classProbability": "Class probability",
+        "probability": "Probability: {class}"
       }
     },
     "closeRecipe": {

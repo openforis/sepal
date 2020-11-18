@@ -10,6 +10,7 @@ import ClassificationPreview from './classificationPreview'
 import ClassificationToolbar from './classificationToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
+import BandSelection from './bandSelection'
 
 const mapStateToProps = state => ({
     tabCount: state.process.tabs.length
@@ -31,7 +32,10 @@ class _Classification extends React.Component {
                 <ClassificationToolbar/>
 
                 {initialized && trainingData.dataSets.length
-                    ? <ClassificationPreview/>
+                    ? <React.Fragment>
+                        <ClassificationPreview/>
+                        <BandSelection/>
+                </React.Fragment>
                     : null}
             </React.Fragment>
         )
