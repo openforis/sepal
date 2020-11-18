@@ -63,7 +63,6 @@ export default class CsvUploadSection extends Component {
             dynamicTyping: true,
             skipEmptyLines: 'greedy',
             step: ({data, meta: {fields}}) => {
-                // if (Object.keys(data).length === fields.length)
                 row$.next(data)
                 if (first) {
                     columns$.next(fields)
