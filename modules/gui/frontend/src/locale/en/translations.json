@@ -712,6 +712,12 @@
         "zoomOut": {
           "tooltip": "Zoom out"
         },
+        "linked": {
+            "tooltip": "This map is linked"
+        },
+        "unlinked": {
+            "tooltip": "This map is unlinked"
+        },
         "layersMenu": {
           "baseLayer": "Base layer",
           "overlay": "Overlays",

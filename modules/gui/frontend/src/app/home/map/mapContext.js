@@ -5,4 +5,4 @@ const MapContext = React.createContext()
 
 export const {Provider, Consumer} = MapContext
 
-export const withMapContext = withContext(MapContext, 'mapContext')
+export const withMapContext = withContext(MapContext)

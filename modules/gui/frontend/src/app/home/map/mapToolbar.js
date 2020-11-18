@@ -17,13 +17,14 @@ const mapStateToProps = (state, ownProps) => {
         zoomLevel: sepalMap.getZoom(),
         hasBounds: sepalMap.isLayerInitialized('aoi'),
         isZooming: sepalMap.isZooming(),
+        // isLinked: sepalMap.isLinked(),
         metersPerPixel: sepalMap.getMetersPerPixel()
     }
 }
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, mapContext, isZooming, labelLayerIndex, hasBounds, metersPerPixel, children} = this.props
+        const {statePath, mapContext, isZooming, linked, toggleLinked, labelLayerIndex, hasBounds, metersPerPixel, children} = this.props
         const {sepalMap} = mapContext
         return (
             <React.Fragment>
@@ -48,6 +49,11 @@ class MapToolbar extends React.Component {
                         onClick={() => isZooming ? sepalMap.cancelZoomArea() : sepalMap.zoomArea()}
                         icon={'search'}
                         tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
+                    <Toolbar.ToolbarButton
+                        disabled={!hasBounds}
+                        onClick={() => toggleLinked()}
+                        icon={linked ? 'link' : 'unlink'}
+                        tooltip={msg(linked ? 'process.mosaic.mapToolbar.linked.tooltip' : 'process.mosaic.mapToolbar.unlinked.tooltip')}/>
                     <Toolbar.ToolbarButton
                         disabled={!hasBounds}
                         onClick={() => sepalMap.fitLayer('aoi')}

@@ -1,48 +1,13 @@
 import {Provider, withMapContext} from './mapContext'
-import {SepalMap} from './sepalMap'
+// import {SepalMap} from './sepalMap'
 import {compose} from 'compose'
-import {v4 as uuid} from 'uuid'
 import {withMapsContext} from './maps'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './map.module.css'
-
-const createGoogleMap = (google, mapElement) => {
-    const mapOptions = {
-        zoom: 3,
-        minZoom: 3,
-        maxZoom: 17,
-        center: new google.maps.LatLng(16.7794913, 9.6771556),
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        zoomControl: false,
-        mapTypeControl: false,
-        scaleControl: false,
-        streetViewControl: false,
-        rotateControl: false,
-        fullscreenControl: false,
-        backgroundColor: '#131314',
-        gestureHandling: 'greedy'
-    }
-
-    // https://developers.google.com/maps/documentation/javascript/style-reference
-    const sepalStyle = new google.maps.StyledMapType([
-        {stylers: [{visibility: 'simplified'}]},
-        {stylers: [{color: '#131314'}]},
-        {featureType: 'transit.station', stylers: [{visibility: 'off'}]},
-        {featureType: 'poi', stylers: [{visibility: 'off'}]},
-        {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
-        {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
-    ], {name: 'sepalMap'})
-
-    const googleMap = new google.maps.Map(mapElement, mapOptions)
-
-    googleMap.mapTypes.set('sepalStyle', sepalStyle)
-    googleMap.setMapTypeId('sepalStyle')
-
-    return googleMap
-}
+import withSubscriptions from 'subscription'
 
 class _StaticMap extends React.Component {
     map = React.createRef()
@@ -60,8 +25,8 @@ class _StaticMap extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {google}} = this.props
-        createGoogleMap(google, this.map.current)
+        const {mapsContext: {createGoogleMap}} = this.props
+        createGoogleMap(this.map.current)
     }
 }
 
@@ -74,19 +39,34 @@ StaticMap.propTypes = {}
 
 class _Map extends React.Component {
     state = {
-        googleMap: null,
-        zooming: false,
-        projection: null
+        mapContext: null,
+        bounds: null,
+        linked: true,
+        toggleLinked: this.toggleLinked.bind(this)
     }
 
     map = React.createRef()
-    contextId = uuid()
+
+    isLinked() {
+        const {linked} = this.state
+        return linked
+    }
+
+    toggleLinked() {
+        const {linked: wasLinked, bounds} = this.state
+        const linked = !wasLinked
+        this.setState({linked}, () => {
+            if (linked && bounds) {
+                this.synchronizeThisMap(bounds)
+            }
+        })
+    }
 
     render() {
         const {children} = this.props
-        const {mapContext} = this.state
+        const {mapContext, linked, toggleLinked} = this.state
         return (
-            <Provider value={mapContext}>
+            <Provider value={{mapContext, linked, toggleLinked}}>
                 <div ref={this.map} className={styles.map}/>
                 <div className={styles.content}>
                     {mapContext ? children : null}
@@ -95,17 +75,45 @@ class _Map extends React.Component {
         )
     }
 
+    synchronizeThisMap(bounds) {
+        const {mapContext, linked} = this.state
+        if (linked) {
+            mapContext.sepalMap.fitBounds(bounds, 0)
+        }
+    }
+
     componentDidMount() {
-        const {mapsContext: {google, googleMapsApiKey, norwayPlanetApiKey}} = this.props
-        const googleMap = createGoogleMap(google, this.map.current)
-        const sepalMap = new SepalMap({google, googleMapsApiKey, googleMap})
-        this.setState({mapContext: {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}})
+        const {mapsContext: {createMapContext}, addSubscription} = this.props
+        const {mapContext, bounds$, updateBounds} = createMapContext(this.map.current)
+
+        this.boundChanged = mapContext.sepalMap.onBoundsChanged(() => {
+            const {linked} = this.state
+            if (linked) {
+                updateBounds(mapContext.sepalMap.getBounds())
+            }
+        })
+
+        addSubscription(
+            bounds$.subscribe(
+                bounds => {
+                    this.synchronizeThisMap(bounds)
+                    this.setState({bounds})
+                }
+            )
+        )
+
+        this.setState({mapContext})
+    }
+
+    componentWillUnmount() {
+        this.boundsChanged && this.boundChanged.removeListener()
     }
 }
 
 export const Map = compose(
     _Map,
-    withMapsContext()
+    withMapsContext(),
+    withSubscriptions()
 )
 
 Map.propTypes = {

@@ -58,6 +58,38 @@ export class SepalMap {
         )
     }
 
+    // used by mapToolbar
+    zoomArea() {
+        // setZooming(true)
+        this.zooming = true
+        this._drawingManager = new this.google.maps.drawing.DrawingManager({
+            drawingMode: this.google.maps.drawing.OverlayType.RECTANGLE,
+            drawingControl: false,
+            rectangleOptions: this.drawingOptions
+        })
+        const drawingListener = e => {
+            const rectangle = e.overlay
+            rectangle.setMap(null)
+            this.googleMap.fitBounds(rectangle.bounds)
+            this.cancelZoomArea()
+        }
+        this.google.maps.event.addListener(this._drawingManager, 'overlaycomplete', drawingListener)
+        this._drawingManager.setMap(this.googleMap)
+
+    }
+
+    // used by mapToolbar
+    cancelZoomArea() {
+        // setZooming(false)
+        this.zooming = false
+        this.disableDrawingMode()
+    }
+
+    // used by mapToolbar, chartPixelButton
+    isZooming() {
+        return this.zooming
+    }
+
     // Bounds
 
     // user by polygonLayer
@@ -78,22 +110,22 @@ export class SepalMap {
         )
     }
 
-    // used by aoi
-    fitBounds(bounds) {
+    // used by aoi, map
+    fitBounds(bounds, padding) {
         const nextBounds = this.toGoogleBounds(bounds)
         const currentBounds = this.googleMap.getBounds()
         const boundsChanged = !currentBounds || !currentBounds.equals(nextBounds)
         if (boundsChanged) {
-            this.googleMap.fitBounds(nextBounds)
+            this.googleMap.fitBounds(nextBounds, padding)
         }
     }
 
-    // user by aoi
+    // user by aoi, map
     getBounds() {
         return this.fromGoogleBounds(this.googleMap.getBounds())
     }
 
-    // used by earthEngineLayer
+    // used by earthEngineLayer, map
     onBoundsChanged(listener) {
         const listenerId = this.googleMap.addListener('bounds_changed', listener)
         return {
@@ -172,38 +204,6 @@ export class SepalMap {
         if (layer && layer.bounds) {
             this.fitBounds(layer.bounds)
         }
-    }
-
-    // used by mapToolbar
-    zoomArea() {
-        // setZooming(true)
-        this.zooming = true
-        this._drawingManager = new this.google.maps.drawing.DrawingManager({
-            drawingMode: this.google.maps.drawing.OverlayType.RECTANGLE,
-            drawingControl: false,
-            rectangleOptions: this.drawingOptions
-        })
-        const drawingListener = e => {
-            const rectangle = e.overlay
-            rectangle.setMap(null)
-            this.googleMap.fitBounds(rectangle.bounds)
-            this.cancelZoomArea()
-        }
-        this.google.maps.event.addListener(this._drawingManager, 'overlaycomplete', drawingListener)
-        this._drawingManager.setMap(this.googleMap)
-
-    }
-
-    // used by mapToolbar
-    cancelZoomArea() {
-        // setZooming(false)
-        this.zooming = false
-        this.disableDrawingMode()
-    }
-
-    // used by mapToolbar, chartPixelButton
-    isZooming() {
-        return this.zooming
     }
 
     // used by polygonSection
