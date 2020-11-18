@@ -56,14 +56,20 @@ const exportImageToAsset$ = ({
     }
 
     return assetDestination$(description, assetId).pipe(
-        switchMap(({description, assetId}) =>
-            exportToAsset$({
-                task: ee.batch.Export.image.toAsset(image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels),
+        switchMap(({description, assetId}) => {
+            const serverConfig = ee.batch.Export.convertToServerParams(
+                {image, description, assetId, pyramidingPolicy, dimensions, region, scale, crs, crsTransform, maxPixels},
+                ee.data.ExportDestination.ASSET,
+                ee.data.ExportType.IMAGE
+            )
+            const task = ee.batch.ExportTask.create(serverConfig)
+            return exportToAsset$({
+                task,
                 description: `exportImageToAsset(assetId: ${assetId}, description: ${description})`,
                 assetId,
-                retries
-            })
-        )
+            retries
+        })
+        })
     )
 }
 
