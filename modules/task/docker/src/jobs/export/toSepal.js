@@ -76,7 +76,7 @@ const exportImageToSepal$ = (
                             fileFormat,
                             formatOptions
                         },
-                        ee.data.ExportDestination.GOOGLE_CLOUD_STORAGE,
+                        ee.data.ExportDestination.GCS,
                         ee.data.ExportType.IMAGE
                     )
                     const task = ee.batch.ExportTask.create(serverConfig)
@@ -122,7 +122,7 @@ const exportImageToSepal$ = (
                 image, description, folder, fileNamePrefix: prefix, dimensions, region, scale, crs,
                 crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
             },
-            ee.data.ExportDestination.GOOGLE_CLOUD_STORAGE,
+            ee.data.ExportDestination.DRIVE,
             ee.data.ExportType.IMAGE
         )
         const task = ee.batch.ExportTask.create(serverConfig)
