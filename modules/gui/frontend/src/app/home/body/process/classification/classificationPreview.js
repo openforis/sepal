@@ -10,6 +10,7 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 import {selectFrom} from '../../../../../stateUtils'
+import {Legend} from 'widget/legend'
 
 const LABEL = 'classification'
 
@@ -19,22 +20,6 @@ class ClassificationPreview extends React.Component {
     state = {
         initializing: false,
         failed: false
-    }
-
-    renderInitializing() {
-        return (
-            <MapStatus message={msg(`process.${LABEL}.preview.initializing`)}/>
-        )
-    }
-
-    renderLoading() {
-        const {tiles, error} = this.state
-        return (
-            <MapStatus
-                loading={!tiles.complete}
-                message={msg(`process.${LABEL}.preview.loading`, {loaded: tiles.loaded, count: tiles.count})}
-                error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
-        )
     }
 
     render() {
@@ -48,7 +33,35 @@ class ClassificationPreview extends React.Component {
         if (tiles && !tiles.complete) {
             return this.renderLoading()
         }
-        return null
+        return this.renderLegend()
+    }
+
+    renderLegend() {
+        const {visParams} = this.state
+        if (!visParams)
+            return null
+        return (
+            <Legend palette={visParams.palette} min={visParams.min} max={visParams.max}/>
+        )
+    }
+
+    renderInitializing() {
+        return (
+            <MapStatus message={msg(`process.${LABEL}.preview.initializing`)}/>
+        )
+    }
+
+    renderLoading() {
+        const {tiles, error} = this.state
+        return (
+            <React.Fragment>
+                {this.renderLegend()}
+                <MapStatus
+                    loading={!tiles.complete}
+                    message={msg(`process.${LABEL}.preview.loading`, {loaded: tiles.loaded, count: tiles.count})}
+                    error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
+            </React.Fragment>
+        )
     }
 
     onProgress(tiles) {
@@ -111,7 +124,8 @@ class ClassificationPreview extends React.Component {
             description: msg('process.classification.preview.description'),
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
-            onProgress: tiles => this.onProgress(tiles)
+            onProgress: tiles => this.onProgress(tiles),
+            onInitialized: visParams => this.setState({visParams})
         })
         const context = sepalMap.getContext(recipe.id)
         const changed = context.setLayer({
