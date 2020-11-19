@@ -5,7 +5,7 @@ pyCrypto
 oauth2client
 geemap
 google-api-python-client
-git+git://github.com/openforis/earthengine-api.git@v0.1.234#egg=earthengine-api&subdirectory=python
+git+git://github.com/openforis/earthengine-api.git@v0.1.242#egg=earthengine-api&subdirectory=python
 awscli
 bqplot
 haversine
@@ -32,6 +32,8 @@ psycopg2-binary
 imageio
 rtree
 retrying
+Cython
+pyproj==2.6.1 # Require proj update before 3.0.0 can be installed
 
 ######## Early Warning System for Canopy Disturbances in Ecuador (SATA) ########
 # dev
