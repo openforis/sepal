@@ -24,24 +24,25 @@ const createDriveFolder$ = folder =>
         swallow()
     )
 
-const exportImageToSepal$ = ({
-    image,
-    folder,
-    description,
-    downloadDir,
-    dimensions,
-    region,
-    scale,
-    crs,
-    crsTransform,
-    maxPixels = 1e13,
-    shardSize,
-    fileDimensions,
-    skipEmptyTiles,
-    fileFormat,
-    formatOptions,
-    retries
-}) => {
+const exportImageToSepal$ = (
+    {
+        image,
+        folder,
+        description,
+        downloadDir,
+        dimensions,
+        region,
+        scale,
+        crs,
+        crsTransform,
+        maxPixels = 1e13,
+        shardSize,
+        fileDimensions,
+        skipEmptyTiles,
+        fileFormat,
+        formatOptions,
+        retries
+    }) => {
     const prefix = description
 
     const throughCloudStorage$ = () => {
@@ -57,26 +58,45 @@ const exportImageToSepal$ = ({
                 initUserBucket$()
             )
         ).pipe(
-            switchMap(bucketPath =>
-                concat(
-                    exportToCloudStorage$({
-                        task: ee.batch.Export.image.toCloudStorage(
-                            image, description, bucketPath, `${folder}/${prefix}`, dimensions, region, scale, crs,
-                            crsTransform, maxPixels, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-                        ),
-                        description: `export to Sepal through CS (${description})`,
-                        retries
-                    }),
-                    cloudStorage.download$({
-                        bucketPath,
-                        prefix: cloudStoragePrefix,
-                        downloadDir,
-                        deleteAfterDownload: false
-                    })
-                ).pipe(
-                    finalize(() => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}),
-                        `Delete Cloud Storage files: ${bucketPath}:${cloudStoragePrefix}`)
-                )
+            switchMap(bucketPath => {
+                    const serverConfig = ee.batch.Export.convertToServerParams({
+                            image,
+                            description,
+                            bucket: bucketPath,
+                            fileNamePrefix: `${folder}/${prefix}`,
+                            dimensions,
+                            region,
+                            scale,
+                            crs,
+                            crsTransform,
+                            maxPixels,
+                            shardSize,
+                            fileDimensions,
+                            skipEmptyTiles,
+                            fileFormat,
+                            formatOptions
+                        },
+                        ee.data.ExportDestination.GCS,
+                        ee.data.ExportType.IMAGE
+                    )
+                    const task = ee.batch.ExportTask.create(serverConfig)
+                    return concat(
+                        exportToCloudStorage$({
+                            task,
+                            description: `export to Sepal through CS (${description})`,
+                            retries
+                        }),
+                        cloudStorage.download$({
+                            bucketPath,
+                            prefix: cloudStoragePrefix,
+                            downloadDir,
+                            deleteAfterDownload: false
+                        })
+                    ).pipe(
+                        finalize(() => cloudStorage.delete$({bucketPath, prefix: cloudStoragePrefix}),
+                            `Delete Cloud Storage files: ${bucketPath}:${cloudStoragePrefix}`)
+                    )
+                }
             )
         )
     }
@@ -98,12 +118,17 @@ const exportImageToSepal$ = ({
                 deleteAfterDownload: true
             })
 
+        const serverConfig = ee.batch.Export.convertToServerParams({
+                image, description, folder, fileNamePrefix: prefix, dimensions, region, scale, crs,
+                crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+            },
+            ee.data.ExportDestination.DRIVE,
+            ee.data.ExportType.IMAGE
+        )
+        const task = ee.batch.ExportTask.create(serverConfig)
         return concat(
             exportToDrive$({
-                task: ee.batch.Export.image.toDrive(
-                    image, description, folder, prefix, dimensions, region, scale, crs,
-                    crsTransform, maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
-                ),
+                task,
                 description: `export to Sepal through Drive (${description})`,
                 folder,
                 retries
