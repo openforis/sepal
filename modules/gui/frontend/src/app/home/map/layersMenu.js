@@ -89,7 +89,6 @@ class _LayersMenu extends React.Component {
 
     // changeBaseLayer(type, year, month, proc) {
     changeBaseLayer(type, dateRange, proc) {
-        console.log('changeBaseLayer', dateRange.value, proc.value)
         const {statePath, mapContext} = this.props
         const planetApiKey = getNorwayPlanetApiKey()
         changeBaseLayer({
@@ -241,7 +240,6 @@ class _LayersMenu extends React.Component {
             // }
         // }
         const {dateRange: prevDateRange, proc: prevProc, inputs: {dateRange, proc}} = this.props
-        console.log(dateRange.value, proc.value)
         if (!proc.value)
             proc.set(prevProc || 'rgb')
         if (!dateRange.value)
