@@ -133,14 +133,12 @@ class ClassificationPreview extends React.Component {
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
             progress$: this.progress$
-            // onProgress: tiles => this.onProgress(tiles),
-            // onInitialized: visParams => this.setState({visParams})
         })
         const changed = mapContext.sepalMap.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
-            onInitialized: visParams => this.setState({visParams}),
+            onInitialized: ({visParams}) => this.setState({visParams}),
             onError: e => this.onError(e)
         })
         this.setState({failed: false})

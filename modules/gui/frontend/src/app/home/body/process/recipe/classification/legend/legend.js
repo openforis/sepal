@@ -2,7 +2,6 @@ import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {MosaicPreview} from '../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -32,7 +31,6 @@ class Legend extends React.Component {
         super(props)
         const {recipeId} = props
         this.preview = MosaicPreview(recipeId)
-        this.recipeActions = RecipeActions(recipeId)
     }
 
     render() {

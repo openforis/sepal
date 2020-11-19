@@ -3,7 +3,6 @@ import {FileSelect} from '../../../../../../../widget/fileSelect'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -12,6 +11,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './classifier.module.css'
+import {MosaicPreview} from '../../mosaic/mosaicPreview'
 
 const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend')
@@ -96,16 +96,17 @@ const fields = {
 class Classifier extends React.Component {
     constructor(props) {
         super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
+        const {recipeId} = props
+        this.preview = MosaicPreview(recipeId)
     }
 
     render() {
-        const {recipeId, inputs: {advanced}} = this.props
+        const {inputs: {advanced}} = this.props
         return (
             <RecipeFormPanel
                 placement='bottom-right'
                 className={styles.panel}
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                onClose={() => this.preview.show()}>
                 <Panel.Header
                     icon='cog'
                     title={msg('process.classification.panel.classifier.title')}/>
@@ -656,8 +657,7 @@ class Classifier extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).hidePreview().dispatch()
+        this.preview.hide()
     }
 
     setAdvanced(enabled) {
