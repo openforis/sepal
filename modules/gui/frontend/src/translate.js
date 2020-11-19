@@ -23,7 +23,7 @@ const flattenDeep = arr => Array.isArray(arr)
 
 export const msg = (id, values = {}, defaultMessage) => {
     values = _.transform(values, (result, value, key) =>
-        result[key] = JSON.stringify(value)
+        result[key] = _.isString(value) ? value : JSON.stringify(value)
     )
     const idString = String(flattenDeep(id).join('.'))
     return intl.formatMessage({

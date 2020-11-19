@@ -37,6 +37,9 @@
 }
 
 .label .info {
-    cursor: help;
     margin-left: .5rem;
+}
+
+.label .info:hover {
+    color: #e0e0e0;
 }

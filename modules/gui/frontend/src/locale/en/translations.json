@@ -153,6 +153,11 @@
     "notFound": "EE Table not found",
     "unauthorized": "You don't have access to this EE Table"
   },
+  "asset": {
+    "failedToLoad": "Failed to load EE asset",
+    "notFound": "Asset not found",
+    "unauthorized": "You don't have access to this asset"
+  },
   "gee": {
     "classification": {
       "error": {
@@ -366,6 +371,179 @@
           "title": "Auxiliary sources",
           "tooltip": "Include Auxiliary image sources in classification"
         },
+        "classifier": {
+          "button": "CLS",
+          "form": {
+            "type": {
+              "label": "Type"
+            },
+            "randomForest": {
+              "label": "Random Forest",
+              "config": {
+                "numberOfTrees": {
+                  "label": "Number of trees",
+                  "tooltip": "The number of decision trees to create",
+                  "placeholder": "Number of trees..."
+                },
+                "variablesPerSplit": {
+                  "label": "Variables per split",
+                  "tooltip": "The number of variables per split. If unspecified, uses the square root of the number of variables.",
+                  "placeholder": "Variables per split..."
+                },
+                "minLeafPopulation": {
+                  "label": "Min leaf population",
+                  "tooltip": "Only create nodes whose training set contains at least this many points",
+                  "placeholder": "Min leaf population..."
+                },
+                "bagFraction": {
+                  "label": "Bag fraction",
+                  "tooltip": "The fraction of input to bag per tree",
+                  "placeholder": "Bag fraction..."
+                },
+                "maxNodes": {
+                  "label": "Max nodes",
+                  "tooltip": "The maximum number of leaf nodes in each tree. If unspecified, defaults to no limit",
+                  "placeholder": "Max nodes..."
+                },
+                "seed": {
+                  "label": "Seed",
+                  "tooltip": "The randomization seed",
+                  "placeholder": "Seed..."
+                }
+              }
+            },
+            "cart": {
+              "label": "Cart"
+            },
+            "naiveBayes": {
+              "label": "Naive bayes",
+              "config": {
+                "lambda": {
+                  "label": "Lambda",
+                  "tooltip": "A smoothing lambda. Used to avoid assigning zero probability to classes not seen during training, instead using lambda / (lambda * nFeatures)",
+                  "placeholder": "Lambda..."
+                }
+              }
+            },
+            "svm": {
+              "label": "SVM",
+              "config": {
+                "decisionProcedure": {
+                  "label": "Decision procedure",
+                  "options": {
+                    "Voting.label": "Voting",
+                    "Margin.label": "Margin"
+                  }
+                },
+                "svmType": {
+                  "label": "SVM type",
+                  "tooltip": "The decision procedure to use for classification",
+                  "options": {
+                    "C_SVC": {
+                      "label": "C-SVC",
+                      "tooltip": "Default type"
+                    },
+                    "NU_SVC": {
+                      "label": "NU-SVC",
+                      "tooltip": "More flexible type"
+                    },
+                    "ONE_CLASS": {
+                      "label": "ONE-CLASS",
+                      "tooltip": "Train on a single class, using outliers as negative examples"
+                    }
+                  }
+                },
+                "kernelType": {
+                  "label": "Kernel type",
+                  "tooltip": "The type of kernel function",
+                  "options": {
+                    "LINEAR": {
+                      "label": "Linear",
+                      "tooltip": "u′×v (work well with large training data sets)"
+                    },
+                    "POLY": {
+                      "label": "Polynomial",
+                      "tooltip": "(γ×u′×v + coef₀)ᵈᵉᵍʳᵉᵉ"
+                    },
+                    "RBF": {
+                      "label": "Gaussian RBD",
+                      "tooltip": "exp(-γ×|u-v|²) (Handles non-linear problems well)"
+                    },
+                    "SIGMOID": {
+                      "label": "Sigmoid",
+                      "tooltip": "tanh(γ×u′×v + coef₀)"
+                    }
+                  }
+                },
+                "shrinking": {
+                  "label": "Shrinking",
+                  "tooltip": "Whether to use shrinking heuristics",
+                  "options": {
+                    "yes.label": "Yes",
+                    "no.label": "No"
+                  }
+                },
+                "degree": {
+                  "label": "Degree of polynomial",
+                  "placeholder": "Degree..."
+                },
+                "gamma": {
+                  "label": "Gamma",
+                  "tooltip": "The gamma value in the kernel function. Defaults to the reciprocal of the number of features",
+                  "placeholder": "Gamma..."
+                },
+                "coef0": {
+                  "label": "coef₀",
+                  "tooltip": "The coef₀ value in the kernel function",
+                  "placeholder": "coef₀..."
+                },
+                "cost": {
+                  "label": "Cost",
+                  "tooltip": "The cost (C) parameter",
+                  "placeholder": "Cost..."
+                },
+                "nu": {
+                  "label": "nu",
+                  "tooltip": "The nu parameter",
+                  "placeholder": "nu parameter..."
+                },
+                "oneClass": {
+                  "label": "Class to train on",
+                  "placeholder": "Class to train on..."
+                }
+              }
+            },
+            "minimumDistance": {
+              "label": "Min distance",
+              "config": {
+                "metric": {
+                  "label": "Metric",
+                  "options": {
+                    "euclidean": {
+                      "label": "Euclidean",
+                      "tooltip": "Euclidean distance from the un-normalized class mean"
+                    },
+                    "cosine": {
+                      "label": "Spectral angle",
+                      "tooltip": "Spectral angle from the un-normalized class mean"
+                    },
+                    "mahalanobis": {
+                      "label": "Mahalanobis",
+                      "tooltip": "Mahalanobis distance from the class mean"
+                    }
+                  }
+                }
+              }
+            },
+            "decisionTree": {
+              "label": "Decision tree",
+              "tooltip": "Paste or drop file with the decision tree",
+              "placeholder": "Paste or drop file with the decision tree..."
+            }
+          },
+          "title": "Classifier configuration",
+          "tooltip": "Configure the classifier"
+        },
         "inputImagery": {
           "asset": {
             "title": "Earth Engine asset"
@@ -487,9 +665,18 @@
             "RECIPE_REF": "Sepal recipe"
           }
         },
+        "legend": {
+          "button": "LEG",
+          "title": "Legend",
+          "tooltip": "Setup legend for classification"
+        },
         "retrieve": {
           "apply": "Retrieve",
           "form": {
+            "bands": {
+              "atLeastOne": "At least one band must be retrieved",
+              "label": "Bands to retrieve"
+            },
             "destination": {
               "GEE": "Google Earth Engine asset",
               "SEPAL": "Sepal workspace",
@@ -510,26 +697,123 @@
         },
         "trainingData": {
           "button": "TRN",
-          "form": {
-            "eeTable": {
-              "invalid": "Invalid EE Table ID",
-              "label": "EE table",
-              "placeholder": "Enter a EE Table ID",
-              "required": "EE Table must be specified"
-            },
-            "eeTableColumn": {
-              "label": "Class column",
-              "placeholder": {
-                "loaded": "Select a column...",
-                "loading": "Loading columns...",
-                "noEETable": "Enter an EE Table ID first"
-              },
-              "required": "A column must be selected"
-            },
-            "openCeo": "Open training data collection tool"
-          },
           "title": "Training data",
-          "tooltip": "Configure training data source"
+          "tooltip": "Configure training data source",
+          "noDataSet": "No training data set added",
+          "remove": {
+            "confirmationMessage": "Are you sure you want to remove {name} from your training data?",
+            "tooltip": "Remove training data set"
+          },
+          "sectionSelection": {
+            "title": "Training data set"
+          },
+          "type": {
+            "EE_TABLE": {
+              "label": "Earth Engine Table",
+              "tooltip": "Load reference data from an EE table.",
+              "title": "EE TABLE"
+            },
+            "CSV_UPLOAD": {
+              "label": "CSV file",
+              "tooltip": "Upload a CSV file.",
+              "title": "CSV UPLOAD"
+            },
+            "SAMPLE_CLASSIFICATION": {
+              "label": "Sample classification",
+              "tooltip": "Sample a pre-existing classification.",
+              "title": "SAMPLE CLASSIFICATION"
+            },
+            "RECIPE": {
+              "label": "Saved Sepal recipe",
+              "tooltip": "Use training data from a saved Sepal recipe.",
+              "title": "SEPAL RECIPE"
+            }
+          },
+          "form": {
+            "csvUpload": {
+              "file": {
+                "label": "CSV file"
+              }
+            },
+            "eeTable": {
+              "label": "EE table asset ID",
+              "placeholder": "Enter an asset ID...",
+              "required": "You must enter an asset ID"
+            },
+            "sampleClassification": {
+              "assetToSample": {
+                "label": "EE asset ID of classification",
+                "placeholder": "Enter an asset ID...",
+                "required": "You must enter an asset ID"
+              },
+              "samplesPerClass": {
+                "label": "Samples per class",
+                "info": "{count} samples",
+                "required": "You must specify the number of samples to collect for each class"
+              },
+              "sampleScale": {
+                "label": "Scale to sample in (m)",
+                "info": "{scale} meters",
+                "required": "You must specify the scale to sample in"
+              },
+              "valueColumn": {
+                "label": "Class band",
+                "tooltip": "Select band containing class",
+                "placeholder": "Select band containing class..."
+              }
+            },
+            "location": {
+              "locationType": {
+                "label": "Location type",
+                "tooltip": "Select how location of reference data is represented",
+                "GEO_JSON": {
+                  "label": "GeoJSON column",
+                  "tooltip": "Location is in a single GeoJSON column"
+                },
+                "XY_COLUMNS": {
+                  "label": "X/Y coordinate columns",
+                  "tooltip": "Location is in two X/Y coordinate columns"
+                }
+              },
+              "geoJson": {
+                "label": "GeoJSON column",
+                "placeholder": "Select column"
+              },
+              "xColumn": {
+                "label": "X coordinate column",
+                "placeholder": "Select column"
+              },
+              "yColumn": {
+                "label": "Y coordinate column",
+                "placeholder": "Select column"
+              }
+            },
+            "class": {
+              "classColumnFormat": {
+                "label": "Class format",
+                "options": {
+                  "SINGLE_COLUMN": {
+                    "label": "Single column",
+                    "tooltip": "The classes are in a single column"
+                  },
+                  "MULTIPLE_COLUMNS": {
+                    "label": "Column per class",
+                    "tooltip": "The classes are in separate columns"
+                  },
+                  "OTHER_FORMAT": {
+                    "label": "Other format",
+                    "tooltip": "Reference data has a different format"
+                  }
+                }
+              },
+              "valueColumn": {
+                "label": "Class column",
+                "tooltip": "Select column containing class values",
+                "placeholder": "Select column containing class values...",
+                "required": "A column must be selected"
+              }
+            }
+          }
         }
       },
       "preview": {
@@ -539,6 +823,12 @@
         "initializing": "Loading preview...",
         "loading": "Loaded {loaded} of {count} tiles",
         "tilesFailed": "{failed} failed"
+      },
+      "bands": {
+        "class": "Class",
+        "regression": "Regression",
+        "classProbability": "Class probability",
+        "probability": "Probability: {class}"
       }
     },
     "closeRecipe": {
@@ -1692,7 +1982,6 @@
         "loadFailed": "Failed to load chart: {error}"
       }
     },
-
     "ccdcSlice": {
       "create": "CCDC slice",
       "tabPlaceholder": "CCDC slice",
@@ -2173,6 +2462,19 @@
     "confirm": {
       "title": "Confirmation required"
     },
+    "fileSelect": {
+      "multiple": {
+        "dropOrClick": "Drop file(s) here, or click to select file(s)",
+        "drop": "Drop file(s) here.",
+        "reject": "Cannot drop file(s). Wrong file type?"
+      },
+      "single": {
+        "dropOrClick": "Drop file here, or click to select file",
+        "drop": "Drop file here",
+        "reject": "Cannot drop file. Wrong file type?",
+        "tooMany": "Can only drop a single file."
+      }
+    },
     "list": {
       "noResults": "No results"
     },
@@ -2202,5 +2504,18 @@
   },
   "error": {
     "internal": "Internal error"
+  },
+  "fieldValidation": {
+    "match": "Must match {regex}",
+    "notEmpty": "Cannot be empty",
+    "notBlank": "Cannot be blank",
+    "email": "Must be an email",
+    "date": "Must be a date",
+    "int": "Must be an integer",
+    "number": "Must be a number",
+    "min": "Min value is {minValue}",
+    "greaterThan": "Must be greater than {minValue}",
+    "max": "Max value is {maxValue}",
+    "lessThan": "Must be less than {maxValue}"
   }
 }

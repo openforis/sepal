@@ -22,18 +22,9 @@ class _Panel extends React.Component {
         this.props.onDisable(() => this.setState({enabled: false}))
     }
 
-    renderContent() {
-        const {className, type, children} = this.props
-        const {enabled} = this.state
-        return (
-            <div className={[
-                styles.panel,
-                styles[type],
-                enabled ? null : styles.disabled,
-                className
-            ].join(' ')}>
-                {children}
-            </div>
+    render() {
+        return this.renderContainer(
+            this.renderContent()
         )
     }
 
@@ -48,9 +39,18 @@ class _Panel extends React.Component {
             </Portal>
     }
 
-    render() {
-        return this.renderContainer(
-            this.renderContent()
+    renderContent() {
+        const {className, type, children} = this.props
+        const {enabled} = this.state
+        return (
+            <div className={[
+                styles.panel,
+                styles[type],
+                enabled ? null : styles.disabled,
+                className
+            ].join(' ')}>
+                {children}
+            </div>
         )
     }
 }

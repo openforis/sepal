@@ -86,10 +86,12 @@ export default class EarthEngineLayer {
         return this.mapId
             ? of(this)
             : this.mapId$.pipe(
-                tap(({response: {token, mapId, urlTemplate}}) => {
+                tap(({response: {token, mapId, urlTemplate, visParams}}) => {
                     this.token = token
                     this.mapId = mapId
                     this.urlTemplate = urlTemplate
+                    this.visParams = visParams
+                    this.onInitialized(visParams)
                 }),
                 mapTo(this)
             )

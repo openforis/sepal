@@ -54,7 +54,7 @@ class SliderContainer extends React.Component {
         const left = `${Math.trunc(position)}px`
         return (
             <React.Fragment key={value}>
-                <div className={styles.tick} style={{left}}></div>
+                <div className={styles.tick} style={{left}}/>
                 <div className={styles.label} style={{left}}>{label}</div>
             </React.Fragment>
         )
@@ -76,7 +76,7 @@ class SliderContainer extends React.Component {
     }
 
     renderDynamics() {
-        const {input, width, range, decimals, ticks, snap, minValue, maxValue, invert} = this.props
+        const {input, width, range, decimals, ticks, snap, minValue, maxValue, invert, onChange} = this.props
         return (
             <SliderDynamics
                 input={input}
@@ -97,6 +97,7 @@ class SliderContainer extends React.Component {
                     const {scale, minValue, maxValue} = this.props
                     return denormalize(value, minValue, maxValue, scale, invert)
                 }}
+                onChange={onChange}
             />
         )
     }
@@ -128,7 +129,8 @@ SliderContainer.propTypes = {
         PropTypes.number,
         PropTypes.array
     ]),
-    width: PropTypes.number
+    width: PropTypes.number,
+    onChange: PropTypes.func
 }
 
 class _SliderDynamics extends React.Component {
@@ -377,12 +379,13 @@ class _SliderDynamics extends React.Component {
     }
 
     updateInputValue() {
-        const {input, decimals} = this.props
+        const {input, decimals, onChange} = this.props
         const {previewPosition} = this.state
         const value = this.toValue(this.snapPosition(previewPosition))
         const factor = Math.pow(10, decimals)
         const roundedValue = Math.round(value * factor) / factor
         input.set(roundedValue)
+        onChange && onChange(roundedValue)
     }
 
     setPreviewPosition(previewPosition) {
@@ -421,7 +424,8 @@ SliderDynamics.propTypes = {
     invert: PropTypes.bool,
     snap: PropTypes.bool,
     ticks: PropTypes.array,
-    width: PropTypes.number
+    width: PropTypes.number,
+    onChange: PropTypes.func
 }
 
 export class FormSlider extends React.Component {
@@ -468,7 +472,7 @@ export class FormSlider extends React.Component {
         const label = (tick && tick.label) || input.value
         return info ? (
             <div className={[styles.info, styles.alignment, styles[alignment]].join(' ')}>
-                {_.isFunction(info) ? info(label) : info}
+                {_.isFunction(info) ? info(label, input.value) : info}
             </div>
         ) : null
     }
@@ -486,7 +490,7 @@ export class FormSlider extends React.Component {
     }
 
     renderContainer() {
-        const {input, scale = 'linear', decimals = 0, snap, range = 'left', invert = false, info} = this.props
+        const {input, scale = 'linear', decimals = 0, snap, range = 'left', invert = false, info, onChange} = this.props
         const {ticks, minValue, maxValue, width} = this.state
         return (
             <SliderContainer
@@ -500,7 +504,9 @@ export class FormSlider extends React.Component {
                 scale={scale}
                 invert={invert}
                 info={info}
-                width={width}/>
+                width={width}
+                onChange={onChange}
+            />
         )
 
     }
@@ -543,5 +549,6 @@ FormSlider.propTypes = {
         PropTypes.array
     ]),
     tooltip: PropTypes.string,
-    tooltipPlacement: PropTypes.string
+    tooltipPlacement: PropTypes.string,
+    onChange: PropTypes.func
 }

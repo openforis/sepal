@@ -1,0 +1,26 @@
+.legend {
+    position: absolute;
+    display: flex;
+    bottom: 3.5rem;
+    right: 5rem;
+    background-color: hsla(36, 8%, 15%, .5);
+    padding: 1rem;
+    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
+    border-radius: .5rem;;
+
+}
+
+.labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-right: 0.5rem;
+    text-align: right;
+}
+
+.palette {
+    --palette: '';
+    width: 1rem;
+    height: 8rem;
+    background: linear-gradient(0deg, var(--palette));
+}

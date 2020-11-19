@@ -1,7 +1,9 @@
 import {Button} from 'widget/button'
+import {Legend} from 'widget/legend'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import MapStatus from 'widget/mapStatus'
@@ -32,22 +34,6 @@ class ClassificationPreview extends React.Component {
         )
     }
 
-    renderInitializing() {
-        return (
-            <MapStatus message={msg(`process.${LABEL}.preview.initializing`)}/>
-        )
-    }
-
-    renderLoading() {
-        const {tiles, error} = this.state
-        return (
-            <MapStatus
-                loading={!tiles.complete}
-                message={msg(`process.${LABEL}.preview.loading`, {loaded: tiles.loaded, count: tiles.count})}
-                error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
-        )
-    }
-
     render() {
         const {initializing, tiles, failed} = this.state
         if (this.isHidden() || failed) {
@@ -59,7 +45,35 @@ class ClassificationPreview extends React.Component {
         if (tiles && !tiles.complete) {
             return this.renderLoading()
         }
-        return null
+        return this.renderLegend()
+    }
+
+    renderInitializing() {
+        return (
+            <MapStatus message={msg(`process.${LABEL}.preview.initializing`)}/>
+        )
+    }
+
+    renderLegend() {
+        const {visParams} = this.state
+        if (!visParams)
+            return null
+        return (
+            <Legend palette={visParams.palette} min={visParams.min} max={visParams.max}/>
+        )
+    }
+
+    renderLoading() {
+        const {tiles, error} = this.state
+        return (
+            <React.Fragment>
+                {this.renderLegend()}
+                <MapStatus
+                    loading={!tiles.complete}
+                    message={msg(`process.${LABEL}.preview.loading`, {loaded: tiles.loaded, count: tiles.count})}
+                    error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
+            </React.Fragment>
+        )
     }
 
     onError(e) {
@@ -106,6 +120,9 @@ class ClassificationPreview extends React.Component {
 
     updateLayer(previewRequest) {
         const {mapContext, componentWillUnmount$} = this.props
+        // if (!selectFrom(recipe, 'ui.bands.selection'))
+        //     return
+
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
             mapContext,
@@ -117,6 +134,8 @@ class ClassificationPreview extends React.Component {
             props: previewRequest,
             progress$: this.progress$
             
+            // onProgress: tiles => this.onProgress(tiles),
+            // onInitialized: visParams => this.setState({visParams})
         })
         const changed = mapContext.sepalMap.setLayer({
             id: 'preview',
@@ -137,8 +156,11 @@ class ClassificationPreview extends React.Component {
     }
 
     toPreviewRequest(recipe) {
+        const selection = selectFrom(recipe, 'ui.bands.selection')
         return {
-            recipe: _.omit(recipe, ['ui'])
+            recipe: _.omit(recipe, ['ui']),
+            bands: {selection: [selection]}
+
         }
     }
 }

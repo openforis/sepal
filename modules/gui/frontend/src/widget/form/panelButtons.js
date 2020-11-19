@@ -4,13 +4,16 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 export class FormPanelButtons extends React.Component {
-    renderExtraButtons() {
-        const {children} = this.props
-        return children ? (
-            <Panel.Buttons.Extra>
-                {children}
-            </Panel.Buttons.Extra>
-        ) : null
+    render() {
+        return (
+            <FormPanelContext.Consumer>
+                {props => {
+                    const renderProps = {...props, ...this.props}
+                    const inWizard = renderProps.wizard && renderProps.wizard.includes(renderProps.id)
+                    return inWizard ? this.renderWizard(renderProps) : this.renderForm(renderProps)
+                }}
+            </FormPanelContext.Consumer>
+        )
     }
 
     renderForm({isActionForm, dirty, invalid, onOk, onCancel}) {
@@ -46,19 +49,38 @@ export class FormPanelButtons extends React.Component {
         )
     }
 
-    renderWizard({invalid, first, last, onBack, onNext, onDone}) {
+    renderWizard({closable, isActionForm, dirty, invalid, first, last, onBack, onNext, onDone, onCancel}) {
+        const {applyLabel} = this.props
+        const canSubmit = isActionForm || dirty
         const onEnter =
             invalid
                 ? null
                 : last
                     ? onDone
                     : onNext
+        const onEscape = invalid || canSubmit ? onCancel : onDone
         return (
             <Panel.Buttons
-                onEnter={onEnter}>
+                onEnter={onEnter}
+                onEscape={closable && onEscape}>
                 <Panel.Buttons.Main>
+                    {closable
+                         ? <Panel.Buttons.Cancel
+                            shown={canSubmit}
+                            onClick={onCancel}/>
+                        : null
+                    }
+                    {closable
+                        ? <Panel.Buttons.Close
+                            type={'submit'}
+                            label={applyLabel}
+                            shown={!canSubmit}
+                            onClick={onDone}/>
+                        : null
+                    }
                     <Panel.Buttons.Back
-                        shown={!first}
+                        shown={!first || closable}
+                        disabled={first}
                         onClick={onBack}/>
                     <Panel.Buttons.Done
                         shown={last}
@@ -74,16 +96,13 @@ export class FormPanelButtons extends React.Component {
         )
     }
 
-    render() {
-        return (
-            <FormPanelContext.Consumer>
-                {props => {
-                    const inWizard = props.wizard && props.wizard.includes(props.id)
-                    const renderProps = {...props, ...this.props}
-                    return inWizard ? this.renderWizard(renderProps) : this.renderForm(renderProps)
-                }}
-            </FormPanelContext.Consumer>
-        )
+    renderExtraButtons() {
+        const {children} = this.props
+        return children ? (
+            <Panel.Buttons.Extra>
+                {children}
+            </Panel.Buttons.Extra>
+        ) : null
     }
 }
 

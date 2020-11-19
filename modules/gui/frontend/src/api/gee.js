@@ -10,6 +10,10 @@ export default {
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {body: {asset, recipe}, retries: 0})
             .pipe(toResponse),
+    sampleImage$: ({asset, count, scale, classBand}) =>
+        get$('/api/gee/image/sample',
+            {query: {asset, count, scale, classBand}, retries: 0}
+        ).pipe(toResponse),
     sceneAreas$: ({aoi, source}) =>
         postJson$('/api/gee/sceneareas', {
             body: {
@@ -41,6 +45,10 @@ export default {
     loadEETableColumnValues$: (tableId, columnName) =>
         get$('/api/gee/table/columnValues',
             {query: {tableId, columnName}}
+        ).pipe(toResponse),
+    loadEETableRows$: tableId =>
+        get$('/api/gee/table/rows',
+            {query: {tableId}, retries: 0}
         ).pipe(toResponse),
     eeTableMap$: ({tableId, columnName, columnValue, color, fillColor}) =>
         get$('/api/gee/table/map',

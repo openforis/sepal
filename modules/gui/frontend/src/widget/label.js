@@ -43,7 +43,7 @@ export default class Label extends React.Component {
 
 Label.propTypes = {
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
-    children: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+    children: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
     msg: PropTypes.string,
