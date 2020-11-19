@@ -59,7 +59,6 @@ export const resolve = (object, path, createTemplates = false) =>
                 const item = _.find(value,
                     item => _.isEqual(_.pick(item, Object.keys(flatten(pathElement))), pathElement)
                 )
-                console.log('item', item, pathElement)
                 if (item) {
                     return item
                 }
@@ -85,9 +84,7 @@ export class Mutator {
 
     getKey(pathState, pathElement) {
         if (_.isPlainObject(pathElement)) {
-            const key = _.findIndex(pathState, item => _.isEqual(_.pick(item, Object.keys(flatten(pathElement))), pathElement))
-            console.log('key', pathElement, key)
-            return key
+            return _.findIndex(pathState, item => _.isEqual(_.pick(item, Object.keys(flatten(pathElement))), pathElement))
         }
         return pathElement
     }
