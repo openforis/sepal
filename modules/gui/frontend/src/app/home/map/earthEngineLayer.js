@@ -91,7 +91,7 @@ export default class EarthEngineLayer {
                 this.mapId = mapId
                 this.urlTemplate = urlTemplate
                 this.visParams = visParams
-                this.onInitialized(visParams)
+                this.onInitialized && this.onInitialized(visParams)
                 return this
             })
         )
