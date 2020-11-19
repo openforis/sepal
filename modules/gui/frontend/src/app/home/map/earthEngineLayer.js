@@ -6,7 +6,7 @@ import ee from '@google/earthengine'
 import guid from 'guid'
 
 export default class EarthEngineLayer {
-    constructor({layerIndex, toggleable, label, description, bounds, mapId$, props, onProgress}) {
+    constructor({layerIndex, toggleable, label, description, bounds, mapId$, props, onInitialized, onProgress}) {
         this.layerIndex = layerIndex
         this.toggleable = toggleable
         this.label = label
@@ -15,6 +15,7 @@ export default class EarthEngineLayer {
         this.mapId$ = mapId$
         this.props = props
         this.onProgress = onProgress
+        this.onInitialized = onInitialized
     }
 
     equals(o) {
@@ -85,10 +86,12 @@ export default class EarthEngineLayer {
         if (this.mapId)
             return of(this)
         return this.mapId$.pipe(
-            map(({response: {token, mapId, urlTemplate}}) => {
+            map(({response: {token, mapId, urlTemplate, visParams}}) => {
                 this.token = token
                 this.mapId = mapId
                 this.urlTemplate = urlTemplate
+                this.visParams = visParams
+                this.onInitialized(visParams)
                 return this
             })
         )
