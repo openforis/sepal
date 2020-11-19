@@ -1,16 +1,17 @@
-import {form, Form} from 'widget/form/form'
+import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {MosaicPreview} from '../../mosaic/mosaicPreview'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../classificationRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import RemoveButton from 'widget/removeButton'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './legend.module.css'
-import guid from 'guid'
+import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
+import guid from 'guid'
+import styles from './legend.module.css'
 
 const legendFields = {
     entries: new Form.Field()
@@ -29,16 +30,17 @@ const legendFields = {
 class Legend extends React.Component {
     constructor(props) {
         super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
+        const {recipeId} = props
+        this.preview = MosaicPreview(recipeId)
+        this.recipeActions = RecipeActions(recipeId)
     }
 
     render() {
-        const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 placement='bottom-right'
                 className={styles.panel}
-                onClose={() => RecipeActions(recipeId).showPreview().dispatch()}>
+                onClose={() => this.preview.show()}>
                 <Panel.Header
                     icon='list'
                     title={msg('process.classification.panel.legend.title')}/>
@@ -76,8 +78,7 @@ class Legend extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId} = this.props
-        RecipeActions(recipeId).hidePreview().dispatch()
+        this.preview.hide()
     }
 
     updateEntry(updatedEntry) {
@@ -105,7 +106,7 @@ class Legend extends React.Component {
             : COLORS.length > entryCount
                 ? COLORS[entryCount]
                 : '#FFB300'
-        const entry = {id: id, value, color, label: ''}
+        const entry = {id, value, color, label: ''}
         entries.set(
             [...entries.value, entry]
         )

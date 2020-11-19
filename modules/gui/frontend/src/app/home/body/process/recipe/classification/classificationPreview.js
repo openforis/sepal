@@ -34,32 +34,9 @@ class ClassificationPreview extends React.Component {
         )
     }
 
-    render() {
-        const {initializing, tiles, failed} = this.state
-        if (this.isHidden() || failed) {
-            return null
-        }
-        if (initializing) {
-            return this.renderInitializing()
-        }
-        if (tiles && !tiles.complete) {
-            return this.renderLoading()
-        }
-        return this.renderLegend()
-    }
-
     renderInitializing() {
         return (
             <MapStatus message={msg(`process.${LABEL}.preview.initializing`)}/>
-        )
-    }
-
-    renderLegend() {
-        const {visParams} = this.state
-        if (!visParams)
-            return null
-        return (
-            <Legend palette={visParams.palette} min={visParams.min} max={visParams.max}/>
         )
     }
 
@@ -74,6 +51,29 @@ class ClassificationPreview extends React.Component {
                     error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
             </React.Fragment>
         )
+    }
+
+    renderLegend() {
+        const {visParams} = this.state
+        if (!visParams)
+            return null
+        return (
+            <Legend palette={visParams.palette} min={visParams.min} max={visParams.max}/>
+        )
+    }
+
+    render() {
+        const {initializing, tiles, failed} = this.state
+        if (this.isHidden() || failed) {
+            return null
+        }
+        if (initializing) {
+            return this.renderInitializing()
+        }
+        if (tiles && !tiles.complete) {
+            return this.renderLoading()
+        }
+        return this.renderLegend()
     }
 
     onError(e) {
@@ -133,7 +133,6 @@ class ClassificationPreview extends React.Component {
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
             progress$: this.progress$
-            
             // onProgress: tiles => this.onProgress(tiles),
             // onInitialized: visParams => this.setState({visParams})
         })
@@ -141,6 +140,7 @@ class ClassificationPreview extends React.Component {
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
+            onInitialized: visParams => this.setState({visParams}),
             onError: e => this.onError(e)
         })
         this.setState({failed: false})
