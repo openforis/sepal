@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import flatten from 'flat'
 
 const DOT_SAFE = '__dotSafe__'
 const dotSafeWrap = unsafePath => ({[DOT_SAFE]: unsafePath})
@@ -55,9 +56,8 @@ export const resolve = (object, path, createTemplates = false) =>
                 }
             }
             if (_.isPlainObject(pathElement) && _.isArray(value)) {
-                // match array item by template
                 const item = _.find(value,
-                    item => _.isEqual(_.merge({}, item, pathElement), item)
+                    item => _.isEqual(_.pick(item, Object.keys(flatten(pathElement))), pathElement)
                 )
                 if (item) {
                     return item
@@ -84,7 +84,7 @@ export class Mutator {
 
     getKey(pathState, pathElement) {
         if (_.isPlainObject(pathElement)) {
-            return _.findIndex(pathState, item => _.isEqual(_.merge({}, item, pathElement), item))
+            return _.findIndex(pathState, item => _.isEqual(_.pick(item, Object.keys(flatten(pathElement))), pathElement))
         }
         return pathElement
     }
