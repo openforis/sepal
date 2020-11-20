@@ -42,6 +42,7 @@ class _Map extends React.Component {
         mapContext: null,
         bounds: null,
         linked: true,
+        metersPerPixel: null,
         toggleLinked: this.toggleLinked.bind(this)
     }
 
@@ -64,9 +65,9 @@ class _Map extends React.Component {
 
     render() {
         const {children} = this.props
-        const {mapContext, linked, toggleLinked} = this.state
+        const {mapContext, linked, toggleLinked, metersPerPixel} = this.state
         return (
-            <Provider value={{mapContext, linked, toggleLinked}}>
+            <Provider value={{mapContext, linked, toggleLinked, metersPerPixel}}>
                 <div ref={this.map} className={styles.map}/>
                 <div className={styles.content}>
                     {mapContext ? children : null}
@@ -82,6 +83,10 @@ class _Map extends React.Component {
         }
     }
 
+    updateScale(metersPerPixel) {
+        this.setState({metersPerPixel})
+    }
+
     componentDidMount() {
         const {mapsContext: {createMapContext}, addSubscription} = this.props
         const {mapContext, bounds$, updateBounds} = createMapContext(this.map.current)
@@ -91,6 +96,14 @@ class _Map extends React.Component {
             if (linked) {
                 updateBounds(mapContext.sepalMap.getBounds())
             }
+        })
+
+        this.centerChanged = mapContext.sepalMap.onCenterChanged(() => {
+            this.updateScale(mapContext.sepalMap.getMetersPerPixel())
+        })
+
+        this.zoomChanged = mapContext.sepalMap.onZoomChanged(() => {
+            this.updateScale(mapContext.sepalMap.getMetersPerPixel())
         })
 
         addSubscription(
@@ -107,6 +120,8 @@ class _Map extends React.Component {
 
     componentWillUnmount() {
         this.boundsChanged && this.boundChanged.removeListener()
+        this.centerChanged && this.centerChanged.removeListener()
+        this.zoomChanged && this.zoomChanged.removeListener()
     }
 }
 

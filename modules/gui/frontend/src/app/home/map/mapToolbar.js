@@ -16,9 +16,7 @@ const mapStateToProps = (state, ownProps) => {
         labelsShown: select([ownProps.statePath, 'labelsShown']),
         zoomLevel: sepalMap.getZoom(),
         hasBounds: sepalMap.isLayerInitialized('aoi'),
-        isZooming: sepalMap.isZooming(),
-        // isLinked: sepalMap.isLinked(),
-        metersPerPixel: sepalMap.getMetersPerPixel()
+        isZooming: sepalMap.isZooming()
     }
 }
 

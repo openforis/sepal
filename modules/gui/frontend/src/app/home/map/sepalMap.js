@@ -125,12 +125,27 @@ export class SepalMap {
         return this.fromGoogleBounds(this.googleMap.getBounds())
     }
 
-    // used by earthEngineLayer, map
-    onBoundsChanged(listener) {
-        const listenerId = this.googleMap.addListener('bounds_changed', listener)
+    // used by this
+    addListener(event, listener) {
+        const listenerId = this.googleMap.addListener(event, listener)
         return {
             removeListener: () => this.google.maps.event.removeListener(listenerId)
         }
+    }
+
+    // used by map
+    onCenterChanged(listener) {
+        return this.addListener('center_changed', listener)
+    }
+
+    // used by map
+    onZoomChanged(listener) {
+        return this.addListener('zoom_changed', listener)
+    }
+
+    // used by earthEngineLayer, map
+    onBoundsChanged(listener) {
+        return this.addListener('bounds_changed', listener)
     }
 
     // Layers
