@@ -9,6 +9,7 @@ import ClassificationPreview from './classificationPreview'
 import ClassificationToolbar from './panels/classificationToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
+import ReferenceDataLayer from './referenceDataLayer'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
@@ -27,6 +28,7 @@ class _Classification extends React.Component {
                 {initialized && trainingData.dataSets.length
                     ? <React.Fragment>
                         <ClassificationPreview/>
+                        <ReferenceDataLayer/>
                         <BandSelection/>
                     </React.Fragment>
                     : null}

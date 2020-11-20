@@ -1,0 +1,8 @@
+.cluster {
+    width: 5rem;
+    height: 5rem;
+    color: transparent;
+    background-color: hsla(0, 0%, 0%, 0.4);
+    border: 1px solid hsla(0, 0%, 49%, 0.8);
+    border-radius: 50%;
+}

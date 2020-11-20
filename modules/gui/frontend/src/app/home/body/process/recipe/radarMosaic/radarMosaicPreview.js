@@ -136,7 +136,7 @@ class MosaicPreview extends React.Component {
 
     isHidden() {
         const {recipe} = this.props
-        return recipe.ui.hidePreview || !selectFrom(recipe, 'ui.bands.selection') || recipe.ui.overlayIndex === -1
+        return recipe.ui.hidePreview || !selectFrom(recipe, 'ui.bands.selection') || recipe.ui.mapOverlayIndex === -1
     }
 
     toPreviewRequest(recipe) {

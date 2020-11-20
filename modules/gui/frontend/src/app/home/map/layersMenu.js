@@ -24,7 +24,8 @@ const fields = {
 const mapStateToProps = (state, ownProps) => ({
     labelsShown: select([ownProps.statePath, 'labelsShown']),
     baseLayer: select([ownProps.statePath, 'baseLayer']),
-    overlayIndex: select([ownProps.statePath, 'overlayIndex']),
+    mapOverlayIndex: select([ownProps.statePath, 'mapOverlayIndex']),
+    featureOverlayIds: select([ownProps.statePath, 'featureOverlayIds']),
     dateRange: select([ownProps.statePath, 'mapLayer.dateRange']),
     proc: select([ownProps.statePath, 'mapLayer.proc'])
     // year: select([ownProps.statePath, 'options.year']),
@@ -32,86 +33,6 @@ const mapStateToProps = (state, ownProps) => ({
 })
 
 class _LayersMenu extends React.Component {
-
-    getPlanetDateOptions() {
-        // const {inputs: {year}} = this.props
-        // const startDate = moment('2018-08-01')
-        // const endDate = moment().subtract(1, 'months')
-        //
-        // const yearOptions = sequence(startDate.year(), moment().year())
-        //     .map(year => ({value: `${year}`, label: `${year}`}))
-        //
-        // const allMonthOptions = moment.monthsShort()
-        //     .map((label, i) => ({value: `${i + 1}`.padStart(2, '0'), label}))
-        //
-        // const monthOptions = year.value === `${startDate.year()}`
-        //     ? allMonthOptions.slice(startDate.month() + 1)
-        //     : year.value === `${endDate.year()}`
-        //         ? allMonthOptions.slice(0, endDate.month() + 1)
-        //         : allMonthOptions
-        // return {yearOptions, monthOptions}
-
-        const procOptions = [
-            {value: 'rgb', label: 'RGB'},
-            {value: 'cir', label: 'CIR'},
-        ]
-        const dateRangeOptions = [
-            {value: '2018-12_2019-05', label: 'Dec 2018 (6 months)'},
-            {value: '2019-06_2019-11', label: 'Jun 2019 (6 months)'},
-            {value: '2019-12_2020-05', label: 'Dec 2019 (6 months)'},
-            {value: '2020-06_2020-08', label: 'Jun 2020 (3 months)'},
-            {value: '2020-09', label: 'Sep 2020 (1 month)'},
-        ]
-        return {procOptions, dateRangeOptions}
-    }
-
-    toggleOverlay = selectedOverlayIndex => {
-        const {mapContext: {sepalMap, googleMap}, statePath} = this.props
-        const overlays = sepalMap.toggleableLayers()
-
-        const prevOverlayIndex = this.selectedOverlayIndex()
-        if (selectedOverlayIndex !== prevOverlayIndex) {
-            const prevOverlay = overlays.find(layer => layer.layerIndex === prevOverlayIndex)
-            prevOverlay && prevOverlay.hide(googleMap, true)
-        }
-
-        const selectedOverlay = overlays.find(layer => layer.layerIndex === selectedOverlayIndex)
-        const hide = prevOverlayIndex === selectedOverlayIndex
-        selectedOverlay && selectedOverlay.hide(googleMap, hide)
-        const nextOverlayIndex = hide ? -1 : selectedOverlayIndex
-
-        actionBuilder('SET_OVERLAY', {nextOverlayIndex})
-            .set([statePath, 'overlayIndex'], nextOverlayIndex)
-            .build()
-            .dispatch()
-    }
-
-    // changeBaseLayer(type, year, month, proc) {
-    changeBaseLayer(type, dateRange, proc) {
-        const {statePath, mapContext} = this.props
-        const planetApiKey = mapContext.norwayPlanetApiKey
-        changeBaseLayer({
-            type,
-            mapContext,
-            statePath,
-            options: {dateRange: dateRange.value, proc: proc.value, planetApiKey}
-            // options: {year: year.value, month: month.value, proc: proc.value, planetApiKey}
-        })
-    }
-
-    selectedOverlayIndex() {
-        const {overlayIndex, mapContext: {sepalMap}} = this.props
-        if (overlayIndex === undefined) {
-            const overlays = sepalMap.toggleableLayers()
-            const firstOverlayIndex = overlays.length
-                ? overlays.map(layer => layer.layerIndex)[0]
-                : -1
-            return firstOverlayIndex
-        } else {
-            return overlayIndex
-        }
-    }
-
     render() {
         const {
             inputs: {dateRange, proc},
@@ -119,11 +40,16 @@ class _LayersMenu extends React.Component {
             activatable: {deactivate},
             labelsShown, baseLayer, labelLayerIndex, statePath, mapContext
         } = this.props
-        const overlays = mapContext.sepalMap.toggleableLayers()
-        const toggleableOptions = overlays.map(layer =>
+        const mapOverlayOptions = this.getMapOverlays().map(layer =>
             <Menu.Option
                 key={layer.layerIndex}
                 id={layer.layerIndex}
+                label={layer.label}
+                description={layer.description}/>)
+        const featureOverlayOptions = this.getFeatureOverlayIds().map(layer =>
+            <Menu.Option
+                key={layer.id}
+                id={layer.id}
                 label={layer.label}
                 description={layer.description}/>)
         // const {yearOptions, monthOptions, procOptions} = this.getPlanetDateOptions()
@@ -200,11 +126,17 @@ class _LayersMenu extends React.Component {
                 </Menu.Select>
                 <Menu.Separator/>
                 <Menu.Select
-                    id={'OVERLAYS'}
+                    id={'MAP_OVERLAYS'}
                     label={msg('process.mosaic.mapToolbar.layersMenu.overlay')}
-                    onSelect={selectedOverlayIndex => this.toggleOverlay(selectedOverlayIndex)}
-                    selected={this.selectedOverlayIndex()}>
-                    {toggleableOptions}
+                    onSelect={selectedOverlayIndex => this.toggleMapOverlay(selectedOverlayIndex)}
+                    selected={this.selectedMapOverlayIndex()}>
+                    {mapOverlayOptions}
+                </Menu.Select>
+                <Menu.Select
+                    id={'FEATURE_OVERLAYS'}
+                    onSelect={selectedOverlayId => this.toggleFeatureOverlay(selectedOverlayId)}
+                    selected={this.selectedFeatureOverlayIds()}>
+                    {featureOverlayOptions}
                 </Menu.Select>
                 <Menu.Toggle
                     id={'SHOW_LABELS'}
@@ -241,6 +173,122 @@ class _LayersMenu extends React.Component {
             proc.set(prevProc || 'rgb')
         if (!dateRange.value)
             dateRange.set(prevDateRange || '2020-09')
+    }
+
+    getPlanetDateOptions() {
+        // const {inputs: {year}} = this.props
+        // const startDate = moment('2018-08-01')
+        // const endDate = moment().subtract(1, 'months')
+        //
+        // const yearOptions = sequence(startDate.year(), moment().year())
+        //     .map(year => ({value: `${year}`, label: `${year}`}))
+        //
+        // const allMonthOptions = moment.monthsShort()
+        //     .map((label, i) => ({value: `${i + 1}`.padStart(2, '0'), label}))
+        //
+        // const monthOptions = year.value === `${startDate.year()}`
+        //     ? allMonthOptions.slice(startDate.month() + 1)
+        //     : year.value === `${endDate.year()}`
+        //         ? allMonthOptions.slice(0, endDate.month() + 1)
+        //         : allMonthOptions
+        // return {yearOptions, monthOptions}
+
+        const procOptions = [
+            {value: 'rgb', label: 'RGB'},
+            {value: 'cir', label: 'CIR'},
+        ]
+        const dateRangeOptions = [
+            {value: '2018-12_2019-05', label: 'Dec 2018 (6 months)'},
+            {value: '2019-06_2019-11', label: 'Jun 2019 (6 months)'},
+            {value: '2019-12_2020-05', label: 'Dec 2019 (6 months)'},
+            {value: '2020-06_2020-08', label: 'Jun 2020 (3 months)'},
+            {value: '2020-09', label: 'Sep 2020 (1 month)'},
+        ]
+        return {procOptions, dateRangeOptions}
+    }
+
+    // changeBaseLayer(type, year, month, proc) {
+    changeBaseLayer(type, dateRange, proc) {
+        const {statePath, mapContext} = this.props
+        const planetApiKey = mapContext.norwayPlanetApiKey
+        changeBaseLayer({
+            type,
+            mapContext,
+            statePath,
+            options: {dateRange: dateRange.value, proc: proc.value, planetApiKey}
+            // options: {year: year.value, month: month.value, proc: proc.value, planetApiKey}
+        })
+    }
+
+    getMapOverlays() {
+        const {mapContext: {sepalMap}} = this.props
+        return sepalMap.toggleableLayers()
+            .filter(({layerIndex}) => layerIndex !== undefined)
+    }
+
+    selectedMapOverlayIndex() {
+        const {mapOverlayIndex} = this.props
+        if (mapOverlayIndex === undefined) {
+            const overlays = this.getMapOverlays()
+            return overlays.length
+                ? overlays.map(layer => layer.layerIndex)[0]
+                : -1
+        } else {
+            return mapOverlayIndex
+        }
+    }
+
+    toggleMapOverlay = selectedOverlayIndex => {
+        const {statePath} = this.props
+        const mapOverlays = this.getMapOverlays()
+
+        const prevOverlayIndex = this.selectedMapOverlayIndex()
+        if (selectedOverlayIndex !== prevOverlayIndex) {
+            const prevOverlay = mapOverlays.find(layer => layer.layerIndex === prevOverlayIndex)
+            prevOverlay && prevOverlay.hide(true)
+        }
+
+        const selectedOverlay = mapOverlays.find(layer => layer.layerIndex === selectedOverlayIndex)
+        const hide = prevOverlayIndex === selectedOverlayIndex
+        selectedOverlay && selectedOverlay.hide(hide)
+        const nextOverlayIndex = hide ? -1 : selectedOverlayIndex
+
+        actionBuilder('SET_MAP_OVERLAY', {nextOverlayIndex})
+            .set([statePath, 'mapOverlayIndex'], nextOverlayIndex)
+            .build()
+            .dispatch()
+    }
+
+    getFeatureOverlayIds() {
+        const {mapContext: {sepalMap}} = this.props
+        return sepalMap.toggleableLayers()
+            .filter(({layerIndex}) => layerIndex === undefined)
+    }
+
+    selectedFeatureOverlayIds() {
+        const {featureOverlayIds} = this.props
+        if (featureOverlayIds === undefined) {
+            const overlays = this.getFeatureOverlayIds()
+            return overlays.map(layer => layer.id)
+        } else {
+            return featureOverlayIds
+        }
+    }
+
+    toggleFeatureOverlay = selectedOverlayId => {
+        const {statePath} = this.props
+        const featureOverlays = this.getFeatureOverlayIds()
+        const prevOverlayIds = this.selectedFeatureOverlayIds()
+        const alreadySelected = prevOverlayIds.includes(selectedOverlayId)
+        const overlay = featureOverlays.find(layer => layer.id === selectedOverlayId)
+        overlay && overlay.hide(alreadySelected)
+        const nextOverlayIds = alreadySelected
+            ? prevOverlayIds.filter(id => id !== selectedOverlayId)
+            : [...prevOverlayIds, selectedOverlayId]
+        actionBuilder('SET_FEATURE_OVERLAYS', {nextOverlayIds})
+            .set([statePath, 'featureOverlayIds'], nextOverlayIds)
+            .build()
+            .dispatch()
     }
 }
 
