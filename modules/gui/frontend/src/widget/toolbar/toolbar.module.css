@@ -78,7 +78,7 @@
     border-color: var(--look-highlight-active-border-color);
 }
 
-.toolbar.vertical.panelButton button.selected {
+.toolbar.vertical.panelButton button.activationButton.selected {
     width: calc(var(--toolbar-button-size) + var(--button-panel-margin));
     margin-left: calc(-1 * var(--button-panel-margin));
     padding-left: calc(var(--button-panel-margin) + var(--selected-panel-border-width));
