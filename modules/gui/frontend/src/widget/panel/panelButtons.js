@@ -65,6 +65,11 @@ export class PanelButtons extends React.Component {
                 look: 'cancel',
                 icon: 'times',
                 label: msg('button.discard')
+            },
+            remove: {
+                look: 'cancel',
+                icon: 'times',
+                label: msg('button.remove')
             }
         }
         return (
@@ -103,6 +108,10 @@ export class PanelButtons extends React.Component {
 
     static Discard(props) {
         return PanelButtons.renderButton({template: 'discard', ...props})
+    }
+
+    static Remove(props) {
+        return PanelButtons.renderButton({template: 'remove', ...props})
     }
 
     static Close(props) {
@@ -228,6 +237,7 @@ PanelButtons.Cancel.propTypes = buttonPropTypes
 PanelButtons.Close.propTypes = buttonPropTypes
 PanelButtons.Confirm.propTypes = buttonPropTypes
 PanelButtons.Discard.propTypes = buttonPropTypes
+PanelButtons.Remove.propTypes = buttonPropTypes
 PanelButtons.Done.propTypes = buttonPropTypes
 PanelButtons.Next.propTypes = buttonPropTypes
 PanelButtons.Save.propTypes = buttonPropTypes
