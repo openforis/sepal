@@ -3,10 +3,10 @@
     display: flex;
     bottom: 3.5rem;
     right: 5rem;
-    background-color: hsla(36, 8%, 15%, .5);
-    padding: 1rem;
-    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
-    border-radius: .5rem;;
+    background-color: hsla(0, 0%, 0%, .35);
+    padding: .5rem;
+    border: 1px solid var(--wireframe-color);
+    border-radius: .25rem;;
 
 }
 
@@ -14,7 +14,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    margin-right: 0.5rem;
+    margin-right: .5rem;
     text-align: right;
 }
 

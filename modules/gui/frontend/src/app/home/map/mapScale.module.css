@@ -1,13 +1,12 @@
 .container {
     position: absolute;
-    bottom: .25rem;
+    bottom: .5rem;
     right: .5rem;
     font-size: .8rem;
     line-height: .8rem;
-    background-color: hsla(0, 0%, 0%, .5);
+    background-color: hsla(0, 0%, 0%, .35);
     color: #ccc;
-    padding: .5rem;
-    border: 1px solid transparent;
-    border-color: var(--wireframe-color);
+    padding: .35rem;
+    border: 1px solid var(--wireframe-color);
     border-radius: .25rem;
 }
