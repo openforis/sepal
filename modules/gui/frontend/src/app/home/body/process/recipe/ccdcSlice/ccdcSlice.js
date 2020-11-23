@@ -10,6 +10,7 @@ import CCDCSlicePreview from './ccdcSlicePreview'
 import CCDCSliceToolbar from './panels/ccdcSliceToolbar'
 import ChartPixel from './panels/chartPixel'
 import ChartPixelButton from '../ccdc/panels/chartPixelButton'
+import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import _ from 'lodash'
@@ -35,6 +36,7 @@ class _CCDCSlice extends React.Component {
                 <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}>
                     <ChartPixelButton onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                 </MapToolbar>
+                <MapScale/>
                 <CCDCSliceToolbar/>
                 {initialized
                     ? <React.Fragment>

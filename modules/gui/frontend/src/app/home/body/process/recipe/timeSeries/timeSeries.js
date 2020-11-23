@@ -4,6 +4,7 @@ import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
+import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import TimeSeriesToolbar from './panels/timeSeriesToolbar'
@@ -19,6 +20,7 @@ class _TimeSeries extends React.Component {
         return (
             <div className={styles.timeSeries}>
                 <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={2}/>
+                <MapScale/>
                 <TimeSeriesToolbar/>
             </div>
         )

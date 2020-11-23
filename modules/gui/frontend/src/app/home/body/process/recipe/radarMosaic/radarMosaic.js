@@ -6,6 +6,7 @@ import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import BandSelection from './bandSelection'
+import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
 import MosaicPreview from './radarMosaicPreview'
 import RadarMosaicToolbar from './panels/radarMosaicToolbar'
@@ -25,6 +26,7 @@ class _RadarMosaic extends React.Component {
                 <Content>
                     <div className={styles.radarMosaic}>
                         <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
+                        <MapScale/>
                         <RadarMosaicToolbar/>
                         {initialized
                             ? <React.Fragment>

@@ -7,6 +7,7 @@ import {selectFrom} from 'stateUtils'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import AutoSelectScenes from './autoSelectScenes'
 import BandSelection from './bandSelection'
+import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
 import MosaicToolbar from './panels/opticalMosaicToolbar'
 import OpticalMosaicPreview from './opticalMosaicPreview'
@@ -41,6 +42,7 @@ class _Mosaic extends React.Component {
                         <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}>
                             <ShowSceneAreaToggle/>
                         </MapToolbar>
+                        <MapScale/>
                         <MosaicToolbar/>
                         {initialized
                             ? <React.Fragment>

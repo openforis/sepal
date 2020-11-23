@@ -1,7 +1,10 @@
+import {NEVER, Subject} from 'rxjs'
 import {Provider, withMapContext} from './mapContext'
-// import {SepalMap} from './sepalMap'
 import {compose} from 'compose'
+import {filter, takeUntil} from 'rxjs/operators'
+import {msg} from 'translate'
 import {withMapsContext} from './maps'
+import Notifications from 'widget/notifications'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -38,20 +41,32 @@ export const StaticMap = compose(
 StaticMap.propTypes = {}
 
 class _Map extends React.Component {
+    layerById = {}
+
+    drawingOptions = {
+        fillColor: '#FBFAF2',
+        fillOpacity: 0.07,
+        strokeColor: '#c5b397',
+        strokeOpacity: 1,
+        strokeWeight: 2,
+        clickable: false,
+        editable: false,
+        zIndex: 1
+    }
+
+    removeLayer$ = new Subject()
+    map = React.createRef()
+
     state = {
         mapContext: null,
         bounds: null,
         linked: true,
+        zooming: false,
         metersPerPixel: null,
         toggleLinked: this.toggleLinked.bind(this)
     }
 
-    map = React.createRef()
-
-    isLinked() {
-        const {linked} = this.state
-        return linked
-    }
+    // Linking
 
     toggleLinked() {
         const {linked: wasLinked, bounds} = this.state
@@ -63,23 +78,300 @@ class _Map extends React.Component {
         })
     }
 
+    // Zooming
+
+    getZoom() {
+        const {googleMap} = this.state
+        return googleMap.getZoom()
+    }
+
+    setZoom(zoom) {
+        const {googleMap} = this.state
+        return googleMap.setZoom(zoom)
+    }
+
+    zoomIn() {
+        const {googleMap} = this.state
+        googleMap.setZoom(Math.min(googleMap.maxZoom, googleMap.getZoom() + 1))
+    }
+
+    zoomOut() {
+        const {googleMap} = this.state
+        googleMap.setZoom(Math.max(googleMap.minZoom, googleMap.getZoom() - 1))
+    }
+
+    isMaxZoom() {
+        const {googleMap} = this.state
+        return googleMap.getZoom() === googleMap.maxZoom
+    }
+
+    isMinZoom() {
+        const {googleMap} = this.state
+        return googleMap.getZoom() === googleMap.minZoom
+    }
+
+    getMetersPerPixel() {
+        const {googleMap} = this.state
+        const latitude = googleMap.getCenter().lat()
+        const zoom = googleMap.getZoom()
+        return Math.round(
+            156543.03392 * Math.cos(latitude * Math.PI / 180) / Math.pow(2, zoom)
+        )
+    }
+
+    // used by mapToolbar
+    zoomArea() {
+        const {google, googleMap} = this.state
+        this.setState({zooming: true})
+        this._drawingManager = new google.maps.drawing.DrawingManager({
+            drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
+            drawingControl: false,
+            rectangleOptions: this.drawingOptions
+        })
+        const drawingListener = e => {
+            const rectangle = e.overlay
+            rectangle.setMap(null)
+            googleMap.fitBounds(rectangle.bounds)
+            this.cancelZoomArea()
+        }
+        google.maps.event.addListener(this._drawingManager, 'overlaycomplete', drawingListener)
+        this._drawingManager.setMap(googleMap)
+
+    }
+
+    // used by mapToolbar
+    cancelZoomArea() {
+        this.setState({zooming: false})
+        this.disableDrawingMode()
+    }
+
+    // used by mapToolbar, chartPixelButton
+    isZooming() {
+        const {zooming} = this.state
+        return zooming
+    }
+
+    // Bounds
+
+    // user by polygonLayer
+    fromGoogleBounds(googleBounds) {
+        const sw = googleBounds.getSouthWest()
+        const ne = googleBounds.getNorthEast()
+        return [
+            [sw.lng(), sw.lat()],
+            [ne.lng(), ne.lat()]
+        ]
+    }
+
+    // used here
+    toGoogleBounds(bounds) {
+        const {google} = this.state
+        return new google.maps.LatLngBounds(
+            {lng: bounds[0][0], lat: bounds[0][1]},
+            {lng: bounds[1][0], lat: bounds[1][1]}
+        )
+    }
+
+    // used by aoi, map
+    fitBounds(bounds, padding) {
+        const {googleMap} = this.state
+        const nextBounds = this.toGoogleBounds(bounds)
+        const currentBounds = googleMap.getBounds()
+        const boundsChanged = !currentBounds || !currentBounds.equals(nextBounds)
+        if (boundsChanged) {
+            googleMap.fitBounds(nextBounds, padding)
+        }
+    }
+
+    // user by aoi, map
+    getBounds() {
+        const {googleMap} = this.state
+        return this.fromGoogleBounds(googleMap.getBounds())
+    }
+
+    // used by this
+    addListener(event, listener) {
+        const {google, googleMap} = this.state
+        const listenerId = googleMap.addListener(event, listener)
+        return {
+            removeListener: () => google.maps.event.removeListener(listenerId)
+        }
+    }
+
+    // used by map
+    onCenterChanged(listener) {
+        return this.addListener('center_changed', listener)
+    }
+
+    // used by map
+    onZoomChanged(listener) {
+        return this.addListener('zoom_changed', listener)
+    }
+
+    // used by earthEngineLayer, map
+    onBoundsChanged(listener) {
+        return this.addListener('bounds_changed', listener)
+    }
+
+    // Layers
+
+    getLayer(id) {
+        return this.layerById[id]
+    }
+
+    // used by MANY
+    setLayer({id, layer, destroy$ = NEVER, onInitialized, onError}) {
+        const existingLayer = this.getLayer(id)
+        const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
+        if (unchanged) {
+            return false
+
+        }
+        this.removeLayer(id)
+        if (layer) {
+            this.layerById[id] = layer
+            layer.initialize$().pipe(
+                takeUntil(destroy$),
+                takeUntil(this.removeLayer$.pipe(
+                    filter(layerId => layerId === id),
+                ))
+            ).subscribe(
+                () => {
+                    layer.__initialized__ = true
+                    layer.addToMap()
+                    onInitialized && onInitialized(layer)
+                },
+                error => onError
+                    ? onError(error)
+                    : Notifications.error({message: msg('map.layer.error'), error})
+            )
+        }
+        return true
+    }
+
+    // used by MANY
+    hideLayer(id, hidden) {
+        const layer = this.getLayer(id)
+        if (layer) {
+            layer.hide(hidden)
+        }
+    }
+
+    // used by MANY
+    removeLayer(id) {
+        const layer = this.getLayer(id)
+        if (layer) {
+            this.removeLayer$.next(id)
+            layer.removeFromMap()
+            delete this.getLayer(id)
+        }
+    }
+
+    // used by mapToolbar
+    isLayerInitialized(id) {
+        const layer = this.getLayer(id)
+        return !!(layer && layer.__initialized__)
+    }
+
+    // used by layersMenu
+    toggleableLayers() {
+        return _.orderBy(Object.values(this.layerById).filter(layer => layer.toggleable), ['layerIndex'])
+    }
+
+    // used by MANY
+    fitLayer(id) {
+        const layer = this.getLayer(id)
+        if (layer && layer.bounds) {
+            this.fitBounds(layer.bounds)
+        }
+    }
+
+    // used by polygonSection
+    drawPolygon(id, callback) {
+        const {google, googleMap} = this.state
+        this._drawingPolygon = {id, callback}
+        this._drawingManager = this._drawingManager || new google.maps.drawing.DrawingManager({
+            drawingMode: google.maps.drawing.OverlayType.POLYGON,
+            drawingControl: false,
+            drawingControlOptions: {
+                position: google.maps.ControlPosition.TOP_CENTER,
+                drawingModes: ['polygon']
+            },
+            circleOptions: this.drawingOptions,
+            polygonOptions: this.drawingOptions,
+            rectangleOptions: this.drawingOptions
+        })
+        const drawingListener = e => {
+            const polygon = e.overlay
+            polygon.setMap(null)
+            const toPolygonPath = polygon => polygon.getPaths().getArray()[0].getArray().map(latLng =>
+                [latLng.lng(), latLng.lat()]
+            )
+            callback(toPolygonPath(polygon))
+        }
+        google.maps.event.addListener(this._drawingManager, 'overlaycomplete', drawingListener)
+        this._drawingManager.setMap(googleMap)
+    }
+
+    // used by polygonSection
+    disableDrawingMode() {
+        const {google} = this.state
+        if (this._drawingManager) {
+            this._drawingManager.setMap(null)
+            google.maps.event.clearListeners(this._drawingManager, 'overlaycomplete')
+            this._drawingPolygon = null
+        }
+    }
+
+    // used by chartPixelButton
+    onOneClick(listener) {
+        const {google, googleMap} = this.state
+        googleMap.setOptions({draggableCursor: 'pointer'})
+        const instances = [
+            googleMap,
+            ...Object.values(this.layerById)
+                .filter(instance => instance.type === 'PolygonLayer')
+                .map(({layer}) => layer)
+        ]
+        instances.forEach(instance => {
+            google.maps.event.addListener(instance, 'click', ({latLng}) => {
+                listener({lat: latLng.lat(), lng: latLng.lng()})
+                this.clearClickListeners()
+            })
+        })
+    }
+
+    // used by chartPixelButton
+    clearClickListeners() {
+        const {google, googleMap} = this.state
+        googleMap.setOptions({draggableCursor: null})
+        const instances = [
+            googleMap,
+            ...Object.values(this.layerById)
+                .filter(({type}) => type === 'PolygonLayer')
+                .map(({layer}) => layer)
+        ]
+        instances.forEach(instance => google.maps.event.clearListeners(instance, 'click'))
+    }
+
     render() {
         const {children} = this.props
-        const {mapContext, linked, toggleLinked, metersPerPixel} = this.state
+        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, linked, toggleLinked, metersPerPixel} = this.state
+        const mapContext = {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}
         return (
             <Provider value={{mapContext, linked, toggleLinked, metersPerPixel}}>
                 <div ref={this.map} className={styles.map}/>
                 <div className={styles.content}>
-                    {mapContext ? children : null}
+                    {sepalMap ? children : null}
                 </div>
             </Provider>
         )
     }
 
     synchronizeThisMap(bounds) {
-        const {mapContext, linked} = this.state
+        const {linked} = this.state
         if (linked) {
-            mapContext.sepalMap.fitBounds(bounds, 0)
+            this.fitBounds(bounds, 0)
         }
     }
 
@@ -88,22 +380,65 @@ class _Map extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {createMapContext}, addSubscription} = this.props
-        const {mapContext, bounds$, updateBounds} = createMapContext(this.map.current)
+        const {mapsContext: {createMapContext}} = this.props
+        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds} = createMapContext(this.map.current)
 
-        this.boundChanged = mapContext.sepalMap.onBoundsChanged(() => {
+        const sepalMap = {
+            getZoom: this.getZoom.bind(this),
+            setZoom: this.setZoom.bind(this),
+            zoomIn: this.zoomIn.bind(this),
+            zoomOut: this.zoomOut.bind(this),
+            isMaxZoom: this.isMaxZoom.bind(this),
+            isMinZoom: this.isMinZoom.bind(this),
+            getMetersPerPixel: this.getMetersPerPixel.bind(this),
+            zoomArea: this.zoomArea.bind(this),
+            cancelZoomArea: this.cancelZoomArea.bind(this),
+            isZooming: this.isZooming.bind(this),
+            fromGoogleBounds: this.fromGoogleBounds.bind(this),
+            toGoogleBounds: this.toGoogleBounds.bind(this),
+            fitBounds: this.fitBounds.bind(this),
+            getBounds: this.getBounds.bind(this),
+            onCenterChanged: this.onCenterChanged.bind(this),
+            onZoomChanged: this.onZoomChanged.bind(this),
+            onBoundsChanged: this.onBoundsChanged.bind(this),
+            getLayer: this.getLayer.bind(this),
+            setLayer: this.setLayer.bind(this),
+            hideLayer: this.hideLayer.bind(this),
+            removeLayer: this.removeLayer.bind(this),
+            isLayerInitialized: this.isLayerInitialized.bind(this),
+            toggleableLayers: this.toggleableLayers.bind(this),
+            fitLayer: this.fitLayer.bind(this),
+            drawPolygon: this.drawPolygon.bind(this),
+            disableDrawingMode: this.disableDrawingMode.bind(this),
+            onOneClick: this.onOneClick.bind(this),
+            clearClickListeners: this.clearClickListeners.bind(this)
+        }
+
+        this.setState({google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () =>
+            this.subscribe(bounds$, updateBounds)
+        )
+    }
+
+    componentWillUnmount() {
+        this.unsubscribe()
+    }
+
+    subscribe(bounds$, updateBounds) {
+        const {addSubscription} = this.props
+
+        this.boundChanged = this.onBoundsChanged(() => {
             const {linked} = this.state
             if (linked) {
-                updateBounds(mapContext.sepalMap.getBounds())
+                updateBounds(this.getBounds())
             }
         })
 
-        this.centerChanged = mapContext.sepalMap.onCenterChanged(() => {
-            this.updateScale(mapContext.sepalMap.getMetersPerPixel())
+        this.centerChanged = this.onCenterChanged(() => {
+            this.updateScale(this.getMetersPerPixel())
         })
 
-        this.zoomChanged = mapContext.sepalMap.onZoomChanged(() => {
-            this.updateScale(mapContext.sepalMap.getMetersPerPixel())
+        this.zoomChanged = this.onZoomChanged(() => {
+            this.updateScale(this.getMetersPerPixel())
         })
 
         addSubscription(
@@ -114,11 +449,9 @@ class _Map extends React.Component {
                 }
             )
         )
-
-        this.setState({mapContext})
     }
 
-    componentWillUnmount() {
+    unsubscribe() {
         this.boundsChanged && this.boundChanged.removeListener()
         this.centerChanged && this.centerChanged.removeListener()
         this.zoomChanged && this.zoomChanged.removeListener()

@@ -1002,11 +1002,11 @@
         "zoomOut": {
           "tooltip": "Zoom out"
         },
-        "linked": {
-            "tooltip": "This map is linked"
+        "link": {
+            "tooltip": "Link this map to all other linked maps"
         },
-        "unlinked": {
-            "tooltip": "This map is unlinked"
+        "unlink": {
+            "tooltip": "Unlink this map"
         },
         "layersMenu": {
           "baseLayer": "Base layer",

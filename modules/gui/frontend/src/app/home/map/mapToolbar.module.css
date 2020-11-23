@@ -17,11 +17,8 @@
     margin-right: 6rem;
 }
 
-.metersPerPixel {
-    position: absolute;
-    top: 1rem;
-    right: .5rem;
-    height: var(--toolbar-button-size);
-    font-size: .8rem;
-    color: #ccc;
+@media only screen and (max-width: 500px) {
+    .mapToolbar {
+        margin-right: 3rem;
+    }
 }

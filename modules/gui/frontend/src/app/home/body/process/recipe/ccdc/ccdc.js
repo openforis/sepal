@@ -7,6 +7,7 @@ import {setAoiLayer} from 'app/home/map/aoiLayer'
 import CCDCToolbar from './panels/ccdcToolbar'
 import ChartPixel from './panels/chartPixel'
 import ChartPixelButton from './panels/chartPixelButton'
+import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import styles from './ccdc.module.css'
@@ -31,6 +32,7 @@ class _CCDC extends React.Component {
                         showGoogleSatellite
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                 </MapToolbar>
+                <MapScale/>
                 <CCDCToolbar/>
                 <ChartPixel/>
             </div>

@@ -7,6 +7,7 @@ import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import BandSelection from './bandSelection'
 import ClassificationPreview from './classificationPreview'
 import ClassificationToolbar from './panels/classificationToolbar'
+import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 
@@ -22,6 +23,7 @@ class _Classification extends React.Component {
         return (
             <React.Fragment>
                 <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
+                <MapScale/>
                 <ClassificationToolbar/>
 
                 {initialized && trainingData.dataSets.length
