@@ -341,7 +341,24 @@ class _Map extends React.Component {
         })
     }
 
-    // used by chartPixelButton
+    // used by referenceDataLayer
+    onClick(listener) {
+        const {google, googleMap} = this.state
+        googleMap.setOptions({draggableCursor: 'pointer'})
+        const instances = [
+            googleMap,
+            ...Object.values(this.layerById)
+                .filter(instance => instance.type === 'PolygonLayer')
+                .map(({layer}) => layer)
+        ]
+        instances.forEach(instance => {
+            google.maps.event.addListener(instance, 'click', ({latLng}) => {
+                listener({lat: latLng.lat(), lng: latLng.lng()})
+            })
+        })
+    }
+
+    // used by chartPixelButton, referenceDataLayer
     clearClickListeners() {
         const {google, googleMap} = this.state
         googleMap.setOptions({draggableCursor: null})
@@ -410,6 +427,7 @@ class _Map extends React.Component {
             fitLayer: this.fitLayer.bind(this),
             drawPolygon: this.drawPolygon.bind(this),
             disableDrawingMode: this.disableDrawingMode.bind(this),
+            onClick: this.onClick.bind(this),
             onOneClick: this.onOneClick.bind(this),
             clearClickListeners: this.clearClickListeners.bind(this)
         }
