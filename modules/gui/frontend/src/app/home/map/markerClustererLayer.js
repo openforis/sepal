@@ -3,7 +3,16 @@ import MarkerClusterer from '@googlemaps/markerclustererplus'
 import _ from 'lodash'
 import styles from './markerClustererLayer.module.css'
 
+const DEFAULT_COLOR = '#FFFFFF'
+const DEFAULT_STROKE_COLOR = '#000000'
+const SELECTED_STROKE_COLOR = '#000000'
+const DEFAULT_STROKE_WIDTH = 2
+const SELECTED_STROKE_WIDTH = 3
+const DEFAULT_SCALE = 0.5
+const SELECTED_SCALE = 0.6
+
 export default class MarkerClustererLayer {
+
     constructor({mapContext: {google, googleMap, sepalMap}, id, label, description}) {
         this.type = 'MarkerClustererLayer'
         this.toggleable = true
@@ -13,45 +22,83 @@ export default class MarkerClustererLayer {
         this.id = id
         this.label = label
         this.description = description
+        this.mapMarkers = {}
+        this.clickable = false
 
-        // Path borrowed from https://github.com/scottdejonge/map-icons
+        // Path from https://github.com/scottdejonge/map-icons
         this.icon = {
             path: "M25.015 2.4c-7.8 0-14.121 6.204-14.121 13.854 0 7.652 14.121 32.746 14.121 32.746s14.122-25.094 14.122-32.746c0-7.65-6.325-13.854-14.122-13.854z",
-            fillOpacity: .6,
-            anchor: new google.maps.Point(0, 0),
-            strokeWeight: 1,
-            strokeColor: '#000000',
-            scale: 0.5
+            fillOpacity: 1,
+            anchor: new google.maps.Point(25, 50),
+            strokeWeight: DEFAULT_STROKE_WIDTH,
+            strokeColor: DEFAULT_STROKE_COLOR,
+            scale: DEFAULT_SCALE
         }
 
         this.markerCluster = new MarkerClusterer(null, [], {
             clusterClass: styles.cluster,
-            minimumClusterSize: 5
+            maxZoom: 14
         })
         this.markerCluster.setStyles(
-            this.markerCluster.getStyles().map(style => ({...style, textColor: 'white'}))
+            this.markerCluster.getStyles().map(style => _.omit({...style, textColor: 'white'}, 'url'))
         )
     }
 
     setMarkers(markers) {
-        const google = this.google
+        this.mapMarkers = {}
         this.markers = markers
-            .map(({x, y, color, onClick}) => {
-                const marker = new google.maps.Marker({
-                    position: new google.maps.LatLng(y, x),
-                    // map: this.googleMap,
-                    draggable: false,
-                    icon: {...this.icon, fillColor: color}
-                })
-                marker.addListener("click", () => {
-                    onClick && onClick({x, y, color})
-                })
-
-                return marker
+            .forEach(({x, y, color, onClick}) => {
+                this.mapMarkers[markerKey({x, y})] = this.toMapMarker({x, y, color, onClick})
             })
-
         this.markerCluster.clearMarkers()
-        this.markerCluster.addMarkers(this.markers)
+        this.markerCluster.addMarkers(Object.values(this.mapMarkers))
+    }
+
+    selectMarker(marker) {
+        this.updateIcon(marker, {
+            strokeWeight: SELECTED_STROKE_WIDTH,
+            strokeColor: SELECTED_STROKE_COLOR,
+            scale: SELECTED_SCALE
+        })
+    }
+
+    deselectMarker(marker) {
+        this.updateIcon(marker, {
+            strokeWeight: DEFAULT_STROKE_WIDTH,
+            strokeColor: DEFAULT_STROKE_COLOR,
+            scale: DEFAULT_SCALE
+        })
+    }
+
+    addMarker(marker) {
+        const mapMarker = this.toMapMarker(marker)
+        mapMarker.setIcon({
+            ...mapMarker.getIcon(),
+            strokeWeight: SELECTED_STROKE_WIDTH,
+            strokeColor: SELECTED_STROKE_COLOR,
+            scale: SELECTED_SCALE
+        })
+        this.mapMarkers[markerKey(marker)] = mapMarker
+        this.markerCluster.addMarker(mapMarker)
+    }
+
+    updateMarker(marker) {
+        this.updateIcon(marker, {fillColor: marker.color})
+    }
+
+    removeMarker(marker) {
+        const mapMarker = this.mapMarkers[markerKey(marker)]
+        delete this.mapMarkers[markerKey(marker)]
+        if (mapMarker) {
+            this.markerCluster.removeMarker(mapMarker)
+        }
+    }
+
+    updateIcon(marker, iconUpdate) {
+        const mapMarker = this.mapMarkers[markerKey(marker)]
+        if (!mapMarker)
+            throw new Error(`Marker not found: ${marker}`)
+        mapMarker.setIcon({...mapMarker.getIcon(), ...iconUpdate})
     }
 
     equals(o) {
@@ -60,7 +107,7 @@ export default class MarkerClustererLayer {
 
     addToMap() {
         this.markerCluster.clearMarkers()
-        this.markerCluster.addMarkers(this.markers)
+        this.markerCluster.addMarkers(Object.values(this.mapMarkers))
         this.markerCluster.setMap(this.googleMap)
     }
 
@@ -76,4 +123,26 @@ export default class MarkerClustererLayer {
     initialize$() {
         return of(this)
     }
+
+    toMapMarker({x, y, color = DEFAULT_COLOR, onClick}) {
+        const google = this.google
+        const marker = new google.maps.Marker({
+            position: new google.maps.LatLng(y, x),
+            // map: this.googleMap,
+            draggable: false,
+            icon: {...this.icon, fillColor: color},
+            clickable: this.clickable
+        })
+        marker.addListener("click", () => {
+            onClick && onClick({x, y, color})
+        })
+        return marker
+    }
+
+    setClickable(flag) {
+        this.clickable = flag
+        Object.values(this.mapMarkers || {}).forEach(marker => marker.setClickable(flag))
+    }
 }
+
+const markerKey = ({x, y}) => `${x},${y}`

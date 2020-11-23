@@ -714,6 +714,10 @@
             "title": "Training data set"
           },
           "type": {
+            "COLLECTED": {
+              "label": "Collected reference data",
+              "title": "COLLECTED"
+            },
             "EE_TABLE": {
               "label": "Earth Engine Table",
               "tooltip": "Load reference data from an EE table.",

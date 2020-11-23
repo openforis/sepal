@@ -14,15 +14,17 @@ import React from 'react'
 import Retrieve from './retrieve/retrieve'
 import TrainingData from './trainingData/trainingData.js'
 import styles from './classificationToolbar.module.css'
+import {RecipeActions} from '../classificationRecipe'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
+    collecting: selectFrom(recipe, 'ui.collect.collecting'),
     initialized: selectFrom(recipe, 'ui.initialized'),
 })
 
 class ClassificationToolbar extends React.Component {
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, collecting, initialized} = this.props
         return (
             <PanelWizard
                 panels={['inputImagery', 'legend', 'trainingData']}
@@ -41,6 +43,11 @@ class ClassificationToolbar extends React.Component {
                     placement='top-right'
                     panel
                     className={styles.top}>
+                    <Toolbar.ToolbarButton
+                        selected={collecting}
+                        onClick={() => RecipeActions(recipeId).setCollecting(!collecting)}
+                        icon={'map-marker'}
+                        tooltip={msg(`process.classification.tooltip`)}/>
                     <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'

@@ -1,0 +1,31 @@
+.panel {
+    max-width: 21rem;
+    margin-top: 3rem;
+}
+
+.legendEntry {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-gap: 1rem;
+    color: #ccc;
+}
+
+
+.legendEntry .color {
+    --color: black; /* To be overridden */
+    background-color: var(--color);
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+.legendEntry .value {
+    width: 2rem;
+}
+
+.legendEntry .label {
+
+}
+
+.selected {
+    background-color: var(--look-selected-active-background-color) !important;
+}

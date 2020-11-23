@@ -43,7 +43,7 @@ export const withRecipe = mapRecipeToProps =>
         )
     }
     
-export const recipe = ({defaultModel, mapRecipeToProps}) =>
+export const recipe = ({getDefaultModel, defaultModel, mapRecipeToProps}) =>
     WrappedComponent => {
         const mapStateToProps = (state, ownProps) => {
             const {recipeContext: {statePath}} = ownProps
@@ -62,8 +62,8 @@ export const recipe = ({defaultModel, mapRecipeToProps}) =>
             componentDidMount() {
                 const {hasModel, recipeContext: {statePath}} = this.props
                 if (!hasModel) {
-                    actionBuilder('INIT_MODEL', defaultModel)
-                        .set([statePath, 'model'], defaultModel)
+                    actionBuilder('INIT_MODEL', defaultModel || (getDefaultModel && getDefaultModel()))
+                        .set([statePath, 'model'], defaultModel || (getDefaultModel && getDefaultModel()))
                         .dispatch()
                 }
             }

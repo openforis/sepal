@@ -2,8 +2,19 @@ import {msg} from 'translate'
 import {recipeActionBuilder} from '../../recipe'
 import _ from 'lodash'
 import api from 'api'
+import guid from 'guid'
 
-export const defaultModel = {
+export const getDefaultModel = () => ({
+    trainingData: {
+        dataSets: [
+            {
+                dataSetId: guid(),
+                name: msg('process.classification.panel.trainingData.type.COLLECTED.label'),
+                type: "COLLECTED",
+                referenceData: []
+            }
+        ]
+    },
     auxiliaryImagery: [],
     classifier: {
         type: 'RANDOM_FOREST',
@@ -28,7 +39,7 @@ export const defaultModel = {
 
         metric: 'euclidean'
     }
-}
+})
 
 export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
@@ -60,6 +71,32 @@ export const RecipeActions = id => {
             actionBuilder('REMOVE_TRAINING_DATA_SET', {dataSetToRemove})
                 .del(['model.trainingData.dataSets', {dataSetId: dataSetToRemove.dataSetId}])
                 .del(['ui.trainingData.dataSets', {dataSetId: dataSetToRemove.dataSetId}])
+                .dispatch()
+        },
+        setSelectedPoint(point) {
+            return set('SET_SELECTED_POINT', 'ui.collect.point', point, {point})
+                .dispatch()
+        },
+        addSelectedPoint(point) {
+            actionBuilder('ADD_SELECTED_POINT', {point})
+                .push(['model.trainingData.dataSets', {type: 'COLLECTED'}, 'referenceData'], point)
+                .set('ui.collect.point', point)
+                .dispatch()
+        },
+        updateSelectedPoint(point) {
+            actionBuilder('UPDATE_SELECTED_POINT', {point})
+                .assign(['model.trainingData.dataSets', {type: 'COLLECTED'}, 'referenceData', {x: point.x, y: point.y}], point)
+                .set('ui.collect.lastValue', point['class'])
+                .dispatch()
+        },
+        removeSelectedPoint(point) {
+            actionBuilder('REMOVE_SELECTED_POINT', {point})
+                .del(['model.trainingData.dataSets', {type: 'COLLECTED'}, 'referenceData', {x: point.x, y: point.y}])
+                .set('ui.collect.point', null)
+                .dispatch()
+        },
+        setCollecting(collecting) {
+            return set('SET_COLLECTING_REFERENCE_DATA', 'ui.collect.collecting', collecting, {collecting})
                 .dispatch()
         }
     }

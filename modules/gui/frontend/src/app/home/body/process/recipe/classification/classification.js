@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {defaultModel} from './classificationRecipe'
+import {getDefaultModel} from './classificationRecipe'
 import {msg} from 'translate'
 import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
@@ -11,6 +11,8 @@ import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import ReferenceDataLayer from './referenceDataLayer'
+import {DataCollectionEvents} from './dataCollectionEvents'
+import CollectPanel from './panels/collect/collectPanel'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
@@ -19,6 +21,8 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Classification extends React.Component {
+    dataCollectionEvents = new DataCollectionEvents()
+
     render() {
         const {recipeContext: {statePath}, trainingData, initialized} = this.props
         return (
@@ -30,7 +34,8 @@ class _Classification extends React.Component {
                 {initialized && trainingData.dataSets.length
                     ? <React.Fragment>
                         <ClassificationPreview/>
-                        <ReferenceDataLayer/>
+                        <ReferenceDataLayer dataCollectionEvents={this.dataCollectionEvents}/>
+                        <CollectPanel dataCollectionEvents={this.dataCollectionEvents}/>
                         <BandSelection/>
                     </React.Fragment>
                     : null}
@@ -59,7 +64,7 @@ class _Classification extends React.Component {
 
 const Classification = compose(
     _Classification,
-    recipe({defaultModel, mapRecipeToProps})
+    recipe({getDefaultModel, mapRecipeToProps})
 )
 
 export default () => ({
