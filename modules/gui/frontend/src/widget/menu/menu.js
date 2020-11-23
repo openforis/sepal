@@ -1,6 +1,7 @@
 import {Panel} from 'widget/panel/panel'
 import React from 'react'
 import styles from './menu.module.css'
+import _ from 'lodash'
 
 const {MenuItem} = require('./menuItem')
 const MenuContext = require('./menuContext')
@@ -44,7 +45,9 @@ const Select = ({label, selected, children, onSelect}) => {
             select: selected => onSelect(selected)
         }}>
             <div className={styles.group}>
-                <li className={styles.groupLabel}>{label}</li>
+                {label
+                    ? <li className={styles.groupLabel}>{label}</li>
+                    : null}
                 <ul>
                     {children}
                 </ul>
@@ -61,7 +64,9 @@ const Option = ({id, label, description, right}) =>
             <Menu.Item
                 label={label}
                 description={description}
-                selected={id === selected}
+                selected={_.isArray(selected)
+                    ? selected.includes(id)
+                    : id === selected}
                 right={right}
                 onClick={() => select(id)}/>
         }

@@ -136,7 +136,7 @@ class OpticalMosaicPreview extends React.Component {
 
     isHidden() {
         const {recipe} = this.props
-        return recipe.ui.hidePreview || recipe.ui.overlayIndex === -1
+        return recipe.ui.hidePreview || recipe.ui.mapOverlayIndex === -1
     }
 
     toPreviewRequest(recipe) {

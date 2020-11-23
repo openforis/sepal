@@ -348,6 +348,12 @@
       "create": "Classification",
       "tabPlaceholder": "Classification",
       "description": "Classify imagery from SEPAL or Google Earth Engine. Include imagery from multiple points in time to do change detection.",
+      "layers": {
+        "referenceData": {
+          "label": "Reference data",
+          "description": "Reference data points used to create classification"
+        }
+      },
       "panel": {
         "auxiliaryImagery": {
           "button": "AUX",

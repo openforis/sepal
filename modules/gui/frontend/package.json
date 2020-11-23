@@ -10,6 +10,7 @@
     "@fortawesome/free-solid-svg-icons": "5.14.0",
     "@fortawesome/react-fontawesome": "0.1.11",
     "@google/earthengine": "0.1.242",
+    "@googlemaps/markerclustererplus": "^1.0.3",
     "base-64": "0.1.0",
     "chartist": "^0.11.4",
     "cross-fetch": "3.0.5",
