@@ -348,6 +348,10 @@
       "create": "Classification",
       "tabPlaceholder": "Classification",
       "description": "Classify imagery from SEPAL or Google Earth Engine. Include imagery from multiple points in time to do change detection.",
+      "collect": {
+        "enable.tooltip": "Enable reference data collection",
+        "disable.tooltip": "Disable reference data collection"
+      },
       "layers": {
         "referenceData": {
           "label": "Reference data",

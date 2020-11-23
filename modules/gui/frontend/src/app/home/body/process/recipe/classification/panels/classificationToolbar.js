@@ -47,7 +47,9 @@ class ClassificationToolbar extends React.Component {
                         selected={collecting}
                         onClick={() => RecipeActions(recipeId).setCollecting(!collecting)}
                         icon={'map-marker'}
-                        tooltip={msg(`process.classification.tooltip`)}/>
+                        tooltip={msg(collecting
+                            ? 'process.classification.collect.disable.tooltip'
+                            : `process.classification.collect.enable.tooltip`)}/>
                     <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
