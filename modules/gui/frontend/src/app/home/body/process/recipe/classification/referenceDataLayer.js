@@ -155,9 +155,13 @@ class ReferenceDataLayer extends React.Component {
             x: point.x,
             y: point.y,
             ...color,
-            onClick: point => {
-                const p = this.getReferenceData().find(p => _.isEqual([p.x, p.y], [point.x, point.y]))
-                this.onSelect(p || point)
+            onClick: marker => {
+                const point = this.getReferenceData()
+                    .find(p => _.isEqual(
+                        [p.x, p.y],
+                        [marker.x, marker.y]
+                    ))
+                this.onSelect(point || {x: marker.x, y: marker.y})
             }
         }
     }
