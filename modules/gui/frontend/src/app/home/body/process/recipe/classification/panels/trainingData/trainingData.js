@@ -76,8 +76,8 @@ class TrainingData extends React.Component {
                 removeMessage={msg('process.classification.panel.trainingData.remove.confirmationMessage', {name})}
                 removeTooltip={msg('process.classification.panel.trainingData.remove.tooltip')}
                 disabled={disabled}
-                onClick={!disabled && (() => this.editDataSet(dataSet))}
-                onRemove={!disabled && (() => this.removeDataSet(dataSet))}
+                onClick={disabled ? null : () => this.editDataSet(dataSet)}
+                onRemove={disabled ? null : () => this.removeDataSet(dataSet)}
             />
         )
     }

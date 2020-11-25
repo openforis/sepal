@@ -85,13 +85,23 @@ export const RecipeActions = id => {
         },
         updateSelectedPoint(point) {
             actionBuilder('UPDATE_SELECTED_POINT', {point})
-                .assign(['model.trainingData.dataSets', {type: 'COLLECTED'}, 'referenceData', {x: point.x, y: point.y}], point)
+                .assign([
+                    'model.trainingData.dataSets',
+                    point.dataSetId ? {dataSetId: point.dataSetId} : {type: 'COLLECTED'},
+                    'referenceData',
+                    {x: point.x, y: point.y}
+                ], {x: point.x, y: point.y, 'class': point['class']})
                 .set('ui.collect.lastValue', point['class'])
                 .dispatch()
         },
         removeSelectedPoint(point) {
             actionBuilder('REMOVE_SELECTED_POINT', {point})
-                .del(['model.trainingData.dataSets', {type: 'COLLECTED'}, 'referenceData', {x: point.x, y: point.y}])
+                .del([
+                    'model.trainingData.dataSets',
+                    point.dataSetId ? {dataSetId: point.dataSetId} : {type: 'COLLECTED'},
+                    'referenceData',
+                    {x: point.x, y: point.y}
+                ])
                 .set('ui.collect.point', null)
                 .dispatch()
         },

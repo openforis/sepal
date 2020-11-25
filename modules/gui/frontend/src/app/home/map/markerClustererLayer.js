@@ -72,7 +72,6 @@ export default class MarkerClustererLayer {
     }
 
     addMarker(marker) {
-        console.log('addMarker', marker)
         const mapMarker = this.toMapMarker(marker)
         mapMarker.setIcon({
             ...mapMarker.getIcon(),
@@ -85,7 +84,6 @@ export default class MarkerClustererLayer {
     }
 
     updateMarker(marker) {
-        console.log('updateMarker', marker)
         const mapMarker = this.getMapMarker(marker)
         mapMarker.data = marker
         this.updateIcon(marker, {fillColor: marker.color})

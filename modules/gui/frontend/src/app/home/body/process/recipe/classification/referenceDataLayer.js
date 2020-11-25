@@ -114,7 +114,7 @@ class ReferenceDataLayer extends React.Component {
             }
         }
         this.layer.selectMarker(marker)
-        this.recipeActions.setSelectedPoint({x: marker.x, y: marker.y, 'class': marker['class']})
+        this.recipeActions.setSelectedPoint({x: marker.x, y: marker.y, dataSetId: marker.dataSetId, 'class': marker['class']})
     }
 
     onDeselect(point) {
@@ -126,6 +126,7 @@ class ReferenceDataLayer extends React.Component {
     }
 
     onAdd(point) {
+        console.log('onAdd', point)
         const {prevPoint} = this.props
         if (prevPoint)
             this.layer.deselectMarker(prevPoint)
@@ -137,11 +138,13 @@ class ReferenceDataLayer extends React.Component {
     }
 
     onUpdate(point) {
+        console.log('onUpdate', point)
         this.layer.updateMarker(this.toMarker(point))
         this.recipeActions.updateSelectedPoint(point)
     }
 
     onRemove(point) {
+        console.log('onRemove', point)
         this.layer.removeMarker(this.toMarker(point))
         this.recipeActions.removeSelectedPoint(point)
     }
@@ -158,6 +161,7 @@ class ReferenceDataLayer extends React.Component {
         return {
             x: point.x,
             y: point.y,
+            dataSetId: point.dataSetId,
             ...additionalProps,
             onClick: marker => this.onSelect(marker)
         }
@@ -167,7 +171,9 @@ class ReferenceDataLayer extends React.Component {
         const {trainingDataSets} = this.props
         return trainingDataSets
             .filter(({type}) => type !== 'RECIPE')
-            .map(({referenceData}) => referenceData)
+            .map(({dataSetId, referenceData}) =>
+                referenceData.map(point => ({...point, dataSetId}))
+            )
             .flat()
     }
 }
