@@ -31,7 +31,8 @@ class ReferenceDataLayer extends React.Component {
             onAdd: point => this.onAdd(point),
             onUpdate: point => this.onUpdate(point),
             onRemove: point => this.onRemove(point),
-            onDeselect: point => this.onDeselect(point)
+            onDeselect: point => this.onDeselect(point),
+            onDataSetUpdate: () => this.updateAllMarkers()
         })
         this.recipeActions = RecipeActions(recipeId)
     }
@@ -54,20 +55,7 @@ class ReferenceDataLayer extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        const {trainingDataSets} = this.props
         this.handleCollectingChange(prevProps.collecting)
-        const changed = () => {
-            const prevDataSets = prevProps.trainingDataSets.filter(({type}) => type !== 'COLLECTED')
-            const dataSets = this.props.trainingDataSets.filter(({type}) => type !== 'COLLECTED')
-            return prevDataSets.length !== dataSets.length
-                || dataSets.find(
-                    dataSet => dataSet !== prevDataSets.find(({id}) => dataSet.id === id)
-                )
-        }
-
-        if (prevProps.trainingDataSets !== trainingDataSets && changed()) {
-            this.updateAllMarkers()
-        }
     }
 
     componentWillUnmount() {
@@ -126,7 +114,6 @@ class ReferenceDataLayer extends React.Component {
     }
 
     onAdd(point) {
-        console.log('onAdd', point)
         const {prevPoint} = this.props
         if (prevPoint)
             this.layer.deselectMarker(prevPoint)
@@ -138,13 +125,11 @@ class ReferenceDataLayer extends React.Component {
     }
 
     onUpdate(point) {
-        console.log('onUpdate', point)
         this.layer.updateMarker(this.toMarker(point))
         this.recipeActions.updateSelectedPoint(point)
     }
 
     onRemove(point) {
-        console.log('onRemove', point)
         this.layer.removeMarker(this.toMarker(point))
         this.recipeActions.removeSelectedPoint(point)
     }

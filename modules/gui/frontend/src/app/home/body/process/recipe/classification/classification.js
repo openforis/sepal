@@ -29,7 +29,7 @@ class _Classification extends React.Component {
             <React.Fragment>
                 <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
                 <MapScale/>
-                <ClassificationToolbar/>
+                <ClassificationToolbar dataCollectionEvents={this.dataCollectionEvents}/>
 
                 {initialized && trainingData.dataSets.length
                     ? <React.Fragment>

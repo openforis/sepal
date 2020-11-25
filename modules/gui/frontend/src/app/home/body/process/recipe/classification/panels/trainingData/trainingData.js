@@ -14,6 +14,7 @@ import React from 'react'
 import TrainingDataSet from './trainingDataSet'
 import guid from 'guid'
 import styles from './trainingData.module.css'
+import PropTypes from 'prop-types'
 
 const mapRecipeToProps = recipe => ({
     dataSets: selectFrom(recipe, 'model.trainingData.dataSets') || []
@@ -28,7 +29,7 @@ class TrainingData extends React.Component {
         this.recipeActions = RecipeActions(recipeId)
     }
     render() {
-        const {dataSets} = this.props
+        const {dataSets, dataCollectionEvents} = this.props
         return (
             <React.Fragment>
                 <RecipeFormPanel
@@ -45,7 +46,7 @@ class TrainingData extends React.Component {
                         <Panel.Buttons.Add onClick={() => this.addDataSet()}/>
                     </Form.PanelButtons>
                 </RecipeFormPanel>
-                <TrainingDataSet/>
+                <TrainingDataSet dataCollectionEvents={dataCollectionEvents}/>
             </React.Fragment>
         )
     }
@@ -107,7 +108,9 @@ class TrainingData extends React.Component {
     }
 }
 
-TrainingData.propTypes = {}
+TrainingData.propTypes = {
+    dataCollectionEvents: PropTypes.object.isRequired
+}
 
 const additionalPolicy = () => ({'trainingDataSet': 'allow'})
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected data sets from

@@ -24,7 +24,7 @@ const mapRecipeToProps = recipe => ({
 
 class ClassificationToolbar extends React.Component {
     render() {
-        const {recipeId, collecting, initialized} = this.props
+        const {recipeId, collecting, dataCollectionEvents, initialized} = this.props
         return (
             <PanelWizard
                 panels={['inputImagery', 'legend', 'trainingData']}
@@ -34,7 +34,7 @@ class ClassificationToolbar extends React.Component {
                 <Retrieve/>
                 <InputImagery/>
                 <Legend/>
-                <TrainingData/>
+                <TrainingData dataCollectionEvents={dataCollectionEvents}/>
                 <AuxiliaryImagery/>
                 <Classifier/>
 
@@ -92,7 +92,8 @@ class ClassificationToolbar extends React.Component {
 }
 
 ClassificationToolbar.propTypes = {
-    recipeId: PropTypes.string.isRequired
+    recipeId: PropTypes.string.isRequired,
+    dataCollectionEvents: PropTypes.object.isRequired
 }
 
 export default compose(

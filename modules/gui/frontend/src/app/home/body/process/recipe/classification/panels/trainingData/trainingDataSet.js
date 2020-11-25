@@ -14,6 +14,7 @@ import ClassMappingStep from './classMappingStep'
 import LocationStep from './locationStep'
 import EETableSection from './eeTableSection'
 import SampleClassificationSection from './sampleClassificationSection'
+import PropTypes from 'prop-types'
 
 const fields = {
     dataSetId: new Form.Field()
@@ -85,7 +86,7 @@ const fields = {
 
     referenceData: new Form.Field()
         .skip((value, {wizardStep}) => wizardStep !== 3)
-        .notEmpty('process.classification.panel.trainingData.form.referenceData.required'),
+        .notEmpty('process.classification.panel.trainingData.form.referenceData.required')
 }
 
 const mapRecipeToProps = recipe => ({
@@ -94,12 +95,13 @@ const mapRecipeToProps = recipe => ({
 
 class TrainingDataSet extends React.Component {
     render() {
-        const {inputs} = this.props
+        const {dataCollectionEvents, inputs} = this.props
 
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='modal'>
+                placement='modal'
+                onApply={() => setTimeout(() => dataCollectionEvents.updateDataSet(inputs.dataSetId.value))}>
                 <PanelSections
                     inputs={inputs}
                     sections={this.getSectionOptions()}
@@ -269,4 +271,6 @@ export default compose(
     recipeFormPanel(panelOptions)
 )
 
-TrainingDataSet.propTypes = {}
+TrainingDataSet.propTypes = {
+    dataCollectionEvents: PropTypes.object.isRequired
+}
