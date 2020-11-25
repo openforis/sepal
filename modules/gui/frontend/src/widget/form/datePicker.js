@@ -66,7 +66,7 @@ export class FormDatePicker extends React.Component {
                         <div className={styles.input}>
                             <Input
                                 ref={this.inputElement}
-                                value={value}
+                                value={value || input.value}
                                 type='text'
                                 maxLength={10}
                                 autoFocus={autoFocus}
@@ -241,11 +241,6 @@ class _DatePickerPanel extends React.Component {
         const lastDay = lastDate.date()
         const lastToRender = moment(lastOfMonth).endOf('week')
         const indexOffset = firstOfMonth.weekday() - 1
-        console.log({
-            firstToRender: firstToRender.format(DATE_FORMAT),
-            firstOfMonth: firstOfMonth.format(DATE_FORMAT),
-            indexOffset
-        })
         const daysToRender = lastToRender.diff(firstToRender, 'days') + 1
         const firstIndex = firstDay + indexOffset
         const lastIndex = lastDay + indexOffset
