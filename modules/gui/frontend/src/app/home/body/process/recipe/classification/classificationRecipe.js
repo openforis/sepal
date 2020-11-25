@@ -147,7 +147,10 @@ const submitRetrieveRecipeTask = recipe => {
     const taskTitle = msg(['process.classification.panel.retrieve.form.task', destination], {name})
     const pyramidingPolicy = {}
     bands.forEach(band => pyramidingPolicy[band] = band === 'class' ? 'mode' : 'mean')
-    console.log('bands', bands, pyramidingPolicy)
+    const properties = {}
+    recipe.model.legend.entries.forEach(
+        ({value, color, label}) => properties[`legend_${value}`] = {color, label}
+    )
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
@@ -158,7 +161,8 @@ const submitRetrieveRecipeTask = recipe => {
                     recipe: _.omit(recipe, ['ui']),
                     bands: {selection: bands},
                     scale,
-                    pyramidingPolicy
+                    pyramidingPolicy,
+                    properties
                 }
             }
     }
