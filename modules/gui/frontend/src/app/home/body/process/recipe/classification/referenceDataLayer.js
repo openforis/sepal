@@ -104,17 +104,17 @@ class ReferenceDataLayer extends React.Component {
         this.layer.setMarkers(markers)
     }
 
-    onSelect(point) {
+    onSelect(marker) {
         const {prevPoint} = this.props
         if (prevPoint) {
-            if (isClassified(point)) {
+            if (isClassified(marker)) {
                 this.layer.deselectMarker(prevPoint)
             } else {
-                this.layer.removeMarker(this.toMarker(point))
+                this.layer.removeMarker(marker)
             }
         }
-        this.layer.selectMarker(this.toMarker(point))
-        this.recipeActions.setSelectedPoint(point)
+        this.layer.selectMarker(marker)
+        this.recipeActions.setSelectedPoint({x: marker.x, y: marker.y, 'class': marker['class']})
     }
 
     onDeselect(point) {
@@ -148,21 +148,18 @@ class ReferenceDataLayer extends React.Component {
 
     toMarker(point) {
         const {legend} = this.props
-        const color = isClassified(point)
-            ? {color: legend.entries.find(({value}) => `${value}` === `${point['class']}`).color}
+        const legendEntry = legend.entries.find(({value}) => `${value}` === `${point['class']}`)
+        const additionalProps = legendEntry
+            ? {
+                color: legendEntry.color,
+                'class': legendEntry.value
+            }
             : {}
         return {
             x: point.x,
             y: point.y,
-            ...color,
-            onClick: marker => {
-                const point = this.getReferenceData()
-                    .find(p => _.isEqual(
-                        [p.x, p.y],
-                        [marker.x, marker.y]
-                    ))
-                this.onSelect(point || {x: marker.x, y: marker.y})
-            }
+            ...additionalProps,
+            onClick: marker => this.onSelect(marker)
         }
     }
 
@@ -175,7 +172,7 @@ class ReferenceDataLayer extends React.Component {
     }
 }
 
-const isClassified = point => Object.keys(point).includes('class') && _.isFinite(point['class'])
+const isClassified = marker => Object.keys(marker).includes('class') && _.isFinite(marker['class'])
 
 ReferenceDataLayer.propTypes = {
     recipeId: PropTypes.string,

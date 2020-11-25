@@ -47,8 +47,9 @@ export default class MarkerClustererLayer {
     setMarkers(markers) {
         this.mapMarkers = {}
         this.markers = markers
-            .forEach(({x, y, color, onClick}) => {
-                this.mapMarkers[markerKey({x, y})] = this.toMapMarker({x, y, color, onClick})
+            .forEach(marker => {
+                const {x, y} = marker
+                this.mapMarkers[markerKey({x, y})] = this.toMapMarker(marker)
             })
         this.markerCluster.clearMarkers()
         this.markerCluster.addMarkers(Object.values(this.mapMarkers))
@@ -71,6 +72,7 @@ export default class MarkerClustererLayer {
     }
 
     addMarker(marker) {
+        console.log('addMarker', marker)
         const mapMarker = this.toMapMarker(marker)
         mapMarker.setIcon({
             ...mapMarker.getIcon(),
@@ -83,6 +85,9 @@ export default class MarkerClustererLayer {
     }
 
     updateMarker(marker) {
+        console.log('updateMarker', marker)
+        const mapMarker = this.getMapMarker(marker)
+        mapMarker.data = marker
         this.updateIcon(marker, {fillColor: marker.color})
     }
 
@@ -95,14 +100,19 @@ export default class MarkerClustererLayer {
     }
 
     updateIcon(marker, iconUpdate) {
-        const mapMarker = this.mapMarkers[markerKey(marker)]
-        if (!mapMarker)
-            throw new Error(`Marker not found: ${marker}`)
+        const mapMarker = this.getMapMarker(marker)
         mapMarker.setIcon({...mapMarker.getIcon(), ...iconUpdate})
     }
 
+    getMapMarker(marker) {
+        const mapMarker = this.mapMarkers[markerKey(marker)]
+        if (!mapMarker)
+            throw new Error(`Marker not found: ${marker}`)
+        return mapMarker
+    }
+
     equals(o) {
-        return _.isEqual(o && o.props, this.props)
+        return _.isEqual(o && o.type, this.type)
     }
 
     addToMap() {
@@ -124,19 +134,20 @@ export default class MarkerClustererLayer {
         return of(this)
     }
 
-    toMapMarker({x, y, color = DEFAULT_COLOR, onClick}) {
+    toMapMarker(marker) {
+        const {x, y, color = DEFAULT_COLOR, onClick} = marker
         const google = this.google
-        const marker = new google.maps.Marker({
+        const mapMarker = new google.maps.Marker({
             position: new google.maps.LatLng(y, x),
-            // map: this.googleMap,
             draggable: false,
             icon: {...this.icon, fillColor: color},
             clickable: this.clickable
         })
-        marker.addListener("click", () => {
-            onClick && onClick({x, y, color})
+        mapMarker.addListener("click", () => {
+            onClick && onClick(this.mapMarkers[markerKey({x, y})].data)
         })
-        return marker
+        mapMarker.data = marker
+        return mapMarker
     }
 
     setClickable(flag) {
