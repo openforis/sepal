@@ -11,6 +11,7 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 import withSubscriptions from 'subscription'
+import {Legend} from 'widget/legend'
 
 const LABEL = 'ccdcSlice'
 
@@ -33,22 +34,6 @@ class CCDCSlicePreview extends React.Component {
         )
     }
 
-    renderInitializing() {
-        return (
-            <MapStatus message={msg(`process.${LABEL}.preview.initializing`)}/>
-        )
-    }
-
-    renderLoading() {
-        const {tiles, error} = this.state
-        return (
-            <MapStatus
-                loading={!tiles.complete}
-                message={msg(`process.${LABEL}.preview.loading`, {loaded: tiles.loaded, count: tiles.count})}
-                error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
-        )
-    }
-
     render() {
         const {initializing, tiles, failed} = this.state
         if (this.isHidden() || failed) {
@@ -60,7 +45,35 @@ class CCDCSlicePreview extends React.Component {
         if (tiles && !tiles.complete) {
             return this.renderLoading()
         }
-        return null
+        return this.renderLegend()
+    }
+
+    renderInitializing() {
+        return (
+            <MapStatus message={msg(`process.${LABEL}.preview.initializing`)}/>
+        )
+    }
+
+    renderLoading() {
+        const {tiles, error} = this.state
+        return (
+            <React.Fragment>
+                {this.renderLegend()}
+                <MapStatus
+                    loading={!tiles.complete}
+                    message={msg(`process.${LABEL}.preview.loading`, {loaded: tiles.loaded, count: tiles.count})}
+                    error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
+            </React.Fragment>
+        )
+    }
+
+    renderLegend() {
+        const {visParams} = this.state
+        if (!visParams || !visParams.palette)
+            return null
+        return (
+            <Legend palette={visParams.palette} min={visParams.min} max={visParams.max}/>
+        )
     }
 
     onError(e) {
@@ -128,6 +141,7 @@ class CCDCSlicePreview extends React.Component {
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
+            onInitialized: ({visParams}) => this.setState({visParams}),
             onError: e => this.onError(e)
         })
         if (changed && initializing !== !!layer)
