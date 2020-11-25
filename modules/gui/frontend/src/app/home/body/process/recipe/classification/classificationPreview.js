@@ -103,16 +103,13 @@ class ClassificationPreview extends React.Component {
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
-    componentDidMount() {
-        this.updateLayer(this.toPreviewRequest(this.props.recipe))
-    }
-
     componentDidUpdate(prevProps) {
         const {recipe, mapContext: {sepalMap}} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
-        if (layerChanged)
+        if (layerChanged) {
             this.updateLayer(previewRequest)
+        }
         sepalMap.hideLayer('preview', this.isHidden(recipe))
     }
 
