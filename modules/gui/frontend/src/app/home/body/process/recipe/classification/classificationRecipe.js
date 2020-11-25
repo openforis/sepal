@@ -145,6 +145,9 @@ const submitRetrieveRecipeTask = recipe => {
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.classification.panel.retrieve.form.task', destination], {name})
+    const pyramidingPolicy = {}
+    bands.forEach(band => pyramidingPolicy[band] = band === 'class' ? 'mode' : 'mean')
+    console.log('bands', bands, pyramidingPolicy)
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
@@ -154,7 +157,8 @@ const submitRetrieveRecipeTask = recipe => {
                 image: {
                     recipe: _.omit(recipe, ['ui']),
                     bands: {selection: bands},
-                    scale
+                    scale,
+                    pyramidingPolicy
                 }
             }
     }
