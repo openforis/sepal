@@ -220,7 +220,7 @@ const COLORS = [
 ]
 
 const isValid = entry => {
-    const validValue = _.inRange(entry.value, 0, 99)
+    const validValue = _.inRange(entry.value, 0, 100)
     const validColor = !!entry.color
     const validLabel = !!entry.label
     return validValue && validColor && validLabel
