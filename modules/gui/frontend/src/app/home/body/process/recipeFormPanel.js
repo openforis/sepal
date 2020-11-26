@@ -96,7 +96,7 @@ export const recipeFormPanel = (
     }
 }
 
-export const RecipeFormPanel = ({className, placement, isActionForm, onApply, onCancel, children}) =>
+export const RecipeFormPanel = ({className, placement, isActionForm, onApply, onCancel, onClose, children}) =>
     <Context.Consumer>
         {({id, evaluatedPath, form, statePath, valuesToModel, deactivate, prevValues}) => {
             const wrappedOnApply = values => {
@@ -118,7 +118,8 @@ export const RecipeFormPanel = ({className, placement, isActionForm, onApply, on
                     isActionForm={isActionForm}
                     placement={placement}
                     onApply={wrappedOnApply}
-                    onCancel={onCancel}>
+                    onCancel={onCancel}
+                    onClose={onClose}>
                     {children}
                 </_RecipeFormPanel>
             )
@@ -127,7 +128,7 @@ export const RecipeFormPanel = ({className, placement, isActionForm, onApply, on
 
 class _RecipeFormPanel extends React.Component {
     render() {
-        const {id, form, className, placement, isActionForm, onApply, onCancel, close, children} = this.props
+        const {id, form, className, placement, isActionForm, onApply, onCancel, onClose, close, children} = this.props
         return (
             <Form.Panel
                 id={id}
