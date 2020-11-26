@@ -101,7 +101,7 @@ class TrainingDataSet extends React.Component {
             <RecipeFormPanel
                 className={styles.panel}
                 placement='modal'
-                onApply={() => setTimeout(() => dataCollectionEvents.updateDataSet(inputs.dataSetId.value))}>
+                onApply={() => setTimeout(() => dataCollectionEvents.updateAll())}>
                 <PanelSections
                     inputs={inputs}
                     sections={this.getSectionOptions()}

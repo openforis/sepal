@@ -35,7 +35,10 @@ class TrainingData extends React.Component {
                 <RecipeFormPanel
                     className={styles.panel}
                     placement='bottom-right'
-                    onClose={() => this.preview.show()}>
+                    onClose={() => {
+                        console.log('onClose')
+                        this.preview.show()
+                    }}>
                     <Panel.Header
                         icon='table'
                         title={msg('process.classification.panel.trainingData.title')}/>
@@ -65,6 +68,7 @@ class TrainingData extends React.Component {
     }
 
     renderDataSet(dataSet) {
+        const {dataCollectionEvents} = this.props
         const name = dataSet.name
         if (!name)
             return null
@@ -78,7 +82,10 @@ class TrainingData extends React.Component {
                 removeTooltip={msg('process.classification.panel.trainingData.remove.tooltip')}
                 disabled={disabled}
                 onClick={disabled ? null : () => this.editDataSet(dataSet)}
-                onRemove={disabled ? null : () => this.removeDataSet(dataSet)}
+                onRemove={disabled ? null : () => {
+                    this.removeDataSet(dataSet)
+                    setTimeout(() => dataCollectionEvents.updateAll())
+                }}
             />
         )
     }

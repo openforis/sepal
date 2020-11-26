@@ -5,7 +5,7 @@ import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import AuxiliaryImagery from './auxiliaryImagery/auxiliaryImagery'
-import Classifier from '../classifier/classifier'
+import Classifier from './classifier/classifier'
 import InputImagery from './inputImagery/inputImagery'
 import Legend from '../legend/legend'
 import PanelWizard from 'widget/panelWizard'
@@ -27,7 +27,7 @@ class ClassificationToolbar extends React.Component {
         const {recipeId, collecting, dataCollectionEvents, initialized} = this.props
         return (
             <PanelWizard
-                panels={['inputImagery', 'legend', 'trainingData']}
+                panels={['inputImagery', 'legend']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 

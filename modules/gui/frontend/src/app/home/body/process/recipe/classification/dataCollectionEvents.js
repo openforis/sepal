@@ -13,11 +13,11 @@ export class DataCollectionEvents {
         this.listeners.forEach(({onRemove}) => onRemove && onRemove(point))
     }
 
-    updateDataSet(dataSetId) {
-        this.listeners.forEach(({onDataSetUpdate}) => onDataSetUpdate && onDataSetUpdate(dataSetId))
+    updateAll() {
+        this.listeners.forEach(({onUpdateAll}) => onUpdateAll && onUpdateAll())
     }
 
-    addListener({onDeselect, onUpdate, onRemove, onDataSetUpdate}) {
-        this.listeners.push({onDeselect, onUpdate, onRemove, onDataSetUpdate})
+    addListener({onDeselect, onUpdate, onRemove, onUpdateAll}) {
+        this.listeners.push({onDeselect, onUpdate, onRemove, onUpdateAll})
     }
 }

@@ -33,7 +33,7 @@ class ReferenceDataLayer extends React.Component {
             onUpdate: (point, prevValue) => this.onUpdate(point, prevValue),
             onRemove: point => this.onRemove(point),
             onDeselect: point => this.onDeselect(point),
-            onDataSetUpdate: () => this.updateAllMarkers()
+            onUpdateAll: () => this.updateAllMarkers()
         })
         this.recipeActions = RecipeActions(recipeId)
     }

@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {FileSelect} from '../../../../../../../widget/fileSelect'
+import {FileSelect} from 'widget/fileSelect'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -11,7 +11,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './classifier.module.css'
-import {MosaicPreview} from '../../mosaic/mosaicPreview'
+import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 
 const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend')

@@ -38,8 +38,9 @@ class ClassificationPreview extends React.Component {
     }
 
     render() {
+        const {recipe} = this.props
         const {initializing, tiles, failed} = this.state
-        if (this.isHidden() || failed) {
+        if (this.isHidden() || failed || !this.hasTrainingData(recipe)) {
             return null
         }
         if (initializing) {
@@ -79,8 +80,8 @@ class ClassificationPreview extends React.Component {
         )
     }
 
-    hasTrainingData() {
-        const {countPerClass = {}} = this.props
+    hasTrainingData(recipe) {
+        const countPerClass = (recipe.ui.collect && recipe.ui.collect.countPerClass) || {}
         return Object.values(countPerClass).filter(count => count > 0).length >= 2
     }
 
@@ -115,6 +116,7 @@ class ClassificationPreview extends React.Component {
         const {recipe, mapContext: {sepalMap}} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
+
         if (layerChanged) {
             this.updateLayer(previewRequest)
         }
@@ -124,8 +126,8 @@ class ClassificationPreview extends React.Component {
     // common code above
 
     updateLayer(previewRequest) {
-        const {mapContext, componentWillUnmount$} = this.props
-        if (!this.hasTrainingData()) {
+        const {recipe, mapContext, componentWillUnmount$} = this.props
+        if (!this.hasTrainingData(recipe)) {
             mapContext.sepalMap.removeLayer('preview')
             return
         }
@@ -164,8 +166,8 @@ class ClassificationPreview extends React.Component {
         const selection = selectFrom(recipe, 'ui.bands.selection')
         return {
             recipe: _.omit(recipe, ['ui']),
+            hasTrainingData: this.hasTrainingData(recipe),
             bands: {selection: [selection]}
-
         }
     }
 }
