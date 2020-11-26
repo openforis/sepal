@@ -5,8 +5,8 @@ export class DataCollectionEvents {
         this.listeners.forEach(({onDeselect}) => onDeselect && onDeselect(point))
     }
 
-    update(point) {
-        this.listeners.forEach(({onUpdate}) => onUpdate && onUpdate(point))
+    update(point, prevValue) {
+        this.listeners.forEach(({onUpdate}) => onUpdate && onUpdate(point, prevValue))
     }
 
     remove(point) {

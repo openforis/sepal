@@ -15,12 +15,15 @@ import withSubscriptions from 'subscription'
 
 const LABEL = 'classification'
 
-const mapRecipeToProps = recipe => ({recipe})
+const mapRecipeToProps = recipe => ({
+    countPerClass: selectFrom(recipe, 'ui.collect.countPerClass'),
+    recipe
+})
 
 class ClassificationPreview extends React.Component {
     state = {
         initializing: false,
-        failed: false
+        failed: false,
     }
 
     constructor(props) {
@@ -32,6 +35,20 @@ class ClassificationPreview extends React.Component {
                 tiles => this.setState({tiles, initializing: false})
             )
         )
+    }
+
+    render() {
+        const {initializing, tiles, failed} = this.state
+        if (this.isHidden() || failed) {
+            return null
+        }
+        if (initializing) {
+            return this.renderInitializing()
+        }
+        if (tiles && !tiles.complete) {
+            return this.renderLoading()
+        }
+        return this.renderLegend()
     }
 
     renderInitializing() {
@@ -62,18 +79,9 @@ class ClassificationPreview extends React.Component {
         )
     }
 
-    render() {
-        const {initializing, tiles, failed} = this.state
-        if (this.isHidden() || failed) {
-            return null
-        }
-        if (initializing) {
-            return this.renderInitializing()
-        }
-        if (tiles && !tiles.complete) {
-            return this.renderLoading()
-        }
-        return this.renderLegend()
+    hasTrainingData() {
+        const {countPerClass = {}} = this.props
+        return Object.values(countPerClass).filter(count => count > 0).length >= 2
     }
 
     onError(e) {
@@ -117,8 +125,10 @@ class ClassificationPreview extends React.Component {
 
     updateLayer(previewRequest) {
         const {mapContext, componentWillUnmount$} = this.props
-        // if (!selectFrom(recipe, 'ui.bands.selection'))
-        //     return
+        if (!this.hasTrainingData()) {
+            mapContext.sepalMap.removeLayer('preview')
+            return
+        }
 
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({

@@ -119,7 +119,7 @@ class CollectPanel extends React.Component {
     select(point) {
         const update = _.isFinite(this.state.value)
         if (update) {
-            this.update(point)
+            this.update(point, this.state.value)
         } else {
             this.add(point)
         }
@@ -131,9 +131,9 @@ class CollectPanel extends React.Component {
         dataCollectionEvents.update(point)
     }
 
-    update(point) {
+    update(point, prevValue) {
         const {dataCollectionEvents} = this.props
-        dataCollectionEvents.update(point)
+        dataCollectionEvents.update(point, prevValue)
     }
 
     next() {

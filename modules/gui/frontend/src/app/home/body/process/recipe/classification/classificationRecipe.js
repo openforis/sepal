@@ -108,6 +108,10 @@ export const RecipeActions = id => {
         setCollecting(collecting) {
             return set('SET_COLLECTING_REFERENCE_DATA', 'ui.collect.collecting', collecting, {collecting})
                 .dispatch()
+        },
+        setCountPerClass(countPerClass) {
+            return set('SET_COUNT_PER_CLASS', 'ui.collect.countPerClass', countPerClass, {countPerClass})
+                .dispatch()
         }
     }
 }

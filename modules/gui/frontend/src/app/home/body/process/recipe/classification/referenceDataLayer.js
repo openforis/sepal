@@ -14,7 +14,8 @@ const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend'),
     trainingDataSets: selectFrom(recipe, 'model.trainingData.dataSets'),
     prevPoint: selectFrom(recipe, 'ui.collect.point'),
-    collecting: selectFrom(recipe, 'ui.collect.collecting')
+    collecting: selectFrom(recipe, 'ui.collect.collecting'),
+    countPerClass: selectFrom(recipe, 'ui.collect.countPerClass')
 })
 
 class ReferenceDataLayer extends React.Component {
@@ -29,7 +30,7 @@ class ReferenceDataLayer extends React.Component {
         })
         dataCollectionEvents.addListener({
             onAdd: point => this.onAdd(point),
-            onUpdate: point => this.onUpdate(point),
+            onUpdate: (point, prevValue) => this.onUpdate(point, prevValue),
             onRemove: point => this.onRemove(point),
             onDeselect: point => this.onDeselect(point),
             onDataSetUpdate: () => this.updateAllMarkers()
@@ -87,8 +88,14 @@ class ReferenceDataLayer extends React.Component {
 
     updateAllMarkers() {
         const referenceData = this.getReferenceData()
+        const countPerClass = {}
         const markers = referenceData
-            .map(point => this.toMarker(point))
+            .map(point => {
+                const pointClass = point['class']
+                countPerClass[pointClass] = (countPerClass[pointClass] || 0)  + 1
+                return this.toMarker(point)
+            })
+        this.updateCountPerClass(countPerClass)
         this.layer.setMarkers(markers)
     }
 
@@ -118,20 +125,47 @@ class ReferenceDataLayer extends React.Component {
         if (prevPoint)
             this.layer.deselectMarker(prevPoint)
         this.layer.addMarker(this.toMarker(point))
-        if (isClassified(point))
+        if (isClassified(point)) {
+            this.incrementCount(point)
             this.recipeActions.addSelectedPoint(point)
-        else
+        } else {
             this.recipeActions.setSelectedPoint(point)
+        }
     }
 
-    onUpdate(point) {
+    onUpdate(point, prevValue) {
+        const {countPerClass} = this.props
+        const pointClass = point['class']
+        if (_.isFinite(prevValue))
+        countPerClass[prevValue] = (countPerClass[prevValue] || 0) - 1
+        countPerClass[pointClass] = (countPerClass[pointClass] || 0) + 1
+        this.updateCountPerClass(countPerClass)
         this.layer.updateMarker(this.toMarker(point))
         this.recipeActions.updateSelectedPoint(point)
     }
 
     onRemove(point) {
         this.layer.removeMarker(this.toMarker(point))
+        this.decrementCount(point)
         this.recipeActions.removeSelectedPoint(point)
+    }
+
+    updateCountPerClass(countPerClass) {
+        this.recipeActions.setCountPerClass(countPerClass)
+    }
+
+    incrementCount(point) {
+        const {countPerClass} = this.props
+        const pointClass = point['class']
+        countPerClass[pointClass] = (countPerClass[pointClass] || 0) + 1
+        this.updateCountPerClass(countPerClass)
+    }
+
+    decrementCount(point) {
+        const {countPerClass} = this.props
+        const pointClass = point['class']
+        countPerClass[pointClass] = (countPerClass[pointClass] || 0) - 1
+        this.updateCountPerClass(countPerClass)
     }
 
     toMarker(point) {
