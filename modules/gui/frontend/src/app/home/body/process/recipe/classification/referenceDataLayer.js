@@ -106,7 +106,7 @@ class ReferenceDataLayer extends React.Component {
                 return
             }
             if (isClassified(marker)) {
-                this.layer.deselectMarker(prevPoint) // TODO: Need to include class - gets removed if no class
+                this.layer.deselectMarker(prevPoint)
             } else {
                 this.layer.removeMarker(marker)
             }
@@ -131,7 +131,7 @@ class ReferenceDataLayer extends React.Component {
     onAdd(point) {
         const {prevPoint} = this.props
         if (prevPoint)
-            this.layer.deselectMarker(prevPoint) // TODO: Need to include class - gets removed if no class
+            this.layer.deselectMarker(prevPoint)
         this.layer.addMarker(this.toMarker(point))
         if (isClassified(point)) {
             this.incrementCount(point)
