@@ -12,9 +12,11 @@ import styles from './period.module.css'
 
 const fields = {
     startYear: new Form.Field()
+        .notBlank()
         .int('process.landCover.panel.period.startYear.malformed'),
 
     endYear: new Form.Field()
+        .notBlank()
         .int('process.landCover.panel.period.endYear.malformed'),
 }
 

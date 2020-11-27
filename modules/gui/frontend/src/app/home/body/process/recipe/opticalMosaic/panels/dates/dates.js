@@ -24,14 +24,17 @@ const fields = {
 
     targetYear: new Form.Field()
         .skip((_, {advanced}) => advanced)
+        .notBlank()
         .int('process.mosaic.panel.dates.form.targetDate.malformed'),
 
     targetDate: new Form.Field()
         .skip((_, {advanced}) => !advanced)
+        .notBlank()
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.targetDate.malformed'),
 
     seasonStart: new Form.Field()
         .skip((_, {advanced}) => !advanced)
+        .notBlank()
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
         .predicate((date, {targetDate}) => parseDate(date).isSameOrAfter(minStartDate(targetDate)),
             'process.mosaic.panel.dates.form.season.tooEarly',
@@ -46,6 +49,7 @@ const fields = {
 
     seasonEnd: new Form.Field()
         .skip((_, {advanced}) => !advanced)
+        .notBlank()
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
         .predicate((date, {targetDate}) => parseDate(date).isSameOrAfter(minEndDate(targetDate)),
             'process.mosaic.panel.dates.form.season.tooEarly',

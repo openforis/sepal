@@ -20,7 +20,7 @@ class FormProperty {
 
     match(regex, messageId, messageArgs) {
         return this.predicate(
-            value => regex.test(value),
+            value => isBlank(value) || regex.test(value),
             messageId || 'fieldValidation.match',
             messageId ? messageArgs : () => ({regex})
         )
@@ -33,7 +33,7 @@ class FormProperty {
                 else if (value === Object(value))
                     return Object.keys(value).length > 0
                 else
-                    return !!value
+                    return isBlank(value)
             },
             messageId,
             messageArgs
@@ -41,7 +41,7 @@ class FormProperty {
     }
 
     notBlank(messageId = 'fieldValidation.notBlank', messageArgs) {
-        return this.predicate(value => !!value, messageId, messageArgs)
+        return this.predicate(value => !isBlank(value), messageId, messageArgs)
     }
 
     email(messageId = 'fieldValidation.email', messageArgs) {
@@ -49,16 +49,16 @@ class FormProperty {
     }
 
     date(format, messageId = 'fieldValidation.date', messageArgs) {
-        return this.predicate(value => moment(value, format).isValid(), messageId, messageArgs)
+        return this.predicate(value => isBlank(value) || moment(value, format).isValid(), messageId, messageArgs)
     }
 
     int(messageId = 'fieldValidation.int', messageArgs) {
-        return this.predicate(value => String(value).match(/^\d+$/), messageId, messageArgs)
+        return this.predicate(value => isBlank(value) || String(value).match(/^\d+$/), messageId, messageArgs)
     }
 
     number(messageId = 'fieldValidation.number', messageArgs) {
         return this.predicate(
-            value => _.isFinite(value) || (!isNaN(value) && !isNaN(parseFloat(value))),
+            value => isBlank(value) || _.isFinite(value) || (!isNaN(value) && !isNaN(parseFloat(value))),
             messageId,
             messageArgs
         )
@@ -66,7 +66,7 @@ class FormProperty {
 
     min(minValue, messageId, messageArgs) {
         return this.predicate(
-            value => value >= minValue,
+            value => isBlank(value) || value >= minValue,
             messageId || 'fieldValidation.min',
             messageId ? messageArgs : () => ({minValue})
         )
@@ -74,7 +74,7 @@ class FormProperty {
 
     greaterThan(minValue, messageId, messageArgs) {
         return this.predicate(
-            value => value > minValue,
+            value => isBlank(value) || value > minValue,
             messageId || 'fieldValidation.greaterThan',
             messageId ? messageArgs : () => ({minValue})
         )
@@ -82,7 +82,7 @@ class FormProperty {
 
     max(maxValue, messageId, messageArgs) {
         return this.predicate(
-            value => value <= maxValue,
+            value => isBlank(value) || value <= maxValue,
             messageId || 'fieldValidation.max',
             messageId ? messageArgs : () => ({maxValue})
         )
@@ -90,7 +90,7 @@ class FormProperty {
 
     lessThan(maxValue, messageId, messageArgs) {
         return this.predicate(
-            value => value < maxValue,
+            value => isBlank(value) || value < maxValue,
             messageId || 'fieldValidation.lessThan',
             messageId ? messageArgs : () => ({maxValue})
         )
@@ -140,3 +140,5 @@ export class FormField extends FormProperty {
         return this._skip.find(when => when(values[name], values))
     }
 }
+
+const isBlank = value => _.isEmpty(value) && !_.isNumber(value) && isNaN(parseFloat(value))
