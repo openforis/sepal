@@ -11,6 +11,7 @@ import Icon from 'widget/icon'
 import Label from 'widget/label'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Tooltip from 'widget/tooltip'
 import _ from 'lodash'
 import format from 'format'
 import lookStyles from 'style/look.module.css'
@@ -304,6 +305,25 @@ UserList.propTypes = {
     onSelect: PropTypes.func.isRequired
 }
 
+const Usage = ({currentValue, budgetValue, formattedValue}) => {
+    const percentage = Math.round(100 * currentValue / budgetValue)
+    const overbudget = currentValue > budgetValue
+    const usage = Math.min(currentValue / budgetValue, 1)
+    return (
+        <div className={styles.number}>
+            <Tooltip
+                className={[overbudget ? styles.overBudget : null].join(' ')}
+                msg={msg('user.report.usage', {percentage})}
+                delay={.25}
+                placement='top'
+            >
+                <div className={styles.usage} style={{'--usage': `${usage}`}}>
+                    {formattedValue}
+                </div>
+            </Tooltip>
+        </div>
+    )
+}
 class UserItem extends React.Component {
     render() {
         const {
@@ -330,23 +350,56 @@ class UserItem extends React.Component {
                     styles.user,
                     status ? styles.clickable : null
                 ].join(' ')}
-                onClick={() => status ? onClick() : null}>
+                onClick={() => status ? onClick() : null}
+            >
                 <div><Highlight search={highlight} ignoreDiacritics={true} matchClass={styles.highlight}>{name}</Highlight></div>
                 <div>{status ? msg(`user.userDetails.form.status.${status}`) : <Icon name='spinner'/>}</div>
                 <div>{moment(updateTime).fromNow()}</div>
-                <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
-                <div className={[styles.number, current.instanceSpending > budget.instanceSpending ? styles.overBudget : null].join(' ')}>
-                    {format.dollars(current.instanceSpending)}
-                </div>
-                <div className={styles.number}>{format.dollars(budget.storageSpending)}</div>
-                <div className={[styles.number, current.storageSpending > budget.storageSpending ? styles.overBudget : null].join(' ')}>
-                    {format.dollars(current.storageSpending)}
-                </div>
-                <div className={styles.number}>{format.fileSize(budget.storageQuota, {scale: 'G'})}</div>
-                <div className={[styles.number, current.storageQuota > budget.storageQuota ? styles.overBudget : null].join(' ')}>
-                    {format.fileSize(current.storageQuota, {scale: 'G'})}
-                </div>
+
+                {this.renderInstanceSpending(budget, current)}
+                {this.renderStorageSpending(budget, current)}
+                {this.renderStorageQuota(budget, current)}
+
             </div>
+        )
+    }
+
+    renderInstanceSpending(budget, current) {
+        return (
+            <React.Fragment>
+                <div className={styles.number}>{format.dollars(budget.instanceSpending)}</div>
+                <Usage
+                    currentValue={current.instanceSpending}
+                    budgetValue={budget.instanceSpending}
+                    formattedValue={format.dollars(current.instanceSpending)}
+                />
+            </React.Fragment>
+        )
+    }
+
+    renderStorageSpending(budget, current) {
+        return (
+            <React.Fragment>
+                <div className={styles.number}>{format.dollars(budget.storageSpending)}</div>
+                <Usage
+                    currentValue={current.storageSpending}
+                    budgetValue={budget.storageSpending}
+                    formattedValue={format.dollars(current.storageSpending)}
+                />
+            </React.Fragment>
+        )
+    }
+
+    renderStorageQuota(budget, current) {
+        return (
+            <React.Fragment>
+                <div className={styles.number}>{format.fileSize(budget.storageQuota, {scale: 'G'})}</div>
+                <Usage
+                    currentValue={current.storageQuota}
+                    budgetValue={budget.storageQuota}
+                    formattedValue={format.fileSize(current.storageQuota, {scale: 'G'})}
+                />
+            </React.Fragment>
         )
     }
 }
