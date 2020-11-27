@@ -23,7 +23,7 @@ export const getDefaultModel = () => ({
         minLeafPopulation: 1,
         bagFraction: 0.5,
         maxNodes: null,
-        seed: 0,
+        seed: 1,
 
         lambda: 0.000001,
 
@@ -31,7 +31,7 @@ export const getDefaultModel = () => ({
         svmType: 'C_SVC',
         kernelType: 'LINEAR',
         shrinking: true,
-        degree: null,
+        degree: 3,
         gamma: null,
         coef0: 0,
         cost: 1,
