@@ -10,7 +10,7 @@ import ButtonSelect from 'widget/buttonSelect'
 import Labels from './labels'
 import PropTypes from 'prop-types'
 import React from 'react'
-import actionBuilder from '../../../action-builder'
+import actionBuilder from 'action-builder'
 // import moment from 'moment'
 import styles from './layersMenu.module.css'
 
