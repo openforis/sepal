@@ -252,8 +252,9 @@ export default class UserList extends React.Component {
         const highlightMatcher = textFilterValues.length
             ? new RegExp(`(?:${textFilterValues.join('|')})`, 'i')
             : ''
+        const key = user => _.compact([user.id, user.username, highlightMatcher]).join('|')
         return (
-            <Pageable.Data itemKey={user => `${user.username || user.id}`}>
+            <Pageable.Data itemKey={user => key(user)}>
                 {user =>
                     <UserItem
                         user={user}

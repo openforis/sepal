@@ -63,7 +63,7 @@ class _AppListData extends React.Component {
         return (
             <Consumer>
                 {({tags, hasData, highlightMatcher}) => {
-                    const key = app => _.compact([app.label, highlightMatcher]).join('|')
+                    const key = app => _.compact([app.path, highlightMatcher]).join('|')
                     return hasData()
                         ? (
                             <ScrollableContainer>
