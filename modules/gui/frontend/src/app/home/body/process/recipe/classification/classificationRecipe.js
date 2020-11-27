@@ -107,11 +107,23 @@ export const RecipeActions = id => {
                 .dispatch()
         },
         setCollecting(collecting) {
-            return set('SET_COLLECTING_REFERENCE_DATA', 'ui.collect.collecting', collecting, {collecting})
+            set('SET_COLLECTING_REFERENCE_DATA', 'ui.collect.collecting', collecting, {collecting})
                 .dispatch()
         },
         setCountPerClass(countPerClass) {
-            return set('SET_COUNT_PER_CLASS', 'ui.collect.countPerClass', countPerClass, {countPerClass})
+            set('SET_COUNT_PER_CLASS', 'ui.collect.countPerClass', countPerClass, {countPerClass})
+                .dispatch()
+        },
+        setNextPoints(nextPoints) {
+            actionBuilder('SET_NEXT_POINTS', {nextPoints})
+                .set('ui.collect.nextPoints', nextPoints)
+                .set('ui.collect.lastValue', null)
+                .dispatch()
+        },
+        nextPointSelected() {
+            actionBuilder('NEXT_POINT_SELECTED')
+                .del(['ui.collect.nextPoints', [0]])
+                .set('ui.collect.lastValue', null)
                 .dispatch()
         }
     }
@@ -172,4 +184,10 @@ const submitRetrieveRecipeTask = recipe => {
             }
     }
     return api.tasks.submit$(task).subscribe()
+}
+
+export const hasTrainingData = recipe => {
+    const countPerClass = (recipe.ui.collect && recipe.ui.collect.countPerClass) || {}
+    const hasRecipeDataType = recipe.model.trainingData.dataSets.find(({type}) => type === 'RECIPE')
+    return hasRecipeDataType || Object.values(countPerClass).filter(count => count > 0).length >= 2
 }

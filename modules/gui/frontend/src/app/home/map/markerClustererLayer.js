@@ -94,7 +94,7 @@ export default class MarkerClustererLayer {
     }
 
     removeMarker(marker) {
-        const mapMarker = this.getMapMarker(marker)
+        const mapMarker = this.findMapMarker(marker)
         if (mapMarker) {
             this.markerCluster.removeMarker(mapMarker)
         }
@@ -107,10 +107,14 @@ export default class MarkerClustererLayer {
     }
 
     getMapMarker(marker) {
-        const mapMarker = this.mapMarkers[markerKey(marker)]
+        const mapMarker = this.findMapMarker(marker)
         if (!mapMarker)
             throw new Error(`Marker not found: ${JSON.stringify(marker)}`)
         return mapMarker
+    }
+
+    findMapMarker(marker) {
+        return this.mapMarkers[markerKey(marker)]
     }
 
     equals(o) {

@@ -350,7 +350,13 @@
       "description": "Classify imagery from SEPAL or Google Earth Engine. Include imagery from multiple points in time to do change detection.",
       "collect": {
         "enable.tooltip": "Enable reference data collection",
-        "disable.tooltip": "Disable reference data collection"
+        "disable.tooltip": "Disable reference data collection",
+        "findingNextPoint": {
+          "title": "Fining next point...",
+          "message": "Fining next point...",
+          "notFound": "Unable to find any points for you. Try to select some yourself.",
+          "error": "Failed to find points: {error}"
+        }
       },
       "layers": {
         "referenceData": {

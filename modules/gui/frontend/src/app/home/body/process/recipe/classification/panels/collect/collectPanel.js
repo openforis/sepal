@@ -8,22 +8,33 @@ import {withRecipe} from '../../../../recipeContext'
 import {SuperButton} from 'widget/superButton'
 import Keybinding from 'widget/keybinding'
 import _ from 'lodash'
+import {Subject} from 'rxjs'
+import {takeUntil} from 'rxjs/operators'
+import {hasTrainingData, RecipeActions} from '../../classificationRecipe'
+import {msg} from 'translate'
+import api from 'api'
+import Icon from 'widget/icon'
+import Notifications from 'widget/notifications'
 
 const mapRecipeToProps = recipe => {
     return ({
         recipeId: recipe.id,
         legend: selectFrom(recipe, 'model.legend'),
         point: selectFrom(recipe, 'ui.collect.point'),
-        lastValue: selectFrom(recipe, 'ui.collect.lastValue')
+        lastValue: selectFrom(recipe, 'ui.collect.lastValue'),
+        nextPoint: selectFrom(recipe, ['ui.collect.nextPoints', 0]),
+        recipe
     })
 }
 
 class CollectPanel extends React.Component {
     state = {}
+    close$ = new Subject()
 
     render() {
-        const {point} = this.props
-        if (!point) {
+        const {point, stream} = this.props
+        const loadingNextPoint = stream('LOAD_NEXT_POINTS').active
+        if (!point && !loadingNextPoint) {
             return null
         }
         return (
@@ -31,17 +42,21 @@ class CollectPanel extends React.Component {
                 type='top-right'
                 className={styles.panel}>
                 <Panel.Header
-                    icon='check'
-                    title={`${point.x}, ${point.y}`}/>
+                    icon='map-pin'
+                    title={point
+                        ? `${point.x}, ${point.y}`
+                        : msg('process.classification.collect.findingNextPoint.title')}/>
                 <Panel.Content>
-                    {this.renderContent()}
+                    {loadingNextPoint
+                        ? this.renderLoadingNextPoint()
+                        : this.renderForm()}
                 </Panel.Content>
                 {this.renderButtons()}
             </Panel>
         )
     }
 
-    renderContent() {
+    renderForm() {
         const {legend} = this.props
         return legend.entries.map(entry => this.renderOption(entry))
     }
@@ -69,21 +84,37 @@ class CollectPanel extends React.Component {
     }
 
     renderButtons() {
+        const {stream, recipe} = this.props
+        const loadingNextPoint = stream('LOAD_NEXT_POINTS').active
         return (
             <Panel.Buttons
                 onEnter={() => this.next()}
                 onEscape={() => this.close()}>
                 <Panel.Buttons.Main>
                     <Panel.Buttons.Close onClick={() => this.close()}/>
-                    <Panel.Buttons.Next onClick={() => this.next()}/>
+                    <Panel.Buttons.Next
+                        onClick={() => this.next()}
+                        disabled={!hasTrainingData(recipe) || loadingNextPoint}
+                    />
                 </Panel.Buttons.Main>
                 <Keybinding keymap={{
                     Delete: () => this.remove(),
                     Backspace: () => this.remove()
                 }}>
-                    <Panel.Buttons.Remove onClick={() => this.remove()}/>
+                    <Panel.Buttons.Remove
+                        onClick={() => this.remove()}
+                        disabled={loadingNextPoint}
+                    />
                 </Keybinding>
             </Panel.Buttons>
+        )
+    }
+
+    renderLoadingNextPoint() {
+        return (
+            <div className={styles.loadingNextPoint}>
+                <Icon name={'spinner'} size='2x'/>
+            </div>
         )
     }
 
@@ -137,13 +168,44 @@ class CollectPanel extends React.Component {
     }
 
     next() {
-        const {dataCollectionEvents} = this.props
+        const {mapContext: {sepalMap}, recipe, stream, nextPoint, dataCollectionEvents} = this.props
         dataCollectionEvents.deselect(this.pointWithCurrentValue())
+        const moveMap = point => sepalMap.fitBounds([[point.x, point.y], [point.x, point.y]])
+        if (nextPoint) {
+            RecipeActions(recipe.id).nextPointSelected()
+            moveMap(nextPoint)
+            dataCollectionEvents.add(nextPoint)
+        } else {
+            stream('LOAD_NEXT_POINTS',
+                api.gee.nextReferenceDataPoints$(recipe).pipe(
+                    takeUntil(this.close$)
+                ),
+                nextPoints => {
+                    if (!nextPoints.length) {
+                        Notifications.info({
+                            message: msg('process.classification.collect.findingNextPoint.notFound')
+                        })
+                        return
+                    }
+                    const [nextPoint, ...restOfPoints] = nextPoints
+                    RecipeActions(recipe.id).setNextPoints(restOfPoints)
+                    moveMap(nextPoint)
+                    dataCollectionEvents.add(nextPoint)
+                },
+                error => Notifications.error({
+                    message: msg('process.classification.collect.findingNextPoint.error', {error})
+                })
+
+            )
+        }
     }
 
     close() {
-        const {dataCollectionEvents} = this.props
-        dataCollectionEvents.deselect(this.pointWithCurrentValue())
+        const {dataCollectionEvents, point} = this.props
+        this.close$.next()
+        if (point) {
+            dataCollectionEvents.deselect(this.pointWithCurrentValue())
+        }
     }
 
     remove() {

@@ -29,3 +29,8 @@
 .selected {
     background-color: var(--look-selected-active-background-color) !important;
 }
+
+.loadingNextPoint {
+    margin: 2rem;
+    text-align: center;
+}

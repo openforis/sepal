@@ -12,6 +12,7 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 import withSubscriptions from 'subscription'
+import {hasTrainingData} from './classificationRecipe'
 
 const LABEL = 'classification'
 
@@ -40,7 +41,7 @@ class ClassificationPreview extends React.Component {
     render() {
         const {recipe} = this.props
         const {initializing, tiles, failed} = this.state
-        if (this.isHidden() || failed || !this.hasTrainingData(recipe)) {
+        if (this.isHidden() || failed || !hasTrainingData(recipe)) {
             return null
         }
         if (initializing) {
@@ -78,11 +79,6 @@ class ClassificationPreview extends React.Component {
         return (
             <Legend palette={visParams.palette} min={visParams.min} max={visParams.max}/>
         )
-    }
-
-    hasTrainingData(recipe) {
-        const countPerClass = (recipe.ui.collect && recipe.ui.collect.countPerClass) || {}
-        return Object.values(countPerClass).filter(count => count > 0).length >= 2
     }
 
     onError(e) {
@@ -127,7 +123,7 @@ class ClassificationPreview extends React.Component {
 
     updateLayer(previewRequest) {
         const {recipe, mapContext, componentWillUnmount$} = this.props
-        if (!this.hasTrainingData(recipe)) {
+        if (!hasTrainingData(recipe)) {
             mapContext.sepalMap.removeLayer('preview')
             return
         }
@@ -166,7 +162,7 @@ class ClassificationPreview extends React.Component {
         const selection = selectFrom(recipe, 'ui.bands.selection')
         return {
             recipe: _.omit(recipe, ['ui']),
-            hasTrainingData: this.hasTrainingData(recipe),
+            hasTrainingData: hasTrainingData(recipe),
             bands: {selection: [selection]}
         }
     }

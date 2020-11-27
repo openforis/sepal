@@ -5,6 +5,10 @@ export class DataCollectionEvents {
         this.listeners.forEach(({onDeselect}) => onDeselect && onDeselect(point))
     }
 
+    add(point, prevValue) {
+        this.listeners.forEach(({onAdd}) => onAdd && onAdd(point, prevValue))
+    }
+
     update(point, prevValue) {
         this.listeners.forEach(({onUpdate}) => onUpdate && onUpdate(point, prevValue))
     }
@@ -17,7 +21,7 @@ export class DataCollectionEvents {
         this.listeners.forEach(({onUpdateAll}) => onUpdateAll && onUpdateAll())
     }
 
-    addListener({onDeselect, onUpdate, onRemove, onUpdateAll}) {
-        this.listeners.push({onDeselect, onUpdate, onRemove, onUpdateAll})
+    addListener({onAdd, onUpdate, onRemove, onDeselect, onUpdateAll}) {
+        this.listeners.push({onAdd, onUpdate, onRemove, onDeselect, onUpdateAll})
     }
 }

@@ -65,6 +65,10 @@ export default {
     loadCCDCSegments$: ({asset, latLng}) =>
         postJson$('/api/gee/loadCCDCSegments',
             {body: {asset, latLng}, retries: 0}
+        ).pipe(toResponse),
+    nextReferenceDataPoints$: recipe =>
+        postJson$('/api/gee/nextReferenceDataPoints',
+            {body: recipe}
         ).pipe(toResponse)
 }
 
