@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
   python3 \
   python3-pip
 RUN pip3 install \
-  ansible \
+  ansible==2.9.15 \
   boto \
   boto3
 ENV SEPAL_HOME=/usr/local/lib/sepal
