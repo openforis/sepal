@@ -3,7 +3,8 @@
 }
 
 .number {
-    text-align: right;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .pageInfo {
@@ -140,12 +141,17 @@
     justify-content: center;
 }
 
-.overBudget {
-    color: red;
-}
-
 .highlight {
     font-weight: 500;
     color: yellow;
     background-color: transparent;
+}
+
+.usage {
+    --usage: 0;
+    color: hsl(calc(220 * (1 - var(--usage))), 75%, 50%);
+}
+
+.tooltip {
+    font-weight: bold;
 }

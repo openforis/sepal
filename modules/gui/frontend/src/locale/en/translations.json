@@ -1965,6 +1965,7 @@
       "updating": "Updating..."
     },
     "report": {
+      "usage": "Using {percentage}% of allocated quota",
       "resources": {
         "monthlyInstance": "Instance budget",
         "monthlyStorage": "Storage budget",
