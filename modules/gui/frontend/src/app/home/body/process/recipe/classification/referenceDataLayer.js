@@ -92,7 +92,7 @@ class ReferenceDataLayer extends React.Component {
         const markers = referenceData
             .map(point => {
                 const pointClass = point['class']
-                countPerClass[pointClass] = (countPerClass[pointClass] || 0)  + 1
+                countPerClass[pointClass] = (countPerClass[pointClass] || 0) + 1
                 return this.toMarker(point)
             })
         this.updateCountPerClass(countPerClass)
@@ -102,14 +102,22 @@ class ReferenceDataLayer extends React.Component {
     onSelect(marker) {
         const {prevPoint} = this.props
         if (prevPoint) {
+            if (_.isEqual([prevPoint.x, prevPoint.y], [marker.x, marker.y])) {
+                return
+            }
             if (isClassified(marker)) {
-                this.layer.deselectMarker(prevPoint)
+                this.layer.deselectMarker(prevPoint) // TODO: Need to include class - gets removed if no class
             } else {
                 this.layer.removeMarker(marker)
             }
         }
         this.layer.selectMarker(marker)
-        this.recipeActions.setSelectedPoint({x: marker.x, y: marker.y, dataSetId: marker.dataSetId, 'class': marker['class']})
+        this.recipeActions.setSelectedPoint({
+            x: marker.x,
+            y: marker.y,
+            dataSetId: marker.dataSetId,
+            'class': marker['class']
+        })
     }
 
     onDeselect(point) {
@@ -123,7 +131,7 @@ class ReferenceDataLayer extends React.Component {
     onAdd(point) {
         const {prevPoint} = this.props
         if (prevPoint)
-            this.layer.deselectMarker(prevPoint)
+            this.layer.deselectMarker(prevPoint) // TODO: Need to include class - gets removed if no class
         this.layer.addMarker(this.toMarker(point))
         if (isClassified(point)) {
             this.incrementCount(point)
@@ -137,7 +145,7 @@ class ReferenceDataLayer extends React.Component {
         const {countPerClass} = this.props
         const pointClass = point['class']
         if (_.isFinite(prevValue))
-        countPerClass[prevValue] = (countPerClass[prevValue] || 0) - 1
+            countPerClass[prevValue] = (countPerClass[prevValue] || 0) - 1
         countPerClass[pointClass] = (countPerClass[pointClass] || 0) + 1
         this.updateCountPerClass(countPerClass)
         this.layer.updateMarker(this.toMarker(point))

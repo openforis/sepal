@@ -64,11 +64,15 @@ export default class MarkerClustererLayer {
     }
 
     deselectMarker(marker) {
-        this.updateIcon(marker, {
-            strokeWeight: DEFAULT_STROKE_WIDTH,
-            strokeColor: DEFAULT_STROKE_COLOR,
-            scale: DEFAULT_SCALE
-        })
+        if (_.isFinite(marker['class'])) {
+            this.updateIcon(marker, {
+                strokeWeight: DEFAULT_STROKE_WIDTH,
+                strokeColor: DEFAULT_STROKE_COLOR,
+                scale: DEFAULT_SCALE
+            })
+        } else {
+            this.removeMarker(marker)
+        }
     }
 
     addMarker(marker) {
@@ -90,11 +94,11 @@ export default class MarkerClustererLayer {
     }
 
     removeMarker(marker) {
-        const mapMarker = this.mapMarkers[markerKey(marker)]
-        delete this.mapMarkers[markerKey(marker)]
+        const mapMarker = this.getMapMarker(marker)
         if (mapMarker) {
             this.markerCluster.removeMarker(mapMarker)
         }
+        delete this.mapMarkers[markerKey(marker)]
     }
 
     updateIcon(marker, iconUpdate) {
@@ -105,7 +109,7 @@ export default class MarkerClustererLayer {
     getMapMarker(marker) {
         const mapMarker = this.mapMarkers[markerKey(marker)]
         if (!mapMarker)
-            throw new Error(`Marker not found: ${marker}`)
+            throw new Error(`Marker not found: ${JSON.stringify(marker)}`)
         return mapMarker
     }
 
@@ -141,10 +145,10 @@ export default class MarkerClustererLayer {
             icon: {...this.icon, fillColor: color},
             clickable: this.clickable
         })
-        mapMarker.addListener("click", () => {
-            onClick && onClick(this.mapMarkers[markerKey({x, y})].data)
-        })
         mapMarker.data = marker
+        mapMarker.addListener("click", () => {
+            onClick && onClick(this.getMapMarker({x, y}).data)
+        })
         return mapMarker
     }
 

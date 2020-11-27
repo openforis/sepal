@@ -92,6 +92,7 @@ export const RecipeActions = id => {
                     {x: point.x, y: point.y}
                 ], {x: point.x, y: point.y, 'class': point['class']})
                 .set('ui.collect.lastValue', point['class'])
+                .set('ui.collect.point', point)
                 .dispatch()
         },
         removeSelectedPoint(point) {
