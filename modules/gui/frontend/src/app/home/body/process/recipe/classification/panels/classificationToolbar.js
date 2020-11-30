@@ -33,7 +33,7 @@ class ClassificationToolbar extends React.Component {
 
                 <Retrieve/>
                 <InputImagery/>
-                <Legend/>
+                <Legend dataCollectionEvents={dataCollectionEvents}/>
                 <TrainingData dataCollectionEvents={dataCollectionEvents}/>
                 <AuxiliaryImagery/>
                 <Classifier/>
