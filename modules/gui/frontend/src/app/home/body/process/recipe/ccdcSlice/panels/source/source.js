@@ -8,12 +8,12 @@ import {msg} from 'translate'
 import {takeUntil} from 'rxjs/operators'
 import React from 'react'
 import _ from 'lodash'
-import api from '../../../../../../../../api'
+import api from 'api'
 import styles from './source.module.css'
 
 const fields = {
     asset: new Form.Field()
-        .notEmpty('process.ccdcSlice.panel.source.form.asset.required'),
+        .notBlank('process.ccdcSlice.panel.source.form.asset.required'),
     bands: new Form.Field()
         .notEmpty('process.ccdcSlice.panel.source.form.bands.required'),
     dateFormat: new Form.Field(),
