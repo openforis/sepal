@@ -29,10 +29,11 @@ class ReferenceDataLayer extends React.Component {
             description: msg('process.classification.layers.referenceData.description')
         })
         dataCollectionEvents.addListener({
+            onSelect: point => this.onSelect(this.toMarker(point)),
+            onDeselect: point => this.onDeselect(point),
             onAdd: point => this.onAdd(point),
             onUpdate: (point, prevValue) => this.onUpdate(point, prevValue),
             onRemove: point => this.onRemove(point),
-            onDeselect: point => this.onDeselect(point),
             onUpdateAll: () => this.updateAllMarkers()
         })
         this.recipeActions = RecipeActions(recipeId)
@@ -129,10 +130,8 @@ class ReferenceDataLayer extends React.Component {
     }
 
     onAdd(point) {
-        console.log('onAdd', point)
         const {prevPoint} = this.props
         if (prevPoint) {
-            console.log('deselect prevPoint', point)
             this.layer.deselectMarker(prevPoint)
         }
         this.layer.addMarker(this.toMarker(point))
@@ -156,7 +155,6 @@ class ReferenceDataLayer extends React.Component {
     }
 
     onRemove(point) {
-        console.log('onRemove', point)
         this.layer.removeMarker(this.toMarker(point))
         this.decrementCount(point)
         this.recipeActions.removeSelectedPoint(point)

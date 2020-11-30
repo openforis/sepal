@@ -30,7 +30,28 @@
     background-color: var(--look-selected-active-background-color) !important;
 }
 
+.content {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
 .loadingNextPoint {
-    margin: 2rem;
+    /*margin: 2rem;*/
     text-align: center;
+}
+
+.header {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-grow: 1;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: 0.5rem;
+}
+
+.header .point {
+}
+
+.header .buttons {
+
 }

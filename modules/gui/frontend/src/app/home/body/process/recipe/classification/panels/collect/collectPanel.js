@@ -15,6 +15,8 @@ import {msg} from 'translate'
 import api from 'api'
 import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
+import {ButtonGroup} from 'widget/buttonGroup'
+import {Button} from 'widget/button'
 
 const mapRecipeToProps = recipe => {
     return ({
@@ -23,6 +25,8 @@ const mapRecipeToProps = recipe => {
         point: selectFrom(recipe, 'ui.collect.point'),
         lastValue: selectFrom(recipe, 'ui.collect.lastValue'),
         nextPoint: selectFrom(recipe, ['ui.collect.nextPoints', 0]),
+        history: selectFrom(recipe, 'ui.collect.history'),
+        historyIndex: selectFrom(recipe, 'ui.collect.historyIndex'),
         recipe
     })
 }
@@ -31,22 +35,50 @@ class CollectPanel extends React.Component {
     state = {}
     close$ = new Subject()
 
+    constructor(props) {
+        super(props)
+        const {recipeId} = props
+        this.recipeActions = RecipeActions(recipeId)
+    }
+
     render() {
-        const {point, stream} = this.props
+        const {point, stream, history = []} = this.props
+        const historyIndex = this.getHistoryIndex()
         const loadingNextPoint = stream('LOAD_NEXT_POINTS').active
         if (!point && !loadingNextPoint) {
             return null
         }
+        const pointHeader = () =>
+            <div className={styles.header}>
+                <div className={styles.point}>
+                    <div>{point.x}</div>
+                    <div>{point.y}</div>
+                </div>
+                <ButtonGroup layout={'horizontal-nowrap'}>
+                    <Button
+                        icon={'chevron-left'}
+                        shape={'none'}
+                        disabled={historyIndex === 0 || history.length === 0}
+                        onClick={() => this.previous()}
+                    />
+                    <Button
+                        icon={'chevron-right'}
+                        shape={'none'}
+                        disabled={historyIndex >= history.length - 1 || historyIndex === -1}
+                        onClick={() => this.next()}
+                    />
+                </ButtonGroup>
+            </div>
         return (
             <Panel
                 type='top-right'
                 className={styles.panel}>
                 <Panel.Header
-                    icon='map-pin'
+                    icon='map-marker'
                     title={point
-                        ? `${point.x}, ${point.y}`
+                        ? pointHeader()
                         : msg('process.classification.collect.findingNextPoint.title')}/>
-                <Panel.Content>
+                <Panel.Content className={styles.content}>
                     {loadingNextPoint
                         ? this.renderLoadingNextPoint()
                         : this.renderForm()}
@@ -71,7 +103,7 @@ class CollectPanel extends React.Component {
                 onClick={() =>
                     point['class'] === legendEntry.value
                         ? this.deselectValue({...point, 'class': null})
-                        : this.select({...point, 'class': legendEntry.value})}
+                        : this.selectValue({...point, 'class': legendEntry.value})}
             />
         )
     }
@@ -91,12 +123,12 @@ class CollectPanel extends React.Component {
         const loadingNextPoint = stream('LOAD_NEXT_POINTS').active
         return (
             <Panel.Buttons
-                onEnter={() => this.next()}
+                onEnter={() => this.findNext()}
                 onEscape={() => this.close()}>
                 <Panel.Buttons.Main>
                     <Panel.Buttons.Close onClick={() => this.close()}/>
                     <Panel.Buttons.Next
-                        onClick={() => this.next()}
+                        onClick={() => this.findNext()}
                         disabled={!hasTrainingData(recipe) || loadingNextPoint}
                     />
                 </Panel.Buttons.Main>
@@ -129,6 +161,13 @@ class CollectPanel extends React.Component {
         }
     }
 
+    getHistoryIndex() {
+        if (!this.props.point)
+            return -1
+        const {point, history = []} = this.props
+        return history.findIndex(p => _.isEqual([p.x, p.y], [point.x, point.y]))
+    }
+
     isSelected(legendEntry) {
         const {value} = this.state
         return value === legendEntry.value
@@ -143,14 +182,15 @@ class CollectPanel extends React.Component {
         } else if (newWithDefault) {
             this.setState(
                 {value: null},
-                () => this.select({...point, 'class': lastValue})
+                () => this.selectValue({...point, 'class': lastValue})
             )
         } else {
             this.setState({value: null})
         }
     }
 
-    select(point) {
+    selectValue(point) {
+        this.recipeActions.pushToHistory(point)
         const update = _.isFinite(this.state.value)
         if (update) {
             this.update(point, this.state.value)
@@ -161,9 +201,9 @@ class CollectPanel extends React.Component {
     }
 
     deselectValue(point) {
-        const {recipeId, dataCollectionEvents} = this.props
+        const {dataCollectionEvents} = this.props
         this.remove()
-        RecipeActions(recipeId).unsetLastValue()
+        this.recipeActions.unsetLastValue()
         setTimeout(() => dataCollectionEvents.add(point))
     }
 
@@ -177,13 +217,17 @@ class CollectPanel extends React.Component {
         dataCollectionEvents.update(point, prevValue)
     }
 
-    next() {
-        const {mapContext: {sepalMap}, recipe, stream, nextPoint, dataCollectionEvents} = this.props
+    moveMap(point) {
+        const {mapContext: {sepalMap}} = this.props
+        sepalMap.fitBounds([[point.x, point.y], [point.x, point.y]])
+    }
+
+    findNext() {
+        const {recipe, stream, nextPoint, dataCollectionEvents} = this.props
         dataCollectionEvents.deselect(this.pointWithCurrentValue())
-        const moveMap = point => sepalMap.fitBounds([[point.x, point.y], [point.x, point.y]])
         if (nextPoint) {
-            RecipeActions(recipe.id).nextPointSelected()
-            moveMap(nextPoint)
+            this.recipeActions.nextPointSelected()
+            this.moveMap(nextPoint)
             dataCollectionEvents.add(nextPoint)
         } else {
             stream('LOAD_NEXT_POINTS',
@@ -198,8 +242,8 @@ class CollectPanel extends React.Component {
                         return
                     }
                     const [nextPoint, ...restOfPoints] = nextPoints
-                    RecipeActions(recipe.id).setNextPoints(restOfPoints)
-                    moveMap(nextPoint)
+                    this.recipeActions.setNextPoints(restOfPoints)
+                    this.moveMap(nextPoint)
                     dataCollectionEvents.add(nextPoint)
                 },
                 error => Notifications.error({
@@ -208,6 +252,27 @@ class CollectPanel extends React.Component {
             )
         }
     }
+
+    next() {
+        const {history, dataCollectionEvents} = this.props
+        const historyIndex = this.getHistoryIndex()
+        const updatedIndex = historyIndex + 1
+        const point = history[updatedIndex]
+        this.moveMap(point)
+        dataCollectionEvents.select(point)
+    }
+
+    previous() {
+        const {history, dataCollectionEvents} = this.props
+        const historyIndex = this.getHistoryIndex()
+        const updatedIndex = historyIndex === -1
+            ? history.length - 1
+            : historyIndex - 1
+        const point = history[updatedIndex]
+        this.moveMap(point)
+        dataCollectionEvents.select(point)
+    }
+
 
     close() {
         const {dataCollectionEvents, point} = this.props

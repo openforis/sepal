@@ -78,12 +78,16 @@ export const RecipeActions = id => {
                 .dispatch()
         },
         addSelectedPoint(point) {
+            console.log('addSelectedPoint')
             actionBuilder('ADD_SELECTED_POINT', {point})
                 .push(['model.trainingData.dataSets', {type: 'COLLECTED'}, 'referenceData'], point)
+                .del(['ui.collect.history', {x: point.x, y: point.y}])
+                .push('ui.collect.history', point)
                 .set('ui.collect.point', point)
                 .dispatch()
         },
         updateSelectedPoint(point) {
+            console.log('updateSelectedPoint')
             actionBuilder('UPDATE_SELECTED_POINT', {point})
                 .assign([
                     'model.trainingData.dataSets',
@@ -96,6 +100,7 @@ export const RecipeActions = id => {
                 .dispatch()
         },
         removeSelectedPoint(point) {
+            console.log('removeSelectedPoint')
             actionBuilder('REMOVE_SELECTED_POINT', {point})
                 .del([
                     'model.trainingData.dataSets',
@@ -103,7 +108,14 @@ export const RecipeActions = id => {
                     'referenceData',
                     {x: point.x, y: point.y}
                 ])
+                .del(['ui.collect.history', {x: point.x, y: point.y}])
                 .set('ui.collect.point', null)
+                .dispatch()
+        },
+        pushToHistory(point) {
+            actionBuilder('PUSH_TO_HISTORY', {point})
+                .del(['ui.collect.history', {x: point.x, y: point.y}])
+                .push('ui.collect.history', point)
                 .dispatch()
         },
         setCollecting(collecting) {

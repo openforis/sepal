@@ -34,10 +34,12 @@ class Legend extends React.Component {
     }
 
     render() {
+        const {dataCollectionEvents} = this.props
         return (
             <RecipeFormPanel
                 placement='bottom-right'
                 className={styles.panel}
+                onApply={() => setTimeout(() => dataCollectionEvents.updateAll())}>
                 onClose={() => this.preview.show()}>
                 <Panel.Header
                     icon='list'
@@ -188,7 +190,8 @@ const entryFields = {
 const Entry = compose(_Entry, form({fields: entryFields}))
 
 Legend.propTypes = {
-    recipeId: PropTypes.string
+    recipeId: PropTypes.string,
+    dataCollectionEvents: PropTypes.object.isRequired
 }
 
 export default compose(
