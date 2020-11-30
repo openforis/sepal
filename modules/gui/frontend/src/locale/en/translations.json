@@ -352,8 +352,8 @@
         "enable.tooltip": "Enable reference data collection",
         "disable.tooltip": "Disable reference data collection",
         "findingNextPoint": {
-          "title": "Fining next point...",
-          "message": "Fining next point...",
+          "title": "Finding next point...",
+          "message": "Finding next point...",
           "notFound": "Unable to find any points for you. Try to select some yourself.",
           "error": "Failed to find points: {error}"
         }
