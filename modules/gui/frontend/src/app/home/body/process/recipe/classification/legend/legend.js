@@ -48,7 +48,7 @@ class Legend extends React.Component {
             <RecipeFormPanel
                 placement='bottom-right'
                 className={styles.panel}
-                onApply={() => setTimeout(() => dataCollectionEvents.updateAll())}>
+                onApply={() => setTimeout(() => dataCollectionEvents.updateAll())}
                 onClose={() => this.preview.show()}>
                 <Panel.Header
                     icon='list'
