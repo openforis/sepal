@@ -125,6 +125,7 @@ app.post('/create-project', (req, res, next) => {
         samplesPerPlot: '',
         sampleResolution: plotSize,
         sampleValues: sampleValues,
+        surveyQuestions: sampleValues,
         surveyRules: [],
         useTemplatePlots: '',
         useTemplateWidgets: '',
@@ -199,7 +200,7 @@ app.get('/get-collected-data/:id', (req, res, next) => {
         if (statusCode !== 200) return res.sendStatus(statusCode)
         response.on('data', data => {
             const project = JSON.parse(data.toString())
-            const [sampleValue] = project.sampleValues
+            const [sampleValue] = project.sampleValues || project.surveyQuestions
             const {question, answers} = sampleValue
             if (!question || !answers) return res.sendStatus(500)
             const answersById = answers.reduce((acc, cur) => {
