@@ -148,7 +148,7 @@ app.post('/create-project', (req, res, next) => {
         response.on('data', data => {
             const jsonObject = JSON.parse(data)
             const {projectId, tokenKey, errorMessage} = jsonObject
-            const isInteger = n => !isNaN(parseInt(n)) && isFinite(n) && !n.includes('.')
+            const isInteger = n => /^\d+$/.test(n)
             if (!isInteger(projectId)) {
                 res.status(400).send({
                     projectId: 0,
