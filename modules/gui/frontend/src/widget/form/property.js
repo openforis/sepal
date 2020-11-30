@@ -33,7 +33,7 @@ class FormProperty {
                 else if (value === Object(value))
                     return Object.keys(value).length > 0
                 else
-                    return isBlank(value)
+                    return !isBlank(value)
             },
             messageId,
             messageArgs
