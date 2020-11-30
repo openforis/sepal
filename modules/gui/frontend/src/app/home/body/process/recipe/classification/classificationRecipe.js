@@ -125,6 +125,11 @@ export const RecipeActions = id => {
                 .del(['ui.collect.nextPoints', [0]])
                 .set('ui.collect.lastValue', null)
                 .dispatch()
+        },
+        unsetLastValue() {
+            actionBuilder('UNSET_LAST_VALUE')
+                .set('ui.collect.lastValue', null)
+                .dispatch()
         }
     }
 }

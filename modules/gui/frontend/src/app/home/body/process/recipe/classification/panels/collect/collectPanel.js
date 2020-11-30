@@ -68,7 +68,10 @@ class CollectPanel extends React.Component {
                 key={legendEntry.value}
                 className={this.isSelected(legendEntry) ? styles.selected : null}
                 title={this.renderOptionTitle(legendEntry)}
-                onClick={() => this.select({...point, 'class': legendEntry.value})}
+                onClick={() =>
+                    point['class'] === legendEntry.value
+                        ? this.deselectValue({...point, 'class': null})
+                        : this.select({...point, 'class': legendEntry.value})}
             />
         )
     }
@@ -157,6 +160,13 @@ class CollectPanel extends React.Component {
         this.setState({value: point['class']})
     }
 
+    deselectValue(point) {
+        const {recipeId, dataCollectionEvents} = this.props
+        this.remove()
+        RecipeActions(recipeId).unsetLastValue()
+        setTimeout(() => dataCollectionEvents.add(point))
+    }
+
     add(point) {
         const {dataCollectionEvents} = this.props
         dataCollectionEvents.update(point)
@@ -195,7 +205,6 @@ class CollectPanel extends React.Component {
                 error => Notifications.error({
                     message: msg('process.classification.collect.findingNextPoint.error', {error})
                 })
-
             )
         }
     }

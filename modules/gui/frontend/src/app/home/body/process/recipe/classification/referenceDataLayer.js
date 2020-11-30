@@ -129,9 +129,12 @@ class ReferenceDataLayer extends React.Component {
     }
 
     onAdd(point) {
+        console.log('onAdd', point)
         const {prevPoint} = this.props
-        if (prevPoint)
+        if (prevPoint) {
+            console.log('deselect prevPoint', point)
             this.layer.deselectMarker(prevPoint)
+        }
         this.layer.addMarker(this.toMarker(point))
         if (isClassified(point)) {
             this.incrementCount(point)
@@ -153,6 +156,7 @@ class ReferenceDataLayer extends React.Component {
     }
 
     onRemove(point) {
+        console.log('onRemove', point)
         this.layer.removeMarker(this.toMarker(point))
         this.decrementCount(point)
         this.recipeActions.removeSelectedPoint(point)
