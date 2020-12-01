@@ -14,7 +14,8 @@ const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend'),
     trainingDataSets: selectFrom(recipe, 'model.trainingData.dataSets'),
     prevPoint: selectFrom(recipe, 'ui.collect.point'),
-    collecting: selectFrom(recipe, 'ui.collect.collecting')
+    collecting: selectFrom(recipe, 'ui.collect.collecting'),
+    countPerClass: selectFrom(recipe, 'ui.collect.countPerClass')
 })
 
 class ReferenceDataLayer extends React.Component {
@@ -28,10 +29,12 @@ class ReferenceDataLayer extends React.Component {
             description: msg('process.classification.layers.referenceData.description')
         })
         dataCollectionEvents.addListener({
+            onSelect: point => this.onSelect(this.toMarker(point)),
+            onDeselect: point => this.onDeselect(point),
             onAdd: point => this.onAdd(point),
-            onUpdate: point => this.onUpdate(point),
+            onUpdate: (point, prevValue) => this.onUpdate(point, prevValue),
             onRemove: point => this.onRemove(point),
-            onDeselect: point => this.onDeselect(point)
+            onUpdateAll: () => this.updateAllMarkers()
         })
         this.recipeActions = RecipeActions(recipeId)
     }
@@ -54,20 +57,7 @@ class ReferenceDataLayer extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        const {trainingDataSets} = this.props
         this.handleCollectingChange(prevProps.collecting)
-        const changed = () => {
-            const prevDataSets = prevProps.trainingDataSets.filter(({type}) => type !== 'COLLECTED')
-            const dataSets = this.props.trainingDataSets.filter(({type}) => type !== 'COLLECTED')
-            return prevDataSets.length !== dataSets.length
-                || dataSets.find(
-                    dataSet => dataSet !== prevDataSets.find(({id}) => dataSet.id === id)
-                )
-        }
-
-        if (prevProps.trainingDataSets !== trainingDataSets && changed()) {
-            this.updateAllMarkers()
-        }
     }
 
     componentWillUnmount() {
@@ -99,22 +89,36 @@ class ReferenceDataLayer extends React.Component {
 
     updateAllMarkers() {
         const referenceData = this.getReferenceData()
+        const countPerClass = {}
         const markers = referenceData
-            .map(point => this.toMarker(point))
+            .map(point => {
+                const pointClass = point['class']
+                countPerClass[pointClass] = (countPerClass[pointClass] || 0) + 1
+                return this.toMarker(point)
+            })
+        this.updateCountPerClass(countPerClass)
         this.layer.setMarkers(markers)
     }
 
-    onSelect(point) {
+    onSelect(marker) {
         const {prevPoint} = this.props
         if (prevPoint) {
-            if (isClassified(point)) {
+            if (_.isEqual([prevPoint.x, prevPoint.y], [marker.x, marker.y])) {
+                return
+            }
+            if (isClassified(marker)) {
                 this.layer.deselectMarker(prevPoint)
             } else {
-                this.layer.removeMarker(this.toMarker(point))
+                this.layer.removeMarker(marker)
             }
         }
-        this.layer.selectMarker(this.toMarker(point))
-        this.recipeActions.setSelectedPoint(point)
+        this.layer.selectMarker(marker)
+        this.recipeActions.setSelectedPoint({
+            x: marker.x,
+            y: marker.y,
+            dataSetId: marker.dataSetId,
+            'class': marker['class']
+        })
     }
 
     onDeselect(point) {
@@ -127,38 +131,68 @@ class ReferenceDataLayer extends React.Component {
 
     onAdd(point) {
         const {prevPoint} = this.props
-        if (prevPoint)
+        if (prevPoint) {
             this.layer.deselectMarker(prevPoint)
+        }
         this.layer.addMarker(this.toMarker(point))
-        if (isClassified(point))
+        if (isClassified(point)) {
+            this.incrementCount(point)
             this.recipeActions.addSelectedPoint(point)
-        else
+        } else {
             this.recipeActions.setSelectedPoint(point)
+        }
     }
 
-    onUpdate(point) {
+    onUpdate(point, prevValue) {
+        const {countPerClass} = this.props
+        const pointClass = point['class']
+        if (_.isFinite(prevValue))
+            countPerClass[prevValue] = (countPerClass[prevValue] || 0) - 1
+        countPerClass[pointClass] = (countPerClass[pointClass] || 0) + 1
+        this.updateCountPerClass(countPerClass)
         this.layer.updateMarker(this.toMarker(point))
         this.recipeActions.updateSelectedPoint(point)
     }
 
     onRemove(point) {
         this.layer.removeMarker(this.toMarker(point))
+        this.decrementCount(point)
         this.recipeActions.removeSelectedPoint(point)
+    }
+
+    updateCountPerClass(countPerClass) {
+        this.recipeActions.setCountPerClass(countPerClass)
+    }
+
+    incrementCount(point) {
+        const {countPerClass} = this.props
+        const pointClass = point['class']
+        countPerClass[pointClass] = (countPerClass[pointClass] || 0) + 1
+        this.updateCountPerClass(countPerClass)
+    }
+
+    decrementCount(point) {
+        const {countPerClass} = this.props
+        const pointClass = point['class']
+        countPerClass[pointClass] = (countPerClass[pointClass] || 0) - 1
+        this.updateCountPerClass(countPerClass)
     }
 
     toMarker(point) {
         const {legend} = this.props
-        const color = isClassified(point)
-            ? {color: legend.entries.find(({value}) => `${value}` === `${point['class']}`).color}
+        const legendEntry = legend.entries.find(({value}) => `${value}` === `${point['class']}`)
+        const additionalProps = legendEntry
+            ? {
+                color: legendEntry.color,
+                'class': legendEntry.value
+            }
             : {}
         return {
             x: point.x,
             y: point.y,
-            ...color,
-            onClick: point => {
-                const p = this.getReferenceData().find(p => _.isEqual([p.x, p.y], [point.x, point.y]))
-                this.onSelect(p || point)
-            }
+            dataSetId: point.dataSetId,
+            ...additionalProps,
+            onClick: marker => this.onSelect(marker)
         }
     }
 
@@ -166,12 +200,14 @@ class ReferenceDataLayer extends React.Component {
         const {trainingDataSets} = this.props
         return trainingDataSets
             .filter(({type}) => type !== 'RECIPE')
-            .map(({referenceData}) => referenceData)
+            .map(({dataSetId, referenceData}) =>
+                referenceData.map(point => ({...point, dataSetId}))
+            )
             .flat()
     }
 }
 
-const isClassified = point => Object.keys(point).includes('class') && _.isFinite(point['class'])
+const isClassified = marker => Object.keys(marker).includes('class') && _.isFinite(marker['class'])
 
 ReferenceDataLayer.propTypes = {
     recipeId: PropTypes.string,

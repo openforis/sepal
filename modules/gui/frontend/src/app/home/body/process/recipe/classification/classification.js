@@ -24,14 +24,14 @@ class _Classification extends React.Component {
     dataCollectionEvents = new DataCollectionEvents()
 
     render() {
-        const {recipeContext: {statePath}, trainingData, initialized} = this.props
+        const {recipeContext: {statePath}, initialized} = this.props
         return (
             <React.Fragment>
                 <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
                 <MapScale/>
-                <ClassificationToolbar/>
+                <ClassificationToolbar dataCollectionEvents={this.dataCollectionEvents}/>
 
-                {initialized && trainingData.dataSets.length
+                {initialized
                     ? <React.Fragment>
                         <ClassificationPreview/>
                         <ReferenceDataLayer dataCollectionEvents={this.dataCollectionEvents}/>

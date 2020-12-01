@@ -23,7 +23,7 @@ export const getDefaultModel = () => ({
         minLeafPopulation: 1,
         bagFraction: 0.5,
         maxNodes: null,
-        seed: 0,
+        seed: 1,
 
         lambda: 0.000001,
 
@@ -31,7 +31,7 @@ export const getDefaultModel = () => ({
         svmType: 'C_SVC',
         kernelType: 'LINEAR',
         shrinking: true,
-        degree: null,
+        degree: 3,
         gamma: null,
         coef0: 0,
         cost: 1,
@@ -80,23 +80,64 @@ export const RecipeActions = id => {
         addSelectedPoint(point) {
             actionBuilder('ADD_SELECTED_POINT', {point})
                 .push(['model.trainingData.dataSets', {type: 'COLLECTED'}, 'referenceData'], point)
+                .del(['ui.collect.history', {x: point.x, y: point.y}])
+                .push('ui.collect.history', point)
                 .set('ui.collect.point', point)
                 .dispatch()
         },
         updateSelectedPoint(point) {
             actionBuilder('UPDATE_SELECTED_POINT', {point})
-                .assign(['model.trainingData.dataSets', {type: 'COLLECTED'}, 'referenceData', {x: point.x, y: point.y}], point)
+                .assign([
+                    'model.trainingData.dataSets',
+                    point.dataSetId ? {dataSetId: point.dataSetId} : {type: 'COLLECTED'},
+                    'referenceData',
+                    {x: point.x, y: point.y}
+                ], {x: point.x, y: point.y, 'class': point['class']})
                 .set('ui.collect.lastValue', point['class'])
+                .set('ui.collect.point', point)
                 .dispatch()
         },
         removeSelectedPoint(point) {
             actionBuilder('REMOVE_SELECTED_POINT', {point})
-                .del(['model.trainingData.dataSets', {type: 'COLLECTED'}, 'referenceData', {x: point.x, y: point.y}])
+                .del([
+                    'model.trainingData.dataSets',
+                    point.dataSetId ? {dataSetId: point.dataSetId} : {type: 'COLLECTED'},
+                    'referenceData',
+                    {x: point.x, y: point.y}
+                ])
+                .del(['ui.collect.history', {x: point.x, y: point.y}])
                 .set('ui.collect.point', null)
                 .dispatch()
         },
+        pushToHistory(point) {
+            actionBuilder('PUSH_TO_HISTORY', {point})
+                .del(['ui.collect.history', {x: point.x, y: point.y}])
+                .push('ui.collect.history', point)
+                .dispatch()
+        },
         setCollecting(collecting) {
-            return set('SET_COLLECTING_REFERENCE_DATA', 'ui.collect.collecting', collecting, {collecting})
+            set('SET_COLLECTING_REFERENCE_DATA', 'ui.collect.collecting', collecting, {collecting})
+                .dispatch()
+        },
+        setCountPerClass(countPerClass) {
+            set('SET_COUNT_PER_CLASS', 'ui.collect.countPerClass', countPerClass, {countPerClass})
+                .dispatch()
+        },
+        setNextPoints(nextPoints) {
+            actionBuilder('SET_NEXT_POINTS', {nextPoints})
+                .set('ui.collect.nextPoints', nextPoints)
+                .set('ui.collect.lastValue', null)
+                .dispatch()
+        },
+        nextPointSelected() {
+            actionBuilder('NEXT_POINT_SELECTED')
+                .del(['ui.collect.nextPoints', [0]])
+                .set('ui.collect.lastValue', null)
+                .dispatch()
+        },
+        unsetLastValue() {
+            actionBuilder('UNSET_LAST_VALUE')
+                .set('ui.collect.lastValue', null)
                 .dispatch()
         }
     }
@@ -135,6 +176,12 @@ const submitRetrieveRecipeTask = recipe => {
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.classification.panel.retrieve.form.task', destination], {name})
+    const pyramidingPolicy = {}
+    bands.forEach(band => pyramidingPolicy[band] = band === 'class' ? 'mode' : 'mean')
+    const properties = {}
+    recipe.model.legend.entries.forEach(
+        ({value, color, label}) => properties[`legend_${value}`] = {color, label}
+    )
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
@@ -144,9 +191,17 @@ const submitRetrieveRecipeTask = recipe => {
                 image: {
                     recipe: _.omit(recipe, ['ui']),
                     bands: {selection: bands},
-                    scale
+                    scale,
+                    pyramidingPolicy,
+                    properties
                 }
             }
     }
     return api.tasks.submit$(task).subscribe()
+}
+
+export const hasTrainingData = recipe => {
+    const countPerClass = (recipe.ui.collect && recipe.ui.collect.countPerClass) || {}
+    const hasRecipeDataType = recipe.model.trainingData.dataSets.find(({type}) => type === 'RECIPE')
+    return hasRecipeDataType || Object.values(countPerClass).filter(count => count > 0).length >= 2
 }

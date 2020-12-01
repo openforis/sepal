@@ -9,8 +9,9 @@ export class ActivationButton extends React.Component {
         const {id, icon, label, tooltip, disabled, onClick} = this.props
         return (
             <Activator id={id}>
-                {({activate, deactivate, active, canActivate}) =>
-                    <ToolbarButton
+                {activator => {
+                    const {activate, deactivate, active, canActivate} = activator
+                    return <ToolbarButton
                         disabled={disabled || (!active && !canActivate)}
                         selected={active}
                         icon={icon}
@@ -21,6 +22,7 @@ export class ActivationButton extends React.Component {
                             active ? deactivate() : activate()
                             onClick && onClick(e)
                         }}/>
+                }
                 }
             </Activator>
         )

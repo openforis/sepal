@@ -18,7 +18,8 @@ const fields = {
         .notBlank('process.mosaic.panel.areaOfInterest.form.section.required'),
     country: new Form.Field()
         .skip((value, {section}) => section !== 'COUNTRY')
-        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
+        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
+        .notEmpty('process.mosaic.panel.areaOfInterest.form.country.required'),
     area: new Form.Field(),
     eeTable: new Form.Field()
         .skip((value, {section}) => section !== 'EE_TABLE')

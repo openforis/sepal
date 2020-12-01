@@ -1,10 +1,10 @@
 .panel {
     min-height: 20rem;
-    max-width: 21rem;
+    max-width: 27rem;
 }
 
 .value {
-    width: 1.5rem;
+    width: 2rem;
 }
 
 .value input {

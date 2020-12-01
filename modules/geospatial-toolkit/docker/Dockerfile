@@ -52,6 +52,9 @@ ENV DEBIAN_FRONTEND noninteractive
 ADD script/init_gpu.sh /script/
 RUN chmod u+x /script/init_gpu.sh && sync && /script/init_gpu.sh
 
+ADD script/init_biota.sh /script/
+RUN chmod u+x /script/init_biota.sh && sync && /script/init_biota.sh
+
 ADD script/init_post.sh /script/
 RUN chmod u+x /script/init_post.sh && sync && /script/init_post.sh
 

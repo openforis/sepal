@@ -16,17 +16,18 @@ const defaultPolicy = ({values, wizardContext: {wizard}}) =>
         ? {_: 'disallow'}
         : {_: 'allow-then-deactivate'}
 
-export const recipeFormPanel = ({
-    id,
-    fields,
-    constraints,
-    path,
-    mapRecipeToProps = () => ({}),
-    modelToValues = model => ({...model}),
-    valuesToModel = values => ({...values}),
-    policy = defaultPolicy,
-    additionalPolicy = () => ({})
-}) => {
+export const recipeFormPanel = (
+    {
+        id,
+        fields,
+        constraints,
+        path,
+        mapRecipeToProps = () => ({}),
+        modelToValues = model => ({...model}),
+        valuesToModel = values => ({...values}),
+        policy = defaultPolicy,
+        additionalPolicy = () => ({})
+    }) => {
     path = path || (() => id)
     const createMapRecipeToProps = mapRecipeToProps =>
         (recipe, props) => {
@@ -73,7 +74,7 @@ export const recipeFormPanel = ({
                         deactivate,
                         prevValues: this.prevValues
                     }}>
-                        {React.createElement(WrappedComponent, this.props)}
+                        {React.createElement(WrappedComponent, {...this.props, form})}
                     </Context.Provider>
                 )
             }
@@ -95,39 +96,58 @@ export const recipeFormPanel = ({
     }
 }
 
-export class RecipeFormPanel extends React.Component {
-    render() {
-        const {className, placement, isActionForm, onCancel, onClose, children} = this.props
-        return (
-            <Context.Consumer>
-                {({id, evaluatedPath, form, statePath, valuesToModel, deactivate, prevValues}) =>
-                    <Form.Panel
-                        id={id}
-                        className={className}
-                        form={form}
-                        close={deactivate}
-                        isActionForm={isActionForm}
-                        placement={placement}
-                        onApply={values => this.onApply({evaluatedPath, statePath, values, valuesToModel, prevValues})}
-                        onCancel={onCancel}
-                        onClose={onClose}>
-                        {children}
-                    </Form.Panel>
+export const RecipeFormPanel = ({className, placement, isActionForm, onApply, onCancel, onClose, children}) =>
+    <Context.Consumer>
+        {({id, evaluatedPath, form, statePath, valuesToModel, deactivate, prevValues}) => {
+            const wrappedOnApply = values => {
+                if (isActionForm) {
+                    setValues({evaluatedPath, statePath, values})
+                    onApply && onApply(values)
+                } else if (valuesToModel) {
+                    const model = valuesToModel(values)
+                    setModelAndValues({evaluatedPath, statePath, model, values})
+                    onApply && onApply(values, model, prevValues)
                 }
-            </Context.Consumer>
+            }
+            return (
+                <_RecipeFormPanel
+                    id={id}
+                    className={className}
+                    form={form}
+                    close={deactivate}
+                    isActionForm={isActionForm}
+                    placement={placement}
+                    onApply={wrappedOnApply}
+                    onCancel={onCancel}
+                    onClose={onClose}>
+                    {children}
+                </_RecipeFormPanel>
+            )
+        }}
+    </Context.Consumer>
+
+class _RecipeFormPanel extends React.Component {
+    render() {
+        const {id, form, className, placement, isActionForm, onApply, onCancel, onClose, close, children} = this.props
+        return (
+            <Form.Panel
+                id={id}
+                className={className}
+                form={form}
+                close={close}
+                isActionForm={isActionForm}
+                placement={placement}
+                onApply={onApply}
+                onCancel={onCancel}>
+                {children}
+            </Form.Panel>
         )
     }
 
-    onApply({evaluatedPath, statePath, values, valuesToModel, prevValues}) {
-        const {onApply, isActionForm} = this.props
-        if (isActionForm) {
-            setValues({evaluatedPath, statePath, values})
-            onApply && onApply(values)
-        } else if (valuesToModel) {
-            const model = valuesToModel(values)
-            setModelAndValues({evaluatedPath, statePath, model, values})
-            onApply && onApply(values, model, prevValues)
-        }
+    componentWillUnmount() {
+        const {form, onCancel, onClose} = this.props
+        onCancel && form.isDirty() && onCancel()
+        onClose && onClose()
     }
 }
 

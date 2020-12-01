@@ -1,19 +1,31 @@
 export class DataCollectionEvents {
     listeners = []
 
-    deselect(point) {
-        this.listeners.forEach(({onDeselect}) => onDeselect(point))
+    select(point) {
+        this.listeners.forEach(({onSelect}) => onSelect && onSelect(point))
     }
 
-    update(point) {
-        this.listeners.forEach(({onUpdate}) => onUpdate(point))
+    deselect(point) {
+        this.listeners.forEach(({onDeselect}) => onDeselect && onDeselect(point))
+    }
+
+    add(point, prevValue) {
+        this.listeners.forEach(({onAdd}) => onAdd && onAdd(point, prevValue))
+    }
+
+    update(point, prevValue) {
+        this.listeners.forEach(({onUpdate}) => onUpdate && onUpdate(point, prevValue))
     }
 
     remove(point) {
-        this.listeners.forEach(({onRemove}) => onRemove(point))
+        this.listeners.forEach(({onRemove}) => onRemove && onRemove(point))
     }
 
-    addListener({onDeselect, onUpdate, onRemove}) {
-        this.listeners.push({onDeselect, onUpdate, onRemove})
+    updateAll() {
+        this.listeners.forEach(({onUpdateAll}) => onUpdateAll && onUpdateAll())
+    }
+
+    addListener({onSelect, onDeselect, onAdd, onUpdate, onRemove, onUpdateAll}) {
+        this.listeners.push({onSelect, onDeselect, onAdd, onUpdate, onRemove, onUpdateAll})
     }
 }

@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {FileSelect} from '../../../../../../../widget/fileSelect'
+import {FileSelect} from 'widget/fileSelect'
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
@@ -11,7 +11,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './classifier.module.css'
-import {MosaicPreview} from '../../mosaic/mosaicPreview'
+import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 
 const mapRecipeToProps = recipe => ({
     legend: selectFrom(recipe, 'model.legend')
@@ -22,32 +22,35 @@ const fields = {
     type: new Form.Field(),
     numberOfTrees: new Form.Field()
         .skip((value, {type}) => type !== 'RANDOM_FOREST')
+        .notBlank()
         .int()
         .min(1),
     variablesPerSplit: new Form.Field()
         .skip((value, {type}) => type !== 'RANDOM_FOREST')
-        .skip(value => value == null || value === '')
         .int()
         .min(1),
     minLeafPopulation: new Form.Field()
         .skip((value, {type}) => !['RANDOM_FOREST', 'CART'].includes(type))
+        .notBlank()
         .int()
         .min(1),
     bagFraction: new Form.Field()
         .skip((value, {type}) => type !== 'RANDOM_FOREST')
+        .notBlank()
         .number()
         .greaterThan(0)
         .max(1),
     maxNodes: new Form.Field()
         .skip((value, {type}) => !['RANDOM_FOREST', 'CART'].includes(type))
-        .skip(value => value == null || value === '')
         .int()
         .min(2),
     seed: new Form.Field()
         .skip((value, {type}) => type !== 'RANDOM_FOREST')
+        .notBlank()
         .int(),
     lambda: new Form.Field()
         .skip((value, {type}) => type !== 'NAIVE_BAYES')
+        .notBlank()
         .number()
         .greaterThan(0),
     decisionProcedure: new Form.Field(),
@@ -57,27 +60,29 @@ const fields = {
     degree: new Form.Field()
         .skip((value, {type}) => type !== 'SVM')
         .skip((value, {kernelType}) => kernelType !== 'POLY')
-        .skip(value => value == null || value === '')
+        .notBlank()
         .int()
         .min(1),
     gamma: new Form.Field()
         .skip((value, {type}) => type !== 'SVM')
         .skip((value, {kernelType}) => !['POLY', 'RBF', 'SIGMOID'].includes(kernelType))
-        .skip(value => value == null || value === '')
         .number()
         .min(0),
     coef0: new Form.Field()
         .skip((value, {type}) => type !== 'SVM')
         .skip((value, {kernelType}) => !['POLY', 'SIGMOID'].includes(kernelType))
+        .notBlank()
         .number(),
     cost: new Form.Field()
         .skip((value, {type}) => type !== 'SVM')
         .skip((value, {svmType}) => svmType !== 'C_SVC')
+        .notBlank()
         .number()
         .greaterThan(0),
     nu: new Form.Field()
         .skip((value, {type}) => type !== 'SVM')
         .skip((value, {svmType}) => svmType !== 'NU_SVC')
+        .notBlank()
         .number()
         .greaterThan(0)
         .skip((value, {type}) => type !== 'SVM')

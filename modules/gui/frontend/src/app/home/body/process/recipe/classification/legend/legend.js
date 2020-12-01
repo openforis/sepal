@@ -11,6 +11,7 @@ import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import guid from 'guid'
 import styles from './legend.module.css'
+import {selectFrom} from '../../../../../../../stateUtils'
 
 const legendFields = {
     entries: new Form.Field()
@@ -26,6 +27,14 @@ const legendFields = {
         }, 'process.classification.panel.inputImagery.form.section.required')
 }
 
+const mapRecipeToProps = recipe => {
+    const dataSets = selectFrom(recipe, 'model.trainingData').dataSets || []
+
+    return ({
+        hasTrainingData: !!dataSets.find(dataSet => dataSet.type !== 'COLLECTED' || !_.isEmpty(dataSet.referenceData))
+    })
+}
+
 class Legend extends React.Component {
     constructor(props) {
         super(props)
@@ -34,10 +43,12 @@ class Legend extends React.Component {
     }
 
     render() {
+        const {dataCollectionEvents} = this.props
         return (
             <RecipeFormPanel
                 placement='bottom-right'
                 className={styles.panel}
+                onApply={() => setTimeout(() => dataCollectionEvents.updateAll())}
                 onClose={() => this.preview.show()}>
                 <Panel.Header
                     icon='list'
@@ -55,7 +66,7 @@ class Legend extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {entries}} = this.props
+        const {hasTrainingData, inputs: {entries}} = this.props
         const duplicates = findDuplicates((entries.value || []))
         return (
             <Layout>
@@ -64,10 +75,12 @@ class Legend extends React.Component {
                         <Entry
                             entry={entry}
                             duplicate={duplicates.find(duplicate => duplicate.id === entry.id) || {}}
+                            hasTrainingData={hasTrainingData}
                             onChange={entry => this.updateEntry(entry)}
                         />
                         <RemoveButton
                             message={'Are you sure you want to remove this legend entry?'}
+                            disabled={hasTrainingData}
                             onRemove={() => this.removeEntry(entry)}/>
                     </Layout>
                 )}
@@ -113,7 +126,7 @@ class Legend extends React.Component {
 
 class _Entry extends React.Component {
     render() {
-        const {entry, inputs: {value, color, label}} = this.props
+        const {entry, hasTrainingData, inputs: {value, color, label}} = this.props
         return (
             <Layout type={'horizontal-nowrap'}>
                 <Form.Input
@@ -130,6 +143,7 @@ class _Entry extends React.Component {
                     input={value}
                     errorMessage
                     autoComplete={false}
+                    disabled={hasTrainingData}
                     onChange={e => this.notifyChange({value: e.target.value})}
                 />
                 <Form.Input
@@ -188,12 +202,13 @@ const entryFields = {
 const Entry = compose(_Entry, form({fields: entryFields}))
 
 Legend.propTypes = {
-    recipeId: PropTypes.string
+    recipeId: PropTypes.string,
+    dataCollectionEvents: PropTypes.object.isRequired
 }
 
 export default compose(
     Legend,
-    recipeFormPanel({id: 'legend', fields: legendFields})
+    recipeFormPanel({id: 'legend', fields: legendFields, mapRecipeToProps})
 )
 
 const COLORS = [
@@ -220,7 +235,7 @@ const COLORS = [
 ]
 
 const isValid = entry => {
-    const validValue = _.inRange(entry.value, 0, 99)
+    const validValue = _.inRange(entry.value, 0, 100)
     const validColor = !!entry.color
     const validLabel = !!entry.label
     return validValue && validColor && validLabel

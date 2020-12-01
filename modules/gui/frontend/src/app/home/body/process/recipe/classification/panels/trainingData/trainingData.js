@@ -14,6 +14,7 @@ import React from 'react'
 import TrainingDataSet from './trainingDataSet'
 import guid from 'guid'
 import styles from './trainingData.module.css'
+import PropTypes from 'prop-types'
 
 const mapRecipeToProps = recipe => ({
     dataSets: selectFrom(recipe, 'model.trainingData.dataSets') || []
@@ -28,13 +29,16 @@ class TrainingData extends React.Component {
         this.recipeActions = RecipeActions(recipeId)
     }
     render() {
-        const {dataSets} = this.props
+        const {dataSets, dataCollectionEvents} = this.props
         return (
             <React.Fragment>
                 <RecipeFormPanel
                     className={styles.panel}
                     placement='bottom-right'
-                    onClose={() => this.preview.show()}>
+                    onClose={() => {
+                        console.log('onClose')
+                        this.preview.show()
+                    }}>
                     <Panel.Header
                         icon='table'
                         title={msg('process.classification.panel.trainingData.title')}/>
@@ -45,7 +49,7 @@ class TrainingData extends React.Component {
                         <Panel.Buttons.Add onClick={() => this.addDataSet()}/>
                     </Form.PanelButtons>
                 </RecipeFormPanel>
-                <TrainingDataSet/>
+                <TrainingDataSet dataCollectionEvents={dataCollectionEvents}/>
             </React.Fragment>
         )
     }
@@ -64,6 +68,7 @@ class TrainingData extends React.Component {
     }
 
     renderDataSet(dataSet) {
+        const {dataCollectionEvents} = this.props
         const name = dataSet.name
         if (!name)
             return null
@@ -76,8 +81,11 @@ class TrainingData extends React.Component {
                 removeMessage={msg('process.classification.panel.trainingData.remove.confirmationMessage', {name})}
                 removeTooltip={msg('process.classification.panel.trainingData.remove.tooltip')}
                 disabled={disabled}
-                onClick={!disabled && (() => this.editDataSet(dataSet))}
-                onRemove={!disabled && (() => this.removeDataSet(dataSet))}
+                onClick={disabled ? null : () => this.editDataSet(dataSet)}
+                onRemove={disabled ? null : () => {
+                    this.removeDataSet(dataSet)
+                    setTimeout(() => dataCollectionEvents.updateAll())
+                }}
             />
         )
     }
@@ -107,7 +115,9 @@ class TrainingData extends React.Component {
     }
 }
 
-TrainingData.propTypes = {}
+TrainingData.propTypes = {
+    dataCollectionEvents: PropTypes.object.isRequired
+}
 
 const additionalPolicy = () => ({'trainingDataSet': 'allow'})
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected data sets from

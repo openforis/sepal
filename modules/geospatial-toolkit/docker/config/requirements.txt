@@ -12,6 +12,7 @@ haversine
 dask[complete]
 numpy
 pytesmo
+scikit-image
 scikit-learn
 scipy
 shapely

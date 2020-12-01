@@ -12,15 +12,19 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 import withSubscriptions from 'subscription'
+import {hasTrainingData} from './classificationRecipe'
 
 const LABEL = 'classification'
 
-const mapRecipeToProps = recipe => ({recipe})
+const mapRecipeToProps = recipe => ({
+    countPerClass: selectFrom(recipe, 'ui.collect.countPerClass'),
+    recipe
+})
 
 class ClassificationPreview extends React.Component {
     state = {
         initializing: false,
-        failed: false
+        failed: false,
     }
 
     constructor(props) {
@@ -32,6 +36,21 @@ class ClassificationPreview extends React.Component {
                 tiles => this.setState({tiles, initializing: false})
             )
         )
+    }
+
+    render() {
+        const {recipe} = this.props
+        const {initializing, tiles, failed} = this.state
+        if (this.isHidden() || failed || !hasTrainingData(recipe)) {
+            return null
+        }
+        if (initializing) {
+            return this.renderInitializing()
+        }
+        if (tiles && !tiles.complete) {
+            return this.renderLoading()
+        }
+        return this.renderLegend()
     }
 
     renderInitializing() {
@@ -62,20 +81,6 @@ class ClassificationPreview extends React.Component {
         )
     }
 
-    render() {
-        const {initializing, tiles, failed} = this.state
-        if (this.isHidden() || failed) {
-            return null
-        }
-        if (initializing) {
-            return this.renderInitializing()
-        }
-        if (tiles && !tiles.complete) {
-            return this.renderLoading()
-        }
-        return this.renderLegend()
-    }
-
     onError(e) {
         this.setState({failed: true})
         Notifications.error({
@@ -103,25 +108,25 @@ class ClassificationPreview extends React.Component {
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
-    componentDidMount() {
-        this.updateLayer(this.toPreviewRequest(this.props.recipe))
-    }
-
     componentDidUpdate(prevProps) {
         const {recipe, mapContext: {sepalMap}} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
-        if (layerChanged)
+
+        if (layerChanged) {
             this.updateLayer(previewRequest)
+        }
         sepalMap.hideLayer('preview', this.isHidden(recipe))
     }
 
     // common code above
 
     updateLayer(previewRequest) {
-        const {mapContext, componentWillUnmount$} = this.props
-        // if (!selectFrom(recipe, 'ui.bands.selection'))
-        //     return
+        const {recipe, mapContext, componentWillUnmount$} = this.props
+        if (!hasTrainingData(recipe)) {
+            mapContext.sepalMap.removeLayer('preview')
+            return
+        }
 
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
@@ -157,8 +162,8 @@ class ClassificationPreview extends React.Component {
         const selection = selectFrom(recipe, 'ui.bands.selection')
         return {
             recipe: _.omit(recipe, ['ui']),
+            hasTrainingData: hasTrainingData(recipe),
             bands: {selection: [selection]}
-
         }
     }
 }
