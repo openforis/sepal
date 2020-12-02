@@ -66,8 +66,8 @@ export class Graph extends React.Component {
 const createUnderlayCallback = highlights =>
     (canvas, area, g) => {
         (highlights || []).forEach(({startDate, endDate, color}) => {
-            const bottomLeft = g.toDomCoords(startDate, -20)
-            const topRight = g.toDomCoords(endDate, +20)
+            const bottomLeft = g.toDomCoords(startDate, 0)
+            const topRight = g.toDomCoords(endDate, 0)
             const left = bottomLeft[0]
             const right = topRight[0]
             canvas.fillStyle = color
