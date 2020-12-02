@@ -1,0 +1,18 @@
+.wrapper {
+    flex-grow: 1;
+    height: 30rem;
+    display: flex;
+    position: relative;
+}
+
+.point {
+    position: absolute;
+    z-index: 10;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: var(--wireframe);
+    padding: 1rem;
+}
+
+.label {
+    margin-bottom: 0 !important;
+}

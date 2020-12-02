@@ -1804,7 +1804,19 @@
         },
         "chartPixel": {
           "start.tooltip": "Chart time-series for pixel",
-          "cancel.tooltip": "Cancel time-series charting"
+          "cancel.tooltip": "Cancel time-series charting",
+          "loadSegments.error": "Failed to load segments: {error}",
+          "loadObservations.error": "Failed to load observations: {error}"
+        },
+        "ccdcGraph": {
+          "value.label": "Value",
+          "dates": {
+            "label": "Dates",
+            "value": "{startDate} to {endDate}"
+          },
+          "rmse.label": "RMSE",
+          "magnitude.label": "Magnitude",
+          "observationCount.label": "Observation count"
         }
       },
       "panel": {

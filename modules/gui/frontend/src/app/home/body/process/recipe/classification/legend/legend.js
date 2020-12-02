@@ -11,7 +11,7 @@ import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import guid from 'guid'
 import styles from './legend.module.css'
-import {selectFrom} from '../../../../../../../stateUtils'
+import {selectFrom} from 'stateUtils'
 
 const legendFields = {
     entries: new Form.Field()
@@ -211,7 +211,8 @@ export default compose(
     recipeFormPanel({id: 'legend', fields: legendFields, mapRecipeToProps})
 )
 
-const COLORS = [
+const
+    COLORS = [
     '#FFB300',  // Vivid Yellow
     '#803E75',  // Strong Purple
     '#FF6800',  // Vivid Orange

@@ -104,8 +104,16 @@ function toBackendRecipe({recipe, bands}) {
     }
 }
 
-export const loadCCDCTimeSeries$ = ({recipe, latLng, bands}) =>
-    api.gee.loadCCDCTimeSeries$({recipe: toBackendRecipe({
+export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
+    api.gee.loadCCDCSegments$({recipe: toBackendRecipe({
+        recipe,
+        bands
+    }), latLng, bands})
+
+
+
+export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
+    api.gee.loadCCDCObservations$({recipe: toBackendRecipe({
         recipe,
         bands
     }), latLng})

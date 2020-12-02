@@ -22,4 +22,6 @@
 .chart {
     flex-grow: 1;
     height: 20rem;
+    display: flex;
 }
+
