@@ -11,8 +11,49 @@
     background-color: rgba(0, 0, 0, 0.8);
     border: var(--wireframe);
     padding: 1rem;
+    display: grid;
+    column-gap: 2rem;
+    row-gap: 1rem;
+    grid-template-areas:
+        'date        date'
+        'model       observation'
+        'startDate   endDate'
+        'rmse        observationCount'
+        'magnitude   magnitude';
 }
 
 .label {
     margin-bottom: 0 !important;
+}
+
+.date {
+    grid-area: date;
+}
+
+.model {
+    grid-area: model;
+}
+
+.observation {
+    grid-area: observation;
+}
+
+.startDate {
+    grid-area: startDate;
+}
+
+.endDate {
+    grid-area: endDate;
+}
+
+.rmse {
+    grid-area: rmse;
+}
+
+.magnitude {
+    grid-area: magnitude;
+}
+
+.observationCount {
+    grid-area: observationCount;
 }

@@ -4,8 +4,9 @@ import {Graph} from 'widget/graph'
 import moment from 'moment'
 import styles from './ccdcGraph.module.css'
 import Label from 'widget/label'
-import {Layout} from 'widget/layout'
-import {msg} from '../../../../../../translate'
+import {msg} from 'translate'
+import format from 'format'
+import _ from 'lodash'
 
 export class CCDCGraph extends React.Component {
     state = {}
@@ -17,20 +18,23 @@ export class CCDCGraph extends React.Component {
         if (!data || !startDate || !endDate)
             return null
 
-        const highlightCallback = (event, x, points) => {
-            const point = points.find(point => point.name === 'segments')
-            if (!point)
-                return
-            const date = new Date(point.xval)
-            const model = point.yval
+        const highlightCallback = (event, x, points, row) => {
+            const point = points[0]
+            const [date, observationArray, modelArray] = data[row]
+            const observation = observationArray ? observationArray[0] : null
+            const model = modelArray ? modelArray[0] : null
+            const observationInfo = points.find(point => point.name === 'observations')
+                ? {observation}
+                : {}
             const segmentIndex = sequence(0, segments.tStart.length - 1)
                 .findIndex(segmentIndex =>
                     fromT(segments.tStart[segmentIndex], dateFormat) <= date
                     && fromT(segments.tEnd[segmentIndex], dateFormat) > date
                 )
-            // // TODO: Deal with extrapolation and interpolation
-            if (segmentIndex !== -1) {
-                const selectedPoint = {
+            // TODO: Deal with extrapolation and interpolation - no segmentIndex found
+            const segmentInfo = segmentIndex !== -1
+                ? {
+                    model,
                     startDate: fromT(segments.tStart[segmentIndex], dateFormat),
                     endDate: fromT(segments.tEnd[segmentIndex], dateFormat),
                     tBreak: segments.changeProb[segmentIndex]
@@ -39,11 +43,10 @@ export class CCDCGraph extends React.Component {
                     magnitude: segments[`${band}_magnitude`][segmentIndex],
                     rmse: segments[`${band}_rmse`][segmentIndex],
                     observationCount: segments.numObs[segmentIndex],
-                    model,
                     left: point.x <= 0.5
                 }
-                this.setState({point: selectedPoint})
-            }
+                : {}
+            this.setState({point: {...observationInfo, ...segmentInfo}})
         }
 
         const unhighlightCallback = () => this.setState({point: null})
@@ -68,6 +71,12 @@ export class CCDCGraph extends React.Component {
                             highlightCircleSize: 1
                         }
                     }}
+
+                    highlightSeriesOpts={{
+                        highlightCircleSize: 3
+                    }}
+                    highlightSeriesBackgroundAlpha={1}
+                    highlightSeriesBackgroundColor={'hsla(0, 0%, 0%, 1)'}
                     dateWindow={[startDate, endDate]}
                     showRangeSelector
                     rangeSelectorPlotFillColor={'#1B1B1C'}
@@ -91,38 +100,50 @@ export class CCDCGraph extends React.Component {
         const {point} = this.state
         if (!point)
             return null
-
         return (
-            <Layout
-                className={styles.point} style={point.left ? {right: 0} : null}
-                type={'vertical'}
-                spacing={'compact'}>
-                <Layout spacing={'compact'}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.value.label')} className={styles.label}/>
-                    <div>{point.model}</div>
-                </Layout>
-                <Layout spacing={'compact'}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.dates.label')} className={styles.label}/>
-                    <div>
-                        {msg('process.ccdc.mapToolbar.ccdcGraph.dates.value', {
-                            startDate: moment(point.startDate).format('YYYY-MM-DD'),
-                            endDate: moment(point.endDate).format('YYYY-MM-DD')
-                        })}
-                    </div>
-                </Layout>
-                <Layout spacing={'compact'}>
+            <div
+                className={styles.point}
+                style={point.left ? {right: 0} : null}>
+                <div className={styles.date}>
+                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.date.label')} className={styles.label}/>
+                    <div>{moment(point.date).format('YYYY-MM-DD')}</div>
+                </div>
+                <div className={styles.model}>
+                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.model.label')} className={styles.label}/>
+                    <div>{_.isFinite(point.model)
+                        ? format.number({value: point.model, precisionDigits: 3})
+                        : 'N/A'
+                    }</div>
+                </div>
+                <div className={styles.observation}>
+                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observation.label')} className={styles.label}/>
+                    <div>{_.isFinite(point.observation)
+                        ? format.number({value: point.observation, precisionDigits: 3})
+                        : 'N/A'
+                    }</div>
+                </div>
+                <div className={styles.startDate}>
+                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.startDate.label')} className={styles.label}/>
+                    <div>{moment(point.startDate).format('YYYY-MM-DD')}</div>
+                </div>
+                <div className={styles.endDate}>
+                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.endDate.label')} className={styles.label}/>
+                    <div>{moment(point.endDate).format('YYYY-MM-DD')}</div>
+                </div>
+                <div className={styles.rmse}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.rmse.label')} className={styles.label}/>
-                    <div>{point.rmse}</div>
-                </Layout>
-                <Layout spacing={'compact'}>
+                    <div>{format.number({value: point.rmse, precisionDigits: 3})}</div>
+                </div>
+                <div className={styles.magnitude}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.magnitude.label')} className={styles.label}/>
-                    <div>{point.magnitude}</div>
-                </Layout>
-                <Layout spacing={'compact'}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observationCount.label')} className={styles.label}/>
+                    <div>{format.number({value: point.magnitude, precisionDigits: 3})}</div>
+                </div>
+                <div className={styles.observationCount}>
+                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observationCount.label')}
+                           className={styles.label}/>
                     <div>{point.observationCount}</div>
-                </Layout>
-            </Layout>
+                </div>
+            </div>
         )
     }
 

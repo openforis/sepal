@@ -18,9 +18,6 @@ export class Graph extends React.Component {
         const shouldUpdate = data !== nextData
             || !_.isEqual(highlights, nextHighlights)
             || !_.isEqual(_.omit(options, CALLBACKS), _.omit(nextOptions, CALLBACKS))
-        if (shouldUpdate) {
-            console.log(data !== nextData, !_.isEqual(highlights, nextHighlights), !_.isEqual(options, nextOptions))
-        }
         return shouldUpdate
     }
 
