@@ -448,6 +448,10 @@
                     "name": "B9",
                     "scaled": true
                 },
+                "cirrus": {
+                    "name": "B10",
+                    "scaled": true
+                },
                 "swir1": {
                     "name": "B11",
                     "scaled": true
