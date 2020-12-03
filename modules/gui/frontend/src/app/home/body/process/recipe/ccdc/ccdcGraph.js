@@ -28,8 +28,8 @@ export class CCDCGraph extends React.Component {
                 : {}
             const segmentIndex = sequence(0, segments.tStart.length - 1)
                 .findIndex(segmentIndex =>
-                    fromT(segments.tStart[segmentIndex], dateFormat) <= date
-                    && fromT(segments.tEnd[segmentIndex], dateFormat) > date
+                    moment(fromT(segments.tStart[segmentIndex], dateFormat)).startOf('date').toDate() <= date
+                    && moment(fromT(segments.tEnd[segmentIndex], dateFormat)).startOf('date').toDate() > date
                 )
             // TODO: Deal with extrapolation and interpolation - no segmentIndex found
             const segmentInfo = segmentIndex !== -1
@@ -46,7 +46,7 @@ export class CCDCGraph extends React.Component {
                     left: point.x <= 0.5
                 }
                 : {}
-            this.setState({point: {...observationInfo, ...segmentInfo}})
+            this.setState({point: {date, ...observationInfo, ...segmentInfo}})
         }
 
         const unhighlightCallback = () => this.setState({point: null})
@@ -100,6 +100,8 @@ export class CCDCGraph extends React.Component {
         const {point} = this.state
         if (!point)
             return null
+        const hasModel = _.isFinite(point.model)
+        const hasObservation = _.isFinite(point.observation)
         return (
             <div
                 className={styles.point}
@@ -110,38 +112,53 @@ export class CCDCGraph extends React.Component {
                 </div>
                 <div className={styles.model}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.model.label')} className={styles.label}/>
-                    <div>{_.isFinite(point.model)
+                    <div>{hasModel
                         ? format.number({value: point.model, precisionDigits: 3})
                         : 'N/A'
                     }</div>
                 </div>
                 <div className={styles.observation}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observation.label')} className={styles.label}/>
-                    <div>{_.isFinite(point.observation)
+                    <div>{hasObservation
                         ? format.number({value: point.observation, precisionDigits: 3})
                         : 'N/A'
                     }</div>
                 </div>
                 <div className={styles.startDate}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.startDate.label')} className={styles.label}/>
-                    <div>{moment(point.startDate).format('YYYY-MM-DD')}</div>
+                    <div>{hasModel
+                        ? moment(point.startDate).format('YYYY-MM-DD')
+                        : 'N/A'
+                    }</div>
                 </div>
                 <div className={styles.endDate}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.endDate.label')} className={styles.label}/>
-                    <div>{moment(point.endDate).format('YYYY-MM-DD')}</div>
+                    <div>{hasModel
+                        ? moment(point.endDate).format('YYYY-MM-DD')
+                        : 'N/A'
+                    }</div>
                 </div>
                 <div className={styles.rmse}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.rmse.label')} className={styles.label}/>
-                    <div>{format.number({value: point.rmse, precisionDigits: 3})}</div>
+                    <div>{hasModel
+                        ? format.number({value: point.rmse, precisionDigits: 3})
+                        : 'N/A'
+                    }</div>
                 </div>
                 <div className={styles.magnitude}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.magnitude.label')} className={styles.label}/>
-                    <div>{format.number({value: point.magnitude, precisionDigits: 3})}</div>
+                    <div>{hasModel
+                        ? format.number({value: point.magnitude, precisionDigits: 3})
+                        : 'N/A'
+                    }</div>
                 </div>
                 <div className={styles.observationCount}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observationCount.label')}
                            className={styles.label}/>
-                    <div>{point.observationCount}</div>
+                    <div>{hasModel
+                        ? point.observationCount
+                        : 'N/A'
+                    }</div>
                 </div>
             </div>
         )
