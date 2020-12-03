@@ -85,6 +85,5 @@ export default () => ({
     },
     components: {
         recipe: CcdcSlice
-    },
-    beta: true
+    }
 })
