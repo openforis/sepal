@@ -6,10 +6,12 @@ import styles from './ccdcGraph.module.css'
 import Label from 'widget/label'
 import {msg} from 'translate'
 import format from 'format'
+import {isMobile} from 'widget/userAgent'
 import _ from 'lodash'
 
 export class CCDCGraph extends React.Component {
     state = {}
+
 
     render() {
         const {segments, band, dateFormat} = this.props
@@ -59,7 +61,6 @@ export class CCDCGraph extends React.Component {
                     connectSeparatedPoints
                     showLabelsOnHighlight={false}
                     labels={['dates', 'observations', 'segments']}
-                    xRangePad={remToPx(3)}
                     series={{
                         segments: {
                             strokeWidth: 2
@@ -71,14 +72,18 @@ export class CCDCGraph extends React.Component {
                             highlightCircleSize: 1
                         }
                     }}
-
                     highlightSeriesOpts={{
                         highlightCircleSize: 3
+                    }}
+                    axes={{
+                        x: {
+                            pixelsPerLabel: remToPx(6)
+                        }
                     }}
                     highlightSeriesBackgroundAlpha={1}
                     highlightSeriesBackgroundColor={'hsla(0, 0%, 0%, 1)'}
                     dateWindow={[startDate, endDate]}
-                    showRangeSelector
+                    showRangeSelector={!isMobile()}
                     rangeSelectorPlotFillColor={'#1B1B1C'}
                     rangeSelectorPlotFillGradientColor={'#1B1B1C'}
                     rangeSelectorPlotStrokeColor={'#1B1B1C'}
@@ -87,8 +92,8 @@ export class CCDCGraph extends React.Component {
                     rangeSelectorForegroundStrokeColor={'rgba(100%, 100%, 100%, .15)'}
                     errorBars
                     sigma={1}
-                    highlightCallback={highlightCallback}
-                    unhighlightCallback={unhighlightCallback}
+                    highlightCallback={isMobile() ? undefined: highlightCallback}
+                    unhighlightCallback={isMobile() ? undefined :unhighlightCallback}
                 />
                 {this.renderPoint()}
             </div>
@@ -97,6 +102,7 @@ export class CCDCGraph extends React.Component {
 
 
     renderPoint() {
+        const {observations} = this.props
         const {point} = this.state
         if (!point)
             return null
@@ -117,13 +123,18 @@ export class CCDCGraph extends React.Component {
                         : 'N/A'
                     }</div>
                 </div>
-                <div className={styles.observation}>
-                    <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observation.label')} className={styles.label}/>
-                    <div>{hasObservation
-                        ? format.number({value: point.observation, precisionDigits: 3})
-                        : 'N/A'
-                    }</div>
-                </div>
+                {observations
+                    ? <div className={styles.observation}>
+                        <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observation.label')}
+                               className={styles.label}/>
+                        <div>{hasObservation
+                            ? format.number({value: point.observation, precisionDigits: 3})
+                            : 'N/A'
+                        }</div>
+                    </div>
+                    : null
+                }
+
                 <div className={styles.startDate}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.startDate.label')} className={styles.label}/>
                     <div>{hasModel
@@ -242,7 +253,6 @@ CCDCGraph.propTypes = {
     segments: PropTypes.object,
     observations: PropTypes.object
 }
-
 
 const J_DAYS = 0
 const FRACTIONAL_YEARS = 1

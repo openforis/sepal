@@ -1,6 +1,5 @@
 .wrapper {
     flex-grow: 1;
-    height: 30rem;
     display: flex;
     position: relative;
 }
@@ -15,11 +14,10 @@
     column-gap: 2rem;
     row-gap: 1rem;
     grid-template-areas:
-        'date        date'
-        'model       observation'
-        'startDate   endDate'
+        'date        observation'
+        'model       magnitude'
         'rmse        observationCount'
-        'magnitude   magnitude';
+        'startDate   endDate';
 }
 
 .label {

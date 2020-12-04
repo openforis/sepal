@@ -1,9 +1,14 @@
 .panel {
-    /*height: 30rem;*/
 }
 
 .form {
-    height: 30rem;
+    height: 23rem;
+}
+
+@media screen and (max-height: 500px) {
+    .form {
+        height: 10rem;
+    }
 }
 
 .spinner {

@@ -118,6 +118,7 @@ class ChartPixel extends React.Component {
                     segments={segments}
                     observations={observations}
                     highlightGaps
+                    harmonics={3}
                 />
             )
     }

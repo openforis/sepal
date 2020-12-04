@@ -1809,14 +1809,14 @@
           "loadObservations.error": "Failed to load observations: {error}"
         },
         "ccdcGraph": {
-          "model.label": "Model",
+          "model.label": "Model value",
           "observation.label": "Observation",
           "date.label": "Date",
-          "startDate.label": "Start",
-          "endDate.label": "End",
+          "startDate.label": "Start date",
+          "endDate.label": "End date",
           "rmse.label": "RMSE",
-          "magnitude.label": "Magnitude",
-          "observationCount.label": "Count"
+          "magnitude.label": "Break magnitude",
+          "observationCount.label": "Obs. count"
         }
       },
       "panel": {

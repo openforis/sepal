@@ -11,19 +11,24 @@ export class Graph extends React.Component {
     graphRef = React.createRef()
 
     shouldComponentUpdate(nextProps, nextState, nextContext) {
-        const {data, highlights} = this.props
+        const {data, highlights, dimensions} = this.props
         const {data: nextData, highlights: nextHighlights} = nextProps
         const options = this.getOptions(this.props)
         const nextOptions = this.getOptions(nextProps)
-        const shouldUpdate = data !== nextData
+        const nextDimensions = nextProps.dimensions
+        return !_.isEqual(dimensions, nextDimensions)
+            || data !== nextData
             || !_.isEqual(highlights, nextHighlights)
             || !_.isEqual(_.omit(options, CALLBACKS), _.omit(nextOptions, CALLBACKS))
-        return shouldUpdate
     }
 
 
     render() {
-        return <div ref={this.graphRef} style={{flexGrow: 1, margin: '2rem'}} className={styles.graph}/>
+        return (
+            <div className={styles.wrapper}>
+                <div ref={this.graphRef} className={styles.graph}/>
+            </div>
+        )
     }
 
     componentDidMount() {
@@ -189,12 +194,12 @@ const createUnderlayCallback = highlights =>
         })
     }
 
+const CALLBACKS = ['clickCallback', 'drawCallback', 'drawHighlightPointCallback', 'drawPointCallback',
+    'highlightCallback', 'pointClickCallback', 'underlayCallback', 'unhighlightCallback', 'zoomCallback']
+
 Graph.defaultProps = {
     color: '#FFB300'
 }
-
-const CALLBACKS = ['clickCallback', 'drawCallback', 'drawHighlightPointCallback', 'drawPointCallback',
-    'highlightCallback', 'pointClickCallback', 'underlayCallback', 'unhighlightCallback', 'zoomCallback']
 
 Graph.propTypes = {
     data: PropTypes.array.isRequired,
