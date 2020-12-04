@@ -112,8 +112,8 @@ class ChartPixel extends React.Component {
                     dateFormat={dateFormat}
                     segments={segments}
                     highlights={[{
-                        startDate: moment(date, 'YYYY-MM-DD').toDate(),
-                        endDate: moment(date, 'YYYY-MM-DD').add(1, 'days').toDate(),
+                        startDate: moment(date, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
+                        endDate: moment(date, 'YYYY-MM-DD').add(0.5, 'days').toDate(),
                         color: '#FF0000'
                     }]}
                     highlightGaps
