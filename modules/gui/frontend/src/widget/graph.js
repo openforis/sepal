@@ -203,7 +203,11 @@ Graph.defaultProps = {
 
 Graph.propTypes = {
     data: PropTypes.array.isRequired,
-    highlights: PropTypes.array,
+    highlights: PropTypes.arrayOf(PropTypes.shape({
+        startDate: PropTypes.any.isRequired,
+        endDate: PropTypes.any.isRequired,
+        color: PropTypes.string.isRequired,
+    })),
     className: PropTypes.string,
 
     animatedZooms: PropTypes.bool,

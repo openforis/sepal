@@ -14,7 +14,7 @@ export class CCDCGraph extends React.Component {
 
 
     render() {
-        const {segments, band, dateFormat} = this.props
+        const {segments, band, dateFormat, highlights = []} = this.props
         const {data, gaps} = this.state
         const {startDate, endDate} = this.getDates()
         if (!data || !startDate || !endDate)
@@ -57,7 +57,7 @@ export class CCDCGraph extends React.Component {
             <div className={styles.wrapper}>
                 <Graph
                     data={data}
-                    highlights={gaps}
+                    highlights={[...gaps, ...highlights]}
                     connectSeparatedPoints
                     showLabelsOnHighlight={false}
                     labels={['dates', 'observations', 'segments']}
@@ -251,7 +251,12 @@ CCDCGraph.propTypes = {
     highlightGaps: PropTypes.any,
     harmonics: PropTypes.number,
     segments: PropTypes.object,
-    observations: PropTypes.object
+    observations: PropTypes.object,
+    highlights: PropTypes.arrayOf(PropTypes.shape({
+        startDate: PropTypes.any.isRequired,
+        endDate: PropTypes.any.isRequired,
+        color: PropTypes.string.isRequired,
+    })),
 }
 
 const J_DAYS = 0

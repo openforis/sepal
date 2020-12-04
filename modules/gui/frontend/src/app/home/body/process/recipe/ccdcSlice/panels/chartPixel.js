@@ -15,6 +15,7 @@ import React from 'react'
 import _ from 'lodash'
 import styles from './chartPixel.module.css'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
+import moment from 'moment'
 
 const fields = {
     selectedBand: new Form.Field()
@@ -24,6 +25,7 @@ const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
     dateFormat: selectFrom(recipe, 'model.source.dateFormat'),
+    date: selectFrom(recipe, 'model.date.date'),
     recipe
 })
 
@@ -98,7 +100,7 @@ class ChartPixel extends React.Component {
     }
 
     renderChart() {
-        const {dateFormat, inputs: {selectedBand}} = this.props
+        const {date, dateFormat, inputs: {selectedBand}} = this.props
         const {segments} = this.state
         const loading = !segments
         if (loading)
@@ -109,6 +111,11 @@ class ChartPixel extends React.Component {
                     band={selectedBand.value}
                     dateFormat={dateFormat}
                     segments={segments}
+                    highlights={[{
+                        startDate: moment(date, 'YYYY-MM-DD').toDate(),
+                        endDate: moment(date, 'YYYY-MM-DD').add(1, 'days').toDate(),
+                        color: '#FF0000'
+                    }]}
                     highlightGaps
                 />
             )
