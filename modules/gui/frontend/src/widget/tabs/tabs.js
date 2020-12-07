@@ -7,7 +7,7 @@ import {TabContent} from './tabContent'
 import {TabHandle} from './tabHandle'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {delay} from 'rxjs/operators'
+import {delay, filter} from 'rxjs/operators'
 import {isMobile} from 'widget/userAgent'
 import {msg} from 'translate'
 import Keybinding from 'widget/keybinding'
@@ -83,8 +83,9 @@ class _Tabs extends React.Component {
     constructor(props) {
         super(props)
         const {tabs, statePath} = props
-        if (tabs.length === 0)
+        if (tabs.length === 0) {
             addTab(statePath)
+        }
     }
 
     renderTab(tab) {
@@ -100,9 +101,7 @@ class _Tabs extends React.Component {
                 closing={tab.ui && tab.ui.closing}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
-                onClose={() => {
-                    onClose ? onClose(tab, close) : close()
-                }}
+                onClose={() => onClose ? onClose(tab, close) : close()}
             />
         )
     }
@@ -195,6 +194,7 @@ class _Tabs extends React.Component {
     }
 
     renderAddButton() {
+        const {onAdd} = this.props
         return (
             <Button
                 chromeless
@@ -204,21 +204,24 @@ class _Tabs extends React.Component {
                 icon='plus'
                 tooltip={msg('widget.tabs.addTab.tooltip')}
                 tooltipPlacement='bottom'
-                disabled={this.isAddDisabled()}
+                disabled={this.isAddDisabled() && !onAdd}
                 onClick={() => this.addTab()}/>
         )
     }
 
     addTab() {
+        const {onAdd} = this.props
         const {statePath, tabs, isLandingTab} = this.props
-        if (isLandingTab) {
-            const tab = tabs.find(tab => isLandingTab(tab))
-            if (tab) {
-                return selectTab(tab.id, statePath)
-            }
-        }
         if (!this.isAddDisabled()) {
+            if (isLandingTab) {
+                const tab = tabs.find(tab => isLandingTab(tab))
+                if (tab) {
+                    return selectTab(tab.id, statePath)
+                }
+            }
             addTab(statePath)
+        } else {
+            onAdd && onAdd()
         }
     }
 
@@ -250,10 +253,11 @@ class _Tabs extends React.Component {
     }
 
     handleCloseTab() {
-        const {addSubscription} = this.props
+        const {addSubscription, statePath} = this.props
         addSubscription(
             close$.pipe(
-                delay(CLOSE_ANIMATION_DURATION_MS * 1.2)
+                filter(tab => tab.statePath === statePath),
+                delay(CLOSE_ANIMATION_DURATION_MS * 1.2),
             ).subscribe(
                 ({id, statePath, nextId}) => this.finalizeCloseTab(id, statePath, nextId)
             )
@@ -303,6 +307,7 @@ Tabs.propTypes = {
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
     tabs: PropTypes.array,
+    onAdd: PropTypes.func,
     onClose: PropTypes.func,
     onTitleChanged: PropTypes.func
 }
