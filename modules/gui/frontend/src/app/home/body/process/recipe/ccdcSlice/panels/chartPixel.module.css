@@ -1,9 +1,14 @@
 .panel {
-    /*height: 30rem;*/
 }
 
 .form {
     height: 23rem;
+}
+
+@media screen and (max-height: 500px) {
+    .form {
+        height: 10rem;
+    }
 }
 
 .spinner {
@@ -21,5 +26,6 @@
 
 .chart {
     flex-grow: 1;
-    height: 20rem;
+    display: flex;
 }
+

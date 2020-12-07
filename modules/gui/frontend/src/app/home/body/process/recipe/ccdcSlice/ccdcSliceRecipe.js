@@ -2,9 +2,6 @@ import {msg} from 'translate'
 import {recipeActionBuilder} from '../../recipe'
 import _ from 'lodash'
 import api from 'api'
-import moment from 'moment'
-
-const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
     date: {

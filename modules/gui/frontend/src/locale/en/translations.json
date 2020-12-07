@@ -352,8 +352,8 @@
         "enable.tooltip": "Enable reference data collection",
         "disable.tooltip": "Disable reference data collection",
         "findingNextPoint": {
-          "title": "Fining next point...",
-          "message": "Fining next point...",
+          "title": "Finding next point...",
+          "message": "Finding next point...",
           "notFound": "Unable to find any points for you. Try to select some yourself.",
           "error": "Failed to find points: {error}"
         }
@@ -1804,7 +1804,19 @@
         },
         "chartPixel": {
           "start.tooltip": "Chart time-series for pixel",
-          "cancel.tooltip": "Cancel time-series charting"
+          "cancel.tooltip": "Cancel time-series charting",
+          "loadSegments.error": "Failed to load segments: {error}",
+          "loadObservations.error": "Failed to load observations: {error}"
+        },
+        "ccdcGraph": {
+          "model.label": "Model value",
+          "observation.label": "Observation",
+          "date.label": "Date",
+          "startDate.label": "Start date",
+          "endDate.label": "End date",
+          "rmse.label": "RMSE",
+          "magnitude.label": "Break magnitude",
+          "observationCount.label": "Obs. count"
         }
       },
       "panel": {

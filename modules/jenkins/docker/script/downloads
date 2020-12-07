@@ -17,7 +17,7 @@ apt-get update && apt-get install -y \
 export SDKMAN_DIR=/usr/local/lib/sdkman
 curl -s get.sdkman.io | bash
 source "$SDKMAN_DIR/bin/sdkman-init.sh"
-yes | sdk install java 11.0.8.hs-adpt
+yes | sdk install java 11.0.9.hs-adpt
 sdk install groovy
 sdk install maven
 sdk install gradle

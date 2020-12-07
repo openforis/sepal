@@ -54,10 +54,12 @@ const fileSize = (size, {scale, precisionDigits} = {}) =>
 // prefix: the prefix to be prepended to the output value (e.g. '$')
 // unit: the suffix to be appended to the output magnitude (e.g. 'bytes')
 const number = ({value = 0, scale = '', minScale = '', precisionDigits = 3, prefix = '', suffix = '', unit = ''}) => {
+    const negative = value < 0
+    value = Math.abs(value)
     const modulo3 = n => ((n % 3) + 3) % 3 // safe for negative numbers too
     const unitPadding = unit.length ? ' ' : ''
     const formattedValue = (normalizedValue, magnitude, decimals) =>
-        prefix + normalizedValue.toFixed(decimals) + unitPadding + magnitudes[magnitude] + unit + suffix
+        (negative ? '-' : '') + prefix + normalizedValue.toFixed(decimals) + unitPadding + magnitudes[magnitude] + unit + suffix
     const magnitudes = ['p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
     // handle case when value is zero
     if (value === 0) {

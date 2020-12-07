@@ -1,23 +1,21 @@
 import '../../ccdc/panels/chart.css'
 import {Form, form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions, loadCCDCSegments$} from '../ccdcSliceRecipe'
+import {loadCCDCSegments$, RecipeActions} from '../ccdcSliceRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
-import {evaluateSegments} from '../../ccdc/segments'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import {takeUntil, tap} from 'rxjs/operators'
+import {takeUntil} from 'rxjs/operators'
 import {withRecipe} from '../../../recipeContext'
-import Chartist from 'chartist'
-import ChartistGraph from 'react-chartist'
 import Icon from 'widget/icon'
 import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
-import moment from 'moment'
 import styles from './chartPixel.module.css'
+import {CCDCGraph} from '../../ccdc/ccdcGraph'
+import moment from 'moment'
 
 const fields = {
     selectedBand: new Form.Field()
@@ -26,6 +24,8 @@ const fields = {
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
+    dateFormat: selectFrom(recipe, 'model.source.dateFormat'),
+    date: selectFrom(recipe, 'model.date.date'),
     recipe
 })
 
@@ -58,8 +58,8 @@ class ChartPixel extends React.Component {
                     title={`${latLng.lat}, ${latLng.lng}`}/>
 
                 <Panel.Content className={loading ? styles.loading : null}
-                    scrollable={false}
-                    noVerticalPadding>
+                               scrollable={false}
+                               noVerticalPadding>
                     <Form className={styles.form}>
                         {this.renderChart()}
                         {this.renderBandOptions()}
@@ -100,52 +100,30 @@ class ChartPixel extends React.Component {
     }
 
     renderChart() {
-        const {segments = []} = this.state
-        const loading = !segments || !segments.length
+        const {date, dateFormat, inputs: {selectedBand}} = this.props
+        const {segments} = this.state
+        const loading = !segments
         if (loading)
             return this.renderSpinner()
-
-        const data = {
-            series: segments.map((segment, i) => ({
-                name: `segment-${i + 1}`,
-                data: segment.map(({date, value}) => ({x: date, y: value}))
-            }))
-        }
-
-        const options = {
-            axisX: {
-                // type: Chartist.FixedScaleAxis,
-                // divisor: 5,
-
-                type: Chartist.AutoScaleAxis,
-                scaleMinSpace: 60,
-
-                labelInterpolationFnc: function (value) {
-                    return moment(value).format('YYYY-MM-DD')
-                }
-            },
-            series: segments.reduce(
-                (series, _, i) => {
-                    series[`segment-${i + 1}`] = {showPoint: false}
-                    return series
-                },
-                {}
+        else {
+            return (
+                <CCDCGraph
+                    band={selectedBand.value}
+                    dateFormat={dateFormat}
+                    segments={segments}
+                    highlights={[{
+                        startDate: moment(date, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
+                        endDate: moment(date, 'YYYY-MM-DD').add(0.5, 'days').toDate(),
+                        color: '#FF0000'
+                    }]}
+                    highlightGaps
+                />
             )
         }
-
-        return (
-            <div className={styles.chart}>
-                <ChartistGraph
-                    data={data}
-                    options={options}
-                    type={'Line'}
-                    className={styles.chart}/>
-            </div>
-        )
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        const {recipe, latLng, inputs: {selectedBand}} = this.props
+        const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
 
         if (!selectedBand.value)
             selectedBand.set(recipe.model.source.bands[0])
@@ -156,27 +134,20 @@ class ChartPixel extends React.Component {
         ) {
             this.cancel$.next(true)
             this.setState({segments: undefined})
-            const load$ = loadCCDCSegments$({recipe, latLng}).pipe(
-                tap(segments => {
-                    this.setState({
-                        segments: evaluateSegments({
-                            segments,
-                            band: selectedBand.value,
-                            dateFormat: recipe.model.source.dateFormat || 0,
-                            harmonics: recipe.model.options.harmonics
-                        })
+            stream('LOAD_CCDC_SEGMENTS',
+                // of({"changeProb":[1,0],"ndwi_coefs":[[-439223.70821076905,215.1876193089946,-727.3541532507837,594.7438108806724,-254.00319350911434,-136.8030553791102,74.63840046922108,54.40544556317409],[-393456.56899727084,191.7092607629123,-431.3701345238819,573.4262362206015,-151.68302134139591,-233.6967490670943,-7.038562898709706,-110.03688339229556]],"ndwi_magnitude":[-1698.4496494625705,0],"ndwi_rmse":[553.0643088514388,912.1285119549182],"numObs":[24,30],"tBreak":[2016.2974832740765,0],"tEnd":[2016.2536778322813,2020.678045727812],"tStart":[2013.8443731335717,2016.2974832740765]}).pipe(
+                //     delay(100),
+                loadCCDCSegments$({recipe, latLng, bands: [selectedBand.value]}).pipe(
+                    takeUntil(this.cancel$)
+                ),
+                segments => this.setState({segments}),
+                error => {
+                    this.close()
+                    Notifications.error({
+                        message: msg('process.ccdc.chartPixel.loadFailed', {error})
                     })
-                }),
-                takeUntil(this.cancel$)
+                }
             )
-            const onSuccess = () => null
-            const onError = error => {
-                this.close()
-                Notifications.error({
-                    message: msg('process.ccdc.chartPixel.loadFailed', {error})
-                })
-            }
-            this.props.stream('LOAD_CHART', load$, onSuccess, onError)
         }
     }
 

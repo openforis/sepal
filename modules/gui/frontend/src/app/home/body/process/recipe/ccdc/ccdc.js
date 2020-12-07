@@ -69,6 +69,5 @@ export default () => ({
     },
     components: {
         recipe: CCDC
-    },
-    beta: true
+    }
 })

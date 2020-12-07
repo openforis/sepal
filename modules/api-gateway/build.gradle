@@ -8,7 +8,7 @@ mainClassName = 'org.openforis.sepal.apigateway.Main'
 
 dependencies {
     compile project(':sepal-common')
-    compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.55'
+    compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.67'
     testCompile project(':sepal-common-test')
 }
 
