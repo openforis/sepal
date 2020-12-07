@@ -52,17 +52,19 @@ const mapStateToProps = (state, ownProps) => {
 
 class UserDetails extends React.Component {
     save(userDetails) {
-        this.props.onSave(userDetails)
+        const {onSave, onCancel} = this.props
+        onSave(userDetails)
+        onCancel()
     }
 
     cancel() {
-        this.props.onCancel()
+        const {onCancel} = this.props
+        onCancel()
     }
 
     render() {
-        const {form,
-            inputs: {username, name, email, organization, admin, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota}
-        } = this.props
+        const {form, inputs} = this.props
+        const {username, name, email, organization, admin, monthlyBudgetInstanceSpending, monthlyBudgetStorageSpending, monthlyBudgetStorageQuota} = inputs
         const newUser = !this.props.userDetails.username
         return (
             <Form.Panel
@@ -71,7 +73,7 @@ class UserDetails extends React.Component {
                 statePath='userDetails'
                 modal
                 onApply={userDetails => this.save(userDetails)}
-                close={() => this.cancel()}>
+                onDone={() => this.cancel()}>
                 <Panel.Header
                     icon='user'
                     title={msg('user.userDetails.title')}/>

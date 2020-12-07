@@ -70,8 +70,7 @@ class SaveRecipe extends React.Component {
                 className={styles.panel}
                 form={form}
                 isActionForm={true}
-                modal
-                close={() => this.close()}>
+                modal>
                 <Panel.Header
                     icon='save'
                     title={msg('process.saveRecipe.title')}/>

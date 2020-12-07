@@ -10,11 +10,11 @@ import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import PropTypes from 'prop-types'
 import React from 'react'
 import TrainingDataSet from './trainingDataSet'
 import guid from 'guid'
 import styles from './trainingData.module.css'
-import PropTypes from 'prop-types'
 
 const mapRecipeToProps = recipe => ({
     dataSets: selectFrom(recipe, 'model.trainingData.dataSets') || []
@@ -35,10 +35,7 @@ class TrainingData extends React.Component {
                 <RecipeFormPanel
                     className={styles.panel}
                     placement='bottom-right'
-                    onClose={() => {
-                        console.log('onClose')
-                        this.preview.show()
-                    }}>
+                    onClose={() => this.preview.show()}>
                     <Panel.Header
                         icon='table'
                         title={msg('process.classification.panel.trainingData.title')}/>

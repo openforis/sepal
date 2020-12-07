@@ -1,7 +1,7 @@
 import {Form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
 import {PanelButtonContext} from 'widget/toolbar/panelButtonContext'
-import {PanelWizardContext} from '../panelWizard'
+import {PanelWizardContext, withPanelWizardContext} from '../panelWizard'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {isObservable} from 'rxjs'
@@ -13,25 +13,26 @@ import styles from './panel.module.css'
 export const FormPanelContext = React.createContext()
 
 class _FormPanel extends React.Component {
+    autoCancel = true
+
     apply(onSuccess) {
         const {form, onApply} = this.props
         const result = onApply(form && form.values())
+        this.autoCancel = false
         if (isObservable(result)) {
             const result$ = result
             this.props.stream('FORM_PANEL_APPLY', result$,
                 () => null,
                 _error => null,
                 () => {
+                    onSuccess && onSuccess()
                     this.close()
-                    onSuccess()
                 }
             )
         } else {
-            this.close()
             onSuccess && onSuccess()
+            this.close()
         }
-
-        return true
     }
 
     ok() {
@@ -45,14 +46,14 @@ class _FormPanel extends React.Component {
 
     cancel() {
         const {onCancel} = this.props
+        this.autoCancel = false
         onCancel && onCancel()
         this.close()
     }
 
     close() {
-        const {close, onClose} = this.props
-        close()
-        onClose && onClose()
+        const {onDone} = this.props
+        onDone && onDone()
     }
 
     renderSpinner() {
@@ -104,16 +105,25 @@ class _FormPanel extends React.Component {
             </PanelWizardContext>
         )
     }
+
+    componentWillUnmount() {
+        const {wizardContext: {wizard} = {}} = this.props
+        if (wizard) {
+            this.close()
+        } else {
+            this.autoCancel && this.cancel()
+        }
+    }
 }
 
 export const FormPanel = compose(
     _FormPanel,
-    connect()
+    connect(),
+    withPanelWizardContext()
 )
 
 FormPanel.propTypes = {
     children: PropTypes.any.isRequired,
-    close: PropTypes.func.isRequired,
     form: PropTypes.object.isRequired,
     className: PropTypes.string,
     isActionForm: PropTypes.any,
@@ -122,5 +132,5 @@ FormPanel.propTypes = {
     type: PropTypes.string, // TODO: Same as type?
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
-    onClose: PropTypes.func
+    onDone: PropTypes.func
 }

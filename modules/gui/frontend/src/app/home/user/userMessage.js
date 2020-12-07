@@ -77,7 +77,7 @@ class UserMessage extends React.Component {
                 statePath='userMessage'
                 modal
                 onApply={message => onApply(message)}
-                close={() => onCancel()}>
+                onCancel={onCancel}>
                 <Panel.Header
                     icon='bell'
                     title={msg('userMessage.title')}/>

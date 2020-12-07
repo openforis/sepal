@@ -110,46 +110,28 @@ export const RecipeFormPanel = ({className, placement, isActionForm, onApply, on
                 }
             }
             return (
-                <_RecipeFormPanel
+                <Form.Panel
                     id={id}
                     className={className}
                     form={form}
-                    close={deactivate}
                     isActionForm={isActionForm}
                     placement={placement}
-                    onApply={wrappedOnApply}
-                    onCancel={onCancel}
-                    onClose={onClose}>
+                    onApply={values => {
+                        wrappedOnApply(values)
+                    }}
+                    onCancel={() => {
+                        onCancel && onCancel()
+                    }}
+                    onDone={() => {
+                        deactivate()
+                        onClose && onClose()
+                    }}
+                >
                     {children}
-                </_RecipeFormPanel>
+                </Form.Panel>
             )
         }}
     </Context.Consumer>
-
-class _RecipeFormPanel extends React.Component {
-    render() {
-        const {id, form, className, placement, isActionForm, onApply, onCancel, onClose, close, children} = this.props
-        return (
-            <Form.Panel
-                id={id}
-                className={className}
-                form={form}
-                close={close}
-                isActionForm={isActionForm}
-                placement={placement}
-                onApply={onApply}
-                onCancel={onCancel}>
-                {children}
-            </Form.Panel>
-        )
-    }
-
-    componentWillUnmount() {
-        const {form, onCancel, onClose} = this.props
-        onCancel && form.isDirty() && onCancel()
-        onClose && onClose()
-    }
-}
 
 RecipeFormPanel.propTypes = {
     children: PropTypes.any.isRequired,
