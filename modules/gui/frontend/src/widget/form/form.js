@@ -301,20 +301,20 @@ export class Form extends React.Component {
 
 Form.propTypes = {
     children: PropTypes.any.isRequired,
-    onSubmit: PropTypes.func,
-    className: PropTypes.string
+    className: PropTypes.string,
+    onSubmit: PropTypes.func
 }
 
-Form.Field = FormField
-Form.Constraint = FormConstraint
-Form.Input = FormInput
-Form.Error = FormError
-Form.FieldSet = FormFieldSet
-Form.Slider = FormSlider
-Form.Combo = FormCombo
-Form.Checkbox = FormCheckbox
-Form.YearPicker = FormYearPicker
-Form.DatePicker = FormDatePicker
 Form.Buttons = FormButtons
+Form.Checkbox = FormCheckbox
+Form.Combo = FormCombo
+Form.Constraint = FormConstraint
+Form.DatePicker = FormDatePicker
+Form.Error = FormError
+Form.Field = FormField
+Form.FieldSet = FormFieldSet
+Form.Input = FormInput
 Form.Panel = FormPanel
 Form.PanelButtons = FormPanelButtons
+Form.Slider = FormSlider
+Form.YearPicker = FormYearPicker

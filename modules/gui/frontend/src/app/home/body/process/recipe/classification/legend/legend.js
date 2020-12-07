@@ -5,13 +5,13 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import guid from 'guid'
 import styles from './legend.module.css'
-import {selectFrom} from '../../../../../../../stateUtils'
 
 const legendFields = {
     entries: new Form.Field()

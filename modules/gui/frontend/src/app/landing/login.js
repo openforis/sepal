@@ -66,7 +66,6 @@ class Login extends React.Component {
                                 look='transparent'
                                 size='large'
                                 shape='pill'
-                                alignment='left'
                                 label={msg('landing.login.sign-up')}
                                 tabIndex={4}
                                 onMouseDown={e => e.preventDefault()}
@@ -77,7 +76,7 @@ class Login extends React.Component {
                                 look='transparent'
                                 size='large'
                                 shape='pill'
-                                alignment='left'
+                                // alignment='left'
                                 label={msg('landing.login.forgot-password-link')}
                                 tabIndex={5}
                                 onMouseDown={e => e.preventDefault()}

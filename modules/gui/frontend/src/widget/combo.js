@@ -3,7 +3,7 @@ import {ButtonGroup} from 'widget/buttonGroup'
 import {Form} from 'widget/form/form'
 import {Input} from 'widget/input'
 import {ScrollableList} from 'widget/list'
-import {fromEvent, Subject} from 'rxjs'
+import {Subject, fromEvent} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {delay} from 'rxjs/operators'
@@ -238,7 +238,7 @@ class _Combo extends React.Component {
     }
 
     handleSelect() {
-        const {input, onChange, addSubscription} = this.props
+        const {onChange, addSubscription} = this.props
         addSubscription(
             this.select$.subscribe(
                 option => {
@@ -289,7 +289,7 @@ class _Combo extends React.Component {
     }
 
     updateOptions() {
-        const {input, options} = this.props
+        const {options} = this.props
         const {filter} = this.state
         const matcher = this.matcher(filter)
         const getFilteredOptions = options =>
@@ -298,8 +298,8 @@ class _Combo extends React.Component {
                     option.options
                         ? {...option, options: getFilteredOptions(option.options)}
                         : matcher.test(option.searchableText || option.label)
-                        ? option
-                        : null
+                            ? option
+                            : null
                 )
             )
         const getFlattenedOptions = options =>
@@ -339,7 +339,6 @@ export const Combo = compose(
 
 Combo.propTypes = {
     options: PropTypes.any.isRequired,
-    value: PropTypes.any,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     allowClear: PropTypes.any,
     autoFocus: PropTypes.any,
@@ -358,9 +357,10 @@ Combo.propTypes = {
     standalone: PropTypes.any,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
+    value: PropTypes.any,
+    onBlur: PropTypes.func,
     onCancel: PropTypes.func,
-    onChange: PropTypes.func,
-    onBlur: PropTypes.func
+    onChange: PropTypes.func
 }
 
 Combo.defaultProps = {

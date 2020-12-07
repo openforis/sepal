@@ -19,10 +19,7 @@ export class FormPanelButtons extends React.Component {
     renderForm({isActionForm, dirty, invalid, onOk, onCancel}) {
         const {applyLabel} = this.props
         const canSubmit = isActionForm || dirty
-        const onEnter =
-            invalid
-                ? null
-                : onOk
+        const onEnter = invalid ? null : onOk
         const onEscape = invalid || canSubmit ? onCancel : onOk
         return (
             <Panel.Buttons
@@ -65,7 +62,7 @@ export class FormPanelButtons extends React.Component {
                 onEscape={closable && onEscape}>
                 <Panel.Buttons.Main>
                     {closable
-                         ? <Panel.Buttons.Cancel
+                        ? <Panel.Buttons.Cancel
                             shown={canSubmit}
                             onClick={onCancel}/>
                         : null
