@@ -11,6 +11,10 @@ import React from 'react'
 import Retrieve from './retrieve/retrieve'
 import Source from './source/source'
 import styles from './ccdcSliceToolbar.module.css'
+import ChartPixelButton from '../../ccdc/panels/chartPixelButton'
+import {RecipeActions} from '../ccdcSliceRecipe'
+import BandSelection from '../bandSelection'
+import ChartPixel from './chartPixel'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
@@ -19,6 +23,11 @@ const mapRecipeToProps = recipe => ({
 })
 
 class CcdcSliceToolbar extends React.Component {
+    constructor(props) {
+        super(props)
+        this.recipeActions = RecipeActions(props.recipeId)
+    }
+
     render() {
         const {recipeId, initialized, bands} = this.props
         return (
@@ -27,6 +36,7 @@ class CcdcSliceToolbar extends React.Component {
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 
+                {initialized ? <ChartPixel/> : null}
                 <Retrieve/>
                 <Source/>
                 <Date/>
@@ -36,6 +46,10 @@ class CcdcSliceToolbar extends React.Component {
                     vertical
                     placement='top-right'
                     className={styles.top}>
+                    <ChartPixelButton
+                        disabled={!initialized}
+                        onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}
+                    />
                     <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'

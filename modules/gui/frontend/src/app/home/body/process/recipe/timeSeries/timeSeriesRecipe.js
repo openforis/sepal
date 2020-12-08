@@ -29,6 +29,12 @@ export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
 
     return {
+        setChartPixel(latLng) {
+            return actionBuilder('SET_CHART_PIXEL', latLng)
+                .set('ui.chartPixel', latLng)
+                .build()
+                .dispatch()
+        },
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
                 .setAll({
@@ -37,6 +43,12 @@ export const RecipeActions = id => {
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
+        },
+        setClassificationLegend(classificationLegend) {
+            actionBuilder('SET_CLASSIFICATION_LEGEND', {classificationLegend})
+                .set('ui.classificationLegend', classificationLegend)
+                .build()
+                .dispatch()
         }
     }
 }
@@ -52,7 +64,8 @@ const submitRetrieveRecipeTask = recipe => {
                 description: name,
                 indicator: recipe.ui.retrieveOptions.indicator,
                 scale: recipe.ui.retrieveOptions.scale,
-                dataSets: _.flatten(Object.values(recipe.model.sources)),
+                dataSets: _.flatten(Object.values(recipe.model.sources.dataSets)),
+                classification: recipe.model.sources.classification,
                 aoi: recipe.model.aoi,
                 fromDate: recipe.model.dates.startDate,
                 toDate: recipe.model.dates.endDate,

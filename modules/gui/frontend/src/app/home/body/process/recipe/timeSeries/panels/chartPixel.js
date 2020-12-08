@@ -1,20 +1,21 @@
 import {Form, form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
-import {loadCCDCSegments$, RecipeActions} from '../ccdcSliceRecipe'
+import {loadCCDCObservations$, RecipeActions} from '../../ccdc/ccdcRecipe'
 import {Subject} from 'rxjs'
-import {compose} from 'compose'
-import {msg} from 'translate'
-import {selectFrom} from 'stateUtils'
 import {takeUntil} from 'rxjs/operators'
+import {compose} from 'compose'
+import {filterBands, opticalBandOptions, radarBandOptions} from '../bandOptions'
+import {selectFrom} from 'stateUtils'
 import {withRecipe} from '../../../recipeContext'
 import Icon from 'widget/icon'
 import Keybinding from 'widget/keybinding'
-import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
 import styles from './chartPixel.module.css'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import moment from 'moment'
+import Notifications from 'widget/notifications'
+import {msg} from 'translate'
 
 const fields = {
     selectedBand: new Form.Field()
@@ -23,8 +24,9 @@ const fields = {
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
-    dateFormat: selectFrom(recipe, 'model.source.dateFormat'),
-    date: selectFrom(recipe, 'model.date.date'),
+    startDate: moment(selectFrom(recipe, 'model.dates.startDate'), 'YYYY-MM-DD').toDate(),
+    endDate: moment(selectFrom(recipe, 'model.dates.endDate'), 'YYYY-MM-DD').toDate(),
+    classificationLegend: selectFrom(recipe, 'ui.classificationLegend'),
     recipe
 })
 
@@ -46,8 +48,8 @@ class ChartPixel extends React.Component {
 
     renderPanel() {
         const {latLng} = this.props
-        const {segments} = this.state
-        const loading = !segments || !segments.length
+        const {observations} = this.state
+        const loading = !observations
         return (
             <Panel
                 className={styles.panel}
@@ -85,8 +87,8 @@ class ChartPixel extends React.Component {
     }
 
     renderBandOptions() {
-        const {recipe: {model: {source: {bands: sourceBands}}}, inputs: {selectedBand}} = this.props
-        const options = sourceBands.map(band => ({value: band, label: band.toUpperCase()}))
+        const {inputs: {selectedBand}} = this.props
+        const options = this.getBandOptions()
         return (
             <Form.Buttons
                 className={styles.buttons}
@@ -95,56 +97,83 @@ class ChartPixel extends React.Component {
                 multiple={false}
                 options={options}/>
         )
+    }
 
+    getBandOptions() {
+        const {recipe: {model: {sources: {dataSets}}}, classificationLegend} = this.props
+        return [
+            ...(_.isEmpty(dataSets['SENTINEL_1'])
+                ? opticalBandOptions({dataSets}).map(o => o.options).flat()
+                : radarBandOptions({})),
+            ...(classificationLegend
+                ? [{
+                    value: 'regression',
+                    label: (msg('process.ccdc.panel.sources.form.breakpointBands.regression')),
+                    scale: 1000
+                }]
+                : []),
+            ...classificationLegend
+                ? classificationLegend.entries.map(({value, label}) => ({
+                    value: `probability_${value}`,
+                    label: msg('process.ccdc.panel.sources.form.breakpointBands.probability', {label}),
+                    scale: 100
+                }))
+                : []
+        ]
     }
 
     renderChart() {
-        const {date, dateFormat, inputs: {selectedBand}} = this.props
-        const {segments} = this.state
-        const loading = !segments
-        if (loading)
+        const {dateFormat, startDate, endDate, inputs: {selectedBand}} = this.props
+        const {observations} = this.state
+        const loading = !observations
+        if (loading) {
             return this.renderSpinner()
-        else {
+        } else {
+            const scale = this.getBandOptions().find(({value}) => value === selectedBand.value)
+                .scale
             return (
                 <CCDCGraph
                     band={selectedBand.value}
+                    scale={scale}
                     dateFormat={dateFormat}
-                    segments={segments}
-                    highlights={[{
-                        startDate: moment(date, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
-                        endDate: moment(date, 'YYYY-MM-DD').add(0.5, 'days').toDate(),
-                        color: '#FF0000'
-                    }]}
+                    startDate={startDate}
+                    endDate={endDate}
+                    observations={observations}
                     highlightGaps
+                    harmonics={3}
                 />
             )
         }
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
-
-        if (!selectedBand.value)
-            selectedBand.set(recipe.model.source.bands[0])
-
+        const {classificationLegend, stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const {model: {sources: {dataSets}}} = recipe
+        const options = this.getBandOptions()
+        const filteredBands = classificationLegend && (
+            selectedBand.value === 'regression' || classificationLegend.entries
+                .find(({value}) => `probability_${value}` === selectedBand.value))
+            ? [selectedBand.value]
+            : selectedBand.value ? filterBands([selectedBand.value], dataSets) : []
+        selectedBand.set(
+            filteredBands.length
+                ? filteredBands[0]
+                : options[0].value
+        )
         if (latLng && selectedBand.value && !_.isEqual(
             [recipe.model, latLng, selectedBand.value],
             [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value])
         ) {
             this.cancel$.next(true)
-            this.setState({segments: undefined})
-            stream('LOAD_CCDC_SEGMENTS',
-                // of({"changeProb":[1,0],"ndwi_coefs":[[-439223.70821076905,215.1876193089946,-727.3541532507837,594.7438108806724,-254.00319350911434,-136.8030553791102,74.63840046922108,54.40544556317409],[-393456.56899727084,191.7092607629123,-431.3701345238819,573.4262362206015,-151.68302134139591,-233.6967490670943,-7.038562898709706,-110.03688339229556]],"ndwi_magnitude":[-1698.4496494625705,0],"ndwi_rmse":[553.0643088514388,912.1285119549182],"numObs":[24,30],"tBreak":[2016.2974832740765,0],"tEnd":[2016.2536778322813,2020.678045727812],"tStart":[2013.8443731335717,2016.2974832740765]}).pipe(
-                //     delay(100),
-                loadCCDCSegments$({recipe, latLng, bands: [selectedBand.value]}).pipe(
+            this.setState({observations: undefined})
+            stream('LOAD_CCDC_OBSERVATIONS',
+                loadCCDCObservations$({recipe, latLng, bands: [selectedBand.value]}).pipe(
                     takeUntil(this.cancel$)
                 ),
-                segments => this.setState({segments}),
+                observations => this.setState({observations}),
                 error => {
                     this.close()
-                    Notifications.error({
-                        message: msg('process.ccdc.chartPixel.loadFailed', {error})
-                    })
+                    Notifications.error(msg('process.ccdc.mapToolbar.chartPixel.loadObservations.error', {error}))
                 }
             )
         }
@@ -152,7 +181,7 @@ class ChartPixel extends React.Component {
 
     close() {
         this.cancel$.next(true)
-        this.setState({segments: undefined})
+        this.setState({observations: undefined})
         this.recipeActions.setChartPixel(null)
     }
 }

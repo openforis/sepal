@@ -19,7 +19,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    sources: selectFrom(recipe, 'model.sources')
+    sources: selectFrom(recipe, 'model.sources'),
+    classificationLegend: selectFrom(recipe, 'ui.classificationLegend')
 })
 
 class Retrieve extends React.Component {
@@ -32,10 +33,26 @@ class Retrieve extends React.Component {
     }
 
     renderContent() {
-        const {sources: {dataSets}, inputs: {bands, scale}} = this.props
-        const options = (_.isEmpty(dataSets['SENTINEL_1'])
-            ? opticalBandOptions({dataSets})
-            : radarBandOptions({}))
+        const {classificationLegend, sources: {dataSets}, inputs: {bands, scale}} = this.props
+        const options = [
+            ...(_.isEmpty(dataSets['SENTINEL_1'])
+                ? opticalBandOptions({dataSets})
+                : radarBandOptions({})),
+            ...(classificationLegend
+                ? [{
+                    options: [
+                        {
+                            value: 'regression',
+                            label: (msg('process.ccdc.panel.sources.form.breakpointBands.regression'))
+                        },
+                        ...classificationLegend.entries.map(({value, label}) => ({
+                            value: `probability_${value}`,
+                            label: msg('process.ccdc.panel.sources.form.breakpointBands.probability', {label})
+                        }))
+                    ]
+                }]
+                : [])
+        ]
 
         return (
             <Layout>

@@ -22,6 +22,7 @@ class ChartPixelButton extends React.Component {
     }
 
     render() {
+        const {disabled} = this.props
         const {isSelecting} = this.state
         return (
             <Toolbar.ToolbarButton
@@ -29,6 +30,7 @@ class ChartPixelButton extends React.Component {
                 onClick={() => isSelecting ? this.cancelSelecting() : this.startSelecting()}
                 icon={'chart-area'}
                 tooltip={msg(`process.ccdc.mapToolbar.chartPixel.${isSelecting ? 'cancel' : 'start'}.tooltip`)}
+                disabled={disabled}
             />
         )
     }
@@ -61,7 +63,8 @@ class ChartPixelButton extends React.Component {
 ChartPixelButton.propTypes = {
     mapContext: PropTypes.object.isRequired,
     onPixelSelected: PropTypes.func.isRequired,
-    showGoogleSatellite: PropTypes.any
+    showGoogleSatellite: PropTypes.any,
+    disabled: PropTypes.any
 }
 
 export default compose(

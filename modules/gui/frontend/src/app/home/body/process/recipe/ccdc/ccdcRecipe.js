@@ -78,6 +78,12 @@ export const RecipeActions = id => {
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
+        },
+        setClassificationLegend(classificationLegend) {
+            actionBuilder('SET_CLASSIFICATION_LEGEND', {classificationLegend})
+                .set('ui.classificationLegend', classificationLegend)
+                .build()
+                .dispatch()
         }
     }
 }
@@ -93,6 +99,7 @@ function toBackendRecipe({recipe, bands}) {
         bands,
         breakpointBands,
         dataSets: _.flatten(Object.values(recipe.model.sources.dataSets)),
+        classification: recipe.model.sources.classification,
         aoi: recipe.model.aoi,
         fromDate: recipe.model.dates.startDate,
         toDate: recipe.model.dates.endDate,
@@ -113,9 +120,9 @@ export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
 
 
 export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
-    api.gee.loadCCDCObservations$({recipe: toBackendRecipe({
+    api.gee.loadTimeSeriesObservations$({recipe: toBackendRecipe({
         recipe,
-        bands
+        bands,
     }), latLng})
 
 const submitRetrieveRecipeTask = recipe => {

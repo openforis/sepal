@@ -1,7 +1,6 @@
-const {toGeometry, toFeatureCollection} = require('sepal/ee/aoi')
-const {allScenes: createOpticalCollection, hasImagery: hasOpticalImagery} = require('sepal/ee/optical/collection')
-const {createCollection: createRadarCollection, hasImagery: hasRadarImagery} = require('sepal/ee/radar/collection')
-const {calculateIndex} = require('sepal/ee/optical/indexes')
+const {toFeatureCollection} = require('sepal/ee/aoi')
+const {hasImagery: hasOpticalImagery} = require('sepal/ee/optical/collection')
+const {hasImagery: hasRadarImagery} = require('sepal/ee/radar/collection')
 const tile = require('sepal/ee/tile')
 const {exportImageToSepal$} = require('../jobs/export/toSepal')
 const {mkdirSafe$} = require('root/rxjs/fileSystem')
@@ -14,6 +13,7 @@ const {sequence} = require('sepal/utils/array')
 const moment = require('moment')
 const ee = require('ee')
 const {getCurrentContext$} = require('root/jobs/service/context')
+const {getCollection$} = require('sepal/ee/timeSeries/collection')
 const log = require('sepal/log').getLogger('task')
 
 const TILE_DEGREES = 2
@@ -38,12 +38,11 @@ module.exports = {
 
 const export$ = (downloadDir, recipe) => {
     const {
-        description, aoi, dataSets, fromDate, toDate, indicator, scale,
+        description, aoi, dataSets, classification, fromDate, toDate, indicator, scale,
         surfaceReflectance, cloudMasking, cloudBuffer, snowMasking, calibrate, brdfCorrect, // Optical
         orbits, geometricCorrection, speckleFilter, outlierRemoval // Radar
     } = recipe
 
-    const geometry = toGeometry(aoi) // synchronous EE
     const reflectance = surfaceReflectance ? 'SR' : 'TOA'
 
     const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES) // synchronous EE
@@ -78,96 +77,68 @@ const export$ = (downloadDir, recipe) => {
         const chunks$ = dateOffsets.map(dateOffset => {
             const start = moment(from).add(dateOffset, DATE_DELTA_UNIT)
             const end = moment.min(moment(start).add(DATE_DELTA, DATE_DELTA_UNIT), to)
-            const timeSeries = createTimeSeries(tile, start, end)
             const dateRange = `${start.format('YYYY-MM-DD')}_${end.format('YYYY-MM-DD')}`
-            const notEmpty$ = hasImagery$(
+            return hasImagery$(
                 tile.geometry(),
                 ee.Date(start.format('YYYY-MM-DD')),
                 ee.Date(end.format('YYYY-MM-DD'))
-            )
-            return notEmpty$.pipe(
-                map(notEmpty => ({tileIndex, timeSeries, dateRange, notEmpty}))
+            ).pipe(
+                switchMap(notEmpty => {
+                    if (notEmpty) {
+                        return createTimeSeries$(tile, start, end).pipe(
+                            map(timeSeries =>
+                                ({tileIndex, timeSeries, dateRange, notEmpty})
+                            )
+                        )
+                    } else {
+                        return of({tileIndex, dateRange, notEmpty})
+                    }
+                })
             )
         })
         return forkJoin(chunks$)
     }
 
-    const opticalImages = (geometry, startDate, endDate) =>
-        createOpticalCollection({
-            geometry,
-            dataSets: extractDataSets(dataSets),
-            reflectance,
-            filters: [],
-            cloudMasking,
-            cloudBuffer,
-            snowMasking,
-            panSharpen: false,
-            calibrate,
-            brdfCorrect,
-            dates: {
-                seasonStart: startDate.format('YYYY-MM-DD'),
-                seasonEnd: endDate.format('YYYY-MM-DD')
-            }
-        }).map(image =>
-            calculateIndex(image, indicator)
-                .multiply(10000)
-                .int16()
-                .set('date', image.date().format('yyyy-MM-dd'))
-        )
-
-
-    const radarImages = (geometry, startDate, endDate) =>
-        createRadarCollection({
-            startDate: startDate.format('YYYY-MM-DD'),
-            endDate: endDate.format('YYYY-MM-DD'),
-            targetDate: startDate.format('YYYY-MM-DD'),
-            geometry,
-            orbits,
-            geometricCorrection,
-            speckleFilter,
-            outlierRemoval
-        }).map(image =>
-            (indicator === 'ratio_VV_VH'
-                    ? image.select('VV').divide(image.select('VH')).rename('ratio_VV_VH')
-                    : image.select(indicator)
-            ).set('date', image.date().format('yyyy-MM-dd'))
-        )
-
     const isRadar = () => dataSets.length === 1 && dataSets[0] === 'SENTINEL_1'
 
-    const createTimeSeries = (feature, startDate, endDate) => {
-        const images = isRadar()
-            ? radarImages(feature.geometry(), startDate, endDate)
-            : opticalImages(feature.geometry(), startDate, endDate)
-        const distinctDateImages = images.distinct('date')
-        const timeSeries = ee.ImageCollection(
-            ee.Join.saveAll('images')
-                .apply({
-                    primary: distinctDateImages,
-                    secondary: images,
-                    condition: ee.Filter.equals({
-                        leftField: 'date',
-                        rightField: 'date'
-                    })
-                })
-                .map(image => ee.ImageCollection(ee.List(image.get('images')))
-                    .median()
-                    .rename(image.getString('date'))
-                ))
-            .toBands()
-            .regexpRename('.*(.{10})', '$1')
-            .clip(feature.geometry())
-        return timeSeries.select(timeSeries.bandNames().sort())
+    const createTimeSeries$ = (feature, startDate, endDate) => {
+        const images$ = getCollection$({
+            description, geometry: feature.geometry(), dataSets, classification, bands: [indicator], fromDate: startDate, toDate: endDate,
+            surfaceReflectance, cloudMasking, cloudBuffer, shadowMasking: false, snowMasking, calibrate, brdfCorrect, // Optical
+            orbits, geometricCorrection, speckleFilter, outlierRemoval // Radar
+        })
+        return images$.pipe(
+            map(images => {
+                const distinctDateImages = images.distinct('date')
+                const timeSeries = ee.ImageCollection(
+                    ee.Join.saveAll('images')
+                        .apply({
+                            primary: distinctDateImages,
+                            secondary: images,
+                            condition: ee.Filter.equals({
+                                leftField: 'date',
+                                rightField: 'date'
+                            })
+                        })
+                        .map(image => ee.ImageCollection(ee.List(image.get('images')))
+                            .median()
+                            .rename(image.getString('date'))
+                        ))
+                    .toBands()
+                    .regexpRename('.*(.{10})', '$1')
+                    .clip(feature.geometry())
+                return timeSeries.select(timeSeries.bandNames().sort())
+            })
+        )
     }
 
-    const hasImagery$ = (geometry, startDate, endDate) => {
-        return ee.getInfo$(
+    const hasImagery$ = (geometry, startDate, endDate) =>
+        ee.getInfo$(
             isRadar()
                 ? hasRadarImagery({geometry, startDate, endDate})
                 : hasOpticalImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate}),
             `check if date range has imagery (${description})`
         )
-    }
 
     const exportChunks$ = chunks$ =>
         chunks$.pipe(

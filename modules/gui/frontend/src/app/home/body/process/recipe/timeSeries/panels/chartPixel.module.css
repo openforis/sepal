@@ -1,0 +1,26 @@
+.panel {
+}
+
+.form {
+    height: 23rem;
+}
+
+@media screen and (max-height: 500px) {
+    .form {
+        height: 10rem;
+    }
+}
+
+.spinner {
+    flex-grow: 1;
+    display: flex;
+    align-self: center;
+    justify-content: space-around;
+    flex-direction: column;
+    color: #ccc;
+}
+
+.buttons button {
+    margin-bottom: 1rem;
+}
+

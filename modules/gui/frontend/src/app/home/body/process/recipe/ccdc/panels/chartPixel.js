@@ -1,9 +1,8 @@
-import './chart.css'
 import {Form, form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../ccdcRecipe'
-import {Subject, of} from 'rxjs'
-import {takeUntil, delay} from 'rxjs/operators'
+import {Subject} from 'rxjs'
+import {takeUntil} from 'rxjs/operators'
 import {compose} from 'compose'
 import {filterBands, opticalBandOptions, radarBandOptions} from '../bandOptions'
 import {selectFrom} from 'stateUtils'
@@ -28,6 +27,7 @@ const mapRecipeToProps = recipe => ({
     startDate: moment(selectFrom(recipe, 'model.dates.startDate'), 'YYYY-MM-DD').toDate(),
     endDate: moment(selectFrom(recipe, 'model.dates.endDate'), 'YYYY-MM-DD').toDate(),
     dateFormat: selectFrom(recipe, 'model.ccdcOptions.dateFormat'),
+    classificationLegend: selectFrom(recipe, 'ui.classificationLegend'),
     recipe
 })
 
@@ -88,10 +88,8 @@ class ChartPixel extends React.Component {
     }
 
     renderBandOptions() {
-        const {recipe: {model: {sources: {dataSets}}}, inputs: {selectedBand}} = this.props
-        const options = (_.isEmpty(dataSets['SENTINEL_1'])
-            ? opticalBandOptions({dataSets}).map(o => o.options).flat()
-            : radarBandOptions({}))
+        const {inputs: {selectedBand}} = this.props
+        const options = this.getBandOptions()
         return (
             <Form.Buttons
                 className={styles.buttons}
@@ -102,16 +100,42 @@ class ChartPixel extends React.Component {
         )
     }
 
+    getBandOptions() {
+        const {recipe: {model: {sources: {dataSets}}}, classificationLegend} = this.props
+        return [
+            ...(_.isEmpty(dataSets['SENTINEL_1'])
+                ? opticalBandOptions({dataSets}).map(o => o.options).flat()
+                : radarBandOptions({})),
+            ...(classificationLegend
+                ? [{
+                    value: 'regression',
+                    label: (msg('process.ccdc.panel.sources.form.breakpointBands.regression')),
+                    scale: 1000
+                }]
+                : []),
+            ...classificationLegend
+                ? classificationLegend.entries.map(({value, label}) => ({
+                    value: `probability_${value}`,
+                    label: msg('process.ccdc.panel.sources.form.breakpointBands.probability', {label}),
+                    scale: 100
+                }))
+                : []
+        ]
+    }
+
     renderChart() {
         const {dateFormat, startDate, endDate, inputs: {selectedBand}} = this.props
         const {segments, observations} = this.state
         const loading = !segments
-        if (loading)
+        if (loading) {
             return this.renderSpinner()
-        else
+        } else {
+            const scale = this.getBandOptions().find(({value}) => value === selectedBand.value)
+                .scale
             return (
                 <CCDCGraph
                     band={selectedBand.value}
+                    scale={scale}
                     dateFormat={dateFormat}
                     startDate={startDate}
                     endDate={endDate}
@@ -121,12 +145,17 @@ class ChartPixel extends React.Component {
                     harmonics={3}
                 />
             )
+        }
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const {classificationLegend, stream, recipe, latLng, inputs: {selectedBand}} = this.props
         const {model: {sources: {dataSets}}} = recipe
-        const filteredBands = filterBands([selectedBand.value], dataSets)
+        const filteredBands = classificationLegend && (
+            selectedBand.value === 'regression' || classificationLegend.entries
+                .find(({value}) => `probability_${value}` === selectedBand.value))
+            ? [selectedBand.value]
+            : filterBands([selectedBand.value], dataSets)
         selectedBand.set(
             filteredBands.length
                 ? filteredBands[0]

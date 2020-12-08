@@ -848,7 +848,7 @@
         "class": "Class",
         "regression": "Regression",
         "classProbability": "Class probability",
-        "probability": "Probability: {class}"
+        "probability": "{class} %"
       }
     },
     "closeRecipe": {
@@ -2000,12 +2000,20 @@
                 }
               }
             },
+            "classification": {
+              "label": "Classification",
+              "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series.",
+              "placeholder": "Select a classification..."
+            },
             "breakpointBands": {
               "label": "Breakpoint bands",
-              "atLeastOne": "Select at least one band"
+              "atLeastOne": "Select at least one band",
+              "regression": "Regression",
+              "probability": "{label} %"
             },
             "required": "A data source must be selected"
           },
+          "classificationLoadError": "Failed to load classification: {error}",
           "title": "Sources",
           "tooltip": "Select image source"
         }

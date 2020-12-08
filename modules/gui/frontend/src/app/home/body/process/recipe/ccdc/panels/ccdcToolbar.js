@@ -15,6 +15,9 @@ import Retrieve from 'app/home/body/process/recipe/ccdc/panels/retrieve/retrieve
 import Sources from 'app/home/body/process/recipe/ccdc/panels/sources/sources'
 import _ from 'lodash'
 import styles from './ccdcToolbar.module.css'
+import ChartPixelButton from './chartPixelButton'
+import {RecipeActions} from '../ccdcRecipe'
+import ChartPixel from './chartPixel'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
@@ -23,6 +26,11 @@ const mapRecipeToProps = recipe => ({
 })
 
 class CcdcToolbar extends React.Component {
+    constructor(props) {
+        super(props)
+        this.recipeActions = RecipeActions(props.recipeId)
+    }
+
     render() {
         const {recipeId, initialized, sources} = this.props
         return (
@@ -31,6 +39,7 @@ class CcdcToolbar extends React.Component {
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 
+                {initialized ? <ChartPixel/> : null}
                 <Retrieve/>
                 <Aoi allowWholeEETable={true} layerIndex={2}/>
                 <Dates/>
@@ -45,6 +54,10 @@ class CcdcToolbar extends React.Component {
                     vertical
                     placement='top-right'
                     className={styles.top}>
+                    <ChartPixelButton
+                        disabled={!initialized}
+                        showGoogleSatellite
+                        onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                     <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'

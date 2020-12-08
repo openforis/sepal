@@ -33,16 +33,13 @@ class _CCDCSlice extends React.Component {
         const {recipeId, recipeContext: {statePath}, initialized} = this.props
         return (
             <div>
-                <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}>
-                    <ChartPixelButton onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
-                </MapToolbar>
+                <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}/>
                 <MapScale/>
                 <CCDCSliceToolbar/>
                 {initialized
                     ? <React.Fragment>
                         <CCDCSlicePreview/>
                         <BandSelection/>
-                        <ChartPixel/>
                     </React.Fragment>
                     : null}
             </div>

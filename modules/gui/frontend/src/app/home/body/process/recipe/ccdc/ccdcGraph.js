@@ -12,7 +12,6 @@ import _ from 'lodash'
 export class CCDCGraph extends React.Component {
     state = {}
 
-
     render() {
         const {segments, band, dateFormat, highlights = []} = this.props
         const {data, gaps} = this.state
@@ -28,27 +27,31 @@ export class CCDCGraph extends React.Component {
             const observationInfo = points.find(point => point.name === 'observations')
                 ? {observation}
                 : {}
-            const segmentIndex = sequence(0, segments.tStart.length - 1)
-                .findIndex(segmentIndex =>
-                    moment(fromT(segments.tStart[segmentIndex], dateFormat)).startOf('date').toDate() <= date
-                    && moment(fromT(segments.tEnd[segmentIndex], dateFormat)).startOf('date').toDate() > date
-                )
-            // TODO: Deal with extrapolation and interpolation - no segmentIndex found
-            const segmentInfo = segmentIndex !== -1
-                ? {
-                    model,
-                    startDate: fromT(segments.tStart[segmentIndex], dateFormat),
-                    endDate: fromT(segments.tEnd[segmentIndex], dateFormat),
-                    tBreak: segments.changeProb[segmentIndex]
-                        ? fromT(segments.tBreak[segmentIndex], dateFormat)
-                        : null,
-                    magnitude: segments[`${band}_magnitude`][segmentIndex],
-                    rmse: segments[`${band}_rmse`][segmentIndex],
-                    observationCount: segments.numObs[segmentIndex],
-                    left: point.x <= 0.5
-                }
-                : {}
-            this.setState({point: {date, ...observationInfo, ...segmentInfo}})
+            if (segments) {
+                const segmentIndex = sequence(0, segments.tStart.length - 1)
+                    .findIndex(segmentIndex =>
+                        moment(fromT(segments.tStart[segmentIndex], dateFormat)).startOf('date').toDate() <= date
+                        && moment(fromT(segments.tEnd[segmentIndex], dateFormat)).startOf('date').toDate() > date
+                    )
+                // TODO: Deal with extrapolation and interpolation - no segmentIndex found
+                const segmentInfo = segmentIndex !== -1
+                    ? {
+                        model,
+                        startDate: fromT(segments.tStart[segmentIndex], dateFormat),
+                        endDate: fromT(segments.tEnd[segmentIndex], dateFormat),
+                        tBreak: segments.changeProb[segmentIndex]
+                            ? fromT(segments.tBreak[segmentIndex], dateFormat)
+                            : null,
+                        magnitude: segments[`${band}_magnitude`][segmentIndex],
+                        rmse: segments[`${band}_rmse`][segmentIndex],
+                        observationCount: segments.numObs[segmentIndex],
+                        left: point.x <= 0.5
+                    }
+                    : {}
+                this.setState({point: {date, ...observationInfo, ...segmentInfo}})
+            } else {
+                this.setState({point: {date, ...observationInfo}})
+            }
         }
 
         const unhighlightCallback = () => this.setState({point: null})
@@ -92,8 +95,8 @@ export class CCDCGraph extends React.Component {
                     rangeSelectorForegroundStrokeColor={'rgba(100%, 100%, 100%, .15)'}
                     errorBars
                     sigma={1}
-                    highlightCallback={isMobile() ? undefined: highlightCallback}
-                    unhighlightCallback={isMobile() ? undefined :unhighlightCallback}
+                    highlightCallback={isMobile() ? undefined : highlightCallback}
+                    unhighlightCallback={isMobile() ? undefined : unhighlightCallback}
                 />
                 {this.renderPoint()}
             </div>
@@ -120,7 +123,7 @@ export class CCDCGraph extends React.Component {
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.model.label')} className={styles.label}/>
                     <div>{hasModel
                         ? format.number({value: point.model, precisionDigits: 3})
-                        : 'N/A'
+                        : <React.Fragment>&ndash;</React.Fragment>
                     }</div>
                 </div>
                 {observations
@@ -129,7 +132,7 @@ export class CCDCGraph extends React.Component {
                                className={styles.label}/>
                         <div>{hasObservation
                             ? format.number({value: point.observation, precisionDigits: 3})
-                            : 'N/A'
+                            : <React.Fragment>&ndash;</React.Fragment>
                         }</div>
                     </div>
                     : null
@@ -139,28 +142,28 @@ export class CCDCGraph extends React.Component {
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.startDate.label')} className={styles.label}/>
                     <div>{hasModel
                         ? moment(point.startDate).format('YYYY-MM-DD')
-                        : 'N/A'
+                        : <React.Fragment>&ndash;</React.Fragment>
                     }</div>
                 </div>
                 <div className={styles.endDate}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.endDate.label')} className={styles.label}/>
                     <div>{hasModel
                         ? moment(point.endDate).format('YYYY-MM-DD')
-                        : 'N/A'
+                        : <React.Fragment>&ndash;</React.Fragment>
                     }</div>
                 </div>
                 <div className={styles.rmse}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.rmse.label')} className={styles.label}/>
                     <div>{hasModel
                         ? format.number({value: point.rmse, precisionDigits: 3})
-                        : 'N/A'
+                        : <React.Fragment>&ndash;</React.Fragment>
                     }</div>
                 </div>
                 <div className={styles.magnitude}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.magnitude.label')} className={styles.label}/>
                     <div>{hasModel
                         ? format.number({value: point.magnitude, precisionDigits: 3})
-                        : 'N/A'
+                        : <React.Fragment>&ndash;</React.Fragment>
                     }</div>
                 </div>
                 <div className={styles.observationCount}>
@@ -168,7 +171,7 @@ export class CCDCGraph extends React.Component {
                            className={styles.label}/>
                     <div>{hasModel
                         ? point.observationCount
-                        : 'N/A'
+                        : <React.Fragment>&ndash;</React.Fragment>
                     }</div>
                 </div>
             </div>
@@ -227,14 +230,14 @@ export class CCDCGraph extends React.Component {
     }
 
     calculateData() {
-        const {band, dateFormat, harmonics, segments, observations} = this.props
+        const {band, scale, dateFormat, harmonics, segments, observations} = this.props
         const {startDate, endDate} = this.getDates()
         if (segments) {
-            return segmentsData({band, startDate, endDate, dateFormat, harmonics, segments, observations})
+            return segmentsData({band, scale, startDate, endDate, dateFormat, harmonics, segments, observations})
         } else {
             return observations.features.map(feature => [
                 new Date(feature.properties.date.value),
-                [feature.properties.value, 0],
+                [feature.properties.value / scale, 0],
                 null
             ])
         }
@@ -243,9 +246,14 @@ export class CCDCGraph extends React.Component {
 
 const remToPx = rem => rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
 
+CCDCGraph.defaultProps = {
+    scale: 1
+}
+
 CCDCGraph.propTypes = {
     band: PropTypes.string,
-    dateFormat: PropTypes.number.isRequired,
+    scale: PropTypes.number,
+    dateFormat: PropTypes.number,
     startDate: PropTypes.any,
     endDate: PropTypes.any,
     highlightGaps: PropTypes.any,
@@ -255,22 +263,22 @@ CCDCGraph.propTypes = {
     highlights: PropTypes.arrayOf(PropTypes.shape({
         startDate: PropTypes.any.isRequired,
         endDate: PropTypes.any.isRequired,
-        color: PropTypes.string.isRequired,
-    })),
+        color: PropTypes.string.isRequired
+    }))
 }
 
 const J_DAYS = 0
 const FRACTIONAL_YEARS = 1
 const UNIX_TIME_MILLIS = 2
 
-const segmentsData = ({observations, startDate, endDate, segments, band, dateFormat, harmonics = 3}) => {
+const segmentsData = ({observations, startDate, endDate, segments, band, scale, dateFormat, harmonics = 3}) => {
     const bandCoefs = segments[`${band}_coefs`]
     const bandRmse = segments[`${band}_rmse`]
 
     const model = ({date, segmentIndex}) => {
         const coefs = bandCoefs[segmentIndex]
-        const value = slice({coefs, date, dateFormat, harmonics})
-        const rmse = bandRmse[segmentIndex]
+        const value = slice({coefs, date, dateFormat, harmonics}) / scale
+        const rmse = bandRmse[segmentIndex] / scale
         return [date, observationByTimestamp[date.getTime()] || null, [value, rmse]]
     }
 
@@ -282,7 +290,7 @@ const segmentsData = ({observations, startDate, endDate, segments, band, dateFor
     const observationByTimestamp = {}
     if (observations) {
         observations.features.forEach(feature =>
-            observationByTimestamp[moment(feature.properties.date.value).startOf('day').valueOf()] = [feature.properties.value, 0]
+            observationByTimestamp[moment(feature.properties.date.value).startOf('day').valueOf()] = [feature.properties.value / scale, 0]
         )
     }
 

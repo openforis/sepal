@@ -9,12 +9,22 @@ import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import TimeSeriesToolbar from './panels/timeSeriesToolbar'
 import styles from './timeSeries.module.css'
+import api from 'api'
+import Notifications from 'widget/notifications'
+import {RecipeActions} from './timeSeriesRecipe'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
+    classificationLegend: selectFrom(recipe, 'ui.classificationLegend'),
+    classificationRecipeId: selectFrom(recipe, 'model.sources.classification')
 })
 
 class _TimeSeries extends React.Component {
+    constructor(props) {
+        super(props)
+        this.recipeActions = RecipeActions(props.recipeId)
+    }
+
     render() {
         const {recipeContext: {statePath}} = this.props
         return (
@@ -35,6 +45,18 @@ class _TimeSeries extends React.Component {
             onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
             layerIndex: 1
         })
+        this.initClassificationLegend()
+    }
+
+    initClassificationLegend() {
+        const {stream, classificationLegend, classificationRecipeId} = this.props
+        if (classificationRecipeId && !classificationLegend) {
+            stream('LOAD_CLASSIFICATION_RECIPE',
+                api.recipe.load$(classificationRecipeId),
+                classification => this.recipeActions.setClassificationLegend(classification.model.legend),
+                error => Notifications.error({message: msg('process.ccdc.panel.sources.classificationLoadError', {error}), error})
+            )
+        }
     }
 }
 
@@ -48,7 +70,7 @@ export default () => ({
     labels: {
         name: msg('process.timeSeries.create'),
         creationDescription: msg('process.timeSeries.description'),
-        tabPlaceholder: msg('process.timeSeries.tabPlaceholder'),
+        tabPlaceholder: msg('process.timeSeries.tabPlaceholder')
     },
     components: {
         recipe: TimeSeries

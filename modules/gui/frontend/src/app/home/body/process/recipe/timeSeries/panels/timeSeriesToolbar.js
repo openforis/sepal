@@ -14,6 +14,9 @@ import Retrieve from 'app/home/body/process/recipe/timeSeries/panels/retrieve/re
 import Sources from 'app/home/body/process/recipe/timeSeries/panels/sources/sources'
 import _ from 'lodash'
 import styles from './timeSeriesToolbar.module.css'
+import ChartPixelButton from '../../ccdc/panels/chartPixelButton'
+import {RecipeActions} from '../timeSeriesRecipe'
+import ChartPixel from './chartPixel'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
@@ -22,6 +25,11 @@ const mapRecipeToProps = recipe => ({
 })
 
 class TimeSeriesToolbar extends React.Component {
+    constructor(props) {
+        super(props)
+        this.recipeActions = RecipeActions(props.recipeId)
+    }
+
     render() {
         const {recipeId, initialized, sources} = this.props
         return (
@@ -30,6 +38,7 @@ class TimeSeriesToolbar extends React.Component {
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 
+                {initialized ? <ChartPixel/> : null}
                 <Retrieve/>
                 <Aoi allowWholeEETable={true}/>
                 <Dates/>
@@ -43,6 +52,10 @@ class TimeSeriesToolbar extends React.Component {
                     vertical
                     placement='top-right'
                     className={styles.top}>
+                    <ChartPixelButton
+                        disabled={!initialized}
+                        showGoogleSatellite
+                        onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                     <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'

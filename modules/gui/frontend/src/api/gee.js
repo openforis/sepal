@@ -58,12 +58,12 @@ export default {
         postJson$('/api/gee/table/query',
             {body: {select, from, where, orderBy}}
         ).pipe(toResponse),
-    loadCCDCObservations$: ({recipe, latLng}) =>
-        postJson$('/api/gee/loadCCDCObservations',
+    loadTimeSeriesObservations$: ({recipe, latLng}) =>
+        postJson$('/api/gee/timeSeries/loadObservations',
             {body: {recipe, latLng}, retries: 0}
         ).pipe(toResponse),
     loadCCDCSegments$: ({asset, recipe, latLng, bands}) =>
-        postJson$('/api/gee/loadCCDCSegments',
+        postJson$('/api/gee/ccdc/loadSegments',
             {body: {asset, recipe, latLng, bands}, retries: 0}
         ).pipe(toResponse),
     nextReferenceDataPoints$: recipe =>

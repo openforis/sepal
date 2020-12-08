@@ -11,10 +11,14 @@ import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import styles from './ccdc.module.css'
+import api from 'api'
+import Notifications from 'widget/notifications'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
-    aoi: selectFrom(recipe, 'model.aoi')
+    aoi: selectFrom(recipe, 'model.aoi'),
+    classificationRecipeId: selectFrom(recipe, 'model.sources.classification'),
+    classificationLegend: selectFrom(recipe, 'ui.classificationLegend'),
 })
 
 class _CCDC extends React.Component {
@@ -27,14 +31,9 @@ class _CCDC extends React.Component {
         const {recipeContext: {statePath}} = this.props
         return (
             <div className={styles.ccdc}>
-                <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}>
-                    <ChartPixelButton
-                        showGoogleSatellite
-                        onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
-                </MapToolbar>
+                <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
                 <MapScale/>
                 <CCDCToolbar/>
-                <ChartPixel/>
             </div>
         )
     }
@@ -48,10 +47,18 @@ class _CCDC extends React.Component {
             onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
             layerIndex: 1
         })
+        this.initClassificationLegend()
     }
 
-    setChartPixel(latLng) {
-        this.recipeActions.setChartPixel(latLng)
+    initClassificationLegend() {
+        const {stream, classificationLegend, classificationRecipeId} = this.props
+        if (classificationRecipeId && !classificationLegend) {
+            stream('LOAD_CLASSIFICATION_RECIPE',
+                api.recipe.load$(classificationRecipeId),
+                classification => this.recipeActions.setClassificationLegend(classification.model.legend),
+                error => Notifications.error({message: msg('process.ccdc.panel.sources.classificationLoadError', {error}), error})
+            )
+        }
     }
 }
 

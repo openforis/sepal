@@ -123,7 +123,7 @@ class ClassificationPreview extends React.Component {
 
     updateLayer(previewRequest) {
         const {recipe, mapContext, componentWillUnmount$} = this.props
-        if (!hasTrainingData(recipe)) {
+        if (!previewRequest || !hasTrainingData(recipe)) {
             mapContext.sepalMap.removeLayer('preview')
             return
         }
@@ -160,6 +160,8 @@ class ClassificationPreview extends React.Component {
 
     toPreviewRequest(recipe) {
         const selection = selectFrom(recipe, 'ui.bands.selection')
+        if (!selection)
+            return
         return {
             recipe: _.omit(recipe, ['ui']),
             hasTrainingData: hasTrainingData(recipe),

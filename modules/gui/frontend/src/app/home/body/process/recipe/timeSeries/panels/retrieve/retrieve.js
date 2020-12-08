@@ -10,15 +10,17 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './retrieve.module.css'
+import {opticalBandOptions, radarBandOptions} from '../../bandOptions'
 
 const fields = {
     indicator: new Form.Field()
         .notEmpty('process.timeSeries.panel.retrieve.form.indicator.required'),
-    scale: new Form.Field(),
+    scale: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
-    sources: selectFrom(recipe, 'model.sources')
+    sources: selectFrom(recipe, 'model.sources'),
+    classificationLegend: selectFrom(recipe, 'ui.classificationLegend')
 })
 
 class Retrieve extends React.Component {
@@ -31,23 +33,26 @@ class Retrieve extends React.Component {
     }
 
     renderContent() {
-        const {sources, inputs: {indicator, scale}} = this.props
-        const indicatorOptions = _.isEmpty(sources['SENTINEL_1'])
-            ? [
-                {value: 'ndvi', label: 'NDVI', tooltip: '(nir - red) / (nir + red)'},
-                {value: 'ndmi', label: 'NDMI', tooltip: '(nir - swir1) / (nir + swir1)'},
-                {value: 'ndwi', label: 'NDWI', tooltip: '(green - nir) / (green + nir)'},
-                {value: 'ndfi', label: 'NDFI', tooltip: 'Normalized Difference Fraction Index'},
-                {value: 'nbr', label: 'NBR', tooltip: '(nir - swir2) / (nir + swir2)'},
-                {value: 'evi', label: 'EVI', tooltip: '2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1)'},
-                {value: 'evi2', label: 'EVI2', tooltip: '2.5 * (nir - red) / (nir + 2.4 * red + 1)'},
-                {value: 'savi', label: 'SAVI', tooltip: '(1.5 * (nir - red) / (nir + red + 0.5)'}
-            ]
-            : [
-                {value: 'VV', label: 'VV'},
-                {value: 'VH', label: 'VH'},
-                {value: 'VV/VH', label: 'VV/VH'}
-            ]
+        const {classificationLegend, sources: {dataSets}, inputs: {indicator, scale}} = this.props
+        const options = [
+            ...(_.isEmpty(dataSets['SENTINEL_1'])
+                ? opticalBandOptions({dataSets})
+                : radarBandOptions({})),
+            ...(classificationLegend
+                ? [{
+                    options: [
+                        {
+                            value: 'regression',
+                            label: (msg('process.ccdc.panel.sources.form.breakpointBands.regression'))
+                        },
+                        ...classificationLegend.entries.map(({value, label}) => ({
+                            value: `probability_${value}`,
+                            label: msg('process.ccdc.panel.sources.form.breakpointBands.probability', {label})
+                        }))
+                    ]
+                }]
+                : [])
+        ]
 
         return (
             <Layout>
@@ -55,7 +60,7 @@ class Retrieve extends React.Component {
                     label={msg('process.timeSeries.panel.retrieve.form.indicator.label')}
                     input={indicator}
                     multiple={false}
-                    options={indicatorOptions}/>
+                    options={options}/>
                 <Form.Slider
                     label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
                     info={scale => msg('process.timeSeries.panel.retrieve.form.scale.info', {scale})}

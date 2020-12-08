@@ -13,6 +13,10 @@ import _ from 'lodash'
 import moment from 'moment'
 import styles from './sources.module.css'
 import updateDataSets from './updateDataSets'
+import {RecipeActions} from '../../timeSeriesRecipe'
+import {connect, select} from 'store'
+import api from 'api'
+import Notifications from 'widget/notifications'
 
 const fields = {
     opticalDataSets: new Form.Field()
@@ -20,7 +24,14 @@ const fields = {
         .notEmpty('process.timeSeries.panel.sources.form.required'),
     radarDataSets: new Form.Field()
         .skip((value, {opticalDataSets}) => !_.isEmpty(opticalDataSets))
-        .notEmpty('process.timeSeries.panel.sources.form.required')
+        .notEmpty('process.timeSeries.panel.sources.form.required'),
+    classification: new Form.Field()
+}
+
+const mapStateToProps = () => {
+    return {
+        recipes: select('process.recipes')
+    }
 }
 
 const mapRecipeToProps = recipe => ({
@@ -28,8 +39,33 @@ const mapRecipeToProps = recipe => ({
 })
 
 class Sources extends React.Component {
+    constructor(props) {
+        super(props)
+        this.recipeActions = RecipeActions(props.recipeId)
+    }
+
     lookupDataSetNames(sourceValue) {
         return sourceValue ? imageSourceById[sourceValue].dataSets : null
+    }
+
+    render() {
+        return (
+            <RecipeFormPanel
+                className={styles.panel}
+                placement='bottom-right'>
+                <Panel.Header
+                    icon='cog'
+                    title={msg('process.timeSeries.panel.sources.title')}/>
+                <Panel.Content>
+                    <Layout>
+                        {this.renderOpticalDataSets()}
+                        {this.renderRadarDataSets()}
+                        {this.renderClassification()}
+                    </Layout>
+                </Panel.Content>
+                <Form.PanelButtons/>
+            </RecipeFormPanel>
+        )
     }
 
     renderOpticalDataSets() {
@@ -77,24 +113,46 @@ class Sources extends React.Component {
         )
     }
 
-    render() {
+    renderClassification() {
+        const {recipes, inputs: {classification}} = this.props
+        const options = recipes
+            .filter(({type}) => type === 'CLASSIFICATION')
+            .map(recipe => ({
+                value: recipe.id,
+                label: recipe.name
+            }))
         return (
-            <RecipeFormPanel
-                className={styles.panel}
-                placement='bottom-right'>
-                <Panel.Header
-                    icon='cog'
-                    title={msg('process.timeSeries.panel.sources.title')}/>
-                <Panel.Content>
-                    <Layout>
-                        {this.renderOpticalDataSets()}
-                        {this.renderRadarDataSets()}
-                    </Layout>
-                </Panel.Content>
-                <Form.PanelButtons/>
-            </RecipeFormPanel>
+            <Form.Combo
+                label={msg('process.ccdc.panel.sources.form.classification.label')}
+                tooltip={msg('process.ccdc.panel.sources.form.classification.tooltip')}
+                placeholder={msg('process.ccdc.panel.sources.form.classification.placeholder')}
+                input={classification}
+                options={options}
+                busyMessage={this.props.stream('LOAD_CLASSIFICATION_RECIPE').active && msg('widget.loading')}
+                onChange={selected => selected
+                    ? this.loadClassification(selected.value)
+                    : this.deselectClassification()}
+                allowClear
+                autoFocus
+                errorMessage
+            />
         )
     }
+
+    loadClassification(recipeId) {
+        const {stream} = this.props
+        this.deselectClassification()
+        stream('LOAD_CLASSIFICATION_RECIPE',
+            api.recipe.load$(recipeId),
+            classification => this.recipeActions.setClassificationLegend(classification.model.legend),
+            error => Notifications.error({message: msg('process.ccdc.panel.sources.classificationLoadError', {error}), error})
+        )
+    }
+
+    deselectClassification() {
+        this.recipeActions.setClassificationLegend(null)
+    }
+
 
     componentDidUpdate() {
         this.deselectOutOfRange()
@@ -120,20 +178,25 @@ Sources.propTypes = {}
 
 const valuesToModel = values => {
     return {
-        LANDSAT: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('LANDSAT')) : null,
-        SENTINEL_2: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('SENTINEL_2')) : null,
-        SENTINEL_1: values.radarDataSets ? values.radarDataSets.filter(dataSetId => dataSetId.startsWith('SENTINEL_1')) : null
+        dataSets: {
+            LANDSAT: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('LANDSAT')) : null,
+            SENTINEL_2: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('SENTINEL_2')) : null,
+            SENTINEL_1: values.radarDataSets ? values.radarDataSets.filter(dataSetId => dataSetId.startsWith('SENTINEL_1')) : null
+        },
+        classification: values.classification
     }
 }
 
 const modelToValues = model => {
     return {
-        opticalDataSets: (model['LANDSAT'] || []).concat(model['SENTINEL_2'] || []),
-        radarDataSets: model['SENTINEL_1'] || []
+        opticalDataSets: (model.dataSets['LANDSAT'] || []).concat(model.dataSets['SENTINEL_2'] || []),
+        radarDataSets: model.dataSets['SENTINEL_1'] || [],
+        classification: model.classification
     }
 }
 
 export default compose(
     Sources,
+    connect(mapStateToProps),
     recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})
 )

@@ -25,7 +25,7 @@ const worker$ = ({recipe, latLng}) => {
             .filter(ee.Filter.notNull(['value']))
     }
 
-    const collectionBands = [...new Set([...recipe.bands, ...recipe.breakpointBands])]
+    const collectionBands = [...new Set([...recipe.bands])]
     return getCollection$({...recipe, bands: collectionBands, aoi}).pipe(
         switchMap(collection => getRows$(
             timeSeriesForPixel$(collection)
