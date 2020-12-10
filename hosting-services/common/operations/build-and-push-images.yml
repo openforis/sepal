@@ -4,9 +4,6 @@
   become: yes
   gather_facts: true
 
-  vars_files:
-    - "{{ secret_vars_file }}"
-
   roles:
     - { role: build-module, module: letsencrypt }
     - { role: build-module, module: java }
@@ -28,7 +25,6 @@
     - { role: build-module, module: user-storage }
     - { role: build-module, module: user-storage-backup }
     - { role: build-module, module: gui }
-    - { role: build-module, module: ceo }
     - { role: build-module, module: ceo-gateway }
     - { role: build-module, module: sepal-server }
     - role: push-images

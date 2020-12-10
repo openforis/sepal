@@ -11,7 +11,6 @@ docker push localhost/openforis/user-storage:{{ version }}
 docker push localhost/openforis/user-storage-backup:{{ version }}
 docker push localhost/openforis/sepal:{{ version }}
 docker push localhost/openforis/gui:{{ version }}
-docker push localhost/openforis/ceo:{{ version }}
 docker push localhost/openforis/ceo-gateway:{{ version }}
 docker push localhost/openforis/mysql:{{ version }}
 docker push localhost/openforis/mysql-backup:{{ version }}

@@ -46,10 +46,6 @@ check program ceo-gateway with path /usr/local/bin/dockercheck-ceo-gateway
     depends on docker
     if status != 0 then alert
 
-check program ceo with path /usr/local/bin/dockercheck-ceo
-    depends on docker
-    if status != 0 then alert
-
 check program mysql-backup with path /usr/local/bin/dockercheck-mysql-backup
     depends on docker
     if status != 0 then alert
