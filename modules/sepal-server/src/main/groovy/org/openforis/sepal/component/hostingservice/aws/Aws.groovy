@@ -23,7 +23,7 @@ class Aws implements HostingServiceAdapter {
             new InstanceType(id: 'M5a2xlarge', name: 'm5a.2xlarge', tag: 'm8', hourlyCost: 0.384, cpuCount: 8, ramGiB: 32),
             new InstanceType(id: 'M5a4xlarge', name: 'm5a.4xlarge', tag: 'm16', hourlyCost: 0.768, cpuCount: 16, ramGiB: 64),
             new InstanceType(id: 'M5a12xlarge', name: 'm4.10xlarge', tag: 'm48', hourlyCost: 2.304, cpuCount: 48, ramGiB: 192),
-            new InstanceType(id: 'M5a416xlarge', name: 'm5a.16xlarge', tag: 'm64', hourlyCost: 3.072, cpuCount: 64, ramGiB: 256),
+            new InstanceType(id: 'M5a16xlarge', name: 'm5a.16xlarge', tag: 'm64', hourlyCost: 3.072, cpuCount: 64, ramGiB: 256),
             new InstanceType(id: 'C5Large', name: 'c5.large', tag: 'c2', hourlyCost: 0.096, cpuCount: 2, ramGiB: 4),
             new InstanceType(id: 'C5Xlarge', name: 'c5.xlarge', tag: 'c4', hourlyCost: 0.192, cpuCount: 4, ramGiB: 8),
             new InstanceType(id: 'C52xlarge', name: 'c5.2xlarge', tag: 'c8', hourlyCost: 0.384, cpuCount: 8, ramGiB: 16),
