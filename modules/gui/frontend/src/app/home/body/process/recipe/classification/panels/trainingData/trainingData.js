@@ -1,5 +1,6 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
+import {MosaicPreview} from '../../../mosaic/mosaicPreview'
 import {Msg, msg} from 'translate'
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../classificationRecipe'
@@ -29,6 +30,8 @@ class TrainingData extends React.Component {
         super(props)
         this.eeTableChanged$ = new Subject()
         this.recipeActions = RecipeActions(props.recipeId)
+        const {recipeId} = props
+        this.preview = MosaicPreview(recipeId)
     }
 
     loadEETableColumns(eeTableId) {
