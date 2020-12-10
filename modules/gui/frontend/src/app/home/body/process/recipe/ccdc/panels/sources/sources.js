@@ -1,22 +1,22 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {RecipeActions, dateRange} from '../../ccdcRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {arrayEquals} from 'collections'
 import {compose} from 'compose'
-import {dateRange, RecipeActions} from '../../ccdcRecipe'
+import {connect, select} from 'store'
+import {filterOpticalBands, filterRadarBands, opticalBandOptions, radarBandOptions} from '../../bandOptions'
 import {imageSourceById, isDataSetInDateRange} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
+import api from 'api'
 import moment from 'moment'
 import styles from './sources.module.css'
 import updateDataSets from './updateDataSets'
-import {filterOpticalBands, filterRadarBands, opticalBandOptions, radarBandOptions} from '../../bandOptions'
-import {connect, select} from 'store'
-import api from 'api'
-import Notifications from 'widget/notifications'
 
 const fields = {
     opticalDataSets: new Form.Field()
@@ -227,7 +227,7 @@ class Sources extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate() {
         this.deselectOutOfRange()
         this.deselectNonAvailableBands()
     }
@@ -266,7 +266,6 @@ class Sources extends React.Component {
         return from.isBefore(moment('2014-10-03'))
     }
 }
-
 
 Sources.propTypes = {}
 

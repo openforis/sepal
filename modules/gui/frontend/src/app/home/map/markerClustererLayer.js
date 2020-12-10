@@ -27,7 +27,7 @@ export default class MarkerClustererLayer {
 
         // Path from https://github.com/scottdejonge/map-icons
         this.icon = {
-            path: "M25.015 2.4c-7.8 0-14.121 6.204-14.121 13.854 0 7.652 14.121 32.746 14.121 32.746s14.122-25.094 14.122-32.746c0-7.65-6.325-13.854-14.122-13.854z",
+            path: 'M25.015 2.4c-7.8 0-14.121 6.204-14.121 13.854 0 7.652 14.121 32.746 14.121 32.746s14.122-25.094 14.122-32.746c0-7.65-6.325-13.854-14.122-13.854z',
             fillOpacity: 1,
             anchor: new google.maps.Point(25, 50),
             strokeWeight: DEFAULT_STROKE_WIDTH,
@@ -150,7 +150,7 @@ export default class MarkerClustererLayer {
             clickable: this.clickable
         })
         mapMarker.data = marker
-        mapMarker.addListener("click", () => {
+        mapMarker.addListener('click', () => {
             onClick && onClick(this.getMapMarker({x, y}).data)
         })
         return mapMarker

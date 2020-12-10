@@ -1,7 +1,7 @@
-import React from 'react'
 import Dygraph from 'dygraphs'
-import _ from 'lodash'
 import PropTypes from 'prop-types'
+import React from 'react'
+import _ from 'lodash'
 import styles from './graph.module.css'
 
 export class Graph extends React.Component {
@@ -10,7 +10,7 @@ export class Graph extends React.Component {
     options = null
     graphRef = React.createRef()
 
-    shouldComponentUpdate(nextProps, nextState, nextContext) {
+    shouldComponentUpdate(nextProps) {
         const {data, highlights, dimensions} = this.props
         const {data: nextData, highlights: nextHighlights} = nextProps
         const options = this.getOptions(this.props)
@@ -21,7 +21,6 @@ export class Graph extends React.Component {
             || !_.isEqual(highlights, nextHighlights)
             || !_.isEqual(_.omit(options, CALLBACKS), _.omit(nextOptions, CALLBACKS))
     }
-
 
     render() {
         return (
@@ -35,7 +34,7 @@ export class Graph extends React.Component {
         this.update()
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps) {
         this.update(prevProps)
     }
 
@@ -181,7 +180,6 @@ export class Graph extends React.Component {
     }
 }
 
-
 const createUnderlayCallback = highlights =>
     (canvas, area, g) => {
         (highlights || []).forEach(({startDate, endDate, color}) => {
@@ -190,7 +188,7 @@ const createUnderlayCallback = highlights =>
             const left = bottomLeft[0]
             const right = topRight[0]
             canvas.fillStyle = color
-            canvas.fillRect(left, area.y, right - left, area.h);
+            canvas.fillRect(left, area.y, right - left, area.h)
         })
     }
 
@@ -203,13 +201,6 @@ Graph.defaultProps = {
 
 Graph.propTypes = {
     data: PropTypes.array.isRequired,
-    highlights: PropTypes.arrayOf(PropTypes.shape({
-        startDate: PropTypes.any.isRequired,
-        endDate: PropTypes.any.isRequired,
-        color: PropTypes.string.isRequired,
-    })),
-    className: PropTypes.string,
-
     animatedZooms: PropTypes.bool,
     annotationClickHandler: PropTypes.func,
     annotationDblClickHandler: PropTypes.func,
@@ -223,6 +214,7 @@ Graph.propTypes = {
     axisLineColor: PropTypes.string,
     axisLineWidth: PropTypes.number,
     axisTickSize: PropTypes.number,
+    className: PropTypes.string,
     clickCallback: PropTypes.func,
     color: PropTypes.string,
     colors: PropTypes.any,
@@ -255,6 +247,11 @@ Graph.propTypes = {
     hideOverlayOnMouseOut: PropTypes.bool,
     highlightCallback: PropTypes.func,
     highlightCircleSize: PropTypes.any,
+    highlights: PropTypes.arrayOf(PropTypes.shape({
+        color: PropTypes.string.isRequired,
+        endDate: PropTypes.any.isRequired,
+        startDate: PropTypes.any.isRequired,
+    })),
     highlightSeriesBackgroundAlpha: PropTypes.number,
     highlightSeriesBackgroundColor: PropTypes.string,
     highlightSeriesOpts: PropTypes.any,

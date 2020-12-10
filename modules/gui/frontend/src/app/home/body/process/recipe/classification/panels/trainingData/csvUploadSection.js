@@ -1,14 +1,14 @@
 import * as PropTypes from 'prop-types'
-import React, {Component} from 'react'
-import {Subject, zip} from 'rxjs'
-import {toArray} from 'rxjs/operators'
-import Papa from 'papaparse'
 import {FileSelect} from 'widget/fileSelect'
 import {Layout} from 'widget/layout'
-import Label from 'widget/label'
+import {Subject, zip} from 'rxjs'
 import {msg} from 'translate'
-import styles from './csvUploadSection.module.css'
+import {toArray} from 'rxjs/operators'
 import Icon from 'widget/icon'
+import Label from 'widget/label'
+import Papa from 'papaparse'
+import React, {Component} from 'react'
+import styles from './csvUploadSection.module.css'
 
 export default class CsvUploadSection extends Component {
     render() {
@@ -33,7 +33,6 @@ export default class CsvUploadSection extends Component {
         )
     }
 
-
     onSelect(file) {
         const {stream, inputs: {name, inputData, columns}} = this.props
         name.set(file.name)
@@ -51,7 +50,6 @@ export default class CsvUploadSection extends Component {
             }
         )
     }
-
 
     parse(file) {
         const row$ = new Subject()

@@ -1,4 +1,5 @@
 import {Button} from 'widget/button'
+import {Legend} from 'widget/legend'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -11,7 +12,6 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 import withSubscriptions from 'subscription'
-import {Legend} from 'widget/legend'
 
 const LABEL = 'ccdcSlice'
 

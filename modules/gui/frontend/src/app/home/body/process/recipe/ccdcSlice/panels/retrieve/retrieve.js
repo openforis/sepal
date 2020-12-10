@@ -4,12 +4,12 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../ccdcSliceRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
+import {currentUser} from 'widget/user'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './retrieve.module.css'
-import {currentUser} from 'widget/user'
 
 const fields = {
     baseBands: new Form.Field()

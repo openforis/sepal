@@ -2,9 +2,6 @@ import {Form} from 'widget/form/form'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ImageForm from '../inputImagery/imageForm'
-import RecipeSection from '../inputImagery/recipeSection'
-import AssetSection from '../inputImagery/assetSection'
 
 export default class SectionSelection extends React.Component {
     render() {

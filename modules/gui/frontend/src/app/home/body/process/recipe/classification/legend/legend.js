@@ -169,7 +169,7 @@ class _Entry extends React.Component {
         duplicate.set(this.props.duplicate)
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate() {
         const {inputs: {duplicate}} = this.props
         duplicate.set(this.props.duplicate)
     }
@@ -202,8 +202,8 @@ const entryFields = {
 const Entry = compose(_Entry, form({fields: entryFields}))
 
 Legend.propTypes = {
+    dataCollectionEvents: PropTypes.object.isRequired,
     recipeId: PropTypes.string,
-    dataCollectionEvents: PropTypes.object.isRequired
 }
 
 export default compose(

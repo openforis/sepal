@@ -1,6 +1,4 @@
-// import {parse, eval as evaluate} from 'expression-eval'
-import {parse, eval as evaluate} from './expressionEval'
-
+import {eval as evaluate, parse} from './expressionEval'
 
 const MATH = {
     E: Math.E, LN10: Math.LN10, LN2: Math.LN2, LOG10E: Math.LOG10E, LOG2E: Math.LOG2E, PI: Math.PI,

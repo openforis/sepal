@@ -1,21 +1,21 @@
+import {CCDCGraph} from '../ccdcGraph'
 import {Form, form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
-import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../ccdcRecipe'
+import {RecipeActions, loadCCDCObservations$, loadCCDCSegments$} from '../ccdcRecipe'
 import {Subject} from 'rxjs'
-import {takeUntil} from 'rxjs/operators'
 import {compose} from 'compose'
 import {filterBands, opticalBandOptions, radarBandOptions} from '../bandOptions'
+import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {takeUntil} from 'rxjs/operators'
 import {withRecipe} from '../../../recipeContext'
 import Icon from 'widget/icon'
 import Keybinding from 'widget/keybinding'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
-import styles from './chartPixel.module.css'
-import {CCDCGraph} from '../ccdcGraph'
 import moment from 'moment'
-import Notifications from 'widget/notifications'
-import {msg} from 'translate'
+import styles from './chartPixel.module.css'
 
 const fields = {
     selectedBand: new Form.Field()
@@ -60,8 +60,8 @@ class ChartPixel extends React.Component {
                     title={`${latLng.lat}, ${latLng.lng}`}/>
 
                 <Panel.Content className={loading ? styles.loading : null}
-                               scrollable={false}
-                               noVerticalPadding>
+                    scrollable={false}
+                    noVerticalPadding>
                     <Form className={styles.form}>
                         {this.renderChart()}
                         {this.renderBandOptions()}
@@ -148,7 +148,7 @@ class ChartPixel extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps) {
         const {classificationLegend, stream, recipe, latLng, inputs: {selectedBand}} = this.props
         const {model: {sources: {dataSets}}} = recipe
         const filteredBands = classificationLegend && (

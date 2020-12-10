@@ -1,6 +1,6 @@
 import {msg} from 'translate'
-import moment from 'moment'
 import _ from 'lodash'
+import moment from 'moment'
 
 class FormProperty {
     static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape
@@ -28,15 +28,15 @@ class FormProperty {
 
     notEmpty(messageId = 'fieldValidation.notEmpty', messageArgs) {
         return this.predicate(value => {
-                if (Array.isArray(value))
-                    return value.length > 0
-                else if (value === Object(value))
-                    return Object.keys(value).length > 0
-                else
-                    return !isBlank(value)
-            },
-            messageId,
-            messageArgs
+            if (Array.isArray(value))
+                return value.length > 0
+            else if (value === Object(value))
+                return Object.keys(value).length > 0
+            else
+                return !isBlank(value)
+        },
+        messageId,
+        messageArgs
         )
     }
 

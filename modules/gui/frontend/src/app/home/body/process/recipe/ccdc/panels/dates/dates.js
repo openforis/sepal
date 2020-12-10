@@ -47,7 +47,7 @@ class Dates extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {dateFormat, startDate, endDate}} = this.props
+        const {inputs: {startDate, endDate}} = this.props
         return (
             <Layout>
                 <Form.FieldSet

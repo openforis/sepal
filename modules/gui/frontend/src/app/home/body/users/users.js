@@ -119,11 +119,11 @@ class Users extends React.Component {
                 : api.user.updateUser$({username, name, email, organization, admin})
 
         const updateUserBudget$ = ({
-                                       username,
-                                       monthlyBudgetInstanceSpending: instanceSpending,
-                                       monthlyBudgetStorageSpending: storageSpending,
-                                       monthlyBudgetStorageQuota: storageQuota
-                                   }) => api.user.updateUserBudget$({
+            username,
+            monthlyBudgetInstanceSpending: instanceSpending,
+            monthlyBudgetStorageSpending: storageSpending,
+            monthlyBudgetStorageQuota: storageQuota
+        }) => api.user.updateUserBudget$({
             username,
             instanceSpending,
             storageSpending,

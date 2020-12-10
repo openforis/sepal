@@ -1,22 +1,22 @@
+import {Button} from 'widget/button'
+import {ButtonGroup} from 'widget/buttonGroup'
 import {Panel} from 'widget/panel/panel'
+import {RecipeActions, hasTrainingData} from '../../classificationRecipe'
+import {Subject} from 'rxjs'
+import {SuperButton} from 'widget/superButton'
 import {compose} from 'compose'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import {takeUntil} from 'rxjs/operators'
+import {withRecipe} from '../../../../recipeContext'
+import Icon from 'widget/icon'
+import Keybinding from 'widget/keybinding'
+import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './collectPanel.module.css'
-import {selectFrom} from 'stateUtils'
-import {withRecipe} from '../../../../recipeContext'
-import {SuperButton} from 'widget/superButton'
-import Keybinding from 'widget/keybinding'
 import _ from 'lodash'
-import {Subject} from 'rxjs'
-import {takeUntil} from 'rxjs/operators'
-import {hasTrainingData, RecipeActions} from '../../classificationRecipe'
-import {msg} from 'translate'
 import api from 'api'
-import Icon from 'widget/icon'
-import Notifications from 'widget/notifications'
-import {ButtonGroup} from 'widget/buttonGroup'
-import {Button} from 'widget/button'
+import styles from './collectPanel.module.css'
 
 const mapRecipeToProps = recipe => {
     return ({
@@ -153,7 +153,7 @@ class CollectPanel extends React.Component {
         )
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps) {
         const {point} = this.props
         const opened = point && point !== prevProps.point
         if (opened) {
@@ -273,7 +273,6 @@ class CollectPanel extends React.Component {
         dataCollectionEvents.select(point)
     }
 
-
     close() {
         const {dataCollectionEvents, point} = this.props
         this.close$.next()
@@ -295,8 +294,8 @@ class CollectPanel extends React.Component {
 }
 
 CollectPanel.propTypes = {
+    dataCollectionEvents: PropTypes.object.isRequired,
     recipeId: PropTypes.string,
-    dataCollectionEvents: PropTypes.object.isRequired
 }
 
 export default compose(

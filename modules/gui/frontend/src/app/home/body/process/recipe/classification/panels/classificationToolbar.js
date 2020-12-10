@@ -1,3 +1,4 @@
+import {RecipeActions} from '../classificationRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -14,7 +15,6 @@ import React from 'react'
 import Retrieve from './retrieve/retrieve'
 import TrainingData from './trainingData/trainingData.js'
 import styles from './classificationToolbar.module.css'
-import {RecipeActions} from '../classificationRecipe'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
@@ -49,7 +49,7 @@ class ClassificationToolbar extends React.Component {
                         icon={'map-marker'}
                         tooltip={msg(collecting
                             ? 'process.classification.collect.disable.tooltip'
-                            : `process.classification.collect.enable.tooltip`)}/>
+                            : 'process.classification.collect.enable.tooltip')}/>
                     <Toolbar.ActivationButton
                         id='retrieve'
                         icon='cloud-download-alt'
@@ -92,8 +92,8 @@ class ClassificationToolbar extends React.Component {
 }
 
 ClassificationToolbar.propTypes = {
+    dataCollectionEvents: PropTypes.object.isRequired,
     recipeId: PropTypes.string.isRequired,
-    dataCollectionEvents: PropTypes.object.isRequired
 }
 
 export default compose(

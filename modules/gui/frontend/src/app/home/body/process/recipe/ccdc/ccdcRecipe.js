@@ -117,8 +117,6 @@ export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
         bands
     }), latLng, bands})
 
-
-
 export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
     api.gee.loadTimeSeriesObservations$({recipe: toBackendRecipe({
         recipe,

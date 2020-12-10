@@ -1,12 +1,12 @@
-import {compose} from 'compose'
-import {withRecipe} from 'app/home/body/process/recipeContext'
-import {selectFrom} from 'stateUtils'
-import React from 'react'
-import MarkerClustererLayer from '../../../../map/markerClustererLayer'
-import {msg} from 'translate'
-import {activator} from 'widget/activation/activator'
 import {RecipeActions} from './classificationRecipe'
+import {activator} from 'widget/activation/activator'
+import {compose} from 'compose'
+import {msg} from 'translate'
+import {selectFrom} from 'stateUtils'
+import {withRecipe} from 'app/home/body/process/recipeContext'
+import MarkerClustererLayer from '../../../../map/markerClustererLayer'
 import PropTypes from 'prop-types'
+import React from 'react'
 import _ from 'lodash'
 
 const mapRecipeToProps = recipe => ({
@@ -56,7 +56,7 @@ class ReferenceDataLayer extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps) {
         this.handleCollectingChange(prevProps.collecting)
     }
 
@@ -210,8 +210,8 @@ class ReferenceDataLayer extends React.Component {
 const isClassified = marker => Object.keys(marker).includes('class') && _.isFinite(marker['class'])
 
 ReferenceDataLayer.propTypes = {
+    dataCollectionEvents: PropTypes.object.isRequired,
     recipeId: PropTypes.string,
-    dataCollectionEvents: PropTypes.object.isRequired
 }
 
 export default compose(

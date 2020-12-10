@@ -64,7 +64,6 @@ const submitRetrieveRecipeTask = recipe => {
     const bands = baseBands
         .map(baseBand => bandTypes.map(bandType => `${baseBand}${bandTypeSuffixes[bandType]}`))
         .flat()
-    console.log({bands})
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':

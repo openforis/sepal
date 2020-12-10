@@ -11,7 +11,7 @@ export class ToolbarButton extends React.Component {
             <Context.Consumer>
                 {({horizontal, panel}) =>
                     <Button
-                        className={[selected && !disabled ? styles.selected : null, panel ? styles.panel : null,className].join(' ')}
+                        className={[selected && !disabled ? styles.selected : null, panel ? styles.panel : null, className].join(' ')}
                         icon={icon}
                         label={label}
                         disabled={disabled}

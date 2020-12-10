@@ -1,3 +1,4 @@
+import {RecipeActions} from './timeSeriesRecipe'
 import {compose} from 'compose'
 import {defaultModel} from './timeSeriesRecipe'
 import {msg} from 'translate'
@@ -6,12 +7,11 @@ import {selectFrom} from 'stateUtils'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import TimeSeriesToolbar from './panels/timeSeriesToolbar'
-import styles from './timeSeries.module.css'
 import api from 'api'
-import Notifications from 'widget/notifications'
-import {RecipeActions} from './timeSeriesRecipe'
+import styles from './timeSeries.module.css'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),

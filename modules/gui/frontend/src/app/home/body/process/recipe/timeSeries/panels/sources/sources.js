@@ -1,22 +1,21 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
+import {RecipeActions, dateRange} from '../../timeSeriesRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {arrayEquals} from 'collections'
 import {compose} from 'compose'
-import {dateRange} from '../../timeSeriesRecipe'
+import {connect, select} from 'store'
 import {imageSourceById, isDataSetInDateRange} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
+import api from 'api'
 import moment from 'moment'
 import styles from './sources.module.css'
 import updateDataSets from './updateDataSets'
-import {RecipeActions} from '../../timeSeriesRecipe'
-import {connect, select} from 'store'
-import api from 'api'
-import Notifications from 'widget/notifications'
 
 const fields = {
     opticalDataSets: new Form.Field()
@@ -145,14 +144,16 @@ class Sources extends React.Component {
         stream('LOAD_CLASSIFICATION_RECIPE',
             api.recipe.load$(recipeId),
             classification => this.recipeActions.setClassificationLegend(classification.model.legend),
-            error => Notifications.error({message: msg('process.ccdc.panel.sources.classificationLoadError', {error}), error})
+            error => Notifications.error({
+                message: msg('process.ccdc.panel.sources.classificationLoadError', {error}),
+                error
+            })
         )
     }
 
     deselectClassification() {
         this.recipeActions.setClassificationLegend(null)
     }
-
 
     componentDidUpdate() {
         this.deselectOutOfRange()
@@ -187,11 +188,11 @@ const valuesToModel = values => {
     }
 }
 
-const modelToValues = model => {
+const modelToValues = ({classification, dataSets = {}}) => {
     return {
-        opticalDataSets: (model.dataSets['LANDSAT'] || []).concat(model.dataSets['SENTINEL_2'] || []),
-        radarDataSets: model.dataSets['SENTINEL_1'] || [],
-        classification: model.classification
+        opticalDataSets: (dataSets['LANDSAT'] || []).concat(dataSets['SENTINEL_2'] || []),
+        radarDataSets: dataSets['SENTINEL_1'] || [],
+        classification
     }
 }
 

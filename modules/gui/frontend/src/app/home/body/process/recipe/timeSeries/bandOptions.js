@@ -1,6 +1,6 @@
+import {dataSetById} from 'sources'
 import {msg} from 'translate'
 import _ from 'lodash'
-import {dataSetById} from 'sources'
 
 const option = band => ({value: band, label: msg(['bands', band])})
 
@@ -62,18 +62,17 @@ export const opticalBandOptions = ({dataSets, alwaysSelected = []}) => {
     )
     const bandOptions = allBandOptions
         .map(group => ({
-                ...group,
-                options: group.options
-                    .filter(option => availableBands.has(option.value))
-                    .map(option => ({...option, alwaysSelected: alwaysSelected.includes(option.value)}))
-            })
+            ...group,
+            options: group.options
+                .filter(option => availableBands.has(option.value))
+                .map(option => ({...option, alwaysSelected: alwaysSelected.includes(option.value)}))
+        })
         )
         .filter(group =>
             group.options.length
         )
     return [indexOptions, ...bandOptions]
 }
-
 
 export const radarBandOptions = ({alwaysSelected = []}) => ([
     {value: 'VV', label: 'VV'},

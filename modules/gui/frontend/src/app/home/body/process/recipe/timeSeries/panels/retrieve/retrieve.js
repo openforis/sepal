@@ -5,12 +5,12 @@ import {RecipeActions} from '../../timeSeriesRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
+import {opticalBandOptions, radarBandOptions} from '../../bandOptions'
 import {selectFrom} from 'stateUtils'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './retrieve.module.css'
-import {opticalBandOptions, radarBandOptions} from '../../bandOptions'
 
 const fields = {
     indicator: new Form.Field()

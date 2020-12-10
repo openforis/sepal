@@ -246,7 +246,7 @@ class ClassMappingStep extends Component {
         referenceData.set(null)
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps) {
         const {stream, inputs: {valueMapping, columnMapping, customMapping, referenceData, defaultValue}} = this.props
         const {inputs: {valueMapping: prevValueMapping, columnMapping: prevColumnMapping, customMapping: prevCustomMapping, defaultValue: prevDefaultValue}} = prevProps
         const notAlreadyUpdatingReferenceData = !stream('UPDATE_REFERENCE_DATA').active

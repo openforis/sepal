@@ -1,5 +1,5 @@
-import React from 'react'
 import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './legend.module.css'
 
 export const Legend = ({min, max, palette}) =>
@@ -11,10 +11,9 @@ export const Legend = ({min, max, palette}) =>
         <div className={styles.palette} style={{'--palette': palette}}/>
     </div>
 
-
 Legend.propTypes = {
-    min: PropTypes.any.isRequired,
     max: PropTypes.any.isRequired,
+    min: PropTypes.any.isRequired,
     palette: PropTypes.any.isRequired
 
 }

@@ -63,8 +63,8 @@ class ChartPixelButton extends React.Component {
 ChartPixelButton.propTypes = {
     mapContext: PropTypes.object.isRequired,
     onPixelSelected: PropTypes.func.isRequired,
+    disabled: PropTypes.any,
     showGoogleSatellite: PropTypes.any,
-    disabled: PropTypes.any
 }
 
 export default compose(

@@ -57,7 +57,7 @@ class BandSelection extends React.Component {
         )
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps) {
         const {inputs: {selection}} = this.props
         const {bandOptions, optionByValue} = this.state
         const changed = !_.isEqual(

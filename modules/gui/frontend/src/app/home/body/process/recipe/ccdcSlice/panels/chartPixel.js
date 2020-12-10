@@ -1,6 +1,7 @@
+import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {Form, form} from 'widget/form/form'
 import {Panel} from 'widget/panel/panel'
-import {loadCCDCSegments$, RecipeActions} from '../ccdcSliceRecipe'
+import {RecipeActions, loadCCDCSegments$} from '../ccdcSliceRecipe'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -12,9 +13,8 @@ import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import _ from 'lodash'
-import styles from './chartPixel.module.css'
-import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import moment from 'moment'
+import styles from './chartPixel.module.css'
 
 const fields = {
     selectedBand: new Form.Field()
@@ -57,8 +57,8 @@ class ChartPixel extends React.Component {
                     title={`${latLng.lat}, ${latLng.lng}`}/>
 
                 <Panel.Content className={loading ? styles.loading : null}
-                               scrollable={false}
-                               noVerticalPadding>
+                    scrollable={false}
+                    noVerticalPadding>
                     <Form className={styles.form}>
                         {this.renderChart()}
                         {this.renderBandOptions()}
@@ -121,7 +121,7 @@ class ChartPixel extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps) {
         const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
 
         if (!selectedBand.value)

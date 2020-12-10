@@ -1,3 +1,4 @@
+import {DataCollectionEvents} from './dataCollectionEvents'
 import {compose} from 'compose'
 import {getDefaultModel} from './classificationRecipe'
 import {msg} from 'translate'
@@ -7,12 +8,11 @@ import {setRecipeGeometryLayer} from 'app/home/map/recipeGeometryLayer'
 import BandSelection from './bandSelection'
 import ClassificationPreview from './classificationPreview'
 import ClassificationToolbar from './panels/classificationToolbar'
+import CollectPanel from './panels/collect/collectPanel'
 import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
 import ReferenceDataLayer from './referenceDataLayer'
-import {DataCollectionEvents} from './dataCollectionEvents'
-import CollectPanel from './panels/collect/collectPanel'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),

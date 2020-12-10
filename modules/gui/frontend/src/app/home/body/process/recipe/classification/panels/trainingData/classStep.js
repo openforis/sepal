@@ -43,7 +43,6 @@ class ClassStep extends Component {
                         validateExpression({expression: filterExpression.value, rows: inputData.value})
                         invalidFilterExpression.set(false)
                     } catch (e) {
-                        console.log('Got an error', e.message)
                         filterExpression.setInvalid(e.message)
                         invalidFilterExpression.set(true)
                     }

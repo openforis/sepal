@@ -1,9 +1,12 @@
+import {RecipeActions} from '../ccdcSliceRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
+import ChartPixel from './chartPixel'
+import ChartPixelButton from '../../ccdc/panels/chartPixelButton'
 import Date from './date/date'
 import Options from './options/options'
 import PanelWizard from 'widget/panelWizard'
@@ -11,10 +14,6 @@ import React from 'react'
 import Retrieve from './retrieve/retrieve'
 import Source from './source/source'
 import styles from './ccdcSliceToolbar.module.css'
-import ChartPixelButton from '../../ccdc/panels/chartPixelButton'
-import {RecipeActions} from '../ccdcSliceRecipe'
-import BandSelection from '../bandSelection'
-import ChartPixel from './chartPixel'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,

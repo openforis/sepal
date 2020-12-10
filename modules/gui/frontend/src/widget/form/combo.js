@@ -1,6 +1,6 @@
+import {Combo} from 'widget/combo'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Combo} from 'widget/combo'
 
 export const FormCombo = (
     {
@@ -35,7 +35,6 @@ export const FormCombo = (
             onChange && onChange(option)
         }}
         onBlur={() => input.validate()}/>
-
 
 FormCombo.propTypes = {
     input: PropTypes.any.isRequired,

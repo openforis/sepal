@@ -1,3 +1,4 @@
+import {RecipeActions} from '../ccdcRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -5,6 +6,8 @@ import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Aoi from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
+import ChartPixel from './chartPixel'
+import ChartPixelButton from './chartPixelButton'
 import Dates from 'app/home/body/process/recipe/ccdc/panels/dates/dates'
 import OpticalPreprocess from './opticalPreprocess/opticalPreprocess'
 import Options from './options/options'
@@ -15,9 +18,6 @@ import Retrieve from 'app/home/body/process/recipe/ccdc/panels/retrieve/retrieve
 import Sources from 'app/home/body/process/recipe/ccdc/panels/sources/sources'
 import _ from 'lodash'
 import styles from './ccdcToolbar.module.css'
-import ChartPixelButton from './chartPixelButton'
-import {RecipeActions} from '../ccdcRecipe'
-import ChartPixel from './chartPixel'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,

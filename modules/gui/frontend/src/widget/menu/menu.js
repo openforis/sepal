@@ -1,7 +1,7 @@
 import {Panel} from 'widget/panel/panel'
 import React from 'react'
-import styles from './menu.module.css'
 import _ from 'lodash'
+import styles from './menu.module.css'
 
 const {MenuItem} = require('./menuItem')
 const MenuContext = require('./menuContext')

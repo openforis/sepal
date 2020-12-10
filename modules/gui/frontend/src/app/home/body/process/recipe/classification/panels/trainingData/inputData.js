@@ -1,6 +1,6 @@
-import _ from 'lodash'
-import {evaluateRow} from './expression'
 import {Subject} from 'rxjs'
+import {evaluateRow} from './expression'
+import _ from 'lodash'
 
 const filter = (row, {filterExpression}) =>
     filterExpression.value === undefined || !filterExpression.value.length
@@ -12,12 +12,9 @@ const validLocation = (row, {locationType, geoJsonColumn, xColumn, yColumn}) =>
         ? toGeoJSON(row[geoJsonColumn.value]).coordinates
         : _.isNumber(row[xColumn.value]) && _.isNumber(row[yColumn.value])
 
-const filterOutInvalidLocations = inputs =>
-    inputs.inputData.value.filter(row => validLocation(row, inputs))
-
 const filteredInputData = inputs => inputs.inputData.value.filter(row => validLocation(row, inputs) && filter(row, inputs))
 
-export const toReferenceData$ = (inputs) => {
+export const toReferenceData$ = inputs => {
     // TODO: Use worker
     const referenceData$ = new Subject()
     setTimeout(() => {
@@ -47,14 +44,14 @@ export const toReferenceData$ = (inputs) => {
 
 const remap = (row, inputs) => {
     switch (inputs.classColumnFormat.value) {
-        case 'SINGLE_COLUMN':
-            return remapSingleColumn(row, inputs)
-        case 'MULTIPLE_COLUMNS':
-            return remapMultipleColumns(row, inputs)
-        case 'OTHER_FORMAT':
-            return remapOtherFormat(row, inputs)
-        default:
-            throw new Error(`Invalid classColumnFormat: ${inputs.classColumnFormat.value}`)
+    case 'SINGLE_COLUMN':
+        return remapSingleColumn(row, inputs)
+    case 'MULTIPLE_COLUMNS':
+        return remapMultipleColumns(row, inputs)
+    case 'OTHER_FORMAT':
+        return remapOtherFormat(row, inputs)
+    default:
+        throw new Error(`Invalid classColumnFormat: ${inputs.classColumnFormat.value}`)
     }
 }
 
@@ -76,7 +73,7 @@ const remapMultipleColumns = (row, {columnMapping, defaultValue}) => {
             const columns = columnsByLegendValue[legendValue] || []
             return columns.find(column => row[column])
         })
-    return legendValue === undefined ? defaultValue.value || undefined: legendValue
+    return legendValue === undefined ? defaultValue.value || undefined : legendValue
 }
 
 const remapOtherFormat = (row, {customMapping, defaultValue}) => {

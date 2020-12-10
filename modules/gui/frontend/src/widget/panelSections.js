@@ -1,9 +1,9 @@
 import * as PropTypes from 'prop-types'
+import {Form} from './form/form'
 import {Panel} from 'widget/panel/panel'
 import ButtonSelect from 'widget/buttonSelect'
 import React from 'react'
 import _ from 'lodash'
-import {Form} from './form/form'
 
 export default class PanelSections extends React.Component {
     render() {
@@ -71,7 +71,6 @@ export default class PanelSections extends React.Component {
         }
     }
 
-
     shouldComponentUpdate(nextProps) {
         return nextProps.inputs !== this.props.inputs
     }
@@ -109,13 +108,13 @@ export default class PanelSections extends React.Component {
 }
 
 PanelSections.propTypes = {
-    sections: PropTypes.array.isRequired,
     inputs: PropTypes.any.isRequired,
+    sections: PropTypes.array.isRequired,
     selected: PropTypes.any.isRequired, // input field
-    step: PropTypes.any, // input field
+    defaultButtons: PropTypes.any,
     icon: PropTypes.string,
     label: PropTypes.string,
-    defaultButtons: PropTypes.any
+    step: PropTypes.any, // input field
 }
 
 PanelSections.defaultProps = {

@@ -10,7 +10,7 @@ export const getDefaultModel = () => ({
             {
                 dataSetId: guid(),
                 name: msg('process.classification.panel.trainingData.type.COLLECTED.label'),
-                type: "COLLECTED",
+                type: 'COLLECTED',
                 referenceData: []
             }
         ]
@@ -162,7 +162,6 @@ export const getBandOptions = (legend, classifierType) =>
             label: msg('process.classification.bands.probability', {class: label})
         })
     ].filter(option => option)
-
 
 const supportRegression = classifierType =>
     ['RANDOM_FOREST', 'CART'].includes(classifierType)

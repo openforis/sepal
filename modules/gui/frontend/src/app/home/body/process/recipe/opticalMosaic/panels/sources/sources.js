@@ -36,10 +36,6 @@ class Sources extends React.Component {
         this.recipeActions = RecipeActions(recipeId)
     }
 
-    lookupDataSetNames(sourceValue) {
-        return sourceValue ? imageSourceById[sourceValue].dataSets : null
-    }
-
     render() {
         return (
             <RecipeFormPanel
@@ -99,7 +95,7 @@ class Sources extends React.Component {
         this.preview.hide()
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate() {
         this.removeOutOfDateRangeSelection()
     }
 

@@ -1,8 +1,8 @@
-import React from 'react'
-import {useDropzone} from 'react-dropzone'
-import styles from './fileSelect.module.css'
 import {msg} from '../translate'
+import {useDropzone} from 'react-dropzone'
 import PropTypes from 'prop-types'
+import React from 'react'
+import styles from './fileSelect.module.css'
 
 export const FileSelect = ({multiple, single, accept, onSelect, children}) => {
     const {getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject, draggedFiles} = useDropzone({
@@ -19,32 +19,32 @@ export const FileSelect = ({multiple, single, accept, onSelect, children}) => {
     ]
 
     return (
-            <div {...getRootProps({className: classNames.join(' ')})}>
-                <input {...getInputProps()} />
-                <div>
-                    {reject
+        <div {...getRootProps({className: classNames.join(' ')})}>
+            <input {...getInputProps()}/>
+            <div>
+                {reject
+                    ? multiple
+                        ? msg('widget.fileSelect.multiple.reject')
+                        : draggedFiles.length > 1
+                            ? msg('widget.fileSelect.single.tooMany')
+                            : msg('widget.fileSelect.single.reject')
+                    : isDragAccept
                         ? multiple
-                            ? msg('widget.fileSelect.multiple.reject')
-                            : draggedFiles.length > 1
-                                ? msg('widget.fileSelect.single.tooMany')
-                                : msg('widget.fileSelect.single.reject')
-                        : isDragAccept
-                            ? multiple
-                                ? msg('widget.fileSelect.multiple.drop')
-                                : msg('widget.fileSelect.single.drop')
-                            : children
+                            ? msg('widget.fileSelect.multiple.drop')
+                            : msg('widget.fileSelect.single.drop')
+                        : children
                             || (multiple
                                 ? msg('widget.fileSelect.multiple.dropOrClick')
                                 : msg('widget.fileSelect.single.dropOrClick'))
-                    }
-                </div>
+                }
             </div>
+        </div>
     )
 }
 
 FileSelect.propTypes = {
+    onSelect: PropTypes.func.isRequired,
+    accept: PropTypes.any,
     multiple: PropTypes.any,
     single: PropTypes.any,
-    accept: PropTypes.any,
-    onSelect: PropTypes.func.isRequired
 }

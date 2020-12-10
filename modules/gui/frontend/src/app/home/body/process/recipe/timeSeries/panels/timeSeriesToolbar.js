@@ -1,3 +1,4 @@
+import {RecipeActions} from '../timeSeriesRecipe'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
@@ -5,6 +6,8 @@ import {selectFrom} from 'stateUtils'
 import {setInitialized} from 'app/home/body/process/recipe'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import Aoi from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
+import ChartPixel from './chartPixel'
+import ChartPixelButton from '../../ccdc/panels/chartPixelButton'
 import Dates from 'app/home/body/process/recipe/timeSeries/panels/dates/dates'
 import Options from 'app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
 import PanelWizard from 'widget/panelWizard'
@@ -14,9 +17,6 @@ import Retrieve from 'app/home/body/process/recipe/timeSeries/panels/retrieve/re
 import Sources from 'app/home/body/process/recipe/timeSeries/panels/sources/sources'
 import _ from 'lodash'
 import styles from './timeSeriesToolbar.module.css'
-import ChartPixelButton from '../../ccdc/panels/chartPixelButton'
-import {RecipeActions} from '../timeSeriesRecipe'
-import ChartPixel from './chartPixel'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,

@@ -1,11 +1,11 @@
 import * as PropTypes from 'prop-types'
-import {compose} from 'compose'
-import React, {Component} from 'react'
 import {Form} from 'widget/form/form'
-import {msg} from 'translate'
 import {Subject} from 'rxjs'
-import api from 'api'
+import {compose} from 'compose'
+import {msg} from 'translate'
 import {takeUntil} from 'rxjs/operators'
+import React, {Component} from 'react'
+import api from 'api'
 
 class EETableSection extends Component {
     eeTableChanged$ = new Subject()
