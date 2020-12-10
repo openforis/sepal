@@ -1,3 +1,6 @@
+sepal-ui
+Unidecode
+pyperclip
 llvmlite==0.31.0
 bfast
 python-dateutil
