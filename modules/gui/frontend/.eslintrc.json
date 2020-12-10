@@ -31,83 +31,83 @@
     },
     "rules": {
         "arrow-parens": [
-            "error", 
+            "warn",
             "as-needed"
         ],
         "arrow-spacing": [
-            "error"
+            "warn"
         ],
         "brace-style": [
-            "error", "1tbs", { 
+            "warn", "1tbs", {
                 "allowSingleLine": true
             }
         ],
         "comma-spacing": [
-            "error", {
+            "warn", {
                 "before": false,
                 "after": true
             }
         ],
         "eol-last": [
-            "error",
+            "warn",
             "always"
         ],
         "indent": [
-            "error",
+            "warn",
             4
         ],
         "key-spacing": [
-            "error", {
+            "warn", {
                 "beforeColon": false,
                 "afterColon": true,
                 "mode": "strict"
             }
         ],
         "linebreak-style": [
-            "error",
+            "warn",
             "unix"
         ],
         "no-console": [
-            "error", {
+            "warn", {
                 "allow": ["info", "warn", "error"]
             }
         ],
         "no-multi-spaces": [
-            "error", {
+            "warn", {
                 "ignoreEOLComments": true
             }
         ],
         "no-multiple-empty-lines": [
-            "error", {
+            "warn", {
                 "max": 1,
                 "maxBOF": 0,
                 "maxEOF": 1
             }
         ],
         "no-trailing-spaces": [
-            "error", {
+            "warn", {
                 "skipBlankLines": true,
                 "ignoreComments": false
             }
         ],
         "no-unused-vars": [
-            "error", {
+            "warn", {
                 "argsIgnorePattern": "^_",
                 "varsIgnorePattern": "^_"
             }
         ],
         "object-curly-spacing": [
-            "error",
+            "warn",
             "never"
         ],
-        "space-before-blocks": "error",
-        "space-infix-ops": "error",
+        "space-before-blocks": "warn",
+        "space-infix-ops": "warn",
         "quotes": [
-            "error",
+            "warn",
             "single"
         ],
         "react/jsx-tag-spacing": [
-            "error", {
+            "warn", {
                 "closingSlash": "never",
                 "beforeSelfClosing": "never",
                 "afterOpening": "never",
@@ -116,7 +116,7 @@
         ],
         "react/prop-types": 0,
         "react/sort-prop-types": [
-            "error", {
+            "warn", {
                 "ignoreCase": true,
                 "callbacksLast": true,
                 "requiredFirst": true,
@@ -125,14 +125,14 @@
             }
         ],
         "semi": [
-            "error",
+            "warn",
             "never"
         ],
-        "sort-imports-es6-autofix/sort-imports-es6": ["error", {
+        "sort-imports-es6-autofix/sort-imports-es6": ["warn", {
             "ignoreCase": false,
             "ignoreMemberSort": false,
             "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
         }],
-        "space-in-parens": ["error", "never"]
+        "space-in-parens": ["warn", "never"]
     }
 }

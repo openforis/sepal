@@ -1,13 +1,13 @@
-import React from 'react'
-import PropTypes from 'prop-types'
 import {Graph} from 'widget/graph'
+import {isMobile} from 'widget/userAgent'
+import {msg} from 'translate'
+import Label from 'widget/label'
+import PropTypes from 'prop-types'
+import React from 'react'
+import _ from 'lodash'
+import format from 'format'
 import moment from 'moment'
 import styles from './ccdcGraph.module.css'
-import Label from 'widget/label'
-import {msg} from 'translate'
-import format from 'format'
-import {isMobile} from 'widget/userAgent'
-import _ from 'lodash'
 
 export class CCDCGraph extends React.Component {
     state = {}
@@ -103,7 +103,6 @@ export class CCDCGraph extends React.Component {
         )
     }
 
-
     renderPoint() {
         const {observations} = this.props
         const {point} = this.state
@@ -129,7 +128,7 @@ export class CCDCGraph extends React.Component {
                 {observations
                     ? <div className={styles.observation}>
                         <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observation.label')}
-                               className={styles.label}/>
+                            className={styles.label}/>
                         <div>{hasObservation
                             ? format.number({value: point.observation, precisionDigits: 3})
                             : <React.Fragment>&ndash;</React.Fragment>
@@ -168,7 +167,7 @@ export class CCDCGraph extends React.Component {
                 </div>
                 <div className={styles.observationCount}>
                     <Label msg={msg('process.ccdc.mapToolbar.ccdcGraph.observationCount.label')}
-                           className={styles.label}/>
+                        className={styles.label}/>
                     <div>{hasModel
                         ? point.observationCount
                         : <React.Fragment>&ndash;</React.Fragment>
@@ -190,7 +189,7 @@ export class CCDCGraph extends React.Component {
         this.update()
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps) {
         this.update(prevProps)
     }
 
@@ -252,19 +251,19 @@ CCDCGraph.defaultProps = {
 
 CCDCGraph.propTypes = {
     band: PropTypes.string,
-    scale: PropTypes.number,
     dateFormat: PropTypes.number,
-    startDate: PropTypes.any,
     endDate: PropTypes.any,
-    highlightGaps: PropTypes.any,
     harmonics: PropTypes.number,
-    segments: PropTypes.object,
-    observations: PropTypes.object,
+    highlightGaps: PropTypes.any,
     highlights: PropTypes.arrayOf(PropTypes.shape({
-        startDate: PropTypes.any.isRequired,
+        color: PropTypes.string.isRequired,
         endDate: PropTypes.any.isRequired,
-        color: PropTypes.string.isRequired
-    }))
+        startDate: PropTypes.any.isRequired,
+    })),
+    observations: PropTypes.object,
+    scale: PropTypes.number,
+    segments: PropTypes.object,
+    startDate: PropTypes.any
 }
 
 const J_DAYS = 0
@@ -282,7 +281,7 @@ const segmentsData = ({observations, startDate, endDate, segments, band, scale, 
         return [date, observationByTimestamp[date.getTime()] || null, [value, rmse]]
     }
 
-    const gap = ({date, prevSegmentIndex, nextSegmentIndex}) => {
+    const gap = ({date}) => {
         // TODO: Support interpolation and extrapolation. Extra props needed for extrapolation
         return [date, observationByTimestamp[date.getTime()] || null, NaN]
     }
@@ -334,51 +333,67 @@ const slice = ({coefs, date, dateFormat, harmonics}) => {
     ].slice(0, harmonics + 1).reduce((acc, value) => acc + value, 0)
 }
 
-const getOmega = (dateFormat) => {
+const getOmega = dateFormat => {
     switch (dateFormat) {
-        case J_DAYS:
-            return 2.0 * Math.PI / 365.25
-        case FRACTIONAL_YEARS:
-            return 2.0 * Math.PI
-        case UNIX_TIME_MILLIS:
-            return 2.0 * Math.PI * 60 * 60 * 24 * 365.25
-        default:
-            throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
+    case J_DAYS:
+        return 2.0 * Math.PI / 365.25
+    case FRACTIONAL_YEARS:
+        return 2.0 * Math.PI
+    case UNIX_TIME_MILLIS:
+        return 2.0 * Math.PI * 60 * 60 * 24 * 365.25
+    default:
+        throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
     }
 }
 
 const fromT = (t, dateFormat) => {
+    function fromJDays() {
+        const epochDay = 719529
+        return new Date((t - epochDay) * 1000 * 3600 * 24)
+    }
+
+    function fromFractionalYears() {
+        const firstOfYear = moment().year(Math.floor(t)).month(1).day(1)
+        const firstOfNextYear = moment(firstOfYear).add(1, 'years')
+        const daysInYear = firstOfNextYear.diff(firstOfYear, 'days')
+        const dayOfYear = Math.floor(daysInYear * (t % 1))
+        return moment(firstOfYear).add(dayOfYear, 'days').toDate()
+    }
+
     switch (dateFormat) {
-        case J_DAYS:
-            const epochDay = 719529
-            return new Date((t - epochDay) * 1000 * 3600 * 24)
-        case FRACTIONAL_YEARS:
-            const firstOfYear = moment().year(Math.floor(t)).month(1).day(1)
-            const firstOfNextYear = moment(firstOfYear).add(1, 'years')
-            const daysInYear = firstOfNextYear.diff(firstOfYear, 'days')
-            const dayOfYear = Math.floor(daysInYear * (t % 1))
-            return moment(firstOfYear).add(dayOfYear, 'days').toDate()
-        case UNIX_TIME_MILLIS:
-            return new Date(t)
-        default:
-            throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
+    case J_DAYS:
+        return fromJDays()
+    case FRACTIONAL_YEARS:
+        return fromFractionalYears()
+    case UNIX_TIME_MILLIS:
+        return new Date(t)
+    default:
+        throw Error('Only dateFormat 0 (Julian days), 1 (Fractional years), and 2 (Unix time milliseconds) is supported')
     }
 }
 
 const toT = (date, dateFormat) => {
+    function toJDay() {
+        const epochDay = 719529
+        return date.getTime() / 1000 / 3600 / 24 + epochDay
+    }
+
+    function toFractionalYears() {
+        const firstOfYear = new Date(Date.UTC(date.getFullYear(), 0, 1, 0, 0, 0))
+        const firstOfNextYear = new Date(Date.UTC(date.getFullYear() + 1, 0, 1, 0, 0, 0))
+        const fraction = (date - firstOfYear) / (firstOfNextYear - firstOfYear)
+        return date.getFullYear() + fraction
+    }
+
     switch (dateFormat) {
-        case J_DAYS:
-            const epochDay = 719529
-            return date.getTime() / 1000 / 3600 / 24 + epochDay
-        case FRACTIONAL_YEARS:
-            const firstOfYear = new Date(Date.UTC(date.getFullYear(), 0, 1, 0, 0, 0))
-            const firstOfNextYear = new Date(Date.UTC(date.getFullYear() + 1, 0, 1, 0, 0, 0))
-            const fraction = (date - firstOfYear) / (firstOfNextYear - firstOfYear)
-            return date.getFullYear() + fraction
-        case UNIX_TIME_MILLIS:
-            return date.getTime()
-        default:
-            throw Error('Only dateFormat 0 (jdate), 1 (fractional years), and 2 (unix seconds) is supported')
+    case J_DAYS:
+        return toJDay()
+    case FRACTIONAL_YEARS:
+        return toFractionalYears()
+    case UNIX_TIME_MILLIS:
+        return date.getTime()
+    default:
+        throw Error('Only dateFormat 0 (jdate), 1 (fractional years), and 2 (unix seconds) is supported')
     }
 }
 

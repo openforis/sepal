@@ -5,14 +5,12 @@ import {recipe} from 'app/home/body/process/recipeContext'
 import {selectFrom} from 'stateUtils'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import CCDCToolbar from './panels/ccdcToolbar'
-import ChartPixel from './panels/chartPixel'
-import ChartPixelButton from './panels/chartPixelButton'
 import MapScale from 'app/home/map/mapScale'
 import MapToolbar from 'app/home/map/mapToolbar'
-import React from 'react'
-import styles from './ccdc.module.css'
-import api from 'api'
 import Notifications from 'widget/notifications'
+import React from 'react'
+import api from 'api'
+import styles from './ccdc.module.css'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),

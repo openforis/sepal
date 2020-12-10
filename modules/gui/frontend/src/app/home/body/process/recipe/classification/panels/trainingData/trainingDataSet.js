@@ -1,20 +1,21 @@
+/* eslint-disable react/jsx-key */
 import {Form} from 'widget/form/form'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
-import PanelSections from 'widget/panelSections'
-import React from 'react'
-import styles from './trainingDataSet.module.css'
-import SectionSelection from './sectionSelection'
-import CsvUploadSection from './csvUploadSection'
-import RecipeSection from './recipeSection'
-import ClassStep from './classStep'
 import ClassMappingStep from './classMappingStep'
-import LocationStep from './locationStep'
+import ClassStep from './classStep'
+import CsvUploadSection from './csvUploadSection'
 import EETableSection from './eeTableSection'
-import SampleClassificationSection from './sampleClassificationSection'
+import LocationStep from './locationStep'
+import PanelSections from 'widget/panelSections'
 import PropTypes from 'prop-types'
+import React from 'react'
+import RecipeSection from './recipeSection'
+import SampleClassificationSection from './sampleClassificationSection'
+import SectionSelection from './sectionSelection'
+import styles from './trainingDataSet.module.css'
 
 const fields = {
     dataSetId: new Form.Field()
@@ -186,18 +187,18 @@ class TrainingDataSet extends React.Component {
     getSelectedImage() {
         const {inputs: {section, recipe, asset}} = this.props
         switch (section.value) {
-            case 'ASSET':
-                return {
-                    type: 'ASSET',
-                    id: asset.value
-                }
-            case 'RECIPE_REF':
-                return {
-                    type: 'RECIPE_REF',
-                    id: recipe.value
-                }
-            default:
-                throw Error(`Unexpected image section: ${section.value}`)
+        case 'ASSET':
+            return {
+                type: 'ASSET',
+                id: asset.value
+            }
+        case 'RECIPE_REF':
+            return {
+                type: 'RECIPE_REF',
+                id: recipe.value
+            }
+        default:
+            throw Error(`Unexpected image section: ${section.value}`)
         }
     }
 

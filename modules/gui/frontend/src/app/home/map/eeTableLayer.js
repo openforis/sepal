@@ -9,6 +9,7 @@ export const setEETableLayer = ({
     destroy$,
     onInitialized,
 }) => {
+
     const watchedProps = {tableId, columnName, columnValue}
     const layer = tableId
         ? new RecipeGeometryLayer({
