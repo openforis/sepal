@@ -24,10 +24,10 @@ bfast
 sepal-ui
 Unidecode
 pyperclip
-geemap
-haversine
 python-dateutil
 pytesmo
+Wand
+PyPDF2 # more recent version are avaiable (PyPDF4)
 
 ########  web api  ########
 falcon
