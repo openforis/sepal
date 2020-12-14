@@ -1,5 +1,9 @@
 .build/
 
+#docker-sync
+.docker-sync
+*.tmp
+
 #Maven
 target
 
@@ -14,7 +18,6 @@ build
 .settings
 
 #Sepal binaries
-/modules/task-executor/docker/binary/task-executor.jar
 /modules/ssh-gateway/docker/binary/sepal-ssh-gateway.jar
 /modules/user/docker/binary/sepal-user.jar
 /modules/sepal-server/docker/binary/sepal.jar
@@ -48,9 +51,6 @@ node_modules/
 
 #Visual Studio
 .vscode
-modules/peatlands/docker/build/
-
-modules/peatlands/docker/env/
 
 #IntelliJ
 *.iml
@@ -76,3 +76,6 @@ modules/peatlands/docker/env/
 /modules/user/out/
 /modules/user/out/production/classes/
 /modules/user/out/test/classes/
+
+# SEPAL data
+sepal-data/

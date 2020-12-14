@@ -1,0 +1,14 @@
+{
+    "port": 5104,
+    "categories": {
+        "cache": "debug",
+        "config": "info",
+        "email": "debug",
+        "emailQueue": "debug",
+        "http": "debug",
+        "main": "info",
+        "messageHanlder": "debug",
+        "messageQueue": "debug",
+        "user": "debug"
+    }
+}

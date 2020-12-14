@@ -7,7 +7,7 @@ echo "*** Installing Open Foris Geospatial Toolkit ***"
 echo "************************************************"
 
 # TODO: Add dans-gdal-scripts - this package currently won't install due to broken dependencies
-apt-get install -y \
+apt-get update && apt-get install -y \
 	 gcc \
 	 g++ \
 	 geotiff-bin \
@@ -32,3 +32,7 @@ yes 1 | ./OpenForisToolkit.run
 rm OpenForisToolkit.run
 
 rm -f /usr/local/bin/gdal_merge.py /usr/local/bin/gdal_rasterize /usr/local/bin/gdalsrsinfo
+
+git clone https://github.com/openforis/geospatial-toolkit.git
+cp -rf geospatial-toolkit/* /usr/local/bin/
+rm -rf geospatial-toolkit

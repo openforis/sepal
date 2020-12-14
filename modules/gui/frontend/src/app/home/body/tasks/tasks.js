@@ -39,7 +39,7 @@ class Tasks extends React.Component {
                             label={msg('button.remove')}
                             onClick={() => this.removeTask(task)}/>
                     </ButtonGroup>
-                ) : task.status === 'ACTIVE' ?
+                ) : ['PENDING', 'ACTIVE'].includes(task.status) ?
                     <Button
                         className={styles.stop}
                         icon='stop'
@@ -125,10 +125,13 @@ class Tasks extends React.Component {
         }
         if (typeof description === 'string') {
             return description
-        } else {
+        } else if (description.messageKey) {
             return msg(description.messageKey, description.messageArgs, description.defaultMessage)
+        } else if (description.defaultMessage) {
+            return description.defaultMessage
+        } else {
+            return msg('tasks.status.executing')
         }
-
     }
 
     componentDidUpdate(prevProps) {

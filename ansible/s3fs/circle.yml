@@ -1,9 +1,0 @@
-dependencies:
-  pre:
-    - sudo pip2 install -r tests/requirements.txt
-
-test:
-  pre:
-    - sudo ln -s ansible-role-s3fs ../Aplyca.S3fs
-  override:
-    - tests/tests.sh

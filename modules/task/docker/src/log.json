@@ -1,0 +1,24 @@
+{
+    "port": 5102,
+    "categories": {
+        "channel-forward": "info",
+        "channel-reverse": "info",
+        "cloudStorage": "debug",
+        "config": "debug",
+        "context": "debug",
+        "default": "info",
+        "ee": "debug",
+        "drive": "debug",
+        "gdal": "info",
+        "http": "info",
+        "httpClient": "info",
+        "limiter": "info",
+        "scheduler": "info",
+        "pool": "info",
+        "service": "info",
+        "task": "debug",
+        "terminal": "info",
+        "transport": "info",
+        "worker": "debug"
+    }
+}

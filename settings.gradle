@@ -4,7 +4,6 @@ include ':sepal-common-test'
 include ':sepal-api-gateway'
 include ':sepal-user'
 include ':sepal-server'
-include ':task-executor'
 include ':sepal-ssh-gateway'
 include ':sepal-gui'
 
@@ -13,6 +12,5 @@ project(':sepal-common-test').projectDir = "$rootDir/common-test" as File
 project(':sepal-api-gateway').projectDir = "$rootDir/modules/api-gateway" as File
 project(':sepal-user').projectDir = "$rootDir/modules/user" as File
 project(':sepal-server').projectDir = "$rootDir/modules/sepal-server" as File
-project(':task-executor').projectDir = "$rootDir/modules/task-executor" as File
 project(':sepal-ssh-gateway').projectDir = "$rootDir/modules/ssh-gateway" as File
 project(':sepal-gui').projectDir = "$rootDir/modules/gui" as File

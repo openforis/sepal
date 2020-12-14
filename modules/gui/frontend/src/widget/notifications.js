@@ -12,7 +12,8 @@ import styles from './notifications.module.css'
 import withSubscriptions from 'subscription'
 
 const PATH = 'Notifications'
-const DISMISS_DELAY_MS = 500
+const PUBLISH_ANIMATION_DURATION_MS = 250
+const DISMISS_ANIMATION_DURATION_MS = 250
 
 const publish$ = new Subject()
 const manualDismiss$ = new Subject()
@@ -20,13 +21,13 @@ const autoDismiss$ = publish$
     .pipe(
         filter(notification => notification.timeout),
         mergeMap(notification =>
-            timer(notification.timeout).pipe(
+            timer(notification.timeout * 1000).pipe(
                 map(() => notification.id)
             )
         )
     )
 const dismiss$ = merge(manualDismiss$, autoDismiss$)
-const remove$ = dismiss$.pipe(delay(DISMISS_DELAY_MS))
+const remove$ = dismiss$.pipe(delay(DISMISS_ANIMATION_DURATION_MS))
 
 const group = ({group = false, id, ...notification}) =>
     group === false
@@ -51,7 +52,7 @@ const publish = notification => {
         id = uuid(),
         level = 'info',
         title = defaultTitle[level],
-        timeout = 3000,
+        timeout = 4,
         dismissable = true,
         ...notification
     }) => ({id, level, title, timeout, dismissable, ...notification})
@@ -99,12 +100,23 @@ class _Notifications extends React.Component {
         )
     }
 
-    renderDismissMessage() {
+    renderDismissMessage(timeout) {
+        const message = timeout
+            ? msg('widget.notification.dismissOrWait', {timeout})
+            : msg('widget.notification.dismiss')
         return (
             <div className={styles.dismiss}>
-                {msg('widget.notification.dismiss')}
+                {message}
             </div>
         )
+    }
+
+    renderAutoDismissIndicator(timeout) {
+        return timeout
+            ? (
+                <div className={styles.autoDismiss} style={{'--auto-dismiss-timeout-s': `${timeout}s`}}/>
+            )
+            : null
     }
 
     renderNotification({id, level, title, message, error, content, timeout, dismissable, dismissing}) {
@@ -119,14 +131,18 @@ class _Notifications extends React.Component {
                         dismissable ? styles.dismissable : null,
                         dismissing ? styles.dismissing : null
                     ].join(' ')}
-                    style={{'--dismiss-time-ms': `${DISMISS_DELAY_MS}ms`}}
+                    style={{
+                        '--publish-animation-duration-ms': `${PUBLISH_ANIMATION_DURATION_MS}ms`,
+                        '--dismiss-animation-duration-ms': `${DISMISS_ANIMATION_DURATION_MS}ms`
+                    }}
                     onClick={() => dismissable && dismiss()}
                 >
                     {title ? this.renderTitle(title) : null}
                     {message ? this.renderMessage(message) : null}
                     {error ? this.renderError(error) : null}
                     {content ? this.renderContent(content, dismiss) : null}
-                    {timeout === 0 ? this.renderDismissMessage() : null}
+                    {this.renderDismissMessage(timeout)}
+                    {this.renderAutoDismissIndicator(timeout)}
                 </div>
             )
             : null

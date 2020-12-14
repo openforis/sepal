@@ -58,3 +58,7 @@ def not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html', exception=e), 500
+
+@app.route('/ceo', methods=['GET'])
+def dummy():
+    return render_template('404.html'), 404

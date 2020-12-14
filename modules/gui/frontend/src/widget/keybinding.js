@@ -12,6 +12,7 @@ class Keybinding extends React.Component {
         const {onEnable, onDisable} = props
         onEnable(() => this.keybinding.enabled = true)
         onDisable(() => this.keybinding.enabled = false)
+        add(this.keybinding)
     }
 
     createKeybinding() {
@@ -50,10 +51,6 @@ class Keybinding extends React.Component {
     render() {
         const {children} = this.props
         return children || null
-    }
-
-    componentDidMount() {
-        add(this.keybinding)
     }
 
     componentDidUpdate() {

@@ -1,7 +1,15 @@
 .panel {
-    width: 24rem;
+    width: 26rem;
 }
 
 .googleAccount {
     margin-top: 1rem;
+}
+
+.connected {
+    color: var(--success-color);
+}
+
+.disconnected {
+    color: var(--warning-color);
 }

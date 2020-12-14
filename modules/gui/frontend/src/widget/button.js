@@ -30,8 +30,8 @@ class _Button extends React.Component {
     }
 
     active() {
-        const {shown = true, disabled = false} = this.props
-        return shown && !disabled
+        const {disabled, busy} = this.props
+        return !disabled && !busy
     }
 
     linked() {
@@ -138,10 +138,10 @@ class _Button extends React.Component {
     }
 
     renderPlainLink(contents) {
-        const {linkUrl, linkTarget, shown, disabled} = this.props
-        return linkUrl && shown && !disabled
+        const {linkUrl, linkTarget} = this.props
+        return this.active() && linkUrl
             ? (
-                <a href={linkUrl} target={linkTarget} onMouseDown={e => e.preventDefault()}>
+                <a href={linkUrl} rel='noopener noreferrer' target={linkTarget} onMouseDown={e => e.preventDefault()}>
                     {contents}
                 </a>
             )
@@ -149,8 +149,8 @@ class _Button extends React.Component {
     }
 
     renderRouteLink(contents) {
-        const {route, shown, disabled} = this.props
-        return route && shown && !disabled
+        const {route} = this.props
+        return this.active() && route
             ? (
                 <Link to={route} onMouseDown={e => e.preventDefault()}>
                     {contents}
@@ -160,8 +160,8 @@ class _Button extends React.Component {
     }
 
     renderTooltip(contents) {
-        const {tooltip, tooltipPlacement, tooltipDisabled, disabled} = this.props
-        return tooltip && !tooltipDisabled && !disabled ? (
+        const {tooltip, tooltipPlacement, tooltipDisabled} = this.props
+        return this.active() && tooltip && !tooltipDisabled ? (
             <Tooltip msg={tooltip} placement={tooltipPlacement}>
                 {contents}
             </Tooltip>
@@ -169,14 +169,14 @@ class _Button extends React.Component {
     }
 
     renderButton(contents) {
-        const {type, tabIndex, disabled, onClickHold, forwardedRef} = this.props
+        const {type, tabIndex, onClickHold, forwardedRef} = this.props
         return (
             <button
                 ref={forwardedRef}
                 type={type}
                 className={this.classNames()}
                 tabIndex={tabIndex}
-                disabled={disabled}
+                disabled={!this.active()}
                 onMouseOver={e => this.handleMouseOver(e)}
                 onMouseOut={e => this.handleMouseOut(e)}
                 onMouseDown={e => this.handleMouseDown(e)}
@@ -188,16 +188,22 @@ class _Button extends React.Component {
     }
 
     renderIcon() {
-        const {icon, iconType, iconFlipHorizontal, iconFlipVertical, iconFixedWidth} = this.props
-        return (
-            <Icon
+        const {busy, icon, iconType, iconVariant, iconSpin, iconFlipHorizontal, iconFlipVertical, iconFixedWidth} = this.props
+        return busy
+            ? <Icon
+                name='spinner'
+                variant={iconVariant}
+                spin
+            />
+            : <Icon
                 name={icon}
                 type={iconType}
+                variant={iconVariant}
+                spin={iconSpin}
                 fixedWidth={iconFixedWidth}
                 flipHorizontal={iconFlipHorizontal}
                 flipVertical={iconFlipVertical}
             />
-        )
     }
 
     renderLabel() {
@@ -219,7 +225,7 @@ class _Button extends React.Component {
     }
 
     render() {
-        const {shown = true} = this.props
+        const {shown} = this.props
         return shown ? (
             this.renderWrapper(
                 this.renderLink(
@@ -263,8 +269,8 @@ class _Button extends React.Component {
 
             addSubscription(
                 clickHold$.subscribe(e => {
-                    const {onClickHold, disabled} = this.props
-                    if (onClickHold && !disabled) {
+                    const {onClickHold} = this.props
+                    if (this.active() && onClickHold) {
                         this.handleClickHold(e)
                     }
                 })
@@ -287,8 +293,8 @@ class _Button extends React.Component {
 
             addSubscription(
                 click$.subscribe(e => {
-                    const {onClick, disabled} = this.props
-                    if (onClick && !disabled) {
+                    const {onClick} = this.props
+                    if (this.active() && onClick) {
                         this.handleClick(e)
                     }
                 })
@@ -307,6 +313,7 @@ Button.propTypes = {
     additionalClassName: PropTypes.string,
     air: PropTypes.oneOf(['normal', 'more', 'less', 'none']),
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
+    busy: PropTypes.any,
     children: PropTypes.any,
     chromeless: PropTypes.any,
     className: PropTypes.string,
@@ -321,7 +328,9 @@ Button.propTypes = {
     iconFlipHorizontal: PropTypes.any,
     iconFlipVertical: PropTypes.any,
     iconPlacement: PropTypes.oneOf(['left', 'right']),
+    iconSpin: PropTypes.any,
     iconType: PropTypes.string,
+    iconVariant: PropTypes.string,
     label: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.array]),
     linkTarget: PropTypes.string,
     linkUrl: PropTypes.string,
@@ -348,6 +357,7 @@ Button.defaultProps = {
     air: 'normal',
     alignment: 'center',
     iconPlacement: 'left',
+    iconVariant: 'normal',
     content: 'default',
     linkTarget: '_blank',
     look: 'default',

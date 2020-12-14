@@ -2,7 +2,6 @@
     --primary-text-color: #white;
     --secondary-text-color: #c7cacc;
     --backdrop-color: rgba(187, 192, 195, 0.05);
-    --feature-icon-size: 1.7rem;
 
     height: 100%;
     display: flex;
@@ -24,7 +23,7 @@
 
 .tagline {
     grid-area: tagline;
-    animation: tagline 1000ms 500ms ease-in-out both;
+    animation: tagline 500ms 250ms ease-in-out both;
 }
 
 @keyframes tagline {
@@ -36,7 +35,7 @@
 
 .title {
     grid-area: title;
-    animation: title 2000ms 0ms ease-in-out both;
+    animation: title 1000ms 0ms ease-in-out both;
 }
 
 @keyframes title {
@@ -48,7 +47,7 @@
 
 .language {
     grid-area: language;
-    animation: language 500ms 2000ms ease-in-out both;
+    animation: language 250ms 1000ms ease-in-out both;
     justify-self: right;
     /* opacity: .75; */
 }
@@ -66,7 +65,7 @@
 
 .features {
     grid-area: features;
-    animation: features 2000ms 0ms ease-in-out both;
+    animation: features 1000ms 0ms ease-in-out both;
 }
 
 @keyframes features {
@@ -78,7 +77,7 @@
 
 .credentials {
     grid-area: credentials;
-    animation: credentials 1000ms 1000ms ease-in-out both;
+    animation: credentials 500ms 500ms ease-in-out both;
 }
 
 @keyframes credentials {
@@ -90,7 +89,7 @@
 
 .privacy {
     grid-area: privacy;
-    animation: privacy 2000ms ease-in-out both;
+    animation: privacy 1000ms ease-in-out both;
     justify-self: right;
     opacity: .7;
 }
@@ -102,87 +101,12 @@
     }
 }
 
-/* Tagline */
-
-.tagline {
-    font-family: Merriweather, Georgia, Times New Roman, Times, serif;
-    font-style: italic;
-    font-size: 1.0rem;
-    line-height: 1.5rem;
-    color: var(--secondary-text-color);
-}
-
-/* Title */
-
-.title {
-    font-family: var(--header-font-family);
-    font-size: 3.5rem;
-    font-weight: 300;
-    line-height: 3.5rem;
-    letter-spacing: .3rem;
-    text-transform: uppercase;
-}
-
-.titleUnderline {
-    width: 4rem;
-    height: 1px;
-    margin: 1rem 0 0 0;
-    background-color: var(--primary-text-color);
-}
-
 /* Features */
 
 .features {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: repeat(4, 1fr);
-}
-
-.feature {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-column-gap: 1.5rem;
-}
-
-.featureIcon {
-    width: calc(var(--feature-icon-size) * 2.5);
-    height: calc(var(--feature-icon-size) * 2.5);
-    border-radius: 50%;
-    font-size: var(--feature-icon-size);
-    display:grid;
-    justify-content: center;
-    align-content: center;
-}
-
-.featureIcon.process {
-    background-color: hsl(var(--section-process-color-h), var(--section-process-color-s), var(--section-process-color-l));
-}
-
-.featureIcon.browse {
-    background-color: hsl(var(--section-browse-color-h), var(--section-browse-color-s), var(--section-browse-color-l));
-}
-
-.featureIcon.apps {
-    background-color: hsl(var(--section-apps-color-h), var(--section-apps-color-s), var(--section-apps-color-l));
-}
-
-.featureIcon.terminal {
-    background-color: hsl(var(--section-terminal-color-h), var(--section-terminal-color-s), var(--section-terminal-color-l));
-}
-
-.featureTitle {
-    font-family: var(--header-font-family);
-    font-weight: normal;
-    font-size: 1.4rem;
-    letter-spacing: 0.15rem;
-    text-transform: uppercase;
-    color: var(--primary-text-color);
-}
-
-.featureDescription {
-    font-size: .9rem;
-    font-weight: lighter;
-    color: var(--secondary-text-color);
 }
 
 /* large displays */

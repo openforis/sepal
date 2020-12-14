@@ -1,7 +1,6 @@
 import {Provider} from 'react-redux'
 import {Router} from 'react-router-dom'
 import {applyMiddleware, createStore} from 'redux'
-import {composeWithDevTools} from 'redux-devtools-extension'
 import {createBrowserHistory} from 'history'
 import {initStore} from 'store'
 import {syncHistoryAndStore} from 'route'
@@ -32,9 +31,14 @@ const batchActions = () => next => action => {
         next(action)
 }
 
+const useDevTools = middleware =>
+    process.env.NODE_ENV === 'development'
+        ? require('redux-devtools-extension').composeWithDevTools(middleware)
+        : middleware
+
 const store = createStore(
     rootReducer,
-    composeWithDevTools(applyMiddleware(batchActions))
+    useDevTools(applyMiddleware(batchActions))
 )
 initStore(store)
 

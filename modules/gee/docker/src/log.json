@@ -1,0 +1,22 @@
+{
+    "port": 5101,
+    "categories": {
+    },
+    "availableCategories": {
+        "config": "info",
+        "default": "debug",
+        "channel-forward": "info",
+        "channel-reverse": "info",
+        "ee": "debug",
+        "http": "debug",
+        "limiter": "debug",
+        "logger": "debug",
+        "main": "info",
+        "scheduler": "debug",
+        "pool": "debug",
+        "service": "debug",
+        "transport": "debug",
+        "worker": "debug",
+        "job:<jobName>": "debug"
+    }
+}

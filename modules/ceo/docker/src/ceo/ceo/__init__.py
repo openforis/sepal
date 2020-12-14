@@ -3,6 +3,7 @@ from flask import Flask
 template_folder = 'templates'
 
 app = Flask(__name__, instance_relative_config=True, template_folder=template_folder, static_url_path='/static', static_folder='../static')
+app.config['MONGO_URI'] = "mongodb://localhost:27017/ceo"
 app.config.from_object('config')
 app.config.from_pyfile('config.py', silent=True)
 
@@ -23,9 +24,9 @@ def beforeFirstRequest(*args, **kwargs):
     mongo.db.records.create_index('id')
     mongo.db.records.create_index('project_id')
     # imagery
-    with app.open_resource('../static/resources/imagery.json') as f:
+    with app.open_resource('../static/resources/imagery.json', mode='r') as f:
         imagery = json.load(f)
         for value in imagery:
             mongo.db.imagery.update({'id': value.get('id')}, {'$set': value}, upsert=True)
 
-import api, web
+from . import api, web

@@ -25,9 +25,10 @@ class _Pageable extends React.Component {
         const isSinglePage = isFirstPage && isLastPage
         return (
             <Keybinding keymap={{
-                'Ctrl+Shift+ArrowLeft': () => this.firstPage(),
-                'Ctrl+ArrowLeft': () => this.previousPage(),
-                'Ctrl+ArrowRight': () => this.nextPage()
+                'Alt+Shift+ArrowLeft': () => this.firstPage(),
+                'Alt+ArrowLeft': () => this.previousPage(),
+                'Alt+ArrowRight': () => this.nextPage(),
+                'Alt+Shift+ArrowRight': () => this.lastPage()
             }}>
                 <Provider value={{
                     items: pageItems,
@@ -65,7 +66,6 @@ class _Pageable extends React.Component {
 
     needsReset(prevProps) {
         return !_.isEqual(prevProps.items, this.props.items)
-            || !_.isEqual(prevProps.matcher, this.props.matcher)
     }
 
     needsRefresh(prevProps) {
@@ -103,6 +103,19 @@ class _Pageable extends React.Component {
         }
     }
 
+    lastPage() {
+        const {items} = this.props
+        const count = items.length
+        if (!this.isLastPage()) {
+            this.setState({
+                pageItems: [],
+                start: undefined,
+                stop: count,
+                direction: -1
+            })
+        }
+    }
+
     previousPage() {
         if (!this.isFirstPage()) {
             this.setState(({start}) => ({
@@ -135,11 +148,6 @@ class _Pageable extends React.Component {
         return !count || stop === count
     }
 
-    isMatching(item) {
-        const {matcher} = this.props
-        return !matcher || matcher(item)
-    }
-
     next(overflow) {
         const {items, fillFirstPage, fillLastPage} = this.props
         const {direction} = this.state
@@ -147,11 +155,11 @@ class _Pageable extends React.Component {
             return
         }
         
-        this.setState(({pageItems, count, start, stop, direction}) => {
-            return direction === 1
+        this.setState(({pageItems, count, start, stop, direction}) =>
+            direction === 1
                 ? nextForwards({pageItems, overflow, start, stop, count})
                 : nextBackwards({pageItems, overflow, start, stop})
-        })
+        )
 
         const nextForwards = ({pageItems, overflow, start, stop, count}) => {
             if (overflow) {
@@ -161,28 +169,23 @@ class _Pageable extends React.Component {
                     pageItems: pageItems.slice(0, -1)
                 }
             }
-            for (;;) {
-                stop = stop === undefined
-                    ? start
-                    : stop + 1
-                if (stop > count) {
-                    return {
-                        stop: count,
-                        direction: fillLastPage ? - 1 : 0
-                    }
-                } else if (stop === start) {
-                    return {
-                        stop: stop
-                    }
-                } else {
-                    const item = items[stop - 1]
-                    if (this.isMatching(item)) {
-                        return {
-                            stop: stop,
-                            pageItems: [...pageItems, item]
-                        }
-                    }
+            stop = stop === undefined
+                ? start
+                : stop + 1
+            if (stop > count) {
+                return {
+                    stop: count,
+                    direction: fillLastPage ? - 1 : 0
                 }
+            }
+            if (stop === start) {
+                return {
+                    stop
+                }
+            }
+            return {
+                stop,
+                pageItems: [...pageItems, items[stop - 1]]
             }
         }
 
@@ -194,28 +197,23 @@ class _Pageable extends React.Component {
                     pageItems: pageItems.slice(1)
                 }
             }
-            for (;;) {
-                start = start === undefined
-                    ? stop
-                    : start - 1
-                if (start < 0) {
-                    return {
-                        start: 0,
-                        direction: fillFirstPage ? 1 : 0
-                    }
-                } else if (start === stop) {
-                    return {
-                        start: start
-                    }
-                } else {
-                    const item = items[start]
-                    if (this.isMatching(item)) {
-                        return {
-                            start: start,
-                            pageItems: [item, ...pageItems]
-                        }
-                    }
+            start = start === undefined
+                ? stop
+                : start - 1
+            if (start < 0) {
+                return {
+                    start: 0,
+                    direction: fillFirstPage ? 1 : 0
                 }
+            }
+            if (start === stop) {
+                return {
+                    start
+                }
+            }
+            return {
+                start,
+                pageItems: [items[start], ...pageItems]
             }
         }
     }
@@ -230,8 +228,7 @@ Pageable.propTypes = {
     children: PropTypes.any.isRequired,
     items: PropTypes.array.isRequired,
     fillFirstPage: PropTypes.bool,
-    fillLastPage: PropTypes.bool,
-    matcher: PropTypes.func
+    fillLastPage: PropTypes.bool
 }
 
 Pageable.defaultProps = {

@@ -58,7 +58,7 @@ let overlayMapManager = {
                     console.error(data, textStatus, jqXHR);
                 } else {
                     if (data.hasOwnProperty('mapid')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token);
+                        that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token, data.urlFormat);
                     }
                 }
                 callback();
@@ -90,7 +90,7 @@ let overlayMapManager = {
                     console.error(data, textStatus, jqXHR);
                 } else {
                     if (data.hasOwnProperty('mapid')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token);
+                        that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token, data.urlFormat);
                     }
                     callback();
                 }
@@ -221,7 +221,7 @@ let overlayMapManager = {
                     console.error(jqXHR, textStatus, errorThrown);
                 }).done(function(data, textStatus, jqXHR) {
                     if (data.hasOwnProperty('mapId')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapId, data.token);
+                        that.overlayMapTypes[index] = createEarthEngineLayer(data.mapId, data.token, data.urlTemplate);
                     }
                     callback();
                 });
@@ -242,14 +242,14 @@ let overlayMapManager = {
             callback();
         }
 
-        function createEarthEngineLayer(mapId, token) {
+        function createEarthEngineLayer(mapId, token, urlFormat) {
           if (document.documentMode) {
             return new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {});
           } else {
             // Requires Content-Security-Policy, not available in IE
             return new ee.layers.ImageOverlay(
                 new ee.layers.EarthEngineTileSource(
-                    toMapId(mapId, token)
+                    toMapId(mapId, token, urlFormat)
                 )
             )
           }
@@ -259,22 +259,18 @@ let overlayMapManager = {
 
 };
 
-
-
-
 // Creates a ee.data.RawMapId.
-// https://github.com/google/earthengine-api/blob/1a3121aa7574ecf2d5432c047621081aed8e1b28/javascript/src/data.js#L2198
-const toMapId = (mapid, token) => {
-    const path = `https://earthengine.googleapis.com/map/${mapid}`
-    const suffix = `?token=${token}`
-    // Builds a URL of the form {tileBaseUrl}{path}/{z}/{x}/{y}{suffix}
+const toMapId = (mapid, token, urlTemplate) => {
     const formatTileUrl = (x, y, z) => {
         const width = Math.pow(2, z)
         x = x % width
         if (x < 0) {
             x += width
         }
-        return [path, z, x, y].join('/') + suffix
+        return urlTemplate
+            .replace('{x}', x)
+            .replace('{y}', y)
+            .replace('{z}', z)
     }
     return {mapid, token, formatTileUrl}
 }

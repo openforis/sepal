@@ -91,7 +91,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
 
             set(name, value) {
                 const prevValue = this.state.values[name]
-                if (value !== prevValue && !_.isEqual(value, prevValue))
+                if (value !== prevValue && !_.isEqual(value, prevValue)) {
                     this.setState(prevState => {
                         const state = _.cloneDeep(prevState)
                         state.values[name] = value
@@ -105,6 +105,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                         state.gotClean[name] = state.gotClean[name] || (!state.dirty && prevState.dirty)
                         return state
                     }, () => this.notifyOnChange(name, value))
+                }
                 return this
             }
 
@@ -226,7 +227,7 @@ export const form = ({fields = {}, constraints = {}, mapStateToProps}) =>
                 const inputs = {}
                 Object.keys(fields).forEach(name => {
                     inputs[name] = {
-                        name: name,
+                        name,
                         value: this.state.values[name],
                         error: this.state.errors[name],
                         validationFailed: !!this.state.errors[name] || !!this.getConstraintErrorsForField(name),
@@ -300,7 +301,7 @@ export class Form extends React.Component {
 
 Form.propTypes = {
     children: PropTypes.any.isRequired,
-    onSubmit: PropTypes.func.isRequired,
+    onSubmit: PropTypes.func,
     className: PropTypes.string
 }
 

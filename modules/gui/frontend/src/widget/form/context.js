@@ -1,5 +1,5 @@
+import {withContext} from 'context'
 import React from 'react'
-import withContext from 'context'
 
 export const FormContext = React.createContext()
 

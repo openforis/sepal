@@ -65,7 +65,7 @@ def generate_id(value):
     return hash_object.hexdigest()
 
 def listToCSVRowString(lst):
-    output = io.BytesIO()
+    output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(lst)
     return output.getvalue()

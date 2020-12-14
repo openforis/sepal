@@ -1,37 +1,33 @@
 package component.task
 
 import org.openforis.sepal.command.ExecutionFailed
-import spock.lang.Ignore
 
-import static org.openforis.sepal.component.task.api.Task.State.CANCELED
+import static org.openforis.sepal.component.task.api.Task.State.CANCELING
 
 class CancelTask_Test extends AbstractTaskTest {
-    @Ignore
-    def 'Given one pending task, when canceling it, task is canceled, work is not canceled, and session is closed'() {
+    def 'Given one pending task, when canceling it, task is canceling, work is not canceled'() {
         def task = pendingTask()
 
         when:
         cancelTask(task)
 
         then:
-        oneTaskIs CANCELED
+        oneTaskIs CANCELING
         workerGateway.canceledNone()
-        sessionManager.closedOne()
     }
 
-    def 'Given one active task, when canceling it, task is canceled, work is canceled, and session is closed'() {
+    def 'Given one active task, when canceling it, task is canceling and work is canceled'() {
         def task = activeTask()
 
         when:
         cancelTask(task)
 
         then:
-        oneTaskIs CANCELED
+        oneTaskIs CANCELING
         workerGateway.canceledOne()
-        sessionManager.closedOne()
     }
 
-    def 'Given two active tasks, when canceling one, task is canceled, work is canceled, and session is not closed'() {
+    def 'Given two active tasks, when canceling one, task is canceling and work is canceled'() {
         activeTask()
         def task = activeTask()
 
@@ -39,43 +35,18 @@ class CancelTask_Test extends AbstractTaskTest {
         cancelTask(task)
 
         then:
-        oneTaskIs CANCELED
+        oneTaskIs CANCELING
         workerGateway.canceledOne()
-        sessionManager.closedNone()
     }
 
-    def 'Given two task in different instance types, when canceling one, task is canceled, and session is closed'() {
-        def task = activeTask()
-        activeTask(instanceType: 'another-instance-type')
-
-        when:
-        cancelTask(task)
-
-        then:
-        oneTaskIs CANCELED
-        sessionManager.closedOne()
-    }
-
-    def 'Given two tasks for different users, when canceling one, task is canceled, and session is closed'() {
-        def task = activeTask()
-        activeTask(username: 'another-username')
-
-        when:
-        cancelTask(task)
-
-        then:
-        oneTaskIs CANCELED
-        sessionManager.closedOne()
-    }
-
-    def 'Given task, when other user cancel task, task is not canceled, and execution fails'() {
+    def 'Given task, when other user cancel task, task is not canceling, and execution fails'() {
         def task = activeTask([username: 'another-username'])
 
         when:
         cancelTask(task)
 
         then:
-        noTaskIs CANCELED
+        noTaskIs CANCELING
         thrown ExecutionFailed
     }
 }

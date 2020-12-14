@@ -3,11 +3,10 @@ package org.openforis.sepal.component.workersession.command
 import groovy.transform.Canonical
 import groovy.transform.EqualsAndHashCode
 import org.openforis.sepal.command.AbstractCommand
-import org.openforis.sepal.command.CommandHandler
-import org.openforis.sepal.component.workersession.api.InstanceManager
+import org.openforis.sepal.command.NonTransactionalCommandHandler
+import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
-import org.openforis.sepal.component.workersession.event.SessionClosed
-import org.openforis.sepal.event.EventDispatcher
+import org.openforis.sepal.transaction.TransactionManager
 
 @EqualsAndHashCode(callSuper = true)
 @Canonical
@@ -15,25 +14,26 @@ class CloseTimedOutSessions extends AbstractCommand<Void> {
 
 }
 
-class CloseTimedOutSessionsHandler implements CommandHandler<Void, CloseTimedOutSessions> {
+class CloseTimedOutSessionsHandler implements NonTransactionalCommandHandler<Void, CloseTimedOutSessions> {
     private final WorkerSessionRepository repository
-    private final InstanceManager instanceManager
-    private final EventDispatcher eventDispatcher
+    private final TransactionManager transactionManager
+    private final CloseSessionHandler closeSessionHandler
 
     CloseTimedOutSessionsHandler(
-        WorkerSessionRepository repository,
-        InstanceManager instanceManager,
-        EventDispatcher eventDispatcher) {
+            WorkerSessionRepository repository,
+            CloseSessionHandler closeSessionHandler,
+            TransactionManager transactionManager) {
         this.repository = repository
-        this.instanceManager = instanceManager
-        this.eventDispatcher = eventDispatcher
+        this.transactionManager = transactionManager
+        this.closeSessionHandler = closeSessionHandler
     }
 
     Void execute(CloseTimedOutSessions command) {
-        def timedOutSessions = repository.timedOutSessions()
-        timedOutSessions.each { repository.update(it.close()) }
-        timedOutSessions.each { instanceManager.releaseInstance(it.instance.id) }
-        timedOutSessions.each { eventDispatcher.publish(new SessionClosed(it.id)) }
+        repository.timedOutSessions().each { WorkerSession session ->
+            transactionManager.withTransaction {
+                closeSessionHandler.execute(new CloseSession(sessionId: session.id))
+            }
+        }
         return null
     }
 }

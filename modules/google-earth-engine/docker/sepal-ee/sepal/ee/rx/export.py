@@ -28,18 +28,11 @@ def export_image_to_asset(
     asset_id, description = _init_asset_id_and_description(asset_id, description)
 
     def create_task():
-        return ee.batch.Export.image.toAsset(
-            image=image,
-            description=description,
-            assetId=asset_id,
-            pyramidingPolicy=pyramiding_policy,
-            dimensions=dimensions,
-            region=region,
-            scale=scale,
-            crs=crs,
-            crsTransform=crs_transform,
-            maxPixels=max_pixels
-        )
+        task = ee.batch.Export.image.toAsset(image=image, description=description, assetId=asset_id,
+            pyramidingPolicy=pyramiding_policy, dimensions=dimensions, region=region, scale=scale, crs=crs,
+            crsTransform=crs_transform, maxPixels=max_pixels)
+        task.asset_id = asset_id
+        return task
 
     return _export_to_asset(
         credentials,
@@ -59,11 +52,9 @@ def export_table_to_asset(
     asset_id, description = _init_asset_id_and_description(asset_id, description)
 
     def create_task():
-        return ee.batch.Export.table.toAsset(
-            collection=collection,
-            description=description,
-            assetId=asset_id
-        )
+        task = ee.batch.Export.table.toAsset(collection=collection, description=description, assetId=asset_id)
+        task.asset_id = asset_id
+        return task
 
     return _export_to_asset(
         credentials,
@@ -85,7 +76,6 @@ def export_image_to_drive(
         crs: str = None,
         crs_transform: str = None,
         max_pixels: int = None,
-        shard_size: int = None,
         file_dimensions=None,
         skip_empty_tiles=None,
         file_format: str = None,
@@ -104,7 +94,6 @@ def export_image_to_drive(
             crs=crs,
             crsTransform=crs_transform,
             maxPixels=max_pixels,
-            shardSize=shard_size,
             fileDimensions=file_dimensions,
             skipEmptyTiles=skip_empty_tiles,
             fileFormat=file_format,
@@ -163,16 +152,16 @@ def _init_asset_id_and_description(asset_id, description):
 
 
 def _first_asset_root():
-    asset_roots = ee.data.getAssetRoots()
+    asset_roots = [bucket['id'] for bucket in ee.data.listBuckets()['assets']]
     if not asset_roots:
         raise Exception('User has no GEE asset roots: {}'.format(ee.Credentials()))
-    return asset_roots[0]['id']
+    return asset_roots[0]
 
 
 def _export_to_asset(credentials, create_task, description, retries):
     def create_observable():
         return execute(credentials, create_task, description=description).pipe(
-            flat_map(lambda task: delete_asset(credentials, task.config['assetId']).pipe(
+            flat_map(lambda task: delete_asset(credentials, task.asset_id).pipe(
                 flat_map(lambda _: execute_task(credentials, task))
             ))
         )

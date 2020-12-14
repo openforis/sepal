@@ -11,24 +11,57 @@ import styles from './input.module.css'
 import withForwardedRef from 'ref'
 
 class _Input extends React.Component {
+    state = {
+        value: '',
+        focused: false
+    }
+
     constructor(props) {
         super(props)
         this.ref = props.forwardedRef || React.createRef()
     }
 
-    state = {
-        value: null
+    componentDidMount() {
+        const {value} = this.props
+        const start = value.length
+        const end = value.length
+        this.setState({start, end})
     }
 
-    static getDerivedStateFromProps(props) {
-        const {value} = props
-        return {
-            value
+    componentDidUpdate(prevProps, prevState) {
+        const {value} = this.props
+        const input = this.ref.current
+        input.value = value
+        if (this.isSelectionAllowed()) {
+            const {start, end} = this.state
+            if (prevState.start !== start) {
+                input.selectionStart = start
+            }
+            if (prevState.end !== end) {
+                input.selectionEnd = end
+            }
+        }
+    }
+
+    isSelectionAllowed() {
+        const input = this.ref.current
+        return input && /text|search|password|tel|url/.test(input.type)
+    }
+
+    moveCursorToEnd() {
+        const el = this.ref.current
+        if (typeof el.selectionStart == 'number') {
+            el.selectionStart = el.selectionEnd = el.value.length
+        } else if (typeof el.createTextRange != 'undefined') {
+            el.focus()
+            var range = el.createTextRange()
+            range.collapse(false)
+            range.select()
         }
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, border, onClick} = this.props
+        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, busyMessage, border, onClick} = this.props
         return (
             <Widget
                 className={[
@@ -40,6 +73,7 @@ class _Input extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 errorMessage={errorMessage}
+                busyMessage={busyMessage}
                 border={border}
                 onClick={e => onClick && onClick(e)}
             >
@@ -63,35 +97,56 @@ class _Input extends React.Component {
 
     renderInput() {
         const {
-            type, name, value, defaultValue, placeholder, maxLength, tabIndex,
-            autoFocus, autoComplete, autoCorrect, autoCapitalize, spellCheck, disabled, readOnly,
+            type, name, placeholder, maxLength, tabIndex,
+            autoFocus, autoComplete, autoCorrect, autoCapitalize, spellCheck, disabled, readOnly, transform,
             onBlur, onChange, onFocus
         } = this.props
+        const {focused} = this.state
+        const {value} = this.props
         return (
             // [HACK] input is wrapped in a div for fixing Firefox input width in flex
-            <div className={styles.inputWrapper}>
-                <input
-                    ref={this.ref}
-                    className={readOnly ? styles.readOnly : null}
-                    type={this.isSearchInput() ? 'text' : type}
-                    name={name}
-                    value={value}
-                    defaultValue={defaultValue}
-                    placeholder={placeholder}
-                    maxLength={maxLength}
-                    tabIndex={tabIndex}
-                    autoFocus={autoFocus && !isMobile()}
-                    autoComplete={autoComplete ? 'on' : 'off'}
-                    autoCorrect={autoCorrect ? 'on' : 'off'}
-                    autoCapitalize={autoCapitalize ? 'on' : 'off'}
-                    spellCheck={spellCheck ? 'true' : 'false'}
-                    disabled={disabled}
-                    readOnly={readOnly ? 'readonly' : ''}
-                    onBlur={e => onBlur && onBlur(e)}
-                    onChange={e => onChange && onChange(e)}
-                    onFocus={e => onFocus && onFocus(e)}
-                />
-            </div>
+            <Keybinding keymap={{' ': null}} disabled={!focused} priority>
+                <div className={styles.inputWrapper}>
+                    <input
+                        ref={this.ref}
+                        className={readOnly ? styles.readOnly : null}
+                        type={this.isSearchInput() ? 'text' : type}
+                        name={name}
+                        defaultValue={value}
+                        placeholder={placeholder}
+                        maxLength={maxLength}
+                        tabIndex={tabIndex}
+                        autoFocus={autoFocus && !isMobile()}
+                        autoComplete={autoComplete ? 'on' : 'off'}
+                        autoCorrect={autoCorrect ? 'on' : 'off'}
+                        autoCapitalize={autoCapitalize ? 'on' : 'off'}
+                        spellCheck={spellCheck ? 'true' : 'false'}
+                        disabled={disabled}
+                        readOnly={readOnly ? 'readonly' : ''}
+                        onFocus={e => {
+                            this.setState({focused: true})
+                            onFocus && onFocus(e)
+                        }}
+                        onBlur={e => {
+                            this.setState({focused: false})
+                            onBlur && onBlur(e)
+                        }}
+                        onChange={e => {
+                            const value = transform
+                                ? transform(e.target.value)
+                                : e.target.value
+
+                            if (this.isSelectionAllowed()) {
+                                const start = e.target.selectionStart
+                                const end = e.target.selectionEnd
+                                this.setState({start, end})
+                            }
+                            e.target.value = value
+                            onChange && onChange(e)
+                        }}
+                    />
+                </div>
+            </Keybinding>
         )
     }
 
@@ -152,8 +207,8 @@ Input.propTypes = {
     autoCorrect: PropTypes.any,
     autoFocus: PropTypes.any,
     border: PropTypes.any,
+    busyMessage: PropTypes.any,
     className: PropTypes.string,
-    defaultValue: PropTypes.any,
     disabled: PropTypes.any,
     errorMessage: PropTypes.string,
     fadeOverflow: PropTypes.any,
@@ -168,6 +223,7 @@ Input.propTypes = {
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
     tooltipPlacement: PropTypes.string,
+    transform: PropTypes.func,
     type: PropTypes.string,
     value: PropTypes.any,
     onBlur: PropTypes.func,
@@ -189,7 +245,9 @@ Input.defaultProps = {
 
 class _Textarea extends React.Component {
     state = {
-        textareaFocused: false
+        focused: false,
+        start: null,
+        end: null
     }
 
     constructor(props) {
@@ -198,7 +256,7 @@ class _Textarea extends React.Component {
     }
 
     render() {
-        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, border} = this.props
+        const {className, disabled, label, tooltip, tooltipPlacement, errorMessage, busyMessage, border} = this.props
         return (
             <Widget
                 className={[
@@ -210,6 +268,7 @@ class _Textarea extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 errorMessage={errorMessage}
+                busyMessage={busyMessage}
                 border={border}>
                 {this.renderTextArea()}
             </Widget>
@@ -217,10 +276,10 @@ class _Textarea extends React.Component {
     }
 
     renderTextArea() {
-        const {className, name, value, autoFocus, tabIndex, minRows, maxRows, onChange, onBlur} = this.props
-        const {textareaFocused} = this.state
+        const {className, name, value, autoFocus, tabIndex, minRows, maxRows, onChange, onBlur, onFocus} = this.props
+        const {focused} = this.state
         return (
-            <Keybinding keymap={{Enter: null}} disabled={!textareaFocused} priority>
+            <Keybinding keymap={{Enter: null, ' ': null}} disabled={!focused} priority>
                 <TextareaAutosize
                     ref={this.element}
                     className={className}
@@ -230,12 +289,15 @@ class _Textarea extends React.Component {
                     autoFocus={autoFocus && !isMobile()}
                     minRows={minRows}
                     maxRows={maxRows}
-                    onChange={e => onChange && onChange(e)}
-                    onFocus={() => this.setState({textareaFocused: true})}
+                    onFocus={e => {
+                        this.setState({focused: true})
+                        onFocus && onFocus(e)
+                    }}
                     onBlur={e => {
-                        this.setState({textareaFocused: false})
+                        this.setState({focused: false})
                         onBlur && onBlur(e)
                     }}
+                    onChange={e => onChange && onChange(e)}
                 />
             </Keybinding>
         )
@@ -249,9 +311,10 @@ export const Textarea = compose(
 
 Textarea.propTypes = {
     autoFocus: PropTypes.any,
+    busyMessage: PropTypes.string,
     className: PropTypes.string,
     disabled: PropTypes.any,
-    errorMessage: PropTypes.any,
+    errorMessage: PropTypes.string,
     label: PropTypes.any,
     maxRows: PropTypes.number,
     minRows: PropTypes.number,
@@ -262,7 +325,8 @@ Textarea.propTypes = {
     tooltipPlacement: PropTypes.any,
     value: PropTypes.any,
     onBlur: PropTypes.func,
-    onChange: PropTypes.func
+    onChange: PropTypes.func,
+    onFocuse: PropTypes.func
 }
 
 Textarea.defaultProps = {

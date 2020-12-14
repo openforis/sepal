@@ -1,0 +1,37 @@
+.panel {
+    margin-top: 3rem;
+    max-width: 30rem;
+}
+
+.layerOptions {
+    display: flex;
+}
+
+.layerOptions > *:not(:last-child) {
+    margin-right: 1rem;
+}
+
+.dropDown {
+    margin-right: 0.5rem;
+    font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
+    font-weight: 100;
+    color: #ccc;
+    border: var(--wireframe);
+    padding: 0.35rem 1rem;
+    background-color: hsla(40, 8%, 12%, 0.95);
+}
+
+.dropDown:hover {
+    background-color: hsla(40, 8%, 15%, 0.95);
+    color: #fff;
+}
+
+.dropDownOptions {
+    position: absolute;
+    background-color: hsla(40, 8%, 12%, 0.95);
+    padding: 1rem;
+}
+
+.dropDownOption {
+    margin: 1rem;
+}

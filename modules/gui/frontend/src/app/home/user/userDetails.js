@@ -1,20 +1,18 @@
 import {Activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
-import {ButtonGroup} from 'widget/buttonGroup'
-import {CenteredProgress} from 'widget/progress'
 import {Form, form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
 import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {currentUser} from 'widget/user'
+import {currentUser, updateCurrentUserDetails$} from 'widget/user'
 import {msg} from 'translate'
-import {revokeGoogleAccess$, updateCurrentUserDetails$} from 'widget/user'
 import ChangePassword from './changePassword'
+import GoogleAccount from './googleAccount'
+import Icon from 'widget/icon'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import api from 'api'
 import styles from './userDetails.module.css'
 
 const fields = {
@@ -22,31 +20,25 @@ const fields = {
         .notBlank('user.userDetails.form.name.required'),
     email: new Form.Field()
         .notBlank('user.userDetails.form.email.required'),
-    organization: new Form.Field()
+    organization: new Form.Field(),
+    emailNotificationsEnabled: new Form.Field()
 }
-const mapStateToProps = () => {
+
+const mapStateToProps = state => {
     const user = currentUser()
     return {
         user,
         values: {
             name: user.name,
             email: user.email,
-            organization: user.organization
-        }
+            organization: user.organization,
+            emailNotificationsEnabled: user.emailNotificationsEnabled
+        },
+        tasks: state.tasks
     }
 }
 
 class _UserDetails extends React.Component {
-    useUserGoogleAccount(e) {
-        e.preventDefault()
-        api.user.getGoogleAccessRequestUrl$(window.location.hostname)
-            .subscribe(({url}) => window.location = url)
-    }
-
-    useSepalGoogleAccount(e) {
-        e.preventDefault()
-        this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT', revokeGoogleAccess$())
-    }
 
     updateUserDetails(userDetails) {
         updateCurrentUserDetails$(userDetails).subscribe(
@@ -55,35 +47,15 @@ class _UserDetails extends React.Component {
         )
     }
 
-    renderGoogleAccountButton() {
-        const {user, form} = this.props
+    isUserGoogleAccount() {
+        const {user} = this.props
         return user.googleTokens
-            ? (
-                <Button
-                    label={msg('user.userDetails.useSepalGoogleAccount.label')}
-                    icon='google'
-                    iconType='brands'
-                    tooltip={msg('user.userDetails.useSepalGoogleAccount.tooltip')}
-                    disabled={form.isDirty()}
-                    onClick={e => this.useSepalGoogleAccount(e)}
-                />
-            ) : (
-                <Button
-                    label={msg('user.userDetails.useUserGoogleAccount.label')}
-                    icon='google'
-                    iconType='brands'
-                    tooltip={msg('user.userDetails.useUserGoogleAccount.tooltip')}
-                    disabled={form.isDirty()}
-                    onClick={e => this.useUserGoogleAccount(e)}
-                />
-            )
     }
 
     renderPanel() {
-        const {form, inputs: {name, email, organization}} = this.props
-        return this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT').active
-            ? <CenteredProgress title={msg('user.userDetails.switchingToSepalGoogleAccount')}/>
-            : <React.Fragment>
+        const {inputs: {name, email, organization, emailNotificationsEnabled}} = this.props
+        return (
+            <React.Fragment>
                 <Panel.Content>
                     <Layout>
                         <Form.Input
@@ -104,25 +76,68 @@ class _UserDetails extends React.Component {
                             input={organization}
                             spellCheck={false}
                         />
-                        <div className={styles.googleAccount}>
-                            <ButtonGroup>
-                                {this.renderGoogleAccountButton()}
-                            </ButtonGroup>
-                        </div>
+                        <Form.Buttons
+                            label={msg('user.userDetails.form.emailNotifications.label')}
+                            tooltip={msg('user.userDetails.form.emailNotifications.tooltip')}
+                            input={emailNotificationsEnabled}
+                            multiple={false}
+                            options={[{
+                                value: true,
+                                label: msg('user.userDetails.form.emailNotifications.enabled.label'),
+                                tooltip: msg('user.userDetails.form.emailNotifications.enabled.tooltip')
+                            }, {
+                                value: false,
+                                label: msg('user.userDetails.form.emailNotifications.disabled.label'),
+                                tooltip: msg('user.userDetails.form.emailNotifications.disabled.tooltip')
+                            }]}
+                            type='horizontal-nowrap'
+                        />
                     </Layout>
                 </Panel.Content>
                 <Form.PanelButtons>
-                    <Activator id='changePassword'>
-                        {({canActivate, activate}) =>
-                            <Button
-                                icon={'key'}
-                                label={msg('user.changePassword.title')}
-                                disabled={!canActivate || form.isDirty()}
-                                onClick={() => activate()}/>
-                        }
-                    </Activator>
+                    {this.renderExtraButtons()}
                 </Form.PanelButtons>
             </React.Fragment>
+        )
+    }
+
+    renderExtraButtons() {
+        const {form} = this.props
+        return form.isDirty()
+            ? null
+            : <React.Fragment>
+                <Activator id='changePassword'>
+                    {({canActivate, activate}) =>
+                        <Button
+                            icon={'key'}
+                            label={msg('user.changePassword.label')}
+                            disabled={!canActivate || form.isDirty()}
+                            onClick={() => activate()}/>
+                    }
+                </Activator>
+                <Activator id='googleAccount'>
+                    {({canActivate, activate}) =>
+                        <Button
+                            icon='google'
+                            iconType='brands'
+                            label={msg('user.googleAccount.label')}
+                            disabled={!canActivate || form.isDirty()}
+                            onClick={() => activate()}/>
+                    }
+                </Activator>
+            </React.Fragment>
+    }
+
+    renderConnectionStatus() {
+        const connected = this.isUserGoogleAccount()
+        return (
+            <Layout type='horizontal-nowrap' spacing='compact'>
+                <Icon name='google' type='brands'/>
+                <div className={connected ? styles.connected : styles.disconnected}>
+                    {msg(connected ? 'user.googleAccount.connected.label' : 'user.googleAccount.disconnected.label')}
+                </div>
+            </Layout>
+        )
     }
 
     render() {
@@ -137,8 +152,11 @@ class _UserDetails extends React.Component {
                 close={() => deactivate()}>
                 <Panel.Header
                     icon='user'
-                    title={msg('user.userDetails.title')}/>
+                    title={msg('user.userDetails.title')}
+                    label={this.renderConnectionStatus()}
+                />
                 {this.renderPanel()}
+                {/* {this.renderProgress()} */}
             </Form.Panel>
         )
     }
@@ -146,7 +164,8 @@ class _UserDetails extends React.Component {
 
 const policy = () => ({
     _: 'disallow',
-    changePassword: 'allow-then-deactivate'
+    changePassword: 'allow-then-deactivate',
+    googleAccount: 'allow-then-deactivate'
 })
 
 const UserDetails = compose(
@@ -177,6 +196,7 @@ const _UserDetailsButton = ({className, username}) =>
         </Activator>
         <UserDetails/>
         <ChangePassword/>
+        <GoogleAccount/>
     </React.Fragment>
 
 export const UserDetailsButton = compose(

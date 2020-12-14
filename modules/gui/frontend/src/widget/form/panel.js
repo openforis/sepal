@@ -74,7 +74,7 @@ class _FormPanel extends React.Component {
                         <PanelButtonContext.Consumer>
                             {placementFromContext => (
                                 <FormPanelContext.Provider value={{
-                                    id: id,
+                                    id,
                                     wizard,
                                     first: !back,
                                     last: !next,

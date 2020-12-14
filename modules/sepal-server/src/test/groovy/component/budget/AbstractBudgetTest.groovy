@@ -5,6 +5,7 @@ import component.workersession.FakeGoogleOAuthGateway
 import component.workersession.FakeInstanceManager
 import fake.Database
 import fake.FakeClock
+import fake.FakeTopic
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.budget.api.Budget
 import org.openforis.sepal.component.budget.api.UserInstanceSpending
@@ -12,8 +13,8 @@ import org.openforis.sepal.component.budget.api.UserSpendingReport
 import org.openforis.sepal.component.budget.api.UserStorageUse
 import org.openforis.sepal.component.budget.command.CheckUserInstanceSpending
 import org.openforis.sepal.component.budget.command.CheckUserStorageUse
-import org.openforis.sepal.component.budget.command.DetermineUserStorageUsage
 import org.openforis.sepal.component.budget.command.UpdateBudget
+import org.openforis.sepal.component.budget.command.UpdateUserStorageUsage
 import org.openforis.sepal.component.budget.query.FindUsersExceedingBudget
 import org.openforis.sepal.component.budget.query.GenerateSpendingReport
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
@@ -58,6 +59,8 @@ abstract class AbstractBudgetTest extends Specification {
             userRepository,
             userFiles,
             eventDispatcher,
+            new FakeTopic(),
+            new FakeTopic(),
             clock
     )
     final sessionComponent = new WorkerSessionComponent(
@@ -84,9 +87,14 @@ abstract class AbstractBudgetTest extends Specification {
     }
 
     final <E extends Event> E published(Class<E> eventType) {
-        def recievedEvent = events.find { it.class.isAssignableFrom(eventType) }
-        assert recievedEvent, "Expected to event of type $eventType to have been published. Actually published $events"
-        recievedEvent as E
+        def receivedEvent = events.find { it.class.isAssignableFrom(eventType) }
+        assert receivedEvent, "Expected to event of type $eventType to have been published. Actually published $events"
+        receivedEvent as E
+    }
+
+    final <E extends Event> void notPublished(Class<E> eventType) {
+        def receivedEvent = events.find { it.class.isAssignableFrom(eventType) }
+        assert !receivedEvent, "Expected no event of type $eventType to have been published. Found $receivedEvent"
     }
 
     final UserInstanceSpending checkUserInstanceSpending(Map args = [:]) {
@@ -119,8 +127,11 @@ abstract class AbstractBudgetTest extends Specification {
         component.submit(new FindUsersExceedingBudget())
     }
 
-    final void determineStorageUsage() {
-        component.submit(new DetermineUserStorageUsage())
+    final void updateStorageUsage(Map args) {
+        component.submit(new UpdateUserStorageUsage(
+                userToUpdate: username(args),
+                gbUsed: args.gbUsed as Double ?: 0d
+        ))
     }
 
     private String username(Map args) {
@@ -154,10 +165,10 @@ abstract class AbstractBudgetTest extends Specification {
 
         clock.set(start)
         userFiles.gbUsed(username(args), gb)
-        determineStorageUsage()
+        updateStorageUsage(gbUsed: gb)
         if (hours) {
             clock.forward((hours * 60d * 60d) as long, TimeUnit.SECONDS)
-            determineStorageUsage()
+            updateStorageUsage(gbUsed: gb)
         }
     }
 

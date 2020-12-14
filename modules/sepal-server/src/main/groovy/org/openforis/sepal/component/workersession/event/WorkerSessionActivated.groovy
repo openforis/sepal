@@ -6,5 +6,6 @@ import org.openforis.sepal.event.Event
 
 @Immutable
 class WorkerSessionActivated implements Event {
+    String username
     WorkerSession session
 }

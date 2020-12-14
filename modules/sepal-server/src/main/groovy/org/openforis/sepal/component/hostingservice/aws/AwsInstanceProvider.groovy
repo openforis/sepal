@@ -3,6 +3,7 @@ package org.openforis.sepal.component.hostingservice.aws
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model.*
+import groovy.time.TimeCategory
 import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
@@ -35,7 +36,7 @@ final class AwsInstanceProvider implements InstanceProvider {
         def credentials = new BasicAWSCredentials(config.accessKey, config.secretKey)
         client = new AmazonEC2Client(credentials)
         client.endpoint = "https://ec2.${region}.amazonaws.com"
-        imageId = fetchImageId(availabilityZone)
+        imageId = fetchImageId(region)
     }
 
     List<WorkerInstance> launchIdle(String instanceType, int count) {
@@ -54,12 +55,12 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private WorkerInstance waitForPublicIpToBecomeAvailable(WorkerInstance instance, String instanceType, WorkerReservation reservation) {
         LOG.debug("Waiting for public IP to be come available on instance $instance, " +
-            "instanceType: $instanceType, reservation: $reservation")
+                "instanceType: $instanceType, reservation: $reservation")
         int retries = 0
         while (!instance.host && retries < Integer.MAX_VALUE) {
             retries++
             LOG.debug("Getting instance $instance.id to see if the public ID is assigned yet, " +
-                "instanceType: $instanceType, reservation: $reservation")
+                    "instanceType: $instanceType, reservation: $reservation")
 
             instance = getInstance(instance.id)
             LOG.debug("Got instance $instance")
@@ -67,15 +68,15 @@ final class AwsInstanceProvider implements InstanceProvider {
         }
         if (!instance.host)
             throw new FailedToLaunchInstance("Unable to get public IP of instance $instance.id, " +
-                "instanceType: $instanceType, reservation: $reservation")
+                    "instanceType: $instanceType, reservation: $reservation")
         return instance
     }
 
     void terminate(String instanceId) {
         LOG.info("Terminating instance " + instanceId)
-        retry(3) {
+        retry(10) {
             def request = new TerminateInstancesRequest()
-                .withInstanceIds(instanceId)
+                    .withInstanceIds(instanceId)
             client.terminateInstances(request)
             LOG.info("Terminated instance " + instanceId)
         }
@@ -91,26 +92,29 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     List<WorkerInstance> idleInstances(String instanceType) {
         findInstances(
-            taggedWith('State', 'idle'),
-            ofInstanceType(instanceType)
+                true,
+                taggedWith('State', 'idle'),
+                ofInstanceType(instanceType)
         )
     }
 
     List<WorkerInstance> idleInstances() {
         findInstances(
-            taggedWith('State', 'idle')
+                true,
+                taggedWith('State', 'idle')
         )
     }
 
     List<WorkerInstance> reservedInstances() {
         findInstances(
-            taggedWith('State', 'reserved')
+                false,
+                taggedWith('State', 'reserved'),
         )
     }
 
     WorkerInstance getInstance(String instanceId) {
-        def instances = findInstances(new DescribeInstancesRequest()
-            .withInstanceIds(instanceId)
+        def instances = findInstances(false, new DescribeInstancesRequest()
+                .withInstanceIds(instanceId)
         )
         if (instances.size() != 1)
             throw new IllegalStateException("Expected exactly one instance with id $instanceId, got $instances")
@@ -132,7 +136,7 @@ final class AwsInstanceProvider implements InstanceProvider {
     }
 
     private void notifyAboutStartedInstance() {
-        def instances = findInstances(running(), taggedWith('Starting', 'true'))
+        def instances = findInstances(false, running(), taggedWith('Starting', 'true'))
         instances.findAll {
             it.running
         }.each {
@@ -147,30 +151,30 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private List<Tag> launchTags() {
         [
-            tag('Environment', environment),
-            tag('Type', 'Worker'),
-            tag('Version', currentSepalVersion),
-            tag('Starting', 'true')
+                tag('Environment', environment),
+                tag('Type', 'Worker'),
+                tag('Version', currentSepalVersion),
+                tag('Starting', 'true')
         ]
     }
 
     private List<Tag> reserveTags(WorkerReservation reservation) {
         [
-            tag('State', 'reserved'),
-            tag('Username', reservation.username),
-            tag('WorkerType', reservation.workerType),
-            tag('InStateSince', DateTime.toDateTimeString(new Date())),
-            tag('Name', "$environment: $reservation.workerType, $reservation.username")
+                tag('State', 'reserved'),
+                tag('Username', reservation.username),
+                tag('WorkerType', reservation.workerType),
+                tag('InStateSince', DateTime.toDateTimeString(new Date())),
+                tag('Name', "$environment: $reservation.workerType, $reservation.username")
         ]
     }
 
     private List<Tag> idleTags() {
         [
-            tag('State', 'idle'),
-            tag('Username', ''),
-            tag('WorkerType', ''),
-            tag('InStateSince', DateTime.toDateTimeString(new Date())),
-            tag('Name', "$environment: Idle worker")
+                tag('State', 'idle'),
+                tag('Username', ''),
+                tag('WorkerType', ''),
+                tag('InStateSince', DateTime.toDateTimeString(new Date())),
+                tag('Name', "$environment: Idle worker")
         ]
     }
 
@@ -190,22 +194,23 @@ final class AwsInstanceProvider implements InstanceProvider {
         new Filter('instance-type', [(instanceType as InstanceType).toString()])
     }
 
-    private List<WorkerInstance> findInstances(Filter... filters) {
-        findInstances(new DescribeInstancesRequest().withFilters(
-            filters.toList() + [
-                taggedWith('Type', 'Worker'),
-                taggedWith('Environment', environment),
-                new Filter('instance-state-name', ['pending', 'running'])
-            ]))
+    private List<WorkerInstance> findInstances(boolean onlyCorrectVersion, Filter... filters) {
+        findInstances(onlyCorrectVersion, new DescribeInstancesRequest().withFilters(
+                filters.toList() + [
+                        taggedWith('Type', 'Worker'),
+                        taggedWith('Environment', environment),
+                        new Filter('instance-state-name', ['pending', 'running'])
+                ]))
     }
 
-    private List<WorkerInstance> findInstances(DescribeInstancesRequest request) {
+    private List<WorkerInstance> findInstances(boolean onlyCorrectVersion, DescribeInstancesRequest request) {
         def awsInstances = client.describeInstances(request).reservations
-            .collect { it.instances }.flatten() as List<Instance>
-        def instancesWithValidVersion = awsInstances.findAll {
+                .collect { it.instances }.flatten() as List<Instance>
+        def instancesWithValidVersion = onlyCorrectVersion ? awsInstances.findAll {
             !WorkerInstanceConfig.isOlderVersion(instanceVersion(it), currentSepalVersion)
-        }
+        } : awsInstances
         terminateOldIdle(awsInstances)
+        terminateUntagged()
         return instancesWithValidVersion.collect { toWorkerInstance(it) }
     }
 
@@ -224,22 +229,22 @@ final class AwsInstanceProvider implements InstanceProvider {
     private List<Instance> launch(String instanceType, int count) {
         LOG.info("Launching $instanceType")
         def request = new RunInstancesRequest()
-            .withKeyName(region)
-            .withInstanceType(instanceType as InstanceType)
-            .withSecurityGroups(SECURITY_GROUP)
-            .withImageId(imageId)
-            .withMinCount(count).withMaxCount(count)
-            .withPlacement(new Placement(availabilityZone: availabilityZone))
+                .withKeyName(region)
+                .withInstanceType(instanceType as InstanceType)
+                .withSecurityGroups(SECURITY_GROUP)
+                .withImageId(imageId)
+                .withMinCount(count).withMaxCount(count)
+                .withPlacement(new Placement(availabilityZone: availabilityZone))
 
         def response = client.runInstances(request)
         return response.reservation.instances
     }
 
-    private String fetchImageId(String availabilityZone) {
+    private String fetchImageId(String region) {
         def request = new DescribeImagesRequest()
         request.withFilters(
-            new Filter("tag:Version", [currentSepalVersion]),
-            new Filter('tag:AvailabilityZone', [availabilityZone])
+                new Filter("tag:Version", [currentSepalVersion]),
+                new Filter('tag:Region', [region])
         )
         def response = client.describeImages(request)
         if (!response?.images)
@@ -251,26 +256,26 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private void tagInstance(String instanceId, Collection<Tag>... tagCollections) {
         try {
-            retry(3) {
+            retry(10) {
                 def tags = tagCollections.toList().flatten() as Tag[]
                 LOG.info("Tagging instance $instanceId with $tags")
                 def request = new CreateTagsRequest()
-                    .withResources(instanceId)
-                    .withTags(tags)
+                        .withResources(instanceId)
+                        .withTags(tags)
                 client.createTags(request)
             }
-        } catch (AmazonEC2Exception e) {
+        } catch (Exception e) {
             terminate()
             throw new FailedToTagInstance("Failed to tag instance $instanceId with $tags", e)
         }
     }
 
     private void retry(int tries, Closure<Void> operation) {
-        for (def retries = 0; retries - 1 < tries; retries++) {
+        for (int retries = 0; retries - 1 < tries; retries++) {
             try {
                 operation()
                 return
-            } catch (AmazonEC2Exception e) {
+            } catch (Exception e) {
                 if (retries - 1 < tries) {
                     backoff(retries)
                     LOG.warn("Retry #${retries + 1} after exception: ${e}")
@@ -281,7 +286,7 @@ final class AwsInstanceProvider implements InstanceProvider {
     }
 
     private int backoff(int retries) {
-        def millis = (long) Math.pow(2, retries) * 1000
+        def millis = (long) Math.pow(2, retries ?: 0) * 1000
         Thread.sleep(millis)
     }
 
@@ -289,17 +294,17 @@ final class AwsInstanceProvider implements InstanceProvider {
         def idle = tagValue(awsInstance, 'State') == 'idle'
         def running = awsInstance.state.name == 'running'
         def reservation = idle ? null :
-            new WorkerReservation(
-                username: tagValue(awsInstance, 'Username'),
-                workerType: tagValue(awsInstance, 'WorkerType')
-            )
+                new WorkerReservation(
+                        username: tagValue(awsInstance, 'Username'),
+                        workerType: tagValue(awsInstance, 'WorkerType')
+                )
         return new WorkerInstance(
-            id: awsInstance.instanceId,
-            type: instanceType(awsInstance),
-            host: awsInstance.publicIpAddress,
-            running: running,
-            launchTime: awsInstance.launchTime,
-            reservation: reservation
+                id: awsInstance.instanceId,
+                type: instanceType(awsInstance),
+                host: awsInstance.publicIpAddress,
+                running: running,
+                launchTime: awsInstance.launchTime,
+                reservation: reservation
         )
     }
 
@@ -309,6 +314,23 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private String instanceType(Instance awsInstance) {
         InstanceType.fromValue(awsInstance.instanceType).name()
+    }
+
+    void terminateUntagged() {
+        use(TimeCategory) {
+            def request = new DescribeInstancesRequest().withFilters(
+                    running()
+            )
+            def awsInstances = client.describeInstances(request).reservations
+                    .collect { it.instances }.flatten() as List<Instance>
+            awsInstances
+                    .findAll {
+                        def untagged = it.tags.empty
+                        def minutesSinceLaunched = (new Date() - it.launchTime).minutes
+                        untagged && minutesSinceLaunched > 1
+                    }
+                    .forEach { terminate(it.instanceId) }
+        }
     }
 
     class UnableToGetImageId extends RuntimeException {

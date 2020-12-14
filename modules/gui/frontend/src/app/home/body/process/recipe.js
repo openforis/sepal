@@ -173,7 +173,7 @@ export const selectRecipe = recipeId =>
 const duplicateRecipe = (sourceRecipe, destinationRecipeId) => ({
     ...sourceRecipe,
     id: destinationRecipeId,
-    placeholder: (sourceRecipe.title || sourceRecipe.placeholder) + '_copy',
+    placeholder: `${sourceRecipe.title || sourceRecipe.placeholder}_copy`,
     title: null,
     ui: {...sourceRecipe.ui, unsaved: true}
 })

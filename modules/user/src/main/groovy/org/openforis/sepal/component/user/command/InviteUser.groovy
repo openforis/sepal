@@ -35,12 +35,12 @@ class InviteUserHandler implements CommandHandler<User, InviteUser> {
     private final Clock clock
 
     InviteUserHandler(
-        UserRepository userRepository,
-        MessageBroker messageBroker,
-        ExternalUserDataGateway externalUserDataGateway,
-        EmailGateway emailGateway,
-        UserChangeListener changeListener,
-        Clock clock
+            UserRepository userRepository,
+            MessageBroker messageBroker,
+            ExternalUserDataGateway externalUserDataGateway,
+            EmailGateway emailGateway,
+            UserChangeListener changeListener,
+            Clock clock
     ) {
         this.userRepository = userRepository
         this.externalUserDataGateway = externalUserDataGateway
@@ -57,18 +57,19 @@ class InviteUserHandler implements CommandHandler<User, InviteUser> {
         def token = UUID.randomUUID() as String
         def now = clock.now()
         def userToInsert = new User(
-            name: command.name,
-            username: command.invitedUsername,
-            email: command.email,
-            organization: command.organization,
-            status: PENDING,
-            roles: [].toSet(),
-            creationTime: now,
-            updateTime: now)
+                name: command.name,
+                username: command.invitedUsername,
+                email: command.email,
+                organization: command.organization,
+                emailNotificationsEnabled: true,
+                status: PENDING,
+                roles: [].toSet(),
+                creationTime: now,
+                updateTime: now)
         def user = userRepository.insertUser(userToInsert, token)
         messageQueue.publish(
-            user: user,
-            token: token
+                user: user,
+                token: token
         )
         return user
     }

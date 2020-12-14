@@ -6,7 +6,7 @@ check program sepal with path /usr/local/bin/dockercheck-sepal
     depends on docker
     if status != 0 then alert
 
-check program google-earth-engine with path /usr/local/bin/dockercheck-google-earth-engine
+check program gee with path /usr/local/bin/dockercheck-gee
     depends on docker
     if status != 0 then alert
 
@@ -14,11 +14,7 @@ check program ldap with path /usr/local/bin/dockercheck-ldap
     depends on docker
     if status != 0 then alert
 
-check program kafka with path /usr/local/bin/dockercheck-kafka
-    depends on docker
-    if status != 0 then alert
-
-check program zookeeper with path /usr/local/bin/dockercheck-zookeeper
+check program rabbitmq with path /usr/local/bin/dockercheck-rabbitmq
     depends on docker
     if status != 0 then alert
 
@@ -43,10 +39,6 @@ check program letsencrypt with path /usr/local/bin/dockercheck-letsencrypt
     if status != 0 then alert
 
 check program terminal with path /usr/local/bin/dockercheck-terminal
-    depends on docker
-    if status != 0 then alert
-
-check program peatlands with path /usr/local/bin/dockercheck-peatlands
     depends on docker
     if status != 0 then alert
 

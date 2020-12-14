@@ -15,7 +15,7 @@ class InstanceSpendingCalculator {
         def firstOfMonth = DateTime.parseDateString("$year-$month-1")
         return instanceUses.collect {
             def hours = hoursToCharge(it, firstOfMonth)
-            def hourlyCost = hourlyCostByInstanceType[it.instanceType]
+            def hourlyCost = hourlyCostByInstanceType[it.instanceType] ?: 0
             hours * hourlyCost
         }?.sum() ?: 0 as double
     }

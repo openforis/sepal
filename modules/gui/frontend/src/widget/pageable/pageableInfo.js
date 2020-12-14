@@ -9,15 +9,18 @@ export const PageableInfo = props => {
             {msg('pagination.info', {count, start, stop})}
         </div>
         
-    const renderCustomInfo = ({count, start, stop}) =>
+    const renderCustomInfo = ({count, start, stop, isSinglePage}) =>
         <React.Fragment>
-            {props.children({count, start, stop})}
+            {props.children({count, start, stop, isSinglePage})}
         </React.Fragment>
 
-    const pageinfo = ({count, start, stop}) => ({
+    const pageinfo = ({count, start, stop, isFirstPage, isLastPage, isSinglePage}) => ({
         count,
         start: start + 1,
-        stop
+        stop,
+        isFirstPage,
+        isLastPage,
+        isSinglePage
     })
 
     return (

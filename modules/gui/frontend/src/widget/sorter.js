@@ -4,7 +4,6 @@ import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './sorter.module.css'
 
 export class Sorter extends React.Component {
     state = {
@@ -16,14 +15,13 @@ export class Sorter extends React.Component {
     renderSortButtons() {
         const {sortOptions} = this.props
         return (
-            <ButtonGroup layout='horizontal-nowrap-tight'>
+            <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
                 {sortOptions.map(({column, label}) => this.renderSortButton(column, label))}
             </ButtonGroup>
         )
     }
 
     renderSortButton(column, label) {
-        const {sortingOrder} = this.state
         return (
             <Button
                 chromeless
@@ -31,15 +29,20 @@ export class Sorter extends React.Component {
                 shape='pill'
                 size='large'
                 additionalClassName='itemType'
-                onClick={() => this.setSorting(column)}>
-                <span className={[styles.sortable, sortingOrder === column ? styles.sorted : null].join(' ')}>
-                    {label}
-                </span>
-                <span className={styles.sortingHandle}>
-                    {this.renderSortingHandle(column)}
-                </span>
-            </Button>
+                onClick={() => this.setSorting(column)}
+                label={label}
+                icon={this.icon(column)}
+                iconPlacement='right'
+            />
         )
+    }
+
+    icon(column) {
+        return this.state.sortingOrder === column
+            ? this.state.sortingDirection === 1
+                ? 'sort-down'
+                : 'sort-up'
+            : 'sort'
     }
 
     renderSortingHandle(column) {
@@ -81,7 +84,6 @@ Sorter.propTypes = {
             label: PropTypes.string
         })
     ).isRequired,
-    // sortingOrder: PropTypes.string,
     onSort: PropTypes.func.isRequired,
     items: PropTypes.array
 }

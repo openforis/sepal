@@ -28,6 +28,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     private final Component taskComponent
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
+    private final String norwayPlanetApiKey
 
     static DataSearchComponent create(
         Component processingRecipeComponent,
@@ -42,6 +43,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
             CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
             CsvBackedSentinel2Gateway.create(new File(config.downloadWorkingDirectory)),
             config.googleMapsApiKey,
+            config.norwayPlanetApiKey,
             new AsynchronousEventDispatcher()
         )
     }
@@ -54,11 +56,13 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
         DataSetMetadataGateway landsatMetadata,
         DataSetMetadataGateway sentinel2Metadata,
         String googleMapsApiKey,
+        String norwayPlanetApiKey,
         HandlerRegistryEventDispatcher eventDispatcher) {
         super(connectionManager, eventDispatcher)
         this.taskComponent = taskComponent
         this.geeGateway = geeGateway
         this.googleMapsApiKey = googleMapsApiKey
+        this.norwayPlanetApiKey = norwayPlanetApiKey
         def sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
 
         command(UpdateSceneMetaData, new UpdateSceneMetaDataHandler([
@@ -85,9 +89,9 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     void registerEndpointsWith(Controller controller) {
         new DataSearchEndpoint(
             this,
-            taskComponent,
             geeGateway,
-            googleMapsApiKey
+            googleMapsApiKey,
+            norwayPlanetApiKey,
         ).registerWith(controller)
     }
 }

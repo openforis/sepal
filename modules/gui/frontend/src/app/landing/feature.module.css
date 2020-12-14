@@ -1,0 +1,47 @@
+.feature {
+    --feature-icon-size: 1.7rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-column-gap: 1.5rem;
+}
+
+.featureIcon {
+    width: calc(var(--feature-icon-size) * 2.5);
+    height: calc(var(--feature-icon-size) * 2.5);
+    border-radius: 50%;
+    font-size: var(--feature-icon-size);
+    display:grid;
+    justify-content: center;
+    align-content: center;
+}
+
+.featureIcon.process {
+    background-color: hsl(var(--section-process-color-h), var(--section-process-color-s), var(--section-process-color-l));
+}
+
+.featureIcon.browse {
+    background-color: hsl(var(--section-browse-color-h), var(--section-browse-color-s), var(--section-browse-color-l));
+}
+
+.featureIcon.apps {
+    background-color: hsl(var(--section-apps-color-h), var(--section-apps-color-s), var(--section-apps-color-l));
+}
+
+.featureIcon.terminal {
+    background-color: hsl(var(--section-terminal-color-h), var(--section-terminal-color-s), var(--section-terminal-color-l));
+}
+
+.featureTitle {
+    font-family: var(--header-font-family);
+    font-weight: normal;
+    font-size: 1.4rem;
+    letter-spacing: 0.15rem;
+    text-transform: uppercase;
+    color: var(--primary-text-color);
+}
+
+.featureDescription {
+    font-size: .9rem;
+    font-weight: lighter;
+    color: var(--secondary-text-color);
+}

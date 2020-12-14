@@ -12,14 +12,14 @@ export const history = () => ({
     push(pathname, state) {
         return actionBuilder('HISTORY_CHANGE')
             .set('historyOperation', {method: 'push', args: [pathname, state]})
-            .set('location', {...location(), pathname: pathname, state: state})
+            .set('location', {...location(), pathname, state})
             .dispatch()
     },
 
     replace(pathname, state) {
         return actionBuilder('HISTORY_CHANGE')
             .set('historyOperation', {method: 'replace', args: [pathname, state]})
-            .set('location', {...location(), pathname: pathname, state: state})
+            .set('location', {...location(), pathname, state})
             .dispatch()
     }
 })
@@ -67,7 +67,7 @@ function dispatchLocationChange(historyLocation) {
 
 export function syncHistoryAndStore(history, store) {
     historyInstance = history
-    historyInstance.listen(dispatchLocationChange)
+    historyInstance.listen(({location}) => dispatchLocationChange(location))
     dispatchLocationChange(history.location)
     store.subscribe(() => {
         const historyOperation = state().historyOperation

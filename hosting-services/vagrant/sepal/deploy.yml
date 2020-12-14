@@ -10,7 +10,6 @@
   pre_tasks:
     - set_fact:
         ldap_host: "{{ vagrant_ip }}"
-        elk_host: "{{ vagrant_ip }}"
         hosting_service: "vagrant"
         syslog_address: "unixgram:///dev/log"
         syslog_host: "172.17.0.1"
@@ -129,26 +128,27 @@
     - { role: build-module, module: geospatial-toolkit }
     - { role: build-module, module: sandbox }
     - { role: build-module, module: user }
+    - { role: build-module, module: user-storage }
+    - { role: build-module, module: user-storage-backup }
     - { role: build-module, module: sepal-server }
     - { role: build-module, module: gui }
     - { role: build-module, module: ceo }
     - { role: build-module, module: ceo-gateway }
-    - { role: build-module, module: peatlands }
-    - { role: build-module, module: task-executor }
-    - { role: build-module, module: google-earth-engine }
-    - { role: build-module, module: zookeeper }
-    - { role: build-module, module: kafka }
+    - { role: build-module, module: task }
+    - { role: build-module, module: gee }
+    - { role: build-module, module: rabbitmq }
 
     - { role: run-module, module: backup }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
     - { role: run-module, module: mysql-backup }
-    - { role: run-module, module: google-earth-engine }
+    - { role: run-module, module: gee }
     - { role: run-module, module: user }
+    - { role: run-module, module: user-storage }
+    - { role: run-module, module: user-storage-backup }
     - { role: run-module, module: sepal-server, container_name: sepal }
     - { role: run-module, module: gui }
-    - { role: run-module, module: peatlands }
     - { role: run-module, module: ceo }
     - { role: run-module, module: ceo-gateway }
     - { role: run-module, module: ssh-gateway }
@@ -156,4 +156,4 @@
     - { role: run-module, module: api-gateway }
     - { role: run-module, module: letsencrypt }
     - { role: run-module, module: haproxy }
-    - { role: run-module, module: kafka }
+    - { role: run-module, module: rabbitmq }

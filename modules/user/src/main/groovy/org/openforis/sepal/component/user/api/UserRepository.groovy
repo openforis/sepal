@@ -12,9 +12,13 @@ interface UserRepository {
 
     List<User> listUsers()
 
+    void setLastLoginTime(String username, Date loginTime)
+
     User lookupUser(String username)
 
     User findUserByEmail(String email)
+
+    boolean emailNotificationsEnabled(String email)
 
     void updateToken(String username, String token, Date tokenGenerationTime)
 

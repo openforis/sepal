@@ -32,10 +32,10 @@ export const addTab = statePath => {
     return tab
 }
 
-export const closeTab = (id, statePath) => {
-    close$.next({id, statePath})
+export const closeTab = (id, statePath, nextId) => {
+    close$.next({id, statePath, nextId})
     actionBuilder('CLOSING_TAB')
-        .set([statePath, 'tabs', {id}, 'closing'], true)
+        .set([statePath, 'tabs', {id}, 'ui.closing'], true)
         .dispatch()
 }
 
@@ -97,7 +97,7 @@ class _Tabs extends React.Component {
                 title={tab.title}
                 placeholder={tab.placeholder}
                 selected={tab.id === selectedTabId}
-                closing={tab.closing}
+                closing={tab.ui && tab.ui.closing}
                 statePath={statePath}
                 onTitleChanged={onTitleChanged}
                 onClose={() => {
@@ -255,12 +255,12 @@ class _Tabs extends React.Component {
             close$.pipe(
                 delay(CLOSE_ANIMATION_DURATION_MS * 1.2)
             ).subscribe(
-                ({id, statePath}) => this.finalizeCloseTab(id, statePath)
+                ({id, statePath, nextId}) => this.finalizeCloseTab(id, statePath, nextId)
             )
         )
     }
 
-    finalizeCloseTab(id, statePath) {
+    finalizeCloseTab(id, statePath, nextId) {
         const nextSelectedTabId = () => {
             const tabs = select([statePath, 'tabs'])
             const tabIndex = tabs.findIndex(tab => tab.id === id)
@@ -274,9 +274,9 @@ class _Tabs extends React.Component {
             }
             return null
         }
-    
+
         actionBuilder('CLOSE_TAB')
-            .set([statePath, 'selectedTabId'], nextSelectedTabId())
+            .set([statePath, 'selectedTabId'], nextId || nextSelectedTabId())
             .del([statePath, 'tabs', {id}])
             .dispatch()
     }

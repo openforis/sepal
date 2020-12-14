@@ -1,5 +1,6 @@
 import {Activator, activator} from 'widget/activation/activator'
 import {Button} from 'widget/button'
+import {Markdown} from 'widget/markdown'
 import {Msg, msg} from 'translate'
 import {NoData} from 'widget/noData'
 import {Panel} from 'widget/panel/panel'
@@ -8,7 +9,6 @@ import {activatable} from 'widget/activation/activatable'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {v4 as uuid} from 'uuid'
-import Markdown from 'react-markdown'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -21,9 +21,10 @@ import styles from './userMessages.module.css'
 
 const mapStateToProps = state => {
     const currentUser = state.user.currentUser
+    const userMessages = state.user.userMessages
     return {
         isAdmin: currentUser.roles && currentUser.roles.includes('application_admin'),
-        userMessages: state.user.userMessages
+        userMessages
     }
 }
 
@@ -36,6 +37,9 @@ export const closePanel = () =>
     actionBuilder('USER_MESSAGES')
         .del('ui.userMessages')
         .dispatch()
+
+const unreadMessagesCount = userMessages =>
+    _.filter(userMessages, {state: 'UNREAD'}).length
 
 class _UserMessages extends React.Component {
     state = {
@@ -121,6 +125,11 @@ class _UserMessages extends React.Component {
         })
     }
 
+    isUnread() {
+        const {userMessages} = this.props
+        return unreadMessagesCount(userMessages)
+    }
+
     newMessage() {
         this.editMessage({})
     }
@@ -179,7 +188,7 @@ class _UserMessages extends React.Component {
                 onExpandDelayed={() => this.setReadState(userMessage, 'READ')}
                 onEdit={isAdmin ? () => this.editMessage(message) : null}
                 onRemove={isAdmin ? () => this.removeMessage(message) : null}
-                extraButtons={[
+                inlineComponents={[
                     this.renderStatusButton(userMessage)
                 ]}
                 clickToExpand
@@ -191,7 +200,8 @@ class _UserMessages extends React.Component {
 
     renderMessagesPanel() {
         const {isAdmin, activatable: {deactivate}} = this.props
-        const close = () => deactivate()
+        const isClosable = !this.isUnread() || isAdmin
+        const close = () => isClosable && deactivate()
         const add = () => this.newMessage()
         return (
             <Panel
@@ -205,7 +215,7 @@ class _UserMessages extends React.Component {
                 </Panel.Content>
                 <Panel.Buttons onEnter={close} onEscape={close}>
                     <Panel.Buttons.Main>
-                        <Panel.Buttons.Close onClick={close}/>
+                        <Panel.Buttons.Close onClick={close} disabled={!isClosable}/>
                     </Panel.Buttons.Main>
                     <Panel.Buttons.Extra>
                         <Panel.Buttons.Add
@@ -296,7 +306,7 @@ class _UserMessagesButton extends React.Component {
 export const UserMessagesButton = compose(
     _UserMessagesButton,
     connect(state => ({
-        unreadUserMessages: _.filter(state.user.userMessages, {state: 'UNREAD'}).length
+        unreadUserMessages: unreadMessagesCount(state.user.userMessages)
     })),
     activator('userMessages')
 )

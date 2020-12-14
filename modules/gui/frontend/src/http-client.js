@@ -63,29 +63,30 @@ export const delete$ = (url, {retries = DEFAULT_RETRIES, headers, validStatuses,
 
 export default {get$, post$, postJson$, delete$}
 
-function toQueryString(object) {
-    return object &&
-        Object.keys(object)
-            .map(key => `${key}=${encodeURIComponent(object[key])}`)
-            .join('&')
-}
+const toQueryString = object =>
+    object && Object.keys(object)
+        .map(key => {
+            const value = object[key]
+            return `${key}=${value === null || value === undefined ? '' : encodeURIComponent(value)}`
+        })
+        .join('&')
 
-function execute$(url, method, {retries, query, username, password, headers, validStatuses, ...args}) {
+const validateResponse = (response, validStatuses) =>
+    !validStatuses || validStatuses.includes(response.status)
+        ? response
+        : throwError(response)
+        
+const execute$ = (url, method, {retries, query, username, password, headers, validStatuses, ...args}) => {
     const queryString = toQueryString(query)
     let urlWithQuery = queryString ? `${url}?${queryString}` : url
     headers = {'No-auth-challenge': true, ...headers}
     if (username || password)
         headers = {
-            'Authorization': 'Basic ' + base64.encode(username + ':' + password),
+            'Authorization': `Basic ${base64.encode(`${username}:${password}`)}`,
             ...headers
         }
     return ajax({url: urlWithQuery, method, headers, ...args}).pipe(
-        map(e => {
-            if (!validStatuses || validStatuses.includes(e.status))
-                return e
-            else
-                return throwError(e)
-        }),
+        map(response => validateResponse(response, validStatuses)),
         catchError(e => {
             if (validStatuses && validStatuses.includes(e.status)) {
                 return of(e)
@@ -114,6 +115,5 @@ function execute$(url, method, {retries, query, username, password, headers, val
     )
 }
 
-function isRelative(url) {
-    return !/^\w+:\/\//i.test(url) // Not starting with protocol://
-}
+const isRelative = url =>
+    !/^\w+:\/\//i.test(url) // Not starting with protocol://

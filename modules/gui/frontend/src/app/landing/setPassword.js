@@ -49,7 +49,7 @@ class SetPassword extends React.Component {
             () => {
                 Notifications.error({
                     message: msg('landing.validate-token.error'),
-                    timeout: 10000
+                    timeout: 10
                 })
                 history().push('/process') // [TODO] fix this
             }
@@ -108,7 +108,7 @@ class SetPassword extends React.Component {
                         tabIndex={2}
                         errorMessage={[password2, 'passwordsMatch']}
                     />
-                    <ButtonGroup layout='horizontal-nowrap-right'>
+                    <ButtonGroup layout='horizontal-nowrap' alignment='right'>
                         <Button
                             type='submit'
                             look='apply'

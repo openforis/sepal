@@ -36,19 +36,19 @@ const dummyTask = name => {
     const observable = of(true).pipe(
         mergeMap(() => from([
             queue.enqueue({
-                observable: tick(name + ' foo'),
+                observable: tick(`${name} foo`),
                 group: 'some-group',
-                description: name + ' foo'
+                description: `${name} foo`
             }),
             queue.enqueue({
-                observable: tick(name + ' bar'),
+                observable: tick(`${name} bar`),
                 group: 'some-group',
-                description: name + ' bar'
+                description: `${name} bar`
             }),
             queue.enqueue({
-                observable: tick(name + ' baz'),
+                observable: tick(`${name} baz`),
                 group: 'some-group',
-                description: name + ' baz'
+                description: `${name} baz`
             })
         ])),
         mergeAll()

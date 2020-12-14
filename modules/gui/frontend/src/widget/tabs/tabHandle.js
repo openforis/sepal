@@ -24,7 +24,7 @@ class _TabHandle extends React.Component {
         const {title = ''} = props
         this.state = {
             editing: false,
-            title: title,
+            title,
             prevTitle: title
         }
     }
@@ -81,6 +81,7 @@ class _TabHandle extends React.Component {
                     readOnly={!editing}
                     tooltip={title || placeholder}
                     tooltipPlacement='bottom'
+                    transform={value => value.replace(/[^\w-.]/g, '_')}
                     onClick={() => selected
                         ? this.editTitle()
                         : this.selectTab()
@@ -117,8 +118,7 @@ class _TabHandle extends React.Component {
     }
 
     onTitleChange(e) {
-        const value = e.target.value.replace(/[^\w-.]/g, '_')
-        // e.target.value = value
+        const value = e.target.value
         this.setState({title: value})
     }
 

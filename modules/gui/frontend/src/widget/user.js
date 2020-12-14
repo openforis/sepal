@@ -2,7 +2,7 @@ import {EMPTY, Subject, timer} from 'rxjs'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {history} from 'route'
-import {map, switchMap} from 'rxjs/operators'
+import {map, switchMap, tap} from 'rxjs/operators'
 import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import React from 'react'
@@ -38,6 +38,11 @@ export const revokeGoogleAccess$ = () =>
         map(() => loadUser$.next())
     )
 
+export const requestUserAccess$ = () =>
+    api.user.getGoogleAccessRequestUrl$(window.location).pipe(
+        tap(({url}) => window.location = url)
+    )
+
 export const requestPasswordReset$ = email =>
     api.user.requestPasswordReset$(email)
 
@@ -52,13 +57,14 @@ export const validateToken$ = token =>
         })
     )
 
-export const updateCurrentUserDetails$ = ({name, email, organization}) =>
-    api.user.updateCurrentUserDetails$({name, email, organization}).pipe(
+export const updateCurrentUserDetails$ = ({name, email, organization, emailNotificationsEnabled}) =>
+    api.user.updateCurrentUserDetails$({name, email, organization, emailNotificationsEnabled}).pipe(
         map(({name, email, organization}) =>
             actionBuilder('UPDATE_USER_DETAILS', {name, email, organization})
                 .set('user.currentUser.name', name)
                 .set('user.currentUser.email', email)
                 .set('user.currentUser.organization', organization)
+                .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
                 .dispatch()
         )
     )

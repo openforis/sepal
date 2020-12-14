@@ -15,8 +15,12 @@ class WorkerInstanceConfig {
     final int dockerPort
     final String dockerEntryPoint
     final String dockerRegistryHost
+    final String googleProjectId
+    final String googleRegion
     final String googleEarthEngineAccount
     final String googleEarthEnginePrivateKey
+    final String rabbitMQHost
+    final int rabbitMQPort
 
     WorkerInstanceConfig() {
         def c = new Config('workerInstance.properties')
@@ -30,8 +34,12 @@ class WorkerInstanceConfig {
         dockerPort = c.integer('dockerPort')
         dockerEntryPoint = c.string('dockerEntryPoint')
         dockerRegistryHost = c.string('dockerRegistryHost')
+        googleProjectId = c.string('googleProjectId')
+        googleRegion = c.string('googleRegion')
         googleEarthEngineAccount = c.string('googleEarthEngineAccount')
         googleEarthEnginePrivateKey = c.string('googleEarthEnginePrivateKey')
+        rabbitMQHost = c.string('rabbitMQHost')
+        rabbitMQPort = c.integer('rabbitMQPort')
     }
 
     static boolean isOlderVersion(String sepalVersion1, String sepalVersion2) {

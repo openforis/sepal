@@ -13,10 +13,10 @@ import {msg} from 'translate'
 import {post$} from 'http-client'
 import {v4 as uuid} from 'uuid'
 import {withLatestFrom} from 'rxjs/operators'
+import Keybinding from 'widget/keybinding'
 import Notifications from 'widget/notifications'
 import React from 'react'
 import styles from './terminal.module.css'
-import withSubscriptions from 'subscription'
 
 export default class Terminal extends React.Component {
     render() {
@@ -87,7 +87,9 @@ class _TerminalSession extends React.Component {
         return (
             <ElementResizeDetector onResize={() => this.fit$.next()}>
                 <ContentPadding menuPadding horizontalPadding verticalPadding>
-                    <div className={styles.terminal} ref={this.terminalContainer}></div>
+                    <Keybinding keymap={{' ': null}} priority>
+                        <div className={styles.terminal} ref={this.terminalContainer}></div>
+                    </Keybinding>
                 </ContentPadding>
             </ElementResizeDetector>
         )
@@ -107,7 +109,6 @@ class _TerminalSession extends React.Component {
             url: `wss://${window.location.hostname}:${window.location.port}/api/terminal/${sessionId}`,
             replyHeartbeats: true
         })
-
         this.webSocket.onOpen(() => this.startTerminal(sessionId))
         // this.webSocket.onClose(() => console.log('socket closed'))
         this.webSocket.onError(() =>
@@ -150,6 +151,5 @@ class _TerminalSession extends React.Component {
 
 const TerminalSession = compose(
     _TerminalSession,
-    connect(),
-    withSubscriptions()
+    connect()
 )

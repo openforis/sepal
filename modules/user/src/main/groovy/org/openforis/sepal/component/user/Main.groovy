@@ -61,6 +61,8 @@ class ServerConfig {
     final String googleOAuthClientSecret
     final String googleEarthEngineEndpoint
     final String homeDirectory
+    final String rabbitMQHost
+    final int rabbitMQPort
 
     ServerConfig() {
         def c = new Config('user-server.properties')
@@ -71,6 +73,8 @@ class ServerConfig {
         googleOAuthClientSecret = c.googleOAuthClientSecret
         googleEarthEngineEndpoint = c.googleEarthEngineEndpoint
         homeDirectory = c.homeDirectory
+        rabbitMQHost = c.rabbitMQHost
+        rabbitMQPort = c.integer('rabbitMQPort')
     }
 }
 

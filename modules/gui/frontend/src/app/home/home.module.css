@@ -36,16 +36,6 @@
     --menu-clearance: var(--menu-handle-width);
 }
 
-.map {
-    position: absolute;
-    top: 0;
-    bottom: calc(var(--footer-height));
-    left: 0;
-    right: 0;
-    pointer-events: all;
-    z-index: 0;
-}
-
 .menu {
     position: absolute;
     left: var(--menu-position);
@@ -69,7 +59,6 @@
     grid-gap: 0;
     grid-template-areas:
         'body'
-        'google'
         'footer';
     z-index: 1;
 }
@@ -81,13 +70,6 @@
 .container:not(.floatingMenu) .menu,
 .menu:hover {
     left: 0;
-}
-
-.google {
-    grid-area: 'google';
-    width: 100%;
-    height: var(--map-overlay-height);
-    background-color: hsla(0, 0%, 0%, .4);
 }
 
 .footer {

@@ -1,0 +1,7 @@
+.header {
+    margin-bottom: 1rem;
+}
+
+.apps {
+    flex-shrink: 1;
+}

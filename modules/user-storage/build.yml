@@ -1,0 +1,13 @@
+- name: user-storage | Create build directory
+  file:
+    path: "{{ module_dir }}/docker/build"
+    state: directory
+  delegate_to: 127.0.0.1
+
+- name: user-storage | Copy sepal lib
+  copy:
+    src: "{{ project_dir }}/lib"
+    dest: "{{ module_dir }}/docker/build"
+  delegate_to: 127.0.0.1
+
+- include_tasks: "{{ build_image_task }}"

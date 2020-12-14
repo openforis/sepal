@@ -1,0 +1,8 @@
+.container {
+    width: 100%;
+    pointer-events: all;
+}
+
+.bottomBar {
+    justify-content: center;
+}

@@ -1,15 +1,15 @@
-- name: "sandbox | Create {{workspace}}/modules/{{ module }}/docker/.build"
+- name: sandbox | Create build directory
   file:
-    path: "{{workspace}}/modules/{{ module }}/docker/.build"
+    path: "{{ module_dir }}/docker/build"
     state: directory
-    recurse: yes
+  delegate_to: 127.0.0.1
 
-- name: 'sandbox | Copy sepal-ee'
-  synchronize:
-    src: "{{ module_dir }}/../google-earth-engine/docker/sepal-ee"
-    dest: "{{workspace}}/modules/{{ module }}/docker/.build/"
-    archive: yes
-    recursive: yes
-    delete: yes
+
+- name: sandbox | Copy sepal lib
+  copy:
+    src: "{{ project_dir }}/lib"
+    dest: "{{ module_dir }}/docker/build/"
+  delegate_to: 127.0.0.1
+
 
 - include_tasks: "{{ build_image_task }}"

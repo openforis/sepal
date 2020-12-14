@@ -1,27 +1,30 @@
-import {map} from 'rxjs/operators'
+import {mapTo, tap} from 'rxjs/operators'
 import {of} from 'rxjs'
-import {sepalMap} from './map'
 import _ from 'lodash'
-import ee from 'earthengine-api'
+import ee from '@google/earthengine'
 import guid from 'guid'
 
 export default class EarthEngineLayer {
-    constructor({layerIndex, bounds, mapId$, props, onProgress}) {
+    constructor({mapContext, layerIndex, toggleable, label, description, bounds, mapId$, props, progress$}) {
+        this.mapContext = mapContext
         this.layerIndex = layerIndex
+        this.toggleable = toggleable
+        this.label = label
+        this.description = description
         this.bounds = bounds
         this.mapId$ = mapId$
         this.props = props
-        this.onProgress = onProgress
+        this.progress$ = progress$
     }
 
     equals(o) {
         return _.isEqual(o && o.props, this.props)
     }
 
-    addToMap(googleMap) {
+    addToMap() {
         const layer = new ee.layers.ImageOverlay(
             new ee.layers.EarthEngineTileSource(
-                toMapId(this.mapId, this.token)
+                toMapId(this.mapId, this.token, this.urlTemplate)
             )
         )
 
@@ -31,12 +34,12 @@ export default class EarthEngineLayer {
         // This workaround uses unique tile ids. Hopefully this doesn't lead to any memory leaks.
         layer.getUniqueTileId_ = () => guid()
 
-        googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
+        this.mapContext.googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
 
         const notifyOnProgress = () => {
             // Manually calculate stats, since GEE returns stats from multiple zoom-levels
             const tileStatuses = layer.tilesById.getValues()
-                .filter(tile => tile.zoom === googleMap.getZoom())
+                .filter(tile => tile.zoom === this.mapContext.googleMap.getZoom())
                 .map(tile => tile.getStatus())
             const Status = ee.layers.AbstractTile.Status
 
@@ -55,55 +58,60 @@ export default class EarthEngineLayer {
             }
             tileStats.complete = tileStats.count === tileStats.loaded + tileStats.failed
 
-            if (this.onProgress && tileStats.count > 0)
-                this.onProgress(tileStats)
-            else
+            if (this.progress$ && tileStats.count > 0) {
+                this.progress$.next(tileStats)
+            } else {
                 setTimeout(notifyOnProgress, 100)
+            }
         }
-        this.boundsChangedListener = sepalMap.onBoundsChanged(notifyOnProgress)
+        this.boundsChanged = this.mapContext.sepalMap.onBoundsChanged(notifyOnProgress)
         notifyOnProgress()
         layer.addEventListener('tile-load', notifyOnProgress)
         layer.addEventListener('tile-fail', notifyOnProgress)
     }
 
-    removeFromMap(googleMap) {
-        sepalMap.removeListener(this.boundsChangedListener)
-        // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
-        googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
-        googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
+    removeFromMap() {
+        if (this.boundsChanged) {
+            this.boundsChanged.removeListener()
+            this.boundsChanged = null
+            // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
+            this.mapContext.googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
+            this.mapContext.googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
+        }
     }
 
-    hide(googleMap, hidden) {
-        const layer = googleMap.overlayMapTypes.getAt(this.layerIndex)
+    hide(hidden) {
+        const layer = this.mapContext.googleMap.overlayMapTypes.getAt(this.layerIndex)
         layer && layer.setOpacity(hidden ? 0 : 1)
     }
 
     initialize$() {
-        if (this.token)
-            return of(this)
-        return this.mapId$.pipe(
-            map(({response: {token, mapId}}) => {
-                this.token = token
-                this.mapId = mapId
-                return this
-            })
-        )
+        return this.mapId
+            ? of(this)
+            : this.mapId$.pipe(
+                tap(({response: {token, mapId, urlTemplate}}) => {
+                    this.token = token
+                    this.mapId = mapId
+                    this.urlTemplate = urlTemplate
+                }),
+                mapTo(this)
+            )
     }
 }
 
 // Creates a ee.data.RawMapId.
 // https://github.com/google/earthengine-api/blob/1a3121aa7574ecf2d5432c047621081aed8e1b28/javascript/src/data.js#L2198
-const toMapId = (mapid, token) => {
-    const path = `https://earthengine.googleapis.com/map/${mapid}`
-    const suffix = `?token=${token}`
-    // Builds a URL of the form {tileBaseUrl}{path}/{z}/{x}/{y}{suffix}
+const toMapId = (mapid, token, urlTemplate) => {
     const formatTileUrl = (x, y, z) => {
         const width = Math.pow(2, z)
         x = x % width
         if (x < 0) {
             x += width
         }
-        return [path, z, x, y].join('/') + suffix
+        return urlTemplate
+            .replace('{x}', x)
+            .replace('{y}', y)
+            .replace('{z}', z)
     }
     return {mapid, token, formatTileUrl}
 }

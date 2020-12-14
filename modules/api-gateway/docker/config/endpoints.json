@@ -2,7 +2,7 @@
   {
     "prefix": "true",
     "path": "/api/gee/",
-    "target": "http://google-earth-engine:5001/",
+    "target": "http://gee:5001/",
     "https": "false",
     "authenticate": "true"
   },
@@ -17,13 +17,6 @@
     "prefix": "true",
     "path": "/api/ceo-gateway/",
     "target": "http://ceo-gateway:8001/",
-    "https": "false",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/peatlands/",
-    "target": "http://peatlands:7767/",
     "https": "false",
     "authenticate": "true"
   },

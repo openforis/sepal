@@ -1,0 +1,46 @@
+{
+    "name": "shared",
+    "version": "1.0.0",
+    "description": "",
+    "author": "",
+    "license": "ISC",
+    "scripts": {
+        "postinstall": "link-module-alias",
+        "preinstall": "command -v link-module-alias && link-module-alias clean || true",
+        "test": "jest",
+        "testWatch": "jest --watchAll"
+    },
+    "_moduleAliases": {
+        "sepal": "src",
+        "rx": "src/reexport/rx",
+        "ee": "src/reexport/ee"
+    },
+    "dependencies": {
+        "@google/earthengine": "0.1.242",
+        "amqplib": "^0.6.0",
+        "base-64": "^0.1.0",
+        "koa": "^2.13.0",
+        "koa-bodyparser": "^4.3.0",
+        "koa-easy-ws": "^1.2.0",
+        "koa-router": "^9.1.0",
+        "lodash": "^4.17.19",
+        "log4js": "^6.3.0",
+        "moment": "^2.27.0",
+        "request": "^2.88.2",
+        "rxjs": "^7.0.0-beta.1",
+        "serialize-error": "^7.0.1",
+        "short-unique-id": "^3.0.4",
+        "uuid": "^8.2.0"
+    },
+    "devDependencies": {
+        "eslint": "^7.5.0",
+        "jest": "^26.1.0",
+        "jest-expect-message": "^1.0.2",
+        "link-module-alias": "^1.2.0"
+    },
+    "jest": {
+        "setupFilesAfterEnv": [
+            "jest-expect-message"
+        ]
+    }
+}

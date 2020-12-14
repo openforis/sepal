@@ -25,13 +25,6 @@ class StateDescription_Test extends AbstractTaskTest {
         statusDescription() == expectedDescription
     }
 
-    def 'Canceled task has expected description'() {
-        canceledTask()
-
-        expect:
-        statusDescription() == CANCELED.description
-    }
-
     def 'Failed task has expected description'() {
         failedTask()
 

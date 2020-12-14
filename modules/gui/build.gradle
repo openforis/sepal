@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'com.github.johnrengelman.shadow' version '4.0.1'
-    id "com.moowork.node" version "1.2.0"
+    id 'com.github.node-gradle.node' version '2.2.0'
 }
 
 apply plugin: "idea"
@@ -18,8 +18,8 @@ idea.module {
 mainClassName = 'org.openforis.sepal.gui.Main'
 
 node {
-    version = '10.14.2'
-    npmVersion = '6.7.0'
+    version = '12.15.0'
+    npmVersion = '6.13.4'
     nodeModulesDir = file("${projectDir}/frontend")
     download = true
 }
@@ -36,8 +36,10 @@ dependencies {
     testCompile project(':sepal-server')
 }
 
-task buildFrontend(type: NpmTask) {
-    args = ['run', 'build']
+task buildFrontend(type: Exec) {
+    workingDir "${projectDir}/frontend"
+    commandLine 'npm', 'run', 'build'
+    timeout = Duration.ofHours(9999)
 }
 
 task copyFrontend(type: Copy) {
@@ -50,9 +52,9 @@ shadowJar {
 }
 
 task copyJar(type: Copy) {
-    from file("${libsDir}/${project.name}-${version}-all.jar")
+    from file("${buildDir}/libs/${project.name}-${version}.jar")
     into file("${projectDir}/docker/binary")
-    rename "${project.name}-${version}-all.jar", "${project.name}.jar"
+    rename "${project.name}-${version}.jar", "${project.name}.jar"
 }
 
 buildFrontend.dependsOn(npm_cache_verify, npm_install)
@@ -72,4 +74,3 @@ task runDev(type: JavaExec) {
     main = mainClassName
     systemProperties(System.getProperties())
 }
-//  ./gradlew :sepal-gui:runDev

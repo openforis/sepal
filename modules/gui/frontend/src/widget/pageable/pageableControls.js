@@ -6,7 +6,7 @@ import React from 'react'
 
 export const PageableControls = props => {
     const renderDefaultControls = pageable =>
-        <ButtonGroup layout='horizontal-nowrap-tight'>
+        <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
             <Button
                 chromeless
                 look='transparent'
@@ -31,7 +31,16 @@ export const PageableControls = props => {
                 icon='forward'
                 onClick={() => pageable.nextPage()}
                 disabled={pageable.isLastPage}/>
+            <Button
+                chromeless
+                look='transparent'
+                size='large'
+                shape='pill'
+                icon='fast-forward'
+                onClick={() => pageable.lastPage()}
+                disabled={pageable.isLastPage}/>
         </ButtonGroup>
+        
     const renderCustomControls = pageable =>
         <React.Fragment>
             {props.children({...pageable, renderDefaultControls: () => renderDefaultControls(pageable)})}

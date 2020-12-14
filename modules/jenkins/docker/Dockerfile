@@ -18,12 +18,10 @@ ENV JENKINS_SLAVE_AGENT_PORT 50000
 ENV JENKINS_UC https://updates.jenkins-ci.org
 ENV JAVA_HOME /usr/local/lib/sdkman/candidates/java/current
 
-RUN chmod +x /init_image; sync
+RUN chmod +x /init_image; sync; chmod +x /usr/local/bin/plugins.sh; sync;
 RUN /init_image
 RUN /downloads
 RUN /usr/local/bin/plugins.sh /plugins.txt
-
-ADD config/settings.xml /etc/maven/settings.xml
 
 VOLUME /var/jenkins_home
 

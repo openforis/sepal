@@ -1,23 +1,29 @@
-import './map.module.css'
-import {fromGoogleBounds, google, polygonOptions} from './map'
 import {of} from 'rxjs'
-import {sepalMap} from 'app/home/map/map'
 
-export const setPolygonLayer = (
-    {
-        contextId,
-        layerSpec: {id, path},
-        _fill,
-        destroy$,
-        onInitialized
-    }) => {
-    const layer = path ? new PolygonLayer(path) : null
-    sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
+const polygonOptions = fill => ({
+    fillColor: '#FBFAF2',
+    fillOpacity: fill ? 0.07 : 0.000000000000000000000000000001,
+    strokeColor: '#FBFAF2',
+    strokeOpacity: 0.5,
+    strokeWeight: 1
+})
+
+export const setPolygonLayer = ({
+    mapContext,
+    layerSpec: {id, path},
+    _fill,
+    destroy$,
+    onInitialized
+}) => {
+    const layer = path ? new PolygonLayer({mapContext, path}) : null
+    mapContext.sepalMap.setLayer({id, layer, destroy$, onInitialized})
     return layer
 }
 
 class PolygonLayer {
-    constructor(path, fill) {
+    constructor({mapContext: {google, googleMap, sepalMap}, path, fill}) {
+        this.googleMap = googleMap
+        this.type = 'PolygonLayer'
         this.polygonPath = path
         this.fill = fill
         this.layer = new google.maps.Polygon({
@@ -29,7 +35,7 @@ class PolygonLayer {
             path.getArray().forEach(latLng =>
                 googleBounds.extend(latLng)
             ))
-        this.bounds = fromGoogleBounds(googleBounds)
+        this.bounds = sepalMap.fromGoogleBounds(googleBounds)
     }
 
     equals(o) {
@@ -40,11 +46,11 @@ class PolygonLayer {
         )
     }
 
-    addToMap(googleMap) {
-        this.layer.setMap(googleMap)
+    addToMap() {
+        this.layer.setMap(this.googleMap)
     }
 
-    removeFromMap(_googleMap) {
+    removeFromMap() {
         this.layer.setMap(null)
     }
 

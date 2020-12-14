@@ -4,7 +4,7 @@ from .gee import get_info
 
 
 class Aoi:
-    _fusion_table_by_data_set = {
+    _table_by_data_set = {
         'LANDSAT': {
             'table_id': 'users/wiell/SepalResources/landsatSceneAreas',
             'id_column': 'name',
@@ -45,9 +45,9 @@ class Aoi:
         :return: A list of dicts scene areas
         :rtype: list
         """
-        if data_set not in self._fusion_table_by_data_set:
+        if data_set not in self._table_by_data_set:
             raise ValueError('Unsupported data set: ' + data_set)
-        table = self._fusion_table_by_data_set[data_set]
+        table = self._table_by_data_set[data_set]
         aoi = self._geometry
         scene_area_table = get_info(
             ee.FeatureCollection(table['table_id'])
@@ -111,10 +111,13 @@ class EETable(Aoi):
         self.key_column = spec['keyColumn']
         table = ee.FeatureCollection(self.table_name)
         self.value_column = spec['key']
-        filters = [ee.Filter.eq(self.key_column, self.value_column)]
-        if is_number(self.value_column):
-            filters.append(ee.Filter.eq(self.key_column, float(self.value_column)))
-        self.feature_collection = table.filter(ee.Filter.Or(*filters))
+        if self.key_column:
+            filters = [ee.Filter.eq(self.key_column, self.value_column)]
+            if is_number(self.value_column):
+                filters.append(ee.Filter.eq(self.key_column, float(self.value_column)))
+            self.feature_collection = table.filter(ee.Filter.Or(*filters))
+        else:
+            self.feature_collection = table
         geometry = self.feature_collection.geometry()
         Aoi.__init__(self, geometry, spec)
 

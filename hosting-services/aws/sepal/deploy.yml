@@ -12,7 +12,6 @@
         ldap_host: "{{ ec2_private_ip_address }}"
         sepal_http_ip: "{{ ec2_private_ip_address }}"
         sepal_ssh_ip: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
-        elk_host: "{{ elk_host }}"
         syslog_address: "unixgram:///dev/log"
         syslog_host: "{{ ec2_private_ip_address }}"
 
@@ -140,6 +139,10 @@
     - name: Install docker
       command: "amazon-linux-extras install docker"
 
+    - name: Install Development Tools
+      yum:
+        name: "@Development Tools"
+
     - name: Install pip
       yum:
         name: "python-pip"
@@ -181,18 +184,17 @@
     - { role: docker-login }
 
     - { role: run-module, module: backup }
-    - { role: run-module, module: kafka }
+    - { role: run-module, module: rabbitmq }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
     - { role: run-module, module: mysql-backup }
-    - { role: run-module, module: google-earth-engine}
+    - { role: run-module, module: gee}
     - { role: run-module, module: user }
     - { role: run-module, module: sepal-server, container_name: sepal }
     - { role: run-module, module: gui }
     - { role: run-module, module: ceo }
     - { role: run-module, module: ceo-gateway }
-    - { role: run-module, module: peatlands }
     - { role: run-module, module: ssh-gateway }
     - { role: run-module, module: terminal }
     - { role: run-module, module: api-gateway }

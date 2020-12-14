@@ -116,7 +116,6 @@ SliderContainer.propTypes = {
     input: PropTypes.object.isRequired,
     decimals: PropTypes.number,
     denormalize: PropTypes.func,
-    disabled: PropTypes.any,
     info: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.func
@@ -158,7 +157,7 @@ class _SliderDynamics extends React.Component {
         return (
             <React.Fragment>
                 {((range === 'low' && !invert) || (range === 'high' && invert)) ? this.renderLeftRange() : null}
-                {((range === 'high' && !invert ) || (range === 'low' && invert)) ? this.renderRightRange() : null}
+                {((range === 'high' && !invert) || (range === 'low' && invert)) ? this.renderRightRange() : null}
             </React.Fragment>
         )
     }
@@ -217,6 +216,7 @@ class _SliderDynamics extends React.Component {
 
     initialize({handleRef, clickableAreaRef}) {
         const {addSubscription} = this.props
+        
         this.setHandlePositionByValue()
 
         const handle = new Hammer(handleRef)
@@ -266,14 +266,20 @@ class _SliderDynamics extends React.Component {
             })
         )
 
+        const handleDragging$ = merge(
+            panStart$.pipe(mapTo(true)),
+            panEnd$.pipe(mapTo(false)),
+        )
+
         const targetPosition$ = merge(clickPosition$, dragPosition$)
 
         const handlePosition$ = targetPosition$.pipe(
-            switchMap(targetPosition => {
+            withLatestFrom(handleDragging$),
+            switchMap(([targetPosition, dragging]) => {
                 const {position} = this.state
                 return animationFrame$.pipe(
                     map(() => targetPosition),
-                    scan(lerp(.1), position),
+                    scan(lerp(dragging ? .25 : .1), position),
                     map(position => Math.round(position)),
                     distinctUntilChanged()
                 )
@@ -283,11 +289,6 @@ class _SliderDynamics extends React.Component {
         const handleMoving$ = combineLatest(handlePosition$, targetPosition$).pipe(
             map(([currentPosition, targetPosition]) => currentPosition !== targetPosition),
             distinctUntilChanged()
-        )
-
-        const handleDragging$ = merge(
-            panStart$.pipe(mapTo(true)),
-            panEnd$.pipe(mapTo(false)),
         )
 
         const previewPosition$ = merge(targetPosition$, hoverPosition$).pipe(
@@ -485,7 +486,7 @@ export class FormSlider extends React.Component {
     }
 
     renderContainer() {
-        const {input, scale = 'linear', decimals = 0, snap, range = 'left', invert = false, info, disabled} = this.props
+        const {input, scale = 'linear', decimals = 0, snap, range = 'left', invert = false, info} = this.props
         const {ticks, minValue, maxValue, width} = this.state
         return (
             <SliderContainer
@@ -499,31 +500,23 @@ export class FormSlider extends React.Component {
                 scale={scale}
                 invert={invert}
                 info={info}
-                width={width}
-                disabled={disabled}/>
+                width={width}/>
         )
 
     }
 
-    renderDisabledOverlay() {
-        const {disabled} = this.props
-        return disabled
-            ? <div className={styles.disabled}/>
-            : null
-    }
-
     render() {
-        const {label, tooltip, tooltipPlacement, alignment} = this.props
+        const {label, tooltip, tooltipPlacement, alignment, disabled} = this.props
         return (
             <Widget
                 className={styles.wrapper}
                 label={label}
                 alignment={alignment}
+                disabled={disabled}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}>
                 {this.renderInfo()}
                 {this.renderSlider()}
-                {this.renderDisabledOverlay()}
             </Widget>
         )
     }

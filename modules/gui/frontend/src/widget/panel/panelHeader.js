@@ -4,15 +4,42 @@ import React from 'react'
 import styles from './panelHeader.module.css'
 
 export class PanelHeader extends React.Component {
+    renderIcon() {
+        const {icon} = this.props
+        return icon
+            ? (
+                <div className={styles.icon}>
+                    <Icon name={icon}/>
+                </div>
+            )
+            : null
+    }
+
+    renderTitle() {
+        const {title} = this.props
+        return (
+            <div className={styles.title}>
+                {title}
+            </div>
+        )
+    }
+
+    renderLabel() {
+        const {label} = this.props
+        return label
+            ? (
+                <div className={styles.label}>
+                    {label}
+                </div>)
+            : null
+    }
+
     renderDefault() {
-        const {icon, title, label} = this.props
         return (
             <React.Fragment>
-                <div className={styles.title}>
-                    {icon ? <Icon name={icon}/> : null}
-                    {title}
-                </div>
-                {label ? <div className={styles.label}>{label}</div> : null}
+                {this.renderIcon()}
+                {this.renderTitle()}
+                {this.renderLabel()}
             </React.Fragment>
         )
     }
@@ -31,6 +58,6 @@ PanelHeader.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     icon: PropTypes.string,
-    label: PropTypes.string,
+    label: PropTypes.any,
     title: PropTypes.any
 }

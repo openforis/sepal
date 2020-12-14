@@ -1,8 +1,8 @@
 import {CenteredProgress} from 'widget/progress'
+import {Maps} from 'app/home/map/maps'
 import {compose} from 'compose'
 import {connect, select} from 'store'
 import {history, location} from 'route'
-import {initGoogleMapsApi$} from '../map/map'
 import {msg} from 'translate'
 import Apps from './apps/apps'
 import Browse from './browse/browse'
@@ -21,13 +21,6 @@ const mapStateToProps = () => ({
 })
 
 class Body extends React.Component {
-    constructor(props) {
-        super(props)
-        this.props.asyncActionBuilder('INIT_GOOGLE_MAPS_API',
-            initGoogleMapsApi$())
-            .dispatch()
-    }
-
     componentDidUpdate() {
         const {budgetExceeded, location} = this.props
         if (budgetExceeded && !['/browse', '/users'].includes(location.pathname))
@@ -36,18 +29,13 @@ class Body extends React.Component {
             history().replace('/process')
     }
 
-    render() {
-        const {action, className} = this.props
-        if (!action('INIT_GOOGLE_MAPS_API').dispatched) {
-            const progressMessageId = action('LOAD_GOOGLE_MAPS_API_KEY').dispatching
-                ? 'body.initializing-google-maps'
-                : 'body.starting-sepal'
-            return <CenteredProgress title={msg(progressMessageId)} className={className}/>
-        }
+    renderSections() {
+        const {className} = this.props
+        // const map = React.createElement(Map)
         return (
             <div className={className}>
                 <div className={styles.sections}>
-                    <Section path='/process' captureMouseEvents={false}>
+                    <Section path='/process' captureMouseEvents={false} staticMap={false}>
                         <Process/>
                     </Section>
                     <Section path='/browse'>
@@ -67,6 +55,19 @@ class Body extends React.Component {
                     </Section>
                 </div>
             </div>
+        )
+    }
+
+    renderProgress() {
+        const {className} = this.props
+        return <CenteredProgress title={msg('body.starting-sepal')} className={className}/>
+    }
+
+    render() {
+        return (
+            <Maps>
+                {initialized => initialized ? this.renderSections() : this.renderProgress()}
+            </Maps>
         )
     }
 }

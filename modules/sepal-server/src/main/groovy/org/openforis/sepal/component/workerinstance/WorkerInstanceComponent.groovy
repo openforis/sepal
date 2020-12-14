@@ -12,6 +12,8 @@ import org.openforis.sepal.component.workerinstance.query.FindMissingInstances
 import org.openforis.sepal.component.workerinstance.query.FindMissingInstancesHandler
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.event.RabbitMQTopic
+import org.openforis.sepal.event.TopicEventDispatcher
 import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
@@ -26,24 +28,27 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
     private final List<InstanceType> instanceTypes
 
     static WorkerInstanceComponent create(HostingServiceAdapter hostingServiceAdapter) {
+        def config = new WorkerInstanceConfig()
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA))
         return new WorkerInstanceComponent(
-                connectionManager,
-                new AsynchronousEventDispatcher(),
-                hostingServiceAdapter.instanceProvider,
-                hostingServiceAdapter.instanceTypes,
-                hostingServiceAdapter.instanceProvisioner,
-                new SystemClock()
+            connectionManager,
+            new TopicEventDispatcher(
+                    new RabbitMQTopic('workerInstance', config.rabbitMQHost, config.rabbitMQPort)
+            ),
+            hostingServiceAdapter.instanceProvider,
+            hostingServiceAdapter.instanceTypes,
+            hostingServiceAdapter.instanceProvisioner,
+            new SystemClock()
         )
     }
 
     WorkerInstanceComponent(
-            SqlConnectionManager connectionManager,
-            HandlerRegistryEventDispatcher eventDispatcher,
-            InstanceProvider instanceProvider,
-            List<InstanceType> instanceTypes,
-            InstanceProvisioner instanceProvisioner,
-            Clock clock) {
+        SqlConnectionManager connectionManager,
+        HandlerRegistryEventDispatcher eventDispatcher,
+        InstanceProvider instanceProvider,
+        List<InstanceType> instanceTypes,
+        InstanceProvisioner instanceProvisioner,
+        Clock clock) {
         super(connectionManager, eventDispatcher)
         this.instanceProvider = instanceProvider
         this.instanceTypes = instanceTypes
@@ -51,7 +56,7 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
         command(RequestInstance, new RequestInstanceHandler(instanceRepository, instanceProvider, eventDispatcher, clock))
         command(ReleaseInstance, new ReleaseInstanceHandler(instanceRepository, instanceProvider, instanceProvisioner, eventDispatcher))
         command(ProvisionInstance, new ProvisionInstanceHandler(instanceProvisioner, eventDispatcher))
-        command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceRepository, instanceProvider, instanceProvisioner, eventDispatcher, clock))
+        command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceRepository, instanceProvider, instanceProvisioner, eventDispatcher, connectionManager, clock))
         command(SizeIdlePool, new SizeIdlePoolHandler(instanceRepository, instanceProvider, eventDispatcher, clock))
 
         query(FindMissingInstances, new FindMissingInstancesHandler(instanceProvisioner))
@@ -63,8 +68,8 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
 
         on(InstancePendingProvisioning) {
             submit(new ProvisionInstance(
-                    username: it.instance.reservation.username,
-                    instance: it.instance))
+                username: it.instance.reservation.username,
+                instance: it.instance))
         }
     }
 
@@ -72,11 +77,7 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
         def targetIdleCountByInstanceType = instanceTypes.collectEntries {
             [(it.id): it.idleCount]
         }.findAll { it.value > 0 }
-        schedule(1, MINUTES,
-                new SizeIdlePool(
-                        targetIdleCountByInstanceType: targetIdleCountByInstanceType,
-                        timeBeforeChargeToTerminate: 5,
-                        timeUnit: MINUTES))
+        schedule(1, MINUTES, new SizeIdlePool(targetIdleCountByInstanceType))
         instanceProvider.start()
     }
 

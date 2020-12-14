@@ -16,11 +16,20 @@ else
     echo "User $sandbox_user initialized"
 fi
 
-sudo -iu $sandbox_user NODE_PATH=$NODE_PATH:`npm root -g`:`npm root` python3 /usr/local/bin/jupyter-notebook\
+function exportEnvironment {
+    while read line; do
+      export $line
+    done </etc/environment
+}
+
+exportEnvironment
+
+sudo -iu $sandbox_user PATH=$PATH PROJ_LIB=/usr/share/proj NODE_PATH=$NODE_PATH:`npm root -g`:`npm root` python3 /usr/local/bin/jupyter-notebook\
  --no-browser\
  --allow-root\
  --ip=0.0.0.0\
  --port=8888\
  --NotebookApp.token=''\
  --NotebookApp.base_url='/api/sandbox/jupyter/'\
- --NotebookApp.notebook_dir="/home/$sandbox_user"
+ --NotebookApp.notebook_dir="/home/$sandbox_user"\
+ --VoilaConfiguration.enable_nbextensions=True

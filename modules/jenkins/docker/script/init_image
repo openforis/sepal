@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
+set -e
 
 # Needed for apt-add-repository command
-apt-get -y update && apt-get install -y software-properties-common sudo
+apt-get -y update && apt-get install -y \
+  curl \
+  software-properties-common \
+  sudo
 
-curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_14.x | bash -
 apt-get install -y nodejs\
  bzip2
 
@@ -15,6 +19,5 @@ chown -R jenkins /usr/share/jenkins/ref
 chmod +x /downloads
 chmod +x /init_container
 chmod +x /jenkins.sh
-chmod +x /usr/local/bin/plugins.sh
 
 

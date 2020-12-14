@@ -11,12 +11,12 @@ export class ActivationButton extends React.Component {
             <Activator id={id}>
                 {({activate, deactivate, active, canActivate}) =>
                     <ToolbarButton
-                        disabled={disabled || !canActivate}
+                        disabled={disabled || (!active && !canActivate)}
                         selected={active}
                         icon={icon}
                         label={label}
                         tooltip={tooltip}
-                        className={[styles.panelButton, active ? styles.selected : null].join(' ')}
+                        className={[styles.activationButton, styles.panelButton, active ? styles.selected : null].join(' ')}
                         onClick={e => {
                             active ? deactivate() : activate()
                             onClick && onClick(e)

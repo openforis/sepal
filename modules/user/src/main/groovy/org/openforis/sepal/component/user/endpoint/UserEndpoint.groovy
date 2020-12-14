@@ -3,10 +3,12 @@ package org.openforis.sepal.component.user.endpoint
 import groovymvc.Controller
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.user.command.*
+import org.openforis.sepal.component.user.query.EmailNotificationsEnabled
 import org.openforis.sepal.component.user.query.GoogleAccessRequestUrl
 import org.openforis.sepal.component.user.query.ListUsers
 import org.openforis.sepal.component.user.query.LoadUser
 import org.openforis.sepal.endpoint.InvalidRequest
+import org.openforis.sepal.user.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -45,7 +47,8 @@ class UserEndpoint {
                     usernameToUpdate: [notNull(), notBlank()],
                     name            : [notNull(), notBlank()],
                     email           : emailConstraints,
-                    organization    : organizationConstraints])
+                    organization    : organizationConstraints,
+                    admin           : notNull()])
             constrain(ChangePassword, [
                     oldPassword: [notNull(), notBlank()],
                     newPassword: passwordConstraints])
@@ -65,7 +68,7 @@ class UserEndpoint {
                                     username: user.username,
                                     tokens: user.googleTokens
                             ))
-                    send toJson(user)
+                    send toJson(userToMap(user))
                 } else {
                     LOG.info('Authentication failed: ' + params.user)
                     halt(401)
@@ -103,7 +106,7 @@ class UserEndpoint {
                 if (errors)
                     throw new InvalidRequest(errors)
                 def user = component.submit(command)
-                send toJson(user)
+                send toJson(userToMap(user))
             }
 
             post('/activate', [NO_AUTHORIZATION]) {
@@ -113,7 +116,7 @@ class UserEndpoint {
                 if (errors)
                     throw new InvalidRequest(errors)
                 def user = component.submit(command)
-                send toJson(user)
+                send toJson(userToMap(user))
             }
 
 
@@ -126,7 +129,7 @@ class UserEndpoint {
                 response.contentType = 'application/json'
                 def query = new LoadUser(username: sepalUser.username)
                 def user = component.submit(query)
-                send toJson(user)
+                send toJson(userToMap(user))
             }
 
             post('/current/password') {
@@ -149,11 +152,13 @@ class UserEndpoint {
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
+                // Make sure user cannot update these properties - take them from currently logged in user.
                 command.username = sepalUser.username
                 command.usernameToUpdate = sepalUser.username
+                command.admin = sepalUser.admin
                 def user = component.submit(command)
                 response.addHeader('sepal-user-updated', 'true')
-                send toJson(user)
+                send toJson(userToMap(user))
             }
 
             post('/details', [ADMIN]) {
@@ -164,14 +169,22 @@ class UserEndpoint {
                     throw new InvalidRequest(errors)
                 command.username = sepalUser.username
                 def user = component.submit(command)
-                send toJson(user)
+                send toJson(userToMap(user))
             }
 
             get('/list', [ADMIN]) {
                 response.contentType = 'application/json'
                 def users = component.submit(new ListUsers())
                 users.removeAll { it.systemUser }
-                send toJson(users)
+                send toJson(users.collect { userToMap(it) })
+            }
+
+            get('/email-notifications-enabled/{email}', [ADMIN]) {
+                response.contentType = 'application/json'
+                def emailNotificationsEnabled = component.submit(
+                        new EmailNotificationsEnabled(email: params.required('email', String))
+                )
+                send toJson([emailNotificationsEnabled: emailNotificationsEnabled])
             }
 
             post('/invite', [ADMIN]) {
@@ -182,7 +195,7 @@ class UserEndpoint {
                     throw new InvalidRequest(errors)
                 command.username = sepalUser.username
                 def user = component.submit(command)
-                send toJson(user)
+                send toJson(userToMap(user))
             }
 
             post('/delete', [ADMIN]) {
@@ -211,8 +224,6 @@ class UserEndpoint {
 
             post('/google/revoke-access') {
                 response.contentType = 'application/json'
-                if (!sepalUser.googleTokens)
-                    return send(toJson([status: 'success', message: 'No tokens to revoke']))
                 component.submit(
                         new RevokeGoogleAccountAccess(
                                 username: sepalUser.username,
@@ -233,5 +244,23 @@ class UserEndpoint {
                 send toJson(tokens)
             }
         }
+    }
+
+    Map userToMap(User user) {
+        [
+                id: user.id,
+                name: user.name,
+                username: user.username,
+                email: user.email,
+                organization: user.organization,
+                googleTokens: user.googleTokens,
+                emailNotificationsEnabled: user.emailNotificationsEnabled,
+                status: user.status,
+                roles: user.roles,
+                systemUser: user.systemUser,
+                creationTime: user.creationTime,
+                updateTime: user.updateTime,
+                admin: user.admin
+        ]
     }
 }

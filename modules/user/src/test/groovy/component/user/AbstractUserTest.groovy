@@ -6,6 +6,7 @@ import org.openforis.sepal.component.user.UserComponent
 import org.openforis.sepal.component.user.adapter.GoogleAccessTokenFileGateway
 import org.openforis.sepal.component.user.adapter.SmtpEmailGateway
 import org.openforis.sepal.component.user.command.*
+import org.openforis.sepal.component.user.query.EmailNotificationsEnabled
 import org.openforis.sepal.component.user.query.ListUsers
 import org.openforis.sepal.component.user.query.LoadUser
 import org.openforis.sepal.event.SynchronousEventDispatcher
@@ -46,7 +47,7 @@ class AbstractUserTest extends Specification {
             eventDispatcher,
             googleOAuthClient,
             googleEarthEngineWhitelistChecker,
-            new GoogleAccessTokenFileGateway(homeDirectory.absolutePath),
+            new FakeGoogleAccessTokenFileGateway(homeDirectory.absolutePath),
             changeListener,
             clock
     )
@@ -68,6 +69,12 @@ class AbstractUserTest extends Specification {
         )
     }
 
+    boolean emailNotificationsEnabled(String email) {
+        component.submit(
+                new EmailNotificationsEnabled(email: email)
+        )
+    }
+
     User inviteUser(Map args = [:]) {
         component.submit(
                 new InviteUser(
@@ -77,6 +84,19 @@ class AbstractUserTest extends Specification {
                         organization: args.testOrganization ?: testOrganization
                 ))
 
+    }
+
+    User updateUserDetails(User user) {
+        component.submit(
+                new UpdateUserDetails(
+                        usernameToUpdate: user.username,
+                        name: user.name,
+                        email: user.email,
+                        organization: user.organization,
+                        emailNotificationsEnabled: user.emailNotificationsEnabled,
+                        admin: user.admin
+                )
+        )
     }
 
     void requestPasswordReset(Map args = [:]) {

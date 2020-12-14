@@ -1,0 +1,15 @@
+.panel {
+    max-width: 20rem;
+    min-height: 15rem;
+}
+
+
+.form {
+    display: flex;
+    justify-content: space-between;
+}
+
+.dateRange {
+    color: #ccc;
+    font-size: 0.8rem;
+}

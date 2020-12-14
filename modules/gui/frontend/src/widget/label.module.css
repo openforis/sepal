@@ -2,6 +2,8 @@
     --label-color: #b0b0b0;
     --normal-font-size: .8rem;
     --large-font-size: .9rem;
+    display: flex;
+    align-items: center;
     margin: 0;
     margin-bottom: .5rem;
     font-size: var(--font-size);

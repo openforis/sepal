@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:bionic
 MAINTAINER OpenForis
 EXPOSE 7766
 
@@ -6,11 +6,11 @@ ADD config /config
 ADD script /script
 
 RUN chmod -R 500 /script && \
-    chmod -R 400 /config; sync && \
+    chmod -R 400 /config && sync && \
     /script/init_image.sh
 
 ADD requirements.txt /requirements.txt
-RUN pip2 install -r /requirements.txt
+RUN pip3 install -r /requirements.txt
 
 ADD src /src
 

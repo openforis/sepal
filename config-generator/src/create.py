@@ -1,14 +1,13 @@
+import errno
 import getpass
+import json
+import os
 import random
 import string
 import subprocess
-from os.path import dirname
-
-import errno
-import json
-import os
 import sys
 from collections import OrderedDict
+from os.path import dirname
 
 print "******************************"
 print "*** Sepal Config Generator ***"
@@ -139,20 +138,18 @@ def _config_sepal():
 
     _google_earth_engine()
 
+    _text('norway_planet_api_key', 'Google Maps API key')
     _text('google_maps_api_key', 'Google Maps API key')
     _text('smtp_from', 'Sepal email address (used as from when sending emails)')
     _text('smtp_host', 'SMTP server host')
     _text('smtp_port', 'SMTP server port')
     _text('smtp_username', 'SMTP server username')
     _password('smtp_password', 'SMTP server password', 'required')
-    _text('elk_host', 'ELK stack host')
     _certificate('certificates/sepal-https.ca-bundle', 'HTTPS CA bundle')
     _certificate('certificates/sepal-https.crt', 'HTTPS certificate')
     _certificate('certificates/sepal-https.key', 'HTTPS key')
     _certificate('certificates/aws.pem', 'AWS pem')
     _certificate('certificates/docker-registry.crt', 'Docker registry certificate')
-    _certificate('certificates/elk-client.crt', 'ELK client certificate')
-    _certificate('certificates/elk-client.key', 'ELK client key')
     # _create_key_pair('certificates/ldap-crt.pem', 'certificates/ldap-key.pem', '/O=SEPAL/CN=ldap')
     # TODO: LDAP - CA and key pair
 
@@ -163,8 +160,6 @@ def _config_ops():
     _text('jenkins_github_user_password', 'GitHub password')
     _create_key_pair('certificates/docker-registry.crt', 'certificates/docker-registry.key',
                      '/O=SEPAL/CN=' + config['host'])
-    _create_key_pair('certificates/elk-client.crt', 'certificates/elk-client.key', '/CN=*.elk')
-    _create_key_pair('certificates/elk.crt', 'certificates/elk.key', '/CN=*.elk')
 
 
 def _config_aws_sepal():

@@ -1,13 +1,13 @@
 package org.openforis.sepal.component.sandboxwebproxy.adapter
 
 import org.openforis.sepal.component.Component
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSession
 import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSessionManager
-import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.command.Heartbeat
 import org.openforis.sepal.component.workersession.command.RequestSession
-import org.openforis.sepal.component.workersession.event.SessionClosed
+import org.openforis.sepal.component.workersession.event.WorkerSessionClosed
 import org.openforis.sepal.component.workersession.query.FindSessionById
 import org.openforis.sepal.component.workersession.query.UserWorkerSessions
 
@@ -25,7 +25,7 @@ class WorkerSessionComponentAdapter implements SandboxSessionManager {
     }
 
     SandboxSession requestSession(String username) {
-        def instanceType = instanceTypes.first().id
+        def instanceType = instanceTypes.findAll {it.tag}.first().id
         def session = component.submit(new RequestSession(
                 instanceType: instanceType,
                 workerType: SANDBOX,
@@ -71,7 +71,7 @@ class WorkerSessionComponentAdapter implements SandboxSessionManager {
     }
 
     void onSessionClosed(Closure listener) {
-        component.on(SessionClosed) {
+        component.on(WorkerSessionClosed) {
             listener(it.sessionId)
         }
     }

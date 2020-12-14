@@ -49,11 +49,6 @@
     -webkit-text-fill-color: #fff;
 }
 
-.input input:disabled,
-.input textarea:disabled {
-    color: #888;
-}
-
 .input input::placeholder,
 .input textarea::placeholder {
     color: hsl(0, 0%, 39%);
@@ -61,5 +56,6 @@
 
 .input input.readOnly,
 .input textarea.readOnly {
+    color: inherit;
     pointer-events: none;
 }

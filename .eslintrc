@@ -1,0 +1,126 @@
+{
+    "env": {
+        "node":  true,
+        "browser": true,
+        "amd": true,
+        "es6": true,
+        "jest": true
+    },
+    "extends": [
+        "eslint:recommended"
+        // "plugin:import/errors",
+        // "plugin:import/warnings"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 9,
+        "ecmaFeatures": {
+            "jsx": true
+        },
+        "sourceType": "module"
+    },
+    "plugins": [
+        // "import",
+        // "sort-imports-es6-autofix"
+    ],
+    "rules": {
+        "arrow-parens": [
+            "error", 
+            "as-needed"
+        ],
+        "arrow-spacing": [
+            "error"
+        ],
+        "brace-style": [
+            "error", "1tbs", { 
+                "allowSingleLine": true
+            }
+        ],
+        "comma-spacing": [
+            "error", {
+                "before": false,
+                "after": true
+            }
+        ],
+        "eol-last": [
+            "error",
+            "always"
+        ],
+        "indent": [
+            "error",
+            4
+        ],
+        "key-spacing": [
+            "error", {
+                "beforeColon": false,
+                "afterColon": true,
+                "mode": "strict"
+            }
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "no-console": [
+            "error", {
+                "allow": ["info", "warn", "error"]
+            }
+        ],
+        "no-multi-spaces": [
+            "error", {
+                "ignoreEOLComments": true
+            }
+        ],
+        "no-multiple-empty-lines": [
+            "error", {
+                "max": 1,
+                "maxBOF": 0,
+                "maxEOF": 1
+            }
+        ],
+        "no-trailing-spaces": [
+            "error", {
+                "skipBlankLines": true,
+                "ignoreComments": false
+            }
+        ],
+        "no-unused-vars": [
+            "error", {
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_"
+            }
+        ],
+        "object-curly-spacing": [
+            "error",
+            "never"
+        ],
+        "object-shorthand": [
+            "error", 
+            "properties"
+        ],
+        "prefer-template": [
+            "error"
+        ],
+        "space-before-blocks": "error",
+        "space-in-parens": [
+            "error",
+            "never"
+        ],
+        "space-infix-ops": "error",
+        "quotes": [
+            "error",
+            "single"
+        ],
+        "semi": [
+            "error",
+            "never"
+        ],
+        "template-curly-spacing": [
+            "error"
+        ]
+        // "sort-imports-es6-autofix/sort-imports-es6": ["error", {
+        //     "ignoreCase": false,
+        //     "ignoreMemberSort": false,
+        //     "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+        // }]
+    }
+}

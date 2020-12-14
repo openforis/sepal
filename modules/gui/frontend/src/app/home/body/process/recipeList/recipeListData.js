@@ -79,7 +79,7 @@ export class RecipeListData extends React.Component {
 
     renderSortButtons() {
         return (
-            <ButtonGroup layout='horizontal-nowrap-tight'>
+            <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
                 {this.renderSortButton('updateTime', msg('process.recipe.lastUpdate'))}
                 {this.renderSortButton('name', msg('process.recipe.name'))}
             </ButtonGroup>
@@ -105,6 +105,7 @@ export class RecipeListData extends React.Component {
     }
 
     getHandleIcon({column, sortingOrder, sortingDirection}) {
+        
         const sorted = sortingOrder === column
         return sorted
             ? sortingDirection === 1
@@ -122,6 +123,7 @@ export class RecipeListData extends React.Component {
                 description={recipe.name}
                 timestamp={recipe.updateTime}
                 highlight={highlightMatcher}
+                highlightTitle={false}
                 duplicateTooltip={msg('process.menu.duplicateRecipe')}
                 removeMessage={msg('process.menu.removeRecipe.message', {recipe: recipe.name})}
                 removeTooltip={msg('process.menu.removeRecipe.tooltip')}

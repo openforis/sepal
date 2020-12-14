@@ -9,7 +9,7 @@ class FakeMessageBroker implements MessageBroker {
 
     void stop() {}
 
-    def <M> MessageQueue<M> createMessageQueue(String queueName, Class<M> messageType, MessageConsumer<M> consumer) {
+    def <M> MessageQueue<M> createMessageQueue(String queueName, Class<M> messageType, Closure consumer) {
         new FakeMessageQueue(consumer)
     }
 }

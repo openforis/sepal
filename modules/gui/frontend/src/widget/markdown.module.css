@@ -1,0 +1,12 @@
+.markdown {
+    font-size: .9rem;
+    padding: .5rem 0;
+}
+
+.markdown :first-child {
+    margin-top: 0;
+}
+
+.markdown :last-child {
+    margin-bottom: 0;
+}

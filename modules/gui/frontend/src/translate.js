@@ -1,6 +1,7 @@
 import {IntlProvider, injectIntl} from 'react-intl'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import flat from 'flat'
 import moment from 'moment'
 
@@ -21,6 +22,9 @@ const flattenDeep = arr => Array.isArray(arr)
     : [arr]
 
 export const msg = (id, values = {}, defaultMessage) => {
+    values = _.transform(values, (result, value, key) =>
+        result[key] = JSON.stringify(value)
+    )
     const idString = String(flattenDeep(id).join('.'))
     return intl.formatMessage({
         id: idString,

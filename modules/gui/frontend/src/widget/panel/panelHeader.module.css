@@ -9,22 +9,29 @@
     border-bottom: var(--wireframe);
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 
 .header * {
     text-transform: uppercase;
 }
 
-.header > div > *:first-child {
+.header .icon {
     margin-right: .5rem;
+    flex-grow: 0;
+    flex-shrink: 1;
 }
 
 .header .title {
     display: flex;
     flex-direction: row;
     align-items: center;
+    flex-grow: 1;
+    flex-shrink: 1;
 }
 
 .header .label {
     margin-left: 1rem;
+    flex-grow: 0;
+    flex-shrink: 1;
 }

@@ -1,16 +1,15 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
+import {Item} from 'widget/item'
 import {Subject, animationFrameScheduler, fromEvent, interval, timer} from 'rxjs'
 import {compose} from 'compose'
 import {debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil} from 'rxjs/operators'
 import Hammer from 'hammerjs'
-import Highlight from 'react-highlighter'
 import PropTypes from 'prop-types'
 import React from 'react'
 import RemoveButton from 'widget/removeButton'
 import _ from 'lodash'
 import lookStyles from 'style/look.module.css'
-import moment from 'moment'
 import styles from './superButton.module.css'
 import withSubscriptions from 'subscription'
 
@@ -30,9 +29,14 @@ class _SuperButton extends React.Component {
         return clickToExpand && children
     }
 
-    isInteractive() {
-        const {onClick, expanded} = this.props
-        return onClick || (this.isExpandable() && !expanded) || this.isDraggable()
+    isDisabled() {
+        const {disabled} = this.props
+        return disabled
+    }
+
+    isClickable() {
+        const {disabled, onClick, expanded} = this.props
+        return !disabled && (onClick || (this.isExpandable() && !expanded) || this.isDraggable())
     }
 
     isInternallySelected() {
@@ -50,105 +54,118 @@ class _SuperButton extends React.Component {
     }
 
     isDraggable() {
-        const {drag$, onDragStart, onDrag, onDragEnd} = this.props
-        return drag$ || onDragStart || onDrag || onDragEnd
+        const {disabled, drag$, onDragStart, onDrag, onDragEnd} = this.props
+        return !disabled && (drag$ || onDragStart || onDrag || onDragEnd)
     }
 
     isDragging() {
-        const {dragging} = this.state
-        return dragging
+        const {disabled, dragging} = this.state
+        return !disabled && dragging
+    }
+
+    onClick() {
+        const {onClick} = this.props
+        onClick && onClick()
+    }
+
+    clickToExpand() {
+        const {onExpand} = this.props
+        this.setState(
+            ({expanded}) => ({expanded: !expanded}),
+            () => {
+                const {expanded} = this.state
+                onExpand && onExpand(expanded)
+                this.expand$.next(expanded)
+            }
+        )
     }
 
     handleClick() {
-        const {onClick, onExpand} = this.props
-        if (onClick) {
-            onClick && onClick()
-            return
-        }
-        if (this.isExpandable()) {
-            this.setState(
-                ({expanded}) => ({expanded: !expanded}),
-                () => {
-                    const {expanded} = this.state
-                    expanded && onExpand && onExpand()
-                    this.expand$.next(expanded)
-                }
-            )
-            return
+        const {disabled, onClick} = this.props
+        if (!disabled) {
+            if (onClick) {
+                this.onClick()
+            } else if (this.isExpandable()) {
+                this.clickToExpand()
+            }
         }
     }
 
+    renderDefaultContent() {
+        const {title, description, image, timestamp, highlight, highlightClassName, highlightTitle, highlightDescription} = this.props
+        return (
+            <Item
+                className={styles.content}
+                title={title}
+                description={description}
+                image={image}
+                timestamp={timestamp}
+                highlight={highlight}
+                highlightClassName={highlightClassName}
+                highlightTitle={highlightTitle}
+                highlightDescription={highlightDescription}
+            />
+        )
+    }
+
+    renderContent() {
+        const {content} = this.props
+        return content
+            ? <div className={styles.content}>{content}</div>
+            : this.renderDefaultContent()
+    }
+
+    renderButtons() {
+        return (
+            <ButtonGroup
+                layout='horizontal-nowrap'
+                className={styles.inline}
+            >
+                {this.renderInlineComponents()}
+                {/* {this.renderDragButton()} */}
+                {this.renderInfoButton()}
+                {this.renderEditButton()}
+                {this.renderDuplicateButton()}
+                {this.renderRemoveButton()}
+            </ButtonGroup>
+        )
+    }
+
     render() {
-        const {className, title, description} = this.props
+        const {className} = this.props
         const classNames = _.flatten([
             styles.container,
             lookStyles.look,
             lookStyles.transparent,
             lookStyles.noTransitions,
             this.isSelected() === true ? [lookStyles.hover, styles.expanded] : null,
-            this.isInteractive() ? null : lookStyles.nonInteractive,
+            this.isDisabled() ? lookStyles.nonInteractive : null,
             this.isDraggable() ? styles.draggable : null,
             this.isDragging() ? styles.dragging : null,
+            this.isClickable() ? null : styles.unclickable,
             className
         ]).join(' ')
         return (
             <div className={classNames} ref={this.ref}>
                 <div className={styles.main}>
                     <div className={styles.clickTarget} onClick={() => this.handleClick()}/>
-                    <div className={styles.info}>
-                        <div className='itemType'>{this.renderHighlight(title)}</div>
-                        <div className={styles.description}>{this.renderHighlight(description)}</div>
-                    </div>
-                    <ButtonGroup
-                        layout='horizontal-nowrap'
-                        className={styles.buttons}>
-                        {this.renderTimestamp()}
-                        {this.renderExtraButtons()}
-                        {/* {this.renderDragButton()} */}
-                        {this.renderEditButton()}
-                        {this.renderDuplicateButton()}
-                        {this.renderRemoveButton()}
-                    </ButtonGroup>
+                    {this.renderContent()}
+                    {this.renderButtons()}
                 </div>
                 {this.renderChildren()}
             </div>
         )
     }
 
-    renderHighlight(content) {
-        const {highlight, highlightClassName} = this.props
-        return highlight
-            ? (
-                <Highlight
-                    search={highlight}
-                    ignoreDiacritics={true}
-                    matchClass={highlightClassName}>
-                    {content}
-                </Highlight>
-            )
-            : content
-    }
-
-    renderTimestamp() {
-        const {timestamp} = this.props
-        return timestamp
-            ? (
-                <div className={styles.timestamp}>
-                    {moment(timestamp).fromNow()}
-                </div>
-            )
-            : null
-    }
-
-    renderExtraButtons() {
-        const {extraButtons} = this.props
-        return extraButtons
-            ? extraButtons
+    renderInlineComponents() {
+        const {inlineComponents} = this.props
+        return inlineComponents
+            ? inlineComponents
             : null
     }
 
     renderEditButton() {
-        const {onEdit, editTooltip, tooltipPlacement} = this.props
+        const {editDisabled, onEdit, editTooltip, tooltipPlacement} = this.props
         return onEdit
             ? (
                 <Button
@@ -158,6 +175,7 @@ class _SuperButton extends React.Component {
                     icon='edit'
                     tooltip={editTooltip}
                     tooltipPlacement={tooltipPlacement}
+                    editDisabled={editDisabled}
                     onClick={() => onEdit()}
                 />
             )
@@ -165,7 +183,7 @@ class _SuperButton extends React.Component {
     }
 
     renderDuplicateButton() {
-        const {onDuplicate, duplicateTooltip, tooltipPlacement} = this.props
+        const {duplicateDisabled, onDuplicate, duplicateTooltip, tooltipPlacement} = this.props
         return onDuplicate
             ? (
                 <Button
@@ -175,6 +193,7 @@ class _SuperButton extends React.Component {
                     icon='clone'
                     tooltip={duplicateTooltip}
                     tooltipPlacement={tooltipPlacement}
+                    disabled={duplicateDisabled}
                     onClick={() => onDuplicate()}/>
             )
             : null
@@ -196,7 +215,7 @@ class _SuperButton extends React.Component {
     }
 
     renderInfoButton() {
-        const {onInfo, infoTooltip, tooltipPlacement} = this.props
+        const {infoDisabled, onInfo, infoTooltip, tooltipPlacement} = this.props
         return onInfo
             ? (
                 <Button
@@ -206,6 +225,7 @@ class _SuperButton extends React.Component {
                     icon='info-circle'
                     tooltip={infoTooltip}
                     tooltipPlacement={tooltipPlacement}
+                    disabled={infoDisabled}
                     onClick={() => onInfo()}/>
             )
             : null
@@ -233,7 +253,7 @@ class _SuperButton extends React.Component {
         const {children} = this.props
         return children && this.isSelected() !== false
             ? (
-                <div className={styles.extra}>
+                <div className={styles.expand}>
                     {children}
                 </div>
             )
@@ -334,22 +354,29 @@ SuperButton.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     clickToExpand: PropTypes.any,
-    description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    content: PropTypes.any,
+    description: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    disabled: PropTypes.any,
     drag$: PropTypes.object,
     dragTooltip: PropTypes.string,
     dragValue: PropTypes.any,
+    duplicateDisabled: PropTypes.any,
     duplicateTooltip: PropTypes.string,
+    editDisabled: PropTypes.any,
     editTooltip: PropTypes.string,
     expanded: PropTypes.any,
-    extraButtons: PropTypes.arrayOf(PropTypes.object),
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
+    highlightDescription: PropTypes.any,
+    highlightTitle: PropTypes.any,
+    image: PropTypes.any,
+    infoDisabled: PropTypes.any,
     infoTooltip: PropTypes.string,
+    inlineComponents: PropTypes.any,
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
     removeTooltip: PropTypes.string,
-    timestamp: PropTypes.any,
-    title: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    title: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     tooltipPlacement: PropTypes.string,
     unsafeRemove: PropTypes.any,
     onClick: PropTypes.func,

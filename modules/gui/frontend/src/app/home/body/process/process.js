@@ -1,3 +1,4 @@
+import {Map} from '../../map/map'
 import {RecipeContext} from 'app/home/body/process/recipeContext'
 import {RecipeHome} from './recipeHome'
 import {Tabs} from 'widget/tabs/tabs'
@@ -13,15 +14,15 @@ import Revisions from 'app/home/body/process/revisions'
 import SaveRecipe from './saveRecipe'
 
 class Process extends React.Component {
-    renderRecipeByType(type) {
-        return React.createElement(
-            getRecipeType(type).components.recipe
-        )
+    renderRecipeByType(recipeId, type) {
+        const component = getRecipeType(type).components.recipe
+        const props = {recipeId}
+        return React.createElement(component, props)
     }
 
     renderRecipe(recipeId, type) {
         return type
-            ? this.renderRecipeByType(type)
+            ? this.renderRecipeByType(recipeId, type)
             : <RecipeHome recipeId={recipeId}/>
     }
 
@@ -56,7 +57,9 @@ class Process extends React.Component {
                     onClose={(recipe, close) => this.onCloseTab(recipe, close)}>
                     {({id, type}) =>
                         <RecipeContext recipeId={id}>
-                            {this.renderRecipe(id, type)}
+                            <Map>
+                                {this.renderRecipe(id, type)}
+                            </Map>
                         </RecipeContext>
                     }
                 </Tabs>

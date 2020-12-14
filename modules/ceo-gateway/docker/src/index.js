@@ -3,10 +3,14 @@ const session = require('express-session')
 const request = require('request')
 const urljoin = require('url-join')
 const randomColor = require('randomcolor')
+const swaggerUi = require('swagger-ui-express')
 
 const config = require('./config')
+const swaggerDocument = require('./swagger.json')
 
 const app = express()
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.use(session({
     secret: '343ji43j4n3jn4jk3n',
@@ -16,8 +20,8 @@ app.use(session({
 
 app.use(express.json())
 
-app.use(['/login', '/create-project', '/get-collected-data'], (req, res, next) => {
-    const {url, username, password, userId} = config.ceo
+app.use(['/login', '/create-project', '/get-collected-data', '/delete-project', '/get-project-stats'], (req, res, next) => {
+    const {ceo: {url, username, password, userId}} = config
     request.post({
         url: urljoin(url, 'login'),
         form: {
@@ -56,18 +60,32 @@ app.get('/login', (req, res, next) => {
 app.post('/create-project', (req, res, next) => {
     const {isLogged} = req
     if (!isLogged) res.status(500).send({error: 'Login failed!'})
-    const {cookie} = req.session
-    const {url, institutionId} = config.ceo
-    const {classes, plotSize, plots, title} = req.body
+    const {session: {cookie}} = req
+    const {ceo: {url, institutionId}} = config
+    const {classes, plotSize, plots, title, imageryId} = req.body
     if (!Array.isArray(classes) || classes.length === 0
         || typeof plotSize !== 'number' || plotSize < 0
         || !Array.isArray(plots) || plots.length === 0
-        || typeof title !== 'string' || title.trim() === '') {
+        || typeof title !== 'string' || title.trim() === ''
+        || (imageryId !== undefined && typeof imageryId !== 'number')) {
         return res.status(400).send('Bad Request')
     }
+    let csvHeader = Object.keys(plots.reduce((result, obj) => {
+        return Object.assign(result, obj)
+    }, {})).sort()
+    csvHeader.splice(csvHeader.indexOf('lon'), 1)
+    csvHeader.splice(csvHeader.indexOf('lat'), 1)
     const plotFile = plots.reduce((acc, curr, i) => {
-        return `${acc}\n${curr.lon},${curr.lat},${i+1}`
-    }, 'LON,LAT,PLOTID')
+        const {lon, lat, ...newCurr} = curr
+        let csvRecord = `${acc}\n${lon},${lat},${i+1}`
+        if (csvHeader.length !== 0) {
+            csvHeader.forEach(key => {
+                const value = newCurr[key] || ''
+                csvRecord = `${csvRecord},${value}`
+            })
+        }
+        return csvRecord
+    }, csvHeader.length !== 0 ? `LON,LAT,PLOTID,${csvHeader.join()}` : 'LON,LAT,PLOTID')
     const colors = randomColor({
         count: classes.length,
         hue: 'random',
@@ -88,7 +106,7 @@ app.post('/create-project', (req, res, next) => {
         componentType: 'button',
     }]
     const data = {
-        baseMapSource: 'DigitalGlobeRecentImagery',
+        ...(imageryId !== undefined && {imageryId}),
         description: title,
         institutionId,
         lonMin: '',
@@ -107,6 +125,7 @@ app.post('/create-project', (req, res, next) => {
         samplesPerPlot: '',
         sampleResolution: plotSize,
         sampleValues: sampleValues,
+        surveyQuestions: sampleValues,
         surveyRules: [],
         useTemplatePlots: '',
         useTemplateWidgets: '',
@@ -130,7 +149,7 @@ app.post('/create-project', (req, res, next) => {
         response.on('data', data => {
             const jsonObject = JSON.parse(data)
             const {projectId, tokenKey, errorMessage} = jsonObject
-            const isInteger = n => !isNaN(parseInt(n)) && isFinite(n) && !n.includes('.')
+            const isInteger = n => /^\d+$/.test(n)
             if (!isInteger(projectId)) {
                 res.status(400).send({
                     projectId: 0,
@@ -166,9 +185,8 @@ app.post('/create-project', (req, res, next) => {
 app.get('/get-collected-data/:id', (req, res, next) => {
     const {isLogged} = req
     if (!isLogged) res.status(500).send({error: 'Login failed!'})
-    const {cookie} = req.session
-    const {url} = config.ceo
-    const {id} = req.params
+    const {session: {cookie}, params: {id}} = req
+    const {ceo: {url}} = config
     request.get({
         headers: {
             Cookie: cookie['0'],
@@ -182,7 +200,7 @@ app.get('/get-collected-data/:id', (req, res, next) => {
         if (statusCode !== 200) return res.sendStatus(statusCode)
         response.on('data', data => {
             const project = JSON.parse(data.toString())
-            const [sampleValue] = project.sampleValues
+            const [sampleValue] = project.sampleValues || project.surveyQuestions
             const {question, answers} = sampleValue
             if (!question || !answers) return res.sendStatus(500)
             const answersById = answers.reduce((acc, cur) => {
@@ -216,6 +234,62 @@ app.get('/get-collected-data/:id', (req, res, next) => {
                 })
             }).on('error', err => {
                 next(err)
+            })
+        })
+    }).on('error', err => {
+        next(err)
+    })
+})
+
+app.get('/delete-project/:id', (req, res, next) => {
+    const {isLogged} = req
+    if (!isLogged) res.status(500).send({error: 'Login failed!'})
+    const {session: {cookie}, params: {id}} = req
+    const {ceo: {url}} = config
+    request.post({
+        headers: {
+            Cookie: cookie,
+        },
+        url: urljoin(url, 'archive-project'),
+        qs: {
+            projectId: id,
+        },
+    }).on('response', response => {
+        const {statusCode} = response
+        res.sendStatus(statusCode)
+    }).on('error', err => {
+        next(err)
+    })
+})
+
+app.get('/get-project-stats/:id', (req, res, next) => {
+    const {isLogged} = req
+    if (!isLogged) res.status(500).send({error: 'Login failed!'})
+    const {session: {cookie}, params: {id}} = req
+    const {ceo: {url}} = config
+    request.get({
+        headers: {
+            Cookie: cookie['0'],
+        },
+        url: urljoin(url, 'get-project-stats'),
+        qs: {
+            projectId: id,
+        },
+    }).on('response', response => {
+        const {statusCode} = response
+        if (statusCode !== 200) return res.sendStatus(statusCode)
+        response.on('data', data => {
+            const stats = JSON.parse(data.toString())
+            const {unanalyzedPlots, analyzedPlots, flaggedPlots} = stats
+            const totalPlotsReviewed = flaggedPlots + analyzedPlots
+            const completationPercentage = parseInt((totalPlotsReviewed / (flaggedPlots + analyzedPlots + unanalyzedPlots)) * 100)
+            res.send({
+                projectId: id,
+                unanalyzedPlots,
+                analyzedPlots,
+                flaggedPlots,
+                totalPlotsReviewed,
+                completationPercentage,
             })
         })
     }).on('error', err => {
