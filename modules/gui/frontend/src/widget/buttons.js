@@ -72,10 +72,10 @@ export class Buttons extends React.Component {
 
     }
 
-    renderButtons(options, key) {
+    renderButtons(options, key, label, disabled) {
         const {layout} = this.props
         return (
-            <ButtonGroup key={key} className={styles.buttons} layout={layout}>
+            <ButtonGroup key={key} className={styles.buttons} layout={layout} label={label} disabled={disabled}>
                 {options.map(option => this.renderButton(
                     _.isObjectLike(option)
                         ? option
@@ -88,7 +88,7 @@ export class Buttons extends React.Component {
     renderOptionGroups(groups) {
         return (
             groups.map((group, i) =>
-                this.renderButtons(group.options, group.value || group.label || i)
+                this.renderButtons(group.options, group.value || group.label || i, group.label, group.disabled)
             )
         )
     }

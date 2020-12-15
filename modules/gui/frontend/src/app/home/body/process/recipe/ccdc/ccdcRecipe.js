@@ -77,12 +77,11 @@ export const RecipeActions = id => {
                     'ui.retrieveOptions': retrieveOptions
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .build()
+                .dispatch()
         },
-        setClassificationLegend(classificationLegend) {
-            actionBuilder('SET_CLASSIFICATION_LEGEND', {classificationLegend})
-                .set('ui.classificationLegend', classificationLegend)
-                .build()
+        setClassification({classificationLegend, classifierType} = {}) {
+            actionBuilder('SET_CLASSIFICATION', {classificationLegend, classifierType})
+                .set('ui.classification', {classificationLegend, classifierType})
                 .dispatch()
         }
     }
@@ -112,16 +111,15 @@ function toBackendRecipe({recipe, bands}) {
 }
 
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
-    api.gee.loadCCDCSegments$({recipe: toBackendRecipe({
-        recipe,
-        bands
-    }), latLng, bands})
+    api.gee.loadCCDCSegments$({
+        recipe: toBackendRecipe({recipe, bands}), latLng, bands
+    })
 
 export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
-    api.gee.loadTimeSeriesObservations$({recipe: toBackendRecipe({
-        recipe,
-        bands,
-    }), latLng})
+    api.gee.loadTimeSeriesObservations$({
+        recipe: toBackendRecipe({recipe, bands}),
+        latLng
+    })
 
 const submitRetrieveRecipeTask = recipe => {
     const task = {

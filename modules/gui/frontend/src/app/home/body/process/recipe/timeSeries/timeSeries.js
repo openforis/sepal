@@ -15,8 +15,8 @@ import styles from './timeSeries.module.css'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
-    classificationLegend: selectFrom(recipe, 'ui.classificationLegend'),
-    classificationRecipeId: selectFrom(recipe, 'model.sources.classification')
+    classificationRecipeId: selectFrom(recipe, 'model.sources.classification'),
+    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
 })
 
 class _TimeSeries extends React.Component {
@@ -45,17 +45,28 @@ class _TimeSeries extends React.Component {
             onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
             layerIndex: 1
         })
-        this.initClassificationLegend()
+        this.initClassification()
     }
 
-    initClassificationLegend() {
+    componentDidUpdate() {
+        this.initClassification()
+    }
+
+    initClassification() {
         const {stream, classificationLegend, classificationRecipeId} = this.props
-        if (classificationRecipeId && !classificationLegend) {
+        if (classificationRecipeId && !classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
             stream('LOAD_CLASSIFICATION_RECIPE',
                 api.recipe.load$(classificationRecipeId),
-                classification => this.recipeActions.setClassificationLegend(classification.model.legend),
-                error => Notifications.error({message: msg('process.ccdc.panel.sources.classificationLoadError', {error}), error})
+                classification => {
+                    this.recipeActions.setClassification({
+                        classificationLegend: classification.model.legend,
+                        classifierType: classification.model.classifier.type
+                    })
+                },
+                error => Notifications.error({message: msg('process.timeSeries.panel.sources.classificationLoadError', {error}), error})
             )
+        } else if (!classificationRecipeId && classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
+            this.recipeActions.setClassification({classificationLegend: null, classifierType: null})
         }
     }
 }

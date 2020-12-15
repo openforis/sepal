@@ -1,37 +1,24 @@
 import {Form} from 'widget/form/form'
 import {Layout} from 'widget/layout'
 import {Panel} from 'widget/panel/panel'
-import {RecipeActions, dateRange} from '../../ccdcRecipe'
+import {RecipeActions} from '../../ccdcRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
-import {arrayEquals} from 'collections'
 import {compose} from 'compose'
 import {connect, select} from 'store'
-import {filterOpticalBands, filterRadarBands, opticalBandOptions, radarBandOptions} from '../../bandOptions'
-import {imageSourceById, isDataSetInDateRange} from 'sources'
+import {groupedBandOptions, groupedDataSetOptions, toSources} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import Notifications from 'widget/notifications'
 import React from 'react'
-import _ from 'lodash'
 import api from 'api'
-import moment from 'moment'
 import styles from './sources.module.css'
-import updateDataSets from './updateDataSets'
 
 const fields = {
-    opticalDataSets: new Form.Field()
-        .skip((value, {radarDataSets}) => !_.isEmpty(radarDataSets))
-        .notEmpty('process.ccdc.panel.sources.form.required'),
-    radarDataSets: new Form.Field()
-        .skip((value, {opticalDataSets}) => !_.isEmpty(opticalDataSets))
-        .notEmpty('process.ccdc.panel.sources.form.required'),
+    dataSets: new Form.Field()
+        .notEmpty(),
     classification: new Form.Field(),
-    opticalBreakpointBands: new Form.Field()
-        .skip((value, {radarDataSets}) => !_.isEmpty(radarDataSets))
-        .predicate(bands => bands && bands.length, 'process.ccdc.panel.source.form.breakpointBands.atLeastOne'),
-    radarBreakpointBands: new Form.Field()
-        .skip((value, {opticalDataSets}) => !_.isEmpty(opticalDataSets))
-        .predicate(bands => bands && bands.length, 'process.ccdc.panel.source.form.breakpointBands.atLeastOne')
+    breakpointBands: new Form.Field()
+        .notEmpty()
 }
 
 const mapStateToProps = () => {
@@ -42,21 +29,18 @@ const mapStateToProps = () => {
 
 const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates'),
-    legend: selectFrom(recipe, 'ui.classificationLegend')
+    corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections')
 })
 
 class Sources extends React.Component {
+    state = {}
+
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
     }
 
-    lookupDataSetNames(sourceValue) {
-        return sourceValue ? imageSourceById[sourceValue].dataSets : null
-    }
-
     render() {
-        const {inputs: {radarDataSets}} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -66,13 +50,9 @@ class Sources extends React.Component {
                     title={msg('process.ccdc.panel.sources.title')}/>
                 <Panel.Content className={styles.content}>
                     <Layout>
-                        {this.renderOpticalDataSets()}
-                        {this.renderRadarDataSets()}
+                        {this.renderDataSets()}
                         {this.renderClassification()}
-                        {_.isEmpty(radarDataSets.value)
-                            ? this.renderOpticalBreakpointBands()
-                            : this.renderRadarBreakpointBands()
-                        }
+                        {this.renderBreakpointBands()}
 
                     </Layout>
                 </Panel.Content>
@@ -81,45 +61,14 @@ class Sources extends React.Component {
         )
     }
 
-    renderOpticalDataSets() {
-        const {dates, inputs: {opticalDataSets, radarDataSets}} = this.props
-        const [from, to] = dateRange(dates)
-        const dataSetNames = this.lookupDataSetNames('LANDSAT')
-            .concat(this.lookupDataSetNames('SENTINEL_2'))
-        const options = (dataSetNames || []).map(value =>
-            ({
-                value,
-                label: msg(['process.ccdc.panel.sources.form.dataSets.options', value, 'label']),
-                tooltip: msg(['process.ccdc.panel.sources.form.dataSets.options', value, 'tooltip']),
-                neverSelected: !isDataSetInDateRange(value, from, to)
-            })
-        )
+    renderDataSets() {
+        const {dates, inputs: {dataSets}} = this.props
+        const options = groupedDataSetOptions({dataSetIds: dataSets.value, ...dates})
         return (
             <Form.Buttons
-                label={msg('process.ccdc.panel.sources.form.dataSets.optical.label')}
-                input={opticalDataSets}
+                input={dataSets}
                 options={options}
                 multiple
-                disabled={!_.isEmpty(radarDataSets.value)}
-            />
-        )
-    }
-
-    renderRadarDataSets() {
-        const {inputs: {opticalDataSets, radarDataSets}} = this.props
-        const options = [{
-            value: 'SENTINEL_1',
-            label: msg(['process.ccdc.panel.sources.form.dataSets.options', 'SENTINEL_1', 'label']),
-            tooltip: msg(['process.ccdc.panel.sources.form.dataSets.options', 'SENTINEL_1', 'tooltip']),
-            neverSelected: this.s1OutOfRange()
-        }]
-        return (
-            <Form.Buttons
-                label={msg('process.ccdc.panel.sources.form.dataSets.radar.label')}
-                input={radarDataSets}
-                options={options}
-                multiple
-                disabled={!_.isEmpty(opticalDataSets.value)}
             />
         )
     }
@@ -150,34 +99,23 @@ class Sources extends React.Component {
         )
     }
 
-    renderOpticalBreakpointBands() {
-        const {inputs: {opticalBreakpointBands, opticalDataSets}} = this.props
-        const options = [
-            ...opticalBandOptions({dataSets: opticalDataSets.value}),
-            ...this.classificationOptions()
-        ]
+    renderBreakpointBands() {
+        const {corrections, inputs: {breakpointBands, dataSets}} = this.props
+        const {classificationLegend, classifierType} = this.state
+        const options = groupedBandOptions({
+            sources: toSources(dataSets.value),
+            corrections,
+            timeScan: false,
+            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']},
+            order: ['indexes', 'dataSets', 'classification']
+        })
         return (
             <Form.Buttons
                 label={msg('process.ccdc.panel.sources.form.breakpointBands.label')}
-                input={opticalBreakpointBands}
+                input={breakpointBands}
                 options={options}
                 multiple
-            />
-        )
-    }
-
-    renderRadarBreakpointBands() {
-        const {inputs: {radarBreakpointBands}} = this.props
-        const options = [
-            ...radarBandOptions({}),
-            ...this.classificationOptions()
-        ]
-        return (
-            <Form.Buttons
-                label={msg('process.ccdc.panel.sources.form.breakpointBands.label')}
-                input={radarBreakpointBands}
-                options={options}
-                multiple
+                disabled={!options.length}
             />
         )
     }
@@ -188,7 +126,10 @@ class Sources extends React.Component {
         if (recipeId) {
             stream('LOAD_CLASSIFICATION_RECIPE',
                 api.recipe.load$(recipeId),
-                classification => this.recipeActions.setClassificationLegend(classification.model.legend),
+                classification => this.setState({
+                    classificationLegend: classification.model.legend,
+                    classifierType: classification.model.classifier.type
+                }),
                 error => Notifications.error({
                     message: msg('process.ccdc.panel.sources.classificationLoadError', {error}),
                     error
@@ -198,26 +139,10 @@ class Sources extends React.Component {
     }
 
     deselectClassification() {
-        this.recipeActions.setClassificationLegend(null)
-    }
-
-    classificationOptions() {
-        const {legend} = this.props
-        if (!legend) {
-            return []
-        } else {
-            return legend
-                ? [{
-                    options: [
-                        {value: 'regression', label: msg('process.ccdc.panel.sources.form.breakpointBands.regression')},
-                        ...legend.entries.map(({value, label}) => ({
-                            value: `probability_${value}`,
-                            label: msg('process.ccdc.panel.sources.form.breakpointBands.probability', {label})
-                        }))
-                    ]
-                }]
-                : []
-        }
+        this.setState({
+            classificationLegend: null,
+            classifierType: null
+        })
     }
 
     componentDidMount() {
@@ -226,67 +151,20 @@ class Sources extends React.Component {
             this.loadClassification(classification.value)
         }
     }
-
-    componentDidUpdate() {
-        this.deselectOutOfRange()
-        this.deselectNonAvailableBands()
-    }
-
-    deselectOutOfRange() {
-        const {dates, inputs: {opticalDataSets, radarDataSets}} = this.props
-        const selectedDataSets = updateDataSets(opticalDataSets.value, ...dateRange(dates))
-        if (!arrayEquals(selectedDataSets, opticalDataSets.value))
-            opticalDataSets.set(selectedDataSets)
-        if (!_.isEmpty(radarDataSets.value) && this.s1OutOfRange())
-            radarDataSets.set([])
-    }
-
-    deselectNonAvailableBands = () => {
-        const {stream, inputs: {opticalDataSets, opticalBreakpointBands, radarBreakpointBands}} = this.props
-        if (stream('LOAD_CLASSIFICATION_RECIPE').active) {
-            return
-        }
-        const classificationOptions = this.classificationOptions()
-        const classificationValues = classificationOptions.length
-            ? classificationOptions[0].options.map(({value}) => value)
-            : []
-        opticalBreakpointBands.set([
-            ...filterOpticalBands(opticalBreakpointBands.value, opticalDataSets.value),
-            ...classificationValues.filter(value => opticalBreakpointBands.value.includes(value))
-        ])
-        radarBreakpointBands.set([
-            ...filterRadarBands(radarBreakpointBands.value),
-            ...classificationValues.filter(value => radarBreakpointBands.value.includes(value))
-        ])
-    }
-
-    s1OutOfRange() {
-        const {dates} = this.props
-        const [from] = dateRange(dates)
-        return from.isBefore(moment('2014-10-03'))
-    }
 }
 
 Sources.propTypes = {}
 
-const valuesToModel = values => {
-    return {
-        dataSets: {
-            LANDSAT: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('LANDSAT')) : null,
-            SENTINEL_2: values.opticalDataSets ? values.opticalDataSets.filter(dataSetId => dataSetId.startsWith('SENTINEL_2')) : null,
-            SENTINEL_1: values.radarDataSets ? values.radarDataSets.filter(dataSetId => dataSetId.startsWith('SENTINEL_1')) : null
-        },
-        classification: values.classification,
-        breakpointBands: _.isEmpty(values.opticalDataSets) ? values.radarBreakpointBands : values.opticalBreakpointBands
-    }
-}
+const valuesToModel = ({dataSets, classification, breakpointBands}) => ({
+    dataSets: toSources(dataSets),
+    classification,
+    breakpointBands
+})
 
 const modelToValues = ({dataSets, classification, breakpointBands}) => ({
-    opticalDataSets: (dataSets['LANDSAT'] || []).concat(dataSets['SENTINEL_2'] || []),
-    radarDataSets: dataSets['SENTINEL_1'] || [],
+    dataSets: Object.values(dataSets).flat(),
     classification,
-    opticalBreakpointBands: _.isEmpty(dataSets['SENTINEL_1']) ? breakpointBands : [],
-    radarBreakpointBands: _.isEmpty(dataSets['SENTINEL_1']) ? [] : breakpointBands
+    breakpointBands
 })
 
 export default compose(

@@ -38,6 +38,8 @@ const mapRecipeToProps = recipe => ({
 })
 
 class Sources extends React.Component {
+    state = {}
+
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
@@ -122,9 +124,9 @@ class Sources extends React.Component {
             }))
         return (
             <Form.Combo
-                label={msg('process.ccdc.panel.sources.form.classification.label')}
-                tooltip={msg('process.ccdc.panel.sources.form.classification.tooltip')}
-                placeholder={msg('process.ccdc.panel.sources.form.classification.placeholder')}
+                label={msg('process.timeSeries.panel.sources.form.classification.label')}
+                tooltip={msg('process.timeSeries.panel.sources.form.classification.tooltip')}
+                placeholder={msg('process.timeSeries.panel.sources.form.classification.placeholder')}
                 input={classification}
                 options={options}
                 busyMessage={this.props.stream('LOAD_CLASSIFICATION_RECIPE').active && msg('widget.loading')}
@@ -143,16 +145,22 @@ class Sources extends React.Component {
         this.deselectClassification()
         stream('LOAD_CLASSIFICATION_RECIPE',
             api.recipe.load$(recipeId),
-            classification => this.recipeActions.setClassificationLegend(classification.model.legend),
+            classification => this.setState({
+                classificationLegend: classification.model.legend,
+                classifierType: classification.model.classifier.type
+            }),
             error => Notifications.error({
-                message: msg('process.ccdc.panel.sources.classificationLoadError', {error}),
+                message: msg('process.timeSeries.panel.sources.classificationLoadError', {error}),
                 error
             })
         )
     }
 
     deselectClassification() {
-        this.recipeActions.setClassificationLegend(null)
+        this.setState({
+            classificationLegend: null,
+            classifierType: null
+        })
     }
 
     componentDidUpdate() {

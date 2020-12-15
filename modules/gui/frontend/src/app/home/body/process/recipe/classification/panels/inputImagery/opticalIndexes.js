@@ -41,7 +41,7 @@ const indexByName = {
         requiredBands: ['red', 'nir', 'swir1']
     },
     ebbi: {
-        requiredBands: ['nir', 'swir1', 'swir2']
+        requiredBands: ['nir', 'swir1', 'swir2', 'thermal']
     },
     bui: {
         requiredBands: ['red', 'swir1', 'swir2']

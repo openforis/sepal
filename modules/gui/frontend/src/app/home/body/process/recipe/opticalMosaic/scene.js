@@ -1,7 +1,7 @@
 import {Button} from 'widget/button'
 import {ButtonGroup} from 'widget/buttonGroup'
 import {HoverDetector, HoverOverlay} from 'widget/hover'
-import {dataSetById} from 'sources'
+import {getDataSet} from 'sources'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
@@ -41,7 +41,7 @@ export class Scene extends React.Component {
 
     renderImage(url) {
         return (
-            <div className={styles.image} style={{'--image': `url("${url}")`}}></div>
+            <div className={styles.image} style={{'--image': `url("${url}")`}}/>
         )
     }
 
@@ -66,7 +66,7 @@ export class Scene extends React.Component {
             <div className={styles.date}>
                 <div className={[styles.info, styles.dataSet].join(' ')}>
                     <Icon name='satellite-dish'/>
-                    {dataSetById[dataSet].shortName}
+                    {getDataSet(dataSet).shortName}
                 </div>
                 <div>
                     {date}

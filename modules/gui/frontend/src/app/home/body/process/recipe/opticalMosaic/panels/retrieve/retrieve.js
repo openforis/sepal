@@ -1,181 +1,65 @@
-import {Form} from 'widget/form/form'
-import {Layout} from 'widget/layout'
-import {Panel} from 'widget/panel/panel'
-import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
+import {RecipeActions} from '../../opticalMosaicRecipe'
 import {compose} from 'compose'
-import {currentUser} from 'widget/user'
-import {dataSetById} from 'sources'
+import {groupedBandOptions, minScale} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withRecipe} from '../../../../recipeContext'
 import React from 'react'
-import _ from 'lodash'
-import styles from './retrieve.module.css'
+import RetrievePanel from '../../../mosaic/panels/retrieve/retrieve'
 
-const fields = {
-    bands: new Form.Field()
-        .predicate(bands => bands && bands.length, 'process.mosaic.panel.retrieve.form.bands.atLeastOne'),
-    scale: new Form.Field(),
-    destination: new Form.Field()
-        .notEmpty('process.mosaic.panel.retrieve.form.destination.required')
-}
+const mapRecipeToProps = recipe => ({
+    recipeId: recipe.id,
+    sources: selectFrom(recipe, 'model.sources'),
+    compositeOptions: selectFrom(recipe, 'model.compositeOptions')
+})
 
-const mapRecipeToProps = recipe => {
-    const sources = selectFrom(recipe, 'model.sources')
-    const props = {
-        sources,
-        compositeOptions: selectFrom(recipe, 'model.compositeOptions'),
-        user: currentUser(),
-    }
-    if (!selectFrom(recipe, 'ui.retrieve.scale')) {
-        const sentinel2 = Object.keys(sources).includes('SENTINEL_2')
-        props.values = {scale: sentinel2 ? 10 : 30}
-    }
-    return props
-}
+const option = band => ({value: band, label: msg(['bands', band])})
 
 class Retrieve extends React.Component {
-    constructor(props) {
-        super(props)
-        const {recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
-        this.allBandOptions = [
-            {
-                options: [
-                    option('blue'),
-                    option('green'),
-                    option('red'),
-                    option('nir'),
-                    option('swir1'),
-                    option('swir2')
-                ]
-            },
-            {
-                options: [
-                    option('redEdge1'),
-                    option('redEdge2'),
-                    option('redEdge3'),
-                    option('redEdge4')
-                ]
-            },
-            {
-                options: [
-                    option('aerosol'),
-                    option('waterVapor'),
-                    option('pan'),
-                    option('cirrus'),
-                    option('thermal'),
-                    option('thermal2')
-                ]
-            },
-            {
-                options: [
-                    option('brightness'),
-                    option('greenness'),
-                    option('wetness'),
-                ]
-            },
-            {
-                options: [
-                    option('unixTimeDays'),
-                    option('dayOfYear'),
-                    option('daysFromTarget')
-                ]
-            }
+    metadataOptions = {
+        options: [
+            option('unixTimeDays'),
+            option('dayOfYear'),
+            option('daysFromTarget')
         ]
     }
 
     render() {
+        const {sources} = this.props
         return (
-            <RecipeFormPanel
-                className={styles.panel}
-                isActionForm
-                placement='top-right'
-                onApply={values => this.recipeActions.retrieve(values).dispatch()}>
-                <Panel.Header
-                    icon='cloud-download-alt'
-                    title={msg('process.mosaic.panel.retrieve.title')}/>
-                <Panel.Content>
-                    {this.renderContent()}
-                </Panel.Content>
-                <Form.PanelButtons
-                    applyLabel={msg('process.mosaic.panel.retrieve.apply')}/>
-            </RecipeFormPanel>
+            <RetrievePanel
+                bandOptions={this.bandOptions()}
+                defaultScale={minScale(sources)}
+                toSepal
+                toEE
+                onRetrieve={retrieveOptions => {
+                    return this.retrieve(retrieveOptions)
+                }}
+            />
         )
     }
 
-    renderContent() {
-        const {user, sources, compositeOptions, inputs: {bands, scale, destination}} = this.props
-        const correction = compositeOptions.corrections.includes('SR') ? 'SR' : 'TOA'
-        const bandsForEachDataSet = _.flatten(Object.values(sources))
-            .map(dataSetId => dataSetById[dataSetId][correction].bands)
-        const availableBands = new Set(
-            _.intersection(...bandsForEachDataSet)
-        )
-
-        if (compositeOptions.compose !== 'MEDIAN')
-            ['unixTimeDays', 'dayOfYear', 'daysFromTarget'].forEach(band => availableBands.add(band))
-
-        const bandOptions = this.allBandOptions
-            .map(group => ({
-                ...group,
-                options: group.options.filter(option => availableBands.has(option.value))
-            })
-            )
-            .filter(group =>
-                group.options.length
-            )
-        const destinationOptions = [
-            {
-                value: 'SEPAL',
-                label: msg('process.mosaic.panel.retrieve.form.destination.SEPAL'),
-                disabled: !user.googleTokens
-            },
-            {
-                value: 'GEE',
-                label: msg('process.mosaic.panel.retrieve.form.destination.GEE')
-            }
-        ].filter(({value}) => user.googleTokens || value !== 'GEE')
-
-        return (
-            <Layout>
-                <Form.Buttons
-                    label={msg('process.mosaic.panel.retrieve.form.bands.label')}
-                    input={bands}
-                    multiple={true}
-                    options={bandOptions}/>
-                <Form.Slider
-                    label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
-                    info={scale => msg('process.radarMosaic.panel.retrieve.form.scale.info', {scale})}
-                    input={scale}
-                    minValue={10}
-                    maxValue={100}
-                    scale={'log'}
-                    ticks={[10, 15, 20, 30, 60, 100]}
-                    snap
-                    range='none'
-                />
-                <Form.Buttons
-                    label={msg('process.mosaic.panel.retrieve.form.destination.label')}
-                    input={destination}
-                    multiple={false}
-                    options={destinationOptions}/>
-            </Layout>
-        )
+    bandOptions() {
+        const {sources, compositeOptions: {compose, corrections}} = this.props
+        const options = groupedBandOptions({
+            sources,
+            corrections,
+            order: ['dataSets']
+        })
+        return compose === 'MEDIAN'
+            ? options
+            : [...options, this.metadataOptions]
     }
 
-    componentDidUpdate() {
-        const {user, inputs: {destination}} = this.props
-        if (!user.googleTokens && destination.value !== 'SEPAL')
-            destination.set('SEPAL')
+    retrieve(retrieveOptions) {
+        const {recipeId} = this.props
+        return RecipeActions(recipeId).retrieve(retrieveOptions)
     }
 }
-
-const option = band => ({value: band, label: msg(['bands', band])})
 
 Retrieve.propTypes = {}
 
 export default compose(
     Retrieve,
-    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
+    withRecipe(mapRecipeToProps)
 )

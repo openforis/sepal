@@ -5,9 +5,9 @@ import {Panel} from 'widget/panel/panel'
 import {RecipeActions, breakDetectionOptions} from '../../ccdcRecipe'
 import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
+import {flatBandOptions, toSources} from 'sources'
 import {msg} from 'translate'
-import {opticalBandOptions, radarBandOptions} from '../../bandOptions'
-import {selectFrom} from '../../../../../../../../stateUtils'
+import {selectFrom} from 'stateUtils'
 import React from 'react'
 import _ from 'lodash'
 import styles from './options.module.css'
@@ -31,7 +31,10 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    sources: selectFrom(recipe, 'model.sources')
+    sources: selectFrom(recipe, 'model.sources'),
+    corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections'),
+    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
+    classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
 })
 
 class Options extends React.Component {
@@ -62,14 +65,15 @@ class Options extends React.Component {
     }
 
     renderAdvanced() {
-        const {sources, inputs: {dateFormat, tmaskBands, minObservations, chiSquareProbability, minNumOfYearsScaler, lambda, maxIterations}} = this.props
+        const {corrections, classificationLegend, classifierType, sources, inputs: {dateFormat, tmaskBands, minObservations, chiSquareProbability, minNumOfYearsScaler, lambda, maxIterations}} = this.props
         const dataSets = sources.dataSets
-        const tmaskBandsOptions = (_.isEmpty(dataSets['SENTINEL_1'])
-            ? opticalBandOptions({dataSets})
-            : radarBandOptions({}))
-            .map(group => group.options)
-            .flat()
-            .filter(({value}) => sources.breakpointBands.includes(value))
+        const tmaskBandsOptions = flatBandOptions({
+            sources: toSources(dataSets.value),
+            corrections,
+            timeScan: false,
+            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']},
+            order: ['indexes', 'dataSets', 'classification']
+        }).filter(({value}) => sources.breakpointBands.includes(value))
         return (
             <Layout>
                 <Form.Buttons

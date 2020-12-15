@@ -114,7 +114,7 @@ export const RecipeActions = id => {
                     'ui.retrieveOptions': retrieveOptions,
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .build()
+                .dispatch()
         }
     }
 }
