@@ -12,7 +12,9 @@ export const defaultModel = {
         endDate: moment().format(DATE_FORMAT)
     },
     sources: {
-        LANDSAT: ['LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
+        dataSets: {
+            LANDSAT: ['LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
+        }
     },
     options: {
         corrections: [],
