@@ -52,13 +52,14 @@ export const selectTab = (id, statePath) => {
         .dispatch()
 }
 
-const getTabsInfo = statePath => {
+export const getTabsInfo = statePath => {
     const tabs = select([statePath, 'tabs'])
     const selectedId = select([statePath, 'selectedTabId'])
     if (tabs && selectedId) {
         const selectedIndex = tabs.findIndex(tab => tab.id === selectedId)
         const first = selectedIndex === 0
         const last = selectedIndex === tabs.length - 1
+        const single = first && last
         const previousId = !first && tabs[selectedIndex - 1].id
         const nextId = !last && tabs[selectedIndex + 1].id
         return {
@@ -67,6 +68,7 @@ const getTabsInfo = statePath => {
             selectedIndex,
             first,
             last,
+            single,
             previousId,
             nextId
         }
