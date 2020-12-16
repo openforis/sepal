@@ -15,7 +15,7 @@ Degradation (REDD) in developing countries.
 [FAO](http://www.fao.org/home/en/), as a member of the [UN-REDD Programme](http://www.un-redd.org/), is responsible for
 assisting countries in developing robust national forest
 monitoring systems (NFMS) and operational satellite land monitoring systems (SLMS) to help them to meet the measurement,
-reporting and verification  (MRV) requirements of the REDD+.  Furtermore, countries need help in establishing and
+reporting and verification  (MRV) requirements of the REDD+.  Furthermore, countries need help in establishing and
 maintaining  a SLMS capable of producing the information required to make consequential decisions about forest
 management; decisions that promote sustainable forest management and can potentially mitigate the effects of global
 climate change on society.  Specifically, a solution is needed to address the existing challenges countries face when
@@ -147,7 +147,7 @@ An IDE for R in a web browser.
 Library for remote sensing image processing.
 
 **OpenSARKit** -
-Tools for Autimatic Preprocessing of SAR Imagery.
+Tools for Automatic Preprocessing of SAR Imagery.
 
 Build and Release
 -----------------

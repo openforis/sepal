@@ -79,6 +79,48 @@
     "waterVapor": "Water vapor",
     "wetness": "Wetness"
   },
+  "sources": {
+    "optical": {
+      "label": "Optical"
+    },
+    "radar": {
+      "label": "Radar"
+    },
+    "dataSets": {
+      "LANDSAT_7": {
+        "label": "L7",
+        "tooltip": "Landsat 7"
+      },
+      "LANDSAT_7_T2": {
+        "label": "L7 T2",
+        "tooltip": "Landsat 7 Tier 2"
+      },
+      "LANDSAT_8": {
+        "label": "L8",
+        "tooltip": "Landsat 8"
+      },
+      "LANDSAT_8_T2": {
+        "label": "L8 T2",
+        "tooltip": "Landsat 8 Tier 2"
+      },
+      "LANDSAT_TM": {
+        "label": "L4-5",
+        "tooltip": "Landsat 4-5"
+      },
+      "LANDSAT_TM_T2": {
+        "label": "L4-5 T2",
+        "tooltip": "Landsat 4-5 Tier 2"
+      },
+      "SENTINEL_1": {
+        "label": "S1",
+        "tooltip": "Sentinel 1 A+B"
+      },
+      "SENTINEL_2": {
+        "label": "S2",
+        "tooltip": "Sentinel 2 A+B"
+      }
+    }
+  },
   "body": {
     "loading-apps": "Loading apps...",
     "loading-initializing-google-maps": "Initializing map...",
@@ -1727,7 +1769,13 @@
         },
         "sources": {
           "button": "SRC",
+          "classificationLoadError": "Failed to load classification: {error}",
           "form": {
+            "classification": {
+              "label": "Classification",
+              "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series.",
+              "placeholder": "Select a classification..."
+            },
             "dataSets": {
               "optical": {
                 "label": "Optical"
@@ -1781,6 +1829,13 @@
       "create": "CCDC",
       "tabPlaceholder": "CCDC",
       "description": "Create a CCDC asset from a time-series.",
+      "chartPixel": {
+        "start.tooltip": "Chart time-series for pixel",
+        "cancel.tooltip": "Cancel time-series charting",
+        "loadSegments.error": "Failed to load segments: {error}",
+        "loadObservations.error": "Failed to load observations: {error}",
+        "loadFailed": "Failed to load chart: {error}"
+      },
       "mapToolbar": {
         "centerMap": {
           "tooltip": "Zoom to area of interest"
@@ -1801,12 +1856,6 @@
         },
         "zoomOut": {
           "tooltip": "Zoom out"
-        },
-        "chartPixel": {
-          "start.tooltip": "Chart time-series for pixel",
-          "cancel.tooltip": "Cancel time-series charting",
-          "loadSegments.error": "Failed to load segments: {error}",
-          "loadObservations.error": "Failed to load observations: {error}"
         },
         "ccdcGraph": {
           "model.label": "Model value",
@@ -1957,49 +2006,8 @@
         },
         "sources": {
           "button": "SRC",
+          "classificationLoadError": "Failed to load classification: {error}",
           "form": {
-            "dataSets": {
-              "optical": {
-                "label": "Optical"
-              },
-              "radar": {
-                "label": "Radar"
-              },
-              "options": {
-                "LANDSAT_7": {
-                  "label": "L7",
-                  "tooltip": "Landsat 7"
-                },
-                "LANDSAT_7_T2": {
-                  "label": "L7 T2",
-                  "tooltip": "Landsat 7 Tier 2"
-                },
-                "LANDSAT_8": {
-                  "label": "L8",
-                  "tooltip": "Landsat 8"
-                },
-                "LANDSAT_8_T2": {
-                  "label": "L8 T2",
-                  "tooltip": "Landsat 8 Tier 2"
-                },
-                "LANDSAT_TM": {
-                  "label": "L4-5",
-                  "tooltip": "Landsat 4-5"
-                },
-                "LANDSAT_TM_T2": {
-                  "label": "L4-5 T2",
-                  "tooltip": "Landsat 4-5 Tier 2"
-                },
-                "SENTINEL_1": {
-                  "label": "S1",
-                  "tooltip": "Sentinel 1 A+B"
-                },
-                "SENTINEL_2": {
-                  "label": "S2",
-                  "tooltip": "Sentinel 2 A+B"
-                }
-              }
-            },
             "classification": {
               "label": "Classification",
               "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series.",
@@ -2013,19 +2021,22 @@
             },
             "required": "A data source must be selected"
           },
-          "classificationLoadError": "Failed to load classification: {error}",
           "title": "Sources",
           "tooltip": "Select image source"
         }
-      },
-      "chartPixel": {
-        "loadFailed": "Failed to load chart: {error}"
       }
     },
     "ccdcSlice": {
       "create": "CCDC slice",
       "tabPlaceholder": "CCDC slice",
       "description": "Create a slice of a CCDC asset, for a specific date.",
+      "chartPixel": {
+        "start.tooltip": "Chart time-series for pixel",
+        "cancel.tooltip": "Cancel time-series charting",
+        "loadSegments.error": "Failed to load segments: {error}",
+        "loadObservations.error": "Failed to load observations: {error}",
+        "loadFailed": "Failed to load chart: {error}"
+      },
       "mapToolbar": {
         "centerMap": {
           "tooltip": "Zoom to area of interest"

@@ -235,7 +235,7 @@ const extractDataSets = sources =>
             dataSet === 'LANDSAT_TM'
                 ? ['LANDSAT_4', 'LANDSAT_5']
                 : dataSet === 'LANDSAT_TM_T2'
-                ? ['LANDSAT_4_T2', 'LANDSAT_5_T2']
-                : dataSet
+                    ? ['LANDSAT_4_T2', 'LANDSAT_5_T2']
+                    : dataSet
         )
         .flat()

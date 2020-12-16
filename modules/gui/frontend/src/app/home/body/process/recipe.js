@@ -93,8 +93,12 @@ const saveToLocalStorage$ = (() => {
 export const recipePath = (recipeId, path) =>
     ['process.tabs', {id: recipeId}, path]
 
-export const recipeActionBuilder = id =>
-    scopedActionBuilder(recipePath(id))
+export const recipeActionBuilder = id => {
+    if (!id) {
+        throw new Error(`Creating recipeActionBuilder without valid recipe id: '${id}'`)
+    }
+    return scopedActionBuilder(recipePath(id))
+}
 
 export const RecipeState = recipeId =>
     isRecipeOpen(recipeId)
@@ -181,8 +185,7 @@ const duplicateRecipe = (sourceRecipe, destinationRecipeId) => ({
 export const duplicateRecipe$ = (sourceRecipeId, destinationRecipeId) =>
     api.recipe.load$(sourceRecipeId).pipe(
         map(sourceRecipe => {
-            const duplicate = duplicateRecipe(sourceRecipe, destinationRecipeId)
-            return duplicate
+            return duplicateRecipe(sourceRecipe, destinationRecipeId)
         }),
         map(recipe =>
             actionBuilder('DUPLICATE_RECIPE', {duplicate: recipe})

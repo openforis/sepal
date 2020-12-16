@@ -331,7 +331,7 @@ Button.propTypes = {
     iconSpin: PropTypes.any,
     iconType: PropTypes.string,
     iconVariant: PropTypes.string,
-    label: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.array]),
+    label: PropTypes.any,
     linkTarget: PropTypes.string,
     linkUrl: PropTypes.string,
     look: PropTypes.oneOf(['default', 'highlight', 'selected', 'transparent', 'add', 'apply', 'cancel']),

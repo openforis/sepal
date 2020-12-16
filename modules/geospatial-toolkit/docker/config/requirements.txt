@@ -1,20 +1,4 @@
-sepal-ui
-Unidecode
-pyperclip
-llvmlite==0.31.0
-bfast
-python-dateutil
-pyCrypto
-oauth2client
-geemap
-google-api-python-client
-git+git://github.com/openforis/earthengine-api.git@v0.1.242#egg=earthengine-api&subdirectory=python
-awscli
-bqplot
-haversine
-dask[complete]
-numpy
-pytesmo
+########  geospatial data analysis  ########
 scikit-image
 scikit-learn
 scipy
@@ -23,15 +7,45 @@ shapely-geojson
 tqdm
 xarray-leaflet
 GDAL==$GDAL_VERSION
+bqplot
+numpy
+geopandas
+matplotlib
+pandas
+dask[complete]
 
+########  Google Earthengine  ########
+oauth2client
+google-api-python-client
+git+git://github.com/openforis/earthengine-api.git@v0.1.242#egg=earthengine-api&subdirectory=python
 
-# OSK requirements
+########  sepal modules  ########
+bfast
+sepal-ui
+Unidecode
+pyperclip
+python-dateutil
+pytesmo
+Wand
+PyPDF2 # more recent version are avaiable (PyPDF4)
+rasterio
+
+########  web api  ########
+falcon
+gunicorn
+pyCrypto
+awscli
+
+########  other deps  ########
+requests
+llvmlite==0.31.0
+coverage
+
+########  OSK requirements  ########
 git+https://github.com/ESA-PhiLab/OpenSarToolkit.git
 descartes
 fiona
 godale
-geopandas
-matplotlib
 psycopg2-binary
 imageio
 rtree
@@ -39,21 +53,10 @@ retrying
 Cython
 pyproj==2.6.1 # Require proj update before 3.0.0 can be installed
 
-######## Early Warning System for Canopy Disturbances in Ecuador (SATA) ########
-# dev
+########  Early Warning System for Canopy Disturbances in Ecuador (SATA)  ########
 nose
 nosexcover
-coverage
 pylint
-
 click
 dateutils
 boto3
-pandas
-
-# web api
-falcon
-gunicorn
-
-# other deps
-requests

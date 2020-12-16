@@ -56,7 +56,7 @@ export const RecipeActions = id => {
                     'ui.retrieveOptions': retrieveOptions
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .build()
+                .dispatch()
         },
         setEETableColumns(columns) {
             return set('SET_EE_TABLE_COLUMNS', 'ui.eeTable.columns', columns, {columns})
@@ -163,10 +163,10 @@ export const getBandOptions = (legend, classifierType) =>
         })
     ].filter(option => option)
 
-const supportRegression = classifierType =>
+export const supportRegression = classifierType =>
     ['RANDOM_FOREST', 'CART'].includes(classifierType)
 
-const supportProbability = classifierType =>
+export const supportProbability = classifierType =>
     ['RANDOM_FOREST', 'CART'].includes(classifierType)
 
 const submitRetrieveRecipeTask = recipe => {

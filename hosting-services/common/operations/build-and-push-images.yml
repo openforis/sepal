@@ -4,6 +4,9 @@
   become: yes
   gather_facts: true
 
+  vars_files:
+    - "{{ secret_vars_file }}"
+
   roles:
     - { role: build-module, module: letsencrypt }
     - { role: build-module, module: java }

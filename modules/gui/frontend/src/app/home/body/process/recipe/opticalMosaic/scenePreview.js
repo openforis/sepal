@@ -1,7 +1,7 @@
 import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {compose} from 'compose'
-import {dataSetById} from 'sources'
+import {getDataSet} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
@@ -50,7 +50,7 @@ class ScenePreview extends React.Component {
                             </div>
                         </Hammer>
                         <div className={styles.details}>
-                            <LabelValue name='dataSet' value={dataSetById[dataSet].name} icon='satellite-dish'/>
+                            <LabelValue name='dataSet' value={getDataSet(dataSet).name} icon='satellite-dish'/>
                             <LabelValue name='date' value={date} icon='calendar'/>
                             <LabelValue name='daysFromTarget' value={daysFromTargetString} icon='calendar-check'/>
                             <LabelValue name='cloudCover' value={`${cloudCover}%`} icon='cloud'/>

@@ -1,172 +1,55 @@
-import {Form} from 'widget/form/form'
-import {Layout} from 'widget/layout'
-import {Panel} from 'widget/panel/panel'
 import {RecipeActions} from '../../radarMosaicRecipe'
-import {RecipeFormPanel, recipeFormPanel} from 'app/home/body/process/recipeFormPanel'
 import {compose} from 'compose'
-import {currentUser} from 'widget/user'
+import {groupedBandOptions} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
+import {withRecipe} from '../../../../recipeContext'
 import React from 'react'
-import styles from './retrieve.module.css'
+import RetrievePanel from '../../../mosaic/panels/retrieve/retrieve'
 
-const fields = {
-    bands: new Form.Field()
-        .predicate(bands => bands && bands.length, 'process.radarMosaic.panel.retrieve.form.bands.atLeastOne'),
-    scale: new Form.Field(),
-    destination: new Form.Field()
-        .notEmpty('process.radarMosaic.panel.retrieve.form.destination.required')
+const mapRecipeToProps = recipe => {
+    return ({
+        recipeId: recipe.id,
+        timeScan: !selectFrom(recipe, 'model.dates.targetDate')
+    })
 }
-
-const mapRecipeToProps = recipe => ({
-    sources: selectFrom(recipe, 'model.sources'),
-    timeScan: !selectFrom(recipe, 'model.dates.targetDate'),
-    user: currentUser()
-})
 
 const option = band => ({value: band, label: msg(['bands', band])})
 
 class Retrieve extends React.Component {
-    timeScanBandOptions = [
-        {
-            options: [
-                {value: 'VV_min', label: <span>VV<sub>min</sub></span>},
-                {value: 'VV_mean', label: <span>VV<sub>mean</sub></span>},
-                {value: 'VV_median', label: <span>VV<sub>med</sub></span>},
-                {value: 'VV_max', label: <span>VV<sub>max</sub></span>},
-                {value: 'VV_stdDev', label: <span>VV<sub>sd</sub></span>},
-                {value: 'VV_CV', label: <span>VV<sub>cv</sub></span>}
-            ]
-        },
-        {
-            options: [
-                {value: 'VH_min', label: <span>VH<sub>min</sub></span>},
-                {value: 'VH_mean', label: <span>VH<sub>mean</sub></span>},
-                {value: 'VH_median', label: <span>VH<sub>med</sub></span>},
-                {value: 'VH_max', label: <span>VH<sub>max</sub></span>},
-                {value: 'VH_stdDev', label: <span>VH<sub>sd</sub></span>},
-                {value: 'VH_CV', label: <span>VH<sub>cv</sub></span>}
-            ]
-        },
-        {
-            options: [
-                {value: 'VV_constant', label: <span>VV<sub>const</sub></span>},
-                {value: 'VV_t', label: <span>VV<sub>t</sub></span>},
-                {value: 'VV_phase', label: <span>VV<sub>phase</sub></span>},
-                {value: 'VV_amplitude', label: <span>VV<sub>amp</sub></span>},
-                {value: 'VV_residuals', label: <span>VV<sub>residuals</sub></span>}
-            ]
-        },
-        {
-            options: [
-                {value: 'VH_constant', label: <span>VH<sub>const</sub></span>},
-                {value: 'VH_t', label: <span>VH<sub>t</sub></span>},
-                {value: 'VH_phase', label: <span>VH<sub>phase</sub></span>},
-                {value: 'VH_amplitude', label: <span>VH<sub>amp</sub></span>},
-                {value: 'VH_residuals', label: <span>VH<sub>residuals</sub></span>}
-            ]
-        }
-    ]
-
-    pointInTimeOptions = [
-        {
-            options: [
-                {value: 'VV', label: 'VV'},
-                {value: 'VH', label: 'VH'},
-                {value: 'ratio_VV_VH', label: 'VV/VH'},
-            ]
-        },
-        {
-            options: [
-                option('unixTimeDays'),
-                option('dayOfYear'),
-                option('daysFromTarget')
-            ]
-        }
-    ]
-
-    constructor(props) {
-        super(props)
-        const {inputs: {scale}} = this.props
-        if (!scale.value)
-            scale.set(20)
-    }
-
-    renderContent() {
-        const {user, timeScan, inputs: {bands, scale, destination}} = this.props
-
-        const bandOptions = timeScan ? this.timeScanBandOptions : this.pointInTimeOptions
-        const destinationOptions = [
-            {
-                value: 'SEPAL',
-                label: msg('process.radarMosaic.panel.retrieve.form.destination.SEPAL'),
-                disabled: !user.googleTokens
-            },
-            {
-                value: 'GEE',
-                label: msg('process.radarMosaic.panel.retrieve.form.destination.GEE')
-            }
-        ].filter(({value}) => user.googleTokens || value !== 'GEE')
-
-        return (
-            <Layout>
-                <Form.Buttons
-                    label={msg('process.radarMosaic.panel.retrieve.form.bands.label')}
-                    input={bands}
-                    multiple={true}
-                    options={bandOptions}/>
-                <Form.Slider
-                    label={msg('process.radarMosaic.panel.retrieve.form.scale.label')}
-                    info={scale => msg('process.radarMosaic.panel.retrieve.form.scale.info', {scale})}
-                    input={scale}
-                    minValue={10}
-                    maxValue={100}
-                    scale={'log'}
-                    ticks={[10, 15, 20, 30, 60, 100]}
-                    snap
-                    range='none'
-                />
-                <Form.Buttons
-                    label={msg('process.radarMosaic.panel.retrieve.form.destination.label')}
-                    input={destination}
-                    multiple={false}
-                    options={destinationOptions}/>
-            </Layout>
-        )
-    }
+    metadataOptions = {options: [
+        option('unixTimeDays'),
+        option('dayOfYear'),
+        option('daysFromTarget')
+    ]}
 
     render() {
-        const {recipeId} = this.props
         return (
-            <RecipeFormPanel
-                className={styles.panel}
-                isActionForm
-                placement='top-right'
-                onApply={values => RecipeActions(recipeId).retrieve(values).dispatch()}>
-                <Panel.Header
-                    icon='cloud-download-alt'
-                    title={msg('process.radarMosaic.panel.retrieve.title')}/>
-                <Panel.Content>
-                    {this.renderContent()}
-                </Panel.Content>
-                <Form.PanelButtons
-                    applyLabel={msg('process.radarMosaic.panel.retrieve.apply')}/>
-            </RecipeFormPanel>
+            <RetrievePanel
+                bandOptions={this.bandOptions()}
+                defaultScale={20}
+                toSepal
+                toEE
+                onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
+            />
         )
     }
 
-    componentDidUpdate() {
-        const {user, timeScan, inputs: {bands, destination}} = this.props
-        if (!user.googleTokens && destination.value !== 'SEPAL')
-            destination.set('SEPAL')
+    bandOptions() {
+        const {timeScan} = this.props
+        const options = groupedBandOptions({
+            dataSetId: 'SENTINEL_1',
+            timeScan,
+            order: ['dataSets']
+        })
+        return timeScan
+            ? options
+            : [...options, this.metadataOptions]
+    }
 
-        const validBands = (timeScan ? this.timeScanBandOptions : this.pointInTimeOptions)
-            .map(group => group.options.map(option => option.value))
-            .flat()
-        const invalidBand = (bands.value || []).find(band => !validBands.includes(band))
-        const selectedInvalid = !!invalidBand
-        if (selectedInvalid)
-            bands.set([])
+    retrieve(retrieveOptions) {
+        const {recipeId} = this.props
+        return RecipeActions(recipeId).retrieve(retrieveOptions)
     }
 }
 
@@ -174,5 +57,5 @@ Retrieve.propTypes = {}
 
 export default compose(
     Retrieve,
-    recipeFormPanel({id: 'retrieve', fields, mapRecipeToProps})
+    withRecipe(mapRecipeToProps)
 )
