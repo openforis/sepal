@@ -110,9 +110,10 @@ class _Maps extends React.Component {
             filter(({mapId: id}) => id !== mapId),
             map(({bounds}) => bounds)
         )
+
         const updateBounds = bounds => this.bounds$.next({mapId, bounds})
+        
         return {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds}
-        // return {mapContext, bounds$, updateBounds}
     }
 
     render() {

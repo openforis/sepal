@@ -1,14 +1,19 @@
 import {NEVER, Subject} from 'rxjs'
 import {Provider, withMapContext} from './mapContext'
 import {compose} from 'compose'
+import {connect} from 'store'
 import {filter, takeUntil} from 'rxjs/operators'
+import {getProcessTabsInfo} from '../body/process/process'
 import {msg} from 'translate'
+import {select} from 'store'
 import {withMapsContext} from './maps'
+import {withRecipePath} from '../body/process/recipe'
 import Notifications from 'widget/notifications'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
+import actionBuilder from 'action-builder'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
 
@@ -40,8 +45,16 @@ export const StaticMap = compose(
 
 StaticMap.propTypes = {}
 
+const mapStateToProps = (_state, {recipePath}) => {
+    return {
+        single: getProcessTabsInfo().single,
+        linked: select([recipePath, 'ui.map.linked'])
+    }
+}
+
 class _Map extends React.Component {
     layerById = {}
+    updateBounds$ = new Subject()
 
     drawingOptions = {
         fillColor: '#FBFAF2',
@@ -59,23 +72,28 @@ class _Map extends React.Component {
 
     state = {
         mapContext: null,
-        bounds: null,
-        linked: true,
         zooming: false,
         metersPerPixel: null,
-        toggleLinked: this.toggleLinked.bind(this)
     }
 
     // Linking
 
+    isLinked() {
+        const {linked} = this.props
+        return linked
+    }
+
+    setLinked(linked) {
+        const {recipePath} = this.props
+        actionBuilder('TOGGLE_LINKED')
+            .set([recipePath, 'ui.map.linked'], linked)
+            .dispatch()
+    }
+
     toggleLinked() {
-        const {linked: wasLinked, bounds} = this.state
+        const {linked: wasLinked} = this.props
         const linked = !wasLinked
-        this.setState({linked}, () => {
-            if (linked && bounds) {
-                this.synchronizeThisMap(bounds)
-            }
-        })
+        this.setLinked(linked)
     }
 
     // Zooming
@@ -172,7 +190,7 @@ class _Map extends React.Component {
         )
     }
 
-    // used by aoi, map
+    // used by w, map
     fitBounds(bounds, padding) {
         const {googleMap} = this.state
         const nextBounds = this.toGoogleBounds(bounds)
@@ -372,8 +390,8 @@ class _Map extends React.Component {
     }
 
     render() {
-        const {children} = this.props
-        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, linked, toggleLinked, metersPerPixel} = this.state
+        const {linked, children} = this.props
+        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, toggleLinked, metersPerPixel} = this.state
         const mapContext = {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}
         return (
             <Provider value={{mapContext, linked, toggleLinked, metersPerPixel}}>
@@ -385,19 +403,12 @@ class _Map extends React.Component {
         )
     }
 
-    synchronizeThisMap(bounds) {
-        const {linked} = this.state
-        if (linked) {
-            this.fitBounds(bounds, 0)
-        }
-    }
-
     updateScale(metersPerPixel) {
         this.setState({metersPerPixel})
     }
 
     componentDidMount() {
-        const {mapsContext: {createMapContext}} = this.props
+        const {mapsContext: {createMapContext}, single} = this.props
         const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds} = createMapContext(this.map.current)
 
         const sepalMap = {
@@ -429,12 +440,18 @@ class _Map extends React.Component {
             disableDrawingMode: this.disableDrawingMode.bind(this),
             onClick: this.onClick.bind(this),
             onOneClick: this.onOneClick.bind(this),
-            clearClickListeners: this.clearClickListeners.bind(this)
+            clearClickListeners: this.clearClickListeners.bind(this),
+            toggleLinked: this.toggleLinked.bind(this),
         }
 
-        this.setState({google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () =>
+        this.setState({google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () => {
             this.subscribe(bounds$, updateBounds)
-        )
+            this.setLinked(single)
+        })
+    }
+
+    componentDidUpdate() {
+        this.updateBounds$.next()
     }
 
     componentWillUnmount() {
@@ -445,10 +462,7 @@ class _Map extends React.Component {
         const {addSubscription} = this.props
 
         this.boundChanged = this.onBoundsChanged(() => {
-            const {linked} = this.state
-            if (linked) {
-                updateBounds(this.getBounds())
-            }
+            this.updateBounds$.next()
         })
 
         this.centerChanged = this.onCenterChanged(() => {
@@ -459,11 +473,29 @@ class _Map extends React.Component {
             this.updateScale(this.getMetersPerPixel())
         })
 
+        const {googleMap} = this.state
         addSubscription(
             bounds$.subscribe(
                 bounds => {
-                    this.synchronizeThisMap(bounds)
-                    this.setState({bounds})
+                    const {linked} = this.props
+                    if (linked) {
+                        const currentBounds = googleMap.getBounds()
+                        const boundsChanged = !currentBounds || !currentBounds.equals(bounds)
+                        if (boundsChanged) {
+                            googleMap.fitBounds(bounds, 0)
+                        }
+                    }
+                }
+            ),
+            this.updateBounds$.subscribe(
+                () => {
+                    const {linked} = this.props
+                    if (linked) {
+                        const bounds = googleMap.getBounds()
+                        if (bounds) {
+                            updateBounds(bounds)
+                        }
+                    }
                 }
             )
         )
@@ -478,11 +510,14 @@ class _Map extends React.Component {
 
 export const Map = compose(
     _Map,
+    connect(mapStateToProps),
+    withRecipePath(),
     withMapsContext(),
     withSubscriptions()
 )
 
 Map.propTypes = {
+    recipeId: PropTypes.string.isRequired,
     children: PropTypes.object,
     className: PropTypes.string
 }

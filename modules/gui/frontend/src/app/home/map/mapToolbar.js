@@ -2,16 +2,22 @@ import {LayersMenu} from './layersMenu'
 // import {MapLayout, MapLayoutButton} from 'app/home/body/process/mapLayout/mapLayout'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
+import {connect} from 'store'
 import {msg} from 'translate'
+import {select} from 'store'
 import {withMapContext} from './mapContext'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './mapToolbar.module.css'
 
+const mapStateToProps = (_state, {statePath}) => ({
+    linked: select([statePath, 'map.linked'])
+})
+
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, mapContext, zooming, linked, toggleLinked, labelLayerIndex, children} = this.props
+        const {statePath, mapContext, zooming, labelLayerIndex, linked, children} = this.props
         const {sepalMap} = mapContext
         const hasBounds = sepalMap.isLayerInitialized('aoi')
         return (
@@ -39,8 +45,9 @@ class MapToolbar extends React.Component {
                         tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
                     <Toolbar.ToolbarButton
                         disabled={!hasBounds}
-                        onClick={() => toggleLinked()}
-                        icon={linked ? 'link' : 'unlink'}
+                        onClick={() => sepalMap.toggleLinked()}
+                        selected={linked}
+                        icon='link'
                         tooltip={msg(linked ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
                     <Toolbar.ToolbarButton
                         disabled={!hasBounds}
@@ -83,5 +90,6 @@ MapToolbar.propTypes = {
 
 export default compose(
     MapToolbar,
+    connect(mapStateToProps),
     withMapContext()
 )

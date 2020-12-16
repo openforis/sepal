@@ -93,7 +93,8 @@ class OpticalMosaicPreview extends React.Component {
     }
 
     componentDidMount() {
-        this.updateLayer(this.toPreviewRequest(this.props.recipe))
+        const {recipe} = this.props
+        this.updateLayer(this.toPreviewRequest(recipe))
     }
 
     componentDidUpdate(prevProps) {

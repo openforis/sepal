@@ -5,6 +5,7 @@ import {Tabs} from 'widget/tabs/tabs'
 import {activator} from 'widget/activation/activator'
 import {compose} from 'compose'
 import {getRecipeType} from './recipeTypes'
+import {getTabsInfo} from 'widget/tabs/tabs'
 import {msg} from 'translate'
 import {saveRecipe} from './recipe'
 import CloseRecipe from './closeRecipe'
@@ -12,6 +13,8 @@ import ProcessMenu from './processMenu'
 import React from 'react'
 import Revisions from 'app/home/body/process/revisions'
 import SaveRecipe from './saveRecipe'
+
+export const getProcessTabsInfo = () => getTabsInfo('process')
 
 class Process extends React.Component {
     renderRecipeByType(recipeId, type) {
@@ -54,10 +57,11 @@ class Process extends React.Component {
                     isLandingTab={({type}) => !type}
                     tabActions={recipeId => this.renderMenu(recipeId)}
                     onTitleChanged={recipe => saveRecipe(recipe)}
-                    onClose={(recipe, close) => this.onCloseTab(recipe, close)}>
+                    onClose={(recipe, close) => this.onCloseTab(recipe, close)}
+                >
                     {({id, type}) =>
                         <RecipeContext recipeId={id}>
-                            <Map>
+                            <Map recipeId={id}>
                                 {this.renderRecipe(id, type)}
                             </Map>
                         </RecipeContext>
