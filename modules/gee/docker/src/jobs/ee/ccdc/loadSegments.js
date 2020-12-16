@@ -1,11 +1,12 @@
 const {job} = require('root/jobs/job')
 
-const worker$ = ({asset, recipe, latLng, bands}) => {
+const worker$ = ({recipe, latLng, bands}) => {
     const {toGeometry} = require('sepal/ee/aoi')
-    const {getCollection$} = require('sepal/ee/timeSeries/collection')
-    const {getSegments$} = require('sepal/ee/timeSeries/ccdc')
     const {of} = require('rx')
     const {switchMap} = require('rx/operators')
+    const ccdc = require('sepal/ee/timeSeries/ccdc')
+    const imageFactory = require('sepal/ee/imageFactory')
+    const _ = require('lodash')
     const ee = require('ee')
 
     const aoi = {type: 'POINT', ...latLng}
@@ -26,21 +27,24 @@ const worker$ = ({asset, recipe, latLng, bands}) => {
         )
 
     const assetSegments$ = () =>
-        of(new ee.Image(asset))
+        of(new ee.Image(recipe.id))
 
-    const recipeSegments$ = () => {
-        const aoi = {type: 'POINT', ...latLng}
-        const collectionBands = [...new Set([...bands, ...recipe.breakpointBands])]
-        return getCollection$({...recipe, bands: collectionBands, aoi}).pipe(
-            switchMap(collection => {
-                return getSegments$({...recipe, collection, aoi, bands: collectionBands})
-            })
-        )
-    }
+    const recipeRef$ = () => imageFactory(recipe, {selection: bands}).getRecipe$()
 
-    const segments$ = asset
+    const recipeSegments$ = () =>
+        of(ccdc(
+            _.merge(recipe, {model: {aoi: {type: 'POINT', ...latLng}}}),
+            {selection: bands}
+        ))
+
+    const segments$ = recipe.type === 'ASSET'
         ? assetSegments$()
-        : recipeSegments$()
+        : (recipe.type === 'RECIPE_REF'
+            ? recipeRef$()
+            : recipeSegments$()
+        ).pipe(
+            switchMap(ccdc => ccdc.getImage$())
+        )
     return segmentsForPixel$(segments$)
 }
 

@@ -2068,7 +2068,7 @@
               "malformed": "Invalid date",
               "required": "Date is required",
               "tooltip": "The date of the slice",
-              "range": "The CCDC asset was created with data from {startDate} to {endDate}"
+              "range": "The CCDC segments were created with data from {startDate} to {endDate}"
             }
           },
           "title": "Date",
@@ -2191,6 +2191,14 @@
         },
         "source": {
           "button": "SRC",
+          "asset": {
+            "label": "Earth Engine CCDC Asset",
+            "title": "Earth Engine CCDC Asset"
+          },
+          "recipe": {
+            "label": "Saved Sepal CCDC recipe",
+            "title": "Saved Sepal CCDC recipe"
+          },
           "form": {
             "asset": {
               "label": "CCDC asset",

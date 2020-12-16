@@ -23,28 +23,24 @@ const DATE_DELTA = 3
 const DATE_DELTA_UNIT = 'months'
 
 module.exports = {
-    submit$: (id, recipe) =>
+    submit$: (id, {description, recipe, indicator, scale}) =>
         getCurrentContext$().pipe(
             switchMap(({config}) => {
-                const preferredDownloadDir = `${config.homeDir}/downloads/${recipe.description}/`
+                const preferredDownloadDir = `${config.homeDir}/downloads/${description}/`
                 return mkdirSafe$(preferredDownloadDir, {recursive: true}).pipe(
                     switchMap(downloadDir =>
-                        export$(downloadDir, recipe)
+                        export$({description, downloadDir, recipe, indicator, scale})
                     )
                 )
             })
         )
 }
 
-const export$ = (downloadDir, recipe) => {
-    const {
-        description, aoi, dataSets, classification, fromDate, toDate, indicator, scale,
-        surfaceReflectance, cloudMasking, cloudBuffer, snowMasking, calibrate, brdfCorrect, // Optical
-        orbits, geometricCorrection, speckleFilter, outlierRemoval // Radar
-    } = recipe
-
-    const reflectance = surfaceReflectance ? 'SR' : 'TOA'
-
+const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
+    const aoi = recipe.model.aoi
+    const dataSets = recipe.model.sources.dataSets
+    const {startDate, endDate} = recipe.model.dates
+    const reflectance = recipe.model.options.corrections.includes('SR') ? 'SR' : 'TOA'
     const tiles = tile(toFeatureCollection(aoi), TILE_DEGREES) // synchronous EE
 
     const exportTiles$ = tileIds => {
@@ -70,8 +66,8 @@ const export$ = (downloadDir, recipe) => {
 
     const createChunks$ = ({tileId, tileIndex}) => {
         const tile = tiles.filterMetadata('system:index', 'equals', tileId).first()
-        const from = moment(fromDate)
-        const to = moment(toDate)
+        const from = moment(startDate)
+        const to = moment(endDate)
         const duration = moment(to).subtract(1, 'day').diff(from, DATE_DELTA_UNIT)
         const dateOffsets = sequence(0, duration, DATE_DELTA)
         const chunks$ = dateOffsets.map(dateOffset => {
@@ -102,11 +98,7 @@ const export$ = (downloadDir, recipe) => {
     const isRadar = () => dataSets.length === 1 && dataSets[0] === 'SENTINEL_1'
 
     const createTimeSeries$ = (feature, startDate, endDate) => {
-        const images$ = getCollection$({
-            description, geometry: feature.geometry(), dataSets, classification, bands: [indicator], fromDate: startDate, toDate: endDate,
-            surfaceReflectance, cloudMasking, cloudBuffer, shadowMasking: false, snowMasking, calibrate, brdfCorrect, // Optical
-            orbits, geometricCorrection, speckleFilter, outlierRemoval // Radar
-        })
+        const images$ = getCollection$({recipe, bands: [indicator], startDate, endDate})
         return images$.pipe(
             map(images => {
                 const distinctDateImages = images.distinct('date')
@@ -137,7 +129,7 @@ const export$ = (downloadDir, recipe) => {
             isRadar()
                 ? hasRadarImagery({geometry, startDate, endDate})
                 : hasOpticalImagery({dataSets: extractDataSets(dataSets), reflectance, geometry, startDate, endDate}),
-            `check if date range has imagery (${description})`
+            'check if date range has imagery'
         )
 
     const exportChunks$ = chunks$ =>

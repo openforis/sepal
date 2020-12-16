@@ -1,7 +1,6 @@
 const {job} = require('root/jobs/job')
 
-
-const worker$ = ({recipe, latLng}) => {
+const worker$ = ({recipe, bands, latLng}) => {
     const {getCollection$} = require('sepal/ee/timeSeries/collection')
     const {toGeometry} = require('sepal/ee/aoi')
     const {getRows$} = require('sepal/ee/table')
@@ -11,7 +10,7 @@ const worker$ = ({recipe, latLng}) => {
     const geometry = toGeometry(aoi)
 
     const timeSeriesForPixel$ = collection => {
-        const band = recipe.bands[0]
+        const band = bands[0] // We only support one band at the moment
         return collection
             .select(band)
             .map(image => {
@@ -24,9 +23,7 @@ const worker$ = ({recipe, latLng}) => {
             })
             .filter(ee.Filter.notNull(['value']))
     }
-
-    const collectionBands = [...new Set([...recipe.bands])]
-    return getCollection$({...recipe, bands: collectionBands, aoi}).pipe(
+    return getCollection$({recipe, bands, geometry}).pipe(
         switchMap(collection => getRows$(
             timeSeriesForPixel$(collection)
         ))

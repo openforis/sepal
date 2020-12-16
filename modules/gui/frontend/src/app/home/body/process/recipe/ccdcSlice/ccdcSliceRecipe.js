@@ -6,9 +6,7 @@ import api from 'api'
 export const defaultModel = {
     date: {
     },
-    source: {
-        asset: ''
-    },
+    source: {},
     options: {
         harmonics: 3,
         gapStrategy: 'INTERPOLATE',
@@ -41,7 +39,7 @@ export const RecipeActions = id => {
 }
 
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
-    api.gee.loadCCDCSegments$({asset: recipe.model.source.asset, latLng, bands})
+    api.gee.loadCCDCSegments$({recipe: recipe.model.source, latLng, bands})
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder

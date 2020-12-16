@@ -21,5 +21,5 @@ export default class AssetSection extends React.Component {
 }
 
 AssetSection.propTypes = {
-    input: PropTypes.object.isRequired
+    inputs: PropTypes.object.isRequired
 }

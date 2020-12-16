@@ -96,95 +96,97 @@ class InputImage extends React.Component {
         const {inputs, activatable: {imageId}} = this.props
         inputs.imageId.set(imageId)
     }
-umberOfSamplesValue
-addImage() {
-    const {onAdd, activatable: {deactivate}} = this.props
-    onAdd(this.getSelectedImage())
-    deactivate()
-}
 
-getSelectedImage() {
-    const {inputs: {section, recipe, asset}} = this.props
-    switch (section.value) {
-    case 'ASSET':
-        return {
-            type: 'ASSET',
-            id: asset.value
-        }
-    case 'RECIPE_REF':
-        return {
-            type: 'RECIPE_REF',
-            id: recipe.value
-        }
-    default:
-        throw Error(`Unexpected image section: ${section.value}`)
+    umberOfSamplesValue
+
+    addImage() {
+        const {onAdd, activatable: {deactivate}} = this.props
+        onAdd(this.getSelectedImage())
+        deactivate()
     }
-}
 
-updateBandSetSpecs(option) {
-    const {inputs: {bandSetSpecs, bands}} = this.props
-
-    const getSpecs = () => {
-        switch (option.type) {
-        case 'PROFILE':
-            return getProfileBandSetSpecs(option.value, bands.value)
-        case 'PAIR_WISE_EXPRESSION':
-            return bandSetSpecs.value.concat(
-                {id: guid(), type: 'PAIR_WISE_EXPRESSION', operation: option.value, included: []}
-            )
-        case 'INDEXES':
-            return bandSetSpecs.value.concat(
-                {id: guid(), type: 'INDEXES', included: []}
-            )
+    getSelectedImage() {
+        const {inputs: {section, recipe, asset}} = this.props
+        switch (section.value) {
+        case 'ASSET':
+            return {
+                type: 'ASSET',
+                id: asset.value
+            }
+        case 'RECIPE_REF':
+            return {
+                type: 'RECIPE_REF',
+                id: recipe.value
+            }
         default:
-            throw Error(`Unsupported type: ${JSON.stringify(option)}`)
+            throw Error(`Unexpected image section: ${section.value}`)
         }
     }
 
-    return bandSetSpecs.set(getSpecs())
-}
+    updateBandSetSpecs(option) {
+        const {inputs: {bandSetSpecs, bands}} = this.props
 
-derivedBandsOptions() {
-    const {inputs: {bands, bandSetSpecs}} = this.props
-    const indexAlreadyAdded = (bandSetSpecs.value || []).find(spec => spec.type === 'INDEXES')
-    const bandCombination = ({value, type, disabled}) => ({
-        value,
-        type,
-        label: msg(`process.classification.panel.inputImagery.derivedBands.bandCombinations.options.${value}.label`),
-        tooltip: msg(`process.classification.panel.inputImagery.derivedBands.bandCombinations.options.${value}.tooltip`),
-        disabled
-    })
-    const profile = value => ({
-        value,
-        type: 'PROFILE',
-        label: msg(`process.classification.panel.inputImagery.derivedBands.profiles.options.${value}.label`),
-        tooltip: msg(`process.classification.panel.inputImagery.derivedBands.profiles.options.${value}.tooltip`),
-        disabled: isProfileDisabled(value, bands.value)
-    })
-    return [{
-        label: msg('process.classification.panel.inputImagery.derivedBands.bandCombinations.label'),
-        options: [
-            bandCombination({value: 'RATIO', type: 'PAIR_WISE_EXPRESSION'}),
-            bandCombination({value: 'NORMALIZED_DIFFERENCE', type: 'PAIR_WISE_EXPRESSION'}),
-            bandCombination({value: 'DIFFERENCE', type: 'PAIR_WISE_EXPRESSION'}),
-            bandCombination({value: 'DISTANCE', type: 'PAIR_WISE_EXPRESSION'}),
-            bandCombination({value: 'ANGLE', type: 'PAIR_WISE_EXPRESSION'}),
-            bandCombination({
-                value: 'INDEXES',
-                type: 'INDEXES',
-                disabled: !getAvailableIndexes(bands.value).length || !!indexAlreadyAdded
-            })
-        ]
-    }, {
-        label: msg('process.classification.panel.inputImagery.derivedBands.profiles.label'),
-        options: [
-            profile('SIMPLE'),
-            profile('RLCMS')
-        ]
+        const getSpecs = () => {
+            switch (option.type) {
+            case 'PROFILE':
+                return getProfileBandSetSpecs(option.value, bands.value)
+            case 'PAIR_WISE_EXPRESSION':
+                return bandSetSpecs.value.concat(
+                    {id: guid(), type: 'PAIR_WISE_EXPRESSION', operation: option.value, included: []}
+                )
+            case 'INDEXES':
+                return bandSetSpecs.value.concat(
+                    {id: guid(), type: 'INDEXES', included: []}
+                )
+            default:
+                throw Error(`Unsupported type: ${JSON.stringify(option)}`)
+            }
+        }
+
+        return bandSetSpecs.set(getSpecs())
     }
 
-    ]
-}
+    derivedBandsOptions() {
+        const {inputs: {bands, bandSetSpecs}} = this.props
+        const indexAlreadyAdded = (bandSetSpecs.value || []).find(spec => spec.type === 'INDEXES')
+        const bandCombination = ({value, type, disabled}) => ({
+            value,
+            type,
+            label: msg(`process.classification.panel.inputImagery.derivedBands.bandCombinations.options.${value}.label`),
+            tooltip: msg(`process.classification.panel.inputImagery.derivedBands.bandCombinations.options.${value}.tooltip`),
+            disabled
+        })
+        const profile = value => ({
+            value,
+            type: 'PROFILE',
+            label: msg(`process.classification.panel.inputImagery.derivedBands.profiles.options.${value}.label`),
+            tooltip: msg(`process.classification.panel.inputImagery.derivedBands.profiles.options.${value}.tooltip`),
+            disabled: isProfileDisabled(value, bands.value)
+        })
+        return [{
+            label: msg('process.classification.panel.inputImagery.derivedBands.bandCombinations.label'),
+            options: [
+                bandCombination({value: 'RATIO', type: 'PAIR_WISE_EXPRESSION'}),
+                bandCombination({value: 'NORMALIZED_DIFFERENCE', type: 'PAIR_WISE_EXPRESSION'}),
+                bandCombination({value: 'DIFFERENCE', type: 'PAIR_WISE_EXPRESSION'}),
+                bandCombination({value: 'DISTANCE', type: 'PAIR_WISE_EXPRESSION'}),
+                bandCombination({value: 'ANGLE', type: 'PAIR_WISE_EXPRESSION'}),
+                bandCombination({
+                    value: 'INDEXES',
+                    type: 'INDEXES',
+                    disabled: !getAvailableIndexes(bands.value).length || !!indexAlreadyAdded
+                })
+            ]
+        }, {
+            label: msg('process.classification.panel.inputImagery.derivedBands.profiles.label'),
+            options: [
+                profile('SIMPLE'),
+                profile('RLCMS')
+            ]
+        }
+
+        ]
+    }
 }
 
 const modelToValues = model => {
