@@ -13,7 +13,7 @@ export class CCDCGraph extends React.Component {
     state = {}
 
     render() {
-        const {segments, band, dateFormat, highlights = []} = this.props
+        const {gapStrategy, segments, band, dateFormat, highlights = []} = this.props
         const {data, gaps} = this.state
         const {startDate, endDate} = this.getDates()
         if (!data || !startDate || !endDate)
@@ -28,12 +28,25 @@ export class CCDCGraph extends React.Component {
                 ? {observation}
                 : {}
             if (segments) {
-                const segmentIndex = sequence(0, segments.tStart.length - 1)
-                    .findIndex(segmentIndex =>
-                        moment(fromT(segments.tStart[segmentIndex], dateFormat)).startOf('date').toDate() <= date
-                        && moment(fromT(segments.tEnd[segmentIndex], dateFormat)).startOf('date').toDate() > date
-                    )
-                // TODO: Deal with extrapolation and interpolation - no segmentIndex found
+                const segmentIndexes = sequence(0, segments.tStart.length - 1)
+                const findSegmentIndex = () => {
+                    const segmentIndex = segmentIndexes
+                        .findIndex(segmentIndex =>
+                            moment(fromT(segments.tStart[segmentIndex], dateFormat)).startOf('date').toDate() <= date
+                            && moment(fromT(segments.tEnd[segmentIndex], dateFormat)).startOf('date').toDate() > date
+                        )
+                    if (segmentIndex >= 0) {
+                        return segmentIndex
+                    } else if (_.isFinite(model) && gapStrategy === 'INTERPOLATE') {
+                        return segmentIndexes
+                            .findIndex(segmentIndex =>
+                                moment(fromT(segments.tEnd[segmentIndex], dateFormat)).startOf('date').toDate() > date
+                            ) - 1
+                    } else {
+                        return -1 // TODO: Deal with extrapolation
+                    }
+                }
+                const segmentIndex = findSegmentIndex()
                 const segmentInfo = segmentIndex !== -1
                     ? {
                         model,
@@ -229,10 +242,16 @@ export class CCDCGraph extends React.Component {
     }
 
     calculateData() {
-        const {band, scale, dateFormat, harmonics, segments, observations} = this.props
+        const {
+            band, scale, dateFormat, harmonics, segments, observations,
+            gapStrategy, extrapolateSegment, extrapolateMaxDays
+        } = this.props
         const {startDate, endDate} = this.getDates()
         if (segments) {
-            return segmentsData({band, scale, startDate, endDate, dateFormat, harmonics, segments, observations})
+            return segmentsData({
+                band, scale, startDate, endDate, dateFormat, harmonics, segments, observations,
+                gapStrategy, extrapolateSegment, extrapolateMaxDays
+            })
         } else {
             return observations.features.map(feature => [
                 new Date(feature.properties.date.value),
@@ -246,6 +265,9 @@ export class CCDCGraph extends React.Component {
 const remToPx = rem => rem * parseFloat(getComputedStyle(document.documentElement).fontSize)
 
 CCDCGraph.defaultProps = {
+    extrapolateSegment: 'CLOSEST',
+    extrapolateMaxDays: 30,
+    gapStrategy: 'MASK',
     scale: 1
 }
 
@@ -253,6 +275,9 @@ CCDCGraph.propTypes = {
     band: PropTypes.string,
     dateFormat: PropTypes.number,
     endDate: PropTypes.any,
+    extrapolateMaxDays: PropTypes.number,
+    extrapolateSegment: PropTypes.oneOf(['CLOSEST', 'PREVIOUS', 'NEXT']),
+    gapStrategy: PropTypes.oneOf(['INTERPOLATE', 'EXTRAPOLATE', 'MASK']),
     harmonics: PropTypes.number,
     highlightGaps: PropTypes.any,
     highlights: PropTypes.arrayOf(PropTypes.shape({
@@ -270,7 +295,10 @@ const J_DAYS = 0
 const FRACTIONAL_YEARS = 1
 const UNIX_TIME_MILLIS = 2
 
-const segmentsData = ({observations, startDate, endDate, segments, band, scale, dateFormat, harmonics = 3}) => {
+const segmentsData = ({
+    observations, startDate, endDate, segments, band, scale, dateFormat, harmonics = 3,
+    gapStrategy, extrapolateSegment, extrapolateMaxDays
+}) => {
     const bandCoefs = segments[`${band}_coefs`]
     const bandRmse = segments[`${band}_rmse`]
 
@@ -281,9 +309,51 @@ const segmentsData = ({observations, startDate, endDate, segments, band, scale, 
         return [date, observationByTimestamp[date.getTime()] || null, [value, rmse]]
     }
 
-    const gap = ({date}) => {
-        // TODO: Support interpolation and extrapolation. Extra props needed for extrapolation
+    const gap = ({date, prevSegmentIndex, nextSegmentIndex}) => {
+        if (gapStrategy === 'INTERPOLATE' && prevSegmentIndex >= 0 && nextSegmentIndex >= 0) {
+            return interpolate({
+                date, prevSegmentIndex, nextSegmentIndex
+            })
+        } else if (gapStrategy === 'EXTRAPOLATE') {
+            return extrapolate({
+                date, prevSegmentIndex, nextSegmentIndex, extrapolateSegment, extrapolateMaxDays
+            })
+        } else {
+            return mask({
+                date
+            })
+        }
+    }
+
+    const mask = ({date}) => {
         return [date, observationByTimestamp[date.getTime()] || null, NaN]
+    }
+
+    // TODO: Implement...
+    // eslint-disable-next-line no-unused-vars
+    const extrapolate = ({date, prevSegmentIndex, nextSegmentIndex}) => {
+        return [date, observationByTimestamp[date.getTime()] || null, NaN]
+    }
+
+    const interpolate = ({date, prevSegmentIndex, nextSegmentIndex}) => {
+        const t = toT(date, dateFormat)
+        const tStart = segments.tEnd[prevSegmentIndex]
+        const tEnd = segments.tStart[nextSegmentIndex]
+        const days = moment(fromT(tEnd, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
+        const day = moment(fromT(t, dateFormat)).diff(moment(fromT(tStart, dateFormat)), 'days')
+        const endWeight = (day + 1) / (days + 1)
+        const startWeight = 1 - endWeight
+        const startCoefs = bandCoefs[prevSegmentIndex]
+        const endCoefs = bandCoefs[nextSegmentIndex]
+        const coefs = sequence(0, 7).map(coefIndex =>
+            startCoefs[coefIndex] * startWeight + endCoefs[coefIndex] * endWeight
+        )
+        const interpolated = slice({coefs, date, dateFormat, harmonics})
+        const rmse = Math.sqrt(
+            Math.pow(bandRmse[prevSegmentIndex] * startWeight, 2)
+            + Math.pow(bandRmse[nextSegmentIndex] * endWeight, 2)
+        )
+        return [date, observationByTimestamp[date.getTime()] || null, [interpolated, rmse]]
     }
 
     const observationByTimestamp = {}
@@ -314,7 +384,13 @@ const segmentsData = ({observations, startDate, endDate, segments, band, scale, 
         const gapPoints = sequence(0, gapEnd.diff(segmentEnd, 'days') - 1)
             .map(dateOffset => {
                 const date = moment(segmentEnd).add(dateOffset, 'days').toDate()
-                return gap({date, prevSegmentIndex: null, nextSegmentIndex: 0})
+                return gap({
+                    date,
+                    prevSegmentIndex: segmentIndex,
+                    nextSegmentIndex: segmentIndex < numberOfSegments - 1
+                        ? segmentIndex + 1
+                        : -1
+                })
             })
         return [...modelPoints, ...gapPoints]
     }).flat()

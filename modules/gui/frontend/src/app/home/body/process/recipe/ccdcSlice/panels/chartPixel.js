@@ -25,6 +25,10 @@ const mapRecipeToProps = recipe => ({
     latLng: selectFrom(recipe, 'ui.chartPixel'),
     dateFormat: selectFrom(recipe, 'model.source.dateFormat'),
     date: selectFrom(recipe, 'model.date.date'),
+    harmonics: selectFrom(recipe, 'model.options.harmonics'),
+    gapStrategy: selectFrom(recipe, 'model.options.gapStrategy'),
+    extrapolateSegment: selectFrom(recipe, 'model.options.extrapolateSegment'),
+    extrapolateMaxDays: selectFrom(recipe, 'model.options.extrapolateMaxDays'),
     recipe
 })
 
@@ -95,11 +99,12 @@ class ChartPixel extends React.Component {
                 multiple={false}
                 options={options}/>
         )
-
     }
 
     renderChart() {
-        const {date, dateFormat, inputs: {selectedBand}} = this.props
+        const {
+            date, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays, dateFormat, inputs: {selectedBand}
+        } = this.props
         const {segments} = this.state
         const loading = !segments
         if (loading)
@@ -116,6 +121,10 @@ class ChartPixel extends React.Component {
                         color: '#FF0000'
                     }]}
                     highlightGaps
+                    gapStrategy={gapStrategy}
+                    extrapolateMaxDays={extrapolateMaxDays}
+                    extrapolateSegment={extrapolateSegment}
+                    harmonics={harmonics}
                 />
             )
         }
