@@ -2138,6 +2138,10 @@
                 "label": "RMSE",
                 "tooltip": "RMSE of the harmonic models"
               },
+              "magnitude": {
+                "label": "Magnitude",
+                "tooltip": "Break magnitude of segment"
+              },
               "intercept": {
                 "label": "Intercept",
                 "tooltip": "The intercept of the model's linear component"
@@ -2169,6 +2173,30 @@
               "amplitude3": {
                 "label": "Amplitude 3",
                 "tooltip": "The amplitude of the model's third order harmonic"
+              }
+            },
+            "segmentBands": {
+              "label": "Segment bands",
+              "tooltip": "Bands with information about the segment the slice falls in. If a pixel falls in a gap, the previous segment will be used",
+              "tStart": {
+                "label": "Start",
+                "tooltip": "Start date of segment"
+              },
+              "tEnd": {
+                "label": "End",
+                "tooltip": "End date of segment"
+              },
+              "tBreak": {
+                "label": "Break",
+                "tooltip": "Date of detected break"
+              },
+              "numObs": {
+                "label": "Observations",
+                "tooltip": "Number of observations in segment"
+              },
+              "changeProb": {
+                "label": "Probability",
+                "tooltip": "Probability of detected break being accurate"
               }
             },
             "scale": {
