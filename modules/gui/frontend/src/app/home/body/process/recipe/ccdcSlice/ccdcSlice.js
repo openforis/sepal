@@ -49,19 +49,21 @@ class _CCDCSlice extends React.Component {
     }
 
     componentDidUpdate(prevProps, _prevState, _snapshot) {
-        const prevAsset = prevProps.recipe.model.source.asset
-        const asset = this.props.recipe.model.source.asset
-        this.setAoiLayer(prevAsset !== asset)
+        const prevSource = prevProps.recipe.model.source.id
+        const source = this.props.recipe.model.source.id
+        this.setAoiLayer(prevSource !== source)
     }
 
     setAoiLayer(fitLayer) {
         const {mapContext, recipe, componentWillUnmount$} = this.props
-        setRecipeGeometryLayer({
-            mapContext,
-            layerSpec: {id: 'aoi', layerIndex: 1, recipe},
-            destroy$: componentWillUnmount$,
-            onInitialized: () => fitLayer && mapContext.sepalMap.fitLayer('aoi')
-        })
+        if (recipe.model.source.id) {
+            setRecipeGeometryLayer({
+                mapContext,
+                layerSpec: {id: 'aoi', layerIndex: 1, recipe},
+                destroy$: componentWillUnmount$,
+                onInitialized: () => fitLayer && mapContext.sepalMap.fitLayer('aoi')
+            })
+        }
     }
 }
 

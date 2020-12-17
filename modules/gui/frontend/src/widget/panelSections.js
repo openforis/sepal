@@ -18,6 +18,7 @@ export default class PanelSections extends React.Component {
                 {component
                     ? <Panel.Content>
                         {component}
+                        <div style={{height: '1rem'}}/> {/* [HACK] Make sure widget messages are shown */}
                     </Panel.Content>
                     : null
                 }

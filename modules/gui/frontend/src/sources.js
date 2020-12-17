@@ -434,8 +434,6 @@ const requiredBandsByOpticalIndex = {
     ui: ['nir', 'swir2'],
     ndbi: ['nir', 'swir1'],
     ibi: ['green', 'red', 'nir', 'swir1'],
-    nbi: ['red', 'nir', 'swir1'],
-    ebbi: ['nir', 'swir1', 'swir2', 'thermal'],
     bui: ['red', 'swir1', 'swir2']
 
 }
@@ -525,20 +523,6 @@ const getBandOption = band => {
                 value: 'ibi',
                 label: 'IBI',
                 tooltip: '(ndbi - (savi + mndwi) / 2) / (ndbi + (savi + mndwi) / 2)',
-                mosaicMultiplier: 10000,
-                timeSeriesMultiplier: 10000
-            },
-            nbi: {
-                value: 'nbi',
-                label: 'NBI',
-                tooltip: 'red * swir1 / nir',
-                mosaicMultiplier: 10000,
-                timeSeriesMultiplier: 10000
-            },
-            ebbi: {
-                value: 'ebbi',
-                label: 'EBBI',
-                tooltip: '(swir1 - nir) / 10 * sqrt(swir1 + thermal)',
                 mosaicMultiplier: 10000,
                 timeSeriesMultiplier: 10000
             },

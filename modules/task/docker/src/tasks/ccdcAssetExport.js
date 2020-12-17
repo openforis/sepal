@@ -1,22 +1,17 @@
 const {exportImageToAsset$} = require('../jobs/export/toAsset')
 const {switchMap} = require('rx/operators')
-const {getCollection$} = require('sepal/ee/timeSeries/collection')
-const {getSegments$} = require('sepal/ee/timeSeries/ccdc')
+const ccdc = require('sepal/ee/timeSeries/ccdc')
 
 module.exports = {
-    submit$: (id, recipe) => {
-        const description = recipe.description
-        const scale = recipe.scale
-        const collectionBands = [...new Set([...recipe.bands, ...recipe.breakpointBands])]
-        return getCollection$({...recipe, bands: collectionBands}).pipe(
-            switchMap(collection => getSegments$({...recipe, collection})),
+    submit$: (id, {recipe, bands, scale, description}) => {
+        return ccdc(recipe, {selection: bands}).getImage$().pipe(
             switchMap(segments =>
                 exportImageToAsset$({
                     image: segments
-                        .set('startDate', recipe.fromDate)
-                        .set('endDate', recipe.toDate)
-                        .set('dateFormat', recipe.dateFormat)
-                        .set('surfaceReflectance', recipe.surfaceReflectance && 1),
+                        .set('startDate', recipe.model.dates.startDate)
+                        .set('endDate', recipe.model.dates.endDate)
+                        .set('dateFormat', recipe.model.ccdcOptions.dateFormat)
+                        .set('surfaceReflectance', recipe.model.options.corrections.includes('SR') && 1),
                     description,
                     pyramidingPolicy: {'.default': 'sample'},
                     scale,

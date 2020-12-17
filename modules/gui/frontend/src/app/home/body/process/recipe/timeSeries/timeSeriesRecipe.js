@@ -1,6 +1,5 @@
 import {msg} from 'translate'
 import {recipeActionBuilder} from '../../recipe'
-import _ from 'lodash'
 import api from 'api'
 import moment from 'moment'
 
@@ -54,33 +53,17 @@ export const RecipeActions = id => {
     }
 }
 
-const toBackendRecipe = recipe => {
-    const name = recipe.title || recipe.placeholder
-    const options = {...recipe.model.options, ...recipe.model.preProcessingOptions}
-    const indicator = recipe.ui.retrieveOptions
-        ? recipe.ui.retrieveOptions.bands
-        : null
-    return {
-        title: msg(['process.timeSeries.panel.retrieve.task'], {name}),
-        description: name,
-        indicator,
-        dataSets: _.flatten(Object.values(recipe.model.sources.dataSets)),
-        classification: recipe.model.sources.classification,
-        aoi: recipe.model.aoi,
-        fromDate: recipe.model.dates.startDate,
-        toDate: recipe.model.dates.endDate,
-        brdfCorrect: options.corrections.includes('BRDF'),
-        surfaceReflectance: options.corrections.includes('SR'),
-        ...options
-    }
-}
-
 const submitRetrieveRecipeTask = recipe => {
+    const name = recipe.title || recipe.placeholder
+    const title = msg(['process.timeSeries.panel.retrieve.task'], {name})
     const task = {
         'operation': 'timeseries.download',
         'params': {
-            ...toBackendRecipe(recipe),
-            scale: recipe.ui.retrieveOptions.scale
+            title,
+            description: name,
+            recipe,
+            indicator: recipe.ui.retrieveOptions.bands,
+            scale: recipe.ui.retrieveOptions.scale,
         }
     }
     return api.tasks.submit$(task).subscribe()
@@ -88,8 +71,7 @@ const submitRetrieveRecipeTask = recipe => {
 
 export const loadObservations$ = ({recipe, latLng, bands}) =>
     api.gee.loadTimeSeriesObservations$({
-        recipe: {...toBackendRecipe(recipe), bands},
-        latLng
+        recipe, latLng, bands
     })
 
 export const dateRange = dates => ([moment(dates.startDate, DATE_FORMAT), moment(dates.endDate, DATE_FORMAT)])

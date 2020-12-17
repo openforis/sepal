@@ -6,9 +6,7 @@ import api from 'api'
 export const defaultModel = {
     date: {
     },
-    source: {
-        asset: ''
-    },
+    source: {},
     options: {
         harmonics: 3,
         gapStrategy: 'INTERPOLATE',
@@ -41,17 +39,18 @@ export const RecipeActions = id => {
 }
 
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
-    api.gee.loadCCDCSegments$({asset: recipe.model.source.asset, latLng, bands})
+    api.gee.loadCCDCSegments$({recipe: recipe.model.source, latLng, bands})
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
     const taskTitle = msg(['process.ccdcSlice.panel.retrieve.form.task', destination], {name})
-    const {baseBands, bandTypes} = recipe.ui.retrieveOptions
+    const {baseBands, bandTypes, segmentBands} = recipe.ui.retrieveOptions
     const bandTypeSuffixes = {
         VALUE: '',
         RMSE: '_rmse',
+        MAGNITUDE: '_magnitude',
         INTERCEPT: '_intercept',
         SLOPE: '_slope',
         PHASE1: '_phase_1',
@@ -61,9 +60,12 @@ const submitRetrieveRecipeTask = recipe => {
         AMPLITUDE2: '_amplitude_2',
         AMPLITUDE3: '_amplitude_3',
     }
-    const bands = baseBands
-        .map(baseBand => bandTypes.map(bandType => `${baseBand}${bandTypeSuffixes[bandType]}`))
-        .flat()
+    const bands = [
+        ...baseBands
+            .map(baseBand => bandTypes.map(bandType => `${baseBand}${bandTypeSuffixes[bandType]}`))
+            .flat(),
+        ...segmentBands
+    ]
     const task = {
         'operation': `image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':

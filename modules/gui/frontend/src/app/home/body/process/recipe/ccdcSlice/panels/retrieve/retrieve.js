@@ -16,6 +16,7 @@ const fields = {
         .predicate(selection => selection && selection.length, 'process.ccdcSlice.panel.retrieve.form.baseBands.atLeastOne'),
     bandTypes: new Form.Field()
         .predicate(selection => selection && selection.length, 'process.ccdcSlice.panel.retrieve.form.bandTypes.atLeastOne'),
+    segmentBands: new Form.Field(),
     scale: new Form.Field(),
     destination: new Form.Field()
         .notEmpty('process.ccdcSlice.panel.retrieve.form.destination.required')
@@ -59,6 +60,7 @@ class Retrieve extends React.Component {
             <Layout>
                 {this.renderBaseBands()}
                 {this.renderBandTypes()}
+                {this.renderSegmentBands()}
                 {this.renderScale()}
                 {this.renderDestination()}
             </Layout>
@@ -90,6 +92,11 @@ class Retrieve extends React.Component {
                 value: 'RMSE',
                 label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.rmse.label'),
                 tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.rmse.tooltip')
+            },
+            {
+                value: 'MAGNITUDE',
+                label: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.magnitude.label'),
+                tooltip: msg('process.ccdcSlice.panel.retrieve.form.bandTypes.magnitude.tooltip')
             },
             {
                 value: 'INTERCEPT',
@@ -138,6 +145,46 @@ class Retrieve extends React.Component {
                 input={bandTypes}
                 multiple
                 options={bandTypeOptions}/>
+        )
+    }
+
+    renderSegmentBands() {
+        const {inputs: {segmentBands}} = this.props
+        const options = [
+            {
+                value: 'tStart',
+                label: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tStart.label'),
+                tooltip: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tStart.tooltip')
+            },
+            {
+                value: 'tEnd',
+                label: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tEnd.label'),
+                tooltip: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tEnd.tooltip')
+            },
+            {
+                value: 'tBreak',
+                label: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tBreak.label'),
+                tooltip: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tBreak.tooltip')
+            },
+            {
+                value: 'numObs',
+                label: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.numObs.label'),
+                tooltip: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.numObs.tooltip')
+            },
+            {
+                value: 'changeProb',
+                label: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.changeProb.label'),
+                tooltip: msg('process.ccdcSlice.panel.retrieve.form.segmentBands.changeProb.tooltip')
+            }
+        ]
+
+        return (
+            <Form.Buttons
+                label={msg('process.ccdcSlice.panel.retrieve.form.segmentBands.label')}
+                tooltip={msg('process.ccdcSlice.panel.retrieve.form.segmentBands.tooltip')}
+                input={segmentBands}
+                multiple
+                options={options}/>
         )
     }
 

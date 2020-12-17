@@ -61,7 +61,6 @@ export const defaultModel = {
 
 export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
-
     return {
         setChartPixel(latLng) {
             return actionBuilder('SET_CHART_PIXEL', latLng)
@@ -87,48 +86,24 @@ export const RecipeActions = id => {
     }
 }
 
-function toBackendRecipe({recipe, bands}) {
-    const name = recipe.title || recipe.placeholder
-    const preprocess = recipe.model.options
-    const ccdcOptions = recipe.model.ccdcOptions
-    const breakpointBands = recipe.model.sources.breakpointBands
-    return {
-        title: msg(['process.ccdc.panel.retrieve.task'], {name}),
-        description: name,
-        bands,
-        breakpointBands,
-        dataSets: _.flatten(Object.values(recipe.model.sources.dataSets)),
-        classification: recipe.model.sources.classification,
-        aoi: recipe.model.aoi,
-        fromDate: recipe.model.dates.startDate,
-        toDate: recipe.model.dates.endDate,
-        brdfCorrect: preprocess.corrections.includes('BRDF'),
-        surfaceReflectance: preprocess.corrections.includes('SR'),
-        calibrate: true,
-        ...preprocess,
-        ...ccdcOptions
-    }
-}
-
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
-    api.gee.loadCCDCSegments$({
-        recipe: toBackendRecipe({recipe, bands}), latLng, bands
-    })
+    api.gee.loadCCDCSegments$({recipe, latLng, bands})
 
 export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
     api.gee.loadTimeSeriesObservations$({
-        recipe: toBackendRecipe({recipe, bands}),
-        latLng
+        recipe, latLng, bands
     })
 
 const submitRetrieveRecipeTask = recipe => {
+    const name = recipe.title || recipe.placeholder
+    const title = msg(['process.ccdc.panel.retrieve.task'], {name})
     const task = {
         'operation': 'ccdc.asset_export',
         'params': {
-            ...toBackendRecipe({
-                recipe,
-                bands: recipe.ui.retrieveOptions.bands
-            }),
+            title,
+            description: name,
+            recipe: _.omit(recipe, ['ui']),
+            bands: recipe.ui.retrieveOptions.bands,
             scale: recipe.ui.retrieveOptions.scale
         }
     }
