@@ -71,6 +71,7 @@ class _Map extends React.Component {
     map = React.createRef()
 
     state = {
+        mapId: null,
         mapContext: null,
         zooming: false,
         metersPerPixel: null,
@@ -190,7 +191,7 @@ class _Map extends React.Component {
         )
     }
 
-    // used by w, map
+    // used by aoi, map, collectPanel
     fitBounds(bounds, padding) {
         const {googleMap} = this.state
         const nextBounds = this.toGoogleBounds(bounds)
@@ -409,7 +410,7 @@ class _Map extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {createMapContext}, single} = this.props
-        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds} = createMapContext(this.map.current)
+        const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds} = createMapContext(this.map.current)
 
         const sepalMap = {
             getZoom: this.getZoom.bind(this),
@@ -444,7 +445,7 @@ class _Map extends React.Component {
             toggleLinked: this.toggleLinked.bind(this),
         }
 
-        this.setState({google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () => {
+        this.setState({mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () => {
             this.subscribe(bounds$, updateBounds)
             this.setLinked(single)
         })
@@ -461,16 +462,14 @@ class _Map extends React.Component {
     subscribe(bounds$, updateBounds) {
         const {addSubscription} = this.props
 
-        this.boundChanged = this.onBoundsChanged(() => {
-            this.updateBounds$.next()
-        })
-
         this.centerChanged = this.onCenterChanged(() => {
             this.updateScale(this.getMetersPerPixel())
+            this.updateBounds$.next()
         })
 
         this.zoomChanged = this.onZoomChanged(() => {
             this.updateScale(this.getMetersPerPixel())
+            this.updateBounds$.next()
         })
 
         const {googleMap} = this.state
@@ -478,11 +477,15 @@ class _Map extends React.Component {
             bounds$.subscribe(
                 bounds => {
                     const {linked} = this.props
-                    if (linked) {
-                        const currentBounds = googleMap.getBounds()
-                        const boundsChanged = !currentBounds || !currentBounds.equals(bounds)
-                        if (boundsChanged) {
-                            googleMap.fitBounds(bounds, 0)
+                    if (bounds && linked) {
+                        const {center, zoom} = bounds
+                        const currentCenter = googleMap.getCenter()
+                        const currentZoom = googleMap.getZoom()
+                        if (!currentCenter || !currentCenter.equals(center)) {
+                            googleMap.setCenter(center)
+                        }
+                        if (!currentZoom || currentZoom !== zoom) {
+                            googleMap.setZoom(zoom)
                         }
                     }
                 }
@@ -491,9 +494,10 @@ class _Map extends React.Component {
                 () => {
                     const {linked} = this.props
                     if (linked) {
-                        const bounds = googleMap.getBounds()
-                        if (bounds) {
-                            updateBounds(bounds)
+                        const center = googleMap.getCenter()
+                        const zoom = googleMap.getZoom()
+                        if (center && zoom) {
+                            updateBounds({center, zoom})
                         }
                     }
                 }

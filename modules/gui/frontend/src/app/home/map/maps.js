@@ -2,7 +2,7 @@ import {Loader} from 'google-maps'
 import {Subject, from, of, zip} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {debounceTime, filter, map, switchMap} from 'rxjs/operators'
+import {debounceTime, distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
 import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
@@ -107,13 +107,14 @@ class _Maps extends React.Component {
         // const mapContext = {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}
         const bounds$ = this.bounds$.pipe(
             debounceTime(250),
-            filter(({mapId: id}) => id !== mapId),
+            distinctUntilChanged(),
+            filter(({mapId: id}) => mapId !== id),
             map(({bounds}) => bounds)
         )
 
         const updateBounds = bounds => this.bounds$.next({mapId, bounds})
         
-        return {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds}
+        return {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds}
     }
 
     render() {
