@@ -45,7 +45,7 @@ const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const scale = recipe.ui.retrieveOptions.scale
     const destination = recipe.ui.retrieveOptions.destination
-    const taskTitle = msg(['process.ccdcSlice.panel.retrieve.form.task', destination], {name})
+    const taskTitle = msg(['process.ccdcSlice.panel.retrieve.task', destination], {name})
     const {baseBands, bandTypes, segmentBands} = recipe.ui.retrieveOptions
     const bandTypeSuffixes = {
         VALUE: '',
