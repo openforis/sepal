@@ -2028,7 +2028,7 @@
     },
     "ccdcSlice": {
       "create": "CCDC slice",
-      "tabPlaceholder": "CCDC slice",
+      "tabPlaceholder": "CCDC_slice",
       "description": "Create a slice of a CCDC asset, for a specific date.",
       "chartPixel": {
         "start.tooltip": "Chart time-series for pixel",
