@@ -19,13 +19,17 @@ export const RecipeActions = id => {
     const actionBuilder = recipeActionBuilder(id)
 
     return {
+        setBands(selection, baseBands) {
+            return actionBuilder('SET_BANDS', {selection, baseBands})
+                .set('ui.bands.selection', selection)
+                .set('ui.bands.baseBands', baseBands)
+                .dispatch()
+        },
         setChartPixel(latLng) {
             return actionBuilder('SET_CHART_PIXEL', latLng)
                 .set('ui.chartPixel', latLng)
-                .build()
                 .dispatch()
         },
-
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_CCDC_SLICE_RETRIEVAL', {retrieveOptions})
                 .setAll({
@@ -72,7 +76,7 @@ const submitRetrieveRecipeTask = recipe => {
             {
                 title: taskTitle,
                 description: name,
-                image: {recipe: _.omit(recipe, ['ui']), bands: {selection: bands}, scale}
+                image: {recipe: _.omit(recipe, ['ui']), bands: {selection: bands, baseBands}, scale}
             }
     }
     return api.tasks.submit$(task).subscribe()

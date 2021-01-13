@@ -1,7 +1,6 @@
 /* eslint-disable react/jsx-key */
 import {Form, form} from 'widget/form/form'
-import {RecipeActions} from 'app/home/body/process/recipe/mosaic/mosaicRecipe'
-// setBands
+import {RecipeActions} from './ccdcSliceRecipe'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
@@ -42,7 +41,6 @@ class BandSelection extends React.PureComponent {
     individualBands = [
         'ndvi', 'ndmi', 'ndwi', 'mndwi', 'ndfi', 'evi', 'evi2', 'savi', 'nbr', 'ui', 'ndbi', 'ibi', 'nbi', 'ebbi', 'bui'
     ]
-    optionByValue = {}
 
     constructor(props) {
         super(props)
@@ -63,7 +61,7 @@ class BandSelection extends React.PureComponent {
                             selection={selection}
                             options={bandOptions}
                             onChange={option => {
-                                this.recipeActions.setBands(option.value).dispatch()
+                                this.recipeActions.setBands(option.value, option.baseBands)
                                 this.setSelectorShown(false)
                             }}
                             onCancel={() => this.setSelectorShown(false)}/>
@@ -88,9 +86,10 @@ class BandSelection extends React.PureComponent {
             : this.state
         const validOption = optionByValue[selection.value]
         if (!validOption) {
-            const value = bandOptions[0].options[0].value
+            const defaultOption = bandOptions[0].options[0]
+            const value = defaultOption.value
             selection.set(value)
-            this.recipeActions.setBands(value).dispatch()
+            this.recipeActions.setBands(value, defaultOption.baseBands)
         }
     }
 
@@ -101,13 +100,13 @@ class BandSelection extends React.PureComponent {
                 label: msg('process.mosaic.bands.combinations'),
                 options: this.bandCombinations
                     .filter(({bands}) => bands.every(band => assetBands.includes(band)))
-                    .map(({bands, label}) => ({value: bands.join(', '), label}))
+                    .map(({bands, label}) => ({value: bands.join(', '), label, baseBands: bands}))
             },
             {
                 label: 'Individual bands', // TODO: Use message bundle
                 options: this.individualBands
                     .filter(band => assetBands.includes(band))
-                    .map(band => ({value: band, label: band.toUpperCase()}))
+                    .map(band => ({value: band, label: band.toUpperCase(), baseBands: [band]}))
             },
             {
                 label: 'Harmonics', // TODO: Use message bundle
@@ -115,7 +114,8 @@ class BandSelection extends React.PureComponent {
                     .filter(band => assetBands.includes(band))
                     .map(band => ({
                         value: `${band}_phase_1, ${band}_amplitude_1, ${band}_rmse`,
-                        label: `${band.toUpperCase()} harmonics` // TODO: Use message bundle
+                        label: `${band.toUpperCase()} harmonics`, // TODO: Use message bundle
+                        baseBands: [band]
                     }))
             }
         ].filter(({options}) => options.length)

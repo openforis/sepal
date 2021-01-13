@@ -157,9 +157,10 @@ class CCDCSlicePreview extends React.Component {
 
     toPreviewRequest(recipe) {
         const selection = selectFrom(recipe, 'ui.bands.selection')
+        const baseBands = selectFrom(recipe, 'ui.bands.baseBands')
         return {
             recipe: _.omit(recipe, ['ui']),
-            bands: {selection: selection && selection.split(', ')}
+            bands: {selection: selection && selection.split(', '), baseBands}
         }
     }
 }
