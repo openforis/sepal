@@ -3,7 +3,7 @@ const {job} = require('root/jobs/job')
 const worker$ = ({recipe, latLng, bands}) => {
     const {toGeometry} = require('sepal/ee/aoi')
     const {of} = require('rx')
-    const {switchMap} = require('rx/operators')
+    const {map, switchMap} = require('rx/operators')
     const ccdc = require('sepal/ee/timeSeries/ccdc')
     const imageFactory = require('sepal/ee/imageFactory')
     const _ = require('lodash')
@@ -23,7 +23,8 @@ const worker$ = ({recipe, latLng, bands}) => {
                     }),
                     `Get CCDC segments for pixel (${latLng})`
                 )
-            )
+            ),
+            map(segments => _.mapValues(segments, value => value || []))
         )
 
     const assetSegments$ = () =>
