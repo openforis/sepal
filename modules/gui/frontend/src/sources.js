@@ -221,7 +221,7 @@ function getClassificationBands(classifierType, classificationLegend, include) {
 }
 
 function getClassificationOptions(classifierType, classificationLegend, include) {
-    return classifierType && classificationLegend
+    return classifierType && classificationLegend && classificationLegend.entries
         ? [
             include.includes('class')
                 ? [{
