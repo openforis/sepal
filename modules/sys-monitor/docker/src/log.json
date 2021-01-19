@@ -1,0 +1,9 @@
+{
+    "port": 5103,
+    "categories": {
+        "config": "info",
+        "logMonitor": "info",
+        "main": "info",
+        "messageQueue": "info"
+    }
+}
