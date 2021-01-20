@@ -13,7 +13,7 @@ try {
     program
         .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
         .requiredOption('--sepal-server-log <value>', 'Log file to monitor')
-        .requiredOption('--notify-email-address <value>', 'Email for notifications')
+        .requiredOption('--notify-email-address <values...>', 'Email(s) for notifications')
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
@@ -23,7 +23,7 @@ const {
     amqpUri,
     sepalServerLog,
     notifyEmailAddress
-} = program
+} = program.opts()
 
 log.info('Configuration loaded')
 
