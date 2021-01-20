@@ -37,7 +37,7 @@ const {
     sepalHost,
     sepalUsername,
     sepalPassword
-} = program
+} = program.opts()
 
 log.info('Configuration loaded')
 
