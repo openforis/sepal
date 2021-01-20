@@ -8,4 +8,4 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon \
     src/main.js \
     --amqp-uri amqp://rabbitmq \
     --sepal-server-log /var/log/sepal/sepal-server.log \
-    --notify-email-address lookap@gmail.com
+    --notify-email-address foo@bar.baz

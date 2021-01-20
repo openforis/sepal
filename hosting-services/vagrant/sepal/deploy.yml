@@ -155,3 +155,4 @@
     - { role: run-module, module: letsencrypt }
     - { role: run-module, module: haproxy }
     - { role: run-module, module: rabbitmq }
+    - { role: run-module, module: sys-monitor }

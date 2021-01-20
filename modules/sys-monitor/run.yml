@@ -19,10 +19,7 @@
     env:
       RABBITMQ_HOST: "{{ sepal_host }}"
       RABBITMQ_PORT: "5672"
-      MIN_DELAY_SECONDS: "60"
-      MAX_DELAY_SECONDS: "86400"
-      DELAY_INCREASE_FACTOR: "2"
-      CONCURRENCY: "5"
-      MAX_RETRIES: "10"
-      INITIAL_RETRY_DELAY_SECONDS: "30"
+      SEPAL_SERVER_LOG: "/log/messages"
+      SYSADMIN_EMAIL_1: "{{ sysadmin_email_1 }}"
+      SYSADMIN_EMAIL_2: "{{ sysadmin_email_2 }}"
   

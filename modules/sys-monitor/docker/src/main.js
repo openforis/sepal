@@ -4,7 +4,7 @@ const log = require('sepal/log').getLogger('main')
 const _ = require('lodash')
 
 const {messageQueue} = require('sepal/messageQueue')
-const {amqpUri} = require('./config')
+const {amqpUri, notifyEmailAddress} = require('./config')
 const {start} = require('./logMonitor')
 const {email$} = require('./email')
 
@@ -16,6 +16,7 @@ const main = async () => {
     start()
 
     log.info('Initialized')
+    log.info(`Notifications will be sent to: ${notifyEmailAddress}`)
 }
 
 main().catch(log.fatal)

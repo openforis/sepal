@@ -17,14 +17,14 @@
         "rx": "node_modules/shared/src/reexport/rx"
     },
     "dependencies": {
-        "commander": "^6.0.0",
-        "lodash": "^4.17.19",
+        "commander": "^7.0.0",
+        "lodash": "^4.17.20",
         "log4js": "^6.3.0",
         "shared": "../../../lib/js/shared",
         "tail-file": "^1.4.13"
     },
     "devDependencies": {
-        "eslint": "^7.5.0",
+        "eslint": "^7.18.0",
         "link-module-alias": "^1.2.0"
     }
 }
