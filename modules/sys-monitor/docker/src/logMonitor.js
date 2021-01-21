@@ -12,7 +12,7 @@ const tag$ = new Subject()
 
 const getTimeout = tag => rules[tag].timeout
 
-const getEmail = tag => rules[tag].email
+const getEmail = tag => rules[tag].email || {}
 
 tag$.pipe(
     groupBy(({tag}) => tag),
@@ -35,7 +35,7 @@ const tagDetected = (tag, warmup) => {
 
 const tagExpected = tag => {
     log.info(`Rule triggered: ${tag}`)
-    notify(getEmail(tag) || {subject: `Tag ${tag} missing for at least ${getTimeout(tag)} seconds`})
+    notify({subject: `Rule ${tag} triggered on ${new Date().toUTCString()}`, ...getEmail(tag)})
 }
 
 const processLine = line =>
