@@ -17,7 +17,7 @@
     volumes:
       - "/var/log:/log:ro"
     env:
-      RABBITMQ_HOST: "{{ sepal_host }}"
+      RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
       SEPAL_SERVER_LOG: "/log/messages"
       SYSADMIN_EMAIL_1: "{{ sysadmin_email_1 }}"
