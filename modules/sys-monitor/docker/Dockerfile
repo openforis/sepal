@@ -23,6 +23,8 @@ USER node
 RUN npm install
 
 ADD src ${MODULE}/src
+
+USER root
 CMD node \
     src/main.js \
     --amqp-uri amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT} \
