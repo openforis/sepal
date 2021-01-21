@@ -31,6 +31,7 @@ CMD node \
     --smtp-secure ${SMTP_SECURE} \
     --smtp-user ${SMTP_USER} \
     --smtp-password ${SMTP_PASSWORD} \
+    --smtp-from ${SMTP_FROM} \
     --sepal-host "$SEPAL_HOST_SEPAL_ENV" \
     --sepal-username "sepalAdmin" \
     --sepal-password "$SEPAL_ADMIN_PASSWORD_SEPAL_ENV"
