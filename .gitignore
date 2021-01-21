@@ -1,5 +1,5 @@
 .build/
-.eslintcache/
+.eslintcache
 
 #docker-sync
 .docker-sync
