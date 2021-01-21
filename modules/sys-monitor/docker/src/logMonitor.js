@@ -39,7 +39,11 @@ const tagExpected = tag => {
 }
 
 const processLine = line =>
-    _.forEach(rules, (rule, tag) => line.includes(rule.match) && tag$.next({tag}))
+    _.forEach(rules, (rule, tag) => {
+        if (line.includes(rule.match)) {
+            tag$.next({tag})
+        }
+    })
 
 const warmUpTags = () =>
     _.forEach(rules, (rule, tag) => tag$.next({tag, warmup: true}))
