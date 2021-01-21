@@ -33,7 +33,7 @@
     networks:
       - name: 'sepal'
     env:
-      RABBITMQ_HOST: "{{ sepal_host }}"
+      RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
       SMTP_FROM: "{{ smtp_from }}"
       SMTP_HOST: "{{ smtp_host }}"
