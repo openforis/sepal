@@ -8,6 +8,7 @@
     - "{{ secret_vars_file }}"
 
   roles:
+    - { role: build-module, module: email }
     - { role: build-module, module: sys-monitor }
     - { role: build-module, module: letsencrypt }
     - { role: build-module, module: java }
