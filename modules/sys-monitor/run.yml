@@ -15,7 +15,7 @@
     networks:
       - name: 'sepal'
     volumes:
-      - "/var/log:/log"
+      - "/var/log:/log:ro"
     env:
       RABBITMQ_HOST: "{{ sepal_host }}"
       RABBITMQ_PORT: "5672"
