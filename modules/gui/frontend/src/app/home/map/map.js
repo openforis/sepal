@@ -410,7 +410,7 @@ class _Map extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {createMapContext}, single} = this.props
-        const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds} = createMapContext(this.map.current)
+        const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, requestBounds} = createMapContext(this.map.current)
 
         const sepalMap = {
             getZoom: this.getZoom.bind(this),
@@ -442,17 +442,24 @@ class _Map extends React.Component {
             onClick: this.onClick.bind(this),
             onOneClick: this.onOneClick.bind(this),
             clearClickListeners: this.clearClickListeners.bind(this),
-            toggleLinked: this.toggleLinked.bind(this),
+            toggleLinked: this.toggleLinked.bind(this)
         }
 
-        this.setState({mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () => {
+        this.setState({mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, requestBounds}, () => {
             this.subscribe(bounds$, updateBounds)
             this.setLinked(single)
         })
     }
 
-    componentDidUpdate() {
-        this.updateBounds$.next()
+    componentDidUpdate(prevProps) {
+        const {linked} = this.props
+        const {linked: wasLinked} = prevProps
+        const {requestBounds} = this.state
+        if (linked && !wasLinked) {
+            requestBounds()
+        } else {
+            this.updateBounds$.next()
+        }
     }
 
     componentWillUnmount() {

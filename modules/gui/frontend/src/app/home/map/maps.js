@@ -1,5 +1,5 @@
 import {Loader} from 'google-maps'
-import {Subject, from, of, zip} from 'rxjs'
+import {Subject, from, merge, of, zip} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {debounceTime, distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
@@ -103,18 +103,28 @@ class _Maps extends React.Component {
         const {mapsContext: {google, googleMapsApiKey, norwayPlanetApiKey}} = this.state
         const mapId = uuid()
         const googleMap = this.createGoogleMap(mapElement)
-        // const sepalMap = new SepalMap({google, googleMapsApiKey, googleMap})
-        // const mapContext = {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}
-        const bounds$ = this.bounds$.pipe(
-            debounceTime(250),
-            distinctUntilChanged(),
-            filter(({mapId: id}) => mapId !== id),
-            map(({bounds}) => bounds)
+
+        const bounds$ = merge(
+            this.bounds$.pipe(
+                debounceTime(250),
+                distinctUntilChanged(),
+                filter(({mapId: id}) => mapId !== id),
+                map(({bounds}) => bounds)
+            )
         )
 
-        const updateBounds = bounds => this.bounds$.next({mapId, bounds})
+        const requestBounds = () => {
+            if (this.currentBounds) {
+                this.bounds$.next({bounds: this.currentBounds})
+            }
+        }
+
+        const updateBounds = bounds => {
+            this.bounds$.next({mapId, bounds})
+            this.currentBounds = bounds
+        }
         
-        return {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds}
+        return {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, requestBounds}
     }
 
     render() {
