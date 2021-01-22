@@ -1,8 +1,9 @@
 FROM ubuntu:bionic
-ENV DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
 
 # update and install base packages
 RUN apt-get update && apt-get install -y \
+  apt-utils  \
   curl \
   dnsutils \
   gettext \
@@ -47,9 +48,9 @@ USER sepal
 RUN curl -s "https://get.sdkman.io" | bash
 RUN bash -c "source '/home/sepal/.sdkman/bin/sdkman-init.sh' && sdk install java 12.0.2.hs-adpt"
 
-# install nvm and nodejs
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
-RUN bash -c "source /home/sepal/.nvm/nvm.sh && nvm install node 13 && npm install -g nodemon"
+# install nvm, nodejs (stable) and global npm packages
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
+RUN bash -c "source /home/sepal/.nvm/nvm.sh && nvm install node stable && npm install -g nodemon npm-check-updates"
 
 # setup sepal
 ENV SEPAL_HOME=/usr/local/lib/sepal

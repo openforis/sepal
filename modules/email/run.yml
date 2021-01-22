@@ -33,12 +33,12 @@
     networks:
       - name: 'sepal'
     env:
-      RABBITMQ_HOST: "{{ sepal_host }}"
+      RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
       SMTP_FROM: "{{ smtp_from }}"
       SMTP_HOST: "{{ smtp_host }}"
       SMTP_PORT: "{{ smtp_port }}"
-      SMTP_SECURE: false`
+      SMTP_SECURE: false
       SMTP_USER: "{{ smtp_username }}"
       SMTP_PASSWORD: "{{ smtp_password }}"
       SMTP_FROM: "sepal-notificatons@{{ sepal_host }}"

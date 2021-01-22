@@ -328,7 +328,7 @@ run () {
         $ARGS
         ;;
     gee)
-        (cd $SEPAL/lib/js/shared && npm install)
+        # (cd $SEPAL/lib/js/shared && npm install)
         (cd $SEPAL/modules/gee/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     gui)
@@ -344,7 +344,7 @@ run () {
         $ARGS
         ;;
     task)
-        (cd $SEPAL/lib/js/shared && npm install)
+        # (cd $SEPAL/lib/js/shared && npm install)
         (cd $SEPAL/modules/task/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     user)
@@ -357,15 +357,15 @@ run () {
         $ARGS
         ;;
     user-storage)
-        (cd $SEPAL/lib/js/shared && npm install)
+        # (cd $SEPAL/lib/js/shared && npm install)
         (cd $SEPAL/modules/user-storage/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     email)
-        (cd $SEPAL/lib/js/shared && npm install)
+        # (cd $SEPAL/lib/js/shared && npm install)
         (cd $SEPAL/modules/email/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     sys-monitor)
-        (cd $SEPAL/lib/js/shared && npm install)
+        # (cd $SEPAL/lib/js/shared && npm install)
         (cd $SEPAL/modules/sys-monitor/docker && npm install && SEPAL_CONFIG=$SEPAL_CONFIG npm run dev)
         ;;
     *)

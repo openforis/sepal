@@ -35,7 +35,7 @@
     volumes:
       - "/data/sepal/home:/sepalUsers"
     env:
-      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_HOST: "{{ sepal_host }}"
       RABBITMQ_PORT: "5672"
       MIN_DELAY_SECONDS: "60"
       MAX_DELAY_SECONDS: "86400"

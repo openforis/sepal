@@ -55,13 +55,17 @@ function check_data_dir() {
     echo "Data directory: $DATA_DIR"
 }
 
-function build_docker_image() {
-    echo "Building Docker image..."
-    docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env 1>/dev/null 
-}
+# function build_docker_image() {
+#     echo "Building Docker image..."
+#     docker build -t $IMAGE_NAME $PROJECT_DIR/dev-env 1>/dev/null 
+# }
 
 function docker_container_exists() {
     docker ps -a --format "{{.Names}}" --filter "name=$CONTAINER_NAME"
+}
+
+function docker_container_running() {
+    docker ps --format "{{.Names}}" --filter "name=$CONTAINER_NAME"
 }
 
 function stop_docker_containers() {
@@ -91,12 +95,14 @@ function start_shell() {
 # Main
 
 function start() {
-    if [ ! "$(docker_container_exists)" ]; then
-        build_docker_image
+    # if [ ! "$(docker_container_exists)" ]; then
+    #     build_docker_image
+    # fi
+    # if [ ! "$(docker_container_running)" ]; then
         start_docker_containers
-    else
-        echo "Already started"
-    fi
+    # else
+        # echo "Already started"
+    # fi
 }
 
 function stop() {

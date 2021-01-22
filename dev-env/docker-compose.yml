@@ -1,6 +1,7 @@
 version: "3"
 services:
   sepal-dev-env:
+    build: .
     image: $IMAGE_NAME
     container_name: $CONTAINER_NAME
     hostname: sepal-dev-env
