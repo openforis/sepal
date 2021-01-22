@@ -55,6 +55,7 @@ const mapStateToProps = (_state, {recipePath}) => {
 class _Map extends React.Component {
     layerById = {}
     updateBounds$ = new Subject()
+    requestBounds$ = new Subject()
 
     drawingOptions = {
         fillColor: '#FBFAF2',
@@ -445,8 +446,8 @@ class _Map extends React.Component {
             toggleLinked: this.toggleLinked.bind(this)
         }
 
-        this.setState({mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, requestBounds}, () => {
-            this.subscribe(bounds$, updateBounds)
+        this.setState({mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () => {
+            this.subscribe({bounds$, updateBounds, requestBounds})
             this.setLinked(single)
         })
     }
@@ -454,9 +455,8 @@ class _Map extends React.Component {
     componentDidUpdate(prevProps) {
         const {linked} = this.props
         const {linked: wasLinked} = prevProps
-        const {requestBounds} = this.state
         if (linked && !wasLinked) {
-            requestBounds()
+            this.requestBounds$.next()
         } else {
             this.updateBounds$.next()
         }
@@ -466,7 +466,7 @@ class _Map extends React.Component {
         this.unsubscribe()
     }
 
-    subscribe(bounds$, updateBounds) {
+    subscribe({bounds$, updateBounds, requestBounds}) {
         const {addSubscription} = this.props
 
         this.centerChanged = this.onCenterChanged(() => {
@@ -508,6 +508,9 @@ class _Map extends React.Component {
                         }
                     }
                 }
+            ),
+            this.requestBounds$.subscribe(
+                () => requestBounds()
             )
         )
     }
