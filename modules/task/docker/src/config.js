@@ -19,7 +19,19 @@ program
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .parse(process.argv)
 
-const {geeEmail, geeKey, geeKeyPath, googleProjectId, googleRegion, sepalHost, sepalUsername, sepalPassword, homeDir, username, port} = program
+const {
+    geeEmail,
+    geeKey,
+    geeKeyPath,
+    googleProjectId,
+    googleRegion,
+    sepalHost,
+    sepalUsername,
+    sepalPassword,
+    homeDir,
+    username,
+    port
+} = program.opts()
 
 const readFile = path => {
     try {

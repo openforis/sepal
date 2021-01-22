@@ -35,7 +35,7 @@ const {
     concurrency = 4,
     maxRetries = 10,
     initialRetryDelaySeconds = 30
-} = program
+} = program.opts()
 
 log.info('Configuration loaded')
 

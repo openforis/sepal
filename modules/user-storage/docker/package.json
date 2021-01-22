@@ -17,18 +17,18 @@
         "rx": "node_modules/shared/src/reexport/rx"
     },
     "dependencies": {
-        "bull": "^3.16.0",
-        "commander": "^6.0.0",
-        "date-fns": "^2.15.0",
-        "ioredis": "^4.17.3",
-        "lodash": "^4.17.19",
+        "bull": "^3.20.0",
+        "commander": "^7.0.0",
+        "date-fns": "^2.16.1",
+        "ioredis": "^4.19.4",
+        "lodash": "^4.17.20",
         "log4js": "^6.3.0",
-        "moment": "^2.27.0",
+        "moment": "^2.29.1",
         "shared": "../../../lib/js/shared",
-        "uuid": "^8.2.0"
+        "uuid": "^8.3.2"
     },
     "devDependencies": {
-        "eslint": "^7.5.0",
+        "eslint": "^7.18.0",
         "link-module-alias": "^1.2.0"
     }
 }

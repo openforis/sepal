@@ -15,7 +15,14 @@ program
     .option('--port <number>', 'Port', DEFAULT_PORT)
     .parse(process.argv)
 
-const {geeEmail, geeKey, geeKeyPath, sepalHost, sepalUsername, sepalPassword, port} = program
+const {geeEmail,
+    geeKey,
+    geeKeyPath,
+    sepalHost,
+    sepalUsername,
+    sepalPassword,
+    port
+} = program.opts()
 
 const readFile = path => {
     try {
