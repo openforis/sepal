@@ -46,7 +46,7 @@ class Retrieve extends React.Component {
             : [
                 {value: 'VV', label: 'VV'},
                 {value: 'VH', label: 'VH'},
-                {value: 'VV/VH', label: 'VV/VH'}
+                {value: 'ratio_VV_VH', label: 'VV/VH'}
             ]
 
         return (
