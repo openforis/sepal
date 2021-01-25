@@ -38,7 +38,7 @@
       SMTP_FROM: "{{ smtp_from }}"
       SMTP_HOST: "{{ smtp_host }}"
       SMTP_PORT: "{{ smtp_port }}"
-      SMTP_SECURE: false
+      SMTP_SECURE: "false"
       SMTP_USER: "{{ smtp_username }}"
       SMTP_PASSWORD: "{{ smtp_password }}"
       SMTP_FROM: "sepal-notificatons@{{ sepal_host }}"
