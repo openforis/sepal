@@ -106,7 +106,6 @@ const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
             map(images => {
                 images = images.select(indicator)
                 const distinctDateImages = images.distinct('date')
-                log.error('bands', images.first().bandNames().getInfo())
                 const timeSeries = ee.ImageCollection(
                     ee.Join.saveAll('images')
                         .apply({
