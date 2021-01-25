@@ -20,10 +20,10 @@
         "rx": "node_modules/shared/src/reexport/rx"
     },
     "dependencies": {
-        "@google-cloud/storage": "^5.1.2",
+        "@google-cloud/storage": "^5.7.2",
         "commander": "^7.0.0",
         "fast-crc32c": "^2.0.0",
-        "googleapis": "^55.0.0",
+        "googleapis": "^67.0.0",
         "moment": "^2.29.1",
         "shared": "../../../lib/js/shared"
     },
