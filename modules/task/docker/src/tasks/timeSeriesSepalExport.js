@@ -14,6 +14,7 @@ const moment = require('moment')
 const ee = require('ee')
 const {getCurrentContext$} = require('root/jobs/service/context')
 const {getCollection$} = require('sepal/ee/timeSeries/collection')
+const _ = require('lodash')
 const log = require('sepal/log').getLogger('task')
 
 const TILE_DEGREES = 2
@@ -72,16 +73,18 @@ const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
         const dateOffsets = sequence(0, duration, DATE_DELTA)
         const chunks$ = dateOffsets.map(dateOffset => {
             const start = moment(from).add(dateOffset, DATE_DELTA_UNIT)
+            const startString = start.format('YYYY-MM-DD')
             const end = moment.min(moment(start).add(DATE_DELTA, DATE_DELTA_UNIT), to)
-            const dateRange = `${start.format('YYYY-MM-DD')}_${end.format('YYYY-MM-DD')}`
+            const endString = end.format('YYYY-MM-DD')
+            const dateRange = `${startString}_${endString}`
             return hasImagery$(
                 tile.geometry(),
-                ee.Date(start.format('YYYY-MM-DD')),
-                ee.Date(end.format('YYYY-MM-DD'))
+                ee.Date(startString),
+                ee.Date(endString)
             ).pipe(
                 switchMap(notEmpty => {
                     if (notEmpty) {
-                        return createTimeSeries$(tile, start, end).pipe(
+                        return createTimeSeries$(tile, startString, endString).pipe(
                             map(timeSeries =>
                                 ({tileIndex, timeSeries, dateRange, notEmpty})
                             )
@@ -95,13 +98,15 @@ const export$ = ({downloadDir, description, recipe, indicator, scale}) => {
         return forkJoin(chunks$)
     }
 
-    const isRadar = () => dataSets.length === 1 && dataSets[0] === 'SENTINEL_1'
+    const isRadar = () => _.isEqual(Object.values(dataSets).flat(), ['SENTINEL_1'])
 
     const createTimeSeries$ = (feature, startDate, endDate) => {
         const images$ = getCollection$({recipe, bands: [indicator], startDate, endDate})
         return images$.pipe(
             map(images => {
+                images = images.select(indicator)
                 const distinctDateImages = images.distinct('date')
+                log.error('bands', images.first().bandNames().getInfo())
                 const timeSeries = ee.ImageCollection(
                     ee.Join.saveAll('images')
                         .apply({
