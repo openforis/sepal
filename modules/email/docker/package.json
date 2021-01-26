@@ -24,7 +24,7 @@
         "ioredis": "^4.19.4",
         "lodash": "^4.17.20",
         "log4js": "^6.3.0",
-        "marked": "^1.2.7",
+        "marked": "^1.2.8",
         "moment": "^2.29.1",
         "nodemailer": "^6.4.17",
         "shared": "../../../lib/js/shared",
