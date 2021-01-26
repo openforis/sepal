@@ -50,8 +50,12 @@ template $TEMPLATE_DIR/sepal-server/workerInstance.properties /etc/sepal/module.
 template $TEMPLATE_DIR/user/smtp.properties /etc/sepal/module.d/user/smtp.properties
 template $TEMPLATE_DIR/user/user-server.properties /etc/sepal/module.d/user/user-server.properties
 
-sudo mkdir -p /etc/sepal/module.d/google-earth-engine
-sudo cp /etc/sepal/conf.d/certificates/gee-service-account.pem /etc/sepal/module.d/google-earth-engine/gee-service-account.pem
 
-sudo mkdir -p /etc/sepal/module.d/api-gateway
+mkdir -p /etc/sepal/module.d/google-earth-engine
+sudo cp /etc/sepal/conf.d/certificates/gee-service-account.pem /etc/sepal/module.d/google-earth-engine/gee-service-account.pem
+sudo chown -R sepal: /etc/sepal/module.d/google-earth-engine
+
+
+mkdir -p /etc/sepal/module.d/api-gateway
 sudo cp /etc/sepal/conf.d/certificates/sepal-https.* /etc/sepal/module.d/api-gateway
+sudo chown -R sepal: /etc/sepal/module.d/api-gateway
