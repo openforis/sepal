@@ -9,9 +9,9 @@ import Aoi from 'app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import ChartPixel from './chartPixel'
 import ChartPixelButton from '../../ccdc/panels/chartPixelButton'
 import Dates from 'app/home/body/process/recipe/timeSeries/panels/dates/dates'
-import Options from 'app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
+import OpticalOptions from 'app/home/body/process/recipe/timeSeries/panels/preProcessingOptions/preProcessingOptions'
 import PanelWizard from 'widget/panelWizard'
-import PreProcessingOptions from 'app/home/body/process/recipe/timeSeries/panels/preProcessingOptions/preProcessingOptions'
+import RadarOptions from 'app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
 import React from 'react'
 import Retrieve from 'app/home/body/process/recipe/timeSeries/panels/retrieve/retrieve'
 import Sources from 'app/home/body/process/recipe/timeSeries/panels/sources/sources'
@@ -37,15 +37,14 @@ class TimeSeriesToolbar extends React.Component {
                 panels={['aoi', 'dates', 'sources']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
-
                 {initialized ? <ChartPixel/> : null}
                 <Retrieve/>
                 <Aoi allowWholeEETable={true}/>
                 <Dates/>
                 <Sources/>
-                {_.isEmpty(sources['SENTINEL_1'])
-                    ? <PreProcessingOptions/>
-                    : <Options/>
+                {_.isEmpty(sources.dataSets['SENTINEL_1'])
+                    ? <OpticalOptions/>
+                    : <RadarOptions/>
                 }
 
                 <Toolbar

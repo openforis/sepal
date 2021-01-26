@@ -35,7 +35,6 @@
     env:
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
-      SMTP_FROM: "{{ smtp_from }}"
       SMTP_HOST: "{{ smtp_host }}"
       SMTP_PORT: "{{ smtp_port }}"
       SMTP_SECURE: "false"
