@@ -1,0 +1,8 @@
+/var/log/docker/*/*.log {
+  rotate 9
+  daily
+  compress
+  missingok
+  delaycompress
+  copytruncate
+}
