@@ -12,7 +12,7 @@
         "main": "info",
         "scheduler": "debug",
         "pool": "debug",
-        "service": "trace",
+        "service": "debug",
         "transport": "debug",
         "worker": "debug"
     },
