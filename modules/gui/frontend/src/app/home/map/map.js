@@ -282,7 +282,7 @@ class _Map extends React.Component {
         if (layer) {
             this.removeLayer$.next(id)
             layer.removeFromMap()
-            delete this.getLayer(id)
+            delete this.layerById[id]
         }
     }
 
