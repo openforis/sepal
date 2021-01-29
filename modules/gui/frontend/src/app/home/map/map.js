@@ -245,7 +245,6 @@ class _Map extends React.Component {
         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
         if (unchanged) {
             return false
-
         }
         this.removeLayer(id)
         if (layer) {

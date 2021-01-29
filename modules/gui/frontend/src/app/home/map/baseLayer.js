@@ -14,7 +14,6 @@ export const changeBaseLayer = ({type, mapContext: {google, googleMap, sepalMap}
                 : sepalMap.removeLayer('base')
 
         })
-        .build()
         .dispatch()
 }
 
