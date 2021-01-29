@@ -47,8 +47,7 @@ class Retrieve extends React.Component {
         const destinationOptions = [
             {
                 value: 'SEPAL',
-                label: msg('process.mosaic.panel.retrieve.form.destination.SEPAL'),
-                disabled: !user.googleTokens
+                label: msg('process.mosaic.panel.retrieve.form.destination.SEPAL')
             },
             {
                 value: 'GEE',
@@ -92,9 +91,9 @@ class Retrieve extends React.Component {
 
     componentDidUpdate() {
         const {defaultScale, toEE, toSepal, user, inputs: {destination, scale}} = this.props
-        if (!user.googleTokens && toSepal && destination.value !== 'SEPAL') {
+        if (!user.googleTokens && toSepal && !destination.value && destination.value !== 'SEPAL') {
             destination.set('SEPAL')
-        } else if (user.googleTokens && toEE && destination.value !== 'GEE') {
+        } else if (user.googleTokens && toEE && !destination.value && destination.value !== 'GEE') {
             destination.set('GEE')
         }
         if (!scale.value) {
