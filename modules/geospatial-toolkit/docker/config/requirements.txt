@@ -1,3 +1,4 @@
+# version 2020-02-03
 ########  geospatial data analysis  ########
 scikit-image
 scikit-learn
