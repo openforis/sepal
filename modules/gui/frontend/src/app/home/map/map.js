@@ -268,6 +268,10 @@ class _Map extends React.Component {
         return true
     }
 
+    listLayers() {
+        return Object.values(this.layerById)
+    }
+
     // used by MANY
     hideLayer(id, hidden) {
         const layer = this.getLayer(id)
@@ -432,6 +436,7 @@ class _Map extends React.Component {
             onBoundsChanged: this.onBoundsChanged.bind(this),
             getLayer: this.getLayer.bind(this),
             setLayer: this.setLayer.bind(this),
+            listLayers: this.listLayers.bind(this),
             hideLayer: this.hideLayer.bind(this),
             removeLayer: this.removeLayer.bind(this),
             isLayerInitialized: this.isLayerInitialized.bind(this),
@@ -462,6 +467,8 @@ class _Map extends React.Component {
     }
 
     componentWillUnmount() {
+        const {sepalMap} = this.state
+        sepalMap.listLayers().map(layer => layer.removeFromMap())
         this.unsubscribe()
     }
 
@@ -551,7 +558,7 @@ class _MapLayer extends React.Component {
                 this.component = component
                 this.xyz = null
             }
-        
+
             draw() {
                 const projection = this.getProjection() // TODO: Zooming changes the projection...
                 const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(0, 0))
@@ -565,7 +572,7 @@ class _MapLayer extends React.Component {
                     //     .dispatch()
                 }
             }
-        
+
             show(shown) {
                 this.component.setState({shown})
             }
@@ -573,12 +580,12 @@ class _MapLayer extends React.Component {
             onAdd() {
                 this.show(true)
             }
-        
+
             onRemove() {
                 this.show(false)
             }
         }
-    
+
         this.overlay = new ReactOverlayView(this)
         this.overlay.setMap(googleMap)
     }
