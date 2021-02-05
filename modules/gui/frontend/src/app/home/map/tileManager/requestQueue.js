@@ -5,22 +5,24 @@ export const getRequestQueue = () => {
     const pendingRequests = []
     const enqueued$ = new ReplaySubject()
 
-    const enqueue = ({tileProviderId, requestId, request, response$, cancel$}) => {
-        pendingRequests.push({tileProviderId, requestId, request, response$, cancel$})
-        enqueued$.next(requestId)
-        console.log(`Enqueued ${requestTag({tileProviderId, requestId})}`)
+    const count = () => {
+        return pendingRequests.length
     }
     
     const pending = () => {
-        const count = pendingRequests.length
-        console.log(`Pending requests: ${count}`)
-        return count > 0
+        return count() > 0
     }
     
+    const enqueue = ({tileProviderId, requestId, request, response$, cancel$}) => {
+        pendingRequests.push({tileProviderId, requestId, request, response$, cancel$})
+        enqueued$.next(requestId)
+        console.log(`Enqueued ${requestTag({tileProviderId, requestId})}, now ${count()}`)
+    }
+
     const dequeue = () => {
         const pendingRequest = pendingRequests.shift()
         const {tileProviderId, requestId} = pendingRequest
-        console.log(`Dequeued ${requestTag({tileProviderId, requestId})}`)
+        console.log(`Dequeued ${requestTag({tileProviderId, requestId})}, now ${count()}`)
         return pendingRequest
     }
     

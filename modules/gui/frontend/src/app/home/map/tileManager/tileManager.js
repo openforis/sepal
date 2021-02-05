@@ -102,6 +102,7 @@ export const getTileManager = tileProvider => {
     }
 
     const close = () => {
+        console.log('*** CLOSE ***')
         removeTileProvider(tileProviderId)
     }
     
