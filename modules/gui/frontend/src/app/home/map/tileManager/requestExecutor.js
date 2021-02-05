@@ -1,8 +1,10 @@
+import {ReplaySubject} from 'rxjs'
 import {finalize, first, takeUntil} from 'rxjs/operators'
 import {requestTag} from './tag'
 
-export const getRequestExecutor = ({concurrency, executed$}) => {
+export const getRequestExecutor = concurrency => {
     const requestHandlers = {}
+    const executed$ = new ReplaySubject()
 
     const addRequest = ({tileProviderId, requestId, request, response$, cancel$}) => {
         const requestHandler = {tileProviderId, request, response$, cancel$, timestamp: Date.now()}
@@ -39,5 +41,5 @@ export const getRequestExecutor = ({concurrency, executed$}) => {
         })
     }
     
-    return {available, execute}
+    return {available, execute, executed$}
 }

@@ -1,10 +1,7 @@
-import {ReplaySubject, Subject, of} from 'rxjs'
+import {ReplaySubject, Subject} from 'rxjs'
+import {finalize, first} from 'rxjs/operators'
 import {getRequestExecutor} from './requestExecutor'
 import {getRequestQueue} from './requestQueue'
-// import {available, execute} from './activeRequest'
-// import {dequeue, enqueue, pending, prioritize} from './pendingRequest'
-
-import {finalize, first, map, mergeMap, takeUntil, tap} from 'rxjs/operators'
 import {requestTag, tileProviderTag} from './tag'
 import {v4 as uuid} from 'uuid'
 
@@ -13,11 +10,9 @@ const CONCURRENCY = 4
 const tileProvidersInfo = {}
 const request$ = new Subject()
 const hidden$ = new Subject()
-const enqueued$ = new Subject()
-const executed$ = new Subject()
 
-const requestQueue = getRequestQueue({enqueued$})
-const requestExecutor = getRequestExecutor({concurrency: CONCURRENCY, executed$})
+const requestQueue = getRequestQueue()
+const requestExecutor = getRequestExecutor(CONCURRENCY)
 
 const getTileProviderInfo = id => {
     const tileProviderInfo = tileProvidersInfo[id]
@@ -53,14 +48,14 @@ request$.subscribe(
     }
 )
 
-// enqueued$.subscribe(
-//     requestId => {
-//         console.log(`Request enqueued: ${requestId}`)
-//         requestQueue.prioritize()
-//     }
-// )
+requestQueue.enqueued$.subscribe(
+    requestId => {
+        console.log(`Request enqueued: ${requestId}`)
+        requestQueue.prioritize()
+    }
+)
 
-executed$.subscribe(
+requestExecutor.executed$.subscribe(
     ({tileProviderId, requestId}) => {
         console.log(`Executed: ${requestTag({tileProviderId, requestId})}`)
         if (requestQueue.pending()) {

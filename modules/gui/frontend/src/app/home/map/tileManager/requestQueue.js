@@ -1,7 +1,9 @@
+import {ReplaySubject} from 'rxjs'
 import {requestTag} from './tag'
 
-export const getRequestQueue = ({enqueued$}) => {
+export const getRequestQueue = () => {
     const pendingRequests = []
+    const enqueued$ = new ReplaySubject()
 
     const enqueue = ({tileProviderId, requestId, request, response$, cancel$}) => {
         pendingRequests.push({tileProviderId, requestId, request, response$, cancel$})
@@ -26,5 +28,5 @@ export const getRequestQueue = ({enqueued$}) => {
         console.log('Prioritized requests (to be implemented)')
     }
 
-    return {enqueue, pending, dequeue, prioritize}
+    return {enqueue, pending, dequeue, prioritize, enqueued$}
 }
