@@ -1,8 +1,9 @@
 import {Subject} from 'rxjs'
-import {filter, map, takeUntil} from 'rxjs/operators'
+import {filter, map, switchMap, takeUntil} from 'rxjs/operators'
 import {get$} from 'http-client'
+import {getTileManager} from './tileManager/tileManager'
+import {v4 as uuid} from 'uuid'
 import ee from '@google/earthengine'
-import guid from 'guid'
 
 export const TileLayer = ({
     layerIndex,
@@ -38,8 +39,6 @@ export const TileLayer = ({
 }
 
 class GoogleMapsLayer {
-    subscriptions = []
-
     constructor(tileProvider, {
         mapContext,
         name,
@@ -79,10 +78,6 @@ class GoogleMapsLayer {
         this.tileProvider.releaseTile(tileElement.id)
     }
 
-    addSubscription(subscription) {
-        this.subscriptions.push(subscription)
-    }
-
     setOpacity(opacity) {
         // TODO: Implement?
         // this.opacity = opacity
@@ -92,7 +87,6 @@ class GoogleMapsLayer {
     }
 
     close() {
-        this.subscribers.forEach(subscription => subscription.unsubscribe())
         this.tileProvider.close()
     }
 
@@ -111,20 +105,31 @@ class GoogleMapsLayer {
 
 }
 
-export class TileProvider {
-    id = guid()
+class TileProvider {
+    id = uuid()
 
-    loadTile$(tileRequest) {
-        throw Error('loadTile$ is expected to be overridden by subclass.')
+    getType() {
+        this.abstractMethodError('getType')
     }
 
-    releaseTile(tileElement) {
+    loadTile$(_tileRequest) {
+        this.abstractMethodError('loadTile$')
     }
 
-    hide() {
+    releaseTile(_tileElement) {
+        // this.abstractMethodError('releaseTile')
+    }
+
+    hide(_hidden) {
+        // this.abstractMethodError('hide')
     }
 
     close() {
+        // this.abstractMethodError('close')
+    }
+
+    abstractMethodError(method) {
+        throw Error(`${method} is expected to be overridden by subclass.`)
     }
 }
 
@@ -145,6 +150,10 @@ export class EarthEngineTileProvider extends TileProvider {
                 .replace('{z}', z)
         }
         this.tileSize = ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH
+    }
+
+    getType() {
+        return 'EarthEngine'
     }
 
     loadTile$({x, y, zoom}) {
@@ -168,6 +177,10 @@ class CancellingTileProvider extends TileProvider {
         this.nextTileProvider = nextTileProvider
     }
 
+    getType() {
+        return this.nextTileProvider.getType()
+    }
+
     loadTile$(tileRequest) {
         const tile$ = this.nextTileProvider.loadTile$(tileRequest)
         const releaseTile$ = this.release$.pipe(
@@ -181,11 +194,11 @@ class CancellingTileProvider extends TileProvider {
 
     releaseTile(requestId) {
         this.release$.next(requestId)
-        this.nextTileProvider.releaseTile()
+        this.nextTileProvider.releaseTile(requestId)
     }
 
     close() {
-        this.close.next()
+        this.close$.next()
         this.nextTileProvider.close()
     }
 }
@@ -218,6 +231,38 @@ export class PrioritizingTileProvider extends TileProvider {
     }
 }
 
+// export class PrioritizingTileProvider extends TileProvider {
+//     constructor(nextTileProvider) {
+//         super()
+//         this.tileManager = getTileManager(nextTileProvider)
+//     }
+
+//     getType() {
+//         return this.tileManager.getType()
+//     }
+
+//     loadTile$(tileRequest) {
+//         // TODO: Implement...
+//         // Should enqueue request
+//         return this.tileManager.loadTile$(tileRequest)
+//     }
+
+//     releaseTile(requestId) {
+//         // TODO: Implement...
+//         // Should remove request from queue
+//         this.tileManager.releaseTile(requestId)
+//     }
+
+//     hide(hidden) {
+//         // TODO: Implement...
+//         // Should change priority for requests enqueued by provider
+//         this.tileManager.hide(hidden)
+//     }
+
+//     close() {
+//         this.tileManager.close()
+//     }
+// }
+
 const renderImageBlob = (element, blob) =>
     element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
-
