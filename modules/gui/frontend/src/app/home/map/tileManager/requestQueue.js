@@ -16,13 +16,13 @@ export const getRequestQueue = () => {
     const enqueue = ({tileProviderId, requestId, request, response$, cancel$}) => {
         pendingRequests.push({tileProviderId, requestId, request, response$, cancel$})
         enqueued$.next(requestId)
-        console.log(`Enqueued ${requestTag({tileProviderId, requestId})}, now ${count()}`)
+        console.log(`Enqueued ${requestTag({tileProviderId, requestId})}, pending: ${count()}`)
     }
 
     const dequeue = () => {
         const pendingRequest = pendingRequests.shift()
         const {tileProviderId, requestId} = pendingRequest
-        console.log(`Dequeued ${requestTag({tileProviderId, requestId})}, now ${count()}`)
+        console.log(`Dequeued ${requestTag({tileProviderId, requestId})}, pending: ${count()}`)
         return pendingRequest
     }
     

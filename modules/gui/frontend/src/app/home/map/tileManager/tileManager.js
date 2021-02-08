@@ -26,13 +26,13 @@ const addTileProvider = (tileProviderId, tileProvider) => {
     tileProvidersInfo[tileProviderId] = {
         tileProvider,
         hidden: false,
-        pendingRequestCount: 0,
+        activeRequests: 0,
     }
     console.log(`Added ${tileProviderTag(tileProviderId)}`)
 }
 
 const removeTileProvider = tileProviderId => {
-    // delete tileProvidersInfo[tileProviderId]
+    delete tileProvidersInfo[tileProviderId]
     console.log(`Removed ${tileProviderTag(tileProviderId)}`)
 }
 
@@ -55,9 +55,19 @@ requestQueue.enqueued$.subscribe(
     }
 )
 
-requestExecutor.executed$.subscribe(
-    ({tileProviderId, requestId}) => {
-        console.log(`Executed: ${requestTag({tileProviderId, requestId})}`)
+requestExecutor.started$.subscribe(
+    tileProviderId => {
+        const tileProvider = getTileProviderInfo(tileProviderId)
+        tileProvider.activeRequests += 1
+        console.log(`** Started: ${tileProviderTag(tileProviderId)}, active ${tileProvider.activeRequests}`)
+    }
+)
+
+requestExecutor.finished$.subscribe(
+    tileProviderId => {
+        const tileProvider = getTileProviderInfo(tileProviderId)
+        tileProvider.activeRequests -= 1
+        console.log(`** Finished: ${tileProviderTag(tileProviderId)}, active ${tileProvider.activeRequests}`)
         if (requestQueue.pending()) {
             const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeue()
             const tileProvider = getTileProviderInfo(tileProviderId).tileProvider

@@ -4,7 +4,8 @@ import {requestTag} from './tag'
 
 export const getRequestExecutor = concurrency => {
     const requestHandlers = {}
-    const executed$ = new ReplaySubject()
+    const started$ = new ReplaySubject()
+    const finished$ = new ReplaySubject()
 
     const count = () => {
         return Object.keys(requestHandlers).length
@@ -17,12 +18,14 @@ export const getRequestExecutor = concurrency => {
     const start = ({tileProviderId, requestId, request, response$, cancel$}) => {
         const requestHandler = {tileProviderId, request, response$, cancel$, timestamp: Date.now()}
         requestHandlers[requestId] = requestHandler
-        console.log(`Started ${requestTag({tileProviderId, requestId})}, now ${count()}`)
+        started$.next(tileProviderId)
+        console.log(`Started ${requestTag({tileProviderId, requestId})}, active: ${count()}`)
     }
     
     const finish = ({tileProviderId, requestId}) => {
         delete requestHandlers[requestId]
-        console.log(`Finished ${requestTag({tileProviderId, requestId})}, now ${count()}`)
+        finished$.next(tileProviderId)
+        console.log(`Finished ${requestTag({tileProviderId, requestId})}, active: ${count()}`)
     }
 
     const execute = ({tileProvider, tileProviderId, requestId, request, response$, cancel$}) => {
@@ -30,12 +33,11 @@ export const getRequestExecutor = concurrency => {
         tileProvider.loadTile$(request).pipe(
             first(),
             takeUntil(cancel$.pipe(
-                tap(`Cancelled ${requestTag({tileProviderId, requestId})}`)
+                tap(() => console.log(`Cancelled ${requestTag({tileProviderId, requestId})}`))
             )),
-            finalize(() => {
+            finalize(() =>
                 finish({tileProviderId, requestId})
-                executed$.next({tileProviderId, requestId})
-            })
+            ),
         ).subscribe({
             next: response => {
                 console.log(`Succeeded ${requestTag({tileProviderId, requestId})}`)
@@ -49,5 +51,5 @@ export const getRequestExecutor = concurrency => {
         })
     }
     
-    return {available, execute, executed$}
+    return {available, execute, started$, finished$}
 }
