@@ -23,7 +23,6 @@ git+git://github.com/openforis/earthengine-api.git@v0.1.242#egg=earthengine-api&
 ########  BFAST  ########
 git+git://github.com/diku-dk/bfast.git@0.6
 pandas
-pyopencl
 wget
 Sphinx
 sphinx-bootstrap-theme
