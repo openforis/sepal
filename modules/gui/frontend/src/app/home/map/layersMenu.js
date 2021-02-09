@@ -56,11 +56,22 @@ class _LayersMenu extends React.Component {
             {value: 'cir', label: 'CIR'},
         ]
         const dateRangeOptions = [
+            {value: '2015-06_2015-11', label: 'Jun 2015 (6 months)'},
+            {value: '2015-12_2016-05', label: 'Dec 2015 (6 months)'},
+            {value: '2016-06_2016-11', label: 'Jun 2016 (6 months)'},
+            {value: '2016-12_2017-05', label: 'Dec 2016 (6 months)'},
+            {value: '2017-06_2017-11', label: 'Jun 2017 (6 months)'},
+            {value: '2017-12_2018-05', label: 'Dec 2017 (6 months)'},
+            {value: '2018-06_2018-11', label: 'Jun 2018 (6 months)'},
             {value: '2018-12_2019-05', label: 'Dec 2018 (6 months)'},
             {value: '2019-06_2019-11', label: 'Jun 2019 (6 months)'},
             {value: '2019-12_2020-05', label: 'Dec 2019 (6 months)'},
             {value: '2020-06_2020-08', label: 'Jun 2020 (3 months)'},
             {value: '2020-09', label: 'Sep 2020 (1 month)'},
+            {value: '2020-10', label: 'Oct 2020 (1 month)'},
+            {value: '2020-11', label: 'Nov 2020 (1 month)'},
+            {value: '2020-12', label: 'Dec 2020 (1 month)'},
+            {value: '2021-01', label: 'Jan 2021 (1 month)'},
         ]
         return {procOptions, dateRangeOptions}
     }
