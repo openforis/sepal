@@ -10,3 +10,5 @@ apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repo
 add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
 apt-get update
 apt-get -y install cuda
+
+pip3 install pyopencl
