@@ -56,7 +56,6 @@ class _LayersMenu extends React.Component {
             {value: 'cir', label: 'CIR'},
         ]
         const dateRangeOptions = [
-            {value: '2015-06_2015-11', label: 'Jun 2015 (6 months)'},
             {value: '2015-12_2016-05', label: 'Dec 2015 (6 months)'},
             {value: '2016-06_2016-11', label: 'Jun 2016 (6 months)'},
             {value: '2016-12_2017-05', label: 'Dec 2016 (6 months)'},
