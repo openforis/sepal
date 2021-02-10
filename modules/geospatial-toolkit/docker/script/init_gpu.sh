@@ -11,4 +11,9 @@ add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos
 apt-get update
 apt-get -y install cuda
 
-pip3 install pyopencl
+cd /usr/local/src/
+git clone https://github.com/pyopencl/pyopencl
+cd pyopencl
+python3 configure.py
+echo 'CL_PRETEND_VERSION = "2.2"' >> siteconf.py
+pip3 install .
