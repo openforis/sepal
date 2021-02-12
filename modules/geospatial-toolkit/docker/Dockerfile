@@ -55,6 +55,9 @@ RUN chmod u+x /script/init_additional_r_packages.sh && sync && /script/init_addi
 ADD script/init_biota.sh /script/
 RUN chmod u+x /script/init_biota.sh && sync && /script/init_biota.sh
 
+ADD script/init_gwb.sh /script/
+RUN chmod u+x /script/init_gwb.sh && sync && /script/init_gwb.sh
+
 ADD script/init_post.sh /script/
 RUN chmod u+x /script/init_post.sh && sync && /script/init_post.sh
 
