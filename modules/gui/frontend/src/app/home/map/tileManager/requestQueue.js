@@ -1,34 +1,45 @@
-import {ReplaySubject} from 'rxjs'
 import {requestTag} from './tag'
+import _ from 'lodash'
 
 export const getRequestQueue = () => {
     const pendingRequests = []
-    const enqueued$ = new ReplaySubject()
 
-    const count = () => {
+    const getCount = () => {
         return pendingRequests.length
     }
     
-    const pending = () => {
-        return count() > 0
+    const isEmpty = () => {
+        return getCount() === 0
     }
     
     const enqueue = ({tileProviderId, requestId, request, response$, cancel$}) => {
         pendingRequests.push({tileProviderId, requestId, request, response$, cancel$})
-        enqueued$.next(requestId)
-        console.log(`Enqueued ${requestTag({tileProviderId, requestId})}, pending: ${count()}`)
+        console.log(`Enqueued ${requestTag({tileProviderId, requestId})}, pending: ${getCount()}`)
     }
 
-    const dequeue = () => {
-        const pendingRequest = pendingRequests.shift()
+    const dequeueOldest = () => {
+        return pendingRequests.shift()
+    }
+
+    const dequeueByRequestId = requestId => {
+        if (requestId) {
+            const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
+            if (index !== -1) {
+                const [pendingRequest] = pendingRequests.splice(index, 1)
+                return pendingRequest
+            } else {
+                console.warn(`Could not dequeue ${requestTag({requestId})}`)
+            }
+        }
+        return null
+    }
+
+    const dequeue = dequeueRequestId => {
+        const pendingRequest = dequeueByRequestId(dequeueRequestId) || dequeueOldest()
         const {tileProviderId, requestId} = pendingRequest
-        console.log(`Dequeued ${requestTag({tileProviderId, requestId})}, pending: ${count()}`)
+        console.log(`Dequeued ${requestTag({tileProviderId, requestId})}, pending: ${getCount()}`)
         return pendingRequest
     }
-    
-    const prioritize = () => {
-        console.log('Prioritized requests (to be implemented)')
-    }
 
-    return {enqueue, pending, dequeue, prioritize, enqueued$}
+    return {isEmpty, enqueue, dequeue}
 }

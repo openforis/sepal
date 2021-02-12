@@ -4,6 +4,7 @@ import {getRequestExecutor} from './requestExecutor'
 import {getRequestQueue} from './requestQueue'
 import {tileProviderTag} from './tag'
 import {v4 as uuid} from 'uuid'
+import _ from 'lodash'
 
 const tileProviderGroups = {}
 
@@ -26,8 +27,7 @@ const createTileManagerGroup = concurrency => {
     const addTileProvider = (tileProviderId, tileProvider) => {
         tileProvidersInfo[tileProviderId] = {
             tileProvider,
-            hidden: false,
-            activeRequests: 0,
+            hidden: false
         }
         console.log(`Added ${tileProviderTag(tileProviderId)}`)
     }
@@ -40,37 +40,29 @@ const createTileManagerGroup = concurrency => {
     request$.subscribe(
         ({tileProviderId, request, response$, cancel$}) => {
             const requestId = uuid()
-            if (requestExecutor.available()) {
+            if (requestExecutor.isAvailable()) {
                 const tileProvider = getTileProviderInfo(tileProviderId).tileProvider
                 requestExecutor.execute({tileProvider, tileProviderId, requestId, request, response$, cancel$})
             } else {
                 requestQueue.enqueue({tileProviderId, requestId, request, response$, cancel$})
+                requestExecutor.notify({tileProviderId, requestId})
             }
         }
     )
     
-    requestQueue.enqueued$.subscribe(
-        requestId => {
-            console.log(`Request enqueued: ${requestId}`)
-            requestQueue.prioritize()
-        }
-    )
-    
     requestExecutor.started$.subscribe(
-        tileProviderId => {
-            const tileProvider = getTileProviderInfo(tileProviderId)
-            tileProvider.activeRequests += 1
-            console.log(`** Started: ${tileProviderTag(tileProviderId)}, active ${tileProvider.activeRequests}`)
+        ({tileProviderId, requestId}) => {
+            // console.log(`** Started: ${requestTag({tileProviderId, requestId})}`)
         }
     )
     
     requestExecutor.finished$.subscribe(
-        tileProviderId => {
-            const tileProvider = getTileProviderInfo(tileProviderId)
-            tileProvider.activeRequests -= 1
-            console.log(`** Finished: ${tileProviderTag(tileProviderId)}, active ${tileProvider.activeRequests}`)
-            if (requestQueue.pending()) {
-                const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeue()
+        ({tileProviderId, requestId, replacementRequest = {}}) => {
+            // console.log(`** Finished: ${requestTag({tileProviderId, requestId})}`)
+            if (requestQueue.isEmpty()) {
+                console.log('Pending request queue empty')
+            } else {
+                const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeue(replacementRequest.requestId)
                 const tileProvider = getTileProviderInfo(tileProviderId).tileProvider
                 requestExecutor.execute({tileProvider, tileProviderId, requestId, request, response$, cancel$})
             }
@@ -89,9 +81,8 @@ const createTileManagerGroup = concurrency => {
 
 const getTileManagerGroup = tileProvider => {
     const type = tileProvider.getType()
-    const concurrency = tileProvider.getConcurrency()
     if (!tileProviderGroups[type]) {
-        tileProviderGroups[type] = createTileManagerGroup(concurrency)
+        tileProviderGroups[type] = createTileManagerGroup(tileProvider.getConcurrency())
     }
     return tileProviderGroups[type]
 }

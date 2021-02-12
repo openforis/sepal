@@ -1,42 +1,99 @@
-import {ReplaySubject} from 'rxjs'
+import {Subject} from 'rxjs'
 import {finalize, first, takeUntil, tap} from 'rxjs/operators'
-import {requestTag} from './tag'
+import {requestTag, tileProviderTag} from './tag'
+import _ from 'lodash'
 
 export const getRequestExecutor = concurrency => {
-    const requestHandlers = {}
-    const started$ = new ReplaySubject()
-    const finished$ = new ReplaySubject()
+    const activeRequests = {}
+    const activeRequestCount = {}
 
-    const count = () => {
-        return Object.keys(requestHandlers).length
-    }
-    
-    const available = () => {
-        return count() < concurrency
-    }
+    const started$ = new Subject()
+    const finished$ = new Subject()
+
+    const getCount = tileProviderId =>
+        tileProviderId
+            ? activeRequestCount[tileProviderId] || 0
+            : Object.keys(activeRequests).length
+
+    const setCount = (tileProviderId, count) =>
+        activeRequestCount[tileProviderId] = count
+
+    const isAvailable = () =>
+        getCount() < concurrency
     
     const start = ({tileProviderId, requestId, request, response$, cancel$}) => {
-        const requestHandler = {tileProviderId, request, response$, cancel$, timestamp: Date.now()}
-        requestHandlers[requestId] = requestHandler
-        started$.next(tileProviderId)
-        console.log(`Started ${requestTag({tileProviderId, requestId})}, active: ${count()}`)
+        activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
+        const activeRequestCountByTileProviderId = getCount(tileProviderId) + 1
+        setCount(tileProviderId, activeRequestCountByTileProviderId)
+        console.log(`Started ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        started$.next({tileProviderId, requestId})
     }
     
-    const finish = ({tileProviderId, requestId}) => {
-        delete requestHandlers[requestId]
-        finished$.next(tileProviderId)
-        console.log(`Finished ${requestTag({tileProviderId, requestId})}, active: ${count()}`)
+    const finish = ({tileProviderId, requestId, replacementRequest}) => {
+        delete activeRequests[requestId]
+        const activeRequestCountByTileProviderId = getCount(tileProviderId) - 1
+        setCount(tileProviderId, activeRequestCountByTileProviderId)
+        console.log(`Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        finished$.next({tileProviderId, requestId, replacementRequest})
+    }
+
+    const getMostRecentByTileProviderId = tileProviderId => {
+        const mostRecent = _(activeRequests)
+            .pickBy(requestHandler => requestHandler.tileProviderId === tileProviderId)
+            .values()
+            .sortBy('timestamp')
+            .tail() // exclude first, to keep at least one
+            .last() // get most recent of the remaining ones
+        return mostRecent
+    }
+
+    const cancelMostRecentByTileProviderId = (tileProviderId, replacementRequest) => {
+        const {cancel$} = getMostRecentByTileProviderId(tileProviderId)
+        if (cancel$) {
+            console.log(`Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
+            cancel$.next(replacementRequest)
+        } else {
+            console.warn(`Could not cancel request handler ${tileProviderTag(tileProviderId)}`)
+        }
+    }
+
+    const getMaxActive = () => {
+        const [tileProviderId, count] = _(activeRequestCount)
+            .toPairs()
+            .sortBy(([_tileProviderId, count]) => count)
+            .last()
+        return {tileProviderId, count}
+    }
+
+    const notify = ({tileProviderId, requestId}) => {
+        // if tileProviderId has no active requests, see what's the tileProvider with
+        // the highest number of active requests and cancel the most recent one
+        const activeCount = getCount(tileProviderId)
+        const maxActive = getMaxActive()
+        const threshold = maxActive.count - 1
+        if (activeCount < threshold) {
+            console.log(`Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount}`)
+            cancelMostRecentByTileProviderId(maxActive.tileProviderId, {tileProviderId, requestId})
+        }
     }
 
     const execute = ({tileProvider, tileProviderId, requestId, request, response$, cancel$}) => {
         start({tileProviderId, requestId, request, response$, cancel$})
+        const finishInfo = {tileProviderId, requestId}
         tileProvider.loadTile$(request).pipe(
             first(),
             takeUntil(cancel$.pipe(
-                tap(() => console.log(`Cancelled ${requestTag({tileProviderId, requestId})}`))
+                tap(replacementRequest => {
+                    if (replacementRequest) {
+                        finishInfo.replacementRequest = replacementRequest
+                        console.log(`Cancelled ${requestTag({tileProviderId, requestId})} for replacement with ${requestTag(replacementRequest)}`)
+                    } else {
+                        console.log(`Cancelled ${requestTag({tileProviderId, requestId})} by unsubscription`)
+                    }
+                })
             )),
             finalize(() =>
-                finish({tileProviderId, requestId})
+                finish(finishInfo)
             ),
         ).subscribe({
             next: response => {
@@ -51,5 +108,5 @@ export const getRequestExecutor = concurrency => {
         })
     }
     
-    return {available, execute, started$, finished$}
+    return {isAvailable, execute, notify, started$, finished$}
 }
