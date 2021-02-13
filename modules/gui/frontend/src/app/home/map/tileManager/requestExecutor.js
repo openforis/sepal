@@ -29,12 +29,12 @@ export const getRequestExecutor = concurrency => {
         started$.next({tileProviderId, requestId})
     }
     
-    const finish = ({tileProviderId, requestId, replacementRequest}) => {
+    const finish = ({tileProviderId, requestId, currentRequest, replacementRequest}) => {
         delete activeRequests[requestId]
         const activeRequestCountByTileProviderId = getCount(tileProviderId) - 1
         setCount(tileProviderId, activeRequestCountByTileProviderId)
         console.log(`Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
-        finished$.next({tileProviderId, requestId, replacementRequest})
+        finished$.next({tileProviderId, requestId, currentRequest, replacementRequest})
     }
 
     const getMostRecentByTileProviderId = tileProviderId => {
@@ -77,14 +77,16 @@ export const getRequestExecutor = concurrency => {
         }
     }
 
-    const execute = ({tileProvider, tileProviderId, requestId, request, response$, cancel$}) => {
-        start({tileProviderId, requestId, request, response$, cancel$})
+    const execute = (tileProvider, currentRequest) => {
+        start(currentRequest)
+        const {tileProviderId, requestId, request, response$, cancel$} = currentRequest
         const finishInfo = {tileProviderId, requestId}
         tileProvider.loadTile$(request).pipe(
             first(),
             takeUntil(cancel$.pipe(
                 tap(replacementRequest => {
                     if (replacementRequest) {
+                        finishInfo.currentRequest = currentRequest
                         finishInfo.replacementRequest = replacementRequest
                         console.log(`Cancelled ${requestTag({tileProviderId, requestId})} for replacement with ${requestTag(replacementRequest)}`)
                     } else {

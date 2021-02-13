@@ -17,29 +17,24 @@ export const getRequestQueue = () => {
         console.log(`Enqueued ${requestTag({tileProviderId, requestId})}, pending: ${getCount()}`)
     }
 
-    const dequeueOldest = () => {
-        return pendingRequests.shift()
+    const dequeueNormal = () => {
+        const pendingRequest = pendingRequests.shift()
+        console.log(`Dequeued (normal) ${requestTag(pendingRequest)}, pending: ${getCount()}`)
+        return pendingRequest
     }
 
-    const dequeueByRequestId = requestId => {
+    const dequeuePriority = requestId => {
         if (requestId) {
             const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
             if (index !== -1) {
                 const [pendingRequest] = pendingRequests.splice(index, 1)
+                console.log(`Dequeued (priority) ${requestTag(pendingRequest)}, pending: ${getCount()}`)
                 return pendingRequest
-            } else {
-                console.warn(`Could not dequeue ${requestTag({requestId})}`)
             }
         }
+        console.warn(`Could not dequeue ${requestTag({requestId})}`)
         return null
     }
 
-    const dequeue = dequeueRequestId => {
-        const pendingRequest = dequeueByRequestId(dequeueRequestId) || dequeueOldest()
-        const {tileProviderId, requestId} = pendingRequest
-        console.log(`Dequeued ${requestTag({tileProviderId, requestId})}, pending: ${getCount()}`)
-        return pendingRequest
-    }
-
-    return {isEmpty, enqueue, dequeue}
+    return {isEmpty, enqueue, dequeueNormal, dequeuePriority}
 }
