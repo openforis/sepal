@@ -37,7 +37,7 @@ test('With max concurrent requests, a request is only executed after an active c
     }
 )
 
-test('With max concurrent requests, a visible request is immediately executed, and a hidden active is canceled',
+test('With max concurrent requests, a request from provider with fewer active requests is immediately executed, and last request from provider with more active requests is canceled',
     done => {
         const provider1 = tileProvider(2)
         const request1 = new BlockingRequest('request1')
