@@ -1,5 +1,5 @@
 import {Subject} from 'rxjs'
-import {filter, map, switchMap, takeUntil} from 'rxjs/operators'
+import {filter, map, takeUntil} from 'rxjs/operators'
 import {get$} from 'http-client'
 import {getTileManager} from './tileManager/tileManager'
 import {v4 as uuid} from 'uuid'
@@ -111,6 +111,10 @@ class TileProvider {
     getType() {
         this.abstractMethodError('getType')
     }
+    
+    getConcurrency() {
+        // this.abstractMethodError('getConcurrency')
+    }
 
     loadTile$(_tileRequest) {
         this.abstractMethodError('loadTile$')
@@ -156,6 +160,10 @@ export class EarthEngineTileProvider extends TileProvider {
         return 'EarthEngine'
     }
 
+    getConcurrency() {
+        return 4
+    }
+
     loadTile$({x, y, zoom}) {
         const url = this.formatTileUrl(x, y, zoom)
         return get$(url, {
@@ -179,6 +187,10 @@ class CancellingTileProvider extends TileProvider {
 
     getType() {
         return this.nextTileProvider.getType()
+    }
+
+    getConcurrency() {
+        return this.nextTileProvider.getConcurrency()
     }
 
     loadTile$(tileRequest) {
@@ -206,63 +218,39 @@ class CancellingTileProvider extends TileProvider {
 export class PrioritizingTileProvider extends TileProvider {
     constructor(nextTileProvider) {
         super()
-        this.nextTileProvider = nextTileProvider
+        this.tileManager = getTileManager(nextTileProvider)
+    }
+
+    getType() {
+        return this.tileManager.getType()
+    }
+
+    getConcurrency() {
+        return this.timeManager.getConcurrency()
     }
 
     loadTile$(tileRequest) {
         // TODO: Implement...
         // Should enqueue request
-        return this.nextTileProvider.loadTile$(tileRequest)
+        return this.tileManager.loadTile$(tileRequest)
     }
 
     releaseTile(requestId) {
         // TODO: Implement...
         // Should remove request from queue
-        this.nextTileProvider.releaseTile()
+        this.tileManager.releaseTile(requestId)
     }
 
     hide(hidden) {
         // TODO: Implement...
         // Should change priority for requests enqueued by provider
+        this.tileManager.hide(hidden)
     }
 
     close() {
-        this.nextTileProvider.close()
+        this.tileManager.close()
     }
 }
-
-// export class PrioritizingTileProvider extends TileProvider {
-//     constructor(nextTileProvider) {
-//         super()
-//         this.tileManager = getTileManager(nextTileProvider)
-//     }
-
-//     getType() {
-//         return this.tileManager.getType()
-//     }
-
-//     loadTile$(tileRequest) {
-//         // TODO: Implement...
-//         // Should enqueue request
-//         return this.tileManager.loadTile$(tileRequest)
-//     }
-
-//     releaseTile(requestId) {
-//         // TODO: Implement...
-//         // Should remove request from queue
-//         this.tileManager.releaseTile(requestId)
-//     }
-
-//     hide(hidden) {
-//         // TODO: Implement...
-//         // Should change priority for requests enqueued by provider
-//         this.tileManager.hide(hidden)
-//     }
-
-//     close() {
-//         this.tileManager.close()
-//     }
-// }
 
 const renderImageBlob = (element, blob) =>
     element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
