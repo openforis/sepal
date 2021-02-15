@@ -105,13 +105,13 @@ class GoogleMapsLayer {
 
 }
 
-class TileProvider {
+export class TileProvider {
     id = uuid()
 
     getType() {
         this.abstractMethodError('getType')
     }
-    
+
     getConcurrency() {
         // this.abstractMethodError('getConcurrency')
     }
