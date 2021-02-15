@@ -8,7 +8,10 @@ test('With fewer than max concurrent requests, a request is immediately executed
         const request = new CompletingRequest('request')
 
         concat(
-            when(() => provider.loadTile$(request), () => request.become('ACTIVE', 'COMPLETED'))
+            when(
+                () => provider.loadTile$(request),
+                () => request.become('ACTIVE', 'COMPLETED')
+            )
         ).subscribe({
             complete: () => done()
         })
@@ -22,7 +25,10 @@ test('With max concurrent requests, a request is only executed after an active c
         const request2 = new CompletingRequest('request2')
 
         concat(
-            when(() => provider.loadTile$(request1), () => request1.become('ACTIVE')),
+            when(
+                () => provider.loadTile$(request1),
+                () => request1.become('ACTIVE')
+            ),
             execute(() => provider.loadTile$(request2)),
             // when(() => request1.complete(), () => request2.become('ACTIVE', 'COMPLETED'))
         ).subscribe({
