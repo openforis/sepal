@@ -58,11 +58,14 @@ export const getRequestExecutor = concurrency => {
     }
 
     const getMaxActive = () => {
-        const [tileProviderId, count] = _(activeRequestCount)
-            .toPairs()
-            .sortBy(([_tileProviderId, count]) => count)
-            .last()
-        return {tileProviderId, count}
+        if (Object.keys(activeRequestCount).length) {
+            const [tileProviderId, count] = _(activeRequestCount)
+                .toPairs()
+                .sortBy(([_tileProviderId, count]) => count)
+                .last()
+            return {tileProviderId, count}
+        }
+        return 0
     }
 
     const notify = ({tileProviderId, requestId}) => {
