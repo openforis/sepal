@@ -58,25 +58,24 @@ export const getRequestExecutor = concurrency => {
     }
 
     const getMaxActive = () => {
-        if (Object.keys(activeRequestCount).length) {
-            const [tileProviderId, count] = _(activeRequestCount)
-                .toPairs()
-                .sortBy(([_tileProviderId, count]) => count)
-                .last()
-            return {tileProviderId, count}
-        }
-        return 0
+        const [tileProviderId, count] = _(activeRequestCount)
+            .toPairs()
+            .sortBy(([_tileProviderId, count]) => count)
+            .last()
+        return {tileProviderId, count}
     }
 
     const notify = ({tileProviderId, requestId}) => {
         // if tileProviderId has no active requests, see what's the tileProvider with
         // the highest number of active requests and cancel the most recent one
-        const activeCount = getCount(tileProviderId)
-        const maxActive = getMaxActive()
-        const threshold = maxActive.count - 1
-        if (activeCount < threshold) {
-            console.log(`Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount}`)
-            cancelMostRecentByTileProviderId(maxActive.tileProviderId, {tileProviderId, requestId})
+        if (getCount()) {
+            const maxActive = getMaxActive()
+            const activeCount = getCount(tileProviderId)
+            const threshold = maxActive.count - 1
+            if (activeCount < threshold) {
+                console.log(`Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount}`)
+                cancelMostRecentByTileProviderId(maxActive.tileProviderId, {tileProviderId, requestId})
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 import {Subject} from 'rxjs'
 import {getRequestExecutor} from './requestExecutor'
 import {getRequestQueue} from './requestQueue'
-import {tileProviderTag} from './tag'
+import {requestTag, tileProviderTag} from './tag'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
 
@@ -40,9 +40,7 @@ const createTileManagerGroup = concurrency => {
         request$.next(currentRequest)
     
     request$.subscribe(
-        foo => {
-            const {tileProviderId, request, response$, cancel$} = foo
-            const requestId = uuid()
+        ({tileProviderId, requestId = uuid(), request, response$, cancel$}) => {
             if (requestExecutor.isAvailable()) {
                 const tileProvider = getTileProviderInfo(tileProviderId).tileProvider
                 requestExecutor.execute(tileProvider, {tileProviderId, requestId, request, response$, cancel$})
@@ -69,7 +67,7 @@ const createTileManagerGroup = concurrency => {
                     const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeuePriority(replacementRequest.requestId)
                     const tileProvider = getTileProviderInfo(tileProviderId).tileProvider
                     requestExecutor.execute(tileProvider, {tileProviderId, requestId, request, response$, cancel$})
-                    // submit(currentRequest)
+                    submit(currentRequest)
                 } else {
                     const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeueNormal()
                     const tileProvider = getTileProviderInfo(tileProviderId).tileProvider

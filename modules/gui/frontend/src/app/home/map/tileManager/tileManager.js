@@ -1,4 +1,4 @@
-import {ReplaySubject} from 'rxjs'
+import {ReplaySubject, Subject} from 'rxjs'
 import {finalize, first, tap} from 'rxjs/operators'
 import {getTileManagerGroup} from './tileManagerGroup'
 import {v4 as uuid} from 'uuid'
@@ -27,7 +27,7 @@ export const getTileManager = tileProvider => {
     const loadTile$ = request => {
         stats.in++
         const response$ = new ReplaySubject()
-        const cancel$ = new ReplaySubject()
+        const cancel$ = new Subject()
         submit({tileProviderId, request, response$, cancel$})
         return response$.pipe(
             first(),
