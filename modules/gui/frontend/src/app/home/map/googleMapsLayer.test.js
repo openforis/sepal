@@ -2,6 +2,11 @@ import {PrioritizingTileProvider, TileProvider} from './googleMapsLayer'
 import {Subject, concat, defer, isObservable, of} from 'rxjs'
 import {finalize, first} from 'rxjs/operators'
 
+let providerType = 'fake-type'
+beforeEach(() => {
+    providerType = `fake-type-${Math.random()}`
+})
+
 test('With fewer than max concurrent requests, a request is immediately executed',
     done => {
         const provider = tileProvider(1)
@@ -10,7 +15,7 @@ test('With fewer than max concurrent requests, a request is immediately executed
         concat(
             when(
                 () => provider.loadTile$(request),
-                () => request.become('ACTIVE', 'COMPLETED')
+                () => request.become$('ACTIVE', 'COMPLETED')
             )
         ).subscribe({
             complete: () => done()
@@ -27,10 +32,13 @@ test('With max concurrent requests, a request is only executed after an active c
         concat(
             when(
                 () => provider.loadTile$(request1),
-                () => request1.become('ACTIVE')
+                () => request1.become$('ACTIVE')
             ),
             execute(() => provider.loadTile$(request2)),
-            // when(() => request1.complete(), () => request2.become('ACTIVE', 'COMPLETED'))
+            when(
+                () => request1.complete(),
+                () => request2.become$('ACTIVE', 'COMPLETED')
+            )
         ).subscribe({
             complete: () => done()
         })
@@ -48,18 +56,18 @@ test('With max concurrent requests, a request from provider with fewer active re
         concat(
             when(
                 () => provider1.loadTile$(request1),
-                () => request1.become('ACTIVE')
+                () => request1.become$('ACTIVE')
             ),
             when(
                 () => provider1.loadTile$(request2),
-                () => request2.become('ACTIVE')
+                () => request2.become$('ACTIVE')
             ),
             when(
                 () => provider2.loadTile$(request3),
-                () => {
-                    request3.become('ACTIVE')
-                    request2.become('CANCELED')
-                }
+                () => concat(
+                    request3.become$('ACTIVE'),
+                    request2.become$('CANCELED')
+                )
             ),
             execute(() => {
                 request1.assertState('ACTIVE')
@@ -72,11 +80,66 @@ test('With max concurrent requests, a request from provider with fewer active re
     }
 )
 
+test('With max concurrent requests, a visible request is immediately executed, and a hidden request is canceled',
+    done => {
+        const provider1 = tileProvider(1)
+        provider1.hide(true)
+        const request1 = new BlockingRequest('request1')
+        const provider2 = tileProvider(1)
+        provider2.hide(false)
+        const request2 = new BlockingRequest('request2')
+
+        concat(
+            when(
+                () => provider1.loadTile$(request1),
+                () => request1.become$('ACTIVE')
+            ),
+            when(
+                () => provider2.loadTile$(request2),
+                () => concat(
+                    request2.become$('ACTIVE'),
+                    request1.become$('CANCELED')
+                )
+            )
+        ).subscribe({
+            complete: () => done()
+        })
+    }
+)
+
+test('With max concurrent request from a hidden provider and a pending hidden from another, when pending request provider is shown, request becomes active and the other cancels',
+    done => {
+        const provider1 = tileProvider(1)
+        provider1.hide(true)
+        const request1 = new BlockingRequest('request1')
+        const provider2 = tileProvider(1)
+        provider2.hide(true)
+        const request2 = new BlockingRequest('request2')
+
+        concat(
+            when(
+                () => provider1.loadTile$(request1),
+                () => request1.become$('ACTIVE')
+            ),
+            execute(() => provider2.loadTile$(request2)),
+            when(
+                () => provider2.hide(false),
+                () => concat(
+                    request2.become$('ACTIVE'),
+                    request1.become$('CANCELED')
+                )
+            )
+        ).subscribe({
+            complete: () => done()
+        })
+    }
+)
+
 class FakeTileProvider extends TileProvider {
     constructor(concurrency) {
         super()
         this.concurrency = concurrency
-        this.type = `FakeTileProvider-${Math.random()}`
+        this.type = providerType
     }
 
     getType() {
@@ -114,7 +177,7 @@ class FakeTileRequest {
         this.state$.next(state)
     }
 
-    become(...states) {
+    become$(...states) {
         const changes = []
         const done$ = new Subject()
         this.state$.subscribe({
@@ -135,6 +198,7 @@ class FakeTileRequest {
 
     assertState(state) {
         expect(this.state).toEqual(state)
+        return of(state)
     }
 }
 
@@ -149,10 +213,7 @@ class BlockingRequest extends FakeTileRequest {
         this.setState('ACTIVE')
         return this.complete$.pipe(
             first(),
-            finalize(() => {
-                console.log('finalize', this.isCompleted)
-                return this.isCompleted || this.setState('CANCELED')
-            })
+            finalize(() => this.isCompleted || this.setState('CANCELED'))
         )
     }
 
@@ -188,5 +249,7 @@ const when = (operationFn, thenFn) =>
         const callbackResult = thenFn()
         const operationResult = operationFn()
         isObservable(operationResult) && operationResult.subscribe()
-        return of(callbackResult)
+        return isObservable(callbackResult)
+            ? callbackResult
+            : of(callbackResult)
     })
