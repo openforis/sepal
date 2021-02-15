@@ -7,7 +7,9 @@ beforeEach(() => {
     providerType = `fake-type-${Math.random()}`
 })
 
-test('With fewer than max concurrent requests, a request is immediately executed',
+test(
+    `With fewer than max concurrent requests, a request 
+    is immediately executed`,
     done => {
         const provider = tileProvider(1)
         const request = new CompletingRequest('request')
@@ -23,7 +25,9 @@ test('With fewer than max concurrent requests, a request is immediately executed
     }
 )
 
-test('With max concurrent requests, a request is only executed after an active completes',
+test(
+    `With max concurrent requests, a request is only 
+    executed after an active completes`,
     done => {
         const provider = tileProvider(1)
         const request1 = new BlockingRequest('request1')
@@ -45,7 +49,11 @@ test('With max concurrent requests, a request is only executed after an active c
     }
 )
 
-test('With max concurrent requests, a request from provider with fewer active requests is immediately executed, and last request from provider with more active requests is canceled',
+test(
+    `With max concurrent requests, a request from provider 
+    with fewer active requests is immediately executed, 
+    and last request from provider with more active 
+    requests is canceled`,
     done => {
         const provider1 = tileProvider(2)
         const request1 = new BlockingRequest('request1')
@@ -80,7 +88,9 @@ test('With max concurrent requests, a request from provider with fewer active re
     }
 )
 
-test('With max concurrent requests, a visible request is immediately executed, and a hidden request is canceled',
+test(
+    `With max concurrent requests, a visible request is 
+    immediately executed, and a hidden request is canceled`,
     done => {
         const provider1 = tileProvider(1)
         provider1.hide(true)
@@ -107,7 +117,11 @@ test('With max concurrent requests, a visible request is immediately executed, a
     }
 )
 
-test('With max concurrent request from a hidden provider and a pending hidden from another, when pending request provider is shown, request becomes active and the other cancels',
+test(
+    `With max concurrent request from a hidden provider and 
+    a pending hidden from another, when pending request 
+    provider is shown, request becomes active 
+    and the other cancels`,
     done => {
         const provider1 = tileProvider(1)
         provider1.hide(true)
