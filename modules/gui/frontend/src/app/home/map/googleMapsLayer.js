@@ -61,29 +61,30 @@ class GoogleMapsLayer {
         this.alt = undefined
         this.projection = undefined
         this.radius = undefined
+        this.tileElementById = {}
     }
 
     getTile({x, y}, zoom, doc) {
         const tileRequest = this._toTileRequest({x, y, zoom, minZoom: this.minZoom, doc})
+        const tileElement = tileRequest.element
+        this.tileElementById[tileElement.id] = tileElement
         if (tileRequest.outOfBounds)
-            return tileRequest.element
+            return tileElement
 
         const tile$ = this.tileProvider.loadTile$(tileRequest)
         // TODO: Error handling
-        tile$.subscribe(blob => renderImageBlob(tileRequest.element, blob))
-        return tileRequest.element
+        tile$.subscribe(blob => renderImageBlob(tileElement, blob))
+        return tileElement
     }
 
     releaseTile(tileElement) {
+        delete this.tileElementById[tileElement.id]
         this.tileProvider.releaseTile(tileElement.id)
     }
 
     setOpacity(opacity) {
-        // TODO: Implement?
-        // this.opacity = opacity
-        // this.tilesById.forEach(function(tile) {
-        //     goog.style.setOpacity(tile.div, this.opacity)
-        // }, this)
+        Object.values(this.tileElementById)
+            .forEach(tileElement => tileElement.style.opacity = opacity)
     }
 
     close() {
