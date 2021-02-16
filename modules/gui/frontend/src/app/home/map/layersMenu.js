@@ -256,7 +256,7 @@ const policy = () => ({
 export const LayersMenu = compose(
     _LayersMenu,
     form({fields, mapStateToProps}),
-    activatable({id: 'layersMenu', policy})
+    activatable({id: 'layersMenu', policy, alwaysAllow: true})
 )
 
 const sequence = (start, end, step = 1) =>
