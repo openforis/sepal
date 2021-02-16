@@ -10,7 +10,7 @@ const stats = {
 }
 
 export const getTileManager = tileProvider => {
-    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, hidden$} = getTileManagerGroup(tileProvider)
+    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancel, hidden$} = getTileManagerGroup(tileProvider)
     
     const tileProviderId = uuid()
 
@@ -28,7 +28,7 @@ export const getTileManager = tileProvider => {
         stats.in++
         const response$ = new ReplaySubject()
         const cancel$ = new Subject()
-        submit({tileProviderId, request, response$, cancel$})
+        submit({tileProviderId, requestId: request.id, request, response$, cancel$})
         return response$.pipe(
             first(),
             tap(() => stats.out++),
@@ -40,11 +40,11 @@ export const getTileManager = tileProvider => {
     }
 
     const releaseTile = requestId => {
-        console.log(`Release tile id: ${requestId}`)
+        cancel(requestId)
     }
 
     const hide = hidden => {
-        hidden$.next({tileProviderId, hidden})
+        hidden(tileProviderId, hidden)
     }
 
     const close = () => {

@@ -36,5 +36,15 @@ export const getRequestQueue = () => {
         return null
     }
 
-    return {isEmpty, enqueue, dequeueNormal, dequeuePriority}
+    const remove = requestId => {
+        if (requestId) {
+            const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
+            if (index !== -1) {
+                const [pendingRequest] = pendingRequests.splice(index, 1)
+                console.log(`Removed ${requestTag(pendingRequest)}, pending: ${getCount()}`)
+            }
+        }
+    }
+
+    return {isEmpty, enqueue, dequeueNormal, dequeuePriority, remove}
 }

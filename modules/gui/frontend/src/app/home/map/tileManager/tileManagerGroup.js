@@ -1,7 +1,7 @@
 import {Subject} from 'rxjs'
 import {getRequestExecutor} from './requestExecutor'
 import {getRequestQueue} from './requestQueue'
-import {requestTag, tileProviderTag} from './tag'
+import {tileProviderTag} from './tag'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
 
@@ -10,6 +10,7 @@ const tileProviderGroups = {}
 const createTileManagerGroup = concurrency => {
     const tileProvidersInfo = {}
     const request$ = new Subject()
+    const cancel$ = new Subject()
     const hidden$ = new Subject()
     
     const requestQueue = getRequestQueue()
@@ -38,6 +39,12 @@ const createTileManagerGroup = concurrency => {
 
     const submit = currentRequest =>
         request$.next(currentRequest)
+
+    const cancel = requestId =>
+        cancel$.next(requestId)
+
+    const hidden = (tileProviderId, hidden) =>
+        hidden$.next({tileProviderId, hidden})
     
     request$.subscribe(
         ({tileProviderId, requestId = uuid(), request, response$, cancel$}) => {
@@ -76,15 +83,22 @@ const createTileManagerGroup = concurrency => {
             }
         }
     )
-    
-    // hidden$.subscribe(
-    //     ({tileProviderId, hidden}) => {
-    //         console.log(`Changing visibility of ${tileProviderId} to ${hidden ? 'hidden' : 'visible'}`)
-    //         getTileProviderInfo(tileProviderId).hidden = hidden
-    //     }
-    // )
 
-    return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, hidden$}
+    cancel$.subscribe(
+        requestId => {
+            requestQueue.remove(requestId)
+            requestExecutor.cancel(requestId)
+        }
+    )
+    
+    hidden$.subscribe(
+        ({tileProviderId, hidden}) => {
+            console.log(`Changing visibility of ${tileProviderId} to ${hidden ? 'hidden' : 'visible'}`)
+            // getTileProviderInfo(tileProviderId).hidden = hidden
+        }
+    )
+
+    return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancel, hidden}
 }
 
 export const getTileManagerGroup = tileProvider => {

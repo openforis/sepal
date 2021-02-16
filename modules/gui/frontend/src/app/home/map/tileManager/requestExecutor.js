@@ -48,10 +48,10 @@ export const getRequestExecutor = concurrency => {
     }
 
     const cancelMostRecentByTileProviderId = (tileProviderId, replacementRequest) => {
-        const {cancel$} = getMostRecentByTileProviderId(tileProviderId)
-        if (cancel$) {
+        const request = getMostRecentByTileProviderId(tileProviderId)
+        if (request) {
             console.log(`Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
-            cancel$.next(replacementRequest)
+            request.cancel$.next(replacementRequest)
         } else {
             console.warn(`Could not cancel request handler ${tileProviderTag(tileProviderId)}`)
         }
@@ -66,9 +66,9 @@ export const getRequestExecutor = concurrency => {
     }
 
     const notify = ({tileProviderId, requestId}) => {
-        // if tileProviderId has no active requests, see what's the tileProvider with
-        // the highest number of active requests and cancel the most recent one
         if (getCount()) {
+            // if tileProviderId has not enough active requests, look for the tileProvider with
+            // the highest number of active requests and cancel the most recent one
             const maxActive = getMaxActive()
             const activeCount = getCount(tileProviderId)
             const threshold = maxActive.count - 1
@@ -76,6 +76,13 @@ export const getRequestExecutor = concurrency => {
                 console.log(`Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount}`)
                 cancelMostRecentByTileProviderId(maxActive.tileProviderId, {tileProviderId, requestId})
             }
+        }
+    }
+
+    const cancel = requestId => {
+        const request = activeRequests[requestId]
+        if (request) {
+            request.cancel$.next()
         }
     }
 
@@ -92,7 +99,7 @@ export const getRequestExecutor = concurrency => {
                         finishInfo.replacementRequest = replacementRequest
                         console.log(`Cancelled ${requestTag({tileProviderId, requestId})} for replacement with ${requestTag(replacementRequest)}`)
                     } else {
-                        console.log(`Cancelled ${requestTag({tileProviderId, requestId})} by unsubscription`)
+                        console.log(`Cancelled ${requestTag({tileProviderId, requestId})}`)
                     }
                 })
             )),
@@ -112,5 +119,5 @@ export const getRequestExecutor = concurrency => {
         })
     }
     
-    return {isAvailable, execute, notify, started$, finished$}
+    return {isAvailable, execute, notify, cancel, started$, finished$}
 }
