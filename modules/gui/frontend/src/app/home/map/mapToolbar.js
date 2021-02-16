@@ -58,8 +58,6 @@ class MapToolbar extends React.Component {
                         id='layersMenu'
                         icon='layer-group'
                         tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}/>
-                    {/* <MapLayout/>
-                    <MapLayoutButton/> */}
                     {children}
                 </Toolbar>
                 <Keybinding disabled={!zooming} keymap={{Escape: () => sepalMap.cancelZoomArea()}}/>
