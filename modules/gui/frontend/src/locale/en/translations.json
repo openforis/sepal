@@ -1488,6 +1488,8 @@
         "tilesFailed": "{failed} failed"
       },
       "sceneAreas": {
+        "label": "Scene areas",
+        "description": "Manually select individual scenes to include in mosaic",
         "error": "Failed to load scene areas",
         "loading": "Loading scene areas..."
       }

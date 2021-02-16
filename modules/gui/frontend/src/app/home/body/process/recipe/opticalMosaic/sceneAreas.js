@@ -107,7 +107,7 @@ class SceneAreas extends React.Component {
             destroy$: componentWillUnmount$
         })
     }
-    
+
     loadSceneAreas(aoi, source) {
         this.loadSceneArea$.next()
         this.recipeActions.setSceneAreas(null).dispatch()
@@ -152,6 +152,9 @@ export default compose(
 class SceneAreaLayer {
     constructor(component) {
         this.component = component
+        this.toggleable = true
+        this.label = msg('process.mosaic.sceneAreas.label')
+        this.description = msg('process.mosaic.sceneAreas.description')
     }
 
     equals(o) {
@@ -168,8 +171,10 @@ class SceneAreaLayer {
             this.component.setState({show: false})
     }
 
-    hide() {
-        this.removeFromMap()
+    hide(hidden) {
+        hidden
+            ? this.removeFromMap()
+            : this.addToMap()
     }
 
     initialize$() {

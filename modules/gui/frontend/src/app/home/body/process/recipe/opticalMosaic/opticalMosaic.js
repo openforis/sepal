@@ -15,7 +15,6 @@ import React from 'react'
 import SceneAreas from './sceneAreas'
 import SceneDeselection from './sceneDeselection'
 import SceneSelection from './sceneSelection'
-import ShowSceneAreaToggle from 'app/home/body/process/recipe/opticalMosaic/showSceneAreaToggle'
 import styles from './opticalMosaic.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -39,9 +38,7 @@ class _Mosaic extends React.Component {
             <SectionLayout>
                 <Content>
                     <div className={styles.mosaic}>
-                        <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}>
-                            <ShowSceneAreaToggle/>
-                        </MapToolbar>
+                        <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
                         <MapScale/>
                         <MosaicToolbar/>
                         {initialized
