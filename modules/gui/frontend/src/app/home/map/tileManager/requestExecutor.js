@@ -10,7 +10,7 @@ export const getRequestExecutor = concurrency => {
     const state = {
         activeRequests: {},
         activeRequestCount: {},
-        hidden: false
+        hidden: {}
     }
 
     const getCount = tileProviderId =>
