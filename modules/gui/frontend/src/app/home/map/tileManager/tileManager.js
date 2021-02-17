@@ -10,7 +10,7 @@ const stats = {
 }
 
 export const getTileManager = tileProvider => {
-    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancel, hidden$} = getTileManagerGroup(tileProvider)
+    const {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancel, hidden} = getTileManagerGroup(tileProvider)
     
     const tileProviderId = uuid()
 
@@ -43,8 +43,8 @@ export const getTileManager = tileProvider => {
         cancel(requestId)
     }
 
-    const hide = hidden => {
-        hidden(tileProviderId, hidden)
+    const hide = isHidden => {
+        hidden(tileProviderId, isHidden)
     }
 
     const close = () => {

@@ -11,7 +11,6 @@ const createTileManagerGroup = concurrency => {
     const tileProvidersInfo = {}
     const request$ = new Subject()
     const cancel$ = new Subject()
-    const hidden$ = new Subject()
     
     const requestQueue = getRequestQueue()
     const requestExecutor = getRequestExecutor(concurrency)
@@ -43,8 +42,10 @@ const createTileManagerGroup = concurrency => {
     const cancel = requestId =>
         cancel$.next(requestId)
 
-    const hidden = (tileProviderId, hidden) =>
-        hidden$.next({tileProviderId, hidden})
+    const hidden = (tileProviderId, hidden) => {
+        requestExecutor.hidden(tileProviderId, hidden)
+        requestQueue.scan(({tileProviderId, requestId}) => requestExecutor.notify({tileProviderId, requestId}))
+    }
     
     request$.subscribe(
         ({tileProviderId, requestId = uuid(), request, response$, cancel$}) => {
@@ -91,12 +92,12 @@ const createTileManagerGroup = concurrency => {
         }
     )
     
-    hidden$.subscribe(
-        ({tileProviderId, hidden}) => {
-            console.log(`Changing visibility of ${tileProviderId} to ${hidden ? 'hidden' : 'visible'}`)
-            // getTileProviderInfo(tileProviderId).hidden = hidden
-        }
-    )
+    // hidden$.subscribe(
+    //     ({tileProviderId, hidden}) => {
+    //         console.log(`Changing visibility of ${tileProviderId} to ${hidden ? 'hidden' : 'visible'}`)
+    //         // getTileProviderInfo(tileProviderId).hidden = hidden
+    //     }
+    // )
 
     return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancel, hidden}
 }

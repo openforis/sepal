@@ -4,25 +4,28 @@ import {requestTag, tileProviderTag} from './tag'
 import _ from 'lodash'
 
 export const getRequestExecutor = concurrency => {
-    const activeRequests = {}
-    const activeRequestCount = {}
-
     const started$ = new Subject()
     const finished$ = new Subject()
 
+    const state = {
+        activeRequests: {},
+        activeRequestCount: {},
+        hidden: false
+    }
+
     const getCount = tileProviderId =>
         tileProviderId
-            ? activeRequestCount[tileProviderId] || 0
-            : Object.keys(activeRequests).length
+            ? state.activeRequestCount[tileProviderId] || 0
+            : Object.keys(state.activeRequests).length
 
     const setCount = (tileProviderId, count) =>
-        activeRequestCount[tileProviderId] = count
+        state.activeRequestCount[tileProviderId] = count
 
     const isAvailable = () =>
         getCount() < concurrency
     
     const start = ({tileProviderId, requestId, request, response$, cancel$}) => {
-        activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
+        state.activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
         const activeRequestCountByTileProviderId = getCount(tileProviderId) + 1
         setCount(tileProviderId, activeRequestCountByTileProviderId)
         console.log(`Started ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
@@ -30,60 +33,46 @@ export const getRequestExecutor = concurrency => {
     }
     
     const finish = ({tileProviderId, requestId, currentRequest, replacementRequest}) => {
-        delete activeRequests[requestId]
+        delete state.activeRequests[requestId]
         const activeRequestCountByTileProviderId = getCount(tileProviderId) - 1
         setCount(tileProviderId, activeRequestCountByTileProviderId)
         console.log(`Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
         finished$.next({tileProviderId, requestId, currentRequest, replacementRequest})
     }
 
-    const getMostRecentByTileProviderId = tileProviderId => {
-        const mostRecent = _(activeRequests)
+    const getMostRecentByTileProviderId = (tileProviderId, excludeCount) => {
+        const mostRecent = _(state.activeRequests)
             .pickBy(requestHandler => requestHandler.tileProviderId === tileProviderId)
             .values()
             .sortBy('timestamp')
-            .tail() // exclude first, to keep at least one
+            // .tail() // exclude first, to keep at least one
+            .slice(excludeCount) // keep a minimum of excludeCount
             .last() // get most recent of the remaining ones
         return mostRecent
     }
 
-    const cancelMostRecentByTileProviderId = (tileProviderId, replacementRequest) => {
+    const cancelMostRecentByTileProviderId = (tileProviderId, replacementRequest, excludeCount) => {
         const request = getMostRecentByTileProviderId(tileProviderId)
         if (request) {
             console.log(`Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
             request.cancel$.next(replacementRequest)
-        } else {
-            console.warn(`Could not cancel request handler ${tileProviderTag(tileProviderId)}`)
+            return true
         }
+        console.warn(`Could not cancel request handler ${tileProviderTag(tileProviderId)}`)
+        return false
     }
 
-    const getMaxActive = () => {
-        const [tileProviderId, count] = _(activeRequestCount)
+    const getMaxActive = filter => {
+        const maxActive = _(state.activeRequestCount)
             .toPairs()
+            .filter(([tileProviderId, _count]) => isHidden(tileProviderId) === filter.hidden)
             .sortBy(([_tileProviderId, count]) => count)
             .last()
-        return {tileProviderId, count}
-    }
-
-    const notify = ({tileProviderId, requestId}) => {
-        if (getCount()) {
-            // if tileProviderId has not enough active requests, look for the tileProvider with
-            // the highest number of active requests and cancel the most recent one
-            const maxActive = getMaxActive()
-            const activeCount = getCount(tileProviderId)
-            const threshold = maxActive.count - 1
-            if (activeCount < threshold) {
-                console.log(`Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount}`)
-                cancelMostRecentByTileProviderId(maxActive.tileProviderId, {tileProviderId, requestId})
-            }
+        if (maxActive) {
+            const [tileProviderId, count] = maxActive
+            return {tileProviderId, count}
         }
-    }
-
-    const cancel = requestId => {
-        const request = activeRequests[requestId]
-        if (request) {
-            request.cancel$.next()
-        }
+        return null
     }
 
     const execute = (tileProvider, currentRequest) => {
@@ -118,6 +107,48 @@ export const getRequestExecutor = concurrency => {
             }
         })
     }
+
+    const isHidden = tileProviderId =>
+        !!(state.hidden[tileProviderId])
+
+    const tryCancelHidden = replacementRequest => {
+        const maxActive = getMaxActive({hidden: true})
+        if (maxActive) {
+            return cancelMostRecentByTileProviderId(maxActive.tileProviderId, replacementRequest, 0)
+        }
+        return false
+    }
     
-    return {isAvailable, execute, notify, cancel, started$, finished$}
+    const tryCancelUnbalanced = replacementRequest => {
+        const maxActive = getMaxActive({hidden: false})
+        if (maxActive) {
+            const {tileProviderId} = replacementRequest
+            const activeCount = getCount(tileProviderId)
+            const threshold = maxActive.count - 1
+            if (activeCount < threshold) {
+                console.log(`Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount}`)
+                return cancelMostRecentByTileProviderId(maxActive.tileProviderId, replacementRequest, 1)
+            }
+        }
+        return false
+    }
+
+    const notify = ({tileProviderId, requestId}) => {
+        if (getCount() && !isHidden(tileProviderId)) {
+            tryCancelHidden({tileProviderId, requestId}) || tryCancelUnbalanced({tileProviderId, requestId})
+        }
+    }
+
+    const cancel = requestId => {
+        const request = state.activeRequests[requestId]
+        if (request) {
+            request.cancel$.next()
+        }
+    }
+
+    const hidden = (tileProviderId, hidden) => {
+        state.hidden[tileProviderId] = hidden
+    }
+
+    return {isAvailable, execute, notify, cancel, hidden, started$, finished$}
 }

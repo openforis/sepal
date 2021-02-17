@@ -46,5 +46,8 @@ export const getRequestQueue = () => {
         }
     }
 
-    return {isEmpty, enqueue, dequeueNormal, dequeuePriority, remove}
+    const scan = callback =>
+        pendingRequests.forEach(callback)
+
+    return {isEmpty, enqueue, dequeueNormal, dequeuePriority, remove, scan}
 }
