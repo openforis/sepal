@@ -1,5 +1,5 @@
-import {Subject, pipe, range, throwError, timer, zip} from 'rxjs'
-import {filter, map, mergeMap, retryWhen, takeUntil} from 'rxjs/operators'
+import {Subject, of, pipe, range, throwError, timer, zip} from 'rxjs'
+import {filter, map, mergeMap, retryWhen, switchMap, takeUntil} from 'rxjs/operators'
 import {get$} from 'http-client'
 import {getTileManager} from './tileManager/tileManager'
 import {v4 as uuid} from 'uuid'
@@ -282,11 +282,13 @@ class RetryingTileManager extends DelegatingTileProvider {
     }
 
     loadTile$(tileRequest) {
-        return super.loadTile$(tileRequest).pipe(
-            retry(this.retries)
+        return of(true).pipe(
+            switchMap(() => super.loadTile$(tileRequest)),
+            retry(this.retries, {description: tileRequest.id}),
         )
     }
 }
+
 const renderImageBlob = (element, blob) =>
     element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
 
@@ -299,12 +301,11 @@ const retry = (maxRetries, {minDelay = 500, maxDelay = 30000, exponentiality = 2
             mergeMap(
                 ([error, retry]) => {
                     if (retry > maxRetries) {
-                        console.log('retry > maxRetries', retry, maxRetries)
                         return throwError(error)
                     } else {
                         const exponentialBackoff = Math.pow(exponentiality, retry) * minDelay
                         const cappedExponentialBackoff = Math.min(exponentialBackoff, maxDelay)
-                        console.log(`Retrying ${description ? `${description} ` : ''}(${retry}/${maxRetries}) in ${cappedExponentialBackoff}ms after error: ${error}`)
+                        console.error(`Retrying ${description ? `${description} ` : ''}(${retry}/${maxRetries}) in ${cappedExponentialBackoff}ms after error: ${error}`)
                         return timer(cappedExponentialBackoff)
                     }
                 }
