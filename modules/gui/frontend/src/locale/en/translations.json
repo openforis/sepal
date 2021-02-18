@@ -883,7 +883,7 @@
         "label": "Classification",
         "description": "Preview of classification, generated on the fly by EE.",
         "initializing": "Loading preview...",
-        "loading": "Loaded {loaded} of {count} tiles",
+        "loading": "Loading tiles: {pending}",
         "tilesFailed": "{failed} failed"
       },
       "bands": {
@@ -1484,7 +1484,7 @@
         "description": "Preview of optical mosaic, generated on the fly by EE.",
         "error": "Failed to create preview",
         "initializing": "Loading preview...",
-        "loading": "Loaded {loaded} of {count} tiles",
+        "loading": "Loading tiles: {pending}",
         "tilesFailed": "{failed} failed"
       },
       "sceneAreas": {
@@ -2245,7 +2245,7 @@
         "label": "CCDC slice",
         "description": "Preview of a CCDC slice, generated on the fly by EE.",
         "initializing": "Loading preview...",
-        "loading": "Loaded {loaded} of {count} tiles",
+        "loading": "Loading tiles: {pending}",
         "tilesFailed": "{failed} failed",
         "error": "Failed to generate preview"
       }

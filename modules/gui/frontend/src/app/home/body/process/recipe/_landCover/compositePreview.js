@@ -65,7 +65,7 @@ class CompositePreview extends React.Component {
             return (
                 <MapStatus
                     loading={!tiles.complete}
-                    message={msg('process.classification.preview.loading', {loaded: tiles.loaded, count: tiles.count})}
+                    message={msg('process.classification.preview.loading', {pending: tiles.pending})}
                     error={tiles.failed ? msg('process.classification.preview.tilesFailed', {failed: tiles.failed}) : error}/>
             )
         else

@@ -21,9 +21,9 @@ export default class EarthEngineLayer {
     }
 
     addToMap() {
-        const {mapContext, layerIndex, mapId, token, urlTemplate} = this
+        const {mapContext, layerIndex, mapId, token, urlTemplate, progress$} = this
         const tileProvider = new EarthEngineTileProvider({mapId, token, urlTemplate})
-        this.layer = TileLayer({mapContext, tileProvider, layerIndex})
+        this.layer = TileLayer({mapContext, tileProvider, layerIndex, progress$})
         this.layer.add()
         // TODO: Do something about progress$
     }

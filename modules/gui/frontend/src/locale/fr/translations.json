@@ -348,7 +348,7 @@
             "preview": {
                 "error": "Echec de la prévisualisation",
                 "initializing": "Chargement de la prévisualisation...",
-                "loading": "{loaded} tuile(s) chargée(s) parmi {count}",
+                "loading": "Chargement de tuiles: {pending}",
                 "tilesFailed": "Echec de {failed}"
             }
         },
@@ -791,7 +791,7 @@
             "preview": {
                 "error": "Echec de la prévisualisation",
                 "initializing": "Chargement de la prévisualisation",
-                "loading": "{loaded} tuiles parmi {count} ont été chargées",
+                "loading": "Chargement de tuiles: {pending}",
                 "tilesFailed": "Echec de {failed}"
             },
             "sceneAreas": {

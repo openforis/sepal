@@ -1,5 +1,5 @@
 import {Subject, of, pipe, range, throwError, timer, zip} from 'rxjs'
-import {filter, map, mergeMap, retryWhen, switchMap, takeUntil} from 'rxjs/operators'
+import {filter, finalize, map, mergeMap, retryWhen, scan, switchMap, takeUntil} from 'rxjs/operators'
 import {get$} from 'http-client'
 import {getTileManager} from './tileManager/tileManager'
 import {v4 as uuid} from 'uuid'
@@ -10,9 +10,10 @@ export const TileLayer = ({
     tileProvider,
     mapContext,
     minZoom = 0,
-    maxZoom = 20
+    maxZoom = 20,
+    progress$
 }) => {
-    const mapLayer = new GoogleMapsLayer(tileProvider, {mapContext, minZoom, maxZoom})
+    const mapLayer = new GoogleMapsLayer(tileProvider, {mapContext, minZoom, maxZoom}, progress$)
     return {
         add() {
             mapContext.googleMap.overlayMapTypes.setAt(layerIndex, mapLayer)
@@ -43,14 +44,16 @@ class GoogleMapsLayer {
         name,
         minZoom = 0,
         maxZoom = 20,
-    } = {}) {
+    } = {}, progress$) {
         this.tileProvider =
-            new RetryingTileManager(3,
-                new PrioritizingTileProvider(
-                    new CancellingTileProvider(
-                        tileProvider
+            new MonitoringTileProvider(
+                new RetryingTileManager(3,
+                    new PrioritizingTileProvider(
+                        new CancellingTileProvider(
+                            tileProvider
+                        )
                     )
-                )
+                ), progress$
             )
         this.name = name
         this.minZoom = minZoom
@@ -172,6 +175,42 @@ export class DelegatingTileProvider extends TileProvider {
 
     close() {
         this.nextTileProvider.close()
+    }
+}
+
+export class MonitoringTileProvider extends DelegatingTileProvider {
+    constructor(nextTileProvider, progress$) {
+        super()
+        this.nextTileProvider = nextTileProvider
+        this.requestById = {}
+        this.pending$ = new Subject()
+        this.pending$.pipe(
+            scan((pending, current) => pending += current)
+        ).subscribe(
+            pending => progress$ && progress$.next({loading: pending})
+        )
+    }
+
+    addRequest(requestId) {
+        this.requestById[requestId] = Date.now()
+        this.pending$.next(1)
+    }
+
+    removeRequest(requestId) {
+        delete this.requestById[requestId]
+        this.pending$.next(-1)
+    }
+
+    loadTile$(tileRequest) {
+        const requestId = tileRequest.id
+        this.addRequest(requestId)
+        return this.nextTileProvider.loadTile$(tileRequest).pipe(
+            finalize(() => this.removeRequest(requestId))
+        )
+    }
+
+    releaseTile(tileElement) {
+        return this.nextTileProvider.releaseTile(tileElement)
     }
 }
 

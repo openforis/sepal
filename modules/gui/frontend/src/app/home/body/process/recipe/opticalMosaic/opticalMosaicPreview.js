@@ -46,7 +46,7 @@ class OpticalMosaicPreview extends React.Component {
         return (
             <MapStatus
                 loading={!tiles.complete}
-                message={msg(`process.${LABEL}.preview.loading`, {loaded: tiles.loaded, count: tiles.count})}
+                message={msg(`process.${LABEL}.preview.loading`, {pending: tiles.loading})}
                 error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
         )
     }
@@ -59,7 +59,7 @@ class OpticalMosaicPreview extends React.Component {
         if (initializing) {
             return this.renderInitializing()
         }
-        if (tiles && !tiles.complete) {
+        if (tiles && tiles.loading) {
             return this.renderLoading()
         }
         return null
@@ -106,9 +106,15 @@ class OpticalMosaicPreview extends React.Component {
         sepalMap.hideLayer('preview', this.isHidden(recipe))
     }
 
+    // componentWillUnmount() {
+    //     const {mapContext: {sepalMap}} = this.props
+    //     // sepalMap.removeLayer('preview')
+    // }
+
     // common code above
 
     updateLayer(previewRequest) {
+        // console.log('updateLayer', previewRequest)
         const {mapContext, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
