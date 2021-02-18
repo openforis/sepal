@@ -54,6 +54,8 @@ const mapStateToProps = (_state, {recipePath}) => {
 
 class _Map extends React.Component {
     layerById = {}
+    hiddenLayerById = {}
+
     updateBounds$ = new Subject()
     requestBounds$ = new Subject()
 
@@ -75,7 +77,7 @@ class _Map extends React.Component {
         mapId: null,
         mapContext: null,
         zooming: false,
-        metersPerPixel: null,
+        metersPerPixel: null
     }
 
     // Linking
@@ -275,9 +277,16 @@ class _Map extends React.Component {
     // used by MANY
     hideLayer(id, hidden) {
         const layer = this.getLayer(id)
+        this.hiddenLayerById[id] = hidden
         if (layer) {
             layer.hide(hidden)
         }
+    }
+
+    setVisibiliy(visible) {
+        _.forEach(this.layerById, (layer, id) =>
+            layer.hide(visible ? this.hiddenLayerById[id] : true)
+        )
     }
 
     // used by MANY
@@ -413,7 +422,7 @@ class _Map extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {createMapContext}, single} = this.props
+        const {mapsContext: {createMapContext}, single, onEnable, onDisable} = this.props
         const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, requestBounds} = createMapContext(this.map.current)
 
         const sepalMap = {
@@ -449,6 +458,9 @@ class _Map extends React.Component {
             clearClickListeners: this.clearClickListeners.bind(this),
             toggleLinked: this.toggleLinked.bind(this)
         }
+
+        onEnable(() => this.setVisibiliy(true))
+        onDisable(() => this.setVisibiliy(false))
 
         this.setState({mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () => {
             this.subscribe({bounds$, updateBounds, requestBounds})
