@@ -1,4 +1,5 @@
-import {EarthEngineTileProvider, TileLayer} from './googleMapsLayer'
+import {EarthEngineTileProvider} from './tileProvider/earthEngineTileProvider'
+import {TileLayer} from './googleMaps/googleMapsLayer'
 import {mapTo, tap} from 'rxjs/operators'
 import {of} from 'rxjs'
 import _ from 'lodash'
