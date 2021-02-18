@@ -202,18 +202,23 @@ class _LayersMenu extends React.Component {
         const prevOverlayIndex = this.selectedMapOverlayIndex()
         if (selectedOverlayIndex !== prevOverlayIndex) {
             const prevOverlay = mapOverlays.find(layer => layer.layerIndex === prevOverlayIndex)
-            prevOverlay && prevOverlay.hide(true)
+            prevOverlay && this.hideLayer(prevOverlay, true)
         }
 
         const selectedOverlay = mapOverlays.find(layer => layer.layerIndex === selectedOverlayIndex)
         const hide = prevOverlayIndex === selectedOverlayIndex
-        selectedOverlay && selectedOverlay.hide(hide)
+        selectedOverlay && this.hideLayer(selectedOverlay, hide)
         const nextOverlayIndex = hide ? -1 : selectedOverlayIndex
 
         actionBuilder('SET_MAP_OVERLAY', {nextOverlayIndex})
             .set([statePath, 'mapOverlayIndex'], nextOverlayIndex)
             .build()
             .dispatch()
+    }
+
+    hideLayer(layer, hidden) {
+        const {mapContext: {sepalMap}} = this.props
+        sepalMap.hideLayer(layer.id, hidden)
     }
 
     getFeatureOverlayIds() {
