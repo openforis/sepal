@@ -27,7 +27,6 @@ export const TileLayer = ({
         },
 
         hide(hidden) {
-            tileProvider.hide(hidden)
             mapLayer.setOpacity(hidden ? 0 : 1)
         },
 
@@ -62,6 +61,7 @@ class GoogleMapsLayer {
         this.projection = undefined
         this.radius = undefined
         this.tileElementById = {}
+        this.opacity = 1
     }
 
     getTile({x, y}, zoom, doc) {
@@ -83,8 +83,11 @@ class GoogleMapsLayer {
     }
 
     setOpacity(opacity) {
-        Object.values(this.tileElementById)
-            .forEach(tileElement => tileElement.style.opacity = opacity)
+        if (this.opacity !== opacity) {
+            Object.values(this.tileElementById)
+                .forEach(tileElement => tileElement.style.opacity = opacity)
+            this.tileProvider.hide(!opacity)
+        }
     }
 
     close() {
@@ -210,6 +213,10 @@ class CancellingTileProvider extends TileProvider {
         this.nextTileProvider.releaseTile(requestId)
     }
 
+    hide(hidden) {
+        this.nextTileProvider.hide(hidden)
+    }
+
     close() {
         this.close$.next()
         this.nextTileProvider.close()
@@ -231,20 +238,14 @@ export class PrioritizingTileProvider extends TileProvider {
     }
 
     loadTile$(tileRequest) {
-        // TODO: Implement...
-        // Should enqueue request
         return this.tileManager.loadTile$(tileRequest)
     }
 
     releaseTile(requestId) {
-        // TODO: Implement...
-        // Should remove request from queue
         this.tileManager.releaseTile(requestId)
     }
 
     hide(hidden) {
-        // TODO: Implement...
-        // Should change priority for requests enqueued by provider
         this.tileManager.hide(hidden)
     }
 
