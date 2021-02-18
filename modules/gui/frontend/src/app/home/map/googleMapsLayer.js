@@ -1,5 +1,5 @@
-import {Subject} from 'rxjs'
-import {filter, map, takeUntil} from 'rxjs/operators'
+import {Subject, pipe, range, throwError, timer, zip} from 'rxjs'
+import {filter, map, mergeMap, retryWhen, takeUntil} from 'rxjs/operators'
 import {get$} from 'http-client'
 import {getTileManager} from './tileManager/tileManager'
 import {v4 as uuid} from 'uuid'
@@ -45,9 +45,11 @@ class GoogleMapsLayer {
         maxZoom = 20,
     } = {}) {
         this.tileProvider =
-            new PrioritizingTileProvider(
-                new CancellingTileProvider(
-                    tileProvider
+            new RetryingTileManager(3,
+                new PrioritizingTileProvider(
+                    new CancellingTileProvider(
+                        tileProvider
+                    )
                 )
             )
         this.name = name
@@ -142,6 +144,37 @@ export class TileProvider {
     }
 }
 
+export class DelegatingTileProvider extends TileProvider {
+    constructor(nextTileProvider) {
+        super()
+        this.nextTileProvider = nextTileProvider
+    }
+
+    getType() {
+        return this.nextTileProvider.getType()
+    }
+
+    getConcurrency() {
+        return this.nextTileProvider.getConcurrency()
+    }
+
+    loadTile$(tileRequest) {
+        return this.nextTileProvider.loadTile$(tileRequest)
+    }
+
+    releaseTile(tileElement) {
+        return this.nextTileProvider.releaseTile(tileElement)
+    }
+
+    hide(hidden) {
+        this.nextTileProvider.hide(hidden)
+    }
+
+    close() {
+        this.nextTileProvider.close()
+    }
+}
+
 export class EarthEngineTileProvider extends TileProvider {
     constructor({mapId, token, urlTemplate}) {
         super()
@@ -181,25 +214,16 @@ export class EarthEngineTileProvider extends TileProvider {
     }
 }
 
-class CancellingTileProvider extends TileProvider {
+class CancellingTileProvider extends DelegatingTileProvider {
     release$ = new Subject()
     close$ = new Subject()
 
     constructor(nextTileProvider) {
-        super()
-        this.nextTileProvider = nextTileProvider
-    }
-
-    getType() {
-        return this.nextTileProvider.getType()
-    }
-
-    getConcurrency() {
-        return this.nextTileProvider.getConcurrency()
+        super(nextTileProvider)
     }
 
     loadTile$(tileRequest) {
-        const tile$ = this.nextTileProvider.loadTile$(tileRequest)
+        const tile$ = super.loadTile$(tileRequest)
         const releaseTile$ = this.release$.pipe(
             filter(requestId => requestId === tileRequest.id)
         )
@@ -210,23 +234,19 @@ class CancellingTileProvider extends TileProvider {
     }
 
     releaseTile(requestId) {
+        super.releaseTile(requestId)
         this.release$.next(requestId)
-        this.nextTileProvider.releaseTile(requestId)
-    }
-
-    hide(hidden) {
-        this.nextTileProvider.hide(hidden)
     }
 
     close() {
+        super.close()
         this.close$.next()
-        this.nextTileProvider.close()
     }
 }
 
-export class PrioritizingTileProvider extends TileProvider {
+export class PrioritizingTileProvider extends DelegatingTileProvider {
     constructor(nextTileProvider) {
-        super()
+        super(nextTileProvider)
         this.tileManager = getTileManager(nextTileProvider)
     }
 
@@ -235,7 +255,7 @@ export class PrioritizingTileProvider extends TileProvider {
     }
 
     getConcurrency() {
-        return this.timeManager.getConcurrency()
+        return this.tileManager.getConcurrency()
     }
 
     loadTile$(tileRequest) {
@@ -255,5 +275,40 @@ export class PrioritizingTileProvider extends TileProvider {
     }
 }
 
+class RetryingTileManager extends DelegatingTileProvider {
+    constructor(retries, nextTileProvider) {
+        super(nextTileProvider)
+        this.retries = retries
+    }
+
+    loadTile$(tileRequest) {
+        return super.loadTile$(tileRequest).pipe(
+            retry(this.retries)
+        )
+    }
+}
 const renderImageBlob = (element, blob) =>
     element.innerHTML = `<img src="${(window.URL || window.webkitURL).createObjectURL(blob)}"/>`
+
+const retry = (maxRetries, {minDelay = 500, maxDelay = 30000, exponentiality = 2, description} = {}) => pipe(
+    retryWhen(error$ =>
+        zip(
+            error$,
+            range(1, maxRetries + 1)
+        ).pipe(
+            mergeMap(
+                ([error, retry]) => {
+                    if (retry > maxRetries) {
+                        console.log('retry > maxRetries', retry, maxRetries)
+                        return throwError(error)
+                    } else {
+                        const exponentialBackoff = Math.pow(exponentiality, retry) * minDelay
+                        const cappedExponentialBackoff = Math.min(exponentialBackoff, maxDelay)
+                        console.log(`Retrying ${description ? `${description} ` : ''}(${retry}/${maxRetries}) in ${cappedExponentialBackoff}ms after error: ${error}`)
+                        return timer(cappedExponentialBackoff)
+                    }
+                }
+            )
+        )
+    )
+)
