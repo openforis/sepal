@@ -87,6 +87,7 @@ class GoogleMapsLayer {
             Object.values(this.tileElementById)
                 .forEach(tileElement => tileElement.style.opacity = opacity)
             this.tileProvider.hide(!opacity)
+            this.opacity = opacity
         }
     }
 
