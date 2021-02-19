@@ -1098,6 +1098,10 @@
             "bounds": {
               "required": "Bounds are not loaded"
             },
+            "buffer": {
+              "label": "Buffer",
+              "info": "{buffer} km buffer"
+            },
             "country": {
               "area": {
                 "label": "Province/area",

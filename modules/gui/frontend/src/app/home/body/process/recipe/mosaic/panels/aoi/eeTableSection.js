@@ -10,6 +10,7 @@ import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {withRecipe} from 'app/home/body/process/recipeContext'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import api from 'api'
 
 const mapRecipeToProps = recipe => {
@@ -86,7 +87,7 @@ class _EETableSection extends React.Component {
             stream,
             columns,
             rows,
-            inputs: {eeTable, eeTableRowSelection, eeTableColumn, eeTableRow}
+            inputs: {eeTable, eeTableRowSelection, eeTableColumn, eeTableRow, buffer}
         } = this.props
         const columnState = stream('LOAD_EE_TABLE_COLUMNS').active
             ? 'loading'
@@ -130,6 +131,17 @@ class _EETableSection extends React.Component {
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.row.placeholder.${rowState}`)}
                     options={(rows || []).map(value => ({value, label: value}))}
                     errorMessage
+                />
+                <Form.Slider
+                    label={msg('process.mosaic.panel.areaOfInterest.form.buffer.label')}
+                    info={buffer => msg('process.mosaic.panel.areaOfInterest.form.buffer.info', {buffer})}
+                    input={buffer}
+                    minValue={0}
+                    maxValue={100}
+                    scale={'log'}
+                    ticks={[0, 1, 2, 5, 10, 20, 50, 100]}
+                    snap
+                    range='none'
                 />
             </React.Fragment>
         )
@@ -178,24 +190,28 @@ class _EETableSection extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {inputs: {eeTableRowSelection}} = this.props
+        const {inputs: {eeTableRowSelection, buffer}} = this.props
         if (!prevProps || prevProps.inputs !== this.props.inputs) {
             this.update()
         }
         if (!eeTableRowSelection.value) {
             eeTableRowSelection.set('FILTER')
         }
+        if (!_.isFinite(buffer.value)) {
+            buffer.set(0)
+        }
     }
 
     update() {
-        const {mapContext, inputs: {eeTable, eeTableColumn, eeTableRow}, componentWillUnmount$, layerIndex} = this.props
+        const {mapContext, inputs: {eeTable, eeTableColumn, eeTableRow, buffer}, componentWillUnmount$, layerIndex} = this.props
         setAoiLayer({
             mapContext,
             aoi: {
                 type: 'EE_TABLE',
                 id: eeTable.value,
                 keyColumn: eeTableColumn.value,
-                key: eeTableRow.value
+                key: eeTableRow.value,
+                buffer: buffer.value
             },
             fill: true,
             destroy$: componentWillUnmount$,

@@ -18,6 +18,7 @@ export const setAoiLayer = ({mapContext, aoi, fill, destroy$, onInitialized, lay
                 tableId: countryEETable,
                 columnName: 'id',
                 columnValue: aoi.areaCode || aoi.countryCode,
+                buffer: aoi.buffer,
                 layerIndex
             },
             destroy$,
@@ -31,6 +32,7 @@ export const setAoiLayer = ({mapContext, aoi, fill, destroy$, onInitialized, lay
                 tableId: aoi.id,
                 columnName: aoi.keyColumn,
                 columnValue: aoi.key,
+                buffer: aoi.buffer,
                 layerIndex
             },
             destroy$,

@@ -36,7 +36,9 @@ const fields = {
         .skip((_, {eeTableRowSelection}) => eeTableRowSelection === 'INCLUDE_ALL')
         .skip((value, {eeTableColumn}) => !eeTableColumn)
         .notBlank('process.mosaic.panel.areaOfInterest.form.eeTable.row.required'),
-
+    buffer: new Form.Field()
+        .skip((value, {section}) => !['EE_TABLE', 'COUNTRY'].includes(section))
+        .int(),
     polygon: new Form.Field()
         .skip((value, {section}) => section !== 'POLYGON')
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
@@ -137,7 +139,8 @@ const valuesToModel = values => {
             id: countryEETable,
             keyColumn: 'id',
             key: values.area || values.country,
-            level: values.area ? 'AREA' : 'COUNTRY'
+            level: values.area ? 'AREA' : 'COUNTRY',
+            buffer: values.buffer
         }
     case 'EE_TABLE':
         return {
@@ -145,7 +148,8 @@ const valuesToModel = values => {
             id: values.eeTable,
             keyColumn: values.eeTableRowSelection === 'FILTER' ? values.eeTableColumn : null,
             key: values.eeTableRowSelection === 'FILTER' ? values.eeTableRow : null,
-            bounds: values.bounds
+            bounds: values.bounds,
+            buffer: values.buffer
         }
     case 'POLYGON':
         return {
@@ -162,7 +166,8 @@ const modelToValues = (model = {}) => {
         if (model.id === countryEETable) // TODO: Add EE Table for countries
             return {
                 section: 'COUNTRY',
-                [model.level ? model.level.toLowerCase() : 'COUNTRY']: model.key
+                [model.level ? model.level.toLowerCase() : 'COUNTRY']: model.key,
+                buffer: model.buffer
             }
         else
             return {
@@ -170,7 +175,8 @@ const modelToValues = (model = {}) => {
                 eeTable: model.id,
                 eeTableColumn: model.keyColumn,
                 eeTableRow: model.key,
-                eeTableRowSelection: model.keyColumn ? 'FILTER' : 'INCLUDE_ALL'
+                eeTableRowSelection: model.keyColumn ? 'FILTER' : 'INCLUDE_ALL',
+                buffer: model.buffer
             }
     else if (model.type === 'POLYGON')
         return {

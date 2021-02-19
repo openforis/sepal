@@ -5,16 +5,15 @@ import api from 'api'
 
 export const setEETableLayer = ({
     mapContext,
-    layerSpec: {id, tableId, columnName, columnValue, layerIndex = 1},
+    layerSpec: {id, tableId, columnName, columnValue, buffer, layerIndex = 1},
     destroy$,
     onInitialized,
 }) => {
-
-    const watchedProps = {tableId, columnName, columnValue}
+    const watchedProps = {tableId, columnName, columnValue, buffer}
     const layer = tableId
         ? new RecipeGeometryLayer({
             mapContext,
-            mapId$: api.gee.eeTableMap$({tableId, columnName, columnValue, color: '#FFFFFF50', fillColor: '#FFFFFF08'}),
+            mapId$: api.gee.eeTableMap$({tableId, columnName, columnValue, buffer, color: '#FFFFFF50', fillColor: '#FFFFFF08'}),
             layerIndex,
             watchedProps
         }) : null

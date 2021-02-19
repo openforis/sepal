@@ -10,6 +10,7 @@ import {withMapContext} from 'app/home/map/mapContext'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
 
@@ -77,7 +78,7 @@ class _CountrySection extends React.Component {
     }
 
     render() {
-        const {stream, countries, countryAreas, inputs: {country, area}} = this.props
+        const {stream, countries, countryAreas, inputs: {country, area, buffer}} = this.props
         const loadCountries = stream('LOAD_COUNTRIES')
         const loadCountryAreas = stream('LOAD_COUNTRY_AREAS')
         const countriesState = loadCountries.active
@@ -118,6 +119,17 @@ class _CountrySection extends React.Component {
                     onChange={() => this.aoiChanged$.next()}
                     allowClear
                 />
+                <Form.Slider
+                    label={msg('process.mosaic.panel.areaOfInterest.form.buffer.label')}
+                    info={buffer => msg('process.mosaic.panel.areaOfInterest.form.buffer.info', {buffer})}
+                    input={buffer}
+                    minValue={0}
+                    maxValue={100}
+                    scale={'log'}
+                    ticks={[0, 1, 2, 5, 10, 20, 50, 100]}
+                    snap
+                    range='none'
+                />
             </Layout>
         )
     }
@@ -143,7 +155,7 @@ class _CountrySection extends React.Component {
     }
 
     update() {
-        const {mapContext, countries, stream, inputs: {country, area}, layerIndex} = this.props
+        const {mapContext, countries, stream, inputs: {country, area, buffer}, layerIndex} = this.props
         if (!countries && !stream('LOAD_COUNTRIES').active && !stream('LOAD_COUNTRIES').failed) {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),
@@ -159,12 +171,16 @@ class _CountrySection extends React.Component {
             aoi: {
                 type: 'COUNTRY',
                 countryCode: country.value,
-                areaCode: area.value
+                areaCode: area.value,
+                buffer: buffer.value
             },
             // destroy$: componentWillUnmount$,
             onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
             layerIndex
         })
+        if (!_.isFinite(buffer.value)) {
+            buffer.set(0)
+        }
     }
 }
 

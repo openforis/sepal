@@ -50,9 +50,9 @@ export default {
         get$('/api/gee/table/rows',
             {query: {tableId}, retries: 0}
         ).pipe(toResponse),
-    eeTableMap$: ({tableId, columnName, columnValue, color, fillColor}) =>
+    eeTableMap$: ({tableId, columnName, columnValue, buffer, color, fillColor}) =>
         get$('/api/gee/table/map',
-            {query: {tableId, columnName, columnValue, color, fillColor}}
+            {query: {tableId, columnName, columnValue, buffer, color, fillColor}}
         ).pipe(toResponse),
     queryEETable$: ({select, from, where, orderBy}) =>
         postJson$('/api/gee/table/query',
