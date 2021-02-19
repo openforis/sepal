@@ -54,6 +54,10 @@ class PolygonLayer {
         this.layer.setMap(null)
     }
 
+    hide(hidden) {
+        hidden ? this.removeFromMap() : this.addToMap()
+    }
+
     initialize$() {
         return of(this)
     }
