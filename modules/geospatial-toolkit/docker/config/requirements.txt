@@ -14,6 +14,8 @@ geopandas
 matplotlib
 pandas
 dask[complete]
+planet
+sphinx
 
 ########  Google Earthengine  ########
 oauth2client
