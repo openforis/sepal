@@ -1,8 +1,11 @@
 import {ReplaySubject, Subject} from 'rxjs'
 import {finalize, first, tap} from 'rxjs/operators'
+import {getLogger} from 'log'
 import {getTileManagerGroup} from './tileManagerGroup'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
+
+const log = getLogger('tileManager')
 
 const stats = {
     in: 0,
@@ -34,7 +37,7 @@ export const getTileManager = tileProvider => {
             tap(() => stats.out++),
             finalize(() => {
                 cancel$.next()
-                console.log(`Stats: in: ${stats.in}, out: ${stats.out}`)
+                log.trace(`Stats: in: ${stats.in}, out: ${stats.out}`)
             })
         )
     }
@@ -44,12 +47,10 @@ export const getTileManager = tileProvider => {
     }
 
     const hide = isHidden => {
-        console.log('TileManager.hide()', isHidden)
         hidden(tileProviderId, isHidden)
     }
 
     const close = () => {
-        console.log('*** CLOSE ***')
         removeTileProvider(tileProviderId)
     }
 

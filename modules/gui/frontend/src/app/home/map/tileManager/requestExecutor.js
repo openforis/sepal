@@ -1,10 +1,12 @@
 import {Subject} from 'rxjs'
 import {finalize, first, takeUntil, tap} from 'rxjs/operators'
+import {getLogger} from 'log'
 import {requestTag, tileProviderTag} from './tag'
 import _ from 'lodash'
 
+const log = getLogger('tileManager')
+
 export const getRequestExecutor = concurrency => {
-    const started$ = new Subject()
     const finished$ = new Subject()
 
     const state = {
@@ -28,16 +30,15 @@ export const getRequestExecutor = concurrency => {
         state.activeRequests[requestId] = {tileProviderId, requestId, request, response$, cancel$, timestamp: Date.now()}
         const activeRequestCountByTileProviderId = getCount(tileProviderId) + 1
         setCount(tileProviderId, activeRequestCountByTileProviderId)
-        console.log(`Started ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
-        started$.next({tileProviderId, requestId})
+        log.debug(`Started ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
     }
     
     const finish = ({tileProviderId, requestId, currentRequest, replacementRequest}) => {
         delete state.activeRequests[requestId]
         const activeRequestCountByTileProviderId = getCount(tileProviderId) - 1
         setCount(tileProviderId, activeRequestCountByTileProviderId)
-        console.log(`Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
-        finished$.next({tileProviderId, requestId, currentRequest, replacementRequest})
+        log.debug(`Finished ${requestTag({tileProviderId, requestId})}, active: ${activeRequestCountByTileProviderId}/${getCount()}`)
+        finished$.next({currentRequest, replacementRequest})
     }
 
     const getMostRecentByTileProviderId = (tileProviderId, excludeCount) => {
@@ -45,7 +46,6 @@ export const getRequestExecutor = concurrency => {
             .pickBy(requestHandler => requestHandler.tileProviderId === tileProviderId)
             .values()
             .sortBy('timestamp')
-            // .tail() // exclude first, to keep at least one
             .slice(excludeCount) // keep a minimum of excludeCount
             .last() // get most recent of the remaining ones
         return mostRecent
@@ -54,7 +54,7 @@ export const getRequestExecutor = concurrency => {
     const cancelMostRecentByTileProviderId = (tileProviderId, replacementRequest, excludeCount) => {
         const request = getMostRecentByTileProviderId(tileProviderId, excludeCount)
         if (request) {
-            console.log(`Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
+            log.debug(`Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
             request.cancel$.next(replacementRequest)
             return true
         }
@@ -86,9 +86,9 @@ export const getRequestExecutor = concurrency => {
                     if (replacementRequest) {
                         finishInfo.currentRequest = currentRequest
                         finishInfo.replacementRequest = replacementRequest
-                        console.log(`Cancelled ${requestTag({tileProviderId, requestId})} for replacement with ${requestTag(replacementRequest)}`)
+                        log.debug(`Cancelled ${requestTag({tileProviderId, requestId})} for replacement with ${requestTag(replacementRequest)}`)
                     } else {
-                        console.log(`Cancelled ${requestTag({tileProviderId, requestId})}`)
+                        log.debug(`Cancelled ${requestTag({tileProviderId, requestId})}`)
                     }
                 })
             )),
@@ -97,7 +97,7 @@ export const getRequestExecutor = concurrency => {
             ),
         ).subscribe({
             next: response => {
-                console.log(`Succeeded ${requestTag({tileProviderId, requestId})}`)
+                log.debug(`Succeeded ${requestTag({tileProviderId, requestId})}`)
                 response$.next(response)
                 response$.complete()
             },
@@ -126,7 +126,7 @@ export const getRequestExecutor = concurrency => {
             const activeCount = getCount(tileProviderId)
             const threshold = maxActive.count - 1
             if (activeCount < threshold) {
-                console.log(`Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount}`)
+                log.debug(`Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount}`)
                 return cancelMostRecentByTileProviderId(maxActive.tileProviderId, replacementRequest, 1)
             }
         }
@@ -150,5 +150,5 @@ export const getRequestExecutor = concurrency => {
         state.hidden[tileProviderId] = hidden
     }
 
-    return {isAvailable, execute, notify, cancel, hidden, started$, finished$}
+    return {isAvailable, execute, notify, cancel, hidden, finished$}
 }

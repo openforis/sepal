@@ -1,9 +1,12 @@
 import {Subject} from 'rxjs'
+import {getLogger} from 'log'
 import {getRequestExecutor} from './requestExecutor'
 import {getRequestQueue} from './requestQueue'
 import {tileProviderTag} from './tag'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
+
+const log = getLogger('tileManager')
 
 const tileProviderGroups = {}
 
@@ -28,12 +31,12 @@ const createTileManagerGroup = concurrency => {
             tileProvider,
             hidden: false
         }
-        console.log(`Added ${tileProviderTag(tileProviderId)}`)
+        log.debug(`Added ${tileProviderTag(tileProviderId)}`)
     }
     
     const removeTileProvider = tileProviderId => {
         delete tileProvidersInfo[tileProviderId]
-        console.log(`Removed ${tileProviderTag(tileProviderId)}`)
+        log.debug(`Removed ${tileProviderTag(tileProviderId)}`)
     }
 
     const submit = currentRequest =>
@@ -59,17 +62,11 @@ const createTileManagerGroup = concurrency => {
         }
     )
     
-    requestExecutor.started$.subscribe(
-        ({tileProviderId, requestId}) => {
-            // console.log(`** Started: ${requestTag({tileProviderId, requestId})}`)
-        }
-    )
-    
     requestExecutor.finished$.subscribe(
-        ({tileProviderId, requestId, currentRequest, replacementRequest}) => {
-            // console.log(`** Finished: ${requestTag({tileProviderId, requestId})}`)
+        ({currentRequest, replacementRequest}) => {
+            // log.debug(`** Finished: ${requestTag({tileProviderId, requestId})}`)
             if (requestQueue.isEmpty()) {
-                console.log('Pending request queue empty')
+                log.debug('Pending request queue empty')
             } else {
                 if (replacementRequest) {
                     const {tileProviderId, requestId, request, response$, cancel$} = requestQueue.dequeuePriority(replacementRequest.requestId)
@@ -92,13 +89,6 @@ const createTileManagerGroup = concurrency => {
         }
     )
     
-    // hidden$.subscribe(
-    //     ({tileProviderId, hidden}) => {
-    //         console.log(`Changing visibility of ${tileProviderId} to ${hidden ? 'hidden' : 'visible'}`)
-    //         // getTileProviderInfo(tileProviderId).hidden = hidden
-    //     }
-    // )
-
     return {getTileProviderInfo, addTileProvider, removeTileProvider, submit, cancel, hidden}
 }
 

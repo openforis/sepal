@@ -1,5 +1,8 @@
+import {getLogger} from 'log'
 import {requestTag} from './tag'
 import _ from 'lodash'
+
+const log = getLogger('tileManager')
 
 export const getRequestQueue = () => {
     const pendingRequests = []
@@ -14,12 +17,12 @@ export const getRequestQueue = () => {
     
     const enqueue = ({tileProviderId, requestId, request, response$, cancel$}) => {
         pendingRequests.push({tileProviderId, requestId, request, response$, cancel$})
-        console.log(`Enqueued ${requestTag({tileProviderId, requestId})}, pending: ${getCount()}`)
+        log.debug(`Enqueued ${requestTag({tileProviderId, requestId})}, pending: ${getCount()}`)
     }
 
     const dequeueNormal = () => {
         const pendingRequest = pendingRequests.shift()
-        console.log(`Dequeued (normal) ${requestTag(pendingRequest)}, pending: ${getCount()}`)
+        log.debug(`Dequeued (normal) ${requestTag(pendingRequest)}, pending: ${getCount()}`)
         return pendingRequest
     }
 
@@ -28,7 +31,7 @@ export const getRequestQueue = () => {
             const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
             if (index !== -1) {
                 const [pendingRequest] = pendingRequests.splice(index, 1)
-                console.log(`Dequeued (priority) ${requestTag(pendingRequest)}, pending: ${getCount()}`)
+                log.debug(`Dequeued (priority) ${requestTag(pendingRequest)}, pending: ${getCount()}`)
                 return pendingRequest
             }
         }
@@ -41,7 +44,7 @@ export const getRequestQueue = () => {
             const index = _.findIndex(pendingRequests, pendingRequest => pendingRequest.requestId === requestId)
             if (index !== -1) {
                 const [pendingRequest] = pendingRequests.splice(index, 1)
-                console.log(`Removed ${requestTag(pendingRequest)}, pending: ${getCount()}`)
+                log.debug(`Removed ${requestTag(pendingRequest)}, pending: ${getCount()}`)
             }
         }
     }
