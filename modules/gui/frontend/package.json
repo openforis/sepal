@@ -23,7 +23,6 @@
     "http-proxy-middleware": "^1.0.6",
     "jszip": "^3.6.0",
     "lodash": "4.17.21",
-    "log4js": "^6.3.0",
     "moment": "2.29.1",
     "pako": "^2.0.3",
     "papaparse": "^5.3.0",
