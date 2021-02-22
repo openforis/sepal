@@ -5,7 +5,6 @@ import {getDataSet} from 'sources'
 import {msg} from 'translate'
 import {selectFrom} from 'stateUtils'
 import {withRecipe} from 'app/home/body/process/recipeContext'
-import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import React from 'react'
 import daysBetween from './daysBetween'
@@ -42,13 +41,11 @@ class ScenePreview extends React.Component {
                         title={'Scene preview'}
                         label={id}/>
                     <Panel.Content>
-                        <Hammer onTap={() => this.closePreview()}>
-                            <div
-                                className={styles.thumbnail}
-                                style={{'backgroundImage': `url(${browseUrl})`}}>
-                                <img src={browseUrl} alt={id}/>
-                            </div>
-                        </Hammer>
+                        <div onClick={() => this.closePreview()}
+                            className={styles.thumbnail}
+                            style={{'backgroundImage': `url(${browseUrl})`}}>
+                            <img src={browseUrl} alt={id}/>
+                        </div>
                         <div className={styles.details}>
                             <LabelValue name='dataSet' value={getDataSet(dataSet).name} icon='satellite-dish'/>
                             <LabelValue name='date' value={date} icon='calendar'/>
