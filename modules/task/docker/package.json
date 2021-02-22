@@ -20,15 +20,15 @@
         "rx": "node_modules/shared/src/reexport/rx"
     },
     "dependencies": {
-        "@google-cloud/storage": "^5.7.3",
-        "commander": "^7.0.0",
+        "@google-cloud/storage": "^5.8.0",
+        "commander": "^7.1.0",
         "fast-crc32c": "^2.0.0",
-        "googleapis": "^67.0.0",
+        "googleapis": "^67.1.0",
         "moment": "^2.29.1",
         "shared": "../../../lib/js/shared"
     },
     "devDependencies": {
-        "eslint": "^7.18.0",
+        "eslint": "^7.20.0",
         "jest": "^26.6.3",
         "jest-expect-message": "^1.0.2",
         "link-module-alias": "^1.2.0"
