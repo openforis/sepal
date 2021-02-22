@@ -52,7 +52,7 @@ export const getRequestExecutor = concurrency => {
     }
 
     const cancelMostRecentByTileProviderId = (tileProviderId, replacementRequest, excludeCount) => {
-        const request = getMostRecentByTileProviderId(tileProviderId)
+        const request = getMostRecentByTileProviderId(tileProviderId, excludeCount)
         if (request) {
             console.log(`Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
             request.cancel$.next(replacementRequest)
