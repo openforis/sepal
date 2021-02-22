@@ -14,6 +14,7 @@ geopandas
 matplotlib
 pandas
 dask[complete]
+planet
 
 ########  Google Earthengine  ########
 oauth2client
