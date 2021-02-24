@@ -19,12 +19,14 @@ const argsJoiner = args =>
 
 const tag = (tag, ...args) => `${tag}<${argsJoiner(args)}>`
 
-const tileProviderTag = tileProviderId => tag('TileProvider', tileProviderId)
+const mapTag = mapId => tag('Map', mapId)
 
 const requestTag = ({tileProviderId, requestId}) => tag('Request', tileProviderId, requestId)
 
+const tileProviderTag = tileProviderId => tag('TileProvider', tileProviderId)
+
 module.exports = {
-    tag,
-    tileProviderTag,
-    requestTag
+    mapTag,
+    requestTag,
+    tileProviderTag
 }

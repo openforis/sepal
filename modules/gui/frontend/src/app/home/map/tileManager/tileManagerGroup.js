@@ -2,7 +2,7 @@ import {Subject} from 'rxjs'
 import {getLogger} from 'log'
 import {getRequestExecutor} from './requestExecutor'
 import {getRequestQueue} from './requestQueue'
-import {tileProviderTag} from './tag'
+import {tileProviderTag} from 'tag'
 import {v4 as uuid} from 'uuid'
 import _ from 'lodash'
 

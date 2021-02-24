@@ -1,7 +1,7 @@
 import {Subject} from 'rxjs'
 import {finalize, first, takeUntil, tap} from 'rxjs/operators'
 import {getLogger} from 'log'
-import {requestTag, tileProviderTag} from './tag'
+import {requestTag, tileProviderTag} from 'tag'
 import _ from 'lodash'
 
 const log = getLogger('tileManager')

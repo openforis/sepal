@@ -1,5 +1,5 @@
 import {getLogger} from 'log'
-import {requestTag} from './tag'
+import {requestTag} from 'tag'
 import _ from 'lodash'
 
 const log = getLogger('tileManager')
