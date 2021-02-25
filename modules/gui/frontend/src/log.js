@@ -19,7 +19,7 @@ const getLevel = (levelName = '') =>
 const isEnabled = (level, minLevel) =>
     level <= minLevel
 
-const log = (func, levelName, loggerName, args) =>
+const log = (func, levelName, loggerName, args = []) =>
     func(`[${new Date().toISOString()}]`, `[${levelName}]`, `${loggerName} -`, ...args)
 
 export const getLogger = name => {

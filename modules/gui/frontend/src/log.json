@@ -1,4 +1,6 @@
 {
     "default": "debug",
-    "tileManager": "debug"
+    "tileManager": "info",
+    "map": "info",
+    "maps": "info"
 }

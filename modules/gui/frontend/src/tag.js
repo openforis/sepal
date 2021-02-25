@@ -14,19 +14,22 @@ const toString = value =>
             : value
         : JSON.stringify(value)
 
-const argsJoiner = args =>
-    _.compact(args.map(arg => toString(arg))).join(ARG_DELIMITER)
+const argsJoiner = (args, delimiter = ARG_DELIMITER) =>
+    _.compact(args.map(arg => toString(arg))).join(delimiter)
 
-const tag = (tag, ...args) => `${tag}<${argsJoiner(args)}>`
+const tag = (tag, args, delimiter) => `${tag}<${argsJoiner(args, delimiter)}>`
 
-const mapTag = mapId => tag('Map', mapId)
+const mapTag = mapId => tag('Map', [mapId])
 
-const requestTag = ({tileProviderId, requestId}) => tag('Request', tileProviderId, requestId)
+const mapBoundsTag = ({center, zoom}) => tag('Bounds', [center.lat().toFixed(4), center.lng().toFixed(4), zoom], '/')
 
-const tileProviderTag = tileProviderId => tag('TileProvider', tileProviderId)
+const requestTag = ({tileProviderId, requestId}) => tag('Request', [tileProviderId, requestId])
+
+const tileProviderTag = tileProviderId => tag('TileProvider', [tileProviderId])
 
 module.exports = {
     mapTag,
+    mapBoundsTag,
     requestTag,
     tileProviderTag
 }
