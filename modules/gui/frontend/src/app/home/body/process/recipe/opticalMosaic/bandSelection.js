@@ -26,7 +26,10 @@ const mapRecipeToProps = recipe => {
 }
 
 class BandSelection extends React.Component {
-    state = {}
+    state = {
+        showSelector: false
+    }
+
     options = [
         {
             label: msg('process.mosaic.bands.combinations'),
@@ -65,10 +68,11 @@ class BandSelection extends React.Component {
     }
 
     render() {
+        const {showSelector} = this.state
         return (
             <div className={styles.wrapper}>
                 <div className={styles.container}>
-                    {this.state.showSelector
+                    {showSelector
                         ? this.renderBandSelector()
                         : this.renderSelectedBands()
                     }
@@ -106,7 +110,10 @@ class BandSelection extends React.Component {
                 canPanSharpen={canPanSharpen}
                 panSharpen={panSharpen}
                 onPanSharpen={enabled => this.recipeActions.setPanSharpen(enabled).dispatch()}
-                onClick={() => this.setSelectorShown(true)}/>)
+                onClick={e => {
+                    e.stopPropagation()
+                    this.setSelectorShown(true)
+                }}/>)
     }
 
     setSelectorShown(showSelector) {
@@ -124,7 +131,7 @@ const BandSelector = ({selection, options, onChange, onCancel}) =>
             autoFocus
             placement='above'
             standalone
-            onChange={option => onChange(option)}
+            onChange={onChange}
             onCancel={onCancel}/>
     </form>
 
