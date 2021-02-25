@@ -2,8 +2,10 @@ import {NEVER, Subject} from 'rxjs'
 import {Provider, withMapContext} from './mapContext'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {filter, takeUntil} from 'rxjs/operators'
+import {debounceTime, filter, takeUntil} from 'rxjs/operators'
+import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
+import {mapBoundsTag, mapTag} from 'tag'
 import {msg} from 'translate'
 import {select} from 'store'
 import {withMapsContext} from './maps'
@@ -16,6 +18,8 @@ import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
+
+const log = getLogger('map')
 
 class _StaticMap extends React.Component {
     map = React.createRef()
@@ -504,6 +508,7 @@ class _Map extends React.Component {
                     const {linked} = this.props
                     if (bounds && linked) {
                         const {center, zoom} = bounds
+                        log.debug(`${mapTag(this.state.mapId)} received ${mapBoundsTag(bounds)}`)
                         const currentCenter = googleMap.getCenter()
                         const currentZoom = googleMap.getZoom()
                         if (!currentCenter || !currentCenter.equals(center)) {
@@ -515,20 +520,27 @@ class _Map extends React.Component {
                     }
                 }
             ),
-            this.updateBounds$.subscribe(
+            this.updateBounds$.pipe(
+                debounceTime(50)
+            ).subscribe(
                 () => {
                     const {linked} = this.props
                     if (linked) {
                         const center = googleMap.getCenter()
                         const zoom = googleMap.getZoom()
                         if (center && zoom) {
-                            updateBounds({center, zoom})
+                            const bounds = {center, zoom}
+                            log.debug(`${mapTag(this.state.mapId)} reporting ${mapBoundsTag(bounds)}`)
+                            updateBounds(bounds)
                         }
                     }
                 }
             ),
             this.requestBounds$.subscribe(
-                () => requestBounds()
+                () => {
+                    log.debug(`${mapTag(this.state.mapId)} requesting bounds`)
+                    requestBounds()
+                }
             )
         )
     }

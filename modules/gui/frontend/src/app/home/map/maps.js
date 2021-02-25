@@ -3,11 +3,15 @@ import {Subject, from, merge, of, zip} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {debounceTime, distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators'
+import {getLogger} from 'log'
+import {mapTag} from 'tag'
 import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
+
+const log = getLogger('maps')
 
 const GOOGLE_MAPS_VERSION = '3.42'
 
@@ -103,6 +107,7 @@ class _Maps extends React.Component {
         const {mapsContext: {google, googleMapsApiKey, norwayPlanetApiKey}} = this.state
         const mapId = uuid()
         const googleMap = this.createGoogleMap(mapElement)
+        const requestedBounds$ = new Subject()
 
         const bounds$ = merge(
             this.bounds$.pipe(
@@ -110,18 +115,27 @@ class _Maps extends React.Component {
                 distinctUntilChanged(),
                 filter(({mapId: id}) => mapId !== id),
                 map(({bounds}) => bounds)
-            )
+            ),
+            requestedBounds$
         )
 
         const requestBounds = () => {
             if (this.currentBounds) {
-                this.bounds$.next({bounds: this.currentBounds})
+                requestedBounds$.next(this.currentBounds)
             }
         }
 
         const updateBounds = bounds => {
-            this.bounds$.next({mapId, bounds})
-            this.currentBounds = bounds
+            const {currentBounds} = this
+            const {center, zoom} = bounds
+
+            if (currentBounds && currentBounds.center.equals(center) && currentBounds.zoom === zoom) {
+                log.debug(`Bounds update from ${mapTag(mapId)} ignored`)
+            } else {
+                log.debug(`Bounds update from ${mapTag(mapId)} accepted`)
+                this.bounds$.next({mapId, bounds})
+                this.currentBounds = bounds
+            }
         }
         
         return {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, requestBounds}
