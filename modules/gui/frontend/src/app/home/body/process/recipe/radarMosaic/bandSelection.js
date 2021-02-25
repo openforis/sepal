@@ -163,7 +163,10 @@ class BandSelection extends React.PureComponent {
         return (
             <SelectedBands
                 selectedOption={this.optionByValue[selection.value]}
-                onClick={() => this.setSelectorShown(true)}/>
+                onClick={e => {
+                    e.stopPropagation()
+                    this.setSelectorShown(true)
+                }}/>
         )
     }
 

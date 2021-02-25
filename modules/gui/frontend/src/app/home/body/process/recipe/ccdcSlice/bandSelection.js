@@ -67,7 +67,10 @@ class BandSelection extends React.PureComponent {
                             onCancel={() => this.setSelectorShown(false)}/>
                         : <SelectedBands
                             selectedOption={optionByValue[selection.value]}
-                            onClick={() => this.setSelectorShown(true)}/>
+                            onClick={e => {
+                                e.stopPropagation()
+                                this.setSelectorShown(true)
+                            }}/>
                     }
                 </div>
             </div>
