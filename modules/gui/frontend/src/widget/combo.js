@@ -46,8 +46,7 @@ class _Combo extends React.Component {
     }
 
     render() {
-        const {errorMessage, busyMessage, standalone, disabled, className, onCancel} = this.props
-        const {label, tooltip, tooltipPlacement} = this.props
+        const {errorMessage, busyMessage, standalone, disabled, className, label, tooltip, tooltipPlacement, onCancel} = this.props
         const {showOptions} = this.state
         const onClick = e => {
             if (this.isActive()) {
