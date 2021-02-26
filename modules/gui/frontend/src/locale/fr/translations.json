@@ -398,10 +398,10 @@
           "tooltip": "Zoom sur la zone"
         },
         "zoomIn": {
-          "tooltip": "Zoomer"
+          "tooltip": "Zoom"
         },
         "zoomOut": {
-          "tooltip": "Dézoomer"
+          "tooltip": "Dézoom"
         }
       },
       "panel": {
@@ -587,10 +587,10 @@
           "tooltip": "Zoom sur la zone"
         },
         "zoomIn": {
-          "tooltip": "Zoomer"
+          "tooltip": "Zoom"
         },
         "zoomOut": {
-          "tooltip": "Dézoomer"
+          "tooltip": "Dézoom"
         }
       },
       "panel": {
@@ -1158,7 +1158,7 @@
           "tooltip": "Zoom"
         },
         "zoomOut": {
-          "tooltip": "Zoom arrière"
+          "tooltip": "Dézoom"
         }
       },
       "panel": {
