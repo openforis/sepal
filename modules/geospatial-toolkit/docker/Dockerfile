@@ -41,19 +41,22 @@ RUN chmod u+x /script/init_drive.sh && sync && /script/init_drive.sh
 ADD script/init_node.sh /script/
 RUN chmod u+x /script/init_node.sh && sync && /script/init_node.sh
 
+ENV DEBIAN_FRONTEND noninteractive
+
+ADD script/init_gpu.sh /script/
+RUN chmod u+x /script/init_gpu.sh && sync && /script/init_gpu.sh
+
 ADD script/init_python_packages.sh /script/
 RUN chmod u+x /script/init_python_packages.sh && sync && /script/init_python_packages.sh
 
 ADD script/init_additional_r_packages.sh /script/
 RUN chmod u+x /script/init_additional_r_packages.sh && sync && /script/init_additional_r_packages.sh
 
-ENV DEBIAN_FRONTEND noninteractive
-
-ADD script/init_gpu.sh /script/
-RUN chmod u+x /script/init_gpu.sh && sync && /script/init_gpu.sh
-
 ADD script/init_biota.sh /script/
 RUN chmod u+x /script/init_biota.sh && sync && /script/init_biota.sh
+
+ADD script/init_gwb.sh /script/
+RUN chmod u+x /script/init_gwb.sh && sync && /script/init_gwb.sh
 
 ADD script/init_post.sh /script/
 RUN chmod u+x /script/init_post.sh && sync && /script/init_post.sh

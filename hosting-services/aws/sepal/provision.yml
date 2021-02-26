@@ -7,6 +7,53 @@
     - "{{ secret_vars_file }}"
 
   tasks:
+    - name: Create letsencrypt AWS user
+      community.aws.iam:
+        iam_type: user
+        name: letsencrypt
+        state: present
+        access_key_state: create
+      register: letsencrypt_user
+
+    - name: LetsEncypt user
+      ansible.builtin.debug:
+        msg: "{{ letsencrypt_user }}"
+
+    - name: CONFIG HOME
+      ansible.builtin.debug:
+        msg: "{{ letsencrypt_user['created_keys'] }}"
+
+    - name: Create letsencrypt user policy
+      community.aws.iam_policy:
+        iam_type: user
+        iam_name: letsencrypt
+        policy_name: letsencrypt_policy
+        policy_json: >
+          {
+              "Version": "2012-10-17",
+              "Statement": [
+                  {
+                      "Effect": "Allow",
+                      "Action": [
+                          "route53:GetHostedZone",
+                          "route53:ListHostedZones",
+                          "route53:ListHostedZonesByName",
+                          "route53:GetHostedZoneCount",
+                          "route53:ChangeResourceRecordSets",
+                          "route53:ListResourceRecordSets"
+                      ],
+                      "Resource": "*"
+                  }
+              ]
+          }
+        state: present
+
+    - name: Store letsencrypt keys
+      copy:
+        content: "letsencrypt_access_key_id: {{ letsencrypt_user['created_keys'][0]['access_key_id'] }}\nletsencrypt_secret_access_key: {{ letsencrypt_user['created_keys'][0]['secret_access_key'] }}\n"
+        dest: "{{ letsencrypt_aws_keys_file }}"
+      when: "{{ letsencrypt_user['created_keys'] }}"
+
     - name: Create Sepal-Storage security group
       ec2_group:
         name: "Sepal-Storage"

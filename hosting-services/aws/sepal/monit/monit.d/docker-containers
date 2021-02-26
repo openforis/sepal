@@ -38,6 +38,10 @@ check program letsencrypt with path /usr/local/bin/dockercheck-letsencrypt
     depends on docker
     if status != 0 then alert
 
+check program sys-monitor with path /usr/local/bin/dockercheck-sys-monitor
+    depends on docker
+    if status != 0 then alert
+
 check program terminal with path /usr/local/bin/dockercheck-terminal
     depends on docker
     if status != 0 then alert

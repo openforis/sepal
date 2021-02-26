@@ -139,6 +139,8 @@
     - { role: build-module, module: rabbitmq }
 
     - { role: run-module, module: backup }
+    - { role: run-module, module: rabbitmq }
+    - { role: run-module, module: email }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
@@ -156,4 +158,4 @@
     - { role: run-module, module: api-gateway }
     - { role: run-module, module: letsencrypt }
     - { role: run-module, module: haproxy }
-    - { role: run-module, module: rabbitmq }
+    - { role: run-module, module: sys-monitor }

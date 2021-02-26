@@ -11,4 +11,5 @@ RUN pip3 install \
   ansible==2.9.15 \
   boto \
   boto3
+RUN ansible-galaxy collection install community.aws
 ENV SEPAL_HOME=/usr/local/lib/sepal

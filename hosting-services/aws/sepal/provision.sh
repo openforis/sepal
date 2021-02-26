@@ -23,7 +23,7 @@ source ../export-aws-keys.sh $CONFIG_HOME/secret.yml
 ansible-playbook provision.yml \
     -i $INVENTORY \
     --private-key=${PRIVATE_KEY}  \
-    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml local_ip_address=$LOCAL_IP_ADDRESS"
+    --extra-vars "secret_vars_file=$CONFIG_HOME/secret.yml local_ip_address=$LOCAL_IP_ADDRESS letsencrypt_aws_keys_file=$CONFIG_HOME/letsencrypt-aws-keys.yml"
 
 # Refresh EC2 inventory cache, to make sure provisioned instance is included
 $INVENTORY --refresh-cache > /dev/null

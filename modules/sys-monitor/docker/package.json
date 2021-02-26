@@ -1,5 +1,5 @@
 {
-    "name": "email",
+    "name": "sys-monitor",
     "version": "1.0.0",
     "description": "",
     "main": "main.js",
@@ -17,18 +17,11 @@
         "rx": "node_modules/shared/src/reexport/rx"
     },
     "dependencies": {
-        "bull": "^3.20.0",
         "commander": "^7.0.0",
-        "date-fns": "^2.16.1",
-        "handlebars": "^4.7.6",
-        "ioredis": "^4.19.4",
         "lodash": "^4.17.20",
         "log4js": "^6.3.0",
-        "marked": "^1.2.7",
-        "moment": "^2.29.1",
-        "nodemailer": "^6.4.17",
         "shared": "../../../lib/js/shared",
-        "short-unique-id": "^3.2.3"
+        "tail-file": "^1.4.13"
     },
     "devDependencies": {
         "eslint": "^7.18.0",

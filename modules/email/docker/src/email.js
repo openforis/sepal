@@ -45,8 +45,9 @@ const send = async ({id, email: {from = smtpFrom, to, cc, bcc, subject = '', con
     await transport.verify()
     try {
         const body = getBody(content, contentType)
-        const context = {subject, body}
-        const html = template(context)
+        const html = body.trim().length > 0
+            ? template({subject, body})
+            : ''
         const email = {from, to, cc, bcc, subject, html}
         log.isTrace()
             ? log.trace(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}\n`, body)

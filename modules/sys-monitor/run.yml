@@ -1,0 +1,25 @@
+---
+- name: "sys-monitor | Start container"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      tag: "sys-monitor"
+    networks:
+      - name: 'sepal'
+    volumes:
+      - "/var/log:/log:ro"
+    env:
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
+      SEPAL_SERVER_LOG: "/log/messages"
+      SYSADMIN_EMAIL_1: "{{ sysadmin_email_1 }}"
+      SYSADMIN_EMAIL_2: "{{ sysadmin_email_2 }}"
+  
