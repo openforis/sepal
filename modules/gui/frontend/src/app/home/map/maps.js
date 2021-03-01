@@ -129,9 +129,6 @@ class _Maps extends React.Component {
             } else {
                 this.linkedMaps.delete(mapId)
             }
-            // if (this.linkedMaps.size === 0) {
-            //     this.currentBounds = null
-            // }
             log.debug(`Linked maps: ${this.linkedMaps.size}`)
             if (linked && this.linkedMaps.size > 1 && this.currentBounds) {
                 requestedBounds$.next(this.currentBounds)
