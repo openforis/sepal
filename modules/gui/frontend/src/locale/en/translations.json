@@ -508,7 +508,7 @@
               },
               "on": {
                 "label": "On",
-                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
+                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
               }
             }
           },
@@ -1377,7 +1377,7 @@
               },
               "on": {
                 "label": "On",
-                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
+                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
               }
             }
           },
@@ -1813,7 +1813,7 @@
               },
               "on": {
                 "label": "On",
-                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
+                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
               }
             }
           },
@@ -1908,7 +1908,7 @@
     "retrieve": {
       "time_series_to_sepal": {
         "assembling": "Assembling tile {currentTile} out of {totalTiles}...",
-        "creating_drive_folder": "Creating Google Drive Folders...",
+        "creating_drive_folder": "Creating Google Drive Folder...",
         "deleting_drive_folder": "Deleting Google Drive Folder.",
         "progress": "Exported {currentTilePercent}% of tile {currentTile} out of {totalTiles}.",
         "tiling": "Tiling AOI..."

@@ -193,7 +193,6 @@
       "app-launch-pad": "Applications",
       "browse": "Fichiers",
       "collapse": "Réduire le menu",
-      "dashboard": "A déterminer",
       "expand": "Étendre le menu",
       "logout": "Déconnexion",
       "process": "Traitement",
@@ -237,10 +236,7 @@
       "label": "Mot de passe oublié ?",
       "placeholder": "Indiquer votre email",
       "required": "Email requis",
-      "success": {
-        "message": "Un courriel de réinitialisation de mdp a été envoyé à {email}.",
-        "title": "Réinitialisation requise"
-      }
+      "success": "Un courriel de réinitialisation de mdp a été envoyé à {email}."
     },
     "intro": {
       "about": {
@@ -327,17 +323,12 @@
     "tagline": "Système pour l'accès, le traitement et l'analyse de données pour la surveillance des terres.",
     "title": "SEPAL",
     "validate-token": {
-      "error": {
-        "message": "Assurez-vous que le lien utilisé soit le dernier envoyé par email.",
-        "title": "Ce lien n'est plus valide"
-      }
+      "error": "Ce lien n'est plus valide. Assurez-vous que le lien utilisé soit le dernier envoyé par email."
     }
   },
   "map": {
     "layer": {
-      "error": {
-        "title": "Echec du chargement de la couche"
-      }
+      "error": "Echec du chargement de la couche"
     },
     "layout": {
       "area": {
@@ -459,6 +450,7 @@
             "chiSquareProbability": "probabilité X²",
             "lambda": "Lambda",
             "maxIterations": "Nombre max d'itérations",
+            "minNumOfYearsScaler": "Nombre min d'année",
             "minObservations": "Nombre min d'observation",
             "tmaskBands": {
               "label": "Bandes TMask",
@@ -483,7 +475,7 @@
               },
               "none": {
                 "label": "Off",
-                "tooltip": "Utilisez des pixels sans nuages si possible, mais ne masque pas les zones présentant des pixels nuageux"
+                "tooltip": "Utiliser des pixels sans nuages si possible, si aucun n'existe le pixel ne sera pas masquer"
               }
             },
             "corrections": {
@@ -595,7 +587,7 @@
       },
       "panel": {
         "date": {
-          "form": {
+            "form": {
             "date": {
               "label": "Date de la coupe",
               "malformed": "Date invalide",
@@ -885,43 +877,6 @@
           "title": "Récupérer",
           "tooltip": "Récupérer la classification"
         },
-        "source": {
-          "asset": {
-            "title": "Sélectionner un asset Earth Engine"
-          },
-          "button": "IMG",
-          "form": {
-            "asset": {
-              "label": "ID de l'asset Earth Engine",
-              "placeholder": "Entrer une ID pour l'asset...",
-              "required": "Vous devez entrer une ID pour l'asset"
-            },
-            "recipe": {
-              "label": "formule",
-              "placeholder": "Sélectionner une formule...",
-              "required": "Vous devez sélectionner une formule"
-            },
-            "section": {
-              "required": "Il faut choisir une image"
-            }
-          },
-          "recipe": {
-            "title": "Sélectionner une formule SEPAL sauvegardée"
-          },
-          "retrieve": {
-            "form": {
-              "destination": {
-                "label": "Destination"
-              },
-              "scale": {
-                "info": "{scale} mètres",
-                "label": "Échelle"
-              }
-            }
-          },
-          "title": "Image à classifier",
-          "tooltip": "Sélectionner une mosaique à classifier"
-        },
         "trainingData": {
           "button": "ETR",
           "form": {
@@ -939,21 +894,6 @@
                 "noEETable": "Entrez d'abord un ID de table EE"
               },
               "required": "Une colonne doit être sélectionnée"
-            },
-            "fusionTable": {
-              "invalid": "ID de la table de fusion non valide",
-              "label": "Table de fusion",
-              "placeholder": "Entrer une ID pour la table de fusion",
-              "required": "Il faut spécifier une table de fusion"
-            },
-            "fusionTableColumn": {
-              "label": "Attribut",
-              "placeholder": {
-                "loaded": "Sélectionner l'attribut...",
-                "loading": "Chargement des attributs...",
-                "noFusionTable": "Veuillez d'abord entrer un ID de table de fusion"
-              },
-              "required": "Un attribut doit être sélectionné"
             },
             "openCeo": "Ouvrir l'outil de collecte des données d' entrainement"
           },
@@ -1101,7 +1041,6 @@
       },
       "revertToOldRevision": "Retour à la révision précédente",
       "saveRecipe": "Sauvegarder la formule...",
-      "savedRecipes": "Formules sauvegardées",
       "savedRecipies": "Formules sauvegardées",
       "searchRecipes": "Chercher une formule"
     },
@@ -1117,14 +1056,6 @@
       "mapToolbar": {
         "centerMap": {
           "tooltip": "Zoomer sur la zone d'intérêt"
-        },
-        "labels": {
-          "hide": {
-            "tooltip": "Masquer les labels"
-          },
-          "show": {
-            "tooltip": "Afficher les labels"
-          }
         },
         "layers": {
           "tooltip": "Sélectionnez les couches à afficher"
@@ -1317,7 +1248,7 @@
               },
               "none": {
                 "label": "Off",
-                "tooltip": "Utiliser des pixels sans nuages si possible, mais ne masque pas les zone de picels nuageux"
+                "tooltip": "Utiliser des pixels sans nuages si possible, si aucun n'existe le pixel ne sera pas masquer"
               }
             },
             "composingMethod": {
@@ -1370,18 +1301,8 @@
               },
               "tooltip": "Filtrer les pixels des scènes sélectionnées à partir des propriétés suivantes"
             },
-            "mask": {
-              "clouds": {
-                "label": "Nuages",
-                "tooltip": "Masquer les nuages plutôt qu'essayer d'utiliser des pixels sans nuages. Peut provoquer un masquage des infrastructures."
-              },
-              "label": "Masque",
-              "snow": {
-                "label": "Neige",
-                "tooltip": "Masquer la neige. Laisse les pixels avec neige ombragée."
-              }
-            },
             "snowMasking": {
+              "label": "Masque neige",
               "off": {
                 "label": "Off",
                 "tooltip": "Ne masquez pas la neige. Notez que certains nuages peuvent être mal classés comme neige, et de ce fait, désactiver le masquage de la neige peut entraîner des artefacts de nuages."
@@ -1540,7 +1461,7 @@
                   "tooltip": "Sentinel 1A et Sentinel 1B"
                 },
                 "SENTINEL_2": {
-                  "label": "A+B",
+                  "label": "A + B",
                   "tooltip": "Sentinel 2A et Sentinel 2B"
                 }
               }
@@ -1658,10 +1579,6 @@
               }
             },
             "speckleFilter": {
-              "boxcar": {
-                "label": "Boxcar",
-                "tooltip": "Filtre boxcar de 30m x 30m"
-              },
               "label": "Filtre speckle",
               "none": {
                 "label": "Aucun",
@@ -1801,7 +1718,7 @@
                 "tooltip": "Ne comptez que sur les bandes QA des images sources pour le masquage des nuages"
               },
               "none": {
-                "tooltip": "Utilisrz des pixels sans nuages si possible, mais ne masque pas les pixels nuageux"
+                "tooltip": "Utiliser des pixels sans nuages si possible, si aucun n'existe le pixel ne sera pas masquer"
               }
             },
             "corrections": {
@@ -1815,15 +1732,8 @@
                 "tooltip": "Utiliser les scène à la réflectance de surface corrigée des effets atmosphère"
               }
             },
-            "mask": {
-              "label": "Masque",
-              "snow": {
-                "label": "Neige",
-                "tooltip": "Masquer la neige. Laisse les pixels avec neige ombragée."
-              }
-            },
             "snowMasking": {
-              "label": "Neige",
+              "label": "Masque neige",
               "off": {
                 "tooltip": "Ne masquez pas la neige. Notez que certains nuages peuvent être mal classés comme neige, et de ce fait, désactiver le masquage de la neige peut entraîner des artefacts de nuages."
               },
@@ -1855,7 +1765,6 @@
           "button": "SRC",
           "form": {
             "dataSets": {
-              "label": "Collection",
               "optical": {
                 "label": "Optique"
               },
@@ -1913,7 +1822,7 @@
     "retrieve": {
       "time_series_to_sepal": {
         "assembling": "Assembler la tuile {currentTile} à partir de {totalTiles}...",
-        "creating_drive_folder": "Création des dossiers de Google Drive...",
+        "creating_drive_folder": "Création du dossier Google Drive...",
         "deleting_drive_folder": "Suppression du dossier Google Drive.",
         "progress": "Exporté {currentTilePercent}% de la tuile {currentTile} sur {totalTiles}.",
         "tiling": "Tuilage de l'AOI..."
@@ -1933,10 +1842,7 @@
     }
   },
   "unauthorized": {
-    "warning": {
-      "message": "Inactif pendant trop longtemps",
-      "title": "Vous n'êtes pas identifié"
-    }
+    "warning": "Vous n'êtes pas identifié. Trop longtemps inactif ?"
   },
   "user": {
     "changePassword": {
@@ -1958,9 +1864,7 @@
         }
       },
       "label": "Mot de passe",
-      "success": {
-        "title": "Le mot de passe a été modifié"
-      },
+      "success": "Le mot de passe a été modifié",
       "title": "Changer le mot de passe",
       "updating": "Mise à jour..."
     },
@@ -2068,9 +1972,6 @@
           "PENDING": "En attente",
           "label": "Statut"
         },
-        "updateTime": {
-          "label": "Mis à jour"
-        },
         "user": {
           "label": "Utilisateur"
         },
@@ -2083,20 +1984,8 @@
       "switchingToSepalGoogleAccount": "Changer pour le compte Google de SEPAL",
       "title": "Détails de l'utilisateur",
       "update": {
-        "error": {
-          "title": "Echec de la mise à jour"
-        },
-        "success": {
-          "title": "Les détails de l'utilisateur ont été mis à jour"
-        }
-      },
-      "useSepalGoogleAccount": {
-        "label": "Utiliser le compte Google de SEPAL",
-        "tooltip": "Retirer la permission à SEPAL d'utiliser votre Google Drive et de gérer vos assets. Certaines fonctionnaliés comme l'export ne seront plus disponibles."
-      },
-      "useUserGoogleAccount": {
-        "label": "Utiliser mon propre compte Google",
-        "tooltip": "Donner à SEPAL la permission d'utiliser votre Google Drive et de gérer vos assets. Accès à toutes les fonctionnaliés SEPAL."
+        "error": "Echec de la mise à jour",
+        "success": "Les détails de l'utilisateur ont été mis à jour"
       }
     },
     "userSession": {
@@ -2110,14 +1999,10 @@
         }
       },
       "stop": {
-        "error": {
-          "title": "La session n'a pu être arrêtée"
-        },
+        "error": "La session n'a pu être arrêtée",
         "label": "Arrêter",
         "message": "Arrêter la session ?",
-        "success": {
-          "title": "Session arrêtée."
-        },
+        "success": "Session arrêtée.",
         "tooltip": "Arrêter la session courante. Les sessions interrompues sont perdues"
       },
       "suspend": {
@@ -2127,12 +2012,8 @@
         "tooltip": "Suspendre la session courante. Les sessions suspendues peuvent être reprises"
       },
       "update": {
-        "error": {
-          "title": "Echec de la mise à jour de la session"
-        },
-        "success": {
-          "title": "La session a été mise à jour"
-        },
+        "error": "Echec de la mise à jour de la session",
+        "success": "La session a été mise à jour",
         "tooltip": "Éditer la session."
       }
     }
@@ -2153,29 +2034,17 @@
       "success": "Le message a été publié"
     },
     "remove": {
-      "error": {
-        "title": "Impossible de supprimer le message"
-      },
-      "success": {
-        "title": "Le message a été supprimé"
-      }
+      "error": "Impossible de supprimer le message",
+      "success": "Le message a été supprimé",
     },
     "title": "Message",
     "update": {
-      "error": {
-        "title": "Impossible de mettre à jour le message"
-      },
-      "success": {
-        "title": "Le message a été mis à jour"
-      }
+      "error": "Impossible de mettre à jour le message",
+      "success": "Le message a été mis à jour"
     },
     "updateState": {
-      "error": {
-        "title": "Impossible de mettre à jour le statut du message"
-      },
-      "success": {
-        "title": "Le statut du message a été mis à jour"
-      }
+      "error": "Impossible de mettre à jour le statut du message",
+      "success": "Le statut du message a été mis à jour"
     }
   },
   "userMessages": {
@@ -2197,7 +2066,9 @@
       "onePage": "{count} {count, plural, one {utilisateur} other {utilisateurs}}"
     },
     "filter": {
-      "placeholder": "Chercher les utilisateurs",
+      "search": {
+        "placeholder": "Chercher les utilisateurs"
+      },
       "status": {
         "active": {
           "label": "Actif"
