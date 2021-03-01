@@ -9,6 +9,7 @@ import {v4 as uuid} from 'uuid'
 import {withContext} from 'context'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import api from 'api'
 
 const log = getLogger('maps')
@@ -23,6 +24,9 @@ class _Maps extends React.Component {
     state = {
         mapsContext: null
     }
+
+    currentBound = null
+    linkedMaps = new Set()
 
     constructor(props) {
         super(props)
@@ -119,8 +123,17 @@ class _Maps extends React.Component {
             requestedBounds$
         )
 
-        const requestBounds = () => {
-            if (this.currentBounds) {
+        const notifyLinked = linked => {
+            if (linked) {
+                this.linkedMaps.add(mapId)
+            } else {
+                this.linkedMaps.delete(mapId)
+            }
+            // if (this.linkedMaps.size === 0) {
+            //     this.currentBounds = null
+            // }
+            log.debug(`Linked maps: ${this.linkedMaps.size}`)
+            if (linked && this.linkedMaps.size > 1 && this.currentBounds) {
                 requestedBounds$.next(this.currentBounds)
             }
         }
@@ -138,7 +151,7 @@ class _Maps extends React.Component {
             }
         }
         
-        return {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, requestBounds}
+        return {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, notifyLinked}
     }
 
     render() {

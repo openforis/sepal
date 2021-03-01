@@ -2,7 +2,7 @@ import {NEVER, Subject} from 'rxjs'
 import {Provider, withMapContext} from './mapContext'
 import {compose} from 'compose'
 import {connect} from 'store'
-import {debounceTime, filter, takeUntil} from 'rxjs/operators'
+import {debounceTime, filter, finalize, takeUntil} from 'rxjs/operators'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
@@ -61,7 +61,7 @@ class _Map extends React.Component {
     hiddenLayerById = {}
 
     updateBounds$ = new Subject()
-    requestBounds$ = new Subject()
+    linked$ = new Subject()
 
     drawingOptions = {
         fillColor: '#FBFAF2',
@@ -427,7 +427,7 @@ class _Map extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {createMapContext}, single, onEnable, onDisable} = this.props
-        const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, requestBounds} = createMapContext(this.map.current)
+        const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, notifyLinked} = createMapContext(this.map.current)
 
         const sepalMap = {
             getZoom: this.getZoom.bind(this),
@@ -467,7 +467,7 @@ class _Map extends React.Component {
         onDisable(() => this.setVisibiliy(false))
 
         this.setState({mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () => {
-            this.subscribe({bounds$, updateBounds, requestBounds})
+            this.subscribe({bounds$, updateBounds, notifyLinked})
             this.setLinked(single)
         })
     }
@@ -475,9 +475,12 @@ class _Map extends React.Component {
     componentDidUpdate(prevProps) {
         const {linked} = this.props
         const {linked: wasLinked} = prevProps
-        if (linked && !wasLinked) {
-            this.requestBounds$.next()
+        if (!linked && wasLinked) {
+            this.linked$.next(false)
         } else {
+            if (linked && !wasLinked) {
+                this.linked$.next(true)
+            }
             this.updateBounds$.next()
         }
     }
@@ -488,7 +491,7 @@ class _Map extends React.Component {
         this.unsubscribe()
     }
 
-    subscribe({bounds$, updateBounds, requestBounds}) {
+    subscribe({bounds$, updateBounds, notifyLinked}) {
         const {addSubscription} = this.props
 
         this.centerChanged = this.onCenterChanged(() => {
@@ -536,10 +539,12 @@ class _Map extends React.Component {
                     }
                 }
             ),
-            this.requestBounds$.subscribe(
-                () => {
-                    log.debug(`${mapTag(this.state.mapId)} requesting bounds`)
-                    requestBounds()
+            this.linked$.pipe(
+                finalize(() => notifyLinked(false))
+            ).subscribe(
+                linked => {
+                    log.debug(`${mapTag(this.state.mapId)} ${linked ? 'linked' : 'unlinked'}`)
+                    notifyLinked(linked)
                 }
             )
         )
