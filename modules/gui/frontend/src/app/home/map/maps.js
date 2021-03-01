@@ -25,7 +25,7 @@ class _Maps extends React.Component {
         mapsContext: null
     }
 
-    currentBound = null
+    currentBounds = null
     linkedMaps = new Set()
 
     constructor(props) {
