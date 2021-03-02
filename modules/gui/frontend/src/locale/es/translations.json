@@ -134,11 +134,6 @@
     "select": "Seleccione",
     "stop": "Detener"
   },
-  "eeTable": {
-    "failedToLoad": "Fallo en la carga de la tabla EE",
-    "notFound": "Tabla EE no encontrada",
-    "unauthorized": "No tienes acceso a esta tabla de EE."
-  },
   "error": {
     "internal": "Error interno"
   },
@@ -160,22 +155,27 @@
     "notFound": "Tabla de Fusión no encontrada",
     "unauthorized": "Usted no tiene acceso a esta Tabla de Fusión"
   },
+  "eeTable": {
+    "failedToLoad": "Fallo en la carga de la tabla EE",
+    "notFound": "Tabla EE no encontrada",
+    "unauthorized": "No tienes acceso a esta tabla de EE."
+  },
   "gee": {
     "classification": {
       "error": {
         "noTrainingData": "No hay datos de entrenamiento en el área de interés seleccionada."
       }
     },
-    "error": {
-      "earthEngineException": "Error de Google Earth Engine: {earthEngineMessage}",
-      "failedToLoadRecipe": "Error al cargar la fórmula.",
-      "title": "Error Google Earth Engine"
-    },
     "table": {
       "error": {
         "notATable": "No es una tabla",
         "notFound": "Tabla no encontrada"
       }
+    },
+    "error": {
+      "earthEngineException": "Error de Google Earth Engine: {earthEngineMessage}",
+      "failedToLoadRecipe": "Error al cargar la fórmula.",
+      "title": "Error Google Earth Engine"
     }
   },
   "home": {
@@ -201,6 +201,49 @@
     }
   },
   "landing": {
+    "signup": "Regístrate en",
+    "launch": "Lanzar",
+    "intro": {
+      "easeOfUse": {
+        "title": "Facilidad de uso",
+        "description": "Permite a los usuarios consultar y procesar los datos de los satélites de forma rápida y eficaz, adaptar sus productos a las necesidades locales y producir rápidamente análisis geoespaciales sofisticados y relevantes."
+      },
+      "computingPower": {
+        "title": "Potencia de cálculo",
+        "description": "Aproveche la informática de alto rendimiento basada en la nube y las modernas infraestructuras de datos geoespaciales."
+      },
+      "googleEarthEngine": {
+        "title": "Earth Engine",
+        "description": "Accede al catálogo de varios petabytes de imágenes de satélite de Google Earth Engine y utiliza sus capacidades de análisis a escala planetaria. Todo ello sin escribir una sola línea de código. Sólo tienes que conectar tu cuenta de Google a SEPAL."
+      },
+      "jupyterNotebook": {
+        "title": "Jupyter Notebook",
+        "description": "Ejecute cualquiera de los cuadernos de procesamiento geoespacial del catálogo de SEPAL o desarrolle los suyos propios. El servidor Jupyter alojado viene con kernels de Python 3, R y JavaScript."
+      },
+      "shiny": {
+        "title": "Servidor Shiny",
+        "description": "Realice estimaciones de áreas estratificadas, análisis de series temporales con BFAST y otros procesamientos geoespaciales a través de las aplicaciones R Shiny alojadas en SEPAL."
+      },
+      "rstudio": {
+        "title": "Servidor RStudio",
+        "description": "Desarrolle sus scripts de R con RStudio, directamente dentro de SEPAL. Utilice cualquiera de los muchos paquetes útiles de R ya instalados, e instale los suyos propios cuando lo necesite."
+      },
+      "integrations": {
+        "title": "Integraciones",
+        "description": "SEPAL no quiere reinventar la rueda. Más bien utilizamos y nos integramos con soluciones ya existentes, como Open Foris Collect Earth Online, para la interpretación visual de las imágenes de satélite."
+      },
+      "powerUsers": {
+        "title": "Usuarios avanzados",
+        "description": "Obtenga acceso a instancias Linux dedicadas, con hasta 128 núcleos de CPU, 2TB de RAM y una serie de herramientas de desarrollo y geoespaciales instaladas. Acceda directamente desde el navegador o a través de un cliente SSH. Transfiera archivos hacia y desde la instancia con rsync, scp o su cliente FTP favorito."
+      },
+      "about": {
+        "description": "SEPAL es un proyecto de código abierto del equipo de Open Foris en el Departamento Forestal de la Organización de las Naciones Unidas para la Agricultura y la Alimentación (FAO), financiado por el Gobierno de Noruega.",
+        "title": "Sobre"
+      },
+      "partners": {
+        "title": "Socios"      
+      }
+    },
     "features": {
       "apps": {
         "description": "Amplíe las funciones de SEPAL con aplicaciones de procesamiento de datos personalizadas",
@@ -226,48 +269,9 @@
       "invalid": "No es un correo electrónico válido",
       "label": "¿Ha olvidado su contraseña?",
       "placeholder": "Introduzca su correo electrónico",
-      "required": "El correo electrónico es obligatorio"
+      "required": "El correo electrónico es obligatorio",
+      "success": "Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña a {email}."
     },
-    "intro": {
-      "about": {
-        "description": "SEPAL es un proyecto de código abierto del equipo de Open Foris en el Departamento Forestal de la Organización de las Naciones Unidas para la Agricultura y la Alimentación (FAO), financiado por el Gobierno de Noruega.",
-        "title": "Sobre"
-      },
-      "computingPower": {
-        "description": "Aproveche la informática de alto rendimiento basada en la nube y las modernas infraestructuras de datos geoespaciales.",
-        "title": "Potencia de cálculo"
-      },
-      "easeOfUse": {
-        "description": "Permite a los usuarios consultar y procesar los datos de los satélites de forma rápida y eficaz, adaptar sus productos a las necesidades locales y producir rápidamente análisis geoespaciales sofisticados y relevantes.",
-        "title": "Facilidad de uso"
-      },
-      "googleEarthEngine": {
-        "description": "Accede al catálogo de varios petabytes de imágenes de satélite de Google Earth Engine y utiliza sus capacidades de análisis a escala planetaria. Todo ello sin escribir una sola línea de código. Sólo tienes que conectar tu cuenta de Google a SEPAL."
-      },
-      "integrations": {
-        "description": "SEPAL no quiere reinventar la rueda. Más bien utilizamos y nos integramos con soluciones ya existentes, como Open Foris Collect Earth Online, para la interpretación visual de las imágenes de satélite.",
-        "title": "Integraciones"
-      },
-      "jupyterNotebook": {
-        "description": "Ejecute cualquiera de los cuadernos de procesamiento geoespacial del catálogo de SEPAL o desarrolle los suyos propios. El servidor Jupyter alojado viene con kernels de Python 3, R y JavaScript."
-      },
-      "partners": {
-        "title": "Socios"
-      },
-      "powerUsers": {
-        "description": "Obtenga acceso a instancias Linux dedicadas, con hasta 128 núcleos de CPU, 2TB de RAM y una serie de herramientas de desarrollo y geoespaciales instaladas. Acceda directamente desde el navegador o a través de un cliente SSH. Transfiera archivos hacia y desde la instancia con rsync, scp o su cliente FTP favorito.",
-        "title": "Usuarios avanzados"
-      },
-      "rstudio": {
-        "description": "Desarrolle sus scripts de R con RStudio, directamente dentro de SEPAL. Utilice cualquiera de los muchos paquetes útiles de R ya instalados, e instale los suyos propios cuando lo necesite.",
-        "title": "Servidor RStudio"
-      },
-      "shiny": {
-        "description": "Realice estimaciones de áreas estratificadas, análisis de series temporales con BFAST y otros procesamientos geoespaciales a través de las aplicaciones R Shiny alojadas en SEPAL.",
-        "title": "Servidor Shiny"
-      }
-    },
-    "launch": "Lanzar",
     "login": {
       "button": "Inicio de sesión",
       "forgot-password-link": "¿Ha olvidado su contraseña?",
@@ -299,47 +303,37 @@
         "placeholder": "Introduzca de nuevo la contraseña",
         "required": "La contraseña debe ser confirmada"
       },
-      "success": {
-        "title": "Restablecimiento de la contraseña"
-      },
+      "success": "Restablecimiento de la contraseña",
       "username": {
         "label": "Nombre de usuario"
       },
       "validating-link": "Validación del enlace..."
     },
-    "signup": "Regístrate en",
     "tagline": "Sistema de observación de la tierra, acceso a los datos, procesamiento y análisis para la vigilancia de la tierra.",
     "title": "Sepal",
     "validate-token": {
-      "error": {
-        "message": "Asegúrese de que el enlace utilizado y el último enviado por correo electrónico.",
-        "title": "Este enlace ya no es válido"
-      }
+      "error": "Este enlace ya no es válido. Asegúrese de que el enlace utilizado y el último enviado por correo electrónico."
     }
   },
   "map": {
     "layer": {
-      "error": {
-        "title": "Fallo en la carga de la capa"
-      }
+      "error": "Fallo en la carga de la capa"
     },
     "layout": {
-      "area": {
-        "edit": {
-          "tooltip": "Editar las propiedades del área"
-        },
-        "remove": {
-          "message": "Por favor, confirme la supresión de esta zona",
-          "tooltip": "Retirar el área"
-        }
-      },
+      "title": "Diseño del mapa",
       "layer": {
         "remove": {
           "message": "Por favor, confirme la eliminación de esta capa",
           "tooltip": "Eliminar la capa"
         }
       },
-      "title": "Diseño del mapa"
+      "area": {
+        "edit.tooltip": "Editar las propiedades del área",
+        "remove": {
+          "message": "Por favor, confirme la supresión de esta zona",
+          "tooltip": "Retirar el área"
+        }
+      }
     }
   },
   "notifications": {
