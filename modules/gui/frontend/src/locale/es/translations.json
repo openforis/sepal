@@ -5,30 +5,30 @@
     },
     "type": {
       "AUTO_SELECT_SCENES": "Seleccionar escenas",
-      "DUPLICATE_RECIPE": "Duplicar la fórmula",
+      "DUPLICATE_RECIPE": "Duplicar fórmula",
       "INIT_GOOGLE_MAPS_API": "Inicializar Google Maps",
       "LOAD_APPS": "Carga de aplicaciones",
       "LOAD_COUNTRIES": "Cargar países",
       "LOAD_COUNTRY_AREAS": "Cargar superficies del país",
       "LOAD_CURRENT_USER": "Cargar usuario",
       "LOAD_DIRECTORY": "Carga del directorio de usuarios",
-      "LOAD_FUSION_TABLE_COLUMNS": "Cargar nombres ( tablas de fusión)",
-      "LOAD_FUSION_TABLE_ROWS": "Cargar lineas ( tablas de fusión)",
+      "LOAD_FUSION_TABLE_COLUMNS": "Cargar nombres (tablas de fusión)",
+      "LOAD_FUSION_TABLE_ROWS": "Cargar lineas (tablas de fusión)",
       "LOAD_RECIPE": "Cargar la fórmula",
       "LOAD_RECIPES": "Cargar las fórmulas",
-      "LOAD_SCENES": "Carga las escenas",
+      "LOAD_SCENES": "Cargar las escenas",
       "LOAD_SCENE_AREAS": "Cargar las superficies de las escenas",
       "LOGIN": "Inicio de sesión",
       "REMOVE_DIRECTORY": "Eliminar el directorio",
       "REMOVE_FILE": "Eliminar el archivo",
       "REMOVE_TASK": "Eliminar la tasa",
-      "REQUEST_PASSWORD_RESET": "Solicitar el restablecimiento de la contraseña",
+      "REQUEST_PASSWORD_RESET": "Solicitar restablecimiento de contraseña",
       "RESET_PASSWORD": "Restablecer contraseña",
-      "RESTART_TASK": "Reiniciar la tasa",
-      "RUN_APP": "Abrir la aplicación",
-      "SCHEDULE_UPDATE_TASKS": "Actualizar las tasas de fondo",
-      "SCHEDULE_USER_INFO_REFRESH": "Programar la solicitud de información del usuario",
-      "STOP_TASK": "Detener la tarea",
+      "RESTART_TASK": "Reiniciar tasa",
+      "RUN_APP": "Abrir aplicación",
+      "SCHEDULE_UPDATE_TASKS": "Actualizar tasas de fondo",
+      "SCHEDULE_USER_INFO_REFRESH": "Programar solicitud de información del usuario",
+      "STOP_TASK": "Detener tarea",
       "VALIDATE_TOKEN": "Validar enlace"
     }
   },
@@ -65,10 +65,10 @@
     "nir": "NIR",
     "pan": "PAN",
     "red": "Rojo",
-    "redEdge1": "Rojo - borde 1",
-    "redEdge2": "Rojo - borde 2",
-    "redEdge3": "Rojo - borde 3",
-    "redEdge4": "Rojo - borde 4",
+    "redEdge1": "RedEdge 1",
+    "redEdge2": "RedEdge 2",
+    "redEdge3": "RedEdge 3",
+    "redEdge4": "RedEdge 4",
     "swir1": "SWIR 1",
     "swir2": "SWIR 2",
     "thermal": "Térmico",
@@ -85,7 +85,7 @@
   "browse": {
     "controls": {
       "clearSelection": {
-        "tooltip": "Borrar la selección"
+        "tooltip": "Borrar selección"
       },
       "download": {
         "tooltip": "Descargar el elemento seleccionado"
@@ -111,17 +111,17 @@
     "removing": {
       "error": "No es posible retirar los documentos."
     },
-    "selected": "{directories} {directories, plural, one {directorio} other {directorios}} and {files} {files, plural, one {documento} other {documentos}} seleccionados"
+    "selected": "{directories} {directories, plural, one {directorio} other {directorios}} and {files} {files, plural, one {archivo} other {archivos}} seleccionados"
   },
   "button": {
     "add": "Añadir",
-    "apply": "Aplica",
+    "apply": "Aplicar",
     "back": "Volver",
     "cancel": "Cancelar",
     "close": "Cerrar",
     "confirm": "Confirmar",
     "copyToClipboard": "Copiar al portapapeles",
-    "discard": "No guardes",
+    "discard": "No guardar",
     "done": "Hecho",
     "less": "Menos",
     "more": "Más",
@@ -131,7 +131,7 @@
     "restart": "Reiniciar",
     "retry": "Reintentar",
     "save": "Guardar",
-    "select": "Seleccione",
+    "select": "Seleccionar",
     "stop": "Detener"
   },
   "error": {
@@ -141,7 +141,7 @@
     "buildNumber": "Número de compilación",
     "buildNumberCopied": "Número de compilación copiado en el portapapeles",
     "gitCommit": "Git commit",
-    "gitCommitCopied": "Git commit copiada en el portapapeles"
+    "gitCommitCopied": "Git commit copiado en el portapapeles"
   },
   "format": {
     "GB": "{value}GB",
@@ -151,13 +151,13 @@
     "percent": "{value}%"
   },
   "fusionTable": {
-    "failedToLoad": "Fallo en la carga de la tabla Fusion",
-    "notFound": "Tabla de Fusión no encontrada",
-    "unauthorized": "Usted no tiene acceso a esta Tabla de Fusión"
+    "failedToLoad": "Fallo en carga de la tabla de fusión",
+    "notFound": "Tabla de fusión no encontrada",
+    "unauthorized": "Usted no tiene acceso a esta tabla de fusión"
   },
   "eeTable": {
-    "failedToLoad": "Fallo en la carga de la tabla EE",
-    "notFound": "Tabla EE no encontrada",
+    "failedToLoad": "Fallo en la carga de la tabla de EE",
+    "notFound": "Tabla de EE no encontrada",
     "unauthorized": "No tienes acceso a esta tabla de EE."
   },
   "gee": {
@@ -175,7 +175,7 @@
     "error": {
       "earthEngineException": "Error de Google Earth Engine: {earthEngineMessage}",
       "failedToLoadRecipe": "Error al cargar la fórmula.",
-      "title": "Error Google Earth Engine"
+      "title": "Error de Google Earth Engine"
     }
   },
   "home": {
@@ -185,15 +185,15 @@
       "browse": "Documentos",
       "collapse": "Ocultar y mostrar automáticamente el menú",
       "expand": "Mostrar siempre el menú",
-      "logout": "Cierre de sesión de SEPAL",
+      "logout": "Cerrar sesión SEPAL",
       "process": "Proceso",
-      "tasks": "Tareas de fondo",
+      "tasks": "Tareas",
       "terminal": "Consola",
       "user": {
         "messages": "Mostrar mensajes del usuario",
         "profile": "Gestionar el perfil del usuario",
         "report": {
-          "budgetExceeded": "Superado",
+          "budgetExceeded": "Límite superado",
           "tooltip": "Mostrar informe del usuario"
         }
       },
@@ -201,40 +201,40 @@
     }
   },
   "landing": {
-    "signup": "Regístrate en",
-    "launch": "Lanzar",
+    "signup": "Registrarse en",
+    "launch": "Iniciar",
     "intro": {
       "easeOfUse": {
         "title": "Facilidad de uso",
         "description": "Permite a los usuarios consultar y procesar los datos de los satélites de forma rápida y eficaz, adaptar sus productos a las necesidades locales y producir rápidamente análisis geoespaciales sofisticados y relevantes."
       },
       "computingPower": {
-        "title": "Potencia de cálculo",
-        "description": "Aproveche la informática de alto rendimiento basada en la nube y las modernas infraestructuras de datos geoespaciales."
+        "title": "Potencia de computación",
+        "description": "Aproveche la computación de alto rendimiento basada en la nube y las modernas infraestructuras de datos geoespaciales."
       },
       "googleEarthEngine": {
         "title": "Earth Engine",
-        "description": "Accede al catálogo de varios petabytes de imágenes de satélite de Google Earth Engine y utiliza sus capacidades de análisis a escala planetaria. Todo ello sin escribir una sola línea de código. Sólo tienes que conectar tu cuenta de Google a SEPAL."
+        "description": "Accede al catálogo de numerosos petabytes de imágenes satelitales de Google Earth Engine y utiliza sus capacidades de análisis a escala planetaria. Todo ello sin escribir una sola línea de código. Sólo tienes que conectar tu cuenta de Google a SEPAL."
       },
       "jupyterNotebook": {
         "title": "Jupyter Notebook",
-        "description": "Ejecute cualquiera de los cuadernos de procesamiento geoespacial del catálogo de SEPAL o desarrolle los suyos propios. El servidor Jupyter alojado viene con kernels de Python 3, R y JavaScript."
+        "description": "Ejecuta cualquiera de los Jupyter Notebooks de procesamiento geoespacial del catálogo de SEPAL o desarrolla los tuyos propios. El servidor Jupyter integrado viene con núcleos de Python 3, R y JavaScript."
       },
       "shiny": {
         "title": "Servidor Shiny",
-        "description": "Realice estimaciones de áreas estratificadas, análisis de series temporales con BFAST y otros procesamientos geoespaciales a través de las aplicaciones R Shiny alojadas en SEPAL."
+        "description": "Realiza estimaciones de áreas estratificadas, análisis de series temporales con BFAST y otros procesamientos geoespaciales a través de las aplicaciones R Shiny alojadas en SEPAL."
       },
       "rstudio": {
         "title": "Servidor RStudio",
-        "description": "Desarrolle sus scripts de R con RStudio, directamente dentro de SEPAL. Utilice cualquiera de los muchos paquetes útiles de R ya instalados, e instale los suyos propios cuando lo necesite."
+        "description": "Desarrolla scripts de R con RStudio, sin salir de SEPAL. Utilice cualquiera de los numerosos paquetes útiles de R ya instalados o instala adicionales cuando lo necesites."
       },
       "integrations": {
         "title": "Integraciones",
-        "description": "SEPAL no quiere reinventar la rueda. Más bien utilizamos y nos integramos con soluciones ya existentes, como Open Foris Collect Earth Online, para la interpretación visual de las imágenes de satélite."
+        "description": "SEPAL no quiere reinventar la rueda. Más bien utilizamos e integramos soluciones ya existentes, como Open Foris Collect Earth Online, para la interpretación visual de las imágenes satelitales."
       },
       "powerUsers": {
         "title": "Usuarios avanzados",
-        "description": "Obtenga acceso a instancias Linux dedicadas, con hasta 128 núcleos de CPU, 2TB de RAM y una serie de herramientas de desarrollo y geoespaciales instaladas. Acceda directamente desde el navegador o a través de un cliente SSH. Transfiera archivos hacia y desde la instancia con rsync, scp o su cliente FTP favorito."
+        "description": "Obtén acceso a instancias dedicadas de Linux, con hasta 128 núcleos de CPU, 2TB de RAM y una serie de herramientas de desarrollo y geoespaciales instaladas. Accede directamente desde el navegador o a través de un cliente SSH. Transfiere archivos hacia y desde la instancia con rsync, scp o tu cliente FTP favorito."
       },
       "about": {
         "description": "SEPAL es un proyecto de código abierto del equipo de Open Foris en el Departamento Forestal de la Organización de las Naciones Unidas para la Agricultura y la Alimentación (FAO), financiado por el Gobierno de Noruega.",
@@ -266,25 +266,25 @@
       "button": "Restablecer contraseña",
       "cancel-link": "Cancelar",
       "instructions": "Indíquenos la dirección de correo electrónico de su cuenta SEPAL y le enviaremos un mensaje con instrucciones para restablecer su contraseña.",
-      "invalid": "No es un correo electrónico válido",
-      "label": "¿Ha olvidado su contraseña?",
-      "placeholder": "Introduzca su correo electrónico",
+      "invalid": "Correo electrónico inválido",
+      "label": "¿Olvidaste tu contraseña?",
+      "placeholder": "Introduce tu correo electrónico",
       "required": "El correo electrónico es obligatorio",
       "success": "Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña a {email}."
     },
     "login": {
       "button": "Inicio de sesión",
-      "forgot-password-link": "¿Ha olvidado su contraseña?",
+      "forgot-password-link": "¿Olvidaste tu contraseña?",
       "password": {
         "invalid": "Nombre de usuario/contraseña no válidos",
         "label": "Contraseña",
-        "placeholder": "Introduzca su contraseña",
+        "placeholder": "Introduce tu contraseña",
         "required": "La contraseña es obligatoria"
       },
       "sign-up": "Inscríbete",
       "username": {
         "label": "Nombre de usuario",
-        "placeholder": "Introduzca su nombre de usuario",
+        "placeholder": "Introduce tu nombre de usuario",
         "required": "El nombre de usuario es obligatorio"
       }
     },
@@ -294,16 +294,16 @@
       "password": {
         "invalid": "La contraseña debe tener al menos 8 caracteres",
         "label": "Contraseña",
-        "placeholder": "Introduzca una nueva contraseña",
+        "placeholder": "Introduce una nueva contraseña",
         "required": "La contraseña es necesaria"
       },
       "password2": {
         "label": "Confirmar contraseña",
         "not-matching": "Las contraseñas no son iguales",
-        "placeholder": "Introduzca de nuevo la contraseña",
+        "placeholder": "Vuelve a introducir la contraseña",
         "required": "La contraseña debe ser confirmada"
       },
-      "success": "Restablecimiento de la contraseña",
+      "success": "La contraseña se ha restablecido",
       "username": {
         "label": "Nombre de usuario"
       },
@@ -312,26 +312,26 @@
     "tagline": "Sistema de observación de la tierra, acceso a los datos, procesamiento y análisis para la vigilancia de la tierra.",
     "title": "Sepal",
     "validate-token": {
-      "error": "Este enlace ya no es válido. Asegúrese de que el enlace utilizado y el último enviado por correo electrónico."
+      "error": "Este enlace ya no es válido. Asegúrate de usar el enlace enviado en el último correo electrónico recibido por Sepal."
     }
   },
   "map": {
     "layer": {
-      "error": "Fallo en la carga de la capa"
+      "error": "Error al cargar la capa"
     },
     "layout": {
       "title": "Diseño del mapa",
       "layer": {
         "remove": {
-          "message": "Por favor, confirme la eliminación de esta capa",
-          "tooltip": "Eliminar la capa"
+          "message": "Por favor, confirma que deseas eliminar esta capa",
+          "tooltip": "Eliminar capa"
         }
       },
       "area": {
-        "edit.tooltip": "Editar las propiedades del área",
+        "edit.tooltip": "Editar propiedades del área",
         "remove": {
-          "message": "Por favor, confirme la supresión de esta zona",
-          "tooltip": "Retirar el área"
+          "message": "Por favor, confirma la supresión de esta zona",
+          "tooltip": "Retirar área"
         }
       }
     }
@@ -339,7 +339,7 @@
   "notifications": {
     "error": {
       "connectionError": "No se ha podido conectar con el servidor. O bien tu conexión a Internet ha fallado, o el servidor no está disponible en este momento.",
-      "generic": "Sepal ha encontrado un error. Por favor, inténtelo de nuevo o póngase en contacto con el servicio de asistencia si el problema persiste."
+      "generic": "Sepal ha encontrado un error. Por favor, inténtalo de nuevo o ponte en contacto con el servicio de asistencia si el problema persiste."
     }
   },
   "pagination": {
@@ -353,14 +353,14 @@
       "description": "Crear un asset CCDC a partir de una serie temporal.",
       "mapToolbar": {
         "centerMap": {
-          "tooltip": "Zoom a la zona de interés"
+          "tooltip": "Acercamiento a la zona de interés"
         },
         "chartPixel": {
           "cancel": {
-            "tooltip": "Anulación de los gráficos de series temporales"
+            "tooltip": "Cancelar gráficos de series temporales"
           },
           "start": {
-            "tooltip": "Gráfico de series temporales de píxeles"
+            "tooltip": "Gráfico de series temporales para píxeles"
           }
         },
         "labels": {
@@ -395,21 +395,21 @@
               "label": "Formato de la fecha",
               "required": "Debe especificarse el formato de la fecha",
               "unixTimeMillis": {
-                "label": "Tiempo de Unix millis"
+                "label": "Tiempo de milisegundos Unix"
               }
             },
             "endDate": {
-              "label": "Fecha de fin",
+              "label": "Fecha fin",
               "malformed": "Fecha no válida",
               "required": "La fecha es obligatoria",
-              "tooltip": "La última fecha de la serie temporal, exclusiva."
+              "tooltip": "La última fecha de la serie temporal es exclusiva."
             },
             "startDate": {
-              "beforeEnd": "Debe ser antes del fin",
+              "beforeEnd": "Debe ser antes de la última fecha",
               "label": "Fecha de inicio",
               "malformed": "Fecha no válida",
               "required": "La fecha es obligatoria",
-              "tooltip": "La primera fecha de la serie temporal, inclusive."
+              "tooltip": "La primera fecha de la serie temporal es inclusiva."
             }
           },
           "title": "Fechas",
@@ -420,22 +420,22 @@
             "breakDetection": {
               "aggressive": {
                 "label": "Agresivo",
-                "tooltip": "Sea agresivo en la detección de rupturas en las series temporales. Podría detectar rupturas donde no las hay."
+                "tooltip": "Ser agresivo en la detección de puntos de quiebre en las series temporales. Podría detectar quiebres donde no los hay."
               },
               "conservative": {
                 "label": "Conservador",
-                "tooltip": "Sea conservador a la hora de detectar rupturas en las series temporales. Puede pasar por alto interrupciones más sutiles o interrupciones en las que hay mala disponibilidad de datos"
+                "tooltip": "Ser conservador al detectar puntos de quiebre en las series temporales. Puede pasar por alto puntos de quiebre más sutiles o en los que hay mala disponibilidad de datos"
               },
-              "label": "Detección de roturas",
+              "label": "Detección de puntos de quiebre",
               "moderate": {
                 "label": "Moderado",
-                "tooltip": "Sea moderado a la hora de detectar rupturas en las series temporales."
+                "tooltip": "Ser moderado en la detección de puntos de quiebre en las series temporales."
               }
             },
-            "chiSquareProbability": "Probabilidad chi cuadrada",
+            "chiSquareProbability": "Probabilidad chi-cuadrada",
             "lambda": "Lambda",
-            "maxIterations": "Máximas iteraciones",
-            "minNumOfYearsScaler": "número mínimo de años escalador",
+            "maxIterations": "Máximo número de iteraciones",
+            "minNumOfYearsScaler": "Número mínimo de años escalares",
             "minObservations": "Observaciones mínimas",
             "tmaskBands": {
               "label": "Bandas de TMask",
@@ -443,22 +443,22 @@
             }
           },
           "title": "Opciones de CCDC",
-          "tooltip": "Configurar las opciones del CCDC"
+          "tooltip": "Configurar las opciones de CCDC"
         },
         "preprocess": {
           "form": {
             "cloudMasking": {
               "aggressive": {
                 "label": "Agresivo",
-                "tooltip": "Confíe en las bandas de control de calidad de la fuente de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras características brillantes."
+                "tooltip": "Basarse en las bandas de control de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
               },
               "label": "Enmascaramiento de nubes",
               "moderate": {
                 "label": "Moderado",
-                "tooltip": "Confiar sólo en las bandas de control de calidad de la fuente de la imagen para el enmascaramiento de las nubes"
+                "tooltip": "Basarse sólo en las bandas de control de calidad de la imagen para el enmascaramiento de las nubes"
               },
               "none": {
-                "tooltip": "Use cloud-free pixels if possible, if non is found no masking will be performed"
+                "tooltip": "Usar píxeles libres de nubes si es posible, pero no enmascarar áreas sin píxeles libres"
               }
             },
             "corrections": {
@@ -469,25 +469,25 @@
               "label": "Correcciones",
               "surfaceReflectance": {
                 "label": "Reflectancia de la superficie",
-                "tooltip": "Utiliza escenas de reflectancia superficial corregida atmosféricamente."
+                "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
               }
             },
             "shadowMasking": {
               "label": "Enmascaramiento de sombras",
               "off": {
-                "tooltip": "No aplique un enmascaramiento agresivo de las sombras."
+                "tooltip": "No aplicar enmascaramiento agresivo de sombras."
               },
               "on": {
-                "tooltip": "Aplicar un enmascaramiento de sombras agresivo. Esto puede eliminar inadvertidamente algunas dinámicas y hacer que se pierdan los cambios"
+                "tooltip": "Aplicar enmascaramiento de sombras agresivo. Esto puede eliminar inadvertidamente algunas dinámicas y hacer que se pierdan cambios"
               }
             },
             "snowMasking": {
-              "label": "Enmascaramiento de la nieve",
+              "label": "Enmascaramiento de nieve",
               "off": {
-                "tooltip": "No enmascarar la nieve. Tenga en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, y debido a esto, deshabilitar el enmascaramiento de la nieve podría conducir a artefactos de nubes."
+                "tooltip": "No enmascarar nieve. Tenga en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
               },
               "on": {
-                "tooltip": "Máscara de nieve. Esto tiende a dejar algunos píxeles con la nieve sombra"
+                "tooltip": "Enmascarar nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
               }
             }
           },
@@ -498,7 +498,7 @@
           "apply": "Recuperar",
           "form": {
             "bands": {
-              "atLeastOne": "Seleccione al menos una banda",
+              "atLeastOne": "Selecciona al menos una banda",
               "label": "Bandas"
             },
             "scale": {
@@ -514,23 +514,23 @@
           "form": {
             "breakpointBands": {
               "atLeastOne": "Seleccione al menos una banda",
-              "label": "Bandas de puntos de ruptura"
+              "label": "Bandas de puntos de quiebre"
             },
             "dataSets": {
               "optical": {
                 "label": "Óptica"
               }
             },
-            "required": "Hay que seleccionar una fuente de datos"
+            "required": "Debes seleccionar una fuente de datos"
           },
           "title": "Fuentes",
-          "tooltip": "Seleccione la fuente de la imagen"
+          "tooltip": "Selecciona la fuente de la imagen"
         }
       }
     },
     "ccdcSlice": {
       "create": "Rodaja de CCDC",
-      "description": "Crear una porción de un asset de CCDC, para una fecha específica.",
+      "description": "Crear un corte de un asset de CCDC, para una fecha específica.",
       "mapToolbar": {
         "centerMap": {
           "tooltip": "Zoom a la zona de interés"
@@ -558,15 +558,15 @@
           "button": "FEC",
           "form": {
             "date": {
-              "label": "Fecha de la rodaja",
+              "label": "Fecha del corte",
               "malformed": "Fecha no válida",
               "range": "El asset de CCDC se creó con datos desde {startDate} hasta {endDate}.",
-              "required": "Se requiere la fecha",
-              "tooltip": "La fecha del rodaja"
+              "required": "La fecha es requerida",
+              "tooltip": "Fecha del corte"
             }
           },
           "title": "Fecha",
-          "tooltip": "Especifique la fecha del rodaja"
+          "tooltip": "Especifique la fecha del corte"
         },
         "options": {
           "form": {
@@ -592,25 +592,25 @@
             "gapStrategy": {
               "extrapolate": {
                 "label": "Extrapolar",
-                "tooltip": "Generar un nuevo modelo basado en el segmento anterior o posterior a la brecha."
+                "tooltip": "Generar un nuevo modelo basado en el segmento anterior o posterior a los 'huecos' (gaps) de píxeles ."
               },
               "interpolate": {
                 "label": "Interpolar",
                 "tooltip": "Genera un nuevo modelo basado en los segmentos circundantes. Si no hay ningún segmento antes o después, el píxel será enmascarado."
               },
-              "label": "Estrategia de brechas",
+              "label": "Estrategia de llenado de 'huecos' (gaps)",
               "mask": {
                 "label": "Máscara",
-                "tooltip": "Enmascara todos los píxeles que caen en un hueco."
+                "tooltip": "Enmascara todos los píxeles que se encuentren en un 'hueco' (gap)."
               },
-              "tooltip": "Decida qué estrategia utilizar para los píxeles en los que no hay un segmento de CCDC. Habrá huecos durante las pausas detectadas o para las fechas anteriores y posteriores al intervalo de fechas del CCDC."
+              "tooltip": "Decidir qué estrategia utilizar para los píxeles en los que no hay un segmento de CCDC. Habrá 'huecos' (gaps) durante los puntos de quiebre detectadas o para las fechas anteriores y posteriores al intervalo de fechas de CCDC."
             },
             "harmonics": {
               "label": "Armónicos",
               "tooltip": "Especifique cuántos armónicos del modelo de regresión CCDC se van a utilizar al crear el corte"
             }
           },
-          "title": "Opciones de rodajas de CCDC",
+          "title": "Opciones de cortes de CCDC",
           "tooltip": "Configurar cómo se hace el corte del CCDC"
         },
         "retrieve": {
@@ -619,15 +619,15 @@
             "bandTypes": {
               "amplitude1": {
                 "label": "Amplitud 1",
-                "tooltip": "La amplitud del armónico de primer orden del modelo"
+                "tooltip": "La amplitud del modelo armónico de primer orden"
               },
               "amplitude2": {
                 "label": "Amplitud 2",
-                "tooltip": "La amplitud del armónico de segundo orden del modelo"
+                "tooltip": "La amplitud del modelo armónico de segundo orden"
               },
               "amplitude3": {
                 "label": "Amplitud 3",
-                "tooltip": "La amplitud del armónico de tercer orden del modelo"
+                "tooltip": "La amplitud del modelo armónico de tercer orden"
               },
               "atLeastOne": "Debe seleccionarse al menos un tipo de banda",
               "intercept": {
@@ -637,15 +637,15 @@
               "label": "Tipos de banda",
               "phase1": {
                 "label": "Fase 1",
-                "tooltip": "La fase del armónico de primer orden del modelo"
+                "tooltip": "La fase del modelo armónico de primer orden."
               },
               "phase2": {
                 "label": "Fase 2",
-                "tooltip": "La fase del armónico de segundo orden del modelo"
+                "tooltip": "La fase del modelo armónico de segundo orden"
               },
               "phase3": {
                 "label": "Fase 3",
-                "tooltip": "La fase del armónico de tercer orden del modelo"
+                "tooltip": "La fase del modelo armónico de tercer orden"
               },
               "rmse": {
                 "tooltip": "RMSE de los modelos armónicos"
@@ -665,8 +665,9 @@
             },
             "destination": {
               "SEPAL": "Espacio de trabajo SEPAL",
+              "GEE": "Asset de Google Earth Engine",
               "label": "Destino",
-              "required": "Hay que seleccionar un destino"
+              "required": "Debe seleccionar el destino"
             },
             "scale": {
               "info": "{scale} metros",
@@ -681,11 +682,11 @@
           "tooltip": "Recuperar series temporales"
         },
         "source": {
-          "button": "FUE",
+          "button": "SRC",
           "form": {
             "asset": {
-              "invalid": "El asset debe ser un asset CCDC exportado",
-              "label": "asset CCDC",
+              "invalid": "Se debe ingresar un asset de CCDC exportado",
+              "label": "GEE asset de CCDC",
               "placeholder": "Indique el ID de un asset CCDC",
               "required": "Indique el ID de un asset CCDC"
             }
@@ -695,18 +696,18 @@
         }
       },
       "preview": {
-        "description": "Vista previa de un corte de CCDC, generado al vuelo por EE.",
+        "description": "Vista previa de un corte de CCDC, generado en la nube por EE.",
         "error": "Fallo en la generación de la vista previa",
-        "initializing": "Cargando la vista previa...",
-        "label": "Rodaja de CCDC",
-        "loading": "Cargado {loaded} de {count} tejas",
-        "tilesFailed": "{failed} fracasó"
+        "initializing": "Cargando vista previa...",
+        "label": "Corte de CCDC",
+        "loading": "Cargado {loaded} de {count} tiles",
+        "tilesFailed": "{failed} falló"
       },
-      "tabPlaceholder": "Rodaja de CCDC"
+      "tabPlaceholder": "Corte de CCDC"
     },
     "classification": {
       "create": "Clasificación",
-      "description": "Clasificar imágenes desde SEPAL o Google Earth Engine. Incluir imágenes de múltiples puntos en el tiempo para hacer la detección de cambios.",
+      "description": "Clasificar imágenes desde SEPAL o Google Earth Engine. Incluir imágenes de múltiples fechas para hacer la detección de cambios.",
       "panel": {
         "auxiliaryImagery": {
           "form": {
@@ -714,7 +715,7 @@
               "label": "Fuentes",
               "latitude": {
                 "label": "Latitud",
-                "tooltip": "Incluya la latitud de cada píxel."
+                "tooltip": "Incluya latitud de cada píxel."
               },
               "terrain": {
                 "label": "Terreno",
@@ -722,7 +723,7 @@
               },
               "water": {
                 "label": "Agua",
-                "tooltip": "Incluir las capas de cartografía global de aguas superficiales del CCI."
+                "tooltip": "Incluir las capas de cartografía global de aguas superficiales del JRC."
               }
             }
           },
@@ -757,7 +758,7 @@
           },
           "derivedBands": {
             "bandCombinations": {
-              "label": "Combinaciones de bandas",
+              "label": "Combinaciones de banda",
               "options": {
                 "ANGLE": {
                   "label": "Ángulo",
@@ -802,30 +803,31 @@
           },
           "form": {
             "asset": {
-              "placeholder": "Indique un ID de asset...",
-              "required": "Debe introducir un ID de asset"
+              "label": "ID de asset de Earth Engine",
+              "placeholder": "Indique el ID de un GEE asset...",
+              "required": "Debes introducir un ID de un GEE asset"
             },
             "includedBands": {
-              "label": "You must enter an asset ID"
+              "label": "Debes ingresar un GEE asset ID"
             },
             "recipe": {
-              "label": "Fórmula",
-              "placeholder": "Seleccione una fórmula...",
-              "required": "Debe seleccionar una fórmula"
+              "label": "Flujo de trabajo",
+              "placeholder": "Seleccione un flujo de trabajo...",
+              "required": "Debes seleccionar un flujo de trabajo"
             },
             "section": {
-              "required": "Hay que seleccionar una imagen"
+              "required": "Debes seleccionar una imagen"
             }
           },
-          "loadingBands": "Carga de bandas disponibles",
-          "loadingBandsError": "Fallo al cargar desde Google Earth Engine",
+          "loadingBands": "Cargando bandas disponibles",
+          "loadingBandsError": "Error al cargar desde Google Earth Engine",
           "noImagery": "Por favor, añada al menos una imagen para clasificar.",
           "recipe": {
-            "title": "Guardar la fórmula de SEPAL"
+            "title": "Guardar el flujo de trabajo de SEPAL"
           },
           "remove": {
-            "confirmationMessage": "¿Está seguro de que quiere eliminar a {name} de su clasificación?",
-            "tooltip": "Eliminar la imagen de la clasificación"
+            "confirmationMessage": "¿Está seguro de que quiere eliminar un {name} de su clasificación?",
+            "tooltip": "Eliminar imagen de la clasificación"
           },
           "retrieve": {
             "form": {
@@ -840,16 +842,17 @@
           "title": "Imágenes para clasificar",
           "tooltip": "Seleccione las imágenes a clasificar",
           "type": {
-            "RECIPE_REF": "Fórmula de SEPAL"
+            "RECIPE_REF": "Flujo de trabajo de SEPAL"
           }
         },
         "retrieve": {
-          "apply": "Recuperar",
+          "apply": "Importar",
           "form": {
             "destination": {
-              "SEPAL": "Espacio de trabajo SEPAL",
-              "label": "Recuperar a",
-              "required": "Hay que seleccionar un destino"
+              "GEE": "Asset de Google Earth Engine",
+              "SEPAL": "Espacio de trabajo en SEPAL",
+              "label": "Importar en",
+              "required": "Debes seleccionar un destino"
             },
             "scale": {
               "info": "{scale} metros",
@@ -857,43 +860,43 @@
             },
             "task": {
               "GEE": "Exportar {name} como asset de Google Earth Engine",
-              "SEPAL": "Recuperar {name} al espacio de trabajo de Sepal"
+              "SEPAL": "Importar {name} al espacio de trabajo de Sepal"
             }
           },
-          "title": "Recuperar",
-          "tooltip": "Recuperar la clasificación"
+          "title": "Importar",
+          "tooltip": "Importar la clasificación"
         },
         "source": {
           "asset": {
-            "title": "Seleccione un asset de Earth Engine"
+            "title": "Selecciona un asset de Google Earth Engine"
           },
           "form": {
             "asset": {
-              "label": "ID de asset de Earth Engine",
+              "label": "ID de asset de Google Earth Engine",
               "placeholder": "Indique un ID para el asset...",
               "required": "Debe indicar un ID de asset"
             }
           }
         },
         "trainingData": {
-          "button": "ETR",
+          "button": "TRN",
           "form": {
             "eeTable": {
-              "invalid": "ID de tabla EE no válida",
-              "label": "Tabla de EE",
-              "placeholder": "Indique un ID de tabla de EE",
-              "required": "Debe especificarse una tabla de EE"
+              "invalid": "ID de tabla GEE no válida",
+              "label": "Tabla de GEE",
+              "placeholder": "Indica un ID de tabla de GEE",
+              "required": "Debes ingresar una tabla de GEE"
             },
             "eeTableColumn": {
               "label": "Columna de clase",
               "placeholder": {
-                "loaded": "Seleccione una columna...",
+                "loaded": "Selecciona una columna...",
                 "loading": "Cargando columnas...",
-                "noEETable": "Indique primero un ID de tabla EE"
+                "noEETable": "Indica primero un ID de tabla EE"
               },
-              "required": "Se debe seleccionar una columna"
+              "required": "Debes seleccionar una columna"
             },
-            "openCeo": "Herramienta de recogida de datos de entrenamiento abierto"
+            "openCeo": "Herramienta abierta de recogida de datos de entrenamiento"
           },
           "title": "Datos de entrenamiento",
           "tooltip": "Configurar la fuente de datos de entrenamiento"
@@ -901,16 +904,16 @@
       },
       "preview": {
         "description": "Vista previa de la clasificación, generada al vuelo por EE.",
-        "error": "Fallo en la creación de la vista previa",
-        "initializing": "Cargando la vista previa...",
+        "error": "Error en la creación de la vista previa",
+        "initializing": "Cargando vista previa...",
         "label": "Clasificación",
-        "loading": "Cargado {loaded} de {count} tejas",
-        "tilesFailed": "{failed} fracasó"
+        "loading": "Cargado {loaded} de {count} tiles",
+        "tilesFailed": "{failed} falló"
       },
       "tabPlaceholder": "Clasificación"
     },
     "closeRecipe": {
-      "message": "¿Quieres guardar esta fórmula?"
+      "message": "¿Quieres guardar este flujo de trabajo?"
     },
     "landCover": {
       "create": "RLCMS",
@@ -920,10 +923,10 @@
           "form": {
             "cloudThreshold": {
               "label": "Máxima nubosidad",
-              "max": "Incluir todas las escenas, independientemente de la cobertura de la nube",
+              "max": "Incluir todas las escenas, independientemente de la nubosidad",
               "off": "Incluir sólo escenas sin nubes",
               "tooltip": "Excluye las escenas con más nubes que el valor especificado.",
-              "value": "Excluir escenas con más de {value}% de nubes"
+              "value": "Excluir escenas con más de {value}% de nubosidad"
             },
             "corrections": {
               "brdf": {
@@ -931,17 +934,17 @@
               },
               "label": "Correcciones",
               "surfaceReflectance": {
-                "tooltip": "Utiliza escenas de reflectancia superficial corregida atmosféricamente."
+                "tooltip": "Utilizar escenas de reflectancia superficial corregidas atmosféricamente."
               },
               "terrain": {
                 "label": "TERRENO",
-                "tooltip": "Aplicar la corrección del terreno."
+                "tooltip": "Aplicar corrección de terreno."
               }
             },
             "mask": {
               "clouds": {
                 "label": "Nubes",
-                "tooltip": "Aplicar un enmascaramiento de nubes más agresivo."
+                "tooltip": "Aplicar enmascaramiento de nubes más agresivo."
               },
               "haze": {
                 "label": "Bruma",
@@ -950,30 +953,30 @@
               "label": "Máscara",
               "shadow": {
                 "label": "Sombra",
-                "tooltip": "Sombra de la máscara"
+                "tooltip": "Sombra de máscara"
               },
               "snow": {
                 "label": "Nieve",
-                "tooltip": "Máscara de nieve. Esto tiende a dejar píxeles donde con la nieve sombra"
+                "tooltip": "Máscara de nieve. Esto tiende a dejar píxeles con sombra de nieve"
               }
             }
           },
-          "title": "Opciones compuestas"
+          "title": "Opciones de composición"
         },
         "createComposites": {
           "task": "Crear compuestos RLCMS",
           "tooltip": "Crear composiciones"
         },
         "createLandCoverMap": {
-          "task": "Crear el mapa de la cubierta del suelo del RLCMS",
-          "tooltip": "Crear un mapa de la cubierta vegetal"
+          "task": "Crear mapa de cobertura del suelo del RLCMS",
+          "tooltip": "Crear un mapa de la cobertura vegetal"
         },
         "period": {
           "endYear": {
             "label": "Año final",
             "malformed": "No un año"
           },
-          "startBeforeEnd": "El inicio debe ser antes del final",
+          "startBeforeEnd": "El inicio debe ser antes del año final",
           "startYear": {
             "label": "Año de inicio",
             "malformed": "No un año"
@@ -982,16 +985,16 @@
           "tooltip": "Especifique el periodo de tiempo"
         },
         "trainingData": {
-          "button": "ETR",
+          "button": "TRN",
           "form": {
             "classColumn": {
               "label": "Columna de clase",
               "placeholder": {
                 "loaded": "Seleccione una columna...",
                 "loading": "Cargando columnas...",
-                "noFusionTable": "Introduzca primero el ID de la tabla Fusion"
+                "noFusionTable": "Introduce primero el ID de la tabla de fusión"
               },
-              "required": "Debe seleccionarse una columna"
+              "required": "Debes seleccionar una columna"
             },
             "eeTable": {
               "invalid": "ID de tabla EE no válida",
@@ -1003,7 +1006,7 @@
               "invalid": "ID de tabla de fusión no válida",
               "label": "Tabla de fusión",
               "placeholder": "Indique el ID de la tabla de fusión",
-              "required": "Debe especificarse la Tabla de Fusión"
+              "required": "Debe especificarse la Tabla de fusión"
             },
             "yearAndClassColumnsSame": "Las columnas de año y clase son las mismas",
             "yearColumn": {
@@ -1011,9 +1014,9 @@
               "placeholder": {
                 "loaded": "Seleccione una columna...",
                 "loading": "Cargando columnas...",
-                "noFusionTable": "Indique primero el ID de la tabla Fusion"
+                "noFusionTable": "Indica primero el ID de la tabla Fusion"
               },
-              "required": "Debe seleccionarse una columna"
+              "required": "Debes seleccionar una columna"
             }
           },
           "title": "Datos de entrenamiento",
@@ -1022,31 +1025,31 @@
         "typology": {
           "button": "TIP",
           "title": "Tipología",
-          "tooltip": "Seleccione la tipología"
+          "tooltip": "Selecciona la tipología"
         }
       },
       "tabPlaceholder": "RLCMS"
     },
     "menu": {
-      "duplicateRecipe": "Duplicar la fórmula",
-      "exportRecipe": "Exportar la fórmula",
-      "noSavedRecipes": "Ninguna fórmula guardada",
-      "recipeNotSaved": "La fórmula no se guarda.",
+      "duplicateRecipe": "Duplicar flujo de trabajo",
+      "exportRecipe": "Exportar flujo de trabajo",
+      "noSavedRecipes": "Ningún flujo de trabajo guardado",
+      "recipeNotSaved": "Flujo de trabajo no guardado.",
       "removeRecipe": {
-        "message": "¿Quiere eliminar la {recipe}?",
-        "tooltip": "Eliminar la fórmula"
+        "message": "¿Quieres eliminar la {recipe}?",
+        "tooltip": "Eliminar flujo de trabajo"
       },
-      "revertToOldRevision": "Volver a la antigua revisión...",
-      "saveRecipe": "Guarda la fórmula...",
-      "savedRecipies": "Formulas guardadas",
-      "searchRecipes": "Buscar formula"
+      "revertToOldRevision": "Volver a una antigua revisión...",
+      "saveRecipe": "Guarda el flujo de trabajo...",
+      "savedRecipies": "Flujos de trabajo guardados",
+      "searchRecipes": "Buscar flujo de trabajo"
     },
     "mosaic": {
       "bands": {
         "combinations": "Combinaciones",
         "metadata": "Metadatos",
-        "panSharpen": "Afilar PAN",
-        "placeholder": "Seleccione las bandas de vista previa"
+        "panSharpen": "Pan sharpen",
+        "placeholder": "Seleccione las bandas preliminares"
       },
       "create": "Mosaico óptico",
       "description": "Crear un mosaico con Landsat o Sentinel 2.",
@@ -1063,7 +1066,7 @@
             "label": "Google Satellite"
           },
           "SEPAL": {
-            "description": "Capa oscura mínima de SEPAL por defecto",
+            "description": "Capa oscura minimalista de SEPAL por defecto",
             "label": "SEPAL"
           },
           "baseLayer": "Capa base",
@@ -1095,7 +1098,7 @@
         "areaOfInterest": {
           "form": {
             "bounds": {
-              "required": "Los límites no se cargan"
+              "required": "Los límites no se cargaron"
             },
             "country": {
               "area": {
@@ -1127,12 +1130,12 @@
                   "loading": "Cargando columnas...",
                   "noEETable": "Indique primero un ID de tabla EE"
                 },
-                "required": "Debe seleccionarse una columna"
+                "required": "Debes seleccionar una columna"
               },
               "eeTable": {
                 "label": "Tabla EE",
-                "placeholder": "Indique un ID de tabla de EE",
-                "required": "Debe especificarse una tabla EE"
+                "placeholder": "Indica un ID de tabla de EE",
+                "required": "Debes especificar una tabla EE"
               },
               "eeTableRowSelection": {
                 "FILTER": "Filtro",
@@ -1142,30 +1145,30 @@
               "row": {
                 "label": "Valor",
                 "placeholder": {
-                  "loaded": "Seleccione un valor...",
+                  "loaded": "Selecciona un valor...",
                   "loading": "Cargando líneas...",
-                  "noColumn": "Seleccione primero una columna",
-                  "noEETable": "Indique primero un ID de tabla EE",
-                  "noRows": "Ninguna fila en la tabla EE"
+                  "noColumn": "Selecciona primero una columna",
+                  "noEETable": "Indica primero un ID de tabla EE",
+                  "noRows": "No hay filas en la tabla EE"
                 },
                 "required": "Debe seleccionarse una línea"
               },
-              "title": "Seleccione de la tabla EE"
+              "title": "Selecciona de la tabla EE"
             },
             "fusionTable": {
               "column": {
                 "label": "Columna",
                 "placeholder": {
-                  "loaded": "Seleccione una columna...",
+                  "loaded": "Selecciona una columna...",
                   "loading": "Cargando columnas...",
-                  "noFusionTable": "Indique primero el ID de la tabla Fusion"
+                  "noFusionTable": "Indica primero el ID de la tabla de fusión"
                 },
-                "required": "Debe seleccionarse una columna"
+                "required": "Debes seleccionar una columna"
               },
               "fusionTable": {
-                "label": "Tabla de Fusión",
-                "placeholder": "Indique el ID de la tabla de fusión",
-                "required": "Debe especificarse la Tabla de Fusión"
+                "label": "Tabla de fusión",
+                "placeholder": "Indica el ID de la tabla de fusión",
+                "required": "Debes especificar la Tabla de fusión"
               },
               "fusionTableRowSelection": {
                 "FILTER": "Filtro",
@@ -1175,13 +1178,13 @@
               "row": {
                 "label": "Valor",
                 "placeholder": {
-                  "loaded": "Seleccione un valor...",
+                  "loaded": "Selecciona un valor...",
                   "loading": "Cargando filas...",
-                  "noColumn": "Seleccione primero una columna",
-                  "noFusionTable": "Indique primero el ID de la tabla Fusion",
+                  "noColumn": "Selecciona primero una columna",
+                  "noFusionTable": "Indica primero el ID de la tabla de fusión",
                   "noRows": "Ninguna línea en la Tabla de Fusión"
                 },
-                "required": "Debe seleccionarse una línea"
+                "required": "Debes seleccionar una línea"
               },
               "title": "Seleccionar de la tabla de fusión"
             },
@@ -1190,11 +1193,11 @@
               "title": "Dibujar un polígono"
             },
             "section": {
-              "required": "Debe seleccionarse una sección"
+              "required": "Debes seleccionar una sección"
             }
           },
           "title": "Área de interés",
-          "tooltip": "Especifique el área de interés"
+          "tooltip": "Especifica el área de interés"
         },
         "autoSelectScenes": {
           "form": {
@@ -1211,8 +1214,8 @@
           "tooltip": "Selección automática de escenas"
         },
         "clearSelectedScenes": {
-          "apply": "Claras escenas",
-          "message": "Va a borrar todas las escenas seleccionadas.",
+          "apply": "Limpiar escenas",
+          "message": "Vas a borrar todas las escenas seleccionadas.",
           "title": "Borrar las escenas seleccionadas",
           "tooltip": "Borrar las escenas seleccionadas"
         },
@@ -1222,12 +1225,12 @@
             "cloudBuffer": {
               "aggressive": {
                 "label": "Agresivo",
-                "tooltip": "Enmascare 600 m adicionales alrededor de cada nube más grande. Esto ayuda a evitar que los píxeles nebulosos en el borde de las nubes se incluyan en el mosaico."
+                "tooltip": "Enmascarar 600 m adicionales alrededor de cada nube más grande. Esto ayuda a evitar que los píxeles del borde de las nubes se incluyan en el mosaico."
               },
               "label": "Amortiguación de la nube",
               "moderate": {
                 "label": "Moderado",
-                "tooltip": "Enmascare 120 m adicionales alrededor de cada nube más grande. Esto ayuda a evitar que los píxeles nebulosos en el borde de las nubes se incluyan en el mosaico."
+                "tooltip": "Enmascarar 120 m adicionales alrededor de cada nube más grande. Esto ayuda a evitar que los píxeles del borde de las nubes se incluyan en el mosaico."
               },
               "none": {
                 "label": "Ninguno",
@@ -1237,7 +1240,7 @@
             "cloudMasking": {
               "aggressive": {
                 "label": "Agresivo",
-                "tooltip": "Confíe en las bandas QA de la fuente de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras características brillantes."
+                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
               },
               "label": "Enmascaramiento de nubes",
               "moderate": {
