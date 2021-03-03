@@ -581,7 +581,7 @@ class _MapLayer extends React.Component {
         super(props)
         const {mapContext: {google, googleMap, sepalMap}} = props
 
-        const ReactOverlayView = class ReactOverlayView extends google.maps.OverlayView {
+        class ReactOverlayView extends google.maps.OverlayView {
             constructor(component) {
                 super()
                 this.component = component
@@ -645,6 +645,11 @@ export const MapLayer = compose(
     withMapContext()
 )
 
+MapLayer.propTypes = {
+    children: PropTypes.any,
+    className: PropTypes.string
+}
+
 class _MapObject extends React.Component {
     render() {
         const {mapContext: {google, googleMap}, lat, lng, width, height, className, children} = this.props
@@ -662,11 +667,12 @@ class _MapObject extends React.Component {
                         top: `calc(${point.y}px - ${height} / 2)`,
                         left: `calc(${point.x}px - ${width} / 2)`
                     }
-                    return <div style={style} className={className}>
-                        {children}
-                    </div>
-                }
-                }
+                    return (
+                        <div style={style} className={className}>
+                            {children}
+                        </div>
+                    )
+                }}
             </ProjectionContext.Consumer>
         )
     }
@@ -677,5 +683,14 @@ export const MapObject = compose(
     // connect(state => ({projectionChange: state.map.projectionChange})),
     withMapContext()
 )
+
+MapObject.propTypes = {
+    children: PropTypes.any,
+    className: PropTypes.string,
+    height: PropTypes.string,
+    lat: PropTypes.number,
+    lng: PropTypes.number,
+    width: PropTypes.string
+}
 
 const ProjectionContext = React.createContext()
