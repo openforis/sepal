@@ -1,5 +1,7 @@
 SEPAL
 =====
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 SEPAL is a cloud computing platform for geographical data processing. It enables users to quickly process large amount
 of data without high network bandwidth requirements or need to invest in high-performance computing infrastructure.
 
