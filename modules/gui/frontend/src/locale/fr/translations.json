@@ -2035,7 +2035,7 @@
     },
     "remove": {
       "error": "Impossible de supprimer le message",
-      "success": "Le message a été supprimé",
+      "success": "Le message a été supprimé"
     },
     "title": "Message",
     "update": {
