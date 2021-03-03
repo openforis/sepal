@@ -268,7 +268,8 @@ CCDCGraph.defaultProps = {
     extrapolateSegment: 'CLOSEST',
     extrapolateMaxDays: 30,
     gapStrategy: 'MASK',
-    scale: 1
+    scale: 1,
+    dateFormat: 0
 }
 
 CCDCGraph.propTypes = {

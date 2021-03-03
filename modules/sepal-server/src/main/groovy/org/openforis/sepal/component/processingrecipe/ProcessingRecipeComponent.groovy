@@ -25,7 +25,8 @@ class ProcessingRecipeComponent extends DataSourceBackedComponent implements End
         RADAR_MOSAIC: new RadarMosaicMigrations(),
         CLASSIFICATION: new ClassificationMigrations(),
         CHANGE_DETECTION: new ChangeDetectionMigrations(),
-        TIME_SERIES: new TimeSeriesMigrations()
+        TIME_SERIES: new TimeSeriesMigrations(),
+        CCDC_SLICE: new CcdcSliceMigrations()
     ]
 
     static ProcessingRecipeComponent create() {
