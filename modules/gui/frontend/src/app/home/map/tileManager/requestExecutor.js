@@ -51,14 +51,14 @@ export const getRequestExecutor = concurrency => {
         return mostRecent
     }
 
-    const cancelMostRecentByTileProviderId = (tileProviderId, replacementRequest, excludeCount) => {
+    const tryCancelMostRecentByTileProviderId = (tileProviderId, replacementRequest, excludeCount) => {
         const request = getMostRecentByTileProviderId(tileProviderId, excludeCount)
         if (request) {
             log.debug(`Cancelling lowest priority request handler for ${tileProviderTag(tileProviderId)}`)
             request.cancel$.next(replacementRequest)
             return true
         }
-        console.warn(`Could not cancel request handler ${tileProviderTag(tileProviderId)}`)
+        log.debug(`No cancellable request for ${tileProviderTag(tileProviderId)}`)
         return false
     }
 
@@ -102,7 +102,7 @@ export const getRequestExecutor = concurrency => {
                 response$.complete()
             },
             error: error => {
-                console.error(`Failed ${requestTag({tileProviderId, requestId})}`, error)
+                log.error(`Failed ${requestTag({tileProviderId, requestId})}`, error)
                 response$.error(error)
             }
         })
@@ -114,7 +114,7 @@ export const getRequestExecutor = concurrency => {
     const tryCancelHidden = replacementRequest => {
         const maxActive = getMaxActive({hidden: true})
         if (maxActive) {
-            return cancelMostRecentByTileProviderId(maxActive.tileProviderId, replacementRequest, 0)
+            return tryCancelMostRecentByTileProviderId(maxActive.tileProviderId, replacementRequest, 0)
         }
         return false
     }
@@ -127,7 +127,7 @@ export const getRequestExecutor = concurrency => {
             const threshold = maxActive.count - 1
             if (activeCount < threshold) {
                 log.debug(`Detected insufficient handlers for ${tileProviderTag(tileProviderId)}, currently ${activeCount}`)
-                return cancelMostRecentByTileProviderId(maxActive.tileProviderId, replacementRequest, 1)
+                return tryCancelMostRecentByTileProviderId(maxActive.tileProviderId, replacementRequest, 1)
             }
         }
         return false
