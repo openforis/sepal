@@ -29,7 +29,7 @@
     --input-border-default-color: #606060;
     --input-border-hover-color: #b0b0b0;
     --input-border-focus-color: #a0a0a0;
-    border-bottom: 1px dotted var(--input-border-color);
+    border-bottom: 1px solid var(--input-border-color);
     transition: 100ms ease-in-out;
 }
 
