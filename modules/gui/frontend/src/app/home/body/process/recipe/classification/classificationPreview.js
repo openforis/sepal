@@ -66,7 +66,7 @@ class ClassificationPreview extends React.Component {
                 {this.renderLegend()}
                 <MapStatus
                     loading={!tiles.complete}
-                    message={msg(`process.${LABEL}.preview.loading`, {pending: tiles.pending})}
+                    message={msg(`process.${LABEL}.preview.loading`, {pending: tiles.loading})}
                     error={tiles.failed ? msg(`process.${LABEL}.preview.tilesFailed`, {failed: tiles.failed}) : error}/>
             </React.Fragment>
         )

@@ -65,7 +65,7 @@ class PrimitivePreview extends React.Component {
             return (
                 <MapStatus
                     loading={!tiles.complete}
-                    message={msg('process.classification.preview.loading', {pending: tiles.pending})}
+                    message={msg('process.classification.preview.loading', {pending: tiles.loading})}
                     error={tiles.failed ? msg('process.classification.preview.tilesFailed', {failed: tiles.failed}) : error}/>
             )
         else
