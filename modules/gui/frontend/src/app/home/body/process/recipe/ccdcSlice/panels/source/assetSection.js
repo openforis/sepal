@@ -1,4 +1,5 @@
 import {Form} from 'widget/form/form'
+import {Layout} from 'widget/layout'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -9,6 +10,10 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 
+const J_DAYS = 0
+const FRACTIONAL_YEARS = 1
+const UNIX_TIME_MILLIS = 2
+
 class AssetSection extends React.Component {
     constructor(props) {
         super(props)
@@ -16,19 +21,44 @@ class AssetSection extends React.Component {
     }
 
     render() {
-        const {inputs: {asset, bands}} = this.props
+        const {inputs: {asset, bands, dateFormat}} = this.props
         return (
-            <Form.Input
-                label={msg('process.ccdcSlice.panel.source.form.asset.label')}
-                autoFocus
-                input={asset}
-                placeholder={msg('process.ccdcSlice.panel.source.form.asset.placeholder')}
-                spellCheck={false}
-                onChange={() => bands.set(null)}
-                onChangeDebounced={asset => asset && this.loadMetadata(asset)}
-                errorMessage
-                busyMessage={this.props.stream('LOAD_ASSET_METADATA').active && msg('widget.loading')}
-            />
+            <Layout>
+                <Form.Input
+                    label={msg('process.ccdcSlice.panel.source.form.asset.label')}
+                    autoFocus
+                    input={asset}
+                    placeholder={msg('process.ccdcSlice.panel.source.form.asset.placeholder')}
+                    spellCheck={false}
+                    onChange={() => bands.set(null)}
+                    onChangeDebounced={asset => asset && this.loadMetadata(asset)}
+                    errorMessage
+                    busyMessage={this.props.stream('LOAD_ASSET_METADATA').active && msg('widget.loading')}
+                />
+                <Form.Buttons
+                    label={msg('process.ccdc.panel.dates.form.dateFormat.label')}
+                    input={dateFormat}
+                    disabled={!asset.value}
+                    multiple={false}
+                    options={[
+                        {
+                            value: J_DAYS,
+                            label: msg('process.ccdc.panel.dates.form.dateFormat.jDays.label'),
+                            tooltip: msg('process.ccdc.panel.dates.form.dateFormat.jDays.tooltip')
+                        },
+                        {
+                            value: FRACTIONAL_YEARS,
+                            label: msg('process.ccdc.panel.dates.form.dateFormat.fractionalYears.label'),
+                            tooltip: msg('process.ccdc.panel.dates.form.dateFormat.fractionalYears.tooltip')
+                        },
+                        {
+                            value: UNIX_TIME_MILLIS,
+                            label: msg('process.ccdc.panel.dates.form.dateFormat.unixTimeMillis.label'),
+                            tooltip: msg('process.ccdc.panel.dates.form.dateFormat.unixTimeMillis.tooltip')
+                        }
+                    ]}
+                />
+            </Layout>
         )
     }
 

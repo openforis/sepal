@@ -20,7 +20,9 @@ const fields = {
         .notBlank('process.ccdcSlice.panel.source.form.recipe.required'),
     bands: new Form.Field()
         .notEmpty('process.ccdcSlice.panel.source.form.bands.required'),
-    dateFormat: new Form.Field(),
+    dateFormat: new Form.Field()
+        .skip((value, {section}) => section !== 'ASSET')
+        .notBlank(),
     startDate: new Form.Field(),
     endDate: new Form.Field(),
     surfaceReflectance: new Form.Field()
