@@ -33,27 +33,34 @@
     }
   },
   "apps": {
-    "initializing": "Starting session...",
-    "loading": {
-      "error": "Failed to load apps. Try to reload the page.",
-      "progress": "Loading..."
-    },
-    "run": {
-      "error": "Failed to run {label}"
-    },
-    "info": "Show information about this app",
+    "developedBy": "Developed by {author}",
     "filter": {
-      "tag": {
-        "ignore.label": "All"
-      },
       "search": {
         "placeholder": "Search apps"
+      },
+      "tag": {
+        "ignore": {
+          "label": "All"
+        }
       }
     },
-    "developedBy": "Developed by {author}",
     "googleAccountRequired": "SEPAL needs to be connected to your Google Account to use this app",
-    "running": "App is running",
-    "notRunning": "App is not running"
+    "info": "Show information about this app",
+    "initializing": "Starting session...",
+    "loading": {
+      "error": {
+        "message": "Reload page",
+        "title": "Failed to load"
+      },
+      "progress": "Loading..."
+    },
+    "notRunning": "App is not running",
+    "run": {
+      "error": {
+        "title": "Fail to execute {label}"
+      }
+    },
+    "running": "App is running"
   },
   "bands": {
     "aerosol": "Aerosol",
@@ -136,6 +143,20 @@
     "select": "Select",
     "stop": "Stop"
   },
+  "eeTable": {
+    "failedToLoad": "Failed to load EE Table",
+    "notFound": "EE Table not found",
+    "unauthorized": "You don't have access to this EE Table"
+  },
+  "error": {
+    "internal": "Internal error"
+  },
+  "footer": {
+    "buildNumber": "Build number",
+    "buildNumberCopied": "Build number copied to clipboard",
+    "gitCommit": "Git commit",
+    "gitCommitCopied": "Git commit copied to clipboard"
+  },
   "format": {
     "GB": "{value}GB",
     "dollars": "${value}",
@@ -148,27 +169,22 @@
     "notFound": "Fusion Table not found",
     "unauthorized": "You don't have access to this Fusion Table"
   },
-  "eeTable": {
-    "failedToLoad": "Failed to load EE Table",
-    "notFound": "EE Table not found",
-    "unauthorized": "You don't have access to this EE Table"
-  },
   "gee": {
     "classification": {
       "error": {
         "noTrainingData": "There is no training data in selected area of interest."
       }
     },
-    "table": {
-      "error": {
-        "notFound": "Table not found",
-        "notATable": "Not a Table"
-      }
-    },
     "error": {
       "earthEngineException": "{earthEngineMessage}",
       "failedToLoadRecipe": "Failed to load recipe",
       "title": "Google Earth Engine error"
+    },
+    "table": {
+      "error": {
+        "notATable": "Not a Table",
+        "notFound": "Table not found"
+      }
     }
   },
   "home": {
@@ -178,7 +194,7 @@
       "browse": "Files",
       "collapse": "Automatically hide and show menu",
       "expand": "Always show menu",
-      "logout": "Logout from Sepal",
+      "logout": "Logout from SEPAL",
       "process": "Process",
       "tasks": "Tasks",
       "terminal": "Terminal",
@@ -194,52 +210,9 @@
     }
   },
   "landing": {
-    "signup": "Signup",
-    "launch": "Launch",
-    "intro": {
-      "easeOfUse": {
-        "title": "Ease of use",
-        "description": "Allows users to query and process satellite data quickly and efficiently, tailor their products for local needs, and produce sophisticated and relevant geospatial analyses quickly."
-      },
-      "computingPower": {
-        "title": "Computing power",
-        "description": "Harness high performance cloud-based computing and modern geospatial data infrastructures."
-      },
-      "googleEarthEngine": {
-        "title": "Earth Engine",
-        "description": "Get access to Google Earth Engine's multi-petabyte catalog of satellite imagery and use their planetary-scale analysis capabilities. All without writing a single line of code. Just connect your Google account to SEPAL."
-      },
-      "jupyterNotebook": {
-        "title": "Jupyter Notebook",
-        "description": "Run any of the geospatial processing notebooks in SEPAL's catalogue, or develop your own. The hosted Jupyter server comes with Python 3, R, and JavaScript kernels."
-      },
-      "shiny": {
-        "title": "Shiny Server",
-        "description": "Perform stratified area estimation, time-series analysis with BFAST, and other geospatial processing through the R Shiny apps hosted in SEPAL."
-      },
-      "rstudio": {
-        "title": "RStudio Server",
-        "description": "Develop your R scripts with RStudio, directly inside SEPAL. Use any of the many useful R packages already installed, and install your own when you need to."
-      },
-      "integrations": {
-        "title": "Integrations",
-        "description": "SEPAL doesn't want to reinvent the wheel. We rather use and integrate with existing solutions, such as Open Foris Collect Earth Online, for visual interpretation of satellite imagery."
-      },
-      "powerUsers": {
-        "title": "Power Users",
-        "description": "Get access to dedicated Linux instances, with up to 128 CPU cores, 2TB of RAM and a host of development and geospatial tools installed. Access it directly from within the browser, or through an SSH client. Transfer files to and from the instance with rsync, scp, or your favorite FTP client."
-      },
-      "about": {
-        "title": "About",
-        "description": "SEPAL is an opensource project by the Open Foris team in Forestry Department of the United Nations Food and Agriculture Organization (FAO), funded by the Government of Norway."
-      },
-      "partners": {
-        "title": "Partners"
-      }
-    },
     "features": {
       "apps": {
-        "description": "Extend the features in Sepal with custom data processing applications",
+        "description": "Extend the features in SEPAL with custom data processing applications",
         "title": "Extensible with apps"
       },
       "browse": {
@@ -260,11 +233,53 @@
       "cancel-link": "Cancel",
       "instructions": "Provide us with the email address of your SEPAL account and we'll send you an email with instructions on how to reset your password.",
       "invalid": "Not a valid email",
-      "label": "Forgot your password ?",
+      "label": "Forgot your password?",
       "placeholder": "Enter your email",
       "required": "Email is required",
       "success": "An email with password reset instructions has been sent to {email}."
     },
+    "intro": {
+      "about": {
+        "description": "SEPAL is an opensource project by the Open Foris team in Forestry Department of the United Nations Food and Agriculture Organization (FAO), funded by the Government of Norway.",
+        "title": "About"
+      },
+      "computingPower": {
+        "description": "Harness high performance cloud-based computing and modern geospatial data infrastructures.",
+        "title": "Computing power"
+      },
+      "easeOfUse": {
+        "description": "Allows users to query and process satellite data quickly and efficiently, tailor their products for local needs, and produce sophisticated and relevant geospatial analyses quickly.",
+        "title": "Ease of use"
+      },
+      "googleEarthEngine": {
+        "description": "Get access to Google Earth Engine's multi-petabyte catalog of satellite imagery and use their planetary-scale analysis capabilities. All without writing a single line of code. Just connect your Google account to SEPAL.",
+        "title": "Earth Engine"
+      },
+      "integrations": {
+        "description": "SEPAL doesn't want to reinvent the wheel. We rather use and integrate with existing solutions, such as Open Foris Collect Earth Online, for visual interpretation of satellite imagery.",
+        "title": "Integrations"
+      },
+      "jupyterNotebook": {
+        "description": "Run any of the geospatial processing notebooks in SEPAL's catalogue, or develop your own. The hosted Jupyter server comes with Python 3, R, and JavaScript kernels.",
+        "title": "Jupyter Notebook"
+      },
+      "partners": {
+        "title": "Partners"
+      },
+      "powerUsers": {
+        "description": "Get access to dedicated Linux instances, with up to 128 CPU cores, 2TB of RAM and a host of development and geospatial tools installed. Access it directly from within the browser, or through an SSH client. Transfer files to and from the instance with rsync, scp, or your favorite FTP client.",
+        "title": "Power Users"
+      },
+      "rstudio": {
+        "description": "Develop your R scripts with RStudio, directly inside SEPAL. Use any of the many useful R packages already installed, and install your own when you need to.",
+        "title": "RStudio Server"
+      },
+      "shiny": {
+        "description": "Perform stratified area estimation, time-series analysis with BFAST, and other geospatial processing through the R Shiny apps hosted in SEPAL.",
+        "title": "Shiny Server"
+      }
+    },
+    "launch": "Launch",
     "login": {
       "button": "Login",
       "forgot-password-link": "Forgot password?",
@@ -285,10 +300,10 @@
     "reset-password": {
       "button": "Set password",
       "password": {
+        "invalid": "Password must be at least 8 characters long",
         "label": "Password",
         "placeholder": "Enter a new password",
-        "required": "Password is required",
-        "invalid": "Password must be at least 8 characters long"
+        "required": "Password is required"
       },
       "password2": {
         "label": "Confirm password",
@@ -296,16 +311,19 @@
         "placeholder": "Enter the password again",
         "required": "Password must be confirmed"
       },
-      "success": "Password has been reset",
+      "success": {
+        "title": "Password reset"
+      },
       "username": {
         "label": "Username"
       },
       "validating-link": "Validating link..."
     },
+    "signup": "Signup",
     "tagline": "System for earth observations, data access, processing & analysis for land monitoring.",
-    "title": "Sepal",
+    "title": "SEPAL",
     "validate-token": {
-      "error": "This link is not valid anymore. Make sure you use the link in the latest email you received from Sepal."
+      "error": "This link is not valid anymore. Make sure you use the link in the latest email you received from SEPAL."
     }
   },
   "map": {
@@ -313,35 +331,444 @@
       "error": "Failed to load layer"
     },
     "layout": {
-      "title": "Map layout",
+      "area": {
+        "edit": {
+          "tooltip": "Edit area properties"
+        },
+        "remove": {
+          "message": "Please confirm removal of this area",
+          "tooltip": "Remove area"
+        }
+      },
       "layer": {
         "remove": {
           "message": "Please confirm removal of this layer",
           "tooltip": "Remove layer"
         }
       },
-      "area": {
-        "edit.tooltip": "Edit area properties",
-        "remove": {
-          "message": "Please confirm removal of this area",
-          "tooltip": "Remove area"
-        }
-      }
+      "title": "Map layout"
     }
   },
   "notifications": {
     "error": {
       "connectionError": "Failed to connect to server. Either your internet connection failed, or server is unavailable at the moment.",
-      "generic": "Sepal encountered an error. Please try again or contact support if the problem persists."
+      "generic": "SEPAL encountered an error. Please try again or contact support if the problem persists."
     }
   },
   "pagination": {
     "info": "{start} - {stop - 1} / {count}"
   },
   "process": {
+    "ccdc": {
+      "chartPixel": {
+        "loadFailed": "Failed to load chart: {error}"
+      },
+      "create": "CCDC",
+      "description": "Create a CCDC asset from a time-series.",
+      "mapToolbar": {
+        "centerMap": {
+          "tooltip": "Zoom to area of interest"
+        },
+        "chartPixel": {
+          "cancel": {
+            "tooltip": "Cancel time-series charting"
+          },
+          "start": {
+            "tooltip": "Chart time-series for pixel"
+          }
+        },
+        "labels": {
+          "hide": {
+            "tooltip": "Hide labels"
+          },
+          "show": {
+            "tooltip": "Show labels"
+          }
+        },
+        "zoom": {
+          "tooltip": "Zoom to area"
+        },
+        "zoomIn": {
+          "tooltip": "Zoom in"
+        },
+        "zoomOut": {
+          "tooltip": "Zoom out"
+        }
+      },
+      "panel": {
+        "dates": {
+          "button": "DAT",
+          "form": {
+            "dateFormat": {
+              "fractionalYears": {
+                "label": "Fractional years"
+              },
+              "jDays": {
+                "label": "Julian days"
+              },
+              "label": "Date format",
+              "required": "Date format must be specified",
+              "unixTimeMillis": {
+                "label": "Unix time millis"
+              }
+            },
+            "endDate": {
+              "label": "End date",
+              "malformed": "Invalid date",
+              "required": "Date is required",
+              "tooltip": "The last date of the time-series, exclusive."
+            },
+            "startDate": {
+              "beforeEnd": "Must be before end",
+              "label": "Start date",
+              "malformed": "Invalid date",
+              "required": "Date is required",
+              "tooltip": "The first date of the time-series, inclusive."
+            }
+          },
+          "title": "Dates",
+          "tooltip": "Specify date range"
+        },
+        "options": {
+          "button": "OPT",
+          "form": {
+            "breakDetection": {
+              "aggressive": {
+                "label": "Aggressive",
+                "tooltip": "Be aggressive in detecting breaks in the time-series. It might detect breaks where there are none."
+              },
+              "conservative": {
+                "label": "Conservative",
+                "tooltip": "Be conservative in detecting breaks in the time-series. It might miss more subtle breaks or breaks where there is bad data availability"
+              },
+              "label": "Break detection",
+              "moderate": {
+                "label": "Moderate",
+                "tooltip": "Be moderate in detecting breaks in the time-series."
+              }
+            },
+            "chiSquareProbability": "Chi square probability",
+            "lambda": "Lambda",
+            "maxIterations": "Max iterations",
+            "minNumOfYearsScaler": "min number of years scaler",
+            "minObservations": "Min observations",
+            "tmaskBands": {
+              "label": "TMask bands",
+              "noneOrTwo": "Exactly two bands must be selected or none"
+            }
+          },
+          "title": "CCDC options",
+          "tooltip": "Configure CCDC options"
+        },
+        "preprocess": {
+          "button": "PRC",
+          "form": {
+            "cloudMasking": {
+              "aggressive": {
+                "label": "Aggressive",
+                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
+              },
+              "label": "Cloud masking",
+              "moderate": {
+                "label": "Moderate",
+                "tooltip": "Rely only on image source QA bands for cloud masking"
+              },
+              "none": {
+                "label": "Off",
+                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
+              }
+            },
+            "corrections": {
+              "brdf": {
+                "label": "BRDF correction",
+                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+              },
+              "label": "Corrections",
+              "surfaceReflectance": {
+                "label": "Surface reflectance",
+                "tooltip": "Use scenes atmospherically corrected surface reflectance."
+              }
+            },
+            "shadowMasking": {
+              "label": "Shadow masking",
+              "off": {
+                "label": "Off",
+                "tooltip": "Don't apply aggressive shadow masking."
+              },
+              "on": {
+                "label": "On",
+                "tooltip": "Apply aggressive shadow masking. This can inadvertently remove some dynamics and lead to missing changes"
+              }
+            },
+            "snowMasking": {
+              "label": "Snow masking",
+              "off": {
+                "label": "Off",
+                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
+              },
+              "on": {
+                "label": "On",
+                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
+              }
+            }
+          },
+          "title": "Pre-process",
+          "tooltip": "Configure imagery pre-processing"
+        },
+        "retrieve": {
+          "apply": "Retrieve",
+          "form": {
+            "bands": {
+              "atLeastOne": "Select at least one band",
+              "label": "Bands"
+            },
+            "scale": {
+              "info": "{scale} meters",
+              "label": "Scale"
+            }
+          },
+          "task": "Retrieve {name} as a Google Earth Engine asset",
+          "title": "Retrieve",
+          "tooltip": "Retrieve time-series"
+        },
+        "sources": {
+          "button": "SRC",
+          "form": {
+            "breakpointBands": {
+              "atLeastOne": "Select at least one band",
+              "label": "Breakpoint bands"
+            },
+            "dataSets": {
+              "optical": {
+                "label": "Optical"
+              },
+              "options": {
+                "LANDSAT_7": {
+                  "label": "L7",
+                  "tooltip": "Landsat 7"
+                },
+                "LANDSAT_7_T2": {
+                  "label": "L7 T2",
+                  "tooltip": "Landsat 7 Tier 2"
+                },
+                "LANDSAT_8": {
+                  "label": "L8",
+                  "tooltip": "Landsat 8"
+                },
+                "LANDSAT_8_T2": {
+                  "label": "L8 T2",
+                  "tooltip": "Landsat 8 Tier 2"
+                },
+                "LANDSAT_TM": {
+                  "label": "L4-5",
+                  "tooltip": "Landsat 4-5"
+                },
+                "LANDSAT_TM_T2": {
+                  "label": "L4-5 T2",
+                  "tooltip": "Landsat 4-5 Tier 2"
+                },
+                "SENTINEL_1": {
+                  "label": "S1",
+                  "tooltip": "Sentinel 1 A+B"
+                },
+                "SENTINEL_2": {
+                  "label": "S2",
+                  "tooltip": "Sentinel 2 A+B"
+                }
+              },
+              "radar": {
+                "label": "Radar"
+              }
+            },
+            "required": "A data source must be selected"
+          },
+          "title": "Sources",
+          "tooltip": "Select image source"
+        }
+      },
+      "tabPlaceholder": "CCDC"
+    },
+    "ccdcSlice": {
+      "create": "CCDC slice",
+      "description": "Create a slice of a CCDC asset, for a specific date.",
+      "mapToolbar": {
+        "centerMap": {
+          "tooltip": "Zoom to area of interest"
+        },
+        "labels": {
+          "hide": {
+            "tooltip": "Hide labels"
+          },
+          "show": {
+            "tooltip": "Show labels"
+          }
+        },
+        "zoom": {
+          "tooltip": "Zoom to area"
+        },
+        "zoomIn": {
+          "tooltip": "Zoom in"
+        },
+        "zoomOut": {
+          "tooltip": "Zoom out"
+        }
+      },
+      "panel": {
+        "date": {
+          "button": "DAT",
+          "form": {
+            "date": {
+              "label": "Date of slice",
+              "malformed": "Invalid date",
+              "range": "The CCDC asset was created with data from {startDate} to {endDate}",
+              "required": "Date is required",
+              "tooltip": "The date of the slice"
+            }
+          },
+          "title": "Date",
+          "tooltip": "Specify date of the slice"
+        },
+        "options": {
+          "button": "OPT",
+          "form": {
+            "extrapolateMaxDays": {
+              "label": "Max days to extrapolate",
+              "unlimited": "all"
+            },
+            "extrapolateSegment": {
+              "closest": {
+                "label": "Closest",
+                "tooltip": "Extrapolate the segment closest to the date"
+              },
+              "label": "Segment to extrapolate",
+              "next": {
+                "label": "Next",
+                "tooltip": "Back-extrapolate the segment after the date"
+              },
+              "previous": {
+                "label": "Previous",
+                "tooltip": "Extrapolate the segment before the date"
+              }
+            },
+            "gapStrategy": {
+              "extrapolate": {
+                "label": "Extrapolate",
+                "tooltip": "Generate a new model based on the segment before or after the gap."
+              },
+              "interpolate": {
+                "label": "Interpolate",
+                "tooltip": "Generate a new model based on surrounding segments. If there isn't any segment before or after, the pixel will be masked."
+              },
+              "label": "Gap strategy",
+              "mask": {
+                "label": "Mask",
+                "tooltip": "Mask all pixels that fall on a gap."
+              },
+              "tooltip": "Decide which strategy to use for pixels where there is no CCDC segment. There will be gaps during detected breaks or for dates before and after the CCDC date range."
+            },
+            "harmonics": {
+              "label": "Harmonics",
+              "tooltip": "Specify how many harmonics from the CCDC regression model to use when creating the slice"
+            }
+          },
+          "title": "CCDC slice options",
+          "tooltip": "Configure how the CCDC slice is made"
+        },
+        "retrieve": {
+          "apply": "Retrieve",
+          "form": {
+            "bandTypes": {
+              "amplitude1": {
+                "label": "Amplitude 1",
+                "tooltip": "The amplitude of the model's first order harmonic"
+              },
+              "amplitude2": {
+                "label": "Amplitude 2",
+                "tooltip": "The amplitude of the model's second order harmonic"
+              },
+              "amplitude3": {
+                "label": "Amplitude 3",
+                "tooltip": "The amplitude of the model's third order harmonic"
+              },
+              "atLeastOne": "At least one band type must be selected",
+              "intercept": {
+                "label": "Intercept",
+                "tooltip": "The intercept of the model's linear component"
+              },
+              "label": "Band types",
+              "phase1": {
+                "label": "Phase 1",
+                "tooltip": "The phase of the model's first order harmonic"
+              },
+              "phase2": {
+                "label": "Phase 2",
+                "tooltip": "The phase of the model's second order harmonic"
+              },
+              "phase3": {
+                "label": "Phase 3",
+                "tooltip": "The phase of the model's third order harmonic"
+              },
+              "rmse": {
+                "label": "RMSE",
+                "tooltip": "RMSE of the harmonic models"
+              },
+              "slope": {
+                "label": "Slope",
+                "tooltip": "The slope of the model's linear component"
+              },
+              "value": {
+                "label": "Value",
+                "tooltip": "The evaluated value of the harmonic models for the specified date"
+              }
+            },
+            "baseBands": {
+              "atLeastOne": "At least one base band must be selected",
+              "label": "Base bands"
+            },
+            "destination": {
+              "GEE": "Google Earth Engine asset",
+              "SEPAL": "SEPAL workspace",
+              "label": "Destination",
+              "required": "A destination must be selected"
+            },
+            "scale": {
+              "info": "{scale} meters",
+              "label": "Scale"
+            }
+          },
+          "task": {
+            "GEE": "Export {name} as a Google Earth Engine asset",
+            "SEPAL": "Retrieve {name} to SEPAL workspace"
+          },
+          "title": "Retrieve",
+          "tooltip": "Retrieve time-series"
+        },
+        "source": {
+          "button": "SRC",
+          "form": {
+            "asset": {
+              "invalid": "Asset must be an exported CCDC asset",
+              "label": "CCDC asset",
+              "placeholder": "Enter CCDC asset ID",
+              "required": "An asset ID must be specified"
+            }
+          },
+          "title": "Source",
+          "tooltip": "Select EE asset with CCDC segments to slice"
+        }
+      },
+      "preview": {
+        "description": "Preview of a CCDC slice, generated on the fly by EE.",
+        "error": "Failed to generate preview",
+        "initializing": "Loading preview...",
+        "label": "CCDC slice",
+        "loading": "Loaded {loaded} of {count} tiles",
+        "tilesFailed": "{failed} failed"
+      },
+      "tabPlaceholder": "CCDC slice"
+    },
     "classification": {
       "create": "Classification",
-      "tabPlaceholder": "Classification",
       "description": "Classify imagery from SEPAL or Google Earth Engine. Include imagery from multiple points in time to do change detection.",
       "panel": {
         "auxiliaryImagery": {
@@ -355,7 +782,7 @@
               },
               "terrain": {
                 "label": "Terrain",
-                "tooltip": "Include SRTM data."
+                "tooltip": "Include SRTM data"
               },
               "water": {
                 "label": "Water",
@@ -464,7 +891,7 @@
           "loadingBandsError": "Failed to load from Google Earth Engine",
           "noImagery": "Please add at least one image to classify.",
           "recipe": {
-            "title": "Saved Sepal recipe"
+            "title": "Saved SEPAL recipe"
           },
           "remove": {
             "confirmationMessage": "Are you sure you want to remove {name} from your classification?",
@@ -484,7 +911,7 @@
           "tooltip": "Select images to classify",
           "type": {
             "ASSET": "Earth Engine asset",
-            "RECIPE_REF": "Sepal recipe"
+            "RECIPE_REF": "SEPAL recipe"
           }
         },
         "retrieve": {
@@ -492,7 +919,7 @@
           "form": {
             "destination": {
               "GEE": "Google Earth Engine asset",
-              "SEPAL": "Sepal workspace",
+              "SEPAL": "SEPAL workspace",
               "label": "Retrieve to",
               "required": "A destination must be selected"
             },
@@ -502,7 +929,7 @@
             },
             "task": {
               "GEE": "Export {name} as a Google Earth Engine asset",
-              "SEPAL": "Retrieve {name} to Sepal workspace"
+              "SEPAL": "Retrieve {name} to SEPAL workspace"
             }
           },
           "title": "Retrieve",
@@ -513,7 +940,7 @@
           "form": {
             "eeTable": {
               "invalid": "Invalid EE Table ID",
-              "label": "EE table",
+              "label": "EE Table",
               "placeholder": "Enter a EE Table ID",
               "required": "EE Table must be specified"
             },
@@ -533,20 +960,20 @@
         }
       },
       "preview": {
-        "error": "Failed to create preview",
-        "label": "Classification",
         "description": "Preview of classification, generated on the fly by EE.",
+        "error": "Failed to create preview",
         "initializing": "Loading preview...",
+        "label": "Classification",
         "loading": "Loaded {loaded} of {count} tiles",
         "tilesFailed": "{failed} failed"
-      }
+      },
+      "tabPlaceholder": "Classification"
     },
     "closeRecipe": {
       "message": "Do you want to save this recipe?"
     },
     "landCover": {
       "create": "RLCMS",
-      "tabPlaceholder": "RLCMS",
       "description": "Regional Land Cover Monitoring System. Create land cover map along with confidence levels from Landsat or Sentinel 2.",
       "panel": {
         "compositeOptions": {
@@ -631,17 +1058,17 @@
               },
               "required": "A column must be selected"
             },
-            "fusionTable": {
-              "invalid": "Invalid Fusion Table ID",
-              "label": "Fusion table",
-              "placeholder": "Enter a Fusion Table ID",
-              "required": "Fusion Table must be specified"
-            },
             "eeTable": {
               "invalid": "Invalid EE Table ID",
               "label": "EE table",
               "placeholder": "Enter a EE Table ID",
               "required": "EE Table must be specified"
+            },
+            "fusionTable": {
+              "invalid": "Invalid Fusion Table ID",
+              "label": "Fusion table",
+              "placeholder": "Enter a Fusion Table ID",
+              "required": "Fusion Table must be specified"
             },
             "yearAndClassColumnsSame": "Year and class columns are the same",
             "yearColumn": {
@@ -662,7 +1089,8 @@
           "title": "Typology",
           "tooltip": "Select typology"
         }
-      }
+      },
+      "tabPlaceholder": "RLCMS"
     },
     "menu": {
       "duplicateRecipe": "Duplicate recipe",
@@ -686,7 +1114,6 @@
         "placeholder": "Select preview bands"
       },
       "create": "Optical mosaic",
-      "tabPlaceholder": "Optical_mosaic",
       "description": "Create a mosaic using Landsat or Sentinel 2.",
       "mapToolbar": {
         "centerMap": {
@@ -694,6 +1121,26 @@
         },
         "layers": {
           "tooltip": "Select layers to show"
+        },
+        "layersMenu": {
+          "GOOGLE_SATELLITE": {
+            "description": "Google Maps high-resolution satellite layer",
+            "label": "Google Satellite"
+          },
+          "PLANET": {
+            "description": "Planet composites",
+            "label": "Planet"
+          },
+          "SEPAL": {
+            "description": "Minimal dark SEPAL default layer",
+            "label": "SEPAL"
+          },
+          "baseLayer": "Base layer",
+          "labels": {
+            "description": "Show map labels, roads and points of interest",
+            "label": "Show Labels"
+          },
+          "overlay": "Overlays"
         },
         "sceneAreas": {
           "hide": {
@@ -711,26 +1158,6 @@
         },
         "zoomOut": {
           "tooltip": "Zoom out"
-        },
-        "layersMenu": {
-          "baseLayer": "Base layer",
-          "overlay": "Overlays",
-          "labels": {
-            "label": "Show Labels",
-            "description": "Show map labels, roads and points of interest"
-          },
-          "SEPAL": {
-            "label": "Sepal",
-            "description": "Minimal dark Sepal default layer"
-          },
-          "GOOGLE_SATELLITE": {
-            "label": "Google Satellite",
-            "description": "Google Maps high-resolution satellite layer"
-          },
-          "PLANET": {
-            "label": "Planet",
-            "description": "Planet composites"
-          }
         }
       },
       "panel": {
@@ -753,54 +1180,16 @@
               },
               "country": {
                 "label": "Country",
+                "loadFailed": "Cannot load countries",
                 "placeholder": {
                   "loaded": "Select a country...",
                   "loading": "Loading countries..."
-                },
-                "loadFailed": "Cannot load countries"
+                }
               },
               "required": "Country is required",
               "title": "Select country/province"
             },
-            "fusionTable": {
-              "fusionTableRowSelection": {
-                "label": "Rows",
-                "FILTER": "Filter",
-                "INCLUDE_ALL": "Include all"
-              },
-              "column": {
-                "label": "Column",
-                "placeholder": {
-                  "loaded": "Select a column...",
-                  "loading": "Loading columns...",
-                  "noFusionTable": "Enter a Fusion Table ID first"
-                },
-                "required": "A column must be selected"
-              },
-              "fusionTable": {
-                "label": "Fusion Table",
-                "placeholder": "Enter a Fusion Table ID",
-                "required": "Fusion Table must be specified"
-              },
-              "row": {
-                "label": "Value",
-                "placeholder": {
-                  "loaded": "Select a value...",
-                  "loading": "Loading rows...",
-                  "noColumn": "Select a column first",
-                  "noFusionTable": "Enter a Fusion Table ID first",
-                  "noRows": "No rows in Fusion Table"
-                },
-                "required": "A row must be selected"
-              },
-              "title": "Select from Fusion Table"
-            },
             "eeTable": {
-              "eeTableRowSelection": {
-                "label": "Rows",
-                "FILTER": "Filter",
-                "INCLUDE_ALL": "Include all"
-              },
               "column": {
                 "label": "Column",
                 "placeholder": {
@@ -815,6 +1204,11 @@
                 "placeholder": "Enter a EE Table ID",
                 "required": "EE Table must be specified"
               },
+              "eeTableRowSelection": {
+                "FILTER": "Filter",
+                "INCLUDE_ALL": "Include all",
+                "label": "Rows"
+              },
               "row": {
                 "label": "Value",
                 "placeholder": {
@@ -827,6 +1221,39 @@
                 "required": "A row must be selected"
               },
               "title": "Select from EE Table"
+            },
+            "fusionTable": {
+              "column": {
+                "label": "Column",
+                "placeholder": {
+                  "loaded": "Select a column...",
+                  "loading": "Loading columns...",
+                  "noFusionTable": "Enter a Fusion Table ID first"
+                },
+                "required": "A column must be selected"
+              },
+              "fusionTable": {
+                "label": "Fusion Table",
+                "placeholder": "Enter a Fusion Table ID",
+                "required": "Fusion Table must be specified"
+              },
+              "fusionTableRowSelection": {
+                "FILTER": "Filter",
+                "INCLUDE_ALL": "Include all",
+                "label": "Rows"
+              },
+              "row": {
+                "label": "Value",
+                "placeholder": {
+                  "loaded": "Select a value...",
+                  "loading": "Loading rows...",
+                  "noColumn": "Select a column first",
+                  "noFusionTable": "Enter a Fusion Table ID first",
+                  "noRows": "No rows in Fusion Table"
+                },
+                "required": "A row must be selected"
+              },
+              "title": "Select from Fusion Table"
             },
             "polygon": {
               "description": "Draw a polygon on the map.",
@@ -862,6 +1289,36 @@
         "composite": {
           "button": "CMP",
           "form": {
+            "cloudBuffer": {
+              "aggressive": {
+                "label": "Aggressive",
+                "tooltip": "Mask an additional 600m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
+              },
+              "label": "Cloud buffering",
+              "moderate": {
+                "label": "Moderate",
+                "tooltip": "Mask an additional 120m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
+              },
+              "none": {
+                "label": "None",
+                "tooltip": "Only mask the clouds. It might leave hazy pixels around masked clouds, but will minimize the amount of masked pixels in the mosaic."
+              }
+            },
+            "cloudMasking": {
+              "aggressive": {
+                "label": "Aggressive",
+                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
+              },
+              "label": "Cloud masking",
+              "moderate": {
+                "label": "Moderate",
+                "tooltip": "Rely only on image source QA bands for cloud masking"
+              },
+              "none": {
+                "label": "Off",
+                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
+              }
+            },
             "composingMethod": {
               "label": "Composing method",
               "median": {
@@ -913,44 +1370,14 @@
               "tooltip": "Filter out pixels in selected scenes based on the below properties"
             },
             "snowMasking": {
+              "label": "Snow masking",
               "off": {
                 "label": "Off",
                 "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
               },
-              "label": "Snow masking",
               "on": {
                 "label": "On",
-                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
-              }
-            },
-            "cloudMasking": {
-              "label": "Cloud masking",
-              "none": {
-                "label": "Off",
-                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
-              },
-              "moderate": {
-                "label": "Moderate",
-                "tooltip": "Rely only on image source QA bands for cloud masking"
-              },
-              "aggressive": {
-                "label": "Aggressive",
-                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
-              }
-            },
-            "cloudBuffer": {
-              "label": "Cloud buffering",
-              "none": {
-                "label": "None",
-                "tooltip": "Only mask the clouds. It might leave hazy pixels around masked clouds, but will minimize the amount of maxed pixels in the mosaic."
-              },
-              "moderate": {
-                "label": "Moderate",
-                "tooltip": "Mask an additional 120m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
-              },
-              "aggressive": {
-                "label": "Aggressive",
-                "tooltip": "Mask an additional 600m around each larger cloud. This helps prevent hazy pixels at the border of clouds to be included in the mosaic."
+                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
               }
             }
           },
@@ -1007,13 +1434,13 @@
             },
             "destination": {
               "GEE": "Google Earth Engine asset",
-              "SEPAL": "Sepal workspace",
+              "SEPAL": "SEPAL workspace",
               "label": "Retrieve to",
               "required": "A destination must be selected"
             },
             "task": {
               "GEE": "Export {name} as a Google Earth Engine asset",
-              "SEPAL": "Retrieve {name} to Sepal workspace"
+              "SEPAL": "Retrieve {name} to SEPAL workspace"
             }
           },
           "title": "Retrieve",
@@ -1122,21 +1549,21 @@
         }
       },
       "preview": {
-        "label": "Optical mosaic",
         "description": "Preview of optical mosaic, generated on the fly by EE.",
         "error": "Failed to create preview",
         "initializing": "Loading preview...",
+        "label": "Optical mosaic",
         "loading": "Loaded {loaded} of {count} tiles",
         "tilesFailed": "{failed} failed"
       },
       "sceneAreas": {
         "error": "Failed to load scene areas",
         "loading": "Loading scene areas..."
-      }
+      },
+      "tabPlaceholder": "Optical_mosaic"
     },
     "radarMosaic": {
       "create": "Radar mosaic",
-      "tabPlaceholder": "Radar_mosaic",
       "description": "Create a mosaic using Sentinel 1.",
       "panel": {
         "dates": {
@@ -1222,14 +1649,14 @@
               }
             },
             "speckleFilter": {
-              "quegan": {
-                "label": "Quegan",
-                "tooltip": "Quegan MT Filter is applied."
-              },
               "label": "Speckle filter",
               "none": {
                 "label": "None",
                 "tooltip": "Don't apply any speckle filter."
+              },
+              "quegan": {
+                "label": "Quegan",
+                "tooltip": "Quegan MT Filter is applied."
               },
               "refinedLee": {
                 "label": "Refined Lee",
@@ -1253,7 +1680,7 @@
             },
             "destination": {
               "GEE": "Google Earth Engine asset",
-              "SEPAL": "Sepal workspace",
+              "SEPAL": "SEPAL workspace",
               "label": "Retrieve to",
               "required": "A destination must be selected"
             },
@@ -1263,7 +1690,7 @@
             },
             "task": {
               "GEE": "Export {name} as a Google Earth Engine asset",
-              "SEPAL": "Retrieve {name} to Sepal workspace"
+              "SEPAL": "Retrieve {name} to SEPAL workspace"
             }
           },
           "title": "Retrieve",
@@ -1271,27 +1698,28 @@
         }
       },
       "preview": {
-        "label": "Radar mosaic",
-        "description": "Preview of radar mosaic, generated on the fly by EE."
-      }
+        "description": "Preview of radar mosaic, generated on the fly by EE.",
+        "label": "Radar mosaic"
+      },
+      "tabPlaceholder": "Radar_mosaic"
     },
     "recipe": {
+      "lastUpdate": "Last update",
       "loading": "Loading recipes",
       "name": "Name",
       "newRecipe": {
         "title": "Create recipe",
-        "tooltip": "Create a new Sepal recipe"
+        "tooltip": "Create a new SEPAL recipe"
       },
       "remove": {
         "success": "Recipe has been removed"
       },
-      "type": "Type",
-      "lastUpdate": "Last update"
+      "type": "Type"
     },
     "revisions": {
+      "none": "No revision available.",
       "revert": "Revert to revision",
-      "title": "Revisions",
-      "none": "No revision available."
+      "title": "Revisions"
     },
     "saveRecipe": {
       "form": {
@@ -1304,7 +1732,6 @@
     },
     "timeSeries": {
       "create": "Time series",
-      "tabPlaceholder": "Time_series",
       "description": "Download Landsat time series to SEPAL.",
       "mapToolbar": {
         "centerMap": {
@@ -1352,6 +1779,21 @@
         "preprocess": {
           "button": "PRC",
           "form": {
+            "cloudMasking": {
+              "aggressive": {
+                "label": "Aggressive",
+                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
+              },
+              "label": "Cloud masking",
+              "moderate": {
+                "label": "Moderate",
+                "tooltip": "Rely only on image source QA bands for cloud masking"
+              },
+              "none": {
+                "label": "Off",
+                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
+              }
+            },
             "corrections": {
               "brdf": {
                 "label": "BRDF correction",
@@ -1364,29 +1806,14 @@
               }
             },
             "snowMasking": {
+              "label": "Snow masking",
               "off": {
                 "label": "Off",
                 "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
               },
-              "label": "Snow masking",
               "on": {
                 "label": "On",
-                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
-              }
-            },
-            "cloudMasking": {
-              "label": "Cloud masking",
-              "none": {
-                "label": "Off",
-                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
-              },
-              "moderate": {
-                "label": "Moderate",
-                "tooltip": "Rely only on image source QA bands for cloud masking"
-              },
-              "aggressive": {
-                "label": "Aggressive",
-                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
+                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
               }
             }
           },
@@ -1401,11 +1828,11 @@
               "required": "You must select an indicator"
             },
             "scale": {
-              "label": "Scale",
-              "info": "{scale} meters"
+              "info": "{scale} meters",
+              "label": "Scale"
             }
           },
-          "task": "Retrieve {name} to Sepal workspace",
+          "task": "Retrieve {name} to SEPAL workspace",
           "title": "Retrieve",
           "tooltip": "Retrieve time-series"
         },
@@ -1415,9 +1842,6 @@
             "dataSets": {
               "optical": {
                 "label": "Optical"
-              },
-              "radar": {
-                "label": "Radar"
               },
               "options": {
                 "LANDSAT_7": {
@@ -1452,229 +1876,10 @@
                   "label": "S2",
                   "tooltip": "Sentinel 2 A+B"
                 }
-              }
-            },
-            "required": "A data source must be selected"
-          },
-          "title": "Sources",
-          "tooltip": "Select image source"
-        }
-      }
-    },
-    "ccdc": {
-      "create": "CCDC",
-      "tabPlaceholder": "CCDC",
-      "description": "Create a CCDC asset from a time-series.",
-      "mapToolbar": {
-        "centerMap": {
-          "tooltip": "Zoom to area of interest"
-        },
-        "labels": {
-          "hide": {
-            "tooltip": "Hide labels"
-          },
-          "show": {
-            "tooltip": "Show labels"
-          }
-        },
-        "zoom": {
-          "tooltip": "Zoom to area"
-        },
-        "zoomIn": {
-          "tooltip": "Zoom in"
-        },
-        "zoomOut": {
-          "tooltip": "Zoom out"
-        },
-        "chartPixel": {
-          "start.tooltip": "Chart time-series for pixel",
-          "cancel.tooltip": "Cancel time-series charting"
-        }
-      },
-      "panel": {
-        "dates": {
-          "button": "DAT",
-          "form": {
-            "dateFormat": {
-              "label": "Date format",
-              "required": "Date format must be specified",
-              "jDays": {
-                "label": "Julian days"
-              },
-              "fractionalYears": {
-                "label": "Fractional years"
-              },
-              "unixTimeMillis": {
-                "label": "Unix time millis"
-              }
-            },
-            "endDate": {
-              "label": "End date",
-              "malformed": "Invalid date",
-              "required": "Date is required",
-              "tooltip": "The last date of the time-series, exclusive."
-            },
-            "startDate": {
-              "beforeEnd": "Must be before end",
-              "label": "Start date",
-              "malformed": "Invalid date",
-              "required": "Date is required",
-              "tooltip": "The first date of the time-series, inclusive."
-            }
-          },
-          "title": "Dates",
-          "tooltip": "Specify date range"
-        },
-        "preprocess": {
-          "button": "PRC",
-          "form": {
-            "corrections": {
-              "brdf": {
-                "label": "BRDF correction",
-                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
-              },
-              "label": "Corrections",
-              "surfaceReflectance": {
-                "label": "Surface reflectance",
-                "tooltip": "Use scenes atmospherically corrected surface reflectance."
-              }
-            },
-            "shadowMasking": {
-              "off": {
-                "label": "Off",
-                "tooltip": "Don't apply aggressive shadow masking."
-              },
-              "label": "Shadow masking",
-              "on": {
-                "label": "On",
-                "tooltip": "Apply aggressive shadow masking. This can inadvertently remove some dynamics and lead to missing changes"
-              }
-            },
-            "snowMasking": {
-              "off": {
-                "label": "Off",
-                "tooltip": "Don't mask snow. Note that some clouds might get misclassified as snow, and because of this, disabling snow masking might lead to cloud artifacts."
-              },
-              "label": "Snow masking",
-              "on": {
-                "label": "On",
-                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
-              }
-            },
-            "cloudMasking": {
-              "label": "Cloud masking",
-              "none": {
-                "label": "Off",
-                "tooltip": "Use cloud-free pixels if possible, but don't mask areas without cloud-free pixels"
-              },
-              "moderate": {
-                "label": "Moderate",
-                "tooltip": "Rely only on image source QA bands for cloud masking"
-              },
-              "aggressive": {
-                "label": "Aggressive",
-                "tooltip": "Rely on image source QA bands and a cloud scoring algorithm for cloud masking. This will probably mask out some built-up areas and other bright features."
-              }
-            }
-          },
-          "title": "Pre-process",
-          "tooltip": "Configure imagery pre-processing"
-        },
-        "options": {
-          "button": "OPT",
-          "form": {
-            "breakDetection": {
-              "label": "Break detection",
-              "conservative": {
-                "label": "Conservative",
-                "tooltip": "Be conservative in detecting breaks in the time-series. It might miss more subtle breaks or breaks where there is bad data availability"
-              },
-              "moderate": {
-                "label": "Moderate",
-                "tooltip": "Be moderate in detecting breaks in the time-series."
-              },
-              "aggressive": {
-                "label": "Aggressive",
-                "tooltip": "Be aggressive in detecting breaks in the time-series. It might detect breaks where there are none."
-              }
-            },
-            "tmaskBands": {
-              "label": "TMask bands",
-              "noneOrTwo": "Exactly two bands must be selected or none"
-            },
-            "minObservations": "Min observations",
-            "chiSquareProbability": "Chi square probability",
-            "minNumOfYearsScaler": "min number of years scaler",
-            "lambda": "Lambda",
-            "maxIterations": "Max iterations"
-          },
-          "title": "CCDC options",
-          "tooltip": "Configure CCDC options"
-        },
-        "retrieve": {
-          "apply": "Retrieve",
-          "form": {
-            "bands": {
-              "label": "Bands",
-              "atLeastOne": "Select at least one band"
-            },
-            "scale": {
-              "label": "Scale",
-              "info": "{scale} meters"
-            }
-          },
-          "task": "Retrieve {name} as a Google Earth Engine asset",
-          "title": "Retrieve",
-          "tooltip": "Retrieve time-series"
-        },
-        "sources": {
-          "button": "SRC",
-          "form": {
-            "dataSets": {
-              "optical": {
-                "label": "Optical"
               },
               "radar": {
                 "label": "Radar"
-              },
-              "options": {
-                "LANDSAT_7": {
-                  "label": "L7",
-                  "tooltip": "Landsat 7"
-                },
-                "LANDSAT_7_T2": {
-                  "label": "L7 T2",
-                  "tooltip": "Landsat 7 Tier 2"
-                },
-                "LANDSAT_8": {
-                  "label": "L8",
-                  "tooltip": "Landsat 8"
-                },
-                "LANDSAT_8_T2": {
-                  "label": "L8 T2",
-                  "tooltip": "Landsat 8 Tier 2"
-                },
-                "LANDSAT_TM": {
-                  "label": "L4-5",
-                  "tooltip": "Landsat 4-5"
-                },
-                "LANDSAT_TM_T2": {
-                  "label": "L4-5 T2",
-                  "tooltip": "Landsat 4-5 Tier 2"
-                },
-                "SENTINEL_1": {
-                  "label": "S1",
-                  "tooltip": "Sentinel 1 A+B"
-                },
-                "SENTINEL_2": {
-                  "label": "S2",
-                  "tooltip": "Sentinel 2 A+B"
-                }
               }
-            },
-            "breakpointBands": {
-              "label": "Breakpoint bands",
-              "atLeastOne": "Select at least one band"
             },
             "required": "A data source must be selected"
           },
@@ -1682,210 +1887,12 @@
           "tooltip": "Select image source"
         }
       },
-      "chartPixel": {
-        "loadFailed": "Failed to load chart: {error}"
-      }
-    },
-
-    "ccdcSlice": {
-      "create": "CCDC slice",
-      "tabPlaceholder": "CCDC slice",
-      "description": "Create a slice of a CCDC asset, for a specific date.",
-      "mapToolbar": {
-        "centerMap": {
-          "tooltip": "Zoom to area of interest"
-        },
-        "labels": {
-          "hide": {
-            "tooltip": "Hide labels"
-          },
-          "show": {
-            "tooltip": "Show labels"
-          }
-        },
-        "zoom": {
-          "tooltip": "Zoom to area"
-        },
-        "zoomIn": {
-          "tooltip": "Zoom in"
-        },
-        "zoomOut": {
-          "tooltip": "Zoom out"
-        }
-      },
-      "panel": {
-        "date": {
-          "button": "DAT",
-          "form": {
-            "date": {
-              "label": "Date of slice",
-              "malformed": "Invalid date",
-              "required": "Date is required",
-              "tooltip": "The date of the slice",
-              "range": "The CCDC asset was created with data from {startDate} to {endDate}"
-            }
-          },
-          "title": "Date",
-          "tooltip": "Specify date of the slice"
-        },
-        "options": {
-          "button": "OPT",
-          "form": {
-            "harmonics": {
-              "label": "Harmonics",
-              "tooltip": "Specify how many harmonics from the CCDC regression model to use when creating the slice"
-            },
-            "gapStrategy": {
-              "label": "Gap strategy",
-              "tooltip": "Decide which strategy to use for pixels where there is no CCDC segment. There will be gaps during detected breaks or for dates before and after the CCDC date range.",
-              "interpolate": {
-                "label": "Interpolate",
-                "tooltip": "Generate a new model based on surrounding segments. If there isn't any segment before or after, the pixel will be masked."
-              },
-              "extrapolate": {
-                "label": "Extrapolate",
-                "tooltip": "Generate a new model based on the segment before or after the gap."
-              },
-              "mask": {
-                "label": "Mask",
-                "tooltip": "Mask all pixels that fall on a gap."
-              }
-            },
-            "extrapolateSegment": {
-              "label": "Segment to extrapolate",
-              "closest": {
-                "label": "Closest",
-                "tooltip": "Extrapolate the segment closest to the date"
-              },
-              "previous": {
-                "label": "Previous",
-                "tooltip": "Extrapolate the segment before the date"
-              },
-              "next": {
-                "label": "Next",
-                "tooltip": "Back-extrapolate the segment after the date"
-              }
-            },
-            "extrapolateMaxDays": {
-              "label": "Max days to extrapolate",
-              "unlimited": "all"
-            }
-          },
-          "title": "CCDC slice options",
-          "tooltip": "Configure how the CCDC slice is made"
-        },
-        "retrieve": {
-          "apply": "Retrieve",
-          "form": {
-            "baseBands": {
-              "label": "Base bands",
-              "atLeastOne": "At least one base band must be selected"
-            },
-            "bandTypes": {
-              "label": "Band types",
-              "atLeastOne": "At least one band type must be selected",
-              "value": {
-                "label": "Value",
-                "tooltip": "The evaluated value of the harmonic models for the specified date"
-              },
-              "rmse": {
-                "label": "RMSE",
-                "tooltip": "RMSE of the harmonic models"
-              },
-              "intercept": {
-                "label": "Intercept",
-                "tooltip": "The intercept of the model's linear component"
-              },
-              "slope": {
-                "label": "Slope",
-                "tooltip": "The slope of the model's linear component"
-              },
-              "phase1": {
-                "label": "Phase 1",
-                "tooltip": "The phase of the model's first order harmonic"
-              },
-              "phase2": {
-                "label": "Phase 2",
-                "tooltip": "The phase of the model's second order harmonic"
-              },
-              "phase3": {
-                "label": "Phase 3",
-                "tooltip": "The phase of the model's third order harmonic"
-              },
-              "amplitude1": {
-                "label": "Amplitude 1",
-                "tooltip": "The amplitude of the model's first order harmonic"
-              },
-              "amplitude2": {
-                "label": "Amplitude 2",
-                "tooltip": "The amplitude of the model's second order harmonic"
-              },
-              "amplitude3": {
-                "label": "Amplitude 3",
-                "tooltip": "The amplitude of the model's third order harmonic"
-              }
-            },
-            "scale": {
-              "label": "Scale",
-              "info": "{scale} meters"
-            },
-            "destination": {
-              "label": "Destination",
-              "GEE": "Google Earth Engine asset",
-              "SEPAL": "Sepal workspace",
-              "required": "A destination must be selected"
-            }
-          },
-          "task": {
-            "GEE": "Export {name} as a Google Earth Engine asset",
-            "SEPAL": "Retrieve {name} to Sepal workspace"
-          },
-          "title": "Retrieve",
-          "tooltip": "Retrieve time-series"
-        },
-        "source": {
-          "button": "SRC",
-          "form": {
-            "asset": {
-              "label": "CCDC asset",
-              "placeholder": "Enter CCDC asset ID",
-              "required": "An asset ID must be specified",
-              "invalid": "Asset must be an exported CCDC asset"
-            }
-          },
-          "title": "Source",
-          "tooltip": "Select EE asset with CCDC segments to slice"
-        }
-      },
-      "preview": {
-        "label": "CCDC slice",
-        "description": "Preview of a CCDC slice, generated on the fly by EE.",
-        "initializing": "Loading preview...",
-        "loading": "Loaded {loaded} of {count} tiles",
-        "tilesFailed": "{failed} failed",
-        "error": "Failed to generate preview"
-      }
+      "tabPlaceholder": "Time_series"
     }
   },
-  "footer": {
-    "buildNumber": "Build number",
-    "buildNumberCopied": "Build number copied to clipboard",
-    "gitCommit": "Git commit",
-    "gitCommitCopied": "Git commit copied to clipboard"
-  },
   "tasks": {
-    "none": "You have no background tasks.",
-    "removeAll": {
-      "tooltip": "Remove all completed, failed, or stopped tasks"
-    },
-    "status": {
-      "initializing": "Initializing...",
-      "executing": "Executing...",
-      "completed": "Completed!",
-      "canceling": "Stopping",
-      "canceled": "Stopped",
-      "failed": "{error}",
-      "EEException": "Earth Engine: {error}"
+    "download": {
+      "progress": "Downloaded {files} {files, plural, one {file} other {files}} / {bytes} left"
     },
     "ee": {
       "export": {
@@ -1894,17 +1901,27 @@
         "running": "Google Earth Engine is exporting"
       }
     },
-    "download": {
-      "progress": "Downloaded {files} {files, plural, one {file} other {files}} / {bytes} left"
+    "none": "You have no background tasks.",
+    "removeAll": {
+      "tooltip": "Remove all completed, failed, or stopped tasks"
     },
     "retrieve": {
       "time_series_to_sepal": {
-        "creating_drive_folder": "Creating Google Drive Folders...",
-        "tiling": "Tiling AOI...",
-        "progress": "Exported {currentTilePercent}% of tile {currentTile} out of {totalTiles}.",
+        "assembling": "Assembling tile {currentTile} out of {totalTiles}...",
+        "creating_drive_folder": "Creating Google Drive Folder...",
         "deleting_drive_folder": "Deleting Google Drive Folder.",
-        "assembling": "Assembling tile {currentTile} out of {totalTiles}..."
+        "progress": "Exported {currentTilePercent}% of tile {currentTile} out of {totalTiles}.",
+        "tiling": "Tiling AOI..."
       }
+    },
+    "status": {
+      "EEException": "Earth Engine: {error}",
+      "canceled": "Stopped",
+      "canceling": "Stopping",
+      "completed": "Completed!",
+      "executing": "Executing...",
+      "failed": "{error}",
+      "initializing": "Initializing..."
     }
   },
   "terminal": {
@@ -1916,31 +1933,6 @@
     "warning": "You are not logged in. Perhaps you have been inactive too long?"
   },
   "user": {
-    "googleAccount": {
-      "label": "Google account",
-      "title": "Google account",
-      "connected": {
-        "label": "Connected",
-        "title": "Your SEPAL account is connected to your Google account",
-        "info": "You have full access to SEPAL. If you disconnect your Google account from SEPAL, some features (like exporting to Earth Engine assets) will not be available."
-      },
-      "disconnected": {
-        "label": "Disconnected",
-        "title": "Your SEPAL account is not connected to your Google account",
-        "info": "You have limited access to SEPAL. If you connect your Google account to SEPAL, all features (including exporting to Earth Engine assets) will be available.",
-        "success": "SEPAL is now disconnected from your Google account."
-      },
-      "connect": {
-        "label": "Connect your Google account"
-      },
-      "disconnect": {
-        "label": "Disconnect your Google account",
-        "warning": {
-          "title": "Warning",
-          "message": "Disconnecting your Google account would cause termination of any task started while connected. Tasks currently running: {taskCount}."
-        }
-      }
-    },
     "changePassword": {
       "form": {
         "confirmPassword": {
@@ -1959,13 +1951,37 @@
           "required": "Current password is required"
         }
       },
-      "success": "Password has been changed.",
       "label": "Password",
+      "success": "Password has been changed.",
       "title": "Change password",
       "updating": "Updating..."
     },
+    "googleAccount": {
+      "connect": {
+        "label": "Connect your Google account"
+      },
+      "connected": {
+        "info": "You have full access to SEPAL. If you disconnect your Google account from SEPAL, some features (like exporting to Earth Engine assets) will not be available.",
+        "label": "Connected",
+        "title": "Your SEPAL account is connected to your Google account"
+      },
+      "disconnect": {
+        "label": "Disconnect your Google account",
+        "warning": {
+          "message": "Disconnecting your Google account would cause termination of any task started while connected. Tasks currently running: {taskCount}.",
+          "title": "Warning"
+        }
+      },
+      "disconnected": {
+        "info": "You have limited access to SEPAL. If you connect your Google account to SEPAL, all features (including exporting to Earth Engine assets) will be available.",
+        "label": "Disconnected",
+        "success": "SEPAL is now disconnected from your Google account.",
+        "title": "Your SEPAL account is not connected to your Google account"
+      },
+      "label": "Google account",
+      "title": "Google account"
+    },
     "report": {
-      "usage": "Using {percentage}% of allocated quota",
       "resources": {
         "monthlyInstance": "Instance budget",
         "monthlyStorage": "Storage budget",
@@ -1985,13 +2001,30 @@
         "time": "Date/time started",
         "title": "Sessions"
       },
-      "title": "User report"
+      "title": "User report",
+      "usage": "Using {percentage}% of allocated quota"
     },
     "userDetails": {
       "form": {
+        "admin": {
+          "label": "Admin"
+        },
         "email": {
           "label": "Email",
           "required": "Email is required"
+        },
+        "emailNotifications": {
+          "disabled": {
+            "label": "Disabled"
+          },
+          "enabled": {
+            "label": "Enabled"
+          },
+          "label": "Email notifications",
+          "tooltip": "Enable or disable optional email notifications (e.g. task completed, task failed, etc.)"
+        },
+        "lastUpdate": {
+          "label": "Last update"
         },
         "monthlyBudget": {
           "instanceSpending": {
@@ -2024,34 +2057,22 @@
         "role": {
           "label": "role"
         },
-        "user": {
-          "label": "User"
-        },
-        "admin": {
-          "label": "Admin"
-        },
         "status": {
           "ACTIVE": "Active",
           "LOCKED": "Locked",
           "PENDING": "Pending",
           "label": "Status"
         },
-        "lastUpdate": {
-          "label": "Last update"
+        "user": {
+          "label": "User"
         },
         "username": {
           "format": "Username should start with a letter",
           "label": "Username",
           "required": "Username is required"
-        },
-        "emailNotifications": {
-          "label": "Email notifications",
-          "tooltip": "Enable or disable optional email notifications (e.g. task completed, task failed, etc.)",
-          "enabled.label": "Enabled",
-          "disabled.label": "Disabled"
         }
       },
-      "switchingToSepalGoogleAccount": "Switching to Sepal's Google Account",
+      "switchingToSepalGoogleAccount": "Switching to SEPAL's Google Account",
       "title": "User details",
       "update": {
         "error": "Could not update user details.",
@@ -2132,26 +2153,26 @@
   },
   "users": {
     "count": {
-      "onePage": "{count} {count, plural, one {user} other {users}}",
-      "morePages": "{count} {count, plural, one {user} other {users}}, showing {start}-{stop}"
+      "morePages": "{count} {count, plural, one {user} other {users}}, showing {start}-{stop}",
+      "onePage": "{count} {count, plural, one {user} other {users}}"
     },
     "filter": {
+      "search": {
+        "placeholder": "Search users"
+      },
       "status": {
-        "ignore": {
-          "label": "All"
-        },
-        "pending": {
-          "label": "Pending"
-        },
         "active": {
           "label": "Active"
         },
+        "ignore": {
+          "label": "All"
+        },
         "overbudget": {
           "label": "Overbudget"
+        },
+        "pending": {
+          "label": "Pending"
         }
-      },
-      "search": {
-        "placeholder": "Search users"
       }
     },
     "invite": {
@@ -2160,17 +2181,17 @@
     "page": "Page {pageNumber} of {pageCount}"
   },
   "widget": {
-    "error": "Error",
-    "loading": "Loading...",
     "comboBox": {
       "loading": "Loading..."
     },
     "confirm": {
       "title": "Confirmation required"
     },
+    "error": "Error",
     "list": {
       "noResults": "No results"
     },
+    "loading": "Loading...",
     "notification": {
       "dismiss": "Click to dismiss",
       "dismissOrWait": "Click to dismiss or wait {timeout} seconds",
@@ -2194,8 +2215,5 @@
       },
       "newTab": "New_Tab"
     }
-  },
-  "error": {
-    "internal": "Internal error"
   }
 }
