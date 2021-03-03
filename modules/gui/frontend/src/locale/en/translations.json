@@ -1100,7 +1100,8 @@
             },
             "buffer": {
               "label": "Buffer",
-              "info": "{buffer} km buffer"
+              "info": "{buffer} km buffer",
+              "tooltip": "Area of interest and preview will take longer to show up when buffering is enabled."
             },
             "country": {
               "area": {

@@ -121,6 +121,7 @@ class _CountrySection extends React.Component {
                 />
                 <Form.Slider
                     label={msg('process.mosaic.panel.areaOfInterest.form.buffer.label')}
+                    tooltip={msg('process.mosaic.panel.areaOfInterest.form.buffer.tooltip')}
                     info={buffer => msg('process.mosaic.panel.areaOfInterest.form.buffer.info', {buffer})}
                     input={buffer}
                     minValue={0}
