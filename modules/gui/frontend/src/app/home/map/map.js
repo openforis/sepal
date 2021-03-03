@@ -595,10 +595,6 @@ class _MapLayer extends React.Component {
                 if (!_.isEqual(this.xyz, xyz)) {
                     this.xyz = xyz
                     this.component.setState({projection})
-                    // changeProjection(projection)
-                    // actionBuilder('PROJECTION_CHANGED', {xyz})
-                    //     .set('map.projectionChange', xyz)
-                    //     .dispatch()
                 }
             }
 
@@ -625,7 +621,7 @@ class _MapLayer extends React.Component {
         const mapPanes = this.overlay.getPanes()
         const content = (
             <div className={className}>
-                <ProjectionContext.Provider value={projection}>
+                <ProjectionContext.Provider value={{projection}}>
                     {children}
                 </ProjectionContext.Provider>
             </div>
@@ -649,13 +645,15 @@ class _MapObject extends React.Component {
     render() {
         const {mapContext: {google, googleMap}, lat, lng, width, height, className, children} = this.props
         const shown = googleMap.getBounds().contains({lng, lat})
-        if (!shown)
+        if (!shown) {
             return null
+        }
         return (
             <ProjectionContext.Consumer>
-                {projection => {
-                    if (!projection)
+                {({projection}) => {
+                    if (!projection) {
                         return null
+                    }
                     const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(lat, lng))
                     const style = {
                         position: 'absolute',
