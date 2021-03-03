@@ -450,12 +450,12 @@
             "cloudMasking": {
               "aggressive": {
                 "label": "Agresivo",
-                "tooltip": "Basarse en las bandas de control de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
+                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
               },
               "label": "Enmascaramiento de nubes",
               "moderate": {
                 "label": "Moderado",
-                "tooltip": "Basarse sólo en las bandas de control de calidad de la imagen para el enmascaramiento de las nubes"
+                "tooltip": "Basarse sólo en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
               },
               "none": {
                 "tooltip": "Usar píxeles libres de nubes si es posible, pero no enmascarar áreas sin píxeles libres"
@@ -484,7 +484,7 @@
             "snowMasking": {
               "label": "Enmascaramiento de nieve",
               "off": {
-                "tooltip": "No enmascarar nieve. Tenga en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
+                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
               },
               "on": {
                 "tooltip": "Enmascarar nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
@@ -1245,11 +1245,11 @@
               "label": "Enmascaramiento de nubes",
               "moderate": {
                 "label": "Moderado",
-                "tooltip": "Confiar sólo en las bandas QA de la fuente de la imagen para el enmascaramiento de las nubes"
+                "tooltip": "Confiar sólo en las bandas de calidad de la imagen para el enmascaramiento de nubes"
               },
               "none": {
                 "label": "Off",
-                "tooltip": "Utilizar píxeles sin nubes si es posible, pero no enmascarar áreas sin píxeles sin nubes"
+                "tooltip": "Utilizar píxeles sin nubes si es posible, pero no enmascarar áreas sin nubes"
               }
             },
             "composingMethod": {
@@ -1265,7 +1265,7 @@
             },
             "corrections": {
               "brdf": {
-                "tooltip": "Corregir los efectos de la función de distribución de la reflectancia bidireccional (BRDF)."
+                "tooltip": "Corregir los efectos de la función de distribución de reflectancia bidireccional (BRDF)."
               },
               "calibrate": {
                 "label": "Calibrar",
@@ -1278,7 +1278,7 @@
             },
             "filters": {
               "dayOfYearPercentile": {
-                "max": "Seleccione los píxeles más cercanos al día objetivo",
+                "max": "Selecciona los píxeles más cercanos al día objetivo",
                 "off": "No filtrar por día del año",
                 "percentile": "Excluir {percentile}% de píxeles (lejos del objetivo)"
               },
@@ -1303,7 +1303,7 @@
             "mask": {
               "clouds": {
                 "label": "Nubes",
-                "tooltip": "Ocultar las nubes en lugar de intentar utilizar píxeles sin nubes. Puede provocar el enmascaramiento de la infraestructura."
+                "tooltip": "Ocultar las nubes en lugar de intentar utilizar píxeles sin nubes. Puede provocar el enmascaramiento de infraestructura."
               },
               "label": "Máscara",
               "snow": {
@@ -1312,14 +1312,14 @@
               }
             },
             "snowMasking": {
-              "label": "Enmascaramiento de la nieve",
+              "label": "Enmascaramiento de nieve",
               "off": {
                 "label": "Off",
-                "tooltip": "No enmascarar la nieve. Tenga en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, y debido a esto, deshabilitar el enmascaramiento de la nieve podría conducir a artefactos de nubes."
+                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
               },
               "on": {
                 "label": "On",
-                "tooltip": "Máscara de nieve. Esto tiende a dejar algunos píxeles donde con la nieve sombra"
+                "tooltip": "Máscara de nieve. Esto tiende a dejar algunos píxeles con sombra de nieve."
               }
             }
           },
@@ -1327,24 +1327,24 @@
           "tooltip": "Configurar la creación de compuestos"
         },
         "dates": {
-          "button": "FEC",
+          "button": "DAT",
           "form": {
             "futureSeasons": {
               "info": {
-                "none": "No incluya temporadas del futuro",
-                "number": "Incluir {futureSeasons} {futureSeasons, plural, one {temporada} otra {temporadas}} del futuro"
+                "none": "No incluir estaciones del futuro",
+                "number": "Incluir {futureSeasons} {futureSeasons, plural, one {estación} other {estaciones}} del futuro"
               },
-              "label": "Futuras temporadas"
+              "label": "Estaciones futuras"
             },
             "pastSeasons": {
               "info": {
-                "none": "No incluya temporadas del pasado",
-                "number": "Incluir {pastSeasons} {pastSeasons, plural, one {temporada} otra {temporadas}} del pasado"
+                "none": "No incluir estaciones del pasado",
+                "number": "Incluir {pastSeasons} {pastSeasons, plural, one {estacion} other {estaciones}} del pasado"
               },
-              "label": "Temporadas anteriores"
+              "label": "Estaciones anteriores"
             },
             "season": {
-              "label": "Temporada",
+              "label": "Estación",
               "malformed": "Fecha no válida",
               "tooEarly": "No debe ser antes de {min}",
               "tooLate": "No debe ser posterior a {max}",
@@ -1353,12 +1353,12 @@
             "targetDate": {
               "label": "Fecha objetivo",
               "malformed": "Fecha no válida",
-              "tooltip": "La fecha en la que idealmente deberían proceder los píxeles del mosaico."
+              "tooltip": "Fecha en la que idealmente deberían proceder los píxeles del mosaico."
             },
             "targetYear": {
               "label": "Año",
               "malformed": "No un año",
-              "tooltip": "El año del que deben proceder los píxeles del mosaico."
+              "tooltip": "Año del que deben proceder los píxeles del mosaico."
             }
           },
           "title": "Fechas",
@@ -1368,33 +1368,33 @@
           "title": "Capas"
         },
         "retrieve": {
-          "apply": "Recuperar",
+          "apply": "Importar",
           "form": {
             "bands": {
-              "atLeastOne": "Al menos una banda debe ser recuperada",
-              "label": "Bandas a recuperar"
+              "atLeastOne": "Al menos una banda debe ser importada",
+              "label": "Bandas a importar"
             },
             "destination": {
-              "SEPAL": "Espacio de trabajo sepal",
-              "label": "Recuperar a",
+              "SEPAL": "Espacio de trabajo SEPAL",
+              "label": "Importar a",
               "required": "Debe seleccionarse un destino"
             },
             "task": {
               "GEE": "Exportar {name} como asset de Google Earth Engine",
-              "SEPAL": "Recuperar {name} al espacio de trabajo de Sepal"
+              "SEPAL": "Importar {name} al espacio de trabajo de SEPAL"
             }
           },
-          "title": "Recuperar",
-          "tooltip": "Recuperar el mosaico"
+          "title": "Importar",
+          "tooltip": "Importar mosaico"
         },
         "sceneSelection": {
           "availableScenes": "Escenas disponibles",
           "loadingScenes": "Cargando escenas...",
-          "noScenes": "Ninguna escena está disponible para la combinación actual de área de interés, fechas y fuentes de datos. Por favor, revise los ajustes en AOI, FEC y/o SRC.",
+          "noScenes": "Ninguna escena está disponible para la combinación actual de área de interés, fechas y fuentes de datos. Por favor, revise los ajustes en AOI, DAT y/o SRC.",
           "preview": {
-            "afterTarget": "{daysFromTarget} despues",
+            "afterTarget": "{daysFromTarget} después",
             "beforeTarget": "{daysFromTarget} antes",
-            "cloudCover": "Cubierta de nubes",
+            "cloudCover": "Cobertura de nubes",
             "dataSet": "Colección",
             "date": "Fecha de adquisición",
             "daysFromTarget": "Días desde el objetivo",
@@ -1410,16 +1410,16 @@
             "targetDateWeight": {
               "balanced": {
                 "label": "Equilibrado",
-                "tooltip": "Intenta tomar imágenes no demasiado nubladas y no demasiado lejos de la fecha objetivo"
+                "tooltip": "Intentar tomar imágenes no muy nubosas y no tan lejos de la fecha objetivo"
               },
               "cloudFree": {
                 "label": "Libre de nubes",
-                "tooltip": "Preferir las imágenes lo más libres de nubes posible, ignorando la fecha"
+                "tooltip": "Preferir imágenes con la menor cantidad de nubes posible, ignorando la fecha"
               },
               "label": "Prioridad",
               "targetDate": {
                 "label": "Fecha objetivo",
-                "tooltip": "Prefiera las imágenes lo más cerca posible del día objetivo"
+                "tooltip": "Preferir imágenes lo más cerca posible del día objetivo"
               }
             },
             "type": {
@@ -1436,7 +1436,7 @@
           "tooltip": "Configurar la selección de escenas"
         },
         "sources": {
-          "button": "FUE",
+          "button": "SRC",
           "form": {
             "dataSets": {
               "label": "Colección",
@@ -1447,7 +1447,7 @@
                 }
               }
             },
-            "required": "Debe seleccionarse una fuente de datos",
+            "required": "Debes seleccionar una fuente de datos",
             "source": {
               "label": "Familia de satélites",
               "options": {
@@ -1457,29 +1457,29 @@
             }
           },
           "title": "Fuentes",
-          "tooltip": "Seleccione la fuente de la imagen"
+          "tooltip": "Selecciona la fuente de la imagen"
         }
       },
       "preview": {
-        "description": "Vista previa del mosaico óptico, generado al vuelo por EE.",
-        "error": "Error en la creación de la vista previa",
-        "initializing": "Cargando la vista previa...",
+        "description": "Vista previa del mosaico óptico, generado en la nube por GEE.",
+        "error": "Error en creación de vista previa",
+        "initializing": "Cargando vista previa...",
         "label": "Mosaico óptico",
-        "loading": "Cargado {loaded} de {count} tejas",
-        "tilesFailed": "{failed} fracasado"
+        "loading": "Cargado {loaded} de {count} tiles",
+        "tilesFailed": "{failed} falló"
       },
       "sceneAreas": {
-        "error": "Error en la carga de las áreas de la escena",
+        "error": "Error en la carga de áreas de la escena",
         "loading": "Cargando zonas de la escena..."
       },
-      "tabPlaceholder": "Mosaico_óptico"
+      "tabPlaceholder": "Optical_mosaic"
     },
     "radarMosaic": {
       "create": "Mosaico de radar",
       "description": "Crea un mosaico con Sentinel 1.",
       "panel": {
         "dates": {
-          "button": "FEC",
+          "button": "DAT",
           "form": {
             "fromDate": {
               "label": "De la fecha",
@@ -1504,7 +1504,7 @@
               },
               "YEARLY_TIME_SCAN": {
                 "label": "Año",
-                "tooltip": "Construir una exploración temporal con datos de un año natural determinado."
+                "tooltip": "Construir una exploración temporal con datos de un año determinado."
               },
               "label": "Tipo"
             },
@@ -1531,17 +1531,17 @@
               },
               "terrain": {
                 "label": "Terreno",
-                "tooltip": "Se aplica la corrección del terreno."
+                "tooltip": "Se aplica corrección del terreno."
               }
             },
             "orbits": {
               "ascending": {
                 "label": "Ascendente",
-                "tooltip": "Incluye escenas de órbitas ascendentes."
+                "tooltip": "Incluir escenas de órbitas ascendentes."
               },
               "descending": {
                 "label": "Descendiendo",
-                "tooltip": "Incluye escenas de órbitas descendentes."
+                "tooltip": "Incluir escenas de órbitas descendentes."
               },
               "label": "Órbitas"
             },
@@ -1550,29 +1550,29 @@
                 "label": "Agresivo",
                 "tooltip": "Eliminar más valores atípicos."
               },
-              "label": "Eliminar los valores atípicos",
+              "label": "Eliminar valores atípicos",
               "moderate": {
                 "label": "Moderado",
-                "tooltip": "Eliminar los valores atípicos."
+                "tooltip": "Eliminar valores atípicos."
               },
               "none": {
                 "label": "Ninguno",
-                "tooltip": "No elimine los valores atípicos."
+                "tooltip": "No eliminar valores atípicos."
               }
             },
             "speckleFilter": {
               "label": "Speckle filtro",
               "none": {
                 "label": "Ninguno",
-                "tooltip": "No aplique ningún filtro speckle."
+                "tooltip": "No aplicar ningún filtro speckle."
               },
               "quegan": {
                 "label": "Quegan",
-                "tooltip": "Se aplica el filtro MT de Quegan."
+                "tooltip": "Aplicar filtro MT de Quegan."
               },
               "refinedLee": {
                 "label": "Lee refinado",
-                "tooltip": "Se aplica el filtrado Lee refinado. Esto puede ser muy lento, pero suele dar buenos resultados."
+                "tooltip": "Aplicar el filtro Lee refinado. Esto puede ser muy lento, pero suele dar buenos resultados."
               },
               "snic": {
                 "label": "SNIC",
@@ -1584,16 +1584,16 @@
           "tooltip": "Configurar las opciones del mosaico"
         },
         "retrieve": {
-          "apply": "Recuperar",
+          "apply": "Importar",
           "form": {
             "bands": {
-              "atLeastOne": "Al menos una banda debe ser recuperada",
-              "label": "Bandas a recuperar"
+              "atLeastOne": "Al menos una banda debe ser importada",
+              "label": "Bandas a importar"
             },
             "destination": {
               "SEPAL": "Espacio de trabajo SEPAL",
-              "label": "Recuperar a",
-              "required": "Debe seleccionarse un destino"
+              "label": "importar a",
+              "required": "Debes seleccionar un destino"
             },
             "scale": {
               "info": "{scale} metros",
@@ -1601,29 +1601,29 @@
             },
             "task": {
               "GEE": "Exportar {name} como asset de Google Earth Engine",
-              "SEPAL": "Recuperar {name} al espacio de trabajo de Sepal"
+              "SEPAL": "Importar {name} al espacio de trabajo de SEPAL"
             }
           },
-          "title": "Recuperar",
-          "tooltip": "Recuperar el mosaico del radar"
+          "title": "Importar",
+          "tooltip": "Importar mosaico de radar"
         }
       },
       "preview": {
-        "description": "Vista previa del mosaico del radar, generado al vuelo por EE.",
+        "description": "Vista previa del mosaico de radar, generado en la nube por GEE.",
         "label": "Mosaico de radar"
       },
-      "tabPlaceholder": "Radar_mosaico"
+      "tabPlaceholder": "Radar_mosaic"
     },
     "recipe": {
       "lastUpdate": "Última actualización",
-      "loading": "Carga de fórmulas",
+      "loading": "Carga de flujo de trabajo",
       "name": "Nombre",
       "newRecipe": {
-        "title": "Crear fórmula",
-        "tooltip": "Crear una nueva fórmula de SEPAL"
+        "title": "Crear flujo de trabajo",
+        "tooltip": "Crear una nueva flujo de trabajo de SEPAL"
       },
       "remove": {
-        "success": "La formula ha sido eliminada"
+        "success": "El flujo de trabajo ha sido eliminado"
       },
       "type": "Tipo"
     },
@@ -1636,14 +1636,14 @@
       "form": {
         "name": {
           "label": "Nombre",
-          "required": "El nombre de la fórmula es obligatorio"
+          "required": "El nombre del flujo de trabajo es obligatorio"
         }
       },
-      "title": "Guardar la fórmula"
+      "title": "Guardar flujo de trabajo"
     },
     "timeSeries": {
       "create": "Series temporales",
-      "description": "Descargue las series temporales de Landsat en SEPAL.",
+      "description": "Descargar series temporales de Landsat en SEPAL.",
       "mapToolbar": {
         "centerMap": {
           "tooltip": "Zoom a la zona de interés"
@@ -1668,20 +1668,20 @@
       },
       "panel": {
         "dates": {
-          "button": "FEC",
+          "button": "DAT",
           "form": {
             "endDate": {
-              "label": "Fecha de fin",
+              "label": "Fecha fin",
               "malformed": "Fecha no válida",
               "required": "Se requiere la fecha",
-              "tooltip": "La última fecha de la serie temporal, exclusiva."
+              "tooltip": "La última fecha de la serie temporal es exclusiva."
             },
             "startDate": {
               "beforeEnd": "Debe ser antes del final",
               "label": "Debe ser antes del final",
               "malformed": "Fecha no válida",
               "required": "Se requiere la fecha",
-              "tooltip": "La primera fecha de la serie temporal, inclusive."
+              "tooltip": "La primera fecha de la serie temporal es inclusiva."
             }
           },
           "title": "Fechas",
@@ -1693,16 +1693,16 @@
             "cloudMasking": {
               "aggressive": {
                 "label": "Agresivo",
-                "tooltip": "Confíe en las bandas QA de la fuente de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras características brillantes."
+                "tooltip": "Basarse en las bandas de calidad de la imagen y en un algoritmo de puntuación de nubes para enmascararlas. Esto probablemente enmascarará algunas zonas edificadas y otras zonas brillantes."
               },
               "label": "Enmascaramiento de nubes",
               "moderate": {
                 "label": "Moderado",
-                "tooltip": "Confiar sólo en las bandas QA de la fuente de la imagen para el enmascaramiento de las nubes"
+                "tooltip": "Basarse en las bandas de calidad de la imagen para el enmascaramiento de las nubes"
               },
               "none": {
                 "label": "Off",
-                "tooltip": "Utilizar píxeles sin nubes si es posible, pero no enmascarar áreas sin píxeles sin nubes"
+                "tooltip": "Utilizar píxeles sin nubes si es posible, pero no enmascarar áreas sin nubes"
               }
             },
             "corrections": {
@@ -1713,23 +1713,23 @@
               "label": "Correcciones",
               "surfaceReflectance": {
                 "label": "Reflectancia de la superficie",
-                "tooltip": "Utiliza escenas de reflectancia superficial corregida atmosféricamente."
+                "tooltip": "Utiliza escenas de reflectancia superficial corregidas atmosféricamente."
               }
             },
             "mask": {
               "label": "Máscara",
               "snow": {
                 "label": "Nieve",
-                "tooltip": "Oculta la nieve. Hojas pixeladas con sombra de nieve."
+                "tooltip": "Oculta la nieve."
               }
             },
             "snowMasking": {
-              "label": "Enmascaramiento de la nieve",
-              "off": {
-                "tooltip": "No enmascarar la nieve. Tenga en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, y debido a esto, deshabilitar el enmascaramiento de la nieve podría conducir a artefactos de nubes."
+              "label": "Enmascaramiento de nieve",
+              "off": {  
+                "tooltip": "No enmascarar nieve. Ten en cuenta que algunas nubes pueden ser clasificadas erróneamente como nieve, por lo tanto, deshabilitar esta opción podría afectar el enmascaramiento de nubes."
               },
               "on": {
-                "tooltip": "Máscara de nieve. Esto tiende a dejar algunos píxeles donde con la nieve sombra"
+                "tooltip": "Máscara de nieve. Esto tiende a dejar algunos píxeles con sombra de nieve"
               }
             }
           },
@@ -1737,7 +1737,7 @@
           "tooltip": "Configurar el preprocesamiento de imágenes"
         },
         "retrieve": {
-          "apply": "Recuperar",
+          "apply": "Importar",
           "form": {
             "indicator": {
               "label": "Indicador",
@@ -1748,12 +1748,12 @@
               "label": "Escala"
             }
           },
-          "task": "Recuperar {name} al espacio de trabajo de SEPAL",
-          "title": "Recuperar",
-          "tooltip": "Recuperar series temporales"
+          "task": "Importar {name} al espacio de trabajo de SEPAL",
+          "title": "Importar",
+          "tooltip": "Importar series temporales"
         },
         "sources": {
-          "button": "FUE",
+          "button": "SRC",
           "form": {
             "dataSets": {
               "label": "Colección",
@@ -1764,10 +1764,10 @@
                 "SENTINEL_1": {}
               }
             },
-            "required": "Debe seleccionarse una fuente de datos"
+            "required": "Debes seleccionar una fuente de datos"
           },
           "title": "Fuentes",
-          "tooltip": "Seleccione la fuente de la imagen"
+          "tooltip": "Selecciona la fuente de la imagen"
         }
       },
       "tabPlaceholder": "Series_temporales"
@@ -1775,7 +1775,7 @@
   },
   "tasks": {
     "download": {
-      "progress": "Descargados {files} {files, plural, one {documento} other {documentos}} / {bytes} restantes"
+      "progress": "Descargados {files} {files, plural, one {archivo} other {archivos}} / {bytes} restantes"
     },
     "ee": {
       "export": {
@@ -1790,17 +1790,17 @@
     },
     "retrieve": {
       "time_series_to_sepal": {
-        "assembling": "Ensamblando la teja {currentTile} de {totalTiles}...",
-        "creating_drive_folder": "Creación del directorio de Google Drive...",
-        "deleting_drive_folder": "Eliminación del directorio de Google Drive.",
-        "progress": "Exportado {currentTilePercent}% de la teja {currentTile} de {totalTiles}.",
-        "tiling": "Azulejos AOI..."
+        "assembling": "Ensamblando el tile {currentTile} de {totalTiles}...",
+        "creating_drive_folder": "Creando directorio de Google Drive...",
+        "deleting_drive_folder": "Eliminando directorio de Google Drive.",
+        "progress": "Exportado {currentTilePercent}% del tile {currentTile} de {totalTiles}.",
+        "tiling": "Tiling AOI..."
       }
     },
     "status": {
       "canceled": "Detenido",
       "canceling": "Deteniendo",
-      "completed": "¡Concluido!",
+      "completed": "¡Finalizado!",
       "executing": "Ejecutando...",
       "initializing": "Iniciando..."
     }
@@ -1847,22 +1847,22 @@
         "label": "Conecta tu cuenta de Google"
       },
       "connected": {
-        "info": "Tienes acceso completo a SEPAL. Si desconectas tu cuenta de Google de SEPAL, algunas funciones (como la exportación a activos de Earth Engine) no estarán disponibles.",
+        "info": "Tienes acceso completo a SEPAL. Si desconectas tu cuenta de Google de SEPAL, algunas funciones (como la exportación a assets de Earth Engine) no estarán disponibles.",
         "label": "Conectado",
         "title": "Tu cuenta SEPAL está conectada a tu cuenta de Google"
       },
       "disconnect": {
         "label": "Desconecta tu cuenta de Google",
         "warning": {
-          "message": "La desconexión de tu cuenta de Google provocará la finalización de cualquier tarea iniciada mientras estés conectado. Tareas actualmente en ejecución: {taskCount}.",
+          "message": "La desconexión de tu cuenta de Google provocará la interrupción de cualquier tarea iniciada mientras estas conectado. Tareas actualmente en ejecución: {taskCount}.",
           "title": "Advertencia"
         }
       },
       "disconnected": {
-        "info": "Usted tiene acceso limitado a SEPAL. Si conecta su cuenta de Google a SEPAL, todas las funciones (incluida la exportación a activos de Earth Engine) estarán disponibles.",
+        "info": "Tienes acceso limitado a SEPAL. Si conectas tu cuenta de Google a SEPAL, todas las funciones (incluida la exportación de assets de Earth Engine) estarán disponibles.",
         "label": "Desconectado",
-        "success": "SEPAL está ahora desconectado de su cuenta de Google.",
-        "title": "Tu cuenta SEPAL no está conectada a tu cuenta de Google"
+        "success": "SEPAL está ahora desconectado de tu cuenta de Google.",
+        "title": "Tu cuenta SEPAL no está vinculada a tu cuenta de Google"
       },
       "label": "Cuenta de Google",
       "title": "Cuenta de Google"
@@ -1878,9 +1878,9 @@
         "used%": "Usado"
       },
       "sessions": {
-        "cost": "Coste",
+        "cost": "Costo",
         "earliestTimeoutHours": "Mantener la actividad",
-        "hourlyCost": "Coste horario",
+        "hourlyCost": "Costo horario",
         "instanceDescription": "Descripción de la instancia",
         "instanceType": "Tipo de instancia",
         "noSessions": "Ninguna sesión activa",
@@ -1907,7 +1907,7 @@
             "label": "Activado"
           },
           "label": "Notificaciones por email",
-          "tooltip": "Activar o desactivar las notificaciones opcionales por email (por ejemplo, tarea completada, tarea fallida, etc.)"
+          "tooltip": "Activar o desactivar notificaciones opcionales por email (por ejemplo, tareas completadas, tareas fallidas, etc.)"
         },
         "lastUpdate": {
           "label": "Última actualización"
@@ -1915,18 +1915,18 @@
         "monthlyBudget": {
           "instanceSpending": {
             "atLeast1": "El presupuesto mensual de la instancia debe ser de al menos 1",
-            "label": "Instancia en US$",
-            "required:": "Se requiere un presupuesto mensual de la instancia"
+            "label": "Instancia en $USD",
+            "required:": "Se requiere un presupuesto mensual para la instancia"
           },
           "storageQuota": {
             "atLeast1": "El almacenamiento mensual debe ser de al menos 1",
-            "label": "Almacenamientoen GB",
+            "label": "Almacenamiento en GB",
             "required:": "Se requiere una cuota mensual de almacenamiento"
           },
           "storageSpending": {
             "atLeast1": "El presupuesto mensual de almacenamiento debe ser de al menos 1",
-            "label": "Almacenamiento US$",
-            "required:": "Se requiere un presupuesto mensual para el almacenamiento"
+            "label": "Almacenamiento $USD",
+            "required:": "Se requiere un presupuesto mensual de almacenamiento"
           }
         },
         "monthlyLimits": {
@@ -1958,7 +1958,7 @@
           "required": "El nombre de usuario es obligatorio"
         }
       },
-      "switchingToSepalGoogleAccount": "Cambiar a la cuenta de Google de Sepal",
+      "switchingToSepalGoogleAccount": "Cambiar a la cuenta de Google de SEPAL",
       "title": "Datos del usuario",
       "update": {
         "error": {
