@@ -223,7 +223,7 @@ const modelToValues = model => {
         filterExpression: model.filterExpression,
         classColumnFormat: model.classColumnFormat,
         valueColumn: model.valueColumn,
-        valueMapping: model.valueMapping,
+        valueMapping: model.valueMapping || {},
         columnMapping: model.columnMapping,
         customMapping: model.customMapping,
         defaultValue: model.defaultValue
