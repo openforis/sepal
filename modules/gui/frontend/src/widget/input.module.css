@@ -51,7 +51,7 @@
 
 .input input::placeholder,
 .input textarea::placeholder {
-    color: hsl(0, 0%, 39%);
+    color: hsl(0, 0%, 45%);
 }
 
 .input input.readOnly,
