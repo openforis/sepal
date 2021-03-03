@@ -1,5 +1,5 @@
+flatten_json=0
 minify_resources=0
 resource_definition=translations
 resource_directories=1
 resource_type=JSON
-flatten_json=0
