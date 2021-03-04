@@ -2,6 +2,7 @@ import {CancellingTileProvider} from '../tileProvider/cancellingTileProvider'
 import {MonitoringTileProvider} from '../tileProvider/monitoringTileProvider'
 import {PrioritizingTileProvider} from '../tileProvider/prioritizingTileProvider'
 import {RetryingTileManager} from '../tileProvider/retryingTileManager'
+import guid from 'guid'
 
 export const TileLayer = ({
     layerIndex,
@@ -18,8 +19,6 @@ export const TileLayer = ({
         },
 
         remove() {
-            // TODO: Only do this if added to the map
-            // TODO: Unregister listeners
             // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
             mapContext.googleMap.overlayMapTypes.insertAt(layerIndex, null)
             mapContext.googleMap.overlayMapTypes.removeAt(layerIndex + 1)
@@ -27,11 +26,6 @@ export const TileLayer = ({
 
         hide(hidden) {
             mapLayer.setOpacity(hidden ? 0 : 1)
-        },
-
-        progress$() {
-            // TODO: Implement...
-            // {count, loading, failed, loaded, completed}
         }
     }
 }
@@ -75,7 +69,6 @@ class GoogleMapsLayer {
             return tileElement
 
         const tile$ = this.tileProvider.loadTile$(tileRequest)
-        // TODO: Error handling
         tile$.subscribe(blob => renderImageBlob(tileElement, blob))
         return tileElement
     }
@@ -105,7 +98,8 @@ class GoogleMapsLayer {
             x += maxCoord
         }
         const element = doc.createElement('div')
-        const id = [this.tileProvider.id, zoom, x, y].join('/')
+        element.style.opacity = this.opacity
+        const id = [this.tileProvider.id, zoom, x, y, guid()].join('/')
         element.id = id
         const outOfBounds = zoom < minZoom || y < 0 || y >= maxCoord
         return {id, x, y, zoom, element, outOfBounds}
