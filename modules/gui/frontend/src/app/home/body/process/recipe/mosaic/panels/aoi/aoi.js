@@ -47,6 +47,7 @@ const fields = {
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
+        this.state = {canceled: false}
         const {recipeId, mapContext: {sepalMap}} = props
         this.preview = MosaicPreview(recipeId)
         this.initialBounds = sepalMap.getBounds()
@@ -82,7 +83,7 @@ class Aoi extends React.Component {
                 className={styles.panel}
                 placement='bottom-right'
                 onApply={(values, model) => this.onApply(values, model)}
-                onCancel={() => this.onCancel()}>
+                onCancel={() => this.setState({canceled: true})}>
                 <PanelSections
                     inputs={inputs}
                     sections={sections}
@@ -101,6 +102,13 @@ class Aoi extends React.Component {
     componentDidUpdate() {
         const {inputs, allowWholeEETable = ''} = this.props
         inputs.allowWholeEETable.set(allowWholeEETable)
+    }
+
+    componentWillUnmount() {
+        const {canceled} = this.state
+        if (canceled) {
+            this.onCancel()
+        }
     }
 
     onApply(values, model) {
