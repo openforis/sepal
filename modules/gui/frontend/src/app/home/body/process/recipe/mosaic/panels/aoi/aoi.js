@@ -83,7 +83,8 @@ class Aoi extends React.Component {
                 className={styles.panel}
                 placement='bottom-right'
                 onApply={(values, model) => this.onApply(values, model)}
-                onCancel={() => this.setState({canceled: true})}>
+                onClose={() => this.onCancel()}
+            >
                 <PanelSections
                     inputs={inputs}
                     sections={sections}
@@ -102,13 +103,6 @@ class Aoi extends React.Component {
     componentDidUpdate() {
         const {inputs, allowWholeEETable = ''} = this.props
         inputs.allowWholeEETable.set(allowWholeEETable)
-    }
-
-    componentWillUnmount() {
-        const {canceled} = this.state
-        if (canceled) {
-            this.onCancel()
-        }
     }
 
     onApply(values, model) {
