@@ -22,7 +22,7 @@
       "REMOVE_DIRECTORY": "Effacer répertoire",
       "REMOVE_FILE": "Effacer fichier",
       "REMOVE_TASK": "Effacer tâche",
-      "REQUEST_PASSWORD_RESET": "Demander nouveau mot de passe",
+      "REQUEST_PASSWORD_RESET": "Demander un nouveau mot de passe",
       "RESET_PASSWORD": "Réinitialiser le mot de passe",
       "RESTART_TASK": "Recharger la tâche",
       "RUN_APP": "Ouvrir application",
@@ -36,7 +36,7 @@
     "developedBy": "Développé par {author}",
     "filter": {
       "search": {
-        "placeholder": "Rechercher une app"
+        "placeholder": "Rechercher une App"
       },
       "tag": {
         "ignore": {
@@ -46,7 +46,7 @@
     },
     "googleAccountRequired": "SEPAL doit être connecté à votre compte Google pour utiliser cette application",
     "info": "Afficher les informations de cette application",
-    "initializing": "Demarrer une session...",
+    "initializing": "Démarrer une session...",
     "loading": {
       "error": {
         "message": "Recharger la page",
@@ -319,7 +319,7 @@
       },
       "validating-link": "Lien en cours de validation..."
     },
-    "signup": "S'inscrir",
+    "signup": "S'inscrire",
     "tagline": "Système pour l'accès, le traitement et l'analyse de données pour la surveillance des terres.",
     "title": "SEPAL",
     "validate-token": {
@@ -351,7 +351,7 @@
   },
   "notifications": {
     "error": {
-      "connectionError": "Echec de connexion au serveur. Vérifier votre connexion internet. Il se peut que le serveur soit aussi desactivé.",
+      "connectionError": "Echec de connexion au serveur. Vérifier votre connexion internet. Il se peut que le serveur soit aussi désactivé.",
       "generic": "Une erreur est survenue. Veuillez réessayer ou contacter le support technique si le problème persiste."
     }
   },
