@@ -170,7 +170,7 @@ class _Map extends React.Component {
     }
 
     // used by aoi, map, collectPanel
-    fitBounds(bounds, padding) {
+    fitBounds(bounds, padding = 0) {
         const {googleMap} = this.state
         const nextBounds = this.toGoogleBounds(bounds)
         const currentBounds = googleMap.getBounds()
