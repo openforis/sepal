@@ -41,7 +41,8 @@ class _Map extends React.Component {
     state = {
         mapId: null,
         mapContext: null,
-        metersPerPixel: null
+        metersPerPixel: null,
+        zoomArea: false
     }
 
     // Linking
@@ -101,6 +102,7 @@ class _Map extends React.Component {
 
     zoomArea() {
         const {google, googleMap} = this.state
+        this.setState({zoomArea: true})
         this._drawingManager = new google.maps.drawing.DrawingManager({
             drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
             drawingControl: false,
@@ -118,6 +120,7 @@ class _Map extends React.Component {
     }
 
     cancelZoomArea() {
+        this.setState({zoomArea: false})
         this.disableDrawingMode()
     }
 
@@ -210,7 +213,8 @@ class _Map extends React.Component {
         }
     }
 
-    setVisibiliy(visible) {
+    setVisibility(visible) {
+        log.debug(`Visibility ${visible ? 'on' : 'off'}`)
         _.forEach(this.layerById, (layer, id) =>
             layer.hide(visible ? this.hiddenLayerById[id] : true)
         )
@@ -324,10 +328,10 @@ class _Map extends React.Component {
 
     render() {
         const {children} = this.props
-        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, metersPerPixel, linked} = this.state
+        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, metersPerPixel, linked, zoomArea} = this.state
         const mapContext = {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}
         return (
-            <Provider value={{mapContext, linked, metersPerPixel}}>
+            <Provider value={{mapContext, linked, metersPerPixel, zoomArea}}>
                 <div ref={this.map} className={styles.map}/>
                 <div className={styles.content}>
                     {sepalMap ? children : null}
@@ -370,8 +374,8 @@ class _Map extends React.Component {
             clearClickListeners: this.clearClickListeners.bind(this)    // chartPixelButton, referenceDataLayer
         }
 
-        onEnable(() => this.setVisibiliy(true))
-        onDisable(() => this.setVisibiliy(false))
+        onEnable(() => this.setVisibility(true))
+        onDisable(() => this.setVisibility(false))
 
         this.setState({mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () => {
             this.subscribe({bounds$, updateBounds, notifyLinked})

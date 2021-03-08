@@ -10,7 +10,7 @@ import styles from './mapToolbar.module.css'
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, mapContext, zooming, labelLayerIndex, linked, children} = this.props
+        const {statePath, mapContext, zoomArea, labelLayerIndex, linked, children} = this.props
         const {sepalMap} = mapContext
         const hasBounds = sepalMap.isLayerInitialized('aoi')
         return (
@@ -31,9 +31,9 @@ class MapToolbar extends React.Component {
                         icon={'minus'}
                         tooltip={msg('process.mosaic.mapToolbar.zoomOut.tooltip')}/>
                     <Toolbar.ToolbarButton
-                        selected={zooming}
+                        selected={zoomArea}
                         disabled={sepalMap.isMaxZoom()}
-                        onClick={() => zooming ? sepalMap.cancelZoomArea() : sepalMap.zoomArea()}
+                        onClick={() => zoomArea ? sepalMap.cancelZoomArea() : sepalMap.zoomArea()}
                         icon={'search'}
                         tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
                     <Toolbar.ToolbarButton
@@ -53,7 +53,7 @@ class MapToolbar extends React.Component {
                         tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}/>
                     {children}
                 </Toolbar>
-                <Keybinding disabled={!zooming} keymap={{Escape: () => sepalMap.cancelZoomArea()}}/>
+                <Keybinding disabled={!zoomArea} keymap={{Escape: () => sepalMap.cancelZoomArea()}}/>
             </React.Fragment>
         )
     }
