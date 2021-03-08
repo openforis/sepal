@@ -167,7 +167,7 @@ export const supportRegression = classifierType =>
     ['RANDOM_FOREST', 'CART'].includes(classifierType)
 
 export const supportProbability = classifierType =>
-    ['RANDOM_FOREST', 'CART'].includes(classifierType)
+    ['RANDOM_FOREST', 'CART', 'SVM', 'NAIVE_BAYES'].includes(classifierType)
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
