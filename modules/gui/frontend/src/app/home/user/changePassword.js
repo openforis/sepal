@@ -89,7 +89,7 @@ class ChangePassword extends React.Component {
                 isActionForm={true}
                 modal
                 onApply={userPasswords => this.changePassword$(userPasswords)}
-                onDone={() => this.close()}>
+                onClose={() => this.close()}>
                 <Panel.Header
                     icon='key'
                     title={msg('user.changePassword.title')}/>

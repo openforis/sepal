@@ -52,8 +52,8 @@ class _FormPanel extends React.Component {
     }
 
     close() {
-        const {onDone} = this.props
-        onDone && onDone()
+        const {onClose} = this.props
+        onClose && onClose()
     }
 
     renderSpinner() {
@@ -132,5 +132,5 @@ FormPanel.propTypes = {
     type: PropTypes.string, // TODO: Same as type?
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
-    onDone: PropTypes.func
+    onClose: PropTypes.func
 }

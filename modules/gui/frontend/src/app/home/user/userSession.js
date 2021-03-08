@@ -70,7 +70,7 @@ class UserSession extends React.Component {
                 statePath='userSessions.userSessionPanel'
                 type='modal'
                 onApply={session => this.updateSession(session)}
-                onDone={() => this.unselectSession()}>
+                onClose={() => this.unselectSession()}>
                 <Panel.Header
                     title={`${session.instanceType.name} (${session.instanceType.description})`}
                     label={`${format.dollars(session.costSinceCreation)} (${format.dollarsPerHour(session.instanceType.hourlyCost)})`}

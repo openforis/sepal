@@ -149,7 +149,7 @@ class _UserDetails extends React.Component {
                 statePath='userDetails'
                 modal
                 onApply={userDetails => this.updateUserDetails(userDetails)}
-                onDone={deactivate}>
+                onClose={deactivate}>
                 <Panel.Header
                     icon='user'
                     title={msg('user.userDetails.title')}

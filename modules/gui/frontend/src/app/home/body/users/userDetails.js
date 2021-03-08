@@ -73,7 +73,7 @@ class UserDetails extends React.Component {
                 statePath='userDetails'
                 modal
                 onApply={userDetails => this.save(userDetails)}
-                onDone={() => this.cancel()}>
+                onClose={() => this.cancel()}>
                 <Panel.Header
                     icon='user'
                     title={msg('user.userDetails.title')}/>
