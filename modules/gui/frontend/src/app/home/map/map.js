@@ -51,7 +51,6 @@ class _Map extends React.Component {
     state = {
         mapId: null,
         mapContext: null,
-        zooming: false,
         metersPerPixel: null
     }
 
@@ -118,10 +117,8 @@ class _Map extends React.Component {
         )
     }
 
-    // used by mapToolbar
     zoomArea() {
         const {google, googleMap} = this.state
-        this.setState({zooming: true})
         this._drawingManager = new google.maps.drawing.DrawingManager({
             drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
             drawingControl: false,
@@ -138,21 +135,12 @@ class _Map extends React.Component {
 
     }
 
-    // used by mapToolbar
     cancelZoomArea() {
-        this.setState({zooming: false})
         this.disableDrawingMode()
-    }
-
-    // used by mapToolbar, chartPixelButton
-    isZooming() {
-        const {zooming} = this.state
-        return zooming
     }
 
     // Bounds
 
-    // user by polygonLayer
     fromGoogleBounds(googleBounds) {
         const sw = googleBounds.getSouthWest()
         const ne = googleBounds.getNorthEast()
@@ -162,7 +150,6 @@ class _Map extends React.Component {
         ]
     }
 
-    // used here
     toGoogleBounds(bounds) {
         const {google} = this.state
         return new google.maps.LatLngBounds(
@@ -171,7 +158,6 @@ class _Map extends React.Component {
         )
     }
 
-    // used by aoi, map, collectPanel
     fitBounds(bounds, padding = 0) {
         const {googleMap} = this.state
         const nextBounds = this.toGoogleBounds(bounds)
@@ -182,13 +168,11 @@ class _Map extends React.Component {
         }
     }
 
-    // user by aoi, map
     getBounds() {
         const {googleMap} = this.state
         return this.fromGoogleBounds(googleMap.getBounds())
     }
 
-    // used by this
     addListener(event, listener) {
         const {google, googleMap} = this.state
         const listenerId = googleMap.addListener(event, listener)
@@ -236,7 +220,6 @@ class _Map extends React.Component {
         return Object.values(this.layerById)
     }
 
-    // used by MANY
     hideLayer(id, hidden) {
         const layer = this.getLayer(id)
         this.hiddenLayerById[id] = hidden
@@ -251,7 +234,6 @@ class _Map extends React.Component {
         )
     }
 
-    // used by MANY
     removeLayer(id) {
         const layer = this.getLayer(id)
         if (layer) {
@@ -261,18 +243,15 @@ class _Map extends React.Component {
         }
     }
 
-    // used by mapToolbar
     isLayerInitialized(id) {
         const layer = this.getLayer(id)
         return !!(layer && layer.__initialized__)
     }
 
-    // used by layersMenu
     toggleableLayers() {
         return _.orderBy(Object.values(this.layerById).filter(layer => layer.toggleable), ['layerIndex'])
     }
 
-    // used by MANY
     fitLayer(id) {
         const layer = this.getLayer(id)
         if (layer && layer.bounds) {
@@ -280,7 +259,6 @@ class _Map extends React.Component {
         }
     }
 
-    // used by polygonSection
     drawPolygon(id, callback) {
         const {google, googleMap} = this.state
         this._drawingPolygon = {id, callback}
@@ -307,7 +285,6 @@ class _Map extends React.Component {
         this._drawingManager.setMap(googleMap)
     }
 
-    // used by polygonSection
     disableDrawingMode() {
         const {google} = this.state
         if (this._drawingManager) {
@@ -317,7 +294,6 @@ class _Map extends React.Component {
         }
     }
 
-    // used by chartPixelButton
     onOneClick(listener) {
         const {google, googleMap} = this.state
         googleMap.setOptions({draggableCursor: 'pointer'})
@@ -335,7 +311,6 @@ class _Map extends React.Component {
         })
     }
 
-    // used by referenceDataLayer
     onClick(listener) {
         const {google, googleMap} = this.state
         googleMap.setOptions({draggableCursor: 'pointer'})
@@ -352,7 +327,7 @@ class _Map extends React.Component {
         })
     }
 
-    // used by chartPixelButton, referenceDataLayer
+    // used by chartPixelButton, eferenceDataLayer
     clearClickListeners() {
         const {google, googleMap} = this.state
         googleMap.setOptions({draggableCursor: null})
@@ -388,33 +363,29 @@ class _Map extends React.Component {
         const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, notifyLinked} = createMapContext(this.map.current)
 
         const sepalMap = {
-            getZoom: this.getZoom.bind(this),
-            setZoom: this.setZoom.bind(this),
-            zoomIn: this.zoomIn.bind(this),
-            zoomOut: this.zoomOut.bind(this),
-            isMaxZoom: this.isMaxZoom.bind(this),
-            isMinZoom: this.isMinZoom.bind(this),
-            getMetersPerPixel: this.getMetersPerPixel.bind(this),
-            zoomArea: this.zoomArea.bind(this),
-            cancelZoomArea: this.cancelZoomArea.bind(this),
-            isZooming: this.isZooming.bind(this),
-            fromGoogleBounds: this.fromGoogleBounds.bind(this),
-            toGoogleBounds: this.toGoogleBounds.bind(this),
-            fitBounds: this.fitBounds.bind(this),
-            getBounds: this.getBounds.bind(this),
-            getLayer: this.getLayer.bind(this),
-            setLayer: this.setLayer.bind(this),
-            hideLayer: this.hideLayer.bind(this),
-            removeLayer: this.removeLayer.bind(this),
-            isLayerInitialized: this.isLayerInitialized.bind(this),
-            toggleableLayers: this.toggleableLayers.bind(this),
-            fitLayer: this.fitLayer.bind(this),
-            drawPolygon: this.drawPolygon.bind(this),
-            disableDrawingMode: this.disableDrawingMode.bind(this),
-            onClick: this.onClick.bind(this),
-            onOneClick: this.onOneClick.bind(this),
-            clearClickListeners: this.clearClickListeners.bind(this),
-            toggleLinked: this.toggleLinked.bind(this)
+            fitBounds: this.fitBounds.bind(this),                       // collectPanel, aoi
+            getBounds: this.getBounds.bind(this),                       // aoi, mapLayer
+            getZoom: this.getZoom.bind(this),                           // aoi, sceneAreas, mapLayer
+            setZoom: this.setZoom.bind(this),                           // aoi
+            zoomIn: this.zoomIn.bind(this),                             // mapToolbar
+            zoomOut: this.zoomOut.bind(this),                           // mapToolbar
+            isMaxZoom: this.isMaxZoom.bind(this),                       // mapToolbar
+            isMinZoom: this.isMinZoom.bind(this),                       // mapToolbar
+            zoomArea: this.zoomArea.bind(this),                         // mapToolbar
+            cancelZoomArea: this.cancelZoomArea.bind(this),             // mapToolbar
+            isLayerInitialized: this.isLayerInitialized.bind(this),     // mapToolbar
+            toggleLinked: this.toggleLinked.bind(this),                 // mapToolbar
+            fromGoogleBounds: this.fromGoogleBounds.bind(this),         // polygonLayer
+            setLayer: this.setLayer.bind(this),                         // MANY
+            hideLayer: this.hideLayer.bind(this),                       // MANY
+            removeLayer: this.removeLayer.bind(this),                   // MANY
+            fitLayer: this.fitLayer.bind(this),                         // MANY
+            toggleableLayers: this.toggleableLayers.bind(this),         // layersMenu
+            drawPolygon: this.drawPolygon.bind(this),                   // polygonSection
+            disableDrawingMode: this.disableDrawingMode.bind(this),     // polygonSection
+            onClick: this.onClick.bind(this),                           // referenceDataLayer
+            onOneClick: this.onOneClick.bind(this),                     // chartPixelButton
+            clearClickListeners: this.clearClickListeners.bind(this)    // chartPixelButton, referenceDataLayer
         }
 
         onEnable(() => this.setVisibiliy(true))

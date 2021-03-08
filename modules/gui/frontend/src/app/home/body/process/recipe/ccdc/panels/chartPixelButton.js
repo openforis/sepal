@@ -1,21 +1,12 @@
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {withRecipe} from 'app/home/body/process/recipeContext'
+import {withMapContext} from 'app/home/map/mapContext'
 import GoogleSatelliteLayer from 'app/home/map/googleSatelliteLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-const mapRecipeToProps = (recipe, ownProps) => {
-    const {mapContext: {sepalMap}} = ownProps
-    return {
-        recipeId: recipe.id,
-        isZooming: sepalMap.isZooming(),
-    }
-}
-
 class ChartPixelButton extends React.Component {
-
     constructor(props) {
         super(props)
         this.state = {}
@@ -69,5 +60,5 @@ ChartPixelButton.propTypes = {
 
 export default compose(
     ChartPixelButton,
-    withRecipe(mapRecipeToProps)
+    withMapContext()
 )
