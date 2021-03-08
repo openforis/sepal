@@ -4,11 +4,15 @@ const request = require('request')
 const urljoin = require('url-join')
 const randomColor = require('randomcolor')
 const swaggerUi = require('swagger-ui-express')
+const bodyParser = require('body-parser')
 
 const config = require('./config')
 const swaggerDocument = require('./swagger.json')
 
 const app = express()
+
+app.use(bodyParser.json({ limit: '50mb' }))
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }))
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
