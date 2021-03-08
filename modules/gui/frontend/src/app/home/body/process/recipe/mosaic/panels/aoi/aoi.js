@@ -83,7 +83,7 @@ class Aoi extends React.Component {
                 className={styles.panel}
                 placement='bottom-right'
                 onApply={(values, model) => this.onApply(values, model)}
-                onClose={() => this.onCancel()}
+                onCancel={() => this.onCancel()}
             >
                 <PanelSections
                     inputs={inputs}
@@ -112,10 +112,10 @@ class Aoi extends React.Component {
 
     onCancel() {
         const {model, mapContext: {sepalMap}} = this.props
-        this.preview.show()
-        this.updateLayer(model)
         sepalMap.fitBounds(this.initialBounds)
         sepalMap.setZoom(this.initialZoom)
+        this.preview.show()
+        this.updateLayer(model)
     }
 
     updateLayer(model) {
