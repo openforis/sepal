@@ -440,8 +440,7 @@ class _Map extends React.Component {
     }
 
     componentWillUnmount() {
-        const {sepalMap} = this.state
-        sepalMap.listLayers().map(layer => layer.removeFromMap())
+        this.listLayers().map(layer => layer.removeFromMap())
         this.unsubscribe()
     }
 
