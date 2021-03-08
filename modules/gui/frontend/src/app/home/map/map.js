@@ -7,25 +7,20 @@ import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
 import {msg} from 'translate'
-import {select} from 'store'
 import {withMapsContext} from './maps'
 import {withRecipePath} from '../body/process/recipe'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import actionBuilder from 'action-builder'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
 
 const log = getLogger('map')
 
-const mapStateToProps = (_state, {recipePath}) => {
-    return {
-        single: getProcessTabsInfo().single,
-        linked: select([recipePath, 'ui.map.linked'])
-    }
-}
+const mapStateToProps = () => ({
+    single: getProcessTabsInfo().single
+})
 
 class _Map extends React.Component {
     layerById = {}
@@ -56,20 +51,12 @@ class _Map extends React.Component {
 
     // Linking
 
-    isLinked() {
-        const {linked} = this.props
-        return linked
-    }
-
     setLinked(linked) {
-        const {recipePath} = this.props
-        actionBuilder('TOGGLE_LINKED')
-            .set([recipePath, 'ui.map.linked'], linked)
-            .dispatch()
+        this.setState({linked})
     }
 
     toggleLinked() {
-        const {linked: wasLinked} = this.props
+        const {linked: wasLinked} = this.state
         const linked = !wasLinked
         this.setLinked(linked)
     }
@@ -341,8 +328,8 @@ class _Map extends React.Component {
     }
 
     render() {
-        const {linked, children} = this.props
-        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, metersPerPixel} = this.state
+        const {children} = this.props
+        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, metersPerPixel, linked} = this.state
         const mapContext = {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}
         return (
             <Provider value={{mapContext, linked, metersPerPixel}}>
@@ -397,9 +384,9 @@ class _Map extends React.Component {
         })
     }
 
-    componentDidUpdate(prevProps) {
-        const {linked} = this.props
-        const {linked: wasLinked} = prevProps
+    componentDidUpdate(prevProps, prevState) {
+        const {linked} = this.state
+        const {linked: wasLinked} = prevState
         if (!linked && wasLinked) {
             this.linked$.next(false)
         } else {
@@ -432,7 +419,7 @@ class _Map extends React.Component {
         addSubscription(
             bounds$.subscribe(
                 bounds => {
-                    const {linked} = this.props
+                    const {linked} = this.state
                     if (bounds && linked) {
                         const {center, zoom} = bounds
                         log.debug(`${mapTag(this.state.mapId)} received ${mapBoundsTag(bounds)}`)
@@ -451,7 +438,7 @@ class _Map extends React.Component {
                 debounceTime(50)
             ).subscribe(
                 () => {
-                    const {linked} = this.props
+                    const {linked} = this.state
                     if (linked) {
                         const center = googleMap.getCenter()
                         const zoom = googleMap.getZoom()

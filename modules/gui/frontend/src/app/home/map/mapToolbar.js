@@ -1,19 +1,12 @@
 import {LayersMenu} from './layersMenu'
-// import {MapLayout, MapLayoutButton} from 'app/home/body/process/mapLayout/mapLayout'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
-import {connect} from 'store'
 import {msg} from 'translate'
-import {select} from 'store'
 import {withMapContext} from './mapContext'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './mapToolbar.module.css'
-
-const mapStateToProps = (_state, {statePath}) => ({
-    linked: select([statePath, 'map.linked'])
-})
 
 class MapToolbar extends React.Component {
     render() {
@@ -66,19 +59,6 @@ class MapToolbar extends React.Component {
     }
 }
 
-// const LayersMenu = () => {
-//     return (
-//         <Menu>
-//             <MenuItem onSelect={() => console.log('first')}>
-//                 {<Msg id='First'/>}
-//             </MenuItem>
-//             <MenuItem onSelect={() => console.log('second')}>
-//                 {<Msg id='Second'/>}
-//             </MenuItem>
-//         </Menu>
-//     )
-// }
-
 MapToolbar.propTypes = {
     labelLayerIndex: PropTypes.any.isRequired,
     mapContext: PropTypes.object.isRequired,
@@ -88,6 +68,5 @@ MapToolbar.propTypes = {
 
 export default compose(
     MapToolbar,
-    connect(mapStateToProps),
     withMapContext()
 )
