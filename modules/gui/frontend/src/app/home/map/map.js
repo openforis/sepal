@@ -191,7 +191,7 @@ class _Map extends React.Component {
         const {google, googleMap} = this.state
         const listenerId = googleMap.addListener(event, listener)
         return {
-            removeListener: () => google.maps.event.removeListener(listenerId)
+            remove: () => google.maps.event.removeListener(listenerId)
         }
     }
 
@@ -503,8 +503,8 @@ class _Map extends React.Component {
     }
 
     unsubscribe() {
-        this.centerChangedListener && this.centerChangedListener.removeListener()
-        this.zoomChangedListener && this.zoomChangedListener.removeListener()
+        this.centerChangedListener && this.centerChangedListener.remove()
+        this.zoomChangedListener && this.zoomChangedListener.remove()
     }
 }
 
