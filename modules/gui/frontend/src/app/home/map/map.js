@@ -1,5 +1,5 @@
 import {NEVER, Subject} from 'rxjs'
-import {Provider, withMapContext} from './mapContext'
+import {Provider} from './mapContext'
 import {compose} from 'compose'
 import {connect} from 'store'
 import {debounceTime, filter, finalize, takeUntil} from 'rxjs/operators'
@@ -11,7 +11,6 @@ import {select} from 'store'
 import {withMapsContext} from './maps'
 import {withRecipePath} from '../body/process/recipe'
 import Notifications from 'widget/notifications'
-import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
@@ -20,34 +19,6 @@ import styles from './map.module.css'
 import withSubscriptions from 'subscription'
 
 const log = getLogger('map')
-
-class _StaticMap extends React.Component {
-    map = React.createRef()
-
-    render() {
-        const {children} = this.props
-        return (
-            <React.Fragment>
-                <div ref={this.map} className={styles.map}/>
-                <div className={styles.content}>
-                    {children}
-                </div>
-            </React.Fragment>
-        )
-    }
-
-    componentDidMount() {
-        const {mapsContext: {createGoogleMap}} = this.props
-        createGoogleMap(this.map.current)
-    }
-}
-
-export const StaticMap = compose(
-    _StaticMap,
-    withMapsContext()
-)
-
-StaticMap.propTypes = {}
 
 const mapStateToProps = (_state, {recipePath}) => {
     return {
@@ -113,7 +84,9 @@ class _Map extends React.Component {
 
     setZoom(zoom) {
         const {googleMap} = this.state
-        return googleMap.setZoom(zoom)
+        if (googleMap.getZoom() !== zoom) {
+            googleMap.setZoom(zoom)
+        }
     }
 
     zoomIn() {
@@ -199,7 +172,7 @@ class _Map extends React.Component {
     }
 
     // used by aoi, map, collectPanel
-    fitBounds(bounds, padding) {
+    fitBounds(bounds, padding = 0) {
         const {googleMap} = this.state
         const nextBounds = this.toGoogleBounds(bounds)
         const currentBounds = googleMap.getBounds()
@@ -220,23 +193,8 @@ class _Map extends React.Component {
         const {google, googleMap} = this.state
         const listenerId = googleMap.addListener(event, listener)
         return {
-            removeListener: () => google.maps.event.removeListener(listenerId)
+            remove: () => google.maps.event.removeListener(listenerId)
         }
-    }
-
-    // used by map
-    onCenterChanged(listener) {
-        return this.addListener('center_changed', listener)
-    }
-
-    // used by map
-    onZoomChanged(listener) {
-        return this.addListener('zoom_changed', listener)
-    }
-
-    // used by earthEngineLayer, map
-    onBoundsChanged(listener) {
-        return this.addListener('bounds_changed', listener)
     }
 
     // Layers
@@ -409,10 +367,10 @@ class _Map extends React.Component {
 
     render() {
         const {linked, children} = this.props
-        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, toggleLinked, metersPerPixel} = this.state
+        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, metersPerPixel} = this.state
         const mapContext = {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}
         return (
-            <Provider value={{mapContext, linked, toggleLinked, metersPerPixel}}>
+            <Provider value={{mapContext, linked, metersPerPixel}}>
                 <div ref={this.map} className={styles.map}/>
                 <div className={styles.content}>
                     {sepalMap ? children : null}
@@ -444,12 +402,8 @@ class _Map extends React.Component {
             toGoogleBounds: this.toGoogleBounds.bind(this),
             fitBounds: this.fitBounds.bind(this),
             getBounds: this.getBounds.bind(this),
-            onCenterChanged: this.onCenterChanged.bind(this),
-            onZoomChanged: this.onZoomChanged.bind(this),
-            onBoundsChanged: this.onBoundsChanged.bind(this),
             getLayer: this.getLayer.bind(this),
             setLayer: this.setLayer.bind(this),
-            listLayers: this.listLayers.bind(this),
             hideLayer: this.hideLayer.bind(this),
             removeLayer: this.removeLayer.bind(this),
             isLayerInitialized: this.isLayerInitialized.bind(this),
@@ -486,20 +440,19 @@ class _Map extends React.Component {
     }
 
     componentWillUnmount() {
-        const {sepalMap} = this.state
-        sepalMap.listLayers().map(layer => layer.removeFromMap())
+        this.listLayers().map(layer => layer.removeFromMap())
         this.unsubscribe()
     }
 
     subscribe({bounds$, updateBounds, notifyLinked}) {
         const {addSubscription} = this.props
 
-        this.centerChanged = this.onCenterChanged(() => {
+        this.centerChangedListener = this.addListener('center_changed', () => {
             this.updateScale(this.getMetersPerPixel())
             this.updateBounds$.next()
         })
 
-        this.zoomChanged = this.onZoomChanged(() => {
+        this.zoomChangedListener = this.addListener('zoom_changed', () => {
             this.updateScale(this.getMetersPerPixel())
             this.updateBounds$.next()
         })
@@ -551,9 +504,8 @@ class _Map extends React.Component {
     }
 
     unsubscribe() {
-        this.boundsChanged && this.boundChanged.removeListener()
-        this.centerChanged && this.centerChanged.removeListener()
-        this.zoomChanged && this.zoomChanged.removeListener()
+        this.centerChangedListener && this.centerChangedListener.remove()
+        this.zoomChangedListener && this.zoomChangedListener.remove()
     }
 }
 
@@ -570,125 +522,3 @@ Map.propTypes = {
     children: PropTypes.object,
     className: PropTypes.string
 }
-
-class _MapLayer extends React.Component {
-    state = {
-        shown: false,
-        projection: null
-    }
-
-    constructor(props) {
-        super(props)
-        const {mapContext: {google, googleMap, sepalMap}} = props
-
-        class ReactOverlayView extends google.maps.OverlayView {
-            constructor(component) {
-                super()
-                this.component = component
-                this.xyz = null
-            }
-
-            draw() {
-                const projection = this.getProjection() // TODO: Zooming changes the projection...
-                const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(0, 0))
-                const xyz = [point.x, point.y, sepalMap.getZoom()]
-                if (!_.isEqual(this.xyz, xyz)) {
-                    this.xyz = xyz
-                    this.component.setState({projection})
-                }
-            }
-
-            show(shown) {
-                this.component.setState({shown})
-            }
-
-            onAdd() {
-                this.show(true)
-            }
-
-            onRemove() {
-                this.show(false)
-            }
-        }
-
-        this.overlay = new ReactOverlayView(this)
-        this.overlay.setMap(googleMap)
-    }
-
-    render() {
-        const {shown, projection} = this.state
-        const {className, children} = this.props
-        const mapPanes = this.overlay.getPanes()
-        const content = (
-            <div className={className}>
-                <ProjectionContext.Provider value={{projection}}>
-                    {children}
-                </ProjectionContext.Provider>
-            </div>
-        )
-        return shown && mapPanes
-            ? <Portal type='container' content={content} container={mapPanes.overlayMouseTarget}/>
-            : null
-    }
-
-    componentWillUnmount() {
-        this.overlay.setMap(null)
-    }
-}
-
-export const MapLayer = compose(
-    _MapLayer,
-    withMapContext()
-)
-
-MapLayer.propTypes = {
-    children: PropTypes.any,
-    className: PropTypes.string
-}
-
-class _MapObject extends React.Component {
-    render() {
-        const {mapContext: {google, googleMap}, lat, lng, width, height, className, children} = this.props
-        const shown = googleMap.getBounds().contains({lng, lat})
-        if (!shown) {
-            return null
-        }
-        return (
-            <ProjectionContext.Consumer>
-                {({projection}) => {
-                    if (!projection) {
-                        return null
-                    }
-                    const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(lat, lng))
-                    const style = {
-                        position: 'absolute',
-                        top: `calc(${point.y}px - ${height} / 2)`,
-                        left: `calc(${point.x}px - ${width} / 2)`
-                    }
-                    return (
-                        <div style={style} className={className}>
-                            {children}
-                        </div>
-                    )
-                }}
-            </ProjectionContext.Consumer>
-        )
-    }
-}
-
-export const MapObject = compose(
-    _MapObject,
-    // connect(state => ({projectionChange: state.map.projectionChange})),
-    withMapContext()
-)
-
-MapObject.propTypes = {
-    children: PropTypes.any,
-    className: PropTypes.string,
-    height: PropTypes.string,
-    lat: PropTypes.number,
-    lng: PropTypes.number,
-    width: PropTypes.string
-}
-
-const ProjectionContext = React.createContext()

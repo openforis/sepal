@@ -122,7 +122,7 @@ export const RecipeFormPanel = ({className, placement, isActionForm, onApply, on
                     onCancel={() => {
                         onCancel && onCancel()
                     }}
-                    onDone={() => {
+                    onClose={() => {
                         deactivate()
                         onClose && onClose()
                     }}

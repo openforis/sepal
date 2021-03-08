@@ -1,4 +1,4 @@
-import {MapObject} from 'app/home/map/map'
+import {MapObject} from 'app/home/map/mapLayer'
 import {RecipeActions} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {compose} from 'compose'
 import {withMapContext} from 'app/home/map/mapContext'

@@ -1,5 +1,5 @@
 import {Button} from 'widget/button'
-import {MapLayer} from 'app/home/map/map'
+import {MapLayer} from 'app/home/map/mapLayer'
 import {RecipeActions, SceneSelectionType, getSource} from 'app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {SceneAreaMarker} from './sceneAreaMarker'
 import {Subject, of} from 'rxjs'
