@@ -1,5 +1,5 @@
 import {Selectable} from 'widget/selectable'
-import {StaticMap} from '../map/map'
+import {StaticMap} from '../map/staticMap'
 import {isPathInLocation} from 'route'
 import PropTypes from 'prop-types'
 import React from 'react'
