@@ -195,21 +195,6 @@ class _Map extends React.Component {
         }
     }
 
-    // used by map
-    onCenterChanged(listener) {
-        return this.addListener('center_changed', listener)
-    }
-
-    // used by map
-    onZoomChanged(listener) {
-        return this.addListener('zoom_changed', listener)
-    }
-
-    // used by earthEngineLayer, map
-    onBoundsChanged(listener) {
-        return this.addListener('bounds_changed', listener)
-    }
-
     // Layers
 
     getLayer(id) {
@@ -380,10 +365,10 @@ class _Map extends React.Component {
 
     render() {
         const {linked, children} = this.props
-        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, toggleLinked, metersPerPixel} = this.state
+        const {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap, metersPerPixel} = this.state
         const mapContext = {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}
         return (
-            <Provider value={{mapContext, linked, toggleLinked, metersPerPixel}}>
+            <Provider value={{mapContext, linked, metersPerPixel}}>
                 <div ref={this.map} className={styles.map}/>
                 <div className={styles.content}>
                     {sepalMap ? children : null}
@@ -415,12 +400,8 @@ class _Map extends React.Component {
             toGoogleBounds: this.toGoogleBounds.bind(this),
             fitBounds: this.fitBounds.bind(this),
             getBounds: this.getBounds.bind(this),
-            onCenterChanged: this.onCenterChanged.bind(this),
-            onZoomChanged: this.onZoomChanged.bind(this),
-            onBoundsChanged: this.onBoundsChanged.bind(this),
             getLayer: this.getLayer.bind(this),
             setLayer: this.setLayer.bind(this),
-            listLayers: this.listLayers.bind(this),
             hideLayer: this.hideLayer.bind(this),
             removeLayer: this.removeLayer.bind(this),
             isLayerInitialized: this.isLayerInitialized.bind(this),
@@ -465,12 +446,12 @@ class _Map extends React.Component {
     subscribe({bounds$, updateBounds, notifyLinked}) {
         const {addSubscription} = this.props
 
-        this.centerChanged = this.onCenterChanged(() => {
+        this.centerChangedListener = this.addListener('center_changed', () => {
             this.updateScale(this.getMetersPerPixel())
             this.updateBounds$.next()
         })
 
-        this.zoomChanged = this.onZoomChanged(() => {
+        this.zoomChangedListener = this.addListener('zoom_changed', () => {
             this.updateScale(this.getMetersPerPixel())
             this.updateBounds$.next()
         })
@@ -522,9 +503,8 @@ class _Map extends React.Component {
     }
 
     unsubscribe() {
-        this.boundsChanged && this.boundChanged.removeListener()
-        this.centerChanged && this.centerChanged.removeListener()
-        this.zoomChanged && this.zoomChanged.removeListener()
+        this.centerChangedListener && this.centerChangedListener.removeListener()
+        this.zoomChangedListener && this.zoomChangedListener.removeListener()
     }
 }
 
