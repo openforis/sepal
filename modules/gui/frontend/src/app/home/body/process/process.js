@@ -61,7 +61,7 @@ class Process extends React.Component {
                 >
                     {({id, type}) =>
                         <RecipeContext recipeId={id}>
-                            <Map recipeId={id}>
+                            <Map>
                                 {this.renderRecipe(id, type)}
                             </Map>
                         </RecipeContext>

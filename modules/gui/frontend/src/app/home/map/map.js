@@ -8,7 +8,6 @@ import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
 import {msg} from 'translate'
 import {withMapsContext} from './maps'
-import {withRecipePath} from '../body/process/recipe'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -17,10 +16,6 @@ import styles from './map.module.css'
 import withSubscriptions from 'subscription'
 
 const log = getLogger('map')
-
-const mapStateToProps = () => ({
-    single: getProcessTabsInfo().single
-})
 
 class _Map extends React.Component {
     layerById = {}
@@ -346,7 +341,7 @@ class _Map extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {createMapContext}, single, onEnable, onDisable} = this.props
+        const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
         const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, notifyLinked} = createMapContext(this.map.current)
 
         const sepalMap = {
@@ -380,7 +375,7 @@ class _Map extends React.Component {
 
         this.setState({mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}, () => {
             this.subscribe({bounds$, updateBounds, notifyLinked})
-            this.setLinked(single)
+            this.setLinked(getProcessTabsInfo().single)
         })
     }
 
@@ -469,14 +464,12 @@ class _Map extends React.Component {
 
 export const Map = compose(
     _Map,
-    connect(mapStateToProps),
-    withRecipePath(),
+    connect(),
     withMapsContext(),
     withSubscriptions()
 )
 
 Map.propTypes = {
-    recipeId: PropTypes.string.isRequired,
     children: PropTypes.object,
     className: PropTypes.string
 }
