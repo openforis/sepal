@@ -84,7 +84,9 @@ class _Map extends React.Component {
 
     setZoom(zoom) {
         const {googleMap} = this.state
-        return googleMap.setZoom(zoom)
+        if (googleMap.getZoom() !== zoom) {
+            googleMap.setZoom(zoom)
+        }
     }
 
     zoomIn() {
