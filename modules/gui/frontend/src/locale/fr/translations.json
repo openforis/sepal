@@ -389,10 +389,10 @@
           "tooltip": "Zoom sur la zone"
         },
         "zoomIn": {
-          "tooltip": "Zoom"
+          "tooltip": "Agrandir"
         },
         "zoomOut": {
-          "tooltip": "Dézoom"
+          "tooltip": "Réduire"
         }
       },
       "panel": {
@@ -579,10 +579,10 @@
           "tooltip": "Zoom sur la zone"
         },
         "zoomIn": {
-          "tooltip": "Zoom"
+          "tooltip": "Agrandir"
         },
         "zoomOut": {
-          "tooltip": "Dézoom"
+          "tooltip": "Réduire"
         }
       },
       "panel": {
@@ -1086,10 +1086,10 @@
           "tooltip": "Zoomer sur la zone"
         },
         "zoomIn": {
-          "tooltip": "Zoom"
+          "tooltip": "Agrandir"
         },
         "zoomOut": {
-          "tooltip": "Dézoom"
+          "tooltip": "Réduire"
         }
       },
       "panel": {
@@ -1677,10 +1677,10 @@
           "tooltip": "Zoomer sur la zone"
         },
         "zoomIn": {
-          "tooltip": "Zoom"
+          "tooltip": "Agrandir"
         },
         "zoomOut": {
-          "tooltip": "Dézoom"
+          "tooltip": "Réduire"
         }
       },
       "panel": {
