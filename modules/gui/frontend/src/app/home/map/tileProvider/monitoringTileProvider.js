@@ -9,7 +9,7 @@ export class MonitoringTileProvider extends DelegatingTileProvider {
         this.pending$.pipe(
             debounceTime(200)
         ).subscribe(
-            pending => progress$ && progress$.next({loading: pending})
+            pending => progress$ && progress$.next({loading: pending, complete: !pending})
         )
         this.requests = {}
     }

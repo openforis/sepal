@@ -26,7 +26,6 @@ export default class EarthEngineLayer {
         const tileProvider = new EarthEngineTileProvider({mapId, token, urlTemplate})
         this.layer = TileLayer({mapContext, tileProvider, layerIndex, progress$})
         this.layer.add()
-        // TODO: Do something about progress$
     }
 
     removeFromMap() {

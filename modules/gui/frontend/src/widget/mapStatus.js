@@ -8,7 +8,7 @@ export default class MapStatus extends React.Component {
 
     render() {
         const {loading = true, message, error} = this.props
-        return message || error
+        return loading && (message || error)
             ? (
                 <div className={styles.container}>
                     <div className={styles.status}>
