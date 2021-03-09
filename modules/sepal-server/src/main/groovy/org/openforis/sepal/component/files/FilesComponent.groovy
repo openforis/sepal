@@ -17,6 +17,7 @@ class FilesComponent extends NonTransactionalComponent implements EndpointRegist
         query(ReadFile, new ReadFileHandler(homeDir))
         query(GbUsed, new GbUsedHandler(homeDir))
         query(QueryFiles, new QueryFilesHandler(homeDir))
+        query(FileSize, new FileSizeHandler(homeDir))
         command(DeleteFile, new DeleteFileHandler(homeDir, publishTopic))
         command(SetArchivable, new SetArchivableHandler(homeDir))
     }

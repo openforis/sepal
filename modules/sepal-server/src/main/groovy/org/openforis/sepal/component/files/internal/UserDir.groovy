@@ -37,6 +37,11 @@ class UserDir {
         }
     }
 
+    long fileSize(String path) {
+        def file = toUserDirFile(path)
+        return file.size()
+    }
+
     String toUserDirPath(UserFile file) {
         '/' + userDir.toURI().relativize(new File(file.path).toURI()).path
     }

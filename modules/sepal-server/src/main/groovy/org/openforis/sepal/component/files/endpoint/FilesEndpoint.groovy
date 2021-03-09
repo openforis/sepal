@@ -60,10 +60,13 @@ class FilesEndpoint {
                         new ReadFile(username: currentUser.username, path: path)
                 )
                 def filename = new File(path).name
+                def size = component.submit(
+                        new FileSize(username: currentUser.username, path: path)
+                )
                 def mimeType = request.servletContext.getMimeType(filename) ?: 'application/octet-stream'
-                response.setHeader "Content-disposition", "attachment; filename=${filename}"
+                response.setHeader "Content-Disposition", "attachment; filename=${filename}"
+                response.setHeader "Content-Length", "${size}"
                 response.contentType = mimeType
-                response.outputStream.leftShift(fileStream)
                 response.outputStream << fileStream
                 response.outputStream.flush()
             }
