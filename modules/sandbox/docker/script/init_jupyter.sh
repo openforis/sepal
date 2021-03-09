@@ -30,3 +30,5 @@ git clone https://github.com/ipython-contrib/jupyter_contrib_nbextensions.git
 npm install -g --unsafe-perm ijavascript
 npm install -g js-beautify
 /usr/bin/ijsinstall --install=global
+
+/usr/bin/python3 /usr/local/bin/jupyter lab build
