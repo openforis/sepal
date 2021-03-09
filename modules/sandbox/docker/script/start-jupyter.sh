@@ -32,4 +32,5 @@ sudo -iu $sandbox_user PATH=$PATH PROJ_LIB=/usr/share/proj NODE_PATH=$NODE_PATH:
  --NotebookApp.token=''\
  --NotebookApp.base_url='/api/sandbox/jupyter/'\
  --NotebookApp.notebook_dir="/home/$sandbox_user"\
+ --FileContentsManager.delete_to_trashBool=False\
  --VoilaConfiguration.enable_nbextensions=True
