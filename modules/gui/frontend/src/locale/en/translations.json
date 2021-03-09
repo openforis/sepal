@@ -942,7 +942,7 @@
               },
               "snow": {
                 "label": "Snow",
-                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
+                "tooltip": "Mask snow. This tend to leave pixels with shadowy snow"
               }
             }
           },
@@ -1283,7 +1283,7 @@
               "label": "Snow masking",
               "on": {
                 "label": "On",
-                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
+                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
               }
             },
             "cloudMasking": {
@@ -1736,7 +1736,7 @@
               "label": "Snow masking",
               "on": {
                 "label": "On",
-                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
+                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
               }
             },
             "cloudMasking": {
@@ -1942,7 +1942,7 @@
               "label": "Snow masking",
               "on": {
                 "label": "On",
-                "tooltip": "Mask snow. This tend to leave some pixels where with shadowy snow"
+                "tooltip": "Mask snow. This tend to leave some pixels with shadowy snow"
               }
             },
             "cloudMasking": {
