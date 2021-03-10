@@ -20,7 +20,7 @@ class ChartPixelButton extends React.Component {
                 selected={isSelecting}
                 onClick={() => isSelecting ? this.cancelSelecting() : this.startSelecting()}
                 icon={'chart-area'}
-                tooltip={msg(`process.ccdc.mapToolbar.chartPixel.${isSelecting ? 'cancel' : 'start'}.tooltip`)}
+                tooltip={msg(`process.ccdc.chartPixel.${isSelecting ? 'cancel' : 'start'}.tooltip`)}
                 disabled={disabled}
             />
         )
