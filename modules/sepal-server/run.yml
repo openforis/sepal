@@ -48,4 +48,3 @@
       EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"
       GOOGLE_MAPS_API_KEY_SEPAL_ENV: "{{ google_maps_api_key }}"
       NORWAY_PLANET_API_KEY_SEPAL_ENV: "{{ norway_planet_api_key }}"
-      SYSLOG_HOST_SEPAL_ENV: "{{ syslog_host }}"

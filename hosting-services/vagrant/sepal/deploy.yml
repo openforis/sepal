@@ -11,8 +11,7 @@
     - set_fact:
         ldap_host: "{{ vagrant_ip }}"
         hosting_service: "vagrant"
-        syslog_address: "unixgram:///dev/log"
-        syslog_host: "172.17.0.1"
+        syslog_address: "udp://172.17.0.1"
         workspace: "/opt/sepal/"
 
     - name: Create docker-registry certificate dir

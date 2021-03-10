@@ -79,6 +79,6 @@ class Aws implements HostingServiceAdapter {
     }
 
     InstanceProvisioner getInstanceProvisioner() {
-        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, config.syslogHost)
+        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, config.syslogAddress)
     }
 }

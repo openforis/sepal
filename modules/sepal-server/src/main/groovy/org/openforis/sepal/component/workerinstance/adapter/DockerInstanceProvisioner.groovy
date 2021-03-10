@@ -22,12 +22,12 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     private static final double MIN_HOST_RAM_GiB = 0.3
     private final WorkerInstanceConfig config
     private final Map<String, InstanceType> instanceTypeById
-    private final String syslogHost
+    private final String syslogAddress
 
-    DockerInstanceProvisioner(WorkerInstanceConfig config, List<InstanceType> instanceTypes, String syslogHost) {
+    DockerInstanceProvisioner(WorkerInstanceConfig config, List<InstanceType> instanceTypes, String syslogAddress) {
         this.config = config
         this.instanceTypeById = instanceTypes.collectEntries { [(it.id): it] }
-        this.syslogHost = syslogHost
+        this.syslogAddress = syslogAddress
     }
 
     void provisionInstance(WorkerInstance instance) {
@@ -91,8 +91,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         LogConfig: [
                                 "Type": "syslog",
                                 "Config": [
-                                        "syslog-address": "tcp://${syslogHost}:514",
-                                        "tag": "{{.Name}}",
+                                        "syslog-address": syslogAddress
                                 ]
                         ],
                         Devices: (instanceType.devices ?: []).collect {

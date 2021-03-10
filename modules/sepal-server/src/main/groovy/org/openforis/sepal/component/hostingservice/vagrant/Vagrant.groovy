@@ -31,6 +31,6 @@ class Vagrant implements HostingServiceAdapter {
     }
 
     InstanceProvisioner getInstanceProvisioner() {
-        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, '172.17.0.1')
+        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes, 'udp://172.17.0.1')
     }
 }

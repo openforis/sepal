@@ -9,8 +9,7 @@
 
   pre_tasks:
     - set_fact:
-        syslog_address: "unixgram:///dev/log"
-        syslog_host: "{{ ec2_private_ip_address }}"
+        syslog_address: "udp://{{ ec2_private_ip_address }}"
 
     # bash prompt
     - name: Set bash prompt
