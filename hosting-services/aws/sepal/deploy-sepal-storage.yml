@@ -101,7 +101,7 @@
         state: directory
 
     - name: Copy /etc/docker/daemon.json
-      copy: src=docker/storage-daemon.json dest=/etc/docker/daemon.json
+      template: src=docker/storage-daemon.json dest=/etc/docker/daemon.json
 
     - name: Add ec2-user to docker group
       user:
