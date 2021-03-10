@@ -22,9 +22,6 @@
       net.ipv4.tcp_keepalive_time: 10
       net.ipv4.tcp_keepalive_intvl: 10
       net.ipv4.tcp_keepalive_probes: 6
-    log_driver: syslog
-    log_opt:
-      syslog-address: "{{ syslog_address }}"
     networks:
       - name: 'sepal'
     volumes:

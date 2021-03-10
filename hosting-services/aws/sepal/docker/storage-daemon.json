@@ -1,3 +1,8 @@
 {
-  "storage-driver": "overlay2"
+  "storage-driver": "overlay2",
+  "log-driver": "syslog",
+  "log-opts": {
+      "syslog-address": "{{ syslog_address }}",
+      "tag": "docker/{{.Name}}"
+  }
 }

@@ -9,9 +9,6 @@
     restart_policy: "{{ restart_policy }}"
     network_mode: "{{ network_mode }}"
     ulimits: nofile:65536:65536
-    log_driver: syslog
-    log_opt:
-      syslog-address: "{{ syslog_address }}"
     networks:
       - name: 'sepal'
     volumes:
