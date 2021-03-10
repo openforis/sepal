@@ -11,7 +11,7 @@
     log_driver: syslog
     log_opt:
       syslog-address: "{{ syslog_address }}"
-      tag: "terminal"
+      
     networks:
       - name: 'sepal'
     volumes:

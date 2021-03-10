@@ -14,7 +14,6 @@
     log_driver: syslog
     log_opt:
       syslog-address: "{{ syslog_address }}"
-      tag: "ldap-backup"
     networks:
       - name: 'sepal'
     volumes:

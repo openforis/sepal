@@ -22,7 +22,6 @@
     log_driver: syslog
     log_opt:
       syslog-address: "{{ syslog_address }}"
-      tag: "ldap"
     networks:
       - name: 'sepal'
     ports:

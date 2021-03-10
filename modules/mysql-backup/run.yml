@@ -13,7 +13,6 @@
     log_driver: syslog
     log_opt:
       syslog-address: "{{ syslog_address }}"
-      tag: "mysql-backup"
     networks:
       - name: 'sepal'
     volumes:

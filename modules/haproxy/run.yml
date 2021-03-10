@@ -12,7 +12,6 @@
     log_driver: syslog
     log_opt:
       syslog-address: "{{ syslog_address }}"
-      tag: "haproxy"
     networks:
       - name: 'sepal'
     volumes:

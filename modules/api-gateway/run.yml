@@ -10,7 +10,6 @@
     log_driver: syslog
     log_opt:
       syslog-address: "{{ syslog_address }}"
-      tag: "api-gateway"
     networks:
       - name: 'sepal'
     volumes:
