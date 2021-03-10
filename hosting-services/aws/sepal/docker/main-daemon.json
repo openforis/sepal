@@ -6,7 +6,7 @@
     ],
     "log-driver": "syslog",
     "log-opts": {
-        "tag": "container_name/{{.Name}}",
+        "tag": "docker/{{.Name}}",
         "labels": "dev",
         "syslog-facility": "daemon"
     }
