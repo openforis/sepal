@@ -14,6 +14,7 @@
     image: "{{ image }}"
     state: "{{ state }}"
     restart_policy: "{{ restart_policy }}"
+    log_driver: local
     network_mode: "{{ network_mode }}"
     networks:
       - name: 'sepal'
