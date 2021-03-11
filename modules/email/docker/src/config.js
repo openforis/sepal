@@ -11,7 +11,7 @@ try {
         .option('--concurrency <number>', 'Concurrent rescan jobs', parseInt)
         .requiredOption('--smtp-host <value>', 'SMTP host')
         .option('--smtp-port <value>', 'SMTP port')
-        .option('--smtp-secure <value>', 'SMTP secure')
+        .option('--smtp-secure <value>', 'SMTP secure', value => value == 'true', false)
         .requiredOption('--smtp-user <value>', 'SMTP user')
         .requiredOption('--smtp-password <value>', 'SMTP password')
         .option('--smtp-from <value>', 'SMTP from')
@@ -23,6 +23,8 @@ try {
     log.fatal(error)
     process.exit(1)
 }
+
+log.fatal(program.opts())
 
 const {
     amqpUri,
