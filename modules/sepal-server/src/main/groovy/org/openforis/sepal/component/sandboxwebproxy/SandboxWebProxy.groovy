@@ -152,11 +152,8 @@ class SandboxWebProxy {
                 if (location != null) {
                     URI locationURI = URI.create(location)
                     if (locationURI.getHost() == null || locationURI.getHost().equals(exchange.getHostName())) {
-                        String path = URLEncoder.encode(
-                                locationURI.getPath() == null ? "" : locationURI.getPath(),
-                                'utf-8'
-                        )
-                        def rewrittenLocation = locationURI.resolve("/${extractEndpoint(exchange)}${path}").getPath()
+                        String path = locationURI.getPath() == null ? "" : locationURI.getPath()
+                        def rewrittenLocation = rewrite(locationURI, exchange, path)
                         if (locationURI.query)
                             rewrittenLocation = rewrittenLocation + "?${locationURI.query}"
                         headers.remove(locationHeaderName)
@@ -166,6 +163,14 @@ class SandboxWebProxy {
                         LOG.debug("Not rewriting ${location} due to redirect to different host." +
                             "Current host: ${exchange.getHostName()}")
                     }
+                }
+            }
+
+            private String rewrite(URI locationURI, HttpServerExchange exchange, String path) {
+                try {
+                    return locationURI.resolve("/${extractEndpoint(exchange)}${path}").getPath()
+                } catch (Exception ignored) {
+                    return locationURI.resolve("/${extractEndpoint(exchange)}${URLEncoder.encode(path, 'utf-8')}").getPath()
                 }
             }
 
