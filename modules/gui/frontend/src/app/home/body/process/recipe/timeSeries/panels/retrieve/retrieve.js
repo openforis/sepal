@@ -22,7 +22,7 @@ class Retrieve extends React.Component {
                 bandOptions={this.bandOptions()}
                 defaultScale={30}
                 single
-                toEE
+                toSepal
                 onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
             />
         )
