@@ -14,6 +14,7 @@ try {
         .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
         .requiredOption('--sepal-server-log <value>', 'Log file to monitor')
         .requiredOption('--notify-email-address <values...>', 'Email(s) for notifications')
+        .option('--notify-at-startup <value>', 'Notify at startup')
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
@@ -22,7 +23,8 @@ try {
 const {
     amqpUri,
     sepalServerLog,
-    notifyEmailAddress
+    notifyEmailAddress,
+    notifyAtStartup = false
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -30,5 +32,6 @@ log.info('Configuration loaded')
 module.exports = {
     amqpUri,
     sepalServerLog,
-    notifyEmailAddress
+    notifyEmailAddress,
+    notifyAtStartup
 }
