@@ -24,8 +24,6 @@ try {
     process.exit(1)
 }
 
-log.fatal(program.opts())
-
 const {
     amqpUri,
     redisUri,
