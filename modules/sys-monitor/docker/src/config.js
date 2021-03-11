@@ -14,7 +14,7 @@ try {
         .requiredOption('--amqp-uri <value>', 'RabbitMQ URI')
         .requiredOption('--sepal-server-log <value>', 'Log file to monitor')
         .requiredOption('--notify-email-address <values...>', 'Email(s) for notifications')
-        .option('--notify-at-startup <value>', 'Notify at startup')
+        .option('--notify-at-startup <value>', 'Notify at startup', value => value == 'true', false)
         .parse(process.argv)
 } catch (error) {
     fatalError(error)
