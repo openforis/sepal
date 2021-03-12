@@ -1,11 +1,4 @@
 {
     "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"],
-    "storage-driver": "overlay2",
-    "log-driver": "syslog",
-    "log-opts": {
-        "syslog-address": "{{ syslog_address }}",
-        "tag": "worker-docker/{{ '{{.Name}}' }}",
-        "labels": "dev",
-        "syslog-facility": "daemon"
-    }
+    "storage-driver": "overlay2"
 }

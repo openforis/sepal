@@ -91,7 +91,10 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                         LogConfig: [
                                 "Type": "syslog",
                                 "Config": [
-                                        "syslog-address": syslogAddress
+                                        "syslog-address": syslogAddress,
+                                        "tag": "worker-docker/{{.Name}}",
+                                        "labels": "dev",
+                                        "syslog-facility": "daemon"
                                 ]
                         ],
                         Devices: (instanceType.devices ?: []).collect {
