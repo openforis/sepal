@@ -22,7 +22,7 @@ const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi')
 })
 
-class _Mosaic extends React.Component {
+class _OpticalMosaic extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
@@ -68,8 +68,8 @@ class _Mosaic extends React.Component {
     }
 }
 
-const Mosaic = compose(
-    _Mosaic,
+const OpticalMosaic = compose(
+    _OpticalMosaic,
     recipe({defaultModel, mapRecipeToProps})
 )
 
@@ -81,6 +81,6 @@ export default () => ({
         tabPlaceholder: msg('process.mosaic.tabPlaceholder'),
     },
     components: {
-        recipe: Mosaic
+        recipe: OpticalMosaic
     }
 })
