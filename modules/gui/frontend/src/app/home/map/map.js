@@ -172,7 +172,6 @@ class _Map extends React.Component {
         return this.layerById[id]
     }
 
-    // used by MANY
     setLayer({id, layer, destroy$ = NEVER, onInitialized, onError}) {
         const existingLayer = this.getLayer(id)
         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
@@ -345,8 +344,10 @@ class _Map extends React.Component {
     }
 
     componentDidMount() {
-        const {mapsContext: {createMapContext}, onEnable, onDisable} = this.props
-        const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, notifyLinked} = createMapContext(this.map.current)
+        const {mapsContext: {createGoogleMap, createMapContext}, onEnable, onDisable} = this.props
+
+        const googleMap = createGoogleMap(this.map.current)
+        const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
 
         const sepalMap = {
             fitBounds: this.fitBounds.bind(this),                       // collectPanel, aoi

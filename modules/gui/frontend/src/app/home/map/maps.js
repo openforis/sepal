@@ -34,7 +34,7 @@ class _Maps extends React.Component {
         this.bounds$ = new Subject()
         stream('INIT_MAPS',
             this.initMaps$(),
-            mapsContext => this.setState({mapsContext})
+            mapsContext => this.setState(mapsContext)
         )
     }
 
@@ -47,10 +47,9 @@ class _Maps extends React.Component {
                 )
             ),
             map(([google, norwayPlanet]) => ({
-                ...google,
-                ...norwayPlanet,
-                createGoogleMap: this.createGoogleMap.bind(this),
-                createMapContext: this.createMapContext.bind(this)
+                google,
+                norwayPlanet,
+                initialized: true
             }))
         )
     }
@@ -72,7 +71,7 @@ class _Maps extends React.Component {
     }
 
     createGoogleMap(mapElement) {
-        const {mapsContext: {google}} = this.state
+        const {google: {google}} = this.state
         const mapOptions = {
             zoom: 3,
             minZoom: 3,
@@ -107,10 +106,8 @@ class _Maps extends React.Component {
         return googleMap
     }
     
-    createMapContext(mapElement) {
-        const {mapsContext: {google, googleMapsApiKey, norwayPlanetApiKey}} = this.state
-        const mapId = uuid()
-        const googleMap = this.createGoogleMap(mapElement)
+    createMapContext(mapId = uuid()) {
+        const {google: {google, googleMapsApiKey}, norwayPlanet: {norwayPlanetApiKey}} = this.state
         const requestedBounds$ = new Subject()
 
         const bounds$ = merge(
@@ -148,15 +145,17 @@ class _Maps extends React.Component {
             }
         }
         
-        return {mapId, google, googleMapsApiKey, norwayPlanetApiKey, googleMap, bounds$, updateBounds, notifyLinked}
+        return {mapId, google, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked}
     }
 
     render() {
         const {children} = this.props
-        const {mapsContext} = this.state
-        const initialized = !!mapsContext
+        const {initialized} = this.state
         return (
-            <MapsContext.Provider value={mapsContext}>
+            <MapsContext.Provider value={{
+                createGoogleMap: this.createGoogleMap.bind(this),
+                createMapContext: this.createMapContext.bind(this)
+            }}>
                 {children(initialized)}
             </MapsContext.Provider>
         )
