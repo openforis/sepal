@@ -99,13 +99,16 @@ PreProcessingOptions.propTypes = {}
 
 const valuesToModel = values => ({
     corrections: values.corrections,
-    mask: values.mask
+    cloudMasking: values.cloudMasking,
+    snowMasking: values.snowMasking
 })
 
 const modelToValues = model => {
     return ({
         corrections: model.corrections,
-        mask: model.mask
+        mask: model.mask,
+        cloudMasking: model.cloudMasking,
+        snowMasking: model.snowMasking
     })
 }
 
