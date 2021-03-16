@@ -57,7 +57,6 @@ class Retrieve extends React.Component {
             .filter(({value}) => user.googleTokens || value !== 'GEE')
             .filter(({value}) => toSepal || value !== 'SEPAL')
             .filter(({value}) => toEE || value !== 'GEE')
-
         return (
             <Layout>
                 <Form.Buttons
@@ -91,9 +90,9 @@ class Retrieve extends React.Component {
 
     componentDidUpdate() {
         const {defaultScale, toEE, toSepal, user, inputs: {destination, scale}} = this.props
-        if (!user.googleTokens && toSepal && !destination.value && destination.value !== 'SEPAL') {
+        if (toSepal && !destination.value) {
             destination.set('SEPAL')
-        } else if (user.googleTokens && toEE && !destination.value && destination.value !== 'GEE') {
+        } else if (user.googleTokens && toEE && !destination.value) {
             destination.set('GEE')
         }
         if (!scale.value) {
