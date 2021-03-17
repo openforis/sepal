@@ -9,7 +9,7 @@ echo "********************"
 
 #echo "options(Ncpus = `nproc`)" > /root/.Rprofile
 
-apt-get install -y\
+apt-get update -y && apt-get install -y\
  r-base\
  r-base-dev
 
