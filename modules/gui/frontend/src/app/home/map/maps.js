@@ -1,4 +1,5 @@
 import {Loader} from 'google-maps'
+import {SepalMap} from './sepalMap'
 import {Subject, from, merge, of, zip} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -105,7 +106,13 @@ class _Maps extends React.Component {
     
         return googleMap
     }
-    
+
+    createSepalMap(mapElement) {
+        const {google: {google}} = this.state
+        const googleMap = this.createGoogleMap(mapElement)
+        return new SepalMap(google, googleMap)
+    }
+
     createMapContext(mapId = uuid()) {
         const {google: {google, googleMapsApiKey}, norwayPlanet: {norwayPlanetApiKey}} = this.state
         const requestedBounds$ = new Subject()
@@ -154,6 +161,7 @@ class _Maps extends React.Component {
         return (
             <MapsContext.Provider value={{
                 createGoogleMap: this.createGoogleMap.bind(this),
+                createSepalMap: this.createSepalMap.bind(this),
                 createMapContext: this.createMapContext.bind(this)
             }}>
                 {children(initialized)}

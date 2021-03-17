@@ -10,7 +10,7 @@ import styles from './mapToolbar.module.css'
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, mapContext, zoomArea, labelLayerIndex, linked, children} = this.props
+        const {statePath, mapContext, zoomArea, labelLayerIndex, toggleLinked, linked, children} = this.props
         const {sepalMap} = mapContext
         const hasBounds = sepalMap.isLayerInitialized('aoi')
         return (
@@ -38,7 +38,7 @@ class MapToolbar extends React.Component {
                         tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
                     <Toolbar.ToolbarButton
                         disabled={!hasBounds}
-                        onClick={() => sepalMap.toggleLinked()}
+                        onClick={() => toggleLinked()}
                         selected={linked}
                         icon='link'
                         tooltip={msg(linked ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
