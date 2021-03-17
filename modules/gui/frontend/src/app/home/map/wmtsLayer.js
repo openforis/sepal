@@ -1,9 +1,8 @@
 import {of} from 'rxjs'
 
 export default class WMTSLayer {
-    constructor({google, googleMap, layerIndex, urlTemplate}) {
-        this.google = google
-        this.googleMap = googleMap
+    constructor({sepalMap, layerIndex, urlTemplate}) {
+        this.sepalMap = sepalMap
         this.layerIndex = layerIndex
         this.urlTemplate = urlTemplate
     }
@@ -13,27 +12,28 @@ export default class WMTSLayer {
     }
 
     addToMap() {
+        const {google} = this.sepalMap.getGoogle()
         const getTileUrl = ({x, y}, z) => this.urlTemplate
             .replace('{x}', x)
             .replace('{y}', y)
             .replace('{z}', z)
-        const layer = new this.google.maps.ImageMapType({
+        const layer = new google.maps.ImageMapType({
             getTileUrl,
             name: 'googleSatellite',
             minZoom: 3,
             maxZoom: 17
         })
-        this.googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
+        this.sepalMap.addToMap(this.layerIndex, layer)
     }
 
     removeFromMap() {
-        // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
-        this.googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
-        this.googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
+        this.sepalMap.removeFromMap(this.layerIndex)
     }
 
     hide(hidden) {
-        hidden ? this.removeFromMap() : this.addToMap()
+        hidden
+            ? this.removeFromMap()
+            : this.addToMap()
     }
 
     initialize$() {

@@ -27,7 +27,7 @@ class ChartPixelButton extends React.Component {
     }
 
     startSelecting() {
-        const {mapContext: {sepalMap, google, googleMap}, showGoogleSatellite, onPixelSelected} = this.props
+        const {mapContext: {sepalMap}, showGoogleSatellite, onPixelSelected} = this.props
         this.setState({isSelecting: true})
         sepalMap.onOneClick(latLng => {
             if (showGoogleSatellite) {
@@ -37,7 +37,7 @@ class ChartPixelButton extends React.Component {
             onPixelSelected(latLng)
         })
         if (showGoogleSatellite) {
-            sepalMap.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer({google, googleMap, layerIndex: 1})})
+            sepalMap.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer({sepalMap, layerIndex: 1})})
         }
     }
 

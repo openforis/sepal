@@ -119,9 +119,9 @@ class Aoi extends React.Component {
     }
 
     updateLayer(model) {
-        const {mapContext} = this.props
+        const {mapContext: {sepalMap}} = this.props
         setAoiLayer({
-            mapContext,
+            sepalMap,
             aoi: model,
             fill: false,
             layerIndex: 1

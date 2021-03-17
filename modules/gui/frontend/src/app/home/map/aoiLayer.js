@@ -7,12 +7,12 @@ export const removeAoiLayer = sepalMap => {
     sepalMap.removeLayer('aoi')
 }
 
-export const setAoiLayer = ({mapContext, aoi, fill, destroy$, onInitialized, layerIndex = 1}) => {
+export const setAoiLayer = ({sepalMap, aoi, fill, destroy$, onInitialized, layerIndex = 1}) => {
     const layerId = 'aoi'
     switch (aoi && aoi.type) {
     case 'COUNTRY':
         return setEETableLayer({
-            mapContext,
+            sepalMap,
             layerSpec: {
                 id: layerId,
                 tableId: countryEETable,
@@ -26,7 +26,7 @@ export const setAoiLayer = ({mapContext, aoi, fill, destroy$, onInitialized, lay
         })
     case 'EE_TABLE':
         return setEETableLayer({
-            mapContext,
+            sepalMap,
             layerSpec: {
                 id: layerId,
                 tableId: aoi.id,
@@ -40,7 +40,7 @@ export const setAoiLayer = ({mapContext, aoi, fill, destroy$, onInitialized, lay
         })
     case 'POLYGON':
         return setPolygonLayer({
-            mapContext,
+            sepalMap,
             layerSpec: {
                 id: layerId,
                 path: aoi.path
@@ -51,6 +51,6 @@ export const setAoiLayer = ({mapContext, aoi, fill, destroy$, onInitialized, lay
         })
 
     default:
-        removeAoiLayer(mapContext.sepalMap)
+        removeAoiLayer(sepalMap)
     }
 }

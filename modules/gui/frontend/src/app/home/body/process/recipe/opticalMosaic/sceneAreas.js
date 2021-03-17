@@ -20,7 +20,7 @@ import api from 'api'
 import styles from './sceneAreas.module.css'
 
 const mapRecipeToProps = (recipe, ownProps) => {
-    const {mapContext: {googleMap}} = ownProps
+    const {mapContext: {sepalMap}} = ownProps
     const sceneSelectionType = selectFrom(recipe, 'model.sceneSelectionOptions.type')
     const manualSelection = sceneSelectionType === SceneSelectionType.SELECT
     return {
@@ -32,8 +32,7 @@ const mapRecipeToProps = (recipe, ownProps) => {
         source: getSource(recipe),
         selectedScenes: selectFrom(recipe, ['model.scenes']) || [],
         loading: selectFrom(recipe, 'ui.autoSelectingScenes'),
-        zoom: select('map.zoom') || googleMap.getZoom(),
-        // zoom: googleMap.getZoom(),
+        zoom: select('map.zoom') || sepalMap.getZoom(),
         manualSelection
     }
 }

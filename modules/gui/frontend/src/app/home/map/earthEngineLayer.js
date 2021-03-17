@@ -5,8 +5,8 @@ import {of} from 'rxjs'
 import _ from 'lodash'
 
 export default class EarthEngineLayer {
-    constructor({mapContext, layerIndex, toggleable, label, description, bounds, mapId$, props, progress$}) {
-        this.mapContext = mapContext
+    constructor({sepalMap, layerIndex, toggleable, label, description, bounds, mapId$, props, progress$}) {
+        this.sepalMap = sepalMap
         this.layerIndex = layerIndex
         this.toggleable = toggleable
         this.label = label
@@ -22,9 +22,9 @@ export default class EarthEngineLayer {
     }
 
     addToMap() {
-        const {mapContext, layerIndex, mapId, token, urlTemplate, progress$} = this
+        const {sepalMap, layerIndex, mapId, token, urlTemplate, progress$} = this
         const tileProvider = new EarthEngineTileProvider({mapId, token, urlTemplate})
-        this.layer = TileLayer({mapContext, tileProvider, layerIndex, progress$})
+        this.layer = TileLayer({sepalMap, tileProvider, layerIndex, progress$})
         this.layer.add()
     }
 

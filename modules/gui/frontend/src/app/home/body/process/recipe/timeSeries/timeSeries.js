@@ -37,12 +37,12 @@ class _TimeSeries extends React.Component {
     }
 
     componentDidMount() {
-        const {mapContext, aoi, componentWillUnmount$} = this.props
+        const {mapContext: {sepalMap}, aoi, componentWillUnmount$} = this.props
         setAoiLayer({
-            mapContext,
+            sepalMap,
             aoi,
             destroy$: componentWillUnmount$,
-            onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
+            onInitialized: () => sepalMap.fitLayer('aoi'),
             layerIndex: 1
         })
         this.initClassification()

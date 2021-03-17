@@ -1,5 +1,5 @@
 import {recipeActionBuilder, recipePath} from '../../recipe'
-import Labels from '../../../../map/labels'
+import LabelsLayer from '../../../../map/labelsLayer'
 import _ from 'lodash'
 
 export const SceneSelectionType = Object.freeze({
@@ -21,8 +21,8 @@ export const RecipeActions = id => {
             .build()
 
     return {
-        setLabelsShown(mapContext, shown) {
-            return Labels.showLabelsAction({mapContext, shown, statePath: recipePath(id, 'ui'), layerIndex: 3})
+        setLabelsShown(sepalMap, shown) {
+            return LabelsLayer.showLabelsAction({sepalMap, shown, statePath: recipePath(id, 'ui'), layerIndex: 3})
         },
         setBands(bands) {
             return setAll('SET_BANDS', {

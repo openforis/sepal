@@ -41,12 +41,12 @@ class _RadarMosaic extends React.Component {
     }
 
     componentDidMount() {
-        const {mapContext, aoi} = this.props
+        const {mapContext: {sepalMap}, aoi} = this.props
         setAoiLayer({
-            mapContext,
+            sepalMap,
             aoi,
             // destroy$: componentWillUnmount$, [TODO] check
-            onInitialized: () => mapContext.sepalMap.fitLayer('aoi')
+            onInitialized: () => sepalMap.fitLayer('aoi')
         })
     }
 }

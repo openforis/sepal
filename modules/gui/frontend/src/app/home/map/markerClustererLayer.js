@@ -13,12 +13,12 @@ const SELECTED_SCALE = 0.6
 
 export default class MarkerClustererLayer {
 
-    constructor({mapContext: {google, googleMap, sepalMap}, id, label, description}) {
+    constructor({mapContext: {sepalMap}, id, label, description}) {
+        const {google, googleMap} = sepalMap.getGoogle()
         this.type = 'MarkerClustererLayer'
         this.toggleable = true
         this.google = google
         this.googleMap = googleMap
-        this.sepalMap = sepalMap
         this.id = id
         this.label = label
         this.description = description
@@ -29,7 +29,7 @@ export default class MarkerClustererLayer {
         this.icon = {
             path: 'M25.015 2.4c-7.8 0-14.121 6.204-14.121 13.854 0 7.652 14.121 32.746 14.121 32.746s14.122-25.094 14.122-32.746c0-7.65-6.325-13.854-14.122-13.854z',
             fillOpacity: 1,
-            anchor: new google.maps.Point(25, 50),
+            anchor: new this.google.maps.Point(25, 50),
             strokeWeight: DEFAULT_STROKE_WIDTH,
             strokeColor: DEFAULT_STROKE_COLOR,
             scale: DEFAULT_SCALE
@@ -133,7 +133,9 @@ export default class MarkerClustererLayer {
     }
 
     hide(hidden) {
-        hidden ? this.removeFromMap() : this.addToMap()
+        hidden
+            ? this.removeFromMap()
+            : this.addToMap()
     }
 
     initialize$() {
@@ -142,9 +144,8 @@ export default class MarkerClustererLayer {
 
     toMapMarker(marker) {
         const {x, y, color = DEFAULT_COLOR, onClick} = marker
-        const google = this.google
-        const mapMarker = new google.maps.Marker({
-            position: new google.maps.LatLng(y, x),
+        const mapMarker = new this.google.maps.Marker({
+            position: new this.google.maps.LatLng(y, x),
             draggable: false,
             icon: {...this.icon, fillColor: color},
             clickable: this.clickable

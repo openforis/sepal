@@ -109,10 +109,10 @@ class MosaicPreview extends React.Component {
     updateLayer(previewRequest) {
         if (this.isHidden())
             return
-        const {mapContext, componentWillUnmount$} = this.props
+        const {mapContext: {sepalMap}, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            mapContext,
+            sepalMap,
             layerIndex: 2,
             toggleable: true,
             label: msg('process.radarMosaic.preview.label'),
@@ -122,7 +122,7 @@ class MosaicPreview extends React.Component {
             props: previewRequest,
             progress$: this.progress$
         })
-        const changed = mapContext.sepalMap.setLayer({
+        const changed = sepalMap.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,

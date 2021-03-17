@@ -33,11 +33,10 @@ export class SepalMap {
     drawingPolygon = null
 
     getGoogle() {
-        return this.google
-    }
-
-    getGoogleMap() {
-        return this.googleMap
+        return {
+            google: this.google,
+            googleMap: this.googleMap
+        }
     }
 
     addListener(event, listener) {
@@ -164,6 +163,18 @@ export class SepalMap {
 
     // Layers
 
+    addToMap(layerIndex, layer) {
+        const {googleMap} = this
+        googleMap.overlayMapTypes.setAt(layerIndex, layer)
+    }
+
+    removeFromMap(layerIndex) {
+        const {googleMap} = this
+        // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
+        googleMap.overlayMapTypes.insertAt(layerIndex, null)
+        googleMap.overlayMapTypes.removeAt(layerIndex + 1)
+    }
+
     getLayer(id) {
         return this.layerById[id]
     }
@@ -196,10 +207,6 @@ export class SepalMap {
         return true
     }
 
-    removeAllLayers() {
-        _.forEach(this.layerById, layer => this.removeLayer(layer))
-    }
-
     removeLayer(id) {
         const layer = this.getLayer(id)
         if (layer) {
@@ -207,6 +214,10 @@ export class SepalMap {
             layer.removeFromMap()
             delete this.layerById[id]
         }
+    }
+
+    removeAllLayers() {
+        _.forEach(this.layerById, layer => this.removeLayer(layer))
     }
 
     hideLayer(id, hidden) {

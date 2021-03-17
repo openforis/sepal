@@ -36,7 +36,8 @@ class _Map extends React.Component {
     }
 
     addListener(event, listener) {
-        const {mapContext: {google, googleMap}} = this.state
+        const {mapContext: {sepalMap}} = this.state
+        const {google, googleMap} = sepalMap.getGoogle()
         const listenerId = googleMap.addListener(event, listener)
         return {
             remove: () => google.maps.event.removeListener(listenerId)
@@ -63,11 +64,10 @@ class _Map extends React.Component {
 
     componentDidMount() {
         const {mapsContext: {createSepalMap, createMapContext}, onEnable, onDisable} = this.props
-        const {mapId, google, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
+        const {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
         const sepalMap = createSepalMap(this.map.current)
-        const googleMap = sepalMap.getGoogleMap()
         const zoomArea$ = sepalMap.getZoomArea$()
-        const mapContext = {google, googleMapsApiKey, norwayPlanetApiKey, googleMap, sepalMap}
+        const mapContext = {googleMapsApiKey, norwayPlanetApiKey, sepalMap}
 
         this.setState({mapId, mapContext, linked: getProcessTabsInfo().single}, () => {
             this.subscribe({zoomArea$, bounds$, updateBounds, notifyLinked})
@@ -96,8 +96,9 @@ class _Map extends React.Component {
     }
 
     subscribe({zoomArea$, bounds$, updateBounds, notifyLinked}) {
-        const {mapContext: {googleMap, sepalMap}} = this.state
+        const {mapContext: {sepalMap}} = this.state
         const {addSubscription} = this.props
+        const {googleMap} = sepalMap.getGoogle()
 
         this.centerChangedListener = this.addListener('center_changed', () => {
             this.updateScale(sepalMap.getMetersPerPixel())

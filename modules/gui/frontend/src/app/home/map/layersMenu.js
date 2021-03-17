@@ -5,8 +5,9 @@ import {changeBaseLayer} from './baseLayer'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {select} from 'store'
+import {withMapContext} from './mapContext'
 import ButtonSelect from 'widget/buttonSelect'
-import Labels from './labels'
+import LabelsLayer from './labelsLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
@@ -32,7 +33,7 @@ class _LayersMenu extends React.Component {
         const {
             inputs: {dateRange, proc},
             activatable: {deactivate},
-            labelsShown, baseLayer, labelLayerIndex, statePath, mapContext
+            labelsShown, baseLayer, labelLayerIndex, statePath, mapContext: {sepalMap}
         } = this.props
         const mapOverlayOptions = this.getMapOverlays().map(layer =>
             <Menu.Option
@@ -116,8 +117,8 @@ class _LayersMenu extends React.Component {
                     description={msg('process.mosaic.mapToolbar.layersMenu.labels.description')}
                     selected={labelsShown}
                     onChange={shown =>
-                        Labels.showLabelsAction({
-                            mapContext,
+                        LabelsLayer.showLabelsAction({
+                            sepalMap,
                             shown,
                             layerIndex: labelLayerIndex,
                             statePath
@@ -167,11 +168,10 @@ class _LayersMenu extends React.Component {
     }
 
     changeBaseLayer(type, dateRange, proc) {
-        const {statePath, mapContext} = this.props
-        const planetApiKey = mapContext.norwayPlanetApiKey
+        const {statePath, mapContext: {sepalMap, norwayPlanetApiKey: planetApiKey}} = this.props
         changeBaseLayer({
             type,
-            mapContext,
+            sepalMap,
             statePath,
             options: {dateRange: dateRange.value, proc: proc.value, planetApiKey}
         })
@@ -261,7 +261,8 @@ const policy = () => ({
 export const LayersMenu = compose(
     _LayersMenu,
     form({fields, mapStateToProps}),
-    activatable({id: 'layersMenu', policy, alwaysAllow: true})
+    activatable({id: 'layersMenu', policy, alwaysAllow: true}),
+    withMapContext()
 )
 
 const sequence = (start, end, step = 1) =>
@@ -270,6 +271,5 @@ const sequence = (start, end, step = 1) =>
 
 LayersMenu.propTypes = {
     labelLayerIndex: PropTypes.any.isRequired,
-    mapContext: PropTypes.object.isRequired,
     statePath: PropTypes.any.isRequired
 }

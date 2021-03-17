@@ -114,7 +114,7 @@ class _Maps extends React.Component {
     }
 
     createMapContext(mapId = uuid()) {
-        const {google: {google, googleMapsApiKey}, norwayPlanet: {norwayPlanetApiKey}} = this.state
+        const {google: {googleMapsApiKey}, norwayPlanet: {norwayPlanetApiKey}} = this.state
         const requestedBounds$ = new Subject()
 
         const bounds$ = merge(
@@ -152,7 +152,7 @@ class _Maps extends React.Component {
             }
         }
         
-        return {mapId, google, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked}
+        return {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked}
     }
 
     render() {

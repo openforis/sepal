@@ -10,12 +10,11 @@ import styles from './mapToolbar.module.css'
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, mapContext, zoomArea, labelLayerIndex, toggleLinked, linked, children} = this.props
-        const {sepalMap} = mapContext
+        const {statePath, mapContext: {sepalMap}, zoomArea, labelLayerIndex, toggleLinked, linked, children} = this.props
         const hasBounds = sepalMap.isLayerInitialized('aoi')
         return (
             <React.Fragment>
-                <LayersMenu statePath={statePath} labelLayerIndex={labelLayerIndex} mapContext={mapContext}/>
+                <LayersMenu statePath={statePath} labelLayerIndex={labelLayerIndex}/>
                 <Toolbar
                     className={styles.mapToolbar}
                     horizontal
@@ -61,7 +60,6 @@ class MapToolbar extends React.Component {
 
 MapToolbar.propTypes = {
     labelLayerIndex: PropTypes.any.isRequired,
-    mapContext: PropTypes.object.isRequired,
     statePath: PropTypes.any.isRequired,
     children: PropTypes.any
 }

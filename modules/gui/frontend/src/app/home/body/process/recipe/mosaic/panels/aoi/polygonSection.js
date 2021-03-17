@@ -24,18 +24,18 @@ class _PolygonSection extends React.Component {
     }
 
     componentDidMount() {
-        const {mapContext, inputs: {polygon}} = this.props
-        this.recipeActions.setLabelsShown(mapContext, true).dispatch()
-        mapContext.sepalMap.drawPolygon('aoi', drawnPolygon => {
+        const {mapContext: {sepalMap}, inputs: {polygon}} = this.props
+        this.recipeActions.setLabelsShown(sepalMap, true).dispatch()
+        sepalMap.drawPolygon('aoi', drawnPolygon => {
             polygon.set(drawnPolygon)
         })
     }
 
     componentWillUnmount() {
-        const {mapContext} = this.props
+        const {mapContext: {sepalMap}} = this.props
         this.disableDrawingMode()
         if (isRecipeOpen(this.props.recipeId)) {
-            this.recipeActions.setLabelsShown(mapContext, this.wereLabelsShown).dispatch()
+            this.recipeActions.setLabelsShown(sepalMap, this.wereLabelsShown).dispatch()
         }
     }
 
@@ -57,16 +57,16 @@ class _PolygonSection extends React.Component {
             return
         }
 
-        const {mapContext, inputs: {polygon}, layerIndex, componentWillUnmount$} = this.props
+        const {mapContext: {sepalMap}, inputs: {polygon}, layerIndex, componentWillUnmount$} = this.props
         setAoiLayer({
-            mapContext,
+            sepalMap,
             aoi: {
                 type: 'POLYGON',
                 path: polygon.value
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: () => mapContext.sepalMap.fitLayer('aoi'),
+            onInitialized: () => sepalMap.fitLayer('aoi'),
             layerIndex
         })
     }

@@ -122,15 +122,15 @@ class ClassificationPreview extends React.Component {
     // common code above
 
     updateLayer(previewRequest) {
-        const {recipe, mapContext, componentWillUnmount$} = this.props
+        const {recipe, mapContext: {sepalMap}, componentWillUnmount$} = this.props
         if (!previewRequest || !hasTrainingData(recipe)) {
-            mapContext.sepalMap.removeLayer('preview')
+            sepalMap.removeLayer('preview')
             return
         }
 
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            mapContext,
+            sepalMap,
             layerIndex: 2,
             toggleable: true,
             label: msg('process.classification.preview.label'),
@@ -139,7 +139,7 @@ class ClassificationPreview extends React.Component {
             props: previewRequest,
             progress$: this.progress$
         })
-        const changed = mapContext.sepalMap.setLayer({
+        const changed = sepalMap.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,

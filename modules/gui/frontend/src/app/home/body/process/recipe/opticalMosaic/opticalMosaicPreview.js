@@ -115,10 +115,10 @@ class OpticalMosaicPreview extends React.Component {
 
     updateLayer(previewRequest) {
         // console.log('updateLayer', previewRequest)
-        const {mapContext, componentWillUnmount$} = this.props
+        const {mapContext: {sepalMap}, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            mapContext,
+            sepalMap,
             layerIndex: 2,
             toggleable: true,
             label: msg('process.mosaic.preview.label'),
@@ -128,7 +128,7 @@ class OpticalMosaicPreview extends React.Component {
             props: previewRequest,
             progress$: this.progress$
         })
-        const changed = mapContext.sepalMap.setLayer({
+        const changed = sepalMap.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,

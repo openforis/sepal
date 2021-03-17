@@ -7,21 +7,20 @@ import guid from 'guid'
 export const TileLayer = ({
     layerIndex,
     tileProvider,
-    mapContext,
+    sepalMap,
     minZoom = 0,
     maxZoom = 20,
     progress$
 }) => {
-    const mapLayer = new GoogleMapsLayer(tileProvider, {mapContext, minZoom, maxZoom}, progress$)
+    const {google} = sepalMap.getGoogle()
+    const mapLayer = new GoogleMapsLayer(tileProvider, {google, minZoom, maxZoom}, progress$)
     return {
         add() {
-            mapContext.googleMap.overlayMapTypes.setAt(layerIndex, mapLayer)
+            sepalMap.addToMap(layerIndex, mapLayer)
         },
 
         remove() {
-            // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
-            mapContext.googleMap.overlayMapTypes.insertAt(layerIndex, null)
-            mapContext.googleMap.overlayMapTypes.removeAt(layerIndex + 1)
+            sepalMap.removeFromMap(layerIndex)
         },
 
         hide(hidden) {
@@ -32,7 +31,7 @@ export const TileLayer = ({
 
 class GoogleMapsLayer {
     constructor(tileProvider, {
-        mapContext,
+        google,
         name,
         minZoom = 0,
         maxZoom = 20,
@@ -50,7 +49,7 @@ class GoogleMapsLayer {
         this.name = name
         this.minZoom = minZoom
         this.maxZoom = maxZoom
-        this.tileSize = new mapContext.google.maps.Size(
+        this.tileSize = new google.maps.Size(
             tileProvider.tileSize || 256,
             tileProvider.tileSize || 256
         )

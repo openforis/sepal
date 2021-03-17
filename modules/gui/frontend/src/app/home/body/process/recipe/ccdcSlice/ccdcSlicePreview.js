@@ -123,10 +123,10 @@ class CCDCSlicePreview extends React.Component {
         if (this.isHidden()) {
             return
         }
-        const {mapContext, componentWillUnmount$} = this.props
+        const {mapContext: {sepalMap}, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            mapContext,
+            sepalMap,
             layerIndex: 2,
             toggleable: true,
             label: msg('process.ccdcSlice.preview.label'),
@@ -136,7 +136,6 @@ class CCDCSlicePreview extends React.Component {
             props: previewRequest,
             progress$: this.progress$
         })
-        const sepalMap = mapContext.sepalMap
         const changed = sepalMap.setLayer({
             id: 'preview',
             layer,

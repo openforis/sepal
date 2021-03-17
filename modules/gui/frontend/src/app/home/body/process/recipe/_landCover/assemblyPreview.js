@@ -105,16 +105,16 @@ class AssemblyPreview extends React.Component {
     }
 
     updateLayer(previewRequest) {
-        const {mapContext, componentWillUnmount$} = this.props
+        const {mapContext: {sepalMap}, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            mapContext,
+            sepalMap,
             layerIndex: 1,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
             progress$: this.progress$
         })
-        const changed = mapContext.sepalMap.setLayer({
+        const changed = sepalMap.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
