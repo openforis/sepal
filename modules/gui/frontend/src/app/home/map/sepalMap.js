@@ -29,9 +29,8 @@ export class SepalMap {
         editable: false,
         zIndex: 1
     }
-
     drawingManager = null
-    drwaingPolygon = null
+    drawingPolygon = null
 
     getGoogle() {
         return this.google
@@ -201,14 +200,6 @@ export class SepalMap {
         _.forEach(this.layerById, layer => this.removeLayer(layer))
     }
 
-    hideLayer(id, hidden) {
-        const layer = this.getLayer(id)
-        this.hiddenLayerById[id] = hidden
-        if (layer) {
-            layer.hide(hidden)
-        }
-    }
-
     removeLayer(id) {
         const layer = this.getLayer(id)
         if (layer) {
@@ -218,11 +209,23 @@ export class SepalMap {
         }
     }
 
-    setVisibility(visible) {
-        log.debug(`Visibility ${visible ? 'on' : 'off'}`)
-        _.forEach(this.layerById, (layer, id) =>
-            layer.hide(visible ? this.hiddenLayerById[id] : true)
-        )
+    hideLayer(id, hidden) {
+        const layer = this.getLayer(id)
+        this.hiddenLayerById[id] = hidden
+        if (layer) {
+            layer.hide(hidden)
+        }
+    }
+
+    isHiddenLayer(id) {
+        return this.hiddenLayerById[id]
+    }
+
+    fitLayer(id) {
+        const layer = this.getLayer(id)
+        if (layer && layer.bounds) {
+            this.fitBounds(layer.bounds)
+        }
     }
 
     isLayerInitialized(id) {
@@ -234,11 +237,11 @@ export class SepalMap {
         return _.orderBy(Object.values(this.layerById).filter(layer => layer.toggleable), ['layerIndex'])
     }
 
-    fitLayer(id) {
-        const layer = this.getLayer(id)
-        if (layer && layer.bounds) {
-            this.fitBounds(layer.bounds)
-        }
+    setVisibility(visible) {
+        log.debug(`Visibility ${visible ? 'on' : 'off'}`)
+        _.forEach(this.layerById, (layer, id) =>
+            layer.hide(visible ? this.isHiddenLayer(id) : true)
+        )
     }
 
     drawPolygon(id, callback) {
