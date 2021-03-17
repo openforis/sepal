@@ -1,8 +1,8 @@
 import {of} from 'rxjs'
 
 export default class GoogleSatelliteLayer {
-    constructor({sepalMap, layerIndex}) {
-        this.sepalMap = sepalMap
+    constructor({map, layerIndex}) {
+        this.map = map
         this.layerIndex = layerIndex
         this.type = 'GoogleSatelliteLayer'
     }
@@ -12,7 +12,7 @@ export default class GoogleSatelliteLayer {
     }
 
     addToMap() {
-        const {google} = this.sepalMap.getGoogle()
+        const {google} = this.map.getGoogle()
         const subdomain = 'mt0'
         const getTileUrl = ({x, y}, z) => `http://${subdomain}.google.com/vt/lyrs=s&x=${x}&y=${y}&z=${z}`
         const layer = new google.maps.ImageMapType({
@@ -21,11 +21,11 @@ export default class GoogleSatelliteLayer {
             minZoom: 3,
             maxZoom: 17,
         })
-        this.sepalMap.addToMap(this.layerIndex, layer)
+        this.map.addToMap(this.layerIndex, layer)
     }
 
     removeFromMap() {
-        this.sepalMap.removeFromMap(this.layerIndex)
+        this.map.removeFromMap(this.layerIndex)
     }
 
     hide(hidden) {

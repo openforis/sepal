@@ -1,7 +1,7 @@
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {withMapContext} from 'app/home/map/mapContext'
+import {withMap} from 'app/home/map/map'
 import GoogleSatelliteLayer from 'app/home/map/googleSatelliteLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -27,27 +27,27 @@ class ChartPixelButton extends React.Component {
     }
 
     startSelecting() {
-        const {sepalMap, showGoogleSatellite, onPixelSelected} = this.props
+        const {map, showGoogleSatellite, onPixelSelected} = this.props
         this.setState({isSelecting: true})
-        sepalMap.onOneClick(latLng => {
+        map.onOneClick(latLng => {
             if (showGoogleSatellite) {
-                sepalMap.removeLayer('googleSatellite')
+                map.removeLayer('googleSatellite')
             }
             this.setState({isSelecting: false})
             onPixelSelected(latLng)
         })
         if (showGoogleSatellite) {
-            sepalMap.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer({sepalMap, layerIndex: 1})})
+            map.setLayer({id: 'googleSatellite', layer: new GoogleSatelliteLayer({map, layerIndex: 1})})
         }
     }
 
     cancelSelecting() {
-        const {sepalMap, showGoogleSatellite} = this.props
+        const {map, showGoogleSatellite} = this.props
         this.setState({isSelecting: false})
         if (showGoogleSatellite) {
-            sepalMap.removeLayer('googleSatellite')
+            map.removeLayer('googleSatellite')
         }
-        sepalMap.clearClickListeners()
+        map.clearClickListeners()
     }
 }
 
@@ -59,5 +59,5 @@ ChartPixelButton.propTypes = {
 
 export default compose(
     ChartPixelButton,
-    withMapContext()
+    withMap()
 )

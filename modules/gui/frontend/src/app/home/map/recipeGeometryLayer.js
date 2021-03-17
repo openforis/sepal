@@ -4,21 +4,21 @@ import EarthEngineLayer from './earthEngineLayer'
 import api from 'api'
 
 export const setRecipeGeometryLayer = ({
-    sepalMap,
+    map,
     layerSpec: {id, recipe, layerIndex = 1},
     destroy$,
     onInitialized
 }) => {
     const layer = recipe
-        ? new RecipeGeometryLayer({sepalMap, mapId$: api.gee.recipeGeometry$(recipe), layerIndex, recipe})
+        ? new RecipeGeometryLayer({map, mapId$: api.gee.recipeGeometry$(recipe), layerIndex, recipe})
         : null
-    sepalMap.setLayer({id, layer, destroy$, onInitialized})
+    map.setLayer({id, layer, destroy$, onInitialized})
     return layer
 }
 
 class RecipeGeometryLayer extends EarthEngineLayer {
-    constructor({sepalMap, mapId$, layerIndex, recipe}) {
-        super({sepalMap, layerIndex, mapId$, props: recipe})
+    constructor({map, mapId$, layerIndex, recipe}) {
+        super({map, layerIndex, mapId$, props: recipe})
     }
 
     initialize$() {

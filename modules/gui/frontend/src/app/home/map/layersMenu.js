@@ -5,7 +5,7 @@ import {changeBaseLayer} from './baseLayer'
 import {compose} from 'compose'
 import {msg} from 'translate'
 import {select} from 'store'
-import {withMapContext} from './mapContext'
+import {withMap} from './map'
 import ButtonSelect from 'widget/buttonSelect'
 import LabelsLayer from './labelsLayer'
 import PropTypes from 'prop-types'
@@ -33,7 +33,7 @@ class _LayersMenu extends React.Component {
         const {
             inputs: {dateRange, proc},
             activatable: {deactivate},
-            labelsShown, baseLayer, labelLayerIndex, statePath, sepalMap
+            labelsShown, baseLayer, labelLayerIndex, statePath, map
         } = this.props
         const mapOverlayOptions = this.getMapOverlays().map(layer =>
             <Menu.Option
@@ -118,7 +118,7 @@ class _LayersMenu extends React.Component {
                     selected={labelsShown}
                     onChange={shown =>
                         LabelsLayer.showLabelsAction({
-                            sepalMap,
+                            map,
                             shown,
                             layerIndex: labelLayerIndex,
                             statePath
@@ -168,18 +168,18 @@ class _LayersMenu extends React.Component {
     }
 
     changeBaseLayer(type, dateRange, proc) {
-        const {statePath, sepalMap, norwayPlanetApiKey: planetApiKey} = this.props
+        const {statePath, map, norwayPlanetApiKey: planetApiKey} = this.props
         changeBaseLayer({
             type,
-            sepalMap,
+            map,
             statePath,
             options: {dateRange: dateRange.value, proc: proc.value, planetApiKey}
         })
     }
 
     getMapOverlays() {
-        const {sepalMap} = this.props
-        return sepalMap.toggleableLayers()
+        const {map} = this.props
+        return map.toggleableLayers()
             .filter(({layerIndex}) => layerIndex !== undefined)
     }
 
@@ -217,13 +217,13 @@ class _LayersMenu extends React.Component {
     }
 
     hideLayer(layer, hidden) {
-        const {sepalMap} = this.props
-        sepalMap.hideLayer(layer.id, hidden)
+        const {map} = this.props
+        map.hideLayer(layer.id, hidden)
     }
 
     getFeatureOverlayIds() {
-        const {sepalMap} = this.props
-        return sepalMap.toggleableLayers()
+        const {map} = this.props
+        return map.toggleableLayers()
             .filter(({layerIndex}) => layerIndex === undefined)
     }
 
@@ -262,7 +262,7 @@ export const LayersMenu = compose(
     _LayersMenu,
     form({fields, mapStateToProps}),
     activatable({id: 'layersMenu', policy, alwaysAllow: true}),
-    withMapContext()
+    withMap()
 )
 
 const sequence = (start, end, step = 1) =>

@@ -103,34 +103,34 @@ class ClassificationPreview extends React.Component {
     }
 
     reload() {
-        const {recipe, sepalMap} = this.props
-        sepalMap.removeLayer('preview')
+        const {recipe, map} = this.props
+        map.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
     componentDidUpdate(prevProps) {
-        const {recipe, sepalMap} = this.props
+        const {recipe, map} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
 
         if (layerChanged) {
             this.updateLayer(previewRequest)
         }
-        sepalMap.hideLayer('preview', this.isHidden(recipe))
+        map.hideLayer('preview', this.isHidden(recipe))
     }
 
     // common code above
 
     updateLayer(previewRequest) {
-        const {recipe, sepalMap, componentWillUnmount$} = this.props
+        const {recipe, map, componentWillUnmount$} = this.props
         if (!previewRequest || !hasTrainingData(recipe)) {
-            sepalMap.removeLayer('preview')
+            map.removeLayer('preview')
             return
         }
 
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            sepalMap,
+            map,
             layerIndex: 2,
             toggleable: true,
             label: msg('process.classification.preview.label'),
@@ -139,7 +139,7 @@ class ClassificationPreview extends React.Component {
             props: previewRequest,
             progress$: this.progress$
         })
-        const changed = sepalMap.setLayer({
+        const changed = map.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,

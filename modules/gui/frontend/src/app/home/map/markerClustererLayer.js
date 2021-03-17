@@ -13,8 +13,8 @@ const SELECTED_SCALE = 0.6
 
 export default class MarkerClustererLayer {
 
-    constructor({sepalMap, id, label, description}) {
-        const {google, googleMap} = sepalMap.getGoogle()
+    constructor({map, id, label, description}) {
+        const {google, googleMap} = map.getGoogle()
         this.type = 'MarkerClustererLayer'
         this.toggleable = true
         this.google = google

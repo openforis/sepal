@@ -6,7 +6,7 @@ import {connect, select} from 'store'
 import {countryEETable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
-import {withMapContext} from 'app/home/map/mapContext'
+import {withMap} from 'app/home/map/map'
 import Notifications from 'widget/notifications'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -156,7 +156,7 @@ class _CountrySection extends React.Component {
     }
 
     update() {
-        const {sepalMap, countries, stream, inputs: {country, area, buffer}, layerIndex} = this.props
+        const {map, countries, stream, inputs: {country, area, buffer}, layerIndex} = this.props
         if (!countries && !stream('LOAD_COUNTRIES').active && !stream('LOAD_COUNTRIES').failed) {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),
@@ -168,7 +168,7 @@ class _CountrySection extends React.Component {
             )
         }
         setAoiLayer({
-            sepalMap,
+            map,
             aoi: {
                 type: 'COUNTRY',
                 countryCode: country.value,
@@ -176,7 +176,7 @@ class _CountrySection extends React.Component {
                 buffer: buffer.value
             },
             // destroy$: componentWillUnmount$,
-            onInitialized: () => sepalMap.fitLayer('aoi'),
+            onInitialized: () => map.fitLayer('aoi'),
             layerIndex
         })
         if (!_.isFinite(buffer.value)) {
@@ -188,7 +188,7 @@ class _CountrySection extends React.Component {
 export const CountrySection = compose(
     _CountrySection,
     connect(mapStateToProps),
-    withMapContext()
+    withMap()
 )
 
 CountrySection.propTypes = {

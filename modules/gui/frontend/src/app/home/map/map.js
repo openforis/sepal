@@ -1,4 +1,3 @@
-import {Provider} from './mapContext'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -6,12 +5,19 @@ import {debounceTime, finalize} from 'rxjs/operators'
 import {getLogger} from 'log'
 import {getProcessTabsInfo} from '../body/process/process'
 import {mapBoundsTag, mapTag} from 'tag'
+import {withContext} from 'context'
 import {withMapsContext} from './maps'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import styles from './map.module.css'
 import withSubscriptions from 'subscription'
+
+const MapContext = React.createContext()
+
+const {Provider} = MapContext
+
+export const withMap = withContext(MapContext)
 
 const log = getLogger('map')
 
@@ -23,7 +29,7 @@ class _Map extends React.Component {
 
     state = {
         mapId: null,
-        sepalMap: null,
+        map: null,
         googleMapsApiKey: null,
         norwayPlanetApiKey: null,
         metersPerPixel: null,
@@ -38,8 +44,8 @@ class _Map extends React.Component {
     }
 
     addListener(event, listener) {
-        const {sepalMap} = this.state
-        const {google, googleMap} = sepalMap.getGoogle()
+        const {map} = this.state
+        const {google, googleMap} = map.getGoogle()
         const listenerId = googleMap.addListener(event, listener)
         return {
             remove: () => google.maps.event.removeListener(listenerId)
@@ -48,13 +54,13 @@ class _Map extends React.Component {
 
     render() {
         const {children} = this.props
-        const {sepalMap, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
+        const {map, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
         const toggleLinked = this.toggleLinked.bind(this)
         return (
-            <Provider value={{sepalMap, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea}}>
+            <Provider value={{map, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea}}>
                 <div ref={this.map} className={styles.map}/>
                 <div className={styles.content}>
-                    {sepalMap ? children : null}
+                    {map ? children : null}
                 </div>
             </Provider>
         )
@@ -67,19 +73,19 @@ class _Map extends React.Component {
     componentDidMount() {
         const {mapsContext: {createSepalMap, createMapContext}, onEnable, onDisable} = this.props
         const {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
-        const sepalMap = createSepalMap(this.map.current)
-        const zoomArea$ = sepalMap.getZoomArea$()
+        const map = createSepalMap(this.map.current)
+        const zoomArea$ = map.getZoomArea$()
 
         this.setState({
             mapId,
-            sepalMap,
+            map,
             googleMapsApiKey,
             norwayPlanetApiKey,
             linked: getProcessTabsInfo().single
         }, () => {
             this.subscribe({zoomArea$, bounds$, updateBounds, notifyLinked})
-            onEnable(() => sepalMap.setVisibility(true))
-            onDisable(() => sepalMap.setVisibility(false))
+            onEnable(() => map.setVisibility(true))
+            onDisable(() => map.setVisibility(false))
         })
     }
 
@@ -97,23 +103,23 @@ class _Map extends React.Component {
     }
 
     componentWillUnmount() {
-        const {sepalMap} = this.state
-        sepalMap.removeAllLayers()
+        const {map} = this.state
+        map.removeAllLayers()
         this.unsubscribe()
     }
 
     subscribe({zoomArea$, bounds$, updateBounds, notifyLinked}) {
-        const {sepalMap} = this.state
+        const {map} = this.state
         const {addSubscription} = this.props
-        const {googleMap} = sepalMap.getGoogle()
+        const {googleMap} = map.getGoogle()
 
         this.centerChangedListener = this.addListener('center_changed', () => {
-            this.updateScale(sepalMap.getMetersPerPixel())
+            this.updateScale(map.getMetersPerPixel())
             this.updateBounds$.next()
         })
 
         this.zoomChangedListener = this.addListener('zoom_changed', () => {
-            this.updateScale(sepalMap.getMetersPerPixel())
+            this.updateScale(map.getMetersPerPixel())
             this.updateBounds$.next()
         })
 

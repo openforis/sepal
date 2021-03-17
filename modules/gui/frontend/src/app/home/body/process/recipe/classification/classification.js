@@ -52,12 +52,12 @@ class _Classification extends React.Component {
     }
 
     setAoiLayer() {
-        const {images, sepalMap, componentWillUnmount$} = this.props
+        const {images, map, componentWillUnmount$} = this.props
         setRecipeGeometryLayer({
-            sepalMap,
+            map,
             layerSpec: {id: 'aoi', layerIndex: 1, recipe: images && images.length > 0 ? images[0] : null},
             destroy$: componentWillUnmount$,
-            onInitialized: () => sepalMap.fitLayer('aoi')
+            onInitialized: () => map.fitLayer('aoi')
         })
     }
 }

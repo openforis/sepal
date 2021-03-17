@@ -2,7 +2,7 @@ import {LayersMenu} from './layersMenu'
 import {Toolbar} from 'widget/toolbar/toolbar'
 import {compose} from 'compose'
 import {msg} from 'translate'
-import {withMapContext} from './mapContext'
+import {withMap} from './map'
 import Keybinding from 'widget/keybinding'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -10,8 +10,8 @@ import styles from './mapToolbar.module.css'
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, sepalMap, zoomArea, labelLayerIndex, toggleLinked, linked, children} = this.props
-        const hasBounds = sepalMap.isLayerInitialized('aoi')
+        const {statePath, map, zoomArea, labelLayerIndex, toggleLinked, linked, children} = this.props
+        const hasBounds = map.isLayerInitialized('aoi')
         return (
             <React.Fragment>
                 <LayersMenu statePath={statePath} labelLayerIndex={labelLayerIndex}/>
@@ -20,19 +20,19 @@ class MapToolbar extends React.Component {
                     horizontal
                     placement='top-right'>
                     <Toolbar.ToolbarButton
-                        disabled={sepalMap.isMaxZoom()}
-                        onClick={() => sepalMap.zoomIn()}
+                        disabled={map.isMaxZoom()}
+                        onClick={() => map.zoomIn()}
                         icon={'plus'}
                         tooltip={msg('process.mosaic.mapToolbar.zoomIn.tooltip')}/>
                     <Toolbar.ToolbarButton
-                        disabled={sepalMap.isMinZoom()}
-                        onClick={() => sepalMap.zoomOut()}
+                        disabled={map.isMinZoom()}
+                        onClick={() => map.zoomOut()}
                         icon={'minus'}
                         tooltip={msg('process.mosaic.mapToolbar.zoomOut.tooltip')}/>
                     <Toolbar.ToolbarButton
                         selected={zoomArea}
-                        disabled={sepalMap.isMaxZoom()}
-                        onClick={() => zoomArea ? sepalMap.cancelZoomArea() : sepalMap.zoomArea()}
+                        disabled={map.isMaxZoom()}
+                        onClick={() => zoomArea ? map.cancelZoomArea() : map.zoomArea()}
                         icon={'search'}
                         tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
                     <Toolbar.ToolbarButton
@@ -43,7 +43,7 @@ class MapToolbar extends React.Component {
                         tooltip={msg(linked ? 'process.mosaic.mapToolbar.unlink.tooltip' : 'process.mosaic.mapToolbar.link.tooltip')}/>
                     <Toolbar.ToolbarButton
                         disabled={!hasBounds}
-                        onClick={() => sepalMap.fitLayer('aoi')}
+                        onClick={() => map.fitLayer('aoi')}
                         icon={'bullseye'}
                         tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>
                     <Toolbar.ActivationButton
@@ -52,7 +52,7 @@ class MapToolbar extends React.Component {
                         tooltip={msg('process.mosaic.mapToolbar.layers.tooltip')}/>
                     {children}
                 </Toolbar>
-                <Keybinding disabled={!zoomArea} keymap={{Escape: () => sepalMap.cancelZoomArea()}}/>
+                <Keybinding disabled={!zoomArea} keymap={{Escape: () => map.cancelZoomArea()}}/>
             </React.Fragment>
         )
     }
@@ -66,5 +66,5 @@ MapToolbar.propTypes = {
 
 export default compose(
     MapToolbar,
-    withMapContext()
+    withMap()
 )

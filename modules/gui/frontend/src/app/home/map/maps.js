@@ -97,7 +97,7 @@ class _Maps extends React.Component {
             {featureType: 'poi', stylers: [{visibility: 'off'}]},
             {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
             {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
-        ], {name: 'sepalMap'})
+        ], {name: 'map'})
     
         const googleMap = new google.maps.Map(mapElement, mapOptions)
     

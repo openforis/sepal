@@ -5,7 +5,7 @@ import {msg} from 'translate'
 import Notifications from 'widget/notifications'
 import _ from 'lodash'
 
-const log = getLogger('sepalMap')
+const log = getLogger('map')
 
 export class SepalMap {
     constructor(google, googleMap) {

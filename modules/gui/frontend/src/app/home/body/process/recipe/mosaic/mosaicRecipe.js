@@ -21,8 +21,8 @@ export const RecipeActions = id => {
             .build()
 
     return {
-        setLabelsShown(sepalMap, shown) {
-            return LabelsLayer.showLabelsAction({sepalMap, shown, statePath: recipePath(id, 'ui'), layerIndex: 3})
+        setLabelsShown(map, shown) {
+            return LabelsLayer.showLabelsAction({map, shown, statePath: recipePath(id, 'ui'), layerIndex: 3})
         },
         setBands(bands) {
             return setAll('SET_BANDS', {

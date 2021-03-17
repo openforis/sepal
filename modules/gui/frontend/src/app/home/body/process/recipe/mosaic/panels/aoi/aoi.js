@@ -48,10 +48,10 @@ class Aoi extends React.Component {
     constructor(props) {
         super(props)
         this.state = {canceled: false}
-        const {recipeId, sepalMap} = props
+        const {recipeId, map} = props
         this.preview = MosaicPreview(recipeId)
-        this.initialBounds = sepalMap.getBounds()
-        this.initialZoom = sepalMap.getZoom()
+        this.initialBounds = map.getBounds()
+        this.initialZoom = map.getZoom()
     }
 
     render() {
@@ -111,17 +111,17 @@ class Aoi extends React.Component {
     }
 
     onCancel() {
-        const {model, sepalMap} = this.props
-        sepalMap.fitBounds(this.initialBounds)
-        sepalMap.setZoom(this.initialZoom)
+        const {model, map} = this.props
+        map.fitBounds(this.initialBounds)
+        map.setZoom(this.initialZoom)
         this.preview.show()
         this.updateLayer(model)
     }
 
     updateLayer(model) {
-        const {sepalMap} = this.props
+        const {map} = this.props
         setAoiLayer({
-            sepalMap,
+            map,
             aoi: model,
             fill: false,
             layerIndex: 1

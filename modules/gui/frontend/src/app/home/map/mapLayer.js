@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {withMapContext} from './mapContext'
+import {withMap} from './map'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -13,8 +13,8 @@ class _MapLayer extends React.Component {
 
     constructor(props) {
         super(props)
-        const {sepalMap} = props
-        const {google, googleMap} = sepalMap.getGoogle()
+        const {map} = props
+        const {google, googleMap} = map.getGoogle()
 
         class ReactOverlayView extends google.maps.OverlayView {
             constructor(component) {
@@ -26,7 +26,7 @@ class _MapLayer extends React.Component {
             draw() {
                 const projection = this.getProjection() // TODO: Zooming changes the projection...
                 const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(0, 0))
-                const xyz = [point.x, point.y, sepalMap.getZoom()]
+                const xyz = [point.x, point.y, map.getZoom()]
                 if (!_.isEqual(this.xyz, xyz)) {
                     this.xyz = xyz
                     this.component.setState({projection})
@@ -73,7 +73,7 @@ class _MapLayer extends React.Component {
 
 export const MapLayer = compose(
     _MapLayer,
-    withMapContext()
+    withMap()
 )
 
 MapLayer.propTypes = {
@@ -83,8 +83,8 @@ MapLayer.propTypes = {
 
 class _MapObject extends React.Component {
     render() {
-        const {sepalMap, lat, lng, width, height, className, children} = this.props
-        const {google, googleMap} = sepalMap.getGoogle()
+        const {map, lat, lng, width, height, className, children} = this.props
+        const {google, googleMap} = map.getGoogle()
         const shown = googleMap.getBounds().contains({lng, lat})
         if (!shown) {
             return null
@@ -115,7 +115,7 @@ class _MapObject extends React.Component {
 export const MapObject = compose(
     _MapObject,
     // connect(state => ({projectionChange: state.map.projectionChange})),
-    withMapContext()
+    withMap()
 )
 
 MapObject.propTypes = {

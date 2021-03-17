@@ -87,8 +87,8 @@ class OpticalMosaicPreview extends React.Component {
     }
 
     reload() {
-        const {recipe, sepalMap} = this.props
-        sepalMap.removeLayer('preview')
+        const {recipe, map} = this.props
+        map.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
@@ -98,27 +98,27 @@ class OpticalMosaicPreview extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {recipe, sepalMap} = this.props
+        const {recipe, map} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
         if (layerChanged)
             this.updateLayer(previewRequest)
-        sepalMap.hideLayer('preview', this.isHidden(recipe))
+        map.hideLayer('preview', this.isHidden(recipe))
     }
 
     // componentWillUnmount() {
-    //     const {sepalMap} = this.props
-    //     // sepalMap.removeLayer('preview')
+    //     const {map} = this.props
+    //     // map.removeLayer('preview')
     // }
 
     // common code above
 
     updateLayer(previewRequest) {
         // console.log('updateLayer', previewRequest)
-        const {sepalMap, componentWillUnmount$} = this.props
+        const {map, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            sepalMap,
+            map,
             layerIndex: 2,
             toggleable: true,
             label: msg('process.mosaic.preview.label'),
@@ -128,7 +128,7 @@ class OpticalMosaicPreview extends React.Component {
             props: previewRequest,
             progress$: this.progress$
         })
-        const changed = sepalMap.setLayer({
+        const changed = map.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
@@ -164,8 +164,8 @@ const hasScenes = ({recipe}) => {
         .find(scenes => scenes.length)
 }
 
-const removeLayer = ({sepalMap}) => {
-    sepalMap.removeLayer('preview')
+const removeLayer = ({map}) => {
+    map.removeLayer('preview')
 }
 
 OpticalMosaicPreview.propTypes = {}

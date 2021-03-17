@@ -85,8 +85,8 @@ class MosaicPreview extends React.Component {
     }
 
     reload() {
-        const {recipe, sepalMap} = this.props
-        sepalMap.removeLayer('preview')
+        const {recipe, map} = this.props
+        map.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
@@ -95,13 +95,13 @@ class MosaicPreview extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {recipe, sepalMap} = this.props
+        const {recipe, map} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
         if (layerChanged) {
             this.updateLayer(previewRequest)
         }
-        sepalMap.hideLayer('preview', this.isHidden(recipe))
+        map.hideLayer('preview', this.isHidden(recipe))
     }
 
     // common code above
@@ -109,10 +109,10 @@ class MosaicPreview extends React.Component {
     updateLayer(previewRequest) {
         if (this.isHidden())
             return
-        const {sepalMap, componentWillUnmount$} = this.props
+        const {map, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
-            sepalMap,
+            map,
             layerIndex: 2,
             toggleable: true,
             label: msg('process.radarMosaic.preview.label'),
@@ -122,7 +122,7 @@ class MosaicPreview extends React.Component {
             props: previewRequest,
             progress$: this.progress$
         })
-        const changed = sepalMap.setLayer({
+        const changed = map.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,

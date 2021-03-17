@@ -218,8 +218,8 @@ class CollectPanel extends React.Component {
     }
 
     moveMap(point) {
-        const {sepalMap} = this.props
-        sepalMap.fitBounds([[point.x, point.y], [point.x, point.y]])
+        const {map} = this.props
+        map.fitBounds([[point.x, point.y], [point.x, point.y]])
     }
 
     findNext() {

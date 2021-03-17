@@ -7,20 +7,20 @@ import guid from 'guid'
 export const TileLayer = ({
     layerIndex,
     tileProvider,
-    sepalMap,
+    map,
     minZoom = 0,
     maxZoom = 20,
     progress$
 }) => {
-    const {google} = sepalMap.getGoogle()
+    const {google} = map.getGoogle()
     const mapLayer = new GoogleMapsLayer(tileProvider, {google, minZoom, maxZoom}, progress$)
     return {
         add() {
-            sepalMap.addToMap(layerIndex, mapLayer)
+            map.addToMap(layerIndex, mapLayer)
         },
 
         remove() {
-            sepalMap.removeFromMap(layerIndex)
+            map.removeFromMap(layerIndex)
         },
 
         hide(hidden) {

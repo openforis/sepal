@@ -9,20 +9,20 @@ const polygonOptions = fill => ({
 })
 
 export const setPolygonLayer = ({
-    sepalMap,
+    map,
     layerSpec: {id, path},
     _fill,
     destroy$,
     onInitialized
 }) => {
-    const layer = path ? new PolygonLayer({sepalMap, path}) : null
-    sepalMap.setLayer({id, layer, destroy$, onInitialized})
+    const layer = path ? new PolygonLayer({map, path}) : null
+    map.setLayer({id, layer, destroy$, onInitialized})
     return layer
 }
 
 class PolygonLayer {
-    constructor({sepalMap, path, fill}) {
-        const {google, googleMap} = sepalMap.getGoogle()
+    constructor({map, path, fill}) {
+        const {google, googleMap} = map.getGoogle()
         this.googleMap = googleMap
         this.type = 'PolygonLayer'
         this.polygonPath = path
@@ -36,7 +36,7 @@ class PolygonLayer {
             path.getArray().forEach(latLng =>
                 googleBounds.extend(latLng)
             ))
-        this.bounds = sepalMap.fromGoogleBounds(googleBounds)
+        this.bounds = map.fromGoogleBounds(googleBounds)
     }
 
     equals(o) {

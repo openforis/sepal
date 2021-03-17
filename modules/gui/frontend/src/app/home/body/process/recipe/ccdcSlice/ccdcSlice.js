@@ -55,13 +55,13 @@ class _CCDCSlice extends React.Component {
     }
 
     setAoiLayer(fitLayer) {
-        const {sepalMap, recipe, componentWillUnmount$} = this.props
+        const {map, recipe, componentWillUnmount$} = this.props
         if (recipe.model.source.id) {
             setRecipeGeometryLayer({
-                sepalMap,
+                map,
                 layerSpec: {id: 'aoi', layerIndex: 1, recipe},
                 destroy$: componentWillUnmount$,
-                onInitialized: () => fitLayer && sepalMap.fitLayer('aoi')
+                onInitialized: () => fitLayer && map.fitLayer('aoi')
             })
         }
     }

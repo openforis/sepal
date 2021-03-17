@@ -1,8 +1,8 @@
 import {of} from 'rxjs'
 
 export default class WMTSLayer {
-    constructor({sepalMap, layerIndex, urlTemplate}) {
-        this.sepalMap = sepalMap
+    constructor({map, layerIndex, urlTemplate}) {
+        this.map = map
         this.layerIndex = layerIndex
         this.urlTemplate = urlTemplate
     }
@@ -12,7 +12,7 @@ export default class WMTSLayer {
     }
 
     addToMap() {
-        const {google} = this.sepalMap.getGoogle()
+        const {google} = this.map.getGoogle()
         const getTileUrl = ({x, y}, z) => this.urlTemplate
             .replace('{x}', x)
             .replace('{y}', y)
@@ -23,11 +23,11 @@ export default class WMTSLayer {
             minZoom: 3,
             maxZoom: 17
         })
-        this.sepalMap.addToMap(this.layerIndex, layer)
+        this.map.addToMap(this.layerIndex, layer)
     }
 
     removeFromMap() {
-        this.sepalMap.removeFromMap(this.layerIndex)
+        this.map.removeFromMap(this.layerIndex)
     }
 
     hide(hidden) {

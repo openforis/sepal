@@ -20,7 +20,7 @@ import api from 'api'
 import styles from './sceneAreas.module.css'
 
 const mapRecipeToProps = (recipe, ownProps) => {
-    const {sepalMap} = ownProps
+    const {map} = ownProps
     const sceneSelectionType = selectFrom(recipe, 'model.sceneSelectionOptions.type')
     const manualSelection = sceneSelectionType === SceneSelectionType.SELECT
     return {
@@ -32,7 +32,7 @@ const mapRecipeToProps = (recipe, ownProps) => {
         source: getSource(recipe),
         selectedScenes: selectFrom(recipe, ['model.scenes']) || [],
         loading: selectFrom(recipe, 'ui.autoSelectingScenes'),
-        zoom: select('map.zoom') || sepalMap.getZoom(),
+        zoom: select('map.zoom') || map.getZoom(),
         manualSelection
     }
 }
@@ -98,9 +98,9 @@ class SceneAreas extends React.Component {
     }
 
     setSceneAreaLayer() {
-        const {sepalMap, componentWillUnmount$} = this.props
+        const {map, componentWillUnmount$} = this.props
         const layer = new SceneAreaLayer(this)
-        sepalMap.setLayer({
+        map.setLayer({
             id: 'sceneAreas',
             layer,
             destroy$: componentWillUnmount$

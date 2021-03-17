@@ -2,19 +2,19 @@ import {NEVER, of} from 'rxjs'
 import actionBuilder from 'action-builder'
 
 export default class LabelsLayer {
-    static showLabelsAction({sepalMap, layerIndex = 2, shown, statePath}) {
+    static showLabelsAction({map, layerIndex = 2, shown, statePath}) {
         return actionBuilder('SET_LABELS_SHOWN', {shown})
             .set([statePath, 'labelsShown'], shown)
             .sideEffect(() => {
-                const layer = shown ? new LabelsLayer({sepalMap, layerIndex}) : null
-                sepalMap.setLayer({id: 'labels', layer, destroy$: NEVER})
+                const layer = shown ? new LabelsLayer({map, layerIndex}) : null
+                map.setLayer({id: 'labels', layer, destroy$: NEVER})
             })
             .build()
     }
 
-    constructor({sepalMap, layerIndex}) {
-        this.sepalMap = sepalMap
-        const {google} = sepalMap.getGoogle()
+    constructor({map, layerIndex}) {
+        this.map = map
+        const {google} = map.getGoogle()
         this.layer = new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
         this.bounds = new google.maps.LatLngBounds(
             new google.maps.LatLng(90, -180),
@@ -28,11 +28,11 @@ export default class LabelsLayer {
     }
 
     addToMap() {
-        this.sepalMap.addToMap(this.layerIndex, this.layer)
+        this.map.addToMap(this.layerIndex, this.layer)
     }
 
     removeFromMap() {
-        this.sepalMap.removeFromMap(this.layerIndex)
+        this.map.removeFromMap(this.layerIndex)
     }
 
     initialize$() {

@@ -4,7 +4,7 @@ import {connect, select} from 'store'
 import {recipeActionBuilder} from './recipe'
 import {toPathList} from 'stateUtils'
 import {withContext} from 'context'
-import {withMapContext} from '../../map/mapContext'
+import {withMap} from '../../map/map'
 import React from 'react'
 import actionBuilder from 'action-builder'
 
@@ -39,7 +39,7 @@ export const withRecipe = mapRecipeToProps =>
             WrappedComponent,
             connect(mapStateToProps),
             withRecipeContext(),
-            withMapContext()
+            withMap()
         )
     }
     

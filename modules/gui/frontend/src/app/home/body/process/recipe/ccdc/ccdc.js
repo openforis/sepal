@@ -37,12 +37,12 @@ class _CCDC extends React.Component {
     }
 
     componentDidMount() {
-        const {aoi, sepalMap, componentWillUnmount$} = this.props
+        const {aoi, map, componentWillUnmount$} = this.props
         setAoiLayer({
-            sepalMap,
+            map,
             aoi,
             destroy$: componentWillUnmount$,
-            onInitialized: () => sepalMap.fitLayer('aoi'),
+            onInitialized: () => map.fitLayer('aoi'),
             layerIndex: 1
         })
         this.initClassification()

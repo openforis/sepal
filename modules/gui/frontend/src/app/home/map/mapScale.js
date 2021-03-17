@@ -1,5 +1,5 @@
 import {compose} from 'compose'
-import {withMapContext} from './mapContext'
+import {withMap} from './map'
 import React from 'react'
 import styles from './mapScale.module.css'
 
@@ -20,5 +20,5 @@ MapToolbar.propTypes = {}
 
 export default compose(
     MapToolbar,
-    withMapContext()
+    withMap()
 )
