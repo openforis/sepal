@@ -103,13 +103,13 @@ class ClassificationPreview extends React.Component {
     }
 
     reload() {
-        const {recipe, mapContext: {sepalMap}} = this.props
+        const {recipe, sepalMap} = this.props
         sepalMap.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
     }
 
     componentDidUpdate(prevProps) {
-        const {recipe, mapContext: {sepalMap}} = this.props
+        const {recipe, sepalMap} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
 
@@ -122,7 +122,7 @@ class ClassificationPreview extends React.Component {
     // common code above
 
     updateLayer(previewRequest) {
-        const {recipe, mapContext: {sepalMap}, componentWillUnmount$} = this.props
+        const {recipe, sepalMap, componentWillUnmount$} = this.props
         if (!previewRequest || !hasTrainingData(recipe)) {
             sepalMap.removeLayer('preview')
             return

@@ -21,9 +21,9 @@ const mapRecipeToProps = recipe => ({
 class ReferenceDataLayer extends React.Component {
     constructor(props) {
         super(props)
-        const {recipeId, mapContext, dataCollectionEvents} = props
+        const {recipeId, sepalMap, dataCollectionEvents} = props
         this.layer = new MarkerClustererLayer({
-            mapContext,
+            sepalMap,
             id: 'referenceData',
             label: msg('process.classification.layers.referenceData.label'),
             description: msg('process.classification.layers.referenceData.description')
@@ -44,7 +44,7 @@ class ReferenceDataLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {collecting, mapContext: {sepalMap}, componentWillUnmount$} = this.props
+        const {collecting, sepalMap, componentWillUnmount$} = this.props
         this.updateAllMarkers()
         sepalMap.setLayer({
             id: 'referenceData',
@@ -78,12 +78,12 @@ class ReferenceDataLayer extends React.Component {
     }
 
     addMapListener() {
-        const {mapContext: {sepalMap}} = this.props
+        const {sepalMap} = this.props
         sepalMap.onClick(({lat: y, lng: x}) => this.onAdd({x, y}))
     }
 
     clearMapListeners() {
-        const {mapContext: {sepalMap}} = this.props
+        const {sepalMap} = this.props
         sepalMap.clearClickListeners()
     }
 

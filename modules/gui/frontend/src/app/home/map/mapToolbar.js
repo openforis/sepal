@@ -10,7 +10,7 @@ import styles from './mapToolbar.module.css'
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, mapContext: {sepalMap}, zoomArea, labelLayerIndex, toggleLinked, linked, children} = this.props
+        const {statePath, sepalMap, zoomArea, labelLayerIndex, toggleLinked, linked, children} = this.props
         const hasBounds = sepalMap.isLayerInitialized('aoi')
         return (
             <React.Fragment>

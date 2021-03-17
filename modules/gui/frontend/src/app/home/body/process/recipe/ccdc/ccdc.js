@@ -37,7 +37,7 @@ class _CCDC extends React.Component {
     }
 
     componentDidMount() {
-        const {aoi, mapContext: {sepalMap}, componentWillUnmount$} = this.props
+        const {aoi, sepalMap, componentWillUnmount$} = this.props
         setAoiLayer({
             sepalMap,
             aoi,

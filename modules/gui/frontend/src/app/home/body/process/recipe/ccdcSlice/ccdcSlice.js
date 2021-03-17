@@ -31,7 +31,7 @@ class _CCDCSlice extends React.Component {
         const {recipeId, recipeContext: {statePath}, initialized} = this.props
         return (
             <div>
-                <MapToolbar statePath={[statePath, 'ui']} mapContext={recipeId} labelLayerIndex={3}/>
+                <MapToolbar statePath={[statePath, 'ui']} labelLayerIndex={3}/>
                 <MapScale/>
                 <CCDCSliceToolbar/>
                 {initialized
@@ -55,7 +55,7 @@ class _CCDCSlice extends React.Component {
     }
 
     setAoiLayer(fitLayer) {
-        const {mapContext: {sepalMap}, recipe, componentWillUnmount$} = this.props
+        const {sepalMap, recipe, componentWillUnmount$} = this.props
         if (recipe.model.source.id) {
             setRecipeGeometryLayer({
                 sepalMap,

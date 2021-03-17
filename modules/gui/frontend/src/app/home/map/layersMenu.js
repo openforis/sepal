@@ -33,7 +33,7 @@ class _LayersMenu extends React.Component {
         const {
             inputs: {dateRange, proc},
             activatable: {deactivate},
-            labelsShown, baseLayer, labelLayerIndex, statePath, mapContext: {sepalMap}
+            labelsShown, baseLayer, labelLayerIndex, statePath, sepalMap
         } = this.props
         const mapOverlayOptions = this.getMapOverlays().map(layer =>
             <Menu.Option
@@ -168,7 +168,7 @@ class _LayersMenu extends React.Component {
     }
 
     changeBaseLayer(type, dateRange, proc) {
-        const {statePath, mapContext: {sepalMap, norwayPlanetApiKey: planetApiKey}} = this.props
+        const {statePath, sepalMap, norwayPlanetApiKey: planetApiKey} = this.props
         changeBaseLayer({
             type,
             sepalMap,
@@ -178,7 +178,7 @@ class _LayersMenu extends React.Component {
     }
 
     getMapOverlays() {
-        const {mapContext: {sepalMap}} = this.props
+        const {sepalMap} = this.props
         return sepalMap.toggleableLayers()
             .filter(({layerIndex}) => layerIndex !== undefined)
     }
@@ -217,12 +217,12 @@ class _LayersMenu extends React.Component {
     }
 
     hideLayer(layer, hidden) {
-        const {mapContext: {sepalMap}} = this.props
+        const {sepalMap} = this.props
         sepalMap.hideLayer(layer.id, hidden)
     }
 
     getFeatureOverlayIds() {
-        const {mapContext: {sepalMap}} = this.props
+        const {sepalMap} = this.props
         return sepalMap.toggleableLayers()
             .filter(({layerIndex}) => layerIndex === undefined)
     }

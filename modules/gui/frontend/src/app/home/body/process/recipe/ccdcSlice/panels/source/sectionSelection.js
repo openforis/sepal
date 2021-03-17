@@ -31,7 +31,7 @@ class _SectionSelection extends React.Component {
     }
 
     componentDidUpdate() {
-        const {mapContext: {sepalMap}} = this.props
+        const {sepalMap} = this.props
         removeAoiLayer(sepalMap)
     }
 }

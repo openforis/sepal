@@ -37,7 +37,7 @@ class _TimeSeries extends React.Component {
     }
 
     componentDidMount() {
-        const {mapContext: {sepalMap}, aoi, componentWillUnmount$} = this.props
+        const {sepalMap, aoi, componentWillUnmount$} = this.props
         setAoiLayer({
             sepalMap,
             aoi,

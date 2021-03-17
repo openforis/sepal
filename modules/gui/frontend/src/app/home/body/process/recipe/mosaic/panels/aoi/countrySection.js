@@ -156,7 +156,7 @@ class _CountrySection extends React.Component {
     }
 
     update() {
-        const {mapContext: {sepalMap}, countries, stream, inputs: {country, area, buffer}, layerIndex} = this.props
+        const {sepalMap, countries, stream, inputs: {country, area, buffer}, layerIndex} = this.props
         if (!countries && !stream('LOAD_COUNTRIES').active && !stream('LOAD_COUNTRIES').failed) {
             this.props.stream('LOAD_COUNTRIES',
                 loadCountries$(),

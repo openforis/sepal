@@ -40,7 +40,7 @@ class CompositePreview extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {recipe, mapContext: {sepalMap}} = this.props
+        const {recipe, sepalMap} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
         if (layerChanged) {
@@ -73,7 +73,7 @@ class CompositePreview extends React.Component {
     }
 
     updateLayer(previewRequest) {
-        const {mapContext: {sepalMap}, componentWillUnmount$} = this.props
+        const {sepalMap, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
             sepalMap,
@@ -95,7 +95,7 @@ class CompositePreview extends React.Component {
     }
 
     reload() {
-        const {recipe, mapContext: {sepalMap}} = this.props
+        const {recipe, sepalMap} = this.props
         sepalMap.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
     }

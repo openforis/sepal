@@ -13,7 +13,7 @@ class _MapLayer extends React.Component {
 
     constructor(props) {
         super(props)
-        const {mapContext: {sepalMap}} = props
+        const {sepalMap} = props
         const {google, googleMap} = sepalMap.getGoogle()
 
         class ReactOverlayView extends google.maps.OverlayView {
@@ -83,7 +83,7 @@ MapLayer.propTypes = {
 
 class _MapObject extends React.Component {
     render() {
-        const {mapContext: {sepalMap}, lat, lng, width, height, className, children} = this.props
+        const {sepalMap, lat, lng, width, height, className, children} = this.props
         const {google, googleMap} = sepalMap.getGoogle()
         const shown = googleMap.getBounds().contains({lng, lat})
         if (!shown) {

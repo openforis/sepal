@@ -27,7 +27,7 @@ class ChartPixelButton extends React.Component {
     }
 
     startSelecting() {
-        const {mapContext: {sepalMap}, showGoogleSatellite, onPixelSelected} = this.props
+        const {sepalMap, showGoogleSatellite, onPixelSelected} = this.props
         this.setState({isSelecting: true})
         sepalMap.onOneClick(latLng => {
             if (showGoogleSatellite) {
@@ -42,7 +42,7 @@ class ChartPixelButton extends React.Component {
     }
 
     cancelSelecting() {
-        const {mapContext: {sepalMap}, showGoogleSatellite} = this.props
+        const {sepalMap, showGoogleSatellite} = this.props
         this.setState({isSelecting: false})
         if (showGoogleSatellite) {
             sepalMap.removeLayer('googleSatellite')
@@ -52,7 +52,6 @@ class ChartPixelButton extends React.Component {
 }
 
 ChartPixelButton.propTypes = {
-    mapContext: PropTypes.object.isRequired,
     onPixelSelected: PropTypes.func.isRequired,
     disabled: PropTypes.any,
     showGoogleSatellite: PropTypes.any,

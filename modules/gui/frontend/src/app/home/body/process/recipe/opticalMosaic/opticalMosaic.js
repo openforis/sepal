@@ -58,7 +58,7 @@ class _OpticalMosaic extends React.Component {
     }
 
     componentDidMount() {
-        const {mapContext: {sepalMap}, aoi} = this.props
+        const {sepalMap, aoi} = this.props
         setAoiLayer({
             sepalMap,
             aoi,

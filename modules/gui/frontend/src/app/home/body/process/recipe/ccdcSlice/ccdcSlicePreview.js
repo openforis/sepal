@@ -98,7 +98,7 @@ class CCDCSlicePreview extends React.Component {
     }
 
     reload() {
-        const {mapContext: {sepalMap}, recipe} = this.props
+        const {sepalMap, recipe} = this.props
         sepalMap.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
     }
@@ -108,7 +108,7 @@ class CCDCSlicePreview extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {mapContext: {sepalMap}, recipe} = this.props
+        const {sepalMap, recipe} = this.props
         const previewRequest = this.toPreviewRequest(recipe)
         const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
         if (layerChanged) {
@@ -123,7 +123,7 @@ class CCDCSlicePreview extends React.Component {
         if (this.isHidden()) {
             return
         }
-        const {mapContext: {sepalMap}, componentWillUnmount$} = this.props
+        const {sepalMap, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = new EarthEngineLayer({
             sepalMap,

@@ -24,7 +24,7 @@ class _PolygonSection extends React.Component {
     }
 
     componentDidMount() {
-        const {mapContext: {sepalMap}, inputs: {polygon}} = this.props
+        const {sepalMap, inputs: {polygon}} = this.props
         this.recipeActions.setLabelsShown(sepalMap, true).dispatch()
         sepalMap.drawPolygon('aoi', drawnPolygon => {
             polygon.set(drawnPolygon)
@@ -32,7 +32,7 @@ class _PolygonSection extends React.Component {
     }
 
     componentWillUnmount() {
-        const {mapContext: {sepalMap}} = this.props
+        const {sepalMap} = this.props
         this.disableDrawingMode()
         if (isRecipeOpen(this.props.recipeId)) {
             this.recipeActions.setLabelsShown(sepalMap, this.wereLabelsShown).dispatch()
@@ -40,7 +40,7 @@ class _PolygonSection extends React.Component {
     }
 
     disableDrawingMode() {
-        const {mapContext: {sepalMap}} = this.props
+        const {sepalMap} = this.props
         sepalMap.disableDrawingMode()
     }
 
@@ -57,7 +57,7 @@ class _PolygonSection extends React.Component {
             return
         }
 
-        const {mapContext: {sepalMap}, inputs: {polygon}, layerIndex, componentWillUnmount$} = this.props
+        const {sepalMap, inputs: {polygon}, layerIndex, componentWillUnmount$} = this.props
         setAoiLayer({
             sepalMap,
             aoi: {

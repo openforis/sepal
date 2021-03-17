@@ -204,7 +204,7 @@ class _EETableSection extends React.Component {
     }
 
     update() {
-        const {mapContext: {sepalMap}, inputs: {eeTable, eeTableColumn, eeTableRow, buffer}, componentWillUnmount$, layerIndex} = this.props
+        const {sepalMap, inputs: {eeTable, eeTableColumn, eeTableRow, buffer}, componentWillUnmount$, layerIndex} = this.props
         setAoiLayer({
             sepalMap,
             aoi: {

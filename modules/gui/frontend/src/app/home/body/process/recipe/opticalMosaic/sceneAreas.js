@@ -20,7 +20,7 @@ import api from 'api'
 import styles from './sceneAreas.module.css'
 
 const mapRecipeToProps = (recipe, ownProps) => {
-    const {mapContext: {sepalMap}} = ownProps
+    const {sepalMap} = ownProps
     const sceneSelectionType = selectFrom(recipe, 'model.sceneSelectionOptions.type')
     const manualSelection = sceneSelectionType === SceneSelectionType.SELECT
     return {
@@ -98,7 +98,7 @@ class SceneAreas extends React.Component {
     }
 
     setSceneAreaLayer() {
-        const {mapContext: {sepalMap}, componentWillUnmount$} = this.props
+        const {sepalMap, componentWillUnmount$} = this.props
         const layer = new SceneAreaLayer(this)
         sepalMap.setLayer({
             id: 'sceneAreas',

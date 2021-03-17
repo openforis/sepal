@@ -23,7 +23,9 @@ class _Map extends React.Component {
 
     state = {
         mapId: null,
-        mapContext: null,
+        sepalMap: null,
+        googleMapsApiKey: null,
+        norwayPlanetApiKey: null,
         metersPerPixel: null,
         zoomArea: false,
         linked: false
@@ -36,7 +38,7 @@ class _Map extends React.Component {
     }
 
     addListener(event, listener) {
-        const {mapContext: {sepalMap}} = this.state
+        const {sepalMap} = this.state
         const {google, googleMap} = sepalMap.getGoogle()
         const listenerId = googleMap.addListener(event, listener)
         return {
@@ -46,13 +48,13 @@ class _Map extends React.Component {
 
     render() {
         const {children} = this.props
-        const {mapContext, metersPerPixel, linked, zoomArea} = this.state
+        const {sepalMap, googleMapsApiKey, norwayPlanetApiKey, metersPerPixel, linked, zoomArea} = this.state
         const toggleLinked = this.toggleLinked.bind(this)
         return (
-            <Provider value={{mapContext, toggleLinked, linked, metersPerPixel, zoomArea}}>
+            <Provider value={{sepalMap, googleMapsApiKey, norwayPlanetApiKey, toggleLinked, linked, metersPerPixel, zoomArea}}>
                 <div ref={this.map} className={styles.map}/>
                 <div className={styles.content}>
-                    {mapContext ? children : null}
+                    {sepalMap ? children : null}
                 </div>
             </Provider>
         )
@@ -67,9 +69,14 @@ class _Map extends React.Component {
         const {mapId, googleMapsApiKey, norwayPlanetApiKey, bounds$, updateBounds, notifyLinked} = createMapContext()
         const sepalMap = createSepalMap(this.map.current)
         const zoomArea$ = sepalMap.getZoomArea$()
-        const mapContext = {googleMapsApiKey, norwayPlanetApiKey, sepalMap}
 
-        this.setState({mapId, mapContext, linked: getProcessTabsInfo().single}, () => {
+        this.setState({
+            mapId,
+            sepalMap,
+            googleMapsApiKey,
+            norwayPlanetApiKey,
+            linked: getProcessTabsInfo().single
+        }, () => {
             this.subscribe({zoomArea$, bounds$, updateBounds, notifyLinked})
             onEnable(() => sepalMap.setVisibility(true))
             onDisable(() => sepalMap.setVisibility(false))
@@ -90,13 +97,13 @@ class _Map extends React.Component {
     }
 
     componentWillUnmount() {
-        const {mapContext: {sepalMap}} = this.state
+        const {sepalMap} = this.state
         sepalMap.removeAllLayers()
         this.unsubscribe()
     }
 
     subscribe({zoomArea$, bounds$, updateBounds, notifyLinked}) {
-        const {mapContext: {sepalMap}} = this.state
+        const {sepalMap} = this.state
         const {addSubscription} = this.props
         const {googleMap} = sepalMap.getGoogle()
 
