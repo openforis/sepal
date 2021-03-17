@@ -1,3 +1,4 @@
+import {ReplaySubject} from 'rxjs'
 import {Subject} from 'rxjs'
 import {compose} from 'compose'
 import {connect} from 'store'
@@ -23,7 +24,7 @@ const log = getLogger('map')
 
 class _Map extends React.Component {
     updateBounds$ = new Subject()
-    linked$ = new Subject()
+    linked$ = new ReplaySubject()
 
     map = React.createRef()
 
@@ -33,8 +34,8 @@ class _Map extends React.Component {
         googleMapsApiKey: null,
         norwayPlanetApiKey: null,
         metersPerPixel: null,
-        zoomArea: false,
-        linked: false
+        zoomArea: null,
+        linked: null
     }
 
     toggleLinked() {
