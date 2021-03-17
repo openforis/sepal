@@ -7,19 +7,22 @@ assignees: ''
 
 ---
 
-**What is the name of your repository ?**
+**What is the name of your repository ?**  
 the full url of your dashboard's app repository
 
-**the name of your dashboard app**
+**The name of your dashboard app**  
 This name will be display in the dashboard list 
 
-**a short description of the app**
+**A short description of the app**  
 This should be a 1 liner and it will be used in the dasboard app list
 
-**any comment you want to add**
+**Is your module requiring a GEE account ?**  
+(answer by yes or no)
+
+**Any comment you want to add**  
 require new libs, should be use with a GEE acount ... etc 
 
-**maintainer checklist**
+**maintainer checklist**  
 - [ ] Name is set 
 - [ ] Desccription set 
 - [ ] Comprehensive readme 
