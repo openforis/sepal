@@ -470,6 +470,31 @@
                 }
               }
             },
+            "gradientTreeBoost": {
+              "label": "Gradient tree boost",
+              "config": {
+                "shrinkage": {
+                  "label": "Shrinkage",
+                  "tooltip": "The shrinkage parameter in (0, 1] controls the learning rate of procedure",
+                  "placeholder": "Shrinkage..."
+                },
+                "samplingRate": {
+                  "label": "Sampling rate",
+                  "tooltip": "The sampling rate for stochastic tree boosting",
+                  "placeholder": "Sampling rate..."
+                },
+                "loss": {
+                  "label": "Loss function",
+                  "tooltip": "Loss function for regression",
+                  "placeholder": "Loss function...",
+                  "options": {
+                    "LeastSquares.label": "Least squares",
+                    "LeastAbsoluteDeviation.label": "Least abs. deviation",
+                    "Huber.label": "Huber"
+                  }
+                }
+              }
+            },
             "cart": {
               "label": "Cart"
             },

@@ -25,6 +25,10 @@ export const getDefaultModel = () => ({
         maxNodes: null,
         seed: 1,
 
+        shrinkage: 0.005,
+        samplingRate: 0.7,
+        loss: 'LeastAbsoluteDeviation',
+
         lambda: 0.000001,
 
         decisionProcedure: 'Voting',
@@ -164,10 +168,10 @@ export const getBandOptions = (legend, classifierType) =>
     ].filter(option => option)
 
 export const supportRegression = classifierType =>
-    ['RANDOM_FOREST', 'CART'].includes(classifierType)
+    ['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART'].includes(classifierType)
 
 export const supportProbability = classifierType =>
-    ['RANDOM_FOREST', 'CART', 'SVM', 'NAIVE_BAYES'].includes(classifierType)
+    ['RANDOM_FOREST', 'GRADIENT_TREE_BOOST', 'CART', 'SVM', 'NAIVE_BAYES'].includes(classifierType)
 
 const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
