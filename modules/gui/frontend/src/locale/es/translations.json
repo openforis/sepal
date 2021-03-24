@@ -281,7 +281,7 @@
         "placeholder": "Introduce tu contraseña",
         "required": "La contraseña es obligatoria"
       },
-      "sign-up": "Inscríbete",
+      "sign-up": "Regístrate",
       "username": {
         "label": "Nombre de usuario",
         "placeholder": "Introduce tu nombre de usuario",
@@ -375,10 +375,10 @@
           "tooltip": "Zoom a la zona"
         },
         "zoomIn": {
-          "tooltip": "Acercarse"
+          "tooltip": "Acercar"
         },
         "zoomOut": {
-          "tooltip": "Alejar el zoom"
+          "tooltip": "Alejar"
         }
       },
       "panel": {
@@ -513,7 +513,7 @@
         "sources": {
           "form": {
             "breakpointBands": {
-              "atLeastOne": "Seleccione al menos una banda",
+              "atLeastOne": "Selecciona al menos una banda",
               "label": "Bandas de puntos de quiebre"
             },
             "dataSets": {
@@ -529,7 +529,7 @@
       }
     },
     "ccdcSlice": {
-      "create": "Rodaja de CCDC",
+      "create": "Corte de CCDC",
       "description": "Crear un corte de un asset de CCDC, para una fecha específica.",
       "mapToolbar": {
         "centerMap": {
@@ -550,7 +550,7 @@
           "tooltip": "Ampliar"
         },
         "zoomOut": {
-          "tooltip": "Reducir"
+          "tooltip": "Alejar"
         }
       },
       "panel": {
@@ -692,7 +692,7 @@
             }
           },
           "title": "Fuente",
-          "tooltip": "Seleccione el asset de EE con segmentos de CCDC para cortar"
+          "tooltip": "Selecciona el asset de EE con segmentos de CCDC para cortar"
         }
       },
       "preview": {
@@ -812,7 +812,7 @@
             },
             "recipe": {
               "label": "Flujo de trabajo",
-              "placeholder": "Seleccione un flujo de trabajo...",
+              "placeholder": "Selecciona un flujo de trabajo...",
               "required": "Debes seleccionar un flujo de trabajo"
             },
             "section": {
@@ -840,7 +840,7 @@
             "title": "Imagen a clasificar"
           },
           "title": "Imágenes para clasificar",
-          "tooltip": "Seleccione las imágenes a clasificar",
+          "tooltip": "Selecciona las imágenes a clasificar",
           "type": {
             "RECIPE_REF": "Flujo de trabajo de SEPAL"
           }
@@ -990,7 +990,7 @@
             "classColumn": {
               "label": "Columna de clase",
               "placeholder": {
-                "loaded": "Seleccione una columna...",
+                "loaded": "Selecciona una columna...",
                 "loading": "Cargando columnas...",
                 "noFusionTable": "Introduce primero el ID de la tabla de fusión"
               },
@@ -1012,7 +1012,7 @@
             "yearColumn": {
               "label": "Columna de años",
               "placeholder": {
-                "loaded": "Seleccione una columna...",
+                "loaded": "Selecciona una columna...",
                 "loading": "Cargando columnas...",
                 "noFusionTable": "Indica primero el ID de la tabla Fusion"
               },
@@ -1049,7 +1049,7 @@
         "combinations": "Combinaciones",
         "metadata": "Metadatos",
         "panSharpen": "Pan sharpen",
-        "placeholder": "Seleccione las bandas preliminares"
+        "placeholder": "Selecciona las bandas preliminares"
       },
       "create": "Mosaico óptico",
       "description": "Crear un mosaico con Landsat o Sentinel 2.",
@@ -1085,10 +1085,10 @@
           }
         },
         "zoom": {
-          "tooltip": "Zoom al área"
+          "tooltip": "Acercar al área"
         },
         "zoomIn": {
-          "tooltip": "Acercarse"
+          "tooltip": "Acercar"
         },
         "zoomOut": {
           "tooltip": "Reducir"
@@ -1104,29 +1104,29 @@
               "area": {
                 "label": "Provincia/zona",
                 "placeholder": {
-                  "loaded": "Seleccione una provincia",
-                  "loading": "Seleccione una provincia",
+                  "loaded": "Selecciona una provincia",
+                  "loading": "Selecciona una provincia",
                   "noAreas": "Ninguna provincia configurada",
-                  "noCountry": "Seleccione primero un país"
+                  "noCountry": "Selecciona primero un país"
                 },
-                "title": "Seleccione la zona"
+                "title": "Selecciona la zona"
               },
               "country": {
                 "label": "País",
                 "loadFailed": "Imposible cargar los países",
                 "placeholder": {
-                  "loaded": "Seleccione un país...",
+                  "loaded": "Selecciona un país...",
                   "loading": "Cargando países..."
                 }
               },
               "required": "El país es necesario",
-              "title": "Seleccione el país/provincia"
+              "title": "Selecciona el país/provincia"
             },
             "eeTable": {
               "column": {
                 "label": "Columna",
                 "placeholder": {
-                  "loaded": "Seleccione una columna...",
+                  "loaded": "Selecciona una columna...",
                   "loading": "Cargando columnas...",
                   "noEETable": "Indique primero un ID de tabla EE"
                 },
@@ -1476,7 +1476,7 @@
     },
     "radarMosaic": {
       "create": "Mosaico de radar",
-      "description": "Crea un mosaico con Sentinel 1.",
+      "description": "Crear un mosaico con Sentinel 1.",
       "panel": {
         "dates": {
           "button": "DAT",
@@ -1660,10 +1660,10 @@
           "tooltip": "Zoom a la zona"
         },
         "zoomIn": {
-          "tooltip": "Acercarse"
+          "tooltip": "Acercar"
         },
         "zoomOut": {
-          "tooltip": "Reducir"
+          "tooltip": "Alejar"
         }
       },
       "panel": {
